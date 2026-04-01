@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'wouter';
-import { AlertCircle, ArrowLeft, CheckCircle2, Mail, Shield, Sparkles } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle2, Mail, Shield } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -367,60 +367,21 @@ export const ZenLogin: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#faf9f5]">
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-6 py-12">
-        <div className="grid w-full max-w-5xl gap-10 lg:grid-cols-[1.1fr_420px] lg:items-center">
-          <div className="hidden lg:block">
-            <div className="max-w-xl space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-1 text-[11px] font-medium text-stone-600">
-                <Shield className="h-3.5 w-3.5 text-stone-500" />
-                Trusted access for regulated work
-              </div>
-              <div className="space-y-4">
-                <h1 className="text-3xl font-semibold tracking-tight text-stone-900">
-                  Secure access without the noise.
-                </h1>
-                <p className="max-w-lg text-[15px] leading-7 text-stone-600">
-                  Sign in, verify, and get back to work. No dashboard theater, no fake enterprise chrome,
-                  just a clean path into the product.
-                </p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-stone-200 bg-white p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-400">
-                    Security
-                  </p>
-                  <p className="mt-2 text-[13px] leading-6 text-stone-700">
-                    JWT sessions, MFA verification, and controlled password reset flows.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-stone-200 bg-white p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-400">
-                    Experience
-                  </p>
-                  <p className="mt-2 text-[13px] leading-6 text-stone-700">
-                    One focused card, one decision at a time, and clear next steps.
-                  </p>
-                </div>
-              </div>
+      <div className="mx-auto flex min-h-screen w-full max-w-3xl items-center justify-center px-4 py-8 sm:px-6">
+        <div className="w-full max-w-[420px] space-y-4">
+          <div className="space-y-2 text-center">
+            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-1 text-[11px] font-medium text-stone-600">
+              <Shield className="h-3.5 w-3.5 text-stone-500" />
+              Trusted access for regulated work
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-lg font-semibold text-stone-900">{title}</h1>
+              <p className="text-[13px] leading-6 text-stone-500">{description}</p>
             </div>
           </div>
 
           <Card className="border-stone-200 bg-white shadow-sm">
-            <CardHeader className="space-y-3 p-6 pb-0">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50">
-                  <Sparkles className="h-4 w-4 text-stone-700" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg font-semibold text-stone-900">{title}</CardTitle>
-                  <CardDescription className="mt-1 text-[13px] leading-6 text-stone-500">
-                    {description}
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-5 p-6">
+            <CardContent className="space-y-5 p-5 sm:p-6">
               {error && (
                 <Alert variant="destructive" className="border-red-200 bg-red-50 text-red-700">
                   <AlertCircle className="h-4 w-4" />
@@ -471,7 +432,7 @@ export const ZenLogin: React.FC = () => {
                     </button>
                   </div>
 
-                  <Button className="h-11 w-full rounded-xl text-[14px]" onClick={handleLogin} disabled={isLoading}>
+                  <Button className="h-10 w-full rounded-xl text-[13px]" onClick={handleLogin} disabled={isLoading}>
                     {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
                     Sign in
                   </Button>
@@ -488,7 +449,7 @@ export const ZenLogin: React.FC = () => {
                           type="button"
                           variant={mfaMethod === method.type ? 'default' : 'outline'}
                           size="sm"
-                          className="rounded-full"
+                          className="h-8 rounded-full px-3 text-[12px]"
                           onClick={() => {
                             setMfaMethod(method.type);
                             setMfaCode('');
@@ -519,11 +480,7 @@ export const ZenLogin: React.FC = () => {
                     <MfaCodeInput value={mfaCode} onChange={setMfaCode} disabled={isLoading} />
                   )}
 
-                  <Button
-                    className="h-11 w-full rounded-xl text-[14px]"
-                    onClick={handleVerifyMfa}
-                    disabled={isLoading}
-                  >
+                  <Button className="h-10 w-full rounded-xl text-[13px]" onClick={handleVerifyMfa} disabled={isLoading}>
                     {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
                     Verify
                   </Button>
@@ -590,16 +547,12 @@ export const ZenLogin: React.FC = () => {
                     </div>
                   </div>
 
-                  <Button
-                    className="h-11 w-full rounded-xl text-[14px]"
-                    onClick={handleForgotPassword}
-                    disabled={isLoading}
-                  >
+                  <Button className="h-10 w-full rounded-xl text-[13px]" onClick={handleForgotPassword} disabled={isLoading}>
                     {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
                     Send reset link
                   </Button>
 
-                  <Button variant="ghost" className="w-full text-[13px]" onClick={() => setView('sign-in')}>
+                  <Button variant="ghost" className="h-9 w-full text-[12px]" onClick={() => setView('sign-in')}>
                     Back to sign in
                   </Button>
                 </div>
@@ -614,7 +567,7 @@ export const ZenLogin: React.FC = () => {
                     If an account exists for <span className="font-medium text-stone-900">{email}</span>, a reset
                     link is on its way.
                   </p>
-                  <Button variant="outline" className="w-full rounded-xl" onClick={() => setView('sign-in')}>
+                  <Button variant="outline" className="h-10 w-full rounded-xl text-[13px]" onClick={() => setView('sign-in')}>
                     Return to sign in
                   </Button>
                 </div>
@@ -641,15 +594,11 @@ export const ZenLogin: React.FC = () => {
                     autoComplete="new-password"
                     disabled={isLoading}
                   />
-                  <Button
-                    className="h-11 w-full rounded-xl text-[14px]"
-                    onClick={handleResetPassword}
-                    disabled={isLoading}
-                  >
+                  <Button className="h-10 w-full rounded-xl text-[13px]" onClick={handleResetPassword} disabled={isLoading}>
                     {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
                     Update password
                   </Button>
-                  <Button variant="ghost" className="w-full text-[13px]" onClick={() => setLocation('/concept2cure/login')}>
+                  <Button variant="ghost" className="h-9 w-full text-[12px]" onClick={() => setLocation('/concept2cure/login')}>
                     Back to sign in
                   </Button>
                 </div>
@@ -661,7 +610,7 @@ export const ZenLogin: React.FC = () => {
                     <CheckCircle2 className="h-6 w-6" />
                   </div>
                   <p className="text-[14px] leading-6 text-stone-600">{successMessage}</p>
-                  <Button className="w-full rounded-xl" onClick={() => setLocation('/concept2cure')}>
+                  <Button className="h-10 w-full rounded-xl text-[13px]" onClick={() => setLocation('/concept2cure')}>
                     Continue
                   </Button>
                 </div>
