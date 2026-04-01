@@ -2327,6 +2327,18 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       });
     }
 
+    // Guided sequence handoff: AnA can drive the same Project → IND/eCTD → Authoring → Verify → Submission flow.
+    if (
+      action.intent === 'guided_project' ||
+      action.intent === 'guided_ind_ectd' ||
+      action.intent === 'guided_authoring' ||
+      action.intent === 'guided_verify' ||
+      action.intent === 'guided_submission'
+    ) {
+      onNavigate?.(action.intent);
+      return;
+    }
+
     // Shared capability entrypoint: keep users in existing flow.
     if (action.intent === 'open_capabilities') {
       onNavigate?.('/concept2cure?panel=capabilities');

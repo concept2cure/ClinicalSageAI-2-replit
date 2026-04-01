@@ -130,6 +130,7 @@ type DocumentTab =
   | 'signatures'
   | 'provenance'
   | 'export';
+type GuidedSequenceStage = 'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission';
 
 // ── Dossier metrics types ────────────────────────────────────────────────────
 interface SectionMetrics {
@@ -362,7 +363,7 @@ const CTD_TEMPLATE_CONTENT: Record<string, string> = {
 <p>[Controlled clinical studies, uncontrolled clinical studies, analyses of data across studies]</p>`,
 };
 
-function buildTemplateContent(title: string, ctdSection: string, _templateKey: string): string {
+function buildTemplateContent(title: string, ctdSection: string, templateKey?: string): string {
   // Try exact match first, then prefix match (e.g., "2.5" matches "2.5.x")
   const sectionContent = CTD_TEMPLATE_CONTENT[ctdSection]
     || CTD_TEMPLATE_CONTENT[ctdSection.split('.').slice(0, 2).join('.')]
@@ -370,6 +371,41 @@ function buildTemplateContent(title: string, ctdSection: string, _templateKey: s
 
   if (sectionContent) {
     return `<h1>${title}</h1>\n${sectionContent}`;
+  }
+
+  // Template-key fallbacks for known high-value starters.
+  if (templateKey === 'cover-letter') {
+    return `<h1>${title}</h1>
+<h2>Addressee</h2>
+<p>[Agency / division / address]</p>
+<h2>Submission Purpose</h2>
+<p>[Purpose and submission context]</p>
+<h2>Contents Summary</h2>
+<p>[Summarize package contents and references]</p>
+<h2>Contact Information</h2>
+<p>[Sponsor contact details]</p>`;
+  }
+  if (templateKey === 'csr-synopsis') {
+    return `<h1>${title}</h1>
+<h2>Study Information</h2>
+<p>[Protocol number, phase, indication, sponsor]</p>
+<h2>Objectives</h2>
+<p>[Primary and secondary objectives]</p>
+<h2>Methodology</h2>
+<p>[Design, population, treatment, endpoints]</p>
+<h2>Results</h2>
+<p>[Efficacy and safety highlights]</p>
+<h2>Conclusions</h2>
+<p>[Key conclusions and next steps]</p>`;
+  }
+  if (templateKey === 'quality-overall-summary') {
+    return `<h1>${title}</h1>
+<h2>Drug Substance</h2>
+<p>[Manufacture, control strategy, key specifications]</p>
+<h2>Drug Product</h2>
+<p>[Composition, process, controls, container closure]</p>
+<h2>Stability</h2>
+<p>[Stability summary and shelf-life rationale]</p>`;
   }
 
   // Fallback: structured starter for unknown sections
@@ -400,6 +436,7 @@ interface ProjectWorkspaceShellProps {
   initialContent?: string;
   initialTitle?: string;
   initialCtdSection?: string;
+  initialTemplateId?: string;
   onInitialContentConsumed?: () => void;
   /** Open a specific existing artifact directly (no creation) */
   openArtifactId?: string;
@@ -417,6 +454,10 @@ interface ProjectWorkspaceShellProps {
   ) => void;
   /** Navigate to a different layout mode (e.g., submission-builder, template-library) */
   onNavigate?: (mode: string) => void;
+  /** Push a guided prompt into AnA */
+  onSuggestedPrompt?: (prompt: string) => void;
+  /** Allow parent (AnA/ZenApp) to trigger guided stage execution */
+  guidedStageCommand?: { stage: GuidedSequenceStage; ts: number } | null;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -433,11 +474,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   initialContent,
   initialTitle,
   initialCtdSection,
+  initialTemplateId,
   onInitialContentConsumed,
   openArtifactId,
   onOpenArtifactConsumed,
   onActiveDocumentChange,
   onNavigate,
+  onSuggestedPrompt,
+  guidedStageCommand,
 }) => {
   // ── Local state ──────────────────────────────────────────────────────────
   const [artifacts, setArtifacts] = useState<TreeArtifact[]>([]);
@@ -446,6 +490,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [selectedDocId, setSelectedDocId] = useState<string | undefined>();
   const [mode, setMode] = useState<'dashboard' | 'browse' | 'edit'>('dashboard');
   const [showContextBars, setShowContextBars] = useState(false);
+  const [guidedControlMode, setGuidedControlMode] = useState<'ana' | 'client'>('ana');
   const [projectNav, setProjectNav] = useState<ProjectNav>('submission_builder');
   const [documentTab, setDocumentTab] = useState<DocumentTab>('content');
   const [leftRailMode, setLeftRailMode] = useState<LeftRailMode>('files');
@@ -457,6 +502,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const { sections: submissionSections, readinessPercent } = useSubmissionSections(projectId, submissionType || projectType);
   const normalizedSubmissionType = String(submissionType || projectType || '').toUpperCase();
   const isINDWorkspace = ['IND', 'NDA', 'BLA', 'MAA'].includes(normalizedSubmissionType);
+  const resolvedSubmissionProgram =
+    normalizedSubmissionType.includes('IND')
+      ? 'ind'
+      : normalizedSubmissionType.includes('510') || normalizedSubmissionType.includes('PMA')
+        ? '510k'
+        : normalizedSubmissionType.includes('MAA') || normalizedSubmissionType.includes('BLA')
+          ? 'ectd'
+          : 'general_ri';
   const nextRecommendedSection = useMemo(() => {
     const flatten = (nodes: SectionNode[]): SectionNode[] =>
       nodes.flatMap(n => [n, ...(n.children ? flatten(n.children) : [])]);
@@ -954,6 +1007,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         content: '<p>Begin editing your document here...</p>',
         type: 'regulatory_document',
         category: 'document',
+        submissionProgram: resolvedSubmissionProgram,
+        originSurface: 'project_workspace_shell',
       });
       if (res.ok) {
         const payload = await res.json();
@@ -972,7 +1027,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     } finally {
       setCreatingNew(false);
     }
-  }, [projectId, newDocTitle, loadArtifacts, pushShellToast]);
+  }, [projectId, newDocTitle, loadArtifacts, pushShellToast, resolvedSubmissionProgram]);
 
   // ── Create from template ─────────────────────────────────────────────────
   const handleCreateFromTemplate = useCallback(
@@ -988,6 +1043,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           category: 'document',
           ctdSection,
           templateId: templateKey,
+          submissionProgram: resolvedSubmissionProgram,
+          originSurface: 'project_workspace_shell',
         });
         if (res.ok) {
           const payload = await res.json();
@@ -1006,7 +1063,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         setCreatingNew(false);
       }
     },
-    [projectId, loadArtifacts, pushShellToast]
+    [projectId, loadArtifacts, pushShellToast, resolvedSubmissionProgram]
   );
 
   // ── Create from dialog (blank or template) ─────────────────────────────
@@ -1021,6 +1078,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           type: 'regulatory_document',
           category: 'document',
           ...(ctdSection ? { ctdSection } : {}),
+          submissionProgram: resolvedSubmissionProgram,
+          originSurface: 'project_workspace_shell',
         });
         if (res.ok) {
           const payload = await res.json();
@@ -1039,7 +1098,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         setCreatingNew(false);
       }
     },
-    [projectId, loadArtifacts, pushShellToast]
+    [projectId, loadArtifacts, pushShellToast, resolvedSubmissionProgram]
   );
 
   const handleDialogCreateFromTemplate = useCallback(
@@ -1047,15 +1106,16 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       if (!projectId) return;
       setCreatingNew(true);
       try {
+        const templateContent = buildTemplateContent(title, ctdSection || '', templateId);
         const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
           title,
-          content: `<h1>${title}</h1><p>Generated from template <code>${templateId}</code>${
-            ctdSection ? ` for CTD section ${ctdSection}` : ''
-          }.</p>`,
+          content: templateContent,
           type: 'regulatory_document',
           category: 'document',
           ...(ctdSection ? { ctdSection } : {}),
           templateId,
+          submissionProgram: resolvedSubmissionProgram,
+          originSurface: 'project_workspace_shell',
         });
         if (res.ok) {
           const payload = await res.json();
@@ -1074,7 +1134,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         setCreatingNew(false);
       }
     },
-    [projectId, loadArtifacts, pushShellToast]
+    [projectId, loadArtifacts, pushShellToast, resolvedSubmissionProgram]
   );
 
   const handleCreateSectionDraftWithRI = useCallback(async () => {
@@ -1094,6 +1154,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         type: 'regulatory_document',
         category: 'document',
         ctdSection: selectedCtdSection,
+        submissionProgram: resolvedSubmissionProgram,
+        originSurface: 'project_workspace_shell',
         metadata: {
           draftingMode: 'ri',
           projectId,
@@ -1123,6 +1185,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     projectType,
     loadArtifacts,
     pushShellToast,
+    resolvedSubmissionProgram,
   ]);
 
   // ── Placement confirmation handler ───────────────────────────────────────
@@ -1547,6 +1610,166 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     if (mode === 'browse') return selectedDocId ? 2 : 1;
     return 1;
   }, [mode, selectedDocId]);
+  const approvedOrLockedCount = useMemo(
+    () =>
+      artifacts.filter(a => {
+        const status = String(a.status || '').toLowerCase();
+        return status === 'approved' || status === 'locked';
+      }).length,
+    [artifacts]
+  );
+  const submissionReady =
+    approvedOrLockedCount > 0 &&
+    readinessPercent >= 80 &&
+    approvedOrLockedCount >= Math.max(1, Math.ceil(artifacts.length * 0.4));
+
+  const guidedSequence = useMemo<
+    Array<{ id: GuidedSequenceStage; label: string; hint: string }>
+  >(
+    () => [
+      { id: 'project', label: 'Project', hint: 'Goal + plan context' },
+      {
+        id: 'ind_ectd',
+        label: isINDWorkspace ? 'IND/eCTD' : 'Dossier',
+        hint: 'Section map + package structure',
+      },
+      { id: 'authoring', label: 'Authoring', hint: 'Draft and refine governed docs' },
+      { id: 'verify', label: 'Verify', hint: 'Readiness and quality checks' },
+      { id: 'submission', label: 'Submission', hint: 'Assemble and publish package' },
+    ],
+    [isINDWorkspace]
+  );
+
+  const currentGuidedStage = useMemo<GuidedSequenceStage>(() => {
+    if (submissionReady || projectNav === 'publish') return 'submission';
+    if (
+      projectNav === 'verify' ||
+      projectNav === 'review' ||
+      phase4Panel === 'verification' ||
+      phase4Panel === 'pulse' ||
+      reviewInFlight > 0
+    ) {
+      return 'verify';
+    }
+    if (mode === 'edit' || selectedDocId) return 'authoring';
+    if (mode === 'dashboard' && !selectedCtdSection && !selectedDocId) return 'project';
+    if (
+      leftRailMode === 'dossier' ||
+      !!selectedCtdSection ||
+      isINDWorkspace ||
+      projectNav === 'submission_builder'
+    ) {
+      return 'ind_ectd';
+    }
+    return 'project';
+  }, [
+    isINDWorkspace,
+    leftRailMode,
+    mode,
+    phase4Panel,
+    projectNav,
+    reviewInFlight,
+    selectedCtdSection,
+    selectedDocId,
+    submissionReady,
+  ]);
+
+  const navigateGuidedStage = useCallback(
+    (stage: GuidedSequenceStage) => {
+      if (stage === 'project') {
+        setProjectNav('submission_builder');
+        setMode('dashboard');
+        setPhase4Panel('none');
+        return;
+      }
+      if (stage === 'ind_ectd') {
+        setProjectNav('submission_builder');
+        setActiveLayer('document_studio');
+        setLeftRailMode('dossier');
+        setMode('browse');
+        if (nextRecommendedSection?.code) setSelectedCtdSection(nextRecommendedSection.code);
+        return;
+      }
+      if (stage === 'authoring') {
+        setProjectNav('submission_builder');
+        setActiveLayer('document_studio');
+        setLeftRailMode('dossier');
+        if (selectedDocId) {
+          if (tryOpenForEdit(activeArtifactRef.current?.status)) {
+            setMode('edit');
+          } else {
+            setMode('browse');
+          }
+          return;
+        }
+        if (nextRecommendedSection?.code) setSelectedCtdSection(nextRecommendedSection.code);
+        setMode('browse');
+        return;
+      }
+      if (stage === 'verify') {
+        setProjectNav('verify');
+        setActiveLayer('reports');
+        setMode('browse');
+        setPhase4Panel('verification');
+        return;
+      }
+      setProjectNav('publish');
+      if (onNavigate) {
+        onNavigate('submissions');
+      } else {
+        setMode('dashboard');
+      }
+    },
+    [nextRecommendedSection?.code, onNavigate, selectedDocId, tryOpenForEdit]
+  );
+
+  const buildGuidedStagePrompt = useCallback(
+    (stage: GuidedSequenceStage) => {
+      const projectLabel = projectName || 'this project';
+      const nextSectionText = nextRecommendedSection?.code
+        ? `Next recommended section is ${nextRecommendedSection.code} ${nextRecommendedSection.title}.`
+        : 'Select the highest-priority missing section.';
+      if (stage === 'project') {
+        return `Guide ${projectLabel} through project setup and confirm the submission strategy, regulatory pathway, and governed document sequence.`;
+      }
+      if (stage === 'ind_ectd') {
+        return `Guide ${projectLabel} through IND/eCTD dossier planning. ${nextSectionText} Create the next concrete drafting plan.`;
+      }
+      if (stage === 'authoring') {
+        return `For ${projectLabel}, take the lead on authoring the next governed draft and provide executable steps I can run now. ${nextSectionText}`;
+      }
+      if (stage === 'verify') {
+        return `Run a verification pass for ${projectLabel}: readiness, blockers, contradictions, and promotion status. Provide the next required fixes in order.`;
+      }
+      return `Prepare ${projectLabel} for submission packaging and publishing. Confirm what is ready, what is missing, and execute the final assembly sequence.`;
+    },
+    [nextRecommendedSection?.code, nextRecommendedSection?.title, projectName]
+  );
+
+  const handleGuidedStageAction = useCallback(
+    (stage: GuidedSequenceStage) => {
+      if (guidedControlMode === 'ana') {
+        onSuggestedPrompt?.(buildGuidedStagePrompt(stage));
+        onNavigate?.('project-home');
+        return;
+      }
+      navigateGuidedStage(stage);
+    },
+    [buildGuidedStagePrompt, guidedControlMode, navigateGuidedStage, onNavigate, onSuggestedPrompt]
+  );
+
+  const handleGuidedContinue = useCallback(() => {
+    const currentIndex = guidedSequence.findIndex(step => step.id === currentGuidedStage);
+    if (currentIndex < 0 || currentIndex === guidedSequence.length - 1) return;
+    const nextStage = guidedSequence[Math.min(currentIndex + 1, guidedSequence.length - 1)]?.id;
+    if (!nextStage) return;
+    handleGuidedStageAction(nextStage);
+  }, [currentGuidedStage, guidedSequence, handleGuidedStageAction]);
+
+  useEffect(() => {
+    if (!guidedStageCommand?.stage) return;
+    handleGuidedStageAction(guidedStageCommand.stage);
+  }, [guidedStageCommand?.stage, guidedStageCommand?.ts, handleGuidedStageAction]);
 
   // Outline available only when doc is open
   const outlineAvailable = mode === 'edit' && !!selectedDocId;
@@ -1671,6 +1894,69 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 ? 'Browse then open a document'
                 : 'Start from project home'}
           </span>
+        </div>
+
+        <div className="flex items-center gap-1.5 px-4 h-9 border-b border-blue-100 bg-blue-50/40 shrink-0 overflow-x-auto">
+          <span className="text-[10px] uppercase tracking-wide text-blue-600 font-semibold whitespace-nowrap">
+            Guided sequence
+          </span>
+          {guidedSequence.map((step, idx) => {
+            const currentIndex = guidedSequence.findIndex(s => s.id === currentGuidedStage);
+            const isCurrent = step.id === currentGuidedStage;
+            const isDone = idx < currentIndex;
+            return (
+              <React.Fragment key={step.id}>
+                <button
+                  onClick={() => handleGuidedStageAction(step.id)}
+                  className={cn(
+                    'text-[11px] px-2 py-0.5 rounded-md border whitespace-nowrap transition-colors',
+                    isCurrent
+                      ? 'border-blue-300 bg-white text-blue-700 font-semibold'
+                      : isDone
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                        : 'border-blue-100 bg-white text-stone-600 hover:bg-blue-100'
+                  )}
+                  title={step.hint}
+                >
+                  {step.label}
+                </button>
+                {idx < guidedSequence.length - 1 && (
+                  <ChevronRight className="w-3 h-3 text-blue-300 shrink-0" />
+                )}
+              </React.Fragment>
+            );
+          })}
+          <div className="ml-auto flex items-center gap-1.5">
+            <span className="text-[10px] text-stone-500 uppercase tracking-wide">Control</span>
+            <button
+              onClick={() => setGuidedControlMode('ana')}
+              className={cn(
+                'text-[10px] px-2 py-0.5 rounded border',
+                guidedControlMode === 'ana'
+                  ? 'border-violet-300 bg-violet-50 text-violet-700'
+                  : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
+              )}
+            >
+              AnA-led
+            </button>
+            <button
+              onClick={() => setGuidedControlMode('client')}
+              className={cn(
+                'text-[10px] px-2 py-0.5 rounded border',
+                guidedControlMode === 'client'
+                  ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                  : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
+              )}
+            >
+              Client-led
+            </button>
+            <button
+              onClick={handleGuidedContinue}
+              className="text-[11px] px-2 py-0.5 rounded border border-blue-200 bg-white text-blue-700 hover:bg-blue-100"
+            >
+              Continue
+            </button>
+          </div>
         </div>
 
         {/* ── Collapsible context bars (AnA Shell, Context Band, CTD Flow) ──── */}
@@ -2933,6 +3219,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                         initialContent={initialContent}
                         initialTitle={initialTitle}
                         initialCtdSection={initialCtdSection}
+                        initialTemplateId={initialTemplateId}
                         onInitialContentConsumed={onInitialContentConsumed}
                         openArtifactId={openArtifactId}
                         onOpenArtifactConsumed={onOpenArtifactConsumed}
