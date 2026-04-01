@@ -104,8 +104,11 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
     updateCollaborators,
     isUpdating: isUpdatingCollaborators,
   } = useProjectCollaborators(project?.id ?? null);
-  const { teamMembers, isLoading: isLoadingTeamMembers, error: teamMembersError } =
-    useProjectTeamMembers(project?.id ?? null);
+  const {
+    data: teamMembers = [],
+    isLoading: isLoadingTeamMembers,
+    error: teamMembersError,
+  } = useProjectTeamMembers(project?.id ?? null);
 
   const effectiveCollaborators = localCollaborators ?? collaborators;
   const assignedIds = useMemo(

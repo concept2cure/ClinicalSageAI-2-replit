@@ -144,6 +144,7 @@ import {
   FileStack,
   Users,
   Loader2,
+  Search,
 } from 'lucide-react';
 import { LoadingState } from '@/components/ui/statesV2';
 import { Button } from '@/components/ui/button';
