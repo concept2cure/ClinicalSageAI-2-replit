@@ -76,4 +76,10 @@ describe('Communication Center backend scaffold', () => {
     expect(routeSrc).not.toContain('These schema tables are not yet defined');
     expect(routeSrc).not.toContain('const submissionProjects: any = null;');
   });
+
+  it('bootstraps unified regulatory submissions feature toggle on startup', () => {
+    const serverSrc = read('server/index.ts');
+    expect(serverSrc).toContain('FeatureToggleService.initializeFeatureToggle');
+    expect(serverSrc).toContain("'UNIFIED_REGULATORY_SUBMISSIONS'");
+  });
 });
