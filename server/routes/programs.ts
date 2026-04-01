@@ -10,6 +10,9 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
+import { and, asc, desc, eq, ilike, sql } from 'drizzle-orm';
+import { db } from '../db';
+import { cerProjects } from '@shared/schema';
 
 const router = Router();
 
@@ -154,43 +157,54 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
       return res.status(401).json({ error: 'Tenant context required' });
     }
 
-    // Mock response - replace with actual DB query
-    const programs = [
-      {
-        id: '550e8400-e29b-41d4-a716-446655440001',
-        name: 'Cardiac Monitor CER 2026',
-        code: 'CER-2026-001',
-        programType: 'CER',
-        productType: 'device',
-        deviceClass: 'II',
-        primaryAgency: 'FDA',
-        productName: 'CardioWatch X1',
-        status: 'active',
-        phase: 'evidence_collection',
-        priority: 'high',
-        progressPercent: 45,
-        targetSubmissionDate: '2026-06-30T00:00:00Z',
-        createdAt: '2026-01-15T10:00:00Z',
-        updatedAt: '2026-01-25T14:30:00Z',
-      },
-      {
-        id: '550e8400-e29b-41d4-a716-446655440002',
-        name: 'Glucose Monitor 510(k)',
-        code: '510K-2026-001',
-        programType: '510K',
-        productType: 'device',
-        deviceClass: 'II',
-        primaryAgency: 'FDA',
-        productName: 'GlucoSense Pro',
-        status: 'draft',
-        phase: 'planning',
-        priority: 'medium',
-        progressPercent: 10,
-        targetSubmissionDate: '2026-09-15T00:00:00Z',
-        createdAt: '2026-01-20T09:00:00Z',
-        updatedAt: '2026-01-24T11:00:00Z',
-      },
-    ];
+    const whereClauses = [eq(cerProjects.organizationId, Number(tenantId))];
+    if (status) whereClauses.push(eq(cerProjects.status, status));
+    if (programType) whereClauses.push(eq(cerProjects.regulatoryContext, programType));
+    if (productType) whereClauses.push(eq(cerProjects.deviceType, productType));
+    if (agency) whereClauses.push(eq(cerProjects.regulatoryContext, agency));
+    if (search) whereClauses.push(ilike(cerProjects.name, `%${search}%`));
+
+    const sortColumn =
+      sortBy === 'updatedAt'
+        ? cerProjects.updatedAt
+        : sortBy === 'name'
+          ? cerProjects.name
+          : sortBy === 'targetSubmissionDate'
+            ? cerProjects.dueDate
+            : cerProjects.createdAt;
+    const orderByExpr = sortOrder === 'asc' ? asc(sortColumn) : desc(sortColumn);
+    const offset = (page - 1) * limit;
+
+    const rows = await db
+      .select()
+      .from(cerProjects)
+      .where(and(...whereClauses))
+      .orderBy(orderByExpr)
+      .limit(limit)
+      .offset(offset);
+
+    const [{ total }] = await db
+      .select({ total: sql<number>`count(*)` })
+      .from(cerProjects)
+      .where(and(...whereClauses));
+
+    const programs = rows.map(row => ({
+      id: String(row.id),
+      name: row.name,
+      code: row.version || `PRG-${row.id}`,
+      programType: row.regulatoryContext || 'CER',
+      productType: row.deviceType || 'device',
+      deviceClass: row.deviceClass,
+      primaryAgency: row.regulatoryContext || 'FDA',
+      productName: row.deviceName,
+      status: row.status,
+      phase: row.metadata?.phase || 'planning',
+      priority: row.metadata?.priority || 'medium',
+      progressPercent: row.metadata?.progressPercent || 0,
+      targetSubmissionDate: row.dueDate,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }));
 
     res.json({
       success: true,
@@ -198,8 +212,8 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
       meta: {
         page,
         limit,
-        total: programs.length,
-        totalPages: Math.ceil(programs.length / limit),
+        total: Number(total),
+        totalPages: Math.max(1, Math.ceil(Number(total) / limit)),
       },
     });
   } catch (error) {
@@ -214,70 +228,60 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
  * GET /api/programs/:id
  * Get a single program by ID
  */
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id(\\d+)', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
     const tenantId = (req as any).tenantContext?.tenantId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
 
-    // Mock response - replace with actual DB query
+    const [row] = await db
+      .select()
+      .from(cerProjects)
+      .where(and(eq(cerProjects.id, id), eq(cerProjects.organizationId, Number(tenantId))))
+      .limit(1);
+    if (!row) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Program not found' },
+      });
+    }
+
     const program = {
-      id,
-      name: 'Cardiac Monitor CER 2026',
-      code: 'CER-2026-001',
-      description: 'Clinical Evaluation Report for CardioWatch X1 cardiac monitoring device',
-      programType: 'CER',
-      productType: 'device',
-      deviceClass: 'II',
-      regulatoryPath: '510k',
-      primaryAgency: 'FDA',
-      targetAgencies: ['FDA', 'EMA'],
-      productName: 'CardioWatch X1',
-      productCode: 'DQA',
-      indication: 'Continuous cardiac rhythm monitoring',
-      intendedUse: 'For continuous monitoring and recording of cardiac rhythm in adult patients',
-      predicateDevices: [
-        { id: '1', name: 'HeartMonitor Pro', kNumber: 'K201234', manufacturer: 'MedTech Inc' },
-      ],
+      id: String(row.id),
+      name: row.name,
+      code: row.version || `PRG-${row.id}`,
+      description: row.description,
+      programType: row.regulatoryContext || 'CER',
+      productType: row.deviceType || 'device',
+      deviceClass: row.deviceClass,
+      regulatoryPath: row.regulatoryContext,
+      primaryAgency: row.regulatoryContext || 'FDA',
+      targetAgencies: [],
+      productName: row.deviceName,
+      productCode: null,
+      indication: null,
+      intendedUse: null,
+      predicateDevices: [],
       equivalentDevices: [],
-      status: 'active',
-      phase: 'evidence_collection',
-      priority: 'high',
-      targetSubmissionDate: '2026-06-30T00:00:00Z',
-      actualSubmissionDate: null,
-      approvalDate: null,
-      progressPercent: 45,
-      completedMilestones: 3,
-      totalMilestones: 8,
-      leadUserId: 101,
-      teamMembers: [
-        {
-          userId: 101,
-          name: 'Dr. Sarah Chen',
-          email: 'sarah.chen@example.com',
-          role: 'lead',
-          permissions: ['*'],
-        },
-        {
-          userId: 102,
-          name: 'John Smith',
-          email: 'john.smith@example.com',
-          role: 'author',
-          permissions: ['read', 'write'],
-        },
-      ],
-      settings: {
-        autoAssignReviewers: true,
-        requireDualApproval: true,
-        notifyOnMilestone: true,
-      },
-      tags: ['cardiac', 'class-ii', 'priority'],
-      createdBy: 'admin',
-      updatedBy: 'sarah.chen@example.com',
-      createdAt: '2026-01-15T10:00:00Z',
-      updatedAt: '2026-01-25T14:30:00Z',
+      status: row.status,
+      phase: row.metadata?.phase || 'planning',
+      priority: row.metadata?.priority || 'medium',
+      targetSubmissionDate: row.dueDate,
+      actualSubmissionDate: row.completionDate,
+      approvalDate: row.reviewDate,
+      progressPercent: row.metadata?.progressPercent || 0,
+      completedMilestones: row.metadata?.completedMilestones || 0,
+      totalMilestones: row.metadata?.totalMilestones || 0,
+      leadUserId: row.createdById,
+      teamMembers: [],
+      settings: row.settings ?? {},
+      tags: row.metadata?.tags ?? [],
+      createdBy: row.createdById,
+      updatedBy: row.assignedToId,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
     };
 
     res.json({ success: true, data: program });
@@ -302,27 +306,33 @@ router.post('/', validateBody(createProgramSchema), async (req: Request, res: Re
     }
     const userId = (req as any).user?.id || 'system';
 
-    // Generate program code if not provided
-    const code =
-      data.code ||
-      `${data.programType}-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
-
-    // Mock response - replace with actual DB insert
-    const program = {
-      id: crypto.randomUUID(),
-      ...data,
-      code,
-      organizationId: tenantId,
-      status: 'draft',
-      phase: 'planning',
-      progressPercent: 0,
-      completedMilestones: 0,
-      totalMilestones: 0,
-      createdBy: userId,
-      updatedBy: userId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    const [program] = await db
+      .insert(cerProjects)
+      .values({
+        organizationId: Number(tenantId),
+        name: data.name,
+        deviceName: data.productName,
+        deviceManufacturer: 'Unknown',
+        deviceType: data.productType,
+        deviceClass: data.deviceClass,
+        regulatoryContext: data.programType,
+        description: data.description,
+        status: 'draft',
+        version: data.code || '1.0.0',
+        dueDate: data.targetSubmissionDate ? new Date(data.targetSubmissionDate) : null,
+        createdById: Number(userId) || null,
+        assignedToId: Number(userId) || null,
+        settings: {},
+        metadata: {
+          phase: 'planning',
+          progressPercent: 0,
+          completedMilestones: 0,
+          totalMilestones: 0,
+          priority: data.priority || 'medium',
+          tags: data.tags || [],
+        },
+      })
+      .returning();
 
     res.status(201).json({ success: true, data: program });
   } catch (error) {
@@ -337,19 +347,39 @@ router.post('/', validateBody(createProgramSchema), async (req: Request, res: Re
  * PATCH /api/programs/:id
  * Update a program
  */
-router.patch('/:id', validateBody(updateProgramSchema), async (req: Request, res: Response) => {
+router.patch('/:id(\\d+)', validateBody(updateProgramSchema), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
     const updates = req.body;
-    const userId = (req as any).user?.id || 'system';
+    const tenantId = (req as any).tenantContext?.tenantId;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context required' });
+    }
+    const [existing] = await db
+      .select()
+      .from(cerProjects)
+      .where(and(eq(cerProjects.id, id), eq(cerProjects.organizationId, Number(tenantId))))
+      .limit(1);
+    if (!existing) {
+      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Program not found' } });
+    }
 
-    // Mock response - replace with actual DB update
-    const program = {
-      id,
-      ...updates,
-      updatedBy: userId,
-      updatedAt: new Date().toISOString(),
-    };
+    const [program] = await db
+      .update(cerProjects)
+      .set({
+        ...(updates.name ? { name: updates.name } : {}),
+        ...(updates.description ? { description: updates.description } : {}),
+        ...(updates.productName ? { deviceName: updates.productName } : {}),
+        ...(updates.productType ? { deviceType: updates.productType } : {}),
+        ...(updates.deviceClass ? { deviceClass: updates.deviceClass } : {}),
+        ...(updates.programType ? { regulatoryContext: updates.programType } : {}),
+        ...(updates.targetSubmissionDate
+          ? { dueDate: new Date(updates.targetSubmissionDate) }
+          : {}),
+        updatedAt: new Date(),
+      })
+      .where(and(eq(cerProjects.id, id), eq(cerProjects.organizationId, Number(tenantId))))
+      .returning();
 
     res.json({ success: true, data: program });
   } catch (error) {
@@ -364,11 +394,17 @@ router.patch('/:id', validateBody(updateProgramSchema), async (req: Request, res
  * DELETE /api/programs/:id
  * Delete (archive) a program
  */
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id(\\d+)', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-
-    // Soft delete - set status to archived
+    const id = Number(req.params.id);
+    const tenantId = (req as any).tenantContext?.tenantId;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context required' });
+    }
+    await db
+      .update(cerProjects)
+      .set({ status: 'archived', updatedAt: new Date() })
+      .where(and(eq(cerProjects.id, id), eq(cerProjects.organizationId, Number(tenantId))));
     res.json({ success: true, message: 'Program archived successfully' });
   } catch (error) {
     res.status(500).json({
@@ -474,7 +510,6 @@ router.post('/:id/milestones', async (req: Request, res: Response) => {
 router.get('/:id/activity', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { limit = 50 } = req.query;
 
     // Mock response
     const activities = [
@@ -540,42 +575,79 @@ router.get('/stats/overview', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Tenant context required' });
     }
 
-    // Mock response
+    const [totals] = await db
+      .select({
+        totalPrograms: sql<number>`count(*)`,
+        activePrograms: sql<number>`count(*) filter (where ${cerProjects.status} = 'active')`,
+        submittedPrograms: sql<number>`count(*) filter (where ${cerProjects.status} = 'submitted')`,
+        approvedPrograms: sql<number>`count(*) filter (where ${cerProjects.status} = 'approved')`,
+      })
+      .from(cerProjects)
+      .where(eq(cerProjects.organizationId, Number(tenantId)));
+
+    const byTypeRows = await db
+      .select({
+        value: cerProjects.regulatoryContext,
+        count: sql<number>`count(*)`,
+      })
+      .from(cerProjects)
+      .where(eq(cerProjects.organizationId, Number(tenantId)))
+      .groupBy(cerProjects.regulatoryContext);
+
+    const byStatusRows = await db
+      .select({
+        value: cerProjects.status,
+        count: sql<number>`count(*)`,
+      })
+      .from(cerProjects)
+      .where(eq(cerProjects.organizationId, Number(tenantId)))
+      .groupBy(cerProjects.status);
+
+    const upcoming = await db
+      .select({
+        id: cerProjects.id,
+        name: cerProjects.name,
+        deadline: cerProjects.dueDate,
+      })
+      .from(cerProjects)
+      .where(
+        and(
+          eq(cerProjects.organizationId, Number(tenantId)),
+          sql`${cerProjects.dueDate} IS NOT NULL`,
+          sql`${cerProjects.dueDate} >= now()`
+        )
+      )
+      .orderBy(asc(cerProjects.dueDate))
+      .limit(5);
+
+    const byType = Object.fromEntries(
+      byTypeRows.map(row => [row.value || 'unknown', Number(row.count)])
+    );
+    const byStatus = Object.fromEntries(byStatusRows.map(row => [row.value, Number(row.count)]));
+
+    const upcomingDeadlines = upcoming.map(item => {
+      const daysRemaining = item.deadline
+        ? Math.max(
+            0,
+            Math.ceil((item.deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+          )
+        : null;
+      return {
+        programId: String(item.id),
+        programName: item.name,
+        deadline: item.deadline,
+        daysRemaining,
+      };
+    });
+
     const stats = {
-      totalPrograms: 12,
-      activePrograms: 5,
-      submittedPrograms: 3,
-      approvedPrograms: 4,
-      byType: {
-        CER: 4,
-        '510K': 5,
-        IND: 2,
-        PMA: 1,
-      },
-      byStatus: {
-        draft: 2,
-        active: 5,
-        in_review: 1,
-        submitted: 3,
-        approved: 4,
-      },
-      upcomingDeadlines: [
-        {
-          programId: '1',
-          programName: 'Cardiac Monitor CER',
-          deadline: '2026-06-30',
-          daysRemaining: 155,
-        },
-        {
-          programId: '2',
-          programName: 'Glucose Monitor 510(k)',
-          deadline: '2026-09-15',
-          daysRemaining: 232,
-        },
-      ],
-      recentActivity: 24,
-      evidenceCount: 156,
-      pendingReviews: 8,
+      totalPrograms: Number(totals?.totalPrograms ?? 0),
+      activePrograms: Number(totals?.activePrograms ?? 0),
+      submittedPrograms: Number(totals?.submittedPrograms ?? 0),
+      approvedPrograms: Number(totals?.approvedPrograms ?? 0),
+      byType,
+      byStatus,
+      upcomingDeadlines,
     };
 
     res.json({ success: true, data: stats });
