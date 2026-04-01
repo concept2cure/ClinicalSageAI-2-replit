@@ -1,5 +1,5 @@
 import { config as dotenvConfig } from 'dotenv';
-dotenvConfig({ override: true });
+dotenvConfig({ override: false });
 import { initializeOpenTelemetry } from './services/telemetry/opentelemetry';
 
 // Initialize Sentry error monitoring early, before other imports
@@ -406,11 +406,17 @@ async function verifyDatabaseConnection() {
       console.error('❌ CRITICAL: Missing tables:', result.missingCritical.join(', '));
       console.error('   Run: npm run db:push to sync schema');
     } else if (result.missingExtensions.length > 0) {
-      console.error('❌ CRITICAL: Missing required database extensions:', result.missingExtensions.join(', '));
+      console.error(
+        '❌ CRITICAL: Missing required database extensions:',
+        result.missingExtensions.join(', ')
+      );
     } else if (result.errors.length > 0) {
       console.error('⚠️ Table verification errors:', result.errors);
     } else if (result.missingSchemas.length > 0) {
-      console.warn('⚠️ Database schemas required initialization:', result.missingSchemas.join(', '));
+      console.warn(
+        '⚠️ Database schemas required initialization:',
+        result.missingSchemas.join(', ')
+      );
     } else if (result.warnings.length > 0) {
       console.warn('⚠️ Database readiness warnings:', result.warnings);
     }
@@ -6451,14 +6457,17 @@ async function startServer() {
   }
 
   // Seed AnA Capability Registry (fire-and-forget — don't block startup)
-  import('../services/ana-capability-registry.js')
-    .then(({ seedCapabilityRegistry }) => seedCapabilityRegistry())
-    .then(({ seeded, total }) => {
-      console.log(`✅ AnA Capability Registry seeded (${seeded} new, ${total} total)`);
-    })
-    .catch((err: any) => {
-      console.warn('⚠️ AnA Capability Registry seeding failed (non-blocking):', err?.message);
-    });
+  // Delay slightly to ensure DB pool is ready
+  setTimeout(() => {
+    import('./services/ana-capability-registry.js')
+      .then(({ seedCapabilityRegistry }) => seedCapabilityRegistry())
+      .then(({ seeded, total }) => {
+        console.log(`✅ AnA Capability Registry seeded (${seeded} new, ${total} total)`);
+      })
+      .catch((err: any) => {
+        console.warn('⚠️ AnA Capability Registry seeding failed (non-blocking):', err?.message);
+      });
+  }, 3000);
 
   // Start Python backend first
   debugLog('Initializing Python backend...');

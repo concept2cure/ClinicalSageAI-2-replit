@@ -1082,6 +1082,10 @@ function getClientWorkspaceId(req: Request): number {
         : parseInt(String(ctx.clientWorkspaceId), 10);
     if (!isNaN(id)) return id;
   }
+  // Dev fallback: return default workspace 1 so routes work without full tenant setup
+  if (process.env.NODE_ENV !== 'production') {
+    return 1;
+  }
   throw new Error('Client workspace context required');
 }
 
