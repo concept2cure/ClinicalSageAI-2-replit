@@ -87,7 +87,5 @@
 
 ## 9) Residual enforcement gaps
 
-- Service-layer artifact writers still need convergence to the canonical governed authority:
-  - `server/services/ana-guidance-executor.ts`
-  - `server/services/contradiction-consequence-service.ts`
-- `authoring-actions` routes now run governed resolution before status mutations, but error envelopes are not yet fully normalized to the concept2cure `sendError(..., 'GOVERNED_CONTRACT_INVALID')` shape for every failure path.
+- Primary residual gap remains upstream orchestration hygiene (`server/services/aiProviderRouter.ts`) where not all callers are yet hard-guaranteed to emit governed artifact consequences.
+- Upload convergence and authoring-actions governed-validation response envelopes are now fail-closed with explicit `GOVERNED_CONTRACT_INVALID` handling.

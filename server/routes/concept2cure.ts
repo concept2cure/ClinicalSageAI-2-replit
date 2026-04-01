@@ -2680,6 +2680,140 @@ router.post(
         status: 'processed',
       };
 
+      // ── CONVERGENCE: create governed source artifact before mutating project knowledge ──
+      const userId = getUserId(req);
+      const artifactId = `artifact_upload_${Date.now()}_${crypto.randomBytes(5).toString('hex')}`;
+      const contentForArtifact =
+        extractedText && extractedText.length > 10
+          ? extractedText
+          : `[Uploaded file: ${safeOriginalName}] (${file.mimetype}, ${file.size} bytes)`;
+      const contentHash = calculateContentHash(contentForArtifact);
+      const uploadGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: numericId,
+        artifactId: null,
+        documentType: 'source_document',
+        generationMode: 'imported',
+        lifecycleStatus: 'draft',
+        originSurface: 'import_pipeline',
+        clientTrack:
+          req.body?.clientTrack === 'device'
+            ? 'device'
+            : req.body?.clientTrack === 'diagnostics'
+              ? 'diagnostics'
+              : 'biotech',
+        submissionProgram: 'general_ri',
+        persona: 'regulatory',
+        regulatorScope: 'fda',
+        evidenceMode: 'mixed',
+        documentClass: 'evidence_memo',
+        readinessGate: 'exploratory',
+        approvalPathType: 'single_reviewer',
+        recommendationSource: 'report_engine',
+        workspaceTarget: 'project',
+        regulatorIntent: 'evidence_analysis',
+        placementContainerId: String(numericId),
+        title: safeOriginalName,
+        content: contentForArtifact,
+        sourceRefs: [`upload:${documentId}`],
+        provider: 'upload_pipeline',
+        model: 'import_handler',
+        exportAllowed: false,
+        eventType: 'artifact.created',
+      });
+      if (!uploadGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: uploadGovernedResolution.validation.errors,
+            warnings: uploadGovernedResolution.validation.warnings,
+            resolved: uploadGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+
+      const [newArtifact] = await db
+        .insert(concept2cureArtifacts)
+        .values({
+          organizationId,
+          projectId: numericId,
+          artifactId,
+          type: 'source_document',
+          category: 'source',
+          title: safeOriginalName,
+          content: contentForArtifact,
+          contentHash,
+          version: 1,
+          metadata: {
+            originalName: safeOriginalName,
+            mimeType: file.mimetype,
+            fileSize: file.size,
+            extension,
+            tokenCount,
+            uploadSource: 'knowledge_upload',
+            knowledgeDocumentId: documentId,
+            harness: {
+              clientTrack: uploadGovernedResolution.contract.clientTrack,
+              submissionProgram: uploadGovernedResolution.contract.submissionProgram,
+              persona: uploadGovernedResolution.contract.persona,
+              regulatorScope: uploadGovernedResolution.contract.regulatorScope,
+              documentClass: uploadGovernedResolution.contract.documentClass,
+              readinessGate: uploadGovernedResolution.contract.readinessGate,
+              workspaceTarget: uploadGovernedResolution.contract.workspaceTarget,
+              originSurface: uploadGovernedResolution.contract.originSurface,
+              recommendationSource: uploadGovernedResolution.contract.recommendationSource,
+              regulatorIntent: uploadGovernedResolution.contract.regulatorIntent,
+              gateChecks: uploadGovernedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: uploadGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: uploadGovernedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
+          createdById: userId,
+        })
+        .returning();
+
+      // Version entry
+      await db.insert(concept2cureArtifactVersions).values({
+        organizationId,
+        artifactId: newArtifact.id,
+        version: 1,
+        content: contentForArtifact,
+        contentHash,
+        createdById: userId,
+      });
+
+      const artifactRecord: { id: number; artifactId: string } = { id: newArtifact.id, artifactId };
+
+      // ── AUTO-EMBED: Insert into lumen_data_atoms + generate embedding ──
+      try {
+        const atomResult = await pool.query(
+          `INSERT INTO lumen_data_atoms
+             (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)
+           VALUES ($1, 'data_room_upload', $2, 'source_document', $3, $4, $5, 0.9, 'active')
+           ON CONFLICT DO NOTHING
+           RETURNING id`,
+          [
+            organizationId,
+            artifactId,
+            safeOriginalName,
+            contentForArtifact.substring(0, 16000),
+            `{source,upload,${extension}}`,
+          ]
+        );
+        if (atomResult.rows.length > 0) {
+          const atomId = atomResult.rows[0].id;
+          const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
+          const embeddingService = getEmbeddingService(pool);
+          await embeddingService.embedAtom(atomId);
+          logger.info('Source document auto-embedded for retrieval', { artifactId, atomId });
+        }
+      } catch (embedErr: any) {
+        logger.warn('Auto-embedding failed (non-fatal)', { error: embedErr.message });
+      }
+
       const settings = normalizeProjectSettings(project.settings);
       const knowledge = normalizeKnowledge(settings);
       const updatedKnowledge: ProjectKnowledge = {
@@ -2702,132 +2836,6 @@ router.post(
         .returning();
 
       await logAuditEntry(req, 'UPDATE', 'project', projectIdRaw, project, updated);
-
-      // ── CONVERGENCE: Also create a concept2cureArtifact for unified Data Room ──
-      let artifactRecord: { id: number; artifactId: string } | null = null;
-      try {
-        const userId = getUserId(req);
-        const artifactId = `artifact_upload_${Date.now()}_${crypto.randomBytes(5).toString('hex')}`;
-        const contentForArtifact =
-          extractedText && extractedText.length > 10
-            ? extractedText
-            : `[Uploaded file: ${safeOriginalName}] (${file.mimetype}, ${file.size} bytes)`;
-        const contentHash = calculateContentHash(contentForArtifact);
-        const uploadGovernedResolution = resolveGovernedContext({
-          req,
-          projectId: numericId,
-          artifactId: null,
-          documentType: 'source_document',
-          generationMode: 'imported',
-          lifecycleStatus: 'draft',
-          originSurface: 'import_pipeline',
-          clientTrack: req.body?.clientTrack === 'device' ? 'device' : req.body?.clientTrack === 'diagnostics' ? 'diagnostics' : 'biotech',
-          submissionProgram: 'general_ri',
-          persona: 'regulatory',
-          regulatorScope: 'fda',
-          evidenceMode: 'mixed',
-          documentClass: 'evidence_memo',
-          readinessGate: 'exploratory',
-          approvalPathType: 'single_reviewer',
-          recommendationSource: 'report_engine',
-          workspaceTarget: 'project',
-          regulatorIntent: 'evidence_analysis',
-          placementContainerId: String(numericId),
-          title: safeOriginalName,
-          content: contentForArtifact,
-          sourceRefs: [`upload:${documentId}`],
-          provider: 'upload_pipeline',
-          model: 'import_handler',
-          exportAllowed: false,
-          eventType: 'artifact.created',
-        });
-        if (!uploadGovernedResolution.validation.valid) {
-          throw new Error(
-            `governed upload artifact blocked: ${uploadGovernedResolution.validation.errors.join('; ')}`
-          );
-        }
-
-        const [newArtifact] = await db
-          .insert(concept2cureArtifacts)
-          .values({
-            organizationId,
-            projectId: numericId,
-            artifactId,
-            type: 'source_document',
-            category: 'source',
-            title: safeOriginalName,
-            content: contentForArtifact,
-            contentHash,
-            version: 1,
-            metadata: {
-              originalName: safeOriginalName,
-              mimeType: file.mimetype,
-              fileSize: file.size,
-              extension,
-              tokenCount,
-              uploadSource: 'knowledge_upload',
-              knowledgeDocumentId: documentId,
-              harness: {
-                clientTrack: uploadGovernedResolution.contract.clientTrack,
-                submissionProgram: uploadGovernedResolution.contract.submissionProgram,
-                persona: uploadGovernedResolution.contract.persona,
-                regulatorScope: uploadGovernedResolution.contract.regulatorScope,
-                documentClass: uploadGovernedResolution.contract.documentClass,
-                readinessGate: uploadGovernedResolution.contract.readinessGate,
-                workspaceTarget: uploadGovernedResolution.contract.workspaceTarget,
-                originSurface: uploadGovernedResolution.contract.originSurface,
-                recommendationSource: uploadGovernedResolution.contract.recommendationSource,
-                regulatorIntent: uploadGovernedResolution.contract.regulatorIntent,
-                gateChecks: uploadGovernedResolution.contract.exportEligibility.gateChecks,
-                blockingReasons: uploadGovernedResolution.contract.exportEligibility.blockingReasons,
-                readinessOutcome: uploadGovernedResolution.contract.exportEligibility.readinessOutcome,
-              },
-            },
-            createdById: userId,
-          })
-          .returning();
-
-        // Version entry
-        await db.insert(concept2cureArtifactVersions).values({
-          organizationId,
-          artifactId: newArtifact.id,
-          version: 1,
-          content: contentForArtifact,
-          contentHash,
-          createdById: userId,
-        });
-
-        artifactRecord = { id: newArtifact.id, artifactId };
-
-        // ── AUTO-EMBED: Insert into lumen_data_atoms + generate embedding ──
-        try {
-          const atomResult = await pool.query(
-            `INSERT INTO lumen_data_atoms
-               (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)
-             VALUES ($1, 'data_room_upload', $2, 'source_document', $3, $4, $5, 0.9, 'active')
-             ON CONFLICT DO NOTHING
-             RETURNING id`,
-            [
-              organizationId,
-              artifactId,
-              safeOriginalName,
-              contentForArtifact.substring(0, 16000),
-              `{source,upload,${extension}}`,
-            ]
-          );
-          if (atomResult.rows.length > 0) {
-            const atomId = atomResult.rows[0].id;
-            const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
-            const embeddingService = getEmbeddingService(pool);
-            await embeddingService.embedAtom(atomId);
-            logger.info('Source document auto-embedded for retrieval', { artifactId, atomId });
-          }
-        } catch (embedErr: any) {
-          logger.warn('Auto-embedding failed (non-fatal)', { error: embedErr.message });
-        }
-      } catch (artifactErr: any) {
-        logger.warn('Artifact convergence failed (non-fatal)', { error: artifactErr.message });
-      }
 
       res.status(201);
       return sendSuccess(res, {

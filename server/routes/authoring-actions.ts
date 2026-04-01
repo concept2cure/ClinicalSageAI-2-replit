@@ -15,6 +15,51 @@ import {
 
 const router = Router();
 
+type GovernedResolutionLike = {
+  validation: {
+    errors: string[];
+    warnings: string[];
+  };
+  resolved: unknown;
+};
+
+type GovernedContractInvalidError = Error & {
+  governed?: GovernedResolutionLike;
+};
+
+const createGovernedContractInvalidError = (
+  governed: GovernedResolutionLike
+): GovernedContractInvalidError => {
+  const error = new Error(
+    `governed contract invalid: ${governed.validation.errors.join('; ')}`
+  ) as GovernedContractInvalidError;
+  error.name = 'GovernedContractInvalidError';
+  error.governed = governed;
+  return error;
+};
+
+const isGovernedContractInvalidError = (
+  error: unknown
+): error is GovernedContractInvalidError =>
+  error instanceof Error && error.name === 'GovernedContractInvalidError';
+
+const sendGovernedContractInvalid = (
+  res: Response,
+  governed: GovernedResolutionLike
+) =>
+  res.status(400).json({
+    success: false,
+    error: {
+      message: 'Governed document contract validation failed',
+      code: 'GOVERNED_CONTRACT_INVALID',
+      details: {
+        errors: governed.validation.errors,
+        warnings: governed.validation.warnings,
+        resolved: governed.resolved,
+      },
+    },
+  });
+
 // ─── Wave 1 Action 1: Resume Last Section ────────────────────────────────────
 
 router.get('/resume-last-section/:projectId', async (req: Request, res: Response) => {
@@ -372,7 +417,7 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
           eventType: 'artifact.reviewed',
         });
         if (!governed.validation.valid) {
-          throw new Error(`governed contract invalid: ${governed.validation.errors.join('; ')}`);
+          throw createGovernedContractInvalidError(governed);
         }
         // Update status
         const { concept2cureArtifacts } = await import('../../shared/schema/index.js');
@@ -473,6 +518,9 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
         boundaryTransitionId: boundaryTransition?.id || null,
       });
     } catch (promoteErr: any) {
+      if (isGovernedContractInvalidError(promoteErr) && promoteErr.governed) {
+        return sendGovernedContractInvalid(res, promoteErr.governed);
+      }
       return res.json({
         promoted: false,
         reason: 'error',
@@ -601,7 +649,7 @@ router.post('/approve-artifact', async (req: Request, res: Response) => {
         eventType: 'artifact.updated',
       });
       if (!governed.validation.valid) {
-        throw new Error(`governed contract invalid: ${governed.validation.errors.join('; ')}`);
+        throw createGovernedContractInvalidError(governed);
       }
 
       await db
@@ -663,6 +711,9 @@ router.post('/approve-artifact', async (req: Request, res: Response) => {
         boundaryTransitionId: boundaryTransition?.id || null,
       });
     } catch (err: any) {
+      if (isGovernedContractInvalidError(err) && err.governed) {
+        return sendGovernedContractInvalid(res, err.governed);
+      }
       return res.status(500).json({ approved: false, reason: 'error', message: err?.message || 'Failed to approve' });
     }
   } catch (err: any) {
@@ -761,7 +812,7 @@ router.post('/lock-artifact', async (req: Request, res: Response) => {
         eventType: 'artifact.updated',
       });
       if (!governed.validation.valid) {
-        throw new Error(`governed contract invalid: ${governed.validation.errors.join('; ')}`);
+        throw createGovernedContractInvalidError(governed);
       }
 
       await db
@@ -825,6 +876,9 @@ router.post('/lock-artifact', async (req: Request, res: Response) => {
         boundaryTransitionId: boundaryTransition?.id || null,
       });
     } catch (err: any) {
+      if (isGovernedContractInvalidError(err) && err.governed) {
+        return sendGovernedContractInvalid(res, err.governed);
+      }
       return res.status(500).json({ locked: false, reason: 'error', message: err?.message || 'Failed to lock' });
     }
   } catch (err: any) {
@@ -954,7 +1008,7 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
         eventType: 'artifact.updated',
       });
       if (!governed.validation.valid) {
-        throw new Error(`governed contract invalid: ${governed.validation.errors.join('; ')}`);
+        throw createGovernedContractInvalidError(governed);
       }
       await db
         .update(concept2cureArtifacts)
@@ -982,7 +1036,11 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
           },
         })
         .where(eq(concept2cureArtifacts.id, Number(artifactId)));
-    } catch { /* non-blocking */ }
+    } catch (metadataErr: unknown) {
+      if (isGovernedContractInvalidError(metadataErr) && metadataErr.governed) {
+        return sendGovernedContractInvalid(res, metadataErr.governed);
+      }
+    }
 
     return res.json({
       submissionReady: true, message: 'Artifact marked submission-ready.',

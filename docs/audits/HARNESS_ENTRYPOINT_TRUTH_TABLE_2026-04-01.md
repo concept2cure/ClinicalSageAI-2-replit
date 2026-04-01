@@ -18,11 +18,11 @@ Classification:
 | Project artifact create | `POST /api/concept2cure/projects/:projectId/artifacts` in `server/routes/concept2cure.ts` | governed and safe | Uses `resolveGovernedContext(...)`, blocks `GOVERNED_CONTRACT_INVALID`, stores resolved harness metadata and gate checks. |
 | Project artifact update | `PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId` in `server/routes/concept2cure.ts` | governed and safe | Uses `resolveGovernedContext(...)` for amendment flow, blocks on invalid contract. |
 | Conversation promotion | `POST /api/concept2cure/conversations/:conversationId/promote` in `server/routes/concept2cure.ts` | governed and safe | Newly wired through `resolveGovernedContext(...)`, blocks invalid combinations and emits governed metadata. |
-| Knowledge upload convergence artifact | Upload route in `server/routes/concept2cure.ts` around `insert(concept2cureArtifacts)` for `source_document` | governed but incomplete | `resolveGovernedContext(...)` runs before insert and blocks insert when invalid, but convergence failure is caught/logged as non-fatal so upload response may still succeed without `GOVERNED_CONTRACT_INVALID`. |
+| Knowledge upload convergence artifact | Upload route in `server/routes/concept2cure.ts` around `insert(concept2cureArtifacts)` for `source_document` | governed and safe | Upload now resolves governed context before artifact insertion and fails closed with `400` + `GOVERNED_CONTRACT_INVALID` when contract validation fails. |
 | Audit report export artifact creation | audit report export route in `server/routes/concept2cure.ts` around `insert(concept2cureArtifacts)` | governed and safe | Uses `resolveGovernedContext(...)` and returns `GOVERNED_CONTRACT_INVALID` on failure before insert. |
 | HAQ session artifact create/update | `PUT /api/concept2cure/projects/:projectId/haq-session` in `server/routes/concept2cure.ts` | governed and safe | Both create and update call `resolveGovernedContext(...)`, block on invalid contract, and persist harness metadata. |
 | Knowledge-base artifact writes | `server/routes/knowledge-base.ts` artifact inserts/updates | governed and safe (artifact mutation) | Module 3 save, save-docx-as-artifact, IND autodraft artifact saves, and vault connector versioning updates are now governed before mutation. |
-| Authoring actions artifact updates | `server/routes/authoring-actions.ts` artifact updates | governed but incomplete | Promote/approve/lock/submission-ready paths run `resolveGovernedContext(...)` before mutation; response/error envelope is not fully normalized to `sendError(..., GOVORNED_CONTRACT_INVALID)` semantics. |
+| Authoring actions artifact updates | `server/routes/authoring-actions.ts` artifact updates | governed and safe | Promote/approve/lock/submission-ready paths run `resolveGovernedContext(...)` before mutation and now return normalized `400` + `GOVERNED_CONTRACT_INVALID` envelopes on governed-validation failures. |
 | Service-layer AnA guidance artifact creation | `server/services/ana-guidance-executor.ts` (`executeArtifactCreation`) | governed and safe | Guidance-created artifacts now resolve/validate governed context before transactional insert and persist harness metadata. |
 | Service-layer contradiction consequence memo | `server/services/contradiction-consequence-service.ts` (`createContradictionMemo`) | governed and safe | Contradiction memo creation now resolves/validates governed context before insert and persists harness metadata; no synthetic fallback IDs on failure. |
 | AI/provider orchestration | `server/services/aiProviderRouter.ts` | governed but incomplete | Routing/audit/trace exists; not all upstream callers guarantee governed artifact consequence on output. |
@@ -46,9 +46,7 @@ Classification:
 
 ## Remaining bypass inventory (must be routed in follow-up slice)
 
-1. Knowledge upload convergence path still treats artifact convergence failure as non-fatal (response-level error semantics incomplete).
-2. Authoring-actions lifecycle paths are governed but use mixed response conventions instead of uniform `GOVERNED_CONTRACT_INVALID` envelopes.
-3. Continuous hygiene: any newly added `insert/update concept2cureArtifacts` outside canonical harness paths must be blocked in CI/audit.
+1. Continuous hygiene: any newly added `insert/update concept2cureArtifacts` outside canonical harness paths must be blocked in CI/audit.
 
 ## Canonical authority used in enforced paths
 
