@@ -157,7 +157,9 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
       '/api/health', '/api/health/full', '/api/metrics',
       '/api/cortex/health', '/api/claude/health', '/api/ai-gateway/health',
       '/api/claude/models',
-      // Public API — uses API-key auth internally, not session auth
+      // Public API — secured by x-api-key header auth (see routes/public-api.ts),
+      // NOT session auth.  All /api/v1 sub-routes MUST enforce their own API-key
+      // middleware; bypassing session auth here relies on that invariant.
       '/api/v1',
       // Billing webhooks — Stripe signature verification, no session auth
       '/api/billing/webhooks',
