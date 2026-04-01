@@ -1932,12 +1932,20 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               ...(data.submissionType !== undefined && { submissionType: data.submissionType }),
             } as any,
           });
+          if (data.customInstructions !== undefined && activeProjectId) {
+            await updateOwnershipPreferencesMutation({
+              projectId: activeProjectId,
+              preferences: {
+                projectInstructions: data.customInstructions || '',
+              },
+            });
+          }
         } catch (error) {
           console.error('Failed to update project:', error);
         }
       }
     },
-    [activeProjectId, rawProjects, updateProjectMutation]
+    [activeProjectId, rawProjects, updateOwnershipPreferencesMutation, updateProjectMutation]
   );
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -2262,9 +2270,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         onSelectConversation={id => {
           setActiveConversationId(id);
           setActiveThreadId(id);
+          setLayoutMode('project-home');
         }}
         onSelectProject={id => {
           setActiveProjectId(id);
+          setActiveConversationId(undefined);
+          setActiveThreadId(undefined);
           setLayoutMode('project-home');
         }}
         onNewChat={handleNewChat}
@@ -3826,8 +3837,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         new Date(a.updatedAt ?? a.createdAt ?? 0).getTime()
                     )?.[0]?.id ?? undefined;
                 setActiveConversationId(latestConversationId);
+                setActiveThreadId(latestConversationId);
               } else {
                 setActiveConversationId(undefined);
+                setActiveThreadId(undefined);
               }
               setLayoutMode('project-home');
             };
@@ -4098,6 +4111,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 screenName: 'project-home',
                 activeProject: activeProject?.name,
                 projectId: activeProjectId,
+                threadId: activeThreadId || activeConversationId,
                 moduleContext,
                 customInstructions,
               }}
@@ -4116,6 +4130,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               onOpenArtifact={handleOpenArtifact}
               onRequestPromotion={handleRequestPromotion}
               onRefreshIntelligence={authoringIntelligence.refetch}
+              onThreadChange={threadId => {
+                setActiveThreadId(threadId);
+                setActiveConversationId(threadId);
+              }}
             />
 
             {/* Right sidebar: Project Knowledge (Claude.ai style — always visible) */}
@@ -4179,6 +4197,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 screenName: layoutMode,
                 activeProject: activeProject?.name,
                 projectId: activeProjectId,
+                threadId: activeThreadId || activeConversationId,
                 moduleContext,
                 customInstructions,
               }}
@@ -4196,6 +4215,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               onOpenArtifact={handleOpenArtifact}
               onRequestPromotion={handleRequestPromotion}
               onRefreshIntelligence={authoringIntelligence.refetch}
+              onThreadChange={threadId => {
+                setActiveThreadId(threadId);
+                setActiveConversationId(threadId);
+              }}
             />
           )}
       </GlobalOperatingShell>
@@ -4267,9 +4290,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           setProjectSwitcherOpen(false);
           setLayoutMode('project-home');
           navigate(`/concept2cure/project/${id}`);
-          // Clear conversation when switching projects
-          setActiveConversationId(undefined);
-          setActiveThreadId(undefined);
         }}
         onCreateProject={() => {
           setProjectSwitcherOpen(false);
