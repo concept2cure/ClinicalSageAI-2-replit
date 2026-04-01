@@ -231,3 +231,42 @@ If both files are changed in one PR, classify as **high integration risk** and r
 - explicit reviewer sign-off from both authoring and shell owners,
 - conflict simulation against latest `concept2cure-v2` before merge queue entry.
 
+---
+
+## 8) Validation evidence addendum (executed on 2026-04-01)
+
+Focused validation gate requested for the #323/#309 playbook has been executed on branch `cursor/customer-shaped-harness-build-5841`.
+
+### 8.1 Governance no-regression checks
+
+1. `npm run ci:audit-route-mounts:no-regression`  
+   - Result: **PASS**
+   - Snapshot: `Errors: 0`, `Warnings: 16`
+   - Baseline delta: `+0 new errors`, `+0 new warnings`
+   - Artifact updated: `docs/reports/route-mount-audit-latest.json`
+
+2. `npm run audit:repo-health:no-regression`  
+   - Result: **PASS**
+   - Snapshot:
+     - duplicate basenames: `195` (delta `0`)
+     - files over byte threshold: `26` (delta `0`)
+     - files over line threshold: `85` (delta `0`)
+   - Artifact updated:
+     - `docs/reports/repo-health-scan-latest.json`
+     - `docs/reports/repo-health-scan-latest.md`
+
+### 8.2 AnA focused suite
+
+3. `npm run test:ana`  
+   - Result: **PASS**
+   - Vitest summary: `4 files`, `137 tests`, all passing
+   - Included suites:
+     - `tests/routes/ana-ri-health.test.ts`
+     - `tests/routes/ana-gap-analysis.test.ts`
+     - `tests/resolution/ana-orchestrator.test.ts`
+     - `server/services/__tests__/ana-ri.test.ts`
+
+### 8.3 Gate status conclusion
+
+The required focused gate defined in section 6.4 is currently **satisfied** for AnA + governance no-regression checks in this branch state.
+
