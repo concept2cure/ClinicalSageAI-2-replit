@@ -17,12 +17,35 @@ interface WorkspaceSummaryShape {
   nextActions?: SuggestedAction[];
 }
 
+const GUIDED_SEQUENCE_ACTION: SuggestedAction = {
+  id: 'guided-sequence',
+  label: 'Run guided sequence',
+  intent: 'guided_project',
+  description:
+    'Progress through Project, IND/eCTD, Authoring, Verify, and Submission in one guided flow.',
+};
+
 const BIOSTATS_ACTION: SuggestedAction = {
   id: 'open-ana-biostats',
   label: 'Open AnA Biostats',
   intent: 'go-biostatistics',
   description: 'Run SAP-grade biostatistics analysis and governed document generation.',
 };
+
+function withCoreActions(actions: SuggestedAction[]): SuggestedAction[] {
+  const seeded = [GUIDED_SEQUENCE_ACTION, BIOSTATS_ACTION, ...actions];
+  const deduped: SuggestedAction[] = [];
+  const seenIntents = new Set<string>();
+
+  for (const action of seeded) {
+    const key = action.intent.trim().toLowerCase();
+    if (!key || seenIntents.has(key)) continue;
+    seenIntents.add(key);
+    deduped.push(action);
+  }
+
+  return deduped.slice(0, 4);
+}
 
 const STARTERS: Record<string, SuggestedAction[]> = {
   '510K': [
@@ -138,16 +161,11 @@ export function useWorkspaceSuggestedActions(
   return useMemo(() => {
     const base = workspaceSummary?.nextActions ?? [];
     if (base.length > 0) {
-      const withBiostats = base.some(action => action.intent === 'go-biostatistics')
-        ? base
-        : [BIOSTATS_ACTION, ...base];
-      return withBiostats.slice(0, 4);
+      return withCoreActions(base);
     }
 
     const t = (projectType || 'IND').toUpperCase();
     const fallback = STARTERS[t] ?? STARTERS['IND'];
-    return fallback.some(action => action.intent === 'go-biostatistics')
-      ? fallback.slice(0, 4)
-      : [BIOSTATS_ACTION, ...fallback].slice(0, 4);
+    return withCoreActions(fallback);
   }, [projectType, workspaceSummary?.nextActions]);
 }

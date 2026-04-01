@@ -79,3 +79,21 @@ test('report-os route captures regional context in run metadata', () => {
   assert.ok(routeSource.includes('submissionType'));
   assert.ok(routeSource.includes('summary: computed.summary'));
 });
+
+test('server index imports bootstrap registrars used at startup callsites', () => {
+  const serverIndexSource = readFileSync('server/index.ts', 'utf8');
+  const requiredBootstrapImports = [
+    "import { registerCoreRoutes } from './bootstrap/register-core-routes';",
+    "import { registerIntegrationRoutes } from './bootstrap/register-integrations-routes';",
+    "import { registerAiRoutes } from './bootstrap/register-ai-routes';",
+    "import { registerConcept2CureRoutes } from './bootstrap/register-concept2cure-routes';",
+    "import { registerAdminRoutes } from './bootstrap/register-admin-routes';",
+  ];
+
+  for (const requiredImport of requiredBootstrapImports) {
+    assert.ok(
+      serverIndexSource.includes(requiredImport),
+      `missing bootstrap import in server/index.ts: ${requiredImport}`,
+    );
+  }
+});

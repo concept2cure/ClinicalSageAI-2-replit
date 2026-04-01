@@ -96,8 +96,10 @@ The prior blocker was resolved by hardening the fallback creation/open flow in t
 
 ### Document-open truth (certified)
 
-- Document-open continuity is now certified in-browser (`PULSE-07` pass).
-- Return from Intelligence to Editor retains active document context (`active-doc-context` visible after return).
+- Document-open continuity is certified in-browser (`PULSE-07` pass) with strict context requirements.
+- Return from Intelligence to Editor must retain active document context (`active-doc-context` visible after return).
+- The Stage 9 pulse harness uses seeded auth/session + project/artifact API interception for deterministic pulse validation.
+- This is a pulse gate (route/workspace continuity proof), not a full backend-integrated end-to-end certification.
 
 ## Founder-ready status
 
