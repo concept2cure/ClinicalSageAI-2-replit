@@ -323,6 +323,9 @@ export const ZenRouter: React.FC = () => {
               </PageTransition>
             )}
           </Route>
+          {/* Billing return paths from Stripe Checkout */}
+          <Route path="/billing/success">{() => <Redirect to="/concept2cure/billing?checkout=success" />}</Route>
+          <Route path="/billing/canceled">{() => <Redirect to="/concept2cure/billing?checkout=canceled" />}</Route>
           {/* Alias: /billing redirects to /concept2cure/billing */}
           <Route path="/billing">{() => <Redirect to="/concept2cure/billing" />}</Route>
 
