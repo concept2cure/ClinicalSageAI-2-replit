@@ -3810,6 +3810,27 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               setActiveProjectId(projectId);
               setLayoutMode('project-home');
             };
+            const openProjectHomeWithLastConversation = (
+              projectId: string,
+              conversationCount?: number
+            ) => {
+              setActiveProjectId(projectId);
+              if ((conversationCount ?? 0) > 0) {
+                const rawProject = rawProjects.find(p => p.id === projectId);
+                const latestConversationId =
+                  rawProject?.conversations
+                    ?.slice()
+                    ?.sort(
+                      (a, b) =>
+                        new Date(b.updatedAt ?? b.createdAt ?? 0).getTime() -
+                        new Date(a.updatedAt ?? a.createdAt ?? 0).getTime()
+                    )?.[0]?.id ?? undefined;
+                setActiveConversationId(latestConversationId);
+              } else {
+                setActiveConversationId(undefined);
+              }
+              setLayoutMode('project-home');
+            };
             const renderProjectSection = (
               title: string,
               sectionProjects: typeof remainingProjects
@@ -3827,6 +3848,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         .filter(Boolean)
                         .slice(0, 2)
                         .join(' · ');
+                      const hasConversations = (project.conversationCount ?? 0) > 0;
                       return (
                         <Button
                           key={project.id}
@@ -3872,7 +3894,28 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                               >
                                 {badge.label}
                               </span>
+                              <span className="flex items-center gap-1 tabular-nums">
+                                <MessageSquare className="w-3 h-3" />
+                                {project.conversationCount ?? 0}
+                              </span>
                               <span className="ml-auto tabular-nums">{relTime(project.lastUpdated)}</span>
+                            </div>
+                            <div className="mt-2 flex items-center justify-end">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  openProjectHomeWithLastConversation(
+                                    project.id,
+                                    project.conversationCount ?? 0
+                                  );
+                                }}
+                                className="h-6 px-2 text-[11px] text-stone-500 hover:text-stone-800"
+                              >
+                                {hasConversations ? 'Resume chat' : 'Start chat'}
+                              </Button>
                             </div>
                           </div>
                         </Button>
@@ -3894,6 +3937,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       <Input
                         value={projectsSearchQuery}
                         onChange={e => setProjectsSearchQuery(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && continueProject) {
+                            e.preventDefault();
+                            openProjectHome(continueProject.id);
+                          }
+                        }}
                         placeholder="Search projects, product, agency..."
                         aria-label="Search projects"
                         className="h-8 pl-8 text-[12px] border-stone-200 bg-white"
@@ -3920,7 +3969,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     </p>
                     <button
                       onClick={() => {
-                        openProjectHome(continueProject.id);
+                        openProjectHomeWithLastConversation(
+                          continueProject.id,
+                          continueProject.conversationCount ?? 0
+                        );
                       }}
                       className={cn(
                         'w-full text-left rounded-xl border border-stone-200 bg-white p-5',
@@ -3975,6 +4027,23 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                               {continueProject.conversationCount}{' '}
                               {continueProject.conversationCount === 1 ? 'chat' : 'chats'}
                             </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={e => {
+                                e.stopPropagation();
+                                openProjectHomeWithLastConversation(
+                                  continueProject.id,
+                                  continueProject.conversationCount ?? 0
+                                );
+                              }}
+                              className="h-6 px-2 text-[11px] text-stone-500 hover:text-stone-800"
+                            >
+                              {(continueProject.conversationCount ?? 0) > 0
+                                ? 'Resume latest chat'
+                                : 'Start first chat'}
+                            </Button>
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 text-stone-400 group-hover:text-stone-600 transition-colors flex-shrink-0 mt-1">
