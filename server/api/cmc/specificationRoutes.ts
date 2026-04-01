@@ -4,42 +4,6 @@ import { z } from 'zod';
 
 const router = express.Router();
 
-// Ensure quality_specifications and audit table exist
-let specTablesInitialized = false;
-async function ensureSpecTables() {
-  if (specTablesInitialized) return;
-  const pool = getPool();
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS quality_specifications (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      project_id UUID,
-      tenant_id TEXT,
-      material_type TEXT NOT NULL,
-      material_name TEXT NOT NULL,
-      test_parameters JSONB,
-      acceptance_criteria JSONB,
-      test_methods JSONB,
-      justification TEXT,
-      regulatory_basis JSONB,
-      approval_status TEXT DEFAULT 'draft',
-      created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-      updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-    )
-  `);
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS specification_audit_log (
-      id SERIAL PRIMARY KEY,
-      specification_id UUID NOT NULL,
-      action TEXT NOT NULL,
-      changed_by TEXT,
-      previous_values JSONB,
-      new_values JSONB,
-      created_at TIMESTAMP DEFAULT NOW() NOT NULL
-    )
-  `);
-  specTablesInitialized = true;
-}
-
 // Validation schemas
 const createSpecSchema = z.object({
   projectId: z.string().uuid().optional(),
@@ -75,7 +39,6 @@ router.get('/:projectId', async (req, res) => {
     }
     const pool = getPool();
 
-    await ensureSpecTables();
 
     const result = await pool.query(
       `SELECT * FROM quality_specifications
@@ -120,7 +83,6 @@ router.post('/', async (req, res) => {
       return res.status(401).json({ error: 'Tenant context required' });
     }
 
-    await ensureSpecTables();
 
     const result = await pool.query(
       `INSERT INTO quality_specifications (
@@ -191,7 +153,6 @@ router.put('/:id', async (req, res) => {
       return res.status(401).json({ error: 'Tenant context required' });
     }
 
-    await ensureSpecTables();
 
     // Get current spec for audit trail (with tenant filter)
     const currentResult = await pool.query(
@@ -279,7 +240,6 @@ router.get('/:id/history', async (req, res) => {
     const { id } = req.params;
     const pool = getPool();
 
-    await ensureSpecTables();
 
     const result = await pool.query(
       `SELECT * FROM specification_audit_log

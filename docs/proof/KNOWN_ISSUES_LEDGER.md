@@ -26,25 +26,25 @@
 
 ## High Issues
 
-| # | Issue | Impact | Location | Discovered |
-|---|-------|--------|----------|-----------|
-| H-1 | `GET /api/regulatory/search` shadowed by mount order | Intelligence search returns registry results instead of regulatory intelligence | `server/index.ts` L3928 vs L7266 | Stage 11 |
-| H-2 | `GET /api/projects/find` swallowed by `/:projectId` param | Module lookup returns "project not found" when called via `/api/projects/find` | `server/index.ts` L7083 vs L7145 | Stage 11 |
-| H-3 | `npm run typecheck` fails with broad pre-existing TS issues | Type safety not enforced at build time; runtime unaffected | Repo-wide | Stage 8 known-limits |
-| H-4 | `roleBasedAccess.test.ts` and `mfaService.test.ts` fail | Auth test drift; does not affect runtime auth behavior | `tests/services/` | Stage 8 known-limits |
+| # | Issue | Impact | Location | Discovered | Status |
+|---|-------|--------|----------|-----------|--------|
+| H-1 | `GET /api/regulatory/search` shadowed by mount order | Intelligence search unreachable | `server/index.ts` L3928 vs L7266 | Stage 11 | **FIXED** — renamed to `/intelligence-search` |
+| H-2 | `GET /api/projects/find` swallowed by `/:projectId` param | Module lookup unreachable | `server/index.ts` L7083 vs L7145 | Stage 11 | **FIXED** — duplicate mount removed, callers updated |
+| H-3 | `npm run typecheck` fails with broad pre-existing TS issues | Type safety not enforced at build time; runtime unaffected | Repo-wide | Stage 8 known-limits | Pre-existing; `vite build` succeeds |
+| H-4 | `roleBasedAccess.test.ts` and `mfaService.test.ts` fail | Auth test drift | `tests/services/` | Stage 8 known-limits | **RESOLVED** — all 34 auth tests pass as of 2026-04-01 |
 
 ---
 
 ## Medium Issues
 
-| # | Issue | Impact | Location | Discovered |
-|---|-------|--------|----------|-----------|
-| M-1 | Playwright port drift across test files | Some `.spec.ts` files default to 5173/3000 instead of 5000 | Various `tests/e2e/*.spec.ts` | Stage 9 |
-| M-2 | `guided-demo-path.test.ts` has drift failures | Test expects old strings/routes/labels | `tests/` | Stage 8 known-limits |
-| M-3 | `ana-ri-health.test.ts` has 1 failing mocked-import | Mock drift; does not affect runtime | `tests/` | Stage 8 known-limits |
-| M-4 | `/api/chat/stream` lacks `processResponseActions` | Streaming chat path cannot create governed artifacts from response | `server/routes/chat.ts` | Stage 12 |
-| M-5 | Auth middleware exists in both `.ts` and `.js` | Caller confusion about which to import | `server/middleware/auth.ts` + `auth.js` | Stage 8 |
-| M-6 | `main.jsx` is unused legacy entry | Dead file; `index.html` references `main.tsx` | `client/src/main.jsx` | Stage 8 |
+| # | Issue | Impact | Location | Discovered | Status |
+|---|-------|--------|----------|-----------|--------|
+| M-1 | Playwright port drift across test files | Some `.spec.ts` files default to 5173/3000 instead of 5000 | Various `tests/e2e/*.spec.ts` | Stage 9 | Partially addressed — config aligned |
+| M-2 | `guided-demo-path.test.ts` has drift failures | Test expects old strings/routes/labels | `tests/` | Stage 8 known-limits | **RESOLVED** — all 24 guided-demo tests pass as of 2026-04-01 |
+| M-3 | `ana-ri-health.test.ts` has 1 failing mocked-import | Mock drift; does not affect runtime | `tests/` | Stage 8 known-limits | **RESOLVED** — all 5 AnA RI health tests pass as of 2026-04-01 |
+| M-4 | `/api/chat/stream` lacks `processResponseActions` | Streaming chat path cannot create governed artifacts | `server/routes/chat.ts` | Stage 12 | **FIXED** — `processResponseActions` added with org/project context |
+| M-5 | Auth middleware exists in both `.ts` and `.js` | Caller confusion about which to import | `server/middleware/auth.ts` + `auth.js` | Stage 8 | Documented — consolidation note added to `.js` |
+| M-6 | `main.jsx` is unused legacy entry | Dead file | `client/src/main.jsx` | Stage 8 | **FIXED** — deleted |
 
 ---
 
@@ -78,7 +78,21 @@
 
 | Issue | Status | Resolved in | Notes |
 |-------|--------|------------|-------|
-| H-1 | **Documented** | Stage 11 | Canonical: `regulatory-registry.ts` owns `/search` |
-| H-2 | **Documented** | Stage 11 | Workaround: use `/api/project-modules/find` |
-| H-3 | **Known** | — | Pre-existing; not a regression |
-| H-4 | **Known** | — | Pre-existing; not a regression |
+| H-1 | **FIXED** | Post-Stage 11 | Renamed to `/api/regulatory/intelligence-search` |
+| H-2 | **FIXED** | Post-Stage 11 | Duplicate mount removed; callers updated to `/api/project-modules/` |
+| H-3 | **Known** | — | Pre-existing; `vite build` succeeds; runtime unaffected |
+| H-4 | **RESOLVED** | 2026-04-01 | All 34 auth tests now pass |
+| M-2 | **RESOLVED** | 2026-04-01 | All 24 guided-demo tests now pass |
+| M-3 | **RESOLVED** | 2026-04-01 | All 5 AnA RI health tests now pass |
+| M-4 | **FIXED** | Post-Stage 12 | `processResponseActions` added to chat/stream |
+| M-6 | **FIXED** | Post-Stage 12 | `main.jsx` deleted |
+
+### Beta-Critical Test Baseline (2026-04-01)
+
+| Suite | Tests | Result |
+|-------|------:|--------|
+| AI entry-point contract | 33 | **All pass** |
+| Guided demo path | 24 | **All pass** |
+| AnA RI health | 5 | **All pass** |
+| RBAC + MFA auth | 34 | **All pass** |
+| **Total beta-critical** | **96** | **All pass** |

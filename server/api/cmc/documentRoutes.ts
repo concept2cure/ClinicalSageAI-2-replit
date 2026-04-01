@@ -4,72 +4,6 @@ import { z } from 'zod';
 
 const router = express.Router();
 
-// Ensure cmc_documents table exists
-let cmcDocumentsTableInitialized = false;
-async function ensureCmcDocumentsTable() {
-  if (cmcDocumentsTableInitialized) return;
-  const pool = getPool();
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS cmc_documents (
-      id SERIAL PRIMARY KEY,
-      project_id UUID,
-      organization_id INTEGER DEFAULT 1,
-      document_type TEXT NOT NULL DEFAULT 'general',
-      module_section TEXT,
-      title TEXT NOT NULL,
-      content TEXT,
-      section TEXT,
-      status TEXT NOT NULL DEFAULT 'draft',
-      version TEXT DEFAULT '1.0',
-      file_path TEXT,
-      metadata JSONB,
-      compliance_score INTEGER,
-      compliance_metrics JSONB,
-      drug_candidate_id TEXT,
-      study_id TEXT,
-      tenant_id TEXT,
-      created_by TEXT,
-      last_modified_by TEXT,
-      created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-      updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-    )
-  `);
-  // Ensure version tracking table
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS cmc_document_versions (
-      id SERIAL PRIMARY KEY,
-      document_id INTEGER REFERENCES cmc_documents(id) ON DELETE CASCADE,
-      version_number TEXT NOT NULL,
-      content TEXT,
-      changes TEXT,
-      author TEXT,
-      created_at TIMESTAMP DEFAULT NOW() NOT NULL
-    )
-  `);
-  // Ensure links table
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS cmc_document_links (
-      id SERIAL PRIMARY KEY,
-      document_id INTEGER NOT NULL,
-      linked_document_id INTEGER NOT NULL,
-      link_type TEXT DEFAULT 'reference',
-      context TEXT,
-      created_at TIMESTAMP DEFAULT NOW() NOT NULL
-    )
-  `);
-  // Ensure collaborators table
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS cmc_document_collaborators (
-      id SERIAL PRIMARY KEY,
-      document_id INTEGER NOT NULL,
-      user_id TEXT,
-      role TEXT DEFAULT 'viewer',
-      created_at TIMESTAMP DEFAULT NOW() NOT NULL
-    )
-  `);
-  cmcDocumentsTableInitialized = true;
-}
-
 // Validation schemas
 const createDocumentSchema = z.object({
   module_section: z.string().min(1, 'Module section is required'),
@@ -106,7 +40,6 @@ router.get('/', async (req, res) => {
     }
     const pool = getPool();
 
-    await ensureCmcDocumentsTable();
 
     let query = `
       SELECT
@@ -168,7 +101,6 @@ router.get('/module/:moduleSection', async (req, res) => {
     }
     const pool = getPool();
 
-    await ensureCmcDocumentsTable();
 
     const query = `
       SELECT
@@ -225,7 +157,6 @@ router.get('/:id', async (req, res) => {
     }
     const pool = getPool();
 
-    await ensureCmcDocumentsTable();
 
     // Get main document
     const documentQuery = `
@@ -318,7 +249,6 @@ router.post('/', async (req, res) => {
     }
     const pool = getPool();
 
-    await ensureCmcDocumentsTable();
 
     // Insert new document
     const insertQuery = `
@@ -400,7 +330,6 @@ router.put('/:id', async (req, res) => {
     }
     const pool = getPool();
 
-    await ensureCmcDocumentsTable();
 
     // Get current document
     const currentQuery = `
@@ -535,7 +464,6 @@ router.post('/:id/link', async (req, res) => {
     }
     const pool = getPool();
 
-    await ensureCmcDocumentsTable();
 
     // Verify both documents exist and belong to the tenant
     const verifyQuery = `
@@ -599,7 +527,6 @@ router.delete('/:id', async (req, res) => {
     }
     const pool = getPool();
 
-    await ensureCmcDocumentsTable();
 
     const deleteQuery = `
       DELETE FROM cmc_documents

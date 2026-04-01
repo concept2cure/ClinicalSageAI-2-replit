@@ -15,7 +15,7 @@
  */
 
 import { getPool } from '../../db.ts';
-import { tagArtifact, type TagArtifactResult } from '../artifact-tagger.js';
+import { tagArtifact } from '../artifact-tagger.js';
 import { logGeneration, validateArtifactQuality } from './enforcement.js';
 
 const pool = getPool();
@@ -29,11 +29,8 @@ import { contradictionEngineService } from '../contradiction-engine-service.js';
 import { crossJurisdictionalEngine } from '../cross-jurisdictional-intelligence.js';
 import { getEndpointRecommenderService } from '../endpoint-recommender-service.js';
 import { runRIMAssessment, type RIMContext } from '../intelligence/rim.js';
-import {
-  buildEvidenceChain,
-  computeConfidence,
-  type EvidenceSource,
-} from '../intelligence/evidence-confidence-model.js';
+import // buildEvidenceChain, computeConfidence, EvidenceSource — reserved for evidence chain wiring
+'../intelligence/evidence-confidence-model.js';
 import { intelligentReportEngine } from '../intelligent-report-engine.js';
 import { clinicalIntelligenceService } from '../clinical-intelligence-service.js';
 
@@ -1421,7 +1418,8 @@ export async function runComplianceScan(
 
     // Comprehensive compliance checks — fast, deterministic
     const issues: Array<{ rule: string; severity: string; finding: string; section?: string }> = [];
-    const sections = content.split(/^(#{1,3}\s+.+)$/gm).filter(Boolean);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _sections = content.split(/^(#{1,3}\s+.+)$/gm).filter(Boolean);
 
     // Document-level checks
     if (/\[insert|TBD|TODO|placeholder|coming soon/i.test(content)) {

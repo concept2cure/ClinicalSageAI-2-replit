@@ -15,6 +15,7 @@ import cmcSpecificationRoutes from '../api/cmc/specificationRoutes';
 import cmcStabilityRoutes from '../api/cmc/stabilityRoutes';
 import cmcBatchRecordRoutes from '../api/cmc/batchRecordRoutes';
 import cmcWorkflowRoutes from '../api/cmc/workflowRoutes';
+import cmcModule3OperatingSystemRoutes from '../api/cmc/module3OperatingSystemRoutes';
 import cmcCollaborationRoutes from '../api/cmc/collaborationRoutes';
 import cmcDocumentRoutes from '../api/cmc/documentRoutes';
 import aiAssistanceRoutes, { setAIService } from '../routes/ai-assistance';
@@ -40,6 +41,7 @@ export function registerCoreRoutes({ app, pool, aiCircuitBreaker }: RouteBootstr
     app.use('/api/cmc/stability', cmcStabilityRoutes);
     app.use('/api/cmc/batch-records', cmcBatchRecordRoutes);
     app.use('/api/cmc/workflows', cmcWorkflowRoutes);
+    app.use('/api/cmc/module3-os', cmcModule3OperatingSystemRoutes);
     app.use('/api/cmc/collaboration', cmcCollaborationRoutes);
     app.use('/api/cmc/documents', cmcDocumentRoutes);
     app.use('/api/cmc/dashboard-legacy', cmcDashboardRoutes);

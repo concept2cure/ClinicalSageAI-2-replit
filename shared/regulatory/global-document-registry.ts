@@ -9,13 +9,12 @@
  * @module shared/regulatory/global-document-registry
  */
 
-import type {
+import {
   RegulatoryApplicationType,
   Region,
   Agency,
   ApplicationFamily,
   ProductClass,
-  DossierStandard,
   LegacySubmissionType,
   LEGACY_TO_REGISTRY_ID,
 } from './document-taxonomy';
@@ -276,7 +275,6 @@ export function search(query: string): RegulatoryApplicationType[] {
 
 /** Resolve a legacy submission type to a registry entry */
 export function resolveFromLegacy(legacyType: string): RegulatoryApplicationType | undefined {
-  const { LEGACY_TO_REGISTRY_ID } = require('./document-taxonomy');
   const id = LEGACY_TO_REGISTRY_ID[legacyType as LegacySubmissionType];
   if (id) return getApplicationType(id);
   // Fallback: search by name

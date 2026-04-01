@@ -26,6 +26,11 @@ import {
   resolveIssueParserGovernanceConfig,
   runGovernedIssueParser,
 } from '../services/regulatory-correspondence/issue-parser';
+import {
+  computeCorrespondenceIssueImpact,
+  createCanonicalTasksForIssue,
+} from '../services/regulatory-correspondence/operating-layer';
+import { compileGovernedResponseAssembly } from '../services/regulatory-correspondence/response-package-compiler';
 
 const router = Router();
 router.use(authMiddleware);
@@ -470,6 +475,8 @@ router.post('/correspondence/intake', async (req, res) => {
     matchedRuleCount: extraction.metadata.matchedRuleCount,
     parserGovernanceMode: parserGovernance.mode,
     parserGovernanceHeuristicEnabled: parserGovernance.heuristicEnabled,
+    deterministicSignals: extraction.metadata.deterministicSignals,
+    modelAssistedReasoningUsed: extraction.metadata.modelAssistedReasoningUsed,
   };
 
   const pool = getDbClientOrNull();
@@ -521,6 +528,7 @@ router.post('/correspondence/intake', async (req, res) => {
       ]
     );
 
+    const downstreamActions: Array<Record<string, unknown>> = [];
     for (const issue of extracted) {
       await pool!.query(
         `INSERT INTO c2c_correspondence_issues
@@ -541,6 +549,32 @@ router.post('/correspondence/intake', async (req, res) => {
           issue.resolutionStatus,
         ]
       );
+
+      const impact = await computeCorrespondenceIssueImpact({
+        orgId,
+        projectId: record.projectId,
+        submissionId: record.submissionId,
+        correspondenceId: id,
+        issue,
+      });
+      const canonicalTasks = await createCanonicalTasksForIssue({
+        orgId,
+        projectId: record.projectId,
+        issue,
+        ownerUserId: userId,
+        ownerName: `user-${userId}`,
+        linkedSectionKeys: impact.linkedSections.map(s => s.sectionKey),
+      });
+
+      downstreamActions.push({
+        issueId: issue.id,
+        linkedPackageDbId: impact.linkedPackageDbId,
+        linkedSections: impact.linkedSections,
+        blockerOpened: impact.blockerOpened,
+        readinessPenalty: impact.readinessPenalty,
+        recommendedResponsePackageType: impact.recommendedResponsePackageType,
+        canonicalTasks,
+      });
     }
 
     await addTimelineEventDB(pool!, {
@@ -551,7 +585,7 @@ router.post('/correspondence/intake', async (req, res) => {
       eventType: 'correspondence_ingested',
       summary: record.subject,
     });
-  return res.status(201).json({ data: record, issues: extracted });
+  return res.status(201).json({ data: record, issues: extracted, downstreamActions });
 });
 
 router.get('/correspondence', async (req, res) => {
@@ -692,9 +726,39 @@ router.post('/response-packages', async (req, res) => {
   if (!sourceRow) {
     return res.status(404).json({ error: 'Source correspondence not found' });
   }
+  const issueRows = await pool!.query(
+    `SELECT * FROM c2c_correspondence_issues WHERE correspondence_id = $1 ORDER BY created_at ASC`,
+    [pack.sourceCorrespondenceId]
+  );
+
   projectId = projectId > 0 ? projectId : Number(sourceRow.project_id);
   if (!Number.isFinite(projectId) || projectId <= 0) {
     return res.status(400).json({ error: 'projectId is required' });
+  }
+
+  if ((pack.revisedArtifactIds || []).length) {
+    const parsedArtifactIds = pack.revisedArtifactIds
+      .map(id => Number(id))
+      .filter(value => Number.isFinite(value) && value > 0);
+    if (parsedArtifactIds.length !== pack.revisedArtifactIds.length) {
+      return res.status(400).json({
+        error: 'revisedArtifactIds must be numeric artifact IDs for boundary validation',
+      });
+    }
+
+    const artifactCheck = await pool!.query(
+      `SELECT id
+         FROM concept2cure_artifacts
+        WHERE org_id = $1
+          AND project_id = $2
+          AND id = ANY($3::int[])`,
+      [orgId, projectId, parsedArtifactIds]
+    );
+    if (artifactCheck.rows.length !== parsedArtifactIds.length) {
+      return res.status(400).json({
+        error: 'One or more revisedArtifactIds do not belong to the same org/project boundary',
+      });
+    }
   }
 
   await pool!.query(
@@ -723,9 +787,17 @@ router.post('/response-packages', async (req, res) => {
       responsePackageId: pack.id,
       eventType: 'response_package_created',
       summary: pack.title,
+      metadata: {
+        compilerVersion: 'response-assembly-v1',
+      },
+  });
+  const compiledAssembly = compileGovernedResponseAssembly({
+    correspondenceId: pack.sourceCorrespondenceId,
+    issues: issueRows.rows as any,
+    revisedArtifactIds: pack.revisedArtifactIds,
   });
 
-  return res.status(201).json({ data: pack });
+  return res.status(201).json({ data: pack, assembly: compiledAssembly });
 });
 
 router.get('/timeline', async (req, res) => {

@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-04-01T06:48:28.038Z",
+  "generatedAt": "2026-04-01T21:20:53.588Z",
   "git": {
-    "sha": "52f844a06946f6a1e7c8d29ac4750feaf90c4d90",
-    "branch": "concept2cure-v2"
+    "sha": "681620f91261f6ee6d51310cb96fee2e4d978ffc",
+    "branch": "work"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 195,
+    "duplicateBasenames": 191,
     "largeFilesByBytes": 26,
     "largeFilesByLines": 85
   },
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 118,
+        "count": 117,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -90,7 +90,6 @@
           "server/index.ts",
           "server/lib/index.ts",
           "server/middleware/index.ts",
-          "server/routes/index.ts",
           "server/services/ai-actions/index.ts",
           "server/services/ai-gateway/index.ts",
           "server/services/ai/index.ts",
@@ -140,30 +139,6 @@
         ]
       },
       {
-        "basename": "routes",
-        "count": 18,
-        "paths": [
-          "server/api/ai/routes.ts",
-          "server/api/cmc/routes.ts",
-          "server/api/drafting/routes.ts",
-          "server/api/ectd/routes.ts",
-          "server/api/enterprise/routes.js",
-          "server/api/gcc/ectd/routes.js",
-          "server/api/gcc/labeling/routes.js",
-          "server/api/gcc/signing/routes.js",
-          "server/api/gcc/site-intel/routes.js",
-          "server/api/gcc/vault/routes.js",
-          "server/api/labeling/routes.ts",
-          "server/api/neuro-symbolic/routes.ts",
-          "server/api/signing/routes.ts",
-          "server/api/site-intel/routes.ts",
-          "server/api/templates/routes.ts",
-          "server/api/vault/routes.ts",
-          "server/routes.js",
-          "server/routes.ts"
-        ]
-      },
-      {
         "basename": "types",
         "count": 18,
         "paths": [
@@ -185,6 +160,29 @@
           "server/services/rules-engine/types.ts",
           "server/services/sentinel/types.ts",
           "services/proof/types.ts"
+        ]
+      },
+      {
+        "basename": "routes",
+        "count": 17,
+        "paths": [
+          "server/api/ai/routes.ts",
+          "server/api/cmc/routes.ts",
+          "server/api/drafting/routes.ts",
+          "server/api/ectd/routes.ts",
+          "server/api/enterprise/routes.js",
+          "server/api/gcc/ectd/routes.js",
+          "server/api/gcc/labeling/routes.js",
+          "server/api/gcc/signing/routes.js",
+          "server/api/gcc/site-intel/routes.js",
+          "server/api/gcc/vault/routes.js",
+          "server/api/labeling/routes.ts",
+          "server/api/neuro-symbolic/routes.ts",
+          "server/api/signing/routes.ts",
+          "server/api/site-intel/routes.ts",
+          "server/api/templates/routes.ts",
+          "server/api/vault/routes.ts",
+          "server/routes.js"
         ]
       },
       {
@@ -565,14 +563,6 @@
         "paths": [
           "client/src/lib/api-security.js",
           "server/utils/api-security.js"
-        ]
-      },
-      {
-        "basename": "asklumenai",
-        "count": 2,
-        "paths": [
-          "client/src/components/advisor/AskLumenAI.jsx",
-          "client/src/components/assistant/AskLumenAI.jsx"
         ]
       },
       {
@@ -1016,14 +1006,6 @@
         ]
       },
       {
-        "basename": "enhanceddocumenteditor",
-        "count": 2,
-        "paths": [
-          "client/src/components/EnhancedDocumentEditor.jsx",
-          "client/src/components/cer/EnhancedDocumentEditor.jsx"
-        ]
-      },
-      {
         "basename": "enhanceddocusharepanel",
         "count": 2,
         "paths": [
@@ -1352,6 +1334,14 @@
         ]
       },
       {
+        "basename": "project-module-bridge.test",
+        "count": 2,
+        "paths": [
+          "tests/server/project-module-bridge.test.ts",
+          "tests/services/project-module-bridge.test.ts"
+        ]
+      },
+      {
         "basename": "projectconfigpanel",
         "count": 2,
         "paths": [
@@ -1512,22 +1502,6 @@
         ]
       },
       {
-        "basename": "strategic-intelligence-service",
-        "count": 2,
-        "paths": [
-          "server/services/strategic-intelligence-service.ts",
-          "server/strategic-intelligence-service.ts"
-        ]
-      },
-      {
-        "basename": "studyarchitectmodule",
-        "count": 2,
-        "paths": [
-          "client/src/components/study-architect/StudyArchitectModule.jsx",
-          "client/src/components/studyArchitect/StudyArchitectModule.jsx"
-        ]
-      },
-      {
         "basename": "studydesignassistant",
         "count": 2,
         "paths": [
@@ -1645,14 +1619,6 @@
         "paths": [
           "server/routes/universal-packager.ts",
           "server/services/universal-packager.ts"
-        ]
-      },
-      {
-        "basename": "updated_fda_section",
-        "count": 2,
-        "paths": [
-          "client/src/components/client/updated_fda_section.jsx",
-          "client/src/components/ui/updated_fda_section.jsx"
         ]
       },
       {
@@ -1791,7 +1757,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 604864
+        "bytes": 625473
       },
       {
         "file": "client/src/pages/csr/CERV2Page.jsx",
@@ -1799,11 +1765,11 @@
       },
       {
         "file": "server/index.ts",
-        "bytes": 290127
+        "bytes": 271388
       },
       {
         "file": "client/src/concept2cure/components/chat/AnaPersistentPanel.tsx",
-        "bytes": 221426
+        "bytes": 224060
       },
       {
         "file": "server/statistics-service.ts",
@@ -1814,20 +1780,20 @@
         "bytes": 217559
       },
       {
+        "file": "client/src/concept2cure/components/editor/EditorPanel.tsx",
+        "bytes": 189293
+      },
+      {
         "file": "client/src/components/cmc/DocumentAuthoringFixed.jsx",
         "bytes": 188653
       },
       {
-        "file": "client/src/concept2cure/components/editor/EditorPanel.tsx",
-        "bytes": 185815
-      },
-      {
         "file": "client/src/concept2cure/ZenApp.tsx",
-        "bytes": 172401
+        "bytes": 173779
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 168407
+        "bytes": 168414
       },
       {
         "file": "client/src/components/cmc/ManufacturingProcessPanel.jsx",
@@ -1843,7 +1809,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 155288
+        "bytes": 155551
       },
       {
         "file": "client/src/components/coauthor/ComponentManagementSystem.jsx",
@@ -1851,7 +1817,7 @@
       },
       {
         "file": "client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx",
-        "bytes": 138668
+        "bytes": 143400
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -1859,11 +1825,15 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "bytes": 132245
+        "bytes": 131879
       },
       {
         "file": "server/storage.ts",
         "bytes": 114958
+      },
+      {
+        "file": "server/services/intelligent-report-engine.ts",
+        "bytes": 114703
       },
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
@@ -1874,12 +1844,8 @@
         "bytes": 112576
       },
       {
-        "file": "server/services/intelligent-report-engine.ts",
-        "bytes": 106827
-      },
-      {
         "file": "client/src/concept2cure/components/editor/UnifiedDocumentEditor.tsx",
-        "bytes": 106746
+        "bytes": 106729
       }
     ],
     "largeFilesByLines": [
@@ -1893,7 +1859,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 16223
+        "lines": 16710
       },
       {
         "file": "client/src/pages/coauthor/CoAuthor.jsx",
@@ -1905,7 +1871,7 @@
       },
       {
         "file": "server/index.ts",
-        "lines": 7912
+        "lines": 7371
       },
       {
         "file": "server/statistics-service.ts",
@@ -1913,7 +1879,7 @@
       },
       {
         "file": "client/src/concept2cure/components/chat/AnaPersistentPanel.tsx",
-        "lines": 5406
+        "lines": 5476
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -1925,19 +1891,19 @@
       },
       {
         "file": "client/src/concept2cure/components/editor/EditorPanel.tsx",
-        "lines": 4490
+        "lines": 4585
       },
       {
         "file": "client/src/components/CommitmentIntelligenceHub.jsx",
         "lines": 4380
       },
       {
-        "file": "client/src/concept2cure/ZenApp.tsx",
-        "lines": 4248
+        "file": "server/services/ana-ri/command-executor.ts",
+        "lines": 4287
       },
       {
-        "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 4230
+        "file": "client/src/concept2cure/ZenApp.tsx",
+        "lines": 4150
       },
       {
         "file": "client/src/components/MedicalDeviceDocumentEditor.jsx",
@@ -1946,6 +1912,10 @@
       {
         "file": "server/storage.ts",
         "lines": 3849
+      },
+      {
+        "file": "server/services/intelligent-report-engine.ts",
+        "lines": 3555
       },
       {
         "file": "client/src/components/cmc/ManufacturingProcessPanel.jsx",
@@ -1960,16 +1930,16 @@
         "lines": 3326
       },
       {
+        "file": "client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx",
+        "lines": 3307
+      },
+      {
         "file": "client/src/components/protocol/StatisticalDesign.jsx",
         "lines": 3214
       },
       {
-        "file": "client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx",
-        "lines": 3211
-      },
-      {
         "file": "server/routes/authoring-actions.ts",
-        "lines": 3185
+        "lines": 3186
       },
       {
         "file": "client/src/concept2cure/components/editor/UnifiedDocumentEditor.tsx",
@@ -1982,10 +1952,6 @@
       {
         "file": "client/src/components/cmc/TaskManagementSystem.jsx",
         "lines": 2671
-      },
-      {
-        "file": "server/services/intelligent-report-engine.ts",
-        "lines": 2660
       },
       {
         "file": "client/src/components/docushare/SmartDocuSharePanel.jsx",
@@ -2013,7 +1979,7 @@
       },
       {
         "file": "server/routes/knowledge-base.ts",
-        "lines": 2206
+        "lines": 2231
       },
       {
         "file": "client/src/components/cer/LiteratureReviewWorkflow.jsx",
@@ -2028,10 +1994,6 @@
         "lines": 2133
       },
       {
-        "file": "server/services/foresight-ai-engine.ts",
-        "lines": 2132
-      },
-      {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
         "lines": 2076
       },
@@ -2044,16 +2006,20 @@
         "lines": 2048
       },
       {
+        "file": "server/services/lumen-context-builder.ts",
+        "lines": 2036
+      },
+      {
         "file": "client/src/components/cmc/ComprehensiveCMCPlatform.jsx",
         "lines": 2032
       },
       {
-        "file": "client/src/pages/ind/UnifiedSubmissionCenter.jsx",
-        "lines": 1980
+        "file": "server/services/foresight-ai-engine.ts",
+        "lines": 1999
       },
       {
-        "file": "server/services/lumen-context-builder.ts",
-        "lines": 1965
+        "file": "client/src/pages/ind/UnifiedSubmissionCenter.jsx",
+        "lines": 1980
       },
       {
         "file": "client/src/components/client/ClientWorkspaceSettings.jsx",
@@ -2125,7 +2091,7 @@
       },
       {
         "file": "server/routes/ana-ri.ts",
-        "lines": 1752
+        "lines": 1760
       },
       {
         "file": "server/services/precedent-engine.ts",
@@ -2133,7 +2099,7 @@
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1743
+        "lines": 1746
       },
       {
         "file": "client/src/components/510k/EnhancedDocumentVault.jsx",
@@ -2148,6 +2114,10 @@
         "lines": 1689
       },
       {
+        "file": "server/routes/auth.ts",
+        "lines": 1668
+      },
+      {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1658
       },
@@ -2156,12 +2126,8 @@
         "lines": 1648
       },
       {
-        "file": "server/routes/auth.ts",
-        "lines": 1627
-      },
-      {
         "file": "server/routes/ivdr-routes.ts",
-        "lines": 1623
+        "lines": 1626
       },
       {
         "file": "client/src/components/cer/QmpSectionGatingPanel.jsx",
@@ -2184,8 +2150,8 @@
         "lines": 1578
       },
       {
-        "file": "client/src/concept2cure/components/reports/IntelligentReportGenerator.tsx",
-        "lines": 1574
+        "file": "server/routes/report-os.ts",
+        "lines": 1577
       },
       {
         "file": "server/services/client-intelligence-memory.ts",
@@ -2208,6 +2174,10 @@
         "lines": 1550
       },
       {
+        "file": "client/src/portal-v2/components/onboarding/OnboardingWizard.tsx",
+        "lines": 1539
+      },
+      {
         "file": "client/src/components/collaboration/ProjectCollaborationHub.jsx",
         "lines": 1538
       },
@@ -2218,17 +2188,13 @@
       {
         "file": "server/services/submission-twin-service.ts",
         "lines": 1534
-      },
-      {
-        "file": "client/src/portal-v2/components/onboarding/OnboardingWizard.tsx",
-        "lines": 1517
       }
     ]
   },
   "comparison": {
     "baseline": "docs/reports/repo-health-scan-latest.json",
     "delta": {
-      "duplicateBasenames": 0,
+      "duplicateBasenames": -4,
       "largeFilesByBytes": 0,
       "largeFilesByLines": 0
     }
@@ -2236,13 +2202,13 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 241,
+      "duplicateGroups": 237,
       "largeByBytes": 8,
-      "largeByLines": 30
+      "largeByLines": 31
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",
-      "duplicateGroups": 228,
+      "duplicateGroups": 220,
       "largeByBytes": 10,
       "largeByLines": 39
     },
@@ -2250,11 +2216,11 @@
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 61,
       "largeByBytes": 5,
-      "largeByLines": 8
+      "largeByLines": 7
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 32,
+      "duplicateGroups": 34,
       "largeByBytes": 2,
       "largeByLines": 6
     },
