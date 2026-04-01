@@ -1115,32 +1115,13 @@ try {
   console.error('Failed to mount AnA Intelligence routes:', error);
 }
 
-// Mount RAG routes (parallelized for faster startup)
-{
-  const ragResults = await Promise.allSettled([
-    import('./routes/foresight-rag-api.js'),
-    import('./routes/biotech-rag.js'),
-  ]);
-
-  if (ragResults[0].status === 'fulfilled') {
-    const foresightRagDeprecation = (req: Request, res: Response, next: () => void) => {
-      res.setHeader('Deprecation', 'true');
-      res.setHeader('Sunset', '2026-04-01');
-      res.setHeader('Link', '<https://docs.concept2cure.ai/api/cortex>; rel="canonical"');
-      next();
-    };
-    app.use('/api/foresight/rag', foresightRagDeprecation, ragResults[0].value.default);
-    console.log('✅ AnA Intelligence RAG API routes mounted');
-  } else {
-    console.error('Failed to mount AnA Intelligence RAG routes:', ragResults[0].reason);
-  }
-
-  if (ragResults[1].status === 'fulfilled') {
-    app.use('/api/biotech-rag', ragResults[1].value.default);
-    console.log('✅ Biotech AI Intelligence RAG API routes mounted');
-  } else {
-    console.error('❌ Failed to mount Biotech RAG routes:', ragResults[1].reason);
-  }
+// Mount RAG routes
+try {
+  const biotechRag = await import('./routes/biotech-rag.js');
+  app.use('/api/biotech-rag', biotechRag.default);
+  console.log('✅ Biotech AI Intelligence RAG API routes mounted');
+} catch (error) {
+  console.error('❌ Failed to mount Biotech RAG routes:', error);
 }
 
 // Mount FDA/CERV2/Device regulatory routes (parallelized for faster startup)
@@ -7894,7 +7875,6 @@ async function startServer() {
 //   register-core-routes.ts         — templates, AI, CMC, enterprise, control-plane
 //   register-ai-routes.ts           — AnA, chat, IND, regulatory, claims, claude-intel
 //   register-concept2cure-routes.ts — concept2cure + compute
-//   register-integrations-routes.ts — foresight (deprecated, sunset 2026-04-01)
 //   register-admin-routes.ts        — reserved placeholder
 //
 // To migrate a group:
