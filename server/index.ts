@@ -46,6 +46,11 @@ import {
   closeRedisRateLimiter,
   createRedisRateLimiter,
 } from './middleware/redisRateLimiter';
+import {
+  assertNoStaticDataFlagsInProduction,
+  isStaticDataEnabled,
+  sendStaticDataDisabled,
+} from './middleware/staticDataGuard';
 
 // Import enterprise services
 // NOTE: openaiService was renamed to aiProviderRouter - the old name was misleading
@@ -91,6 +96,13 @@ import { fda510kStageProgress, fda510kProjects, projects, draftingTasks } from '
   const missing = required.filter(k => !process.env[k]);
   if (missing.length > 0) {
     console.error(`[FATAL] Missing required environment variables: ${missing.join(', ')}`);
+    process.exit(1);
+  }
+
+  try {
+    assertNoStaticDataFlagsInProduction(process.env.NODE_ENV, process.env);
+  } catch (error: any) {
+    console.error(`[FATAL] ${error?.message || 'Invalid static-data route configuration'}`);
     process.exit(1);
   }
 
@@ -1415,10 +1427,18 @@ try {
 try {
   const haqModule = await import('./routes/haq-manager');
   const haqRoutes = haqModule.default;
-  app.use('/api/haq-manager', haqRoutes);
-  console.log(
-    '✅ HAQ Response Manager routes mounted (question tracking, AI drafting, review workflow)'
-  );
+  if (isStaticDataEnabled('ENABLE_HAQ_MANAGER_STATIC_DATA')) {
+    app.use('/api/haq-manager', haqRoutes);
+    console.log(
+      '✅ HAQ Response Manager routes mounted (question tracking, AI drafting, review workflow)'
+    );
+  } else {
+    mountStaticBusinessDataGuard(
+      '/api/haq-manager',
+      'HAQ Response Manager routes',
+      'ENABLE_HAQ_MANAGER_STATIC_DATA'
+    );
+  }
 } catch (error) {
   console.error('❌ Failed to mount HAQ Manager routes:', error);
 }
@@ -1537,6 +1557,15 @@ app.get('/api/shadow/health', async (_req: Request, res: Response) => {
     });
   }
 });
+
+function mountStaticBusinessDataGuard(path: string, routeName: string, requiredFlag: string) {
+  app.use(path, (_req: Request, res: Response) => {
+    return sendStaticDataDisabled(res, routeName, requiredFlag);
+  });
+  console.warn(
+    `⚠️ ${routeName} mounted in fail-closed mode (set ${requiredFlag}=true to re-enable).`
+  );
+}
 
 // Mount SE Matrix render orchestration (Phase 6.6.C2 — Manifest + Payload + Render + Audit)
 // POST /api/programs/:programId/se-matrix/render → Shadow payload → Part 11 audit
@@ -7162,22 +7191,24 @@ async function startServer() {
   // ──────────────────────────────────────────────────────────────────────────
   // MISSION CONTROL — Program OS (PM ecosystem)
   // ──────────────────────────────────────────────────────────────────────────
-  if (EXPERIMENTAL_ROUTES_ENABLED) {
-    try {
-      const missionControlRoutes = await import('./routes/mission-control');
+  try {
+    const missionControlRoutes = await import('./routes/mission-control');
+    if (isStaticDataEnabled('ENABLE_MISSION_CONTROL_STATIC_DATA')) {
       app.use('/api/mission-control', missionControlRoutes.default);
       console.log('✅ Mission Control routes mounted at /api/mission-control');
-
-      const snowglobeRoutes = await import('./routes/snowglobe');
-      app.use('/api/snowglobe', snowglobeRoutes.default);
-      console.log('✅ Snow Globe routes mounted at /api/snowglobe');
-    } catch (error) {
-      console.error('❌ Failed to mount Mission Control routes:', error);
+    } else {
+      mountStaticBusinessDataGuard(
+        '/api/mission-control',
+        'Mission Control routes',
+        'ENABLE_MISSION_CONTROL_STATIC_DATA'
+      );
     }
-  } else {
-    console.log(
-      'ℹ️ Experimental mission-control/snowglobe routes disabled (set ENABLE_EXPERIMENTAL_ROUTES=true in non-production).'
-    );
+
+    const snowglobeRoutes = await import('./routes/snowglobe');
+    app.use('/api/snowglobe', snowglobeRoutes.default);
+    console.log('✅ Snow Globe routes mounted at /api/snowglobe');
+  } catch (error) {
+    console.error('❌ Failed to mount Mission Control routes:', error);
   }
 
   // ──────────────────────────────────────────────────────────────────────────
