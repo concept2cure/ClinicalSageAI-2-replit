@@ -151,6 +151,18 @@ const benefitRiskSchema = z.object({
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * GET /api/csr-builder or /api/csr
+ * Lightweight status endpoint for namespace discovery.
+ */
+router.get('/', (_req: Request, res: Response) => {
+  res.json({
+    success: true,
+    message: 'CSR Builder API available',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+/**
  * GET /api/csr-builder/structure
  * Returns the full ICH E3 section hierarchy.
  */

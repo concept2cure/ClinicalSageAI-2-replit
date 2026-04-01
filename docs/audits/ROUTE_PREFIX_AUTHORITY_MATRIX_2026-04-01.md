@@ -5,6 +5,10 @@ Branch: `cursor/customer-shaped-harness-build-5841`
 
 Purpose: non-destructive authority map for duplicate route-prefix mounts in `server/index.ts` prior to any consolidation work.
 
+Required review artifact linkage:
+- Generated matrix used by CI merge-path gate: `docs/reports/route-ownership-matrix-latest.md`.
+- Gate command: `npm run ci:route-ownership-matrix:check`.
+
 ## Findings summary
 
 - This matrix is **evidence-only** and does not change runtime routing.
@@ -49,4 +53,3 @@ Before any prefix consolidation:
 1. Build path-level overlap map for each duplicate prefix.
 2. Add parity tests for top beta-critical calls (`/api/documents`, `/api/projects`, `/api/regulatory`).
 3. Move to a single-authority router per concern only after green parity evidence.
-
