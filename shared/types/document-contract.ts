@@ -77,9 +77,53 @@ export interface GovernedDocumentActionContract {
     | 'api_route'
     | 'ai_orchestrator'
     | 'import_pipeline'
-    | 'system';
+    | 'system'
+    | 'ri_copilot'
+    | 'ectd_coauthor'
+    | 'ind_workspace'
+    | 'cmc_workspace'
+    | 'cerv2_device';
   generationMode: 'manual' | 'ai_assisted' | 'ai_generated' | 'imported' | 'amendment';
   lifecycleStatus: ArtifactStatus | 'in_review' | 'published' | 'superseded';
+  clientTrack: 'biotech' | 'device' | 'diagnostics';
+  submissionProgram: 'ind' | 'ectd' | '510k' | 'pma' | 'cer' | 'ivdr' | 'general_ri';
+  persona: 'regulatory' | 'medical_writer' | 'cmc' | 'clinical' | 'qa' | 'executive' | 'cro';
+  regulatorScope: 'fda' | 'ema' | 'mhra' | 'hc' | 'pmda' | 'multi';
+  evidenceMode: 'csr' | 'literature' | 'predicate' | 'cmc_source' | 'test_data' | 'mixed';
+  documentClass:
+    | 'strategy_memo'
+    | 'evidence_memo'
+    | 'section_draft'
+    | 'module3_output'
+    | 'submission_component'
+    | 'audit_report'
+    | 'comparator_summary'
+    | 'risk_benefit'
+    | 'protocol_rationale'
+    | 'regional_differences'
+    | 'safety_evidence_brief'
+    | 'endpoint_justification';
+  readinessGate: 'exploratory' | 'internal_review' | 'submission_candidate' | 'inspection_ready';
+  approvalPathType: 'single_reviewer' | 'regulated_dual_review' | 'qa_lock' | 'signoff_required';
+  recommendationSource:
+    | 'ana_ri'
+    | 'cmc_builder'
+    | 'cerv2_510k'
+    | 'cerv2_pma'
+    | 'cerv2_cer'
+    | 'ectd_compiler'
+    | 'ind_autodraft'
+    | 'report_engine';
+  workspaceTarget: 'project' | 'dossier' | 'vault';
+  dossierContainerId?: string;
+  artifactContainerId?: string;
+  regulatorIntent:
+    | 'submission_authoring'
+    | 'evidence_analysis'
+    | 'strategy'
+    | 'comparison'
+    | 'qa_review'
+    | 'inspection_support';
   editorPayload: {
     title: string;
     content: string;
@@ -116,6 +160,8 @@ export interface GovernedDocumentActionContract {
     allowed: boolean;
     reason?: string;
     gateChecks?: Array<{ name: string; passed: boolean; detail?: string }>;
+    blockingReasons?: string[];
+    readinessOutcome?: 'blocked' | 'conditional' | 'ready';
   };
 }
 
@@ -209,6 +255,17 @@ export function validateGovernedDocumentActionContract(
   if (!contract.originSurface) errors.push('originSurface is required');
   if (!contract.generationMode) errors.push('generationMode is required');
   if (!contract.lifecycleStatus) errors.push('lifecycleStatus is required');
+  if (!contract.clientTrack) errors.push('clientTrack is required');
+  if (!contract.submissionProgram) errors.push('submissionProgram is required');
+  if (!contract.persona) errors.push('persona is required');
+  if (!contract.regulatorScope) errors.push('regulatorScope is required');
+  if (!contract.evidenceMode) errors.push('evidenceMode is required');
+  if (!contract.documentClass) errors.push('documentClass is required');
+  if (!contract.readinessGate) errors.push('readinessGate is required');
+  if (!contract.approvalPathType) errors.push('approvalPathType is required');
+  if (!contract.recommendationSource) errors.push('recommendationSource is required');
+  if (!contract.workspaceTarget) errors.push('workspaceTarget is required');
+  if (!contract.regulatorIntent) errors.push('regulatorIntent is required');
   if (!contract.editorPayload?.title) errors.push('editorPayload.title is required');
   if (!contract.editorPayload?.content) errors.push('editorPayload.content is required');
   if (!contract.placementTarget?.workspace) errors.push('placementTarget.workspace is required');
@@ -218,8 +275,70 @@ export function validateGovernedDocumentActionContract(
   if (!contract.auditEventPayload?.eventType) errors.push('auditEventPayload.eventType is required');
   if (!contract.auditEventPayload?.actorId) errors.push('auditEventPayload.actorId is required');
 
+  if (contract.workspaceTarget !== contract.placementTarget.workspace) {
+    errors.push('workspaceTarget must match placementTarget.workspace');
+  }
+
+  if (contract.workspaceTarget === 'dossier' && !contract.dossierContainerId) {
+    errors.push('dossierContainerId is required when workspaceTarget=dossier');
+  }
+
+  if (contract.workspaceTarget === 'vault' && !contract.artifactContainerId) {
+    errors.push('artifactContainerId is required when workspaceTarget=vault');
+  }
+
+  if (contract.documentClass === 'section_draft' && !contract.editorPayload.ctdSection) {
+    warnings.push('section_draft should include editorPayload.ctdSection');
+  }
+
+  if (contract.documentClass === 'module3_output') {
+    const ctd = contract.editorPayload.ctdSection || '';
+    if (!ctd.startsWith('3.')) {
+      errors.push('module3_output requires ctdSection mapping under section 3.x');
+    }
+    if (!contract.provenancePayload?.sourceRefs?.length) {
+      errors.push('module3_output requires provenancePayload.sourceRefs');
+    }
+  }
+
+  if (
+    contract.submissionProgram === '510k' &&
+    contract.documentClass === 'submission_component' &&
+    contract.evidenceMode === 'predicate' &&
+    !contract.provenancePayload?.sourceRefs?.length
+  ) {
+    errors.push('510k submission_component with predicate evidence requires sourceRefs context');
+  }
+
+  if (contract.evidenceMode === 'predicate' && contract.clientTrack !== 'device') {
+    warnings.push('predicate evidence mode is typically restricted to device track');
+  }
+
+  if (contract.documentClass === 'audit_report' && !contract.artifactId) {
+    warnings.push('audit_report should be linked to a source artifactId');
+  }
+
+  if (contract.readinessGate === 'inspection_ready') {
+    if (!contract.provenancePayload.provider || !contract.provenancePayload.model) {
+      errors.push('inspection_ready requires provenancePayload provider and model');
+    }
+    if (
+      !['regulated_dual_review', 'qa_lock', 'signoff_required'].includes(contract.approvalPathType)
+    ) {
+      errors.push('inspection_ready requires stronger approvalPathType');
+    }
+  }
+
   if (contract.exportEligibility.allowed && contract.lifecycleStatus === 'draft') {
     warnings.push('draft artifacts marked export-eligible should be explicitly justified');
+  }
+
+  if (
+    contract.readinessGate === 'submission_candidate' &&
+    contract.workspaceTarget !== 'dossier' &&
+    contract.documentClass !== 'strategy_memo'
+  ) {
+    warnings.push('submission_candidate artifacts should generally be placed in dossier workspace');
   }
 
   return {
