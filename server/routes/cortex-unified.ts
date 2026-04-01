@@ -1215,12 +1215,35 @@ function extractUserId(req: Request): number | null {
   }
 }
 
+function requireAuthenticatedUserId(
+  req: Request,
+  res: Response,
+  code:
+    | 'CORTEX_THREADS_AUTH_REQUIRED'
+    | 'CORTEX_THREAD_AUTH_REQUIRED'
+    | 'CORTEX_THREAD_CREATE_AUTH_REQUIRED'
+    | 'CORTEX_THREAD_UPDATE_AUTH_REQUIRED'
+    | 'CORTEX_THREAD_DELETE_AUTH_REQUIRED'
+): number | null {
+  const userId = extractUserId(req);
+  if (!userId) {
+    res.status(401).json({
+      success: false,
+      error: 'Authentication required',
+      code,
+    });
+    return null;
+  }
+  return userId;
+}
+
 /** GET /api/cortex/threads — list threads for the current user */
 router.get('/threads', async (req: Request, res: Response) => {
   try {
-    const userId = extractUserId(req);
-    const limit = Math.min(Number(req.query.limit) || 50, 100);
-    const offset = Number(req.query.offset) || 0;
+    const userId = requireAuthenticatedUserId(req, res, 'CORTEX_THREADS_AUTH_REQUIRED');
+    if (!userId) return;
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
     const projectId = req.query.project_id as string | undefined;
 
     let query = `
@@ -1253,10 +1276,14 @@ router.get('/threads', async (req: Request, res: Response) => {
       metadata: r.metadata,
     }));
 
-    res.json({ success: true, threads, total: threads.length });
+    return res.json({ success: true, threads, total: threads.length });
   } catch (err: any) {
     logger.error('GET /threads error:', err.message);
-    res.json({ success: true, threads: [] }); // fail-open so UI doesn't break
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to load cortex threads',
+      code: 'CORTEX_THREADS_FETCH_FAILED',
+    });
   }
 });
 
@@ -1264,6 +1291,8 @@ router.get('/threads', async (req: Request, res: Response) => {
 router.get('/threads/:threadId', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
+    const userId = requireAuthenticatedUserId(req, res, 'CORTEX_THREAD_AUTH_REQUIRED');
+    if (!userId) return;
     const threadResult = await pool.query(
       'SELECT id, title, model, created_at, updated_at, user_id, metadata FROM chat_threads WHERE id = $1',
       [threadId]
@@ -1272,6 +1301,14 @@ router.get('/threads/:threadId', async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, error: 'Thread not found' });
     }
     const thread = threadResult.rows[0];
+    const threadOwnerId = Number(thread.user_id);
+    if (!Number.isFinite(threadOwnerId) || threadOwnerId !== userId) {
+      return res.status(403).json({
+        success: false,
+        error: 'Thread access denied',
+        code: 'CORTEX_THREAD_ACCESS_DENIED',
+      });
+    }
     const msgResult = await pool.query(
       'SELECT id, role, content, model, tokens_used, created_at FROM chat_messages WHERE thread_id = $1 ORDER BY created_at ASC',
       [threadId]
@@ -1295,14 +1332,19 @@ router.get('/threads/:threadId', async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     logger.error('GET /threads/:threadId error:', err.message);
-    res.status(500).json({ success: false, error: 'Failed to retrieve thread' });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve thread',
+      code: 'CORTEX_THREAD_FETCH_FAILED',
+    });
   }
 });
 
 /** POST /api/cortex/threads — create a new thread */
 router.post('/threads', async (req: Request, res: Response) => {
   try {
-    const userId = extractUserId(req);
+    const userId = requireAuthenticatedUserId(req, res, 'CORTEX_THREAD_CREATE_AUTH_REQUIRED');
+    if (!userId) return;
     const { title, projectId, submissionType, systemPrompt } = req.body || {};
     const newId = `cortex_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const metadata = { projectId: projectId || null, submissionType: submissionType || null };
@@ -1323,7 +1365,11 @@ router.post('/threads', async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     logger.error('POST /threads error:', err.message);
-    res.status(500).json({ success: false, error: 'Failed to create thread' });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create thread',
+      code: 'CORTEX_THREAD_CREATE_FAILED',
+    });
   }
 });
 
@@ -1331,17 +1377,16 @@ router.post('/threads', async (req: Request, res: Response) => {
 router.patch('/threads/:threadId', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
-    const userId = (req as any).userId || (req as any).user?.id;
-    const orgId =
-      (req as any).tenantContext?.organizationId || (req.headers['x-organization-id'] as string);
+    const userId = requireAuthenticatedUserId(req, res, 'CORTEX_THREAD_UPDATE_AUTH_REQUIRED');
+    if (!userId) return;
     const { title } = req.body || {};
     if (!title || typeof title !== 'string') {
       return res.status(400).json({ success: false, error: 'title is required' });
     }
     const trimmed = title.trim().slice(0, 200);
     const result = await pool.query(
-      'UPDATE chat_threads SET title = $1, updated_at = NOW() WHERE id = $2 AND (user_id = $3 OR organization_id = $4) RETURNING id',
-      [trimmed, threadId, userId, orgId]
+      'UPDATE chat_threads SET title = $1, updated_at = NOW() WHERE id = $2 AND user_id = $3 RETURNING id',
+      [trimmed, threadId, userId]
     );
     if (result.rows.length === 0) {
       return res.status(403).json({ success: false, error: 'Thread not found or access denied' });
@@ -1349,7 +1394,11 @@ router.patch('/threads/:threadId', async (req: Request, res: Response) => {
     res.json({ success: true, title: trimmed });
   } catch (err: any) {
     logger.error('PATCH /threads/:threadId error:', err.message);
-    res.status(500).json({ success: false, error: 'Failed to update thread title' });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update thread title',
+      code: 'CORTEX_THREAD_UPDATE_FAILED',
+    });
   }
 });
 
@@ -1357,14 +1406,13 @@ router.patch('/threads/:threadId', async (req: Request, res: Response) => {
 router.delete('/threads/:threadId', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
-    const userId = (req as any).userId || (req as any).user?.id;
-    const orgId =
-      (req as any).tenantContext?.organizationId || (req.headers['x-organization-id'] as string);
+    const userId = requireAuthenticatedUserId(req, res, 'CORTEX_THREAD_DELETE_AUTH_REQUIRED');
+    if (!userId) return;
 
     // Verify the requester owns this thread before deleting
     const ownerCheck = await pool.query(
-      'SELECT id FROM chat_threads WHERE id = $1 AND (user_id = $2 OR organization_id = $3)',
-      [threadId, userId, orgId]
+      'SELECT id FROM chat_threads WHERE id = $1 AND user_id = $2',
+      [threadId, userId]
     );
     if (ownerCheck.rows.length === 0) {
       return res.status(403).json({ success: false, error: 'Thread not found or access denied' });
@@ -1375,7 +1423,11 @@ router.delete('/threads/:threadId', async (req: Request, res: Response) => {
     res.json({ success: true });
   } catch (err: any) {
     logger.error('DELETE /threads/:threadId error:', err.message);
-    res.status(500).json({ success: false, error: 'Failed to delete thread' });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete thread',
+      code: 'CORTEX_THREAD_DELETE_FAILED',
+    });
   }
 });
 
