@@ -75,8 +75,7 @@ export { default as sapGeneratorService } from './sap-generator-service';
 // ANALYTICS / INTELLIGENCE SERVICES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export { StrategicIntelligenceService } from './strategic-intelligence-service';
-export { MonteCarloService } from './monte-carlo-service';
+export { default as monteCarloService } from './monte-carlo-service';
 export { default as reportGeneratorService } from './report-generator-service';
 
 // ═══════════════════════════════════════════════════════════════════════════════

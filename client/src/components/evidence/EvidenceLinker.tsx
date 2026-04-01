@@ -10,7 +10,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { LoadingState, ErrorState, EmptyState, DataStateWrapper } from '@/components/ui/states';
+import { LoadingState, ErrorState, EmptyState, DataStateWrapper } from '@/components/ui/statesV2';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
