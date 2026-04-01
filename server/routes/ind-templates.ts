@@ -278,7 +278,7 @@ async function extractExcelText(buffer: Buffer): Promise<string> {
     worksheet.eachRow({ includeEmpty: false }, row => {
       const values = row.values
         .slice(1)
-        .map(value => (value === null || value === undefined ? '' : String(value)))
+        .map((value: any) => (value === null || value === undefined ? '' : String(value)))
         .join(', ')
         .trim();
       if (values.length > 0) rows.push(values);
@@ -1022,7 +1022,7 @@ router.get('/template/:id/download', async (req, res) => {
 ${template.description}
 
 ## Included Modules:
-${template.modules.map(module => `- ${module}`).join('\n')}
+${template.modules.map((module: any) => `- ${module}`).join('\n')}
 
 ## Specialization: ${template.specialization}
 

@@ -104,17 +104,17 @@ async function calculateCriticalPath(projectId: number) {
     const dependencies = await storage.db
       .selectFrom('taskDependencies')
       .selectAll()
-      .where(eb =>
+      .where((eb: any) =>
         eb.or([
           eb(
             'predecessorTaskId',
             'in',
-            tasks.map(t => t.taskId)
+            tasks.map((t: any) => t.taskId)
           ),
           eb(
             'successorTaskId',
             'in',
-            tasks.map(t => t.taskId)
+            tasks.map((t: any) => t.taskId)
           ),
         ])
       )
@@ -122,7 +122,7 @@ async function calculateCriticalPath(projectId: number) {
 
     // Build adjacency list
     const graph: Record<string, { task: any; successors: string[]; duration: number }> = {};
-    tasks.forEach(task => {
+    tasks.forEach((task: any) => {
       const duration = task.estimatedHours || 8; // Default 8 hours
       graph[task.taskId] = {
         task,
@@ -131,7 +131,7 @@ async function calculateCriticalPath(projectId: number) {
       };
     });
 
-    dependencies.forEach(dep => {
+    dependencies.forEach((dep: any) => {
       if (graph[dep.predecessorTaskId]) {
         graph[dep.predecessorTaskId].successors.push(dep.successorTaskId);
       }
@@ -167,10 +167,10 @@ async function calculateCriticalPath(projectId: number) {
 
     // Find all root nodes (no predecessors)
     const rootNodes = tasks.filter(
-      task => !dependencies.some(dep => dep.successorTaskId === task.taskId)
+      (task: any) => !dependencies.some((dep: any) => dep.successorTaskId === task.taskId)
     );
 
-    rootNodes.forEach(root => {
+    rootNodes.forEach((root: any) => {
       visited.clear();
       dfs(root.taskId, [], 0);
     });
@@ -192,7 +192,7 @@ async function getOptimalAssignee(organizationId: number, taskData: any) {
     // Get all users and their current workload
     const workloadQuery = await storage.db
       .selectFrom('users')
-      .leftJoin('unifiedTasks', join =>
+      .leftJoin('unifiedTasks', (join: any) =>
         join
           .onRef('users.id', '=', 'unifiedTasks.assigneeId')
           .on('unifiedTasks.status', 'in', ['pending', 'in-progress'])
@@ -211,7 +211,7 @@ async function getOptimalAssignee(organizationId: number, taskData: any) {
       .execute();
 
     // Sort by workload (ascending)
-    const sortedByWorkload = workloadQuery.sort((a, b) => {
+    const sortedByWorkload = workloadQuery.sort((a: any, b: any) => {
       const aHours = Number(a.totalHours || 0);
       const bHours = Number(b.totalHours || 0);
       return aHours - bHours;

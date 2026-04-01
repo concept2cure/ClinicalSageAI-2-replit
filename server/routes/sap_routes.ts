@@ -129,7 +129,7 @@ Study Information:
        To evaluate ${primary_endpoint}
        
    1.2 Secondary Objectives
-       ${secondary_endpoints.map((endpoint, i) => `${i + 1}. To assess ${endpoint}`).join('\n       ')}
+       ${secondary_endpoints.map((endpoint: any, i: any) => `${i + 1}. To assess ${endpoint}`).join('\n       ')}
 
 2. STUDY DESIGN
    - ${numArms}-arm, ${randomization || 'randomized'}, ${blinding || 'blinded'} study

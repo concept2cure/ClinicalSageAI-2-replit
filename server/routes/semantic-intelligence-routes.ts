@@ -173,7 +173,7 @@ router.post('/protocol-alignment', async (req, res) => {
       // Clean up temp file
       try {
         fs.unlinkSync(tempFile);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error deleting temp file:', err);
       }
 
@@ -188,7 +188,7 @@ router.post('/protocol-alignment', async (req, res) => {
       try {
         const result = JSON.parse(pythonOutput);
         return res.json(result);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error parsing Python output:', err);
         return res.status(500).json({
           error: 'Error parsing semantic alignment results',
@@ -196,7 +196,7 @@ router.post('/protocol-alignment', async (req, res) => {
         });
       }
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error in protocol alignment endpoint:', err);
     return res.status(500).json({
       error: 'Internal server error',
@@ -300,7 +300,7 @@ router.post('/field-alignment', async (req, res) => {
       // Clean up temp file
       try {
         fs.unlinkSync(tempFile);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error deleting temp file:', err);
       }
 
@@ -315,7 +315,7 @@ router.post('/field-alignment', async (req, res) => {
       try {
         const result = JSON.parse(pythonOutput);
         return res.json(result);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error parsing Python output:', err);
         return res.status(500).json({
           error: 'Error parsing field alignment results',
@@ -323,7 +323,7 @@ router.post('/field-alignment', async (req, res) => {
         });
       }
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error in field alignment endpoint:', err);
     return res.status(500).json({
       error: 'Internal server error',
@@ -386,7 +386,7 @@ router.post('/optimize-protocol', async (req, res) => {
       // Clean up temp file
       try {
         fs.unlinkSync(tempFile);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error deleting temp file:', err);
       }
 
@@ -401,7 +401,7 @@ router.post('/optimize-protocol', async (req, res) => {
       try {
         const result = JSON.parse(pythonOutput);
         return res.json(result);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error parsing Python output:', err);
         return res.status(500).json({
           error: 'Error parsing optimization results',
@@ -409,7 +409,7 @@ router.post('/optimize-protocol', async (req, res) => {
         });
       }
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error in optimize protocol endpoint:', err);
     return res.status(500).json({
       error: 'Internal server error',

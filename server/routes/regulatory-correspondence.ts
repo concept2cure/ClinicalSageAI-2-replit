@@ -371,7 +371,7 @@ router.post('/correspondence/intake', async (req, res) => {
       quarantined: false,
       importedByUserId: userId,
     },
-    attachmentIds: attachmentRefs.map(a => a.id),
+    attachmentIds: attachmentRefs.map((a: any) => a.id),
     parsedText,
     summary: req.body.summary || parsedText.slice(0, 200),
   };

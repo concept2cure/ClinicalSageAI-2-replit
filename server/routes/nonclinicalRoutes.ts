@@ -65,7 +65,7 @@ const dbOps = {
       const studies = await db.execute(studiesQuery);
 
       // Format studies for frontend (snake_case to camelCase)
-      const formattedStudies = studies.map(study => ({
+      const formattedStudies = studies.map((study: any) => ({
         id: study.id,
         studyIdentifier: study.study_identifier,
         studyTitle: study.study_title,
