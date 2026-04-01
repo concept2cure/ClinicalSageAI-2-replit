@@ -27,9 +27,15 @@ function mockCommonDeps(options: {
       pool: mockPool,
       getPool: options.dbAvailable
         ? () => mockPool
-        : () => {
-            throw new Error('Database connection not available');
-          },
+        : () => ({
+            query: vi.fn(async () => {
+              throw new Error('Database connection not available');
+            }),
+            connect: vi.fn(async () => {
+              throw new Error('Database connection not available');
+            }),
+            on: vi.fn(),
+          }),
     };
   });
 
@@ -196,16 +202,22 @@ function mockCommonDeps(options: {
     processResponseActions: vi.fn(async () => ({ actions: [] })),
   }));
 
-  if (options.commandImportFails) {
-    vi.doMock('../../server/services/ana-ri/command-executor.js', () => {
-      throw new Error('command executor unavailable');
-    });
-  } else {
-    vi.doMock('../../server/services/ana-ri/command-executor.js', () => ({
+  vi.doMock('../../server/services/ana-ri/command-executor.js', () => {
+    if (options.commandImportFails) {
+      return {
+        buildCommandContextForPrompt: vi.fn(() => 'commands unavailable'),
+        get COMMAND_REGISTRY() {
+          throw new Error('command executor unavailable');
+        },
+        processCommandsInResponse: vi.fn(async () => ({ executedCommands: [] })),
+      };
+    }
+    return {
       COMMAND_REGISTRY: [{ name: 'create_project' }],
+      buildCommandContextForPrompt: vi.fn(() => 'mock command context'),
       processCommandsInResponse: vi.fn(async () => ({ executedCommands: [] })),
-    }));
-  }
+    };
+  });
 }
 
 async function callRoute(

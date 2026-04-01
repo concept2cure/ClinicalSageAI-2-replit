@@ -368,7 +368,8 @@ router.post('/chat', async (req: Request, res: Response) => {
       }
     }
 
-    const chatProjectId = req.body.project_id || req.body.context?.projectId;
+    const chatProjectId =
+      req.body.project_id || req.body.context?.projectId || req.body.project_context?.projectId;
     const chatProjectIdNumber = chatProjectId != null ? Number(chatProjectId) : null;
     const chatAuthoringContext =
       authoring_context && typeof authoring_context === 'object'
@@ -624,7 +625,6 @@ router.post('/chat', async (req: Request, res: Response) => {
           'ana-ri'
         );
         await saveMessage(resolvedThreadId, 'user', message);
-        await saveMessage(resolvedThreadId, 'assistant', response.content);
       } catch (e: any) {
         console.error('[AnA RI] Thread persistence failed:', e?.message);
         persistenceFailed = true;
@@ -682,28 +682,11 @@ router.post('/chat', async (req: Request, res: Response) => {
       },
     }).catch(() => {});
 
-    // RIM interception — capture intelligence signals (non-blocking)
-    const projectIdForRim = req.body.project_id || req.body.context?.projectId;
-    if (response.content && projectIdForRim) {
-      interceptChatResponse({
-        organizationId: orgId ? Number(orgId) : 0,
-        projectId: projectIdForRim ? Number(projectIdForRim) : 0,
-        userId: typeof userId === 'number' ? userId : undefined,
-        assistantMessage: response.content,
-        claimCount: 0,
-        supportedClaimRate: 0.5,
-        model: response.model || 'unknown',
-        provider: response.provider || 'unknown',
-      }).catch(() => {});
-    }
-
-    // Evidence validation — semantic grounding check (beyond regex-based enforcement)
-    const evidenceVerdict = validateEvidence(response.content, 'ana-ri');
-
     // Guidance executor — auto-create artifacts if response contains action signals
     // (Parity with /stream — previously only ran on stream path)
     let executedActions: any[] = [];
-    const chatProjectIdForActions = req.body.project_id || req.body.context?.projectId;
+    const chatProjectIdForActions = chatProjectId;
+    let postGuidanceResponseContent = response.content;
     if (response.content && chatProjectIdForActions && orgId) {
       try {
         const guidance = await processResponseActions(response.content, {
@@ -717,6 +700,7 @@ router.post('/chat', async (req: Request, res: Response) => {
           threadId: resolvedThreadId || undefined,
         });
         executedActions = guidance.actions;
+        postGuidanceResponseContent = guidance.cleanedText || response.content;
       } catch (e: any) {
         console.warn('[AnA RI Chat] Guidance executor failed:', e?.message);
       }
@@ -725,8 +709,8 @@ router.post('/chat', async (req: Request, res: Response) => {
     // Command executor — execute operational commands (create project, artifact, task, etc.)
     // (Parity with /stream — previously only ran on stream path)
     let executedCommands: any[] = [];
-    let cleanedResponseContent = response.content;
-    if (response.content && orgId) {
+    let cleanedResponseContent = postGuidanceResponseContent;
+    if (postGuidanceResponseContent && orgId) {
       try {
         const cmdCtx: CommandContext = {
           userId: typeof userId === 'number' ? userId : 0,
@@ -739,16 +723,52 @@ router.post('/chat', async (req: Request, res: Response) => {
           userName: (req as any).user?.name,
           userRole: effectiveRole,
         };
-        const cmdResult = await processCommandsInResponse(response.content, cmdCtx);
+        const cmdResult = await processCommandsInResponse(postGuidanceResponseContent, cmdCtx);
         executedCommands = cmdResult.executedCommands;
         cleanedResponseContent = cmdResult.cleanedText
           ? cmdResult.cleanedText
-          : response.content;
+          : postGuidanceResponseContent;
         if (executedCommands.length > 0) {
           console.log(`[AnA RI Chat] Executed ${executedCommands.length} command(s)`);
         }
       } catch (e: any) {
         console.warn('[AnA RI Chat] Command executor failed:', e?.message);
+      }
+    }
+
+    const finalAssistantContent =
+      cleanedResponseContent && cleanedResponseContent.trim().length > 0
+        ? cleanedResponseContent
+        : executedActions.length > 0 || executedCommands.length > 0
+          ? 'Action executed successfully.'
+          : response.content;
+
+    // RIM interception — capture intelligence signals (non-blocking) using cleaned content
+    const projectIdForRim = chatProjectId;
+    if (finalAssistantContent && projectIdForRim) {
+      interceptChatResponse({
+        organizationId: orgId ? Number(orgId) : 0,
+        projectId: projectIdForRim ? Number(projectIdForRim) : 0,
+        userId: typeof userId === 'number' ? userId : undefined,
+        assistantMessage: finalAssistantContent,
+        claimCount: 0,
+        supportedClaimRate: 0.5,
+        model: response.model || 'unknown',
+        provider: response.provider || 'unknown',
+      }).catch(() => {});
+    }
+
+    // Evidence validation — semantic grounding check (beyond regex-based enforcement)
+    const evidenceVerdict = validateEvidence(finalAssistantContent, 'ana-ri');
+
+    // Persist assistant response after guidance/command cleanup so thread history
+    // matches what users actually saw in chat.
+    if (orgId && resolvedThreadId && response.content) {
+      try {
+        await saveMessage(resolvedThreadId, 'assistant', finalAssistantContent);
+      } catch (e: any) {
+        console.error('[AnA RI] Assistant persist failed:', e?.message);
+        persistenceFailed = true;
       }
     }
 
@@ -759,7 +779,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     });
 
     const responsePayload = {
-      response: cleanedResponseContent,
+      response: finalAssistantContent,
       thread_id: resolvedThreadId,
       orchestration: {
         detectedIntent: orchestration.detectedIntent,
@@ -898,7 +918,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       authoringContextBlock = parts.join('\n');
     }
 
-    const streamProjectId = project_id || req.body.context?.projectId;
+    const streamProjectId = project_id || req.body.context?.projectId || req.body.project_context?.projectId;
     const streamProjectIdNumber = streamProjectId != null ? Number(streamProjectId) : null;
     const streamAuthoringContext =
       authoring_context && typeof authoring_context === 'object'
@@ -1197,6 +1217,7 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     // Guidance executor — auto-create artifacts if response contains action signals
     let executedActions: any[] = [];
+    let contentForCommandProcessing = fullContent;
     if (fullContent && streamProjectId && orgId) {
       try {
         const guidance = await processResponseActions(fullContent, {
@@ -1210,6 +1231,7 @@ router.post('/stream', async (req: Request, res: Response) => {
           threadId: threadId || undefined,
         });
         executedActions = guidance.actions;
+        contentForCommandProcessing = guidance.cleanedText || fullContent;
       } catch (e: any) {
         console.warn('[AnA RI Stream] Guidance executor failed:', e?.message);
       }
@@ -1217,7 +1239,7 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     // Command executor — execute operational commands (create project, artifact, task, etc.)
     let executedCommands: any[] = [];
-    if (fullContent && orgId) {
+    if (contentForCommandProcessing && orgId) {
       try {
         const cmdCtx: CommandContext = {
           userId: typeof userId === 'number' ? userId : 0,
@@ -1232,9 +1254,9 @@ router.post('/stream', async (req: Request, res: Response) => {
         };
         const { processCommandsInResponse } =
           await import('../services/ana-ri/command-executor.js');
-        const cmdResult = await processCommandsInResponse(fullContent, cmdCtx);
+        const cmdResult = await processCommandsInResponse(contentForCommandProcessing, cmdCtx);
         executedCommands = cmdResult.executedCommands;
-        cleanedFullContent = cmdResult.cleanedText ? cmdResult.cleanedText : fullContent;
+        cleanedFullContent = cmdResult.cleanedText ? cmdResult.cleanedText : contentForCommandProcessing;
         if (executedCommands.length > 0) {
           console.log(`[AnA RI Stream] Executed ${executedCommands.length} command(s)`);
         }
@@ -1243,10 +1265,17 @@ router.post('/stream', async (req: Request, res: Response) => {
       }
     }
 
+    const finalAssistantContent =
+      cleanedFullContent && cleanedFullContent.trim().length > 0
+        ? cleanedFullContent
+        : executedActions.length > 0 || executedCommands.length > 0
+          ? 'Action executed successfully.'
+          : contentForCommandProcessing || fullContent;
+
     // Persist assistant response using cleaned text when command blocks were present.
     if (orgId && threadId && fullContent) {
       try {
-        await saveMessage(threadId, 'assistant', cleanedFullContent || fullContent);
+        await saveMessage(threadId, 'assistant', finalAssistantContent);
       } catch (e: any) {
         console.error('[AnA RI Stream] Assistant persist failed:', e?.message);
         persistenceFailed = true;
@@ -1261,11 +1290,13 @@ router.post('/stream', async (req: Request, res: Response) => {
     }
 
     // Evidence discipline + structure checks (parity with /chat)
-    const streamEvidenceCheck = fullContent ? checkEvidenceDiscipline(fullContent) : null;
-    const streamStructureCheck = fullContent ? validateResponseStructure(fullContent) : null;
+    const streamEvidenceCheck = finalAssistantContent ? checkEvidenceDiscipline(finalAssistantContent) : null;
+    const streamStructureCheck = finalAssistantContent ? validateResponseStructure(finalAssistantContent) : null;
 
     // Evidence validation — semantic grounding check (non-blocking)
-    const streamEvidenceVerdict = fullContent ? validateEvidence(fullContent, 'ana-ri') : null;
+    const streamEvidenceVerdict = finalAssistantContent
+      ? validateEvidence(finalAssistantContent, 'ana-ri')
+      : null;
 
     // Build queue metadata
     const streamQueueMeta = buildQueueMeta({
@@ -1295,7 +1326,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         executedCommands: executedCommands.length > 0 ? executedCommands : undefined,
         enrichmentSources: enrichment.sources.length > 0 ? enrichment.sources : undefined,
         enrichmentMeta: enrichment.enrichmentMeta || undefined,
-        cleanedResponse: cleanedFullContent || undefined,
+        cleanedResponse: finalAssistantContent || undefined,
         evidence: streamEvidenceVerdict || undefined,
         evidenceDiscipline: streamEvidenceCheck
           ? {
@@ -1819,6 +1850,9 @@ router.post('/execute', async (req: Request, res: Response) => {
 router.get('/commands', async (_req: Request, res: Response) => {
   try {
     const { COMMAND_REGISTRY } = await import('../services/ana-ri/command-executor.js');
+    if (!Array.isArray(COMMAND_REGISTRY)) {
+      throw new Error('Command registry unavailable');
+    }
     return sendSuccess(res, { commands: COMMAND_REGISTRY });
   } catch (error: any) {
     return sendError(

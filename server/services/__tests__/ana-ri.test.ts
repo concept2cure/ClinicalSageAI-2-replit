@@ -881,6 +881,53 @@ describe('AnA RI Command System', () => {
   });
 });
 
+import { enrichContextForChat } from '../ana-ri/context-enrichment.js';
+
+describe('AnA RI Context Enrichment', () => {
+  it('handles narrative slash commands without unhandled markers', async () => {
+    const result = await enrichContextForChat({
+      message: '/narrative',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+    });
+
+    expect(result.enrichmentMeta?.triggerType).toBe('slash_command');
+    expect(result.enrichmentMeta?.detectedCommand).toBe('narrative');
+    expect(result.enrichmentMeta?.sourcesAttempted).toBeGreaterThanOrEqual(1);
+    expect(result.enrichmentMeta?.sourcesFailed).not.toContain('slash_unhandled:narrative');
+  });
+
+  it('supports deterministic preflight slash enrichment', async () => {
+    const result = await enrichContextForChat({
+      message: '/preflight',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+    });
+
+    expect(result.enrichmentMeta?.triggerType).toBe('slash_command');
+    expect(result.enrichmentMeta?.detectedCommand).toBe('preflight');
+    expect(result.enrichmentMeta?.sourcesAttempted).toBeGreaterThanOrEqual(1);
+    expect(result.enrichmentMeta?.sourcesFailed).not.toContain('slash_unhandled:preflight');
+  });
+
+  it('supports deterministic draft slash enrichment', async () => {
+    const result = await enrichContextForChat({
+      message: '/draft clinical overview',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+    });
+
+    expect(result.enrichmentMeta?.triggerType).toBe('slash_command');
+    expect(result.enrichmentMeta?.detectedCommand).toBe('draft');
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('draft');
+    expect(result.enrichmentMeta?.sourcesFailed).not.toContain('slash_unhandled:draft');
+    expect(result.rewrittenMessage).toContain('clinical overview');
+  });
+});
+
 // ── Diff Service Integration Tests ───────────────────────────────────────────
 
 describe('AnA RI Diff Service Integration', () => {

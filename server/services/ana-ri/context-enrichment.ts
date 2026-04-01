@@ -771,10 +771,24 @@ export async function enrichContextForChat(params: {
       risk: () => Promise.all([enrichWithForesight(projectId, organizationId), enrichWithCRLRTF(projectId, organizationId)]).then(r => r.join('')),
       readiness: () => enrichWithReadiness(projectId, organizationId),
       precedent: () => enrichWithPrecedents(projectId),
+      draft: () =>
+        Promise.resolve(detectDocumentType(slash.args || message))
+          .then(doc => (doc ? buildDocumentGenerationContext(doc) : '\n\n## Draft Request Context\nNo specific document type detected. Ask which CTD section or artifact to draft, then produce submission-ready content.')),
+      preflight: () =>
+        Promise.all([
+          enrichWithReadiness(projectId, organizationId),
+          submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
+          enrichWithClaims(projectId),
+          enrichWithCRLRTF(projectId, organizationId),
+        ]).then(r => r.join('')),
       claims: () => enrichWithClaims(projectId),
       recommend: () => enrichWithRecommendations(projectId, organizationId),
       next: () => enrichWithRecommendations(projectId, organizationId),
       signals: () => enrichWithSignals(projectId),
+      export: () =>
+        Promise.resolve(
+          '\n\n## Conversation Export Intent\nUser requested conversation export. Provide a concise markdown-ready output and include any critical action receipts from this turn.'
+        ),
       simulate: () => enrichWithCRLRTF(projectId, organizationId),
       assess: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
@@ -841,8 +855,8 @@ export async function enrichContextForChat(params: {
     triggerType = 'slash_command';
     detectedCommand = slash.command;
     const enrichFn = enrichMap[slash.command];
+    sourcesAttempted++;
     if (enrichFn) {
-      sourcesAttempted++;
       const block = await enrichFn().catch(() => '');
       if (block) {
         blocks.push(block);
@@ -910,9 +924,9 @@ export async function enrichContextForChat(params: {
       export: 'Export this conversation.',
     };
 
-    rewrittenMessage = slash.args
-      ? `${commandDescriptions[slash.command] || slash.command} ${slash.args}`
-      : commandDescriptions[slash.command] || message;
+    rewrittenMessage =
+      commandDescriptions[slash.command] ||
+      (slash.args ? `${slash.command.slice(1)} ${slash.args}` : message);
   }
 
   // ── Natural language trigger detection (runs if no slash command) ──
