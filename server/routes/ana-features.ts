@@ -13,7 +13,13 @@ import { authenticateToken } from '../middleware/auth';
 import { requireOrganizationContext } from '../middleware/tenantContext';
 import { createRateLimiter } from '../middleware/rateLimiter';
 import { db } from '../db';
-import { gapAnalysisResults } from '../../shared/schema';
+import { eq, and, desc, or, inArray } from 'drizzle-orm';
+import {
+  gapAnalysisResults,
+  projectMemoryEntries,
+  notifications,
+  auditTrail,
+} from '../../shared/schema';
 
 const router = Router();
 
@@ -48,282 +54,92 @@ const memoryStore: Record<string, ProjectMemoryStore> = {};
 let memoryIdCounter = 1000;
 
 // ---------------------------------------------------------------------------
-// 1. Regulatory Intelligence Feed — Mock Data
+// Intelligence feed item type — shared between sources
 // ---------------------------------------------------------------------------
 
-const intelligenceFeedItems = [
-  {
-    id: 'reg-001',
-    type: 'guidance' as const,
-    title: 'FDA Draft Guidance: Artificial Intelligence/Machine Learning-Based Software as a Medical Device',
-    summary: 'FDA issues updated draft guidance on the predetermined change control plan for AI/ML-enabled devices, expanding requirements for continuous learning algorithms and real-world performance monitoring.',
-    agency: 'FDA',
-    date: '2026-03-10',
-    impactLevel: 'critical' as const,
-    therapeuticArea: 'Digital Health',
-    url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/aiml-samd-2026',
-    tags: ['AI/ML', 'SaMD', 'Predetermined Change Control', 'Digital Health'],
-  },
-  {
-    id: 'reg-002',
-    type: 'approval' as const,
-    title: 'FDA Approves First Gene Therapy for Duchenne Muscular Dystrophy in Patients Under 4',
-    summary: 'Breakthrough therapy designation leads to accelerated approval of AAV-based micro-dystrophin gene therapy. Post-market confirmatory trial required within 5 years.',
-    agency: 'FDA',
-    date: '2026-03-08',
-    impactLevel: 'high' as const,
-    therapeuticArea: 'Rare Disease',
-    url: 'https://www.fda.gov/news-events/press-announcements/dmd-gene-therapy-2026',
-    tags: ['Gene Therapy', 'Rare Disease', 'Accelerated Approval', 'Pediatric'],
-  },
-  {
-    id: 'reg-003',
-    type: 'alert' as const,
-    title: 'EMA CHMP Recommends New Conditional Marketing Authorization for KRAS G12C Inhibitor',
-    summary: 'The Committee for Medicinal Products for Human Use adopts positive opinion for sotorasib combination therapy in first-line NSCLC with KRAS G12C mutation, requiring additional Phase III data.',
-    agency: 'EMA',
-    date: '2026-03-05',
-    impactLevel: 'high' as const,
-    therapeuticArea: 'Oncology',
-    url: 'https://www.ema.europa.eu/en/news/chmp-kras-g12c-2026',
-    tags: ['Oncology', 'KRAS', 'Conditional Approval', 'NSCLC'],
-  },
-  {
-    id: 'reg-004',
-    type: 'guidance' as const,
-    title: 'FDA Final Guidance: Diversity Action Plans for Clinical Trials',
-    summary: 'Finalized guidance mandates sponsors submit Race and Ethnicity Diversity Plans for all Phase III and pivotal trials. Applies to INDs submitted after July 1, 2026.',
-    agency: 'FDA',
-    date: '2026-02-28',
-    impactLevel: 'critical' as const,
-    therapeuticArea: 'General',
-    url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/diversity-plans-2026',
-    tags: ['Diversity', 'Clinical Trials', 'Phase III', 'Health Equity'],
-  },
-  {
-    id: 'reg-005',
-    type: 'warning_letter' as const,
-    title: 'FDA Warning Letter to Major CMO for GMP Violations in Sterile Injectable Manufacturing',
-    summary: 'Significant deviations in aseptic processing, environmental monitoring, and data integrity identified during routine inspection. Product impact assessment required for 47 affected drug products.',
-    agency: 'FDA',
-    date: '2026-02-25',
-    impactLevel: 'critical' as const,
-    therapeuticArea: 'Manufacturing',
-    url: 'https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/warning-letters/sterile-cmo-2026',
-    tags: ['GMP', 'Warning Letter', 'Sterile Manufacturing', 'Data Integrity'],
-  },
-  {
-    id: 'reg-006',
-    type: 'guidance' as const,
-    title: 'PMDA Notification: Revised Requirements for Electronic Common Technical Document (eCTD) v4.0 Submissions',
-    summary: 'Japan PMDA announces mandatory eCTD v4.0 format for all new drug applications effective January 2027, with transition support and validation tool updates.',
-    agency: 'PMDA',
-    date: '2026-02-20',
-    impactLevel: 'high' as const,
-    therapeuticArea: 'General',
-    url: 'https://www.pmda.go.jp/english/review-services/regulatory-info/ectd-v4-2026.html',
-    tags: ['eCTD', 'Japan', 'Submission Format', 'Regulatory'],
-  },
-  {
-    id: 'reg-007',
-    type: 'alert' as const,
-    title: 'ICH E6(R3) Good Clinical Practice Guideline Step 4 Adoption',
-    summary: 'ICH finalizes E6(R3) GCP guideline with risk-based quality management, technology-enabled approaches for decentralized trials, and updated informed consent provisions. Implementation timeline: 2 years.',
-    agency: 'FDA',
-    date: '2026-02-15',
-    impactLevel: 'critical' as const,
-    therapeuticArea: 'General',
-    url: 'https://www.ich.org/page/efficacy-guidelines-e6r3',
-    tags: ['ICH', 'GCP', 'Decentralized Trials', 'Risk-Based Quality'],
-  },
-  {
-    id: 'reg-008',
-    type: 'approval' as const,
-    title: 'EMA Grants Marketing Authorization for Bispecific T-Cell Engager in Relapsed/Refractory DLBCL',
-    summary: 'First-in-class CD20xCD3 bispecific antibody approved as third-line treatment for diffuse large B-cell lymphoma, with REMS-like risk management plan for cytokine release syndrome.',
-    agency: 'EMA',
-    date: '2026-02-12',
-    impactLevel: 'high' as const,
-    therapeuticArea: 'Oncology',
-    url: 'https://www.ema.europa.eu/en/medicines/human/EPAR/bispecific-dlbcl-2026',
-    tags: ['Bispecific Antibody', 'Oncology', 'DLBCL', 'Immunotherapy'],
-  },
-  {
-    id: 'reg-009',
-    type: 'guidance' as const,
-    title: 'FDA Guidance: Clinical Pharmacology Considerations for Antibody-Drug Conjugates',
-    summary: 'New guidance addresses PK/PD characterization, drug-antibody ratio stability, payload release kinetics, and immunogenicity assessment specific to ADC development programs.',
-    agency: 'FDA',
-    date: '2026-02-08',
-    impactLevel: 'medium' as const,
-    therapeuticArea: 'Oncology',
-    url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/adc-clinical-pharm-2026',
-    tags: ['ADC', 'Clinical Pharmacology', 'PK/PD', 'Immunogenicity'],
-  },
-  {
-    id: 'reg-010',
-    type: 'warning_letter' as const,
-    title: 'EMA Referral Procedure for Safety Signal in GLP-1 Receptor Agonist Class',
-    summary: 'Article 31 referral initiated following post-marketing reports of medullary thyroid carcinoma. Sponsors required to submit cumulative safety analyses within 60 days.',
-    agency: 'EMA',
-    date: '2026-02-05',
-    impactLevel: 'critical' as const,
-    therapeuticArea: 'Endocrinology',
-    url: 'https://www.ema.europa.eu/en/medicines/human/referrals/glp1-ra-thyroid-2026',
-    tags: ['Safety Signal', 'GLP-1', 'Pharmacovigilance', 'Thyroid'],
-  },
-  {
-    id: 'reg-011',
-    type: 'guidance' as const,
-    title: 'PMDA Guidelines for Evaluation of Cell and Gene Therapy Products: Quality and Non-Clinical',
-    summary: 'Updated requirements for potency assays, viral vector characterization, biodistribution studies, and tumorigenicity assessment for cell and gene therapy products submitted in Japan.',
-    agency: 'PMDA',
-    date: '2026-01-30',
-    impactLevel: 'high' as const,
-    therapeuticArea: 'Cell & Gene Therapy',
-    url: 'https://www.pmda.go.jp/english/review-services/regulatory-info/cgt-quality-2026.html',
-    tags: ['Cell Therapy', 'Gene Therapy', 'Quality', 'Non-Clinical', 'Japan'],
-  },
-  {
-    id: 'reg-012',
-    type: 'alert' as const,
-    title: 'FDA Updates Breakthrough Therapy Designation Criteria for Rare Diseases',
-    summary: 'Revised policy allows preliminary clinical evidence including natural history data, biomarker endpoints, and real-world evidence to support BTD requests for ultra-rare diseases (<1:100,000).',
-    agency: 'FDA',
-    date: '2026-01-25',
-    impactLevel: 'medium' as const,
-    therapeuticArea: 'Rare Disease',
-    url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/btd-rare-disease-2026',
-    tags: ['Breakthrough Therapy', 'Rare Disease', 'Biomarker', 'Real-World Evidence'],
-  },
-  {
-    id: 'reg-013',
-    type: 'approval' as const,
-    title: "PMDA Approves Novel Tau-Targeting Antibody for Early Alzheimer's Disease",
-    summary: 'First anti-tau immunotherapy approved under SAKIGAKE designation. Conditional approval based on Phase II surrogate endpoint data with required post-market Phase III confirmatory trial.',
-    agency: 'PMDA',
-    date: '2026-01-20',
-    impactLevel: 'high' as const,
-    therapeuticArea: 'Neurology',
-    url: 'https://www.pmda.go.jp/english/review-services/regulatory-info/tau-alzheimers-2026.html',
-    tags: ["Alzheimer's", 'Tau', 'SAKIGAKE', 'Neurology', 'Conditional Approval'],
-  },
-  {
-    id: 'reg-014',
-    type: 'guidance' as const,
-    title: 'FDA Draft Guidance: Real-World Data Considerations for Regulatory Decision-Making in Oncology',
-    summary: 'Framework for using electronic health records, claims data, and patient registries as external control arms in single-arm oncology trials. Includes data quality standards and statistical methodology.',
-    agency: 'FDA',
-    date: '2026-01-15',
-    impactLevel: 'high' as const,
-    therapeuticArea: 'Oncology',
-    url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/rwd-oncology-2026',
-    tags: ['Real-World Data', 'Oncology', 'External Control', 'EHR'],
-  },
-  {
-    id: 'reg-015',
-    type: 'alert' as const,
-    title: 'EMA Publishes Revised Guideline on Bioequivalence for Modified-Release Formulations',
-    summary: 'Significant changes to fed/fasted bioequivalence study requirements, multiple-unit vs. single-unit dosage form testing, and acceptance criteria for highly variable drugs.',
-    agency: 'EMA',
-    date: '2026-01-10',
-    impactLevel: 'medium' as const,
-    therapeuticArea: 'General',
-    url: 'https://www.ema.europa.eu/en/bioequivalence-mr-2026',
-    tags: ['Bioequivalence', 'Modified Release', 'Generic', 'Pharmacokinetics'],
-  },
-  {
-    id: 'reg-016',
-    type: 'guidance' as const,
-    title: 'FDA Guidance: Considerations for the Development of Radiopharmaceutical Therapies',
-    summary: 'Comprehensive guidance covering dosimetry requirements, radiation safety, manufacturing quality considerations, and clinical trial design for targeted radiopharmaceutical therapeutics.',
-    agency: 'FDA',
-    date: '2025-12-18',
-    impactLevel: 'high' as const,
-    therapeuticArea: 'Oncology',
-    url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/radiopharm-therapy-2025',
-    tags: ['Radiopharmaceutical', 'Dosimetry', 'Oncology', 'Nuclear Medicine'],
-  },
-  {
-    id: 'reg-017',
-    type: 'warning_letter' as const,
-    title: 'FDA Issues Complete Response Letters for Three Accelerated Approval Conversions',
-    summary: 'Post-marketing confirmatory trials failed to verify clinical benefit for three oncology products granted accelerated approval. Withdrawal proceedings may be initiated under FDORA provisions.',
-    agency: 'FDA',
-    date: '2025-12-10',
-    impactLevel: 'critical' as const,
-    therapeuticArea: 'Oncology',
-    url: 'https://www.fda.gov/drugs/resources-information-approved-drugs/accelerated-approval-withdrawal-2025',
-    tags: ['Accelerated Approval', 'FDORA', 'Withdrawal', 'Confirmatory Trial'],
-  },
-  {
-    id: 'reg-018',
-    type: 'approval' as const,
-    title: 'FDA Approves First CRISPR-Based In Vivo Gene Editing Therapy for Hereditary Angioedema',
-    summary: 'Single-dose liver-targeted lipid nanoparticle delivering CRISPR-Cas9 achieves durable kallikrein gene knockout. Priority Review and Breakthrough Therapy designation. 5-year follow-up required.',
-    agency: 'FDA',
-    date: '2025-12-05',
-    impactLevel: 'critical' as const,
-    therapeuticArea: 'Rare Disease',
-    url: 'https://www.fda.gov/news-events/press-announcements/crispr-hae-2025',
-    tags: ['CRISPR', 'Gene Editing', 'Rare Disease', 'In Vivo', 'LNP'],
-  },
-  {
-    id: 'reg-019',
-    type: 'guidance' as const,
-    title: 'EMA Reflection Paper on Use of Organoids and Microphysiological Systems in Drug Development',
-    summary: 'First regulatory position paper on qualifying organ-on-chip and organoid data for toxicology and efficacy assessment, including criteria for regulatory acceptance as supplementary evidence.',
-    agency: 'EMA',
-    date: '2025-11-28',
-    impactLevel: 'medium' as const,
-    therapeuticArea: 'General',
-    url: 'https://www.ema.europa.eu/en/documents/scientific-guideline/organoids-mps-2025',
-    tags: ['Organoids', 'Organ-on-Chip', 'Non-Clinical', 'New Approach Methods'],
-  },
-  {
-    id: 'reg-020',
-    type: 'alert' as const,
-    title: 'PMDA Announces Expedited Review Pathway for Pandemic Preparedness Countermeasures',
-    summary: 'New regulatory framework enables conditional approval within 30 days for vaccines and therapeutics during declared public health emergencies, with rolling submission and adaptive trial designs.',
-    agency: 'PMDA',
-    date: '2025-11-20',
-    impactLevel: 'high' as const,
-    therapeuticArea: 'Infectious Disease',
-    url: 'https://www.pmda.go.jp/english/review-services/regulatory-info/pandemic-pathway-2025.html',
-    tags: ['Pandemic Preparedness', 'Expedited Review', 'Japan', 'Vaccines'],
-  },
-  {
-    id: 'reg-021',
-    type: 'guidance' as const,
-    title: 'FDA Guidance: Decentralized Clinical Trials — Design, Conduct, and Oversight',
-    summary: 'Finalizes recommendations for remote consent, direct-to-patient drug shipment, telemedicine visits, wearable/digital endpoint collection, and oversight of third-party technology vendors in DCTs.',
-    agency: 'FDA',
-    date: '2025-11-15',
-    impactLevel: 'high' as const,
-    therapeuticArea: 'General',
-    url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/dct-guidance-2025',
-    tags: ['Decentralized Trials', 'Digital Health', 'Telemedicine', 'Remote Monitoring'],
-  },
-  {
-    id: 'reg-022',
-    type: 'approval' as const,
-    title: 'EMA Recommends Approval of mRNA-Based Personalized Cancer Vaccine for Melanoma',
-    summary: 'Individualized neoantigen therapy in combination with anti-PD-1 receives conditional marketing authorization for adjuvant treatment of resected stage III/IV melanoma based on relapse-free survival data.',
-    agency: 'EMA',
-    date: '2025-11-08',
-    impactLevel: 'critical' as const,
-    therapeuticArea: 'Oncology',
-    url: 'https://www.ema.europa.eu/en/medicines/human/EPAR/mrna-melanoma-vaccine-2025',
-    tags: ['mRNA', 'Cancer Vaccine', 'Personalized Medicine', 'Melanoma', 'Immunotherapy'],
-  },
+interface IntelligenceFeedItem {
+  id: string;
+  type: 'guidance' | 'approval' | 'alert' | 'warning_letter' | 'activity';
+  title: string;
+  summary: string;
+  agency: string;
+  date: string;
+  impactLevel: 'critical' | 'high' | 'medium' | 'low';
+  therapeuticArea: string;
+  url: string | null;
+  tags: string[];
+}
+
+const INTELLIGENCE_MEMORY_CATEGORIES = [
+  'intelligence_signal_summary',
+  'rim_pattern_registry',
+  'recommendation_feedback',
+  'regulatory',
+  'risk',
+  'strategy',
+  'compliance',
 ];
 
+function mapImportanceToImpact(importance: string | null): IntelligenceFeedItem['impactLevel'] {
+  switch (importance) {
+    case 'critical': return 'critical';
+    case 'high': return 'high';
+    case 'medium': return 'medium';
+    case 'low': return 'low';
+    default: return 'medium';
+  }
+}
+
+function mapNotificationPriorityToImpact(priority: string | null): IntelligenceFeedItem['impactLevel'] {
+  switch (priority) {
+    case 'critical': return 'critical';
+    case 'high': return 'high';
+    case 'normal': return 'medium';
+    case 'low': return 'low';
+    default: return 'medium';
+  }
+}
+
+function mapMemoryCategoryToType(category: string): IntelligenceFeedItem['type'] {
+  switch (category) {
+    case 'intelligence_signal_summary': return 'alert';
+    case 'rim_pattern_registry': return 'guidance';
+    case 'recommendation_feedback': return 'alert';
+    case 'regulatory': return 'guidance';
+    case 'risk': return 'warning_letter';
+    case 'compliance': return 'alert';
+    default: return 'activity';
+  }
+}
+
+function mapNotificationTypeToFeedType(type: string): IntelligenceFeedItem['type'] {
+  switch (type) {
+    case 'compliance_alert': return 'alert';
+    case 'system_alert': return 'warning_letter';
+    case 'approval_request': return 'approval';
+    default: return 'activity';
+  }
+}
+
+function formatDateString(date: Date | string | null): string {
+  if (!date) return new Date().toISOString().split('T')[0];
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toISOString().split('T')[0];
+}
+
 // ---------------------------------------------------------------------------
-// 1. GET /api/ana/intelligence-feed
+// 1. GET /api/ana/intelligence-feed — Real data from DB
 // ---------------------------------------------------------------------------
 
-router.get('/intelligence-feed', (req: Request, res: Response) => {
+router.get(
+  '/intelligence-feed',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
   try {
+    const organizationId = (req as any).tenantContext?.organizationId || (req as any).organizationId;
+    const userId = req.user?.id || req.user?.userId;
+
     const {
       therapeuticArea,
       agencies,
@@ -331,29 +147,131 @@ router.get('/intelligence-feed', (req: Request, res: Response) => {
       offset = '0',
     } = req.query as Record<string, string | undefined>;
 
-    let items = [...intelligenceFeedItems];
+    const parsedOffset = Math.max(0, parseInt(offset || '0', 10));
+    const parsedLimit = Math.min(50, Math.max(1, parseInt(limit || '20', 10)));
 
-    // Filter by therapeutic area
+    const feedItems: IntelligenceFeedItem[] = [];
+
+    // Source 1: projectMemoryEntries — intelligence signals and knowledge atoms
+    try {
+      const memoryEntries = await db
+        .select()
+        .from(projectMemoryEntries)
+        .where(
+          and(
+            eq(projectMemoryEntries.organizationId, Number(organizationId)),
+            eq(projectMemoryEntries.status, 'active'),
+            inArray(projectMemoryEntries.category, INTELLIGENCE_MEMORY_CATEGORIES),
+          )
+        )
+        .orderBy(desc(projectMemoryEntries.createdAt))
+        .limit(50);
+
+      for (const entry of memoryEntries) {
+        feedItems.push({
+          id: `mem-${entry.id}`,
+          type: mapMemoryCategoryToType(entry.category),
+          title: entry.title,
+          summary: entry.content.length > 500 ? entry.content.slice(0, 497) + '...' : entry.content,
+          agency: entry.subcategory || 'Internal',
+          date: formatDateString(entry.createdAt),
+          impactLevel: mapImportanceToImpact(entry.importanceLevel),
+          therapeuticArea: entry.sourceDocumentType || 'General',
+          url: null,
+          tags: [entry.category, entry.subcategory, entry.sourceDocumentType].filter(Boolean) as string[],
+        });
+      }
+    } catch (memErr) {
+      console.warn('Intelligence feed: projectMemoryEntries query failed (table may not exist):', memErr instanceof Error ? memErr.message : memErr);
+    }
+
+    // Source 2: notifications — regulatory activity for the user's organization
+    try {
+      const recentNotifications = await db
+        .select()
+        .from(notifications)
+        .where(
+          and(
+            eq(notifications.organizationId, Number(organizationId)),
+            or(
+              eq(notifications.type, 'compliance_alert'),
+              eq(notifications.type, 'system_alert'),
+              eq(notifications.type, 'approval_request'),
+            ),
+          )
+        )
+        .orderBy(desc(notifications.createdAt))
+        .limit(30);
+
+      for (const notif of recentNotifications) {
+        feedItems.push({
+          id: `notif-${notif.id}`,
+          type: mapNotificationTypeToFeedType(notif.type),
+          title: notif.title,
+          summary: notif.message,
+          agency: 'Internal',
+          date: formatDateString(notif.createdAt),
+          impactLevel: mapNotificationPriorityToImpact(notif.priority),
+          therapeuticArea: 'General',
+          url: notif.actionUrl || null,
+          tags: [notif.type, notif.category].filter(Boolean) as string[],
+        });
+      }
+    } catch (notifErr) {
+      console.warn('Intelligence feed: notifications query failed (table may not exist):', notifErr instanceof Error ? notifErr.message : notifErr);
+    }
+
+    // Source 3: audit_trail — recent regulatory audit events
+    try {
+      const auditEntries = await db
+        .select()
+        .from(auditTrail)
+        .where(
+          inArray(auditTrail.action, ['approved', 'rejected', 'signed', 'modified']),
+        )
+        .orderBy(desc(auditTrail.timestamp))
+        .limit(20);
+
+      for (const entry of auditEntries) {
+        feedItems.push({
+          id: `audit-${entry.id}`,
+          type: 'activity',
+          title: `${entry.action.charAt(0).toUpperCase() + entry.action.slice(1)}: ${entry.entityType} #${entry.entityId}`,
+          summary: entry.reason || `${entry.entityType} ${entry.action} by ${entry.userName || entry.userId}`,
+          agency: 'Internal',
+          date: formatDateString(entry.timestamp),
+          impactLevel: entry.action === 'rejected' ? 'high' : 'medium',
+          therapeuticArea: 'General',
+          url: null,
+          tags: [entry.entityType, entry.action].filter(Boolean),
+        });
+      }
+    } catch (auditErr) {
+      console.warn('Intelligence feed: audit_trail query failed (table may not exist):', auditErr instanceof Error ? auditErr.message : auditErr);
+    }
+
+    // Sort all items by date descending
+    feedItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    // Apply client-side filters
+    let filtered = feedItems;
+
     if (therapeuticArea) {
-      items = items.filter(
+      filtered = filtered.filter(
         (item) => item.therapeuticArea.toLowerCase() === therapeuticArea.toLowerCase()
       );
     }
 
-    // Filter by agencies (comma-separated)
     if (agencies) {
       const agencyList = agencies.split(',').map((a) => a.trim().toUpperCase());
-      items = items.filter((item) => agencyList.includes(item.agency.toUpperCase()));
+      filtered = filtered.filter((item) => agencyList.includes(item.agency.toUpperCase()));
     }
 
-    const total = items.length;
-    const parsedOffset = Math.max(0, parseInt(offset || '0', 10));
-    const parsedLimit = Math.min(50, Math.max(1, parseInt(limit || '20', 10)));
-
-    items = items.slice(parsedOffset, parsedOffset + parsedLimit);
+    const total = filtered.length;
+    const paged = filtered.slice(parsedOffset, parsedOffset + parsedLimit);
 
     res.json({
-      items,
+      items: paged,
       pagination: {
         total,
         limit: parsedLimit,
