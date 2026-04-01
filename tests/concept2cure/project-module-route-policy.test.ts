@@ -54,5 +54,12 @@ describe('project module route policy', () => {
     );
     expect(preservedDestination).toBe('/concept2cure/project/proj-77/510k/section/12');
   });
+
+  it('extracts ownership preferences API path from project route id', () => {
+    const parsed = parseProjectRoute('/concept2cure/project/proj_123');
+    expect(parsed.projectId).toBe('proj_123');
+    const ownershipPatchPath = `/api/concept2cure/projects/${parsed.projectId}/ownership-preferences`;
+    expect(ownershipPatchPath).toBe('/api/concept2cure/projects/proj_123/ownership-preferences');
+  });
 });
 

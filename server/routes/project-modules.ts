@@ -69,7 +69,10 @@ const statusSchema = z.object({
  */
 router.get('/:projectId/modules', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectIdParam = Array.isArray(req.params.projectId)
+      ? req.params.projectId[0]
+      : req.params.projectId;
+    const projectId = parseInt(projectIdParam, 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenant = getTenantContext(req);
@@ -89,7 +92,10 @@ router.get('/:projectId/modules', async (req: Request, res: Response) => {
  */
 router.get('/:projectId/modules/summary', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectIdParam = Array.isArray(req.params.projectId)
+      ? req.params.projectId[0]
+      : req.params.projectId;
+    const projectId = parseInt(projectIdParam, 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenant = getTenantContext(req);
@@ -109,7 +115,10 @@ router.get('/:projectId/modules/summary', async (req: Request, res: Response) =>
  */
 router.post('/:projectId/modules', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectIdParam = Array.isArray(req.params.projectId)
+      ? req.params.projectId[0]
+      : req.params.projectId;
+    const projectId = parseInt(projectIdParam, 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenant = getTenantContext(req);
@@ -148,7 +157,10 @@ router.post('/:projectId/modules', async (req: Request, res: Response) => {
  */
 router.post('/:projectId/modules/bulk', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectIdParam = Array.isArray(req.params.projectId)
+      ? req.params.projectId[0]
+      : req.params.projectId;
+    const projectId = parseInt(projectIdParam, 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenant = getTenantContext(req);
@@ -190,18 +202,30 @@ router.delete(
   '/:projectId/modules/:moduleType/:moduleInstanceId',
   async (req: Request, res: Response) => {
     try {
-      const projectId = parseInt(req.params.projectId, 10);
-      const moduleInstanceId = parseInt(req.params.moduleInstanceId, 10);
-      const { moduleType } = req.params;
+      const projectIdParam = Array.isArray(req.params.projectId)
+        ? req.params.projectId[0]
+        : req.params.projectId;
+      const moduleInstanceIdParam = Array.isArray(req.params.moduleInstanceId)
+        ? req.params.moduleInstanceId[0]
+        : req.params.moduleInstanceId;
+      const moduleType = Array.isArray(req.params.moduleType)
+        ? req.params.moduleType[0]
+        : req.params.moduleType;
+      const projectId = parseInt(projectIdParam, 10);
+      const moduleInstanceId = parseInt(moduleInstanceIdParam, 10);
 
       if (Number.isNaN(projectId) || Number.isNaN(moduleInstanceId)) {
         return res.status(400).json({ error: 'Invalid IDs' });
       }
 
+      const tenant = getTenantContext(req);
+      if ('error' in tenant) return res.status(400).json({ error: tenant.error });
+
       const removed = await projectModuleBridge.unlinkModule(
         projectId,
         moduleType,
-        moduleInstanceId
+        moduleInstanceId,
+        tenant.organizationId
       );
       if (!removed) {
         return res.status(404).json({ error: 'Module link not found' });
@@ -223,20 +247,32 @@ router.patch(
   '/:projectId/modules/:moduleType/:moduleInstanceId/status',
   async (req: Request, res: Response) => {
     try {
-      const projectId = parseInt(req.params.projectId, 10);
-      const moduleInstanceId = parseInt(req.params.moduleInstanceId, 10);
-      const { moduleType } = req.params;
+      const projectIdParam = Array.isArray(req.params.projectId)
+        ? req.params.projectId[0]
+        : req.params.projectId;
+      const moduleInstanceIdParam = Array.isArray(req.params.moduleInstanceId)
+        ? req.params.moduleInstanceId[0]
+        : req.params.moduleInstanceId;
+      const moduleType = Array.isArray(req.params.moduleType)
+        ? req.params.moduleType[0]
+        : req.params.moduleType;
+      const projectId = parseInt(projectIdParam, 10);
+      const moduleInstanceId = parseInt(moduleInstanceIdParam, 10);
 
       if (Number.isNaN(projectId) || Number.isNaN(moduleInstanceId)) {
         return res.status(400).json({ error: 'Invalid IDs' });
       }
+
+      const tenant = getTenantContext(req);
+      if ('error' in tenant) return res.status(400).json({ error: tenant.error });
 
       const body = statusSchema.parse(req.body);
       const updated = await projectModuleBridge.updateModuleStatus(
         projectId,
         moduleType,
         moduleInstanceId,
-        body.status
+        body.status,
+        tenant.organizationId
       );
 
       if (!updated) {
@@ -264,8 +300,13 @@ router.get('/find', async (req: Request, res: Response) => {
     const tenant = getTenantContext(req);
     if ('error' in tenant) return res.status(400).json({ error: tenant.error });
 
-    const moduleType = req.query.moduleType as string;
-    const moduleInstanceId = parseInt(req.query.moduleInstanceId as string, 10);
+    const moduleTypeRaw = req.query.moduleType;
+    const moduleInstanceRaw = req.query.moduleInstanceId;
+    const moduleType = Array.isArray(moduleTypeRaw) ? moduleTypeRaw[0] : moduleTypeRaw;
+    const moduleInstanceId = parseInt(
+      Array.isArray(moduleInstanceRaw) ? moduleInstanceRaw[0] : moduleInstanceRaw || '',
+      10
+    );
 
     if (!moduleType || Number.isNaN(moduleInstanceId)) {
       return res

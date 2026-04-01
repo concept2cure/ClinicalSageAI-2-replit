@@ -620,50 +620,8 @@ app.get('/api/csr', (req: Request, res: Response) => {
   res.json({ message: 'CSR API available', timestamp: new Date() });
 });
 
-// Mount basic routes including /api/projects
-// Direct mount /api/projects here to ensure it works
-app.get('/api/projects', async (req, res) => {
-  try {
-    // SECURITY: Always derive organization from authenticated JWT context
-    const client_workspace_id =
-      req.query.client_workspace_id || req.headers['x-client-workspace-id'];
-    const organization_id =
-      (req as any).tenantContext?.organizationId ||
-      (req as any).organizationId ||
-      (req as any).user?.organizationId;
-
-    if (!organization_id) {
-      return res.status(403).json({ error: 'Organization context required' });
-    }
-
-    if (!pool) {
-      // Return empty array if database not available
-      return res.json([]);
-    }
-
-    // Query projects from database - fetch all for the organization
-    let query = 'SELECT * FROM projects WHERE organization_id = $1';
-    const params: any[] = [organization_id];
-
-    // Optionally filter by workspace if provided
-    if (client_workspace_id) {
-      params.push(client_workspace_id);
-      query += ` AND client_workspace_id = $${params.length}`;
-    }
-
-    query += ' ORDER BY created_at DESC';
-
-    console.log('Fetching projects with query:', query, 'params:', params);
-    const result = await pool.query(query, params);
-    console.log('Found projects:', result.rows?.length || 0);
-
-    res.json(result.rows || []);
-  } catch (error) {
-    console.error('Failed to fetch projects:', error);
-    res.status(500).json({ error: 'Failed to fetch projects' });
-  }
-});
-console.log('✅ /api/projects route mounted directly');
+// /api/projects is owned by mounted projects-management router.
+// Keep this namespace single-owned to avoid route shadowing/policy drift.
 
 // ────────────────────────────────────────────────────────────────────────────
 // Device-Project CRUD – server-backed persistence for CERV2 module

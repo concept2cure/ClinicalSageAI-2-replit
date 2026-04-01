@@ -717,6 +717,15 @@ const ownershipPreferencesSchema = z
   })
   .partial();
 
+const projectCollaboratorSchema = z.object({
+  userId: z.number().int().positive(),
+  permission: z.enum(['can_use', 'can_edit']),
+});
+
+const updateProjectCollaboratorsSchema = z.object({
+  collaborators: z.array(projectCollaboratorSchema).max(100),
+});
+
 const errorLogSchema = z.object({
   id: z.string().min(1),
   timestamp: z.string().datetime(),
@@ -940,6 +949,7 @@ interface ProjectOwnership {
   documentInventory: UploadedDocument[];
   vaultLinkedFilesEvidence: UploadedDocument[];
   projectInstructions: string;
+  ownershipTeam?: Array<{ userId: number; permission: 'can_use' | 'can_edit' }>;
   connectedAppsContext: string;
   reusableSnippetsKnowledge: string[];
   reports: string[];
@@ -969,6 +979,9 @@ function buildProjectOwnership(
     projectInstructions:
       (typeof settings.customInstructions === 'string' ? settings.customInstructions : '') ||
       (typeof ownership.projectInstructions === 'string' ? ownership.projectInstructions : ''),
+    ownershipTeam: Array.isArray(ownership.ownershipTeam)
+      ? (ownership.ownershipTeam as Array<{ userId: number; permission: 'can_use' | 'can_edit' }>)
+      : [],
     connectedAppsContext: (() => {
       const apps = normalizeConnectedApps(settings);
       return apps
@@ -2117,6 +2130,178 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
     }
     logger.error('Failed to update ownership preferences', { error: error.message });
     return sendError(res, 500, 'Failed to update ownership preferences');
+  }
+});
+
+/**
+ * GET /api/concept2cure/projects/:projectId/collaborators
+ * Returns current project collaborator permission assignments.
+ */
+router.get('/projects/:projectId/collaborators', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const projectId = req.params.projectId.replace('proj_', '');
+    const numericId = parseInt(projectId, 10);
+
+    if (isNaN(numericId)) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .limit(1);
+    if (!project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const settings = normalizeProjectSettings(project.settings);
+    const ownership =
+      settings.ownership && typeof settings.ownership === 'object'
+        ? (settings.ownership as Record<string, unknown>)
+        : {};
+
+    const team = Array.isArray(ownership.ownershipTeam)
+      ? (ownership.ownershipTeam as Array<{ userId: number; permission: 'can_use' | 'can_edit' }>)
+      : [];
+    const normalizedTeam = team.filter(
+      member =>
+        Number.isInteger(member?.userId) &&
+        member.userId > 0 &&
+        (member.permission === 'can_use' || member.permission === 'can_edit')
+    );
+
+    const memberIds = normalizedTeam.map(member => member.userId);
+    const memberDirectory =
+      memberIds.length > 0
+        ? await db
+            .select({
+              userId: users.id,
+              name: users.name,
+              email: users.email,
+            })
+            .from(users)
+            .where(inArray(users.id, memberIds))
+        : [];
+    const directoryById = new Map(memberDirectory.map(member => [member.userId, member]));
+
+    const collaborators = normalizedTeam.map(member => ({
+      userId: member.userId,
+      permission: member.permission,
+      name: directoryById.get(member.userId)?.name || null,
+      email: directoryById.get(member.userId)?.email || null,
+    }));
+
+    return sendSuccess(res, {
+      projectId: `proj_${numericId}`,
+      collaborators,
+    });
+  } catch (error: any) {
+    logger.error('Failed to fetch project collaborators', {
+      error: error.message,
+      projectId: req.params.projectId,
+    });
+    return sendError(res, 500, 'Failed to fetch project collaborators');
+  }
+});
+
+/**
+ * PUT /api/concept2cure/projects/:projectId/collaborators
+ * Replaces project collaborator permission assignments.
+ */
+router.put('/projects/:projectId/collaborators', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const projectId = req.params.projectId.replace('proj_', '');
+    const numericId = parseInt(projectId, 10);
+
+    if (isNaN(numericId)) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const payload = updateProjectCollaboratorsSchema.parse(req.body);
+
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .limit(1);
+    if (!project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const uniqueByUser = new Map<number, { userId: number; permission: 'can_use' | 'can_edit' }>();
+    for (const collaborator of payload.collaborators) {
+      uniqueByUser.set(collaborator.userId, collaborator);
+    }
+    const collaborators = Array.from(uniqueByUser.values());
+
+    if (collaborators.length > 0) {
+      const orgMembers = await db
+        .select({ userId: organizationUsers.userId })
+        .from(organizationUsers)
+        .where(
+          and(
+            eq(organizationUsers.organizationId, organizationId),
+            inArray(
+              organizationUsers.userId,
+              collaborators.map(entry => entry.userId)
+            )
+          )
+        );
+      const allowedIds = new Set(orgMembers.map(member => member.userId));
+      const invalidIds = collaborators
+        .map(entry => entry.userId)
+        .filter(userId => !allowedIds.has(userId));
+      if (invalidIds.length > 0) {
+        return sendError(
+          res,
+          400,
+          `Collaborator user IDs not in organization: ${invalidIds.join(', ')}`
+        );
+      }
+    }
+
+    const settings = normalizeProjectSettings(project.settings);
+    const ownership =
+      settings.ownership && typeof settings.ownership === 'object'
+        ? (settings.ownership as Record<string, unknown>)
+        : {};
+
+    const mergedSettings = {
+      ...settings,
+      ownership: {
+        ...ownership,
+        ownershipTeam: collaborators,
+      },
+    };
+
+    const [updated] = await db
+      .update(projects)
+      .set({ settings: mergedSettings, updatedAt: new Date() })
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .returning();
+
+    await logAuditEntry(req, 'UPDATE', 'project', `proj_${numericId}`, project, {
+      collaborators,
+      action: 'update_collaborators',
+    });
+
+    return sendSuccess(res, {
+      projectId: `proj_${numericId}`,
+      collaborators,
+      updatedAt: updated.updatedAt,
+    });
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+    }
+    logger.error('Failed to update project collaborators', {
+      error: error.message,
+      projectId: req.params.projectId,
+    });
+    return sendError(res, 500, 'Failed to update project collaborators');
   }
 });
 
