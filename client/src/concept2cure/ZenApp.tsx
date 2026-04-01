@@ -1244,6 +1244,25 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     [layoutMode]
   );
 
+  // Project-scoped artifacts for section navigation and Outputs tab
+  const { data: projectArtifacts = [] } = useQuery({
+    queryKey: ['project-artifacts', activeProjectId],
+    queryFn: async () => {
+      if (!activeProjectId) return [];
+      const token =
+        sessionStorage.getItem('trialsage_access_token') ||
+        localStorage.getItem('trialsage_access_token');
+      const res = await fetch(`/api/concept2cure/projects/${activeProjectId}/artifacts`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : data?.data ?? data?.artifacts ?? [];
+    },
+    enabled: !!activeProjectId,
+    staleTime: 30_000,
+  });
+
   useEffect(() => {
     if (layoutMode !== 'biostatistics') return;
     setLayoutMode('regulatory-workspace');
@@ -1466,25 +1485,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     text: string;
     ts: number;
   } | null>(null);
-
-  // Project-scoped artifacts for the Outputs tab (must come after activeProjectId is declared)
-  const { data: projectArtifacts = [] } = useQuery({
-    queryKey: ['project-artifacts', activeProjectId],
-    queryFn: async () => {
-      if (!activeProjectId) return [];
-      const token =
-        sessionStorage.getItem('trialsage_access_token') ||
-        localStorage.getItem('trialsage_access_token');
-      const res = await fetch(`/api/concept2cure/projects/${activeProjectId}/artifacts`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return Array.isArray(data) ? data : data?.data ?? data?.artifacts ?? [];
-    },
-    enabled: !!activeProjectId,
-    staleTime: 30_000,
-  });
 
   // Instructions + knowledge for Instructions tab (lifted so it doesn't remount per tab)
   const workspaceKnowledge = useProjectKnowledge(activeProjectId ?? null);
