@@ -31,7 +31,7 @@ router.get('/study-bundle', async (req, res) => {
       downloadUrl: `/api/download/study-bundle?study_id=${study_id}`,
       message: 'Export bundle created successfully',
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Export error:', error);
     res.status(500).json({
       error: 'Failed to create export bundle',
@@ -99,7 +99,7 @@ router.get('/download/study-bundle', async (req, res) => {
       console.error('Error reading export directory:', err);
       return res.status(500).json({ error: 'Failed to access export files' });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Download error:', error);
     res.status(500).json({
       error: 'Failed to download export bundle',

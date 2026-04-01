@@ -1,5 +1,13 @@
-// Database connection setup - re-exports canonical pool
-import { getPool, db as drizzleDb, db } from './db.ts';
+// Database connection setup - compatibility wrapper over canonical db.ts
+import {
+  getPool,
+  getDb,
+  runMigrations,
+  ensureAuthTables,
+  transaction,
+  healthCheck,
+  db,
+} from './db.ts';
 import 'dotenv/config';
 import EventEmitter from 'events';
 
@@ -248,5 +256,17 @@ export function createFallbackResult(rows = []) {
   };
 }
 
-// Export database functions
-export { pool, getClientWithContext, testConnection, query, db };
+// Export compatibility + canonical helpers to preserve import shapes
+export {
+  pool,
+  getClientWithContext,
+  testConnection,
+  query,
+  db,
+  getPool,
+  getDb,
+  runMigrations,
+  ensureAuthTables,
+  transaction,
+  healthCheck,
+};

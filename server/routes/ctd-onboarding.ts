@@ -195,6 +195,14 @@ router.post('/projects/:id/upload', upload.single('file'), async (req: Request, 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('[ctd-onboarding] Upload error:', message);
+    if (req.file?.path) {
+      fs.unlink(req.file.path, () => {
+        // Best-effort cleanup for orphaned uploads.
+      });
+    }
+    if (message === 'CTD project not found for organization') {
+      return res.status(404).json({ error: 'CTD project not found' });
+    }
     return res.status(500).json({ error: 'Failed to upload document' });
   }
 });

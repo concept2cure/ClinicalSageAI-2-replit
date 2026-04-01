@@ -30,15 +30,15 @@ export const PATTERN_REGISTRY_VERSION = '1.2.0';
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export type PatternCategory =
-  | 'deficiency'           // Patterns that lead to deficiency letters
-  | 'reviewer_trigger'     // Language/structures that trigger reviewer questions
-  | 'rejection'            // Patterns associated with rejections
-  | 'strong_language'      // Phrasing that passes cleanly
-  | 'weak_language'        // Phrasing that gets challenged
-  | 'data_gap'             // Common data gaps
-  | 'consistency_issue'    // Cross-section inconsistency patterns
-  | 'formatting'           // Formatting issues regulators flag
-  | 'risk_signal';         // Generic risk signal
+  | 'deficiency' // Patterns that lead to deficiency letters
+  | 'reviewer_trigger' // Language/structures that trigger reviewer questions
+  | 'rejection' // Patterns associated with rejections
+  | 'strong_language' // Phrasing that passes cleanly
+  | 'weak_language' // Phrasing that gets challenged
+  | 'data_gap' // Common data gaps
+  | 'consistency_issue' // Cross-section inconsistency patterns
+  | 'formatting' // Formatting issues regulators flag
+  | 'risk_signal'; // Generic risk signal
 
 export type RegulatoryAgency =
   | 'FDA'
@@ -64,17 +64,17 @@ export type SubmissionType =
   | 'any';
 
 export type CTDModule =
-  | '1'    // Administrative
-  | '2.1'  // TOC
-  | '2.2'  // Introduction
-  | '2.3'  // Quality Overall Summary
-  | '2.4'  // Nonclinical Overview
-  | '2.5'  // Clinical Overview
-  | '2.6'  // Nonclinical Written/Tabulated Summaries
-  | '2.7'  // Clinical Summary
-  | '3'    // Quality (CMC)
-  | '4'    // Nonclinical Study Reports
-  | '5'    // Clinical Study Reports
+  | '1' // Administrative
+  | '2.1' // TOC
+  | '2.2' // Introduction
+  | '2.3' // Quality Overall Summary
+  | '2.4' // Nonclinical Overview
+  | '2.5' // Clinical Overview
+  | '2.6' // Nonclinical Written/Tabulated Summaries
+  | '2.7' // Clinical Summary
+  | '3' // Quality (CMC)
+  | '4' // Nonclinical Study Reports
+  | '5' // Clinical Study Reports
   | 'any';
 
 export interface RegulatoryPattern {
@@ -127,7 +127,8 @@ const SEED_PATTERNS: RegulatoryPattern[] = [
     id: 'DEF-001',
     category: 'deficiency',
     name: 'Missing primary endpoint justification',
-    description: 'Clinical study report lacks adequate justification for primary endpoint selection',
+    description:
+      'Clinical study report lacks adequate justification for primary endpoint selection',
     agency: 'FDA',
     submissionType: 'NDA',
     ctdModule: '2.5',
@@ -138,8 +139,10 @@ const SEED_PATTERNS: RegulatoryPattern[] = [
       'Regulatory precedent supports this endpoint selection (cite)',
       'This endpoint is consistent with the FDA guidance for [indication]',
     ],
-    reviewerQuestion: 'Please provide the scientific rationale for the selection of the primary endpoint.',
-    remediation: 'Add a dedicated subsection in 2.5 justifying primary endpoint selection with regulatory precedent and scientific rationale',
+    reviewerQuestion:
+      'Please provide the scientific rationale for the selection of the primary endpoint.',
+    remediation:
+      'Add a dedicated subsection in 2.5 justifying primary endpoint selection with regulatory precedent and scientific rationale',
     regulatoryBasis: 'FDA Guidance: Adaptive Design Clinical Trials; ICH E9',
     source: 'seed',
     confidence: 95,
@@ -151,7 +154,8 @@ const SEED_PATTERNS: RegulatoryPattern[] = [
     id: 'DEF-002',
     category: 'deficiency',
     name: 'Inadequate stability data',
-    description: 'Module 3 (Quality) lacks sufficient stability data to support proposed shelf life',
+    description:
+      'Module 3 (Quality) lacks sufficient stability data to support proposed shelf life',
     agency: 'any',
     submissionType: 'any',
     ctdModule: '3',
@@ -162,7 +166,8 @@ const SEED_PATTERNS: RegulatoryPattern[] = [
       'Accelerated stability data (X months, 40°C/75%RH) confirm',
     ],
     reviewerQuestion: 'Provide long-term stability data supporting the proposed shelf life claim.',
-    remediation: 'Ensure Module 3.2.P.8 contains complete stability study reports covering the proposed shelf life period',
+    remediation:
+      'Ensure Module 3.2.P.8 contains complete stability study reports covering the proposed shelf life period',
     regulatoryBasis: 'ICH Q1A(R2); ICH Q1E',
     source: 'seed',
     confidence: 95,
@@ -174,7 +179,8 @@ const SEED_PATTERNS: RegulatoryPattern[] = [
     id: 'DEF-003',
     category: 'deficiency',
     name: 'Inconsistent safety data across sections',
-    description: 'Adverse event counts or rates differ between clinical summary and individual study reports',
+    description:
+      'Adverse event counts or rates differ between clinical summary and individual study reports',
     agency: 'any',
     submissionType: 'any',
     ctdModule: '2.7',
@@ -183,8 +189,10 @@ const SEED_PATTERNS: RegulatoryPattern[] = [
     strongAlternatives: [
       'All safety data in Module 2.7 are derived directly from and consistent with Module 5 study reports',
     ],
-    reviewerQuestion: 'Please reconcile the discrepancy in adverse event data between Section 2.7 and Study Report [X].',
-    remediation: 'Cross-validate all safety tables in Module 2.7 against source study reports in Module 5',
+    reviewerQuestion:
+      'Please reconcile the discrepancy in adverse event data between Section 2.7 and Study Report [X].',
+    remediation:
+      'Cross-validate all safety tables in Module 2.7 against source study reports in Module 5',
     regulatoryBasis: 'ICH E3; ICH M4E(R2)',
     source: 'seed',
     confidence: 90,
@@ -198,7 +206,8 @@ const SEED_PATTERNS: RegulatoryPattern[] = [
     id: 'RT-001',
     category: 'reviewer_trigger',
     name: 'Vague efficacy language',
-    description: 'Efficacy claims use vague or unquantified language that invites reviewer follow-up',
+    description:
+      'Efficacy claims use vague or unquantified language that invites reviewer follow-up',
     agency: 'any',
     submissionType: 'any',
     ctdModule: '2.5',
@@ -214,8 +223,10 @@ const SEED_PATTERNS: RegulatoryPattern[] = [
       'Treatment group showed a [X]% reduction in [endpoint] (p=[value], 95% CI [range])',
       'The difference in [endpoint] between groups was [X] units (95% CI [range])',
     ],
-    reviewerQuestion: 'Please quantify the claimed clinical benefit with specific statistical measures.',
-    remediation: 'Replace vague efficacy statements with quantified results including effect sizes, confidence intervals, and p-values',
+    reviewerQuestion:
+      'Please quantify the claimed clinical benefit with specific statistical measures.',
+    remediation:
+      'Replace vague efficacy statements with quantified results including effect sizes, confidence intervals, and p-values',
     regulatoryBasis: 'ICH E9(R1); FDA Guidance on Clinical Trial Endpoints',
     source: 'seed',
     confidence: 90,
@@ -232,16 +243,13 @@ const SEED_PATTERNS: RegulatoryPattern[] = [
     submissionType: 'NDA',
     ctdModule: '2.5',
     severity: 'high',
-    triggerPhrases: [
-      'overall population',
-      'all patients',
-      'full analysis set',
-    ],
+    triggerPhrases: ['overall population', 'all patients', 'full analysis set'],
     strongAlternatives: [
       'Subgroup analyses by [age, sex, race, baseline disease severity] are presented in Section [X]',
       'Forest plots for key subgroups are provided in [appendix reference]',
     ],
-    reviewerQuestion: 'Please provide subgroup analyses by age, sex, race, and baseline disease severity.',
+    reviewerQuestion:
+      'Please provide subgroup analyses by age, sex, race, and baseline disease severity.',
     remediation: 'Add subgroup analysis results to Module 2.7.3 with appropriate forest plots',
     regulatoryBasis: 'ICH E9; FDA Guidance: Collection of Race and Ethnicity Data',
     source: 'seed',
@@ -303,7 +311,8 @@ const SEED_PATTERNS: RegulatoryPattern[] = [
       'Non-inferiority was demonstrated with a margin of [X] (95% CI [range])',
     ],
     reviewerQuestion: 'Please provide the statistical basis for the superiority claim.',
-    remediation: 'Either support superiority claims with pre-specified superiority analysis results or rephrase as non-inferiority/descriptive comparison',
+    remediation:
+      'Either support superiority claims with pre-specified superiority analysis results or rephrase as non-inferiority/descriptive comparison',
     regulatoryBasis: 'ICH E9(R1); FDA Guidance on Non-Inferiority Trials',
     source: 'seed',
     confidence: 90,
@@ -317,7 +326,8 @@ const SEED_PATTERNS: RegulatoryPattern[] = [
     id: 'DG-001',
     category: 'data_gap',
     name: 'Missing carcinogenicity data',
-    description: 'Nonclinical package lacks carcinogenicity studies for a chronically administered drug',
+    description:
+      'Nonclinical package lacks carcinogenicity studies for a chronically administered drug',
     agency: 'any',
     submissionType: 'NDA',
     ctdModule: '4',
@@ -331,8 +341,10 @@ const SEED_PATTERNS: RegulatoryPattern[] = [
       'Two-year carcinogenicity studies in [species] are presented in Module 4.2.3.4',
       'A carcinogenicity waiver was granted by [agency] based on [rationale] (reference [X])',
     ],
-    reviewerQuestion: 'Please provide carcinogenicity study reports or justification for their omission.',
-    remediation: 'Include completed carcinogenicity studies or provide documented waiver/scientific justification per ICH S1',
+    reviewerQuestion:
+      'Please provide carcinogenicity study reports or justification for their omission.',
+    remediation:
+      'Include completed carcinogenicity studies or provide documented waiver/scientific justification per ICH S1',
     regulatoryBasis: 'ICH S1A; ICH S1B(R1)',
     source: 'seed',
     confidence: 90,
@@ -358,8 +370,10 @@ const SEED_PATTERNS: RegulatoryPattern[] = [
       'All specified and unspecified impurities are identified, qualified, and controlled per ICH Q3A/Q3B thresholds',
       'Impurity [name]: identified as [structure], qualified at [level] per [toxicology study reference]',
     ],
-    reviewerQuestion: 'Provide complete impurity identification, qualification, and specification justification.',
-    remediation: 'Complete impurity characterization in Module 3.2.S.3.2 and 3.2.P.5.5 per ICH Q3A/Q3B',
+    reviewerQuestion:
+      'Provide complete impurity identification, qualification, and specification justification.',
+    remediation:
+      'Complete impurity characterization in Module 3.2.S.3.2 and 3.2.P.5.5 per ICH Q3A/Q3B',
     regulatoryBasis: 'ICH Q3A(R2); ICH Q3B(R2); ICH Q3D',
     source: 'seed',
     confidence: 90,
@@ -373,14 +387,16 @@ const SEED_PATTERNS: RegulatoryPattern[] = [
     id: 'FMT-001',
     category: 'formatting',
     name: 'Non-compliant eCTD granularity',
-    description: 'Documents are not split into eCTD-compliant granularity for electronic submission',
+    description:
+      'Documents are not split into eCTD-compliant granularity for electronic submission',
     agency: 'FDA',
     submissionType: 'any',
     ctdModule: 'any',
     severity: 'medium',
     triggerPhrases: [],
     strongAlternatives: [],
-    reviewerQuestion: 'Please reformat the submission to comply with eCTD granularity requirements.',
+    reviewerQuestion:
+      'Please reformat the submission to comply with eCTD granularity requirements.',
     remediation: 'Split combined documents into individual eCTD leaves per FDA eCTD guidance',
     regulatoryBasis: 'FDA eCTD Guidance; ICH M8',
     source: 'seed',
@@ -404,8 +420,10 @@ const SEED_PATTERNS: RegulatoryPattern[] = [
     strongAlternatives: [
       'The primary endpoint [X] as specified in Protocol Section [Y] was evaluated as described below',
     ],
-    reviewerQuestion: 'The primary endpoint in the CSR appears to differ from the protocol. Please clarify.',
-    remediation: 'Ensure CSR Section 9 endpoints exactly match Protocol Section [X]. Document any protocol amendments that changed endpoints.',
+    reviewerQuestion:
+      'The primary endpoint in the CSR appears to differ from the protocol. Please clarify.',
+    remediation:
+      'Ensure CSR Section 9 endpoints exactly match Protocol Section [X]. Document any protocol amendments that changed endpoints.',
     regulatoryBasis: 'ICH E3; 21 CFR 314.50',
     source: 'seed',
     confidence: 95,
@@ -442,7 +460,9 @@ class PatternRegistryImpl {
       results = results.filter(p => p.agency === criteria.agency || p.agency === 'any');
     }
     if (criteria?.submissionType) {
-      results = results.filter(p => p.submissionType === criteria.submissionType || p.submissionType === 'any');
+      results = results.filter(
+        p => p.submissionType === criteria.submissionType || p.submissionType === 'any'
+      );
     }
     if (criteria?.ctdModule) {
       results = results.filter(p => p.ctdModule === criteria.ctdModule || p.ctdModule === 'any');
@@ -466,11 +486,7 @@ class PatternRegistryImpl {
   /**
    * Scan text for matching patterns. Returns all matches found.
    */
-  scanText(
-    text: string,
-    location: string,
-    criteria?: PatternSearchCriteria,
-  ): PatternMatch[] {
+  scanText(text: string, location: string, criteria?: PatternSearchCriteria): PatternMatch[] {
     const matches: PatternMatch[] = [];
     const lowerText = text.toLowerCase();
     const candidates = this.getPatterns(criteria);
@@ -511,7 +527,7 @@ class PatternRegistryImpl {
    * Add a new learned pattern (from accumulated analysis data).
    */
   addLearnedPattern(
-    pattern: Omit<RegulatoryPattern, 'id' | 'source' | 'hitCount' | 'lastMatchedAt' | 'createdAt'>,
+    pattern: Omit<RegulatoryPattern, 'id' | 'source' | 'hitCount' | 'lastMatchedAt' | 'createdAt'>
   ): RegulatoryPattern {
     const id = `LP-${String(this.patterns.size + 1).padStart(4, '0')}`;
     const full: RegulatoryPattern = {
@@ -556,8 +572,9 @@ class PatternRegistryImpl {
    * Format: "1.1.0+L5" means base v1.1.0 with 5 learned patterns added.
    */
   get version(): string {
-    const learnedCount = Array.from(this.patterns.values())
-      .filter(p => p.source === 'learned').length;
+    const learnedCount = Array.from(this.patterns.values()).filter(
+      p => p.source === 'learned'
+    ).length;
     return learnedCount > 0
       ? `${PATTERN_REGISTRY_VERSION}+L${learnedCount}`
       : PATTERN_REGISTRY_VERSION;
@@ -596,17 +613,22 @@ class PatternRegistryImpl {
  * Call periodically or on significant pattern changes.
  */
 export async function persistPatternRegistry(
-  organizationId: number,
+  organizationId: number
 ): Promise<{ success: boolean; patternCount: number; error?: string }> {
   try {
     // Dynamic import to avoid circular dependencies
     const { db } = await import('../../db.js');
-    const { projectIntelligenceProfiles, projectMemoryEntries } = await import('../../../shared/schema.js');
+    const { projectIntelligenceProfiles, projectMemoryEntries } = await import(
+      '../../../shared/schema.js'
+    );
     const { eq } = await import('drizzle-orm');
 
     // Find any profile for this org to store patterns
     const [profile] = await db
-      .select({ id: projectIntelligenceProfiles.id })
+      .select({
+        id: projectIntelligenceProfiles.id,
+        projectId: projectIntelligenceProfiles.projectId,
+      })
       .from(projectIntelligenceProfiles)
       .where(eq(projectIntelligenceProfiles.organizationId, organizationId))
       .limit(1);
@@ -620,25 +642,29 @@ export async function persistPatternRegistry(
     const hitPatterns = patterns.filter(p => p.hitCount > 0);
 
     await db.insert(projectMemoryEntries).values({
-      profileId: profile.id,
+      projectProfileId: profile.id,
+      projectId: profile.projectId,
       organizationId,
       category: 'rim_pattern_registry',
+      subcategory: 'pattern_export',
+      title: 'RIM Pattern Registry Export',
       content: JSON.stringify({
         version: patternRegistry.version,
         learnedPatterns,
         hitCounts: Object.fromEntries(hitPatterns.map(p => [p.id, p.hitCount])),
         lastMatchDates: Object.fromEntries(
-          hitPatterns.filter(p => p.lastMatchedAt).map(p => [p.id, p.lastMatchedAt]),
+          hitPatterns.filter(p => p.lastMatchedAt).map(p => [p.id, p.lastMatchedAt])
         ),
         exportedAt: new Date().toISOString(),
-      }),
-      source: 'rim_pattern_registry',
-      importance: 'high',
-      metadata: {
         totalPatterns: patterns.length,
         learnedCount: learnedPatterns.length,
         activePatterns: hitPatterns.length,
-      },
+      }),
+      sourceDocumentName: 'rim-pattern-registry',
+      sourceDocumentType: 'system',
+      confidenceScore: 1,
+      importanceLevel: 'high',
+      extractedBy: 'system',
     });
 
     return { success: true, patternCount: patterns.length };
@@ -653,7 +679,7 @@ export async function persistPatternRegistry(
  * Load learned patterns from the database on startup.
  */
 export async function loadPatternRegistry(
-  organizationId: number,
+  organizationId: number
 ): Promise<{ loaded: boolean; learnedCount: number; error?: string }> {
   try {
     const { db } = await import('../../db.js');
@@ -664,10 +690,12 @@ export async function loadPatternRegistry(
     const [entry] = await db
       .select({ content: projectMemoryEntries.content })
       .from(projectMemoryEntries)
-      .where(and(
-        eq(projectMemoryEntries.organizationId, organizationId),
-        eq(projectMemoryEntries.category, 'rim_pattern_registry'),
-      ))
+      .where(
+        and(
+          eq(projectMemoryEntries.organizationId, organizationId),
+          eq(projectMemoryEntries.category, 'rim_pattern_registry')
+        )
+      )
       .orderBy(desc(projectMemoryEntries.createdAt))
       .limit(1);
 
@@ -688,11 +716,13 @@ export async function loadPatternRegistry(
         const pattern = patternRegistry.getPattern(id);
         if (pattern && typeof count === 'number') {
           // Update hit count by re-importing with correct count
-          patternRegistry.importPatterns([{
-            ...pattern,
-            hitCount: count as number,
-            lastMatchedAt: data.lastMatchDates?.[id] ?? pattern.lastMatchedAt,
-          }]);
+          patternRegistry.importPatterns([
+            {
+              ...pattern,
+              hitCount: count as number,
+              lastMatchedAt: data.lastMatchDates?.[id] ?? pattern.lastMatchedAt,
+            },
+          ]);
         }
       }
     }

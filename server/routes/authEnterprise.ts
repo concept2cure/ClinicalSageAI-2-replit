@@ -21,11 +21,6 @@ import {
   isAccountLocked,
   recordFailedLogin,
   resetFailedLogins,
-  verifyMFACode,
-  generateMFASecret,
-  enableMFA,
-  disableMFA,
-  isMFAEnabled,
   isPasswordExpired,
   createElectronicSignature,
   verifySignatureIntegrity,
@@ -35,6 +30,7 @@ import { config } from '../config/environment';
 import { authMiddleware } from '../auth';
 import * as emailOtpService from '../services/emailOtpService';
 import { sendLoginOtpEmail } from '../services/emailService';
+import * as mfaService from '../services/mfaService';
 
 const router = Router();
 // SECURITY FIX: isDev variable and devUser removed — no more dev-mode auth bypasses.
@@ -282,7 +278,7 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
         firstName: user.name?.split(' ')[0] || 'User',
         lastName: user.name?.split(' ').slice(1).join(' ') || '',
         displayName: user.name || user.email,
-        role: user.role || user.tier || 'user',
+        role: 'user',
         organizationId: user.defaultOrganizationId.toString(),
         organizationName: 'Concept2Cure',
       },
@@ -332,17 +328,21 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
       });
     }
 
-    // Verify the MFA code using speakeasy
+    // Verify the MFA code using the same canonical MFA service as /api/auth/*
     const userId = parseInt(decoded.userId);
 
     // Try email OTP first, then fall back to TOTP
     let isValid = await emailOtpService.verifyEmailOtp(userId, code);
-    let verifiedMethod = 'email';
+    let verifiedMethod: 'email' | 'totp' | 'backup_code' = 'email';
 
     if (!isValid) {
-      const mfaResult = await verifyMFACode(userId, code);
-      isValid = mfaResult.valid;
-      verifiedMethod = mfaResult.method || 'totp';
+      const detectedMethod = await mfaService.detectVerificationMethod(userId, code);
+      isValid = await mfaService.verifyToken(userId, code);
+      if (isValid && detectedMethod) {
+        verifiedMethod = detectedMethod;
+      } else if (isValid) {
+        verifiedMethod = 'totp';
+      }
     }
 
     if (!isValid) {
@@ -417,13 +417,13 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const result = await generateMFASecret(parseInt(decoded.userId), decoded.email);
+    const result = await mfaService.generateSecret(parseInt(decoded.userId), decoded.email);
 
     res.json({
       success: true,
       qrCodeDataUrl: result.qrCodeDataUrl,
       secret: result.secret,
-      backupCodes: result.backupCodes,
+      otpauthUrl: result.otpauthUrl,
     });
   } catch (error) {
     console.error('[Enterprise Auth] mfa/setup error:', error);
@@ -448,16 +448,20 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Verification code is required' });
     }
 
-    const success = await enableMFA(parseInt(decoded.userId), code);
+    const result = await mfaService.enableMfa(parseInt(decoded.userId), code);
 
-    if (!success) {
+    if (!result.success) {
       return res.status(400).json({
         error: 'INVALID_CODE',
         message: 'Invalid verification code. MFA not enabled.',
       });
     }
 
-    res.json({ success: true, message: 'MFA enabled successfully' });
+    res.json({
+      success: true,
+      message: 'MFA enabled successfully',
+      backupCodes: result.backupCodes || [],
+    });
   } catch (error) {
     console.error('[Enterprise Auth] mfa/enable error:', error);
     res.status(500).json({ error: 'Failed to enable MFA' });
@@ -476,9 +480,12 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const { password } = req.body;
+    const { password, code } = req.body;
     if (!password) {
       return res.status(400).json({ error: 'Password is required to disable MFA' });
+    }
+    if (!code) {
+      return res.status(400).json({ error: 'Current MFA verification code is required to disable MFA' });
     }
 
     // Re-authenticate before disabling MFA
@@ -498,7 +505,14 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid password' });
     }
 
-    await disableMFA(parseInt(decoded.userId));
+    const disabled = await mfaService.disableMfa(parseInt(decoded.userId), code);
+    if (!disabled) {
+      return res.status(400).json({
+        error: 'INVALID_CODE',
+        message: 'Unable to disable MFA with the current verification state.',
+      });
+    }
+
     res.json({ success: true, message: 'MFA disabled' });
   } catch (error) {
     console.error('[Enterprise Auth] mfa/disable error:', error);
@@ -555,7 +569,8 @@ router.get(
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const result = await verifySignatureIntegrity(parseInt(req.params.id));
+      const signatureId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const result = await verifySignatureIntegrity(parseInt(signatureId, 10));
       res.json(result);
     } catch (error) {
       console.error('[Enterprise Auth] signature verification error:', error);
@@ -637,8 +652,9 @@ router.post('/select-organization', async (req: Request, res: Response) => {
     const orgName = org?.name || 'Organization';
 
     // Issue new JWT scoped to the selected organization with actual role
+    const jwtEmail = Array.isArray(email) ? email[0] : email;
     const token = jwt.sign(
-      { userId, email, organizationId: String(organizationId), role: selectOrgRole },
+      { userId, email: jwtEmail, organizationId: String(organizationId), role: selectOrgRole },
       config.jwt.secret,
       { expiresIn: '24h' }
     );

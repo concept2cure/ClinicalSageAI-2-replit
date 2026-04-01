@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { Pool } from 'pg';
 
+const logger = console;
+
 const dbUrl = process.env.DATABASE_URL;
 if (!dbUrl) {
   logger.error('DATABASE_URL is not set');

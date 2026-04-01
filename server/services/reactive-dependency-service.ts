@@ -236,7 +236,7 @@ class ReactiveDependencyService {
         actionTaken,
         impactedObjectType: dep.targetType,
         impactedObjectId: dep.targetId,
-        impactedObjectLabel: dep.targetLabel,
+        impactedObjectLabel: dep.targetLabel ?? undefined,
         dependencyId: dep.id,
         autoTriggered: true,
         triggeredBy: input.triggeredBy ?? 'system',

@@ -21,7 +21,7 @@ const moduleIntegrationService = new ModuleIntegrationService(db);
 const workflowService = new WorkflowService(db);
 
 // Middleware to handle tenant context
-const setTenantContext = (req, res, next) => {
+const setTenantContext = (req: any, res: any, next: any) => {
   const organizationId = getSecureOrgId(req);
   if (!organizationId) {
     return res.status(401).json({ error: 'Organization context required' });

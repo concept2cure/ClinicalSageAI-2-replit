@@ -18,11 +18,7 @@ import { getPool } from '../../db.ts';
 import { tagArtifact, type TagArtifactResult } from '../artifact-tagger.js';
 import { logGeneration, validateArtifactQuality } from './enforcement.js';
 
-const pool = {
-  query: (...args: Parameters<ReturnType<typeof getPool>['query']>) => getPool().query(...args),
-  connect: (...args: Parameters<ReturnType<typeof getPool>['connect']>) =>
-    getPool().connect(...args),
-};
+const pool = getPool();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Backend service imports — wiring AnA to the full platform
@@ -208,7 +204,9 @@ export async function updateProject(
     return {
       success: false,
       action: 'update_project',
-      message: `Failed to update project ${projectId}: ${err instanceof Error ? err.message : 'unknown error'}.`,
+      message: `Failed to update project ${projectId}: ${
+        err instanceof Error ? err.message : 'unknown error'
+      }.`,
       error: err instanceof Error ? err.message : String(err),
     };
   }
@@ -303,7 +301,9 @@ export async function createArtifact(
     return {
       success: false,
       action: 'create_artifact',
-      message: `Failed to create artifact "${params.title}": ${err instanceof Error ? err.message : 'unknown error'}.`,
+      message: `Failed to create artifact "${params.title}": ${
+        err instanceof Error ? err.message : 'unknown error'
+      }.`,
       error: err instanceof Error ? err.message : String(err),
     };
   }
@@ -382,13 +382,17 @@ export async function updateArtifact(
         title: current.title,
         ctdSection: current.ctd_section,
       },
-      message: `Updated "${current.title}"${sectionLabel}${newVersion}. ${params.changeDescription || 'Content revised by AnA.'}`,
+      message: `Updated "${current.title}"${sectionLabel}${newVersion}. ${
+        params.changeDescription || 'Content revised by AnA.'
+      }`,
     };
   } catch (err: unknown) {
     return {
       success: false,
       action: 'update_artifact',
-      message: `Failed to update artifact ${params.artifactId}: ${err instanceof Error ? err.message : 'unknown error'}.`,
+      message: `Failed to update artifact ${params.artifactId}: ${
+        err instanceof Error ? err.message : 'unknown error'
+      }.`,
       error: err instanceof Error ? err.message : String(err),
     };
   }
@@ -467,7 +471,9 @@ export async function updateArtifactStatus(
     return {
       success: false,
       action: 'update_artifact_status',
-      message: `Failed to update status for artifact ${params.artifactId}: ${err instanceof Error ? err.message : 'unknown error'}.`,
+      message: `Failed to update status for artifact ${params.artifactId}: ${
+        err instanceof Error ? err.message : 'unknown error'
+      }.`,
       error: err instanceof Error ? err.message : String(err),
     };
   }
@@ -510,7 +516,9 @@ export async function placeInDossier(
     return {
       success: false,
       action: 'place_in_dossier',
-      message: `Failed to place artifact ${params.artifactId} in section ${params.ctdSection}: ${err instanceof Error ? err.message : 'unknown error'}.`,
+      message: `Failed to place artifact ${params.artifactId} in section ${params.ctdSection}: ${
+        err instanceof Error ? err.message : 'unknown error'
+      }.`,
       error: err instanceof Error ? err.message : String(err),
     };
   }
@@ -609,7 +617,9 @@ export async function createTask(
     return {
       success: false,
       action: 'create_task',
-      message: `Failed to create task "${params.title}": ${err instanceof Error ? err.message : 'unknown error'}.`,
+      message: `Failed to create task "${params.title}": ${
+        err instanceof Error ? err.message : 'unknown error'
+      }.`,
       error: err instanceof Error ? err.message : String(err),
     };
   }
@@ -774,7 +784,9 @@ export async function checkDossierReadiness(
         issues,
         artifacts: artifacts.rows,
       },
-      message: `Dossier readiness: ${readiness}% (${approved}/${total} approved). ${issues.length > 0 ? 'Issues: ' + issues.join('; ') : 'No blocking issues.'}`,
+      message: `Dossier readiness: ${readiness}% (${approved}/${total} approved). ${
+        issues.length > 0 ? 'Issues: ' + issues.join('; ') : 'No blocking issues.'
+      }`,
     };
   } catch (err: unknown) {
     return {
@@ -1117,7 +1129,9 @@ export async function createSubmissionPackage(
       success: true,
       action: 'create_submission_package',
       data: { packageId: pkg.package_id, title: pkg.title, family: pkg.package_family },
-      message: `Submission package "${params.title}" created (${params.packageFamily.toUpperCase()}).`,
+      message: `Submission package "${
+        params.title
+      }" created (${params.packageFamily.toUpperCase()}).`,
     };
   } catch (err: unknown) {
     return {
@@ -1570,11 +1584,15 @@ export async function exportArtifact(
           artifactId: params.artifactId,
           format: 'docx',
           title: doc.title,
-          fileName: `${(doc.title || 'document').replace(/[^a-zA-Z0-9]/g, '_')}_v${doc.version}.docx`,
+          fileName: `${(doc.title || 'document').replace(/[^a-zA-Z0-9]/g, '_')}_v${
+            doc.version
+          }.docx`,
           base64,
           sizeBytes: buffer.length,
         },
-        message: `Exported "${doc.title}" as DOCX (${Math.round(buffer.length / 1024)}KB, version ${doc.version}).`,
+        message: `Exported "${doc.title}" as DOCX (${Math.round(buffer.length / 1024)}KB, version ${
+          doc.version
+        }).`,
       };
     }
 
@@ -1660,8 +1678,8 @@ export async function compareVersions(
     // Extract section-level changes
     const olderHeaders = olderContent.match(/^#{1,3}\s+.+$/gm) || [];
     const newerHeaders = newerContent.match(/^#{1,3}\s+.+$/gm) || [];
-    const addedSections = newerHeaders.filter(h => !olderHeaders.includes(h));
-    const removedSections = olderHeaders.filter(h => !newerHeaders.includes(h));
+    const addedSections = newerHeaders.filter((h: any) => !olderHeaders.includes(h));
+    const removedSections = olderHeaders.filter((h: any) => !newerHeaders.includes(h));
 
     return {
       success: true,
@@ -1878,7 +1896,9 @@ What should be done BEFORE this version is submitted? Be specific.`;
     let savedArtifactId: number | undefined;
     if (params.saveAsArtifact) {
       try {
-        const impactTitle = `Version Impact Review — ${artifactMeta.title || 'Artifact'} (v${older.version} → v${newer.version})`;
+        const impactTitle = `Version Impact Review — ${artifactMeta.title || 'Artifact'} (v${
+          older.version
+        } → v${newer.version})`;
         const tagResult = await tagArtifact({
           projectId: params.projectId,
           organizationId: ctx.organizationId,
@@ -1938,7 +1958,11 @@ What should be done BEFORE this version is submitted? Be specific.`;
         impact: response.content,
         savedAsArtifactId: savedArtifactId,
       },
-      message: `Version Impact Review for "${artifactMeta.title}" (v${older.version} → v${newer.version}): +${diff.additions}/-${diff.deletions} lines analyzed.${savedArtifactId ? ` Saved as artifact #${savedArtifactId}.` : ''}`,
+      message: `Version Impact Review for "${artifactMeta.title}" (v${older.version} → v${
+        newer.version
+      }): +${diff.additions}/-${diff.deletions} lines analyzed.${
+        savedArtifactId ? ` Saved as artifact #${savedArtifactId}.` : ''
+      }`,
     };
   } catch (err: unknown) {
     return {
@@ -2231,25 +2255,18 @@ export async function generateSAP(
       params.track === 'medical_device'
         ? 'medical_device'
         : params.track === 'diagnostics_ivd'
-          ? 'diagnostics_ivd'
-          : 'biotech_pharma';
+        ? 'diagnostics_ivd'
+        : 'biotech_pharma';
     const result = await anaBiostatsOrchestrator.executeWorkflow({
       workflowType: 'track_aware_drafting',
       input: {
         projectId: Number(params.projectId || ctx.activeProjectId),
         clientTrack: normalizedClientTrack,
         regulatoryBody:
-          typeof params.regulatoryBody === 'string'
-            ? params.regulatoryBody
-            : undefined,
-        studyType:
-          typeof params.studyType === 'string' ? params.studyType : 'superiority',
-        objectiveType:
-          typeof params.objectiveType === 'string'
-            ? params.objectiveType
-            : 'efficacy',
-        endpointType:
-          typeof params.endpointType === 'string' ? params.endpointType : 'continuous',
+          typeof params.regulatoryBody === 'string' ? params.regulatoryBody : undefined,
+        studyType: typeof params.studyType === 'string' ? params.studyType : 'superiority',
+        objectiveType: typeof params.objectiveType === 'string' ? params.objectiveType : 'efficacy',
+        endpointType: typeof params.endpointType === 'string' ? params.endpointType : 'continuous',
         alpha: Number(params.alpha || 0.05),
         powerTarget: Number(params.power || params.powerTarget || 0.8),
         effectSize: Number(params.effectSize || 0.5),
@@ -2315,40 +2332,28 @@ export async function computeSampleSize(
       params.track === 'medical_device'
         ? 'medical_device'
         : params.track === 'diagnostics_ivd'
-          ? 'diagnostics_ivd'
-          : 'biotech_pharma';
+        ? 'diagnostics_ivd'
+        : 'biotech_pharma';
     const validation = inputNormalizer.normalize({
       projectId: Number(params.projectId || ctx.activeProjectId),
       clientTrack: normalizedClientTrack,
-      studyType:
-        typeof params.studyType === 'string' ? params.studyType : 'superiority',
-      objectiveType:
-        typeof params.objectiveType === 'string'
-          ? params.objectiveType
-          : 'efficacy',
-      endpointType:
-        typeof params.endpointType === 'string' ? params.endpointType : 'continuous',
+      studyType: typeof params.studyType === 'string' ? params.studyType : 'superiority',
+      objectiveType: typeof params.objectiveType === 'string' ? params.objectiveType : 'efficacy',
+      endpointType: typeof params.endpointType === 'string' ? params.endpointType : 'continuous',
       alpha: Number(params.alpha || 0.05),
       powerTarget: Number(params.power || params.powerTarget || 0.8),
       effectSize: Number(params.effectSize || 0.5),
       attritionRate: Number(params.attrition || params.attritionRate || 0.15),
       allocationRatio: Number(params.allocationRatio || 1),
-      controlRate:
-        params.controlRate !== undefined ? Number(params.controlRate) : undefined,
-      treatmentRate:
-        params.treatmentRate !== undefined ? Number(params.treatmentRate) : undefined,
+      controlRate: params.controlRate !== undefined ? Number(params.controlRate) : undefined,
+      treatmentRate: params.treatmentRate !== undefined ? Number(params.treatmentRate) : undefined,
       nonInferiorityMargin:
-        params.nonInferiorityMargin !== undefined
-          ? Number(params.nonInferiorityMargin)
-          : undefined,
+        params.nonInferiorityMargin !== undefined ? Number(params.nonInferiorityMargin) : undefined,
       equivalenceMargin:
         params.equivalenceMargin !== undefined ? Number(params.equivalenceMargin) : undefined,
-      prevalence:
-        params.prevalence !== undefined ? Number(params.prevalence) : undefined,
-      sensitivity:
-        params.sensitivity !== undefined ? Number(params.sensitivity) : undefined,
-      specificity:
-        params.specificity !== undefined ? Number(params.specificity) : undefined,
+      prevalence: params.prevalence !== undefined ? Number(params.prevalence) : undefined,
+      sensitivity: params.sensitivity !== undefined ? Number(params.sensitivity) : undefined,
+      specificity: params.specificity !== undefined ? Number(params.specificity) : undefined,
     });
 
     if (!validation.valid) {
@@ -2409,7 +2414,9 @@ export async function computeDoseEscalation(
       success: true,
       action: 'compute_dose_escalation',
       data: result,
-      message: `Dose escalation designed. Method: ${result?.method || params.method || '3+3'}. ${result?.recommendation || 'See results for details.'}`,
+      message: `Dose escalation designed. Method: ${result?.method || params.method || '3+3'}. ${
+        result?.recommendation || 'See results for details.'
+      }`,
     };
   } catch (err: unknown) {
     return {
@@ -2451,7 +2458,9 @@ export async function assessDefensibility(
       success: true,
       action: 'assess_defensibility',
       data: result,
-      message: `Defensibility score: ${result?.overallScore || 'N/A'}/100. ${result?.summary || 'Assessment complete.'}`,
+      message: `Defensibility score: ${result?.overallScore || 'N/A'}/100. ${
+        result?.summary || 'Assessment complete.'
+      }`,
     };
   } catch (err: unknown) {
     return {
@@ -2478,7 +2487,11 @@ export async function designTrial(
       endpoint: params.primaryEndpoint,
       comparator: params.comparator || 'placebo',
     },
-    message: `Trial design parameters captured: ${params.designType || 'parallel'} ${params.phase || 'Phase 2'} for ${params.indication || 'indication'}. Use /power to calculate sample size, or /sap to generate the statistical analysis plan.`,
+    message: `Trial design parameters captured: ${params.designType || 'parallel'} ${
+      params.phase || 'Phase 2'
+    } for ${
+      params.indication || 'indication'
+    }. Use /power to calculate sample size, or /sap to generate the statistical analysis plan.`,
   };
 }
 
@@ -2510,7 +2523,9 @@ export async function draftSection(
       success: true,
       action: 'draft_section',
       data: { sectionId, code: res.rows[0].code, title: res.rows[0].title },
-      message: `Section ${res.rows[0].code || sectionId} ready for AI drafting. Use the /draft slash command or ask me to draft it.`,
+      message: `Section ${
+        res.rows[0].code || sectionId
+      } ready for AI drafting. Use the /draft slash command or ask me to draft it.`,
     };
   } catch (err: unknown) {
     return {
@@ -2886,7 +2901,11 @@ export async function runSubmissionAssessment(
       success: true,
       action: 'run_submission_assessment',
       data: { assessment: result },
-      message: `Full submission twin assessment complete for package ${packageId}. ${result.claims?.length ?? 0} claim(s), ${result.driftAlerts?.length ?? 0} drift alert(s), ${result.challenges?.length ?? 0} challenge(s), ${result.weakZones?.length ?? 0} weak zone(s).`,
+      message: `Full submission twin assessment complete for package ${packageId}. ${
+        result.claims?.length ?? 0
+      } claim(s), ${result.driftAlerts?.length ?? 0} drift alert(s), ${
+        result.challenges?.length ?? 0
+      } challenge(s), ${result.weakZones?.length ?? 0} weak zone(s).`,
     };
   } catch (err: unknown) {
     return {
@@ -2925,7 +2944,9 @@ export async function simulateChallenges(
       success: true,
       action: 'simulate_challenges',
       data: { challenges, count: challenges.length },
-      message: `Simulated ${challenges.length} potential reviewer challenge(s) across ${lenses.join(', ')} lenses.`,
+      message: `Simulated ${challenges.length} potential reviewer challenge(s) across ${lenses.join(
+        ', '
+      )} lenses.`,
     };
   } catch (err: unknown) {
     return {
@@ -3048,7 +3069,9 @@ export async function scanContradictions(
       success: true,
       action: 'scan_contradictions',
       data: { findings, summary, totalCount: summary.total, criticalCount },
-      message: `Found ${summary.total} contradiction(s): ${criticalCount} critical/high severity. ${summary.total === 0 ? 'Documents are internally consistent.' : 'Review recommended.'}`,
+      message: `Found ${summary.total} contradiction(s): ${criticalCount} critical/high severity. ${
+        summary.total === 0 ? 'Documents are internally consistent.' : 'Review recommended.'
+      }`,
     };
   } catch (err: unknown) {
     return {
@@ -3125,7 +3148,11 @@ export async function analyzeJurisdictions(
         harmonizationFrameworks: result.harmonizationFrameworks,
         summary: result.summary,
       },
-      message: `Cross-jurisdictional analysis complete for ${targetAgencies.join(', ')}. ${result.divergences?.length || 0} divergence(s), ${result.reliancePathways?.length || 0} reliance pathway(s), ${result.filingSequences?.length || 0} filing sequence option(s).`,
+      message: `Cross-jurisdictional analysis complete for ${targetAgencies.join(', ')}. ${
+        result.divergences?.length || 0
+      } divergence(s), ${result.reliancePathways?.length || 0} reliance pathway(s), ${
+        result.filingSequences?.length || 0
+      } filing sequence option(s).`,
     };
   } catch (err: unknown) {
     return {
@@ -3160,7 +3187,9 @@ export async function recommendEndpoints(
       success: true,
       action: 'recommend_endpoints',
       data: { recommendations, count: recommendations.length },
-      message: `Generated ${recommendations.length} endpoint recommendation(s) for ${params.indication}${params.phase ? ` (Phase ${params.phase})` : ''}.`,
+      message: `Generated ${recommendations.length} endpoint recommendation(s) for ${
+        params.indication
+      }${params.phase ? ` (Phase ${params.phase})` : ''}.`,
     };
   } catch (err: unknown) {
     return {
@@ -3244,7 +3273,11 @@ export async function runRIMScan(
         runStatus: assessment.run.status,
         verdict: assessment.rimVerdict,
       },
-      message: `RIM assessment complete. Score: ${assessment.rimScore ?? 'N/A'}/100 — ${assessment.rimVerdict}. ${assessment.patternMatches?.length || 0} pattern(s) detected. ${assessment.topActions?.length || 0} recommended action(s).`,
+      message: `RIM assessment complete. Score: ${assessment.rimScore ?? 'N/A'}/100 — ${
+        assessment.rimVerdict
+      }. ${assessment.patternMatches?.length || 0} pattern(s) detected. ${
+        assessment.topActions?.length || 0
+      } recommended action(s).`,
     };
   } catch (err: unknown) {
     return {
@@ -3327,7 +3360,9 @@ export async function generateClinicalInsights(
       success: true,
       action: 'generate_clinical_insights',
       data: { insights },
-      message: `Clinical trial insights generated for ${params.indication} (${params.phase || 'Phase 2'}).`,
+      message: `Clinical trial insights generated for ${params.indication} (${
+        params.phase || 'Phase 2'
+      }).`,
     };
   } catch (err: unknown) {
     return {
@@ -3429,23 +3464,27 @@ export async function analyzeCMSStrategy(
 
     const riskKeywords = /\b(missing|insufficient|unclear|gap|uncertain|weak)\b/i;
     const riskSignals = entries
-      .filter((entry) => riskKeywords.test(entry.content || ''))
+      .filter(entry => riskKeywords.test(entry.content || ''))
       .slice(0, 5)
-      .map((entry) => ({
+      .map(entry => ({
         category: entry.category || 'unknown',
         title: entry.title || 'Untitled',
         snippet: (entry.content || '').slice(0, 220),
       }));
 
-    const categoryCoverage = categories.map((category) => ({
+    const categoryCoverage = categories.map(category => ({
       category,
-      count: entries.filter((entry) => entry.category === category).length,
+      count: entries.filter(entry => entry.category === category).length,
     }));
 
-    const missingAreas = categoryCoverage.filter((item) => item.count === 0).map((item) => item.category);
+    const missingAreas = categoryCoverage
+      .filter(item => item.count === 0)
+      .map(item => item.category);
     const recommendations = [
       ...(missingAreas.includes('coding_coverage')
-        ? ['Define coding pathway assumptions (CPT/HCPCS/DRG/APC) before payer narrative finalization.']
+        ? [
+            'Define coding pathway assumptions (CPT/HCPCS/DRG/APC) before payer narrative finalization.',
+          ]
         : []),
       ...(missingAreas.includes('payer_evidence')
         ? ['Build payer-facing evidence matrix mapping clinical endpoints to coverage criteria.']
@@ -3503,17 +3542,33 @@ export async function assessDiagnosticsValidation(
       'companion_diagnostic',
     ];
     const entries = await loadProjectMemoryEntries(projectId, categories, 20);
-    const corpus = entries.map((entry) => `${entry.title || ''} ${entry.content || ''}`).join(' ');
+    const corpus = entries.map(entry => `${entry.title || ''} ${entry.content || ''}`).join(' ');
 
     const componentChecks = [
-      { key: 'analytical', label: 'Analytical validation', pattern: /\b(precision|linearity|lodd?|repeatability|reproducibility)\b/i },
-      { key: 'clinical', label: 'Clinical performance', pattern: /\b(sensitivity|specificity|ppv|npv|clinical performance)\b/i },
-      { key: 'cutoff', label: 'Cutoff / decision threshold', pattern: /\b(cutoff|threshold|decision point|method comparison)\b/i },
-      { key: 'cdx', label: 'Companion diagnostic alignment', pattern: /\b(companion diagnostic|cdx|co-development)\b/i },
+      {
+        key: 'analytical',
+        label: 'Analytical validation',
+        pattern: /\b(precision|linearity|lodd?|repeatability|reproducibility)\b/i,
+      },
+      {
+        key: 'clinical',
+        label: 'Clinical performance',
+        pattern: /\b(sensitivity|specificity|ppv|npv|clinical performance)\b/i,
+      },
+      {
+        key: 'cutoff',
+        label: 'Cutoff / decision threshold',
+        pattern: /\b(cutoff|threshold|decision point|method comparison)\b/i,
+      },
+      {
+        key: 'cdx',
+        label: 'Companion diagnostic alignment',
+        pattern: /\b(companion diagnostic|cdx|co-development)\b/i,
+      },
     ];
 
-    const present = componentChecks.filter((check) => check.pattern.test(corpus));
-    const missing = componentChecks.filter((check) => !check.pattern.test(corpus));
+    const present = componentChecks.filter(check => check.pattern.test(corpus));
+    const missing = componentChecks.filter(check => !check.pattern.test(corpus));
     const readinessScore = Math.round((present.length / componentChecks.length) * 100);
 
     return {
@@ -3522,8 +3577,8 @@ export async function assessDiagnosticsValidation(
       data: {
         projectId,
         readinessScore,
-        presentComponents: present.map((item) => item.label),
-        missingComponents: missing.map((item) => item.label),
+        presentComponents: present.map(item => item.label),
+        missingComponents: missing.map(item => item.label),
         memoryEntryCount: entries.length,
       },
       message:
@@ -4196,7 +4251,9 @@ export async function executeCommands(
         const result = await handler(ctx, cmd.params);
         results.push(result);
         console.log(
-          `[AnA Command] Executed ${cmd.command}: ${result.success ? 'OK' : 'FAILED'} — ${result.message}`
+          `[AnA Command] Executed ${cmd.command}: ${result.success ? 'OK' : 'FAILED'} — ${
+            result.message
+          }`
         );
       } catch (err: unknown) {
         results.push({

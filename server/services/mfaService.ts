@@ -336,6 +336,57 @@ export async function verifyToken(userId: number, token: string): Promise<boolea
   return false;
 }
 
+export async function detectVerificationMethod(
+  userId: number,
+  token: string
+): Promise<'totp' | 'backup_code' | null> {
+  if (!token) {
+    return null;
+  }
+
+  const normalizedToken = token.replace(/-/g, '').toUpperCase();
+
+  // Backup codes are alphanumeric; TOTP codes are strictly numeric.
+  if (!/^\d+$/.test(token)) {
+    const [user] = await db
+      .select({
+        mfaEnabled: users.mfaEnabled,
+        mfaBackupCodes: users.mfaBackupCodes,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user?.mfaEnabled || !user.mfaBackupCodes) {
+      return null;
+    }
+
+    const storedCodes = user.mfaBackupCodes as string[];
+    const tokenHash = hashBackupCode(normalizedToken);
+    return storedCodes.some(code => code === tokenHash) ? 'backup_code' : null;
+  }
+
+  const [user] = await db
+    .select({
+      mfaSecret: users.mfaSecret,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!user?.mfaSecret) {
+    return null;
+  }
+
+  try {
+    const secretBase32 = decrypt(user.mfaSecret);
+    const secretBuffer = base32Decode(secretBase32);
+    return verifyTOTPToken(secretBuffer, token) ? 'totp' : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Enable MFA after verifying the initial TOTP token.
  * This confirms the user has correctly set up their authenticator app.

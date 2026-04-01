@@ -135,7 +135,7 @@ async function getRelevantLiterature(indication: string, phase: string | undefin
         citation_count: 12,
       },
     ];
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching relevant literature:', error);
 
     // Fallback to pre-defined sources if database query fails - more comprehensive with realistic data
@@ -232,7 +232,7 @@ async function getRegulatoryGuidance(indication: string, phase: string | undefin
     `);
 
     return guidances;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching regulatory guidance:', error);
 
     // Fallback to pre-defined guidance if database query fails
@@ -331,11 +331,11 @@ async function findSimilarProtocols(indication: string, phase: string | undefine
       LIMIT 5
     `);
 
-    return similarTrials.map(trial => ({
+    return similarTrials.map((trial: any) => ({
       ...trial,
       similarity: Math.random() * 30 + 70, // Placeholder for actual similarity score
     }));
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error finding similar protocols:', error);
     return [];
   }
@@ -371,7 +371,7 @@ async function extractStatisticalApproaches(indication: string, phase: string | 
     `);
 
     return statisticalData;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error extracting statistical approaches:', error);
     return [
       { statistical_method: 'ANCOVA with LOCF', frequency: 23 },
@@ -405,7 +405,7 @@ async function analyzeEndpoints(
     // Analyze primary endpoints
     const primaryEndpointAnalysis = primaryEndpoints.map(endpoint => {
       const matchingEndpoint = commonEndpoints.find(
-        e =>
+        (e: any) =>
           e.endpoint_name.toLowerCase().includes(endpoint.toLowerCase()) ||
           endpoint.toLowerCase().includes(e.endpoint_name.toLowerCase())
       );
@@ -424,7 +424,7 @@ async function analyzeEndpoints(
     // Analyze secondary endpoints
     const secondaryEndpointAnalysis = secondaryEndpoints.map(endpoint => {
       const matchingEndpoint = commonEndpoints.find(
-        e =>
+        (e: any) =>
           e.endpoint_name.toLowerCase().includes(endpoint.toLowerCase()) ||
           endpoint.toLowerCase().includes(e.endpoint_name.toLowerCase())
       );
@@ -445,13 +445,13 @@ async function analyzeEndpoints(
       secondaryEndpointAnalysis,
       recommendedAlternatives: commonEndpoints
         .filter(
-          e =>
+          (e: any) =>
             !primaryEndpoints.some(pe => e.endpoint_name.toLowerCase().includes(pe.toLowerCase()))
         )
         .slice(0, 3)
-        .map(e => e.endpoint_name),
+        .map((e: any) => e.endpoint_name),
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error analyzing endpoints:', error);
     return {
       primaryEndpointAnalysis: primaryEndpoints.map(endpoint => ({
@@ -524,7 +524,7 @@ async function getSampleSizeRecommendations(indication: string, phase: string | 
       averageDuration: 24,
       recommendation: `Limited data available for this specific indication/phase. Consider standard sample size calculations based on expected effect size and power.`,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error getting sample size recommendations:', error);
     return {
       averageSampleSize: 120,
@@ -615,7 +615,7 @@ router.post('/analyze', async (req, res) => {
           `Clear definition of primary endpoints (${protocolData.primaryEndpoints.join(', ')})`,
           `Study design generally aligns with regulatory expectations for ${protocolData.indication} trials`,
           `Phase selection (${protocolData.phase || 'Not specified'}) is appropriate for current development stage`,
-          ...(!endpointAnalysis.primaryEndpointAnalysis.some(e => !e.isCommon)
+          ...(!endpointAnalysis.primaryEndpointAnalysis.some((e: any) => !e.isCommon)
             ? [
                 `Primary endpoint selection is consistent with successful ${protocolData.indication} trials`,
               ]
@@ -623,7 +623,7 @@ router.post('/analyze', async (req, res) => {
         ],
 
         weaknesses: [
-          ...(endpointAnalysis.primaryEndpointAnalysis.some(e => !e.isCommon)
+          ...(endpointAnalysis.primaryEndpointAnalysis.some((e: any) => !e.isCommon)
             ? [
                 `Some primary endpoints are not commonly used in successful ${protocolData.indication} trials`,
               ]
@@ -658,7 +658,7 @@ router.post('/analyze', async (req, res) => {
                 : []),
             ],
             recommendations: [
-              `Consider ${similarProtocols.filter(p => p.success).length > 0 ? 'adopting elements from successful trials in this indication' : 'established design patterns in similar therapeutic areas'}`,
+              `Consider ${similarProtocols.filter((p: any) => p.success).length > 0 ? 'adopting elements from successful trials in this indication' : 'established design patterns in similar therapeutic areas'}`,
               ...(protocolData.phase && protocolData.phase.includes('2')
                 ? [
                     'Include adaptive design elements to optimize dose selection for subsequent trials',
@@ -668,11 +668,11 @@ router.post('/analyze', async (req, res) => {
           },
           {
             section: 'Endpoints',
-            content: `The protocol defines ${protocolData.primaryEndpoints.length} primary endpoint(s) and ${protocolData.secondaryEndpoints?.length || 0} secondary endpoint(s). ${endpointAnalysis.primaryEndpointAnalysis.filter(e => e.isCommon).length > 0 ? `${endpointAnalysis.primaryEndpointAnalysis.filter(e => e.isCommon).length} of the primary endpoints are commonly used in successful trials for this indication.` : ''}`,
+            content: `The protocol defines ${protocolData.primaryEndpoints.length} primary endpoint(s) and ${protocolData.secondaryEndpoints?.length || 0} secondary endpoint(s). ${endpointAnalysis.primaryEndpointAnalysis.filter((e: any) => e.isCommon).length > 0 ? `${endpointAnalysis.primaryEndpointAnalysis.filter((e: any) => e.isCommon).length} of the primary endpoints are commonly used in successful trials for this indication.` : ''}`,
             issues: endpointAnalysis.primaryEndpointAnalysis
-              .filter(e => !e.isCommon)
+              .filter((e: any) => !e.isCommon)
               .map(
-                e =>
+                (e: any) =>
                   `Primary endpoint "${e.endpoint}" is uncommon in successful ${protocolData.indication} trials`
               ),
             recommendations: [
@@ -696,7 +696,7 @@ router.post('/analyze', async (req, res) => {
                 ? ['Statistical methodology needs complete specification']
                 : []),
               ...(protocolData.statisticalMethod &&
-              !statisticalApproaches.some(s =>
+              !statisticalApproaches.some((s: any) =>
                 s.statistical_method
                   .toLowerCase()
                   .includes(protocolData.statisticalMethod!.toLowerCase())
@@ -748,7 +748,7 @@ router.post('/analyze', async (req, res) => {
         recommendations: [
           {
             category: 'Endpoint Selection',
-            issue: endpointAnalysis.primaryEndpointAnalysis.some(e => !e.isCommon)
+            issue: endpointAnalysis.primaryEndpointAnalysis.some((e: any) => !e.isCommon)
               ? 'Some selected endpoints are not commonly used in successful trials'
               : 'Endpoint selection generally aligns with successful trials',
             recommendation:
@@ -757,7 +757,7 @@ router.post('/analyze', async (req, res) => {
                 : 'Current endpoint selection is appropriate, ensure consistent definition and measurement',
             evidence:
               'Analysis of 779 CSRs shows clear patterns in endpoint selection for successful trials',
-            importance: endpointAnalysis.primaryEndpointAnalysis.some(e => !e.isCommon)
+            importance: endpointAnalysis.primaryEndpointAnalysis.some((e: any) => !e.isCommon)
               ? 'high'
               : 'medium',
           },
@@ -766,7 +766,7 @@ router.post('/analyze', async (req, res) => {
             issue: !protocolData.statisticalMethod
               ? 'Statistical methodology requires complete specification'
               : `Selected approach (${protocolData.statisticalMethod}) ${
-                  statisticalApproaches.some(s =>
+                  statisticalApproaches.some((s: any) =>
                     s.statistical_method
                       .toLowerCase()
                       .includes(protocolData.statisticalMethod!.toLowerCase())
@@ -798,7 +798,7 @@ router.post('/analyze', async (req, res) => {
                       : 'within'
                 } the typical range for successful trials`,
             recommendation: sampleSizeRecommendations.recommendation,
-            evidence: `Analysis of ${similarProtocols.filter(p => p.success).length} successful trials in ${protocolData.indication} shows median sample size of ${sampleSizeRecommendations.medianSampleSize} (IQR: ${sampleSizeRecommendations.q1SampleSize}-${sampleSizeRecommendations.q3SampleSize})`,
+            evidence: `Analysis of ${similarProtocols.filter((p: any) => p.success).length} successful trials in ${protocolData.indication} shows median sample size of ${sampleSizeRecommendations.medianSampleSize} (IQR: ${sampleSizeRecommendations.q1SampleSize}-${sampleSizeRecommendations.q3SampleSize})`,
             importance:
               !protocolData.populationSize ||
               (protocolData.populationSize &&
@@ -854,7 +854,7 @@ router.post('/analyze', async (req, res) => {
         statisticalConsiderations: [
           `${
             statisticalApproaches.length > 0
-              ? `The most common statistical approaches for ${protocolData.indication} trials are ${statisticalApproaches.map(s => s.statistical_method).join(', ')}`
+              ? `The most common statistical approaches for ${protocolData.indication} trials are ${statisticalApproaches.map((s: any) => s.statistical_method).join(', ')}`
               : `Statistical approaches should be selected based on endpoint type and data characteristics`
           }`,
           `Power calculations should account for an estimated dropout rate of 15-20%`,
@@ -863,14 +863,14 @@ router.post('/analyze', async (req, res) => {
         ],
 
         // Regulatory considerations
-        regulatoryConsiderations: regulatoryGuidance.map(guidance => ({
+        regulatoryConsiderations: regulatoryGuidance.map((guidance: any) => ({
           agency: guidance.agency,
           relevantGuidance: guidance.document_title,
           consideration: guidance.summary,
         })),
 
         // Academic literature citations
-        academicLiterature: literatureCitations.map(citation => ({
+        academicLiterature: literatureCitations.map((citation: any) => ({
           title: citation.title,
           authors: citation.authors,
           journal: citation.journal,
@@ -903,7 +903,7 @@ router.post('/analyze', async (req, res) => {
     }
 
     res.json(assessment);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating protocol assessment:', error);
     res.status(500).json({
       error: 'Error generating protocol assessment',
@@ -930,7 +930,7 @@ router.get('/:id', async (req, res) => {
     // Parse the assessment_results JSON and send it back
     const assessmentResults = assessment[0].assessment_results;
     res.json(assessmentResults);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error retrieving protocol assessment:', error);
     res.status(500).json({
       error: 'Error retrieving protocol assessment',
@@ -958,7 +958,7 @@ router.get('/', async (req, res) => {
       .limit(20);
 
     res.json(assessments);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error retrieving protocol assessments:', error);
     res.status(500).json({
       error: 'Error retrieving protocol assessments',
@@ -992,7 +992,7 @@ router.post('/:id/feedback', async (req, res) => {
     });
 
     res.json({ success: true, message: 'Feedback submitted successfully' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error submitting feedback:', error);
     res.status(500).json({
       error: 'Error submitting feedback',
@@ -1061,14 +1061,14 @@ router.get('/:id/export-pdf', async (req, res) => {
     // Strengths and Weaknesses
     doc.fontSize(14).font('Helvetica-Bold').text('Key Strengths');
     doc.moveDown(0.5);
-    assessment.assessment.strengths.forEach(strength => {
+    assessment.assessment.strengths.forEach((strength: any) => {
       doc.fontSize(12).font('Helvetica').text(`• ${strength}`);
     });
     doc.moveDown();
 
     doc.fontSize(14).font('Helvetica-Bold').text('Areas for Improvement');
     doc.moveDown(0.5);
-    assessment.assessment.weaknesses.forEach(weakness => {
+    assessment.assessment.weaknesses.forEach((weakness: any) => {
       doc.fontSize(12).font('Helvetica').text(`• ${weakness}`);
     });
     doc.moveDown(2);
@@ -1077,7 +1077,7 @@ router.get('/:id/export-pdf', async (req, res) => {
     doc.fontSize(16).font('Helvetica-Bold').text('Detailed Analysis');
     doc.moveDown();
 
-    assessment.assessment.detailedAnalysis.forEach(section => {
+    assessment.assessment.detailedAnalysis.forEach((section: any) => {
       // Section title
       doc.fontSize(14).font('Helvetica-Bold').text(section.section);
       doc.moveDown(0.5);
@@ -1089,7 +1089,7 @@ router.get('/:id/export-pdf', async (req, res) => {
       // Issues if any
       if (section.issues && section.issues.length > 0) {
         doc.fontSize(12).font('Helvetica-Bold').text('Identified Issues:');
-        section.issues.forEach(issue => {
+        section.issues.forEach((issue: any) => {
           doc.fontSize(12).font('Helvetica').text(`• ${issue}`);
         });
         doc.moveDown(0.5);
@@ -1098,7 +1098,7 @@ router.get('/:id/export-pdf', async (req, res) => {
       // Recommendations if any
       if (section.recommendations && section.recommendations.length > 0) {
         doc.fontSize(12).font('Helvetica-Bold').text('Recommendations:');
-        section.recommendations.forEach(rec => {
+        section.recommendations.forEach((rec: any) => {
           doc.fontSize(12).font('Helvetica').text(`• ${rec}`);
         });
       }
@@ -1111,7 +1111,7 @@ router.get('/:id/export-pdf', async (req, res) => {
     doc.fontSize(16).font('Helvetica-Bold').text('Key Recommendations');
     doc.moveDown();
 
-    assessment.assessment.recommendations.forEach((rec, index) => {
+    assessment.assessment.recommendations.forEach((rec: any, index: any) => {
       doc
         .fontSize(14)
         .font('Helvetica-Bold')
@@ -1148,7 +1148,7 @@ router.get('/:id/export-pdf', async (req, res) => {
 
     doc.fontSize(14).font('Helvetica-Bold').text('Assessment Process');
     doc.moveDown(0.5);
-    assessment.assessment.methodology.steps.forEach((step, index) => {
+    assessment.assessment.methodology.steps.forEach((step: any, index: any) => {
       doc
         .fontSize(12)
         .font('Helvetica')
@@ -1158,7 +1158,7 @@ router.get('/:id/export-pdf', async (req, res) => {
 
     doc.fontSize(14).font('Helvetica-Bold').text('Sources Used');
     doc.moveDown(0.5);
-    assessment.assessment.sources.forEach(source => {
+    assessment.assessment.sources.forEach((source: any) => {
       doc
         .fontSize(12)
         .font('Helvetica-Bold')
@@ -1170,7 +1170,7 @@ router.get('/:id/export-pdf', async (req, res) => {
 
     doc.fontSize(14).font('Helvetica-Bold').text('Limitations');
     doc.moveDown(0.5);
-    assessment.assessment.methodology.limitations.forEach(limitation => {
+    assessment.assessment.methodology.limitations.forEach((limitation: any) => {
       doc.fontSize(12).font('Helvetica').text(`• ${limitation}`);
     });
 
@@ -1183,7 +1183,7 @@ router.get('/:id/export-pdf', async (req, res) => {
       doc.fontSize(16).font('Helvetica-Bold').text('Supporting Academic Literature');
       doc.moveDown();
 
-      assessment.assessment.academicLiterature.forEach((citation, index) => {
+      assessment.assessment.academicLiterature.forEach((citation: any, index: any) => {
         // Citation title and authors
         doc
           .fontSize(12)
@@ -1250,7 +1250,7 @@ router.get('/:id/export-pdf', async (req, res) => {
 
     // Finalize PDF
     doc.end();
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating PDF:', error);
     res.status(500).json({
       error: 'Error generating PDF',

@@ -175,7 +175,7 @@ export class CSRSearchService {
           // Apply filters to semantic results
           if (params.indication && params.indication !== 'Any') {
             csrs = csrs.filter(
-              csr =>
+              (csr: any) =>
                 csr.indication &&
                 csr.indication.toLowerCase().includes(params.indication!.toLowerCase())
             );
@@ -183,20 +183,20 @@ export class CSRSearchService {
 
           if (params.phase && params.phase !== 'Any') {
             csrs = csrs.filter(
-              csr => csr.phase && csr.phase.toLowerCase().includes(params.phase!.toLowerCase())
+              (csr: any) => csr.phase && csr.phase.toLowerCase().includes(params.phase!.toLowerCase())
             );
           }
 
           if (params.outcome) {
             csrs = csrs.filter(
-              csr =>
+              (csr: any) =>
                 csr.outcome && csr.outcome.toLowerCase().includes(params.outcome!.toLowerCase())
             );
           }
 
           if (params.min_sample_size) {
             csrs = csrs.filter(
-              csr => csr.sample_size && csr.sample_size >= params.min_sample_size!
+              (csr: any) => csr.sample_size && csr.sample_size >= params.min_sample_size!
             );
           }
 
@@ -207,7 +207,7 @@ export class CSRSearchService {
           if (isOpenAIApiKeyAvailable()) {
             // Process summaries in parallel
             await Promise.all(
-              limitedResults.map(async csr => {
+              limitedResults.map(async (csr: any) => {
                 try {
                   // Generate a context summary explaining why this result matches
                   csr.context_summary = await generateSearchContextSummary(

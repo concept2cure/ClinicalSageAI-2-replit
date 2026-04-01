@@ -77,7 +77,9 @@ import {
   interceptFeedback,
 } from '../services/intelligence/rim-interceptors.js';
 import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
-import { validateGovernedArtifactMutation } from '../services/concept2cure/governedDocumentContractService';
+import {
+  resolveGovernedContext,
+} from '../services/concept2cure/governedDocumentContractService';
 import {
   buildWorkingMemoryPrompt,
   storeWorkingMemory,
@@ -715,6 +717,15 @@ const ownershipPreferencesSchema = z
   })
   .partial();
 
+const projectCollaboratorSchema = z.object({
+  userId: z.number().int().positive(),
+  permission: z.enum(['can_use', 'can_edit']),
+});
+
+const updateProjectCollaboratorsSchema = z.object({
+  collaborators: z.array(projectCollaboratorSchema).max(100),
+});
+
 const errorLogSchema = z.object({
   id: z.string().min(1),
   timestamp: z.string().datetime(),
@@ -779,8 +790,78 @@ const createArtifactSchema = z.object({
   category: z.enum(['document', 'interactive', 'visualization', 'source', 'evidence']),
   title: z.string().min(1, 'Title required').max(200),
   content: z.string().min(1, 'Content must not be empty').max(1000000, 'Content too large'), // 1MB max, no empty
+  templateId: z.string().min(1).max(200).optional(),
   ctdSection: z.string().max(50).optional(),
   metadata: z.record(z.any()).optional(),
+  clientTrack: z.enum(['biotech', 'device', 'diagnostics']).optional(),
+  submissionProgram: z.enum(['ind', 'ectd', '510k', 'pma', 'cer', 'ivdr', 'general_ri']).optional(),
+  persona: z
+    .enum(['regulatory', 'medical_writer', 'cmc', 'clinical', 'qa', 'executive', 'cro'])
+    .optional(),
+  regulatorScope: z.enum(['fda', 'ema', 'mhra', 'hc', 'pmda', 'multi']).optional(),
+  evidenceMode: z.enum(['csr', 'literature', 'predicate', 'cmc_source', 'test_data', 'mixed']).optional(),
+  documentClass: z
+    .enum([
+      'strategy_memo',
+      'evidence_memo',
+      'section_draft',
+      'module3_output',
+      'submission_component',
+      'audit_report',
+      'comparator_summary',
+      'risk_benefit',
+      'protocol_rationale',
+      'regional_differences',
+      'safety_evidence_brief',
+      'endpoint_justification',
+    ])
+    .optional(),
+  readinessGate: z
+    .enum(['exploratory', 'internal_review', 'submission_candidate', 'inspection_ready'])
+    .optional(),
+  approvalPathType: z
+    .enum(['single_reviewer', 'regulated_dual_review', 'qa_lock', 'signoff_required'])
+    .optional(),
+  recommendationSource: z
+    .enum([
+      'ana_ri',
+      'cmc_builder',
+      'cerv2_510k',
+      'cerv2_pma',
+      'cerv2_cer',
+      'ectd_compiler',
+      'ind_autodraft',
+      'report_engine',
+    ])
+    .optional(),
+  originSurface: z
+    .enum([
+      'ri_copilot',
+      'ectd_coauthor',
+      'ind_workspace',
+      'cmc_workspace',
+      'cerv2_device',
+      'editor_panel',
+      'api_route',
+      'import_pipeline',
+      'system',
+      'project_workspace_shell',
+      'ai_orchestrator',
+    ])
+    .optional(),
+  workspaceTarget: z.enum(['project', 'dossier', 'vault']).optional(),
+  dossierContainerId: z.string().optional(),
+  artifactContainerId: z.string().optional(),
+  regulatorIntent: z
+    .enum([
+      'submission_authoring',
+      'evidence_analysis',
+      'strategy',
+      'comparison',
+      'qa_review',
+      'inspection_support',
+    ])
+    .optional(),
 });
 
 const createSignatureSchema = z.object({
@@ -868,6 +949,7 @@ interface ProjectOwnership {
   documentInventory: UploadedDocument[];
   vaultLinkedFilesEvidence: UploadedDocument[];
   projectInstructions: string;
+  ownershipTeam?: Array<{ userId: number; permission: 'can_use' | 'can_edit' }>;
   connectedAppsContext: string;
   reusableSnippetsKnowledge: string[];
   reports: string[];
@@ -897,6 +979,9 @@ function buildProjectOwnership(
     projectInstructions:
       (typeof settings.customInstructions === 'string' ? settings.customInstructions : '') ||
       (typeof ownership.projectInstructions === 'string' ? ownership.projectInstructions : ''),
+    ownershipTeam: Array.isArray(ownership.ownershipTeam)
+      ? (ownership.ownershipTeam as Array<{ userId: number; permission: 'can_use' | 'can_edit' }>)
+      : [],
     connectedAppsContext: (() => {
       const apps = normalizeConnectedApps(settings);
       return apps
@@ -2049,6 +2134,178 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
 });
 
 /**
+ * GET /api/concept2cure/projects/:projectId/collaborators
+ * Returns current project collaborator permission assignments.
+ */
+router.get('/projects/:projectId/collaborators', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const projectId = req.params.projectId.replace('proj_', '');
+    const numericId = parseInt(projectId, 10);
+
+    if (isNaN(numericId)) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .limit(1);
+    if (!project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const settings = normalizeProjectSettings(project.settings);
+    const ownership =
+      settings.ownership && typeof settings.ownership === 'object'
+        ? (settings.ownership as Record<string, unknown>)
+        : {};
+
+    const team = Array.isArray(ownership.ownershipTeam)
+      ? (ownership.ownershipTeam as Array<{ userId: number; permission: 'can_use' | 'can_edit' }>)
+      : [];
+    const normalizedTeam = team.filter(
+      member =>
+        Number.isInteger(member?.userId) &&
+        member.userId > 0 &&
+        (member.permission === 'can_use' || member.permission === 'can_edit')
+    );
+
+    const memberIds = normalizedTeam.map(member => member.userId);
+    const memberDirectory =
+      memberIds.length > 0
+        ? await db
+            .select({
+              userId: users.id,
+              name: users.name,
+              email: users.email,
+            })
+            .from(users)
+            .where(inArray(users.id, memberIds))
+        : [];
+    const directoryById = new Map(memberDirectory.map(member => [member.userId, member]));
+
+    const collaborators = normalizedTeam.map(member => ({
+      userId: member.userId,
+      permission: member.permission,
+      name: directoryById.get(member.userId)?.name || null,
+      email: directoryById.get(member.userId)?.email || null,
+    }));
+
+    return sendSuccess(res, {
+      projectId: `proj_${numericId}`,
+      collaborators,
+    });
+  } catch (error: any) {
+    logger.error('Failed to fetch project collaborators', {
+      error: error.message,
+      projectId: req.params.projectId,
+    });
+    return sendError(res, 500, 'Failed to fetch project collaborators');
+  }
+});
+
+/**
+ * PUT /api/concept2cure/projects/:projectId/collaborators
+ * Replaces project collaborator permission assignments.
+ */
+router.put('/projects/:projectId/collaborators', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const projectId = req.params.projectId.replace('proj_', '');
+    const numericId = parseInt(projectId, 10);
+
+    if (isNaN(numericId)) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const payload = updateProjectCollaboratorsSchema.parse(req.body);
+
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .limit(1);
+    if (!project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const uniqueByUser = new Map<number, { userId: number; permission: 'can_use' | 'can_edit' }>();
+    for (const collaborator of payload.collaborators) {
+      uniqueByUser.set(collaborator.userId, collaborator);
+    }
+    const collaborators = Array.from(uniqueByUser.values());
+
+    if (collaborators.length > 0) {
+      const orgMembers = await db
+        .select({ userId: organizationUsers.userId })
+        .from(organizationUsers)
+        .where(
+          and(
+            eq(organizationUsers.organizationId, organizationId),
+            inArray(
+              organizationUsers.userId,
+              collaborators.map(entry => entry.userId)
+            )
+          )
+        );
+      const allowedIds = new Set(orgMembers.map(member => member.userId));
+      const invalidIds = collaborators
+        .map(entry => entry.userId)
+        .filter(userId => !allowedIds.has(userId));
+      if (invalidIds.length > 0) {
+        return sendError(
+          res,
+          400,
+          `Collaborator user IDs not in organization: ${invalidIds.join(', ')}`
+        );
+      }
+    }
+
+    const settings = normalizeProjectSettings(project.settings);
+    const ownership =
+      settings.ownership && typeof settings.ownership === 'object'
+        ? (settings.ownership as Record<string, unknown>)
+        : {};
+
+    const mergedSettings = {
+      ...settings,
+      ownership: {
+        ...ownership,
+        ownershipTeam: collaborators,
+      },
+    };
+
+    const [updated] = await db
+      .update(projects)
+      .set({ settings: mergedSettings, updatedAt: new Date() })
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .returning();
+
+    await logAuditEntry(req, 'UPDATE', 'project', `proj_${numericId}`, project, {
+      collaborators,
+      action: 'update_collaborators',
+    });
+
+    return sendSuccess(res, {
+      projectId: `proj_${numericId}`,
+      collaborators,
+      updatedAt: updated.updatedAt,
+    });
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+    }
+    logger.error('Failed to update project collaborators', {
+      error: error.message,
+      projectId: req.params.projectId,
+    });
+    return sendError(res, 500, 'Failed to update project collaborators');
+  }
+});
+
+/**
  * DELETE /api/concept2cure/projects/:id
  * Soft delete a project for 21 CFR Part 11 compliance.
  * Records are never truly deleted - just marked with actualEndDate.
@@ -2609,6 +2866,140 @@ router.post(
         status: 'processed',
       };
 
+      // ── CONVERGENCE: create governed source artifact before mutating project knowledge ──
+      const userId = getUserId(req);
+      const artifactId = `artifact_upload_${Date.now()}_${crypto.randomBytes(5).toString('hex')}`;
+      const contentForArtifact =
+        extractedText && extractedText.length > 10
+          ? extractedText
+          : `[Uploaded file: ${safeOriginalName}] (${file.mimetype}, ${file.size} bytes)`;
+      const contentHash = calculateContentHash(contentForArtifact);
+      const uploadGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: numericId,
+        artifactId: null,
+        documentType: 'source_document',
+        generationMode: 'imported',
+        lifecycleStatus: 'draft',
+        originSurface: 'import_pipeline',
+        clientTrack:
+          req.body?.clientTrack === 'device'
+            ? 'device'
+            : req.body?.clientTrack === 'diagnostics'
+              ? 'diagnostics'
+              : 'biotech',
+        submissionProgram: 'general_ri',
+        persona: 'regulatory',
+        regulatorScope: 'fda',
+        evidenceMode: 'mixed',
+        documentClass: 'evidence_memo',
+        readinessGate: 'exploratory',
+        approvalPathType: 'single_reviewer',
+        recommendationSource: 'report_engine',
+        workspaceTarget: 'project',
+        regulatorIntent: 'evidence_analysis',
+        placementContainerId: String(numericId),
+        title: safeOriginalName,
+        content: contentForArtifact,
+        sourceRefs: [`upload:${documentId}`],
+        provider: 'upload_pipeline',
+        model: 'import_handler',
+        exportAllowed: false,
+        eventType: 'artifact.created',
+      });
+      if (!uploadGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: uploadGovernedResolution.validation.errors,
+            warnings: uploadGovernedResolution.validation.warnings,
+            resolved: uploadGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+
+      const [newArtifact] = await db
+        .insert(concept2cureArtifacts)
+        .values({
+          organizationId,
+          projectId: numericId,
+          artifactId,
+          type: 'source_document',
+          category: 'source',
+          title: safeOriginalName,
+          content: contentForArtifact,
+          contentHash,
+          version: 1,
+          metadata: {
+            originalName: safeOriginalName,
+            mimeType: file.mimetype,
+            fileSize: file.size,
+            extension,
+            tokenCount,
+            uploadSource: 'knowledge_upload',
+            knowledgeDocumentId: documentId,
+            harness: {
+              clientTrack: uploadGovernedResolution.contract.clientTrack,
+              submissionProgram: uploadGovernedResolution.contract.submissionProgram,
+              persona: uploadGovernedResolution.contract.persona,
+              regulatorScope: uploadGovernedResolution.contract.regulatorScope,
+              documentClass: uploadGovernedResolution.contract.documentClass,
+              readinessGate: uploadGovernedResolution.contract.readinessGate,
+              workspaceTarget: uploadGovernedResolution.contract.workspaceTarget,
+              originSurface: uploadGovernedResolution.contract.originSurface,
+              recommendationSource: uploadGovernedResolution.contract.recommendationSource,
+              regulatorIntent: uploadGovernedResolution.contract.regulatorIntent,
+              gateChecks: uploadGovernedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: uploadGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: uploadGovernedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
+          createdById: userId,
+        })
+        .returning();
+
+      // Version entry
+      await db.insert(concept2cureArtifactVersions).values({
+        organizationId,
+        artifactId: newArtifact.id,
+        version: 1,
+        content: contentForArtifact,
+        contentHash,
+        createdById: userId,
+      });
+
+      const artifactRecord: { id: number; artifactId: string } = { id: newArtifact.id, artifactId };
+
+      // ── AUTO-EMBED: Insert into lumen_data_atoms + generate embedding ──
+      try {
+        const atomResult = await pool.query(
+          `INSERT INTO lumen_data_atoms
+             (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)
+           VALUES ($1, 'data_room_upload', $2, 'source_document', $3, $4, $5, 0.9, 'active')
+           ON CONFLICT DO NOTHING
+           RETURNING id`,
+          [
+            organizationId,
+            artifactId,
+            safeOriginalName,
+            contentForArtifact.substring(0, 16000),
+            `{source,upload,${extension}}`,
+          ]
+        );
+        if (atomResult.rows.length > 0) {
+          const atomId = atomResult.rows[0].id;
+          const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
+          const embeddingService = getEmbeddingService(pool);
+          await embeddingService.embedAtom(atomId);
+          logger.info('Source document auto-embedded for retrieval', { artifactId, atomId });
+        }
+      } catch (embedErr: any) {
+        logger.warn('Auto-embedding failed (non-fatal)', { error: embedErr.message });
+      }
+
       const settings = normalizeProjectSettings(project.settings);
       const knowledge = normalizeKnowledge(settings);
       const updatedKnowledge: ProjectKnowledge = {
@@ -2631,84 +3022,6 @@ router.post(
         .returning();
 
       await logAuditEntry(req, 'UPDATE', 'project', projectIdRaw, project, updated);
-
-      // ── CONVERGENCE: Also create a concept2cureArtifact for unified Data Room ──
-      let artifactRecord: { id: number; artifactId: string } | null = null;
-      try {
-        const userId = getUserId(req);
-        const artifactId = `artifact_upload_${Date.now()}_${crypto.randomBytes(5).toString('hex')}`;
-        const contentForArtifact =
-          extractedText && extractedText.length > 10
-            ? extractedText
-            : `[Uploaded file: ${safeOriginalName}] (${file.mimetype}, ${file.size} bytes)`;
-        const contentHash = calculateContentHash(contentForArtifact);
-
-        const [newArtifact] = await db
-          .insert(concept2cureArtifacts)
-          .values({
-            organizationId,
-            projectId: numericId,
-            artifactId,
-            type: 'source_document',
-            category: 'source',
-            title: safeOriginalName,
-            content: contentForArtifact,
-            contentHash,
-            version: 1,
-            metadata: {
-              originalName: safeOriginalName,
-              mimeType: file.mimetype,
-              fileSize: file.size,
-              extension,
-              tokenCount,
-              uploadSource: 'knowledge_upload',
-              knowledgeDocumentId: documentId,
-            },
-            createdById: userId,
-          })
-          .returning();
-
-        // Version entry
-        await db.insert(concept2cureArtifactVersions).values({
-          organizationId,
-          artifactId: newArtifact.id,
-          version: 1,
-          content: contentForArtifact,
-          contentHash,
-          createdById: userId,
-        });
-
-        artifactRecord = { id: newArtifact.id, artifactId };
-
-        // ── AUTO-EMBED: Insert into lumen_data_atoms + generate embedding ──
-        try {
-          const atomResult = await pool.query(
-            `INSERT INTO lumen_data_atoms
-               (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)
-             VALUES ($1, 'data_room_upload', $2, 'source_document', $3, $4, $5, 0.9, 'active')
-             ON CONFLICT DO NOTHING
-             RETURNING id`,
-            [
-              organizationId,
-              artifactId,
-              safeOriginalName,
-              contentForArtifact.substring(0, 16000),
-              `{source,upload,${extension}}`,
-            ]
-          );
-          if (atomResult.rows.length > 0) {
-            const atomId = atomResult.rows[0].id;
-            const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
-            const embeddingService = getEmbeddingService(pool);
-            await embeddingService.embedAtom(atomId);
-            logger.info('Source document auto-embedded for retrieval', { artifactId, atomId });
-          }
-        } catch (embedErr: any) {
-          logger.warn('Auto-embedding failed (non-fatal)', { error: embedErr.message });
-        }
-      } catch (artifactErr: any) {
-        logger.warn('Artifact convergence failed (non-fatal)', { error: artifactErr.message });
-      }
 
       res.status(201);
       return sendSuccess(res, {
@@ -2848,7 +3161,23 @@ const aiEditSchema = z.object({
   context: z.string().optional(),
   projectId: z.union([z.string(), z.number()]).optional(),
   artifactId: z.union([z.string(), z.number()]).optional(),
+  contextAttachment: z.enum(['project', 'adhoc']).optional(),
   ctdSection: z.string().optional(),
+}).superRefine((value, ctx) => {
+  if (!value.projectId && value.contextAttachment !== 'adhoc') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['contextAttachment'],
+      message: 'contextAttachment must be "adhoc" when projectId is not provided',
+    });
+  }
+  if (value.contextAttachment === 'project' && !value.projectId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['projectId'],
+      message: 'projectId is required when contextAttachment is "project"',
+    });
+  }
 });
 
 // ── Source traceability helpers for ai/edit-section ──────────────────────────
@@ -2900,7 +3229,12 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
   try {
     const userId = getUserId(req);
     const organizationId = getOrganizationId(req);
-    const data = aiEditSchema.parse(req.body);
+    const rawData = aiEditSchema.parse(req.body);
+    const data = {
+      ...rawData,
+      contextAttachment:
+        rawData.contextAttachment || (rawData.projectId ? ('project' as const) : ('adhoc' as const)),
+    };
 
     const { getGateway } = await import('../services/ai-gateway/gateway.js');
     const gw = getGateway();
@@ -3807,6 +4141,22 @@ const templateGenerateSchema = z.object({
   variables: z.record(z.string(), z.string()),
   projectId: z.union([z.string(), z.number()]).optional(),
   artifactId: z.union([z.string(), z.number()]).optional(),
+  contextAttachment: z.enum(['project', 'adhoc']).optional(),
+}).superRefine((value, ctx) => {
+  if (!value.projectId && value.contextAttachment !== 'adhoc') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['contextAttachment'],
+      message: 'contextAttachment must be "adhoc" when projectId is not provided',
+    });
+  }
+  if (value.contextAttachment === 'project' && !value.projectId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['projectId'],
+      message: 'projectId is required when contextAttachment is "project"',
+    });
+  }
 });
 
 router.post('/ai/templates/:templateId/generate', async (req: Request, res: Response) => {
@@ -3815,7 +4165,12 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
     const { templateId } = req.params;
     const userId = getUserId(req);
     const organizationId = getOrganizationId(req);
-    const data = templateGenerateSchema.parse(req.body);
+    const rawData = templateGenerateSchema.parse(req.body);
+    const data = {
+      ...rawData,
+      contextAttachment:
+        rawData.contextAttachment || (rawData.projectId ? ('project' as const) : ('adhoc' as const)),
+    };
 
     const template = PROMPT_TEMPLATES.find(t => t.id === templateId);
     if (!template) {
@@ -4866,6 +5221,127 @@ router.post(
   }
 );
 
+/**
+ * PATCH /api/concept2cure/projects/:projectId/conversations/:conversationId
+ * Update mutable conversation metadata (currently title).
+ */
+router.patch(
+  '/projects/:projectId/conversations/:conversationId',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) {
+        return sendError(res, 404, 'Project not found');
+      }
+
+      const payload = z
+        .object({
+          title: z.string().min(1).max(200),
+        })
+        .parse(req.body);
+
+      const [dbConversation] = await db
+        .select()
+        .from(concept2cureConversations)
+        .where(
+          and(
+            eq(concept2cureConversations.conversationId, req.params.conversationId),
+            eq(concept2cureConversations.organizationId, organizationId),
+            eq(concept2cureConversations.status, 'active')
+          )
+        )
+        .limit(1);
+
+      if (!dbConversation) {
+        return sendError(res, 404, 'Conversation not found');
+      }
+
+      const [updated] = await db
+        .update(concept2cureConversations)
+        .set({
+          title: sanitizeContent(payload.title.trim()),
+          updatedAt: new Date(),
+        })
+        .where(eq(concept2cureConversations.id, dbConversation.id))
+        .returning();
+
+      await logAuditEntry(req, 'UPDATE', 'conversation', req.params.conversationId, dbConversation, {
+        title: updated.title,
+      });
+
+      return sendSuccess(res, {
+        id: updated.conversationId,
+        projectId: req.params.projectId,
+        title: updated.title,
+        updatedAt: updated.updatedAt,
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      }
+      logConcept2cureError('update conversation', error, {
+        projectId: req.params.projectId,
+        conversationId: req.params.conversationId,
+      });
+      return sendError(res, 500, 'Failed to update conversation');
+    }
+  }
+);
+
+/**
+ * DELETE /api/concept2cure/projects/:projectId/conversations/:conversationId
+ * Soft-delete a conversation (status -> archived).
+ */
+router.delete(
+  '/projects/:projectId/conversations/:conversationId',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) {
+        return sendError(res, 404, 'Project not found');
+      }
+
+      const [dbConversation] = await db
+        .select()
+        .from(concept2cureConversations)
+        .where(
+          and(
+            eq(concept2cureConversations.conversationId, req.params.conversationId),
+            eq(concept2cureConversations.organizationId, organizationId),
+            eq(concept2cureConversations.status, 'active')
+          )
+        )
+        .limit(1);
+
+      if (!dbConversation) {
+        return sendError(res, 404, 'Conversation not found');
+      }
+
+      await db
+        .update(concept2cureConversations)
+        .set({
+          status: 'archived',
+          updatedAt: new Date(),
+        })
+        .where(eq(concept2cureConversations.id, dbConversation.id));
+
+      await logAuditEntry(req, 'DELETE', 'conversation', req.params.conversationId, dbConversation, null);
+      return sendSuccess(res, {
+        conversationId: req.params.conversationId,
+        archived: true,
+      });
+    } catch (error: any) {
+      logConcept2cureError('delete conversation', error, {
+        projectId: req.params.projectId,
+        conversationId: req.params.conversationId,
+      });
+      return sendError(res, 500, 'Failed to delete conversation');
+    }
+  }
+);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ARTIFACT ROUTES (DATABASE-BACKED WITH VERSION CONTROL)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4999,13 +5475,33 @@ router.post(
       // Sanitize content
       const sanitizedContent = sanitizeContent(data.content);
       const sanitizedTitle = sanitizeContent(data.title);
-      const contractValidation = validateGovernedArtifactMutation({
+      const governedResolution = resolveGovernedContext({
         req,
         projectId: numericProjectId,
         artifactId: null,
         documentType: data.type,
         generationMode: data.metadata?.generationMethod === 'ai' ? 'ai_generated' : 'manual',
         lifecycleStatus: 'draft',
+        originSurface: data.originSurface,
+        clientTrack: data.clientTrack,
+        submissionProgram: data.submissionProgram,
+        persona: data.persona,
+        regulatorScope: data.regulatorScope,
+        evidenceMode: data.evidenceMode,
+        documentClass: data.documentClass,
+        readinessGate: data.readinessGate,
+        approvalPathType: data.approvalPathType,
+        recommendationSource: data.recommendationSource,
+        workspaceTarget: data.workspaceTarget,
+        dossierContainerId: data.dossierContainerId,
+        artifactContainerId: data.artifactContainerId,
+        regulatorIntent: data.regulatorIntent,
+        placementContainerId:
+          (data.metadata?.containerId as string | undefined) ||
+          data.dossierContainerId ||
+          data.artifactContainerId,
+        provider: (data.metadata?.provider as string | undefined) || undefined,
+        model: (data.metadata?.model as string | undefined) || undefined,
         title: sanitizedTitle,
         content: sanitizedContent,
         ctdSection: data.ctdSection || null,
@@ -5015,12 +5511,16 @@ router.post(
         exportAllowed: false,
         eventType: 'artifact.created',
       });
-      if (!contractValidation.valid) {
+      if (!governedResolution.validation.valid) {
         return sendError(
           res,
           400,
           'Governed document contract validation failed',
-          contractValidation.errors,
+          {
+            errors: governedResolution.validation.errors,
+            warnings: governedResolution.validation.warnings,
+            resolved: governedResolution.resolved,
+          },
           'GOVERNED_CONTRACT_INVALID'
         );
       }
@@ -5060,7 +5560,25 @@ router.post(
           content: sanitizedContent,
           contentHash,
           version: 1,
-          metadata: data.metadata || {},
+          templateId: data.templateId || null,
+          metadata: {
+            ...(data.metadata || {}),
+            harness: {
+              clientTrack: governedResolution.contract.clientTrack,
+              submissionProgram: governedResolution.contract.submissionProgram,
+              persona: governedResolution.contract.persona,
+              regulatorScope: governedResolution.contract.regulatorScope,
+              documentClass: governedResolution.contract.documentClass,
+              readinessGate: governedResolution.contract.readinessGate,
+              workspaceTarget: governedResolution.contract.workspaceTarget,
+              originSurface: governedResolution.contract.originSurface,
+              recommendationSource: governedResolution.contract.recommendationSource,
+              regulatorIntent: governedResolution.contract.regulatorIntent,
+              gateChecks: governedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: governedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: governedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
           ctdSection: data.ctdSection || null,
           createdById: userId,
           ...(ctdSection ? { ctdSection } : {}),
@@ -5098,6 +5616,7 @@ router.post(
         projectId: req.params.projectId,
         type: newArtifact.type,
         title: newArtifact.title,
+        templateId: data.templateId || null,
         contentLength: sanitizedContent.length,
         contentHash,
       });
@@ -5115,6 +5634,7 @@ router.post(
           title: sanitizedTitle,
           type: data.type,
           category: data.category,
+          templateId: data.templateId || null,
           contentLength: sanitizedContent.length,
           contentHash,
           ctdSection: ctdSection || null,
@@ -5340,7 +5860,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
     // Update ctdSection if provided
     const newCtdSection = ctdSection !== undefined ? ctdSection : dbArtifact.ctdSection;
 
-    const updateContractValidation = validateGovernedArtifactMutation({
+    const updateGovernedResolution = resolveGovernedContext({
       req,
       projectId: dbArtifact.projectId,
       artifactId: dbArtifact.id,
@@ -5351,19 +5871,32 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       title: newTitle || dbArtifact.title,
       content: newContent || dbArtifact.content || '',
       ctdSection: newCtdSection,
-      sourceRefs: undefined,
+      sourceRefs: [`artifact:${dbArtifact.artifactId}`],
       exportAllowed: ['approved', 'locked', 'published'].includes(String(dbArtifact.status || '')),
       eventType: 'artifact.updated',
     });
-    if (!updateContractValidation.valid) {
+    if (!updateGovernedResolution.validation.valid) {
       return sendError(
         res,
         400,
         'Governed document contract validation failed',
-        updateContractValidation.errors,
+        {
+          errors: updateGovernedResolution.validation.errors,
+          warnings: updateGovernedResolution.validation.warnings,
+          resolved: updateGovernedResolution.resolved,
+        },
         'GOVERNED_CONTRACT_INVALID'
       );
     }
+
+    const existingMetadata =
+      dbArtifact.metadata && typeof dbArtifact.metadata === 'object'
+        ? (dbArtifact.metadata as Record<string, unknown>)
+        : {};
+    const existingHarness =
+      existingMetadata.harness && typeof existingMetadata.harness === 'object'
+        ? (existingMetadata.harness as Record<string, unknown>)
+        : {};
 
     // Update artifact record
     const [updatedArtifact] = await db
@@ -5374,6 +5907,25 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
         contentHash: newContentHash,
         version: newVersion,
         ctdSection: newCtdSection,
+        metadata: {
+          ...existingMetadata,
+          harness: {
+            ...existingHarness,
+            clientTrack: updateGovernedResolution.contract.clientTrack,
+            submissionProgram: updateGovernedResolution.contract.submissionProgram,
+            persona: updateGovernedResolution.contract.persona,
+            regulatorScope: updateGovernedResolution.contract.regulatorScope,
+            documentClass: updateGovernedResolution.contract.documentClass,
+            readinessGate: updateGovernedResolution.contract.readinessGate,
+            workspaceTarget: updateGovernedResolution.contract.workspaceTarget,
+            originSurface: updateGovernedResolution.contract.originSurface,
+            recommendationSource: updateGovernedResolution.contract.recommendationSource,
+            regulatorIntent: updateGovernedResolution.contract.regulatorIntent,
+            gateChecks: updateGovernedResolution.contract.exportEligibility.gateChecks,
+            blockingReasons: updateGovernedResolution.contract.exportEligibility.blockingReasons,
+            readinessOutcome: updateGovernedResolution.contract.exportEligibility.readinessOutcome,
+          },
+        },
         updatedAt: new Date(),
       })
       .where(eq(concept2cureArtifacts.id, dbArtifact.id))
@@ -5579,12 +6131,69 @@ router.put(
 
       const previousSection = dbArtifact.ctdSection || null;
 
+      const placementGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: dbArtifact.projectId,
+        artifactId: dbArtifact.id,
+        documentType: dbArtifact.type,
+        generationMode: 'amendment',
+        lifecycleStatus:
+          (dbArtifact.status as GovernedDocumentActionContract['lifecycleStatus']) || 'draft',
+        title: dbArtifact.title,
+        content: dbArtifact.content || '',
+        ctdSection: toSection,
+        sourceRefs: [`artifact:${dbArtifact.artifactId}`],
+        exportAllowed: ['approved', 'locked', 'published'].includes(String(dbArtifact.status || '')),
+        eventType: 'artifact.updated',
+      });
+      if (!placementGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: placementGovernedResolution.validation.errors,
+            warnings: placementGovernedResolution.validation.warnings,
+            resolved: placementGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+
+      const existingMetadata =
+        dbArtifact.metadata && typeof dbArtifact.metadata === 'object'
+          ? (dbArtifact.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        existingMetadata.harness && typeof existingMetadata.harness === 'object'
+          ? (existingMetadata.harness as Record<string, unknown>)
+          : {};
+
       // Update ctdSection on the artifact
       const [updated] = await db
         .update(concept2cureArtifacts)
         .set({
           ctdSection: toSection,
           updatedAt: new Date(),
+          metadata: {
+            ...existingMetadata,
+            harness: {
+              ...existingHarness,
+              clientTrack: placementGovernedResolution.contract.clientTrack,
+              submissionProgram: placementGovernedResolution.contract.submissionProgram,
+              persona: placementGovernedResolution.contract.persona,
+              regulatorScope: placementGovernedResolution.contract.regulatorScope,
+              documentClass: placementGovernedResolution.contract.documentClass,
+              readinessGate: placementGovernedResolution.contract.readinessGate,
+              workspaceTarget: placementGovernedResolution.contract.workspaceTarget,
+              originSurface: placementGovernedResolution.contract.originSurface,
+              recommendationSource: placementGovernedResolution.contract.recommendationSource,
+              regulatorIntent: placementGovernedResolution.contract.regulatorIntent,
+              gateChecks: placementGovernedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: placementGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: placementGovernedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
         })
         .where(eq(concept2cureArtifacts.id, dbArtifact.id))
         .returning();
@@ -6674,6 +7283,77 @@ router.post(
       const reportContent = JSON.stringify(reportData, null, 2);
       const contentHash = crypto.createHash('sha256').update(reportContent).digest('hex');
       const now = new Date();
+      const sourceArtifactMetadata =
+        artifact.metadata && typeof artifact.metadata === 'object'
+          ? (artifact.metadata as Record<string, unknown>)
+          : {};
+      const sourceHarness =
+        sourceArtifactMetadata.harness && typeof sourceArtifactMetadata.harness === 'object'
+          ? (sourceArtifactMetadata.harness as Record<string, unknown>)
+          : {};
+      const auditGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: artifact.projectId,
+        artifactId: null,
+        documentType: 'audit_report',
+        generationMode: 'ai_assisted',
+        lifecycleStatus: 'locked',
+        originSurface: 'api_route',
+        clientTrack:
+          sourceHarness.clientTrack === 'device'
+            ? 'device'
+            : sourceHarness.clientTrack === 'diagnostics'
+              ? 'diagnostics'
+              : 'biotech',
+        submissionProgram:
+          sourceHarness.submissionProgram === 'ind' ||
+          sourceHarness.submissionProgram === 'ectd' ||
+          sourceHarness.submissionProgram === '510k' ||
+          sourceHarness.submissionProgram === 'pma' ||
+          sourceHarness.submissionProgram === 'cer' ||
+          sourceHarness.submissionProgram === 'ivdr'
+            ? (sourceHarness.submissionProgram as GovernedDocumentActionContract['submissionProgram'])
+            : 'general_ri',
+        persona: sourceHarness.persona === 'qa' ? 'qa' : 'regulatory',
+        regulatorScope:
+          sourceHarness.regulatorScope === 'ema' ||
+          sourceHarness.regulatorScope === 'mhra' ||
+          sourceHarness.regulatorScope === 'hc' ||
+          sourceHarness.regulatorScope === 'pmda' ||
+          sourceHarness.regulatorScope === 'multi'
+            ? (sourceHarness.regulatorScope as GovernedDocumentActionContract['regulatorScope'])
+            : 'fda',
+        evidenceMode: 'mixed',
+        documentClass: 'audit_report',
+        readinessGate: 'inspection_ready',
+        approvalPathType: 'qa_lock',
+        recommendationSource: 'report_engine',
+        workspaceTarget: 'vault',
+        artifactContainerId: exportArtifactId,
+        placementContainerId: exportArtifactId,
+        regulatorIntent: 'inspection_support',
+        title: `Audit Report — ${artifact.title} — ${now.toISOString().split('T')[0]}`,
+        content: reportContent,
+        ctdSection: artifact.ctdSection,
+        sourceRefs: [`artifact:${artifact.artifactId}`],
+        provider: 'concept2cure',
+        model: 'audit-export-v1',
+        exportAllowed: true,
+        eventType: 'artifact.created',
+      });
+      if (!auditGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: auditGovernedResolution.validation.errors,
+            warnings: auditGovernedResolution.validation.warnings,
+            resolved: auditGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
 
       const [exportedArtifact] = await db
         .insert(concept2cureArtifacts)
@@ -6692,6 +7372,24 @@ router.post(
           ctdSection: artifact.ctdSection,
           lockedAt: now,
           lockedById: userId,
+          metadata: {
+            sourceArtifactId: artifact.artifactId,
+            harness: {
+              clientTrack: auditGovernedResolution.contract.clientTrack,
+              submissionProgram: auditGovernedResolution.contract.submissionProgram,
+              persona: auditGovernedResolution.contract.persona,
+              regulatorScope: auditGovernedResolution.contract.regulatorScope,
+              documentClass: auditGovernedResolution.contract.documentClass,
+              readinessGate: auditGovernedResolution.contract.readinessGate,
+              workspaceTarget: auditGovernedResolution.contract.workspaceTarget,
+              originSurface: auditGovernedResolution.contract.originSurface,
+              recommendationSource: auditGovernedResolution.contract.recommendationSource,
+              regulatorIntent: auditGovernedResolution.contract.regulatorIntent,
+              gateChecks: auditGovernedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: auditGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: auditGovernedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
         })
         .returning();
 
@@ -7037,6 +7735,68 @@ router.put(
         updateData.lockedAt = null;
         updateData.lockedById = null;
       }
+      const statusGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: artifact.projectId,
+        artifactId: artifact.id,
+        documentType: artifact.type,
+        generationMode: 'amendment',
+        lifecycleStatus:
+          (status === 'review'
+            ? 'in_review'
+            : status === 'locked'
+              ? 'locked'
+              : status === 'approved'
+                ? 'approved'
+                : 'draft') as GovernedDocumentActionContract['lifecycleStatus'],
+        title: artifact.title,
+        content: artifact.content || '',
+        ctdSection: artifact.ctdSection,
+        sourceRefs: [`artifact:${artifact.artifactId}`],
+        readinessGate: status === 'locked' ? 'submission_candidate' : undefined,
+        exportAllowed: ['approved', 'locked'].includes(status),
+        eventType: 'artifact.updated',
+      });
+      if (!statusGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: statusGovernedResolution.validation.errors,
+            warnings: statusGovernedResolution.validation.warnings,
+            resolved: statusGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+      const existingMetadata =
+        artifact.metadata && typeof artifact.metadata === 'object'
+          ? (artifact.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        existingMetadata.harness && typeof existingMetadata.harness === 'object'
+          ? (existingMetadata.harness as Record<string, unknown>)
+          : {};
+      updateData.metadata = {
+        ...existingMetadata,
+        harness: {
+          ...existingHarness,
+          clientTrack: statusGovernedResolution.contract.clientTrack,
+          submissionProgram: statusGovernedResolution.contract.submissionProgram,
+          persona: statusGovernedResolution.contract.persona,
+          regulatorScope: statusGovernedResolution.contract.regulatorScope,
+          documentClass: statusGovernedResolution.contract.documentClass,
+          readinessGate: statusGovernedResolution.contract.readinessGate,
+          workspaceTarget: statusGovernedResolution.contract.workspaceTarget,
+          originSurface: statusGovernedResolution.contract.originSurface,
+          recommendationSource: statusGovernedResolution.contract.recommendationSource,
+          regulatorIntent: statusGovernedResolution.contract.regulatorIntent,
+          gateChecks: statusGovernedResolution.contract.exportEligibility.gateChecks,
+          blockingReasons: statusGovernedResolution.contract.exportEligibility.blockingReasons,
+          readinessOutcome: statusGovernedResolution.contract.exportEligibility.readinessOutcome,
+        },
+      };
 
       const [updated] = await db
         .update(concept2cureArtifacts)
@@ -7307,9 +8067,67 @@ router.put(
       }
 
       const previousSection = artifact.ctdSection;
+      const ctdSectionGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: artifact.projectId,
+        artifactId: artifact.id,
+        documentType: artifact.type,
+        generationMode: 'amendment',
+        lifecycleStatus:
+          (artifact.status as GovernedDocumentActionContract['lifecycleStatus']) || 'draft',
+        title: artifact.title,
+        content: artifact.content || '',
+        ctdSection,
+        sourceRefs: [`artifact:${artifact.artifactId}`],
+        exportAllowed: ['approved', 'locked', 'published'].includes(String(artifact.status || '')),
+        eventType: 'artifact.updated',
+      });
+      if (!ctdSectionGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: ctdSectionGovernedResolution.validation.errors,
+            warnings: ctdSectionGovernedResolution.validation.warnings,
+            resolved: ctdSectionGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+      const existingMetadata =
+        artifact.metadata && typeof artifact.metadata === 'object'
+          ? (artifact.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        existingMetadata.harness && typeof existingMetadata.harness === 'object'
+          ? (existingMetadata.harness as Record<string, unknown>)
+          : {};
       const [updated] = await db
         .update(concept2cureArtifacts)
-        .set({ ctdSection, updatedAt: new Date() })
+        .set({
+          ctdSection,
+          updatedAt: new Date(),
+          metadata: {
+            ...existingMetadata,
+            harness: {
+              ...existingHarness,
+              clientTrack: ctdSectionGovernedResolution.contract.clientTrack,
+              submissionProgram: ctdSectionGovernedResolution.contract.submissionProgram,
+              persona: ctdSectionGovernedResolution.contract.persona,
+              regulatorScope: ctdSectionGovernedResolution.contract.regulatorScope,
+              documentClass: ctdSectionGovernedResolution.contract.documentClass,
+              readinessGate: ctdSectionGovernedResolution.contract.readinessGate,
+              workspaceTarget: ctdSectionGovernedResolution.contract.workspaceTarget,
+              originSurface: ctdSectionGovernedResolution.contract.originSurface,
+              recommendationSource: ctdSectionGovernedResolution.contract.recommendationSource,
+              regulatorIntent: ctdSectionGovernedResolution.contract.regulatorIntent,
+              gateChecks: ctdSectionGovernedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: ctdSectionGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: ctdSectionGovernedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
+        })
         .where(eq(concept2cureArtifacts.id, artifact.id))
         .returning();
 
@@ -7502,6 +8320,43 @@ router.post(
         createdById: userId,
       });
 
+      const rollbackGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: artifact.projectId,
+        artifactId: artifact.id,
+        documentType: artifact.type,
+        generationMode: 'amendment',
+        lifecycleStatus:
+          (artifact.status as GovernedDocumentActionContract['lifecycleStatus']) || 'draft',
+        title: artifact.title,
+        content: targetVer.content || '',
+        ctdSection: artifact.ctdSection,
+        sourceRefs: [`artifact:${artifact.artifactId}`],
+        exportAllowed: ['approved', 'locked', 'published'].includes(String(artifact.status || '')),
+        eventType: 'artifact.updated',
+      });
+      if (!rollbackGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: rollbackGovernedResolution.validation.errors,
+            warnings: rollbackGovernedResolution.validation.warnings,
+            resolved: rollbackGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+      const existingMetadata =
+        artifact.metadata && typeof artifact.metadata === 'object'
+          ? (artifact.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        existingMetadata.harness && typeof existingMetadata.harness === 'object'
+          ? (existingMetadata.harness as Record<string, unknown>)
+          : {};
+
       // Update the artifact to the rolled-back content
       const [updated] = await db
         .update(concept2cureArtifacts)
@@ -7509,6 +8364,25 @@ router.post(
           content: targetVer.content,
           contentHash: newContentHash,
           version: newVersion,
+          metadata: {
+            ...existingMetadata,
+            harness: {
+              ...existingHarness,
+              clientTrack: rollbackGovernedResolution.contract.clientTrack,
+              submissionProgram: rollbackGovernedResolution.contract.submissionProgram,
+              persona: rollbackGovernedResolution.contract.persona,
+              regulatorScope: rollbackGovernedResolution.contract.regulatorScope,
+              documentClass: rollbackGovernedResolution.contract.documentClass,
+              readinessGate: rollbackGovernedResolution.contract.readinessGate,
+              workspaceTarget: rollbackGovernedResolution.contract.workspaceTarget,
+              originSurface: rollbackGovernedResolution.contract.originSurface,
+              recommendationSource: rollbackGovernedResolution.contract.recommendationSource,
+              regulatorIntent: rollbackGovernedResolution.contract.regulatorIntent,
+              gateChecks: rollbackGovernedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: rollbackGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: rollbackGovernedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
           updatedAt: new Date(),
         })
         .where(eq(concept2cureArtifacts.id, artifact.id))
@@ -8622,15 +9496,83 @@ router.put('/projects/:projectId/haq-session', async (req: Request, res: Respons
       .limit(1);
 
     if (existing) {
+      const haqUpdateResolution = resolveGovernedContext({
+        req,
+        projectId: Number(req.params.projectId),
+        artifactId: existing.id,
+        documentType: 'haq_session',
+        generationMode: 'amendment',
+        lifecycleStatus:
+          (existing.status as GovernedDocumentActionContract['lifecycleStatus']) || 'draft',
+        originSurface: 'project_workspace_shell',
+        clientTrack: 'biotech',
+        submissionProgram: 'general_ri',
+        persona: 'regulatory',
+        regulatorScope: 'fda',
+        evidenceMode: 'mixed',
+        documentClass: 'strategy_memo',
+        readinessGate: 'exploratory',
+        approvalPathType: 'single_reviewer',
+        recommendationSource: 'report_engine',
+        workspaceTarget: 'project',
+        regulatorIntent: 'strategy',
+        placementContainerId: String(req.params.projectId),
+        title: 'HAQ Session',
+        content: JSON.stringify({ questions }),
+        sourceRefs: [`haq_session:${existing.artifactId}`],
+        provider: 'concept2cure',
+        model: 'haq-session-manager',
+        exportAllowed: false,
+        eventType: 'artifact.updated',
+      });
+      if (!haqUpdateResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: haqUpdateResolution.validation.errors,
+            warnings: haqUpdateResolution.validation.warnings,
+            resolved: haqUpdateResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+
       // Update existing session
+      const existingMetadata =
+        existing.metadata && typeof existing.metadata === 'object'
+          ? (existing.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        existingMetadata.harness && typeof existingMetadata.harness === 'object'
+          ? (existingMetadata.harness as Record<string, unknown>)
+          : {};
       await db
         .update(concept2cureArtifacts)
         .set({
           content: JSON.stringify({ questions }),
           updatedAt: new Date(),
-          metadata: sql`jsonb_set(COALESCE(metadata, '{}'), '{questionCount}', ${JSON.stringify(
-            questions.length
-          )}::jsonb)`,
+          metadata: {
+            ...existingMetadata,
+            questionCount: questions.length,
+            harness: {
+              ...existingHarness,
+              clientTrack: haqUpdateResolution.contract.clientTrack,
+              submissionProgram: haqUpdateResolution.contract.submissionProgram,
+              persona: haqUpdateResolution.contract.persona,
+              regulatorScope: haqUpdateResolution.contract.regulatorScope,
+              documentClass: haqUpdateResolution.contract.documentClass,
+              readinessGate: haqUpdateResolution.contract.readinessGate,
+              workspaceTarget: haqUpdateResolution.contract.workspaceTarget,
+              originSurface: haqUpdateResolution.contract.originSurface,
+              recommendationSource: haqUpdateResolution.contract.recommendationSource,
+              regulatorIntent: haqUpdateResolution.contract.regulatorIntent,
+              gateChecks: haqUpdateResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: haqUpdateResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: haqUpdateResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
         })
         .where(eq(concept2cureArtifacts.id, existing.id));
 
@@ -8642,6 +9584,48 @@ router.put('/projects/:projectId/haq-session', async (req: Request, res: Respons
     } else {
       // Create new HAQ session artifact
       const artifactId = `haq_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+      const haqCreateResolution = resolveGovernedContext({
+        req,
+        projectId: Number(req.params.projectId),
+        artifactId: null,
+        documentType: 'haq_session',
+        generationMode: 'manual',
+        lifecycleStatus: 'draft',
+        originSurface: 'project_workspace_shell',
+        clientTrack: 'biotech',
+        submissionProgram: 'general_ri',
+        persona: 'regulatory',
+        regulatorScope: 'fda',
+        evidenceMode: 'mixed',
+        documentClass: 'strategy_memo',
+        readinessGate: 'exploratory',
+        approvalPathType: 'single_reviewer',
+        recommendationSource: 'report_engine',
+        workspaceTarget: 'project',
+        regulatorIntent: 'strategy',
+        placementContainerId: String(req.params.projectId),
+        title: 'HAQ Session',
+        content: JSON.stringify({ questions }),
+        sourceRefs: [`haq_session:${artifactId}`],
+        provider: 'concept2cure',
+        model: 'haq-session-manager',
+        exportAllowed: false,
+        eventType: 'artifact.created',
+      });
+      if (!haqCreateResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: haqCreateResolution.validation.errors,
+            warnings: haqCreateResolution.validation.warnings,
+            resolved: haqCreateResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+
       await db.insert(concept2cureArtifacts).values({
         artifactId,
         projectId: Number(req.params.projectId),
@@ -8653,7 +9637,25 @@ router.put('/projects/:projectId/haq-session', async (req: Request, res: Respons
         content: JSON.stringify({ questions }),
         status: 'draft',
         version: 1,
-        metadata: { questionCount: questions.length, sourceSystem: 'haq_manager' },
+        metadata: {
+          questionCount: questions.length,
+          sourceSystem: 'haq_manager',
+          harness: {
+            clientTrack: haqCreateResolution.contract.clientTrack,
+            submissionProgram: haqCreateResolution.contract.submissionProgram,
+            persona: haqCreateResolution.contract.persona,
+            regulatorScope: haqCreateResolution.contract.regulatorScope,
+            documentClass: haqCreateResolution.contract.documentClass,
+            readinessGate: haqCreateResolution.contract.readinessGate,
+            workspaceTarget: haqCreateResolution.contract.workspaceTarget,
+            originSurface: haqCreateResolution.contract.originSurface,
+            recommendationSource: haqCreateResolution.contract.recommendationSource,
+            regulatorIntent: haqCreateResolution.contract.regulatorIntent,
+            gateChecks: haqCreateResolution.contract.exportEligibility.gateChecks,
+            blockingReasons: haqCreateResolution.contract.exportEligibility.blockingReasons,
+            readinessOutcome: haqCreateResolution.contract.exportEligibility.readinessOutcome,
+          },
+        },
       });
 
       return sendSuccess(res, { artifactId, created: true, questionCount: questions.length });
@@ -8903,6 +9905,100 @@ Sincerely,
 [PERFORMANCE SUMMARY]`,
   },
   {
+    id: 'tpl_ind_cover_letter',
+    name: 'IND Cover Letter',
+    description: 'FDA-aligned IND cover letter for initial and amendment submissions',
+    submissionTypes: ['IND'],
+    category: 'document',
+    ctdSection: '1.2',
+    content: `# IND Cover Letter
+Date: <Insert submission date>
+
+Food and Drug Administration
+Center for Drug Evaluation and Research
+<Insert division or office name>
+
+Re: Investigational New Drug Application - <Insert product name>
+IND Number: <Insert IND number or "new IND">
+Submission Type: <Initial IND | Amendment | Annual Report | Safety Report>
+
+Dear Review Team,
+
+On behalf of <Insert sponsor name>, we submit this <Insert submission type> for <Insert product name>.
+This package includes:
+
+- Administrative and regulatory submission materials for this filing
+- Relevant nonclinical, clinical, and safety updates for the current reporting period
+- Chemistry, manufacturing, and controls updates applicable to this submission
+
+Please contact <Insert contact name and title> at <Insert email and phone> with any questions.
+
+Sincerely,
+
+<Insert signatory name>
+<Insert signatory title>
+<Insert sponsor name>`,
+  },
+  {
+    id: 'tpl_ind_investigator_brochure',
+    name: "Investigator's Brochure (IB)",
+    description: 'IND investigator brochure structure aligned to ICH expectations',
+    submissionTypes: ['IND'],
+    category: 'document',
+    ctdSection: '5.3',
+    content: `# Investigator's Brochure
+
+## 1. Summary
+Provide a concise clinical and nonclinical summary of the investigational product, mechanism of action, and development status.
+
+## 2. Introduction
+Describe product background, indication context, and development rationale.
+
+## 3. Physical, Chemical, and Pharmaceutical Properties
+Summarize relevant drug substance and drug product characteristics, including formulation and handling information for investigators.
+
+## 4. Nonclinical Studies
+Summarize pharmacology, pharmacokinetics, and toxicology findings that inform clinical risk management.
+
+## 5. Effects in Humans
+Summarize clinical pharmacology, known efficacy signals, observed safety profile, and important risk considerations.
+
+## 6. Guidance for Investigators
+Provide dosing rationale, monitoring expectations, contraindications, and investigator actions for adverse events.
+
+## 7. References
+List key source reports, publications, and supporting references used in this brochure.`,
+  },
+  {
+    id: 'tpl_ind_pre_ind_briefing',
+    name: 'Pre-IND Briefing Package',
+    description: 'Structured FDA pre-IND meeting briefing package template',
+    submissionTypes: ['IND'],
+    category: 'document',
+    ctdSection: '1.2',
+    content: `# Pre-IND Briefing Package
+
+## 1. Meeting Request Context
+Summarize sponsor, product, indication, and current development stage.
+
+## 2. Product and Development Overview
+Provide a concise integrated overview of CMC, nonclinical, and clinical development work completed to date.
+
+## 3. Proposed Clinical Plan
+Describe the proposed first-in-human or next-phase plan, including study design rationale and key safety controls.
+
+## 4. Key Questions for FDA
+1. Include a focused question on CMC strategy and release readiness.
+2. Include a focused question on nonclinical package adequacy.
+3. Include a focused question on clinical design, dose justification, and safety monitoring.
+
+## 5. Supporting Summaries
+Provide supporting summaries and references for each question area.
+
+## 6. Appendices
+Attach key tables, prior correspondence, and reference documents needed for efficient FDA review.`,
+  },
+  {
     id: 'tpl_ind_protocol',
     name: 'IND Clinical Protocol',
     description: 'Clinical trial protocol template for IND applications',
@@ -9045,11 +10141,30 @@ Sincerely,
  */
 router.get('/templates', (req: Request, res: Response) => {
   try {
-    const { submissionType } = req.query;
+    const { submissionType, package: templatePackage, projectGoal } = req.query;
 
     let templates = TEMPLATES;
     if (submissionType) {
       templates = templates.filter(t => t.submissionTypes.includes(submissionType as string));
+    }
+    const pkg = typeof templatePackage === 'string' ? templatePackage.toLowerCase() : '';
+    const goal = typeof projectGoal === 'string' ? projectGoal.toLowerCase() : '';
+    if (pkg === 'ind' || pkg === 'ind-core' || pkg === 'ind_readiness') {
+      templates = templates.filter(
+        t =>
+          t.submissionTypes.includes('IND') ||
+          ['tpl_ind_cover_letter', 'tpl_ind_investigator_brochure', 'tpl_ind_pre_ind_briefing'].includes(
+            t.id
+          )
+      );
+    } else if (goal === 'first_ind' || goal === 'ind_initial') {
+      templates = templates.filter(t =>
+        ['tpl_ind_cover_letter', 'tpl_ind_investigator_brochure', 'tpl_ind_pre_ind_briefing', 'tpl_ind_protocol'].includes(
+          t.id
+        )
+      );
+    } else if (goal === 'cmc') {
+      templates = templates.filter(t => ['tpl_ind_protocol', 'tpl_risk_analysis'].includes(t.id));
     }
 
     return sendSuccess(res, templates);
@@ -14713,9 +15828,12 @@ router.get(
     try {
       const conversationId = parseInt(req.params.conversationId, 10);
       const organizationId =
-        (req as any).organizationId ||
-        parseInt(req.headers['x-organization-id'] as string, 10) ||
-        1;
+        Number((req as any).tenantContext?.organizationId) ||
+        Number((req as any).tenantId) ||
+        Number((req as any).user?.organizationId);
+      if (!organizationId) {
+        return sendError(res, 403, 'Organization context required');
+      }
 
       if (!conversationId || isNaN(conversationId)) {
         return sendError(res, 400, 'Invalid conversation ID');
@@ -14741,9 +15859,12 @@ router.get(
     try {
       const conversationId = parseInt(req.params.conversationId, 10);
       const organizationId =
-        (req as any).organizationId ||
-        parseInt(req.headers['x-organization-id'] as string, 10) ||
-        1;
+        Number((req as any).tenantContext?.organizationId) ||
+        Number((req as any).tenantId) ||
+        Number((req as any).user?.organizationId);
+      if (!organizationId) {
+        return sendError(res, 403, 'Organization context required');
+      }
 
       if (!conversationId || isNaN(conversationId)) {
         return sendError(res, 400, 'Invalid conversation ID');
@@ -14777,9 +15898,12 @@ router.post(
     try {
       const conversationId = parseInt(req.params.conversationId, 10);
       const organizationId =
-        (req as any).organizationId ||
-        parseInt(req.headers['x-organization-id'] as string, 10) ||
-        1;
+        Number((req as any).tenantContext?.organizationId) ||
+        Number((req as any).tenantId) ||
+        Number((req as any).user?.organizationId);
+      if (!organizationId) {
+        return sendError(res, 403, 'Organization context required');
+      }
 
       if (!conversationId || isNaN(conversationId)) {
         return sendError(res, 400, 'Invalid conversation ID');
@@ -14911,8 +16035,9 @@ router.post(
     try {
       const conversationId = parseInt(req.params.conversationId, 10);
       const organizationId =
-        (req as any).organizationId ||
-        parseInt(req.headers['x-organization-id'] as string, 10) ||
+        Number((req as any).tenantContext?.organizationId) ||
+        Number((req as any).tenantId) ||
+        Number((req as any).user?.organizationId) ||
         null;
       if (!organizationId) {
         return sendError(res, 403, 'Organization context required');
@@ -15059,6 +16184,39 @@ router.post(
       const artifactId = `artifact_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const contentHash = crypto.createHash('sha256').update(documentContent).digest('hex');
 
+      const promotedMetadata = {
+        promotedFrom: type,
+        sourceMessageCount: messages.length,
+      };
+      const governedPromotion = resolveGovernedContext({
+        req,
+        projectId: conversation.project_id,
+        artifactId: null,
+        documentType: type,
+        generationMode: 'ai_generated',
+        lifecycleStatus: 'draft',
+        originSurface: 'ri_copilot',
+        title: DOMPurify.sanitize(title),
+        content: documentContent,
+        sourceRefs: [`conversation:${conversationId}`],
+        provider: 'openai',
+        model: 'gpt-4o-mini',
+        eventType: 'artifact.created',
+      });
+      if (!governedPromotion.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: governedPromotion.validation.errors,
+            warnings: governedPromotion.validation.warnings,
+            resolved: governedPromotion.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+
       const artifactResult = await db
         .insert(concept2cureArtifacts)
         .values({
@@ -15074,7 +16232,24 @@ router.post(
           version: 1,
           status: 'draft',
           createdById: userId,
-          metadata: { promotedFrom: type, sourceMessageCount: messages.length },
+          metadata: {
+            ...promotedMetadata,
+            harness: {
+              clientTrack: governedPromotion.contract.clientTrack,
+              submissionProgram: governedPromotion.contract.submissionProgram,
+              persona: governedPromotion.contract.persona,
+              regulatorScope: governedPromotion.contract.regulatorScope,
+              documentClass: governedPromotion.contract.documentClass,
+              readinessGate: governedPromotion.contract.readinessGate,
+              workspaceTarget: governedPromotion.contract.workspaceTarget,
+              originSurface: governedPromotion.contract.originSurface,
+              recommendationSource: governedPromotion.contract.recommendationSource,
+              regulatorIntent: governedPromotion.contract.regulatorIntent,
+              gateChecks: governedPromotion.contract.exportEligibility.gateChecks,
+              blockingReasons: governedPromotion.contract.exportEligibility.blockingReasons,
+              readinessOutcome: governedPromotion.contract.exportEligibility.readinessOutcome,
+            },
+          },
         })
         .returning();
 
@@ -15456,7 +16631,12 @@ router.get('/team/workload', async (req: Request, res: Response) => {
 router.post('/feedback', authMiddleware, async (req: Request, res: Response) => {
   try {
     const organizationId =
-      (req as any).organizationId || parseInt(req.headers['x-organization-id'] as string, 10) || 1;
+      Number((req as any).tenantContext?.organizationId) ||
+      Number((req as any).tenantId) ||
+      Number((req as any).user?.organizationId);
+    if (!organizationId) {
+      return sendError(res, 403, 'Organization context required');
+    }
     const userId = getUserId(req);
     const { messageId, positive, conversationId, comment } = req.body;
 

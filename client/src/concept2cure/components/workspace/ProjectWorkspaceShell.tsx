@@ -51,6 +51,7 @@ import { CommunicationCenter } from './CommunicationCenter';
 import { ComputeJobPanel } from '../compute/ComputeJobPanel';
 import { IndEvidenceAskPanel } from './IndEvidenceAskPanel';
 import RegulatoryCommunicationsHub from '../correspondence/RegulatoryCommunicationsHub';
+import ReportCenter from '../reports/ReportCenter';
 import {
   ChevronLeft,
   Loader2,
@@ -102,6 +103,7 @@ const EditorPanel = lazy(() => import('../editor/EditorPanel').then(m => ({ defa
 
 import { NewDocumentDialog } from './NewDocumentDialog';
 import { canEscalateToEdit } from '../../contexts/DocumentModeContext';
+import { SectionRequirementsPanel, type SectionMetrics } from './SectionRequirementsPanel';
 
 // ── Left-rail mode type ──────────────────────────────────────────────────────
 type LeftRailMode = 'files' | 'dossier' | 'templates' | 'outline' | 'registry';
@@ -129,20 +131,9 @@ type DocumentTab =
   | 'signatures'
   | 'provenance'
   | 'export';
+type GuidedSequenceStage = 'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission';
 
 // ── Dossier metrics types ────────────────────────────────────────────────────
-interface SectionMetrics {
-  artifactCount: number;
-  draftCount: number;
-  reviewCount: number;
-  approvedCount: number;
-  lockedCount: number;
-  completionPercent: number;
-  templateCoverageAvailable: boolean;
-  evidenceCount: number;
-  precedentCount: number;
-}
-
 interface OperatingLayerConfig {
   id: OperatingLayer;
   label: string;
@@ -361,7 +352,7 @@ const CTD_TEMPLATE_CONTENT: Record<string, string> = {
 <p>[Controlled clinical studies, uncontrolled clinical studies, analyses of data across studies]</p>`,
 };
 
-function buildTemplateContent(title: string, ctdSection: string, _templateKey: string): string {
+function buildTemplateContent(title: string, ctdSection: string, templateKey?: string): string {
   // Try exact match first, then prefix match (e.g., "2.5" matches "2.5.x")
   const sectionContent = CTD_TEMPLATE_CONTENT[ctdSection]
     || CTD_TEMPLATE_CONTENT[ctdSection.split('.').slice(0, 2).join('.')]
@@ -371,16 +362,51 @@ function buildTemplateContent(title: string, ctdSection: string, _templateKey: s
     return `<h1>${title}</h1>\n${sectionContent}`;
   }
 
+  // Template-key fallbacks for known high-value starters.
+  if (templateKey === 'cover-letter') {
+    return `<h1>${title}</h1>
+<h2>Addressee</h2>
+<p>Address this cover letter to the reviewing agency and division responsible for your program.</p>
+<h2>Submission Purpose</h2>
+<p>State the submission type, product name, indication, and the regulatory objective of this package.</p>
+<h2>Contents Summary</h2>
+<p>Summarize the included documents, key updates since the prior interaction, and any referenced attachments.</p>
+<h2>Contact Information</h2>
+<p>Provide sponsor regulatory contact details, including name, title, email, and phone number.</p>`;
+  }
+  if (templateKey === 'csr-synopsis') {
+    return `<h1>${title}</h1>
+<h2>Study Information</h2>
+<p>Document protocol number, trial phase, indication, sponsor, and study dates.</p>
+<h2>Objectives</h2>
+<p>Summarize primary and secondary objectives with endpoints and statistical intent.</p>
+<h2>Methodology</h2>
+<p>Describe trial design, population, treatment arms, analysis populations, and endpoint definitions.</p>
+<h2>Results</h2>
+<p>Provide concise efficacy and safety outcomes, including key tables and clinically meaningful findings.</p>
+<h2>Conclusions</h2>
+<p>Conclude with benefit-risk interpretation and implications for subsequent development or submission steps.</p>`;
+  }
+  if (templateKey === 'quality-overall-summary') {
+    return `<h1>${title}</h1>
+<h2>Drug Substance</h2>
+<p>Summarize drug substance manufacture, control strategy, critical quality attributes, and release specifications.</p>
+<h2>Drug Product</h2>
+<p>Summarize formulation, process controls, container closure rationale, and comparability or process validation status.</p>
+<h2>Stability</h2>
+<p>Summarize stability program design, key findings, proposed shelf life, and storage conditions.</p>`;
+  }
+
   // Fallback: structured starter for unknown sections
   return `<h1>${title}</h1>
 <h2>Purpose</h2>
-<p>[Describe the purpose of this section and its role in the submission.]</p>
+<p>Describe the purpose of this section and its role in the regulatory submission package.</p>
 <h2>Scope</h2>
-<p>[Define the scope of data and analyses presented in this section.]</p>
+<p>Define the scope of data, analyses, and references included in this section.</p>
 <h2>Summary</h2>
-<p>[Provide a concise summary of key findings and conclusions.]</p>
+<p>Provide a concise summary of key findings, supporting evidence, and conclusions.</p>
 <h2>Detailed Content</h2>
-<p>[Begin drafting section content here. Use AnA to help generate regulatory-compliant language.]</p>`;
+<p>Draft section content with explicit traceability to evidence and clear regulatory rationale.</p>`;
 }
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -399,6 +425,7 @@ interface ProjectWorkspaceShellProps {
   initialContent?: string;
   initialTitle?: string;
   initialCtdSection?: string;
+  initialTemplateId?: string;
   onInitialContentConsumed?: () => void;
   /** Open a specific existing artifact directly (no creation) */
   openArtifactId?: string;
@@ -416,6 +443,10 @@ interface ProjectWorkspaceShellProps {
   ) => void;
   /** Navigate to a different layout mode (e.g., submission-builder, template-library) */
   onNavigate?: (mode: string) => void;
+  /** Push a guided prompt into AnA */
+  onSuggestedPrompt?: (prompt: string) => void;
+  /** Allow parent (AnA/ZenApp) to trigger guided stage execution */
+  guidedStageCommand?: { stage: GuidedSequenceStage; ts: number } | null;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -432,11 +463,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   initialContent,
   initialTitle,
   initialCtdSection,
+  initialTemplateId,
   onInitialContentConsumed,
   openArtifactId,
   onOpenArtifactConsumed,
   onActiveDocumentChange,
   onNavigate,
+  onSuggestedPrompt,
+  guidedStageCommand,
 }) => {
   // ── Local state ──────────────────────────────────────────────────────────
   const [artifacts, setArtifacts] = useState<TreeArtifact[]>([]);
@@ -445,6 +479,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [selectedDocId, setSelectedDocId] = useState<string | undefined>();
   const [mode, setMode] = useState<'dashboard' | 'browse' | 'edit'>('dashboard');
   const [showContextBars, setShowContextBars] = useState(false);
+  const [guidedControlMode, setGuidedControlMode] = useState<'ana' | 'client'>('ana');
   const [projectNav, setProjectNav] = useState<ProjectNav>('submission_builder');
   const [documentTab, setDocumentTab] = useState<DocumentTab>('content');
   const [leftRailMode, setLeftRailMode] = useState<LeftRailMode>('files');
@@ -456,6 +491,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const { sections: submissionSections, readinessPercent } = useSubmissionSections(projectId, submissionType || projectType);
   const normalizedSubmissionType = String(submissionType || projectType || '').toUpperCase();
   const isINDWorkspace = ['IND', 'NDA', 'BLA', 'MAA'].includes(normalizedSubmissionType);
+  const resolvedSubmissionProgram =
+    normalizedSubmissionType.includes('IND')
+      ? 'ind'
+      : normalizedSubmissionType.includes('510') || normalizedSubmissionType.includes('PMA')
+        ? '510k'
+        : normalizedSubmissionType.includes('MAA') || normalizedSubmissionType.includes('BLA')
+          ? 'ectd'
+          : 'general_ri';
   const nextRecommendedSection = useMemo(() => {
     const flatten = (nodes: SectionNode[]): SectionNode[] =>
       nodes.flatMap(n => [n, ...(n.children ? flatten(n.children) : [])]);
@@ -953,6 +996,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         content: '<p>Begin editing your document here...</p>',
         type: 'regulatory_document',
         category: 'document',
+        submissionProgram: resolvedSubmissionProgram,
+        originSurface: 'project_workspace_shell',
       });
       if (res.ok) {
         const payload = await res.json();
@@ -971,7 +1016,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     } finally {
       setCreatingNew(false);
     }
-  }, [projectId, newDocTitle, loadArtifacts, pushShellToast]);
+  }, [projectId, newDocTitle, loadArtifacts, pushShellToast, resolvedSubmissionProgram]);
 
   // ── Create from template ─────────────────────────────────────────────────
   const handleCreateFromTemplate = useCallback(
@@ -987,6 +1032,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           category: 'document',
           ctdSection,
           templateId: templateKey,
+          submissionProgram: resolvedSubmissionProgram,
+          originSurface: 'project_workspace_shell',
         });
         if (res.ok) {
           const payload = await res.json();
@@ -1005,7 +1052,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         setCreatingNew(false);
       }
     },
-    [projectId, loadArtifacts, pushShellToast]
+    [projectId, loadArtifacts, pushShellToast, resolvedSubmissionProgram]
   );
 
   // ── Create from dialog (blank or template) ─────────────────────────────
@@ -1020,6 +1067,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           type: 'regulatory_document',
           category: 'document',
           ...(ctdSection ? { ctdSection } : {}),
+          submissionProgram: resolvedSubmissionProgram,
+          originSurface: 'project_workspace_shell',
         });
         if (res.ok) {
           const payload = await res.json();
@@ -1038,7 +1087,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         setCreatingNew(false);
       }
     },
-    [projectId, loadArtifacts, pushShellToast]
+    [projectId, loadArtifacts, pushShellToast, resolvedSubmissionProgram]
   );
 
   const handleDialogCreateFromTemplate = useCallback(
@@ -1046,15 +1095,16 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       if (!projectId) return;
       setCreatingNew(true);
       try {
+        const templateContent = buildTemplateContent(title, ctdSection || '', templateId);
         const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
           title,
-          content: `<h1>${title}</h1><p>Generated from template <code>${templateId}</code>${
-            ctdSection ? ` for CTD section ${ctdSection}` : ''
-          }.</p>`,
+          content: templateContent,
           type: 'regulatory_document',
           category: 'document',
           ...(ctdSection ? { ctdSection } : {}),
           templateId,
+          submissionProgram: resolvedSubmissionProgram,
+          originSurface: 'project_workspace_shell',
         });
         if (res.ok) {
           const payload = await res.json();
@@ -1073,7 +1123,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         setCreatingNew(false);
       }
     },
-    [projectId, loadArtifacts, pushShellToast]
+    [projectId, loadArtifacts, pushShellToast, resolvedSubmissionProgram]
   );
 
   const handleCreateSectionDraftWithRI = useCallback(async () => {
@@ -1093,6 +1143,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         type: 'regulatory_document',
         category: 'document',
         ctdSection: selectedCtdSection,
+        submissionProgram: resolvedSubmissionProgram,
+        originSurface: 'project_workspace_shell',
         metadata: {
           draftingMode: 'ri',
           projectId,
@@ -1122,6 +1174,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     projectType,
     loadArtifacts,
     pushShellToast,
+    resolvedSubmissionProgram,
   ]);
 
   // ── Placement confirmation handler ───────────────────────────────────────
@@ -1392,7 +1445,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             `/api/concept2cure/projects/${projectId}/artifacts`,
             {
               title,
-              content: `<h1>${title}</h1><p>Begin editing this document.</p>`,
+              content: `<h1>${title}</h1><p>This governed draft was created from the selected workflow action. Continue by adding evidence-linked content, section rationale, and regulatory conclusions.</p>`,
               type: 'regulatory_document',
               category: 'document',
               ctdSection,
@@ -1438,7 +1491,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       if (!projectId || !activeArtifactRef.current) return;
       const art = activeArtifactRef.current;
       try {
-        const scaffoldHtml = `<h2>${label}</h2><p>[Content for ${label} — fill this section per regulatory requirements.]</p>`;
+        const scaffoldHtml = `<h2>${label}</h2><p>Draft this subsection with explicit evidence traceability, regulatory rationale, and reviewer-ready language aligned to submission expectations.</p>`;
         const res = await apiRequest(
           'POST',
           `/api/concept2cure/projects/${projectId}/artifacts/${art.id}/versions`,
@@ -1546,6 +1599,166 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     if (mode === 'browse') return selectedDocId ? 2 : 1;
     return 1;
   }, [mode, selectedDocId]);
+  const approvedOrLockedCount = useMemo(
+    () =>
+      artifacts.filter(a => {
+        const status = String(a.status || '').toLowerCase();
+        return status === 'approved' || status === 'locked';
+      }).length,
+    [artifacts]
+  );
+  const submissionReady =
+    approvedOrLockedCount > 0 &&
+    readinessPercent >= 80 &&
+    approvedOrLockedCount >= Math.max(1, Math.ceil(artifacts.length * 0.4));
+
+  const guidedSequence = useMemo<
+    Array<{ id: GuidedSequenceStage; label: string; hint: string }>
+  >(
+    () => [
+      { id: 'project', label: 'Project', hint: 'Goal + plan context' },
+      {
+        id: 'ind_ectd',
+        label: isINDWorkspace ? 'IND/eCTD' : 'Dossier',
+        hint: 'Section map + package structure',
+      },
+      { id: 'authoring', label: 'Authoring', hint: 'Draft and refine governed docs' },
+      { id: 'verify', label: 'Verify', hint: 'Readiness and quality checks' },
+      { id: 'submission', label: 'Submission', hint: 'Assemble and publish package' },
+    ],
+    [isINDWorkspace]
+  );
+
+  const currentGuidedStage = useMemo<GuidedSequenceStage>(() => {
+    if (submissionReady || projectNav === 'publish') return 'submission';
+    if (
+      projectNav === 'verify' ||
+      projectNav === 'review' ||
+      phase4Panel === 'verification' ||
+      phase4Panel === 'pulse' ||
+      reviewInFlight > 0
+    ) {
+      return 'verify';
+    }
+    if (mode === 'edit' || selectedDocId) return 'authoring';
+    if (mode === 'dashboard' && !selectedCtdSection && !selectedDocId) return 'project';
+    if (
+      leftRailMode === 'dossier' ||
+      !!selectedCtdSection ||
+      isINDWorkspace ||
+      projectNav === 'submission_builder'
+    ) {
+      return 'ind_ectd';
+    }
+    return 'project';
+  }, [
+    isINDWorkspace,
+    leftRailMode,
+    mode,
+    phase4Panel,
+    projectNav,
+    reviewInFlight,
+    selectedCtdSection,
+    selectedDocId,
+    submissionReady,
+  ]);
+
+  const navigateGuidedStage = useCallback(
+    (stage: GuidedSequenceStage) => {
+      if (stage === 'project') {
+        setProjectNav('submission_builder');
+        setMode('dashboard');
+        setPhase4Panel('none');
+        return;
+      }
+      if (stage === 'ind_ectd') {
+        setProjectNav('submission_builder');
+        setActiveLayer('document_studio');
+        setLeftRailMode('dossier');
+        setMode('browse');
+        if (nextRecommendedSection?.code) setSelectedCtdSection(nextRecommendedSection.code);
+        return;
+      }
+      if (stage === 'authoring') {
+        setProjectNav('submission_builder');
+        setActiveLayer('document_studio');
+        setLeftRailMode('dossier');
+        if (selectedDocId) {
+          if (tryOpenForEdit(activeArtifactRef.current?.status)) {
+            setMode('edit');
+          } else {
+            setMode('browse');
+          }
+          return;
+        }
+        if (nextRecommendedSection?.code) setSelectedCtdSection(nextRecommendedSection.code);
+        setMode('browse');
+        return;
+      }
+      if (stage === 'verify') {
+        setProjectNav('verify');
+        setActiveLayer('reports');
+        setMode('browse');
+        setPhase4Panel('verification');
+        return;
+      }
+      setProjectNav('publish');
+      if (onNavigate) {
+        onNavigate('submissions');
+      } else {
+        setMode('dashboard');
+      }
+    },
+    [nextRecommendedSection?.code, onNavigate, selectedDocId, tryOpenForEdit]
+  );
+
+  const buildGuidedStagePrompt = useCallback(
+    (stage: GuidedSequenceStage) => {
+      const projectLabel = projectName || 'this project';
+      const nextSectionText = nextRecommendedSection?.code
+        ? `Next recommended section is ${nextRecommendedSection.code} ${nextRecommendedSection.title}.`
+        : 'Select the highest-priority missing section.';
+      if (stage === 'project') {
+        return `Guide ${projectLabel} through project setup and confirm the submission strategy, regulatory pathway, and governed document sequence.`;
+      }
+      if (stage === 'ind_ectd') {
+        return `Guide ${projectLabel} through IND/eCTD dossier planning. ${nextSectionText} Create the next concrete drafting plan.`;
+      }
+      if (stage === 'authoring') {
+        return `For ${projectLabel}, take the lead on authoring the next governed draft and provide executable steps I can run now. ${nextSectionText}`;
+      }
+      if (stage === 'verify') {
+        return `Run a verification pass for ${projectLabel}: readiness, blockers, contradictions, and promotion status. Provide the next required fixes in order.`;
+      }
+      return `Prepare ${projectLabel} for submission packaging and publishing. Confirm what is ready, what is missing, and execute the final assembly sequence.`;
+    },
+    [nextRecommendedSection?.code, nextRecommendedSection?.title, projectName]
+  );
+
+  const handleGuidedStageAction = useCallback(
+    (stage: GuidedSequenceStage) => {
+      if (guidedControlMode === 'ana') {
+        onSuggestedPrompt?.(buildGuidedStagePrompt(stage));
+        onNavigate?.('project-home');
+        return;
+      }
+      navigateGuidedStage(stage);
+    },
+    [buildGuidedStagePrompt, guidedControlMode, navigateGuidedStage, onNavigate, onSuggestedPrompt]
+  );
+
+  const handleGuidedContinue = useCallback(() => {
+    const currentIndex = guidedSequence.findIndex(step => step.id === currentGuidedStage);
+    if (currentIndex < 0 || currentIndex === guidedSequence.length - 1) return;
+    const nextStage = guidedSequence[Math.min(currentIndex + 1, guidedSequence.length - 1)]?.id;
+    if (!nextStage) return;
+    handleGuidedStageAction(nextStage);
+  }, [currentGuidedStage, guidedSequence, handleGuidedStageAction]);
+
+  useEffect(() => {
+    if (!guidedStageCommand?.stage) return;
+    handleGuidedStageAction(guidedStageCommand.stage);
+  }, [guidedStageCommand?.stage, guidedStageCommand?.ts, handleGuidedStageAction]);
 
   // Outline available only when doc is open
   const outlineAvailable = mode === 'edit' && !!selectedDocId;
@@ -1671,6 +1884,71 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 : 'Start from project home'}
           </span>
         </div>
+
+        {showContextBars && (
+        <div className="flex items-center gap-1.5 px-4 h-9 border-b border-stone-100 bg-stone-50/50 shrink-0 overflow-x-auto">
+          <span className="text-[10px] uppercase tracking-wide text-stone-500 font-semibold whitespace-nowrap">
+            Guided sequence
+          </span>
+          {guidedSequence.map((step, idx) => {
+            const currentIndex = guidedSequence.findIndex(s => s.id === currentGuidedStage);
+            const isCurrent = step.id === currentGuidedStage;
+            const isDone = idx < currentIndex;
+            return (
+              <React.Fragment key={step.id}>
+                <button
+                  onClick={() => handleGuidedStageAction(step.id)}
+                  className={cn(
+                    'text-[11px] px-2 py-0.5 rounded-md border whitespace-nowrap transition-colors',
+                    isCurrent
+                      ? 'border-stone-300 bg-white text-stone-800 font-semibold'
+                      : isDone
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                        : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-100'
+                  )}
+                  title={step.hint}
+                >
+                  {step.label}
+                </button>
+                {idx < guidedSequence.length - 1 && (
+                  <ChevronRight className="w-3 h-3 text-stone-300 shrink-0" />
+                )}
+              </React.Fragment>
+            );
+          })}
+          <div className="ml-auto flex items-center gap-1.5">
+            <span className="text-[10px] text-stone-500 uppercase tracking-wide">Control</span>
+            <button
+              onClick={() => setGuidedControlMode('ana')}
+              className={cn(
+                'text-[10px] px-2 py-0.5 rounded border',
+                guidedControlMode === 'ana'
+                  ? 'border-violet-300 bg-violet-50 text-violet-700'
+                  : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
+              )}
+            >
+              AnA-led
+            </button>
+            <button
+              onClick={() => setGuidedControlMode('client')}
+              className={cn(
+                'text-[10px] px-2 py-0.5 rounded border',
+                guidedControlMode === 'client'
+                  ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                  : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
+              )}
+            >
+              Client-led
+            </button>
+            <button
+              onClick={handleGuidedContinue}
+              className="text-[11px] px-2 py-0.5 rounded border border-stone-200 bg-white text-stone-700 hover:bg-stone-100"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+        )}
 
         {/* ── Collapsible context bars (AnA Shell, Context Band, CTD Flow) ──── */}
         <div className={cn('overflow-hidden transition-all duration-200', showContextBars ? 'max-h-48' : 'max-h-0')} aria-hidden={!showContextBars}>
@@ -2852,7 +3130,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 </div>
               ) : mode === 'browse' ? (
                 <div className="flex-1 min-h-0 flex flex-col">
-                  {isINDWorkspace && leftRailMode === 'dossier' && (
+                  {activeLayer === 'reports' ? (
+                    <div className="flex-1 overflow-y-auto">
+                      <ReportCenter projectId={projectId} />
+                    </div>
+                  ) : (
+                    <>
+                      {isINDWorkspace && leftRailMode === 'dossier' && (
                     <div className="px-4 pt-3">
                       <IndEvidenceAskPanel
                         projectId={projectId}
@@ -2862,44 +3146,46 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                         }
                       />
                     </div>
+                      )}
+                      <div className="flex-1 min-h-0">
+                        <DocumentListPane
+                          folderLabel={browseLabel}
+                          documents={browseDocs}
+                          selectedId={selectedDocId}
+                          onSelect={handleSelectDoc}
+                          onCreateNew={() => setShowNewDoc(true)}
+                          onAIDraft={
+                            leftRailMode === 'dossier' && selectedCtdSection
+                              ? handleCreateSectionDraftWithRI
+                              : undefined
+                          }
+                          onStartFromTemplate={
+                            leftRailMode === 'dossier' && selectedCtdSection
+                              ? () =>
+                                  handleDialogCreateFromTemplate(
+                                    'clinical-overview',
+                                    `${selectedCtdSection} — ${getSectionLabel(selectedCtdSection)}`,
+                                    selectedCtdSection
+                                  )
+                              : undefined
+                          }
+                          onWriteManually={
+                            leftRailMode === 'dossier' && selectedCtdSection
+                              ? () =>
+                                  handleDialogCreateBlank(
+                                    `${selectedCtdSection} — ${getSectionLabel(selectedCtdSection)}`,
+                                    selectedCtdSection
+                                  )
+                              : undefined
+                          }
+                          sectionAIDraftable={leftRailMode === 'dossier' && !!selectedCtdSection}
+                          onCutDocument={handleCutDocument}
+                          onCopyCtdPath={handleCopyCtdPath}
+                          onOpenPlacement={handleOpenPlacementForDoc}
+                        />
+                      </div>
+                    </>
                   )}
-                  <div className="flex-1 min-h-0">
-                    <DocumentListPane
-                      folderLabel={browseLabel}
-                      documents={browseDocs}
-                      selectedId={selectedDocId}
-                      onSelect={handleSelectDoc}
-                      onCreateNew={() => setShowNewDoc(true)}
-                      onAIDraft={
-                        leftRailMode === 'dossier' && selectedCtdSection
-                          ? handleCreateSectionDraftWithRI
-                          : undefined
-                      }
-                      onStartFromTemplate={
-                        leftRailMode === 'dossier' && selectedCtdSection
-                          ? () =>
-                              handleDialogCreateFromTemplate(
-                                'clinical-overview',
-                                `${selectedCtdSection} — ${getSectionLabel(selectedCtdSection)}`,
-                                selectedCtdSection
-                              )
-                          : undefined
-                      }
-                      onWriteManually={
-                        leftRailMode === 'dossier' && selectedCtdSection
-                          ? () =>
-                              handleDialogCreateBlank(
-                                `${selectedCtdSection} — ${getSectionLabel(selectedCtdSection)}`,
-                                selectedCtdSection
-                              )
-                          : undefined
-                      }
-                      sectionAIDraftable={leftRailMode === 'dossier' && !!selectedCtdSection}
-                      onCutDocument={handleCutDocument}
-                      onCopyCtdPath={handleCopyCtdPath}
-                      onOpenPlacement={handleOpenPlacementForDoc}
-                    />
-                  </div>
                 </div>
               ) : (
                 <div ref={editorContainerRef} className="flex-1 flex min-h-0 min-w-0">
@@ -2924,6 +3210,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                         initialContent={initialContent}
                         initialTitle={initialTitle}
                         initialCtdSection={initialCtdSection}
+                        initialTemplateId={initialTemplateId}
                         onInitialContentConsumed={onInitialContentConsumed}
                         openArtifactId={openArtifactId}
                         onOpenArtifactConsumed={onOpenArtifactConsumed}
@@ -3015,196 +3302,5 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     </DocumentModeProvider>
   );
 };
-
-// ── Section requirements panel (extracted) ───────────────────────────────────
-
-interface SectionReqsPanelProps {
-  reqs: SectionRequirement;
-  metrics?: SectionMetrics;
-  onClose: () => void;
-}
-
-function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelProps) {
-  const [showChildren, setShowChildren] = useState(false);
-
-  return (
-    <div className="w-[200px] 2xl:w-[240px] border-l border-stone-200 shrink-0 flex flex-col bg-white overflow-y-auto">
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-stone-200 bg-stone-50/60">
-        <div className="flex items-center gap-1.5">
-          <Info className="w-3 h-3 text-blue-600" />
-          <span className="text-xs font-semibold text-stone-700">Section Requirements</span>
-        </div>
-        <button
-          onClick={onClose}
-          className="p-1.5 text-stone-400 hover:text-stone-600 rounded hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
-          aria-label="Close panel"
-          title="Close"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
-      </div>
-      <div className="p-2.5 space-y-2.5 text-xs">
-        {/* Section */}
-        <div>
-          <div className="text-xs text-stone-400 uppercase tracking-wide mb-0.5">Section</div>
-          <div className="font-semibold text-stone-900">{reqs.ctdSection}</div>
-          <div className="text-stone-600 mt-0.5">{reqs.label}</div>
-        </div>
-
-        {/* Description */}
-        <div>
-          <div className="text-xs text-stone-400 uppercase tracking-wide mb-0.5">Description</div>
-          <p className="text-stone-600 leading-relaxed">{reqs.description}</p>
-        </div>
-
-        {/* Expected doc types */}
-        <div>
-          <div className="text-xs text-stone-400 uppercase tracking-wide mb-0.5">
-            Expected Documents
-          </div>
-          <ul className="space-y-0.5">
-            {reqs.requiredDocTypes.map((dt, i) => (
-              <li key={i} className="text-stone-700 flex items-center gap-1">
-                <FileText className="w-2.5 h-2.5 text-stone-400" />
-                {dt}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Required / Optional */}
-        <div className="flex items-center gap-1 px-2 py-1 rounded bg-stone-50">
-          {reqs.optional ? (
-            <>
-              <Info className="w-3 h-3 text-blue-500" />
-              <span className="text-xs text-stone-700 font-medium">Optional section</span>
-            </>
-          ) : (
-            <>
-              <AlertTriangle className="w-3 h-3 text-amber-500" />
-              <span className="text-xs text-amber-700 font-medium">Required section</span>
-            </>
-          )}
-        </div>
-
-        {/* Templates available */}
-        {reqs.starterTemplatesAvailable.length > 0 && (
-          <div>
-            <div className="text-xs text-stone-400 uppercase tracking-wide mb-0.5">
-              Starter Templates
-            </div>
-            {reqs.starterTemplatesAvailable.map((t, i) => (
-              <div key={i} className="text-stone-600 flex items-center gap-1 py-0.5">
-                <Layers className="w-2.5 h-2.5 text-violet-500" />
-                {t}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Common missing blocks */}
-        {reqs.commonMissingBlocks.length > 0 && (
-          <div>
-            <div className="text-xs text-stone-400 uppercase tracking-wide mb-0.5">
-              Expected Content Blocks
-            </div>
-            {reqs.commonMissingBlocks.map((b, i) => (
-              <div key={i} className="text-stone-500 text-xs py-0.5">
-                • {b}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Children sections */}
-        {(reqs.requiredChildren.length > 0 || reqs.optionalChildren.length > 0) && (
-          <div>
-            <button
-              onClick={() => setShowChildren(!showChildren)}
-              className="flex items-center gap-1 text-xs text-stone-400 uppercase tracking-wide mb-0.5 hover:text-stone-600"
-            >
-              {showChildren ? (
-                <ChevronDown className="w-2.5 h-2.5" />
-              ) : (
-                <ChevronRight className="w-2.5 h-2.5" />
-              )}
-              Child Sections ({reqs.requiredChildren.length + reqs.optionalChildren.length})
-            </button>
-            {showChildren && (
-              <div className="space-y-0.5 mt-0.5">
-                {reqs.requiredChildren.map((c, i) => (
-                  <div key={i} className="text-stone-600 text-xs">
-                    ▸ {c}
-                  </div>
-                ))}
-                {reqs.optionalChildren.map((c, i) => (
-                  <div key={i} className="text-stone-400 text-xs italic">
-                    ▹ {c}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Current metrics */}
-        {metrics && (
-          <div>
-            <div className="text-xs text-stone-400 uppercase tracking-wide mb-0.5">
-              Current Status
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-stone-500">Artifacts</span>
-                <span className="font-medium text-stone-700">{metrics.artifactCount}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-stone-500">Completion</span>
-                <span className="font-medium text-stone-700">{metrics.completionPercent}%</span>
-              </div>
-              <div className="w-full bg-stone-100 rounded-full h-1.5">
-                <div
-                  className={cn(
-                    'h-1.5 rounded-full transition-all duration-150',
-                    metrics.completionPercent >= 75
-                      ? 'bg-emerald-500'
-                      : metrics.completionPercent >= 25
-                        ? 'bg-amber-500'
-                        : 'bg-red-400'
-                  )}
-                  style={{ width: `${Math.min(100, metrics.completionPercent)}%` }}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-stone-500">Evidence</span>
-                <span className="font-medium text-stone-700">{metrics.evidenceCount}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-stone-500">Precedents</span>
-                <span className="font-medium text-stone-700">{metrics.precedentCount}</span>
-              </div>
-              {/* Warning signals */}
-              {metrics.artifactCount > 0 && metrics.evidenceCount === 0 && (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-xs">
-                  <AlertTriangle className="w-2.5 h-2.5" /> No evidence linked
-                </div>
-              )}
-              {metrics.artifactCount > 0 && metrics.precedentCount === 0 && (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 text-xs">
-                  <AlertTriangle className="w-2.5 h-2.5" /> No precedents
-                </div>
-              )}
-              {metrics.artifactCount === 0 && reqs.hasTemplates && (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-xs">
-                  <Info className="w-2.5 h-2.5" /> Template available, no doc created
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default ProjectWorkspaceShell;

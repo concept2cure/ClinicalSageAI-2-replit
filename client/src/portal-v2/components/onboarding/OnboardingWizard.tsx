@@ -339,10 +339,28 @@ function toPersistedDraft(data: OnboardingData, currentStep: WizardStep): Persis
 
 interface OnboardingWizardProps {
   onComplete?: (data: OnboardingData) => void | Promise<void>;
+  onPaymentConfirmed?: (data: OnboardingData) => void | Promise<void>;
   onCancel?: () => void;
 }
 
-export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps) {
+function mapTierToBillingTier(tier: SubscriptionTier): 'standard' | 'professional' | 'enterprise' {
+  switch (tier) {
+    case 'starter':
+      return 'standard';
+    case 'enterprise':
+      return 'enterprise';
+    case 'professional':
+    case 'regulatory_plus':
+    default:
+      return 'professional';
+  }
+}
+
+export function OnboardingWizard({
+  onComplete,
+  onPaymentConfirmed,
+  onCancel,
+}: OnboardingWizardProps) {
   const [data, setData] = useState<OnboardingData>(() => ({
     organizationName: '',
     domain: '',
@@ -451,17 +469,20 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
       return;
     }
 
+    const billingTier = mapTierToBillingTier(data.subscriptionTier);
+
     // Then redirect to Stripe Checkout with Link for payment
-    if (data.subscriptionTier !== 'starter') {
+    if (billingTier !== 'standard') {
       setCheckoutLoading(true);
       try {
         const res = await fetch('/api/billing/checkout', {
           method: 'POST',
           headers: {
+            'Content-Type': 'application/json',
             ...getAuthHeaders(),
           },
           body: JSON.stringify({
-            tier: data.subscriptionTier,
+            tier: billingTier,
             billingCycle: data.billingCycle,
             seats: data.estimatedSeats,
           }),
@@ -484,10 +505,11 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
         setCheckoutLoading(false);
       }
     } else {
+      await onPaymentConfirmed?.(data);
       sessionStorage.removeItem(ONBOARDING_STORAGE_KEY);
       setSetupCompleted(true);
     }
-  }, [data, onComplete]);
+  }, [data, onComplete, onPaymentConfirmed]);
 
   if (setupCompleted) {
     return <ActivationCompleteView organizationName={data.organizationName} />;

@@ -1073,7 +1073,8 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     setLocation(href);
   };
   const handleOpenPromptLibrary = useCallback(() => {
-    handleNavigate('/concept2cure?panel=capabilities');
+    // Route through the shared app catalog instead of legacy querystring panel targets.
+    handleNavigate('apps');
   }, [handleNavigate]);
   const userInitials = (() => {
     if (!userName) return 'U';

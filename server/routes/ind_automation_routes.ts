@@ -45,7 +45,7 @@ const sendModuleDocument = async (
     });
 
     res.send(documentBytes);
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error generating Module ${moduleNumber} document: ${error.message}`);
     res.status(500).json({
       status: 'error',
@@ -74,7 +74,7 @@ router.get('/status', async (req, res) => {
           .json({ status: 'error', message: 'Failed to start IND Automation service' });
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error checking IND Automation service status: ${error.message}`);
     res.status(500).json({ status: 'error', message: 'Failed to check service status' });
   }
@@ -88,7 +88,7 @@ router.get('/info', async (req, res) => {
   try {
     const info = await indAutomationService.getServiceInfo();
     res.json(info);
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error getting IND Automation service info: ${error.message}`);
     res.status(500).json({ status: 'error', message: 'Failed to get service information' });
   }
@@ -102,7 +102,7 @@ router.get('/projects', async (req, res) => {
   try {
     const projects = await indAutomationService.listProjects();
     res.json({ projects });
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error listing projects: ${error.message}`);
     res.status(500).json({ status: 'error', message: 'Failed to list projects' });
   }
@@ -129,7 +129,7 @@ router.get('/:projectId/module3', async (req, res) => {
       // Forward the headers and stream the response
       res.set(response.headers);
       response.data.pipe(res);
-    } catch (error) {
+    } catch (error: any) {
       if (error.response) {
         // The service returned an error response
         const status = error.response.status;
@@ -141,7 +141,7 @@ router.get('/:projectId/module3', async (req, res) => {
         res.status(500).json({ status: 'error', message: 'Failed to download document' });
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error generating Module 3 document: ${error.message}`);
     res
       .status(500)
@@ -185,7 +185,7 @@ router.post('/generate/module3', async (req, res) => {
     });
 
     res.send(documentBytes);
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error generating Module 3 document from data: ${error.message}`);
     res
       .status(500)
@@ -197,7 +197,7 @@ router.get('/templates/pyramid', async (req, res) => {
   try {
     const catalog = await indAutomationService.getPyramidCatalog();
     res.json(catalog);
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error fetching IND pyramid catalog: ${error.message}`);
     res.status(500).json({
       status: 'error',
@@ -242,7 +242,7 @@ router.post('/generate/module/:moduleNumber/template/:templateId', async (req, r
     });
 
     res.send(documentBytes);
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error generating IND pyramid sub-template: ${error.message}`);
     res.status(500).json({
       status: 'error',
@@ -288,7 +288,7 @@ router.post('/batch/module3', async (req, res) => {
     const results = await indAutomationService.batchGenerateModule3(projectIds);
 
     res.json(results);
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error processing batch request: ${error.message}`);
     res.status(500).json({ status: 'error', message: `Failed to process batch: ${error.message}` });
   }
@@ -324,7 +324,7 @@ router.post('/generate/form1571', async (req, res) => {
     });
 
     res.send(documentBytes);
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error generating FDA Form 1571: ${error.message}`);
     res
       .status(500)
@@ -362,7 +362,7 @@ router.post('/generate/form1572', async (req, res) => {
     });
 
     res.send(documentBytes);
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error generating FDA Form 1572: ${error.message}`);
     res
       .status(500)
@@ -399,7 +399,7 @@ router.post('/generate/form3674', async (req, res) => {
     });
 
     res.send(documentBytes);
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error generating FDA Form 3674: ${error.message}`);
     res
       .status(500)
@@ -436,7 +436,7 @@ router.post('/generate/cover-letter', async (req, res) => {
     });
 
     res.send(documentBytes);
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error generating cover letter: ${error.message}`);
     res
       .status(500)
@@ -488,7 +488,7 @@ router.get('/alert-preferences', (req, res) => {
     }
 
     res.json(preferences.users[userId]);
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error retrieving alert preferences: ${error.message}`);
     res.status(500).json({ status: 'error', message: 'Failed to retrieve alert preferences' });
   }
@@ -541,7 +541,7 @@ router.post('/alert-preferences', (req, res) => {
     try {
       httpClient.post('/api/alerter/update-preferences', preferences.users[userId]);
       logger.info(`Alert preferences updated for user ${userId}`);
-    } catch (apiError) {
+    } catch (apiError: any) {
       logger.warn(`Failed to sync preferences with Python service: ${apiError.message}`);
       // Continue anyway - file-based preferences are primary
     }
@@ -551,7 +551,7 @@ router.post('/alert-preferences', (req, res) => {
       message: 'Alert preferences updated successfully',
       preferences: preferences.users[userId],
     });
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error updating alert preferences: ${error.message}`);
     res.status(500).json({ status: 'error', message: 'Failed to update alert preferences' });
   }
@@ -589,14 +589,14 @@ router.post('/alert-test', async (req, res) => {
         status: 'success',
         message: 'Test alert sent successfully',
       });
-    } catch (apiError) {
+    } catch (apiError: any) {
       logger.error(`Failed to send test alert: ${apiError.message}`);
       res.status(500).json({
         status: 'error',
         message: `Failed to send test alert: ${apiError.response?.data?.message || apiError.message}`,
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error in alert test: ${error.message}`);
     res.status(500).json({ status: 'error', message: 'Failed to send test alert' });
   }

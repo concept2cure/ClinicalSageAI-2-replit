@@ -2,6 +2,7 @@ import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server } from 'http';
 import jwt from 'jsonwebtoken';
 import { createScopedLogger } from './utils/logger.js';
+import { config } from './config/environment.js';
 const log = createScopedLogger('socket-server');
 
 // Define types for socket events
@@ -195,15 +196,12 @@ export function initializeSocketServer(server: Server) {
   // Authentication middleware — extract orgId from JWT for tenant isolation
   ioInstance.use((socket: AuthenticatedSocket, next) => {
     try {
-      if (!process.env.JWT_SECRET) {
-        return next(new Error('WebSocket auth unavailable'));
-      }
       const token = socket.handshake.auth?.token || socket.handshake.query?.token;
       if (!token) {
         return next(new Error('Missing bearer token'));
       }
 
-      const decoded = jwt.verify(token as string, process.env.JWT_SECRET) as any;
+      const decoded = jwt.verify(token as string, config.jwt.secret) as any;
       if (!decoded.organizationId || !decoded.userId) {
         return next(new Error('Invalid token claims'));
       }

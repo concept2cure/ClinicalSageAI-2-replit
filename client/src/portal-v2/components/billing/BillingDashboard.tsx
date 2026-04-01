@@ -6,7 +6,7 @@
  * Stripe Checkout (with Link) and Stripe Customer Portal.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -25,6 +25,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
+import { useLocation } from 'wouter';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -57,6 +58,7 @@ interface PricingTier {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default function BillingDashboard() {
+  const [location, setLocation] = useLocation();
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [pricing, setPricing] = useState<PricingTier[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,6 +66,18 @@ export default function BillingDashboard() {
   const [portalLoading, setPortalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
+  const [handoffMessage, setHandoffMessage] = useState<string | null>(null);
+
+  const checkoutState = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return { sessionId: null, canceled: false };
+    }
+    const url = new URL(window.location.href);
+    return {
+      sessionId: url.searchParams.get('session_id'),
+      canceled: url.searchParams.get('checkout') === 'canceled',
+    };
+  }, [location]);
 
   // Fetch subscription status and pricing
   useEffect(() => {
@@ -91,6 +105,30 @@ export default function BillingDashboard() {
     }
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (checkoutState.sessionId) {
+      setHandoffMessage(
+        'Checkout completed. We are confirming your subscription and provisioning access now.'
+      );
+    } else if (checkoutState.canceled) {
+      setHandoffMessage('Checkout was canceled. Your current plan remains unchanged.');
+    } else {
+      setHandoffMessage(null);
+    }
+  }, [checkoutState]);
+
+  const dismissHandoffMessage = useCallback(() => {
+    setHandoffMessage(null);
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete('session_id');
+    url.searchParams.delete('checkout');
+    const nextPath = `${url.pathname}${url.search}`;
+    if (nextPath !== location) {
+      setLocation(nextPath);
+    }
+  }, [location, setLocation]);
 
   // Create Stripe Checkout Session
   const handleUpgrade = useCallback(async (tier: string) => {
@@ -179,6 +217,18 @@ export default function BillingDashboard() {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {handoffMessage && (
+        <Alert>
+          <CheckCircle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between gap-3">
+            <span>{handoffMessage}</span>
+            <Button variant="link" className="h-auto p-0" onClick={dismissHandoffMessage}>
+              Dismiss
+            </Button>
+          </AlertDescription>
         </Alert>
       )}
 

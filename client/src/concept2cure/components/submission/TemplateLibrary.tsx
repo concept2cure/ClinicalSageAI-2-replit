@@ -43,6 +43,7 @@ interface DocumentTemplate {
   name: string;
   description: string;
   category: SubmissionCategory;
+  packageTags?: string[];
   ctdModule?: string;
   ctdSection?: string;
   sections: TemplateSection[];
@@ -68,6 +69,7 @@ const TEMPLATES: DocumentTemplate[] = [
     name: 'IND Cover Letter',
     description: 'Cover letter for Initial IND submission to FDA with Form 1571 references.',
     category: 'IND',
+    packageTags: ['ind-core', 'ind-initial'],
     ctdModule: '1',
     ctdSection: '1.2',
     sections: [
@@ -87,6 +89,7 @@ const TEMPLATES: DocumentTemplate[] = [
     name: 'Investigator\'s Brochure (IB)',
     description: 'Comprehensive compilation of clinical and nonclinical data relevant to the study drug.',
     category: 'IND',
+    packageTags: ['ind-core', 'ind-initial'],
     ctdModule: '5',
     sections: [
       { title: 'Title Page', required: true },
@@ -109,6 +112,7 @@ const TEMPLATES: DocumentTemplate[] = [
     name: 'Clinical Study Protocol',
     description: 'Phase I/II/III clinical study protocol per ICH E6(R2) and FDA guidance.',
     category: 'IND',
+    packageTags: ['ind-core', 'ind-initial'],
     ctdModule: '5',
     ctdSection: '5.3',
     sections: [
@@ -361,6 +365,7 @@ export function TemplateLibrary({
 }: TemplateLibraryProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<SubmissionCategory | 'All'>('All');
+  const [selectedPackage, setSelectedPackage] = useState<'all' | 'ind-core' | 'ind-initial'>('all');
   const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplate | null>(null);
 
   const categories: (SubmissionCategory | 'All')[] = ['All', 'IND', 'NDA', 'BLA', '510k', 'PMA', 'MAA', 'General'];
@@ -369,6 +374,9 @@ export function TemplateLibrary({
     let list = TEMPLATES;
     if (selectedCategory !== 'All') {
       list = list.filter(t => t.category === selectedCategory);
+    }
+    if (selectedPackage !== 'all') {
+      list = list.filter(t => t.packageTags?.includes(selectedPackage));
     }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -380,7 +388,7 @@ export function TemplateLibrary({
       );
     }
     return list;
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, selectedPackage, searchQuery]);
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -427,6 +435,41 @@ export function TemplateLibrary({
               {cat}
             </button>
           ))}
+        </div>
+        <div className="flex gap-1.5 flex-wrap pt-1">
+          <button
+            onClick={() => setSelectedPackage('all')}
+            className={cn(
+              'px-2.5 py-1 text-xs font-medium rounded-full transition-colors duration-150',
+              selectedPackage === 'all'
+                ? 'bg-stone-800 text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            )}
+          >
+            All packages
+          </button>
+          <button
+            onClick={() => setSelectedPackage('ind-core')}
+            className={cn(
+              'px-2.5 py-1 text-xs font-medium rounded-full transition-colors duration-150',
+              selectedPackage === 'ind-core'
+                ? 'bg-stone-800 text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            )}
+          >
+            IND core
+          </button>
+          <button
+            onClick={() => setSelectedPackage('ind-initial')}
+            className={cn(
+              'px-2.5 py-1 text-xs font-medium rounded-full transition-colors duration-150',
+              selectedPackage === 'ind-initial'
+                ? 'bg-stone-800 text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            )}
+          >
+            Initial IND
+          </button>
         </div>
       </div>
 

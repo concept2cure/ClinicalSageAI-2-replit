@@ -251,7 +251,7 @@ export async function importTrialsFromCsv(
                 await db
                   .update(csrReports)
                   .set(reportData)
-                  .where(sql => sql`${csrReports.id} = ${reportId}`);
+                  .where((sql: any) => sql`${csrReports.id} = ${reportId}`);
 
                 log.debug(`Updated existing report: ${reportData.title} (ID: ${reportId})`);
               } else {
@@ -357,11 +357,11 @@ export async function importTrialsFromCsv(
                   } else {
                     log.debug(`Details already exist for report ID ${reportId}, skipping`);
                   }
-                } catch (error) {
+                } catch (error: any) {
                   log.error(`Error processing PDF for report ID ${reportId}:`, error);
                 }
               }
-            } catch (error) {
+            } catch (error: any) {
               log.error(`Error importing row: ${JSON.stringify(row)}`, error);
             }
           }
@@ -371,7 +371,7 @@ export async function importTrialsFromCsv(
             message: `Successfully imported ${importCount} new clinical trials`,
             count: importCount,
           });
-        } catch (error) {
+        } catch (error: any) {
           resolve({
             success: false,
             message: `Error during import: ${error.message}`,
@@ -452,7 +452,7 @@ export async function importTrialsFromJson(
           await db
             .update(csrReports)
             .set(reportData)
-            .where(sql => sql`${csrReports.id} = ${reportId}`);
+            .where((sql: any) => sql`${csrReports.id} = ${reportId}`);
 
           log.debug(`Updated existing report: ${reportData.title} (ID: ${reportId})`);
         } else {
@@ -529,11 +529,11 @@ export async function importTrialsFromJson(
             } else {
               log.debug(`Details already exist for report ID ${reportId}, skipping`);
             }
-          } catch (error) {
+          } catch (error: any) {
             log.error(`Error adding details for report ID ${reportId}:`, error);
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         log.error(`Error importing item: ${JSON.stringify(item)}`, error);
       }
     }
@@ -543,7 +543,7 @@ export async function importTrialsFromJson(
       message: `Successfully imported ${importCount} new clinical trials from JSON`,
       count: importCount,
     };
-  } catch (error) {
+  } catch (error: any) {
     return {
       success: false,
       message: `Error parsing or processing JSON: ${error.message}`,
@@ -618,7 +618,7 @@ export async function importTrialsFromApiV2(
           await db
             .update(csrReports)
             .set(report)
-            .where(sql => sql`${csrReports.id} = ${reportId}`);
+            .where((sql: any) => sql`${csrReports.id} = ${reportId}`);
 
           log.debug(`Updated existing report: ${report.title} (ID: ${reportId})`);
         } else {
@@ -704,7 +704,7 @@ export function scheduleDataUpdates(intervalHours: number = 24): NodeJS.Timeout 
           log.debug('No JSON data file found to import');
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       log.error('Error during scheduled data update:', error);
     }
   }, intervalMs);
@@ -737,7 +737,7 @@ export function scheduleDataUpdates(intervalHours: number = 24): NodeJS.Timeout 
       } else {
         log.debug(`Database already has ${reportCount[0].count} reports, skipping initial fetch`);
       }
-    } catch (error) {
+    } catch (error: any) {
       log.error('Error during initial data update:', error);
     }
   }, 5000);

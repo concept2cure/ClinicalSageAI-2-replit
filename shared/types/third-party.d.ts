@@ -105,7 +105,6 @@ declare module 'file-saver' {
 }
 
 declare module 'cheerio';
-declare module '@aws-sdk/client-s3';
 
 // ============================================================================
 // Testing Library Extensions
@@ -285,4 +284,160 @@ declare module 'shepherd.js' {
   }
 
   export default { Tour };
+}
+
+// ============================================================================
+// jsonwebtoken
+// ============================================================================
+declare module 'jsonwebtoken' {
+  export interface SignOptions {
+    algorithm?: string;
+    expiresIn?: string | number;
+    notBefore?: string | number;
+    audience?: string | string[];
+    subject?: string;
+    issuer?: string;
+    jwtid?: string;
+    mutatePayload?: boolean;
+    noTimestamp?: boolean;
+    header?: Record<string, unknown>;
+    encoding?: string;
+  }
+
+  export interface VerifyOptions {
+    algorithms?: string[];
+    audience?: string | string[];
+    clockTimestamp?: number;
+    clockTolerance?: number;
+    complete?: boolean;
+    issuer?: string | string[];
+    ignoreExpiration?: boolean;
+    ignoreNotBefore?: boolean;
+    jwtid?: string;
+    nonce?: string;
+    subject?: string;
+    maxAge?: string | number;
+  }
+
+  export interface DecodeOptions {
+    complete?: boolean;
+    json?: boolean;
+  }
+
+  export interface JwtPayload {
+    [key: string]: unknown;
+    iss?: string;
+    sub?: string;
+    aud?: string | string[];
+    exp?: number;
+    nbf?: number;
+    iat?: number;
+    jti?: string;
+  }
+
+  export function sign(
+    payload: string | Buffer | object,
+    secretOrPrivateKey: string | Buffer,
+    options?: SignOptions
+  ): string;
+
+  export function verify(
+    token: string,
+    secretOrPublicKey: string | Buffer,
+    options?: VerifyOptions
+  ): JwtPayload | string;
+
+  export function decode(token: string, options?: DecodeOptions): null | JwtPayload | string;
+
+  export class JsonWebTokenError extends Error {
+    inner: Error;
+    constructor(message: string, error?: Error);
+  }
+
+  export class TokenExpiredError extends JsonWebTokenError {
+    expiredAt: Date;
+    constructor(message: string, expiredAt: Date);
+  }
+
+  export class NotBeforeError extends JsonWebTokenError {
+    date: Date;
+    constructor(message: string, date: Date);
+  }
+}
+
+// ============================================================================
+// node-cron
+// ============================================================================
+declare module 'node-cron' {
+  export interface ScheduleOptions {
+    scheduled?: boolean;
+    timezone?: string;
+    name?: string;
+    runOnInit?: boolean;
+    recoverMissedExecutions?: boolean;
+  }
+
+  export interface ScheduledTask {
+    start: () => void;
+    stop: () => void;
+  }
+
+  export function schedule(
+    expression: string,
+    func: () => void | Promise<void>,
+    options?: ScheduleOptions
+  ): ScheduledTask;
+
+  export function validate(expression: string): boolean;
+  export function getTasks(): Map<string, ScheduledTask>;
+}
+
+// ============================================================================
+// @google/generative-ai — stub for optional dependency
+// ============================================================================
+declare module '@google/generative-ai' {
+  export class GoogleGenerativeAI {
+    constructor(apiKey: string);
+    getGenerativeModel(params: { model: string; [key: string]: unknown }): GenerativeModel;
+  }
+
+  export interface GenerativeModel {
+    generateContent(prompt: string | unknown[]): Promise<GenerateContentResult>;
+    startChat(params?: unknown): ChatSession;
+  }
+
+  export interface ChatSession {
+    sendMessage(message: string): Promise<GenerateContentResult>;
+  }
+
+  export interface GenerateContentResult {
+    response: {
+      text: () => string;
+      candidates?: unknown[];
+    };
+  }
+
+  export enum HarmCategory {
+    HARM_CATEGORY_HARASSMENT = 'HARM_CATEGORY_HARASSMENT',
+    HARM_CATEGORY_HATE_SPEECH = 'HARM_CATEGORY_HATE_SPEECH',
+    HARM_CATEGORY_SEXUALLY_EXPLICIT = 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+    HARM_CATEGORY_DANGEROUS_CONTENT = 'HARM_CATEGORY_DANGEROUS_CONTENT',
+    HARM_CATEGORY_UNSPECIFIED = 'HARM_CATEGORY_UNSPECIFIED',
+  }
+
+  export enum HarmBlockThreshold {
+    BLOCK_NONE = 'BLOCK_NONE',
+    BLOCK_ONLY_HIGH = 'BLOCK_ONLY_HIGH',
+    BLOCK_MEDIUM_AND_ABOVE = 'BLOCK_MEDIUM_AND_ABOVE',
+    BLOCK_LOW_AND_ABOVE = 'BLOCK_LOW_AND_ABOVE',
+    HARM_BLOCK_THRESHOLD_UNSPECIFIED = 'HARM_BLOCK_THRESHOLD_UNSPECIFIED',
+  }
+
+  export interface Part {
+    text?: string;
+    inlineData?: {
+      mimeType: string;
+      data: string;
+    };
+  }
 }

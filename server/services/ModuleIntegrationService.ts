@@ -147,7 +147,7 @@ export class ModuleIntegrationService {
       return [];
     }
 
-    const documentIds = moduleDocsResult.map(doc => doc.unifiedDocumentId);
+    const documentIds = moduleDocsResult.map((doc: any) => doc.unifiedDocumentId);
 
     const docsResult = await this.db
       .select()
@@ -155,8 +155,8 @@ export class ModuleIntegrationService {
       .where(inArray(unifiedDocuments.id, documentIds));
 
     // Join the results
-    return docsResult.map(doc => {
-      const moduleDoc = moduleDocsResult.find(md => md.unifiedDocumentId === doc.id);
+    return docsResult.map((doc: any) => {
+      const moduleDoc = moduleDocsResult.find((md: any) => md.unifiedDocumentId === doc.id);
       return {
         ...doc,
         moduleType,
@@ -204,7 +204,7 @@ export class ModuleIntegrationService {
     const workflowsWithApprovals = await Promise.all(
       workflows.map(async (w: any) => {
         const approvals = await this.workflowService.getWorkflowApprovals(w.id);
-        const currentApproval = approvals.find(a => a.status === 'pending');
+        const currentApproval = approvals.find((a: any) => a.status === 'pending');
         return {
           ...w,
           approvals,
@@ -214,8 +214,8 @@ export class ModuleIntegrationService {
     );
 
     // Join everything together
-    return documents.map(doc => {
-      const moduleDoc = moduleDocsResult.find(md => md.unifiedDocumentId === doc.id);
+    return documents.map((doc: any) => {
+      const moduleDoc = moduleDocsResult.find((md: any) => md.unifiedDocumentId === doc.id);
       const docWorkflows = workflowsWithApprovals.filter(w => w.documentId === doc.id);
 
       return {

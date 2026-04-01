@@ -44,7 +44,7 @@ router.post('/suggestions', async (req, res) => {
       data: predictions,
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in predictive sections API:', error);
     res.status(500).json({
       error: 'Failed to generate section suggestions',
@@ -92,7 +92,7 @@ router.post('/analyze-document', async (req, res) => {
       predictions,
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error analyzing document:', error);
     res.status(500).json({
       error: 'Failed to analyze document',
@@ -198,7 +198,7 @@ router.get('/templates/:sectionCode', async (req, res) => {
       submissionType,
       regulatoryRegion,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching templates:', error);
     res.status(500).json({
       error: 'Failed to fetch templates',
@@ -243,7 +243,7 @@ router.post('/update-context', async (req, res) => {
       predictions,
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating context:', error);
     res.status(500).json({
       error: 'Failed to update context',
@@ -287,7 +287,7 @@ router.get('/completion-status/:submissionType', async (req, res) => {
       topSuggestions: predictions.suggestions.slice(0, 5),
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error getting completion status:', error);
     res.status(500).json({
       error: 'Failed to get completion status',

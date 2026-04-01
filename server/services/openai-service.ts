@@ -10,6 +10,13 @@ const openai = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
+function requireOpenAI(): OpenAI {
+  if (!openai) {
+    throw new Error('OPENAI_API_KEY is required for OpenAI service operations');
+  }
+  return openai;
+}
+
 /**
  * Create a new OpenAI Assistant
  */
@@ -19,7 +26,7 @@ export async function createAssistant(
   tools: any[] = []
 ): Promise<Assistant> {
   try {
-    const assistant = await openai.beta.assistants.create({
+    const assistant = await requireOpenAI().beta.assistants.create({
       name,
       instructions,
       tools,
@@ -39,7 +46,7 @@ export async function createAssistant(
  */
 export async function createThread(): Promise<Thread> {
   try {
-    const thread = await openai.beta.threads.create();
+    const thread = await requireOpenAI().beta.threads.create();
     console.log(`Created thread with ID: ${thread.id}`);
     return thread;
   } catch (error) {
@@ -56,7 +63,7 @@ export async function addMessageToThread(
   content: string
 ): Promise<ThreadMessage> {
   try {
-    const message = await openai.beta.threads.messages.create(threadId, {
+    const message = await requireOpenAI().beta.threads.messages.create(threadId, {
       role: 'user',
       content,
     });
@@ -72,7 +79,7 @@ export async function addMessageToThread(
  */
 export async function runAssistant(threadId: string, assistantId: string): Promise<Run> {
   try {
-    const run = await openai.beta.threads.runs.create(threadId, {
+    const run = await requireOpenAI().beta.threads.runs.create(threadId, {
       assistant_id: assistantId,
     });
     return run;
@@ -87,7 +94,7 @@ export async function runAssistant(threadId: string, assistantId: string): Promi
  */
 export async function getRunStatus(threadId: string, runId: string): Promise<Run> {
   try {
-    const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+    const run = await requireOpenAI().beta.threads.runs.retrieve(threadId, runId);
     return run;
   } catch (error) {
     console.error('Error getting run status:', error);
@@ -105,7 +112,7 @@ export async function listMessages(threadId: string): Promise<{
   hasMore: boolean;
 }> {
   try {
-    const messages = await openai.beta.threads.messages.list(threadId);
+    const messages = await requireOpenAI().beta.threads.messages.list(threadId);
     return {
       data: messages.data,
       firstId: messages.data[0]?.id || null,
@@ -128,7 +135,7 @@ export async function generateStructuredResponse<T>(
 ): Promise<T> {
   try {
     // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-    const response = await openai.responses.create({
+    const response = await requireOpenAI().responses.create({
       model: 'gpt-4o',
       input: [
         {
@@ -161,7 +168,7 @@ export async function generateStructuredResponse<T>(
  */
 export async function generateWithWebSearch(prompt: string): Promise<string> {
   try {
-    const response = await openai.responses.create({
+    const response = await requireOpenAI().responses.create({
       model: 'gpt-4o',
       input: [
         {
@@ -184,7 +191,7 @@ export async function generateWithWebSearch(prompt: string): Promise<string> {
  */
 export async function generateImage(prompt: string): Promise<string> {
   try {
-    const response = await openai.images.generate({
+    const response = await requireOpenAI().images.generate({
       model: 'dall-e-3',
       prompt: prompt,
       n: 1,
@@ -203,7 +210,7 @@ export async function generateImage(prompt: string): Promise<string> {
  */
 export async function analyzeText(text: string, instruction: string): Promise<string> {
   try {
-    const response = await openai.chat.completions.create({
+    const response = await requireOpenAI().chat.completions.create({
       model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
       messages: [
         {
@@ -229,7 +236,7 @@ export async function analyzeText(text: string, instruction: string): Promise<st
  */
 export async function analyzeImage(imageBase64: string, prompt: string): Promise<string> {
   try {
-    const response = await openai.chat.completions.create({
+    const response = await requireOpenAI().chat.completions.create({
       model: 'gpt-4o', // gpt-4o supports image inputs natively
       messages: [
         {

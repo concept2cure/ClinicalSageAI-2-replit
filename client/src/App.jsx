@@ -10,6 +10,7 @@ import { AnAAssistantProvider } from './contexts/AnAAssistantContext';
 import { FileProvider } from './contexts/FileContext.jsx';
 import { EvidenceGraphProvider } from './contexts/EvidenceGraphContext';
 import { AnAAssistantContainer } from '@/components/ai/AnAAssistantContainer';
+import { LoadingState } from '@/components/ui/statesV2';
 import { memoryOptimizer } from './utils/memoryOptimizer';
 
 // Initialize memory optimization
@@ -223,9 +224,8 @@ const ProtectedRoute = ({ children }) => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
-        <span className="ml-2">Checking authentication...</span>
+      <div className="min-h-screen flex items-center justify-center bg-stone-50">
+        <LoadingState message="Checking authentication..." />
       </div>
     );
   }
@@ -259,8 +259,7 @@ function AppContent() {
 }
 
 function MainApp() {
-  // Default tab for the UnifiedTopNavV3 component
-  const [activeTab, setActiveTab] = useState('RiskHeatmap');
+  // Top-nav active state is route-driven for truthful shell behavior.
   const [isLoading, setIsLoading] = useState(true);
 
   // Initial loading state management - removed artificial delay
@@ -296,12 +295,10 @@ function MainApp() {
       !isDashboardPage &&
       !isConcept2CurePage);
 
-  // Define CSR navigation items as per specifications
+  // Keep top-nav links aligned to routes that are actually mounted in this shell.
+  // Stage 7 honesty pass: remove dead-signage links that route to non-mounted pages.
   const csrNavItems = [
-    { label: 'Dashboard', path: '/csr-intelligence' },
-    { label: 'Search', path: '/csr/search' },
-    { label: 'Library', path: '/csr-library' },
-    { label: 'Compare', path: '/csr/compare-list' }, // Link to the comparison list page
+    { label: 'Library', path: '/csr' },
   ];
 
   // Only show CSR nav items on CSR pages
@@ -315,28 +312,8 @@ function MainApp() {
   // Show loading screen during initial hydration
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <svg
-          className="animate-spin h-8 w-8 text-blue-600"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          ></circle>
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          ></path>
-        </svg>
-        <span className="ml-2 text-gray-700">Loading platform...</span>
+      <div className="min-h-screen flex items-center justify-center bg-stone-50">
+        <LoadingState message="Loading platform..." />
       </div>
     );
   }
@@ -345,7 +322,7 @@ function MainApp() {
     <div>
       {/* Only show the UnifiedTopNavV3 if we're not on the landing page, regulatory hub, or dashboard */}
       {shouldShowNav && (
-        <UnifiedTopNavV3 activeTab={activeTab} onTabChange={setActiveTab} navItems={navItems} />
+        <UnifiedTopNavV3 navItems={navItems} />
       )}
       <div
         className={
@@ -365,7 +342,8 @@ function MainApp() {
         {/* Main Content */}
         <main className={isConcept2CurePage ? 'h-screen' : 'min-h-screen bg-gray-100'}>
           <Switch>
-            {/* Concept2Cure - Claude.ai-style regulatory interface with auth */}
+            {/* ── Primary beta path (canonical shell) ─────────────────────────────── */}
+            {/* Users should start from these Concept2Cure routes. */}
             <Route path="/concept2cure/login">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
@@ -394,7 +372,8 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            {/* Login/Signup redirects */}
+            {/* ── Compatibility aliases (non-primary) ─────────────────────────────── */}
+            {/* Legacy auth aliases are retained, but not promoted as primary entry points. */}
             <Route path="/login">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
@@ -409,7 +388,7 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            {/* Root → Marketing Landing Page via ZenRouter (shows LandingPage for unauth, redirects to /concept2cure for auth) */}
+            {/* Root entry delegates to canonical auth-aware ZenRouter landing behavior */}
             <Route path="/">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
@@ -417,6 +396,15 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
+            {/* Legacy portal paths are intentionally fenced to canonical beta shell */}
+            <Route path="/client-portal">
+              {() => <Redirect to="/concept2cure" />}
+            </Route>
+            <Route path="/client-portal/:rest*">
+              {() => <Redirect to="/concept2cure" />}
+            </Route>
+            {/* ── Secondary/deep-link surfaces (module worlds) ─────────────────────── */}
+            {/* These remain routable, but are not first-rank beta entry points. */}
             {/* Public Sales Landing Page */}
             <Route path="/sales">
               {() => (
@@ -432,8 +420,6 @@ function MainApp() {
             <Route path="/billing/*">
               {() => <Redirect to="/concept2cure/billing" />}
             </Route>
-            {/* Root and legacy portal routes → redirect to Concept2Cure home */}
-            <Route path="/">{() => <Redirect to="/concept2cure" />}</Route>
             <Route path="/submission-center" component={UnifiedSubmissionCenter} />
             {/* AnA Cortex AI Assistant - Full Page */}
             <Route path="/ana">

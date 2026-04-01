@@ -11,7 +11,7 @@
  */
 
 import { eq, and, sql } from 'drizzle-orm';
-import { concept2cureArtifacts } from '../../../../shared/schema';
+import { concept2cureArtifacts, concept2cureArtifactVersions } from '../../../../shared/schema';
 import { registerActionHandler } from '../action-registry';
 import { fetchContentForProcessing, artifactWhereClause } from '../shared-utils';
 import type {
@@ -23,6 +23,7 @@ import type {
   ValidationFinding,
 } from '../../../../shared/types/ai-actions';
 import { AIActionHandlerError } from '../../../../shared/types/ai-actions';
+import { resolveGovernedContext } from '../../concept2cure/governedDocumentContractService.js';
 
 const handler: AIActionHandler = {
   actionType: 'refine_with_validation',
@@ -117,33 +118,122 @@ const handler: AIActionHandler = {
     // 4. If target exists, save the refined content back
     const updatedObjects = [];
     if (request.targetId && request.targetType === 'artifact') {
-      try {
-        // Use SQL expression for atomic version increment (no read-then-write race)
-        await db
+      const artifact = await fetchArtifactForRefinement(
+        db,
+        request.targetId,
+        ctx.user.organizationId
+      );
+      if (!artifact) {
+        throw new AIActionHandlerError('ARTIFACT_NOT_FOUND', `Artifact ${request.targetId} not found`, 404);
+      }
+
+      const governedResolution = resolveGovernedContext({
+        req: {
+          body: {
+            projectId: request.projectId,
+            metadata: {
+              source: 'ai_action_refinement',
+              actionId: ctx.actionId,
+              sourceRefs: [`artifact:${artifact.artifactId}`],
+            },
+          },
+          userId: ctx.user.userId,
+          userEmail: `${ctx.user.userName || 'user'}@ai-actions.local`,
+          userRole: ctx.user.userRole || 'medical_writer',
+        } as any,
+        projectId: request.projectId,
+        artifactId: artifact.id,
+        documentType: artifact.type || 'regulatory_document',
+        generationMode: 'amendment',
+        lifecycleStatus:
+          (artifact.status === 'review'
+            ? 'in_review'
+            : artifact.status === 'approved'
+              ? 'approved'
+              : artifact.status === 'locked'
+                ? 'locked'
+                : 'draft') as any,
+        originSurface: 'editor_panel',
+        title: artifact.title || title,
+        content: refinedContent,
+        ctdSection: artifact.ctdSection || null,
+        sourceRefs: [`artifact:${artifact.artifactId}`],
+        provider: 'ai_action_refinement',
+        model: 'unified_ai_client',
+        exportAllowed: false,
+        eventType: 'artifact.updated',
+      });
+      if (!governedResolution.validation.valid) {
+        throw new AIActionHandlerError(
+          'GOVERNED_CONTRACT_INVALID',
+          governedResolution.validation.errors.join('; '),
+          400,
+          governedResolution.validation
+        );
+      }
+
+      const nextVersion = (artifact.version || 1) + 1;
+      const refinedContentHash = computeSha256(refinedContent);
+      const existingMetadata =
+        artifact.metadata && typeof artifact.metadata === 'object'
+          ? (artifact.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        existingMetadata.harness && typeof existingMetadata.harness === 'object'
+          ? (existingMetadata.harness as Record<string, unknown>)
+          : {};
+
+      await db.transaction(async (tx: any) => {
+        await tx
           .update(concept2cureArtifacts)
           .set({
             content: refinedContent,
-            version: sql`COALESCE(${concept2cureArtifacts.version}, 1) + 1`,
+            contentHash: refinedContentHash,
+            version: nextVersion,
             metadata: {
+              ...existingMetadata,
               lastRefinedAt: new Date().toISOString(),
               lastRefinedBy: ctx.user.userId,
               refinementActionId: ctx.actionId,
               findingsAddressed: findings.length,
+              harness: {
+                ...existingHarness,
+                clientTrack: governedResolution.contract.clientTrack,
+                submissionProgram: governedResolution.contract.submissionProgram,
+                persona: governedResolution.contract.persona,
+                regulatorScope: governedResolution.contract.regulatorScope,
+                documentClass: governedResolution.contract.documentClass,
+                readinessGate: governedResolution.contract.readinessGate,
+                workspaceTarget: governedResolution.contract.workspaceTarget,
+                originSurface: governedResolution.contract.originSurface,
+                recommendationSource: governedResolution.contract.recommendationSource,
+                regulatorIntent: governedResolution.contract.regulatorIntent,
+                gateChecks: governedResolution.contract.exportEligibility.gateChecks,
+                blockingReasons: governedResolution.contract.exportEligibility.blockingReasons,
+                readinessOutcome: governedResolution.contract.exportEligibility.readinessOutcome,
+              },
             },
             updatedAt: new Date(),
           })
-          .where(artifactWhereClause(request.targetId, ctx.user.organizationId));
+          .where(artifactWhereClause(request.targetId!, ctx.user.organizationId));
 
-        updatedObjects.push({
-          type: 'artifact',
-          id: request.targetId,
-          title,
-          status: 'refined',
+        await tx.insert(concept2cureArtifactVersions).values({
+          artifactId: artifact.id,
+          organizationId: ctx.user.organizationId,
+          version: nextVersion,
+          content: refinedContent,
+          contentHash: refinedContentHash,
+          changeDescription: `AI refinement via validation findings (${findings.length} findings)`,
+          createdById: ctx.user.userId,
         });
-      } catch (err) {
-        console.warn('[AI Actions] Failed to persist refined content:', err);
-        // Non-fatal — still return the refined content
-      }
+      });
+
+      updatedObjects.push({
+        type: 'artifact',
+        id: request.targetId,
+        title,
+        status: 'refined',
+      });
     }
 
     // 5. Summarize what was addressed
@@ -257,3 +347,20 @@ Provide the complete revised content with all findings addressed.`;
 // ---------------------------------------------------------------------------
 
 registerActionHandler(handler);
+
+async function fetchArtifactForRefinement(
+  db: any,
+  targetId: string | number,
+  organizationId: number
+) {
+  const rows = await db
+    .select()
+    .from(concept2cureArtifacts)
+    .where(artifactWhereClause(targetId, organizationId))
+    .limit(1);
+  return rows?.[0] || null;
+}
+
+function computeSha256(value: string): string {
+  return require('crypto').createHash('sha256').update(value, 'utf8').digest('hex');
+}

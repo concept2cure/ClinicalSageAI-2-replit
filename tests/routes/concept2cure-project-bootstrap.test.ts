@@ -10,6 +10,7 @@ import { normalizeProjectMetadata } from '../../server/services/regulatory/proje
 import { buildDefaultInstructions, buildInstructionsFromLegacyType } from '../../server/services/regulatory/defaultInstructionBuilder';
 import { getSuggestedActions } from '../../server/services/regulatory/suggestedActionsCatalog';
 import { getTemplatesForType } from '../../server/services/regulatory/templateCatalog';
+import { validateGovernedDocumentActionContract } from '../../shared/types/document-contract';
 import { getApplicationType } from '../../shared/regulatory/global-document-registry';
 
 describe('Project Bootstrap Integration', () => {
@@ -162,6 +163,45 @@ describe('Project Bootstrap Integration', () => {
       const templates = getTemplatesForType('EU_MAA');
       expect(templates.some(t => t.id === 'smpc')).toBe(true);
       expect(templates.some(t => t.id === 'rmp')).toBe(true);
+    });
+
+  });
+
+  describe('governed project assignment', () => {
+    it('requires projectId for governed documents', () => {
+      const result = validateGovernedDocumentActionContract({
+        projectId: 0 as any,
+        artifactId: 1001,
+        documentType: 'ind-briefing',
+        originSurface: 'project_workspace_shell',
+        generationMode: 'manual',
+        lifecycleStatus: 'draft',
+        clientTrack: 'biotech',
+        submissionProgram: 'ind',
+        persona: 'regulatory',
+        regulatorScope: 'fda',
+        evidenceMode: 'literature',
+        documentClass: 'submission_component',
+        readinessGate: 'internal_review',
+        approvalPathType: 'regulated_dual_review',
+        recommendationSource: 'ind_autodraft',
+        workspaceTarget: 'project',
+        regulatorIntent: 'submission_authoring',
+        editorPayload: {
+          title: 'IND package draft',
+          content: 'Controlled regulatory content for project submission',
+          ctdSection: '1.2',
+        },
+        placementTarget: {
+          workspace: 'project',
+        },
+        exportEligibility: {
+          allowed: false,
+        },
+      } as any);
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('projectId is required');
     });
   });
 });

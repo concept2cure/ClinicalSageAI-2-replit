@@ -326,7 +326,7 @@ router.post('/verify', async (req, res) => {
         verificationResults = {
           credibility: 85,
           sources_verified: sources ? sources.length : 0,
-          recommendations: aiResponse.split('\n').filter(line => line.trim().length > 0).slice(0, 5),
+          recommendations: aiResponse.split('\n').filter((line: any) => line.trim().length > 0).slice(0, 5),
           analysis: aiResponse,
           isRealAI: true,
         };

@@ -160,6 +160,7 @@ export interface ProjectOwnership {
   documentInventory: UploadedDocument[];
   vaultLinkedFilesEvidence: UploadedDocument[];
   projectInstructions: string;
+  ownershipTeam?: Array<{ userId: number; permission: 'can_use' | 'can_edit' }>;
   reusableSnippetsKnowledge: string[];
   reports: string[];
   reviewState: string;
