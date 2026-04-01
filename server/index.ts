@@ -378,12 +378,20 @@ async function verifyDatabaseConnection() {
   try {
     const result = await ensureCoreTables(process.env.DATABASE_URL);
     if (result.success) {
-      console.log(`✅ All ${result.existingTables.length} core database tables verified`);
+      console.log(
+        `✅ Database readiness verified (${result.existingSchemas.length} schemas, ${result.existingTables.length} tables)`
+      );
     } else if (result.missingCritical.length > 0) {
       console.error('❌ CRITICAL: Missing tables:', result.missingCritical.join(', '));
       console.error('   Run: npm run db:push to sync schema');
+    } else if (result.missingExtensions.length > 0) {
+      console.error('❌ CRITICAL: Missing required database extensions:', result.missingExtensions.join(', '));
     } else if (result.errors.length > 0) {
       console.error('⚠️ Table verification errors:', result.errors);
+    } else if (result.missingSchemas.length > 0) {
+      console.warn('⚠️ Database schemas required initialization:', result.missingSchemas.join(', '));
+    } else if (result.warnings.length > 0) {
+      console.warn('⚠️ Database readiness warnings:', result.warnings);
     }
   } catch (err: any) {
     console.error('⚠️ Core table verification failed:', err.message);

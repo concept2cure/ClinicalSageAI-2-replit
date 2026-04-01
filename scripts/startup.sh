@@ -71,6 +71,62 @@ load_env_file() {
     fi
 }
 
+sync_db_config_from_database_url() {
+    if [[ -z "${DATABASE_URL:-}" ]]; then
+        return 0
+    fi
+
+    local parsed
+    parsed=$(node -e "try { const url = new URL(process.env.DATABASE_URL || ''); const dbName = decodeURIComponent((url.pathname || '').replace(/^\\/+/, '')); if (!dbName) process.exit(0); process.stdout.write([url.hostname || '', url.port || '', dbName, decodeURIComponent(url.username || ''), decodeURIComponent(url.password || '')].join('\t')); } catch { process.exit(0); }" 2>/dev/null || true)
+
+    if [[ -z "$parsed" ]]; then
+        return 0
+    fi
+
+    local parsed_host parsed_port parsed_db parsed_user parsed_password
+    IFS=$'\t' read -r parsed_host parsed_port parsed_db parsed_user parsed_password <<< "$parsed"
+
+    if [[ -n "$parsed_db" ]]; then
+        export DB_NAME="$parsed_db"
+    fi
+    if [[ -n "$parsed_host" ]]; then
+        export DB_HOST="$parsed_host"
+    fi
+    if [[ -n "$parsed_port" ]]; then
+        export DB_PORT="$parsed_port"
+    fi
+    if [[ -n "$parsed_user" ]]; then
+        export DB_USER="$parsed_user"
+    fi
+    if [[ -n "$parsed_password" ]]; then
+        export DB_PASSWORD="$parsed_password"
+    fi
+
+    log_info "Database target resolved from DATABASE_URL: ${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+}
+
+is_docker_db_active() {
+    has_docker && docker ps --format '{{.Names}}' | grep -q "^${DOCKER_DB_CONTAINER}$"
+}
+
+run_sql() {
+    if is_docker_db_active; then
+        docker exec -i "$DOCKER_DB_CONTAINER" psql -v ON_ERROR_STOP=1 -U "$DB_USER" -d "$DB_NAME" "$@"
+    else
+        PGPASSWORD="${DB_PASSWORD}" psql -v ON_ERROR_STOP=1 -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" "$@"
+    fi
+}
+
+ensure_required_schemas() {
+    log_info "Ensuring required schemas exist..."
+    run_sql >/dev/null 2>&1 <<'SCHEMA_SQL'
+CREATE SCHEMA IF NOT EXISTS public;
+CREATE SCHEMA IF NOT EXISTS vault;
+CREATE SCHEMA IF NOT EXISTS extensions;
+SCHEMA_SQL
+    log_success "Required schemas ready (public, vault, extensions)"
+}
+
 has_docker() {
     command -v docker >/dev/null 2>&1
 }
@@ -231,8 +287,7 @@ ensure_native_postgres() {
         log_success "Database '${DB_NAME}' exists"
     fi
 
-    # Create vault schema
-    PGPASSWORD="${DB_PASSWORD}" psql -h localhost -U "${DB_USER}" -d "${DB_NAME}" -c "CREATE SCHEMA IF NOT EXISTS vault;" >/dev/null 2>&1
+    ensure_required_schemas
 
     # Install pgvector extension (build from source if needed)
     if ! PGPASSWORD="${DB_PASSWORD}" psql -h localhost -U "${DB_USER}" -d "${DB_NAME}" -c "CREATE EXTENSION IF NOT EXISTS vector;" >/dev/null 2>&1; then
@@ -416,9 +471,10 @@ ensure_database() {
         log_success "Database '$DB_NAME' created"
     fi
 
-    # Ensure pgvector extension
+    # Ensure base schemas and pgvector extension
+    ensure_required_schemas
     log_info "Ensuring pgvector extension..."
-    docker exec "$DOCKER_DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -c "CREATE EXTENSION IF NOT EXISTS vector;" > /dev/null 2>&1
+    run_sql -c "CREATE EXTENSION IF NOT EXISTS vector;" > /dev/null 2>&1
     log_success "pgvector extension ready"
 }
 
@@ -484,6 +540,7 @@ main() {
     if [[ -z "${DATABASE_URL:-}" ]]; then
         export DATABASE_URL="$DEFAULT_DATABASE_URL"
     fi
+    sync_db_config_from_database_url
 
     # If DATABASE_URL points to a remote host (not localhost), skip local DB setup
     if [[ "$DATABASE_URL" == *"neon.tech"* || "$DATABASE_URL" == *"supabase"* || ( "$DATABASE_URL" != *"localhost"* && "$DATABASE_URL" != *"127.0.0.1"* ) ]]; then
