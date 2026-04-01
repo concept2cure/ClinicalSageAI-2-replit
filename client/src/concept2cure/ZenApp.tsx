@@ -1289,17 +1289,37 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // NAVIGATION HELPER — intercepts special paths before falling through to layoutMode
   // ─────────────────────────────────────────────────────────────────────────────
   const handleAnaPanelNavigate = useCallback((path: string) => {
-    if (path === 'ana-intelligence') {
+    const normalizedPath = String(path || '').trim();
+    if (!normalizedPath) return;
+
+    if (normalizedPath === 'ana-intelligence') {
       setSettingsSection('ana-intelligence');
       setSettingsOpen(true);
       return;
     }
+    if (normalizedPath === 'project-config') {
+      setEditProjectOpen(true);
+      return;
+    }
     if (
-      path === 'guided_project' ||
-      path === 'guided_ind_ectd' ||
-      path === 'guided_authoring' ||
-      path === 'guided_verify' ||
-      path === 'guided_submission'
+      normalizedPath === 'open_capabilities' ||
+      normalizedPath === '/concept2cure?panel=capabilities'
+    ) {
+      setLayoutMode(activeProjectId ? 'project-home' : 'projects');
+      if (activeProjectId) {
+        setExternalChatMessage({
+          text: 'Show me all available capabilities for this project, grouped by workflow stage and what AnA can execute for me.',
+          ts: Date.now(),
+        });
+      }
+      return;
+    }
+    if (
+      normalizedPath === 'guided_project' ||
+      normalizedPath === 'guided_ind_ectd' ||
+      normalizedPath === 'guided_authoring' ||
+      normalizedPath === 'guided_verify' ||
+      normalizedPath === 'guided_submission'
     ) {
       const stageMap: Record<string, 'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission'> =
         {
@@ -1309,7 +1329,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           guided_verify: 'verify',
           guided_submission: 'submission',
         };
-      const stage = stageMap[path];
+      const stage = stageMap[normalizedPath];
       setLayoutMode('regulatory-workspace');
       setGuidedStageRequest({
         stage,
@@ -1318,8 +1338,18 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       });
       return;
     }
-    setLayoutMode(path as LayoutMode);
-  }, []);
+    const mapped = SIDEBAR_NAV_TO_LAYOUT[normalizedPath];
+    if (mapped) {
+      setLayoutMode(mapped);
+      return;
+    }
+    const knownLayoutValues = Object.values(SIDEBAR_NAV_TO_LAYOUT);
+    if (knownLayoutValues.includes(normalizedPath as LayoutMode)) {
+      setLayoutMode(normalizedPath as LayoutMode);
+      return;
+    }
+    console.warn(`[AnaPersistentPanel] Unknown navigation target: ${normalizedPath}`);
+  }, [activeProjectId]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // KEYBOARD SHORTCUTS — use refs to avoid re-attaching listeners on every state change

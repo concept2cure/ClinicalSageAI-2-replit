@@ -9912,34 +9912,32 @@ Sincerely,
     category: 'document',
     ctdSection: '1.2',
     content: `# IND Cover Letter
-
-[DATE]
+Date: <Insert submission date>
 
 Food and Drug Administration
 Center for Drug Evaluation and Research
-[Division]
+<Insert division or office name>
 
-Re: Investigational New Drug Application — [PRODUCT NAME]
-IND Number: [IND NUMBER]
-Submission Type: [INITIAL / AMENDMENT / ANNUAL REPORT]
+Re: Investigational New Drug Application - <Insert product name>
+IND Number: <Insert IND number or "new IND">
+Submission Type: <Initial IND | Amendment | Annual Report | Safety Report>
 
-Dear [Review Team],
+Dear Review Team,
 
-On behalf of [SPONSOR], we submit this [SUBMISSION TYPE] for [PRODUCT NAME].
+On behalf of <Insert sponsor name>, we submit this <Insert submission type> for <Insert product name>.
 This package includes:
 
-- [List major included components]
-- [Safety and clinical updates, if applicable]
-- [CMC updates, if applicable]
+- Administrative and regulatory submission materials for this filing
+- Relevant nonclinical, clinical, and safety updates for the current reporting period
+- Chemistry, manufacturing, and controls updates applicable to this submission
 
-Please contact [CONTACT NAME, TITLE] at [EMAIL / PHONE] with any questions.
+Please contact <Insert contact name and title> at <Insert email and phone> with any questions.
 
 Sincerely,
 
-[SIGNATURE]
-[NAME]
-[TITLE]
-[SPONSOR]`,
+<Insert signatory name>
+<Insert signatory title>
+<Insert sponsor name>`,
   },
   {
     id: 'tpl_ind_investigator_brochure',
@@ -9951,25 +9949,25 @@ Sincerely,
     content: `# Investigator's Brochure
 
 ## 1. Summary
-[High-level summary of product, mechanism, and current evidence]
+Provide a concise clinical and nonclinical summary of the investigational product, mechanism of action, and development status.
 
 ## 2. Introduction
-[Background and development context]
+Describe product background, indication context, and development rationale.
 
 ## 3. Physical, Chemical, and Pharmaceutical Properties
-[Drug substance and product properties]
+Summarize relevant drug substance and drug product characteristics, including formulation and handling information for investigators.
 
 ## 4. Nonclinical Studies
-[Pharmacology, PK, and toxicology summary]
+Summarize pharmacology, pharmacokinetics, and toxicology findings that inform clinical risk management.
 
 ## 5. Effects in Humans
-[Clinical pharmacology, efficacy/safety findings, known risks]
+Summarize clinical pharmacology, known efficacy signals, observed safety profile, and important risk considerations.
 
 ## 6. Guidance for Investigators
-[Dose rationale, monitoring, risk management considerations]
+Provide dosing rationale, monitoring expectations, contraindications, and investigator actions for adverse events.
 
 ## 7. References
-[Key cited studies and reports]`,
+List key source reports, publications, and supporting references used in this brochure.`,
   },
   {
     id: 'tpl_ind_pre_ind_briefing',
@@ -9981,24 +9979,24 @@ Sincerely,
     content: `# Pre-IND Briefing Package
 
 ## 1. Meeting Request Context
-[Program background, indication, and development stage]
+Summarize sponsor, product, indication, and current development stage.
 
 ## 2. Product and Development Overview
-[CMC, nonclinical, and clinical overview]
+Provide a concise integrated overview of CMC, nonclinical, and clinical development work completed to date.
 
 ## 3. Proposed Clinical Plan
-[First-in-human or phase transition plan]
+Describe the proposed first-in-human or next-phase plan, including study design rationale and key safety controls.
 
 ## 4. Key Questions for FDA
-1. [Question]
-2. [Question]
-3. [Question]
+1. Include a focused question on CMC strategy and release readiness.
+2. Include a focused question on nonclinical package adequacy.
+3. Include a focused question on clinical design, dose justification, and safety monitoring.
 
 ## 5. Supporting Summaries
-[Relevant nonclinical, CMC, and clinical summary content]
+Provide supporting summaries and references for each question area.
 
 ## 6. Appendices
-[Data tables, references, and supporting documents]`,
+Attach key tables, prior correspondence, and reference documents needed for efficient FDA review.`,
   },
   {
     id: 'tpl_ind_protocol',

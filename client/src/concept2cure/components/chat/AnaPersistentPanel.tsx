@@ -2395,7 +2395,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
     // Shared capability entrypoint: keep users in existing flow.
     if (action.intent === 'open_capabilities') {
-      onNavigate?.('/concept2cure?panel=capabilities');
+      onNavigate?.('apps');
       return;
     }
 
@@ -5457,7 +5457,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 {' '}
                 <button
                   type="button"
-                  onClick={() => onNavigate('/concept2cure?panel=capabilities')}
+                  onClick={() => onNavigate('apps')}
                   className="font-semibold text-[#6B6962] underline decoration-[#D8D5CA] underline-offset-2 hover:text-[#4D4B45]"
                 >
                   Browse all capabilities
