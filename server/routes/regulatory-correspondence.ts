@@ -71,8 +71,6 @@ const KEYWORD_TAXONOMY: Array<{
   },
 ];
 
-const ISSUE_EXTRACTION_METHOD = 'keyword_heuristic_v1';
-
 function parseIssues(text: string, correspondenceId: string): CorrespondenceIssue[] {
   const normalized = text || '';
   const matches = KEYWORD_TAXONOMY.filter(rule => rule.pattern.test(normalized));
@@ -86,7 +84,6 @@ function parseIssues(text: string, correspondenceId: string): CorrespondenceIssu
         blocker: false,
         responseRequired: true,
         sourceExcerpt: normalized.slice(0, 280),
-        // Heuristic confidence is deterministic, not model-calibrated probability.
         confidence: 0.35,
         humanReviewStatus: 'pending',
         mappedCtdSections: [],
@@ -104,7 +101,6 @@ function parseIssues(text: string, correspondenceId: string): CorrespondenceIssu
     blocker: match.blocker,
     responseRequired: true,
     sourceExcerpt: normalized.slice(0, 280),
-    // Heuristic confidence is deterministic, not model-calibrated probability.
     confidence: 0.72,
     humanReviewStatus: 'pending',
     mappedCtdSections: [],
@@ -139,33 +135,28 @@ function getDbClientOrNull() {
 async function tableReady(pool: ReturnType<typeof getDbClientOrNull>): Promise<boolean> {
   if (!pool) return false;
   try {
-    const check = await pool.query(
-      `SELECT tablename
-       FROM pg_tables
-       WHERE schemaname = 'public'
-         AND tablename = ANY($1::text[])`,
-      [[
-        'c2c_submissions',
-        'c2c_correspondence',
-        'c2c_correspondence_issues',
-        'c2c_response_packages',
-        'c2c_communication_timeline_events',
-        'c2c_mailbox_connections',
-      ]]
-    );
-    return check.rows.length === 6;
+    const check = await pool.query(`SELECT to_regclass('public.c2c_submissions') AS tbl`);
+    return !!check.rows[0]?.tbl;
   } catch {
     return false;
   }
 }
 
-function persistenceUnavailable(res: Response, context: string) {
-  return res.status(503).json({
+function requirePersistentStore(
+  tableIsReady: boolean,
+  res: Response,
+  context: string
+): tableIsReady is true {
+  if (tableIsReady) {
+    return true;
+  }
+  res.status(503).json({
     error: 'Regulatory Correspondence store unavailable',
     message:
       `Cannot complete "${context}" because required c2c_* tables are unavailable. ` +
       'In-memory fallback is disabled to avoid non-durable regulatory records.',
   });
+  return false;
 }
 
 async function addTimelineEventDB(
@@ -246,6 +237,11 @@ export async function persistOutboundCorrespondenceRecord(payload: {
   urgency?: Correspondence['urgency'];
   sourceChannel?: Correspondence['sourceChannel'];
 }) {
+  const pool = getDbClientOrNull();
+  if (!(await tableReady(pool))) {
+    throw new Error('Regulatory Correspondence store unavailable');
+  }
+
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   const record: Correspondence = {
@@ -273,12 +269,6 @@ export async function persistOutboundCorrespondenceRecord(payload: {
     },
   };
 
-  const pool = getDbClientOrNull();
-  if (!(await tableReady(pool))) {
-    throw new Error(
-      'Regulatory Correspondence OS persistence is unavailable. Run migration 20260331_regulatory_correspondence_os.sql'
-    );
-  }
   await pool!.query(
     `INSERT INTO c2c_correspondence
     (id, organization_id, project_id, submission_id, direction, source_channel, communication_type, subject, sender, recipients, received_at, sent_at, urgency, response_required, status, parser_metadata, attachment_refs, parsed_text, summary)
@@ -372,34 +362,37 @@ router.post('/submissions', async (req, res) => {
   };
 
   const pool = getDbClientOrNull();
-  if (!(await tableReady(pool))) return persistenceUnavailable(res, 'create submission');
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'create submission')) {
+    return;
+  }
   await pool!.query(
-    `INSERT INTO c2c_submissions
-      (id, organization_id, project_id, submission_type, regulator, center, division, application_number, sequence_number, lifecycle_state, clock_metadata, linked_artifact_ids, linked_communication_ids)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13::jsonb)`,
-    [
-      record.id,
-      record.organizationId,
-      record.projectId,
-      record.submissionType,
-      record.regulator,
-      record.center || null,
-      record.division || null,
-      record.applicationNumber || null,
-      record.sequenceNumber || null,
-      record.lifecycleState,
-      JSON.stringify(record.clockMetadata || {}),
-      JSON.stringify(record.linkedArtifactIds),
-      JSON.stringify(record.linkedCommunicationIds),
-    ]
-  );
+      `INSERT INTO c2c_submissions
+        (id, organization_id, project_id, submission_type, regulator, center, division, application_number, sequence_number, lifecycle_state, clock_metadata, linked_artifact_ids, linked_communication_ids)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13::jsonb)`,
+      [
+        record.id,
+        record.organizationId,
+        record.projectId,
+        record.submissionType,
+        record.regulator,
+        record.center || null,
+        record.division || null,
+        record.applicationNumber || null,
+        record.sequenceNumber || null,
+        record.lifecycleState,
+        JSON.stringify(record.clockMetadata || {}),
+        JSON.stringify(record.linkedArtifactIds),
+        JSON.stringify(record.linkedCommunicationIds),
+      ]
+    );
 
   await addTimelineEventDB(pool!, {
-    orgId,
-    projectId: record.projectId,
-    submissionId: record.id,
-    eventType: 'submission_created',
-    summary: 'Submission initialized for regulatory lifecycle orchestration.',
+      orgId,
+      projectId: record.projectId,
+      submissionId: record.id,
+      eventType: 'submission_created',
+      summary: 'Submission initialized for regulatory lifecycle orchestration.',
   });
 
   res.status(201).json({ data: record });
@@ -410,7 +403,10 @@ router.get('/submissions/:submissionId', async (req, res) => {
   if (!actor) return;
   const { orgId } = actor;
   const pool = getDbClientOrNull();
-  if (!(await tableReady(pool))) return persistenceUnavailable(res, 'get submission');
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'get submission')) {
+    return;
+  }
   const { rows } = await pool!.query(
     `SELECT * FROM c2c_submissions WHERE id = $1 AND organization_id = $2 LIMIT 1`,
     [req.params.submissionId, orgId]
@@ -433,7 +429,10 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
   if (!actor) return;
   const { orgId } = actor;
   const pool = getDbClientOrNull();
-  if (!(await tableReady(pool))) return persistenceUnavailable(res, 'update submission state');
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'update submission state')) {
+    return;
+  }
   const upd = await pool!.query(
     `UPDATE c2c_submissions
      SET lifecycle_state = $2, updated_at = NOW()
@@ -499,10 +498,8 @@ router.post('/correspondence/intake', async (req, res) => {
     sourceThreadId: req.body.sourceThreadId,
     sourceMailboxId: req.body.sourceMailboxId,
     parserMetadata: {
-      parserVersion: ISSUE_EXTRACTION_METHOD,
+      parserVersion: 'v1-keyword-scaffold',
       extractionVersion: '2026-03-31',
-      extractionMethod: 'deterministic_keyword_heuristic',
-      confidenceMethod: 'fixed_heuristic_score',
       malwareScan: 'pending',
       mimeValidated: true,
       quarantined: false,
@@ -514,85 +511,86 @@ router.post('/correspondence/intake', async (req, res) => {
   };
 
   const extracted = parseIssues(parsedText, id);
-  const extractionConfidenceMethod = 'deterministic_heuristic_score';
 
   const pool = getDbClientOrNull();
-  if (!(await tableReady(pool))) return persistenceUnavailable(res, 'ingest correspondence');
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'ingest correspondence')) {
+    return;
+  }
   const submissionCheck = await pool!.query(
-    `SELECT id, project_id
-     FROM c2c_submissions
-     WHERE id = $1 AND organization_id = $2
-     LIMIT 1`,
-    [record.submissionId, orgId]
-  );
-  if (!submissionCheck.rows[0]) {
-    return res.status(404).json({ error: 'Submission not found' });
-  }
-  if (submissionCheck.rows[0].project_id !== record.projectId) {
-    return res.status(400).json({ error: 'Submission does not belong to the specified project' });
-  }
+      `SELECT id, project_id
+       FROM c2c_submissions
+       WHERE id = $1 AND organization_id = $2
+       LIMIT 1`,
+      [record.submissionId, orgId]
+    );
+    if (!submissionCheck.rows[0]) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+    if (submissionCheck.rows[0].project_id !== record.projectId) {
+      return res.status(400).json({ error: 'Submission does not belong to the specified project' });
+    }
 
-  await pool!.query(
-    `INSERT INTO c2c_correspondence
-    (id, organization_id, project_id, submission_id, direction, source_channel, communication_type, subject, sender, recipients, received_at, due_date, urgency, response_required, status, source_message_id, source_thread_id, source_mailbox_id, parser_metadata, attachment_refs, parsed_text, summary)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20::jsonb,$21,$22)`,
-    [
-      record.id,
-      orgId,
-      record.projectId,
-      record.submissionId,
-      record.direction,
-      record.sourceChannel,
-      record.communicationType,
-      record.subject,
-      record.sender || null,
-      JSON.stringify(record.recipients || []),
-      record.receivedAt || null,
-      record.dueDate || null,
-      record.urgency,
-      record.responseRequired,
-      record.status,
-      record.sourceMessageId || null,
-      record.sourceThreadId || null,
-      record.sourceMailboxId || null,
-      JSON.stringify(record.parserMetadata || {}),
-      JSON.stringify(attachmentRefs),
-      record.parsedText || null,
-      record.summary || null,
-    ]
-  );
-
-  for (const issue of extracted) {
     await pool!.query(
-      `INSERT INTO c2c_correspondence_issues
-        (id, correspondence_id, category, severity, blocker, response_required, source_excerpt, confidence, human_review_status, mapped_ctd_sections, mapped_artifact_ids, resolution_status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11::jsonb,$12)`,
+      `INSERT INTO c2c_correspondence
+      (id, organization_id, project_id, submission_id, direction, source_channel, communication_type, subject, sender, recipients, received_at, due_date, urgency, response_required, status, source_message_id, source_thread_id, source_mailbox_id, parser_metadata, attachment_refs, parsed_text, summary)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20::jsonb,$21,$22)`,
       [
-        issue.id,
-        issue.correspondenceId,
-        issue.category,
-        issue.severity,
-        issue.blocker,
-        issue.responseRequired,
-        issue.sourceExcerpt || null,
-        issue.confidence,
-        issue.humanReviewStatus,
-        JSON.stringify(issue.mappedCtdSections || []),
-        JSON.stringify(issue.mappedArtifactIds || []),
-        issue.resolutionStatus,
+        record.id,
+        orgId,
+        record.projectId,
+        record.submissionId,
+        record.direction,
+        record.sourceChannel,
+        record.communicationType,
+        record.subject,
+        record.sender || null,
+        JSON.stringify(record.recipients || []),
+        record.receivedAt || null,
+        record.dueDate || null,
+        record.urgency,
+        record.responseRequired,
+        record.status,
+        record.sourceMessageId || null,
+        record.sourceThreadId || null,
+        record.sourceMailboxId || null,
+        JSON.stringify(record.parserMetadata || {}),
+        JSON.stringify(attachmentRefs),
+        record.parsedText || null,
+        record.summary || null,
       ]
     );
-  }
 
-  await addTimelineEventDB(pool!, {
-    orgId,
-    projectId: record.projectId,
-    submissionId: record.submissionId,
-    correspondenceId: id,
-    eventType: 'correspondence_ingested',
-    summary: record.subject,
-  });
+    for (const issue of extracted) {
+      await pool!.query(
+        `INSERT INTO c2c_correspondence_issues
+          (id, correspondence_id, category, severity, blocker, response_required, source_excerpt, confidence, human_review_status, mapped_ctd_sections, mapped_artifact_ids, resolution_status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11::jsonb,$12)`,
+        [
+          issue.id,
+          issue.correspondenceId,
+          issue.category,
+          issue.severity,
+          issue.blocker,
+          issue.responseRequired,
+          issue.sourceExcerpt || null,
+          issue.confidence,
+          issue.humanReviewStatus,
+          JSON.stringify(issue.mappedCtdSections || []),
+          JSON.stringify(issue.mappedArtifactIds || []),
+          issue.resolutionStatus,
+        ]
+      );
+    }
 
+    await addTimelineEventDB(pool!, {
+      orgId,
+      projectId: record.projectId,
+      submissionId: record.submissionId,
+      correspondenceId: id,
+      eventType: 'correspondence_ingested',
+      summary: record.subject,
+    });
   return res.status(201).json({ data: record, issues: extracted });
 });
 
@@ -604,7 +602,10 @@ router.get('/correspondence', async (req, res) => {
   const submissionId = req.query.submissionId ? String(req.query.submissionId) : null;
 
   const pool = getDbClientOrNull();
-  if (!(await tableReady(pool))) return persistenceUnavailable(res, 'list correspondence');
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'list correspondence')) {
+    return;
+  }
   const params: any[] = [orgId];
   const clauses: string[] = [`organization_id = $1`];
   if (projectId) {
@@ -628,7 +629,10 @@ router.get('/correspondence/:correspondenceId', async (req, res) => {
   if (!actor) return;
   const { orgId } = actor;
   const pool = getDbClientOrNull();
-  if (!(await tableReady(pool))) return persistenceUnavailable(res, 'get correspondence detail');
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'get correspondence detail')) {
+    return;
+  }
   const { rows } = await pool!.query(
     `SELECT * FROM c2c_correspondence WHERE id = $1 AND organization_id = $2 LIMIT 1`,
     [req.params.correspondenceId, orgId]
@@ -658,19 +662,22 @@ router.patch('/issues/:issueId/review', async (req, res) => {
   if (!actor) return;
   const { orgId } = actor;
   const pool = getDbClientOrNull();
-  if (!(await tableReady(pool))) return persistenceUnavailable(res, 'review correspondence issue');
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'review correspondence issue')) {
+    return;
+  }
   const upd = await pool!.query(
     `UPDATE c2c_correspondence_issues AS i
-     SET human_review_status = COALESCE($2, human_review_status),
-         mapped_ctd_sections = COALESCE($3::jsonb, mapped_ctd_sections),
-         mapped_artifact_ids = COALESCE($4::jsonb, mapped_artifact_ids),
-         resolution_status = COALESCE($5, resolution_status),
-         updated_at = NOW()
-     FROM c2c_correspondence AS c
-     WHERE i.id = $1
-       AND c.id = i.correspondence_id
-       AND c.organization_id = $6
-     RETURNING i.*`,
+       SET human_review_status = COALESCE($2, human_review_status),
+           mapped_ctd_sections = COALESCE($3::jsonb, mapped_ctd_sections),
+           mapped_artifact_ids = COALESCE($4::jsonb, mapped_artifact_ids),
+           resolution_status = COALESCE($5, resolution_status),
+           updated_at = NOW()
+       FROM c2c_correspondence AS c
+       WHERE i.id = $1
+         AND c.id = i.correspondence_id
+         AND c.organization_id = $6
+       RETURNING i.*`,
     [
       req.params.issueId,
       req.body.humanReviewStatus || null,
@@ -710,7 +717,10 @@ router.post('/response-packages', async (req, res) => {
   let projectId = Number(req.body.projectId || 0);
 
   const pool = getDbClientOrNull();
-  if (!(await tableReady(pool))) return persistenceUnavailable(res, 'create response package');
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'create response package')) {
+    return;
+  }
   const sourceCorrespondence = await pool!.query(
     `SELECT id, project_id, submission_id
      FROM c2c_correspondence
@@ -728,31 +738,31 @@ router.post('/response-packages', async (req, res) => {
   }
 
   await pool!.query(
-    `INSERT INTO c2c_response_packages
-     (id, organization_id, project_id, source_correspondence_id, title, status, issue_matrix_artifact_id, cover_letter_artifact_id, revised_artifact_ids, assembled_sequence_linkage)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10)`,
-    [
-      pack.id,
-      orgId,
-      projectId,
-      pack.sourceCorrespondenceId,
-      pack.title,
-      pack.status,
-      pack.issueMatrixArtifactId || null,
-      pack.coverLetterArtifactId || null,
-      JSON.stringify(pack.revisedArtifactIds || []),
-      pack.assembledSequenceId || null,
-    ]
+      `INSERT INTO c2c_response_packages
+       (id, organization_id, project_id, source_correspondence_id, title, status, issue_matrix_artifact_id, cover_letter_artifact_id, revised_artifact_ids, assembled_sequence_linkage)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10)`,
+      [
+        pack.id,
+        orgId,
+        projectId,
+        pack.sourceCorrespondenceId,
+        pack.title,
+        pack.status,
+        pack.issueMatrixArtifactId || null,
+        pack.coverLetterArtifactId || null,
+        JSON.stringify(pack.revisedArtifactIds || []),
+        pack.assembledSequenceId || null,
+      ]
   );
 
   await addTimelineEventDB(pool!, {
-    orgId,
-    projectId,
-    submissionId: sourceRow.submission_id,
-    correspondenceId: pack.sourceCorrespondenceId,
-    responsePackageId: pack.id,
-    eventType: 'response_package_created',
-    summary: pack.title,
+      orgId,
+      projectId,
+      submissionId: sourceRow.submission_id,
+      correspondenceId: pack.sourceCorrespondenceId,
+      responsePackageId: pack.id,
+      eventType: 'response_package_created',
+      summary: pack.title,
   });
 
   return res.status(201).json({ data: pack });
@@ -764,7 +774,10 @@ router.get('/timeline', async (req, res) => {
   const { orgId } = actor;
   const submissionId = req.query.submissionId ? String(req.query.submissionId) : null;
   const pool = getDbClientOrNull();
-  if (!(await tableReady(pool))) return persistenceUnavailable(res, 'list correspondence timeline');
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'list correspondence timeline')) {
+    return;
+  }
   const params: any[] = [orgId];
   const clauses = [`organization_id = $1`];
   if (submissionId) {
@@ -789,7 +802,10 @@ router.get('/mailbox-connections', async (req, res) => {
   if (!actor) return;
   const { orgId } = actor;
   const pool = getDbClientOrNull();
-  if (!(await tableReady(pool))) return persistenceUnavailable(res, 'list mailbox connections');
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'list mailbox connections')) {
+    return;
+  }
   const { rows } = await pool!.query(
     `SELECT * FROM c2c_mailbox_connections WHERE organization_id = $1 ORDER BY created_at DESC`,
     [orgId]
@@ -826,11 +842,14 @@ router.post('/mailbox-connections', async (req, res) => {
   };
 
   const pool = getDbClientOrNull();
-  if (!(await tableReady(pool))) return persistenceUnavailable(res, 'create mailbox connection');
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'create mailbox connection')) {
+    return;
+  }
   await pool!.query(
     `INSERT INTO c2c_mailbox_connections
-    (id, organization_id, provider, mailbox_identifier, auth_state, token_reference, scopes, sync_status, cursor, last_sync_at, error_state)
-    VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11)`,
+      (id, organization_id, provider, mailbox_identifier, auth_state, token_reference, scopes, sync_status, cursor, last_sync_at, error_state)
+      VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11)`,
     [
       payload.id,
       payload.organizationId,
@@ -860,17 +879,20 @@ router.get('/analytics/deficiency-patterns', async (req, res) => {
   const { orgId } = actor;
   const projectId = req.query.projectId ? Number(req.query.projectId) : null;
   const pool = getDbClientOrNull();
-  if (!(await tableReady(pool))) return persistenceUnavailable(res, 'compute deficiency patterns');
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'compute deficiency patterns')) {
+    return;
+  }
   const params: any[] = [orgId];
   const projectClause = projectId ? ` AND c.project_id = $2` : '';
   if (projectId) params.push(projectId);
   const { rows } = await pool!.query(
     `SELECT i.category, COUNT(*)::int AS count
-     FROM c2c_correspondence_issues i
-     JOIN c2c_correspondence c ON c.id = i.correspondence_id
-     WHERE c.organization_id = $1 ${projectClause}
-     GROUP BY i.category
-     ORDER BY COUNT(*) DESC`,
+       FROM c2c_correspondence_issues i
+       JOIN c2c_correspondence c ON c.id = i.correspondence_id
+       WHERE c.organization_id = $1 ${projectClause}
+       GROUP BY i.category
+       ORDER BY COUNT(*) DESC`,
     params
   );
   return res.json({ data: rows });
