@@ -5221,6 +5221,127 @@ router.post(
   }
 );
 
+/**
+ * PATCH /api/concept2cure/projects/:projectId/conversations/:conversationId
+ * Update mutable conversation metadata (currently title).
+ */
+router.patch(
+  '/projects/:projectId/conversations/:conversationId',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) {
+        return sendError(res, 404, 'Project not found');
+      }
+
+      const payload = z
+        .object({
+          title: z.string().min(1).max(200),
+        })
+        .parse(req.body);
+
+      const [dbConversation] = await db
+        .select()
+        .from(concept2cureConversations)
+        .where(
+          and(
+            eq(concept2cureConversations.conversationId, req.params.conversationId),
+            eq(concept2cureConversations.organizationId, organizationId),
+            eq(concept2cureConversations.status, 'active')
+          )
+        )
+        .limit(1);
+
+      if (!dbConversation) {
+        return sendError(res, 404, 'Conversation not found');
+      }
+
+      const [updated] = await db
+        .update(concept2cureConversations)
+        .set({
+          title: sanitizeContent(payload.title.trim()),
+          updatedAt: new Date(),
+        })
+        .where(eq(concept2cureConversations.id, dbConversation.id))
+        .returning();
+
+      await logAuditEntry(req, 'UPDATE', 'conversation', req.params.conversationId, dbConversation, {
+        title: updated.title,
+      });
+
+      return sendSuccess(res, {
+        id: updated.conversationId,
+        projectId: req.params.projectId,
+        title: updated.title,
+        updatedAt: updated.updatedAt,
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      }
+      logConcept2cureError('update conversation', error, {
+        projectId: req.params.projectId,
+        conversationId: req.params.conversationId,
+      });
+      return sendError(res, 500, 'Failed to update conversation');
+    }
+  }
+);
+
+/**
+ * DELETE /api/concept2cure/projects/:projectId/conversations/:conversationId
+ * Soft-delete a conversation (status -> archived).
+ */
+router.delete(
+  '/projects/:projectId/conversations/:conversationId',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) {
+        return sendError(res, 404, 'Project not found');
+      }
+
+      const [dbConversation] = await db
+        .select()
+        .from(concept2cureConversations)
+        .where(
+          and(
+            eq(concept2cureConversations.conversationId, req.params.conversationId),
+            eq(concept2cureConversations.organizationId, organizationId),
+            eq(concept2cureConversations.status, 'active')
+          )
+        )
+        .limit(1);
+
+      if (!dbConversation) {
+        return sendError(res, 404, 'Conversation not found');
+      }
+
+      await db
+        .update(concept2cureConversations)
+        .set({
+          status: 'archived',
+          updatedAt: new Date(),
+        })
+        .where(eq(concept2cureConversations.id, dbConversation.id));
+
+      await logAuditEntry(req, 'DELETE', 'conversation', req.params.conversationId, dbConversation, null);
+      return sendSuccess(res, {
+        conversationId: req.params.conversationId,
+        archived: true,
+      });
+    } catch (error: any) {
+      logConcept2cureError('delete conversation', error, {
+        projectId: req.params.projectId,
+        conversationId: req.params.conversationId,
+      });
+      return sendError(res, 500, 'Failed to delete conversation');
+    }
+  }
+);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ARTIFACT ROUTES (DATABASE-BACKED WITH VERSION CONTROL)
 // ─────────────────────────────────────────────────────────────────────────────
