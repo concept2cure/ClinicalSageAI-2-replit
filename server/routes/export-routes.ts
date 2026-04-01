@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import { exportService } from '../services/export-service';
 import { registerExportGovernanceQuick } from '../services/compute/exportGovernance';
+import { authMiddleware } from '../auth';
 import fs from 'fs';
 import path from 'path';
 
 const router = Router();
+router.use(authMiddleware);
 
 /**
  * Generate and return a study bundle as a ZIP archive
@@ -72,25 +74,31 @@ router.get('/download/study-bundle', async (req, res) => {
       const zipPath = path.join(exportDir, zipFiles[0]);
       const fileStat = fs.statSync(zipPath);
 
-      // Register governed export (fail-closed for regulated outputs)
+      // Register governed export (fail-closed for governed flows)
       const user = (req as any).user;
-      const exportGovernance = await registerExportGovernanceQuick({
-        organizationId: user?.organizationId || 1,
-        projectId: user?.projectId || 0,
-        userId: user?.id || 0,
-        userName: user?.name || user?.email || 'unknown',
-        title: `Study Bundle: ${study_id}`,
-        exportFormat: 'zip',
-        exportFilename: zipFiles[0],
-        exportFileSize: fileStat.size,
-        docType: 'study_bundle',
-        backendRoute: '/api/download/study-bundle',
-        ipAddress: req.ip,
-      });
-      if (!exportGovernance) {
-        return res.status(500).json({
+      if (!user?.organizationId || !user?.id) {
+        return res.status(401).json({ error: 'Authenticated organization and user context required' });
+      }
+
+      try {
+        await registerExportGovernanceQuick({
+          organizationId: Number(user.organizationId),
+          projectId: Number(user?.projectId || 0),
+          userId: Number(user.id),
+          userName: user?.name || user?.email || 'unknown',
+          title: `Study Bundle: ${study_id}`,
+          exportFormat: 'zip',
+          exportFilename: zipFiles[0],
+          exportFileSize: fileStat.size,
+          docType: 'study_bundle',
+          backendRoute: '/api/download/study-bundle',
+          ipAddress: req.ip,
+        });
+      } catch (governanceError: any) {
+        return res.status(503).json({
           error: 'Governed export registration failed',
-          code: 'EXPORT_GOVERNANCE_FAILED',
+          code: 'GOVERNANCE_REGISTRATION_FAILED',
+          message: governanceError?.message || 'Governance service unavailable',
         });
       }
 

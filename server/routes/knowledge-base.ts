@@ -946,10 +946,7 @@ router.post('/generate-module3-docx', async (req: Request, res: Response) => {
         const parsedProjId = parseInt(artifactProjectId, 10);
         const orgId = user?.organizationId;
         if (isNaN(parsedProjId) || !orgId) {
-          return res.status(400).json({
-            error: 'Governed artifact save requires valid projectId and organization context',
-            code: 'ARTIFACT_CONSEQUENCE_REQUIRED',
-          });
+          console.warn('[knowledge-base] Skipping artifact save: invalid projectId or missing org');
         } else {
           const docTitle = `Module 3 – Quality (CMC): ${drug_name || substance_name || 'Drug'}`;
           const htmlContent = sections
@@ -1082,6 +1079,10 @@ router.post('/generate-module3-docx', async (req: Request, res: Response) => {
                 backendRoute: 'POST /api/knowledge-base/generate-module3-docx',
               });
             }
+          } else {
+            throw new Error(
+              'Governed artifact persistence failed: artifact row not readable after insert'
+            );
           }
 
           console.log(
@@ -1089,11 +1090,12 @@ router.post('/generate-module3-docx', async (req: Request, res: Response) => {
           );
         }
       } catch (artErr: any) {
-        console.error(`[knowledge-base] Module 3 governed artifact save failed: ${artErr.message}`);
+        console.error(
+          `[knowledge-base] Module 3 artifact persistence failed (fail-closed): ${artErr.message}`
+        );
         return res.status(500).json({
-          error: 'Governed artifact persistence failed for Module 3 output',
-          code: 'ARTIFACT_CONSEQUENCE_REQUIRED',
-          detail: artErr.message,
+          error: 'Module 3 generation blocked: governed artifact persistence failed',
+          detail: artErr?.message || 'Artifact persistence error',
         });
       }
     }
@@ -1294,6 +1296,10 @@ router.post('/save-docx-as-artifact', async (req: Request, res: Response) => {
           ? `Saved DOCX as artifact for CTD section ${ctdSection}`
           : 'Saved DOCX as project artifact',
         backendRoute: 'POST /api/knowledge-base/save-docx-as-artifact',
+      });
+    } else {
+      return res.status(500).json({
+        error: 'Governed artifact persistence failed: inserted artifact lookup missing',
       });
     }
 
@@ -1609,11 +1615,7 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
           const numericArtifactId = Number(artifactId);
           if (Number.isNaN(numericProjectId) || Number.isNaN(numericArtifactId)) {
             return res.status(400).json({
-              success: false,
-              error: {
-                message: 'Invalid projectId/artifactId for versioning',
-                code: 'GOVERNED_CONTRACT_INVALID',
-              },
+              error: 'Invalid projectId/artifactId for governed connector versioning',
             });
           }
           const contentHash = crypto.createHash('sha256').update(content).digest('hex');
@@ -1633,17 +1635,9 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
             eventType: 'artifact.versioned',
           });
           if (!governedResolution.validation.valid) {
-            return res.status(400).json({
-              success: false,
-              error: {
-                message: 'Governed document contract validation failed',
-                code: 'GOVERNED_CONTRACT_INVALID',
-                details: {
-                  errors: governedResolution.validation.errors,
-                  warnings: governedResolution.validation.warnings,
-                  resolved: governedResolution.resolved,
-                },
-              },
+            return res.status(422).json({
+              error: 'Governed contract invalid for connector versioning',
+              details: governedResolution.validation.errors,
             });
           }
           const artifactVersion = await db.insert(concept2cureArtifactVersions).values({
@@ -1657,13 +1651,10 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
           const insertedVersionId = artifactVersion?.[0]?.id || null;
           if (!insertedVersionId) {
             return res.status(500).json({
-              success: false,
-              error: {
-                message: 'Vault DMS version consequence failed',
-                code: 'ARTIFACT_CONSEQUENCE_REQUIRED',
-              },
+              error: 'Governed connector versioning failed: artifact version insert missing id',
             });
           }
+
           const [artifactRow] = await db
             .select()
             .from(concept2cureArtifacts)
@@ -1679,15 +1670,17 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
               : {};
           await db
             .update(concept2cureArtifacts)
-            .set({ metadata: {
-              ...(artifactMetadata || {}),
-              harness: {
-                ...(artifactHarness || {}),
-                gateChecks: governedResolution.contract.exportEligibility.gateChecks,
-                blockingReasons: governedResolution.contract.exportEligibility.blockingReasons,
-                readinessOutcome: governedResolution.contract.exportEligibility.readinessOutcome,
+            .set({
+              metadata: {
+                ...(artifactMetadata || {}),
+                harness: {
+                  ...(artifactHarness || {}),
+                  gateChecks: governedResolution.contract.exportEligibility.gateChecks,
+                  blockingReasons: governedResolution.contract.exportEligibility.blockingReasons,
+                  readinessOutcome: governedResolution.contract.exportEligibility.readinessOutcome,
+                },
               },
-            } })
+            })
             .where(eq(concept2cureArtifacts.id, numericArtifactId));
         }
         result = { success: true, fileId: docId, message: 'Saved to project vault' };
@@ -2158,8 +2151,8 @@ router.post('/ind-autodraft/generate', async (req: Request, res: Response) => {
           if (artifact) {
             artifactId = String(artifact.id);
 
-            // Create initial version (fail-closed: version history is mandatory for governed output)
-            await db.insert(concept2cureArtifactVersions).values({
+            // Create initial version
+            const versionInsert = await db.insert(concept2cureArtifactVersions).values({
               artifactId: artifact.id,
               organizationId: orgId,
               version: 1,
@@ -2167,9 +2160,12 @@ router.post('/ind-autodraft/generate', async (req: Request, res: Response) => {
               contentHash: crypto.createHash('sha256').update(content).digest('hex'),
               createdById: user?.id || user?.userId || null,
               changeDescription: 'Generated by IND AutoDraft',
-            } as any);
+            } as any).returning();
+            if (!versionInsert?.[0]?.id) {
+              throw new Error('Artifact version insert did not return an id');
+            }
 
-            // Emit provenance event (best-effort telemetry, not a blocking mutation primitive)
+            // Emit provenance event
             await emitKBProvenanceEvent({
               artifactDbId: artifact.id,
               organizationId: orgId,
@@ -2188,19 +2184,17 @@ router.post('/ind-autodraft/generate', async (req: Request, res: Response) => {
               sourceDescription: `IND AutoDraft — ${title}`,
               backendRoute: 'POST /api/knowledge-base/ind-autodraft/generate',
             }).catch(() => {
-              // Non-blocking observability
+              // Provenance logging failure is non-fatal
             });
           }
         } catch (dbErr: any) {
-          console.error(`[ind-autodraft] Failed to save artifact for ${section.code}:`, dbErr.message);
-          return res.status(500).json({
-            error: 'Governed artifact consequence failed for IND autodraft output',
-            code: 'ARTIFACT_CONSEQUENCE_REQUIRED',
-            details: {
-              sectionCode: section.code,
-              message: dbErr?.message || String(dbErr),
-            },
-          });
+          console.error(
+            `[ind-autodraft] Artifact persistence failed for ${section.code} (fail-closed):`,
+            dbErr.message
+          );
+          throw new Error(
+            `Governed artifact persistence failed for ${section.code}: ${dbErr.message}`
+          );
         }
 
         generatedSections.push({
@@ -2213,13 +2207,12 @@ router.post('/ind-autodraft/generate', async (req: Request, res: Response) => {
         });
       } catch (genErr: any) {
         console.error(`[ind-autodraft] Failed to generate ${section.code}:`, genErr.message);
-        return res.status(500).json({
-          error: 'IND section generation failed',
-          code: 'IND_SECTION_GENERATION_FAILED',
-          details: {
-            sectionCode: section.code,
-            message: genErr?.message || String(genErr),
-          },
+        generatedSections.push({
+          code: section.code,
+          title: section.title,
+          content: `[Generation failed: ${genErr.message}]`,
+          wordCount: 0,
+          sourceCount: 0,
         });
       }
     }

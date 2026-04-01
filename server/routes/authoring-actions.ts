@@ -1340,7 +1340,7 @@ router.post('/harmonize-sections', async (req: Request, res: Response) => {
 // ACTION 8: Resolution changelog — uses ana-resolution-support + resolution-planner
 router.post('/resolution-changelog', async (req: Request, res: Response) => {
   try {
-    const { projectId, bundleId } = req.body;
+    const { projectId } = req.body;
     if (!projectId) return res.status(400).json({ error: 'projectId is required' });
 
     const orgId = requireTenantId(req, res);
@@ -1412,11 +1412,11 @@ router.get('/module-readiness/:projectId/:moduleCode', async (req: Request, res:
         '../services/orchestration/readiness-engine.js'
       );
       if (computeReadinessAssessment) {
-        const tenantId = requireTenantId(req, res);
-        if (tenantId == null) return;
+        const orgId = requireTenantId(req, res);
+        if (orgId == null) return;
         const assessment = await computeReadinessAssessment({
           projectId: Number(projectId),
-          organizationId: String(tenantId),
+          organizationId: String(orgId),
         });
 
         // Find specific module in breakdown
@@ -1844,6 +1844,8 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
     if (!projectId || !moduleCode) {
       return res.status(400).json({ error: 'projectId and moduleCode are required' });
     }
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
 
     // Find all sections in this module
     const artifactMap = await fetchProjectArtifactsByModule(Number(projectId));
@@ -1862,41 +1864,19 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
     }
 
     // Run section preflights in parallel (reuse the internal logic)
-    const CTD_LINKS: Record<string, string[]> = {
-      '2.2': ['2.3', '2.4', '2.5'], '2.3': ['3.2.S', '3.2.P'],
-      '2.4': ['4.2.1', '4.2.2', '4.2.3'], '2.5': ['2.7.1', '2.7.3', '2.7.4', '5.3'],
-      '2.7.1': ['5.2'], '2.7.3': ['2.5', '5.3'], '2.7.4': ['2.5', '5.3'],
-      '3.2.S': ['2.3'], '3.2.P': ['2.3'], '5.3': ['2.5', '2.7.3', '2.7.4'],
-    };
-
     const sectionResults: any[] = [];
     const sectionPreflightPromises = moduleSections.map(async (sec) => {
       try {
         // Internal fetch to our own section-preflight endpoint
-        const linked = CTD_LINKS[sec.ctdSection] || CTD_LINKS[sec.ctdSection.split('.').slice(0, -1).join('.')] || [];
-        const mockReq = {
-          body: {
-            projectId, sectionCode: sec.ctdSection,
-            artifactId: sec.id, regulatorBody, submissionType,
-            linkedSectionCodes: linked,
-          },
-          tenantId: orgId,
-        };
         // Inline the section preflight logic instead of HTTP call
         // Use simplified check aggregation
-        const orgId = requireTenantId(req, res);
-        if (orgId == null) return null;
-        type CS = 'pass' | 'warn' | 'fail' | 'unknown';
         const checks: Record<string, any> = {};
 
         // Readiness
         try {
           const { computeReadinessAssessment } = await import('../services/orchestration/readiness-engine.js');
           if (computeReadinessAssessment) {
-            const assessment = await computeReadinessAssessment({
-              projectId: Number(projectId),
-              organizationId: String(orgId),
-            });
+            const assessment = await computeReadinessAssessment({ projectId: Number(projectId), organizationId: String(orgId) });
             const major = sec.ctdSection.split('.')[0];
             const blockers = (assessment?.blockers || [])
               .filter((b: any) => !b.module || b.module === `m${major}`)
@@ -2060,8 +2040,7 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
         '../services/contradiction-engine-service.js'
       );
       contradictionContext = await contradictionEngineService.buildPreflightContradictionContext(
-        Number(orgId),
-        Number(projectId),
+        orgId, Number(projectId),
         { moduleCode, regulatorBody, submissionType }
       );
     } catch { /* non-blocking */ }
@@ -2090,6 +2069,8 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
   try {
     const { projectId, regulatorBody, submissionType } = req.body;
     if (!projectId) return res.status(400).json({ error: 'projectId is required' });
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
 
     const artifactMap = await fetchProjectArtifactsByModule(Number(projectId));
     const moduleCodes = Array.from(artifactMap.keys()).sort();
@@ -2144,10 +2125,7 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
     try {
       const { computeReadinessAssessment } = await import('../services/orchestration/readiness-engine.js');
       if (computeReadinessAssessment) {
-        const assessment = await computeReadinessAssessment({
-          projectId: Number(projectId),
-          organizationId: String(orgId),
-        });
+        const assessment = await computeReadinessAssessment({ projectId: Number(projectId), organizationId: String(orgId) });
         readinessBlockers = (assessment?.blockers || []).filter((b: any) => b.severity === 'critical' || b.severity === 'major')
           .slice(0, 10).map((b: any) => ({
             kind: 'readiness-blocker', severity: b.severity,
@@ -2244,8 +2222,7 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
         '../services/contradiction-engine-service.js'
       );
       contradictionContext = await contradictionEngineService.buildPreflightContradictionContext(
-        Number(orgId),
-        Number(projectId),
+        orgId, Number(projectId),
         { regulatorBody, submissionType }
       );
     } catch { /* non-blocking */ }
@@ -2301,8 +2278,7 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
             );
             if (!computeReadinessAssessment) return null;
             const assessment = await computeReadinessAssessment({
-              projectId: Number(projectId),
-              organizationId: String(orgId),
+              projectId: Number(projectId), organizationId: String(orgId),
             });
             const major = sectionCode.split('.')[0];
             const moduleItem = (assessment?.moduleBreakdown || []).find(
@@ -2525,6 +2501,8 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
 router.get('/section-context/:projectId/:sectionCode', async (req: Request, res: Response) => {
   try {
     const { projectId, sectionCode } = req.params;
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
 
     const result: {
       sectionCode: string;
@@ -2542,11 +2520,9 @@ router.get('/section-context/:projectId/:sectionCode', async (req: Request, res:
         '../services/orchestration/readiness-engine.js'
       );
       if (computeReadinessAssessment) {
-        const tenantId = requireTenantId(req, res);
-        if (tenantId == null) return;
         const assessment = await computeReadinessAssessment({
           projectId: Number(projectId),
-          organizationId: String(tenantId),
+          organizationId: String(orgId),
         });
         // Extract section-level readiness from module breakdown
         const moduleBreakdown = assessment?.moduleBreakdown || [];
