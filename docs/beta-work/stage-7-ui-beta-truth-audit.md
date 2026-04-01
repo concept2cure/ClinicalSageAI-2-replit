@@ -3,8 +3,8 @@
 Stage: Stage 7 — UI-Only Beta Honesty Pass  
 Branch: `cursor/critical-files-management-f38a`  
 Stage 7 implementation baseline: `082ef07c` (`082ef07c`)  
-Stage 7 cleanup chain: `185ab0fd` -> `d8046d56` -> `7e49bcac` -> `d097be99`  
-Branch / commit reviewed for archival evidence (current): `d097be99`
+Stage 7 cleanup chain: `185ab0fd` -> `d8046d56` -> `7e49bcac` -> `d097be99` -> `1034efbf` -> `4e994db4`  
+Branch / commit reviewed for archival evidence (current): `4e994db4`
 
 ## Wave A / Batch A1 follow-on (canonical shell exposure policy)
 
@@ -88,6 +88,14 @@ Make the visible UI stop lying by implication. Expose only beta-safe surfaces th
 
 - Module-heavy routes mounted in `App.jsx` (CMC, CERV2 variants, admin surfaces, reports, tools, etc.)
 - Kept available to avoid capability loss, but explicitly marked as secondary in shell comments and docs.
+
+## Wave A / Batch A5 follow-up (governed primitives consistency hardening)
+
+- Converted shell chrome controls from ad-hoc HTML buttons/links to governed `Button` primitives:
+  - `client/src/components/navigation/UnifiedTopNavV3.jsx`
+  - `client/src/concept2cure/components/sidebar/ZenSidebar.tsx`
+- Preserved route wiring and navigation semantics while normalizing control sizing and interaction styles.
+- Kept scope UI-only: no new screens, no capability removal, no route ownership changes.
 
 ## Contradictions fixed in Stage 7
 

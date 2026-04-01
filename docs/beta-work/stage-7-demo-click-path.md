@@ -3,8 +3,8 @@
 Stage: Stage 7 — UI-Only Beta Honesty Pass  
 Branch: `cursor/critical-files-management-f38a`  
 Baseline commit: `45ed2dfc` (`45ed2dfc`)  
-Stage 7 implementation commit chain: `082ef07c` -> `185ab0fd` -> `d8046d56` -> `7e49bcac` -> `d097be99`  
-Validation snapshot commit: `d097be99` (`d097be99`)
+Stage 7 implementation commit chain: `082ef07c` -> `185ab0fd` -> `d8046d56` -> `7e49bcac` -> `d097be99` -> `1034efbf` -> `4e994db4`  
+Validation snapshot commit: `4e994db4` (`4e994db4`)
 
 ## Founder-recommended partner demo path
 
@@ -44,6 +44,8 @@ Use these checks while demoing:
 
 - `npx playwright test tests/e2e/workspace-smoke.e2e.ts --grep "PULSE-" --project=chromium`  
   Result at current snapshot: **PASS (4/4)**
+- `npx vitest run --config vitest.config.ts client/src/__tests__/shellTruthRoutes.test.ts tests/stage6-governed-workspace-verifier.test.ts`  
+  Result at current snapshot: **PASS (15/15)**
 
 ## Current known runtime risk (separate from Stage 7 honesty labels)
 
