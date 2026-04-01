@@ -1311,8 +1311,9 @@ router.delete('/thread/:threadId', async (req: Request, res: Response) => {
  * Same provenance pipeline as /send-message but with real-time token delivery.
  */
 router.post('/stream', async (req: Request, res: Response) => {
+  normalizeBody(req);
   try {
-    const { message, thread_id, system_prompt } = req.body;
+    const { message, thread_id, system_prompt, project_id } = req.body;
     if (!message) {
       return res.status(400).json({ error: 'message is required' });
     }
@@ -1323,6 +1324,11 @@ router.post('/stream', async (req: Request, res: Response) => {
         error: 'No AI providers available. Configure ANTHROPIC_API_KEY or OPENAI_API_KEY.',
       });
     }
+
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    const rawUserId = (req as any).userId || (req as any).user?.id;
+    const numericOrgId = orgId ? (typeof orgId === 'string' ? Number(orgId) : orgId) : null;
+    const numericUserId = typeof rawUserId === 'string' ? parseInt(rawUserId, 10) || 0 : (rawUserId ?? 0);
 
     // Set SSE headers
     res.writeHead(200, {
@@ -1345,7 +1351,6 @@ router.post('/stream', async (req: Request, res: Response) => {
       try {
         const history = await getThreadMessages(thread_id);
         if (history.length > 0) {
-          // Insert history before the current user message
           const historyMessages = history.slice(-10).map((m: any) => ({
             role: m.role as 'user' | 'assistant',
             content: m.content,
@@ -1374,7 +1379,37 @@ router.post('/stream', async (req: Request, res: Response) => {
       callerModule: 'ana-ri-chat-stream',
     });
 
-    // Send final event
+    // Governed action parity: run processResponseActions on the full response
+    // (same pattern as /send-message — non-blocking, non-fatal)
+    let executedActions: Array<{
+      actionType: string;
+      executed: boolean;
+      artifactId: string | null;
+    }> = [];
+
+    if (numericOrgId && project_id && gwResponse.content) {
+      try {
+        const actionResult = await processResponseActions(gwResponse.content, {
+          projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id,
+          organizationId: numericOrgId,
+          userId: numericUserId,
+          userName: (req as any).user?.name || (req as any).user?.email || 'System',
+          threadId: thread_id || undefined,
+        });
+
+        if (actionResult.actions.length > 0) {
+          executedActions = actionResult.actions.map((a: any) => ({
+            actionType: a.actionType,
+            executed: a.executed,
+            artifactId: a.artifactId,
+          }));
+        }
+      } catch (actionErr: any) {
+        console.warn('[Chat Stream] Guidance action processing failed:', actionErr?.message);
+      }
+    }
+
+    // Send final event (includes any governed actions that were executed)
     res.write(
       `data: ${JSON.stringify({
         type: 'done',
@@ -1382,6 +1417,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         provider: gwResponse.provider,
         usage: gwResponse.usage,
         latencyMs: gwResponse.latencyMs,
+        ...(executedActions.length > 0 ? { executedActions } : {}),
       })}\n\n`
     );
 
@@ -1389,7 +1425,6 @@ router.post('/stream', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('[Chat Stream] Error:', error.message);
     if (res.headersSent) {
-      // SECURITY: Don't leak internal error details to client
       res.write(
         `data: ${JSON.stringify({ type: 'error', error: 'An error occurred while generating the response' })}\n\n`
       );
