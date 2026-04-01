@@ -1466,6 +1466,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     text: string;
     ts: number;
   } | null>(null);
+  const [guidedStageRequest, setGuidedStageRequest] = useState<{
+    stage: 'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission';
+    controlMode?: 'ana' | 'client';
+    ts: number;
+  } | null>(null);
 
   // Project-scoped artifacts for the Outputs tab (must come after activeProjectId is declared)
   const { data: projectArtifacts = [] } = useQuery({
@@ -1614,6 +1619,30 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     if (path === 'ana-intelligence') {
       setSettingsSection('ana-intelligence');
       setSettingsOpen(true);
+      return;
+    }
+    if (
+      path === 'guided_project' ||
+      path === 'guided_ind_ectd' ||
+      path === 'guided_authoring' ||
+      path === 'guided_verify' ||
+      path === 'guided_submission'
+    ) {
+      const stageMap: Record<string, 'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission'> =
+        {
+          guided_project: 'project',
+          guided_ind_ectd: 'ind_ectd',
+          guided_authoring: 'authoring',
+          guided_verify: 'verify',
+          guided_submission: 'submission',
+        };
+      const stage = stageMap[path];
+      setLayoutMode('regulatory-workspace');
+      setGuidedStageRequest({
+        stage,
+        controlMode: 'client',
+        ts: Date.now(),
+      });
       return;
     }
     setLayoutMode(path as LayoutMode);
@@ -2990,6 +3019,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 onSuggestedPrompt={prompt => {
                   setExternalChatMessage({ text: prompt, ts: Date.now() });
                 }}
+                guidedStageCommand={guidedStageRequest}
               />
             ))}
 

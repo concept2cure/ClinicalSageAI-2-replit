@@ -130,6 +130,7 @@ type DocumentTab =
   | 'signatures'
   | 'provenance'
   | 'export';
+type GuidedSequenceStage = 'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission';
 
 // ── Dossier metrics types ────────────────────────────────────────────────────
 interface SectionMetrics {
@@ -455,6 +456,8 @@ interface ProjectWorkspaceShellProps {
   onNavigate?: (mode: string) => void;
   /** Push a guided prompt into AnA */
   onSuggestedPrompt?: (prompt: string) => void;
+  /** Allow parent (AnA/ZenApp) to trigger guided stage execution */
+  guidedStageCommand?: { stage: GuidedSequenceStage; ts: number } | null;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -478,6 +481,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   onActiveDocumentChange,
   onNavigate,
   onSuggestedPrompt,
+  guidedStageCommand,
 }) => {
   // ── Local state ──────────────────────────────────────────────────────────
   const [artifacts, setArtifacts] = useState<TreeArtifact[]>([]);
@@ -1619,8 +1623,6 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     readinessPercent >= 80 &&
     approvedOrLockedCount >= Math.max(1, Math.ceil(artifacts.length * 0.4));
 
-  type GuidedSequenceStage = 'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission';
-
   const guidedSequence = useMemo<
     Array<{ id: GuidedSequenceStage; label: string; hint: string }>
   >(
@@ -1763,6 +1765,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     if (!nextStage) return;
     handleGuidedStageAction(nextStage);
   }, [currentGuidedStage, guidedSequence, handleGuidedStageAction]);
+
+  useEffect(() => {
+    if (!guidedStageCommand?.stage) return;
+    handleGuidedStageAction(guidedStageCommand.stage);
+  }, [guidedStageCommand?.stage, guidedStageCommand?.ts, handleGuidedStageAction]);
 
   // Outline available only when doc is open
   const outlineAvailable = mode === 'edit' && !!selectedDocId;
