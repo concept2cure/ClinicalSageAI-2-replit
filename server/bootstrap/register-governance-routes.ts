@@ -1,0 +1,49 @@
+import type { Express } from 'express';
+import clientIntelligenceRoutes from '../routes/client-intelligence';
+import accountIntelligenceRoutes from '../routes/account-intelligence';
+import universalPackagerRoutes from '../routes/universal-packager';
+import precedentEngineRoutes from '../routes/precedent-engine';
+import crossJurisdictionalRoutes from '../routes/cross-jurisdictional';
+import harmonizeRoutes from '../routes/harmonize';
+import escalateRoutes from '../routes/escalate';
+import validateCompletenessRoutes from '../routes/validate-completeness';
+import anaGoldStandardRoutes from '../routes/ana-gold-standard';
+import anaContinuousEvalRoutes from '../routes/ana-continuous-eval';
+import submissionCenterRoutes from '../routes/submissionCenter.routes';
+
+export async function registerGovernanceRoutes(app: Express) {
+  try {
+    const resolutionRoutes = (await import('../routes/resolution')).default;
+    app.use('/api/resolution', resolutionRoutes);
+  } catch (error: any) {
+    console.error('❌ Failed to mount Resolution routes:', error.message);
+  }
+
+  try {
+    const operatingSystemRoutes = (await import('../routes/operating-system')).default;
+    app.use('/api/operating-system', operatingSystemRoutes);
+  } catch (error: any) {
+    console.error('❌ Failed to mount Operating System routes:', error.message);
+  }
+
+  try {
+    const governedIntelRoutes = (await import('../routes/assumption-decision-contradiction')).default;
+    app.use('/api/governed-intelligence', governedIntelRoutes);
+  } catch (error: any) {
+    console.error('❌ Failed to mount Governed Intelligence routes:', error.message);
+  }
+
+  app.use('/api/client-intelligence', clientIntelligenceRoutes);
+  app.use('/api/account-intelligence', accountIntelligenceRoutes);
+  app.use('/api/packager', universalPackagerRoutes);
+  app.use('/api/precedent-engine', precedentEngineRoutes);
+  app.use('/api/cross-jurisdictional', crossJurisdictionalRoutes);
+  app.use('/api/harmonize', harmonizeRoutes);
+  app.use('/api/escalate', escalateRoutes);
+  app.use('/api/validate-completeness', validateCompletenessRoutes);
+  app.use('/api/ana-gold-standard', anaGoldStandardRoutes);
+  app.use('/api/ana-continuous-eval', anaContinuousEvalRoutes);
+  app.use('/api/submission-center', submissionCenterRoutes);
+
+  console.log('✅ Governance and intelligence route bundle mounted');
+}

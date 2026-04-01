@@ -7,10 +7,10 @@ Branch: concept2cure-v2
 
 | Metric | Before | After | Delta |
 |---|---:|---:|---:|
-| `server/index.ts` line count | 8044 | 7615 | -429 |
+| `server/index.ts` line count | 8044 | 7534 | -510 |
 | `shared/schema.ts` line count | 18078 | 18078 | 0 |
 | `package.json` runtime dependency count | 161 | 157 | -4 |
-| Route registration touchpoints in `server/index.ts` | centralized blocks | manifest-based + centralized remainder | partial split |
+| Route registration touchpoints in `server/index.ts` | centralized blocks | manifest-based + centralized remainder | expanded split |
 | High-confidence dead deps removed from runtime | 0 | 4 | +4 |
 | Dead/duplicate files flagged | 0 | 3 categories | +3 |
 

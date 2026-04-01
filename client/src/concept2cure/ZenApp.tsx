@@ -263,7 +263,9 @@ const SOPManagementPanel = lazy(() =>
   import('./components/quality/SOPManagement').then(m => ({ default: m.default }))
 );
 const RegulatoryIntelligenceFullPanel = lazy(() =>
-  import('./components/intelligence/RegulatoryIntelligencePanel').then(m => ({ default: m.default }))
+  import('./components/intelligence/RegulatoryIntelligencePanel').then(m => ({
+    default: m.default,
+  }))
 );
 const VaultBrowserPanel = lazy(() =>
   import('@/components/sharepoint/SharePointFileManager').then(m => ({ default: m.default }))
@@ -1396,78 +1398,85 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     'vault-workspace',
   ]);
 
-  const handleAnaPanelNavigate = useCallback((path: string) => {
-    const normalizedPath = String(path || '').trim();
-    if (!normalizedPath) return;
+  const handleAnaPanelNavigate = useCallback(
+    (path: string) => {
+      const normalizedPath = String(path || '').trim();
+      if (!normalizedPath) return;
 
-    if (normalizedPath === 'ana-intelligence') {
-      setSettingsSection('ana-intelligence');
-      setSettingsOpen(true);
-      return;
-    }
-    if (normalizedPath === 'project-config') {
-      setEditProjectOpen(true);
-      return;
-    }
-    if (
-      normalizedPath === 'open_capabilities' ||
-      normalizedPath === '/concept2cure?panel=capabilities'
-    ) {
-      setLayoutMode(activeProjectId ? 'project-home' : 'projects');
-      if (activeProjectId) {
-        setExternalChatMessage({
-          text: 'Show me all available capabilities for this project, grouped by workflow stage and what AnA can execute for me.',
-          ts: Date.now(),
-        });
-      }
-      return;
-    }
-    if (
-      normalizedPath === 'guided_project' ||
-      normalizedPath === 'guided_ind_ectd' ||
-      normalizedPath === 'guided_authoring' ||
-      normalizedPath === 'guided_verify' ||
-      normalizedPath === 'guided_submission'
-    ) {
-      if (!activeProjectId) {
-        setLayoutMode('projects');
+      if (normalizedPath === 'ana-intelligence') {
+        setSettingsSection('ana-intelligence');
+        setSettingsOpen(true);
         return;
       }
-      const stageMap: Record<string, 'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission'> =
-        {
+      if (normalizedPath === 'project-config') {
+        setEditProjectOpen(true);
+        return;
+      }
+      if (
+        normalizedPath === 'open_capabilities' ||
+        normalizedPath === '/concept2cure?panel=capabilities'
+      ) {
+        setLayoutMode(activeProjectId ? 'project-home' : 'projects');
+        if (activeProjectId) {
+          setExternalChatMessage({
+            text: 'Show me all available capabilities for this project, grouped by workflow stage and what AnA can execute for me.',
+            ts: Date.now(),
+          });
+        }
+        return;
+      }
+      if (
+        normalizedPath === 'guided_project' ||
+        normalizedPath === 'guided_ind_ectd' ||
+        normalizedPath === 'guided_authoring' ||
+        normalizedPath === 'guided_verify' ||
+        normalizedPath === 'guided_submission'
+      ) {
+        if (!activeProjectId) {
+          setLayoutMode('projects');
+          return;
+        }
+        const stageMap: Record<
+          string,
+          'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission'
+        > = {
           guided_project: 'project',
           guided_ind_ectd: 'ind_ectd',
           guided_authoring: 'authoring',
           guided_verify: 'verify',
           guided_submission: 'submission',
         };
-      const stage = stageMap[normalizedPath];
-      setLayoutMode('regulatory-workspace');
-      setGuidedStageRequest({
-        stage,
-        controlMode: 'client',
-        ts: Date.now(),
-      });
-      return;
-    }
-    // Project-scoped layouts require an active project
-    const nextLayout = normalizedPath as LayoutMode;
-    if (isProjectScopedLayout(nextLayout)) {
-      requireActiveProject(nextLayout);
-      return;
-    }
-    const mapped = SIDEBAR_NAV_TO_LAYOUT[normalizedPath];
-    if (mapped) {
-      setLayoutMode(mapped);
-      return;
-    }
-    if (SAFE_ANA_NAV_TARGETS.has(normalizedPath)) {
-      setLayoutMode(normalizedPath as LayoutMode);
-      return;
-    }
-    console.warn(`[AnaPersistentPanel] Unknown navigation target, falling back safely: ${normalizedPath}`);
-    setLayoutMode(activeProjectId ? 'project-home' : 'projects');
-  }, [activeProjectId, requireActiveProject]);
+        const stage = stageMap[normalizedPath];
+        setLayoutMode('regulatory-workspace');
+        setGuidedStageRequest({
+          stage,
+          controlMode: 'client',
+          ts: Date.now(),
+        });
+        return;
+      }
+      // Project-scoped layouts require an active project
+      const nextLayout = normalizedPath as LayoutMode;
+      if (isProjectScopedLayout(nextLayout)) {
+        requireActiveProject(nextLayout);
+        return;
+      }
+      const mapped = SIDEBAR_NAV_TO_LAYOUT[normalizedPath];
+      if (mapped) {
+        setLayoutMode(mapped);
+        return;
+      }
+      if (SAFE_ANA_NAV_TARGETS.has(normalizedPath)) {
+        setLayoutMode(normalizedPath as LayoutMode);
+        return;
+      }
+      console.warn(
+        `[AnaPersistentPanel] Unknown navigation target, falling back safely: ${normalizedPath}`
+      );
+      setLayoutMode(activeProjectId ? 'project-home' : 'projects');
+    },
+    [activeProjectId, requireActiveProject]
+  );
 
   // ─────────────────────────────────────────────────────────────────────────────
   // KEYBOARD SHORTCUTS — use refs to avoid re-attaching listeners on every state change
@@ -1529,7 +1538,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     async (id: string) => {
       const existing = conversations.find(c => c.id === id);
       if (!existing) return;
-      const nextTitle = window.prompt('Rename conversation title', existing.title || 'New conversation');
+      const nextTitle = window.prompt(
+        'Rename conversation title',
+        existing.title || 'New conversation'
+      );
       if (!nextTitle) return;
       const trimmed = nextTitle.trim();
       if (!trimmed || trimmed === existing.title) return;
