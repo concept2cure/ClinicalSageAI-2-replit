@@ -472,7 +472,7 @@ export class PrecedentEngine {
       {
         dim: 'Sample Size',
         user: userContext.sampleSize?.toString(),
-        prec: precedent.sampleSize?.toString(),
+        prec: precedent.sampleSize?.toString() ?? null,
         impact: 'medium',
       },
       {
@@ -911,7 +911,7 @@ export class PrecedentEngine {
         data.fdaComments,
         JSON.stringify(data.fdaQuestions || []),
         JSON.stringify(data.riskFactors || []),
-        data.sourceDocuments || [],
+        (data as any).sourceDocuments || [],
         data.sourceType,
         data.confidenceScore,
         'system',

@@ -694,7 +694,7 @@ class SubmissionTwinService {
 
       for (const impact of impacts) {
         const impactedArtifact = siblings.find(s =>
-          impact.impactDescription.includes(s.artifactId.toString())
+          impact.description.includes(s.artifactId.toString())
         );
 
         const [record] = await db
@@ -1472,10 +1472,10 @@ ${blockerSummary || 'None.'}`,
 
     const parsed = safeJsonParse(aiResult.content, {} as Record<string, unknown>);
     return {
-      artifactType: parsed.artifactType ?? 'Support Gap Memo',
-      rationale: parsed.rationale ?? 'Based on current submission gaps.',
-      priority: parsed.priority ?? 'medium',
-      targetSection: parsed.targetSection,
+      artifactType: (parsed.artifactType as string) ?? 'Support Gap Memo',
+      rationale: (parsed.rationale as string) ?? 'Based on current submission gaps.',
+      priority: ((parsed.priority as string) ?? 'medium') as 'critical' | 'high' | 'medium',
+      targetSection: parsed.targetSection as string | undefined,
     };
   }
 

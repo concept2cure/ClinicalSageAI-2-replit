@@ -12,6 +12,7 @@
 
 import { db } from '../db';
 import { eq, and, ilike, sql } from 'drizzle-orm';
+import { ai } from '../lib/unified-ai-client';
 // ---------------------------------------------------------------------------
 // Interfaces
 // ---------------------------------------------------------------------------
@@ -360,7 +361,7 @@ class MedDRACodingService {
               AND soc_code = ${socCode}`
       );
 
-      const rows = results as any[];
+      const rows = results.rows as Array<{ cnt: number }>;
       if (rows && rows.length > 0) {
         return (rows[0].cnt || 0) > 0;
       }

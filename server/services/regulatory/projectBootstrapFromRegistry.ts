@@ -16,10 +16,17 @@
  */
 
 import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
-import { bootstrapProject, getSectionBlueprintForEntry, getTaskBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap.js';
+import {
+  bootstrapProject,
+  getSectionBlueprintForEntry,
+  getTaskBlueprintForEntry,
+} from '../../../shared/regulatory/project-bootstrap.js';
 import { resolveRegistryId } from './registry/legacySubmissionTypeMapper.js';
 import { buildDefaultInstructions } from './defaultInstructionBuilder.js';
-import type { RegulatoryApplicationType, SectionDefinition, MilestoneDefinition } from '../../../shared/regulatory/document-taxonomy.js';
+import type {
+  RegulatoryApplicationType,
+  MilestoneDefinition,
+} from '../../../shared/regulatory/document-taxonomy.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -76,7 +83,7 @@ interface INDSectionLike {
   role?: string;
   regulatoryRef?: string;
   estimatedHours?: number;
-  parentCode?: string;
+  parentCode?: string | null;
 }
 
 // ─── Bootstrap Functions ──────────────────────────────────────────────────────
@@ -85,9 +92,12 @@ interface INDSectionLike {
  * Main bootstrap entry point. Resolves the registry entry and generates
  * all bootstrap data needed for project creation.
  */
-export async function bootstrapFromRegistry(input: BootstrapInput): Promise<BootstrapResult | null> {
+export async function bootstrapFromRegistry(
+  input: BootstrapInput
+): Promise<BootstrapResult | null> {
   // Resolve registry entry
-  const registryId = input.registryId || (input.submissionType ? resolveRegistryId(input.submissionType) : null);
+  const registryId =
+    input.registryId || (input.submissionType ? resolveRegistryId(input.submissionType) : null);
   if (!registryId) return null;
 
   const entry = getApplicationType(registryId);
@@ -106,11 +116,18 @@ export async function bootstrapFromRegistry(input: BootstrapInput): Promise<Boot
 /**
  * Bootstrap US IND using the existing deep 108-section map.
  */
-async function bootstrapUSIND(entry: RegulatoryApplicationType, input: BootstrapInput): Promise<BootstrapResult> {
+async function bootstrapUSIND(
+  entry: RegulatoryApplicationType,
+  input: BootstrapInput
+): Promise<BootstrapResult> {
   let sections: SectionRow[];
 
   try {
-    const { getAllINDSections } = await import('../../regulatory/ind-ectd-sections.js');
+    const { getAllINDSections } = (await import(
+      '../../../services/regulatory/ind-ectd-sections.js'
+    )) as {
+      getAllINDSections: () => INDSectionLike[];
+    };
     const indSections: INDSectionLike[] = getAllINDSections();
 
     sections = indSections.map(s => ({
@@ -154,7 +171,10 @@ async function bootstrapUSIND(entry: RegulatoryApplicationType, input: Bootstrap
 /**
  * Bootstrap any type using registry blueprints.
  */
-function bootstrapGeneric(entry: RegulatoryApplicationType, input: BootstrapInput): BootstrapResult {
+function bootstrapGeneric(
+  entry: RegulatoryApplicationType,
+  input: BootstrapInput
+): BootstrapResult {
   const bootstrap = bootstrapProject(entry);
 
   const sections: SectionRow[] = bootstrap.sections.map(s => ({
@@ -194,7 +214,11 @@ export async function getSectionCountForType(registryIdOrLegacy: string): Promis
 
   if (entry.id === 'US_IND') {
     try {
-      const { getAllINDSections } = await import('../../regulatory/ind-ectd-sections.js');
+      const { getAllINDSections } = (await import(
+        '../../../services/regulatory/ind-ectd-sections.js'
+      )) as {
+        getAllINDSections: () => INDSectionLike[];
+      };
       return getAllINDSections().length;
     } catch {
       // Fall through

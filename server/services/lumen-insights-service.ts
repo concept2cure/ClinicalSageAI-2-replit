@@ -173,12 +173,12 @@ export class LumenInsightsService {
 
     try {
       // 1. Generate query embedding
-      const queryEmbedding = await this.openai.embeddings.create({
+      const queryEmbedding = await ai.embeddings({
         model: 'text-embedding-3-small',
         input: question,
       });
 
-      const embedding = queryEmbedding.data[0].embedding;
+      const embedding = queryEmbedding.embedding;
 
       // 2. Retrieve relevant chunks via vector similarity
       const relevantChunks = await this.vectorSearch(embedding, {
@@ -204,7 +204,7 @@ export class LumenInsightsService {
         .join('\n\n');
 
       // 4. Generate answer using GPT-4
-      const completion = await this.ai.chat({
+      const completion = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -219,8 +219,8 @@ export class LumenInsightsService {
         temperature: 0.3,
       });
 
-      const answer = aiResult.content || '';
-      const tokensUsed = completion.usage?.total_tokens || 0;
+      const answer = completion.content || '';
+      const tokensUsed = completion.usage?.totalTokens || 0;
 
       // 5. Calculate confidence based on relevance scores
       const avgRelevance =

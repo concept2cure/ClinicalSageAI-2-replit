@@ -29,7 +29,11 @@ import type {
   WorkflowAuditEntry,
   CrossObjectReasoningPayload,
 } from '../../../shared/types/orchestration';
-import type { AIActionRequest, AIActionResponse } from '../../../shared/types/ai-actions';
+import type {
+  AIActionRequest,
+  AIActionResponse,
+  AIActionTargetType,
+} from '../../../shared/types/ai-actions';
 
 // ---------------------------------------------------------------------------
 // Template Registry
@@ -60,12 +64,9 @@ export function getWorkflowExecution(executionId: string): WorkflowExecution | u
   return executions.get(executionId);
 }
 
-export function getProjectWorkflows(
-  orgId: number,
-  projectId: number
-): WorkflowExecution[] {
+export function getProjectWorkflows(orgId: number, projectId: number): WorkflowExecution[] {
   return Array.from(executions.values()).filter(
-    (e) => e.organizationId === orgId && e.projectId === projectId
+    e => e.organizationId === orgId && e.projectId === projectId
   );
 }
 
@@ -96,7 +97,7 @@ export async function executeWorkflow(
     projectId: request.projectId,
     organizationId: request.organizationId,
     module: request.module,
-    steps: template.steps.map((s) => ({
+    steps: template.steps.map(s => ({
       stepId: s.stepId,
       name: s.name,
       status: 'pending',
@@ -137,7 +138,12 @@ export async function executeWorkflow(
   } catch (err) {
     execution.status = 'failed';
     execution.completedAt = new Date().toISOString();
-    addAuditEntry(execution, 'context_assembly_failed', `Failed to assemble project context: ${(err as Error).message}`, request.requestedBy.userId);
+    addAuditEntry(
+      execution,
+      'context_assembly_failed',
+      `Failed to assemble project context: ${(err as Error).message}`,
+      request.requestedBy.userId
+    );
     return execution;
   }
 
@@ -156,7 +162,13 @@ export async function executeWorkflow(
     // Start step
     stepExec.status = 'running';
     stepExec.startedAt = new Date().toISOString();
-    addAuditEntry(execution, 'step_started', `Step ${i + 1}: ${stepDef.name}`, request.requestedBy.userId, stepDef.stepId);
+    addAuditEntry(
+      execution,
+      'step_started',
+      `Step ${i + 1}: ${stepDef.name}`,
+      request.requestedBy.userId,
+      stepDef.stepId
+    );
 
     try {
       // Execute based on action type
@@ -175,7 +187,7 @@ export async function executeWorkflow(
         // Dispatch to the AI action system
         const actionRequest: AIActionRequest = {
           actionType: stepDef.actionType,
-          targetType: request.targetType || 'project',
+          targetType: (request.targetType || 'project') as AIActionTargetType,
           targetId: request.targetId || request.projectId,
           projectId: request.projectId,
           module: request.module,
@@ -205,7 +217,7 @@ export async function executeWorkflow(
         };
 
         if (!actionResponse.success) {
-          stepExec.errors = actionResponse.errors.map((e) => ({
+          stepExec.errors = actionResponse.errors.map(e => ({
             code: e.code,
             message: e.message,
           }));
@@ -213,7 +225,13 @@ export async function executeWorkflow(
             stepExec.status = 'failed';
             stepExec.completedAt = new Date().toISOString();
             execution.status = 'failed';
-            addAuditEntry(execution, 'step_failed', `Step failed: ${actionResponse.errors.map((e) => e.message).join('; ')}`, request.requestedBy.userId, stepDef.stepId);
+            addAuditEntry(
+              execution,
+              'step_failed',
+              `Step failed: ${actionResponse.errors.map(e => e.message).join('; ')}`,
+              request.requestedBy.userId,
+              stepDef.stepId
+            );
             break;
           }
         }
@@ -227,13 +245,25 @@ export async function executeWorkflow(
       stepExec.completedAt = new Date().toISOString();
       stepExec.durationMs = Date.now() - new Date(stepExec.startedAt!).getTime();
 
-      addAuditEntry(execution, 'step_completed', `Step completed: ${stepDef.name}`, request.requestedBy.userId, stepDef.stepId);
+      addAuditEntry(
+        execution,
+        'step_completed',
+        `Step completed: ${stepDef.name}`,
+        request.requestedBy.userId,
+        stepDef.stepId
+      );
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'Unknown error';
       stepExec.status = 'failed';
       stepExec.completedAt = new Date().toISOString();
       stepExec.errors = [{ code: 'STEP_ERROR', message: errMsg }];
-      addAuditEntry(execution, 'step_error', `Step error: ${errMsg}`, request.requestedBy.userId, stepDef.stepId);
+      addAuditEntry(
+        execution,
+        'step_error',
+        `Step error: ${errMsg}`,
+        request.requestedBy.userId,
+        stepDef.stepId
+      );
 
       if (stepDef.stopOnFailure) {
         execution.status = 'failed';
@@ -251,7 +281,12 @@ export async function executeWorkflow(
   execution.totalDurationMs = Date.now() - new Date(execution.startedAt).getTime();
 
   // Aggregate results
-  execution.result = await aggregateResults(execution, stepResults, allBlockers, crossObjectPayload);
+  execution.result = await aggregateResults(
+    execution,
+    stepResults,
+    allBlockers,
+    crossObjectPayload
+  );
 
   addAuditEntry(
     execution,
@@ -372,8 +407,8 @@ async function executeOrchestratorStep(
     case 'summarize_blockers': {
       return {
         totalBlockers: blockers.length,
-        criticalBlockers: blockers.filter((b) => b.severity === 'critical').length,
-        majorBlockers: blockers.filter((b) => b.severity === 'major').length,
+        criticalBlockers: blockers.filter(b => b.severity === 'critical').length,
+        majorBlockers: blockers.filter(b => b.severity === 'major').length,
         blockers: blockers,
       };
     }
@@ -384,8 +419,9 @@ async function executeOrchestratorStep(
         .filter((m: any) => m.module !== 'Unassigned' && m.documentCount === 0)
         .map((m: any) => m.module);
 
-      const unvalidated = crossObjectPayload.documents
-        .filter((d: any) => !d.hasValidation && d.status !== 'draft');
+      const unvalidated = crossObjectPayload.documents.filter(
+        (d: any) => !d.hasValidation && d.status !== 'draft'
+      );
 
       return {
         modulesNeedingContent: missingModules,
@@ -423,15 +459,17 @@ async function aggregateResults(
   blockers: WorkflowBlocker[],
   crossObjectPayload: CrossObjectReasoningPayload
 ): Promise<WorkflowResult> {
-  const completedSteps = execution.steps.filter((s) => s.status === 'completed').length;
-  const failedSteps = execution.steps.filter((s) => s.status === 'failed').length;
+  const completedSteps = execution.steps.filter(s => s.status === 'completed').length;
+  const failedSteps = execution.steps.filter(s => s.status === 'failed').length;
 
   // Build summary
   let summary: string;
   if (execution.status === 'completed') {
     summary = `Workflow "${execution.templateId}" completed: ${completedSteps}/${execution.steps.length} steps succeeded.`;
   } else {
-    summary = `Workflow "${execution.templateId}" failed at step ${execution.currentStepIndex + 1}: ${failedSteps} step(s) failed.`;
+    summary = `Workflow "${execution.templateId}" failed at step ${
+      execution.currentStepIndex + 1
+    }: ${failedSteps} step(s) failed.`;
   }
 
   if (blockers.length > 0) {

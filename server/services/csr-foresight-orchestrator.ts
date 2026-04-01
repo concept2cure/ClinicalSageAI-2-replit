@@ -172,7 +172,7 @@ export class CSRForesightOrchestrator {
         .limit(10) as any);
 
       // Analyze success patterns
-      const successfulOutcomes = recentOutcomes.filter(o => o.outcomeType === 'success');
+      const successfulOutcomes = recentOutcomes.filter((o: any) => o.outcomeType === 'success');
       if (successfulOutcomes.length > 0) {
         insights.push({
           type: 'pattern',
@@ -180,7 +180,7 @@ export class CSRForesightOrchestrator {
           description: `${successfulOutcomes.length} successful outcomes identified with common characteristics`,
           impact: 'high',
           confidence: 0.85,
-          evidence: successfulOutcomes.map(o => o.outcomeValue),
+          evidence: successfulOutcomes.map((o: any) => o.outcomeValue),
           recommendations: [
             'Apply similar study design principles',
             'Focus on identified biomarker profiles',
@@ -204,7 +204,7 @@ export class CSRForesightOrchestrator {
           description: `${topBiomarker.biomarkerName} shows ${((topBiomarker.correlationScore ?? 0) * 100).toFixed(1)}% correlation with ${topBiomarker.endpointName}`,
           impact: (topBiomarker.correlationScore ?? 0) > 0.7 ? 'high' : 'medium',
           confidence: topBiomarker.confidence as number,
-          evidence: biomarkers.map(b => ({
+          evidence: biomarkers.map((b: any) => ({
             biomarker: b.biomarkerName,
             endpoint: b.endpointName,
             correlation: b.correlationScore
@@ -391,7 +391,7 @@ export class CSRForesightOrchestrator {
         activeModels: activeModels[0]?.count || 0,
         predictionAccuracy: accuracy,
         keyInsights: insights.slice(0, 5),
-        recentActivity: recentActivity.map(r => ({
+        recentActivity: recentActivity.map((r: any) => ({
           id: r.id,
           title: r.title,
           date: r.uploadDate,

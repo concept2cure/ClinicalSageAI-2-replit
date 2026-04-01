@@ -19,7 +19,6 @@ interface ProtocolExtractionInput {
   projectId?: string;
   documentId?: string;
 }
-import { ai } from '../lib/unified-ai-client';
 
 interface ProtocolFields {
   title: string | null;

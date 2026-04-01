@@ -26,10 +26,7 @@
  * @module server/services/resolution/contradiction-resolution-orchestrator
  */
 
-import {
-  buildContradictionBundlePlan,
-  classifyPlanActions,
-} from './contradiction-bundle-planner';
+import { buildContradictionBundlePlan, classifyPlanActions } from './contradiction-bundle-planner';
 import { createResolutionBundle } from './bundle-builder';
 import { executeBundle } from './bundle-executor';
 import { createResolutionPlan } from './resolution-planner';
@@ -76,16 +73,16 @@ export async function orchestrateContradictionResolution(
 
   // ── STEP 2: Fetch overlay rules for regulator body ──
   const overlayRules = [];
-  const bodies = new Set(
-    findings.map(f => f.regulatorBody).filter(Boolean) as string[]
-  );
+  const bodies = new Set(findings.map(f => f.regulatorBody).filter(Boolean) as string[]);
   if (trigger.regulatorBody) bodies.add(trigger.regulatorBody);
 
   for (const body of bodies) {
     for (const finding of findings) {
       try {
         const rules = await contradictionEngineService.getOverlayRules(
-          organizationId, finding.contradictionType, body
+          organizationId,
+          finding.contradictionType,
+          body
         );
         overlayRules.push(...rules);
       } catch {
@@ -114,8 +111,9 @@ export async function orchestrateContradictionResolution(
     return {
       plan,
       decision: 'block',
-      decisionRationale: plan.authority.blockedReason
-        ?? 'Cannot execute: escalation required or no executable actions',
+      decisionRationale:
+        plan.authority.blockedReason ??
+        'Cannot execute: escalation required or no executable actions',
       readinessRefreshed: false,
       contradictionStatesUpdated: [],
       timestamp,
@@ -133,17 +131,19 @@ export async function orchestrateContradictionResolution(
       objectType: a.targetObjectType,
       objectId: a.targetObjectId,
       objectTitle: a.targetObjectTitle,
-      impactState: a.requiresEscalation ? 'potential' as const : 'direct' as const,
+      impactState: a.requiresEscalation ? ('potential' as const) : ('direct' as const),
       impactRationale: a.description,
     })),
-    recommendedPath: determineResolutionPath(plan),
-    confidence: determineConfidence(plan),
+    recommendedPath: determineResolutionPath(plan) as ResolutionPath | undefined,
+    confidence: determineConfidence(plan) as ResolutionConfidence | undefined,
     rationale: plan.rationale,
   });
 
   // Transition plan to proposed_resolution
   await transitionResolutionState(
-    organizationId, userId, dbPlan.id,
+    organizationId,
+    userId,
+    dbPlan.id,
     'proposed_resolution',
     `Contradiction bundle plan: ${plan.summary}`
   );
@@ -201,7 +201,9 @@ export async function orchestrateContradictionResolution(
   // decision === 'execute'
   // Transition plan to in_resolution
   await transitionResolutionState(
-    organizationId, userId, dbPlan.id,
+    organizationId,
+    userId,
+    dbPlan.id,
     'in_resolution',
     `Executing bundle ${bundle.id}`
   );
@@ -212,7 +214,10 @@ export async function orchestrateContradictionResolution(
   // Enrich receipt with contradiction context (Pass 9)
   receipt.contradictionIds = plan.contradictionIds;
   receipt.overlayContext = plan.overlayContext
-    ? { regulatorBody: plan.overlayContext.regulatorBody, appliedRuleIds: plan.overlayContext.appliedRuleIds }
+    ? {
+        regulatorBody: plan.overlayContext.regulatorBody,
+        appliedRuleIds: plan.overlayContext.appliedRuleIds,
+      }
     : undefined;
   receipt.userConfirmation = trigger.autoExecute ? 'auto' : 'confirmed';
   receipt.executedBy = userId;
@@ -221,7 +226,12 @@ export async function orchestrateContradictionResolution(
   // The bundle executor handles the 6 standard action types.
   // Now we run the contradiction-specific handlers that create REAL governed objects.
   const postExecutionResults = await executeContradictionSpecificActions(
-    organizationId, userId, projectId, plan, receipt, findings
+    organizationId,
+    userId,
+    projectId,
+    plan,
+    receipt,
+    findings
   );
   receipt.postExecution = postExecutionResults;
 
@@ -270,7 +280,8 @@ export async function orchestrateContradictionResolution(
   return {
     plan,
     decision: 'execute',
-    decisionRationale: `Executed ${receipt.summary.executed} actions, ${receipt.summary.prepared} prepared for review, ${receipt.summary.blocked} blocked. ` +
+    decisionRationale:
+      `Executed ${receipt.summary.executed} actions, ${receipt.summary.prepared} prepared for review, ${receipt.summary.blocked} blocked. ` +
       `Post-execution: ${postExecutionResults.reviewThreadsCreated} review thread(s), ${postExecutionResults.memosAttached} memo(s), ${postExecutionResults.reapprovalFlagsSet} reapproval flag(s).`,
     bundle: {
       ...bundleSummary,
@@ -308,7 +319,13 @@ async function executeContradictionSpecificActions(
   projectId: number,
   plan: ResolutionBundlePlan,
   receipt: BundleExecutionReceipt,
-  findings: Array<{ id: string; title: string; description: string; contradictionType: string; severity: string }>,
+  findings: Array<{
+    id: string;
+    title: string;
+    description: string;
+    contradictionType: string;
+    severity: string;
+  }>
 ): Promise<PostExecutionResults> {
   const results: PostExecutionResults = {
     reviewThreadsCreated: 0,
@@ -329,9 +346,7 @@ async function executeContradictionSpecificActions(
       switch (action.kind) {
         case 'create-review-thread': {
           // Call real createReviewThread handler
-          await createRealReviewThread(
-            pool, organizationId, userId, projectId, action, plan
-          );
+          await createRealReviewThread(pool, organizationId, userId, projectId, action, plan);
           results.reviewThreadsCreated++;
           break;
         }
@@ -340,7 +355,12 @@ async function executeContradictionSpecificActions(
           // Write real memo to contradiction_consequence_log
           const finding = findingMap.get(action.targetObjectId);
           await attachRealContradictionMemo(
-            pool, organizationId, userId, action, finding, receipt.bundleId
+            pool,
+            organizationId,
+            userId,
+            action,
+            finding,
+            receipt.bundleId
           );
           results.memosAttached++;
           break;
@@ -348,18 +368,14 @@ async function executeContradictionSpecificActions(
 
         case 'mark-needs-reapproval': {
           // Set real reapproval flag on artifact
-          await markRealReapproval(
-            pool, organizationId, action, receipt.bundleId
-          );
+          await markRealReapproval(pool, organizationId, action, receipt.bundleId);
           results.reapprovalFlagsSet++;
           break;
         }
 
         case 'escalate': {
           // Persist real escalation record
-          await persistRealEscalation(
-            pool, organizationId, userId, action, plan, receipt.bundleId
-          );
+          await persistRealEscalation(pool, organizationId, userId, action, plan, receipt.bundleId);
           results.escalationsRecorded++;
           break;
         }
@@ -388,7 +404,7 @@ async function createRealReviewThread(
   userId: number,
   projectId: number,
   action: ResolutionBundlePlanAction,
-  plan: ResolutionBundlePlan,
+  plan: ResolutionBundlePlan
 ): Promise<void> {
   const threadId = `thread_cbp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
@@ -433,7 +449,7 @@ async function attachRealContradictionMemo(
   userId: number,
   action: ResolutionBundlePlanAction,
   finding: { id: string; title: string; description: string } | undefined,
-  bundleId: string,
+  bundleId: string
 ): Promise<void> {
   const findingId = action.targetObjectId;
 
@@ -469,21 +485,19 @@ async function markRealReapproval(
   pool: any,
   organizationId: number,
   action: ResolutionBundlePlanAction,
-  bundleId: string,
+  bundleId: string
 ): Promise<void> {
   if (action.targetObjectType !== 'artifact' && action.targetObjectType !== 'document') {
     return; // Only artifacts and documents have reapproval semantics
   }
 
-  const table = action.targetObjectType === 'artifact'
-    ? 'concept2cure_artifacts'
-    : 'unified_documents';
-  const idColumn = action.targetObjectType === 'artifact'
-    ? 'artifact_id'
-    : 'id';
+  const table =
+    action.targetObjectType === 'artifact' ? 'concept2cure_artifacts' : 'unified_documents';
+  const idColumn = action.targetObjectType === 'artifact' ? 'artifact_id' : 'id';
 
   try {
-    await pool.query(`
+    await pool.query(
+      `
       UPDATE ${table}
       SET metadata = jsonb_set(
         jsonb_set(
@@ -496,11 +510,15 @@ async function markRealReapproval(
       ),
       updated_at = NOW()
       WHERE ${idColumn}::text = $2 AND organization_id = $3
-    `, [
-      JSON.stringify(`Contradiction resolution bundle ${bundleId}: ${action.description.slice(0, 200)}`),
-      action.targetObjectId,
-      organizationId,
-    ]);
+    `,
+      [
+        JSON.stringify(
+          `Contradiction resolution bundle ${bundleId}: ${action.description.slice(0, 200)}`
+        ),
+        action.targetObjectId,
+        organizationId,
+      ]
+    );
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     if (!msg.includes('does not exist')) throw err;
@@ -518,7 +536,7 @@ async function persistRealEscalation(
   userId: number,
   action: ResolutionBundlePlanAction,
   plan: ResolutionBundlePlan,
-  bundleId: string,
+  bundleId: string
 ): Promise<void> {
   const findingId = action.targetObjectId;
 
@@ -537,7 +555,9 @@ async function persistRealEscalation(
         'escalation',
         String(userId),
         'executed',
-        `Escalation recorded via bundle ${bundleId}. Authority: ${plan.authority.blockedReason ?? 'requires senior review'}. ${action.description.slice(0, 300)}`,
+        `Escalation recorded via bundle ${bundleId}. Authority: ${
+          plan.authority.blockedReason ?? 'requires senior review'
+        }. ${action.description.slice(0, 300)}`,
       ]
     );
   } catch (err: unknown) {
@@ -557,7 +577,7 @@ async function logConsequences(
   organizationId: number,
   userId: number,
   plan: ResolutionBundlePlan,
-  receipt: BundleExecutionReceipt,
+  receipt: BundleExecutionReceipt
 ): Promise<void> {
   const { pool } = await import('../../db.js');
   if (!pool) return;
@@ -622,7 +642,7 @@ async function logConsequences(
 function classifyDecision(
   plan: ResolutionBundlePlan,
   classification: ReturnType<typeof classifyPlanActions>,
-  autoExecute: boolean,
+  autoExecute: boolean
 ): OrchestratorDecision {
   // If all actions require escalation, block
   if (classification.requiresEscalation.length === plan.actions.length) {
@@ -684,7 +704,7 @@ async function refreshPreflightAfterExecution(
   organizationId: number,
   projectId: number,
   receipt: BundleExecutionReceipt,
-  plan: ResolutionBundlePlan,
+  plan: ResolutionBundlePlan
 ): Promise<void> {
   const { pool } = await import('../../db.js');
   if (!pool) return;
@@ -692,11 +712,14 @@ async function refreshPreflightAfterExecution(
   // Update contradiction findings with resolution metadata
   for (const contradictionId of plan.contradictionIds) {
     try {
-      await pool.query(`
+      await pool.query(
+        `
         UPDATE contradiction_findings
         SET updated_at = NOW()
         WHERE id = $1 AND organization_id = $2
-      `, [contradictionId, organizationId]);
+      `,
+        [contradictionId, organizationId]
+      );
     } catch {
       // Best-effort
     }
@@ -704,11 +727,14 @@ async function refreshPreflightAfterExecution(
 
   // Invalidate cached readiness by touching project updated_at
   try {
-    await pool.query(`
+    await pool.query(
+      `
       UPDATE concept2cure_projects
       SET updated_at = NOW()
       WHERE id = $1 AND organization_id = $2
-    `, [projectId, organizationId]);
+    `,
+      [projectId, organizationId]
+    );
   } catch {
     // Table may not exist
   }
@@ -718,7 +744,8 @@ async function refreshPreflightAfterExecution(
     const [objectType, objectId] = key.split(':');
     if (objectType === 'artifact') {
       try {
-        await pool.query(`
+        await pool.query(
+          `
           UPDATE concept2cure_artifacts
           SET metadata = jsonb_set(
             COALESCE(metadata, '{}'::jsonb),
@@ -727,7 +754,9 @@ async function refreshPreflightAfterExecution(
           ),
           updated_at = NOW()
           WHERE artifact_id::text = $2 AND organization_id = $3
-        `, [JSON.stringify(receipt.bundleId), objectId, organizationId]);
+        `,
+          [JSON.stringify(receipt.bundleId), objectId, organizationId]
+        );
       } catch {
         // Best-effort
       }
@@ -739,7 +768,8 @@ async function refreshPreflightAfterExecution(
     const [objectType, objectId] = key.split(':');
     if (objectType === 'artifact') {
       try {
-        await pool.query(`
+        await pool.query(
+          `
           UPDATE concept2cure_artifacts
           SET metadata = jsonb_set(
             COALESCE(metadata, '{}'::jsonb),
@@ -748,7 +778,9 @@ async function refreshPreflightAfterExecution(
           ),
           updated_at = NOW()
           WHERE artifact_id::text = $1 AND organization_id = $2
-        `, [objectId, organizationId]);
+        `,
+          [objectId, organizationId]
+        );
       } catch {
         // Best-effort
       }
@@ -760,7 +792,8 @@ async function refreshPreflightAfterExecution(
     const [objectType, objectId] = key.split(':');
     if (objectType === 'artifact') {
       try {
-        await pool.query(`
+        await pool.query(
+          `
           UPDATE concept2cure_artifacts
           SET status = CASE
             WHEN status = 'draft' THEN 'review'
@@ -768,7 +801,9 @@ async function refreshPreflightAfterExecution(
           END,
           updated_at = NOW()
           WHERE artifact_id::text = $1 AND organization_id = $2
-        `, [objectId, organizationId]);
+        `,
+          [objectId, organizationId]
+        );
       } catch {
         // Best-effort
       }
@@ -788,9 +823,7 @@ async function refreshPreflightAfterExecution(
  * Everything in the explanation is derived from stored plan/receipt data.
  * No hallucination. No claims beyond what the receipt proves.
  */
-export function buildContradictionExplanation(
-  result: ContradictionOrchestrationResult
-): string {
+export function buildContradictionExplanation(result: ContradictionOrchestrationResult): string {
   const lines: string[] = [];
   const plan = result.plan;
 
@@ -801,7 +834,9 @@ export function buildContradictionExplanation(
 
   // Authority
   if (plan.authority.requiresEscalation) {
-    lines.push(`> Escalation required: ${plan.authority.blockedReason ?? 'authority boundary reached'}`);
+    lines.push(
+      `> Escalation required: ${plan.authority.blockedReason ?? 'authority boundary reached'}`
+    );
   } else if (plan.authority.requiresReviewerApproval) {
     lines.push(`> Reviewer approval required before execution`);
   } else if (plan.authority.requiresHumanConfirmation) {
@@ -811,18 +846,25 @@ export function buildContradictionExplanation(
 
   // Overlay context
   if (plan.overlayContext && plan.overlayContext.appliedRuleIds.length > 0) {
-    lines.push(`**Regulatory overlay**: ${plan.overlayContext.regulatorBody} (${plan.overlayContext.appliedRuleIds.length} rule(s) applied)`);
+    lines.push(
+      `**Regulatory overlay**: ${plan.overlayContext.regulatorBody} (${plan.overlayContext.appliedRuleIds.length} rule(s) applied)`
+    );
     lines.push('');
   }
 
   // Actions
   lines.push(`### Actions (${plan.actions.length})`);
   for (const action of plan.actions) {
-    const gate = action.requiresEscalation ? ' [ESCALATION]'
-      : action.requiresApproval ? ' [NEEDS APPROVAL]'
-        : action.requiresConfirmation ? ' [NEEDS CONFIRMATION]'
-          : ' [AUTO-PREPARABLE]';
-    lines.push(`- **${action.kind}** on ${action.targetObjectTitle ?? action.targetObjectId}${gate}`);
+    const gate = action.requiresEscalation
+      ? ' [ESCALATION]'
+      : action.requiresApproval
+      ? ' [NEEDS APPROVAL]'
+      : action.requiresConfirmation
+      ? ' [NEEDS CONFIRMATION]'
+      : ' [AUTO-PREPARABLE]';
+    lines.push(
+      `- **${action.kind}** on ${action.targetObjectTitle ?? action.targetObjectId}${gate}`
+    );
     lines.push(`  ${action.description}`);
   }
   lines.push('');
@@ -840,7 +882,11 @@ export function buildContradictionExplanation(
       lines.push('');
       lines.push('**Executed:**');
       for (const step of r.executedSteps) {
-        lines.push(`- ${step.stepType} on ${step.targetTitle ?? step.targetId}: ${step.priorState} → ${step.newState}`);
+        lines.push(
+          `- ${step.stepType} on ${step.targetTitle ?? step.targetId}: ${step.priorState} → ${
+            step.newState
+          }`
+        );
       }
     }
 
@@ -856,7 +902,9 @@ export function buildContradictionExplanation(
       lines.push('');
       lines.push('**Prepared for review:**');
       for (const step of r.preparedSteps) {
-        lines.push(`- ${step.stepType} on ${step.targetTitle ?? step.targetId}: ${step.preparedAction}`);
+        lines.push(
+          `- ${step.stepType} on ${step.targetTitle ?? step.targetId}: ${step.preparedAction}`
+        );
       }
     }
   }
@@ -865,7 +913,8 @@ export function buildContradictionExplanation(
   if (result.receipt?.postExecution) {
     const pe = result.receipt.postExecution;
     const parts: string[] = [];
-    if (pe.reviewThreadsCreated > 0) parts.push(`${pe.reviewThreadsCreated} review thread(s) created`);
+    if (pe.reviewThreadsCreated > 0)
+      parts.push(`${pe.reviewThreadsCreated} review thread(s) created`);
     if (pe.memosAttached > 0) parts.push(`${pe.memosAttached} memo(s) attached`);
     if (pe.reapprovalFlagsSet > 0) parts.push(`${pe.reapprovalFlagsSet} reapproval flag(s) set`);
     if (pe.escalationsRecorded > 0) parts.push(`${pe.escalationsRecorded} escalation(s) recorded`);
@@ -890,7 +939,9 @@ export function buildContradictionExplanation(
 
   if (result.contradictionStatesUpdated.length > 0) {
     lines.push('');
-    lines.push(`Contradiction review states updated: ${result.contradictionStatesUpdated.length} finding(s)`);
+    lines.push(
+      `Contradiction review states updated: ${result.contradictionStatesUpdated.length} finding(s)`
+    );
   }
 
   return lines.join('\n');
