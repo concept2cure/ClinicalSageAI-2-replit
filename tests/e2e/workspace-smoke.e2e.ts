@@ -217,35 +217,18 @@ async function seedFallbackSession(page: Page): Promise<void> {
     });
   });
 
-  await page.route('**/api/concept2cure/projects', async route => {
-    const request = route.request();
-    if (request.method() === 'GET') {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: [seededProject] }),
-      });
-      return;
-    }
-    await route.continue();
-  });
-
-  await page.route('**/api/concept2cure/projects?*', async route => {
-    const request = route.request();
-    if (request.method() === 'GET') {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: [seededProject] }),
-      });
-      return;
-    }
-    await route.continue();
-  });
-
-  await page.route('**/api/concept2cure/projects/**', async route => {
+  await page.route('**/api/concept2cure/projects**', async route => {
     const request = route.request();
     const url = new URL(request.url());
+    const projectListPath = /^\/api\/concept2cure\/projects\/?$/;
+    if (request.method() === 'GET' && projectListPath.test(url.pathname)) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [seededProject] }),
+      });
+      return;
+    }
     const projectDetailPath = /^\/api\/concept2cure\/projects\/[^/]+$/;
     if (request.method() === 'GET' && projectDetailPath.test(url.pathname)) {
       await route.fulfill({
@@ -328,133 +311,6 @@ async function seedFallbackSession(page: Page): Promise<void> {
     },
     { expiry: expiryIso, user: fallbackUser, project: seededProject, artifactId: STAGE9_ARTIFACT_ID }
   );
-}
-
-async function seedFallbackProjects(page: Page): Promise<string> {
-  const seededProjectId = `stage9_proj_${Date.now()}`;
-  const now = new Date().toISOString();
-  await page.evaluate(
-    ({ projectId, ts }) => {
-      const seeded = [
-        {
-          id: projectId,
-          name: 'Stage 9 Pulse Project',
-          submissionType: 'IND',
-          description: 'Seeded local project for Stage 9 pulse checks',
-          sponsor: 'Concept2Cure',
-          product: 'Pulse Harness',
-          region: 'FDA',
-          conversations: [],
-          status: 'active',
-          createdAt: ts,
-          updatedAt: ts,
-          metadata: { pinned: true, starred: true },
-        },
-      ];
-      localStorage.setItem('concept2cure_projects', JSON.stringify(seeded));
-    },
-    { projectId: seededProjectId, ts: now }
-  );
-  return seededProjectId;
-}
-
-async function seedFallbackArtifact(page: Page, projectId: string): Promise<string> {
-  const artifactId = `artifact_${Date.now()}`;
-  const now = new Date().toISOString();
-  await page.evaluate(
-    ({ pid, aid, ts }) => {
-      localStorage.setItem(`c2c_last_artifact_${pid}`, aid);
-      localStorage.setItem(`c2c_stage9_seeded_artifact_${pid}`, aid);
-      localStorage.setItem(
-        'c2c_stage9_seeded_artifact_payload',
-        JSON.stringify({
-          id: aid,
-          projectId: pid,
-          title: 'Stage 9 Seeded Artifact',
-          type: 'summary',
-          category: 'authoring',
-          status: 'draft',
-          version: 1,
-          createdAt: ts,
-          updatedAt: ts,
-          ctdSection: '1.1',
-          content: '<p>Stage 9 seeded artifact content</p>',
-        })
-      );
-    },
-    { pid: projectId, aid: artifactId, ts: now }
-  );
-  return artifactId;
-}
-
-async function createPulseProject(page: Page): Promise<string> {
-  const projectName = `Stage9 Pulse ${Date.now()}`;
-  const authHeader = await page.evaluate(() => {
-    const token =
-      sessionStorage.getItem('trialsage_access_token') ||
-      localStorage.getItem('trialsage_access_token');
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  });
-
-  const createResponse = await page.request.post(`${BASE_URL}/api/concept2cure/projects`, {
-    headers: { 'Content-Type': 'application/json', ...authHeader },
-    data: {
-      name: projectName,
-      submissionType: 'IND',
-      description: 'Stage 9 authenticated pulse project',
-      sponsor: 'Concept2Cure',
-      product: 'Pulse Harness',
-      region: 'FDA',
-    },
-  });
-
-  const payload = await createResponse.json().catch(() => ({}));
-  if (!createResponse.ok()) {
-    throw new Error(`Project create failed (${createResponse.status()}): ${JSON.stringify(payload)}`);
-  }
-
-  const projectId = String(payload?.data?.id || payload?.id || '');
-  if (!projectId) {
-    throw new Error(`Project create returned no id: ${JSON.stringify(payload)}`);
-  }
-
-  return projectId;
-}
-
-async function createPulseArtifact(page: Page, projectId: string): Promise<string> {
-  const authHeader = await page.evaluate(() => {
-    const token =
-      sessionStorage.getItem('trialsage_access_token') ||
-      localStorage.getItem('trialsage_access_token');
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  });
-  const artifactResponse = await page.request.post(
-    `${BASE_URL}/api/concept2cure/projects/${projectId}/artifacts`,
-    {
-      headers: { 'Content-Type': 'application/json', ...authHeader },
-      data: {
-        type: 'summary',
-        category: 'authoring',
-        title: `Pulse Artifact ${Date.now()}`,
-        content:
-          '<h1>Pulse stage 9 artifact</h1><p>This artifact is created by the authenticated pulse suite.</p>',
-      },
-    }
-  );
-
-  const payload = await artifactResponse.json().catch(() => ({}));
-  if (!artifactResponse.ok()) {
-    throw new Error(
-      `Artifact create failed (${artifactResponse.status()}): ${JSON.stringify(payload)}`
-    );
-  }
-
-  const artifactId = String(payload?.data?.id || payload?.id || '');
-  if (!artifactId) {
-    throw new Error(`Artifact create returned no id: ${JSON.stringify(payload)}`);
-  }
-
-  return artifactId;
 }
 
 // ─── Helper: navigate via sidebar ─────────────────────────────────────────────
