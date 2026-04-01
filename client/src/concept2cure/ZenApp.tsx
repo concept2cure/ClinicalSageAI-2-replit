@@ -129,6 +129,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { LoadingState } from '@/components/ui/statesV2';
+import { ErrorState } from '@/components/ui/statesV2';
 
 // Canonical loading fallback for Suspense boundaries
 const ModuleLoadingFallback = () => (
@@ -235,6 +236,12 @@ const InspectionReadinessPanel = lazy(() =>
 );
 const ECTDNavigatorPanel = lazy(() =>
   import('./components/regulatory/ECTDNavigator').then(m => ({ default: m.default }))
+);
+const StudyProtocolDesignerPanel = lazy(() =>
+  import('./components/clinical/StudyProtocolDesigner').then(m => ({ default: m.default }))
+);
+const SOPManagementPanel = lazy(() =>
+  import('./components/quality/SOPManagement').then(m => ({ default: m.default }))
 );
 const RegulatoryIntelligenceFullPanel = lazy(() =>
   import('./components/regulatory/RegulatoryIntelligence').then(m => ({ default: m.default }))
@@ -386,6 +393,8 @@ const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.Component
       }
     : {}),
   ectd: ECTDNavigatorPanel,
+  protocol: StudyProtocolDesignerPanel,
+  sop: SOPManagementPanel,
   intelligence: RegulatoryIntelligenceFullPanel,
   vault: VaultBrowserPanel,
   'doc-editor': EditorPanel,
@@ -686,9 +695,46 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
 }) => {
   const config = TOOL_PANELS[panel];
   const Icon = config.icon;
+  const PanelComponent = PANEL_COMPONENTS[panel];
 
-  // In a real implementation, we'd lazy-load the actual components
-  // For now, render a placeholder that shows the component is ready
+  if (!PanelComponent) {
+    return (
+      <div
+        className={cn(
+          'flex flex-col h-full bg-white border-l border-stone-200',
+          isFullscreen ? 'w-full' : 'w-full sm:w-80 md:w-96 lg:w-[600px]'
+        )}
+      >
+        <div className="flex items-center justify-between h-14 px-4 border-b border-stone-100 bg-stone-50/50">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-stone-500 hover:text-stone-700 hover:bg-stone-200/50 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-2">
+              <Icon className="w-4 h-4 text-stone-600" />
+              <span className="font-medium text-stone-900">{config.title}</span>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-stone-500 hover:text-stone-700 hover:bg-stone-200/50 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <ErrorState
+          title="Tool unavailable"
+          message={`${config.title} is not enabled in this workspace.`}
+          details="This panel has no mounted component in the current shell configuration."
+          testId="tool-panel-unavailable"
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -737,24 +783,7 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
               </div>
             }
           >
-            {PANEL_COMPONENTS[panel] ? (
-              (() => {
-                const PanelComponent = PANEL_COMPONENTS[panel];
-                return <PanelComponent />;
-              })()
-            ) : (
-              <div className="flex items-center justify-center h-full text-center p-8">
-                <div>
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-stone-100 flex items-center justify-center">
-                    <Icon className="w-8 h-8 text-stone-500" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-stone-900 mb-2">{config.title}</h3>
-                  <p className="text-sm text-stone-500 max-w-sm">
-                    {config.title} module loading...
-                  </p>
-                </div>
-              </div>
-            )}
+            <PanelComponent />
           </Suspense>
         </ErrorBoundary>
       </div>
@@ -1804,27 +1833,17 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     [activeConversationId, deleteThread, toast]
   );
 
-  const handleToggleConversationStar = useCallback((id: string) => {
-    if (!id) return;
-    toast({
-      title: 'Not available yet',
-      description: 'Conversation star metadata is not enabled in this thread model yet.',
-    });
-  }, [toast]);
+  // Conversation star/pin are intentionally disabled until persistence lands.
+  // Keep handlers silent and hide affordance in sidebar instead of fake success UX.
+  const handleToggleConversationStar = useCallback((_id: string) => {}, []);
 
-  const handleToggleConversationPin = useCallback((id: string) => {
-    if (!id) return;
-    toast({
-      title: 'Not available yet',
-      description: 'Conversation pin metadata is not enabled in this thread model yet.',
-    });
-  }, [toast]);
+  const handleToggleConversationPin = useCallback((_id: string) => {}, []);
 
   const handleRenameConversation = useCallback(
     async (id: string) => {
       const existing = conversations.find(c => c.id === id);
       if (!existing) return;
-      const nextTitle = window.prompt('Rename conversation', existing.title || 'New conversation');
+      const nextTitle = window.prompt('Rename conversation title', existing.title || 'New conversation');
       if (!nextTitle) return;
       const trimmed = nextTitle.trim();
       if (!trimmed || trimmed === existing.title) return;
@@ -1865,9 +1884,26 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   const handleCommandAction = useCallback(
     (actionId: string) => {
+      const SUPPORTED_TOOL_PANELS: Exclude<ToolPanel, null>[] = [
+        'ectd',
+        'intelligence',
+        'vault',
+        'doc-editor',
+        'ana-biostats',
+      ];
+
       // Handle tool panel opens
       if (actionId.startsWith('tool-')) {
         const panel = actionId.replace('tool-', '') as ToolPanel;
+        if (!SUPPORTED_TOOL_PANELS.includes(panel as Exclude<ToolPanel, null>)) {
+          toast({
+            title: 'Command unavailable',
+            description: 'This tool is not enabled in the current workspace.',
+            variant: 'destructive',
+          });
+          setCommandPaletteOpen(false);
+          return;
+        }
         setActiveToolPanel(panel);
         setLayoutMode(panel === 'ectd' ? 'ctd' : 'editor');
         setCommandPaletteOpen(false);
@@ -1883,6 +1919,29 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         'go-biostatistics': 'regulatory-workspace',
         'go-report-engine': 'report-engine',
       };
+      const NAV_ACTION_ROUTES: Record<string, LayoutMode> = {
+        'nav-intelligence-feed': 'intelligence-feed',
+        'nav-gap-analysis': 'gap-analysis',
+        'nav-change-impact': 'change-impact',
+        'nav-ana-memory': 'ana-memory',
+        'nav-mission-control': 'mission-control',
+        'nav-artifact-graph': 'artifact-graph',
+        'nav-review-center': 'review-center',
+        'nav-dossier-view': 'dossier-view',
+        'nav-risk-cockpit': 'risk-cockpit',
+        'nav-route-planner': 'route-planner',
+        'nav-evidence-manager': 'evidence-manager',
+        'nav-decision-log': 'decision-log',
+        'nav-authority-tracker': 'authority-tracker',
+        'nav-provenance-trail': 'provenance-trail',
+        'nav-notifications': 'notifications',
+        'nav-collaboration-hub': 'collaboration-hub',
+        'nav-task-board': 'task-board',
+        'nav-team-workspace': 'team-workspace',
+        'nav-program-analytics': 'program-analytics',
+        'nav-snowglobe': 'snowglobe',
+        'nav-snowglobe-chambers': 'snowglobe-chambers',
+      };
 
       if (MODULE_ROUTES[actionId]) {
         setLayoutMode(MODULE_ROUTES[actionId]);
@@ -1892,13 +1951,35 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         setCommandPaletteOpen(false);
         return;
       }
+      if (NAV_ACTION_ROUTES[actionId]) {
+        const targetLayout = NAV_ACTION_ROUTES[actionId];
+        if (isProjectScopedLayout(targetLayout)) {
+          requireActiveProject(targetLayout);
+        } else {
+          setLayoutMode(targetLayout);
+        }
+        setCommandPaletteOpen(false);
+        return;
+      }
 
       // Handle other actions
       switch (actionId) {
+        case 'search-conversations':
+          setCommandPaletteOpen(false);
+          return;
+        case 'go-author':
+          requireActiveProject('documents');
+          setCommandPaletteOpen(false);
+          return;
+        case 'go-agents':
+          requireActiveProject('regulatory-workspace');
+          setRiViewMode('intelligence');
+          setCommandPaletteOpen(false);
+          return;
         case 'new-chat':
           handleNewChat();
           setCommandPaletteOpen(false);
-          break;
+          return;
         case 'new-510k':
         case 'new-ind':
         case 'new-nda':
@@ -1906,26 +1987,29 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         case 'new-pma':
           setNewProjectOpen(true);
           setCommandPaletteOpen(false);
-          break;
+          return;
         case 'settings-account':
         case 'settings-org':
         case 'settings':
           setSettingsOpen(true);
           setCommandPaletteOpen(false);
-          break;
+          return;
         case 'settings-intelligence':
         case 'ana-intelligence':
           setSettingsSection('ana-intelligence');
           setSettingsOpen(true);
           setCommandPaletteOpen(false);
-          break;
+          return;
         case 'projects':
           setProjectSwitcherOpen(true);
           setCommandPaletteOpen(false);
-          break;
+          return;
+        default:
+          // Unknown actions are ignored intentionally.
+          return;
       }
     },
-    [handleNewChat]
+    [handleNewChat, requireActiveProject, toast]
   );
 
   const handleCreateProject = useCallback(

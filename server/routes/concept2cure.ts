@@ -5187,8 +5187,9 @@ router.patch(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
+      const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) {
+      if (!hasAccess || Number.isNaN(numericProjectId)) {
         return sendError(res, 404, 'Project not found');
       }
 
@@ -5204,6 +5205,7 @@ router.patch(
         .where(
           and(
             eq(concept2cureConversations.conversationId, req.params.conversationId),
+            eq(concept2cureConversations.projectId, numericProjectId),
             eq(concept2cureConversations.organizationId, organizationId),
             eq(concept2cureConversations.status, 'active')
           )
@@ -5255,8 +5257,9 @@ router.delete(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
+      const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) {
+      if (!hasAccess || Number.isNaN(numericProjectId)) {
         return sendError(res, 404, 'Project not found');
       }
 
@@ -5266,6 +5269,7 @@ router.delete(
         .where(
           and(
             eq(concept2cureConversations.conversationId, req.params.conversationId),
+            eq(concept2cureConversations.projectId, numericProjectId),
             eq(concept2cureConversations.organizationId, organizationId),
             eq(concept2cureConversations.status, 'active')
           )
