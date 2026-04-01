@@ -144,6 +144,7 @@ import {
   FileStack,
   Users,
   Loader2,
+  Search,
 } from 'lucide-react';
 import { LoadingState } from '@/components/ui/statesV2';
 import { Button } from '@/components/ui/button';
@@ -1042,13 +1043,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     [layoutMode]
   );
 
-  useEffect(() => {
-    if (layoutMode !== 'biostatistics') return;
-    setLayoutMode('regulatory-workspace');
-    setActiveToolPanel('ana-biostats');
-  }, [layoutMode]);
-
-  // Project-scoped artifacts for the Outputs tab (hoisted before callbacks that reference it)
+  // Project-scoped artifacts for section navigation and Outputs tab
   const { data: projectArtifacts = [] } = useQuery({
     queryKey: ['project-artifacts', activeProjectId],
     queryFn: async () => {
@@ -1066,6 +1061,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     enabled: !!activeProjectId,
     staleTime: 30_000,
   });
+
+  useEffect(() => {
+    if (layoutMode !== 'biostatistics') return;
+    setLayoutMode('regulatory-workspace');
+    setActiveToolPanel('ana-biostats');
+  }, [layoutMode]);
 
   // ── P2: Navigate to section — real navigation ──
   const handleNavigateToSection = useCallback(

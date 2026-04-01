@@ -18,6 +18,9 @@ import { z } from 'zod';
 import { REPORT_TYPE_SEED } from '../services/report-os/taxonomy';
 import { resolveScope } from '../services/report-os/scope-model';
 import { computeInitialRun } from '../services/report-os/orchestrator';
+import { evaluateReadiness } from '../services/regulatory/readinessEvaluator.js';
+import { buildPackageManifest } from '../services/regulatory/submissionPackageBuilder.js';
+import { resolveRegistryId } from '../services/regulatory/registry/legacySubmissionTypeMapper.js';
 import { authMiddleware } from '../auth';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
@@ -52,6 +55,8 @@ const createRunSchema = z.object({
   scopeType: z.enum(reportScopeEnum),
   scopeId: z.string().min(1),
   reportTypeId: z.string().min(1),
+  registryId: z.string().max(80).optional(),
+  submissionType: z.string().max(80).optional(),
   requestedBy: z.number().int().positive().optional(),
 });
 

@@ -65,3 +65,17 @@ test('orchestrator includes lifecycle-aware readiness computation', () => {
   assert.ok(orchestratorSource.includes('approvedOrLockedCount'));
   assert.ok(orchestratorSource.includes("provider: 'submission_readiness'"));
 });
+
+test('report-os orchestrator includes regional obligation provider', () => {
+  assert.ok(orchestratorSource.includes("provider: 'regional_registry_readiness'"));
+  assert.ok(orchestratorSource.includes("provider: 'regional_package_manifest'"));
+  assert.ok(orchestratorSource.includes('evaluateReadiness('));
+  assert.ok(orchestratorSource.includes('buildPackageManifest('));
+  assert.ok(orchestratorSource.includes('registryIdOrLegacy'));
+});
+
+test('report-os route captures regional context in run metadata', () => {
+  assert.ok(routeSource.includes('registryId'));
+  assert.ok(routeSource.includes('submissionType'));
+  assert.ok(routeSource.includes('summary: computed.summary'));
+});
