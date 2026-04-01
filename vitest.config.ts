@@ -1,7 +1,5 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
-
-export default defineConfig({
+export default {
   test: {
     globals: true,
     environment: 'node',
@@ -47,4 +45,4 @@ export default defineConfig({
     reporters: ['verbose'],
     watch: false,
   },
-});
+};
