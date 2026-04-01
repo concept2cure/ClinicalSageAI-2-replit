@@ -15,6 +15,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Plus,
   MessageSquare,
@@ -198,10 +199,13 @@ const WorkspaceGroup: React.FC<{
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="mt-1">
-      <button
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        className="w-full flex items-center gap-1 px-3 py-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest hover:text-stone-500 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded transition-colors"
+        className="h-auto w-full justify-start gap-1 px-3 py-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest hover:text-stone-500 rounded transition-colors"
       >
         <ChevronDown
           className={cn(
@@ -210,7 +214,7 @@ const WorkspaceGroup: React.FC<{
           )}
         />
         <span>{label}</span>
-      </button>
+      </Button>
       {open && <div className="pb-2 space-y-0.5">{children}</div>}
     </div>
   );
@@ -236,11 +240,14 @@ const NavItem: React.FC<{
     const accent = accentColor && accentMap[accentColor];
 
     return (
-      <button
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
         onClick={onClick}
         aria-current={active ? 'page' : undefined}
         className={cn(
-          'w-full flex items-center gap-2 mx-1 pl-5 pr-3 py-[5px] text-xs transition-all duration-150 rounded-md focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
+          'h-auto w-full justify-start gap-2 mx-1 pl-5 pr-3 py-[5px] text-xs transition-all duration-150 rounded-md',
           active
             ? accent
               ? `${accent.bg} ${accent.text} font-medium`
@@ -275,7 +282,7 @@ const NavItem: React.FC<{
             {badge}
           </span>
         )}
-      </button>
+      </Button>
     );
   },
   (prev, next) =>
@@ -326,13 +333,16 @@ const ConvoRow: React.FC<{
       {/* Three-dot menu — visible on hover */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
             onClick={e => e.stopPropagation()}
             aria-label={`Actions for conversation: ${convo.title}`}
-            className="flex-shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-stone-400 hover:text-stone-600 hover:bg-stone-200 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+            className="h-6 w-6 flex-shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-stone-400 hover:text-stone-600 hover:bg-stone-200"
           >
             <MoreHorizontal className="w-3.5 h-3.5" />
-          </button>
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
           {onRename && (
@@ -433,13 +443,16 @@ const ProjectRow: React.FC<{
         )}
       >
         {/* Expand chevron — toggles expand independently */}
-        <button
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
           onClick={e => {
             e.stopPropagation();
             onToggleExpand();
           }}
           aria-label={isExpanded ? 'Collapse project' : 'Expand project'}
-          className="flex-shrink-0 p-0.5 rounded hover:bg-stone-200/50 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors"
+          className="h-5 w-5 flex-shrink-0 p-0.5 rounded hover:bg-stone-200/50 transition-colors"
         >
           <ChevronDown
             className={cn(
@@ -448,7 +461,7 @@ const ProjectRow: React.FC<{
               !isExpanded && '-rotate-90'
             )}
           />
-        </button>
+        </Button>
 
         {/* Colored project dot (Claude.ai style) */}
         <span
@@ -491,18 +504,21 @@ const ProjectRow: React.FC<{
         {/* Three-dot menu — visible on hover */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
               onClick={e => e.stopPropagation()}
               aria-label={`Actions for ${project.name}`}
               className={cn(
-                'flex-shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
+                'h-6 w-6 flex-shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity',
                 isActive
                   ? 'text-stone-500 hover:text-stone-700 hover:bg-stone-300/50'
                   : 'text-stone-400 hover:text-stone-600 hover:bg-stone-200'
               )}
             >
               <MoreHorizontal className="w-3.5 h-3.5" />
-            </button>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44">
             <DropdownMenuItem
@@ -562,16 +578,19 @@ const ProjectRow: React.FC<{
       {isExpanded && (
         <div className="ml-3 pl-3 border-l border-stone-200 mt-0.5 space-y-0.5 pb-1">
           {/* New conversation within project */}
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             onClick={e => {
               e.stopPropagation();
               onNewChat();
             }}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-stone-500 hover:text-stone-700 hover:bg-stone-50 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+            className="h-auto w-full justify-start gap-2 px-2.5 py-1.5 text-xs text-stone-500 hover:text-stone-700 hover:bg-stone-50 rounded-md transition-colors"
           >
             <Plus className="w-3 h-3" />
             New chat
-          </button>
+          </Button>
 
           {conversations.length === 0 && (
             <p className="px-2.5 py-2 text-[11px] text-stone-400">No conversations yet</p>
@@ -617,16 +636,19 @@ const IconBtn: React.FC<{
     onClick,
     children,
   }) => (
-    <button
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
       onClick={onClick}
       aria-label={label}
       className={cn(
-        'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors',
+        'w-9 h-9 rounded-xl transition-colors',
         active ? `${accentBg} ${accentText}` : 'text-stone-500 hover:bg-stone-200'
       )}
     >
       {children}
-    </button>
+    </Button>
   ),
   (prev, next) => prev.label === next.label && prev.active === next.active
 );
@@ -665,11 +687,14 @@ const NewDropdown: React.FC<{
 
   return (
     <div className="relative mx-1" ref={containerRef}>
-      <button
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
         onClick={() => setOpen(o => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-stone-200 text-stone-700 text-[13px] font-medium hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors"
+        className="h-auto w-full justify-start gap-2 px-3 py-2 rounded-lg border-stone-200 text-stone-700 text-[13px] font-medium hover:bg-stone-100"
       >
         <Plus className="w-4 h-4 flex-shrink-0" />
         New
@@ -679,45 +704,54 @@ const NewDropdown: React.FC<{
             open && 'rotate-180'
           )}
         />
-      </button>
+      </Button>
       {open && (
         <div
           role="menu"
           className="absolute left-0 right-0 mt-1 bg-white border border-stone-200 rounded-lg shadow-sm z-50 py-1"
         >
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             role="menuitem"
             onClick={() => {
               onNewChat();
               setOpen(false);
             }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+            className="h-auto w-full justify-start gap-2 px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
           >
             <MessageSquare className="w-3.5 h-3.5 text-stone-400" />
             New Chat
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             role="menuitem"
             onClick={() => {
               onNewProject();
               setOpen(false);
             }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+            className="h-auto w-full justify-start gap-2 px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
           >
             <FolderOpen className="w-3.5 h-3.5 text-stone-400" />
             New Project
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             role="menuitem"
             onClick={() => {
               onNewArtifact();
               setOpen(false);
             }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+            className="h-auto w-full justify-start gap-2 px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
           >
             <FileStack className="w-3.5 h-3.5 text-stone-400" />
             New Document
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -913,13 +947,16 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
         {/* Bottom: expand + account */}
         <div className="mt-auto flex flex-col items-center gap-1">
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
             onClick={onToggleCollapse}
             aria-label="Expand sidebar"
-            className="w-9 h-9 rounded-xl text-stone-400 flex items-center justify-center hover:bg-stone-200 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors"
+            className="w-9 h-9 rounded-xl text-stone-400 hover:bg-stone-200 transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
-          </button>
+          </Button>
           <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center">
             <span className="text-[10px] font-bold text-blue-600 leading-none">
               {avatarInitial}
@@ -961,13 +998,16 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             </div>
             <span className="font-semibold text-stone-800 text-[13px]">Concept2Cure</span>
           </div>
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
             onClick={onToggleCollapse}
             aria-label="Collapse sidebar"
-            className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-200 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors"
+            className="h-8 w-8 p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-200 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
 
         {/* ── Global Navigation (6 items) ──────────────────────────────── */}
@@ -1234,9 +1274,12 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
         {/* User / account footer */}
         <div className="flex-shrink-0 border-t border-stone-100 p-2">
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             onClick={onOpenSettings}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-stone-500 hover:bg-stone-100 hover:text-stone-800 text-xs focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors"
+            className="h-auto w-full justify-start gap-2 px-2 py-1.5 rounded-lg text-stone-500 hover:bg-stone-100 hover:text-stone-800 text-xs transition-colors"
           >
             <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
               <span className="text-[10px] font-bold text-blue-600 leading-none">
@@ -1251,7 +1294,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
                 <p className="text-[10px] text-stone-400 truncate leading-tight">{userEmail}</p>
               )}
             </div>
-          </button>
+          </Button>
         </div>
       </aside>
     </>

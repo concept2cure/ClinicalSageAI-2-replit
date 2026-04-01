@@ -4,9 +4,10 @@ import React from 'react';
 import { useLocation, Link } from 'wouter';
 import { OrganizationSwitcher } from '../tenant/OrganizationSwitcher';
 import { ClientWorkspaceSwitcher } from '../tenant/ClientWorkspaceSwitcher';
-import { Settings, Users, Building2, SwitchCamera, Sparkles } from 'lucide-react';
+import { Settings, Users, Building2, Home, Sparkles } from 'lucide-react';
 import { useAnAAssistant } from '../../contexts/AnAAssistantContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
 import HelpButton from '../common/HelpButton';
 
 export default function UnifiedTopNavV3({
@@ -19,7 +20,7 @@ export default function UnifiedTopNavV3({
   const { openAssistant } = useAnAAssistant();
 
   const utilityChipClass =
-    'px-2.5 py-1 text-[11px] font-medium rounded-md border border-stone-200 bg-white text-stone-600 hover:bg-stone-50 hover:text-stone-900 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none flex items-center cursor-pointer';
+    'h-8 px-2.5 text-[11px] font-medium rounded-md border border-stone-200 bg-white text-stone-600 hover:bg-stone-50 hover:text-stone-900 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none flex items-center cursor-pointer';
   const utilityChipActiveClass = `${utilityChipClass} border-stone-300 bg-stone-100 text-stone-900`;
   const tabChipClass =
     'text-[12px] font-medium px-3 py-1.5 rounded-md border transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none';
@@ -46,7 +47,10 @@ export default function UnifiedTopNavV3({
       <div className="flex flex-col md:flex-row justify-between items-center px-3 py-2 border-b border-stone-100">
         <div className="flex flex-wrap items-center gap-2 mb-2 md:mb-0">
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 try {
                   window.history.back();
@@ -58,8 +62,11 @@ export default function UnifiedTopNavV3({
               className={utilityChipClass}
             >
               ← Back
-            </button>
-            <button
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 try {
                   window.history.forward();
@@ -71,12 +78,10 @@ export default function UnifiedTopNavV3({
               className={utilityChipClass}
             >
               → Forward
-            </button>
-            <Link href="/concept2cure">
-              <span className={utilityChipActiveClass}>
-                Concept2Cure
-              </span>
-            </Link>
+            </Button>
+            <Button asChild type="button" variant="ghost" size="sm" className={utilityChipActiveClass}>
+              <Link href="/concept2cure">Concept2Cure</Link>
+            </Button>
           </div>
 
           <div className="flex items-center gap-2 mt-2 md:mt-0">
@@ -96,13 +101,13 @@ export default function UnifiedTopNavV3({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link href="/settings">
-                  <span className={utilityChipClass}>
+                <Button asChild type="button" variant="ghost" size="sm" className={utilityChipClass}>
+                  <Link href="/settings">
                     <Settings className="h-3 w-3 mr-1" />
                     <span className="hidden sm:inline">Settings</span>
                     <span className="sm:hidden">Set</span>
-                  </span>
-                </Link>
+                  </Link>
+                </Button>
               </TooltipTrigger>
               <TooltipContent>
                 <p className="text-xs max-w-xs">
@@ -113,13 +118,13 @@ export default function UnifiedTopNavV3({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link href="/client-management">
-                  <span className={utilityChipClass}>
+                <Button asChild type="button" variant="ghost" size="sm" className={utilityChipClass}>
+                  <Link href="/client-management">
                     <Users className="h-3 w-3 mr-1" />
                     <span className="hidden sm:inline">Client Management</span>
                     <span className="sm:hidden">Clients</span>
-                  </span>
-                </Link>
+                  </Link>
+                </Button>
               </TooltipTrigger>
               <TooltipContent
                 side="bottom"
@@ -138,13 +143,13 @@ export default function UnifiedTopNavV3({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link href="/tenant-management">
-                  <span className={utilityChipClass}>
+                <Button asChild type="button" variant="ghost" size="sm" className={utilityChipClass}>
+                  <Link href="/tenant-management">
                     <Building2 className="h-3 w-3 mr-1" />
                     <span className="hidden sm:inline">Organization Settings</span>
                     <span className="sm:hidden">Orgs</span>
-                  </span>
-                </Link>
+                  </Link>
+                </Button>
               </TooltipTrigger>
               <TooltipContent
                 side="bottom"
@@ -163,13 +168,13 @@ export default function UnifiedTopNavV3({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link href="/concept2cure">
-                  <span className={utilityChipClass}>
-                    <SwitchCamera className="h-3 w-3 mr-1" />
+                <Button asChild type="button" variant="ghost" size="sm" className={utilityChipClass}>
+                  <Link href="/concept2cure">
+                    <Home className="h-3 w-3 mr-1" />
                     <span className="hidden sm:inline">Open Workspace</span>
                     <span className="sm:hidden">Workspace</span>
-                  </span>
-                </Link>
+                  </Link>
+                </Button>
               </TooltipTrigger>
               <TooltipContent>
                 <p className="text-xs max-w-xs">
@@ -183,16 +188,18 @@ export default function UnifiedTopNavV3({
               navItems.map((item, index) => (
                 <Tooltip key={index}>
                   <TooltipTrigger asChild>
-                    <Link href={item.path}>
-                      <span
-                        className={`${
-                          location === item.path ? utilityChipActiveClass : utilityChipClass
-                        }`}
-                      >
+                    <Button
+                      asChild
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className={location === item.path ? utilityChipActiveClass : utilityChipClass}
+                    >
+                      <Link href={item.path}>
                         <span className="hidden sm:inline">{item.label}</span>
                         <span className="sm:hidden">{item.label.substring(0, 3)}</span>
-                      </span>
-                    </Link>
+                      </Link>
+                    </Button>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="text-xs max-w-xs">CSR {item.label}</p>
@@ -232,7 +239,10 @@ export default function UnifiedTopNavV3({
             (tab.label === 'Timeline Simulator' && location === '/timeline') ||
             activeTab === tab.label.replace(/ /g, '');
           return (
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               key={tab.label}
               onClick={tab.onClick}
               className={
@@ -249,7 +259,7 @@ export default function UnifiedTopNavV3({
               ) : (
                 tab.label
               )}
-            </button>
+            </Button>
           );
         })}
       </div>
