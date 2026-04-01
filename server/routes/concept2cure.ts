@@ -99,6 +99,7 @@ import {
 } from '../../shared/types/communication-center';
 import {
   applyProjectSharingState,
+  canEditProject,
   canManageProject,
   canUseProject,
   getProjectSharingState,
@@ -1081,11 +1082,11 @@ function isMissingTableError(error: unknown): boolean {
   );
 }
 
-function getProjectScope(projectParam: string): { numericId: number } {
+function getProjectScope(projectParam: string): { numericId: number } | null {
   const projectId = projectParam.replace('proj_', '');
   const numericId = parseInt(projectId, 10);
   if (isNaN(numericId)) {
-    throw new Error('Invalid project ID format');
+    return null;
   }
   return { numericId };
 }
@@ -1100,9 +1101,16 @@ async function loadProjectAccessRow(params: {
   project:
     | {
         id: number;
+        name: string;
+        description: string | null;
+        metadata: unknown;
+        status: string;
+        organizationId: number;
         createdById: number | null;
         ownerId: number | null;
         settings: unknown;
+        createdAt: Date;
+        updatedAt: Date;
       }
     | null;
   legacyFallbackApplied: boolean;
@@ -1110,9 +1118,16 @@ async function loadProjectAccessRow(params: {
   const [project] = await db
     .select({
       id: projects.id,
+      name: projects.name,
+      description: projects.description,
+      metadata: projects.metadata,
+      status: projects.status,
+      organizationId: projects.organizationId,
       createdById: projects.createdById,
       ownerId: projects.ownerId,
       settings: projects.settings,
+      createdAt: projects.createdAt,
+      updatedAt: projects.updatedAt,
     })
     .from(projects)
     .where(
@@ -1745,7 +1760,6 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
     if (!scope) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
-
     const projectAccess = await loadProjectAccessRow({
       organizationId,
       clientWorkspaceId,
@@ -2373,14 +2387,7 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
       status: updated.status,
       organizationId: updated.organizationId,
       conversations,
-      ownership: buildProjectOwnership({
-        conversations,
-        settings: normalizeProjectSettings(updated.settings),
-        approvals: derivationData.approvalsByProject.get(numericId) || [],
-        reviewTasks: derivationData.reviewTasksByProject.get(numericId) || [],
-        reports: derivationData.reportsByProject.get(numericId) || [],
-        activityHistory: derivationData.activitiesByProject.get(numericId) || [],
-      }),
+      ownership: buildProjectOwnership(conversations, normalizeProjectSettings(updated.settings)),
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
     });
@@ -2403,6 +2410,9 @@ router.get('/projects/:id/sharing', async (req: Request, res: Response) => {
     const userId = getUserId(req);
     const actorRole = getActorRole(req);
     const scope = getProjectScope(req.params.id);
+    if (!scope) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
 
     const projectAccess = await loadProjectAccessRow({
       organizationId,
@@ -2453,6 +2463,9 @@ router.patch('/projects/:id/sharing/visibility', async (req: Request, res: Respo
     const userId = getUserId(req);
     const actorRole = getActorRole(req);
     const scope = getProjectScope(req.params.id);
+    if (!scope) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
     const { visibility } = projectVisibilitySchema.parse(req.body);
 
     const projectAccess = await loadProjectAccessRow({
@@ -2538,6 +2551,9 @@ router.put('/projects/:id/sharing/members/:userId', async (req: Request, res: Re
     const actorUserId = getUserId(req);
     const actorRole = getActorRole(req);
     const scope = getProjectScope(req.params.id);
+    if (!scope) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
 
     const pathUserId = Number.parseInt(req.params.userId, 10);
     if (!Number.isFinite(pathUserId) || pathUserId <= 0) {
@@ -2662,6 +2678,9 @@ router.delete('/projects/:id/sharing/members/:userId', async (req: Request, res:
     const actorUserId = getUserId(req);
     const actorRole = getActorRole(req);
     const scope = getProjectScope(req.params.id);
+    if (!scope) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
     const targetUserId = Number.parseInt(req.params.userId, 10);
 
     if (!Number.isFinite(targetUserId) || targetUserId <= 0) {
@@ -2728,7 +2747,6 @@ router.delete('/projects/:id', async (req: Request, res: Response) => {
     const userId = getUserId(req);
     const actorRole = getActorRole(req);
     const scope = getProjectScope(req.params.id);
-
     if (!scope) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
@@ -2793,7 +2811,6 @@ router.get('/projects/:projectId/knowledge', async (req: Request, res: Response)
     const userId = getUserId(req);
     const actorRole = getActorRole(req);
     const scope = getProjectScope(req.params.projectId);
-
     if (!scope) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
@@ -2917,7 +2934,6 @@ router.patch('/projects/:projectId/knowledge', async (req: Request, res: Respons
     const userId = getUserId(req);
     const actorRole = getActorRole(req);
     const scope = getProjectScope(req.params.projectId);
-
     if (!scope) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
@@ -5422,6 +5438,9 @@ async function verifyProjectAccess(req: Request, projectId: string): Promise<boo
   const clientWorkspaceId = getClientWorkspaceId(req);
   try {
     const scope = getProjectScope(projectId);
+    if (!scope) {
+      return false;
+    }
     const projectAccess = await loadProjectAccessRow({
       organizationId,
       clientWorkspaceId,
