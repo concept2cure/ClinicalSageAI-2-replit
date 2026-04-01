@@ -73,6 +73,7 @@
     "ci:reasoning-tier-readiness": "node scripts/ci/check-reasoning-tier-readiness-suite.mjs",
     "ci:reasoning-tier-readiness:strict": "node scripts/ci/check-reasoning-tier-readiness-suite.mjs --strict-uat-evidence",
     "audit:last-20-prs": "node scripts/audits/generate-last-pr-wiring-audit.mjs --limit 20",
+<<<<<<< HEAD
     "audit:last-20-prs:plan": "node scripts/audits/execute-last-pr-audit-build-plan.mjs --limit 20",
     "audit:last-20-prs:plan:strict": "node scripts/audits/execute-last-pr-audit-build-plan.mjs --limit 20 --strict",
     "audit:last-20-prs:plan:auto-install": "node scripts/audits/execute-last-pr-audit-build-plan.mjs --limit 20 --auto-install",
@@ -84,6 +85,9 @@
     "audit:repo-health:strict": "node scripts/audits/repo-health-scan.mjs --strict --owners docs/reports/repo-health-owners.json --write-markdown docs/reports/repo-health-scan-latest.md",
     "audit:repo-health:no-regression": "node scripts/audits/repo-health-scan.mjs --strict-no-regression --baseline docs/reports/repo-health-scan-latest.json --owners docs/reports/repo-health-owners.json --write-markdown docs/reports/repo-health-scan-latest.md",
     "audit:repo-health:full-strict": "node scripts/audits/repo-health-scan.mjs --strict --owners docs/reports/repo-health-owners.json --write-markdown docs/reports/repo-health-scan-latest.md"
+=======
+    "audit:last-20-prs:plan": "node scripts/audits/execute-last-pr-audit-build-plan.mjs"
+>>>>>>> origin/codex/audit-last-20-prs-for-correct-wiring
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
