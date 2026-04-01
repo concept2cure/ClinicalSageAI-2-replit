@@ -125,6 +125,7 @@ const sendSuccess = <T>(res: Response, data: T, meta?: Record<string, unknown>) 
   return res.json({ success: true, data });
 };
 import { ai } from '../lib/unified-ai-client';
+import { registerCommunicationCenterRoutes } from './concept2cure-communication-center';
 
 const sendError = (
   res: Response,
