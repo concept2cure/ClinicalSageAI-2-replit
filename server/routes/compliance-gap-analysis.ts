@@ -16,8 +16,8 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { db } from '../db';
-import { documents, components, organizations } from '../../shared/schema';
-import { eq, and, sql, desc, gte, lte } from 'drizzle-orm';
+import { documents, components, organizations, gapAnalysisResults } from '../../shared/schema';
+import { eq, and, sql, desc, gte, lte, count } from 'drizzle-orm';
 // @ts-ignore - JavaScript middleware file
 import { authenticateToken } from '../middleware/auth';
 // @ts-ignore - JavaScript middleware file
@@ -358,50 +358,58 @@ router.get('/trends', async (req, res) => {
   try {
     const { organizationId } = req as any;
     const { period = '30d', agency } = req.query;
-    
-    // Generate mock trend data (in production, would query historical data)
-    const trends = [];
+
     const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
-    const now = new Date();
-    
-    for (let i = days; i >= 0; i -= Math.ceil(days / 10)) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      
-      const dataPoint = {
-        date: date.toISOString().split('T')[0],
-        overallScore: 65 + Math.random() * 25,
-        agencies: {} as any
-      };
-      
-      if (agency) {
-        dataPoint.agencies[agency as string] = 70 + Math.random() * 20;
-      } else {
-        dataPoint.agencies = {
-          FDA: 70 + Math.random() * 20,
-          EMA: 65 + Math.random() * 25,
-          PMDA: 60 + Math.random() * 30
-        };
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+
+    const rows = await db!
+      .select({
+        month: sql<string>`to_char(date_trunc('month', ${gapAnalysisResults.createdAt}), 'YYYY-MM-DD')`,
+        avgScore: sql<number>`ROUND(AVG(${gapAnalysisResults.overallReadiness}), 1)`,
+        submissionType: gapAnalysisResults.submissionType,
+      })
+      .from(gapAnalysisResults)
+      .where(
+        and(
+          eq(gapAnalysisResults.organizationId, String(organizationId)),
+          gte(gapAnalysisResults.createdAt, since)
+        )
+      )
+      .groupBy(
+        sql`date_trunc('month', ${gapAnalysisResults.createdAt})`,
+        gapAnalysisResults.submissionType
+      )
+      .orderBy(sql`date_trunc('month', ${gapAnalysisResults.createdAt})`);
+
+    const trendMap = new Map<string, { date: string; overallScore: number; agencies: Record<string, number> }>();
+    for (const row of rows) {
+      const dateKey = row.month;
+      if (!trendMap.has(dateKey)) {
+        trendMap.set(dateKey, { date: dateKey, overallScore: Number(row.avgScore), agencies: {} });
       }
-      
-      trends.push(dataPoint);
+      const entry = trendMap.get(dateKey)!;
+      entry.agencies[row.submissionType] = Number(row.avgScore);
+      entry.overallScore = Number(row.avgScore);
     }
-    
+
+    const trends = Array.from(trendMap.values());
+
     res.json({
       success: true,
       data: {
         period,
         trends,
-        improvement: trends.length > 1 
+        improvement: trends.length > 1
           ? (trends[trends.length - 1].overallScore - trends[0].overallScore).toFixed(1)
-          : 0
+          : '0'
       }
     });
   } catch (error) {
     console.error('Error fetching compliance trends:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to fetch compliance trends' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch compliance trends'
     });
   }
 });
@@ -414,70 +422,70 @@ router.get('/report/:submissionId', async (req, res) => {
   try {
     const { organizationId } = req as any;
     const { submissionId } = req.params;
-    
-    // Generate comprehensive report (mock data for now)
+
+    const rows = await db!
+      .select()
+      .from(gapAnalysisResults)
+      .where(
+        and(
+          eq(gapAnalysisResults.organizationId, String(organizationId)),
+          eq(gapAnalysisResults.projectId, submissionId)
+        )
+      )
+      .orderBy(desc(gapAnalysisResults.createdAt))
+      .limit(1);
+
+    const latest = rows[0];
+
+    if (!latest) {
+      return res.json({
+        success: true,
+        data: {
+          submissionId,
+          generatedAt: new Date().toISOString(),
+          executiveSummary: {
+            overallReadiness: 0,
+            criticalGapsCount: 0,
+            majorGapsCount: 0,
+            minorGapsCount: 0,
+          },
+          totalRequired: 0,
+          completedCount: 0,
+          gapsSnapshot: [],
+          recommendations: [],
+        }
+      });
+    }
+
+    const gaps = (latest.gapsSnapshot as any[]) || [];
+    const criticalGapsCount = gaps.filter((g: any) => g.severity === 'critical').length;
+    const majorGapsCount = gaps.filter((g: any) => g.severity === 'major').length;
+    const minorGapsCount = gaps.filter((g: any) => g.severity === 'minor').length;
+
     const report = {
       submissionId,
-      generatedAt: new Date().toISOString(),
+      generatedAt: latest.createdAt.toISOString(),
       executiveSummary: {
-        overallReadiness: 78,
-        estimatedApprovalProbability: 0.72,
-        criticalGapsCount: 3,
-        majorGapsCount: 7,
-        minorGapsCount: 15,
-        estimatedRemediationTime: '2-3 weeks'
+        overallReadiness: latest.overallReadiness,
+        criticalGapsCount,
+        majorGapsCount,
+        minorGapsCount,
       },
-      agencyBreakdown: {
-        FDA: {
-          score: 82,
-          status: 'Nearly Complete',
-          gaps: [
-            { section: '3.2.S.4.3', issue: 'Stability data incomplete for accelerated conditions', severity: 'major' },
-            { section: '5.3.5.1', issue: 'Missing pediatric study waiver justification', severity: 'critical' }
-          ]
-        },
-        EMA: {
-          score: 75,
-          status: 'Significant Gaps',
-          gaps: [
-            { section: 'Module 1.8.2', issue: 'Risk Management Plan requires updates', severity: 'critical' },
-            { section: 'Module 2.5', issue: 'Clinical Overview missing ethnic sensitivity analysis', severity: 'major' }
-          ]
-        }
-      },
-      remediationPlan: {
-        immediate: [
-          'Complete stability studies for accelerated conditions',
-          'Submit pediatric waiver request with justification',
-          'Update Risk Management Plan per latest EMA guidance'
-        ],
-        shortTerm: [
-          'Conduct ethnic sensitivity analysis',
-          'Update manufacturing process validation',
-          'Complete outstanding bioequivalence studies'
-        ],
-        longTerm: [
-          'Implement continuous process verification',
-          'Establish post-approval change management protocol'
-        ]
-      },
-      riskAssessment: {
-        regulatoryRisk: 'Medium',
-        timelineRisk: 'Low',
-        qualityRisk: 'Medium',
-        clinicalRisk: 'Low'
-      }
+      totalRequired: latest.totalRequired,
+      completedCount: latest.completedCount,
+      gapsSnapshot: latest.gapsSnapshot,
+      recommendations: latest.recommendations,
     };
-    
+
     res.json({
       success: true,
       data: report
     });
   } catch (error) {
     console.error('Error generating compliance report:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to generate compliance report' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate compliance report'
     });
   }
 });
