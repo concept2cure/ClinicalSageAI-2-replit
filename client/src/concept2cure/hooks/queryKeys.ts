@@ -157,6 +157,17 @@ export const queryKeys = {
   reports: {
     catalog: () => ['concept2cure', 'reports', 'catalog'] as const,
     list: () => ['concept2cure', 'reports', 'list'] as const,
+    workspace: (params?: {
+      organizationId?: number | string;
+      scopeType?: string;
+      scopeId?: string;
+    }) => ['concept2cure', 'reports', 'workspace', params] as const,
+    bundles: () => ['concept2cure', 'reports', 'bundles'] as const,
+    runs: (params?: {
+      organizationId?: number | string;
+      scopeType?: string;
+      scopeId?: string;
+    }) => ['concept2cure', 'reports', 'runs', params] as const,
   },
 
   // ── CMC ───────────────────────────────────────────────────────────────────
