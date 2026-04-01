@@ -15,6 +15,7 @@ import { tenantContextMiddleware } from '../middleware/tenantContext';
 import { RegulatoryIntelligenceService } from '../services/regulatory-intelligence-service';
 import { searchDeviceReports, analyzeMaudeData } from '../fda_maude_client.js';
 import { gatherIntegratedData } from '../data_integration.js';
+import { computeReadinessScore } from '../services/intelligence/readiness-scoring-engine.js';
 
 const logger = createScopedLogger('regulatory-intel-api');
 const router = Router();
@@ -533,41 +534,58 @@ router.post('/impact-analysis', async (req: Request, res: Response) => {
  */
 router.get('/compliance-score', async (req: Request, res: Response) => {
   try {
-    const { phase, indication, productCode, submissionType } = req.query;
+    const { phase, indication, projectId, submissionType } = req.query;
+    const organizationId = Number((req as any).tenantId || (req as any).organizationId);
+    const numericProjectId = Number(projectId);
+
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(401).json({ success: false, error: 'Tenant context required' });
+    }
+    if (!Number.isFinite(numericProjectId) || numericProjectId <= 0) {
+      return res.status(400).json({ success: false, error: 'projectId query parameter is required' });
+    }
 
     await regulatoryService.initialize();
     const intelligence = await regulatoryService.getRegulatoryIntelligence(
       (phase as string) || 'Phase 1',
       indication as string | undefined,
     );
+    const readiness = await computeReadinessScore({
+      organizationId,
+      projectId: numericProjectId,
+      submissionType: (submissionType as string) || undefined,
+    });
 
     const totalReqs = intelligence.key_requirements.length;
     const mandatoryReqs = intelligence.key_requirements.filter(r => r.compliance_level === 'mandatory');
-    const guidanceCount = intelligence.relevant_guidance.length;
-
-    // Score components (simulated — in production these would be calculated from actual compliance data)
-    const documentationScore = Math.min(100, 60 + guidanceCount * 3);
-    const regulatoryReadiness = Math.min(100, 75 + mandatoryReqs.length);
-    const submissionPreparedness = totalReqs > 0 ? Math.round((guidanceCount / Math.max(totalReqs, 1)) * 100) : 50;
-
-    const overallScore = Math.round((documentationScore + regulatoryReadiness + submissionPreparedness) / 3);
+    const docsCoverage = readiness.dimensions.completeness;
+    const regulatoryReadiness = readiness.dimensions.compliance;
+    const submissionPreparedness = readiness.overallScore;
+    const overallScore = Math.round((docsCoverage + regulatoryReadiness + submissionPreparedness) / 3);
 
     res.json({
       success: true,
       data: {
         overallScore,
         breakdown: {
-          documentationCompleteness: documentationScore,
+          documentationCompleteness: docsCoverage,
           regulatoryReadiness,
-          submissionPreparedness: Math.min(100, submissionPreparedness),
+          submissionPreparedness,
+        },
+        readiness: {
+          trend: readiness.trend,
+          openGapCount: readiness.gaps.length,
+          criticalGapCount: readiness.gaps.filter(g => g.severity === 'critical').length,
+          scoredAt: readiness.scoredAt,
         },
         totalRequirements: totalReqs,
         mandatoryRequirements: mandatoryReqs.length,
-        relevantGuidances: guidanceCount,
-        riskAreas: mandatoryReqs.slice(0, 3).map(r => ({
-          area: r.guideline,
-          agency: r.agency,
-          requirement: r.requirement,
+        relevantGuidances: intelligence.relevant_guidance.length,
+        riskAreas: readiness.gaps.slice(0, 5).map(g => ({
+          area: g.module,
+          severity: g.severity,
+          requirement: g.description,
+          remediation: g.remediation,
         })),
         lastCalculated: new Date().toISOString(),
       },

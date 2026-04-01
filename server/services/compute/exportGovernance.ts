@@ -62,12 +62,13 @@ export interface ExportGovernanceResult {
 /**
  * Register a governed export artifact with full provenance chain.
  *
- * Creates all 5 records in a single transaction. If the transaction fails,
- * the export still proceeds (degraded mode), and the caller gets null.
+ * Creates all 5 records in a single transaction.
+ * If the transaction fails, this function throws and callers must decide
+ * whether degraded mode is explicitly allowed.
  */
 export async function registerGovernedExport(
   input: ExportGovernanceInput
-): Promise<ExportGovernanceResult | null> {
+): Promise<ExportGovernanceResult> {
   const pool = getPool();
   const client = await pool.connect();
   const now = new Date();
@@ -277,7 +278,7 @@ export async function registerGovernedExport(
     };
   } catch (error) {
     await client.query('ROLLBACK').catch(() => {});
-    console.error('[ExportGovernance] Failed to register governed export — degraded mode:', error);
+    console.error('[ExportGovernance] Failed to register governed export:', error);
 
     // Trace: export_failure
     emitTraceEvent({
@@ -290,7 +291,9 @@ export async function registerGovernedExport(
       metadata: { error: (error as Error).message, exportFormat: input.exportFormat },
     });
 
-    return null;
+    throw new Error(
+      `Governed export registration failed: ${(error as Error).message || 'unknown error'}`
+    );
   } finally {
     client.release();
   }
@@ -300,8 +303,9 @@ export async function registerGovernedExport(
  * Lightweight governance hook for routes that stream exports.
  *
  * Call this AFTER the export buffer is ready but BEFORE sending the response.
- * Non-blocking: if governance write fails, the export still proceeds (degraded mode).
- * Returns the governance result or null on failure.
+ * Returns the governance result.
+ * When `allowDegradedMode` is false (default), governance failures throw.
+ * When true, failures return null and the caller may proceed in degraded mode.
  */
 export async function registerExportGovernanceQuick(opts: {
   organizationId: number;
@@ -318,6 +322,7 @@ export async function registerExportGovernanceQuick(opts: {
   backendRoute: string;
   ctdSection?: string;
   ipAddress?: string;
+  allowDegradedMode?: boolean;
 }): Promise<ExportGovernanceResult | null> {
   try {
     const contentHash = opts.exportHash ?? crypto.createHash('sha256')
@@ -346,7 +351,10 @@ export async function registerExportGovernanceQuick(opts: {
       ipAddress: opts.ipAddress,
     });
   } catch (err) {
-    console.error('[ExportGovernanceQuick] Non-blocking governance registration failed:', err);
-    return null;
+    console.error('[ExportGovernanceQuick] Governance registration failed:', err);
+    if (opts.allowDegradedMode) {
+      return null;
+    }
+    throw err;
   }
 }
