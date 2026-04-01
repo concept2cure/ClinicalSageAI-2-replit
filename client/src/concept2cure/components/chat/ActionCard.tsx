@@ -7,7 +7,7 @@
  *
  * Intent → behaviour map:
  *   chat.new          → prefill the chat input with a default message
- *   vault.upload      → route to /concept2cure?panel=vault
+ *   vault.upload      → route to vault workspace
  *   project.new       → calls onNewProject callback
  *   validation.run    → prefill chat with "Run a regulatory validation on…"
  *   workflow.*        → prefill chat with workflow startup prompt
@@ -97,7 +97,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
     const action = primary?.action || intent || '';
 
     if (action && (action === 'vault.open_upload' || action === 'vault.upload' || action.startsWith('vault'))) {
-      onNavigate?.('/concept2cure?panel=vault');
+      onNavigate?.('vault');
       return;
     }
     if (action === 'project.new') {
