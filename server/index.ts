@@ -1480,10 +1480,6 @@ try {
   console.error('❌ Failed to mount Stability routes:', error);
 }
 
-// Mount strategy routes
-// Disabled due to missing AI services - import strategyRouter from './src/routes/strategy.router.js';
-// app.use('/api/strategy', strategyRouter);
-
 console.log('✅ Enterprise API routes mounted successfully');
 
 // Mount GCC Platform routes (eCTD, Vault, Signing, Site Intel, Labeling)
@@ -4054,9 +4050,6 @@ console.log('✅ AnA Gold Standard Pack routes mounted successfully');
 import anaContinuousEvalRoutes from './routes/ana-continuous-eval';
 app.use('/api/ana-continuous-eval', anaContinuousEvalRoutes);
 console.log('✅ AnA Continuous Evaluation Loop routes mounted successfully');
-
-// Mount IND templates routes - temporarily disabled
-// app.use('/api/ind', indTemplatesRoutes);
 
 // Mount Submission Center routes
 import submissionCenterRoutes from './routes/submissionCenter.routes';
@@ -7014,14 +7007,6 @@ async function startServer() {
   } catch (error) {
     console.error('Failed to mount leaves routes:', error);
   }
-
-  // Sections routes deprecated - consolidated into predictive-sections.ts
-  // try {
-  //   app.use('/api/sections', sectionsRouter);
-  //   console.log('✅ Sections real-time sync routes mounted successfully');
-  // } catch (error) {
-  //   console.error('Failed to mount sections routes:', error);
-  // }
 
   // Mount predictive sections routes
   try {
