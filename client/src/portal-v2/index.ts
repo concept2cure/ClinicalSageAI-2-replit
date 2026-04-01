@@ -9,6 +9,13 @@
  * ```
  */
 
+/**
+ * @deprecated Stage 2 beta cleanup fence.
+ *
+ * This barrel still re-exports the full `ClientPortalV2` tree for compatibility.
+ * Treat it as non-canonical until `/client-portal/*` ownership is explicitly
+ * resolved in the root app shell.
+ */
 // Main application component
 export { ClientPortalV2, default } from './ClientPortalV2';
 

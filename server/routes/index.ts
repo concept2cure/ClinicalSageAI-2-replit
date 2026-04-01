@@ -4,6 +4,12 @@
  * Canonical route registration happens in `server/index.ts`.
  * This module is retained only as a compatibility shim for
  * older tooling/scripts and should not be used for new work.
+ *
+ * Stage 2 beta cleanup fence (proof-required status).
+ * This alternate aggregator is not proven mounted by `server/index.ts`
+ * in the current live bootstrap path.
+ * It is NOT a removal candidate until unused proof is explicit.
+ * Do not add new behavior here unless mount ownership is explicitly decided.
  */
 import { Router } from 'express';
 import tenantsRoutes from './tenants';

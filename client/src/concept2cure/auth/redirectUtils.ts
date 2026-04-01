@@ -37,10 +37,10 @@ export const computeRedirect = (
   }
 
   const curUser = userArg ?? (userGetter ? userGetter() : undefined);
-  // Only redirect to /client-portal for explicit client-portal role holders.
-  // Admin/editor users also have an organizationId — do NOT send them to the client portal.
+  // Stage 5 shell truth: beta users are steered into Concept2Cure shell.
+  // Keep role check for future specialization, but land in canonical shell path.
   if (curUser?.roles?.includes('client_admin') || curUser?.roles?.includes('client_user')) {
-    return '/client-portal';
+    return '/concept2cure';
   }
   return '/concept2cure';
 };
