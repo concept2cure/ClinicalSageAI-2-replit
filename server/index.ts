@@ -4081,6 +4081,11 @@ import submissionCenterRoutes from './routes/submissionCenter.routes';
 app.use('/api/submission-center', submissionCenterRoutes);
 console.log('✅ Submission Center API routes mounted successfully');
 
+// Mount Unified Regulatory Submissions routes (feature-gated)
+import regulatorySubmissionsRoutes from './routes/regulatorySubmissions';
+app.use('/api/regulatory-submissions', regulatorySubmissionsRoutes);
+console.log('✅ Regulatory Submissions API routes mounted successfully (feature-gated)');
+
 // Mount Submission Ops + Regulatory Correspondence routes
 import submissionOpsRoutes from './routes/submission-ops';
 import regulatoryCorrespondenceRoutes from './routes/regulatory-correspondence';

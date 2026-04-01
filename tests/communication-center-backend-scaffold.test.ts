@@ -61,4 +61,19 @@ describe('Communication Center backend scaffold', () => {
     expect(serverSrc).toContain("import submissionOpsRoutes from './routes/submission-ops'");
     expect(serverSrc).toContain("app.use('/api/submission-ops', submissionOpsRoutes)");
   });
+
+  it('mounts unified regulatory submissions route in server runtime', () => {
+    const serverSrc = read('server/index.ts');
+    expect(serverSrc).toContain("import regulatorySubmissionsRoutes from './routes/regulatorySubmissions'");
+    expect(serverSrc).toContain("app.use('/api/regulatory-submissions', regulatorySubmissionsRoutes)");
+  });
+
+  it('replaces regulatory submissions null placeholders with schema-backed implementation', () => {
+    const routeSrc = read('server/routes/regulatorySubmissions.ts');
+    expect(routeSrc).toContain('regulatorySubmissions');
+    expect(routeSrc).toContain('regulatoryTasks');
+    expect(routeSrc).toContain('stageGates');
+    expect(routeSrc).not.toContain('These schema tables are not yet defined');
+    expect(routeSrc).not.toContain('const submissionProjects: any = null;');
+  });
 });
