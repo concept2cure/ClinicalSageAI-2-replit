@@ -4,7 +4,7 @@ Stage: Stage 7 — UI-Only Beta Honesty Pass
 Branch: `cursor/critical-files-management-f38a`  
 Stage 7 implementation baseline: `082ef07c` (`082ef07c`)  
 Stage 7 cleanup chain: `185ab0fd` -> `d8046d56` -> `7e49bcac` -> `d097be99` -> `1034efbf` -> `4e994db4`  
-Branch / commit reviewed for archival evidence (current): `4e994db4`
+Branch / commit reviewed for archival evidence (current): `ab6c97af`
 
 ## Wave A / Batch A1 follow-on (canonical shell exposure policy)
 
@@ -96,6 +96,17 @@ Make the visible UI stop lying by implication. Expose only beta-safe surfaces th
   - `client/src/concept2cure/components/sidebar/ZenSidebar.tsx`
 - Preserved route wiring and navigation semantics while normalizing control sizing and interaction styles.
 - Kept scope UI-only: no new screens, no capability removal, no route ownership changes.
+
+## Wave A / Batch A6 final certification framing (pre-test snapshot)
+
+- Final certification pass prepared to lock founder-facing evidence:
+  - one explicit implementation chain
+  - one explicit validation snapshot
+  - one explicit residual-risk statement
+- Pre-test certification anchor commit: `ab6c97af`.
+- Final validation evidence will be recorded after re-running:
+  - Stage 7 `PULSE-*` browser heartbeat checks
+  - shell truth + governed workspace contract tests
 
 ## Contradictions fixed in Stage 7
 

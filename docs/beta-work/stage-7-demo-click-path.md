@@ -3,8 +3,8 @@
 Stage: Stage 7 — UI-Only Beta Honesty Pass  
 Branch: `cursor/critical-files-management-f38a`  
 Baseline commit: `45ed2dfc` (`45ed2dfc`)  
-Stage 7 implementation commit chain: `082ef07c` -> `185ab0fd` -> `d8046d56` -> `7e49bcac` -> `d097be99` -> `1034efbf` -> `4e994db4`  
-Validation snapshot commit: `4e994db4` (`4e994db4`)
+Stage 7 implementation commit chain: `082ef07c` -> `185ab0fd` -> `d8046d56` -> `7e49bcac` -> `d097be99` -> `1034efbf` -> `4e994db4` -> `ab6c97af`  
+Pre-validation certification snapshot: `ab6c97af` (`ab6c97af`)
 
 ## Founder-recommended partner demo path
 
@@ -46,6 +46,11 @@ Use these checks while demoing:
   Result at current snapshot: **PASS (4/4)**
 - `npx vitest run --config vitest.config.ts client/src/__tests__/shellTruthRoutes.test.ts tests/stage6-governed-workspace-verifier.test.ts`  
   Result at current snapshot: **PASS (15/15)**
+
+## A6 certification intent
+
+- This snapshot is the founder-facing certification pass for Stage 7 Wave A.
+- Final lock requires one more fresh heartbeat run and validation-snapshot commit update.
 
 ## Current known runtime risk (separate from Stage 7 honesty labels)
 
