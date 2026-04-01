@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { getCurrentUser } from '../utils/getCurrentUser';
+import { getAuthToken } from '@/utils/authToken';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -61,11 +62,18 @@ export function useDocumentCollaboration(documentId: string | null): UseDocument
     if (!documentId) return;
 
     const user = userRef.current;
+    const token = getAuthToken();
+
+    if (!token) {
+      setIsConnected(false);
+      return;
+    }
 
     const socket = io(window.location.origin, {
       path: '/socket.io/',
       autoConnect: false,
       transports: ['websocket', 'polling'],
+      auth: { token },
     });
 
     socketRef.current = socket;
