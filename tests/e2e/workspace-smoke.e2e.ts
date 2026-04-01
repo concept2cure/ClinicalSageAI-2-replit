@@ -781,16 +781,8 @@ test.describe('Stage 9 - Authenticated beta pulse certification', () => {
     await expect(switcher.first()).toBeVisible({ timeout: 10000 });
 
     const firstProjectCard = switcher.first().locator('h3').first();
-    const hasProjectCard = await firstProjectCard.isVisible({ timeout: 10000 }).catch(() => false);
-    if (hasProjectCard) {
-      await firstProjectCard.click();
-    } else {
-      // Fallback for environments where the switcher opens but seeded project cards are delayed/empty.
-      await page.keyboard.press('Escape').catch(() => {});
-      await page.goto(`${BASE_URL}/concept2cure/project/${STAGE9_PROJECT_ID}`, {
-        waitUntil: 'domcontentloaded',
-      });
-    }
+    await expect(firstProjectCard).toBeVisible({ timeout: 10000 });
+    await firstProjectCard.click();
 
     await page.waitForURL(url => url.pathname.startsWith('/concept2cure/project/'), { timeout: 20000 });
     await clickSidebarNav(page, 'Editor');
