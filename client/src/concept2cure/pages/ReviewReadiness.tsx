@@ -589,10 +589,10 @@ function SnowGlobeView() { return null; }
 function _removed() { // eslint-disable-line
   const _: never = null as never; void _; // dead code marker
   const DEFAULT_SIMULATIONS: unknown[] = []; void DEFAULT_SIMULATIONS;
-  const avgRisk = Math.round(simulations.reduce((s, e) => s + e.riskScore, 0) / simulations.length);
+  const avgRisk = Math.round(simulations.reduce((s: any, e: any) => s + e.riskScore, 0) / simulations.length);
 
   const handleRunSimulation = useCallback((index: number) => {
-    setSimulations((prev) => {
+    setSimulations((prev: any) => {
       const next = [...prev];
       next[index] = { ...next[index], status: 'completed', riskScore: Math.max(5, next[index].riskScore + Math.floor(Math.random() * 11) - 5) };
       return next;
@@ -660,7 +660,7 @@ function _removed() { // eslint-disable-line
           </div>
           <div>
             <p className="text-xs text-stone-400 uppercase tracking-wide">Engines Run</p>
-            <p className="text-base font-semibold text-stone-900 mt-1">{simulations.filter((s) => s.status === 'completed').length}/{simulations.length}</p>
+            <p className="text-base font-semibold text-stone-900 mt-1">{simulations.filter((s: any) => s.status === 'completed').length}/{simulations.length}</p>
           </div>
           <div>
             <p className="text-xs text-stone-400 uppercase tracking-wide">Trial Success</p>
@@ -678,7 +678,7 @@ function _removed() { // eslint-disable-line
 
       {/* Engine Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {simulations.map((engine, i) => (
+        {simulations.map((engine: any, i: any) => (
           <div key={i} className="bg-white border border-stone-200 rounded-lg p-5">
             <div className="flex items-start justify-between">
               <div>
@@ -691,7 +691,7 @@ function _removed() { // eslint-disable-line
             </div>
 
             <ul className="mt-3 space-y-1">
-              {engine.findings.map((f, j) => (
+              {engine.findings.map((f: any, j: any) => (
                 <li key={j} className="text-xs text-stone-600 flex items-start gap-1.5">
                   <span className="text-stone-400 mt-0.5">-</span>
                   {f}
@@ -730,7 +730,7 @@ function _removed() { // eslint-disable-line
         <div>
           <p className="text-xs text-stone-400 uppercase tracking-wide mb-2">Risk Factors</p>
           <div className="space-y-1.5">
-            {ANA_PREDICTION.riskFactors.map((rf, i) => (
+            {ANA_PREDICTION.riskFactors.map((rf: any, i: any) => (
               <div key={i} className="flex items-start gap-2">
                 <span className={cn(
                   'mt-0.5 w-1.5 h-1.5 rounded-full shrink-0',
@@ -783,7 +783,7 @@ function _removed() { // eslint-disable-line
       <div className="bg-white border border-stone-200 rounded-lg p-5 space-y-3">
         <h3 className="text-sm font-medium text-stone-900">Recommended Endpoints</h3>
         <div className="divide-y divide-stone-50">
-          {ANA_PREDICTION.endpoints.map((ep, i) => (
+          {ANA_PREDICTION.endpoints.map((ep: any, i: any) => (
             <div key={i} className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
               <div>
                 <p className="text-xs font-medium text-stone-900">{ep.name}</p>
@@ -804,7 +804,7 @@ function _removed() { // eslint-disable-line
       <div className="bg-white border border-stone-200 rounded-lg p-5 space-y-3">
         <h3 className="text-sm font-medium text-stone-900">Protocol Optimization</h3>
         <ul className="space-y-2">
-          {ANA_PREDICTION.protocolFindings.map((finding, i) => (
+          {ANA_PREDICTION.protocolFindings.map((finding: any, i: any) => (
             <li key={i} className="text-xs text-stone-600 flex items-start gap-2">
               <span className="text-blue-500 mt-0.5 shrink-0">{'\u2192'}</span>
               {finding}

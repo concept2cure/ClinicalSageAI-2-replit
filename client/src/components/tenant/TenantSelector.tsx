@@ -95,7 +95,7 @@ export function TenantSelector() {
         <DropdownMenuContent align="end" className="w-[200px]">
           <DropdownMenuLabel>Organizations</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {availableTenants.map(tenant => (
+          {availableTenants.map((tenant: any) => (
             <DropdownMenuItem
               key={tenant.id}
               onClick={() => handleSwitchTenant(tenant)}

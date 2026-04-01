@@ -262,7 +262,7 @@ function EvidenceTaskRow({
             )}
           </div>
           <div className="flex gap-1 mt-1 flex-wrap">
-            {task.triggered_risk_codes.map(rc => (
+            {task.triggered_risk_codes.map((rc: any) => (
               <Badge key={rc} variant="secondary" className="text-[11px] font-mono">
                 {rc}
               </Badge>
@@ -284,7 +284,7 @@ function EvidenceTaskRow({
             <div>
               <p className="text-xs font-medium mb-1">Acceptance Criteria</p>
               <ul className="list-disc list-inside text-xs text-muted-foreground space-y-0.5">
-                {task.acceptance_criteria.map((c, i) => (
+                {task.acceptance_criteria.map((c: any, i: any) => (
                   <li key={i}>{c}</li>
                 ))}
               </ul>
@@ -296,7 +296,7 @@ function EvidenceTaskRow({
             <div>
               <p className="text-xs font-medium mb-1">Recommended Artifacts</p>
               <div className="flex flex-wrap gap-1">
-                {task.recommended_artifacts.map(a => (
+                {task.recommended_artifacts.map((a: any) => (
                   <Badge key={a} variant="outline" className="text-[11px]">
                     {a}
                   </Badge>
@@ -332,12 +332,12 @@ function EvidenceTaskRow({
           {task.anticipated_questions?.length > 0 && (
             <div>
               <p className="text-xs font-medium mb-1">Anticipated Reviewer Questions</p>
-              {task.anticipated_questions.map((q, i) => (
+              {task.anticipated_questions.map((q: any, i: any) => (
                 <div key={i} className="p-2 rounded bg-muted/50 text-xs mb-1">
                   <p className="font-medium">{q.question}</p>
                   {q.recommended_artifacts?.length > 0 && (
                     <div className="flex gap-1 mt-1">
-                      {q.recommended_artifacts.map(a => (
+                      {q.recommended_artifacts.map((a: any) => (
                         <Badge key={a} variant="outline" className="text-[11px]">
                           {a}
                         </Badge>
@@ -433,7 +433,7 @@ function SubmissionGateCard({ gate }: { gate: SubmissionGateResult }) {
           <div className="mt-3">
             <p className="text-xs font-medium mb-1">Blocking Tasks</p>
             <div className="flex flex-wrap gap-1">
-              {gate.blocking_task_ids.map(id => (
+              {gate.blocking_task_ids.map((id: any) => (
                 <Badge key={id} variant="destructive" className="text-[11px] font-mono">
                   {id.slice(0, 12)}
                 </Badge>
@@ -446,7 +446,7 @@ function SubmissionGateCard({ gate }: { gate: SubmissionGateResult }) {
           <div className="mt-2">
             <p className="text-xs font-medium mb-1">Blocking Risk Codes</p>
             <div className="flex flex-wrap gap-1">
-              {gate.blocking_risk_codes.map(rc => (
+              {gate.blocking_risk_codes.map((rc: any) => (
                 <Badge key={rc} variant="destructive" className="text-[11px] font-mono">
                   {rc}
                 </Badge>
@@ -459,7 +459,7 @@ function SubmissionGateCard({ gate }: { gate: SubmissionGateResult }) {
           <div className="mt-3">
             <p className="text-xs font-medium mb-1">Recommended Next Actions</p>
             <ul className="list-disc list-inside text-xs text-muted-foreground space-y-0.5">
-              {gate.recommended_next_actions.map((a, i) => (
+              {gate.recommended_next_actions.map((a: any, i: any) => (
                 <li key={i}>{a}</li>
               ))}
             </ul>
@@ -679,7 +679,7 @@ export function DefensePacketPanel({
             <Card>
               <CardContent className="pt-6 text-center">
                 <p className="text-3xl font-bold text-red-600">
-                  {packet.tasks.filter(t => t.severity === 'High').length}
+                  {packet.tasks.filter((t: any) => t.severity === 'High').length}
                 </p>
                 <p className="text-xs text-muted-foreground">High Severity</p>
               </CardContent>
@@ -734,7 +734,7 @@ export function DefensePacketPanel({
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {packet.top_risks.map(rc => (
+                  {packet.top_risks.map((rc: any) => (
                     <TopRiskCard key={rc} code={rc} />
                   ))}
                 </div>

@@ -56,3 +56,36 @@ export const clearAuthToken = (): void => {
     localStorage.removeItem(key);
   }
 };
+
+const ORG_KEY = 'organizationId';
+
+export const getOrgId = (): string => {
+  try {
+    return sessionStorage.getItem(ORG_KEY) || localStorage.getItem(ORG_KEY) || '';
+  } catch {
+    return '';
+  }
+};
+
+export const setOrgId = (orgId: string): void => {
+  try {
+    sessionStorage.setItem(ORG_KEY, orgId);
+  } catch {
+    // fallback: do nothing
+  }
+};
+
+export const getAuthHeaders = (): Record<string, string> => {
+  const token = getAuthToken();
+  const orgId = getOrgId();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  if (orgId) {
+    headers['x-organization-id'] = orgId;
+  }
+  return headers;
+};

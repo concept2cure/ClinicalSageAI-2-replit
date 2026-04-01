@@ -311,7 +311,7 @@ export default function INDNarrativeModule({ organizationId }: { organizationId:
                 </TabsList>
 
                 <TabsContent value="sections" className="space-y-4">
-                  {sections.map((section) => (
+                  {sections.map((section: any) => (
                     <Card key={section.id} className="bg-gray-50">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">

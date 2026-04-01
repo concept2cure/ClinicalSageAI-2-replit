@@ -4200,7 +4200,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           {/* AnA 1.0 RI — Executed Guidance Actions */}
                           {msg.executedActions && msg.executedActions.length > 0 && (
                             <div className="mt-2 space-y-1.5">
-                              {msg.executedActions.map((action, i) => (
+                              {msg.executedActions.map((action: any, i: any) => (
                                 <div
                                   key={i}
                                   className={cn(

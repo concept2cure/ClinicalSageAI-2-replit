@@ -3264,12 +3264,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         status: a.status || 'draft',
                         version: a.version || 1,
                       }))}
-                      onOpenArtifact={artifactId => {
+                      onOpenArtifact={(artifactId: any) => {
                         setOpenArtifactId(artifactId);
                         setRiViewMode('editor');
                         setLayoutMode('regulatory-workspace');
                       }}
-                      onCreateArtifact={(sectionId, sectionLabel) => {
+                      onCreateArtifact={(sectionId: any, sectionLabel: any) => {
                         setPendingEditorContent({
                           title: sectionLabel,
                           content: '',
@@ -3446,7 +3446,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   </div>
                 </div>
                 <TemplateLibraryView
-                  onSelectTemplate={template => {
+                  onSelectTemplate={(template: any) => {
                     const sectionCode = template.ctdSection;
                     if (sectionCode) {
                       setActiveSectionCode(sectionCode);
