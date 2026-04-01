@@ -7,20 +7,8 @@ import { spawn } from 'child_process';
 import crypto from 'crypto';
 // Lazy load docx to prevent startup failures
 import { PDFDocument } from 'pdf-lib';
+import * as jose from 'jose';
 import { getPool } from '../db';
-
-// REQUIRED JWT verification for 21 CFR Part 11 compliance
-// Authorization: Bearer <jwt> with { email, roles: [...] } claims
-let jose: any = null;
-try {
-  jose = require('jose');
-  if (!jose) {
-    throw new Error('JWT verifier library (jose) did not load');
-  }
-} catch (e) {
-  // SECURITY: fail closed at startup if verifier is unavailable.
-  throw new Error('CRITICAL: JWT verifier unavailable. Refusing to start insecurely.');
-}
 
 const router = Router();
 
@@ -1649,8 +1637,8 @@ router.put('/comments/:id', async (req: Request, res: Response) => {
       status === 'resolved'
         ? 'comment_resolved'
         : status === 'open'
-          ? 'comment_reopened'
-          : 'comment_edited';
+        ? 'comment_reopened'
+        : 'comment_edited';
 
     await pool.query(
       `INSERT INTO authoring_comment_activity
@@ -1945,16 +1933,21 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
     try {
       const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
       const embeddingService = getEmbeddingService(pool);
-      const searchQuery = `${section.module} ${section.code} ${section.title} ${section.product_code || ''}`.trim();
+      const searchQuery = `${section.module} ${section.code} ${section.title} ${
+        section.product_code || ''
+      }`.trim();
       const searchResults = await embeddingService.searchHybrid(searchQuery, 5, 0.65);
       if (searchResults.length > 0) {
         sourcesRetrieved = searchResults.length;
         evidenceBlock =
           '\n\n--- RETRIEVED EVIDENCE FROM DATA ROOM (cite as [SRC-n]) ---\n' +
-          searchResults.map((r: any, i: number) => {
-            const content = r.content.length > 600 ? r.content.substring(0, 600) + '…' : r.content;
-            return `[SRC-${i + 1}] "${r.title}"\n${content}`;
-          }).join('\n\n') +
+          searchResults
+            .map((r: any, i: number) => {
+              const content =
+                r.content.length > 600 ? r.content.substring(0, 600) + '…' : r.content;
+              return `[SRC-${i + 1}] "${r.title}"\n${content}`;
+            })
+            .join('\n\n') +
           '\n--- END EVIDENCE ---\n\n' +
           'When your content relies on evidence above, cite it inline using [SRC-n]. ' +
           'Do NOT fabricate citations for evidence not provided.';
@@ -2002,9 +1995,12 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
                 sourcesRetrieved,
               },
             },
-            message: sourcesRetrieved > 0
-              ? `AI draft generated with ${sourcesRetrieved} Data Room source${sourcesRetrieved !== 1 ? 's' : ''}`
-              : 'AI draft generated successfully',
+            message:
+              sourcesRetrieved > 0
+                ? `AI draft generated with ${sourcesRetrieved} Data Room source${
+                    sourcesRetrieved !== 1 ? 's' : ''
+                  }`
+                : 'AI draft generated successfully',
           });
         }
       }
@@ -2019,7 +2015,9 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
         default: `QUALITY OVERALL SUMMARY - ${section.title}
 
 1. INTRODUCTION
-This section provides comprehensive quality information for ${section.product_code || 'the product'} in accordance with ${region} regulatory requirements.
+This section provides comprehensive quality information for ${
+          section.product_code || 'the product'
+        } in accordance with ${region} regulatory requirements.
 
 2. DRUG SUBSTANCE
 [Detailed information about the drug substance, including nomenclature, structure, general properties, and manufacture]
@@ -2034,7 +2032,9 @@ This section provides comprehensive quality information for ${section.product_co
 [Stability protocol, data, and conclusions supporting the proposed shelf life]
 
 6. CONCLUSION
-The quality information presented demonstrates that ${section.product_code || 'the product'} meets all ${region} regulatory standards for pharmaceutical quality.`,
+The quality information presented demonstrates that ${
+          section.product_code || 'the product'
+        } meets all ${region} regulatory standards for pharmaceutical quality.`,
 
         '3.2.S': `DRUG SUBSTANCE - ${section.title}
 
@@ -2217,7 +2217,9 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
         deficiencies.push({
           type: 'placeholder_text',
           severity: 'high',
-          message: `Found placeholder text: ${matches.slice(0, 3).join(', ')}${matches.length > 3 ? '...' : ''}`,
+          message: `Found placeholder text: ${matches.slice(0, 3).join(', ')}${
+            matches.length > 3 ? '...' : ''
+          }`,
           recommendation: 'Replace all placeholder text with actual content',
           location: 'multiple',
         });
@@ -2253,8 +2255,8 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
           complianceScore >= 80
             ? 'compliant'
             : complianceScore >= 60
-              ? 'needs_improvement'
-              : 'non_compliant',
+            ? 'needs_improvement'
+            : 'non_compliant',
         deficiencies,
         deficiency_count: deficiencies.length,
         scanned_at: new Date().toISOString(),
@@ -2498,7 +2500,9 @@ async function buildDocx(
 
         for (const c of cites) {
           const frozen = c.frozen_at ? 'FROZEN' : 'ACTIVE';
-          const line = `• ${c.source || c.citation_text || 'Citation'} — SHA256: ${c.payload_sha256 || 'PENDING'} — Status: ${frozen} — Created: ${new Date(c.created_at).toISOString()}`;
+          const line = `• ${c.source || c.citation_text || 'Citation'} — SHA256: ${
+            c.payload_sha256 || 'PENDING'
+          } — Status: ${frozen} — Created: ${new Date(c.created_at).toISOString()}`;
           children.push(
             new Paragraph({
               text: line,
@@ -2930,7 +2934,9 @@ router.post('/docs/:docId/send-to-packager', async (req: Request, res: Response)
 
     // 1) Export DOCX (or PDF if requested)
     const exp = await fetch(
-      `${req.protocol}://${req.get('host')}/api/authoring/docs/${req.params.docId}/export?fmt=${fmt || 'docx'}`,
+      `${req.protocol}://${req.get('host')}/api/authoring/docs/${req.params.docId}/export?fmt=${
+        fmt || 'docx'
+      }`,
       {
         method: 'POST',
       }
@@ -3333,7 +3339,9 @@ router.post('/docs/:docId/refresh-all', async (req: Request, res: Response) => {
 
         try {
           const refreshResponse = await fetch(
-            `${req.protocol}://${req.get('host')}/api/authoring/sections/${section.id}/refresh-token`,
+            `${req.protocol}://${req.get('host')}/api/authoring/sections/${
+              section.id
+            }/refresh-token`,
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -3985,7 +3993,9 @@ router.post(
         const cites = Array.isArray(cr.patch_json?.cites) ? cr.patch_json.cites : [];
         for (const citeId of cites) {
           await fetch(
-            `${req.protocol}://${req.get('host')}/api/authoring/sections/${cr.section_id}/refresh-token`,
+            `${req.protocol}://${req.get('host')}/api/authoring/sections/${
+              cr.section_id
+            }/refresh-token`,
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -4168,12 +4178,10 @@ ${sectionsResult.rows
     res.send(fileContent);
   } catch (error) {
     console.error('Export error:', error);
-    res
-      .status(500)
-      .json({
-        error: 'Export failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
+    res.status(500).json({
+      error: 'Export failed',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
   }
 });
 
@@ -4250,12 +4258,10 @@ router.post('/docs/:docId/submit', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Submit error:', error);
-    res
-      .status(500)
-      .json({
-        error: 'Submit failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
+    res.status(500).json({
+      error: 'Submit failed',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
   }
 });
 
@@ -4384,12 +4390,10 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Sign error:', error);
-    res
-      .status(500)
-      .json({
-        error: 'Sign failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
+    res.status(500).json({
+      error: 'Sign failed',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
   }
 });
 
@@ -4466,12 +4470,10 @@ router.post(
       });
     } catch (error) {
       console.error('Freeze error:', error);
-      res
-        .status(500)
-        .json({
-          error: 'Freeze failed',
-          message: error instanceof Error ? error.message : 'Unknown error',
-        });
+      res.status(500).json({
+        error: 'Freeze failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
     }
   }
 );
