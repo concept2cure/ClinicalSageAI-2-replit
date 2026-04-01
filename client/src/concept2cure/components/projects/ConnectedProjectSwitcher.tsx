@@ -87,6 +87,7 @@ export const ConnectedProjectSwitcher: React.FC<ConnectedProjectSwitcherProps> =
       isOpen={isOpen}
       onClose={onClose}
       projects={projects}
+      isLoading={isLoading}
       activeProjectId={activeProjectId}
       onSelectProject={onSelectProject}
       onCreateProject={onOpenNewProjectModal}

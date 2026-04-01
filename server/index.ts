@@ -17,11 +17,9 @@ import { Pool } from 'pg';
 import { setupVite, serveStatic } from './vite';
 import { httpLogger, errorHandler } from './src/mw/observability.js';
 // Database performance optimizations - optional
-import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import type { Request, Response, NextFunction } from 'express';
-import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 
 // Phase 4.1 Proof System - 21 CFR Part 11 Compliance
@@ -36,7 +34,7 @@ import { registerAdminRoutes } from './bootstrap/register-admin-routes';
 import { registerSubscriptionsRoutes } from './routes/reports/subscriptions-routes';
 
 // Enterprise Security & Performance Middleware
-import { applySecurityMiddleware, auditLog } from './middleware/enterprise-security.js';
+import { applySecurityMiddleware } from './middleware/enterprise-security.js';
 import {
   applyPerformanceMiddleware,
   cleanup as cleanupPerformance,
@@ -55,9 +53,6 @@ import {
 // Import enterprise services
 // NOTE: openaiService was renamed to aiProviderRouter - the old name was misleading
 // The service actually uses Kimi AI (moonshot.cn), not OpenAI
-import { AIProviderRouter, getAIRouter } from './services/aiProviderRouter.js';
-// aiProviderRouter will be initialized after database connection
-let aiProviderRouter: AIProviderRouter | null = null;
 // Side-effect imports: constructor initializes audit tables and RBAC cache
 import './services/auditService.js';
 import './services/roleBasedAccess.js';
@@ -153,6 +148,14 @@ import reportsGenerationRoutes from './routes/reports/generate-report';
 import { registerSubscriptionsRoutes } from './routes/reports/subscriptions-routes';
 import firecrawlWebhooksRoutes from './routes/firecrawl-webhooks';
 
+import { registerCoreRoutes } from './bootstrap/register-core-routes';
+import { registerConcept2CureRoutes } from './bootstrap/register-concept2cure-routes';
+import { registerAiRoutes } from './bootstrap/register-ai-routes';
+import { registerAdminRoutes } from './bootstrap/register-admin-routes';
+import { registerIntegrationRoutes } from './bootstrap/register-integrations-routes';
+import { registerGovernanceRoutes } from './bootstrap/register-governance-routes';
+import { registerPlatformRoutes } from './bootstrap/register-platform-routes';
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 const EXPERIMENTAL_ROUTES_ENABLED =
@@ -163,8 +166,6 @@ const DEMO_ROUTES_ENABLED =
 // --- Start Python FastAPI Backend as a Child Process ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const pythonBackendPath = path.resolve(__dirname, '..'); // Python files are in root directory
-
 let pythonProcess: any = null;
 
 const startPythonBackend = () => {
@@ -369,10 +370,6 @@ debugLog('Immutability policy enforcement middleware installed');
 
 debugLog('Express middleware configured');
 
-// Multer configuration
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
-
 // Use centralized database pool
 import { getPool } from './db';
 const pool = getPool();
@@ -402,12 +399,20 @@ async function verifyDatabaseConnection() {
   try {
     const result = await ensureCoreTables(process.env.DATABASE_URL);
     if (result.success) {
-      console.log(`✅ All ${result.existingTables.length} core database tables verified`);
+      console.log(
+        `✅ Database readiness verified (${result.existingSchemas.length} schemas, ${result.existingTables.length} tables)`
+      );
     } else if (result.missingCritical.length > 0) {
       console.error('❌ CRITICAL: Missing tables:', result.missingCritical.join(', '));
       console.error('   Run: npm run db:push to sync schema');
+    } else if (result.missingExtensions.length > 0) {
+      console.error('❌ CRITICAL: Missing required database extensions:', result.missingExtensions.join(', '));
     } else if (result.errors.length > 0) {
       console.error('⚠️ Table verification errors:', result.errors);
+    } else if (result.missingSchemas.length > 0) {
+      console.warn('⚠️ Database schemas required initialization:', result.missingSchemas.join(', '));
+    } else if (result.warnings.length > 0) {
+      console.warn('⚠️ Database readiness warnings:', result.warnings);
     }
   } catch (err: any) {
     console.error('⚠️ Core table verification failed:', err.message);
@@ -579,72 +584,8 @@ app.post('/api/logout', (req, res) => {
   res.redirect(307, '/api/auth/logout');
 });
 
-app.post('/api/register', (req, res) => {
-  res.redirect(307, '/api/auth/signup');
-});
-
-// Mount Enterprise Authentication routes (21 CFR Part 11 Compliant)
-try {
-  const authEnterpriseModule = await import('./routes/authEnterprise');
-  const authEnterpriseRouter = authEnterpriseModule.default;
-  if (
-    authEnterpriseRouter &&
-    (typeof authEnterpriseRouter === 'function' || (authEnterpriseRouter as any).handle)
-  ) {
-    app.use('/api/auth/enterprise', authEnterpriseRouter);
-    console.log('✅ Enterprise Authentication routes mounted at /api/auth/enterprise');
-    console.log(
-      '   - Multi-step auth flow: check-email → verify-password → verify-mfa → select-organization'
-    );
-    console.log('   - Rate limiting, account lockout, MFA support enabled');
-  } else {
-    console.warn('⚠️ Enterprise auth router not found - enterprise auth routes skipped');
-  }
-} catch (error) {
-  console.error('❌ Failed to mount enterprise auth routes:', error);
-}
-
-// Mount SSO helper routes (/api/auth/sso) for developer/testing
-try {
-  const ssoModule = await import('./routes/sso');
-  const ssoRouter = ssoModule.default;
-  if (ssoRouter && (typeof ssoRouter === 'function' || (ssoRouter as any).handle)) {
-    app.use('/api/auth/sso', ssoRouter);
-    console.log('✅ SSO helper routes mounted at /api/auth/sso');
-  }
-} catch (err) {
-  console.warn('⚠️ SSO helper routes not mounted - continuing without SSO helpers');
-}
-
-// ── Global Auth Middleware ──────────────────────────────────────────────
-// Protect ALL /api/* routes EXCEPT public paths (auth, health, legacy redirects).
-// Uses segment-boundary matching to prevent bypass via crafted paths like /api/auth-evil.
-app.use('/api', (req: Request, res: Response, next: NextFunction) => {
-  const openPrefixes = [
-    '/api/auth',
-    '/api/login',
-    '/api/logout',
-    '/api/register',
-    '/api/health',
-    '/api/health/full',
-    '/api/metrics',
-    '/api/cortex/health',
-    '/api/claude/health',
-    '/api/ai-gateway/health',
-    '/api/claude/models',
-  ];
-  const fullPath = req.baseUrl + req.path;
-  const isOpen = openPrefixes.some(p => {
-    if (fullPath === p) return true;
-    // Only match if prefix is followed by '/' or query string boundary
-    return fullPath.startsWith(p + '/');
-  });
-  if (isOpen) return next();
-  return authMiddleware(req, res, next);
-});
-console.log(
-  '✅ Global authMiddleware applied — all /api/* routes protected (except auth & health)'
-);
+// Register platform-level health and authentication routes
+await registerPlatformRoutes({ app, pool, authMiddleware });
 
 // Basic API routes - complex routes will be added back gradually
 app.get('/api/csr', (req: Request, res: Response) => {
@@ -2231,157 +2172,7 @@ app.get('/api/csr-real-data/stats', async (req: Request, res: Response) => {
   }
 });
 
-// Reports canonical routers (P1 extraction in progress)
-app.use('/api/reports', reportsGenerationRoutes);
-app.use('/api/reports', reportsManifestRoutes);
-registerSubscriptionsRoutes(app);
-
-// Reports compatibility facade — real DB query with fallback
-app.get('/api/reports', async (req: Request, res: Response) => {
-  try {
-    const reportType = req.query.type as string | undefined;
-
-    if (reportType === 'section-generation-log') {
-      // Query audit_events for report generation events
-      const result = await pool.query(
-        `SELECT event_type, user_name, metadata, timestamp FROM audit_events
-         WHERE event_type LIKE 'report.%' ORDER BY timestamp DESC LIMIT 20`
-      );
-      return res.json({
-        summary: { totalCalls: result.rows.length, avgLatency: 0, errorRate: 0 },
-        rows: result.rows.map((r: any) => ({
-          timestamp: r.timestamp,
-          user: r.user_name,
-          section: r.metadata?.section || 'N/A',
-          modelVersion: 'ana-cortex-v2',
-          status: 'success',
-          latency: 0,
-        })),
-      });
-    }
-
-    // Query real reports from database
-    const result = await pool.query(
-      `SELECT id, title, report_type, status, metadata, created_at, updated_at
-       FROM reports ORDER BY created_at DESC LIMIT 50`
-    );
-
-    return res.json(
-      result.rows.map((r: any) => ({
-        id: r.id,
-        title: r.title || `Report ${r.id}`,
-        type: r.report_type,
-        status: r.status || 'draft',
-        sponsor: r.metadata?.sponsor || '',
-        indication: r.metadata?.indication || '',
-        phase: r.metadata?.phase || '',
-        createdAt: r.created_at,
-        updatedAt: r.updated_at,
-      }))
-    );
-  } catch (error) {
-    console.error('Failed to fetch reports:', error);
-    return res.status(500).json({ error: 'Failed to fetch reports' });
-  }
-});
-
-app.post('/api/reports', async (req: Request, res: Response) => {
-  try {
-    const { title, reportType, content, metadata } = req.body;
-    const result = await pool.query(
-      `INSERT INTO reports (organization_id, title, report_type, status, content, metadata, created_at, updated_at)
-       VALUES (1, $1, $2, 'draft', $3, $4, NOW(), NOW()) RETURNING id`,
-      [
-        title || 'Untitled Report',
-        reportType || 'general',
-        JSON.stringify(content || {}),
-        JSON.stringify(metadata || {}),
-      ]
-    );
-    return res.status(201).json({
-      success: true,
-      message: 'Report created successfully',
-      reportId: result.rows[0].id,
-    });
-  } catch (error) {
-    console.error('Failed to create report:', error);
-    return res.status(500).json({ error: 'Failed to create report' });
-  }
-});
-
-app.get('/api/reports/count', async (_req: Request, res: Response) => {
-  try {
-    const result = await pool.query('SELECT COUNT(*)::int AS count FROM reports');
-    return res.json({ count: result.rows[0]?.count || 0 });
-  } catch (error) {
-    return res.json({ count: 0 });
-  }
-});
-
-app.get('/api/reports/ana-bio', async (_req: Request, res: Response) => {
-  try {
-    const result = await pool.query(
-      `SELECT id, title, report_type, status, created_at FROM reports WHERE report_type = 'ana-bio' ORDER BY created_at DESC`
-    );
-    return res.json({ reports: result.rows, status: 'available' });
-  } catch (error) {
-    return res.json({ reports: [], status: 'available' });
-  }
-});
-
-app.get('/api/reports/ana-bio/recent', async (_req: Request, res: Response) => {
-  try {
-    const result = await pool.query(
-      `SELECT id, title, report_type, status, created_at FROM reports WHERE report_type = 'ana-bio' ORDER BY created_at DESC LIMIT 5`
-    );
-    return res.json({ reports: result.rows, status: 'available' });
-  } catch (error) {
-    return res.json({ reports: [], status: 'available' });
-  }
-});
-
-app.get('/api/reports/export.pdf', async (_req: Request, res: Response) => {
-  const pdfContent = `%PDF-1.1
-1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
-endobj
-2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
-endobj
-3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
-endobj
-4 0 obj
-<< /Length 66 >>
-stream
-BT
-/F1 18 Tf
-72 720 Td
-(Concept2Cure.RI Report Export) Tj
-ET
-endstream
-endobj
-5 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
-endobj
-xref
-0 6
-0000000000 65535 f
-0000000010 00000 n
-0000000060 00000 n
-0000000117 00000 n
-0000000243 00000 n
-0000000361 00000 n
-trailer
-<< /Size 6 /Root 1 0 R >>
-startxref
-431
-%%EOF`;
-
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="concept2cure-ri-report.pdf"');
-  return res.send(Buffer.from(pdfContent, 'utf-8'));
-});
+// Reports/admin routes moved into admin bootstrap manifest
 
 // Audit — DB-backed implementation using audit_events table
 async function queryAuditEvents(queryParams: any, limitVal = 10, offsetVal = 0) {
