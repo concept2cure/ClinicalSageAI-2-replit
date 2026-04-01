@@ -59,6 +59,16 @@ const statusSchema = z.object({
   status: z.enum(['active', 'inactive', 'completed']),
 });
 
+const moduleRouteParamsSchema = z.object({
+  moduleType: z.enum(MODULE_TYPES as [string, ...string[]]),
+  moduleInstanceId: z.coerce.number().int().positive(),
+});
+
+const findQuerySchema = z.object({
+  moduleType: z.enum(MODULE_TYPES as [string, ...string[]]),
+  moduleInstanceId: z.coerce.number().int().positive(),
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Routes
 // ─────────────────────────────────────────────────────────────────────────────
@@ -75,7 +85,11 @@ router.get('/:projectId/modules', async (req: Request, res: Response) => {
     const tenant = getTenantContext(req);
     if ('error' in tenant) return res.status(400).json({ error: tenant.error });
 
-    const modules = await projectModuleBridge.getProjectModules(projectId, tenant.organizationId);
+    const modules = await projectModuleBridge.getProjectModules(
+      projectId,
+      tenant.organizationId,
+      tenant.clientWorkspaceId
+    );
     res.json({ projectId, modules, count: modules.length });
   } catch (err: any) {
     console.error('Error listing project modules:', err);
@@ -95,7 +109,11 @@ router.get('/:projectId/modules/summary', async (req: Request, res: Response) =>
     const tenant = getTenantContext(req);
     if ('error' in tenant) return res.status(400).json({ error: tenant.error });
 
-    const summary = await projectModuleBridge.getModuleSummary(projectId, tenant.organizationId);
+    const summary = await projectModuleBridge.getModuleSummary(
+      projectId,
+      tenant.organizationId,
+      tenant.clientWorkspaceId
+    );
     res.json({ projectId, summary });
   } catch (err: any) {
     console.error('Error getting module summary:', err);
@@ -191,17 +209,19 @@ router.delete(
   async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId, 10);
-      const moduleInstanceId = parseInt(req.params.moduleInstanceId, 10);
-      const { moduleType } = req.params;
+      if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
-      if (Number.isNaN(projectId) || Number.isNaN(moduleInstanceId)) {
-        return res.status(400).json({ error: 'Invalid IDs' });
-      }
+      const tenant = getTenantContext(req);
+      if ('error' in tenant) return res.status(400).json({ error: tenant.error });
+
+      const params = moduleRouteParamsSchema.parse(req.params);
 
       const removed = await projectModuleBridge.unlinkModule(
         projectId,
-        moduleType,
-        moduleInstanceId
+        params.moduleType,
+        params.moduleInstanceId,
+        tenant.organizationId,
+        tenant.clientWorkspaceId
       );
       if (!removed) {
         return res.status(404).json({ error: 'Module link not found' });
@@ -209,6 +229,9 @@ router.delete(
 
       res.json({ message: 'Module unlinked successfully' });
     } catch (err: any) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ error: 'Invalid request', details: err.errors });
+      }
       console.error('Error unlinking module:', err);
       res.status(500).json({ error: 'Failed to unlink module' });
     }
@@ -224,19 +247,21 @@ router.patch(
   async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId, 10);
-      const moduleInstanceId = parseInt(req.params.moduleInstanceId, 10);
-      const { moduleType } = req.params;
+      if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
-      if (Number.isNaN(projectId) || Number.isNaN(moduleInstanceId)) {
-        return res.status(400).json({ error: 'Invalid IDs' });
-      }
+      const tenant = getTenantContext(req);
+      if ('error' in tenant) return res.status(400).json({ error: tenant.error });
+
+      const params = moduleRouteParamsSchema.parse(req.params);
 
       const body = statusSchema.parse(req.body);
       const updated = await projectModuleBridge.updateModuleStatus(
         projectId,
-        moduleType,
-        moduleInstanceId,
-        body.status
+        params.moduleType,
+        params.moduleInstanceId,
+        body.status,
+        tenant.organizationId,
+        tenant.clientWorkspaceId
       );
 
       if (!updated) {
@@ -264,23 +289,24 @@ router.get('/find', async (req: Request, res: Response) => {
     const tenant = getTenantContext(req);
     if ('error' in tenant) return res.status(400).json({ error: tenant.error });
 
-    const moduleType = req.query.moduleType as string;
-    const moduleInstanceId = parseInt(req.query.moduleInstanceId as string, 10);
-
-    if (!moduleType || Number.isNaN(moduleInstanceId)) {
-      return res
-        .status(400)
-        .json({ error: 'moduleType and moduleInstanceId query params required' });
-    }
+    const query = findQuerySchema.parse(req.query);
 
     const linkedProjects = await projectModuleBridge.findProjectsForModule(
-      moduleType,
-      moduleInstanceId,
-      tenant.organizationId
+      query.moduleType,
+      query.moduleInstanceId,
+      tenant.organizationId,
+      tenant.clientWorkspaceId
     );
 
-    res.json({ moduleType, moduleInstanceId, projects: linkedProjects });
+    res.json({
+      moduleType: query.moduleType,
+      moduleInstanceId: query.moduleInstanceId,
+      projects: linkedProjects,
+    });
   } catch (err: any) {
+    if (err instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid request', details: err.errors });
+    }
     console.error('Error finding projects for module:', err);
     res.status(500).json({ error: 'Failed to find projects' });
   }

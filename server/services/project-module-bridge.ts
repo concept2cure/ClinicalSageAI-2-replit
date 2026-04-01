@@ -9,8 +9,8 @@
  */
 
 import { db } from '../db';
-import { projectModules, projects, organizations, clientWorkspaces } from '@shared/schema';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { projectModules, projects } from '@shared/schema';
+import { and, eq, sql } from 'drizzle-orm';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -65,10 +65,42 @@ export interface ProjectModuleView {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export class ProjectModuleBridge {
+  private async getScopedProject(
+    projectId: number,
+    organizationId: number,
+    clientWorkspaceId?: number | null
+  ): Promise<{ id: number; clientWorkspaceId: number }> {
+    const [project] = await db
+      .select({ id: projects.id, clientWorkspaceId: projects.clientWorkspaceId })
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)))
+      .limit(1);
+
+    if (!project) {
+      throw new Error(
+        `Project ${projectId} not found or does not belong to organization ${organizationId}`
+      );
+    }
+
+    if (clientWorkspaceId != null && project.clientWorkspaceId !== clientWorkspaceId) {
+      throw new Error(
+        `Project ${projectId} is not accessible in client workspace ${clientWorkspaceId}`
+      );
+    }
+
+    return project;
+  }
+
   /**
    * Link a module instance to a project. Idempotent — returns existing link if duplicate.
    */
   async linkModule(req: LinkModuleRequest): Promise<ProjectModuleView> {
+    const scopedProject = await this.getScopedProject(
+      req.projectId,
+      req.organizationId,
+      req.clientWorkspaceId
+    );
+
     // Check if link already exists (unique constraint: projectId + moduleType + moduleInstanceId)
     const existing = await db
       .select()
@@ -76,6 +108,8 @@ export class ProjectModuleBridge {
       .where(
         and(
           eq(projectModules.projectId, req.projectId),
+          eq(projectModules.organizationId, req.organizationId),
+          eq(projectModules.clientWorkspaceId, scopedProject.clientWorkspaceId),
           eq(projectModules.moduleType, req.moduleType),
           eq(projectModules.moduleInstanceId, req.moduleInstanceId)
         )
@@ -99,25 +133,12 @@ export class ProjectModuleBridge {
       return existing[0] as ProjectModuleView;
     }
 
-    // Validate project exists and belongs to org
-    const [project] = await db
-      .select({ id: projects.id })
-      .from(projects)
-      .where(and(eq(projects.id, req.projectId), eq(projects.organizationId, req.organizationId)))
-      .limit(1);
-
-    if (!project) {
-      throw new Error(
-        `Project ${req.projectId} not found or does not belong to organization ${req.organizationId}`
-      );
-    }
-
     const [link] = await db
       .insert(projectModules)
       .values({
         projectId: req.projectId,
         organizationId: req.organizationId,
-        clientWorkspaceId: req.clientWorkspaceId,
+        clientWorkspaceId: scopedProject.clientWorkspaceId,
         moduleType: req.moduleType,
         moduleInstanceId: req.moduleInstanceId,
         status: 'active',
@@ -135,13 +156,19 @@ export class ProjectModuleBridge {
   async unlinkModule(
     projectId: number,
     moduleType: string,
-    moduleInstanceId: number
+    moduleInstanceId: number,
+    organizationId: number,
+    clientWorkspaceId?: number | null
   ): Promise<boolean> {
+    const scopedProject = await this.getScopedProject(projectId, organizationId, clientWorkspaceId);
+
     const result = await db
       .delete(projectModules)
       .where(
         and(
           eq(projectModules.projectId, projectId),
+          eq(projectModules.organizationId, organizationId),
+          eq(projectModules.clientWorkspaceId, scopedProject.clientWorkspaceId),
           eq(projectModules.moduleType, moduleType),
           eq(projectModules.moduleInstanceId, moduleInstanceId)
         )
@@ -154,14 +181,21 @@ export class ProjectModuleBridge {
   /**
    * Get all modules linked to a project.
    */
-  async getProjectModules(projectId: number, organizationId: number): Promise<ProjectModuleView[]> {
+  async getProjectModules(
+    projectId: number,
+    organizationId: number,
+    clientWorkspaceId?: number | null
+  ): Promise<ProjectModuleView[]> {
+    const scopedProject = await this.getScopedProject(projectId, organizationId, clientWorkspaceId);
+
     const modules = await db
       .select()
       .from(projectModules)
       .where(
         and(
           eq(projectModules.projectId, projectId),
-          eq(projectModules.organizationId, organizationId)
+          eq(projectModules.organizationId, organizationId),
+          eq(projectModules.clientWorkspaceId, scopedProject.clientWorkspaceId)
         )
       );
 
@@ -171,8 +205,12 @@ export class ProjectModuleBridge {
   /**
    * Get a summary of all modules linked to a project, grouped by type.
    */
-  async getModuleSummary(projectId: number, organizationId: number): Promise<ModuleSummary[]> {
-    const modules = await this.getProjectModules(projectId, organizationId);
+  async getModuleSummary(
+    projectId: number,
+    organizationId: number,
+    clientWorkspaceId?: number | null
+  ): Promise<ModuleSummary[]> {
+    const modules = await this.getProjectModules(projectId, organizationId, clientWorkspaceId);
 
     const summaryMap = new Map<string, ModuleSummary>();
 
@@ -203,8 +241,20 @@ export class ProjectModuleBridge {
   async findProjectsForModule(
     moduleType: string,
     moduleInstanceId: number,
-    organizationId: number
+    organizationId: number,
+    clientWorkspaceId?: number | null
   ): Promise<Array<{ projectId: number; projectName: string; status: string }>> {
+    const conditions = [
+      eq(projectModules.moduleType, moduleType),
+      eq(projectModules.moduleInstanceId, moduleInstanceId),
+      eq(projectModules.organizationId, organizationId),
+    ];
+
+    if (clientWorkspaceId != null) {
+      conditions.push(eq(projectModules.clientWorkspaceId, clientWorkspaceId));
+      conditions.push(eq(projects.clientWorkspaceId, clientWorkspaceId));
+    }
+
     const links = await db
       .select({
         projectId: projectModules.projectId,
@@ -213,13 +263,7 @@ export class ProjectModuleBridge {
       })
       .from(projectModules)
       .innerJoin(projects, eq(projectModules.projectId, projects.id))
-      .where(
-        and(
-          eq(projectModules.moduleType, moduleType),
-          eq(projectModules.moduleInstanceId, moduleInstanceId),
-          eq(projectModules.organizationId, organizationId)
-        )
-      );
+      .where(and(...conditions));
 
     return links;
   }
@@ -298,14 +342,20 @@ export class ProjectModuleBridge {
     projectId: number,
     moduleType: string,
     moduleInstanceId: number,
-    status: 'active' | 'inactive' | 'completed'
+    status: 'active' | 'inactive' | 'completed',
+    organizationId: number,
+    clientWorkspaceId?: number | null
   ): Promise<ProjectModuleView | null> {
+    const scopedProject = await this.getScopedProject(projectId, organizationId, clientWorkspaceId);
+
     const [updated] = await db
       .update(projectModules)
       .set({ status, updatedAt: new Date() })
       .where(
         and(
           eq(projectModules.projectId, projectId),
+          eq(projectModules.organizationId, organizationId),
+          eq(projectModules.clientWorkspaceId, scopedProject.clientWorkspaceId),
           eq(projectModules.moduleType, moduleType),
           eq(projectModules.moduleInstanceId, moduleInstanceId)
         )
