@@ -30,6 +30,20 @@ describe('auth hardening', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+
+
+  it('rejects malformed bearer header with missing token segment', () => {
+    const req: any = { headers: { authorization: 'Bearer   ' } };
+    const res = createRes();
+    const next = vi.fn();
+
+    authMiddleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.body?.error).toContain('Bearer token');
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('derives request actor from authenticated user context, not user-supplied headers', () => {
     const req: any = {
       headers: {
