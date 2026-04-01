@@ -77,7 +77,55 @@ Result:
 
 These are intentionally unchanged by this QA pass:
 - full `npm run typecheck` repo-wide debt,
-- auth/tenant test suite (`roleBasedAccess` + `mfaService`) red,
 - env-dependent assembly smoke requiring DB env vars.
 
 Those remain tracked in Stage 8 and platform audit docs.
+
+## 6) QA wave 2 (continued) — auth/tenant red suite stabilization
+
+### Finding D — RBAC service tests were stale against current query shape (red)
+- Symptoms:
+  - `tests/services/roleBasedAccess.test.ts` failed in permission grants, role hierarchy, org scoping, cache, and middleware success path.
+- Root cause:
+  - test mocks assumed both permission and role lookups used `.where(...).limit(...)`.
+  - current production `RBACService.getUserRoles()` awaits `.where(...)` directly (no `.limit()`), so role rows were never returned in tests.
+- Fix:
+  - updated the DB mock to support both query paths:
+    - permission path: `.where(...).limit(...)`
+    - role path: awaitable `.where(...)` via `then(...)`.
+  - routed role expectations through a dedicated `mockRowsForWhere` queue.
+  - kept deny-by-default/fail-closed assertions unchanged.
+
+### Finding E — MFA service tests had stale imports and mock queue leakage (red)
+- Symptoms:
+  - `tests/services/mfaService.test.ts` intermittently/consistently failed on:
+    - `enableMfa` success path,
+    - `isMfaEnabled` true/false checks,
+    - challenge token creation due to missing `JWT_SECRET`.
+- Root cause:
+  - schema mock targeted the wrong relative path (`../../../shared/schema` instead of `../../shared/schema` from `tests/services`),
+  - `JWT_SECRET` was not set for challenge-token helpers requiring runtime env,
+  - queued `mockSelectLimit` responses leaked across tests.
+- Fix:
+  - corrected schema mocks to `../../shared/schema` and `../../shared/schema/index.ts`,
+  - set and clear `process.env.JWT_SECRET` in test lifecycle hooks,
+  - reset and re-seed `mockSelectLimit` in `beforeEach` to eliminate queue bleed,
+  - aligned issuer assertion to current production constant (`Concept2Cure`).
+
+### Validation runs (post-fix)
+
+Commands:
+
+```bash
+npx vitest run tests/services/roleBasedAccess.test.ts
+npx vitest run tests/services/mfaService.test.ts
+npx vitest run tests/services/roleBasedAccess.test.ts tests/services/mfaService.test.ts
+npm run smoke:e2e-assembly
+```
+
+Results:
+- `tests/services/roleBasedAccess.test.ts`: **18 passed, 0 failed**
+- `tests/services/mfaService.test.ts`: **16 passed, 0 failed**
+- combined auth/tenant suites: **34 passed, 0 failed**
+- `smoke:e2e-assembly`: **blocked by env precondition**  
+  (`TEST_DATABASE_URL or DATABASE_URL is required for E2E smoke tests`)

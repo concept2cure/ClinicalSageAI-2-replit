@@ -27,13 +27,24 @@ const mockSelect = vi.fn();
 const mockFrom = vi.fn();
 const mockWhere = vi.fn();
 const mockLimit = vi.fn();
+const mockRowsForWhere = vi.fn();
 
-// Chained builder returned by db.select()
-const queryBuilder = {
-  from: mockFrom.mockReturnThis(),
-  where: mockWhere.mockReturnThis(),
-  limit: mockLimit.mockResolvedValue([]),
+// Drizzle-like query builder:
+// - permissions path uses .where(...).limit(...)
+// - roles path uses .where(...) directly (awaitable)
+const queryBuilder: any = {
+  from: (...args: any[]) => mockFrom(...args),
+  where: (...args: any[]) => mockWhere(...args),
+  limit: (...args: any[]) => mockLimit(...args),
 };
+mockFrom.mockImplementation(() => queryBuilder);
+mockWhere.mockImplementation(() => ({
+  limit: (...args: any[]) => mockLimit(...args),
+  then: (resolve: (value: any) => any, reject?: (reason: any) => any) =>
+    Promise.resolve(mockRowsForWhere()).then(resolve, reject),
+}));
+mockLimit.mockResolvedValue([]);
+mockRowsForWhere.mockReturnValue([]);
 mockSelect.mockReturnValue(queryBuilder);
 
 const mockDb = { select: mockSelect };
@@ -51,7 +62,12 @@ const mockClientUserPermissions = {
 };
 
 vi.mock('../../server/db', () => ({ db: mockDb }));
+vi.mock('../../server/db.ts', () => ({ db: mockDb }));
 vi.mock('../../../shared/schema', () => ({
+  organizationUsers: mockOrganizationUsers,
+  clientUserPermissions: mockClientUserPermissions,
+}));
+vi.mock('../../../shared/schema/index.ts', () => ({
   organizationUsers: mockOrganizationUsers,
   clientUserPermissions: mockClientUserPermissions,
 }));
@@ -108,6 +124,8 @@ describe('RBACService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockLimit.mockResolvedValue([]);
+    mockRowsForWhere.mockReturnValue([]);
     rbac = freshService();
   });
 
@@ -129,8 +147,8 @@ describe('RBACService', () => {
     it('should deny when DB has no matching permission grants', async () => {
       // Permissions query returns empty
       mockLimit.mockResolvedValueOnce([]);
-      // Roles query returns empty (via the second select chain for getUserRoles)
-      mockLimit.mockResolvedValueOnce([]);
+      // Roles query returns empty (via await .where() in getUserRoles)
+      mockRowsForWhere.mockReturnValueOnce([]);
 
       const result = await rbac.checkPermission(1, 'documents', 'delete');
       expect(result).toBe(false);
@@ -187,7 +205,7 @@ describe('RBACService', () => {
       // No fine-grained permissions
       mockLimit.mockResolvedValueOnce([]);
       // Roles query returns admin
-      mockLimit.mockResolvedValueOnce([{ role: 'admin' }]);
+      mockRowsForWhere.mockReturnValueOnce([{ role: 'admin' }]);
 
       const result = await rbac.checkPermission(1, 'anything', 'delete');
       expect(result).toBe(true);
@@ -195,21 +213,21 @@ describe('RBACService', () => {
 
     it('should grant super_admin implicit full access', async () => {
       mockLimit.mockResolvedValueOnce([]);
-      mockLimit.mockResolvedValueOnce([{ role: 'super_admin' }]);
+      mockRowsForWhere.mockReturnValueOnce([{ role: 'super_admin' }]);
 
       const result = await rbac.checkPermission(1, 'users', 'delete');
       expect(result).toBe(true);
     });
 
     it('should respect role hierarchy with hasRole — manager satisfies member requirement', async () => {
-      mockLimit.mockResolvedValueOnce([{ role: 'manager' }]);
+      mockRowsForWhere.mockReturnValueOnce([{ role: 'manager' }]);
 
       const result = await rbac.hasRole(1, 'member');
       expect(result).toBe(true);
     });
 
     it('should respect role hierarchy — viewer does NOT satisfy admin requirement', async () => {
-      mockLimit.mockResolvedValueOnce([{ role: 'viewer' }]);
+      mockRowsForWhere.mockReturnValueOnce([{ role: 'viewer' }]);
 
       const result = await rbac.hasRole(1, 'admin');
       expect(result).toBe(false);
@@ -233,7 +251,7 @@ describe('RBACService', () => {
     });
 
     it('should scope getUserRoles to a specific organization', async () => {
-      mockLimit.mockResolvedValueOnce([{ role: 'member' }]);
+      mockRowsForWhere.mockReturnValueOnce([{ role: 'member' }]);
 
       const roles = await rbac.getUserRoles(1, 42);
       expect(roles).toEqual(['member']);
@@ -271,7 +289,7 @@ describe('RBACService', () => {
 
       // After invalidation, the next call must hit DB again
       mockLimit.mockResolvedValueOnce([]);
-      mockLimit.mockResolvedValueOnce([{ role: 'viewer' }]);
+      mockRowsForWhere.mockReturnValueOnce([{ role: 'viewer' }]);
 
       const result = await rbac.checkPermission(5, 'reports', 'read', 1);
       // Now viewer without explicit perm => denied
@@ -296,7 +314,7 @@ describe('RBACService', () => {
 
     it('should return 403 when permission is denied', async () => {
       mockLimit.mockResolvedValueOnce([]);
-      mockLimit.mockResolvedValueOnce([{ role: 'viewer' }]);
+      mockRowsForWhere.mockReturnValueOnce([{ role: 'viewer' }]);
 
       const { req, res, next } = createMockReqRes();
       const mw = rbac.requirePermission('admin', 'delete');
