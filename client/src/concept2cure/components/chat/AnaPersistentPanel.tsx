@@ -2003,6 +2003,108 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
   };
 
+  const handleDecisionsSlash = useCallback(() => {
+    (async () => {
+      const projectId = contextProfile?.projectId;
+      if (!projectId) {
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `a-${Date.now()}`,
+            role: 'assistant',
+            timestamp: new Date(),
+            content:
+              'I need an active project to load a decision trail. Open a project and try `/decisions` again.',
+          },
+        ]);
+        return;
+      }
+
+      const normalizedProjectId = String(projectId).replace(/^proj_/, '');
+      const params = new URLSearchParams({ project_id: normalizedProjectId, limit: '20' });
+      if (authoringContext?.sectionCode) params.set('section_code', authoringContext.sectionCode);
+      if (authoringContext?.moduleCode) params.set('module_code', authoringContext.moduleCode);
+
+      try {
+        const res = await apiRequest('GET', `/api/ana-ri/decisions?${params.toString()}`);
+        const payload = await res.json();
+        const data = payload?.data;
+        if (!payload?.success || !data) {
+          throw new Error(payload?.error?.message || 'Unable to load decision trail.');
+        }
+
+        const decisions: Array<any> = Array.isArray(data.decisions) ? data.decisions : [];
+        const status = data.decisionAwareStatus || {};
+        const top = decisions.slice(0, 5);
+        const lines = [
+          '**Decision Audit Trail**',
+          '',
+          `${status.summary || 'No decision-aware status summary available.'}`,
+          '',
+          `**Recent decisions:** ${data.count || 0}`,
+        ];
+
+        if (top.length > 0) {
+          for (const row of top) {
+            const decision = row?.decision || {};
+            const kind = decision.kind || 'decision';
+            const summary = decision.summary || 'No summary provided.';
+            const state = String(decision.status || 'unknown').toUpperCase();
+            lines.push(`- **[${state}]** ${kind}: ${summary}`);
+          }
+        } else {
+          lines.push('- No formal decisions recorded yet for this scope.');
+        }
+
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `a-${Date.now()}`,
+            role: 'assistant',
+            timestamp: new Date(),
+            content: lines.join('\n'),
+          },
+        ]);
+      } catch (err: any) {
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `a-${Date.now()}`,
+            role: 'assistant',
+            timestamp: new Date(),
+            content: `Could not load decision trail: ${err?.message || 'Unknown error'}`,
+            isError: true,
+          },
+        ]);
+      }
+    })();
+  }, [authoringContext?.moduleCode, authoringContext?.sectionCode, contextProfile?.projectId]);
+
+  const handleExportSlash = useCallback(() => {
+    const transcript = messages
+      .map(msg => `## ${msg.role === 'user' ? 'User' : 'AnA'}\n\n${msg.content}`)
+      .join('\n\n---\n\n');
+
+    const markdown = `# AnA Conversation Export\n\nGenerated: ${new Date().toISOString()}\n\n${transcript}\n`;
+    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ana-conversation-${new Date().toISOString().slice(0, 10)}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    setMessages(prev => [
+      ...prev,
+      {
+        id: `a-${Date.now()}`,
+        role: 'assistant',
+        timestamp: new Date(),
+        content: 'Conversation exported as markdown.',
+      },
+    ]);
+  }, [messages]);
+
   const selectSlashCommand = (cmd: SlashCommand) => {
     if (cmd.command === '/help') {
       setSlashMenuOpen(false);
@@ -2019,6 +2121,22 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       threadIdRef.current = null;
       setInput('');
       setSlashMenuOpen(false);
+      inputRef.current?.focus();
+      return;
+    }
+
+    if (cmd.command === '/decisions') {
+      setSlashMenuOpen(false);
+      setInput('');
+      handleDecisionsSlash();
+      inputRef.current?.focus();
+      return;
+    }
+
+    if (cmd.command === '/export') {
+      setSlashMenuOpen(false);
+      setInput('');
+      handleExportSlash();
       inputRef.current?.focus();
       return;
     }

@@ -2213,11 +2213,13 @@ export async function generateSAP(
     if (res.rows.length === 0)
       return { success: false, action: 'generate_sap', message: 'Project not found' };
 
-    // Call the biostats workflow endpoint internally
-    const { executeWorkflow } = await import('../ana-biostats/orchestrator.js').catch(() => ({
-      executeWorkflow: null,
-    }));
-    if (!executeWorkflow) {
+    // Call the biostats orchestrator directly.
+    const { anaBiostatsOrchestrator } = await import('../ana-biostats/orchestrator.js').catch(
+      () => ({
+        anaBiostatsOrchestrator: null,
+      })
+    );
+    if (!anaBiostatsOrchestrator) {
       return {
         success: false,
         action: 'generate_sap',
@@ -2225,31 +2227,56 @@ export async function generateSAP(
       };
     }
 
-    const result = await executeWorkflow({
-      track: params.track || 'pharma',
-      studyType: params.studyType || 'superiority',
-      endpointType: params.endpointType || 'continuous',
-      alpha: params.alpha || 0.05,
-      power: params.power || 0.8,
-      effectSize: params.effectSize || 0.5,
-      attrition: params.attrition || 0.15,
-      indication: params.indication,
-      phase: params.phase,
-      primaryEndpoint: params.primaryEndpoint,
-      documentType: 'sap_section',
-      projectId: params.projectId || ctx.activeProjectId,
+    const normalizedClientTrack =
+      params.track === 'medical_device'
+        ? 'medical_device'
+        : params.track === 'diagnostics_ivd'
+          ? 'diagnostics_ivd'
+          : 'biotech_pharma';
+    const result = await anaBiostatsOrchestrator.executeWorkflow({
+      workflowType: 'track_aware_drafting',
+      input: {
+        projectId: Number(params.projectId || ctx.activeProjectId),
+        clientTrack: normalizedClientTrack,
+        regulatoryBody:
+          typeof params.regulatoryBody === 'string'
+            ? params.regulatoryBody
+            : undefined,
+        studyType:
+          typeof params.studyType === 'string' ? params.studyType : 'superiority',
+        objectiveType:
+          typeof params.objectiveType === 'string'
+            ? params.objectiveType
+            : 'efficacy',
+        endpointType:
+          typeof params.endpointType === 'string' ? params.endpointType : 'continuous',
+        alpha: Number(params.alpha || 0.05),
+        powerTarget: Number(params.power || params.powerTarget || 0.8),
+        effectSize: Number(params.effectSize || 0.5),
+        attritionRate: Number(params.attrition || params.attritionRate || 0.15),
+        allocationRatio: Number(params.allocationRatio || 1),
+        indication: typeof params.indication === 'string' ? params.indication : undefined,
+        phase: typeof params.phase === 'string' ? params.phase : undefined,
+      },
+      userId: ctx.userId,
       organizationId: ctx.organizationId,
+      generateDocument: true,
+      documentType: 'sap_section_draft',
+      autoAttachToDossier: Boolean(params.autoAttachToDossier),
+      reviewRequired: params.reviewRequired !== false,
     });
 
     return {
       success: true,
       action: 'generate_sap',
       data: {
-        sampleSize: result?.computation?.sampleSize,
+        sampleSize: result?.computation?.sampleSize?.total,
         power: result?.computation?.power,
-        documentId: result?.document?.id,
+        documentId: result?.document?.id || null,
       },
-      message: `SAP generated. Sample size: ${result?.computation?.sampleSize || 'calculated'}. Document saved.`,
+      message: `SAP generated. Sample size total: ${
+        result?.computation?.sampleSize?.total || 'calculated'
+      }. Document prepared.`,
     };
   } catch (err: unknown) {
     return {
@@ -2267,10 +2294,16 @@ export async function computeSampleSize(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const { compute } = await import('../ana-biostats/computation-engine.js').catch(() => ({
-      compute: null,
-    }));
-    if (!compute) {
+    const [{ inputNormalizer }, { computationEngine }] = await Promise.all([
+      import('../ana-biostats/input-normalizer.js').catch(() => ({
+        inputNormalizer: null,
+      })),
+      import('../ana-biostats/computation-engine.js').catch(() => ({
+        computationEngine: null,
+      })),
+    ]);
+
+    if (!inputNormalizer || !computationEngine) {
       return {
         success: false,
         action: 'compute_sample_size',
@@ -2278,22 +2311,71 @@ export async function computeSampleSize(
       };
     }
 
-    const result = await compute({
-      track: 'pharma',
-      studyType: params.studyType || 'superiority',
-      endpointType: params.endpointType || 'continuous',
-      alpha: params.alpha || 0.05,
-      power: params.power || 0.8,
-      effectSize: params.effectSize || 0.5,
-      attrition: params.attrition || 0.15,
-      allocationRatio: params.allocationRatio || 1,
+    const normalizedClientTrack =
+      params.track === 'medical_device'
+        ? 'medical_device'
+        : params.track === 'diagnostics_ivd'
+          ? 'diagnostics_ivd'
+          : 'biotech_pharma';
+    const validation = inputNormalizer.normalize({
+      projectId: Number(params.projectId || ctx.activeProjectId),
+      clientTrack: normalizedClientTrack,
+      studyType:
+        typeof params.studyType === 'string' ? params.studyType : 'superiority',
+      objectiveType:
+        typeof params.objectiveType === 'string'
+          ? params.objectiveType
+          : 'efficacy',
+      endpointType:
+        typeof params.endpointType === 'string' ? params.endpointType : 'continuous',
+      alpha: Number(params.alpha || 0.05),
+      powerTarget: Number(params.power || params.powerTarget || 0.8),
+      effectSize: Number(params.effectSize || 0.5),
+      attritionRate: Number(params.attrition || params.attritionRate || 0.15),
+      allocationRatio: Number(params.allocationRatio || 1),
+      controlRate:
+        params.controlRate !== undefined ? Number(params.controlRate) : undefined,
+      treatmentRate:
+        params.treatmentRate !== undefined ? Number(params.treatmentRate) : undefined,
+      nonInferiorityMargin:
+        params.nonInferiorityMargin !== undefined
+          ? Number(params.nonInferiorityMargin)
+          : undefined,
+      equivalenceMargin:
+        params.equivalenceMargin !== undefined ? Number(params.equivalenceMargin) : undefined,
+      prevalence:
+        params.prevalence !== undefined ? Number(params.prevalence) : undefined,
+      sensitivity:
+        params.sensitivity !== undefined ? Number(params.sensitivity) : undefined,
+      specificity:
+        params.specificity !== undefined ? Number(params.specificity) : undefined,
     });
+
+    if (!validation.valid) {
+      return {
+        success: false,
+        action: 'compute_sample_size',
+        data: {
+          errors: validation.errors,
+          warnings: validation.warnings,
+        },
+        message: `Computation input is incomplete: ${validation.errors
+          .map((e: { message: string }) => e.message)
+          .join(' ')}`,
+      };
+    }
+
+    const result = computationEngine.computeEnhanced(validation.normalizedInput);
 
     return {
       success: true,
       action: 'compute_sample_size',
-      data: result,
-      message: `Sample size: ${result.sampleSize || 'N/A'} per arm (${result.totalSampleSize || 'N/A'} total). Power: ${result.achievedPower ? Math.round(result.achievedPower * 100) + '%' : 'N/A'}.`,
+      data: result as unknown as Record<string, unknown>,
+      message: `Sample size: ${result.sampleSize?.perGroup || 'N/A'} per arm (${
+        result.sampleSize?.total || 'N/A'
+      } total). Power: ${
+        result.power !== undefined ? Math.round(result.power * 100) + '%' : 'N/A'
+      }.`,
     };
   } catch (err: unknown) {
     return {

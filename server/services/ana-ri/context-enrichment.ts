@@ -921,6 +921,12 @@ export async function enrichContextForChat(params: {
       workflow: 'Show the full submission workflow status. List all phases, steps completed vs remaining, critical blockers, and the next step the user should take. Be directive.',
       status: 'Give a quick project status briefing: readiness score, workflow progress, top 3 blockers, and the single most important next action. Keep it concise — 5-7 lines max.',
       help: 'The user is asking what you can do. Look at their project state and suggest 3-4 specific things you can do RIGHT NOW. Show, don\'t tell. Demonstrate by referencing their actual readiness score, gaps, and recommendations.',
+      haq: slash.args
+        ? `Draft a health authority question response for: ${slash.args}. Include cited evidence, known/unknown boundaries, and next required action.`
+        : 'Draft a health authority question response. Ask for agency, exact question text, impacted section, and supporting evidence, then provide a defensible response structure.',
+      ask: slash.args
+        ? `Search the project data room and knowledge memory for: ${slash.args}. Return relevant findings with confidence and source category.`
+        : 'Search the project data room and knowledge memory for the most relevant recent items. Summarize with confidence and source category.',
       export: 'Export this conversation.',
     };
 
