@@ -70,9 +70,6 @@ const AcceptableUsePolicy = lazy(() => import('../pages/legal/AcceptableUsePolic
 const BillingDashboard = lazy(() => import('@/pages/billing/BillingDashboard'));
 const SalesLandingPage = lazy(() => import('@/pages/SalesLandingPage'));
 
-// Lazy-load PasswordReset for the reset-password-via-email flow
-const PasswordResetPage = lazy(() => import('@/portal-v2/components/auth/PasswordReset'));
-
 /**
  * Bridge that extracts :projectId from URL and renders CERV2Page with it.
  */
@@ -333,13 +330,9 @@ export const ZenRouter: React.FC = () => {
           <Route path="/concept2cure/password-reset">
             {() => (
               <PageTransition>
-                <Suspense
-                  fallback={
-                    <ZenLoadingScreen />
-                  }
-                >
-                  <PasswordResetPage />
-                </Suspense>
+                <AuthRoute>
+                  <ZenLogin />
+                </AuthRoute>
               </PageTransition>
             )}
           </Route>
