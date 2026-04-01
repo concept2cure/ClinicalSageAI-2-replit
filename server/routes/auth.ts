@@ -137,6 +137,44 @@ function requireDb(res: Response): boolean {
   return true;
 }
 
+async function getMembershipForOrg(userId: number, organizationId?: string | number | null) {
+  if (!organizationId) return null;
+  const orgId =
+    typeof organizationId === 'string' ? parseInt(organizationId, 10) : Number(organizationId);
+  if (!Number.isFinite(orgId)) return null;
+
+  const [membership] = await db
+    .select({
+      organizationId: organizationUsers.organizationId,
+      role: organizationUsers.role,
+    })
+    .from(organizationUsers)
+    .where(
+      and(eq(organizationUsers.userId, userId), eq(organizationUsers.organizationId, orgId))
+    )
+    .limit(1);
+
+  return membership || null;
+}
+
+async function resolveOrganizationContext(userId: number, preferredOrganizationId?: string | number | null) {
+  const preferredMembership = await getMembershipForOrg(userId, preferredOrganizationId);
+  if (preferredMembership) {
+    return preferredMembership;
+  }
+
+  const [fallbackMembership] = await db
+    .select({
+      organizationId: organizationUsers.organizationId,
+      role: organizationUsers.role,
+    })
+    .from(organizationUsers)
+    .where(eq(organizationUsers.userId, userId))
+    .limit(1);
+
+  return fallbackMembership || null;
+}
+
 /**
  * GET /api/auth/session
  * Get current session status and user info
@@ -185,26 +223,20 @@ router.get('/session', async (req: Request, res: Response) => {
     const sessionLastName = sessionNameParts.slice(1).join(' ') || '';
     const sessionDisplayName = (userData.name || '').trim() || userData.email;
 
-    // Get role from organization_users
-    let sessionRole = 'user';
-    if (decoded.organizationId) {
-      const [sessionMembership] = await db
-        .select({ role: organizationUsers.role })
-        .from(organizationUsers)
-        .where(eq(organizationUsers.userId, userData.id))
-        .limit(1);
-      sessionRole = sessionMembership?.role || 'user';
-    }
+    const sessionMembership = await resolveOrganizationContext(userData.id, decoded.organizationId);
+    const sessionOrganizationId =
+      decoded.organizationId || sessionMembership?.organizationId?.toString() || null;
+    const sessionRole = sessionMembership?.role || 'user';
     const sessionRoles =
       sessionRole === 'admin' ? ['admin', 'user'] : [sessionRole === 'editor' ? 'editor' : 'user'];
 
     // Get organization
     let orgName = 'Concept2Cure';
-    if (decoded.organizationId) {
+    if (sessionOrganizationId) {
       const org = await db
         .select()
         .from(organizations)
-        .where(eq(organizations.id, parseInt(decoded.organizationId)))
+        .where(eq(organizations.id, parseInt(sessionOrganizationId, 10)))
         .limit(1);
       if (org.length) {
         orgName = org[0].name;
@@ -221,10 +253,19 @@ router.get('/session', async (req: Request, res: Response) => {
         displayName: sessionDisplayName,
         roles: sessionRoles,
         permissions: [],
-        organizationId: decoded.organizationId,
+        organizationId: sessionOrganizationId,
         organizationName: orgName,
-        mfaEnabled: false,
-        mfaMethods: [],
+        mfaEnabled: userData.mfaEnabled === true,
+        mfaMethods:
+          userData.mfaEnabled === true
+            ? [
+                {
+                  type: (userData as any).mfaMethod || 'totp',
+                  isEnabled: true,
+                  isPrimary: true,
+                },
+              ]
+            : [],
         mustChangePassword: false,
       },
       session: {
@@ -407,7 +448,12 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       });
     }
     const refreshToken = jwt.sign(
-      { userId: userData.id.toString(), email: userData.email, type: 'refresh' },
+      {
+        userId: userData.id.toString(),
+        email: userData.email,
+        organizationId: String(organizationId),
+        type: 'refresh',
+      },
       process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
@@ -499,7 +545,7 @@ router.post('/dev-login', loginLimiter, async (req: Request, res: Response) => {
       {
         userId: userData.id.toString(),
         email: userData.email,
-        organizationId: organizationId.toString(),
+        organizationId: String(organizationId),
         organizationUuid: organization?.uuid || null,
         role: jwtRole,
       },
@@ -508,7 +554,12 @@ router.post('/dev-login', loginLimiter, async (req: Request, res: Response) => {
     );
 
     const refreshToken = jwt.sign(
-      { userId: userData.id.toString(), email: userData.email, type: 'refresh' },
+      {
+        userId: userData.id.toString(),
+        email: userData.email,
+        organizationId: organizationId.toString(),
+        type: 'refresh',
+      },
       process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
@@ -609,7 +660,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY;
     if (stripeSecretKey) {
       const Stripe = (await import('stripe')).default;
-      const stripe = new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' });
+      const stripe = new Stripe(stripeSecretKey);
       const customer = await stripe.customers.create({
         email,
         name: companyName,
@@ -765,6 +816,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
     ) as {
       userId: string;
       email: string;
+      organizationId?: string;
       type: string;
     };
 
@@ -793,15 +845,8 @@ router.post('/refresh', async (req: Request, res: Response) => {
     }
 
     const refreshUserData = refreshUser[0];
-    let refreshOrgId = refreshUserData.defaultOrganizationId;
-    if (!refreshOrgId) {
-      const [refreshMembership] = await db
-        .select({ organizationId: organizationUsers.organizationId })
-        .from(organizationUsers)
-        .where(eq(organizationUsers.userId, refreshUserData.id))
-        .limit(1);
-      refreshOrgId = refreshMembership?.organizationId || null;
-    }
+    const refreshMembership = await resolveOrganizationContext(refreshUserData.id, decoded.organizationId);
+    const refreshOrgId = refreshMembership?.organizationId || refreshUserData.defaultOrganizationId || null;
 
     if (!refreshOrgId) {
       return res.status(403).json({
@@ -811,26 +856,25 @@ router.post('/refresh', async (req: Request, res: Response) => {
     }
 
     // Get the user's role for the JWT
-    const [refreshMembershipRole] = await db
-      .select({ role: organizationUsers.role })
-      .from(organizationUsers)
-      .where(eq(organizationUsers.userId, refreshUserData.id))
-      .limit(1);
-
     const accessToken = jwt.sign(
       {
         userId: decoded.userId,
         email: decoded.email,
         organizationId: refreshOrgId.toString(),
-        role: refreshMembershipRole?.role || 'user',
+        role: refreshMembership?.role || 'user',
       },
       config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
     const newRefreshToken = jwt.sign(
-      { userId: decoded.userId, email: decoded.email, type: 'refresh' },
-      process.env.REFRESH_TOKEN_SECRET || process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
+      {
+        userId: decoded.userId,
+        email: decoded.email,
+        organizationId: refreshOrgId.toString(),
+        type: 'refresh',
+      },
+      process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
 
@@ -902,12 +946,7 @@ router.get('/me', async (req: Request, res: Response) => {
     const meLastName = meParts.slice(1).join(' ') || '';
     const meDisplayName = (userData.name || '').trim() || userData.email;
 
-    // Get role
-    const [meMembership] = await db
-      .select({ role: organizationUsers.role, organizationId: organizationUsers.organizationId })
-      .from(organizationUsers)
-      .where(eq(organizationUsers.userId, userData.id))
-      .limit(1);
+    const meMembership = await resolveOrganizationContext(userData.id, decoded.organizationId);
     const meRole = meMembership?.role || 'user';
     const meRoles =
       meRole === 'admin' ? ['admin', 'user'] : [meRole === 'editor' ? 'editor' : 'user'];
@@ -984,17 +1023,22 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
 
     const userId = parseInt(challenge.userId);
 
-    // Verify the code — try email OTP first (default), then TOTP
+    // Verify the code — try email OTP first (default), then TOTP/backup codes
     const verificationMethod = method || 'email';
     let isValid = false;
+    let resolvedMethod: 'email' | 'totp' | 'backup_code' = verificationMethod === 'email' ? 'email' : 'totp';
 
     if (verificationMethod === 'email') {
       isValid = await emailOtpService.verifyEmailOtp(userId, code);
     }
 
-    // Fall back to TOTP verification (for users with authenticator apps)
+    // Fall back to TOTP or backup-code verification via the canonical MFA service.
     if (!isValid) {
+      const detectedMethod = await mfaService.detectVerificationMethod(userId, code);
       isValid = await mfaService.verifyToken(userId, code);
+      if (isValid && detectedMethod) {
+        resolvedMethod = detectedMethod;
+      }
     }
 
     if (!isValid) {
@@ -1031,7 +1075,12 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
     );
 
     const refreshToken = jwt.sign(
-      { userId: challenge.userId, email: challenge.email, type: 'refresh' },
+      {
+        userId: challenge.userId,
+        email: challenge.email,
+        organizationId: challenge.organizationId,
+        type: 'refresh',
+      },
       process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
@@ -1075,7 +1124,7 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
         organizationName: mfaOrgName,
         organizationUuid: challenge.organizationUuid,
         mfaEnabled: true,
-        mfaMethods: [{ type: verificationMethod, isEnabled: true, isPrimary: true }],
+        mfaMethods: [{ type: resolvedMethod, isEnabled: true, isPrimary: true }],
         mustChangePassword: false,
       },
       mfaRequired: false,
