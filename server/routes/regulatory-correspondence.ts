@@ -3,13 +3,12 @@ import crypto from 'node:crypto';
 import { getPool } from '../db';
 import type {
   Correspondence,
-  CorrespondenceIssue,
   ResponsePackage,
   Submission,
   SubmissionLifecycleState,
 } from '../../shared/types/regulatory-correspondence';
 import {
-  correspondenceIntakeSchema,
+  correspondenceIntakeGovernanceSchema,
   issueReviewSchema,
   mailboxConnectionSchema,
   responsePackageCreateSchema,
@@ -21,93 +20,17 @@ import { getSecureOrgId } from '../utils/tenantContext';
 import { getOrCreateProfile } from '../services/intelligence/project-intelligence-service';
 import { db } from '../db';
 import { projectMemoryEntries } from '@shared/schema';
+import {
+  ISSUE_EXTRACTION_VERSION,
+  ISSUE_PARSER_VERSION,
+  resolveIssueParserGovernanceConfig,
+  runGovernedIssueParser,
+} from '../services/regulatory-correspondence/issue-parser';
 
 const router = Router();
 router.use(authMiddleware);
 
 const REG_CORRESPONDENCE_ENABLED = process.env.ENABLE_REG_CORRESPONDENCE_OS !== 'false';
-
-const KEYWORD_TAXONOMY: Array<{
-  pattern: RegExp;
-  category: CorrespondenceIssue['category'];
-  severity: CorrespondenceIssue['severity'];
-  blocker: boolean;
-}> = [
-  {
-    pattern: /refuse to file|rtf|reject/i,
-    category: 'filing_acceptance_issue',
-    severity: 'critical',
-    blocker: true,
-  },
-  {
-    pattern: /deficiency|missing information|clarification/i,
-    category: 'missing_information_clarification',
-    severity: 'high',
-    blocker: true,
-  },
-  {
-    pattern: /stability|specification|quality|cmc/i,
-    category: 'cmc_quality_issue',
-    severity: 'high',
-    blocker: true,
-  },
-  {
-    pattern: /safety|adverse event|risk/i,
-    category: 'clinical_safety_issue',
-    severity: 'high',
-    blocker: true,
-  },
-  {
-    pattern: /efficacy|endpoint|benefit/i,
-    category: 'clinical_efficacy_issue',
-    severity: 'medium',
-    blocker: false,
-  },
-  {
-    pattern: /format|ectd|technical/i,
-    category: 'ectd_technical_formatting',
-    severity: 'medium',
-    blocker: false,
-  },
-];
-
-function parseIssues(text: string, correspondenceId: string): CorrespondenceIssue[] {
-  const normalized = text || '';
-  const matches = KEYWORD_TAXONOMY.filter(rule => rule.pattern.test(normalized));
-  if (!matches.length) {
-    return [
-      {
-        id: crypto.randomUUID(),
-        correspondenceId,
-        category: 'other_unclassified',
-        severity: 'low',
-        blocker: false,
-        responseRequired: true,
-        sourceExcerpt: normalized.slice(0, 280),
-        confidence: 0.35,
-        humanReviewStatus: 'pending',
-        mappedCtdSections: [],
-        mappedArtifactIds: [],
-        resolutionStatus: 'open',
-      },
-    ];
-  }
-
-  return matches.map(match => ({
-    id: crypto.randomUUID(),
-    correspondenceId,
-    category: match.category,
-    severity: match.severity,
-    blocker: match.blocker,
-    responseRequired: true,
-    sourceExcerpt: normalized.slice(0, 280),
-    confidence: 0.72,
-    humanReviewStatus: 'pending',
-    mappedCtdSections: [],
-    mappedArtifactIds: [],
-    resolutionStatus: 'open',
-  }));
-}
 
 function requireActorContext(req: Request, res: Response) {
   const orgIdRaw = getSecureOrgId(req as any);
@@ -264,7 +187,7 @@ export async function persistOutboundCorrespondenceRecord(payload: {
     summary: payload.summary,
     parserMetadata: {
       parserVersion: 'report-delivery-v1',
-      extractionVersion: '2026-04-01',
+      extractionVersion: ISSUE_EXTRACTION_VERSION,
       importedByUserId: 'system',
     },
   };
@@ -328,6 +251,18 @@ export async function persistOutboundCorrespondenceRecord(payload: {
 function badRequest(res: Response, error: unknown) {
   return res.status(400).json({ error: 'Validation error', details: error });
 }
+
+
+router.get('/parser/health', async (_req, res) => {
+  const parserGovernance = resolveIssueParserGovernanceConfig(process.env);
+  return res.json({
+    data: {
+      parserVersion: ISSUE_PARSER_VERSION,
+      parserGovernance,
+      responseContract: parserGovernance.available ? 'governed_heuristic_mode_v1' : null,
+    },
+  });
+});
 
 router.post('/submissions', async (req, res) => {
   if (!REG_CORRESPONDENCE_ENABLED) {
@@ -457,7 +392,7 @@ router.post('/correspondence/intake', async (req, res) => {
       .status(403)
       .json({ error: 'Regulatory Correspondence OS is disabled by feature flag.' });
   }
-  const parsed = correspondenceIntakeSchema.safeParse(req.body);
+  const parsed = correspondenceIntakeGovernanceSchema.safeParse(req.body);
   if (!parsed.success) return badRequest(res, parsed.error.flatten());
   req.body = parsed.data;
   const actor = requireActorContext(req, res);
@@ -465,6 +400,7 @@ router.post('/correspondence/intake', async (req, res) => {
   const { orgId, userId } = actor;
   const id = crypto.randomUUID();
   const parsedText = String(req.body.parsedText || req.body.summary || '');
+  const normalizedParsedText = parsedText.trim();
   const attachmentPayload = Array.isArray(req.body.attachments) ? req.body.attachments : [];
   const attachmentRefs = attachmentPayload.map((file: any) => {
     const checksum = crypto
@@ -498,19 +434,43 @@ router.post('/correspondence/intake', async (req, res) => {
     sourceThreadId: req.body.sourceThreadId,
     sourceMailboxId: req.body.sourceMailboxId,
     parserMetadata: {
-      parserVersion: 'v1-keyword-scaffold',
-      extractionVersion: '2026-03-31',
+      parserVersion: ISSUE_PARSER_VERSION,
+      extractionVersion: ISSUE_EXTRACTION_VERSION,
       malwareScan: 'pending',
       mimeValidated: true,
       quarantined: false,
       importedByUserId: userId,
     },
     attachmentIds: attachmentRefs.map((a: any) => a.id),
-    parsedText,
-    summary: req.body.summary || parsedText.slice(0, 200),
+    parsedText: normalizedParsedText,
+    summary: req.body.summary || normalizedParsedText.slice(0, 200),
   };
 
-  const extracted = parseIssues(parsedText, id);
+  const parserGovernance = resolveIssueParserGovernanceConfig(process.env);
+  if (!parserGovernance.available) {
+    return res.status(503).json({
+      error: 'Issue parser unavailable',
+      message:
+        'Governed parser pipeline is not configured in this environment. Configure REG_CORRESPONDENCE_ISSUE_PARSER_MODE=heuristic_v2 and ENABLE_REG_CORRESPONDENCE_HEURISTIC_MODE=true.',
+      parserGovernance,
+    });
+  }
+
+  const extraction = runGovernedIssueParser(normalizedParsedText, id);
+  const extracted = extraction.issues;
+  record.parserMetadata = {
+    ...(record.parserMetadata || {}),
+    parserMode: extraction.metadata.parserMode,
+    responseContract: extraction.metadata.responseContract,
+    extractionMethod: extraction.metadata.extractionMethod,
+    confidenceMethod: extraction.metadata.confidenceMethod,
+    humanReviewRequired: extraction.metadata.humanReviewRequired,
+    extractionVersion: extraction.metadata.extractionVersion,
+    sourceTextDigest: extraction.metadata.sourceTextDigest,
+    matchedRuleCount: extraction.metadata.matchedRuleCount,
+    parserGovernanceMode: parserGovernance.mode,
+    parserGovernanceHeuristicEnabled: parserGovernance.heuristicEnabled,
+  };
 
   const pool = getDbClientOrNull();
   const isReady = await tableReady(pool);
