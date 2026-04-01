@@ -362,7 +362,7 @@ const CTD_TEMPLATE_CONTENT: Record<string, string> = {
 <p>[Controlled clinical studies, uncontrolled clinical studies, analyses of data across studies]</p>`,
 };
 
-function buildTemplateContent(title: string, ctdSection: string, _templateKey: string): string {
+function buildTemplateContent(title: string, ctdSection: string, templateKey?: string): string {
   // Try exact match first, then prefix match (e.g., "2.5" matches "2.5.x")
   const sectionContent = CTD_TEMPLATE_CONTENT[ctdSection]
     || CTD_TEMPLATE_CONTENT[ctdSection.split('.').slice(0, 2).join('.')]
@@ -370,6 +370,41 @@ function buildTemplateContent(title: string, ctdSection: string, _templateKey: s
 
   if (sectionContent) {
     return `<h1>${title}</h1>\n${sectionContent}`;
+  }
+
+  // Template-key fallbacks for known high-value starters.
+  if (templateKey === 'cover-letter') {
+    return `<h1>${title}</h1>
+<h2>Addressee</h2>
+<p>[Agency / division / address]</p>
+<h2>Submission Purpose</h2>
+<p>[Purpose and submission context]</p>
+<h2>Contents Summary</h2>
+<p>[Summarize package contents and references]</p>
+<h2>Contact Information</h2>
+<p>[Sponsor contact details]</p>`;
+  }
+  if (templateKey === 'csr-synopsis') {
+    return `<h1>${title}</h1>
+<h2>Study Information</h2>
+<p>[Protocol number, phase, indication, sponsor]</p>
+<h2>Objectives</h2>
+<p>[Primary and secondary objectives]</p>
+<h2>Methodology</h2>
+<p>[Design, population, treatment, endpoints]</p>
+<h2>Results</h2>
+<p>[Efficacy and safety highlights]</p>
+<h2>Conclusions</h2>
+<p>[Key conclusions and next steps]</p>`;
+  }
+  if (templateKey === 'quality-overall-summary') {
+    return `<h1>${title}</h1>
+<h2>Drug Substance</h2>
+<p>[Manufacture, control strategy, key specifications]</p>
+<h2>Drug Product</h2>
+<p>[Composition, process, controls, container closure]</p>
+<h2>Stability</h2>
+<p>[Stability summary and shelf-life rationale]</p>`;
   }
 
   // Fallback: structured starter for unknown sections
@@ -1047,11 +1082,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       if (!projectId) return;
       setCreatingNew(true);
       try {
+        const templateContent = buildTemplateContent(title, ctdSection || '', templateId);
         const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
           title,
-          content: `<h1>${title}</h1><p>Generated from template <code>${templateId}</code>${
-            ctdSection ? ` for CTD section ${ctdSection}` : ''
-          }.</p>`,
+          content: templateContent,
           type: 'regulatory_document',
           category: 'document',
           ...(ctdSection ? { ctdSection } : {}),

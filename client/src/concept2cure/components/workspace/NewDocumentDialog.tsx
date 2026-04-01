@@ -188,6 +188,35 @@ export function NewDocumentDialog({
     setCtdSection('');
   }, []);
 
+  const normalizedSubmissionType = useMemo(
+    () => String(submissionType || '').toUpperCase(),
+    [submissionType]
+  );
+
+  const visibleTemplates = useMemo(() => {
+    if (!normalizedSubmissionType) return QUICK_TEMPLATES;
+
+    if (normalizedSubmissionType.includes('IND')) {
+      const indFirst = QUICK_TEMPLATES.filter(
+        t => t.id === 'cover-letter' || t.id === 'quality-overall-summary'
+      );
+      const remainder = QUICK_TEMPLATES.filter(t => !indFirst.some(primary => primary.id === t.id));
+      return [...indFirst, ...remainder];
+    }
+
+    if (normalizedSubmissionType.includes('510') || normalizedSubmissionType.includes('PMA')) {
+      const generalFirst = QUICK_TEMPLATES.filter(
+        t => t.id === 'blank-regulatory' || t.id === 'cover-letter'
+      );
+      const remainder = QUICK_TEMPLATES.filter(
+        t => !generalFirst.some(primary => primary.id === t.id)
+      );
+      return [...generalFirst, ...remainder];
+    }
+
+    return QUICK_TEMPLATES;
+  }, [normalizedSubmissionType]);
+
   const handleClose = useCallback(() => {
     reset();
     onClose();
@@ -305,7 +334,7 @@ export function NewDocumentDialog({
                   Choose a Template
                 </h3>
                 <div className="grid grid-cols-2 gap-2 max-h-[280px] overflow-y-auto">
-                  {QUICK_TEMPLATES.map(t => (
+                  {visibleTemplates.map(t => (
                     <button
                       key={t.id}
                       onClick={() => { setSelectedTemplate(t); setCtdSection(t.ctdSection || ''); setStep(2); }}

@@ -51,6 +51,7 @@ interface GenerationMetrics {
 interface TemplateGeneratorPanelProps {
   projectId?: string;
   artifactId?: string | number;
+  contextAttachment?: 'project' | 'adhoc';
   onGenerated: (content: string, templateName: string) => void;
   onClose: () => void;
 }
@@ -68,6 +69,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 const TemplateGeneratorPanel: React.FC<TemplateGeneratorPanelProps> = ({
   projectId,
   artifactId,
+  contextAttachment,
   onGenerated,
   onClose,
 }) => {
@@ -127,6 +129,7 @@ const TemplateGeneratorPanel: React.FC<TemplateGeneratorPanelProps> = ({
         {
           variables: variableValues,
           projectId: projectId || undefined,
+          contextAttachment: contextAttachment || (projectId ? 'project' : 'adhoc'),
           artifactId: artifactId || undefined,
         }
       );

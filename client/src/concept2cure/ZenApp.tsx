@@ -923,6 +923,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     title: string;
     content: string;
     ctdSection?: string;
+    templateId?: string;
   } | null>(null);
 
   // Direct artifact open — when a module has already saved an artifact and wants to open it
@@ -2962,6 +2963,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 initialContent={pendingEditorContent?.content}
                 initialTitle={pendingEditorContent?.title}
                 initialCtdSection={pendingEditorContent?.ctdSection}
+                initialTemplateId={pendingEditorContent?.templateId}
                 onInitialContentConsumed={() => setPendingEditorContent(null)}
                 openArtifactId={openArtifactId}
                 onOpenArtifactConsumed={() => setOpenArtifactId(undefined)}
@@ -3448,6 +3450,16 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 </div>
                 <TemplateLibraryView
                   onSelectTemplate={template => {
+                    const templateScaffold = [
+                      `<h1>${template.name}</h1>`,
+                      ...template.sections.map((section, index) => {
+                        const heading = `<h2>${index + 1}. ${section.title}</h2>`;
+                        const guidance = section.guidance
+                          ? `<p><em>${section.guidance}</em></p>`
+                          : '<p>[Add section content]</p>';
+                        return `${heading}\n${guidance}`;
+                      }),
+                    ].join('\n');
                     const sectionCode = template.ctdSection;
                     if (sectionCode) {
                       setActiveSectionCode(sectionCode);
@@ -3463,14 +3475,16 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       } else {
                         setPendingEditorContent({
                           title: template.name,
-                          content: '',
+                          content: templateScaffold,
                           ctdSection: sectionCode,
+                          templateId: template.id,
                         });
                       }
                     } else {
                       setPendingEditorContent({
                         title: template.name,
-                        content: '',
+                        content: templateScaffold,
+                        templateId: template.id,
                       });
                     }
                     setRiViewMode('editor');
@@ -3713,6 +3727,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     initialContent={pendingEditorContent?.content}
                     initialTitle={pendingEditorContent?.title}
                     initialCtdSection={pendingEditorContent?.ctdSection}
+                    initialTemplateId={pendingEditorContent?.templateId}
                     onInitialContentConsumed={() => setPendingEditorContent(null)}
                   />
                 </Suspense>
