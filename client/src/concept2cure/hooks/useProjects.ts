@@ -35,6 +35,22 @@ type WorkbenchMode =
   | 'section-workspace'
   | 'report-engine';
 
+export type ProjectCollaboratorPermission = 'can_use' | 'can_edit';
+
+export interface ProjectCollaborator {
+  userId: number;
+  permission: ProjectCollaboratorPermission;
+  name?: string | null;
+  email?: string | null;
+}
+
+export interface ProjectTeamMember {
+  userId: number;
+  name?: string | null;
+  email?: string | null;
+  role?: string | null;
+}
+
 function withRequiredOwnership(project: Project): Project {
   return {
     ...project,
@@ -45,6 +61,7 @@ function withRequiredOwnership(project: Project): Project {
       vaultLinkedFilesEvidence: project.ownership?.vaultLinkedFilesEvidence ?? [],
       projectInstructions:
         project.ownership?.projectInstructions ?? project.customInstructions ?? '',
+      ownershipTeam: project.ownership?.ownershipTeam ?? [],
       reusableSnippetsKnowledge: project.ownership?.reusableSnippetsKnowledge ?? [],
       reports: project.ownership?.reports ?? [],
       reviewState: project.ownership?.reviewState ?? 'draft',
@@ -227,6 +244,57 @@ async function patchOwnershipPreferencesAPI(
     );
   }
   return normalizeProjectResponse(withRequiredOwnership(payload?.data ?? payload));
+}
+
+async function fetchProjectCollaboratorsAPI(projectId: string): Promise<ProjectCollaborator[]> {
+  const response = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/collaborators`);
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.success === false) {
+    throw new Error(
+      payload?.error?.message ||
+        payload?.error ||
+        `Failed to fetch project collaborators: ${response.status}`
+    );
+  }
+  return ((payload?.data ?? payload)?.collaborators ?? []) as ProjectCollaborator[];
+}
+
+async function updateProjectCollaboratorsAPI(
+  projectId: string,
+  collaborators: ProjectCollaborator[]
+): Promise<ProjectCollaborator[]> {
+  const response = await apiRequest('PUT', `/api/concept2cure/projects/${projectId}/collaborators`, {
+    collaborators: collaborators.map(c => ({
+      userId: c.userId,
+      permission: c.permission,
+    })),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.success === false) {
+    throw new Error(
+      payload?.error?.message ||
+        payload?.error ||
+        `Failed to update project collaborators: ${response.status}`
+    );
+  }
+  return ((payload?.data ?? payload)?.collaborators ?? []) as ProjectCollaborator[];
+}
+
+async function fetchProjectTeamMembersAPI(projectId: string): Promise<ProjectTeamMember[]> {
+  const response = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/team`);
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.success === false) {
+    throw new Error(
+      payload?.error?.message || payload?.error || `Failed to fetch team members: ${response.status}`
+    );
+  }
+  const members = (payload?.data ?? payload ?? []) as any[];
+  return members.map(member => ({
+    userId: Number(member.userId ?? member.id),
+    name: member.name ?? member.displayName ?? null,
+    email: member.email ?? null,
+    role: member.role ?? member.projectRole ?? null,
+  }));
 }
 
 /**
@@ -570,5 +638,53 @@ export function useProject(projectId: string | null) {
       return project ? withRequiredOwnership(project) : null;
     },
     enabled: !!projectId,
+  });
+}
+
+export function useProjectCollaborators(projectId: string | null) {
+  const queryClient = useQueryClient();
+
+  const collaboratorsQuery = useQuery({
+    queryKey: [...queryKeys.projects.collaborators(projectId || 'none')],
+    queryFn: async () => {
+      if (!projectId) return [];
+      return fetchProjectCollaboratorsAPI(projectId);
+    },
+    enabled: !!projectId,
+    staleTime: 1000 * 30,
+  });
+
+  const updateCollaborators = useMutation({
+    mutationFn: async (collaborators: ProjectCollaborator[]) => {
+      if (!projectId) throw new Error('Project ID is required');
+      return updateProjectCollaboratorsAPI(projectId, collaborators);
+    },
+    onSuccess: () => {
+      if (!projectId) return;
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.projects.collaborators(projectId)] });
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.projects.all] });
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.projects.detail(projectId)] });
+    },
+  });
+
+  return {
+    collaborators: collaboratorsQuery.data || [],
+    isLoading: collaboratorsQuery.isLoading,
+    error: collaboratorsQuery.error,
+    refetch: collaboratorsQuery.refetch,
+    updateCollaborators: updateCollaborators.mutateAsync,
+    isUpdating: updateCollaborators.isPending,
+  };
+}
+
+export function useProjectTeamMembers(projectId: string | null) {
+  return useQuery({
+    queryKey: [...queryKeys.projects.teamMembers(projectId || 'none')],
+    queryFn: async () => {
+      if (!projectId) return [];
+      return fetchProjectTeamMembersAPI(projectId);
+    },
+    enabled: !!projectId,
+    staleTime: 1000 * 60,
   });
 }

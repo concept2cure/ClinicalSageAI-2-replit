@@ -12,6 +12,10 @@ export const queryKeys = {
   projects: {
     all: ['concept2cure', 'projects'] as const,
     detail: (id: number | string) => ['concept2cure', 'projects', id] as const,
+    collaborators: (projectId: number | string) =>
+      ['concept2cure', 'projects', projectId, 'collaborators'] as const,
+    teamMembers: (projectId: number | string) =>
+      ['concept2cure', 'projects', projectId, 'team-members'] as const,
     artifacts: (projectId: number | string) =>
       ['concept2cure', 'projects', projectId, 'artifacts'] as const,
     artifactsSummary: () =>

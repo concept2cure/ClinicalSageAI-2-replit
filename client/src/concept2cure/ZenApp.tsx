@@ -4179,6 +4179,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 targetSubmissionDate: activeProject.targetSubmissionDate,
                 status: activeProject.status,
                 customInstructions: customInstructions,
+                teamMembers: (activeProject as any).teamMembers || [],
               }
             : null
         }
