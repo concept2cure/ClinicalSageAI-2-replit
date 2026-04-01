@@ -737,8 +737,8 @@ export const AuthRoutes: React.FC = () => {
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
         <Route path="login" element={<Navigate to="/concept2cure/login" replace />} />
-        <Route path="mfa-setup" element={<MFASetup />} />
-        <Route path="password-reset" element={<PasswordReset />} />
+        <Route path="mfa-setup" element={<Navigate to="/concept2cure/login" replace />} />
+        <Route path="password-reset" element={<Navigate to="/concept2cure/password-reset" replace />} />
         <Route
           path="onboarding"
           element={<OnboardingWizard onComplete={handleOnboardingComplete} />}

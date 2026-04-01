@@ -344,15 +344,9 @@ export const ZenRouter: React.FC = () => {
             )}
           </Route>
 
-          {/* Onboarding - protected, for first-time users */}
+          {/* Legacy onboarding route redirects to main app entry */}
           <Route path="/concept2cure/onboarding">
-            {() => (
-              <PageTransition>
-                <ProtectedRoute>
-                  <ZenOnboarding />
-                </ProtectedRoute>
-              </PageTransition>
-            )}
+            {() => <Redirect to="/concept2cure" />}
           </Route>
 
           {/* Proof Certificate Explorer */}
