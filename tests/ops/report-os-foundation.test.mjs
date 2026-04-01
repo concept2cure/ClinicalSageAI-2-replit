@@ -23,6 +23,14 @@ test('report-os route includes reporting bundle and delivery endpoints', () => {
   assert.ok(routeSource.includes("router.post('/correspondence/capture'"));
 });
 
+test('report-os persists bundle and delivery state records', () => {
+  assert.ok(routeSource.includes('persistBundleRecord'));
+  assert.ok(routeSource.includes('persistDeliveryRecord'));
+  assert.ok(routeSource.includes('loadBundlesForOrg'));
+  assert.ok(routeSource.includes('loadDeliveriesForOrg'));
+  assert.ok(routeSource.includes("sourceDocumentType: REPORT_OS_RECORD_SOURCE"));
+});
+
 test('report-os schema includes normalized dependency table', () => {
   assert.ok(schemaSource.includes('export const reportRunDependencies = pgTable('));
   assert.ok(schemaSource.includes("'report_run_dependencies'"));
