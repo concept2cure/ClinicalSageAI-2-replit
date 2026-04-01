@@ -523,18 +523,21 @@ async function enrichWithCrossModule(projectId: string | number, orgId?: number)
   }
 }
 
-async function enrichWithSignals(projectId: string | number): Promise<string> {
+async function enrichWithSignals(projectId: string | number, orgId?: number): Promise<string> {
   // Try live RIM signals first
-  try {
-    const signals = getProjectSignals(String(projectId));
-    if (signals && signals.length > 0) {
-      const signalLines = signals.slice(0, 10).map((s: { riskLevel?: string; type?: string; content?: string; message?: string; score?: number }) =>
-        `- **[${s.riskLevel || s.type || 'signal'}]** ${s.content?.slice(0, 300) || s.message || 'No content'} (score: ${s.score ?? '—'})`
-      ).join('\n');
-      return `\n\n## RIM Intelligence Signals (Live)\n**${signals.length} signals** accumulated for this project.\n\n${signalLines}\n\nSummarize patterns, highlight recurring risks, and note trend directions.`;
+  if (orgId) {
+    try {
+      const summary = getProjectSignals(orgId, Number(projectId));
+      if (summary && summary.totalSignals > 0) {
+        const byRisk = Object.entries(summary.byRiskLevel)
+          .filter(([, count]) => Number(count) > 0)
+          .map(([risk, count]) => `- **${risk}**: ${count}`)
+          .join('\n');
+        return `\n\n## RIM Intelligence Signals (Live)\n**${summary.totalSignals} signals** accumulated for this project.\n\nTrend: **${summary.overallTrend}** (${summary.trendConfidence}, n=${summary.trendSampleSize})\nAverage score: **${summary.averageScore}**\nTop patterns: ${summary.topPatternIds.slice(0, 6).join(', ') || 'none'}\n\n### By risk\n${byRisk || '- none'}\n\nSummarize patterns, highlight recurring risks, and note trend directions.`;
+      }
+    } catch (e: unknown) { console.warn("[enrichment] Query failed:", e instanceof Error ? e.message : String(e));
+      // Fall through to memory
     }
-  } catch (e: unknown) { console.warn("[enrichment] Query failed:", e instanceof Error ? e.message : String(e));
-    // Fall through to memory
   }
   return enrichWithProjectMemory(
     projectId,
@@ -845,7 +848,7 @@ export async function enrichContextForChat(params: {
       claims: () => enrichWithClaims(projectId),
       recommend: () => enrichWithRecommendations(projectId, organizationId),
       next: () => enrichWithRecommendations(projectId, organizationId),
-      signals: () => enrichWithSignals(projectId),
+      signals: () => enrichWithSignals(projectId, organizationId),
       export: () =>
         Promise.resolve(
           '\n\n## Conversation Export Intent\nUser requested conversation export. Provide a concise markdown-ready output and include any critical action receipts from this turn.'
@@ -854,7 +857,7 @@ export async function enrichContextForChat(params: {
       assess: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
         enrichWithRecommendations(projectId, organizationId),
-        enrichWithSignals(projectId),
+        enrichWithSignals(projectId, organizationId),
         enrichWithForesight(projectId, organizationId),
       ]).then(r => r.join('')),
       twin: () => Promise.all([

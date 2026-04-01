@@ -1,216 +1,125 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { RegulatoryIntelligenceService } from '../services/regulatory-intelligence-service';
-import { db } from '../db';
-import { regulatoryCalendar, regulatorySubmissions } from '@shared/schema';
-import { and, desc, eq, gte, lte } from 'drizzle-orm';
-import { z } from 'zod';
+import { getPool } from '../db';
+import { getSecureOrgId } from '../utils/tenantContext';
 
 const router = express.Router();
 const regulatoryService = new RegulatoryIntelligenceService();
 router.use(authenticate);
 
-function getOrgId(req: any): number | null {
-  const raw = req.user?.organizationId ?? req.organizationId ?? req.tenantContext?.organizationId;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+const REGULATORY_DATA_UNAVAILABLE = {
+  success: false,
+  error: 'Regulatory data unavailable',
+  message:
+    'Regulatory workflow tables are not available in this environment. Data is not synthesized from mock defaults.',
+};
+
+function getDbClientOrNull() {
+  try {
+    return getPool();
+  } catch {
+    return null;
+  }
 }
 
-const CalendarQuerySchema = z.object({
-  dateFrom: z.string().datetime().optional(),
-  dateTo: z.string().datetime().optional(),
-  limit: z.coerce.number().int().min(1).max(500).default(250),
-});
+async function tableReady(pool: ReturnType<typeof getDbClientOrNull>, tableName: string) {
+  if (!pool) return false;
+  try {
+    const check = await pool.query(`SELECT to_regclass($1) AS tbl`, [tableName]);
+    return !!check.rows[0]?.tbl;
+  } catch {
+    return false;
+  }
+}
 
-const CalendarCreateSchema = z.object({
-  title: z.string().min(1),
-  eventType: z.string().min(1),
-  eventDate: z.string().datetime(),
-  submissionId: z.coerce.number().int().positive().optional(),
-  status: z.string().optional(),
-  priority: z.string().optional(),
-  description: z.string().optional().nullable(),
-  location: z.string().optional().nullable(),
-  allDay: z.boolean().optional(),
-  metadata: z.any().optional(),
-  reminders: z.any().optional(),
-  recurrence: z.any().optional(),
-});
+function requireOrgId(req: express.Request, res: express.Response): number | null {
+  const orgIdRaw = getSecureOrgId(req as any);
+  const orgId = orgIdRaw ? Number(orgIdRaw) : NaN;
+  if (!Number.isFinite(orgId) || orgId <= 0) {
+    res.status(401).json({ success: false, error: 'Organization context required' });
+    return null;
+  }
+  return orgId;
+}
 
 router.get('/submissions', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (!orgId) {
-    return res.status(403).json({ success: false, error: 'Organization context required' });
+  const orgId = requireOrgId(req, res);
+  if (!orgId) return;
+
+  const pool = getDbClientOrNull();
+  if (!(await tableReady(pool, 'public.c2c_submissions'))) {
+    return res.status(503).json(REGULATORY_DATA_UNAVAILABLE);
   }
 
-  const parsedLimit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
-  const rows = await db
-    .select({
-      id: regulatorySubmissions.submissionId,
-      title: regulatorySubmissions.drugName,
-      agency: regulatorySubmissions.targetMarket,
-      status: regulatorySubmissions.status,
-      type: regulatorySubmissions.submissionType,
-      dueDate: regulatorySubmissions.targetSubmissionDate,
-      indication: regulatorySubmissions.indication,
-      sponsor: regulatorySubmissions.sponsor,
-      currentGate: regulatorySubmissions.currentGate,
-      progressPercentage: regulatorySubmissions.progressPercentage,
-    })
-    .from(regulatorySubmissions)
-    .where(eq(regulatorySubmissions.organizationId, orgId))
-    .orderBy(desc(regulatorySubmissions.targetSubmissionDate))
-    .limit(parsedLimit);
+  const { rows } = await pool!.query(
+    `SELECT id, submission_type, regulator, lifecycle_state, application_number, sequence_number, created_at
+     FROM c2c_submissions
+     WHERE organization_id = $1
+     ORDER BY created_at DESC
+     LIMIT 200`,
+    [orgId]
+  );
 
-  return res.json({
-    success: true,
-    data: rows.map(row => ({
-      ...row,
-      dueDate: row.dueDate?.toISOString?.() ?? row.dueDate,
-    })),
-  });
+  const data = rows.map((row: any) => ({
+    id: row.id,
+    title:
+      row.application_number && row.submission_type
+        ? `${row.submission_type} ${row.application_number}`
+        : row.submission_type || 'Regulatory Submission',
+    agency: row.regulator || 'Unknown',
+    status: row.lifecycle_state || 'unknown',
+    type: row.submission_type || 'unknown',
+    sequenceNumber: row.sequence_number || null,
+    createdAt: row.created_at,
+  }));
+
+  return res.json({ success: true, data, source: 'c2c_submissions' });
 });
 
 router.get('/calendar', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (!orgId) {
-    return res.status(403).json({ success: false, error: 'Organization context required' });
+  const orgId = requireOrgId(req, res);
+  if (!orgId) return;
+
+  const pool = getDbClientOrNull();
+  if (!(await tableReady(pool, 'public.c2c_correspondence'))) {
+    return res.status(503).json(REGULATORY_DATA_UNAVAILABLE);
   }
 
-  const queryParse = CalendarQuerySchema.safeParse(req.query);
-  if (!queryParse.success) {
-    return res.status(400).json({ success: false, error: 'Invalid calendar query parameters' });
-  }
-  const { dateFrom, dateTo, limit } = queryParse.data;
+  const { rows } = await pool!.query(
+    `SELECT id, subject, due_date, urgency, status, submission_id
+     FROM c2c_correspondence
+     WHERE organization_id = $1
+       AND due_date IS NOT NULL
+     ORDER BY due_date ASC
+     LIMIT 200`,
+    [orgId]
+  );
 
-  const filters = [eq(regulatoryCalendar.organizationId, orgId)];
-  if (dateFrom) filters.push(gte(regulatoryCalendar.eventDate, new Date(dateFrom)));
-  if (dateTo) filters.push(lte(regulatoryCalendar.eventDate, new Date(dateTo)));
+  const data = rows.map((row: any) => ({
+    id: row.id,
+    title: row.subject || 'Regulatory correspondence deadline',
+    eventType: 'deadline',
+    status: row.status || 'open',
+    priority: row.urgency || 'medium',
+    eventDate: row.due_date,
+    submissionId: row.submission_id || null,
+  }));
 
-  const rows = await db
-    .select({
-      id: regulatoryCalendar.eventId,
-      title: regulatoryCalendar.title,
-      description: regulatoryCalendar.description,
-      eventType: regulatoryCalendar.eventType,
-      status: regulatoryCalendar.status,
-      priority: regulatoryCalendar.priority,
-      eventDate: regulatoryCalendar.eventDate,
-      endDate: regulatoryCalendar.endDate,
-      submissionId: regulatoryCalendar.submissionId,
-      location: regulatoryCalendar.location,
-    })
-    .from(regulatoryCalendar)
-    .where(and(...filters))
-    .orderBy(desc(regulatoryCalendar.eventDate))
-    .limit(limit);
+  return res.json({ success: true, data, source: 'c2c_correspondence' });
+});
 
-  return res.json({
-    success: true,
-    data: rows.map(row => ({
-      ...row,
-      eventDate: row.eventDate?.toISOString?.() ?? row.eventDate,
-      endDate: row.endDate?.toISOString?.() ?? row.endDate,
-    })),
+router.post('/calendar', async (_req, res) => {
+  return res.status(501).json({
+    success: false,
+    error: 'Not implemented',
+    message:
+      'Calendar creation is not implemented on this endpoint yet. Use governed submission/correspondence workflows.',
   });
 });
 
-router.post('/calendar', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (!orgId) {
-    return res.status(403).json({ success: false, error: 'Organization context required' });
-  }
-
-  const parsedBody = CalendarCreateSchema.safeParse(req.body || {});
-  if (!parsedBody.success) {
-    return res.status(400).json({
-      success: false,
-      error: 'Invalid calendar payload',
-      details: parsedBody.error.flatten(),
-    });
-  }
-  const {
-    title,
-    eventType,
-    eventDate,
-    submissionId,
-    status,
-    priority,
-    description,
-    location,
-    allDay,
-    metadata,
-    reminders,
-    recurrence,
-  } = parsedBody.data;
-
-  const parsedEventDate = new Date(eventDate);
-  if (Number.isNaN(parsedEventDate.getTime())) {
-    return res.status(400).json({ success: false, error: 'eventDate must be a valid ISO date' });
-  }
-
-  const submissionIdValue = submissionId ?? null;
-  if (submissionIdValue) {
-    const [existingSubmission] = await db
-      .select({ id: regulatorySubmissions.id })
-      .from(regulatorySubmissions)
-      .where(
-        and(
-          eq(regulatorySubmissions.id, submissionIdValue),
-          eq(regulatorySubmissions.organizationId, orgId)
-        )
-      )
-      .limit(1);
-    if (!existingSubmission) {
-      return res.status(400).json({
-        success: false,
-        error: 'submissionId does not belong to your organization',
-      });
-    }
-  }
-
-  const [created] = await db
-    .insert(regulatoryCalendar)
-    .values({
-      organizationId: orgId,
-      eventId: `cal-${Date.now()}`,
-      title,
-      eventType,
-      eventDate: parsedEventDate,
-      submissionId: submissionIdValue,
-      status: status || 'scheduled',
-      priority: priority || 'medium',
-      description: description || null,
-      location: location || null,
-      allDay: Boolean(allDay ?? false),
-      metadata: metadata || null,
-      reminders: reminders || null,
-      recurrence: recurrence || null,
-    })
-    .returning({
-      id: regulatoryCalendar.eventId,
-      title: regulatoryCalendar.title,
-      eventType: regulatoryCalendar.eventType,
-      eventDate: regulatoryCalendar.eventDate,
-      submissionId: regulatoryCalendar.submissionId,
-      status: regulatoryCalendar.status,
-      priority: regulatoryCalendar.priority,
-      description: regulatoryCalendar.description,
-      location: regulatoryCalendar.location,
-    });
-
-  return res.status(201).json({
-    success: true,
-    data: {
-      ...created,
-      eventDate: created.eventDate?.toISOString?.() ?? created.eventDate,
-    },
-  });
-});
-
-// GET /search is served by regulatory-registry (mounted first at /api/regulatory).
-// This path is the intelligence summary search from RegulatoryIntelligenceService.
-router.get('/intelligence-search', async (req, res) => {
+// Keep /search contract intact for existing clients while avoiding registry route overlap.
+router.get('/search', async (req, res) => {
   const { q, phase } = req.query;
   await regulatoryService.initialize();
   const results = await regulatoryService.getRegulatoryIntelligence(

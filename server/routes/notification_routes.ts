@@ -9,14 +9,17 @@ import { authMiddleware } from '../auth';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Setup NodeMailer or similar email service here in a real implementation
-// For now, we're creating a mock function
 async function sendEmail(
   to: string,
   subject: string,
   text: string,
   html?: string
 ): Promise<boolean> {
+  if (process.env.NODE_ENV === 'production' && process.env.ENABLE_MOCK_NOTIFICATIONS !== 'true') {
+    console.error('[notification_routes] Email transport not configured; refusing mock send in production');
+    return false;
+  }
+
   console.log(`[MOCK EMAIL] Sending email to ${to}`);
   console.log(`[MOCK EMAIL] Subject: ${subject}`);
   console.log(`[MOCK EMAIL] Body: ${text.substring(0, 100)}...`);
@@ -200,6 +203,12 @@ export default function registerNotificationRoutes(app: Express): void {
 
       // Get protocol details
       const protocol = await getProtocolDetails(protocol_id);
+      if (!protocol) {
+        return res.status(503).json({
+          success: false,
+          message: 'Protocol metadata service unavailable in this environment',
+        });
+      }
 
       const emailSubject = `Protocol Comparison Ready: ${protocol.title || 'New Comparison'}`;
       const emailText = `
@@ -317,16 +326,19 @@ async function getUserPreferences(userId: string): Promise<any> {
 /**
  * Get protocol details from database
  */
-async function getProtocolDetails(protocolId: string): Promise<any> {
+async function getProtocolDetails(protocolId: string): Promise<any | null> {
   try {
-    // In a real implementation, this would query the database
-    // For now, return mock data
+    if (process.env.NODE_ENV === 'production') {
+      return null;
+    }
+
     return {
       id: protocolId,
       title: 'Phase 3 Study of Drug XYZ for Treatment of Condition ABC',
       indication: 'Condition ABC',
       phase: 'Phase 3',
       sponsor: 'Pharma Company Ltd.',
+      simulated: true,
     };
   } catch (error) {
     console.error('Error getting protocol details:', error);

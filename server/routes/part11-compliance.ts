@@ -252,6 +252,32 @@ function appendAuditEntry(
 
 const router = Router();
 
+async function verifySignerPassword(pool: Pool, signerId: string, password: string): Promise<boolean> {
+  if (!password || typeof password !== 'string' || password.length < 8) {
+    return false;
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT password_hash
+       FROM users
+       WHERE id::text = $1 OR email = $1
+       LIMIT 1`,
+      [signerId]
+    );
+    const hash = result.rows[0]?.password_hash;
+    if (!hash || typeof hash !== 'string' || hash.startsWith('temp_')) {
+      return false;
+    }
+
+    const bcrypt = await import('bcryptjs');
+    return bcrypt.compare(password, hash);
+  } catch (error) {
+    console.error('[Part11] Password verification query failed:', (error as Error).message);
+    return false;
+  }
+}
+
 // ============================
 // ELECTRONIC SIGNATURES (§11.50, §11.70, §11.100)
 // ============================
@@ -259,7 +285,7 @@ const router = Router();
 /**
  * POST /signatures
  * Apply an electronic signature to a document
- * Requires: password verification (simulated), meaning selection
+ * Requires: credential hash verification + meaning selection
  */
 router.post(
   '/signatures',
@@ -290,9 +316,9 @@ router.post(
       });
     }
 
-    // §11.100(a): Verify identity before signing
-    // In production, this would verify against LDAP/AD/bcrypt hash
-    if (!password || typeof password !== 'string' || password.length < 8) {
+    // §11.100(a): Verify identity before signing against stored credential hash
+    const passwordVerified = await verifySignerPassword(pool, String(signerId), password);
+    if (!passwordVerified) {
       appendAuditEntry({
         entityType: 'signature',
         entityId: documentId,
@@ -327,7 +353,7 @@ router.post(
       userAgent: req.get('user-agent') || 'unknown',
       signatureHash,
       biometricVerified: false,
-      passwordVerified: true,
+      passwordVerified,
       mfaVerified: !!req.body.mfaToken,
       revoked: false,
     };

@@ -1,5 +1,6 @@
 import {
   STANDALONE_MODULE_ROUTE_PATTERNS,
+  buildProjectModulePath,
   buildLoginRedirectPath,
   parseProjectRoute,
 } from '../projectModuleRoutePolicy';
@@ -42,5 +43,11 @@ describe('projectModuleRoutePolicy smoke', () => {
       expect(pattern.startsWith('/concept2cure/project/')).toBe(true);
       expect(pattern.includes(':projectId')).toBe(true);
     }
+  });
+
+  it('builds project module navigation paths for supported modules', () => {
+    expect(buildProjectModulePath('p-88', 'cer')).toBe('/concept2cure/project/p-88/cer');
+    expect(buildProjectModulePath(14, 'cmc')).toBe('/concept2cure/project/14/cmc');
+    expect(buildProjectModulePath('p-88', 'vault')).toBeNull();
   });
 });

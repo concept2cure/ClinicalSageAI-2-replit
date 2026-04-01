@@ -7,6 +7,7 @@ const schemaSource = readFileSync('shared/schema/report-os.ts', 'utf8');
 const migrationSource = readFileSync('migrations/0014_report_os_foundation.sql', 'utf8');
 const progressSource = readFileSync('docs/reports/REPORT_OS_SESSION_PROGRESS_2026-03-30.md', 'utf8');
 const orchestratorSource = readFileSync('server/services/report-os/orchestrator.ts', 'utf8');
+const startupScriptSource = readFileSync('scripts/startup.sh', 'utf8');
 
 test('report-os route guards taxonomy seed and supports dependency endpoint', () => {
   assert.ok(routeSource.includes('canSeedTaxonomy'));
@@ -96,4 +97,16 @@ test('server index imports bootstrap registrars used at startup callsites', () =
       `missing bootstrap import in server/index.ts: ${requiredImport}`,
     );
   }
+});
+
+test('startup script derives DB target from DATABASE_URL before connection checks', () => {
+  assert.ok(startupScriptSource.includes('sync_db_config_from_database_url()'));
+  assert.ok(startupScriptSource.includes('export DB_NAME="$parsed_db"'));
+  assert.ok(startupScriptSource.includes('sync_db_config_from_database_url'));
+});
+
+test('startup script defines shared SQL executor and schema readiness guardrails', () => {
+  assert.ok(startupScriptSource.includes('run_sql()'));
+  assert.ok(startupScriptSource.includes('ensure_required_schemas()'));
+  assert.ok(startupScriptSource.includes('CREATE SCHEMA IF NOT EXISTS vault;'));
 });

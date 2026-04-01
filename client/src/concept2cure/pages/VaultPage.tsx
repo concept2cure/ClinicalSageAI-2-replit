@@ -192,12 +192,16 @@ export const VaultPage: React.FC<VaultPageProps> = ({
         fd.append('file', file);
         const uploadHeaders = getAuthHeaders();
         delete uploadHeaders['Content-Type']; // let browser set multipart boundary
-        await fetch(`/api/client-intelligence/project/${projectId}/documents/upload`, {
+        const response = await fetch(`/api/client-intelligence/project/${projectId}/documents/upload`, {
           method: 'POST',
           credentials: 'include',
           body: fd,
           headers: uploadHeaders,
         });
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => '');
+          throw new Error(errorText || `Upload failed with status ${response.status}`);
+        }
         await loadProjectDocs();
         toast({ title: 'Document uploaded successfully' });
       } catch {

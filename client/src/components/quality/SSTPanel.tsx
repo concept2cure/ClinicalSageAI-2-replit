@@ -58,11 +58,20 @@ export default function SSTPanel({ testId }: { testId: string }) {
   }
   async function apply() {
     if (!tpl) return;
-    await fetch(`/api/quality/tests/${testId}/sst/apply-template`, {
+    const response = await fetch(`/api/quality/tests/${testId}/sst/apply-template`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ template_id: tpl }),
     });
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      toast({
+        title: 'Template apply failed',
+        description: errorText || `Request failed (${response.status})`,
+        variant: 'destructive',
+      });
+      return;
+    }
     toast({ title: 'Template Applied', description: 'SST template applied to test successfully.' });
     loadLatest();
   }

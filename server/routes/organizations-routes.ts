@@ -1,8 +1,7 @@
 import { Router } from 'express';
 import { db } from '../db';
-import { clientWorkspaces, organizations, projects } from '@shared/schema';
-import { count, eq } from 'drizzle-orm';
-import { authMiddleware } from '../auth';
+import { organizations, clientWorkspaces, cerProjects, projectDocuments } from '@shared/schema';
+import { eq, and, sql } from 'drizzle-orm';
 
 // Create a new router for organization endpoints
 const router = Router();
@@ -35,25 +34,31 @@ function validateOrgOwnership(req: any, res: any, next: any) {
  * Get all organizations
  * API: GET /api/organizations
  */
-router.get('/', async (req: any, res) => {
+router.get('/', async (req, res) => {
   try {
     const userRole = req.user?.role || req.userRole;
-    const userOrgId = req.user?.organizationId ? Number(req.user.organizationId) : null;
+    const userOrgId = req.user?.organizationId;
+
     const rows =
       userRole === 'platform_admin' || userRole === 'superadmin'
         ? await db.select().from(organizations)
         : userOrgId
-          ? await db.select().from(organizations).where(eq(organizations.id, userOrgId))
+          ? await db.select().from(organizations).where(eq(organizations.id, Number(userOrgId)))
           : [];
+
+    const organizationsPayload = rows.map(org => ({
+      id: String(org.id),
+      name: org.name,
+      logo: org.logo,
+      subscriptionTier: org.tier,
+      maxUsers: org.maxUsers,
+      activeUsers: null, // active user count is provided by tenant stats endpoint
+      createdAt: org.createdAt?.toISOString() ?? null,
+    }));
 
     res.json({
       success: true,
-      organizations: rows.map(org => ({
-        id: String(org.id),
-        name: org.name,
-        logo: org.logo || '/logos/default.png',
-        createdAt: org.createdAt,
-      })),
+      organizations: organizationsPayload,
     });
   } catch (error) {
     console.error('Error fetching organizations:', error);
@@ -70,25 +75,33 @@ router.get('/', async (req: any, res) => {
  */
 router.get('/:id', validateOrgOwnership, async (req, res) => {
   try {
-    const { id } = req.params;
-    const [organization] = await db
+    const id = parseInt(req.params.id, 10);
+    const [organizationData] = await db
       .select()
       .from(organizations)
-      .where(eq(organizations.id, Number(id)));
+      .where(eq(organizations.id, id))
+      .limit(1);
 
-    if (!organization) {
-      return res.status(404).json({ success: false, error: 'Organization not found' });
+    if (!organizationData) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+      });
     }
 
     res.json({
       success: true,
       organization: {
-        id: String(organization.id),
-        name: organization.name,
-        logo: organization.logo || '/logos/default.png',
-        settings: organization.settings || {},
-        createdAt: organization.createdAt,
-        updatedAt: organization.updatedAt,
+        id: String(organizationData.id),
+        name: organizationData.name,
+        logo: organizationData.logo,
+        subscriptionTier: organizationData.tier,
+        maxUsers: organizationData.maxUsers,
+        activeUsers: null,
+        createdAt: organizationData.createdAt?.toISOString() ?? null,
+        billingCycle: organizationData.billingCycle,
+        domain: organizationData.domain,
+        status: organizationData.status,
       },
     });
   } catch (error) {
@@ -106,30 +119,60 @@ router.get('/:id', validateOrgOwnership, async (req, res) => {
  */
 router.get('/:id/clients', validateOrgOwnership, async (req, res) => {
   try {
-    const { id } = req.params;
-    const orgId = Number(id);
-    const workspaces = await db
-      .select({
-        id: clientWorkspaces.id,
-        name: clientWorkspaces.name,
-        organizationId: clientWorkspaces.organizationId,
-        logo: clientWorkspaces.logo,
-        quotaProjects: clientWorkspaces.quotaProjects,
-        quotaStorageGB: clientWorkspaces.quotaStorage,
-        updatedAt: clientWorkspaces.updatedAt,
-      })
-      .from(clientWorkspaces)
-      .where(eq(clientWorkspaces.organizationId, orgId));
+    const organizationId = parseInt(req.params.id, 10);
 
-    const projectCounts = await db
-      .select({
-        workspaceId: projects.clientWorkspaceId,
-        projectCount: count(projects.id),
+    const workspaces = await db
+      .select()
+      .from(clientWorkspaces)
+      .where(eq(clientWorkspaces.organizationId, organizationId));
+
+    const clients = await Promise.all(
+      workspaces.map(async workspace => {
+        const [projectsAgg] = await db
+          .select({
+            count: sql<number>`count(*)`,
+            lastActivity: sql<Date | null>`max(${cerProjects.updatedAt})`,
+          })
+          .from(cerProjects)
+          .where(
+            and(
+              eq(cerProjects.organizationId, organizationId),
+              eq(cerProjects.clientWorkspaceId, workspace.id)
+            )
+          );
+
+        const [docsAgg] = await db
+          .select({
+            bytes: sql<number>`coalesce(sum(${projectDocuments.fileSize}), 0)`,
+          })
+          .from(projectDocuments)
+          .innerJoin(cerProjects, eq(projectDocuments.projectId, cerProjects.id))
+          .where(
+            and(
+              eq(projectDocuments.organizationId, organizationId),
+              eq(cerProjects.clientWorkspaceId, workspace.id)
+            )
+          );
+
+        const bytes = Number(docsAgg?.bytes ?? 0);
+        const storageUsedGB = Number((bytes / (1024 * 1024 * 1024)).toFixed(2));
+
+        return {
+          id: String(workspace.id),
+          name: workspace.name,
+          organizationId: String(workspace.organizationId),
+          logo: workspace.logo,
+          activeProjects: Number(projectsAgg?.count ?? 0),
+          quotaProjects: workspace.quotaProjects ?? 0,
+          storageUsedGB,
+          quotaStorageGB: workspace.quotaStorage ?? 0,
+          lastActivity:
+            projectsAgg?.lastActivity instanceof Date
+              ? projectsAgg.lastActivity.toISOString()
+              : workspace.updatedAt?.toISOString() ?? workspace.createdAt?.toISOString() ?? null,
+        };
       })
-      .from(projects)
-      .where(eq(projects.organizationId, orgId))
-      .groupBy(projects.clientWorkspaceId);
-    const projectCountByWorkspace = new Map(projectCounts.map(row => [row.workspaceId, row.projectCount]));
+    );
 
     res.json({
       success: true,
