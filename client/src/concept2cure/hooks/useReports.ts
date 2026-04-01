@@ -1,84 +1,265 @@
-/**
- * Hook for generating and managing reports.
- * Connects to report-generator-service and Docx Factory.
- */
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { getOrgId } from '@/utils/authToken';
+import { queryKeys } from './queryKeys';
 
-export interface Report {
-  id: string;
-  title: string;
-  type: 'readiness-brief' | 'exception-summary' | 'handoff-brief' | 'transmittal' | 'executive-summary';
-  status: 'draft' | 'generating' | 'ready' | 'exported';
+export type ReportRunStatus = 'queued' | 'partial' | 'completed' | 'failed';
+export type DeliveryChannel = 'platform_send' | 'external_pdf_export';
+
+export interface ReportRun {
+  id: number;
+  runUuid: string;
+  reportTypeId: string;
+  reportTypeLabel: string;
+  scopeType: string;
+  scopeId: string;
+  status: ReportRunStatus;
+  confidence: number | null;
+  blockers: string[];
   createdAt: string;
-  projectId?: string;
-  downloadUrl?: string;
+  completedAt?: string | null;
 }
 
-export function useReports(projectId?: string) {
-  const reportsQuery = useQuery<Report[]>({
-    queryKey: ['reports', projectId],
+export interface ReportBundle {
+  bundleId: string;
+  organizationId: number;
+  name: string;
+  description?: string;
+  createdAt: string;
+  runIds: number[];
+  items: Array<{
+    runId: number;
+    reportTypeLabel: string;
+    scopeType: string;
+    scopeId: string;
+    status: string;
+    confidence: number | null;
+  }>;
+}
+
+export interface ReportDelivery {
+  deliveryId: string;
+  channel: DeliveryChannel;
+  status: 'sent' | 'exported' | 'queued' | 'failed';
+  subject: string;
+  recipients: string[];
+  createdAt: string;
+  runId?: number;
+  bundleId?: string;
+  correspondenceId?: string;
+}
+
+interface ListRunsParams {
+  scopeType?: string;
+  scopeId?: string;
+  status?: string;
+  reportTypeId?: string;
+  search?: string;
+  sortBy?: 'createdAt' | 'completedAt' | 'confidence' | 'status' | 'reportType' | 'scopeType';
+  sortOrder?: 'asc' | 'desc';
+  limit?: number;
+}
+
+interface GenerateParams {
+  reportTypeId: string;
+  scopeType: 'project' | 'program' | 'submission' | 'document' | 'account' | 'study';
+  scopeId: string;
+  clientWorkspaceId?: number;
+  requestedBy?: number;
+}
+
+interface CreateBundleParams {
+  name: string;
+  description?: string;
+  runIds: number[];
+  createdBy?: number;
+}
+
+interface CreateDeliveryParams {
+  runId?: number;
+  bundleId?: string;
+  submissionId?: string;
+  projectId?: number;
+  correspondenceType?: string;
+  subject: string;
+  message?: string;
+  recipients: string[];
+  urgency?: 'low' | 'medium' | 'high' | 'critical';
+  channel: DeliveryChannel;
+  requestedBy?: number;
+  captureForLearning?: boolean;
+}
+
+interface CaptureCorrespondenceParams {
+  projectId: number;
+  submissionId?: string;
+  direction?: 'inbound' | 'outbound' | 'internal';
+  sourceChannel?: 'manual_upload' | 'mailbox_sync' | 'api_import';
+  communicationType?: string;
+  subject: string;
+  body: string;
+  recipients?: string[];
+  sender?: string;
+  urgency?: 'low' | 'medium' | 'high' | 'critical';
+  responseRequired?: boolean;
+  captureForLearning?: boolean;
+}
+
+export function useReports() {
+  const queryClient = useQueryClient();
+  const organizationId = Number(getOrgId() || '1');
+
+  const taxonomyQuery = useQuery({
+    queryKey: queryKeys.reports.catalog(),
     queryFn: async () => {
-      // Try fetching existing reports
-      try {
-        const res = await apiRequest('GET',
-          projectId
-            ? `/api/concept2cure/projects/${projectId}/reports`
-            : '/api/concept2cure/reports'
-        );
-        const json = await res.json();
-        return json.data || json || [];
-      } catch {
-        // Reports endpoint may not exist yet
-      }
-      return [];
+      const res = await apiRequest('GET', '/api/report-os/taxonomy');
+      const json = await res.json();
+      return json.data || [];
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
   });
 
-  const generateReport = useMutation({
-    mutationFn: async (params: {
-      type: Report['type'];
-      title: string;
-      projectId?: string;
-    }) => {
-      // Generate report via Docx Factory
-      try {
-        const res = await apiRequest('POST', '/api/docx-factory/renders', {
-          templateId: params.type,
-          title: params.title,
-          projectId: params.projectId,
-          inputs: {
-            reportType: params.type,
-            generatedAt: new Date().toISOString(),
-          },
-        });
-        return res.json();
-      } catch {
-        // Fall back to simple DOCX export
-        const docxRes = await apiRequest('POST', '/api/concept2cure/artifacts/export-docx', {
-          title: params.title,
-          content: `# ${params.title}\n\nGenerated: ${new Date().toLocaleDateString()}\n\nThis report was generated from the Concept2Cure platform.`,
-        });
+  const listRuns = async (params: ListRunsParams = {}): Promise<ReportRun[]> => {
+    const query = new URLSearchParams({
+      organizationId: String(organizationId),
+      ...(params.scopeType ? { scopeType: params.scopeType } : {}),
+      ...(params.scopeId ? { scopeId: params.scopeId } : {}),
+      ...(params.status ? { status: params.status } : {}),
+      ...(params.reportTypeId ? { reportTypeId: params.reportTypeId } : {}),
+      ...(params.search ? { search: params.search } : {}),
+      ...(params.sortBy ? { sortBy: params.sortBy } : {}),
+      ...(params.sortOrder ? { sortOrder: params.sortOrder } : {}),
+      ...(params.limit ? { limit: String(params.limit) } : {}),
+    });
+    const res = await apiRequest('GET', `/api/report-os/runs?${query.toString()}`);
+    const json = await res.json();
+    return json.data || [];
+  };
 
-        const blob = await docxRes.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${params.title.replace(/[^a-zA-Z0-9_.-]/g, '_')}.docx`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        return { id: 'local', title: params.title, status: 'exported' };
-      }
+  const runsQuery = useQuery({
+    queryKey: queryKeys.reports.list(),
+    queryFn: () => listRuns({ sortBy: 'createdAt', sortOrder: 'desc', limit: 200 }),
+    staleTime: 30_000,
+  });
+
+  const bundlesQuery = useQuery({
+    queryKey: ['concept2cure', 'reports', 'bundles', organizationId] as const,
+    queryFn: async (): Promise<ReportBundle[]> => {
+      const res = await apiRequest('GET', `/api/report-os/bundles?organizationId=${organizationId}`);
+      const json = await res.json();
+      return json.data || [];
+    },
+    staleTime: 30_000,
+  });
+
+  const deliveriesQuery = useQuery({
+    queryKey: ['concept2cure', 'reports', 'deliveries', organizationId] as const,
+    queryFn: async (): Promise<ReportDelivery[]> => {
+      const res = await apiRequest('GET', `/api/report-os/deliveries?organizationId=${organizationId}`);
+      const json = await res.json();
+      return json.data || [];
+    },
+    staleTime: 30_000,
+  });
+
+  const generateMutation = useMutation({
+    mutationFn: async (params: GenerateParams) => {
+      const res = await apiRequest('POST', '/api/report-os/runs', {
+        organizationId,
+        ...params,
+      });
+      const json = await res.json();
+      return json.data;
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.reports.list() }),
+        queryClient.invalidateQueries({ queryKey: ['concept2cure', 'reports', 'deliveries', organizationId] }),
+      ]);
     },
   });
+
+  const createBundleMutation = useMutation({
+    mutationFn: async (params: CreateBundleParams) => {
+      const res = await apiRequest('POST', '/api/report-os/bundles', {
+        organizationId,
+        ...params,
+      });
+      const json = await res.json();
+      return json.data as ReportBundle;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['concept2cure', 'reports', 'bundles', organizationId],
+      });
+    },
+  });
+
+  const createDeliveryMutation = useMutation({
+    mutationFn: async (params: CreateDeliveryParams) => {
+      const res = await apiRequest('POST', '/api/report-os/deliveries', {
+        organizationId,
+        captureForLearning: true,
+        ...params,
+      });
+      const json = await res.json();
+      return json.data as ReportDelivery;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['concept2cure', 'reports', 'deliveries', organizationId],
+      });
+    },
+  });
+
+  const captureCorrespondenceMutation = useMutation({
+    mutationFn: async (params: CaptureCorrespondenceParams) => {
+      const res = await apiRequest('POST', '/api/report-os/correspondence/capture', {
+        organizationId,
+        captureForLearning: true,
+        ...params,
+      });
+      const json = await res.json();
+      return json.data as {
+        correspondenceId?: string;
+        persistedToPlatform: boolean;
+        issues: Array<{ category: string; severity: string; blocker: boolean }>;
+      };
+    },
+  });
+
+  const runPdfExportUrl = (runId: number) =>
+    `/api/report-os/runs/${runId}/export.pdf?organizationId=${organizationId}`;
+  const bundlePdfExportUrl = (bundleId: string) =>
+    `/api/report-os/bundles/${bundleId}/export.pdf?organizationId=${organizationId}`;
 
   return {
-    reports: reportsQuery.data || [],
-    isLoading: reportsQuery.isLoading,
-    generateReport: generateReport.mutateAsync,
-    isGenerating: generateReport.isPending,
+    organizationId,
+    taxonomy: taxonomyQuery.data || [],
+    runs: (runsQuery.data || []) as ReportRun[],
+    bundles: bundlesQuery.data || [],
+    deliveries: deliveriesQuery.data || [],
+    listRuns,
+    runPdfExportUrl,
+    bundlePdfExportUrl,
+    generateReport: generateMutation.mutateAsync,
+    createBundle: createBundleMutation.mutateAsync,
+    createDelivery: createDeliveryMutation.mutateAsync,
+    captureCorrespondence: captureCorrespondenceMutation.mutateAsync,
+    isLoading:
+      runsQuery.isLoading || taxonomyQuery.isLoading || bundlesQuery.isLoading || deliveriesQuery.isLoading,
+    isGenerating: generateMutation.isPending,
+    isCreatingBundle: createBundleMutation.isPending,
+    isCreatingDelivery: createDeliveryMutation.isPending,
+    isCapturingCorrespondence: captureCorrespondenceMutation.isPending,
+    refreshAll: async () => {
+      await Promise.all([
+        runsQuery.refetch(),
+        taxonomyQuery.refetch(),
+        bundlesQuery.refetch(),
+        deliveriesQuery.refetch(),
+      ]);
+    },
   };
 }

@@ -51,6 +51,7 @@ import { CommunicationCenter } from './CommunicationCenter';
 import { ComputeJobPanel } from '../compute/ComputeJobPanel';
 import { IndEvidenceAskPanel } from './IndEvidenceAskPanel';
 import RegulatoryCommunicationsHub from '../correspondence/RegulatoryCommunicationsHub';
+import ReportCenter from '../reports/ReportCenter';
 import {
   ChevronLeft,
   Loader2,
@@ -2852,7 +2853,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 </div>
               ) : mode === 'browse' ? (
                 <div className="flex-1 min-h-0 flex flex-col">
-                  {isINDWorkspace && leftRailMode === 'dossier' && (
+                  {activeLayer === 'reports' ? (
+                    <div className="flex-1 overflow-y-auto">
+                      <ReportCenter projectId={projectId} />
+                    </div>
+                  ) : (
+                    <>
+                      {isINDWorkspace && leftRailMode === 'dossier' && (
                     <div className="px-4 pt-3">
                       <IndEvidenceAskPanel
                         projectId={projectId}
@@ -2862,44 +2869,46 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                         }
                       />
                     </div>
+                      )}
+                      <div className="flex-1 min-h-0">
+                        <DocumentListPane
+                          folderLabel={browseLabel}
+                          documents={browseDocs}
+                          selectedId={selectedDocId}
+                          onSelect={handleSelectDoc}
+                          onCreateNew={() => setShowNewDoc(true)}
+                          onAIDraft={
+                            leftRailMode === 'dossier' && selectedCtdSection
+                              ? handleCreateSectionDraftWithRI
+                              : undefined
+                          }
+                          onStartFromTemplate={
+                            leftRailMode === 'dossier' && selectedCtdSection
+                              ? () =>
+                                  handleDialogCreateFromTemplate(
+                                    'clinical-overview',
+                                    `${selectedCtdSection} — ${getSectionLabel(selectedCtdSection)}`,
+                                    selectedCtdSection
+                                  )
+                              : undefined
+                          }
+                          onWriteManually={
+                            leftRailMode === 'dossier' && selectedCtdSection
+                              ? () =>
+                                  handleDialogCreateBlank(
+                                    `${selectedCtdSection} — ${getSectionLabel(selectedCtdSection)}`,
+                                    selectedCtdSection
+                                  )
+                              : undefined
+                          }
+                          sectionAIDraftable={leftRailMode === 'dossier' && !!selectedCtdSection}
+                          onCutDocument={handleCutDocument}
+                          onCopyCtdPath={handleCopyCtdPath}
+                          onOpenPlacement={handleOpenPlacementForDoc}
+                        />
+                      </div>
+                    </>
                   )}
-                  <div className="flex-1 min-h-0">
-                    <DocumentListPane
-                      folderLabel={browseLabel}
-                      documents={browseDocs}
-                      selectedId={selectedDocId}
-                      onSelect={handleSelectDoc}
-                      onCreateNew={() => setShowNewDoc(true)}
-                      onAIDraft={
-                        leftRailMode === 'dossier' && selectedCtdSection
-                          ? handleCreateSectionDraftWithRI
-                          : undefined
-                      }
-                      onStartFromTemplate={
-                        leftRailMode === 'dossier' && selectedCtdSection
-                          ? () =>
-                              handleDialogCreateFromTemplate(
-                                'clinical-overview',
-                                `${selectedCtdSection} — ${getSectionLabel(selectedCtdSection)}`,
-                                selectedCtdSection
-                              )
-                          : undefined
-                      }
-                      onWriteManually={
-                        leftRailMode === 'dossier' && selectedCtdSection
-                          ? () =>
-                              handleDialogCreateBlank(
-                                `${selectedCtdSection} — ${getSectionLabel(selectedCtdSection)}`,
-                                selectedCtdSection
-                              )
-                          : undefined
-                      }
-                      sectionAIDraftable={leftRailMode === 'dossier' && !!selectedCtdSection}
-                      onCutDocument={handleCutDocument}
-                      onCopyCtdPath={handleCopyCtdPath}
-                      onOpenPlacement={handleOpenPlacementForDoc}
-                    />
-                  </div>
                 </div>
               ) : (
                 <div ref={editorContainerRef} className="flex-1 flex min-h-0 min-w-0">
