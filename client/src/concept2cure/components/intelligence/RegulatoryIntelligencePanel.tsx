@@ -13,6 +13,7 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
+  Activity,
   Brain,
   Search,
   ShieldAlert,
@@ -45,6 +46,8 @@ import {
   type CompareResult,
 } from '../../hooks/usePrecedentEngine';
 import { AlertFeed } from './AlertFeed';
+import { KernelDecisionLog } from './KernelDecisionLog';
+import { PatternSignalPanel } from './PatternSignalPanel';
 
 // ── Props ────────────────────────────────────────────────────────────────────
 export interface RegulatoryIntelligencePanelProps {
@@ -61,7 +64,7 @@ export interface RegulatoryIntelligencePanelProps {
   onCreateDocument?: (content: string, title: string, ctdSection?: string) => void;
 }
 
-type Tab = 'insights' | 'precedents' | 'risk' | 'strategy' | 'evidence' | 'alerts';
+type Tab = 'insights' | 'precedents' | 'risk' | 'strategy' | 'evidence' | 'alerts' | 'kernel';
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'insights', label: 'Insights', icon: Brain },
@@ -70,6 +73,7 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'strategy', label: 'Strategy', icon: Target },
   { id: 'evidence', label: 'Evidence', icon: FileCheck },
   { id: 'alerts', label: 'Alerts', icon: ShieldAlert },
+  { id: 'kernel', label: 'Kernel', icon: Activity },
 ];
 
 // ── Helper: Score Bar ────────────────────────────────────────────────────────
@@ -1156,6 +1160,11 @@ export function RegulatoryIntelligencePanel({
             therapeuticArea={therapeuticArea}
             compact
           />
+        )}
+
+        {/* ── Kernel decisions tab ───────────────────────────────────────── */}
+        {activeTab === 'kernel' && (
+          <KernelDecisionLog compact />
         )}
       </div>
     </div>

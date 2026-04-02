@@ -512,3 +512,62 @@ export function useRIMAssessment(projectId: number | string | null) {
     refetchOnWindowFocus: false,
   });
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// KERNEL DECISION RECORDS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface KernelDecision {
+  id: string;
+  createdAt: string;
+  requestId: string | null;
+  threadId: string | null;
+  route: string;
+  organizationId: number | null;
+  userId: number | null;
+  projectId: number | null;
+  plannerVersion: string;
+  orchestratorName: string;
+  intentLens: string | null;
+  intentConfidence: number | null;
+  submissionType: string | null;
+  selectedTaskType: string | null;
+  selectedProvider: string | null;
+  selectedModel: string | null;
+  routingStrategy: string | null;
+  selectedTools: string[];
+  alternatives: Array<Record<string, unknown>>;
+  constraints: Record<string, unknown>;
+  decisionRationale: string | null;
+  estimatedCostUsd: number | null;
+  latencyMs: number | null;
+  outcome: 'success' | 'failed' | 'partial' | null;
+  errorMessage: string | null;
+}
+
+export interface KernelDecisionListResponse {
+  decisions: KernelDecision[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+/**
+ * Fetch kernel AI routing decision records for a project (or org-wide if no projectId).
+ */
+export function useKernelDecisions(projectId?: number | string | null, limit = 20) {
+  return useQuery<KernelDecisionListResponse>({
+    queryKey: ['concept2cure', 'kernel-decisions', projectId, limit],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (projectId) params.set('projectId', String(projectId));
+      params.set('limit', String(limit));
+      const res = await apiFetch<{ data: KernelDecisionListResponse }>(
+        `/api/ana-ri/kernel/decisions?${params.toString()}`,
+      );
+      return res.data;
+    },
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+}
