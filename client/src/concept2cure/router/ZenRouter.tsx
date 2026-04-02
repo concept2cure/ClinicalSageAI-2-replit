@@ -247,18 +247,24 @@ const PageTransition: React.FC<PageTransitionProps> = ({ children }) => (
 // LANDING PAGE ROUTE (public → landing, authenticated → redirect to app)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// [BATCH 1] Landing page deleted — redirect to login or app
 const LandingPageRoute: React.FC = () => {
   const { isAuthenticated, isLoading } = usePortalAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!isLoading) {
-      setLocation(isAuthenticated ? '/concept2cure' : '/concept2cure/login');
+    if (!isLoading && isAuthenticated) {
+      setLocation('/concept2cure');
     }
   }, [isAuthenticated, isLoading, setLocation]);
 
-  return <ZenLoadingScreen message="Loading..." />;
+  if (isLoading) return <ZenLoadingScreen message="Loading..." />;
+  if (isAuthenticated) return null; // will redirect
+
+  return (
+    <Suspense fallback={<ZenLoadingScreen message="Loading..." />}>
+      <SalesLandingPage />
+    </Suspense>
+  );
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
