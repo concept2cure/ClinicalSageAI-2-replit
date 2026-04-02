@@ -203,12 +203,7 @@ export const getICHE3Structure = async () => {
  * Launch a full CSR build job with AI-powered drafting
  */
 export const buildCSR = async (studyInfo) => {
-  const response = await fetch('/api/csr-builder/build', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ studyInfo }),
-  });
-  if (!response.ok) throw new Error('Failed to build CSR');
+  const response = await apiRequest('POST', '/api/csr-builder/build', { studyInfo });
   return response.json();
 };
 
@@ -216,12 +211,7 @@ export const buildCSR = async (studyInfo) => {
  * Draft a single CSR section with AI
  */
 export const draftCSRSection = async (sectionNumber, studyInfo) => {
-  const response = await fetch('/api/csr-builder/draft-section', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sectionNumber, studyInfo }),
-  });
-  if (!response.ok) throw new Error('Failed to draft section');
+  const response = await apiRequest('POST', '/api/csr-builder/draft-section', { sectionNumber, studyInfo });
   return response.json();
 };
 
@@ -229,11 +219,6 @@ export const draftCSRSection = async (sectionNumber, studyInfo) => {
  * Cross-study comparison — find similar CSRs
  */
 export const crossStudyCompare = async (indication, phase, endpoint) => {
-  const response = await fetch('/api/csr-builder/compare', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ indication, phase, endpoint }),
-  });
-  if (!response.ok) throw new Error('Failed to compare studies');
+  const response = await apiRequest('POST', '/api/csr-builder/compare', { indication, phase, endpoint });
   return response.json();
 };

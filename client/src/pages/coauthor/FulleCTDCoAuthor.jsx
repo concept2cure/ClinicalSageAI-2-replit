@@ -148,7 +148,7 @@ export default function FulleCTDCoAuthor() {
         }
 
         // Fetch templates
-        const tmplRes = await fetch('/api/coauthor/templates');
+        const tmplRes = await apiRequest('GET', '/api/coauthor/templates');
         if (tmplRes.ok) {
           const tmplData = await tmplRes.json();
           const templates = (tmplData.templates || []).map(t => ({
@@ -164,8 +164,8 @@ export default function FulleCTDCoAuthor() {
         }
 
         // Fetch vault files
-        const vaultRes = await fetch('/api/vault/documents', {
-          headers: { 'x-organization-id': '1' },
+        const vaultRes = await apiRequest('GET', '/api/vault/documents', undefined, {
+          'x-organization-id': '1',
         });
         if (vaultRes.ok) {
           const vaultData = await vaultRes.json();
@@ -215,15 +215,11 @@ export default function FulleCTDCoAuthor() {
     }
 
     try {
-      const response = await fetch('/api/v1/drafting/start_task', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          project_id: 'ectd-project',
-          ectd_section: selectedModule,
-          document_title: documentTitle,
-          template: selectedTemplate,
-        }),
+      const response = await apiRequest('POST', '/api/v1/drafting/start_task', {
+        project_id: 'ectd-project',
+        ectd_section: selectedModule,
+        document_title: documentTitle,
+        template: selectedTemplate,
       });
 
       if (response.ok) {
