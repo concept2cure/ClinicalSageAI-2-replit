@@ -256,99 +256,26 @@ router.get('/:id', async (req: Request, res: Response) => {
       }
     }
 
-    // If still no template found, provide mock templates for common IDs to ensure preview works
+    // If no template found in DB, return 404 — no mock data
     if (!template) {
-      // Mock templates catalog for preview functionality
-      const mockTemplates = [
-        {
-          id: '1',
-          templateName: 'FDA IND Cover Letter',
-          description: 'Standard FDA IND submission cover letter template',
-          category: 'administrative',
-          agency: 'FDA',
-          tags: ['fda', 'ind', 'cover-letter'],
-          content: '<h1>FDA IND Cover Letter</h1><p>This is a standard cover letter template for FDA IND submissions.</p>',
-        },
-        {
-          id: '2',
-          templateName: 'Clinical Protocol Template',
-          description: 'Comprehensive clinical protocol template for Phase I-III studies',
-          category: 'clinical',
-          agency: 'FDA',
-          tags: ['clinical', 'protocol', 'phase-1', 'phase-2', 'phase-3'],
-          content: '<h1>Clinical Protocol</h1><p>This template provides the structure for clinical trial protocols.</p>',
-        },
-        {
-          id: '3',
-          templateName: 'Chemistry Manufacturing Controls',
-          description: 'CMC section template for drug substance and product information',
-          category: 'quality',
-          agency: 'FDA',
-          tags: ['cmc', 'quality', 'manufacturing'],
-          content: '<h1>Chemistry, Manufacturing, and Controls</h1><p>Template for CMC documentation.</p>',
-        },
-        {
-          id: 'ind-cover-letter-base',
-          templateName: 'IND Cover Letter - Base Template',
-          description: 'Base template for IND submission cover letters',
-          category: 'administrative',
-          agency: 'FDA',
-          tags: ['ind', 'fda', 'administrative'],
-          content: '<h1>IND Cover Letter</h1><p>Standard IND submission cover letter.</p>',
-        },
-        {
-          id: 'ind-protocol-phase-1',
-          templateName: 'Phase 1 Clinical Protocol',
-          description: 'Phase 1 specific protocol template',
-          category: 'clinical',
-          agency: 'FDA',
-          tags: ['ind', 'fda', 'phase-1', 'clinical'],
-          content: '<h1>Phase 1 Clinical Protocol</h1><p>Template for Phase 1 clinical studies.</p>',
-        }
-      ];
-      
-      // Check if the requested ID matches any mock template
-      template = mockTemplates.find(t => 
-        t.id === id || 
-        t.id === String(id) || 
-        t.id === numericId?.toString()
-      );
-      
-      // If still not found, create a generic mock template with the requested ID
-      if (!template) {
-        template = {
-          id: id,
-          templateName: `Template ${id}`,
-          description: 'Professional regulatory template for document generation',
-          category: 'general',
-          agency: 'FDA',
-          tags: ['regulatory', 'template'],
-          content: `<h1>Template ${id}</h1><p>This is a template document for regulatory submissions.</p>`,
-        };
-      }
+      return res.status(404).json({
+        success: false,
+        error: `Template with ID '${id}' not found`
+      });
     }
-    
-    // Generate default sections if not provided
-    const defaultSections = [
-      { title: 'Executive Summary', content: 'This section provides a high-level overview of the key findings and recommendations.' },
-      { title: 'Clinical Overview', content: 'Detailed clinical data and study results are presented in this section.' },
-      { title: 'Quality Information', content: 'Quality control and assurance information is documented here.' },
-      { title: 'Safety Assessment', content: 'Comprehensive safety data and risk evaluation are included in this section.' },
-      { title: 'Regulatory Compliance', content: 'Documentation of regulatory requirements and compliance status.' }
-    ];
-    
-    // Return template with preview data in expected format
+
+    // Return template in expected format
     res.json({
       success: true,
       template: {
         id: template.id || template.templateId,
-        templateName: template.templateName || template.name || `Template ${id}`,
-        description: template.description || 'Professional regulatory template for document generation',
-        content: template.content || template.structure || '<p>Template content will be displayed here.</p>',
-        sections: template.sections || defaultSections,
+        templateName: template.templateName || template.name,
+        description: template.description || '',
+        content: template.content || template.structure || '',
+        sections: template.sections || [],
         category: template.category || 'General',
         tags: template.tags || [],
-        agency: template.agency || 'FDA',
+        agency: template.agency || '',
         format: template.format || 'html',
         moduleNumber: template.moduleNumber,
         version: template.version || '1.0.0',

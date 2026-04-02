@@ -17,9 +17,8 @@ const router = Router();
  */
 const resolveOrganizationId = (req: any): number | null => {
   const raw =
-    req.header('x-organization-id') ||
-    req.header('x-org-id') ||
-    req.query.organizationId ||
+    req.tenantId ||
+    req.tenantContext?.organizationId ||
     req.user?.organizationId;
   const parsed = Number(raw);
   return Number.isFinite(parsed) ? parsed : null;

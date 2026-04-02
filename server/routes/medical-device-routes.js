@@ -48,9 +48,9 @@ const requireOrganization = (req, res, next) => {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
-  // Get organization ID from various sources
+  // Get organization ID from authenticated context
   const organizationId =
-    req.headers['x-organization-id'] || req.body?.organizationId || req.user?.organizationId;
+    req.tenantId || req.tenantContext?.organizationId || req.user?.organizationId;
   if (!organizationId) {
     return res.status(400).json({ error: 'Organization ID required' });
   }
