@@ -72,6 +72,8 @@ export const intelligenceKeys = {
     ['intelligence', 'cross-module', projectId] as const,
   rimAssessment: (projectId: number | string) =>
     ['intelligence', 'rim-assessment', projectId] as const,
+  rimSignals: (projectId: number | string) =>
+    ['intelligence', 'rim-signals', projectId] as const,
 } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -346,8 +348,56 @@ export function useSubmitFeedback(projectId: number | string | null) {
   });
 }
 
+/**
+ * Enrich project intelligence profile.
+ */
+export function useEnrichIntelligence(projectId: number | string | null) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>) =>
+      apiFetch(`/api/intelligence/projects/${projectId}/profile/enrich`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => {
+      if (projectId) {
+        qc.invalidateQueries({ queryKey: intelligenceKeys.profile(projectId) });
+        qc.invalidateQueries({ queryKey: intelligenceKeys.dashboard(projectId) });
+      }
+    },
+  });
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
-// RIM ASSESSMENT TYPES
+// RIM SIGNAL TYPES (mirrors backend SignalSummary from signal-capture.ts)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export type RIMSignalType =
+  | 'judgment'
+  | 'pattern_match'
+  | 'recommendation'
+  | 'feedback'
+  | 'artifact_change';
+
+export type TrendConfidence = 'high' | 'moderate' | 'low' | 'insufficient';
+
+export interface RIMSignalSummary {
+  totalSignals: number;
+  byType: Partial<Record<RIMSignalType, number>>;
+  byRiskLevel: Partial<Record<string, number>>;
+  averageScore: number;
+  averageConfidence: number;
+  topPatternIds: string[];
+  overallTrend: 'improving' | 'stable' | 'declining';
+  trendConfidence: TrendConfidence;
+  trendSampleSize: number;
+  periodStart: string;
+  periodEnd: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RIM ASSESSMENT TYPES (mirrors backend RIMAssessment from rim.ts)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export type JudgmentModel =
@@ -401,14 +451,48 @@ export interface JudgmentReport {
   generatedAt: string;
 }
 
+export interface RIMPatternMatch {
+  patternId: string;
+  matchedText: string;
+  matchLocation: string;
+  matchConfidence: number;
+  pattern: {
+    id: string;
+    category: string;
+    name: string;
+    description: string;
+    severity: 'critical' | 'high' | 'medium' | 'low';
+    remediation: string;
+    hitCount: number;
+    lastMatchedAt: string | null;
+  };
+}
+
 export interface RIMAssessment {
   judgment: JudgmentReport;
   rimScore: number;
   rimVerdict: string;
   topActions: string[];
   assessedAt: string;
-  patternMatches: unknown[];
-  signalSummary: unknown;
+  patternMatches: RIMPatternMatch[];
+  signalSummary: RIMSignalSummary | null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RIM HOOKS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * RIM signals summary — accumulated signals with types, scores, trends.
+ */
+export function useRIMSignals(projectId: number | string | null) {
+  return useQuery<RIMSignalSummary>({
+    queryKey: intelligenceKeys.rimSignals(projectId ?? 0),
+    queryFn: () => apiFetch(`/api/intelligence/projects/${projectId}/rim/signals`),
+    enabled: !!projectId,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
 }
 
 /**
@@ -424,28 +508,7 @@ export function useRIMAssessment(projectId: number | string | null) {
         body: JSON.stringify({}),
       }),
     enabled: !!projectId,
-    staleTime: 120_000, // 2 minutes — assessment is expensive
+    staleTime: 120_000,
     refetchOnWindowFocus: false,
-  });
-}
-
-/**
- * Enrich project intelligence profile.
- */
-export function useEnrichIntelligence(projectId: number | string | null) {
-  const qc = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: Record<string, unknown>) =>
-      apiFetch(`/api/intelligence/projects/${projectId}/profile/enrich`, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      }),
-    onSuccess: () => {
-      if (projectId) {
-        qc.invalidateQueries({ queryKey: intelligenceKeys.profile(projectId) });
-        qc.invalidateQueries({ queryKey: intelligenceKeys.dashboard(projectId) });
-      }
-    },
   });
 }

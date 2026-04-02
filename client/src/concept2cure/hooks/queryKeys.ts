@@ -188,6 +188,12 @@ export const queryKeys = {
       ['concept2cure', 'ivdr', 'pack-readiness', projectId, packType] as const,
   },
 
+  // ── Kernel Decision Records ───────────────────────────────────────────────
+  kernelDecisions: {
+    list: (projectId?: number | string) =>
+      ['concept2cure', 'kernel-decisions', projectId] as const,
+  },
+
   // ── Intelligence Layer ────────────────────────────────────────────────────
   intelligence: {
     dashboard: (projectId: number | string) =>
@@ -206,14 +212,8 @@ export const queryKeys = {
       ['intelligence', 'feedback-summary', projectId] as const,
     rimAssessment: (projectId: number | string) =>
       ['intelligence', 'rim-assessment', projectId] as const,
-  },
-
-  // ── Governance / Authoring Actions ────────────────────────────────────
-  governance: {
-    promotionBlockers: (projectId: number | string) =>
-      ['concept2cure', 'governance', 'promotion-blockers', projectId] as const,
-    decisions: (projectId: number | string) =>
-      ['concept2cure', 'governance', 'decisions', projectId] as const,
+    rimSignals: (projectId: number | string) =>
+      ['intelligence', 'rim-signals', projectId] as const,
   },
 
   // ── AnA Intelligence (CLAUDE.md Memory Compression Model) ─────────────
@@ -242,5 +242,11 @@ export const queryKeys = {
     /** Uploaded documents for intelligence */
     documents: (scope: 'company' | 'project', scopeId?: number | string) =>
       ['concept2cure', 'ana-intelligence', 'documents', scope, scopeId] as const,
+    /** Memory context diagnostics (3-layer assembly) */
+    memoryDiagnostics: (projectId?: number | string, threadId?: string) =>
+      ['concept2cure', 'ana-intelligence', 'memory-diagnostics', projectId, threadId] as const,
+    /** Memory semantic search */
+    memorySearch: (projectId: number | string, query: string) =>
+      ['concept2cure', 'ana-intelligence', 'memory-search', projectId, query] as const,
   },
 } as const;
