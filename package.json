@@ -175,7 +175,7 @@
     "@tiptap/pm": "3.21.0",
     "@tiptap/react": "3.21.0",
     "@tiptap/starter-kit": "3.21.0",
-    "@tiptap/suggestion": "3.21.0",
+    "@tiptap/suggestion": "3.22.0",
     "@tiptap/y-tiptap": "3.0.2",
     "@types/compression": "1.8.1",
     "@types/cookie-parser": "1.4.10",
