@@ -22,6 +22,7 @@
  */
 
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { Message, Artifact, SubmissionType } from '../types';
 
 /**

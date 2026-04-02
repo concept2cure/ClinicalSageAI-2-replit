@@ -55,11 +55,7 @@ const CitationManagerPage = () => {
     if (citationDetails[pmid]) return;
 
     try {
-      const response = await fetch(`/api/citation/details/${pmid}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch citation details');
-      }
-
+      const response = await apiRequest('GET', `/api/citation/details/${pmid}`);
       const data = await response.json();
       setCitationDetails(prev => ({
         ...prev,

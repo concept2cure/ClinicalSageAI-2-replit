@@ -15,6 +15,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { getAuthHeaders } from '@/utils/authToken';
+import { apiRequest } from '@/lib/queryClient';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

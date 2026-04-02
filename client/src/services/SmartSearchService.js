@@ -11,6 +11,8 @@
  * - Relevance scoring with multi-parameter ranking
  */
 
+import { apiRequest } from '@/lib/queryClient';
+
 /**
  * Perform a smart search across documents
  *

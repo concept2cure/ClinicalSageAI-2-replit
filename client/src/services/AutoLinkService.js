@@ -11,6 +11,8 @@
  * - Audit logging of auto-linking decisions
  */
 
+import { apiRequest } from '@/lib/queryClient';
+
 /**
  * Auto-link a document to appropriate regulatory modules
  *

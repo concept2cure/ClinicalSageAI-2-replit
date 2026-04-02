@@ -11,6 +11,8 @@
  * - Multi-tenant isolated recommendations
  */
 
+import { apiRequest } from '@/lib/queryClient';
+
 /**
  * Get personalized document recommendations for a user
  *

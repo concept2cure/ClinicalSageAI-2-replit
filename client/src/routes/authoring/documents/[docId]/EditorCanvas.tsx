@@ -167,13 +167,17 @@ export default function EditorCanvas({
     try {
       setIsValidating(true);
 
-      const issues = await apiRequest('POST', '/api/validate', {
+      const response = await apiRequest('POST', '/api/validate', {
         docId: documentId,
         content: editor.getHTML(),
         region,
         section: 'current',
       });
-      setValidationIssues(issues);
+
+      if (response.ok) {
+        const issues = await response.json();
+        setValidationIssues(issues);
+      }
     } catch (error) {
       console.error('[EditorCanvas] Validation failed:', error);
     } finally {

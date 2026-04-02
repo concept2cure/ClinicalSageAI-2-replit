@@ -22,6 +22,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { getFirestoreDb, isFirebaseConfigured } from '../config/firebase';
 import {
   doc,

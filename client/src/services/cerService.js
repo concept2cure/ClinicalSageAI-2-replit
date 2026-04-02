@@ -18,18 +18,11 @@ import { apiRequest } from '@/lib/queryClient';
  * @returns {Promise<Object>} - The job data with ID for tracking
  */
 export async function generateFullCER(options) {
-  const response = await fetch('/api/cer/generate', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
-    },
-    body: JSON.stringify({
-      ndc_code: options.ndc_code,
-      product_name: options.product_name,
-      manufacturer: options.manufacturer,
-      ...options.additional_params,
-    }),
+  const response = await apiRequest('POST', '/api/cer/generate', {
+    ndc_code: options.ndc_code,
+    product_name: options.product_name,
+    manufacturer: options.manufacturer,
+    ...options.additional_params,
   });
 
   if (!response.ok) {
@@ -46,11 +39,7 @@ export async function generateFullCER(options) {
  * @returns {Promise<Object>} - The job status data
  */
 export async function checkCERJobStatus(jobId) {
-  const response = await fetch(`/api/cer/status/${jobId}`, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
-    },
-  });
+  const response = await apiRequest('GET', `/api/cer/status/${jobId}`);
 
   if (!response.ok) {
     throw new Error(`Failed to check job status: ${response.statusText}`);
