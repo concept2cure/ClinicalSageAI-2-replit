@@ -182,12 +182,7 @@ documentApiService.createFolder = async folderData => {
  */
 documentApiService.downloadDocument = async (id, filename) => {
   try {
-    const response = await fetch(`/api/documents/${id}/download`);
-
-    if (!response.ok) {
-      throw new Error(`Error downloading document: ${response.statusText}`);
-    }
-
+    const response = await apiRequest('GET', `/api/documents/${id}/download`);
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -234,18 +229,7 @@ documentApiService.saveCerToVault = async (cerData, metadata = {}) => {
     };
 
     // Create document
-    const response = await fetch('/api/documents', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(documentData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error saving CER to vault: ${response.statusText}`);
-    }
-
+    const response = await apiRequest('POST', '/api/documents', documentData);
     const data = await response.json();
     return data;
   } catch (error) {

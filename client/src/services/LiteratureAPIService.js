@@ -5,6 +5,8 @@
  * the CER module's Literature AI component.
  */
 
+import { apiRequest } from '@/lib/queryClient';
+
 /**
  * Search PubMed for scientific literature
  * @param {Object} params - Search parameters
@@ -15,19 +17,7 @@
  */
 export const searchPubMed = async ({ query, manufacturer = '', limit = 20 }) => {
   try {
-    const response = await fetch('/api/literature/pubmed', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query, manufacturer, limit }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to search PubMed');
-    }
-
+    const response = await apiRequest('POST', '/api/literature/pubmed', { query, manufacturer, limit });
     return await response.json();
   } catch (error) {
     console.error('PubMed search error:', error);
@@ -56,19 +46,7 @@ export const searchLiterature = async ({
   limit = 20,
 }) => {
   try {
-    const response = await fetch('/api/literature/search', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query, sources, filters, limit }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to search for literature');
-    }
-
+    const response = await apiRequest('POST', '/api/literature/search', { query, sources, filters, limit });
     return await response.json();
   } catch (error) {
     console.error('Literature search error:', error);
@@ -88,19 +66,7 @@ export const searchLiterature = async ({
  */
 export const summarizePaper = async ({ text, context, options = {} }) => {
   try {
-    const response = await fetch('/api/literature/summarize', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text, context, options }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to summarize paper');
-    }
-
+    const response = await apiRequest('POST', '/api/literature/summarize', { text, context, options });
     return await response.json();
   } catch (error) {
     console.error('Paper summarization error:', error);
