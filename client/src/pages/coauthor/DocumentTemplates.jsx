@@ -129,15 +129,9 @@ const DocumentTemplates = () => {
   // Track template usage mutation
   const trackUsageMutation = useMutation({
     mutationFn: async ({ templateId, usageType, documentTitle }) => {
-      const response = await fetch(`/api/templates/${templateId}/use`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-organization-id': '7',
-        },
-        body: JSON.stringify({ usageType, documentTitle }),
+      const response = await apiRequest('POST', `/api/templates/${templateId}/use`, { usageType, documentTitle }, {
+        'x-organization-id': '7',
       });
-      if (!response.ok) throw new Error('Failed to track template usage');
       return response.json();
     },
     onSuccess: () => {
@@ -148,15 +142,9 @@ const DocumentTemplates = () => {
   // Create template mutation
   const createTemplateMutation = useMutation({
     mutationFn: async templateData => {
-      const response = await fetch('/api/templates', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-organization-id': '7',
-        },
-        body: JSON.stringify(templateData),
+      const response = await apiRequest('POST', '/api/templates', templateData, {
+        'x-organization-id': '7',
       });
-      if (!response.ok) throw new Error('Failed to create template');
       return response.json();
     },
     onSuccess: () => {
@@ -173,15 +161,9 @@ const DocumentTemplates = () => {
   // Update template mutation
   const updateTemplateMutation = useMutation({
     mutationFn: async ({ templateId, updateData }) => {
-      const response = await fetch(`/api/templates/${templateId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-organization-id': '7',
-        },
-        body: JSON.stringify(updateData),
+      const response = await apiRequest('PUT', `/api/templates/${templateId}`, updateData, {
+        'x-organization-id': '7',
       });
-      if (!response.ok) throw new Error('Failed to update template');
       return response.json();
     },
     onSuccess: () => {
@@ -195,11 +177,9 @@ const DocumentTemplates = () => {
   // Delete template mutation
   const deleteTemplateMutation = useMutation({
     mutationFn: async templateId => {
-      const response = await fetch(`/api/templates/${templateId}`, {
-        method: 'DELETE',
-        headers: { 'x-organization-id': '7' },
+      const response = await apiRequest('DELETE', `/api/templates/${templateId}`, undefined, {
+        'x-organization-id': '7',
       });
-      if (!response.ok) throw new Error('Failed to delete template');
       return response.json();
     },
     onSuccess: () => {

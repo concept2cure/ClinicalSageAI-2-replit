@@ -102,9 +102,10 @@ export const fetchCsrSummary = async query => {
 // --- Upload CSR Document ---
 export const uploadCsrDocument = async formData => {
   try {
+    // Raw fetch required: FormData body needs browser-set Content-Type with boundary
     const response = await fetch(`${API_BASE_URL}/api/csr-intelligence/ingest`, {
       method: 'POST',
-      body: formData, // formData should contain the file
+      body: formData,
     });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -124,18 +125,7 @@ export const uploadCsrDocument = async formData => {
  * @returns {Promise<Object>} Generated narrative
  */
 export const generateNarrative = async narrativeData => {
-  const response = await fetch('/api/csr/generate-narrative', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(narrativeData),
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to generate narrative');
-  }
-
+  const response = await apiRequest('POST', '/api/csr/generate-narrative', narrativeData);
   return response.json();
 };
 
