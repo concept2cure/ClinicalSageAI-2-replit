@@ -84,19 +84,7 @@ export const summarizePaper = async ({ text, context, options = {} }) => {
  */
 export const generateCitations = async ({ papers, format = 'vancouverStyle', numbered = true }) => {
   try {
-    const response = await fetch('/api/literature/generate-citations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ papers, format, numbered }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to generate citations');
-    }
-
+    const response = await apiRequest('POST', '/api/literature/generate-citations', { papers, format, numbered });
     return await response.json();
   } catch (error) {
     console.error('Citation generation error:', error);
@@ -116,19 +104,7 @@ export const generateCitations = async ({ papers, format = 'vancouverStyle', num
  */
 export const generateLiteratureReview = async ({ papers, context, options = {} }) => {
   try {
-    const response = await fetch('/api/literature/generate-review', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ papers, context, options }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to generate literature review');
-    }
-
+    const response = await apiRequest('POST', '/api/literature/generate-review', { papers, context, options });
     return await response.json();
   } catch (error) {
     console.error('Literature review generation error:', error);
@@ -149,6 +125,7 @@ export const analyzePaperPDF = async ({ file, context }) => {
     formData.append('file', file);
     formData.append('context', context || '');
 
+    // Raw fetch required: FormData body needs browser-set Content-Type with boundary
     const response = await fetch('/api/literature/analyze-pdf', {
       method: 'POST',
       body: formData,
@@ -241,24 +218,12 @@ export const generateRelevanceAppraisal = async (
     // Re-attempt with backend API as backup
     try {
       console.log('Attempting to use server API for relevance appraisal');
-      const response = await fetch('/api/literature/appraise-relevance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          study,
-          deviceName,
-          inclusionCriteria,
-          exclusionCriteria,
-        }),
+      const response = await apiRequest('POST', '/api/literature/appraise-relevance', {
+        study,
+        deviceName,
+        inclusionCriteria,
+        exclusionCriteria,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to generate relevance appraisal');
-      }
-
       return await response.json();
     } catch (backupError) {
       console.error('Backup server appraisal failed:', backupError);
