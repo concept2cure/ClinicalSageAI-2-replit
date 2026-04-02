@@ -40,16 +40,8 @@ interface FormData {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const LogoIcon = () => (
-  <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-sm">
-    <img
-      src="/src/assets/concept2cure-logo.jpg"
-      alt="Concept2Cure"
-      className="w-full h-full object-cover object-center"
-    />
-    <div
-      className="absolute inset-0 pointer-events-none"
-      style={{ background: 'radial-gradient(circle at center, transparent 40%, #faf9f5 100%)' }}
-    />
+  <div className="w-10 h-10 rounded-xl bg-stone-800 flex items-center justify-center">
+    <span className="text-xs font-bold text-white">C2C</span>
   </div>
 );
 
@@ -322,7 +314,11 @@ export const ZenSignup: React.FC = () => {
             className={`
               w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
               transition-all duration-300
-              ${index <= currentStepIndex ? 'bg-stone-800 text-white' : 'bg-stone-200 text-stone-500'}
+              ${
+                index <= currentStepIndex
+                  ? 'bg-stone-800 text-white'
+                  : 'bg-stone-200 text-stone-500'
+              }
             `}
           >
             {index < currentStepIndex ? <CheckIcon /> : index + 1}
@@ -668,7 +664,9 @@ export const ZenSignup: React.FC = () => {
       )}
       {/* ── Terms of Service — Scroll to Accept ── */}
       <div
-        className={`rounded-xl border ${errors.acceptedTerms ? 'border-red-300 bg-red-50/30' : 'border-stone-200'}`}
+        className={`rounded-xl border ${
+          errors.acceptedTerms ? 'border-red-300 bg-red-50/30' : 'border-stone-200'
+        }`}
       >
         <div className="px-4 py-2 border-b border-stone-100 flex items-center justify-between">
           <span className="text-xs font-semibold text-stone-700">Terms of Service</span>
@@ -723,7 +721,9 @@ export const ZenSignup: React.FC = () => {
         </div>
         <div className="px-4 py-2 border-t border-stone-100">
           <label
-            className={`flex items-center gap-2 cursor-pointer ${!scrolledTerms ? 'opacity-50 pointer-events-none' : ''}`}
+            className={`flex items-center gap-2 cursor-pointer ${
+              !scrolledTerms ? 'opacity-50 pointer-events-none' : ''
+            }`}
           >
             <input
               type="checkbox"
@@ -739,7 +739,9 @@ export const ZenSignup: React.FC = () => {
 
       {/* ── Privacy & Data Rights — Scroll to Accept ── */}
       <div
-        className={`rounded-xl border ${errors.acceptedPrivacy ? 'border-red-300 bg-red-50/30' : 'border-stone-200'}`}
+        className={`rounded-xl border ${
+          errors.acceptedPrivacy ? 'border-red-300 bg-red-50/30' : 'border-stone-200'
+        }`}
       >
         <div className="px-4 py-2 border-b border-stone-100 flex items-center justify-between">
           <span className="text-xs font-semibold text-stone-700">Privacy Policy & Data Rights</span>
@@ -799,7 +801,9 @@ export const ZenSignup: React.FC = () => {
         </div>
         <div className="px-4 py-2 border-t border-stone-100 space-y-2">
           <label
-            className={`flex items-center gap-2 cursor-pointer ${!scrolledPrivacy ? 'opacity-50 pointer-events-none' : ''}`}
+            className={`flex items-center gap-2 cursor-pointer ${
+              !scrolledPrivacy ? 'opacity-50 pointer-events-none' : ''
+            }`}
           >
             <input
               type="checkbox"
@@ -822,10 +826,14 @@ export const ZenSignup: React.FC = () => {
             </div>
             <button
               onClick={() => setAiLearningOptIn(!aiLearningOptIn)}
-              className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${aiLearningOptIn ? 'bg-stone-800' : 'bg-stone-300'}`}
+              className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${
+                aiLearningOptIn ? 'bg-stone-800' : 'bg-stone-300'
+              }`}
             >
               <span
-                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${aiLearningOptIn ? 'translate-x-5' : ''}`}
+                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
+                  aiLearningOptIn ? 'translate-x-5' : ''
+                }`}
               />
             </button>
           </div>
@@ -834,7 +842,9 @@ export const ZenSignup: React.FC = () => {
 
       {/* ── Regulatory Compliance ── */}
       <label
-        className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors hover:bg-stone-50 ${errors.acceptedCompliance ? 'border-red-300 bg-red-50/30' : 'border-stone-200'}`}
+        className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors hover:bg-stone-50 ${
+          errors.acceptedCompliance ? 'border-red-300 bg-red-50/30' : 'border-stone-200'
+        }`}
       >
         <input
           type="checkbox"

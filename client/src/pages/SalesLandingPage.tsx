@@ -1,6 +1,6 @@
-import { useRef } from "react";
-import { Link } from "wouter";
-import { motion, useInView } from "framer-motion";
+import { useRef } from 'react';
+import { Link } from 'wouter';
+import { motion, useInView } from 'framer-motion';
 import {
   FileCheck,
   FileText,
@@ -14,7 +14,7 @@ import {
   Zap,
   Star,
   Lock,
-} from "lucide-react";
+} from 'lucide-react';
 
 /* ─────────────────────────── helpers ─────────────────────────── */
 
@@ -42,14 +42,14 @@ const fadeIn = {
 };
 
 function scrollTo(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 }
 
 /* ─────────────────────────── section wrapper ─────────────────── */
 
 function Section({
   children,
-  className = "",
+  className = '',
   id,
 }: {
   children: React.ReactNode;
@@ -73,29 +73,26 @@ function Hero() {
         <motion.div
           className="absolute -top-40 -right-40 h-[600px] w-[600px] rounded-full"
           style={{
-            background:
-              "radial-gradient(circle, rgba(217,119,87,0.12) 0%, rgba(217,119,87,0) 70%)",
+            background: 'radial-gradient(circle, rgba(217,119,87,0.12) 0%, rgba(217,119,87,0) 70%)',
           }}
           animate={{ scale: [1, 1.15, 1], x: [0, 30, 0], y: [0, -20, 0] }}
-          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+          transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
           className="absolute -bottom-24 -left-32 h-[500px] w-[500px] rounded-full"
           style={{
-            background:
-              "radial-gradient(circle, rgba(16,185,129,0.10) 0%, rgba(16,185,129,0) 70%)",
+            background: 'radial-gradient(circle, rgba(16,185,129,0.10) 0%, rgba(16,185,129,0) 70%)',
           }}
           animate={{ scale: [1, 1.1, 1], x: [0, -20, 0], y: [0, 15, 0] }}
-          transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+          transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
           className="absolute top-1/3 left-1/2 h-[400px] w-[400px] -translate-x-1/2 rounded-full"
           style={{
-            background:
-              "radial-gradient(circle, rgba(139,92,246,0.08) 0%, rgba(139,92,246,0) 70%)",
+            background: 'radial-gradient(circle, rgba(139,92,246,0.08) 0%, rgba(139,92,246,0) 70%)',
           }}
           animate={{ scale: [1, 1.2, 1] }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
         />
       </div>
 
@@ -118,7 +115,7 @@ function Hero() {
           custom={1}
           className="mx-auto max-w-4xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl xl:text-7xl"
         >
-          AI-Powered{" "}
+          AI-Powered{' '}
           <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">
             Regulatory Intelligence
           </span>
@@ -131,11 +128,10 @@ function Hero() {
           custom={2}
           className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-600 sm:text-xl"
         >
-          Collapse your regulatory submission timeline from{" "}
-          <span className="font-semibold text-slate-800">14 months to 6</span>.
-          Concept2Cure automates 510(k)&nbsp;eSTAR, eCTD authoring, CMC
-          documentation, and clinical evaluation — so your team can focus on
-          science, not paperwork.
+          Collapse your regulatory submission timeline from{' '}
+          <span className="font-semibold text-slate-800">14 months to 6</span>. Concept2Cure
+          automates 510(k)&nbsp;eSTAR, eCTD authoring, CMC documentation, and clinical evaluation —
+          so your team can focus on science, not paperwork.
         </motion.p>
 
         <motion.div
@@ -152,7 +148,7 @@ function Hero() {
             </span>
           </Link>
           <button
-            onClick={() => scrollTo("pricing")}
+            onClick={() => scrollTo('pricing')}
             className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-7 py-3.5 text-base font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50"
           >
             View Pricing
@@ -168,14 +164,14 @@ function Hero() {
 
 function SocialProof() {
   const { ref, inView } = useAnimateIn();
-  const logos = ["Pfizer", "Roche", "Novartis", "Genentech", "Moderna", "BioNTech"];
+  const logos = ['Pfizer', 'Roche', 'Novartis', 'Genentech', 'Moderna', 'BioNTech'];
 
   return (
     <Section className="py-16 sm:py-20">
       <motion.div
         ref={ref}
         initial="hidden"
-        animate={inView ? "visible" : "hidden"}
+        animate={inView ? 'visible' : 'hidden'}
         variants={fadeIn}
         className="text-center"
       >
@@ -204,39 +200,39 @@ function SocialProof() {
 const features = [
   {
     icon: FileCheck,
-    title: "510(k) eSTAR Automation",
+    title: '510(k) eSTAR Automation',
     description:
-      "Auto-generate compliant eSTAR packages with AI-driven field mapping, predicate matching, and risk-based analysis.",
+      'Auto-generate compliant eSTAR packages with AI-driven field mapping, predicate matching, and risk-based analysis.',
   },
   {
     icon: FileText,
-    title: "Clinical Evaluation Reports",
+    title: 'Clinical Evaluation Reports',
     description:
-      "Produce MEDDEV 2.7/1 Rev 4 compliant CERs with automated literature search, appraisal, and analysis.",
+      'Produce MEDDEV 2.7/1 Rev 4 compliant CERs with automated literature search, appraisal, and analysis.',
   },
   {
     icon: PenTool,
-    title: "eCTD Co-Authoring",
+    title: 'eCTD Co-Authoring',
     description:
-      "Collaboratively author Module 2–5 eCTD submissions with AI suggestions, cross-references, and real-time validation.",
+      'Collaboratively author Module 2–5 eCTD submissions with AI suggestions, cross-references, and real-time validation.',
   },
   {
     icon: FlaskConical,
-    title: "CMC Document Generation",
+    title: 'CMC Document Generation',
     description:
-      "Generate Module 3 CMC documentation including drug substance, drug product, and analytical method sections.",
+      'Generate Module 3 CMC documentation including drug substance, drug product, and analytical method sections.',
   },
   {
     icon: ShieldCheck,
-    title: "AI-Powered Risk Analysis",
+    title: 'AI-Powered Risk Analysis',
     description:
-      "Identify submission risks before they become FDA deficiencies. Predictive analytics trained on 50,000+ past reviews.",
+      'Identify submission risks before they become FDA deficiencies. Predictive analytics trained on 50,000+ past reviews.',
   },
   {
     icon: Users,
-    title: "Real-time Collaboration",
+    title: 'Real-time Collaboration',
     description:
-      "Multi-stakeholder review workflows with audit trails, role-based access, and 21\u00A0CFR Part\u00A011 compliant e-signatures.",
+      'Multi-stakeholder review workflows with audit trails, role-based access, and 21\u00A0CFR Part\u00A011 compliant e-signatures.',
   },
 ];
 
@@ -245,11 +241,7 @@ function Features() {
 
   return (
     <Section className="py-20 sm:py-28">
-      <motion.div
-        ref={ref}
-        initial="hidden"
-        animate={inView ? "visible" : "hidden"}
-      >
+      <motion.div ref={ref} initial="hidden" animate={inView ? 'visible' : 'hidden'}>
         <motion.div variants={fadeUp} custom={0} className="text-center">
           <p className="text-sm font-semibold uppercase tracking-widest text-indigo-600">
             Platform
@@ -258,8 +250,8 @@ function Features() {
             Everything you need to file faster
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-500">
-            One platform replaces dozens of disconnected tools, consultants, and
-            spreadsheets across your regulatory operations.
+            One platform replaces dozens of disconnected tools, consultants, and spreadsheets across
+            your regulatory operations.
           </p>
         </motion.div>
 
@@ -275,9 +267,7 @@ function Features() {
                 <f.icon className="h-6 w-6" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900">{f.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                {f.description}
-              </p>
+              <p className="mt-2 text-sm leading-relaxed text-slate-500">{f.description}</p>
             </motion.div>
           ))}
         </div>
@@ -290,22 +280,22 @@ function Features() {
 
 const steps = [
   {
-    num: "01",
-    title: "Upload your data",
+    num: '01',
+    title: 'Upload your data',
     description:
-      "Import existing documents, device descriptions, clinical data, and prior submissions. Our AI understands 120+ document formats.",
+      'Import existing documents, device descriptions, clinical data, and prior submissions. Our AI understands 120+ document formats.',
   },
   {
-    num: "02",
-    title: "AI drafts your submission",
+    num: '02',
+    title: 'AI drafts your submission',
     description:
-      "Concept2Cure generates compliant regulatory documents, identifies predicate devices, maps requirements, and flags gaps — in minutes, not months.",
+      'Concept2Cure generates compliant regulatory documents, identifies predicate devices, maps requirements, and flags gaps — in minutes, not months.',
   },
   {
-    num: "03",
-    title: "Review, sign & submit",
+    num: '03',
+    title: 'Review, sign & submit',
     description:
-      "Your team reviews AI-generated content, applies electronic signatures, and exports submission-ready packages in eCTD or eSTAR format.",
+      'Your team reviews AI-generated content, applies electronic signatures, and exports submission-ready packages in eCTD or eSTAR format.',
   },
 ];
 
@@ -314,11 +304,7 @@ function HowItWorks() {
 
   return (
     <Section className="py-20 sm:py-28 bg-slate-50/60">
-      <motion.div
-        ref={ref}
-        initial="hidden"
-        animate={inView ? "visible" : "hidden"}
-      >
+      <motion.div ref={ref} initial="hidden" animate={inView ? 'visible' : 'hidden'}>
         <motion.div variants={fadeUp} custom={0} className="text-center">
           <p className="text-sm font-semibold uppercase tracking-widest text-indigo-600">
             How It Works
@@ -345,9 +331,7 @@ function HowItWorks() {
               <div className="relative z-10 mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-lg font-bold text-white shadow-lg shadow-indigo-600/20">
                 {s.num}
               </div>
-              <h3 className="mt-6 text-xl font-semibold text-slate-900">
-                {s.title}
-              </h3>
+              <h3 className="mt-6 text-xl font-semibold text-slate-900">{s.title}</h3>
               <p className="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-slate-500">
                 {s.description}
               </p>
@@ -363,52 +347,52 @@ function HowItWorks() {
 
 const plans = [
   {
-    name: "Starter",
-    audience: "For virtual biotechs & startups",
-    price: "$1,500",
-    period: "/mo",
+    name: 'Starter',
+    audience: 'For virtual biotechs & startups',
+    price: '$1,500',
+    period: '/mo',
     popular: false,
     features: [
-      "Up to 5 team members",
-      "510(k) eSTAR automation",
-      "AI document drafting (50 docs/mo)",
-      "Predicate device search",
-      "Standard support",
-      "SOC 2 compliant infrastructure",
+      'Up to 5 team members',
+      '510(k) eSTAR automation',
+      'AI document drafting (50 docs/mo)',
+      'Predicate device search',
+      'Standard support',
+      'SOC 2 compliant infrastructure',
     ],
   },
   {
-    name: "Professional",
-    audience: "For growing regulatory teams",
-    price: "$3,000",
-    period: "/mo",
+    name: 'Professional',
+    audience: 'For growing regulatory teams',
+    price: '$3,000',
+    period: '/mo',
     popular: true,
     features: [
-      "Up to 25 team members",
-      "Everything in Starter, plus:",
-      "eCTD co-authoring & export",
-      "Clinical Evaluation Reports",
-      "CMC document generation",
-      "AI risk analysis & gap detection",
-      "Priority support & onboarding",
-      "21 CFR Part 11 e-signatures",
+      'Up to 25 team members',
+      'Everything in Starter, plus:',
+      'eCTD co-authoring & export',
+      'Clinical Evaluation Reports',
+      'CMC document generation',
+      'AI risk analysis & gap detection',
+      'Priority support & onboarding',
+      '21 CFR Part 11 e-signatures',
     ],
   },
   {
-    name: "Enterprise",
-    audience: "For pharma & large biotechs",
-    price: "Custom",
-    period: "",
+    name: 'Enterprise',
+    audience: 'For pharma & large biotechs',
+    price: 'Custom',
+    period: '',
     popular: false,
     features: [
-      "Unlimited team members",
-      "Everything in Professional, plus:",
-      "Dedicated success manager",
-      "Custom AI model training",
-      "SSO & SAML integration",
-      "On-premise deployment option",
-      "SLA-backed uptime guarantee",
-      "Regulatory consulting hours",
+      'Unlimited team members',
+      'Everything in Professional, plus:',
+      'Dedicated success manager',
+      'Custom AI model training',
+      'SSO & SAML integration',
+      'On-premise deployment option',
+      'SLA-backed uptime guarantee',
+      'Regulatory consulting hours',
     ],
   },
 ];
@@ -418,21 +402,15 @@ function Pricing() {
 
   return (
     <Section id="pricing" className="py-20 sm:py-28">
-      <motion.div
-        ref={ref}
-        initial="hidden"
-        animate={inView ? "visible" : "hidden"}
-      >
+      <motion.div ref={ref} initial="hidden" animate={inView ? 'visible' : 'hidden'}>
         <motion.div variants={fadeUp} custom={0} className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-indigo-600">
-            Pricing
-          </p>
+          <p className="text-sm font-semibold uppercase tracking-widest text-indigo-600">Pricing</p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
             Plans that scale with your pipeline
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-lg text-slate-500">
-            Start small. Scale as you grow. Every plan includes a 14-day free
-            trial with no credit card required.
+            Start small. Scale as you grow. Every plan includes a 14-day free trial with no credit
+            card required.
           </p>
         </motion.div>
 
@@ -445,9 +423,7 @@ function Pricing() {
                 variants={fadeUp}
                 custom={i + 1}
                 className={`relative flex flex-col rounded-2xl border p-8 shadow-sm transition-shadow hover:shadow-md ${
-                  isPopular
-                    ? "border-indigo-600 ring-1 ring-indigo-600"
-                    : "border-slate-200"
+                  isPopular ? 'border-indigo-600 ring-1 ring-indigo-600' : 'border-slate-200'
                 }`}
               >
                 {isPopular && (
@@ -457,9 +433,7 @@ function Pricing() {
                 )}
 
                 <div>
-                  <h3 className="text-xl font-semibold text-slate-900">
-                    {plan.name}
-                  </h3>
+                  <h3 className="text-xl font-semibold text-slate-900">{plan.name}</h3>
                   <p className="mt-1 text-sm text-slate-500">{plan.audience}</p>
                 </div>
 
@@ -467,19 +441,12 @@ function Pricing() {
                   <span className="text-4xl font-bold tracking-tight text-slate-900">
                     {plan.price}
                   </span>
-                  {plan.period && (
-                    <span className="text-base text-slate-500">
-                      {plan.period}
-                    </span>
-                  )}
+                  {plan.period && <span className="text-base text-slate-500">{plan.period}</span>}
                 </div>
 
                 <ul className="mt-8 flex-1 space-y-3">
-                  {plan.features.map((f) => (
-                    <li
-                      key={f}
-                      className="flex items-start gap-3 text-sm text-slate-600"
-                    >
+                  {plan.features.map(f => (
+                    <li key={f} className="flex items-start gap-3 text-sm text-slate-600">
                       <Check className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
                       {f}
                     </li>
@@ -487,7 +454,7 @@ function Pricing() {
                 </ul>
 
                 <div className="mt-8">
-                  {plan.name === "Enterprise" ? (
+                  {plan.name === 'Enterprise' ? (
                     <Link href="/concept2cure/signup">
                       <span className="block w-full rounded-xl border border-slate-300 bg-white py-3 text-center text-sm font-semibold text-slate-700 transition-all hover:border-slate-400 hover:bg-slate-50">
                         Contact Sales
@@ -498,8 +465,8 @@ function Pricing() {
                       <span
                         className={`block w-full rounded-xl py-3 text-center text-sm font-semibold transition-all ${
                           isPopular
-                            ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700"
-                            : "bg-slate-900 text-white hover:bg-slate-800"
+                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700'
+                            : 'bg-slate-900 text-white hover:bg-slate-800'
                         }`}
                       >
                         Start Free Trial
@@ -521,24 +488,24 @@ function Pricing() {
 const testimonials = [
   {
     quote:
-      "Concept2Cure cut our 510(k) preparation time from 11 months to under 4. The AI-generated eSTAR package was 95% ready on first pass — our RA team just reviewed and signed.",
-    name: "Dr. Sarah Chen",
-    title: "VP Regulatory Affairs",
-    company: "Apex MedTech",
+      'Concept2Cure cut our 510(k) preparation time from 11 months to under 4. The AI-generated eSTAR package was 95% ready on first pass — our RA team just reviewed and signed.',
+    name: 'Dr. Sarah Chen',
+    title: 'VP Regulatory Affairs',
+    company: 'Apex MedTech',
   },
   {
     quote:
-      "We used to spend $400K on regulatory consultants for every submission. With Concept2Cure, our in-house team handles it end-to-end. The ROI was clear within the first quarter.",
-    name: "James Hartley",
-    title: "Chief Operating Officer",
-    company: "Vanta Therapeutics",
+      'We used to spend $400K on regulatory consultants for every submission. With Concept2Cure, our in-house team handles it end-to-end. The ROI was clear within the first quarter.',
+    name: 'James Hartley',
+    title: 'Chief Operating Officer',
+    company: 'Vanta Therapeutics',
   },
   {
     quote:
-      "The eCTD co-authoring feature is a game-changer. Real-time collaboration with AI suggestions means our Module 2 summaries practically write themselves. FDA accepted on first review.",
-    name: "Dr. Priya Anand",
-    title: "Director of CMC",
-    company: "NovaCell Biologics",
+      'The eCTD co-authoring feature is a game-changer. Real-time collaboration with AI suggestions means our Module 2 summaries practically write themselves. FDA accepted on first review.',
+    name: 'Dr. Priya Anand',
+    title: 'Director of CMC',
+    company: 'NovaCell Biologics',
   },
 ];
 
@@ -547,11 +514,7 @@ function Testimonials() {
 
   return (
     <Section className="py-20 sm:py-28 bg-slate-50/60">
-      <motion.div
-        ref={ref}
-        initial="hidden"
-        animate={inView ? "visible" : "hidden"}
-      >
+      <motion.div ref={ref} initial="hidden" animate={inView ? 'visible' : 'hidden'}>
         <motion.div variants={fadeUp} custom={0} className="text-center">
           <p className="text-sm font-semibold uppercase tracking-widest text-indigo-600">
             Testimonials
@@ -580,14 +543,12 @@ function Testimonials() {
               <figcaption className="mt-6 flex items-center gap-4 border-t border-slate-100 pt-6">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-600">
                   {t.name
-                    .split(" ")
-                    .map((w) => w[0])
-                    .join("")}
+                    .split(' ')
+                    .map(w => w[0])
+                    .join('')}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    {t.name}
-                  </p>
+                  <p className="text-sm font-semibold text-slate-900">{t.name}</p>
                   <p className="text-xs text-slate-500">
                     {t.title}, {t.company}
                   </p>
@@ -611,7 +572,7 @@ function FinalCTA() {
       <motion.div
         ref={ref}
         initial="hidden"
-        animate={inView ? "visible" : "hidden"}
+        animate={inView ? 'visible' : 'hidden'}
         variants={fadeUp}
         className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 px-8 py-16 text-center shadow-2xl sm:px-16 sm:py-20"
       >
@@ -629,8 +590,8 @@ function FinalCTA() {
           Ready to accelerate your submissions?
         </h2>
         <p className="relative mx-auto mt-4 max-w-xl text-lg text-indigo-100">
-          Join hundreds of regulatory teams who have cut their submission
-          timelines in half. Start your 14-day free trial today.
+          Join hundreds of regulatory teams who have cut their submission timelines in half. Start
+          your 14-day free trial today.
         </p>
         <div className="relative mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link href="/concept2cure/signup">
@@ -640,7 +601,7 @@ function FinalCTA() {
             </span>
           </Link>
           <button
-            onClick={() => scrollTo("pricing")}
+            onClick={() => scrollTo('pricing')}
             className="inline-flex items-center gap-2 rounded-xl border border-white/30 px-8 py-3.5 text-base font-semibold text-white transition-all hover:bg-white/10"
           >
             Compare Plans
@@ -654,8 +615,8 @@ function FinalCTA() {
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━ FOOTER ━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 function Footer() {
-  const linkClass = "text-sm text-slate-500 transition-colors hover:text-slate-700";
-  const headingClass = "text-xs font-semibold uppercase tracking-widest text-slate-400";
+  const linkClass = 'text-sm text-slate-500 transition-colors hover:text-slate-700';
+  const headingClass = 'text-xs font-semibold uppercase tracking-widest text-slate-400';
 
   return (
     <footer className="border-t border-slate-200/60 bg-white">
@@ -663,19 +624,17 @@ function Footer() {
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
           {/* brand */}
           <div className="lg:col-span-1">
-            <span className="text-xl font-bold tracking-tight text-slate-900">
-              Concept2Cure
-            </span>
+            <span className="text-xl font-bold tracking-tight text-slate-900">Concept2Cure</span>
             <p className="mt-3 text-sm leading-relaxed text-slate-500">
-              AI-powered regulatory intelligence for life sciences. A
-              Concept2Cure product by ClinicalSageAI.
+              AI-powered regulatory intelligence for life sciences. A Concept2Cure product by
+              ClinicalSageAI.
             </p>
             <div className="mt-6 flex items-center gap-3">
               {[
-                { label: "FDA 21 CFR Part 11", icon: ShieldCheck },
-                { label: "SOC 2", icon: Lock },
-                { label: "HIPAA", icon: ShieldCheck },
-              ].map((b) => (
+                { label: 'FDA 21 CFR Part 11', icon: ShieldCheck },
+                { label: 'SOC 2', icon: Lock },
+                { label: 'HIPAA', icon: ShieldCheck },
+              ].map(b => (
                 <span
                   key={b.label}
                   className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500"
@@ -692,18 +651,15 @@ function Footer() {
             <h4 className={headingClass}>Product</h4>
             <ul className="mt-4 space-y-3">
               {[
-                ["510(k) Automation", "#"],
-                ["eCTD Authoring", "#"],
-                ["CER Generation", "#"],
-                ["Risk Analysis", "#"],
-                ["Pricing", "#pricing"],
+                ['510(k) Automation', '#'],
+                ['eCTD Authoring', '#'],
+                ['CER Generation', '#'],
+                ['Risk Analysis', '#'],
+                ['Pricing', '#pricing'],
               ].map(([label, href]) => (
                 <li key={label}>
-                  {href.startsWith("#") ? (
-                    <button
-                      onClick={() => scrollTo(href.slice(1))}
-                      className={linkClass}
-                    >
+                  {href.startsWith('#') ? (
+                    <button onClick={() => scrollTo(href.slice(1))} className={linkClass}>
                       {label}
                     </button>
                   ) : (
@@ -720,15 +676,13 @@ function Footer() {
           <div>
             <h4 className={headingClass}>Company</h4>
             <ul className="mt-4 space-y-3">
-              {["About", "Careers", "Blog", "Contact", "Partners"].map(
-                (label) => (
-                  <li key={label}>
-                    <a href="#" className={linkClass}>
-                      {label}
-                    </a>
-                  </li>
-                )
-              )}
+              {['About', 'Careers', 'Blog', 'Contact', 'Partners'].map(label => (
+                <li key={label}>
+                  <a href="#" className={linkClass}>
+                    {label}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -737,12 +691,12 @@ function Footer() {
             <h4 className={headingClass}>Legal</h4>
             <ul className="mt-4 space-y-3">
               {[
-                "Privacy Policy",
-                "Terms of Service",
-                "Security",
-                "HIPAA Compliance",
-                "Data Processing Agreement",
-              ].map((label) => (
+                'Privacy Policy',
+                'Terms of Service',
+                'Security',
+                'HIPAA Compliance',
+                'Data Processing Agreement',
+              ].map(label => (
                 <li key={label}>
                   <a href="#" className={linkClass}>
                     {label}
@@ -755,8 +709,7 @@ function Footer() {
 
         <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-slate-200/60 pt-8 sm:flex-row">
           <p className="text-sm text-slate-400">
-            &copy; {new Date().getFullYear()} ClinicalSageAI, Inc. All rights
-            reserved.
+            &copy; {new Date().getFullYear()} ClinicalSageAI, Inc. All rights reserved.
           </p>
           <p className="text-xs text-slate-400">
             Concept2Cure&trade; is a registered trademark of ClinicalSageAI, Inc.
@@ -785,30 +738,28 @@ function NavBar() {
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
-          {["Features", "How It Works", "Pricing", "Testimonials"].map(
-            (label) => {
-              const id = label.toLowerCase().replace(/\s+/g, "-");
-              return (
-                <button
-                  key={label}
-                  onClick={() => {
-                    const sectionId =
-                      id === "features"
-                        ? "features"
-                        : id === "how-it-works"
-                          ? "how-it-works"
-                          : id === "testimonials"
-                            ? "testimonials"
-                            : id;
-                    scrollTo(sectionId);
-                  }}
-                  className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
-                >
-                  {label}
-                </button>
-              );
-            }
-          )}
+          {['Features', 'How It Works', 'Pricing', 'Testimonials'].map(label => {
+            const id = label.toLowerCase().replace(/\s+/g, '-');
+            return (
+              <button
+                key={label}
+                onClick={() => {
+                  const sectionId =
+                    id === 'features'
+                      ? 'features'
+                      : id === 'how-it-works'
+                      ? 'how-it-works'
+                      : id === 'testimonials'
+                      ? 'testimonials'
+                      : id;
+                  scrollTo(sectionId);
+                }}
+                className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
 
         <div className="flex items-center gap-3">

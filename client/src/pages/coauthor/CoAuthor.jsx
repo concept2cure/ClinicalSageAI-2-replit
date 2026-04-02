@@ -149,8 +149,8 @@ import SemanticSearchBar from '../../components/search/SemanticSearchBar';
 import SemanticSearchResults from '../../components/search/SemanticSearchResults';
 
 // Import Component Management System (CCMS)
-const ComponentManagementSystem = lazy(
-  () => import('../../components/coauthor/ComponentManagementSystem')
+const ComponentManagementSystem = lazy(() =>
+  import('../../components/coauthor/ComponentManagementSystem')
 );
 const AskDataRoomPanel = lazy(() => import('../../components/coauthor/AskDataRoomPanel'));
 const SmartBlocks = lazy(() => import('../../components/coauthor/SmartBlocks'));
@@ -452,7 +452,9 @@ const TipTapEditor = ({ document, onSave, isReadOnly = false, documentStatus }) 
     `,
     editorProps: {
       attributes: {
-        class: `prose prose-lg max-w-none focus:outline-none min-h-[400px] p-4 text-gray-900 prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-em:text-gray-800 prose-li:text-gray-800 ${isReadOnly ? 'opacity-75 cursor-not-allowed' : ''}`,
+        class: `prose prose-lg max-w-none focus:outline-none min-h-[400px] p-4 text-gray-900 prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-em:text-gray-800 prose-li:text-gray-800 ${
+          isReadOnly ? 'opacity-75 cursor-not-allowed' : ''
+        }`,
         contenteditable: !isReadOnly,
       },
     },
@@ -1205,7 +1207,9 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
             <div className="flex items-center gap-2 flex-1">
               {hasChildren && (
                 <ChevronRight
-                  className={`h-3 w-3 text-slate-400 transition-transform expand-toggle cursor-pointer ${isExpanded ? 'rotate-90' : ''}`}
+                  className={`h-3 w-3 text-slate-400 transition-transform expand-toggle cursor-pointer ${
+                    isExpanded ? 'rotate-90' : ''
+                  }`}
                   onClick={e => {
                     e.stopPropagation();
                     setSectionExpanded(prev => ({ ...prev, [section.id]: !prev[section.id] }));
@@ -1220,7 +1224,9 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
                 />
               )}
               <span
-                className={`text-xs ${selectedDocument === section.id ? 'text-blue-600 font-semibold' : 'text-slate-700'}`}
+                className={`text-xs ${
+                  selectedDocument === section.id ? 'text-blue-600 font-semibold' : 'text-slate-700'
+                }`}
               >
                 {section.title}
               </span>
@@ -1237,7 +1243,9 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
                 </Badge>
               )}
               <CheckCircle
-                className={`h-3 w-3 ${section.status === 'completed' ? 'text-green-500' : 'text-gray-300'}`}
+                className={`h-3 w-3 ${
+                  section.status === 'completed' ? 'text-green-500' : 'text-gray-300'
+                }`}
               />
             </div>
           </button>
@@ -1319,14 +1327,18 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
                 </span>
 
                 <Badge
-                  className={`h-5 text-[11px] ${statusColors[moduleStatuses[module.id]] || statusColors['pending']} border-0`}
+                  className={`h-5 text-[11px] ${
+                    statusColors[moduleStatuses[module.id]] || statusColors['pending']
+                  } border-0`}
                 >
                   {moduleStatuses[module.id] || 'Pending'}
                 </Badge>
               </div>
             </div>
             <ChevronDown
-              className={`h-4 w-4 text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+              className={`h-4 w-4 text-slate-500 transition-transform ${
+                isExpanded ? 'rotate-180' : ''
+              }`}
             />
           </button>
           {isExpanded && (
@@ -2146,8 +2158,6 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
   // Use shared data from submission center
   React.useEffect(() => {
     if (sharedData && Object.keys(sharedData).length > 0) {
-
-
       // Update IND data with shared data
       setIndData(prev => ({
         ...prev,
@@ -2252,16 +2262,27 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
       <p><strong>Development Phase:</strong> ${phase || 'Phase I'}</p>
 
       <h2>2.5.1 Product Development Rationale</h2>
-      <p>${module2Data?.qualityOverview || 'The product development rationale will be based on the IND submission data.'}</p>
+      <p>${
+        module2Data?.qualityOverview ||
+        'The product development rationale will be based on the IND submission data.'
+      }</p>
 
       <h2>2.5.2 Overview of Biopharmaceutics</h2>
-      <p>${module2Data?.drugSubstance?.description || 'Biopharmaceutical properties and formulation development details from IND.'}</p>
+      <p>${
+        module2Data?.drugSubstance?.description ||
+        'Biopharmaceutical properties and formulation development details from IND.'
+      }</p>
 
       <h2>2.5.5 Safety Profile</h2>
-      <p>The safety profile of ${drugName || 'the investigational drug'} is being evaluated in ${phase || 'Phase I'} clinical trials for the treatment of ${indication || 'the target indication'}.</p>
+      <p>The safety profile of ${drugName || 'the investigational drug'} is being evaluated in ${
+      phase || 'Phase I'
+    } clinical trials for the treatment of ${indication || 'the target indication'}.</p>
 
       <h2>Clinical Protocol Summary</h2>
-      <p>${module5Data?.studyDesign?.summary || 'Clinical protocol information will be imported from the IND submission.'}</p>
+      <p>${
+        module5Data?.studyDesign?.summary ||
+        'Clinical protocol information will be imported from the IND submission.'
+      }</p>
     `;
   }, [indData]);
 
@@ -2530,9 +2551,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
 
         if (isAuthenticated) {
           setGoogleUserInfo(googleAuthService.getCurrentUser());
-
         } else {
-
         }
       } catch (error) {
         console.error('Error checking Google authentication:', error);
@@ -2611,7 +2630,6 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
         setAutoSaveStatus('saving');
         setTimeout(() => {
           setAutoSaveStatus('saved');
-
         }, 1000);
       }
     }, 30000); // Auto-save every 30 seconds
@@ -2940,7 +2958,6 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
       user: authenticatedUser?.display_name || authenticatedUser?.username || 'Unknown User',
     };
 
-
     toast({
       title: 'Status Updated',
       description: `Document status changed to ${newStatus}`,
@@ -2969,7 +2986,6 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
       }
 
       setLastSaveTime(new Date());
-
     } catch (error) {
       console.error('Error saving to vault:', error);
     }
@@ -3633,9 +3649,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
           setContentAtoms(data);
           return;
         }
-      } catch (error) {
-
-      }
+      } catch (error) {}
 
       // For development, we'll use the registry in the component
       let atomsFromRegistry = [
@@ -3695,8 +3709,8 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
         const templates = Array.isArray(templatesData)
           ? templatesData
           : templatesData?.templates
-            ? templatesData.templates
-            : [];
+          ? templatesData.templates
+          : [];
 
         if (templates.length > 0) {
           // Process templates and extract their atoms
@@ -3712,11 +3726,9 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
           setTemplates(processedTemplates);
         } else {
           // If no templates, keep using the mock data
-
         }
       } else {
         // If API fails, we'll keep using the mock data
-
       }
     } catch (error) {
       console.error('Error fetching templates:', error);
@@ -3885,11 +3897,8 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
           : `Creating embeddings for document "${metadata.title}" (${metadata.version})...`,
       });
 
-
-
       // Break document into semantic chunks for embedding
       const chunks = chunkDocumentContent(documentContent);
-
 
       // Track embedding progress
       let completedEmbeddings = 0;
@@ -3938,7 +3947,9 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
           // Log the issue but continue with other chunks
           toast({
             title: 'Chunk Processing Warning',
-            description: `Issue with document section ${index + 1}. Continuing with remaining sections.`,
+            description: `Issue with document section ${
+              index + 1
+            }. Continuing with remaining sections.`,
             variant: 'warning',
           });
 
@@ -4336,7 +4347,9 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
           .slice(0, 3)
           .map(
             r =>
-              `• **${r.documentTitle || 'Document'}** (${r.section || 'N/A'}): ${(r.content || '').substring(0, 150)}...`
+              `• **${r.documentTitle || 'Document'}** (${r.section || 'N/A'}): ${(
+                r.content || ''
+              ).substring(0, 150)}...`
           )
           .join('\n\n');
         return {
@@ -4623,7 +4636,9 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
       if (result.success) {
         toast({
           title: 'Import Successful',
-          description: `Document imported with ${result.components?.total || 0} components extracted`,
+          description: `Document imported with ${
+            result.components?.total || 0
+          } components extracted`,
           variant: 'success',
         });
 
@@ -4639,12 +4654,8 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
 
         // Store the document ID for future reference
         if (result.documentId) {
-
           // Could navigate to the document or refresh the document list
         }
-
-
-
 
         // Refresh the component list if CCMS is open
         if (window.refreshCCMSComponents) {
@@ -4707,8 +4718,6 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
         title: 'Export Successful',
         description: `${documentContent.title} downloaded successfully`,
       });
-
-
     } catch (error) {
       console.error('Error exporting to Word:', error);
       toast({
@@ -4772,7 +4781,9 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
       yPosition += lineHeight;
 
       doc.text(
-        `Last Modified: ${new Date(documentContent.metadata?.lastModified || Date.now()).toLocaleDateString()}`,
+        `Last Modified: ${new Date(
+          documentContent.metadata?.lastModified || Date.now()
+        ).toLocaleDateString()}`,
         margin,
         yPosition
       );
@@ -4861,8 +4872,6 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
 
       // Save the PDF
       doc.save(`${documentContent.title.replace(/[^a-z0-9]/gi, '_')}_${new Date().getTime()}.pdf`);
-
-
     } catch (error) {
       console.error('Error exporting to PDF:', error);
       toast({
@@ -5016,7 +5025,6 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
           // Since we're working within a single file, we'll handle the eCTD backbone generation directly
           // In a production environment, this would be a proper backend endpoint
 
-
           // Mock eCTD XML backbone data generation
           const generateEctdBackbone = (metadata, region, module) => {
             const getRegionalPrefix = r => {
@@ -5103,7 +5111,9 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
 
           toast({
             title: 'eCTD Package Ready',
-            description: `eCTD package with XML backbone and ${exportOptions.includeChecksums ? 'MD5/SHA-256 checksums' : 'no checksums'} has been generated for ${exportRegion}.`,
+            description: `eCTD package with XML backbone and ${
+              exportOptions.includeChecksums ? 'MD5/SHA-256 checksums' : 'no checksums'
+            } has been generated for ${exportRegion}.`,
             variant: 'default',
           });
 
@@ -6228,7 +6238,9 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
         template: selectedTemplate,
         content: selectedTemplate
           ? `<h1>${documentTitle}</h1>
-           <h2>Document created from template: ${templates.find(t => t.id === selectedTemplate)?.name || 'Standard Template'}</h2>
+           <h2>Document created from template: ${
+             templates.find(t => t.id === selectedTemplate)?.name || 'Standard Template'
+           }</h2>
            <p>This document contains structured content blocks ready for editing.</p>`
           : `<h1>${documentTitle}</h1>
            <h2>New eCTD Document</h2>
@@ -6610,7 +6622,9 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                 <ChevronLeft className="w-4 h-4" />
                 Hub
               </button>
-              <img src="/src/assets/concept2cure-logo.jpg" alt="Concept2Cure" className="h-8 w-8 rounded-lg" />
+              <div className="h-8 w-8 rounded-lg bg-stone-800 flex items-center justify-center">
+                <span className="text-[9px] font-bold text-white">C2C</span>
+              </div>
               <div className="flex items-center space-x-2">
                 <h1 className="text-xl font-semibold text-slate-800">eCTD Co-Author</h1>
                 <Badge variant="outline" className="text-xs border-blue-200 text-blue-700">
@@ -6631,7 +6645,11 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
 
                   <Input
                     type="search"
-                    placeholder={`Search ${vectorizedDocuments.length > 0 ? `${vectorizedDocuments.length} regulatory documents...` : 'your eCTD dossier...'}`}
+                    placeholder={`Search ${
+                      vectorizedDocuments.length > 0
+                        ? `${vectorizedDocuments.length} regulatory documents...`
+                        : 'your eCTD dossier...'
+                    }`}
                     className="pl-12 pr-12 py-2.5 h-11 w-full border-0 focus:ring-0 focus:outline-none text-sm bg-transparent"
                     value={semanticSearchQuery}
                     onChange={e => {
@@ -6706,7 +6724,9 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                       onClick={() =>
                         toast({
                           title: 'Vector Database',
-                          description: `${vectorizedDocuments.length} documents indexed with ${vectorizedDocuments.reduce(
+                          description: `${
+                            vectorizedDocuments.length
+                          } documents indexed with ${vectorizedDocuments.reduce(
                             (sum, doc) => sum + doc.embeddingCount,
                             0
                           )} semantic vectors.`,
@@ -6726,7 +6746,9 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                         {(searchSuggestions || []).map((suggestion, idx) => (
                           <li
                             key={`suggestion-${idx}`}
-                            className={`px-3 py-2 hover:bg-blue-50 cursor-pointer ${suggestion.isHint ? 'text-slate-500 text-sm italic' : ''}`}
+                            className={`px-3 py-2 hover:bg-blue-50 cursor-pointer ${
+                              suggestion.isHint ? 'text-slate-500 text-sm italic' : ''
+                            }`}
                             onClick={() => {
                               if (suggestion.isHint) {
                                 // For hints, just use them as the search query
@@ -6873,11 +6895,15 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                       className="flex items-center space-x-2 text-sm font-semibold text-slate-800 hover:text-blue-700 transition-colors"
                     >
                       <FileEdit
-                        className={`h-4 w-4 ${activePhase === 'author' ? 'text-blue-600' : 'text-blue-500'}`}
+                        className={`h-4 w-4 ${
+                          activePhase === 'author' ? 'text-blue-600' : 'text-blue-500'
+                        }`}
                       />
                       <span>Author</span>
                       <ChevronDown
-                        className={`h-3 w-3 transition-transform duration-300 ${expandedWorkflowPhases.author ? 'rotate-180' : ''}`}
+                        className={`h-3 w-3 transition-transform duration-300 ${
+                          expandedWorkflowPhases.author ? 'rotate-180' : ''
+                        }`}
                       />
                     </button>
                     {expandedWorkflowPhases.author && (
@@ -6935,11 +6961,15 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                       className="flex items-center space-x-2 text-sm font-semibold text-slate-800 hover:text-orange-700 transition-colors"
                     >
                       <Search
-                        className={`h-4 w-4 ${activePhase === 'analyze' ? 'text-orange-600' : 'text-orange-500'}`}
+                        className={`h-4 w-4 ${
+                          activePhase === 'analyze' ? 'text-orange-600' : 'text-orange-500'
+                        }`}
                       />
                       <span>Analyze</span>
                       <ChevronDown
-                        className={`h-3 w-3 transition-transform duration-300 ${expandedWorkflowPhases.analyze ? 'rotate-180' : ''}`}
+                        className={`h-3 w-3 transition-transform duration-300 ${
+                          expandedWorkflowPhases.analyze ? 'rotate-180' : ''
+                        }`}
                       />
                     </button>
                     {expandedWorkflowPhases.analyze && (
@@ -7003,11 +7033,15 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                       className="flex items-center space-x-2 text-sm font-semibold text-slate-800 hover:text-green-700 transition-colors"
                     >
                       <Users
-                        className={`h-4 w-4 ${activePhase === 'collaborate' ? 'text-green-600' : 'text-green-500'}`}
+                        className={`h-4 w-4 ${
+                          activePhase === 'collaborate' ? 'text-green-600' : 'text-green-500'
+                        }`}
                       />
                       <span>Collaborate</span>
                       <ChevronDown
-                        className={`h-3 w-3 transition-transform duration-300 ${expandedWorkflowPhases.collaborate ? 'rotate-180' : ''}`}
+                        className={`h-3 w-3 transition-transform duration-300 ${
+                          expandedWorkflowPhases.collaborate ? 'rotate-180' : ''
+                        }`}
                       />
                     </button>
                     {expandedWorkflowPhases.collaborate && (
@@ -7065,11 +7099,15 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                       className="flex items-center space-x-2 text-sm font-semibold text-slate-800 hover:text-purple-700 transition-colors"
                     >
                       <Package
-                        className={`h-4 w-4 ${activePhase === 'package' ? 'text-purple-600' : 'text-purple-500'}`}
+                        className={`h-4 w-4 ${
+                          activePhase === 'package' ? 'text-purple-600' : 'text-purple-500'
+                        }`}
                       />
                       <span>Package</span>
                       <ChevronDown
-                        className={`h-3 w-3 transition-transform duration-300 ${expandedWorkflowPhases.package ? 'rotate-180' : ''}`}
+                        className={`h-3 w-3 transition-transform duration-300 ${
+                          expandedWorkflowPhases.package ? 'rotate-180' : ''
+                        }`}
                       />
                     </button>
                     {expandedWorkflowPhases.package && (
@@ -7183,10 +7221,10 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                   {activePhase === 'author'
                     ? 'Authoring'
                     : activePhase === 'analyze'
-                      ? 'Analyzing'
-                      : activePhase === 'collaborate'
-                        ? 'Collaborating'
-                        : 'Packaging'}
+                    ? 'Analyzing'
+                    : activePhase === 'collaborate'
+                    ? 'Collaborating'
+                    : 'Packaging'}
                 </Badge>
               </div>
 
@@ -7213,7 +7251,9 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
         <div className="flex h-[calc(100vh-200px)] relative" ref={editorContainerRef}>
           {/* Left Sidebar - Collapsible Document Navigation & Recent Documents */}
           <div
-            className={`${isTreeOpen ? 'w-80' : 'w-0'} transition-all duration-300 border-r border-slate-200 bg-white overflow-hidden flex-shrink-0`}
+            className={`${
+              isTreeOpen ? 'w-80' : 'w-0'
+            } transition-all duration-300 border-r border-slate-200 bg-white overflow-hidden flex-shrink-0`}
           >
             <div className="w-80 h-full overflow-y-auto">
               <div className="p-4">
@@ -7343,8 +7383,8 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                                   doc.status === 'Final'
                                     ? 'bg-green-100 text-green-700 border-0'
                                     : doc.status === 'In Review'
-                                      ? 'bg-amber-100 text-amber-700 border-0'
-                                      : 'bg-slate-100 text-slate-600 border-0'
+                                    ? 'bg-amber-100 text-amber-700 border-0'
+                                    : 'bg-slate-100 text-slate-600 border-0'
                                 }`}
                               >
                                 {doc.status}
@@ -8058,10 +8098,10 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                             documentStatuses[selectedDocument.id] === 'approved'
                               ? 'success'
                               : documentStatuses[selectedDocument.id] === 'in-review'
-                                ? 'warning'
-                                : documentStatuses[selectedDocument.id] === 'submitted'
-                                  ? 'info'
-                                  : 'outline'
+                              ? 'warning'
+                              : documentStatuses[selectedDocument.id] === 'submitted'
+                              ? 'info'
+                              : 'outline'
                           }
                           className="text-xs"
                         >
@@ -8696,7 +8736,9 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
 
                           toast({
                             title: 'Content Inserted',
-                            description: `Added content from ${content.metadata?.title || 'Data Room'}`,
+                            description: `Added content from ${
+                              content.metadata?.title || 'Data Room'
+                            }`,
                           });
                         } else {
                           toast({
@@ -8931,7 +8973,6 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                 onResolveComment={handleResolveComment}
                 onMentionUser={userId => {
                   // Handle @mention
-
                 }}
               />
             )}
@@ -8964,19 +9005,19 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                           documentStatus === 'published'
                             ? 'default'
                             : documentStatus === 'approved'
-                              ? 'success'
-                              : documentStatus === 'in-review'
-                                ? 'warning'
-                                : 'secondary'
+                            ? 'success'
+                            : documentStatus === 'in-review'
+                            ? 'warning'
+                            : 'secondary'
                         }
                         className={`mr-3 ${
                           documentStatus === 'published'
                             ? 'bg-purple-100 text-purple-800'
                             : documentStatus === 'approved'
-                              ? 'bg-green-100 text-green-800'
-                              : documentStatus === 'in-review'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-gray-100 text-gray-800'
+                            ? 'bg-green-100 text-green-800'
+                            : documentStatus === 'in-review'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-gray-100 text-gray-800'
                         }`}
                         data-testid={`status-badge-${documentStatus}`}
                       >
@@ -9696,8 +9737,8 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                                                   blockType === 'table'
                                                     ? 'text-blue-600 border-blue-300'
                                                     : blockType === 'narrative'
-                                                      ? 'text-purple-600 border-purple-300'
-                                                      : 'text-green-600 border-green-300'
+                                                    ? 'text-purple-600 border-purple-300'
+                                                    : 'text-green-600 border-green-300'
                                                 }`}
                                               >
                                                 {blockType === 'table' && (
@@ -10045,8 +10086,6 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                                 'Unknown User',
                               timestamp: new Date().toISOString(),
                             });
-
-
 
                             toast({
                               title: 'Document Saved',
@@ -11407,20 +11446,32 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                   <label className="text-sm font-medium">Export Format</label>
                   <div className="flex flex-col space-y-2">
                     <div
-                      className={`border rounded-md p-3 cursor-pointer hover:bg-slate-50 flex items-center space-x-2 ${exportFormat === 'docx' ? 'border-blue-500 bg-blue-50' : ''}`}
+                      className={`border rounded-md p-3 cursor-pointer hover:bg-slate-50 flex items-center space-x-2 ${
+                        exportFormat === 'docx' ? 'border-blue-500 bg-blue-50' : ''
+                      }`}
                       onClick={() => setExportFormat('docx')}
                     >
                       <div
-                        className={`w-4 h-4 rounded-full border ${exportFormat === 'docx' ? 'border-blue-500 bg-blue-500' : 'border-slate-300'}`}
+                        className={`w-4 h-4 rounded-full border ${
+                          exportFormat === 'docx'
+                            ? 'border-blue-500 bg-blue-500'
+                            : 'border-slate-300'
+                        }`}
                       />
                       <span>Word Document (DOCX)</span>
                     </div>
                     <div
-                      className={`border rounded-md p-3 cursor-pointer hover:bg-slate-50 flex items-center space-x-2 ${exportFormat === 'pdf' ? 'border-blue-500 bg-blue-50' : ''}`}
+                      className={`border rounded-md p-3 cursor-pointer hover:bg-slate-50 flex items-center space-x-2 ${
+                        exportFormat === 'pdf' ? 'border-blue-500 bg-blue-50' : ''
+                      }`}
                       onClick={() => setExportFormat('pdf')}
                     >
                       <div
-                        className={`w-4 h-4 rounded-full border ${exportFormat === 'pdf' ? 'border-blue-500 bg-blue-500' : 'border-slate-300'}`}
+                        className={`w-4 h-4 rounded-full border ${
+                          exportFormat === 'pdf'
+                            ? 'border-blue-500 bg-blue-500'
+                            : 'border-slate-300'
+                        }`}
                       />
                       <span>PDF Document</span>
                     </div>
@@ -11564,7 +11615,11 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                       <div
                         key={template.id}
                         data-testid={`template-item-${template.id}`}
-                        className={`p-3 hover:bg-slate-50 cursor-pointer ${selectedTemplate?.id === template.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''}`}
+                        className={`p-3 hover:bg-slate-50 cursor-pointer ${
+                          selectedTemplate?.id === template.id
+                            ? 'bg-blue-50 border-l-4 border-blue-500'
+                            : ''
+                        }`}
                         onClick={() => {
                           setSelectedTemplate(template);
 
@@ -12871,7 +12926,9 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                   {chatMessages.map((message, index) => (
                     <div
                       key={index}
-                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                      className={`flex ${
+                        message.role === 'user' ? 'justify-end' : 'justify-start'
+                      }`}
                     >
                       <div
                         className={`rounded-lg p-3 ${
@@ -13613,8 +13670,8 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                               result.similarity > 0.8
                                 ? 'bg-green-100 text-green-800 border-green-200'
                                 : result.similarity > 0.6
-                                  ? 'bg-amber-100 text-amber-800 border-amber-200'
-                                  : 'bg-blue-100 text-blue-800 border-blue-200'
+                                ? 'bg-amber-100 text-amber-800 border-amber-200'
+                                : 'bg-blue-100 text-blue-800 border-blue-200'
                             }`}
                           >
                             {(result.similarity * 100).toFixed(0)}% match
@@ -14035,8 +14092,8 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                                         req.priority === 'Critical'
                                           ? 'destructive'
                                           : req.priority === 'High'
-                                            ? 'default'
-                                            : 'secondary'
+                                          ? 'default'
+                                          : 'secondary'
                                       }
                                       className="text-xs"
                                     >
@@ -14121,8 +14178,8 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                                       section.status === 'Reusable'
                                         ? 'default'
                                         : section.status === 'Requires Modification'
-                                          ? 'secondary'
-                                          : 'destructive'
+                                        ? 'secondary'
+                                        : 'destructive'
                                     }
                                     className="text-xs"
                                   >
@@ -14164,8 +14221,8 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                               category.priority === 'Critical'
                                 ? 'destructive'
                                 : category.priority === 'High'
-                                  ? 'default'
-                                  : 'secondary'
+                                ? 'default'
+                                : 'secondary'
                             }
                           >
                             {category.priority} Priority
@@ -14276,8 +14333,8 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                               category.riskLevel === 'High'
                                 ? 'destructive'
                                 : category.riskLevel === 'Medium'
-                                  ? 'default'
-                                  : 'secondary'
+                                ? 'default'
+                                : 'secondary'
                             }
                           >
                             {category.riskLevel} Risk
@@ -14574,10 +14631,10 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                     documentStatus === 'published'
                       ? 'bg-purple-100 text-purple-800'
                       : documentStatus === 'approved'
-                        ? 'bg-green-100 text-green-800'
-                        : documentStatus === 'in-review'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-gray-100 text-gray-800'
+                      ? 'bg-green-100 text-green-800'
+                      : documentStatus === 'in-review'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-gray-100 text-gray-800'
                   }`}
                 >
                   {documentStatus === 'draft' && 'Draft'}
@@ -14723,10 +14780,10 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                                 entry.fromStatus === 'published'
                                   ? 'bg-purple-100 text-purple-800'
                                   : entry.fromStatus === 'approved'
-                                    ? 'bg-green-100 text-green-800'
-                                    : entry.fromStatus === 'in-review'
-                                      ? 'bg-yellow-100 text-yellow-800'
-                                      : 'bg-gray-100 text-gray-800'
+                                  ? 'bg-green-100 text-green-800'
+                                  : entry.fromStatus === 'in-review'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-gray-100 text-gray-800'
                               }
                             >
                               {entry.fromStatus || 'Initial'}
@@ -14737,10 +14794,10 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                                 entry.toStatus === 'published'
                                   ? 'bg-purple-100 text-purple-800'
                                   : entry.toStatus === 'approved'
-                                    ? 'bg-green-100 text-green-800'
-                                    : entry.toStatus === 'in-review'
-                                      ? 'bg-yellow-100 text-yellow-800'
-                                      : 'bg-gray-100 text-gray-800'
+                                  ? 'bg-green-100 text-green-800'
+                                  : entry.toStatus === 'in-review'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-gray-100 text-gray-800'
                               }
                             >
                               {entry.toStatus}
@@ -14807,7 +14864,6 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
             onClose={() => setShowImportFromINDDialog(false)}
             targetDocumentId={selectedDocument?.id}
             onImportComplete={result => {
-
               // Refresh the document content
               if (selectedDocument?.id) {
                 queryClient.invalidateQueries([`/api/coauthor/documents/${selectedDocument.id}`]);

@@ -64,7 +64,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { EmptyState } from '@/design-system/patterns/EmptyState';
-import logoSrc from '@/assets/concept2cure-logo.jpg';
+// Logo image removed — text mark only
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -893,16 +893,9 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         role="navigation"
         aria-label="Main sidebar"
       >
-        {/* Logo */}
-        <div className="relative w-8 h-8 rounded-xl overflow-hidden shadow-sm flex-shrink-0 mb-1">
-          <img src={logoSrc} alt="C2C" className="w-full h-full object-cover object-center" />
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background:
-                'radial-gradient(circle at center, transparent 40%, var(--color-bg, #faf9f5) 100%)',
-            }}
-          />
+        {/* Brand mark */}
+        <div className="w-8 h-8 rounded-xl bg-stone-800 flex items-center justify-center flex-shrink-0 mb-1">
+          <span className="text-[10px] font-bold text-white">C2C</span>
         </div>
 
         {/* ── Global nav (6 items) ── */}
@@ -929,7 +922,11 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         >
           <FileStack className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="Intelligence" active={activeNavId === 'ri-copilot'} onClick={nav['ri-copilot']}>
+        <IconBtn
+          label="Intelligence"
+          active={activeNavId === 'ri-copilot'}
+          onClick={nav['ri-copilot']}
+        >
           <Settings className="w-4 h-4" />
         </IconBtn>
 
@@ -982,19 +979,8 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         {/* Brand header */}
         <div className="flex items-center justify-between px-3 h-11 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <div className="relative w-7 h-7 rounded-lg overflow-hidden flex-shrink-0 shadow-sm">
-              <img
-                src={logoSrc}
-                alt="Concept2Cure"
-                className="w-full h-full object-cover object-center"
-              />
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background:
-                    'radial-gradient(circle at center, transparent 40%, var(--color-bg, #faf9f5) 100%)',
-                }}
-              />
+            <div className="w-7 h-7 rounded-lg bg-stone-800 flex items-center justify-center flex-shrink-0">
+              <span className="text-[9px] font-bold text-white">C2C</span>
             </div>
             <span className="font-semibold text-stone-800 text-[13px]">Concept2Cure</span>
           </div>

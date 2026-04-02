@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import logoSrc from '@/assets/concept2cure-logo.jpg';
+// Logo image removed — text mark only
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SHARED LAYOUT
@@ -21,13 +21,9 @@ const ErrorLayout: React.FC<{
     className="min-h-screen flex flex-col items-center justify-center px-6"
     style={{ background: '#faf9f5', fontFamily: "'Lora', Georgia, serif" }}
   >
-    {/* Logo with gradient blend */}
-    <div className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-md mb-8">
-      <img src={logoSrc} alt="Concept2Cure" className="w-full h-full object-cover object-center" />
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(circle at center, transparent 40%, #faf9f5 100%)' }}
-      />
+    {/* Brand mark */}
+    <div className="w-16 h-16 rounded-2xl bg-stone-800 flex items-center justify-center mb-8">
+      <span className="text-lg font-bold text-white">C2C</span>
     </div>
 
     {/* Error code */}
@@ -81,9 +77,24 @@ const ErrorLayout: React.FC<{
         © {new Date().getFullYear()} Concept2Cure, Inc. — AI-Powered Regulatory Intelligence
       </p>
       <div className="flex gap-4 justify-center mt-2">
-        <a href="/concept2cure/legal/terms" className="text-[11px] text-stone-400 hover:text-stone-600 transition-colors">Terms</a>
-        <a href="/concept2cure/legal/privacy" className="text-[11px] text-stone-400 hover:text-stone-600 transition-colors">Privacy</a>
-        <a href="mailto:support@concept2cure.com" className="text-[11px] text-stone-400 hover:text-stone-600 transition-colors">Support</a>
+        <a
+          href="/concept2cure/legal/terms"
+          className="text-[11px] text-stone-400 hover:text-stone-600 transition-colors"
+        >
+          Terms
+        </a>
+        <a
+          href="/concept2cure/legal/privacy"
+          className="text-[11px] text-stone-400 hover:text-stone-600 transition-colors"
+        >
+          Privacy
+        </a>
+        <a
+          href="mailto:support@concept2cure.com"
+          className="text-[11px] text-stone-400 hover:text-stone-600 transition-colors"
+        >
+          Support
+        </a>
       </div>
     </div>
   </div>
@@ -128,10 +139,16 @@ export const MaintenancePage: React.FC = () => (
       className="mb-8 px-6 py-4 rounded-xl border max-w-md text-center"
       style={{ background: 'white', borderColor: '#e8e6dc' }}
     >
-      <p className="text-xs font-medium text-stone-700" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
+      <p
+        className="text-xs font-medium text-stone-700"
+        style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
+      >
         Expected completion
       </p>
-      <p className="text-lg font-semibold text-stone-900 mt-1" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
+      <p
+        className="text-lg font-semibold text-stone-900 mt-1"
+        style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
+      >
         Within 4 hours
       </p>
       <p className="text-xs text-stone-500 mt-2">

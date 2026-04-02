@@ -124,14 +124,9 @@ const ProtectedZenApp: React.FC = () => (
 const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading...' }) => (
   <div className="min-h-screen bg-white flex items-center justify-center">
     <div className="flex flex-col items-center gap-4">
-      <p className="text-sm text-stone-400">
-        {message}
-      </p>
+      <p className="text-sm text-stone-400">{message}</p>
       <div className="w-48 h-1 bg-stone-100 rounded-full overflow-hidden">
-        <div
-          className="h-full rounded-full animate-pulse bg-stone-300"
-          style={{ width: '60%' }}
-        />
+        <div className="h-full rounded-full animate-pulse bg-stone-300" style={{ width: '60%' }} />
       </div>
     </div>
   </div>

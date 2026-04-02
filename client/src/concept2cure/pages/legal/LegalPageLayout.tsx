@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import logoSrc from '@/assets/concept2cure-logo.jpg';
+// Logo image removed — text mark only
 
 interface LegalPageLayoutProps {
   title: string;
@@ -18,11 +18,13 @@ const LegalPageLayout: React.FC<LegalPageLayoutProps> = ({ title, lastUpdated, c
     <header className="bg-white border-b border-stone-200 sticky top-0 z-10">
       <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
         <a href="/concept2cure" className="flex items-center gap-3">
-          <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-sm">
-            <img src={logoSrc} alt="Concept2Cure" className="w-full h-full object-cover object-center" />
-            <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, transparent 40%, white 100%)' }} />
+          <div className="w-10 h-10 rounded-xl bg-stone-800 flex items-center justify-center">
+            <span className="text-xs font-bold text-white">C2C</span>
           </div>
-          <span className="text-lg font-semibold text-stone-900" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
+          <span
+            className="text-lg font-semibold text-stone-900"
+            style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
+          >
             Concept2Cure
           </span>
         </a>
@@ -42,34 +44,46 @@ const LegalPageLayout: React.FC<LegalPageLayoutProps> = ({ title, lastUpdated, c
         {/* Document header with brand accent */}
         <div className="px-10 pt-10 pb-6 border-b border-stone-100">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-1 h-8 rounded-full" style={{ background: 'linear-gradient(180deg, #d97757, #c15f3c)' }} />
-            <h1 className="text-base font-semibold text-stone-900" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
+            <div
+              className="w-1 h-8 rounded-full"
+              style={{ background: 'linear-gradient(180deg, #d97757, #c15f3c)' }}
+            />
+            <h1
+              className="text-base font-semibold text-stone-900"
+              style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
+            >
               {title}
             </h1>
           </div>
-          <p className="text-sm text-stone-500" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
+          <p
+            className="text-sm text-stone-500"
+            style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
+          >
             Last updated: {lastUpdated}
           </p>
-          <p className="text-sm text-stone-500 mt-1" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
+          <p
+            className="text-sm text-stone-500 mt-1"
+            style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
+          >
             Concept2Cure, Inc. — AI-Powered Regulatory Intelligence Platform
           </p>
         </div>
 
         {/* Document body */}
-        <div className="px-10 py-8 prose prose-stone max-w-none">
-          {children}
-        </div>
+        <div className="px-10 py-8 prose prose-stone max-w-none">{children}</div>
 
         {/* Document footer */}
         <div className="px-10 py-6 bg-stone-50 border-t border-stone-100">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="relative w-8 h-8 rounded-lg overflow-hidden">
-                <img src={logoSrc} alt="Concept2Cure" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, transparent 40%, #faf9f5 100%)' }} />
+              <div className="w-8 h-8 rounded-lg bg-stone-800 flex items-center justify-center">
+                <span className="text-[9px] font-bold text-white">C2C</span>
               </div>
               <div>
-                <p className="text-xs font-medium text-stone-700" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
+                <p
+                  className="text-xs font-medium text-stone-700"
+                  style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
+                >
                   Concept2Cure, Inc.
                 </p>
                 <p className="text-[11px] text-stone-400">

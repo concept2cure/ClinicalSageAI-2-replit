@@ -179,7 +179,9 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
           setCommandFeedback(`Navigating to ${intent.description || intent.moduleId}...`);
         } else {
           setCommandFeedback(
-            `Intent: ${intent.action} ${intent.moduleId} (${Math.round(confidence * 100)}% confidence)`
+            `Intent: ${intent.action} ${intent.moduleId} (${Math.round(
+              confidence * 100
+            )}% confidence)`
           );
         }
 
@@ -383,7 +385,9 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       >
         {!isCollapsed && (
           <div className="flex items-center gap-2">
-            <img src="/src/assets/concept2cure-logo.jpg" alt="Concept2Cure" className="h-8 w-8 rounded-lg" />
+            <div className="h-8 w-8 rounded-lg bg-stone-800 flex items-center justify-center">
+              <span className="text-[9px] font-bold text-white">C2C</span>
+            </div>
             <div>
               <div className="text-sm font-bold text-gray-900">Concept2Cure</div>
               <div className="text-xs text-muted-foreground">Client Portal</div>
