@@ -1,6 +1,7 @@
 /**
  * Protocol API - Client-side API helper for Protocol Designer module
  */
+import { apiRequest } from '@/lib/queryClient';
 
 /**
  * Get protocol data by ID
@@ -9,7 +10,7 @@
  * @returns {Promise<Object>} Protocol data
  */
 export const getProtocol = async id => {
-  const response = await fetch(`/api/protocol/${id}`);
+  const response = await apiRequest('GET', `/api/protocol/${id}`);
   if (!response.ok) {
     throw new Error('Failed to fetch protocol');
   }
@@ -23,13 +24,7 @@ export const getProtocol = async id => {
  * @returns {Promise<Object>} Saved protocol data
  */
 export const saveProtocol = async protocol => {
-  const response = await fetch('/api/protocol/save', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(protocol),
-  });
+  const response = await apiRequest('POST', '/api/protocol/save', protocol);
 
   if (!response.ok) {
     throw new Error('Failed to save protocol');
@@ -45,13 +40,7 @@ export const saveProtocol = async protocol => {
  * @returns {Promise<Array>} Generated schedule array
  */
 export const generateSchedule = async protocol => {
-  const response = await fetch('/api/protocol/generate-schedule', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(protocol),
-  });
+  const response = await apiRequest('POST', '/api/protocol/generate-schedule', protocol);
 
   if (!response.ok) {
     throw new Error('Failed to generate schedule');
@@ -67,13 +56,7 @@ export const generateSchedule = async protocol => {
  * @returns {Promise<Array>} Validation results array
  */
 export const validateProtocol = async protocol => {
-  const response = await fetch('/api/protocol/validate', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(protocol),
-  });
+  const response = await apiRequest('POST', '/api/protocol/validate', protocol);
 
   if (!response.ok) {
     throw new Error('Failed to validate protocol');

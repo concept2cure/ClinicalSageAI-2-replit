@@ -11,6 +11,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 // ---------------------------------------------------------------------------
 // Types (mirrored from shared/types/orchestration.ts for client use)
@@ -189,13 +190,8 @@ export interface WorkflowTemplateInfo {
 // API helpers
 // ---------------------------------------------------------------------------
 
-async function apiPost<T>(path: string, body: Record<string, unknown>): Promise<T> {
-  const res = await fetch(`/api/orchestration${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    credentials: 'include',
-  });
+async function orchPost<T>(path: string, body: Record<string, unknown>): Promise<T> {
+  const res = await apiRequest('POST', `/api/orchestration${path}`, body);
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error || 'Request failed');
@@ -203,10 +199,8 @@ async function apiPost<T>(path: string, body: Record<string, unknown>): Promise<
   return res.json();
 }
 
-async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(`/api/orchestration${path}`, {
-    credentials: 'include',
-  });
+async function orchGet<T>(path: string): Promise<T> {
+  const res = await apiRequest('GET', `/api/orchestration${path}`);
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error || 'Request failed');
@@ -236,7 +230,7 @@ export function useWorkflowExecution() {
       setIsRunning(true);
       setError(null);
       try {
-        const result = await apiPost<WorkflowExecution>('/execute', params);
+        const result = await orchPost<WorkflowExecution>('/execute', params);
         setExecution(result);
         // Invalidate related queries
         queryClient.invalidateQueries({ queryKey: ['readiness', params.projectId] });
@@ -255,7 +249,7 @@ export function useWorkflowExecution() {
   );
 
   const cancel = useCallback(async (executionId: string) => {
-    await apiPost('/cancel/' + executionId, {});
+    await orchPost('/cancel/' + executionId, {});
     setExecution((prev) => prev ? { ...prev, status: 'cancelled' } : null);
   }, []);
 
@@ -275,7 +269,7 @@ export function useWorkflowExecution() {
 export function useReadinessAssessment(projectId: number | null, module?: string) {
   return useQuery<ReadinessAssessment>({
     queryKey: ['readiness', projectId, module],
-    queryFn: () => apiPost('/readiness', { projectId, module }),
+    queryFn: () => orchPost('/readiness', { projectId, module }),
     enabled: !!projectId,
     staleTime: 60_000, // 1 minute
     refetchOnWindowFocus: false,
@@ -293,7 +287,7 @@ export function useRecommendations(
   return useQuery<RecommendationSet>({
     queryKey: ['recommendations', projectId, options],
     queryFn: () =>
-      apiPost('/recommendations', {
+      orchPost('/recommendations', {
         projectId,
         ...options,
       }),
@@ -309,12 +303,12 @@ export function useRecommendations(
 
 export function useContinuity(projectId: number | null) {
   const generateMutation = useMutation({
-    mutationFn: (pid: number) => apiPost<ContinuitySnapshot>('/continuity', { projectId: pid }),
+    mutationFn: (pid: number) => orchPost<ContinuitySnapshot>('/continuity', { projectId: pid }),
   });
 
   const latestQuery = useQuery<ContinuitySnapshot>({
     queryKey: ['continuity', projectId],
-    queryFn: () => apiGet(`/continuity/${projectId}`),
+    queryFn: () => orchGet(`/continuity/${projectId}`),
     enabled: !!projectId,
     staleTime: 5 * 60_000, // 5 minutes
     retry: false, // Don't retry 404s
@@ -341,7 +335,7 @@ export function useContinuity(projectId: number | null) {
 export function useWorkflowTemplates() {
   return useQuery<{ templates: WorkflowTemplateInfo[] }>({
     queryKey: ['workflow-templates'],
-    queryFn: () => apiGet('/templates'),
+    queryFn: () => orchGet('/templates'),
     staleTime: 10 * 60_000, // 10 minutes
   });
 }
