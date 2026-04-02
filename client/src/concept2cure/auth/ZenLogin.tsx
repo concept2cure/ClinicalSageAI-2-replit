@@ -1,159 +1,436 @@
 /// <reference types="vite/client" />
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'wouter';
-import { AlertCircle, ArrowLeft, CheckCircle2, Mail, XCircle } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Spinner } from '@/components/ui/spinner';
 import {
   authService,
   useAuth as usePortalAuth,
   type MfaMethod,
 } from '@/portal-v2/services/authService';
-
-import concept2cureIcon from '@/assets/concept2cure-icon.svg';
 import { computeRedirect } from './redirectUtils';
 import { getMfaMethodLabel, normalizeEmail } from './authInputUtils';
 import { computeFailedLoginState, getLockoutRemainingSeconds } from './loginLockout';
 import { evaluatePasswordPolicy, isPasswordPolicySatisfied } from './passwordPolicy';
 
-type View = 'sign-in' | 'mfa' | 'forgot-password' | 'reset-password' | 'reset-sent' | 'success';
+const DEMO_PERSONAS = [
+  { label: 'JM Smith', email: 'jm.smith@concept2cure.pro', role: 'Admin', initials: 'JS' },
+  { label: 'Sarah Chen', email: 'sarah.chen@concept2cure.pro', role: 'Regulatory Affairs', initials: 'SC' },
+  { label: 'Michael Torres', email: 'michael.torres@concept2cure.pro', role: 'Medical Writer', initials: 'MT' },
+  { label: 'Emily Watson', email: 'emily.watson@concept2cure.pro', role: 'QA Lead', initials: 'EW' },
+  { label: 'David Park', email: 'david.park@concept2cure.pro', role: 'Biostatistics', initials: 'DP' },
+] as const;
 
-interface AuthError {
-  field?: 'email' | 'password' | 'mfa' | 'reset';
-  message: string;
+const INDUSTRY_OPTIONS = [
+  { value: 'biotech', label: 'Biotech' },
+  { value: 'pharma', label: 'Pharma' },
+  { value: 'medtech', label: 'MedTech' },
+  { value: 'cro', label: 'CRO' },
+  { value: 'academic', label: 'Academic' },
+  { value: 'regulatory', label: 'Regulatory' },
+  { value: 'medical_writing', label: 'Medical Writing' },
+] as const;
+
+type View = 'sign-in' | 'sign-up' | 'mfa' | 'forgot-password' | 'reset-password' | 'reset-sent' | 'success';
+
+const isDev =
+  typeof globalThis.window !== 'undefined' &&
+  (globalThis.window.location.hostname === 'localhost' ||
+    globalThis.window.location.hostname.includes('github.dev') ||
+    globalThis.window.location.hostname.includes('replit'));
+
+/* ══════════════════════════════════════════════════════════════════
+   EMBEDDED STYLE — completely overrides global CSS for this page.
+   Uses data-zen-auth attribute for specificity without !important.
+   ══════════════════════════════════════════════════════════════════ */
+const STYLE = `
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+[data-zen-auth],
+[data-zen-auth] *,
+[data-zen-auth] *::before,
+[data-zen-auth] *::after {
+  box-sizing: border-box !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
-interface PasswordFieldProps {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  autoComplete?: string;
-  autoFocus?: boolean;
-  disabled?: boolean;
-  onSubmit?: () => void;
+[data-zen-auth] {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #ffffff !important;
+  margin: 0 !important;
+  padding: 24px !important;
+  overflow-y: auto !important;
 }
 
-const PasswordField: React.FC<PasswordFieldProps> = ({
-  id,
-  label,
-  value,
-  onChange,
-  placeholder,
-  autoComplete,
-  autoFocus,
-  disabled,
-  onSubmit,
+.za-card {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.za-title {
+  font-size: 32px !important;
+  font-weight: 300 !important;
+  color: #0d0d0d !important;
+  letter-spacing: -0.03em !important;
+  text-align: center !important;
+  margin: 0 0 8px 0 !important;
+  line-height: 1.1 !important;
+}
+
+.za-subtitle {
+  font-size: 15px !important;
+  color: #8e8e8e !important;
+  text-align: center !important;
+  margin: 0 0 40px 0 !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+}
+
+.za-label {
+  display: block !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #3d3d3d !important;
+  margin-bottom: 8px !important;
+  letter-spacing: 0 !important;
+}
+
+.za-input {
+  display: block !important;
+  width: 100% !important;
+  padding: 14px 16px !important;
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+  color: #0d0d0d !important;
+  background: #ffffff !important;
+  border: 1.5px solid #d4d4d4 !important;
+  border-radius: 12px !important;
+  outline: none !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+  -webkit-appearance: none !important;
+}
+.za-input::placeholder { color: #b0b0b0 !important; }
+.za-input:focus {
+  border-color: #a0a0a0 !important;
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.04) !important;
+}
+
+.za-select {
+  display: block !important;
+  width: 100% !important;
+  padding: 14px 40px 14px 16px !important;
+  font-size: 15px !important;
+  color: #0d0d0d !important;
+  background: #ffffff !important;
+  border: 1.5px solid #d4d4d4 !important;
+  border-radius: 12px !important;
+  outline: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 16px center !important;
+  transition: border-color 0.2s ease !important;
+}
+.za-select:focus {
+  border-color: #a0a0a0 !important;
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.04) !important;
+}
+
+.za-field { margin-bottom: 20px !important; }
+.za-field-last { margin-bottom: 28px !important; }
+
+.za-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  padding: 14px 24px !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  border-radius: 12px !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  letter-spacing: 0 !important;
+  line-height: 1 !important;
+}
+.za-btn:disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+}
+
+.za-btn-primary {
+  background: #0d0d0d !important;
+  color: #ffffff !important;
+}
+.za-btn-primary:hover:not(:disabled) {
+  background: #262626 !important;
+}
+
+.za-btn-outline {
+  background: #ffffff !important;
+  color: #0d0d0d !important;
+  border: 1.5px solid #d4d4d4 !important;
+}
+.za-btn-outline:hover:not(:disabled) {
+  background: #f7f7f7 !important;
+  border-color: #b0b0b0 !important;
+}
+
+.za-link {
+  font-size: 14px !important;
+  color: #8e8e8e !important;
+  background: none !important;
+  border: none !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  transition: color 0.15s ease !important;
+  text-decoration: none !important;
+}
+.za-link:hover { color: #3d3d3d !important; }
+
+.za-divider {
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+  margin: 28px 0 !important;
+  color: #c0c0c0 !important;
+  font-size: 13px !important;
+}
+.za-divider::before,
+.za-divider::after {
+  content: '' !important;
+  flex: 1 !important;
+  height: 1px !important;
+  background: #e8e8e8 !important;
+}
+
+.za-error {
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+  font-size: 14px !important;
+  padding: 14px 16px !important;
+  border-radius: 12px !important;
+  margin-bottom: 24px !important;
+  border: 1px solid #fecaca !important;
+  line-height: 1.5 !important;
+}
+
+.za-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-top: 20px !important;
+}
+
+.za-pw-toggle {
+  font-size: 13px !important;
+  color: #8e8e8e !important;
+  background: none !important;
+  border: none !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+}
+.za-pw-toggle:hover { color: #3d3d3d !important; }
+
+.za-grid-2 {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+}
+
+.za-pw-rule {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+}
+.za-pw-rule-met { color: #16a34a !important; }
+.za-pw-rule-unmet { color: #c0c0c0 !important; }
+
+.za-mfa-grid {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 10px !important;
+}
+.za-mfa-digit {
+  width: 48px !important;
+  height: 56px !important;
+  text-align: center !important;
+  font-size: 22px !important;
+  font-weight: 500 !important;
+  color: #0d0d0d !important;
+  background: #ffffff !important;
+  border: 1.5px solid #d4d4d4 !important;
+  border-radius: 12px !important;
+  outline: none !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+.za-mfa-digit:focus {
+  border-color: #a0a0a0 !important;
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.04) !important;
+}
+
+.za-personas {
+  background: #ffffff !important;
+  border: 1.5px solid #e8e8e8 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04) !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: calc(100% + 8px) !important;
+  z-index: 100 !important;
+}
+.za-persona-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  width: 100% !important;
+  padding: 14px 18px !important;
+  background: none !important;
+  border: none !important;
+  cursor: pointer !important;
+  text-align: left !important;
+  transition: background 0.1s ease !important;
+  font-family: inherit !important;
+}
+.za-persona-item:hover { background: #f7f7f7 !important; }
+.za-persona-item + .za-persona-item { border-top: 1px solid #f0f0f0 !important; }
+
+.za-avatar {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  background: #f0f0f0 !important;
+  color: #666 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  flex-shrink: 0 !important;
+}
+
+.za-persona-name {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #0d0d0d !important;
+}
+.za-persona-role {
+  font-size: 13px !important;
+  color: #8e8e8e !important;
+}
+
+.za-check-circle {
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: 50% !important;
+  background: #f0fdf4 !important;
+  color: #16a34a !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto 20px !important;
+  font-size: 24px !important;
+}
+
+.za-mfa-pills {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  margin-bottom: 24px !important;
+}
+.za-pill {
+  padding: 7px 16px !important;
+  border-radius: 999px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+.za-pill-active {
+  background: #0d0d0d !important;
+  color: #ffffff !important;
+}
+.za-pill-inactive {
+  background: #f5f5f5 !important;
+  color: #666 !important;
+}
+.za-pill-inactive:hover { background: #eaeaea !important; }
+
+.za-spinner {
+  display: inline-block !important;
+  width: 18px !important;
+  height: 18px !important;
+  border: 2px solid transparent !important;
+  border-top-color: currentColor !important;
+  border-radius: 50% !important;
+  animation: za-spin 0.6s linear infinite !important;
+  margin-right: 10px !important;
+}
+@keyframes za-spin { to { transform: rotate(360deg); } }
+`;
+
+/* ── Reusable spinner ── */
+const Spin = () => <span className="za-spinner" />;
+
+/* ── MFA digit boxes ── */
+const MfaCodeInput: React.FC<{ value: string; onChange: (v: string) => void; disabled?: boolean }> = ({
+  value, onChange, disabled,
 }) => {
-  const [showPassword, setShowPassword] = useState(false);
-
+  const refs = useRef<Array<HTMLInputElement | null>>([]);
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between">
-        <Label htmlFor={id} className="text-sm font-medium text-slate-700">
-          {label}
-        </Label>
-        <button
-          type="button"
-          className="text-xs text-slate-400 transition-colors hover:text-slate-600"
-          onClick={() => setShowPassword(current => !current)}
-        >
-          {showPassword ? 'Hide' : 'Show'}
-        </button>
-      </div>
-      <Input
-        id={id}
-        type={showPassword ? 'text' : 'password'}
-        value={value}
-        onChange={event => onChange(event.target.value)}
-        onKeyDown={event => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            onSubmit?.();
-          }
-        }}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        autoFocus={autoFocus}
-        disabled={disabled}
-        className="h-11 rounded-lg border-slate-200 bg-white text-sm focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:border-blue-400"
-      />
-    </div>
-  );
-};
-
-const MfaCodeInput: React.FC<{
-  value: string;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-}> = ({ value, onChange, disabled }) => {
-  const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
-
-  const handleDigitChange = (index: number, digit: string) => {
-    if (!/^\d*$/.test(digit)) return;
-    const next = value.split('');
-    next[index] = digit;
-    const joined = next.join('').slice(0, 6);
-    onChange(joined);
-    if (digit && index < 5) inputRefs.current[index + 1]?.focus();
-  };
-
-  const handleKeyDown = (index: number, event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Backspace' && !value[index] && index > 0) inputRefs.current[index - 1]?.focus();
-  };
-
-  const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
-    event.preventDefault();
-    const pasted = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    onChange(pasted);
-    inputRefs.current[Math.max(0, Math.min(pasted.length - 1, 5))]?.focus();
-  };
-
-  return (
-    <div className="flex justify-center gap-2.5">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <Input
-          key={index}
-          ref={element => { inputRefs.current[index] = element; }}
-          value={value[index] || ''}
-          onChange={event => handleDigitChange(index, event.target.value)}
-          onKeyDown={event => handleKeyDown(index, event)}
-          onPaste={handlePaste}
+    <div className="za-mfa-grid">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <input
+          key={`mfa-${i}`}
+          ref={el => { refs.current[i] = el; }}
+          className="za-mfa-digit"
+          value={value[i] || ''}
+          onChange={e => {
+            if (!/^\d*$/.test(e.target.value)) return;
+            const next = value.split(''); next[i] = e.target.value;
+            const joined = next.join('').slice(0, 6); onChange(joined);
+            if (e.target.value && i < 5) refs.current[i + 1]?.focus();
+          }}
+          onKeyDown={e => { if (e.key === 'Backspace' && !value[i] && i > 0) refs.current[i - 1]?.focus(); }}
+          onPaste={e => { e.preventDefault(); onChange(e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)); }}
           disabled={disabled}
           inputMode="numeric"
           maxLength={1}
           autoComplete="one-time-code"
-          className="h-11 w-11 rounded-lg border-slate-200 bg-white px-0 text-center text-base font-medium focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:border-blue-400"
+          aria-label={`Digit ${i + 1}`}
         />
       ))}
     </div>
   );
 };
 
-const isDev = typeof window !== 'undefined' && (
-  window.location.hostname === 'localhost' ||
-  window.location.hostname.includes('github.dev') ||
-  window.location.hostname.includes('replit')
-);
-
+/* ══════════════════════════════════════════════════════════════════
+   MAIN COMPONENT
+   ══════════════════════════════════════════════════════════════════ */
 export const ZenLogin: React.FC = () => {
   const [, setLocation] = useLocation();
   const { login, verifyMfa } = usePortalAuth();
 
-  const search = typeof window !== 'undefined' ? window.location.search : '';
+  const search = typeof globalThis.window !== 'undefined' ? globalThis.window.location.search : '';
   const params = useMemo(() => new URLSearchParams(search), [search]);
   const resetToken = params.get('token')?.trim() || '';
 
   const [view, setView] = useState<View>(resetToken ? 'reset-password' : 'sign-in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(true);
+  const [showPw, setShowPw] = useState(false);
   const [mfaCode, setMfaCode] = useState('');
   const [mfaMethod, setMfaMethod] = useState<MfaMethod['type']>('email');
   const [availableMfaMethods, setAvailableMfaMethods] = useState<MfaMethod[]>([]);
@@ -162,540 +439,423 @@ export const ZenLogin: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isDemoLoading, setIsDemoLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(false);
   const [isResendingCode, setIsResendingCode] = useState(false);
-  const [failedSignInAttempts, setFailedSignInAttempts] = useState(0);
-  const [signInLockedUntil, setSignInLockedUntil] = useState<number | null>(null);
-  const [lockoutSecondsRemaining, setLockoutSecondsRemaining] = useState(0);
-  const [error, setError] = useState<AuthError | null>(null);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
+  const [lockSecs, setLockSecs] = useState(0);
+  const [error, setError] = useState('');
 
-  const supportsRecoveryCodes = useMemo(
-    () => availableMfaMethods.some(method => method.type === 'backup_code'),
-    [availableMfaMethods]
-  );
-  const passwordRules = useMemo(() => evaluatePasswordPolicy(newPassword), [newPassword]);
-  const isPasswordCompliant = useMemo(
-    () => isPasswordPolicySatisfied(newPassword),
-    [newPassword]
-  );
-  const doPasswordsMatch = newPassword.length > 0 && newPassword === confirmPassword;
+  const [suFirstName, setSuFirstName] = useState('');
+  const [suLastName, setSuLastName] = useState('');
+  const [suEmail, setSuEmail] = useState('');
+  const [suPassword, setSuPassword] = useState('');
+  const [suConfirm, setSuConfirm] = useState('');
+  const [suCompany, setSuCompany] = useState('');
+  const [suIndustry, setSuIndustry] = useState('biotech');
+
+  const supportsRecoveryCodes = useMemo(() => availableMfaMethods.some(m => m.type === 'backup_code'), [availableMfaMethods]);
+  const suPwRules = useMemo(() => evaluatePasswordPolicy(suPassword), [suPassword]);
+  const suPwOk = useMemo(() => isPasswordPolicySatisfied(suPassword), [suPassword]);
+  const suPwMatch = suPassword.length > 0 && suPassword === suConfirm;
+  const resetPwRules = useMemo(() => evaluatePasswordPolicy(newPassword), [newPassword]);
+  const resetPwOk = useMemo(() => isPasswordPolicySatisfied(newPassword), [newPassword]);
+  const resetPwMatch = newPassword.length > 0 && newPassword === confirmPassword;
 
   useEffect(() => {
     if (view !== 'mfa' || resendCountdown <= 0) return;
-    const timer = window.setTimeout(() => setResendCountdown(current => current - 1), 1000);
-    return () => window.clearTimeout(timer);
+    const t = setTimeout(() => setResendCountdown(c => c - 1), 1000);
+    return () => clearTimeout(t);
   }, [view, resendCountdown]);
 
-  useEffect(() => { setError(null); }, [email, password, mfaCode, newPassword, confirmPassword]);
+  useEffect(() => { setError(''); }, [email, password, mfaCode, newPassword, confirmPassword, suEmail, suPassword, suConfirm]);
 
   useEffect(() => {
-    if (!signInLockedUntil) { setLockoutSecondsRemaining(0); return; }
-    const updateRemaining = () => {
-      const seconds = Math.max(0, Math.ceil((signInLockedUntil - Date.now()) / 1000));
-      setLockoutSecondsRemaining(seconds);
-      if (seconds === 0) { setSignInLockedUntil(null); setFailedSignInAttempts(0); }
+    if (!lockedUntil) { setLockSecs(0); return; }
+    const tick = () => {
+      const s = Math.max(0, Math.ceil((lockedUntil - Date.now()) / 1000));
+      setLockSecs(s);
+      if (s === 0) { setLockedUntil(null); setFailedAttempts(0); }
     };
-    updateRemaining();
-    const timer = window.setInterval(updateRemaining, 1000);
-    return () => window.clearInterval(timer);
-  }, [signInLockedUntil]);
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, [lockedUntil]);
 
-  const validateEmail = useCallback((value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value), []);
+  const validEmail = useCallback((v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), []);
 
+  /* ── handlers ── */
   const handleLogin = useCallback(async () => {
-    if (signInLockedUntil && signInLockedUntil > Date.now()) {
-      setError({
-        field: 'password',
-        message: `Too many attempts. Wait ${Math.max(1, getLockoutRemainingSeconds(signInLockedUntil))}s.`,
-      });
-      return;
-    }
-    const normalizedEmail = normalizeEmail(email);
-    if (!validateEmail(normalizedEmail)) {
-      setError({ field: 'email', message: 'Enter a valid email address.' });
-      return;
-    }
-    if (!password) {
-      setError({ field: 'password', message: 'Enter your password.' });
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
+    if (lockedUntil && lockedUntil > Date.now()) { setError(`Account locked. Try again in ${Math.max(1, getLockoutRemainingSeconds(lockedUntil))}s.`); return; }
+    const norm = normalizeEmail(email);
+    if (!validEmail(norm)) { setError('Enter a valid email address.'); return; }
+    if (!password) { setError('Enter your password.'); return; }
+    setLoading(true); setError('');
     try {
-      const result = await login({ email: normalizedEmail, password, rememberDevice: rememberMe });
-      if (!result.success) {
-        const nextState = computeFailedLoginState(failedSignInAttempts);
-        setFailedSignInAttempts(nextState.failedAttempts);
-        if (nextState.lockedUntil) {
-          setSignInLockedUntil(nextState.lockedUntil);
-          setError({ field: 'password', message: 'Too many failed attempts. Locked for 30 seconds.' });
-          return;
-        }
-        setError({ field: 'password', message: result.error?.message || 'Invalid credentials.' });
-        return;
+      const r = await login({ email: norm, password, rememberDevice: true });
+      if (!r.success) {
+        const ns = computeFailedLoginState(failedAttempts);
+        setFailedAttempts(ns.failedAttempts);
+        if (ns.lockedUntil) { setLockedUntil(ns.lockedUntil); setError('Too many attempts. Account temporarily locked.'); return; }
+        setError(r.error?.message || 'Invalid email or password.'); return;
       }
-      setFailedSignInAttempts(0);
-      setSignInLockedUntil(null);
-      if (result.data?.mfaRequired) {
-        const methods = result.data.methods || [{ type: 'email', isEnabled: true, isPrimary: true }];
-        setAvailableMfaMethods(methods);
-        setMfaMethod(methods[0]?.type || 'email');
-        setMaskedEmail(result.data.maskedEmail || '');
-        setResendCountdown(methods[0]?.type === 'email' ? 60 : 0);
-        setView('mfa');
-        return;
+      setFailedAttempts(0); setLockedUntil(null);
+      if (r.data?.mfaRequired) {
+        const methods = r.data.methods || [{ type: 'email', isEnabled: true, isPrimary: true }];
+        setAvailableMfaMethods(methods); setMfaMethod(methods[0]?.type || 'email');
+        setMaskedEmail(r.data.maskedEmail || ''); setResendCountdown(methods[0]?.type === 'email' ? 60 : 0);
+        setView('mfa'); return;
       }
-      setView('success');
-      setSuccessMessage('Signed in.');
-      window.setTimeout(() => {
-        setLocation(computeRedirect(undefined, undefined, () => authService.getUser()));
-      }, 300);
-    } finally { setIsLoading(false); }
-  }, [email, failedSignInAttempts, login, password, rememberMe, setLocation, signInLockedUntil, validateEmail]);
+      setView('success'); setSuccessMessage('Welcome back.');
+      setTimeout(() => setLocation(computeRedirect(undefined, undefined, () => authService.getUser())), 300);
+    } finally { setLoading(false); }
+  }, [email, failedAttempts, login, password, setLocation, lockedUntil, validEmail]);
 
-  const handleDemoLogin = useCallback(async () => {
-    setIsDemoLoading(true);
-    setError(null);
+  const handleSignup = useCallback(async () => {
+    const norm = suEmail.trim().toLowerCase();
+    if (!validEmail(norm)) { setError('Enter a valid email address.'); return; }
+    if (!suCompany.trim() || suCompany.trim().length < 2) { setError('Company name is required.'); return; }
+    if (!suPwOk) { setError('Password does not meet all requirements.'); return; }
+    if (!suPwMatch) { setError('Passwords do not match.'); return; }
+    setLoading(true); setError('');
     try {
-      const res = await fetch('/api/auth/dev-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'jm.smith@concept2cure.pro' }),
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: norm, password: suPassword, companyName: suCompany.trim(), industryMode: suIndustry, firstName: suFirstName.trim() || undefined, lastName: suLastName.trim() || undefined }),
       });
       const data = await res.json();
-      if (data.token || data.accessToken) {
-        const token = data.token || data.accessToken;
-        localStorage.setItem('trialsage_access_token', token);
+      if (!res.ok || !data.success) { setError(data.error?.message || 'Could not create account.'); return; }
+      if (data.token) { localStorage.setItem('trialsage_access_token', data.token); if (data.user) localStorage.setItem('trialsage_user', JSON.stringify(data.user)); }
+      setView('success'); setSuccessMessage('Account created.');
+      setTimeout(() => setLocation('/concept2cure'), 400);
+    } catch { setError('Unable to reach the server.'); }
+    finally { setLoading(false); }
+  }, [suEmail, suPassword, suConfirm, suCompany, suIndustry, suFirstName, suLastName, suPwOk, suPwMatch, validEmail, setLocation]);
+
+  const handleDemoLogin = useCallback(async (personaEmail: string) => {
+    setDemoLoading(true); setError(''); setDemoOpen(false);
+    try {
+      const res = await fetch('/api/auth/dev-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: personaEmail }) });
+      const data = await res.json();
+      if (data.accessToken || data.token) {
+        const tok = data.accessToken || data.token;
+        localStorage.setItem('trialsage_access_token', tok);
         if (data.refreshToken) localStorage.setItem('trialsage_refresh_token', data.refreshToken);
         if (data.user) localStorage.setItem('trialsage_user', JSON.stringify(data.user));
-        setView('success');
-        setSuccessMessage('Demo access granted.');
-        window.setTimeout(() => { setLocation('/concept2cure'); }, 300);
-      } else {
-        setError({ message: data.message || 'Demo login failed.' });
-      }
-    } catch {
-      setError({ message: 'Could not reach the server.' });
-    } finally { setIsDemoLoading(false); }
+        setView('success'); setSuccessMessage('Welcome.');
+        setTimeout(() => setLocation('/concept2cure'), 300);
+      } else { setError(data.error?.message || data.message || 'Persona not found.'); }
+    } catch { setError('Unable to reach the server.'); } finally { setDemoLoading(false); }
   }, [setLocation]);
 
   const handleVerifyMfa = useCallback(async () => {
-    const method = mfaMethod;
-    const trimmedCode = mfaCode.trim();
-    if (!trimmedCode || (method !== 'backup_code' && trimmedCode.length !== 6)) {
-      setError({
-        field: 'mfa',
-        message: method === 'backup_code' ? 'Enter a recovery code.' : 'Enter the full 6-digit code.',
-      });
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
+    const code = mfaCode.trim();
+    if (!code || (mfaMethod !== 'backup_code' && code.length !== 6)) { setError(mfaMethod === 'backup_code' ? 'Enter your recovery code.' : 'Enter the 6-digit code.'); return; }
+    setLoading(true); setError('');
     try {
-      const result = await verifyMfa({ method, code: trimmedCode });
-      if (!result.success) {
-        setError({ field: 'mfa', message: result.error?.message || 'Code not accepted.' });
-        return;
-      }
-      setView('success');
-      setSuccessMessage('Verified.');
-      window.setTimeout(() => {
-        setLocation(computeRedirect(undefined, undefined, () => authService.getUser()));
-      }, 300);
-    } finally { setIsLoading(false); }
+      const r = await verifyMfa({ method: mfaMethod, code });
+      if (!r.success) { setError(r.error?.message || 'Invalid code.'); return; }
+      setView('success'); setSuccessMessage('Verified.');
+      setTimeout(() => setLocation(computeRedirect(undefined, undefined, () => authService.getUser())), 300);
+    } finally { setLoading(false); }
   }, [mfaCode, mfaMethod, setLocation, verifyMfa]);
 
   const handleForgotPassword = useCallback(async () => {
-    const normalizedEmail = normalizeEmail(email);
-    if (!validateEmail(normalizedEmail)) {
-      setError({ field: 'email', message: 'Enter your account email first.' });
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await authService.requestPasswordReset({ email: normalizedEmail });
-      if (!result.success) {
-        setError({ field: 'email', message: result.error?.message || 'Unable to send reset link.' });
-        return;
-      }
-      setView('reset-sent');
-    } finally { setIsLoading(false); }
-  }, [email, validateEmail]);
+    const norm = normalizeEmail(email);
+    if (!validEmail(norm)) { setError('Enter your email address.'); return; }
+    setLoading(true); setError('');
+    try { const r = await authService.requestPasswordReset({ email: norm }); if (!r.success) { setError(r.error?.message || 'Unable to send reset link.'); return; } setView('reset-sent'); }
+    finally { setLoading(false); }
+  }, [email, validEmail]);
 
   const handleResetPassword = useCallback(async () => {
-    if (!resetToken) { setError({ field: 'reset', message: 'Missing reset token.' }); return; }
-    if (!newPassword) { setError({ field: 'reset', message: 'Enter a new password.' }); return; }
-    if (!isPasswordCompliant) {
-      setError({ field: 'reset', message: 'Password does not meet requirements.' });
-      return;
-    }
-    if (!doPasswordsMatch) { setError({ field: 'reset', message: 'Passwords do not match.' }); return; }
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await authService.confirmPasswordReset({ token: resetToken, newPassword });
-      if (!result.success) {
-        setError({ field: 'reset', message: result.error?.message || 'Unable to reset password.' });
-        return;
-      }
-      setView('success');
-      setSuccessMessage('Password updated. You can sign in now.');
-      window.setTimeout(() => { setLocation('/concept2cure/login'); }, 500);
-    } finally { setIsLoading(false); }
-  }, [doPasswordsMatch, isPasswordCompliant, newPassword, resetToken, setLocation]);
+    if (!resetToken) { setError('Missing reset token.'); return; }
+    if (!resetPwOk) { setError('Password does not meet requirements.'); return; }
+    if (!resetPwMatch) { setError('Passwords do not match.'); return; }
+    setLoading(true); setError('');
+    try { const r = await authService.confirmPasswordReset({ token: resetToken, newPassword }); if (!r.success) { setError(r.error?.message || 'Reset failed.'); return; } setView('success'); setSuccessMessage('Password updated.'); setTimeout(() => setLocation('/concept2cure/login'), 500); }
+    finally { setLoading(false); }
+  }, [resetPwMatch, resetPwOk, newPassword, resetToken, setLocation]);
 
   const handleResendCode = useCallback(async () => {
     if (resendCountdown > 0 || mfaMethod !== 'email' || isResendingCode) return;
     setIsResendingCode(true);
-    try {
-      const result = await authService.resendLoginOtp();
-      if (!result.success) {
-        setError({ field: 'mfa', message: result.error?.message || 'Unable to resend code.' });
-        return;
-      }
-      setMaskedEmail(result.data?.maskedEmail || maskedEmail);
-      setResendCountdown(60);
-    } finally { setIsResendingCode(false); }
+    try { const r = await authService.resendLoginOtp(); if (!r.success) { setError(r.error?.message || 'Resend failed.'); return; } setMaskedEmail(r.data?.maskedEmail || maskedEmail); setResendCountdown(60); }
+    finally { setIsResendingCode(false); }
   }, [isResendingCode, maskedEmail, mfaMethod, resendCountdown]);
 
+  /* ══════════════════════════════════
+     RENDER
+     ══════════════════════════════════ */
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-sm">
-        {/* Logo + Brand */}
-        <div className="mb-8 flex flex-col items-center">
-          <img
-            src={concept2cureIcon}
-            alt="Concept2Cure"
-            className="h-14 w-14 rounded-2xl shadow-md"
-          />
-          <h1 className="mt-4 text-xl font-semibold text-slate-900">Concept2Cure</h1>
+    <>
+      <style dangerouslySetInnerHTML={{ __html: STYLE }} />
+      <div data-zen-auth="">
+        <div className="za-card">
+
+          {/* ── SIGN IN ── */}
           {view === 'sign-in' && (
-            <p className="mt-1 text-sm text-slate-500">Sign in to your account</p>
-          )}
-          {view === 'mfa' && (
-            <p className="mt-1 text-sm text-slate-500">
-              {maskedEmail ? `Code sent to ${maskedEmail}` : 'Enter your verification code'}
-            </p>
-          )}
-          {(view === 'forgot-password' || view === 'reset-sent' || view === 'reset-password') && (
-            <p className="mt-1 text-sm text-slate-500">Reset your password</p>
-          )}
-          {view === 'success' && (
-            <p className="mt-1 text-sm text-slate-500">{successMessage}</p>
-          )}
-        </div>
+            <>
+              <h1 className="za-title">AnA 1.0 RI</h1>
+              <p className="za-subtitle">Regulatory intelligence platform</p>
 
-        {/* Card */}
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          {error && (
-            <Alert variant="destructive" className="mb-4 border-red-200 bg-red-50 text-red-700" role="alert" aria-live="polite">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-sm">{error.message}</AlertDescription>
-            </Alert>
-          )}
+              {error && <div className="za-error" role="alert">{error}</div>}
 
-          {/* Sign In */}
-          {view === 'sign-in' && (
-            <form
-              className="space-y-4"
-              onSubmit={event => { event.preventDefault(); handleLogin(); }}
-            >
-              <div className="space-y-1.5">
-                <Label htmlFor="login-email" className="text-sm font-medium text-slate-700">Email</Label>
-                <Input
-                  id="login-email"
-                  type="email"
-                  value={email}
-                  onChange={event => setEmail(event.target.value)}
-                  placeholder="you@company.com"
-                  autoComplete="email"
-                  autoFocus
-                  className="h-11 rounded-lg border-slate-200 bg-white text-sm focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:border-blue-400"
-                />
-              </div>
-
-              <PasswordField
-                id="login-password"
-                label="Password"
-                value={password}
-                onChange={setPassword}
-                onSubmit={handleLogin}
-                placeholder="Password"
-                autoComplete="current-password"
-                disabled={isLoading}
-              />
-
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-                  <Checkbox checked={rememberMe} onCheckedChange={checked => setRememberMe(checked === true)} />
-                  Remember me
-                </label>
-                <button
-                  type="button"
-                  className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
-                  onClick={() => setView('forgot-password')}
-                >
-                  Forgot password?
-                </button>
-              </div>
-
-              <Button
-                type="submit"
-                className="h-11 w-full rounded-lg bg-blue-600 text-sm font-medium hover:bg-blue-700 transition-colors"
-                disabled={isLoading || lockoutSecondsRemaining > 0}
-              >
-                {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
-                Sign in
-              </Button>
-
-              {lockoutSecondsRemaining > 0 && (
-                <p className="text-center text-xs text-amber-600">
-                  Locked. Try again in {lockoutSecondsRemaining}s.
-                </p>
-              )}
-
-              {isDev && (
-                <div className="pt-2 border-t border-slate-100">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-10 w-full rounded-lg text-sm text-slate-600 border-slate-200 hover:bg-slate-50 transition-colors"
-                    onClick={handleDemoLogin}
-                    disabled={isDemoLoading}
-                  >
-                    {isDemoLoading ? <Spinner size="sm" className="mr-2" /> : null}
-                    Demo Access
-                  </Button>
+              <form onSubmit={e => { e.preventDefault(); handleLogin(); }}>
+                <div className="za-field">
+                  <label className="za-label" htmlFor="za-email">Email address</label>
+                  <input id="za-email" type="email" className="za-input" value={email}
+                    onChange={e => setEmail(e.target.value)} placeholder="name@company.com"
+                    autoComplete="email" autoFocus />
                 </div>
+                <div className="za-field-last">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+                    <label className="za-label" htmlFor="za-pw" style={{ marginBottom: 0 }}>Password</label>
+                    <button type="button" className="za-pw-toggle" onClick={() => setShowPw(p => !p)}>{showPw ? 'Hide' : 'Show'}</button>
+                  </div>
+                  <input id="za-pw" type={showPw ? 'text' : 'password'} className="za-input" value={password}
+                    onChange={e => setPassword(e.target.value)} placeholder="Enter your password"
+                    autoComplete="current-password" />
+                </div>
+
+                <button type="submit" className="za-btn za-btn-primary" disabled={loading || lockSecs > 0}>
+                  {loading && <Spin />}
+                  {lockSecs > 0 ? `Locked (${lockSecs}s)` : 'Continue'}
+                </button>
+
+                <div className="za-row">
+                  <button type="button" className="za-link" onClick={() => setView('forgot-password')}>Forgot password?</button>
+                  <button type="button" className="za-link" onClick={() => setView('sign-up')}>Create account</button>
+                </div>
+              </form>
+
+              {/* Demo access — prominent, always visible in dev */}
+              {isDev && (
+                <>
+                  <div className="za-divider">or</div>
+                  <div style={{ position: 'relative' }}>
+                    <button type="button" className="za-btn za-btn-outline" onClick={() => setDemoOpen(o => !o)} disabled={demoLoading}>
+                      {demoLoading ? <Spin /> : 'Continue with Demo Account'}
+                      {!demoLoading && (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                          style={{ marginLeft: 8, opacity: 0.5, transform: demoOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}>
+                          <path d="M6 9l6 6 6-6" />
+                        </svg>
+                      )}
+                    </button>
+                    {demoOpen && (
+                      <div className="za-personas">
+                        {DEMO_PERSONAS.map(p => (
+                          <button key={p.email} type="button" className="za-persona-item" onClick={() => handleDemoLogin(p.email)}>
+                            <div className="za-avatar">{p.initials}</div>
+                            <div>
+                              <div className="za-persona-name">{p.label}</div>
+                              <div className="za-persona-role">{p.role}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
-            </form>
+            </>
           )}
 
-          {/* MFA */}
+          {/* ── SIGN UP ── */}
+          {view === 'sign-up' && (
+            <>
+              <h1 className="za-title">Create account</h1>
+              <p className="za-subtitle">Get started with AnA 1.0 RI</p>
+
+              {error && <div className="za-error" role="alert">{error}</div>}
+
+              <form onSubmit={e => { e.preventDefault(); handleSignup(); }}>
+                <div className="za-grid-2" style={{ marginBottom: 20 }}>
+                  <div>
+                    <label className="za-label" htmlFor="za-fn">First name</label>
+                    <input id="za-fn" className="za-input" value={suFirstName} onChange={e => setSuFirstName(e.target.value)} placeholder="First" autoFocus />
+                  </div>
+                  <div>
+                    <label className="za-label" htmlFor="za-ln">Last name</label>
+                    <input id="za-ln" className="za-input" value={suLastName} onChange={e => setSuLastName(e.target.value)} placeholder="Last" />
+                  </div>
+                </div>
+                <div className="za-field">
+                  <label className="za-label" htmlFor="za-su-email">Email address</label>
+                  <input id="za-su-email" type="email" className="za-input" value={suEmail} onChange={e => setSuEmail(e.target.value)} placeholder="name@company.com" autoComplete="email" />
+                </div>
+                <div className="za-field">
+                  <label className="za-label" htmlFor="za-co">Company</label>
+                  <input id="za-co" className="za-input" value={suCompany} onChange={e => setSuCompany(e.target.value)} placeholder="Company name" />
+                </div>
+                <div className="za-field">
+                  <label className="za-label" htmlFor="za-ind">Industry</label>
+                  <select id="za-ind" className="za-select" value={suIndustry} onChange={e => setSuIndustry(e.target.value)}>
+                    {INDUSTRY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+                <div className="za-field">
+                  <label className="za-label" htmlFor="za-su-pw">Password</label>
+                  <input id="za-su-pw" type="password" className="za-input" value={suPassword} onChange={e => setSuPassword(e.target.value)} placeholder="Minimum 12 characters" autoComplete="new-password" />
+                </div>
+                <div className="za-field">
+                  <label className="za-label" htmlFor="za-su-cpw">Confirm password</label>
+                  <input id="za-su-cpw" type="password" className="za-input" value={suConfirm} onChange={e => setSuConfirm(e.target.value)} placeholder="Re-enter password" autoComplete="new-password" />
+                </div>
+
+                <div style={{ marginBottom: 24 }}>
+                  {suPwRules.map(r => (
+                    <div key={r.id} className={`za-pw-rule ${r.met ? 'za-pw-rule-met' : 'za-pw-rule-unmet'}`}>
+                      <span>{r.met ? '✓' : '○'}</span><span>{r.label}</span>
+                    </div>
+                  ))}
+                  <div className={`za-pw-rule ${suPwMatch ? 'za-pw-rule-met' : 'za-pw-rule-unmet'}`}>
+                    <span>{suPwMatch ? '✓' : '○'}</span><span>Passwords match</span>
+                  </div>
+                </div>
+
+                <button type="submit" className="za-btn za-btn-primary" disabled={loading || !suPwOk || !suPwMatch}>
+                  {loading && <Spin />}Create account
+                </button>
+                <div style={{ textAlign: 'center', marginTop: 20 }}>
+                  <button type="button" className="za-link" onClick={() => setView('sign-in')}>Already have an account? Sign in</button>
+                </div>
+              </form>
+            </>
+          )}
+
+          {/* ── MFA ── */}
           {view === 'mfa' && (
-            <div className="space-y-4">
+            <>
+              <h1 className="za-title" style={{ fontSize: 24 }}>Verification</h1>
+              <p className="za-subtitle">{maskedEmail ? `Code sent to ${maskedEmail}` : 'Enter your verification code'}</p>
+
+              {error && <div className="za-error" role="alert">{error}</div>}
+
               {availableMfaMethods.length > 1 && (
-                <div className="flex flex-wrap gap-2">
-                  {availableMfaMethods.map(method => (
-                    <Button
-                      key={method.type}
-                      type="button"
-                      variant={mfaMethod === method.type ? 'default' : 'outline'}
-                      size="sm"
-                      className="h-8 rounded-lg px-3 text-xs"
-                      onClick={() => {
-                        setMfaMethod(method.type);
-                        setMfaCode('');
-                        setResendCountdown(method.type === 'email' ? 60 : 0);
-                      }}
-                    >
-                      {getMfaMethodLabel(method.type)}
-                    </Button>
+                <div className="za-mfa-pills">
+                  {availableMfaMethods.map(m => (
+                    <button key={m.type} type="button"
+                      className={`za-pill ${mfaMethod === m.type ? 'za-pill-active' : 'za-pill-inactive'}`}
+                      onClick={() => { setMfaMethod(m.type); setMfaCode(''); setResendCountdown(m.type === 'email' ? 60 : 0); }}>
+                      {getMfaMethodLabel(m.type)}
+                    </button>
                   ))}
                 </div>
               )}
 
               {mfaMethod === 'backup_code' ? (
-                <div className="space-y-1.5">
-                  <Label htmlFor="backup-code" className="text-sm font-medium text-slate-700">Recovery code</Label>
-                  <Input
-                    id="backup-code"
-                    value={mfaCode}
-                    onChange={event => setMfaCode(event.target.value)}
-                    placeholder="Enter recovery code"
-                    autoFocus
-                    className="h-11 rounded-lg border-slate-200 font-mono text-sm focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:border-blue-400"
-                  />
+                <div className="za-field-last">
+                  <input className="za-input" value={mfaCode} onChange={e => setMfaCode(e.target.value)}
+                    placeholder="Recovery code" autoFocus style={{ fontFamily: 'monospace', textAlign: 'center', letterSpacing: '0.1em' }} />
                 </div>
               ) : (
-                <MfaCodeInput value={mfaCode} onChange={setMfaCode} disabled={isLoading} />
+                <div style={{ marginBottom: 28 }}><MfaCodeInput value={mfaCode} onChange={setMfaCode} disabled={loading} /></div>
               )}
 
-              <Button
-                className="h-11 w-full rounded-lg bg-blue-600 text-sm font-medium hover:bg-blue-700"
-                onClick={handleVerifyMfa}
-                disabled={isLoading}
-              >
-                {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
-                Verify
-              </Button>
+              <button type="button" className="za-btn za-btn-primary" onClick={handleVerifyMfa} disabled={loading}>
+                {loading && <Spin />}Verify
+              </button>
 
-              <div className="flex items-center justify-between text-sm">
-                <button
-                  type="button"
-                  className="flex items-center gap-1 text-slate-500 hover:text-slate-700 transition-colors"
-                  onClick={() => { setView('sign-in'); setPassword(''); setMfaCode(''); }}
-                >
-                  <ArrowLeft className="h-3.5 w-3.5" /> Back
-                </button>
-                {mfaMethod === 'email' ? (
-                  resendCountdown > 0 ? (
-                    <span className="text-slate-400">Resend in {resendCountdown}s</span>
-                  ) : (
-                    <button
-                      type="button"
-                      className="text-blue-600 hover:text-blue-700 transition-colors"
-                      onClick={handleResendCode}
-                      disabled={isResendingCode}
-                    >
-                      {isResendingCode ? 'Sending...' : 'Resend code'}
-                    </button>
-                  )
-                ) : supportsRecoveryCodes && mfaMethod !== 'backup_code' ? (
-                  <button
-                    type="button"
-                    className="text-blue-600 hover:text-blue-700 transition-colors"
-                    onClick={() => { setMfaMethod('backup_code'); setMfaCode(''); }}
-                  >
-                    Use recovery code
-                  </button>
-                ) : null}
+              <div className="za-row">
+                <button type="button" className="za-link" onClick={() => { setView('sign-in'); setPassword(''); setMfaCode(''); }}>&#8592; Back</button>
+                {mfaMethod === 'email' && (
+                  resendCountdown > 0
+                    ? <span style={{ fontSize: 13, color: '#b0b0b0' }}>Resend in {resendCountdown}s</span>
+                    : <button type="button" className="za-link" onClick={handleResendCode} disabled={isResendingCode}>{isResendingCode ? 'Sending...' : 'Resend code'}</button>
+                )}
+                {mfaMethod !== 'email' && mfaMethod !== 'backup_code' && supportsRecoveryCodes && (
+                  <button type="button" className="za-link" onClick={() => { setMfaMethod('backup_code'); setMfaCode(''); }}>Use recovery code</button>
+                )}
               </div>
+            </>
+          )}
+
+          {/* ── Forgot Password ── */}
+          {view === 'forgot-password' && (
+            <>
+              <h1 className="za-title" style={{ fontSize: 24 }}>Reset password</h1>
+              <p className="za-subtitle">We'll send a reset link to your email</p>
+
+              {error && <div className="za-error" role="alert">{error}</div>}
+
+              <div className="za-field-last">
+                <label className="za-label" htmlFor="za-fp-email">Email address</label>
+                <input id="za-fp-email" type="email" className="za-input" value={email}
+                  onChange={e => setEmail(e.target.value)} placeholder="name@company.com" autoFocus />
+              </div>
+              <button type="button" className="za-btn za-btn-primary" onClick={handleForgotPassword} disabled={loading}>
+                {loading && <Spin />}Send reset link
+              </button>
+              <div style={{ textAlign: 'center', marginTop: 20 }}>
+                <button type="button" className="za-link" onClick={() => setView('sign-in')}>&#8592; Back to sign in</button>
+              </div>
+            </>
+          )}
+
+          {/* ── Reset Sent ── */}
+          {view === 'reset-sent' && (
+            <div style={{ textAlign: 'center' }}>
+              <div className="za-check-circle">&#10003;</div>
+              <h1 className="za-title" style={{ fontSize: 24, marginBottom: 12 }}>Check your email</h1>
+              <p className="za-subtitle">We sent a reset link. It may take a minute to arrive.</p>
+              <button type="button" className="za-link" onClick={() => setView('sign-in')}>Back to sign in</button>
             </div>
           )}
 
-          {/* Forgot Password */}
-          {view === 'forgot-password' && (
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="forgot-email" className="text-sm font-medium text-slate-700">Email</Label>
-                <div className="relative">
-                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Input
-                    id="forgot-email"
-                    type="email"
-                    value={email}
-                    onChange={event => setEmail(event.target.value)}
-                    placeholder="you@company.com"
-                    autoFocus
-                    className="h-11 rounded-lg border-slate-200 bg-white pl-10 text-sm focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:border-blue-400"
-                  />
+          {/* ── Reset Password ── */}
+          {view === 'reset-password' && (
+            <>
+              <h1 className="za-title" style={{ fontSize: 24 }}>New password</h1>
+              <p className="za-subtitle">Choose a strong password for your account</p>
+
+              {error && <div className="za-error" role="alert">{error}</div>}
+
+              <div className="za-field">
+                <label className="za-label" htmlFor="za-np">New password</label>
+                <input id="za-np" type="password" className="za-input" value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)} placeholder="New password" autoComplete="new-password" autoFocus />
+              </div>
+              <div className="za-field">
+                <label className="za-label" htmlFor="za-cnp">Confirm password</label>
+                <input id="za-cnp" type="password" className="za-input" value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)} placeholder="Re-enter password" autoComplete="new-password" />
+              </div>
+
+              <div style={{ marginBottom: 24 }}>
+                {resetPwRules.map(r => (
+                  <div key={r.id} className={`za-pw-rule ${r.met ? 'za-pw-rule-met' : 'za-pw-rule-unmet'}`}>
+                    <span>{r.met ? '✓' : '○'}</span><span>{r.label}</span>
+                  </div>
+                ))}
+                <div className={`za-pw-rule ${resetPwMatch ? 'za-pw-rule-met' : 'za-pw-rule-unmet'}`}>
+                  <span>{resetPwMatch ? '✓' : '○'}</span><span>Passwords match</span>
                 </div>
               </div>
-              <Button
-                className="h-11 w-full rounded-lg bg-blue-600 text-sm font-medium hover:bg-blue-700"
-                onClick={handleForgotPassword}
-                disabled={isLoading}
-              >
-                {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
-                Send reset link
-              </Button>
-              <button
-                type="button"
-                className="w-full text-center text-sm text-slate-500 hover:text-slate-700 transition-colors"
-                onClick={() => setView('sign-in')}
-              >
-                Back to sign in
+
+              <button type="button" className="za-btn za-btn-primary" onClick={handleResetPassword} disabled={loading || !resetPwOk || !resetPwMatch}>
+                {loading && <Spin />}Update password
               </button>
-            </div>
-          )}
-
-          {/* Reset Sent */}
-          {view === 'reset-sent' && (
-            <div className="space-y-4 text-center">
-              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                <CheckCircle2 className="h-5 w-5" />
+              <div style={{ textAlign: 'center', marginTop: 20 }}>
+                <button type="button" className="za-link" onClick={() => setLocation('/concept2cure/login')}>&#8592; Back</button>
               </div>
-              <p className="text-sm text-slate-600">
-                If an account exists for <span className="font-medium text-slate-900">{email}</span>, a reset link is on its way.
-              </p>
-              <Button
-                variant="outline"
-                className="h-11 w-full rounded-lg text-sm"
-                onClick={() => setView('sign-in')}
-              >
-                Return to sign in
-              </Button>
-            </div>
+            </>
           )}
 
-          {/* Reset Password */}
-          {view === 'reset-password' && (
-            <div className="space-y-4">
-              <PasswordField
-                id="reset-password"
-                label="New password"
-                value={newPassword}
-                onChange={setNewPassword}
-                placeholder="Create a strong password"
-                autoComplete="new-password"
-                autoFocus
-                disabled={isLoading}
-              />
-              <PasswordField
-                id="reset-password-confirm"
-                label="Confirm password"
-                value={confirmPassword}
-                onChange={setConfirmPassword}
-                placeholder="Repeat your password"
-                autoComplete="new-password"
-                disabled={isLoading}
-              />
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Password policy</p>
-                <ul className="space-y-1">
-                  {passwordRules.map(rule => (
-                    <li key={rule.id} className="flex items-center gap-2 text-sm text-slate-700">
-                      {rule.met ? (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                      ) : (
-                        <XCircle className="h-3.5 w-3.5 text-slate-300" />
-                      )}
-                      {rule.label}
-                    </li>
-                  ))}
-                  <li className="mt-1.5 flex items-center gap-2 text-sm text-slate-700">
-                    {doPasswordsMatch ? (
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                    ) : (
-                      <XCircle className="h-3.5 w-3.5 text-slate-300" />
-                    )}
-                    Passwords match
-                  </li>
-                </ul>
-              </div>
-              <Button
-                className="h-11 w-full rounded-lg bg-blue-600 text-sm font-medium hover:bg-blue-700"
-                onClick={handleResetPassword}
-                disabled={isLoading || !isPasswordCompliant || !doPasswordsMatch}
-              >
-                {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
-                Update password
-              </Button>
-              <button
-                type="button"
-                className="w-full text-center text-sm text-slate-500 hover:text-slate-700 transition-colors"
-                onClick={() => setLocation('/concept2cure/login')}
-              >
-                Back to sign in
-              </button>
-            </div>
-          )}
-
-          {/* Success */}
+          {/* ── Success ── */}
           {view === 'success' && (
-            <div className="space-y-4 text-center">
-              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                <CheckCircle2 className="h-5 w-5" />
-              </div>
-              <p className="text-sm text-slate-600">{successMessage}</p>
-              <Button
-                className="h-11 w-full rounded-lg bg-blue-600 text-sm font-medium hover:bg-blue-700"
-                onClick={() => setLocation('/concept2cure')}
-              >
-                Continue
-              </Button>
+            <div style={{ textAlign: 'center' }}>
+              <div className="za-check-circle">&#10003;</div>
+              <p style={{ fontSize: 16, color: '#3d3d3d', fontWeight: 400 }}>{successMessage}</p>
             </div>
           )}
-        </div>
 
-        <p className="mt-6 text-center text-xs text-slate-400">
-          Concept2Cure.RI &mdash; Regulatory Intelligence Platform
-        </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
