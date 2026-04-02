@@ -259,9 +259,7 @@ router.post('/session/init', authenticateJWT, async (req: Request, res: Response
   try {
     const { documentId, sessionType = 'read' } = req.body;
     const userId = Number(req.user?.id || req.userId);
-    const organizationId = Number(
-      req.user?.organizationId || req.tenantContext?.organizationId
-    );
+    const organizationId = Number(req.user?.organizationId || req.tenantContext?.organizationId);
 
     // Generate secure session token
     const sessionToken = crypto.randomBytes(32).toString('hex');
@@ -422,9 +420,7 @@ router.get('/documents', authenticateJWT, async (req: Request, res: Response) =>
   try {
     const { status, documentType, category, search, page = 1, limit = 20 } = req.query;
 
-    const organizationId = Number(
-      req.user?.organizationId || req.tenantContext?.organizationId
-    );
+    const organizationId = Number(req.user?.organizationId || req.tenantContext?.organizationId);
     const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
 
     // Build query conditions
@@ -561,9 +557,7 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const userId = Number(req.user?.id || req.userId);
-      const organizationId = Number(
-        req.user?.organizationId || req.tenantContext?.organizationId
-      );
+      const organizationId = Number(req.user?.organizationId || req.tenantContext?.organizationId);
       const clientWorkspaceId = Number((req as any).tenantContext?.clientWorkspaceId);
 
       // Validate input
@@ -1065,9 +1059,7 @@ router.get(
         limit = 50,
       } = req.query;
 
-      const organizationId = Number(
-        req.user?.organizationId || req.tenantContext?.organizationId
-      );
+      const organizationId = Number(req.user?.organizationId || req.tenantContext?.organizationId);
       const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
 
       // Build query conditions
@@ -1491,9 +1483,7 @@ router.post(
     try {
       const { documentIds, limsEndpoint, apiKey } = req.body;
       const userId = Number(req.user?.id || req.userId);
-      const organizationId = Number(
-        req.user?.organizationId || req.tenantContext?.organizationId
-      );
+      const organizationId = Number(req.user?.organizationId || req.tenantContext?.organizationId);
 
       // Validate LIMS configuration
       if (!limsEndpoint || !apiKey) {
@@ -1565,9 +1555,7 @@ router.post(
 // GET /api/document-authoring/integrations/dms/status
 router.get('/integrations/dms/status', authenticateJWT, async (req: Request, res: Response) => {
   try {
-    const organizationId = Number(
-      req.user?.organizationId || req.tenantContext?.organizationId
-    );
+    const organizationId = Number(req.user?.organizationId || req.tenantContext?.organizationId);
 
     // Get DMS configuration from organization settings
     const org = await db!
@@ -1650,7 +1638,7 @@ router.post('/mfa/verify', authenticateJWT, async (req: Request, res: Response) 
         mfaVerified: true,
         expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
       },
-      process.env.JWT_SECRET || 'secret'
+      process.env.JWT_SECRET!
     );
 
     res.json({
@@ -1684,11 +1672,9 @@ router.post('/mfa/setup', authenticateJWT, async (req: Request, res: Response) =
 
     // Store secret temporarily (would be confirmed after verification)
     // In production, store encrypted in database
-    const tempToken = jwt.sign(
-      { userId, secret: secret.base32 },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '10m' }
-    );
+    const tempToken = jwt.sign({ userId, secret: secret.base32 }, process.env.JWT_SECRET!, {
+      expiresIn: '10m',
+    });
 
     res.json({
       success: true,

@@ -7,8 +7,14 @@ import {
   summarizeSectionDiff,
   createSourceHash,
 } from '../../services/cmc-module3-compiler';
-import { composeModule3FromCanonicalSources, impactedSectionsForSourceType } from '../../services/module3Composer';
-import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
+import {
+  composeModule3FromCanonicalSources,
+  impactedSectionsForSourceType,
+} from '../../services/module3Composer';
+import {
+  detectContradictions,
+  deriveImpactTasks,
+} from '../../services/cmc-impact-contradiction-engine';
 
 const router = express.Router();
 
@@ -37,7 +43,7 @@ function getOrgId(req: express.Request): number {
     String(
       (req as any).tenantId ||
         (req as any).tenantContext?.organizationId ||
-        req.headers['x-organization-id'] ||
+        (req as any).user?.organizationId ||
         0
     ),
     10
@@ -61,7 +67,15 @@ router.post('/source-objects/:projectId', async (req, res) => {
        ON CONFLICT (project_id, source_type, source_key, version)
        DO UPDATE SET source_payload = excluded.source_payload, source_hash = excluded.source_hash, updated_at = NOW()
        RETURNING id, source_type as "sourceType", source_key as "sourceKey", source_hash as "sourceHash", version`,
-      [orgId, projectId, data.sourceType, data.sourceKey, JSON.stringify(data.sourcePayload), sourceHash, version]
+      [
+        orgId,
+        projectId,
+        data.sourceType,
+        data.sourceKey,
+        JSON.stringify(data.sourcePayload),
+        sourceHash,
+        version,
+      ]
     );
 
     await pool.query(
@@ -79,12 +93,16 @@ router.post('/source-objects/:projectId', async (req, res) => {
     return res.status(201).json({ success: true, data: inserted.rows[0] });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, error: 'Invalid source object payload', details: error.errors });
+      return res
+        .status(400)
+        .json({ success: false, error: 'Invalid source object payload', details: error.errors });
     }
     if (String(error?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({ success: false, error: error.message || 'Failed to upsert source object' });
+    return res
+      .status(500)
+      .json({ success: false, error: error.message || 'Failed to upsert source object' });
   }
 });
 
@@ -106,7 +124,9 @@ router.get('/sections/:projectId', async (req, res) => {
     if (String(error?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({ success: false, error: error.message || 'Failed to fetch section map' });
+    return res
+      .status(500)
+      .json({ success: false, error: error.message || 'Failed to fetch section map' });
   }
 });
 
@@ -213,13 +233,13 @@ router.post('/source-changed/:projectId', async (req, res) => {
       changedSourceType,
       reason || 'Source changed'
     );
-    for (const s of stale.filter((x) => x.stale && staleSections.includes(x.sectionKey))) {
+    for (const s of stale.filter(x => x.stale && staleSections.includes(x.sectionKey))) {
       await pool.query(
         `UPDATE cmc_module3_sections SET stale = true, stale_reason = $1, updated_at = now() WHERE organization_id=$2 AND project_id=$3 AND section_key=$4`,
         [s.staleReason, orgId, projectId, s.sectionKey]
       );
     }
-    res.json({ success: true, staleSections: stale.filter((s) => s.stale).map((s) => s.sectionKey) });
+    res.json({ success: true, staleSections: stale.filter(s => s.stale).map(s => s.sectionKey) });
   } catch (error: any) {
     if (String(error?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
@@ -238,19 +258,28 @@ router.post('/contradictions/:projectId', async (req, res) => {
         `SELECT material_name as "materialName", acceptance_criteria as "acceptanceCriteria" FROM quality_specifications WHERE project_id = $1`,
         [projectId]
       ),
-      pool.query(`SELECT method_name as "methodName", purpose FROM analytical_methods WHERE project_id = $1`, [projectId]),
-      pool.query(`SELECT study_name as "studyName", status FROM stability_studies WHERE project_id = $1`, [projectId]),
-      pool.query(`SELECT batch_number as "batchNumber", disposition FROM cmc_batch_records WHERE project_id = $1`, [projectId]),
+      pool.query(
+        `SELECT method_name as "methodName", purpose FROM analytical_methods WHERE project_id = $1`,
+        [projectId]
+      ),
+      pool.query(
+        `SELECT study_name as "studyName", status FROM stability_studies WHERE project_id = $1`,
+        [projectId]
+      ),
+      pool.query(
+        `SELECT batch_number as "batchNumber", disposition FROM cmc_batch_records WHERE project_id = $1`,
+        [projectId]
+      ),
       pool.query(
         `SELECT assessment_name as "assessmentName", regulatory_risk_level as "regulatoryRiskLevel" FROM cmc_comparability_assessments WHERE project_id = $1`,
         [projectId]
       ),
     ]);
 
-    await pool.query(`DELETE FROM cmc_contradictions WHERE organization_id = $1 AND project_id = $2`, [
-      orgId,
-      projectId,
-    ]);
+    await pool.query(
+      `DELETE FROM cmc_contradictions WHERE organization_id = $1 AND project_id = $2`,
+      [orgId, projectId]
+    );
     const contradictions = detectContradictions({
       specifications: specs.rows,
       methods: methods.rows,
@@ -279,7 +308,9 @@ router.post('/contradictions/:projectId', async (req, res) => {
     if (String(error?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    res.status(500).json({ success: false, error: error.message || 'Contradiction detection failed' });
+    res
+      .status(500)
+      .json({ success: false, error: error.message || 'Contradiction detection failed' });
   }
 });
 
@@ -302,7 +333,9 @@ router.get('/contradictions/:projectId', async (req, res) => {
     if (String(error?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({ success: false, error: error.message || 'Failed to fetch contradictions' });
+    return res
+      .status(500)
+      .json({ success: false, error: error.message || 'Failed to fetch contradictions' });
   }
 });
 
@@ -337,12 +370,16 @@ router.patch('/contradictions/:id/resolve', async (req, res) => {
     return res.json({ success: true, data: { id, status: 'resolved' } });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, error: 'Invalid resolution payload', details: error.errors });
+      return res
+        .status(400)
+        .json({ success: false, error: 'Invalid resolution payload', details: error.errors });
     }
     if (String(error?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({ success: false, error: error.message || 'Failed to resolve contradiction' });
+    return res
+      .status(500)
+      .json({ success: false, error: error.message || 'Failed to resolve contradiction' });
   }
 });
 
@@ -367,7 +404,9 @@ router.get('/readiness/:projectId', async (req, res) => {
     ]);
 
     const totalSections = sections.rows.length;
-    const approvedSections = sections.rows.filter((r: any) => r.approval_state === 'approved').length;
+    const approvedSections = sections.rows.filter(
+      (r: any) => r.approval_state === 'approved'
+    ).length;
     const staleSections = sections.rows.filter((r: any) => Boolean(r.stale)).length;
     const openCriticalContradictions = contradictions.rows.filter(
       (r: any) => r.severity === 'critical' && r.status !== 'resolved'
@@ -380,14 +419,20 @@ router.get('/readiness/:projectId', async (req, res) => {
         approvedSections,
         staleSections,
         openCriticalContradictions,
-        exportReady: totalSections > 0 && approvedSections === totalSections && staleSections === 0 && openCriticalContradictions === 0,
+        exportReady:
+          totalSections > 0 &&
+          approvedSections === totalSections &&
+          staleSections === 0 &&
+          openCriticalContradictions === 0,
       },
     });
   } catch (error: any) {
     if (String(error?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({ success: false, error: error.message || 'Failed to compute readiness' });
+    return res
+      .status(500)
+      .json({ success: false, error: error.message || 'Failed to compute readiness' });
   }
 });
 
@@ -417,7 +462,9 @@ router.get('/provenance/:projectId/:sectionKey', async (req, res) => {
     if (String(error?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({ success: false, error: error.message || 'Failed to fetch provenance' });
+    return res
+      .status(500)
+      .json({ success: false, error: error.message || 'Failed to fetch provenance' });
   }
 });
 
@@ -436,7 +483,10 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
     if (blocking.rows.length > 0) {
       return res
         .status(409)
-        .json({ success: false, error: 'Critical contradictions must be resolved before approval.' });
+        .json({
+          success: false,
+          error: 'Critical contradictions must be resolved before approval.',
+        });
     }
 
     const sectionRes = await pool.query(
@@ -558,7 +608,8 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
     ]);
 
     const sections = sectionsRes.rows;
-    const allApproved = sections.length > 0 && sections.every((s: any) => s.approval_state === 'approved');
+    const allApproved =
+      sections.length > 0 && sections.every((s: any) => s.approval_state === 'approved');
     const allowed = canFinalizeExport({
       approvalState: allApproved ? 'approved' : 'draft',
       contradictions: contradictionsRes.rows || [],
@@ -571,7 +622,9 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
         data: {
           totalSections: sections.length,
           approvedSections: sections.filter((s: any) => s.approval_state === 'approved').length,
-          openCriticalContradictions: (contradictionsRes.rows || []).filter((c: any) => c.severity === 'critical' && c.status !== 'resolved').length,
+          openCriticalContradictions: (contradictionsRes.rows || []).filter(
+            (c: any) => c.severity === 'critical' && c.status !== 'resolved'
+          ).length,
         },
       });
     }
@@ -581,7 +634,9 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
     if (String(error?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({ success: false, error: error.message || 'Failed final export guard check' });
+    return res
+      .status(500)
+      .json({ success: false, error: error.message || 'Failed final export guard check' });
   }
 });
 

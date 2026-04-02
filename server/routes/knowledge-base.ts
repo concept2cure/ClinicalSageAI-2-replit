@@ -233,11 +233,18 @@ function parseInlineHtml(html: string): TextRun[] {
           const colorMatch = openTag.match(/style\s*=\s*["'][^"']*color:\s*([^;"']+)/i);
           if (colorMatch) {
             const c = colorMatch[1].trim().replace('#', '');
-            if (/^[0-9a-fA-F]{3,6}$/.test(c)) opts.color = c.length === 3
-              ? c.split('').map((ch: string) => ch + ch).join('')
-              : c;
+            if (/^[0-9a-fA-F]{3,6}$/.test(c))
+              opts.color =
+                c.length === 3
+                  ? c
+                      .split('')
+                      .map((ch: string) => ch + ch)
+                      .join('')
+                  : c;
           }
-          const sizeMatch = openTag.match(/style\s*=\s*["'][^"']*font-size:\s*([0-9.]+)(px|pt|rem|em)/i);
+          const sizeMatch = openTag.match(
+            /style\s*=\s*["'][^"']*font-size:\s*([0-9.]+)(px|pt|rem|em)/i
+          );
           if (sizeMatch) {
             const val = parseFloat(sizeMatch[1]);
             const unit = sizeMatch[2];
@@ -256,12 +263,24 @@ function parseInlineHtml(html: string): TextRun[] {
   while (i < html.length) {
     if (html[i] === '<') {
       const end = html.indexOf('>', i);
-      if (end === -1) { textBuf += html[i]; i++; continue; }
+      if (end === -1) {
+        textBuf += html[i];
+        i++;
+        continue;
+      }
       const tagFull = html.slice(i + 1, end).trim();
       const isClosing = tagFull.startsWith('/');
       const tagName = (isClosing ? tagFull.slice(1) : tagFull.split(/[\s/]/)[0]).toLowerCase();
-      if (tagName === 'br') { flushText(); runs.push(new TextRun({ break: 1 } as any)); i = end + 1; continue; }
-      if (['hr', 'input'].includes(tagName) || tagFull.endsWith('/')) { i = end + 1; continue; }
+      if (tagName === 'br') {
+        flushText();
+        runs.push(new TextRun({ break: 1 } as any));
+        i = end + 1;
+        continue;
+      }
+      if (['hr', 'input'].includes(tagName) || tagFull.endsWith('/')) {
+        i = end + 1;
+        continue;
+      }
       // Handle inline images — extract src for ImageRun
       if (tagName === 'img') {
         flushText();
@@ -273,19 +292,47 @@ function parseInlineHtml(html: string): TextRun[] {
             const ext = srcMatch[1].match(/data:image\/(png|jpeg|jpg|gif|webp)/i);
             const imgType = ext ? ext[1].toLowerCase().replace('jpg', 'jpeg') : 'png';
             try {
-              runs.push(new ImageRun({
-                data: Buffer.from(base64Data, 'base64'),
-                transformation: { width: 400, height: 300 },
-                type: imgType === 'png' ? 'png' : 'jpg',
-              } as any));
-            } catch { /* skip image if ImageRun fails */ }
+              runs.push(
+                new ImageRun({
+                  data: Buffer.from(base64Data, 'base64'),
+                  transformation: { width: 400, height: 300 },
+                  type: imgType === 'png' ? 'png' : 'jpg',
+                } as any)
+              );
+            } catch {
+              /* skip image if ImageRun fails */
+            }
           }
         }
-        i = end + 1; continue;
+        i = end + 1;
+        continue;
       }
-      if (['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'ul', 'ol',
-        'table', 'tr', 'td', 'th', 'thead', 'tbody', 'blockquote', 'pre', 'code'].includes(tagName)) {
-        i = end + 1; continue;
+      if (
+        [
+          'p',
+          'div',
+          'h1',
+          'h2',
+          'h3',
+          'h4',
+          'h5',
+          'h6',
+          'li',
+          'ul',
+          'ol',
+          'table',
+          'tr',
+          'td',
+          'th',
+          'thead',
+          'tbody',
+          'blockquote',
+          'pre',
+          'code',
+        ].includes(tagName)
+      ) {
+        i = end + 1;
+        continue;
       }
       flushText();
       if (isClosing) {
@@ -333,20 +380,24 @@ function htmlToDocxElements(html: string): (Paragraph | DocxTable)[] {
         const cellRuns = isHeader
           ? parseInlineHtml(`<strong>${cellMatch[2]}</strong>`)
           : parseInlineHtml(cellMatch[2]);
-        cells.push(new DocxTableCell({
-          children: [new Paragraph({ children: cellRuns })],
-          width: { size: 100, type: WidthType.AUTO },
-        }));
+        cells.push(
+          new DocxTableCell({
+            children: [new Paragraph({ children: cellRuns })],
+            width: { size: 100, type: WidthType.AUTO },
+          })
+        );
       }
       if (cells.length > 0) {
         rows.push(new DocxTableRow({ children: cells }));
       }
     }
     if (rows.length > 0) {
-      tablePlaceholders.push(new DocxTable({
-        rows,
-        width: { size: 100, type: WidthType.PERCENTAGE },
-      }));
+      tablePlaceholders.push(
+        new DocxTable({
+          rows,
+          width: { size: 100, type: WidthType.PERCENTAGE },
+        })
+      );
       return `\n__TABLE_${tablePlaceholders.length - 1}__\n`;
     }
     return '';
@@ -354,15 +405,19 @@ function htmlToDocxElements(html: string): (Paragraph | DocxTable)[] {
 
   // Track list context for ordered vs unordered
   let inOrderedList = false;
-  processed = processed.replace(/<ol[^>]*>/gi, () => { inOrderedList = true; return '\n__OL_START__\n'; });
-  processed = processed.replace(/<\/ol>/gi, () => { inOrderedList = false; return '\n__OL_END__\n'; });
+  processed = processed.replace(/<ol[^>]*>/gi, () => {
+    inOrderedList = true;
+    return '\n__OL_START__\n';
+  });
+  processed = processed.replace(/<\/ol>/gi, () => {
+    inOrderedList = false;
+    return '\n__OL_END__\n';
+  });
   processed = processed.replace(/<ul[^>]*>/gi, '\n__UL_START__\n');
   processed = processed.replace(/<\/ul>/gi, '\n__UL_END__\n');
 
   // Split remaining content by block-level closing tags
-  const lines = processed
-    .replace(/<\/(p|div|h[1-6]|blockquote|pre|li)>/gi, '\n')
-    .split('\n');
+  const lines = processed.replace(/<\/(p|div|h[1-6]|blockquote|pre|li)>/gi, '\n').split('\n');
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
@@ -381,19 +436,29 @@ function htmlToDocxElements(html: string): (Paragraph | DocxTable)[] {
     if (hMatch) {
       const level = parseInt(hMatch[1], 10);
       const headingMap: Record<number, (typeof HeadingLevel)[keyof typeof HeadingLevel]> = {
-        1: HeadingLevel.HEADING_1, 2: HeadingLevel.HEADING_2,
-        3: HeadingLevel.HEADING_3, 4: HeadingLevel.HEADING_4,
+        1: HeadingLevel.HEADING_1,
+        2: HeadingLevel.HEADING_2,
+        3: HeadingLevel.HEADING_3,
+        4: HeadingLevel.HEADING_4,
       };
       const alignMatch = (hMatch[2] || '').match(/text-align:\s*(center|right|justify)/i);
       const alignment = alignMatch
-        ? ({ center: AlignmentType.CENTER, right: AlignmentType.RIGHT, justify: AlignmentType.JUSTIFIED } as any)[alignMatch[1].toLowerCase()]
+        ? (
+            {
+              center: AlignmentType.CENTER,
+              right: AlignmentType.RIGHT,
+              justify: AlignmentType.JUSTIFIED,
+            } as any
+          )[alignMatch[1].toLowerCase()]
         : undefined;
-      elements.push(new Paragraph({
-        children: parseInlineHtml(hMatch[3]),
-        heading: headingMap[level] || HeadingLevel.HEADING_4,
-        spacing: { before: level === 1 ? 400 : 240, after: 120 },
-        ...(alignment ? { alignment } : {}),
-      }));
+      elements.push(
+        new Paragraph({
+          children: parseInlineHtml(hMatch[3]),
+          heading: headingMap[level] || HeadingLevel.HEADING_4,
+          spacing: { before: level === 1 ? 400 : 240, after: 120 },
+          ...(alignment ? { alignment } : {}),
+        })
+      );
       continue;
     }
 
@@ -401,17 +466,25 @@ function htmlToDocxElements(html: string): (Paragraph | DocxTable)[] {
     if (line.match(/^<blockquote/i)) {
       const content = line.replace(/<\/?blockquote[^>]*>/gi, '').replace(/<\/?p[^>]*>/gi, '');
       const bqRuns = parseInlineHtml(`<em>${content}</em>`);
-      elements.push(new Paragraph({
-        children: bqRuns,
-        indent: { left: 720 },
-        spacing: { before: 120, after: 120 },
-      }));
+      elements.push(
+        new Paragraph({
+          children: bqRuns,
+          indent: { left: 720 },
+          spacing: { before: 120, after: 120 },
+        })
+      );
       continue;
     }
 
     // List context markers
-    if (line.trim() === '__OL_START__') { inOrderedList = true; continue; }
-    if (line.trim() === '__OL_END__') { inOrderedList = false; continue; }
+    if (line.trim() === '__OL_START__') {
+      inOrderedList = true;
+      continue;
+    }
+    if (line.trim() === '__OL_END__') {
+      inOrderedList = false;
+      continue;
+    }
     if (line.trim() === '__UL_START__' || line.trim() === '__UL_END__') continue;
 
     // List items — numbered or bullet depending on context
@@ -432,10 +505,12 @@ function htmlToDocxElements(html: string): (Paragraph | DocxTable)[] {
 
     // Horizontal rule
     if (line.match(/^<hr/i)) {
-      elements.push(new Paragraph({
-        children: [new TextRun({ text: '\u2500'.repeat(60), color: 'CCCCCC', size: 16 })],
-        spacing: { before: 200, after: 200 },
-      }));
+      elements.push(
+        new Paragraph({
+          children: [new TextRun({ text: '\u2500'.repeat(60), color: 'CCCCCC', size: 16 })],
+          spacing: { before: 200, after: 200 },
+        })
+      );
       continue;
     }
 
@@ -445,16 +520,26 @@ function htmlToDocxElements(html: string): (Paragraph | DocxTable)[] {
     const stripped = content.replace(/<[^>]*>/g, '').trim();
     if (!stripped) continue;
 
-    const alignMatch = pMatch ? (pMatch[1] || '').match(/text-align:\s*(center|right|justify)/i) : null;
+    const alignMatch = pMatch
+      ? (pMatch[1] || '').match(/text-align:\s*(center|right|justify)/i)
+      : null;
     const alignment = alignMatch
-      ? ({ center: AlignmentType.CENTER, right: AlignmentType.RIGHT, justify: AlignmentType.JUSTIFIED } as any)[alignMatch[1].toLowerCase()]
+      ? (
+          {
+            center: AlignmentType.CENTER,
+            right: AlignmentType.RIGHT,
+            justify: AlignmentType.JUSTIFIED,
+          } as any
+        )[alignMatch[1].toLowerCase()]
       : undefined;
 
-    elements.push(new Paragraph({
-      children: parseInlineHtml(content),
-      spacing: { after: 120 },
-      ...(alignment ? { alignment } : {}),
-    }));
+    elements.push(
+      new Paragraph({
+        children: parseInlineHtml(content),
+        spacing: { after: 120 },
+        ...(alignment ? { alignment } : {}),
+      })
+    );
   }
 
   return elements;
@@ -550,15 +635,19 @@ async function renderDocxNodeFallback(
 
   const doc = new Document({
     numbering: {
-      config: [{
-        reference: 'default-numbering',
-        levels: [{
-          level: 0,
-          format: 'decimal' as any,
-          text: '%1.',
-          alignment: AlignmentType.START,
-        }],
-      }],
+      config: [
+        {
+          reference: 'default-numbering',
+          levels: [
+            {
+              level: 0,
+              format: 'decimal' as any,
+              text: '%1.',
+              alignment: AlignmentType.START,
+            },
+          ],
+        },
+      ],
     },
     sections: [{ children }],
   });
@@ -681,7 +770,9 @@ router.post('/generate-ind-package', async (req: Request, res: Response) => {
           : [
               {
                 title: '1. Administrative Information',
-                content: `Sponsor: ${sponsor || 'Not specified'}\nDrug Name: ${drug_name || 'Not specified'}\nIndication: ${indication || 'Not specified'}`,
+                content: `Sponsor: ${sponsor || 'Not specified'}\nDrug Name: ${
+                  drug_name || 'Not specified'
+                }\nIndication: ${indication || 'Not specified'}`,
                 sectionCode: 'M1',
               },
               { title: '2. Clinical Overview', content: '[To be completed]', sectionCode: 'M2.5' },
@@ -736,7 +827,9 @@ router.post('/generate-ind-section', async (req: Request, res: Response) => {
     res.json({
       section_code: section_code || 'unknown',
       title: section_title || 'IND Section',
-      content: `<h1>${section_title || 'IND Section'}</h1>\n<p>This section for ${drug_name || 'the investigational drug'} requires authoring. Use the Document Editor to draft content with Regulatory Intelligence assistance.</p>`,
+      content: `<h1>${section_title || 'IND Section'}</h1>\n<p>This section for ${
+        drug_name || 'the investigational drug'
+      } requires authoring. Use the Document Editor to draft content with Regulatory Intelligence assistance.</p>`,
       status: 'scaffold',
       generated_by: 'node-fallback',
     });
@@ -876,7 +969,9 @@ router.post('/generate-module3-docx', async (req: Request, res: Response) => {
           molecular_weight ? `Molecular Weight: ${molecular_weight}` : '',
           '',
           '3.2.S.1 General Information',
-          `The drug substance ${substance_name || drug_name || '[name]'} is described in this section per ICH M4Q guidelines.`,
+          `The drug substance ${
+            substance_name || drug_name || '[name]'
+          } is described in this section per ICH M4Q guidelines.`,
           '',
           '3.2.S.2 Manufacture',
           typeof manufacturing_process === 'string'
@@ -885,17 +980,25 @@ router.post('/generate-module3-docx', async (req: Request, res: Response) => {
           '',
           '3.2.S.3 Characterization',
           impurities_profile
-            ? `Impurities Profile: ${typeof impurities_profile === 'string' ? impurities_profile : JSON.stringify(impurities_profile)}`
+            ? `Impurities Profile: ${
+                typeof impurities_profile === 'string'
+                  ? impurities_profile
+                  : JSON.stringify(impurities_profile)
+              }`
             : 'Characterization data to be provided.',
           '',
           '3.2.S.4 Control of Drug Substance',
           specifications
-            ? `Specifications: ${typeof specifications === 'string' ? specifications : JSON.stringify(specifications)}`
+            ? `Specifications: ${
+                typeof specifications === 'string' ? specifications : JSON.stringify(specifications)
+              }`
             : 'Specifications to be provided.',
           '',
           '3.2.S.7 Stability',
           stability_data
-            ? `Stability Data: ${typeof stability_data === 'string' ? stability_data : JSON.stringify(stability_data)}`
+            ? `Stability Data: ${
+                typeof stability_data === 'string' ? stability_data : JSON.stringify(stability_data)
+              }`
             : 'Stability data to be provided per ICH Q1A guidelines.',
         ]
           .filter(Boolean)
@@ -911,7 +1014,9 @@ router.post('/generate-module3-docx', async (req: Request, res: Response) => {
           '',
           '3.2.P.1 Description and Composition',
           composition
-            ? `Composition: ${typeof composition === 'string' ? composition : JSON.stringify(composition)}`
+            ? `Composition: ${
+                typeof composition === 'string' ? composition : JSON.stringify(composition)
+              }`
             : 'Composition details to be provided.',
           '',
           '3.2.P.2 Pharmaceutical Development',
@@ -937,7 +1042,10 @@ router.post('/generate-module3-docx', async (req: Request, res: Response) => {
       'CTD Module 3'
     );
 
-    const filename = `Module3_CMC_${(drug_name || substance_name || 'drug').replace(/[^a-zA-Z0-9_-]/g, '_')}.docx`;
+    const filename = `Module3_CMC_${(drug_name || substance_name || 'drug').replace(
+      /[^a-zA-Z0-9_-]/g,
+      '_'
+    )}.docx`;
 
     // If saveAsArtifact is requested, also persist as a project artifact
     if (saveAsArtifact && artifactProjectId && db) {
@@ -973,7 +1081,9 @@ router.post('/generate-module3-docx', async (req: Request, res: Response) => {
           });
           if (!governedResolution.validation.valid) {
             console.warn(
-              `[knowledge-base] Governed contract blocked Module 3 artifact save: ${governedResolution.validation.errors.join('; ')}`
+              `[knowledge-base] Governed contract blocked Module 3 artifact save: ${governedResolution.validation.errors.join(
+                '; '
+              )}`
             );
             throw new Error('Governed contract validation failed');
           }
@@ -1189,7 +1299,9 @@ router.post('/save-docx-as-artifact', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'projectId, title, and htmlContent are required' });
     }
     if (typeof htmlContent === 'string' && htmlContent.trim().length === 0) {
-      return res.status(400).json({ error: 'Content must not be empty — no empty artifact creation allowed' });
+      return res
+        .status(400)
+        .json({ error: 'Content must not be empty — no empty artifact creation allowed' });
     }
 
     const user = (req as any).user;
@@ -1329,7 +1441,10 @@ router.post('/extract-pdf', upload.single('file'), async (req: Request, res: Res
     }
 
     // Strategy 1: Forward to analytics engine (FastAPI)
-    const analyticsUrl = process.env.ANALYTICS_SERVICE_URL || process.env.SHADOW_SERVICE_URL || 'http://localhost:8001';
+    const analyticsUrl =
+      process.env.ANALYTICS_SERVICE_URL ||
+      process.env.SHADOW_SERVICE_URL ||
+      'http://localhost:8001';
     try {
       const base64 = file.buffer.toString('base64');
       const analyticsResp = await fetch(`${analyticsUrl}/extract-pdf`, {
@@ -1366,7 +1481,7 @@ router.post('/extract-pdf', upload.single('file'), async (req: Request, res: Res
 
     // Strategy 2: Use unified document ingestion service
     try {
-      const mod = await import('../services/unifiedDocumentIngestion.js') as any;
+      const mod = (await import('../services/unifiedDocumentIngestion.js')) as any;
       const ingestion = new mod.UnifiedDocumentIngestion();
       const result = await ingestion.processDocument({
         buffer: file.buffer,
@@ -1392,7 +1507,9 @@ router.post('/extract-pdf', upload.single('file'), async (req: Request, res: Res
     // Strategy 3: Return buffer info as fallback
     res.json({
       success: true,
-      html: `<p><em>[PDF uploaded: ${file.originalname} — ${(file.size / 1024).toFixed(1)} KB. Text extraction services unavailable.]</em></p>`,
+      html: `<p><em>[PDF uploaded: ${file.originalname} — ${(file.size / 1024).toFixed(
+        1
+      )} KB. Text extraction services unavailable.]</em></p>`,
       text: '',
       strategy: 'fallback',
     });
@@ -1414,7 +1531,10 @@ router.post('/ocr', upload.single('file'), async (req: Request, res: Response) =
     }
 
     // Strategy 1: Forward to analytics engine
-    const analyticsUrl = process.env.ANALYTICS_SERVICE_URL || process.env.SHADOW_SERVICE_URL || 'http://localhost:8001';
+    const analyticsUrl =
+      process.env.ANALYTICS_SERVICE_URL ||
+      process.env.SHADOW_SERVICE_URL ||
+      'http://localhost:8001';
     try {
       const base64 = file.buffer.toString('base64');
       const analyticsResp = await fetch(`${analyticsUrl}/extract-pdf`, {
@@ -1441,7 +1561,7 @@ router.post('/ocr', upload.single('file'), async (req: Request, res: Response) =
 
     // Strategy 2: Use unified document ingestion OCR path
     try {
-      const mod = await import('../services/unifiedDocumentIngestion.js') as any;
+      const mod = (await import('../services/unifiedDocumentIngestion.js')) as any;
       const ingestion = new mod.UnifiedDocumentIngestion();
       const result = await ingestion.processWithOCR({
         buffer: file.buffer,
@@ -1477,16 +1597,8 @@ router.post('/ocr', upload.single('file'), async (req: Request, res: Response) =
 router.post('/save-to-connector', async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    const {
-      connectorId,
-      projectId,
-      artifactId,
-      title,
-      content,
-      format,
-      folderPath,
-      metadata,
-    } = req.body;
+    const { connectorId, projectId, artifactId, title, content, format, folderPath, metadata } =
+      req.body;
 
     if (!connectorId || !title || !content) {
       return res.status(400).json({
@@ -1494,7 +1606,10 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
       });
     }
 
-    const orgId = user?.organizationId || user?.orgId || 1;
+    const orgId = Number(user?.organizationId || user?.orgId);
+    if (!orgId || orgId <= 0) {
+      return res.status(400).json({ error: 'Organization context required' });
+    }
 
     // Generate DOCX blob from content using the local DOCX builder
     let fileBuffer: Buffer;
@@ -1516,15 +1631,19 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
       const doc = new Document({
         sections: [{ children: docElements }],
         numbering: {
-          config: [{
-            reference: 'default-numbering',
-            levels: [{
-              level: 0,
-              format: 'decimal' as any,
-              text: '%1.',
-              alignment: AlignmentType.START,
-            }],
-          }],
+          config: [
+            {
+              reference: 'default-numbering',
+              levels: [
+                {
+                  level: 0,
+                  format: 'decimal' as any,
+                  text: '%1.',
+                  alignment: AlignmentType.START,
+                },
+              ],
+            },
+          ],
         },
       });
       const uint8 = await Packer.toBuffer(doc);
@@ -1541,11 +1660,25 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
         // Authenticate with org credentials from DB or env
         const credentials = await getConnectorCredentials(orgId, 'veeva_vault');
         if (!credentials) {
-          return res.status(400).json({ error: 'Veeva Vault not configured. Set up credentials in Connector Library.' });
+          return res
+            .status(400)
+            .json({
+              error: 'Veeva Vault not configured. Set up credentials in Connector Library.',
+            });
         }
         await connector.authenticate(credentials);
-        const uploadResult = await connector.upload(fileBuffer, fileName, mimeType, folderPath || '/');
-        result = { success: true, fileId: uploadResult?.id, url: uploadResult?.url, message: 'Saved to Veeva Vault' };
+        const uploadResult = await connector.upload(
+          fileBuffer,
+          fileName,
+          mimeType,
+          folderPath || '/'
+        );
+        result = {
+          success: true,
+          fileId: uploadResult?.id,
+          url: uploadResult?.url,
+          message: 'Saved to Veeva Vault',
+        };
         break;
       }
 
@@ -1554,11 +1687,23 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
         const connector = new SharePointConnector();
         const credentials = await getConnectorCredentials(orgId, 'sharepoint');
         if (!credentials) {
-          return res.status(400).json({ error: 'SharePoint not configured. Set up credentials in Connector Library.' });
+          return res
+            .status(400)
+            .json({ error: 'SharePoint not configured. Set up credentials in Connector Library.' });
         }
         await connector.authenticate(credentials);
-        const uploadResult = await connector.upload(fileBuffer, fileName, mimeType, folderPath || '/Shared Documents');
-        result = { success: true, fileId: uploadResult?.id, url: uploadResult?.url, message: 'Saved to SharePoint' };
+        const uploadResult = await connector.upload(
+          fileBuffer,
+          fileName,
+          mimeType,
+          folderPath || '/Shared Documents'
+        );
+        result = {
+          success: true,
+          fileId: uploadResult?.id,
+          url: uploadResult?.url,
+          message: 'Saved to SharePoint',
+        };
         break;
       }
 
@@ -1567,11 +1712,23 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
         const connector = new OneDriveConnector();
         const credentials = await getConnectorCredentials(orgId, 'onedrive');
         if (!credentials) {
-          return res.status(400).json({ error: 'OneDrive not configured. Set up credentials in Connector Library.' });
+          return res
+            .status(400)
+            .json({ error: 'OneDrive not configured. Set up credentials in Connector Library.' });
         }
         await connector.authenticate(credentials);
-        const uploadResult = await connector.upload(fileBuffer, fileName, mimeType, folderPath || '/ClinicalSageAI');
-        result = { success: true, fileId: uploadResult?.id, url: uploadResult?.url, message: 'Saved to OneDrive' };
+        const uploadResult = await connector.upload(
+          fileBuffer,
+          fileName,
+          mimeType,
+          folderPath || '/ClinicalSageAI'
+        );
+        result = {
+          success: true,
+          fileId: uploadResult?.id,
+          url: uploadResult?.url,
+          message: 'Saved to OneDrive',
+        };
         break;
       }
 
@@ -1580,11 +1737,25 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
         const connector = new GoogleDriveConnector();
         const credentials = await getConnectorCredentials(orgId, 'google_drive');
         if (!credentials) {
-          return res.status(400).json({ error: 'Google Drive not configured. Set up credentials in Connector Library.' });
+          return res
+            .status(400)
+            .json({
+              error: 'Google Drive not configured. Set up credentials in Connector Library.',
+            });
         }
         await connector.authenticate(credentials);
-        const uploadResult = await connector.upload(fileBuffer, fileName, mimeType, folderPath || 'ClinicalSageAI');
-        result = { success: true, fileId: uploadResult?.id, url: uploadResult?.url, message: 'Saved to Google Drive' };
+        const uploadResult = await connector.upload(
+          fileBuffer,
+          fileName,
+          mimeType,
+          folderPath || 'ClinicalSageAI'
+        );
+        result = {
+          success: true,
+          fileId: uploadResult?.id,
+          url: uploadResult?.url,
+          message: 'Saved to Google Drive',
+        };
         break;
       }
 
@@ -1593,21 +1764,39 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
         const connector = new BoxConnector();
         const credentials = await getConnectorCredentials(orgId, 'box');
         if (!credentials) {
-          return res.status(400).json({ error: 'Box not configured. Set up credentials in Connector Library.' });
+          return res
+            .status(400)
+            .json({ error: 'Box not configured. Set up credentials in Connector Library.' });
         }
         await connector.authenticate(credentials);
-        const uploadResult = await connector.upload(fileBuffer, fileName, mimeType, folderPath || 'ClinicalSageAI');
-        result = { success: true, fileId: uploadResult?.id, url: uploadResult?.url, message: 'Saved to Box' };
+        const uploadResult = await connector.upload(
+          fileBuffer,
+          fileName,
+          mimeType,
+          folderPath || 'ClinicalSageAI'
+        );
+        result = {
+          success: true,
+          fileId: uploadResult?.id,
+          url: uploadResult?.url,
+          message: 'Saved to Box',
+        };
         break;
       }
 
       case 'vault_dms': {
         // Save to internal vault/DMS linked to project
-        const s3Mod = await import('../services/s3-storage.js') as any;
+        const s3Mod = (await import('../services/s3-storage.js')) as any;
         const storageService = s3Mod.s3Storage || s3Mod.default;
         const docId = `${orgId}_${projectId || 'unlinked'}_${Date.now()}`;
         if (storageService?.uploadRawDocument) {
-          await storageService.uploadRawDocument(docId, fileBuffer, fileName, mimeType, user?.name || 'system');
+          await storageService.uploadRawDocument(
+            docId,
+            fileBuffer,
+            fileName,
+            mimeType,
+            user?.name || 'system'
+          );
         }
         // Also save as artifact version if projectId + artifactId provided
         if (projectId && artifactId && db) {
@@ -1640,14 +1829,17 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
               details: governedResolution.validation.errors,
             });
           }
-          const artifactVersion = await db.insert(concept2cureArtifactVersions).values({
-            artifactId: numericArtifactId,
-            organizationId: orgId,
-            version: 1,
-            content,
-            contentHash,
-            createdById: user?.id || null,
-          } as any).returning();
+          const artifactVersion = await db
+            .insert(concept2cureArtifactVersions)
+            .values({
+              artifactId: numericArtifactId,
+              organizationId: orgId,
+              version: 1,
+              content,
+              contentHash,
+              createdById: user?.id || null,
+            } as any)
+            .returning();
           const insertedVersionId = artifactVersion?.[0]?.id || null;
           if (!insertedVersionId) {
             return res.status(500).json({
@@ -1724,7 +1916,14 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
 async function getConnectorCredentials(
   orgId: number,
   connectorId: string
-): Promise<{ baseUrl?: string; username?: string; password?: string; clientId?: string; clientSecret?: string; apiKey?: string } | null> {
+): Promise<{
+  baseUrl?: string;
+  username?: string;
+  password?: string;
+  clientId?: string;
+  clientSecret?: string;
+  apiKey?: string;
+} | null> {
   if (!db) return null;
   try {
     // Try from the organization_connectors / connector_credentials tables
@@ -1796,21 +1995,68 @@ function detectDocumentType(filename: string, text: string): string {
   const lower = filename.toLowerCase();
   const textLower = text.slice(0, 2000).toLowerCase();
 
-  if (lower.includes('protocol') || textLower.includes('clinical protocol') || textLower.includes('study protocol')) return 'Protocol';
-  if (lower.includes('ib') || lower.includes('investigator') || textLower.includes("investigator's brochure") || textLower.includes('investigator brochure')) return 'Investigator Brochure';
-  if (lower.includes('cmc') || textLower.includes('chemistry, manufacturing') || textLower.includes('drug substance') || textLower.includes('drug product')) return 'CMC Data';
-  if (lower.includes('tox') || textLower.includes('toxicology') || textLower.includes('toxicological')) return 'Toxicology Report';
-  if (lower.includes('pharm') || textLower.includes('pharmacology') || textLower.includes('pharmacokinetic')) return 'Pharmacology Report';
-  if (lower.includes('nonclinical') || lower.includes('non-clinical') || textLower.includes('nonclinical') || textLower.includes('non-clinical')) return 'Nonclinical Report';
-  if (lower.includes('clinical') || textLower.includes('clinical study report') || textLower.includes('clinical trial')) return 'Clinical Report';
-  if (lower.includes('stability') || textLower.includes('stability data') || textLower.includes('stability study')) return 'Stability Data';
+  if (
+    lower.includes('protocol') ||
+    textLower.includes('clinical protocol') ||
+    textLower.includes('study protocol')
+  )
+    return 'Protocol';
+  if (
+    lower.includes('ib') ||
+    lower.includes('investigator') ||
+    textLower.includes("investigator's brochure") ||
+    textLower.includes('investigator brochure')
+  )
+    return 'Investigator Brochure';
+  if (
+    lower.includes('cmc') ||
+    textLower.includes('chemistry, manufacturing') ||
+    textLower.includes('drug substance') ||
+    textLower.includes('drug product')
+  )
+    return 'CMC Data';
+  if (
+    lower.includes('tox') ||
+    textLower.includes('toxicology') ||
+    textLower.includes('toxicological')
+  )
+    return 'Toxicology Report';
+  if (
+    lower.includes('pharm') ||
+    textLower.includes('pharmacology') ||
+    textLower.includes('pharmacokinetic')
+  )
+    return 'Pharmacology Report';
+  if (
+    lower.includes('nonclinical') ||
+    lower.includes('non-clinical') ||
+    textLower.includes('nonclinical') ||
+    textLower.includes('non-clinical')
+  )
+    return 'Nonclinical Report';
+  if (
+    lower.includes('clinical') ||
+    textLower.includes('clinical study report') ||
+    textLower.includes('clinical trial')
+  )
+    return 'Clinical Report';
+  if (
+    lower.includes('stability') ||
+    textLower.includes('stability data') ||
+    textLower.includes('stability study')
+  )
+    return 'Stability Data';
   return 'Source Document';
 }
 
 /**
  * Simple metadata extraction from combined text.
  */
-function detectMetadataFromText(texts: string[]): { drugName: string; indication: string; phase: string } {
+function detectMetadataFromText(texts: string[]): {
+  drugName: string;
+  indication: string;
+  phase: string;
+} {
   const combined = texts.join('\n').slice(0, 10000);
   const result = { drugName: '', indication: '', phase: '' };
 
@@ -1859,136 +2105,151 @@ function detectMetadataFromText(texts: string[]): { drugName: string; indication
  * Extracts text, detects document types and metadata.
  * Returns sessionId + file metadata.
  */
-router.post('/ind-autodraft/upload', upload.array('files', 20), async (req: Request, res: Response) => {
-  try {
-    const files = (req as any).files as Express.Multer.File[];
-    if (!files || files.length === 0) {
-      return res.status(400).json({ error: 'No files provided' });
-    }
+router.post(
+  '/ind-autodraft/upload',
+  upload.array('files', 20),
+  async (req: Request, res: Response) => {
+    try {
+      const files = (req as any).files as Express.Multer.File[];
+      if (!files || files.length === 0) {
+        return res.status(400).json({ error: 'No files provided' });
+      }
 
-    // Use existing sessionId or create new one
-    let sessionId = req.body?.sessionId || crypto.randomUUID();
-    let session = autoDraftSessions.get(sessionId);
-    if (!session) {
-      session = { files: [], createdAt: Date.now() };
-      autoDraftSessions.set(sessionId, session);
-    }
+      // Use existing sessionId or create new one
+      let sessionId = req.body?.sessionId || crypto.randomUUID();
+      let session = autoDraftSessions.get(sessionId);
+      if (!session) {
+        session = { files: [], createdAt: Date.now() };
+        autoDraftSessions.set(sessionId, session);
+      }
 
-    const processedFiles: Array<{
-      name: string;
-      size: number;
-      extractedLength: number;
-      detectedType: string;
-    }> = [];
+      const processedFiles: Array<{
+        name: string;
+        size: number;
+        extractedLength: number;
+        detectedType: string;
+      }> = [];
 
-    for (const file of files) {
-      let extractedText = '';
-      let tikaResult: Awaited<ReturnType<typeof extractWithTika>> = null;
-      const ext = file.originalname.split('.').pop()?.toLowerCase() || '';
+      for (const file of files) {
+        let extractedText = '';
+        let tikaResult: Awaited<ReturnType<typeof extractWithTika>> = null;
+        const ext = file.originalname.split('.').pop()?.toLowerCase() || '';
 
-      try {
-        tikaResult = await extractWithTika({
-          buffer: file.buffer,
-          filename: file.originalname,
-          mimeType: file.mimetype,
-        }).catch(() => null);
+        try {
+          tikaResult = await extractWithTika({
+            buffer: file.buffer,
+            filename: file.originalname,
+            mimeType: file.mimetype,
+          }).catch(() => null);
 
-        if (tikaResult?.text?.trim()) {
-          extractedText = tikaResult.text;
-        } else if (ext === 'pdf') {
-          // Use pdf.js-extract for PDF extraction
-          try {
-            const { PDFExtract } = await import('pdf.js-extract');
-            const pdfExtract = new PDFExtract();
-            const data = await pdfExtract.extractBuffer(file.buffer, {});
-            extractedText = data.pages
-              .map((page: any) => page.content.map((item: any) => item.str).join(' '))
-              .join('\n\n');
-          } catch {
-            // Fallback: treat as unextractable
-            extractedText = `[PDF file: ${file.originalname} — ${(file.size / 1024).toFixed(1)} KB. Text extraction unavailable.]`;
-          }
-        } else if (ext === 'docx' || ext === 'doc') {
-          try {
-            const mammoth = await import('mammoth');
-            const result = await mammoth.extractRawText({ buffer: file.buffer });
-            extractedText = result.value;
-          } catch {
-            extractedText = `[DOCX file: ${file.originalname} — ${(file.size / 1024).toFixed(1)} KB. Text extraction unavailable.]`;
-          }
-        } else if (ext === 'xlsx' || ext === 'csv') {
-          // Basic text extraction for spreadsheets
-          if (ext === 'csv') {
+          if (tikaResult?.text?.trim()) {
+            extractedText = tikaResult.text;
+          } else if (ext === 'pdf') {
+            // Use pdf.js-extract for PDF extraction
+            try {
+              const { PDFExtract } = await import('pdf.js-extract');
+              const pdfExtract = new PDFExtract();
+              const data = await pdfExtract.extractBuffer(file.buffer, {});
+              extractedText = data.pages
+                .map((page: any) => page.content.map((item: any) => item.str).join(' '))
+                .join('\n\n');
+            } catch {
+              // Fallback: treat as unextractable
+              extractedText = `[PDF file: ${file.originalname} — ${(file.size / 1024).toFixed(
+                1
+              )} KB. Text extraction unavailable.]`;
+            }
+          } else if (ext === 'docx' || ext === 'doc') {
+            try {
+              const mammoth = await import('mammoth');
+              const result = await mammoth.extractRawText({ buffer: file.buffer });
+              extractedText = result.value;
+            } catch {
+              extractedText = `[DOCX file: ${file.originalname} — ${(file.size / 1024).toFixed(
+                1
+              )} KB. Text extraction unavailable.]`;
+            }
+          } else if (ext === 'xlsx' || ext === 'csv') {
+            // Basic text extraction for spreadsheets
+            if (ext === 'csv') {
+              extractedText = file.buffer.toString('utf-8');
+            } else {
+              extractedText = `[XLSX file: ${file.originalname} — ${(file.size / 1024).toFixed(
+                1
+              )} KB. Tabular data included as source context.]`;
+            }
+          } else if (ext === 'txt') {
             extractedText = file.buffer.toString('utf-8');
           } else {
-            extractedText = `[XLSX file: ${file.originalname} — ${(file.size / 1024).toFixed(1)} KB. Tabular data included as source context.]`;
+            extractedText = `[File: ${file.originalname} — unsupported format]`;
           }
-        } else if (ext === 'txt') {
-          extractedText = file.buffer.toString('utf-8');
-        } else {
-          extractedText = `[File: ${file.originalname} — unsupported format]`;
+        } catch (err: any) {
+          console.error(
+            `[ind-autodraft] Text extraction failed for ${file.originalname}:`,
+            err.message
+          );
+          extractedText = `[File: ${file.originalname} — extraction failed]`;
         }
-      } catch (err: any) {
-        console.error(`[ind-autodraft] Text extraction failed for ${file.originalname}:`, err.message);
-        extractedText = `[File: ${file.originalname} — extraction failed]`;
-      }
 
-      const grobidResult = looksScholarlyDocument(file.originalname, extractedText)
-        ? await extractWithGrobid({ buffer: file.buffer, filename: file.originalname }).catch(() => null)
-        : null;
-      if (grobidResult?.abstract && !extractedText.includes(grobidResult.abstract)) {
-        extractedText = `${grobidResult.abstract}
+        const grobidResult = looksScholarlyDocument(file.originalname, extractedText)
+          ? await extractWithGrobid({ buffer: file.buffer, filename: file.originalname }).catch(
+              () => null
+            )
+          : null;
+        if (grobidResult?.abstract && !extractedText.includes(grobidResult.abstract)) {
+          extractedText = `${grobidResult.abstract}
 
 ${extractedText}`;
+        }
+
+        const detectedType = detectDocumentType(file.originalname, extractedText);
+
+        const orgId = Number((req as any).organizationId || (req as any).tenantId || 0);
+        if (orgId > 0) {
+          await indexGovernedDocument({
+            id: `kb_${sessionId}_${file.originalname}`.replace(/[^a-zA-Z0-9_.-]/g, '_'),
+            organizationId: orgId,
+            projectId: req.body?.projectId ? Number(req.body.projectId) : null,
+            docType: detectedType,
+            title: file.originalname,
+            source: 'knowledge-base-ind-autodraft',
+            provenance: grobidResult ? 'grobid' : tikaResult ? 'tika' : 'legacy',
+            tags: [detectedType, grobidResult ? 'scholarly' : 'general'],
+            lifecycleState: 'draft',
+            content: extractedText.slice(0, 20000),
+          }).catch(() => undefined);
+        }
+
+        session.files.push({
+          name: file.originalname,
+          size: file.size,
+          extractedText,
+          detectedType,
+        });
+
+        processedFiles.push({
+          name: file.originalname,
+          size: file.size,
+          extractedLength: extractedText.length,
+          detectedType,
+        });
       }
 
-      const detectedType = detectDocumentType(file.originalname, extractedText);
+      // Detect metadata from all extracted texts
+      const allTexts = session.files.map(f => f.extractedText);
+      const detectedMetadata = detectMetadataFromText(allTexts);
 
-      const orgId = Number((req as any).organizationId || (req as any).tenantId || 0);
-      if (orgId > 0) {
-        await indexGovernedDocument({
-          id: `kb_${sessionId}_${file.originalname}`.replace(/[^a-zA-Z0-9_.-]/g, '_'),
-          organizationId: orgId,
-          projectId: req.body?.projectId ? Number(req.body.projectId) : null,
-          docType: detectedType,
-          title: file.originalname,
-          source: 'knowledge-base-ind-autodraft',
-          provenance: grobidResult ? 'grobid' : tikaResult ? 'tika' : 'legacy',
-          tags: [detectedType, grobidResult ? 'scholarly' : 'general'],
-          lifecycleState: 'draft',
-          content: extractedText.slice(0, 20000),
-        }).catch(() => undefined);
-      }
-
-      session.files.push({
-        name: file.originalname,
-        size: file.size,
-        extractedText,
-        detectedType,
+      res.json({
+        sessionId,
+        files: processedFiles,
+        detectedMetadata,
       });
-
-      processedFiles.push({
-        name: file.originalname,
-        size: file.size,
-        extractedLength: extractedText.length,
-        detectedType,
-      });
+    } catch (err: any) {
+      console.error('[ind-autodraft] Upload failed:', err.message);
+      res.status(500).json({ error: 'Upload processing failed', detail: err.message });
     }
-
-    // Detect metadata from all extracted texts
-    const allTexts = session.files.map(f => f.extractedText);
-    const detectedMetadata = detectMetadataFromText(allTexts);
-
-    res.json({
-      sessionId,
-      files: processedFiles,
-      detectedMetadata,
-    });
-  } catch (err: any) {
-    console.error('[ind-autodraft] Upload failed:', err.message);
-    res.status(500).json({ error: 'Upload processing failed', detail: err.message });
   }
-});
+);
 
 /**
  * POST /api/knowledge-base/ind-autodraft/generate
@@ -2007,7 +2268,9 @@ router.post('/ind-autodraft/generate', async (req: Request, res: Response) => {
     };
 
     if (!sessionId || !projectId || !modules?.length) {
-      return res.status(400).json({ error: 'Missing required fields: sessionId, projectId, modules' });
+      return res
+        .status(400)
+        .json({ error: 'Missing required fields: sessionId, projectId, modules' });
     }
 
     const session = autoDraftSessions.get(sessionId);
@@ -2017,10 +2280,9 @@ router.post('/ind-autodraft/generate', async (req: Request, res: Response) => {
 
     // Import AI gateway and IND section registry
     const { getGateway } = await import('../services/ai-gateway/index.js');
-    const {
-      IND_SECTIONS,
-      getGenerationPrompt,
-    } = await import('../services/ind/ind-section-registry.js');
+    const { IND_SECTIONS, getGenerationPrompt } = await import(
+      '../services/ind/ind-section-registry.js'
+    );
 
     const gw = getGateway();
 
@@ -2091,7 +2353,7 @@ router.post('/ind-autodraft/generate', async (req: Request, res: Response) => {
         let artifactId: string | undefined;
         try {
           const user = (req as any).user;
-          const orgId = user?.organizationId || user?.organization_id || 1;
+          const orgId = Number(user?.organizationId || user?.organization_id) || 0;
           const governedResolution = resolveGovernedContext({
             req,
             projectId: Number(projectId),
@@ -2112,55 +2374,63 @@ router.post('/ind-autodraft/generate', async (req: Request, res: Response) => {
           });
           if (!governedResolution.validation.valid) {
             throw new Error(
-              `Governed contract invalid for IND autodraft: ${governedResolution.validation.errors.join('; ')}`
+              `Governed contract invalid for IND autodraft: ${governedResolution.validation.errors.join(
+                '; '
+              )}`
             );
           }
 
           // Create artifact via the concept2cure artifacts table
-          const [artifact] = await db.insert(concept2cureArtifacts).values({
-            artifactId: `artifact_${crypto.randomUUID()}`,
-            projectId: Number(projectId),
-            organizationId: orgId,
-            title,
-            content,
-            type: 'regulatory_document',
-            category: 'document',
-            ctdSection: section.code,
-            status: 'draft',
-            version: 1,
-            createdById: user?.id || user?.userId || null,
-            metadata: {
-              harness: {
-                clientTrack: governedResolution.contract.clientTrack,
-                submissionProgram: governedResolution.contract.submissionProgram,
-                persona: governedResolution.contract.persona,
-                regulatorScope: governedResolution.contract.regulatorScope,
-                documentClass: governedResolution.contract.documentClass,
-                readinessGate: governedResolution.contract.readinessGate,
-                workspaceTarget: governedResolution.contract.workspaceTarget,
-                originSurface: governedResolution.contract.originSurface,
-                recommendationSource: governedResolution.contract.recommendationSource,
-                regulatorIntent: governedResolution.contract.regulatorIntent,
-                gateChecks: governedResolution.contract.exportEligibility.gateChecks,
-                blockingReasons: governedResolution.contract.exportEligibility.blockingReasons,
-                readinessOutcome: governedResolution.contract.exportEligibility.readinessOutcome,
+          const [artifact] = await db
+            .insert(concept2cureArtifacts)
+            .values({
+              artifactId: `artifact_${crypto.randomUUID()}`,
+              projectId: Number(projectId),
+              organizationId: orgId,
+              title,
+              content,
+              type: 'regulatory_document',
+              category: 'document',
+              ctdSection: section.code,
+              status: 'draft',
+              version: 1,
+              createdById: user?.id || user?.userId || null,
+              metadata: {
+                harness: {
+                  clientTrack: governedResolution.contract.clientTrack,
+                  submissionProgram: governedResolution.contract.submissionProgram,
+                  persona: governedResolution.contract.persona,
+                  regulatorScope: governedResolution.contract.regulatorScope,
+                  documentClass: governedResolution.contract.documentClass,
+                  readinessGate: governedResolution.contract.readinessGate,
+                  workspaceTarget: governedResolution.contract.workspaceTarget,
+                  originSurface: governedResolution.contract.originSurface,
+                  recommendationSource: governedResolution.contract.recommendationSource,
+                  regulatorIntent: governedResolution.contract.regulatorIntent,
+                  gateChecks: governedResolution.contract.exportEligibility.gateChecks,
+                  blockingReasons: governedResolution.contract.exportEligibility.blockingReasons,
+                  readinessOutcome: governedResolution.contract.exportEligibility.readinessOutcome,
+                },
               },
-            },
-          } as any).returning();
+            } as any)
+            .returning();
 
           if (artifact) {
             artifactId = String(artifact.id);
 
             // Create initial version
-            const versionInsert = await db.insert(concept2cureArtifactVersions).values({
-              artifactId: artifact.id,
-              organizationId: orgId,
-              version: 1,
-              content,
-              contentHash: crypto.createHash('sha256').update(content).digest('hex'),
-              createdById: user?.id || user?.userId || null,
-              changeDescription: 'Generated by IND AutoDraft',
-            } as any).returning();
+            const versionInsert = await db
+              .insert(concept2cureArtifactVersions)
+              .values({
+                artifactId: artifact.id,
+                organizationId: orgId,
+                version: 1,
+                content,
+                contentHash: crypto.createHash('sha256').update(content).digest('hex'),
+                createdById: user?.id || user?.userId || null,
+                changeDescription: 'Generated by IND AutoDraft',
+              } as any)
+              .returning();
             if (!versionInsert?.[0]?.id) {
               throw new Error('Artifact version insert did not return an id');
             }

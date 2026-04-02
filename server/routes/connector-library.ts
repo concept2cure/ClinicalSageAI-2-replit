@@ -42,7 +42,9 @@ router.use(requireOrganizationContext);
 
 function getOrganizationId(req: Request): number {
   const ctx = (req as any).tenantContext;
-  return ctx?.organizationId || 1;
+  const orgId = Number(ctx?.organizationId || (req as any).user?.organizationId);
+  if (!orgId || orgId <= 0) throw new Error('Organization context required');
+  return orgId;
 }
 
 function getUserId(req: Request): string {
@@ -119,7 +121,10 @@ router.get('/catalog', async (req: Request, res: Response) => {
     const enrichedCatalog = await getConnectorCatalog(orgId);
 
     // Get enable/disable state from organization_connectors table
-    let enabledMap: Map<string, { enabled: boolean; healthStatus: string; enabledAt: string | null }> = new Map();
+    let enabledMap: Map<
+      string,
+      { enabled: boolean; healthStatus: string; enabledAt: string | null }
+    > = new Map();
     if (pool) {
       try {
         const { rows } = await pool.query(
@@ -128,10 +133,16 @@ router.get('/catalog', async (req: Request, res: Response) => {
            WHERE organization_id = $1`,
           [orgId]
         );
-        enabledMap = new Map(rows.map((r: any) => [
-          r.connector_id,
-          { enabled: r.enabled, healthStatus: r.health_status || 'unknown', enabledAt: r.enabled_at },
-        ]));
+        enabledMap = new Map(
+          rows.map((r: any) => [
+            r.connector_id,
+            {
+              enabled: r.enabled,
+              healthStatus: r.health_status || 'unknown',
+              enabledAt: r.enabled_at,
+            },
+          ])
+        );
       } catch {
         // DB unavailable — all connectors show as disabled
       }
@@ -143,7 +154,7 @@ router.get('/catalog', async (req: Request, res: Response) => {
       return {
         ...entry,
         category: catalogEntry?.category || 'regulatory',
-        enabled: orgState?.enabled ?? (!entry.requiresCredentials), // Free connectors default to enabled
+        enabled: orgState?.enabled ?? !entry.requiresCredentials, // Free connectors default to enabled
         healthStatus: orgState?.healthStatus || (entry.healthy ? 'healthy' : 'unknown'),
         enabledAt: orgState?.enabledAt || null,
         hasSetupGuide: !!catalogEntry?.setupGuide,
@@ -233,7 +244,9 @@ router.post('/:connectorId/toggle', async (req: Request, res: Response) => {
 
     const parsed = ToggleSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ success: false, error: 'INVALID_BODY', details: parsed.error.issues });
+      return res
+        .status(400)
+        .json({ success: false, error: 'INVALID_BODY', details: parsed.error.issues });
     }
 
     const { enabled } = parsed.data;
@@ -287,7 +300,11 @@ router.post('/:connectorId/toggle', async (req: Request, res: Response) => {
       success: true,
     });
 
-    logger.info(`Connector ${connectorId} ${enabled ? 'enabled' : 'disabled'} for org=${orgId} by ${getUserEmail(req)}`);
+    logger.info(
+      `Connector ${connectorId} ${
+        enabled ? 'enabled' : 'disabled'
+      } for org=${orgId} by ${getUserEmail(req)}`
+    );
 
     return res.json({
       success: true,
@@ -341,7 +358,9 @@ router.post('/:connectorId/credentials', async (req: Request, res: Response) => 
 
     const parsed = CredentialsSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ success: false, error: 'INVALID_CREDENTIALS', details: parsed.error.issues });
+      return res
+        .status(400)
+        .json({ success: false, error: 'INVALID_CREDENTIALS', details: parsed.error.issues });
     }
 
     // Validate required credential fields from setup guide
@@ -453,7 +472,9 @@ router.delete('/:connectorId/credentials', async (req: Request, res: Response) =
     return res.json({
       success: true,
       connectorId,
-      message: `Credentials for ${catalogEntry?.name || connectorId} have been removed and the connector has been disabled.`,
+      message: `Credentials for ${
+        catalogEntry?.name || connectorId
+      } have been removed and the connector has been disabled.`,
     });
   } catch (err) {
     logger.error('Failed to remove credentials', err as Record<string, unknown>);
@@ -484,7 +505,10 @@ router.post('/:connectorId/test', async (req: Request, res: Response) => {
     // For connectors that don't require credentials, do a basic search test
     if (!catalogEntry.requiresCredentials) {
       try {
-        const results = await searchConnectors(orgId, [connectorId], { keywords: ['test'], limit: 1 });
+        const results = await searchConnectors(orgId, [connectorId], {
+          keywords: ['test'],
+          limit: 1,
+        });
         const result = results[0];
         const healthy = !result.error;
 
@@ -523,7 +547,10 @@ router.post('/:connectorId/test', async (req: Request, res: Response) => {
     }
 
     // For credentialed connectors, attempt a search with stored credentials
-    const results = await searchConnectors(orgId, [connectorId], { keywords: ['connection test'], limit: 1 });
+    const results = await searchConnectors(orgId, [connectorId], {
+      keywords: ['connection test'],
+      limit: 1,
+    });
     const result = results[0];
     const healthy = !result.error;
 
@@ -579,7 +606,9 @@ router.post('/search', async (req: Request, res: Response) => {
 
     const parsed = SearchSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ success: false, error: 'INVALID_SEARCH', details: parsed.error.issues });
+      return res
+        .status(400)
+        .json({ success: false, error: 'INVALID_SEARCH', details: parsed.error.issues });
     }
 
     let targetConnectors = parsed.data.connectorIds;
@@ -595,9 +624,7 @@ router.post('/search', async (req: Request, res: Response) => {
         targetConnectors = rows.map((r: any) => r.connector_id);
 
         // Also include free connectors that are enabled by default
-        const freeConnectors = CONNECTOR_CATALOG
-          .filter(c => !c.requiresCredentials)
-          .map(c => c.id);
+        const freeConnectors = CONNECTOR_CATALOG.filter(c => !c.requiresCredentials).map(c => c.id);
         targetConnectors = [...new Set([...targetConnectors, ...freeConnectors])];
       } else {
         // Fallback: search free connectors only
@@ -606,7 +633,11 @@ router.post('/search', async (req: Request, res: Response) => {
     }
 
     if (targetConnectors.length === 0) {
-      return res.json({ success: true, results: [], message: 'No connectors are enabled. Enable connectors from the connector library.' });
+      return res.json({
+        success: true,
+        results: [],
+        message: 'No connectors are enabled. Enable connectors from the connector library.',
+      });
     }
 
     const results = await searchConnectors(orgId, targetConnectors, {
@@ -668,18 +699,18 @@ router.get('/active', async (req: Request, res: Response) => {
       });
 
       // Add free connectors that are enabled by default
-      const freeConnectors = CONNECTOR_CATALOG
-        .filter(c => !c.requiresCredentials && !rows.some((r: any) => r.connector_id === c.id))
-        .map(c => ({
-          id: c.id,
-          name: c.name,
-          type: c.type,
-          category: c.category,
-          healthStatus: 'healthy' as const,
-          enabledAt: null,
-          lastHealthCheck: null,
-          icon: c.icon,
-        }));
+      const freeConnectors = CONNECTOR_CATALOG.filter(
+        c => !c.requiresCredentials && !rows.some((r: any) => r.connector_id === c.id)
+      ).map(c => ({
+        id: c.id,
+        name: c.name,
+        type: c.type,
+        category: c.category,
+        healthStatus: 'healthy' as const,
+        enabledAt: null,
+        lastHealthCheck: null,
+        icon: c.icon,
+      }));
 
       return res.json({
         success: true,
@@ -689,18 +720,16 @@ router.get('/active', async (req: Request, res: Response) => {
     }
 
     // Fallback: only free connectors
-    const freeConnectors = CONNECTOR_CATALOG
-      .filter(c => !c.requiresCredentials)
-      .map(c => ({
-        id: c.id,
-        name: c.name,
-        type: c.type,
-        category: c.category,
-        healthStatus: 'healthy',
-        enabledAt: null,
-        lastHealthCheck: null,
-        icon: c.icon,
-      }));
+    const freeConnectors = CONNECTOR_CATALOG.filter(c => !c.requiresCredentials).map(c => ({
+      id: c.id,
+      name: c.name,
+      type: c.type,
+      category: c.category,
+      healthStatus: 'healthy',
+      enabledAt: null,
+      lastHealthCheck: null,
+      icon: c.icon,
+    }));
 
     return res.json({ success: true, active: freeConnectors, total: freeConnectors.length });
   } catch (err) {

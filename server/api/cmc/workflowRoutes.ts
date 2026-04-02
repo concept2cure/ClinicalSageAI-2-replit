@@ -13,7 +13,12 @@ const router = express.Router();
 
 function getOrganizationId(req: express.Request): number {
   const orgId = parseInt(
-    String((req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-organization-id'] || 0),
+    String(
+      (req as any).tenantId ||
+        (req as any).tenantContext?.organizationId ||
+        (req as any).user?.organizationId ||
+        0
+    ),
     10
   );
   if (!orgId || Number.isNaN(orgId)) {
@@ -386,7 +391,7 @@ router.get('/', async (req, res) => {
 
     // Enrich with tasks
     const enriched = await Promise.all(
-      rows.map(async (wf) => {
+      rows.map(async wf => {
         const tasks = await db
           .select()
           .from(workflowTasks)
@@ -488,19 +493,13 @@ router.post('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const [workflow] = await db
-      .select()
-      .from(projectWorkflows)
-      .where(eq(projectWorkflows.id, id));
+    const [workflow] = await db.select().from(projectWorkflows).where(eq(projectWorkflows.id, id));
 
     if (!workflow) {
       return res.status(404).json({ success: false, error: 'Workflow not found' });
     }
 
-    const tasks = await db
-      .select()
-      .from(workflowTasks)
-      .where(eq(workflowTasks.workflowId, id));
+    const tasks = await db.select().from(workflowTasks).where(eq(workflowTasks.workflowId, id));
 
     const completed = tasks.filter(t => t.status === 'completed').length;
 
@@ -547,10 +546,7 @@ router.put('/:id/tasks/:taskId', async (req, res) => {
     }
 
     // Recalculate workflow progress
-    const allTasks = await db
-      .select()
-      .from(workflowTasks)
-      .where(eq(workflowTasks.workflowId, id));
+    const allTasks = await db.select().from(workflowTasks).where(eq(workflowTasks.workflowId, id));
 
     const completed = allTasks.filter(t => t.status === 'completed').length;
     const progress = allTasks.length > 0 ? Math.round((completed / allTasks.length) * 100) : 0;
@@ -561,10 +557,7 @@ router.put('/:id/tasks/:taskId', async (req, res) => {
       .where(eq(projectWorkflows.id, id));
 
     // Fetch updated workflow
-    const [workflow] = await db
-      .select()
-      .from(projectWorkflows)
-      .where(eq(projectWorkflows.id, id));
+    const [workflow] = await db.select().from(projectWorkflows).where(eq(projectWorkflows.id, id));
 
     res.json({
       success: true,
@@ -573,7 +566,9 @@ router.put('/:id/tasks/:taskId', async (req, res) => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, error: 'Invalid input data', details: error.errors });
+      return res
+        .status(400)
+        .json({ success: false, error: 'Invalid input data', details: error.errors });
     }
     console.error('Error updating task:', error);
     res.status(500).json({ success: false, error: 'Operation failed' });
@@ -887,7 +882,9 @@ router.get('/download/:id', async (req, res) => {
       });
     }
 
-    const filename = `${result.command.replace(/\s+/g, '_')}_${result.drugName}_${new Date().toISOString().split('T')[0]}.md`;
+    const filename = `${result.command.replace(/\s+/g, '_')}_${result.drugName}_${
+      new Date().toISOString().split('T')[0]
+    }.md`;
 
     res.set({
       'Content-Type': 'text/markdown',

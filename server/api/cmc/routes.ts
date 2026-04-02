@@ -30,10 +30,9 @@ let complianceTrackingTableReady = false;
 function getOrgId(req: express.Request): number {
   const orgId = parseInt(
     (req as any).tenantId ||
-    (req as any).tenantContext?.organizationId ||
-    (req.headers['x-organization-id'] as string) ||
-    (req.query.organizationId as string) ||
-    ''
+      (req as any).tenantContext?.organizationId ||
+      (req as any).user?.organizationId ||
+      ''
   );
   if (isNaN(orgId) || orgId <= 0) {
     throw new Error('Organization context required');
@@ -71,7 +70,10 @@ router.post('/analytical-methods', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertAnalyticalMethodSchema.parse(req.body);
-    const [method] = await db.insert(analyticalMethods).values({ ...validatedData, organizationId: orgId }).returning();
+    const [method] = await db
+      .insert(analyticalMethods)
+      .values({ ...validatedData, organizationId: orgId })
+      .returning();
     res.json({ success: true, data: method });
   } catch (error) {
     console.error('Error creating analytical method:', error);
@@ -116,7 +118,10 @@ router.post('/process-validation', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertProcessValidationSchema.parse(req.body);
-    const [validation] = await db.insert(processValidation).values({ ...validatedData, organizationId: orgId }).returning();
+    const [validation] = await db
+      .insert(processValidation)
+      .values({ ...validatedData, organizationId: orgId })
+      .returning();
     res.json({ success: true, data: validation });
   } catch (error) {
     console.error('Error creating process validation:', error);
@@ -154,7 +159,10 @@ router.post('/stability-studies', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertStabilityStudySchema.parse(req.body);
-    const [study] = await db.insert(stabilityStudies).values({ ...validatedData, organizationId: orgId }).returning();
+    const [study] = await db
+      .insert(stabilityStudies)
+      .values({ ...validatedData, organizationId: orgId })
+      .returning();
     res.json({ success: true, data: study });
   } catch (error) {
     console.error('Error creating stability study:', error);
@@ -178,7 +186,10 @@ router.post('/qc-testing', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertQcTestingSchema.parse(req.body);
-    const [test] = await db.insert(qcTesting).values({ ...validatedData, organizationId: orgId }).returning();
+    const [test] = await db
+      .insert(qcTesting)
+      .values({ ...validatedData, organizationId: orgId })
+      .returning();
     res.json({ success: true, data: test });
   } catch (error) {
     console.error('Error creating QC test:', error);
@@ -205,7 +216,10 @@ router.post('/change-control', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertCmcChangeControlSchema.parse(req.body);
-    const [change] = await db.insert(cmcChangeControl).values({ ...validatedData, organizationId: orgId }).returning();
+    const [change] = await db
+      .insert(cmcChangeControl)
+      .values({ ...validatedData, organizationId: orgId })
+      .returning();
     res.json({ success: true, data: change });
   } catch (error) {
     console.error('Error creating change control:', error);
@@ -243,7 +257,10 @@ router.post('/drug-substances', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertDrugSubstanceSchema.parse(req.body);
-    const [substance] = await db.insert(drugSubstances).values({ ...validatedData, organizationId: orgId }).returning();
+    const [substance] = await db
+      .insert(drugSubstances)
+      .values({ ...validatedData, organizationId: orgId })
+      .returning();
     res.json({ success: true, data: substance });
   } catch (error) {
     console.error('Error creating drug substance:', error);
@@ -281,7 +298,10 @@ router.post('/drug-products', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertDrugProductSchema.parse(req.body);
-    const [product] = await db.insert(drugProducts).values({ ...validatedData, organizationId: orgId }).returning();
+    const [product] = await db
+      .insert(drugProducts)
+      .values({ ...validatedData, organizationId: orgId })
+      .returning();
     res.json({ success: true, data: product });
   } catch (error) {
     console.error('Error creating drug product:', error);
@@ -471,9 +491,24 @@ router.post('/compliance/check-rules', async (req, res) => {
         }
       } else {
         rules = [
-          { rule: 'ICH Q8 Quality by Design', status: 'violation', severity: 'medium', description: 'Missing design space justification in process development section' },
-          { rule: 'ICH Q9 Quality Risk Management', status: 'compliant', severity: 'low', description: 'Risk assessment documentation is adequate' },
-          { rule: 'FDA 21 CFR 211.84', status: 'violation', severity: 'high', description: 'Incomplete validation documentation for cleaning procedures' },
+          {
+            rule: 'ICH Q8 Quality by Design',
+            status: 'violation',
+            severity: 'medium',
+            description: 'Missing design space justification in process development section',
+          },
+          {
+            rule: 'ICH Q9 Quality Risk Management',
+            status: 'compliant',
+            severity: 'low',
+            description: 'Risk assessment documentation is adequate',
+          },
+          {
+            rule: 'FDA 21 CFR 211.84',
+            status: 'violation',
+            severity: 'high',
+            description: 'Incomplete validation documentation for cleaning procedures',
+          },
         ];
         complianceScore = 75;
         recommendedActions = [
@@ -484,7 +519,9 @@ router.post('/compliance/check-rules', async (req, res) => {
       }
     } catch (e) {
       console.warn('[CMC] Could not query compliance_tracking:', e);
-      rules = [{ rule: 'ICH Q8', status: 'violation', severity: 'medium', description: 'DB unavailable' }];
+      rules = [
+        { rule: 'ICH Q8', status: 'violation', severity: 'medium', description: 'DB unavailable' },
+      ];
       complianceScore = 75;
     }
 
@@ -631,10 +668,16 @@ router.post('/generate-enhanced-blueprint', async (req: express.Request, res: ex
 
     // Build prompt context from drug substance/product form data
     const dsInfo = drugSubstance
-      ? `Drug Substance: ${drugSubstance.name || 'N/A'}, INN: ${drugSubstance.inn || 'N/A'}, Route: ${drugSubstance.route || 'N/A'}, Dosage Form: ${drugSubstance.dosageForm || 'N/A'}`
+      ? `Drug Substance: ${drugSubstance.name || 'N/A'}, INN: ${
+          drugSubstance.inn || 'N/A'
+        }, Route: ${drugSubstance.route || 'N/A'}, Dosage Form: ${
+          drugSubstance.dosageForm || 'N/A'
+        }`
       : 'Drug substance information not provided.';
     const dpInfo = drugProduct
-      ? `Drug Product: ${drugProduct.name || 'N/A'}, Strength: ${drugProduct.strength || 'N/A'}, Container: ${drugProduct.container || 'N/A'}`
+      ? `Drug Product: ${drugProduct.name || 'N/A'}, Strength: ${
+          drugProduct.strength || 'N/A'
+        }, Container: ${drugProduct.container || 'N/A'}`
       : 'Drug product information not provided.';
 
     const { ai: aiClient } = await import('../../lib/unified-ai-client.js');
@@ -643,7 +686,9 @@ router.post('/generate-enhanced-blueprint', async (req: express.Request, res: ex
       [
         {
           role: 'system',
-          content: `You are a CMC regulatory writer generating Module 3 content for an ${submissionType || 'IND'} submission following ICH Q1-Q14 guidelines. Generate a compliant draft for section ${section} with regulatory-grade technical language. Include relevant specifications, acceptance criteria, and cross-references to ICH guidelines where applicable.`,
+          content: `You are a CMC regulatory writer generating Module 3 content for an ${
+            submissionType || 'IND'
+          } submission following ICH Q1-Q14 guidelines. Generate a compliant draft for section ${section} with regulatory-grade technical language. Include relevant specifications, acceptance criteria, and cross-references to ICH guidelines where applicable.`,
         },
         {
           role: 'user',
@@ -657,7 +702,12 @@ Project ID: ${projectId || 'N/A'}
 Write a comprehensive draft for this CMC section following ICH guidelines.`,
         },
       ],
-      { taskType: 'regulatory_review', temperature: 0.3, maxTokens: 3000, callerModule: 'cmc-blueprint-generator' }
+      {
+        taskType: 'regulatory_review',
+        temperature: 0.3,
+        maxTokens: 3000,
+        callerModule: 'cmc-blueprint-generator',
+      }
     );
 
     res.json({
