@@ -22,6 +22,7 @@ import fs from 'fs';
 import type { Request, Response, NextFunction } from 'express';
 import { fileURLToPath } from 'url';
 import { betaFlowTelemetryMiddleware } from './middleware/betaFlowTelemetry';
+import { mountBetaSafeRoutes } from './betaRouteManifest';
 
 // Phase 4.1 Proof System - 21 CFR Part 11 Compliance
 import { initializeProofDatabasePersistence } from '../services/proof/database-setup';
