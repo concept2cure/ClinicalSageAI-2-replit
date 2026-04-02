@@ -302,22 +302,10 @@ export const generateBiasAssessment = async (study, biasDomains = []) => {
     // Re-attempt with backend API as backup
     try {
       console.log('Attempting to use server API for bias assessment');
-      const response = await fetch('/api/literature/assess-bias', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          study,
-          biasDomains,
-        }),
+      const response = await apiRequest('POST', '/api/literature/assess-bias', {
+        study,
+        biasDomains,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to generate bias assessment');
-      }
-
       return await response.json();
     } catch (backupError) {
       console.error('Backup server assessment failed:', backupError);
@@ -418,19 +406,7 @@ export const generateSearchSummary = async reviewData => {
     // Re-attempt with backend API as backup
     try {
       console.log('Attempting to use server API for search summary');
-      const response = await fetch('/api/literature/search-summary', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(reviewData),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to generate search summary');
-      }
-
+      const response = await apiRequest('POST', '/api/literature/search-summary', reviewData);
       return await response.json();
     } catch (backupError) {
       console.error('Backup server summary generation failed:', backupError);

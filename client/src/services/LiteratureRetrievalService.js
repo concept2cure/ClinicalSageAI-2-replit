@@ -14,6 +14,7 @@
  */
 
 import OpenAI from 'openai';
+import { apiRequest } from '@/lib/queryClient';
 
 // SECURITY: OpenAI calls must go through the backend API gateway.
 // Direct client-side calls with API keys are forbidden in production.

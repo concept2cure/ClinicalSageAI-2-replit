@@ -5,6 +5,8 @@
  * providing methods to save, analyze, and retrieve these connections for the 510k module.
  */
 
+import { apiRequest } from '@/lib/queryClient';
+
 /**
  * Save connections between device features and literature papers
  * @param {Object} data - The connection data
@@ -21,19 +23,7 @@ export const saveLiteratureFeatureConnections = async data => {
       throw new Error('Missing required parameters for literature evidence connections');
     }
 
-    const response = await fetch('/api/510k/literature/evidence', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ documentId, featureEvidence, organizationId }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to save literature feature connections');
-    }
-
+    const response = await apiRequest('POST', '/api/510k/literature/evidence', { documentId, featureEvidence, organizationId });
     return await response.json();
   } catch (error) {
     console.error('Literature feature connection error:', error);
@@ -56,19 +46,7 @@ export const analyzeLiteratureFeatureRelevance = async data => {
       throw new Error('Missing required parameters for literature relevance analysis');
     }
 
-    const response = await fetch('/api/510k/literature/analyze-relevance', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ features, literature }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to analyze literature relevance');
-    }
-
+    const response = await apiRequest('POST', '/api/510k/literature/analyze-relevance', { features, literature });
     return await response.json();
   } catch (error) {
     console.error('Literature relevance analysis error:', error);
