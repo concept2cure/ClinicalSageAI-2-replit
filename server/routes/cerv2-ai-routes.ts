@@ -39,7 +39,7 @@ const aiRateLimiter = rateLimit({
   keyGenerator: (req: any) => {
     // Rate limit by user + org to prevent abuse
     const userId = req.userId || req.user?.id || 'anon';
-    const orgId = req.header('x-organization-id') || 'unknown';
+    const orgId = req.tenantId || req.tenantContext?.organizationId || 'unknown';
     return `cerv2-ai:${orgId}:${userId}`;
   },
 });
@@ -55,10 +55,9 @@ const requireEditorAccess = (req: any, res: any, next: () => void) => {
     return res.status(403).json({ error: 'Insufficient permissions' });
   }
   // Verify organization context exists (prevents cross-org access)
-  const headerOrg = req.header('x-organization-id') || req.header('x-org-id');
   const tenantOrg = req.tenantContext?.organizationId;
   const userOrg = req.user?.organizationId || req.tenantId;
-  const orgId = headerOrg || tenantOrg || userOrg;
+  const orgId = tenantOrg || userOrg;
   if (!orgId) {
     return res.status(400).json({ error: 'Organization context required' });
   }

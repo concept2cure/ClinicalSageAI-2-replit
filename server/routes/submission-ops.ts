@@ -55,7 +55,9 @@ function getOrgId(req: Request): number {
 }
 
 function getUserId(req: Request): number {
-  return (req as any).user?.id ?? (req as any).userId ?? 0;
+  const userId = (req as any).user?.id ?? (req as any).userId;
+  if (!userId || userId <= 0) throw new Error('Authenticated user context required');
+  return userId;
 }
 
 // ============================================================

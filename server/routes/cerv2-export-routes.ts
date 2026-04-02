@@ -40,7 +40,7 @@ const exportRateLimiter = rateLimit({
   message: { error: 'Too many export requests — please wait before trying again.' },
   keyGenerator: (req: any) => {
     const userId = req.userId || req.user?.id || 'anon';
-    const orgId = req.header('x-organization-id') || 'unknown';
+    const orgId = req.tenantId || req.tenantContext?.organizationId || 'unknown';
     return `cerv2-export:${orgId}:${userId}`;
   },
 });

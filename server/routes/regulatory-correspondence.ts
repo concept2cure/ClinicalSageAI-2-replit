@@ -484,6 +484,7 @@ router.post('/correspondence/intake', async (req, res) => {
   if (!requirePersistentStore(isReady, res, 'ingest correspondence')) {
     return;
   }
+  try {
   const submissionCheck = await pool!.query(
       `SELECT id, project_id
        FROM c2c_submissions
@@ -586,6 +587,11 @@ router.post('/correspondence/intake', async (req, res) => {
       summary: record.subject,
     });
   return res.status(201).json({ data: record, issues: extracted, downstreamActions });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'Unknown error';
+    console.error('[Correspondence Intake] DB operation failed:', message);
+    return res.status(500).json({ error: 'Failed to ingest correspondence', detail: message });
+  }
 });
 
 router.get('/correspondence', async (req, res) => {
