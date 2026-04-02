@@ -22,10 +22,6 @@ import { eq, and } from 'drizzle-orm';
 
 const router = express.Router();
 
-// Module-level DDL init guards
-let projectWorkflowsTableReady = false;
-let complianceTrackingTableReady = false;
-
 // Helper to read organization ID from authenticated context
 function getOrgId(req: express.Request): number {
   const orgId = parseInt(
@@ -312,26 +308,6 @@ router.post('/insights/take-action', async (req, res) => {
     let taskResult: any;
     try {
       const pool = getPool();
-      if (!projectWorkflowsTableReady) {
-        await pool.query(`
-          CREATE TABLE IF NOT EXISTS project_workflows (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            organization_id INTEGER,
-            project_id UUID,
-            template_id UUID,
-            workflow_name TEXT NOT NULL,
-            workflow_data JSONB NOT NULL DEFAULT '{}',
-            status TEXT DEFAULT 'active',
-            progress INTEGER DEFAULT 0,
-            start_date TIMESTAMP,
-            end_date TIMESTAMP,
-            assigned_to TEXT,
-            created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-            updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-          )
-        `);
-        projectWorkflowsTableReady = true;
-      }
 
       const priority = type === 'compliance' ? 'high' : 'medium';
       const dueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -410,28 +386,6 @@ router.post('/compliance/check-rules', async (req, res) => {
 
     try {
       const pool = getPool();
-      if (!complianceTrackingTableReady) {
-        await pool.query(`
-          CREATE TABLE IF NOT EXISTS compliance_tracking (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            project_id UUID,
-            organization_id INTEGER,
-            guideline TEXT NOT NULL,
-            requirement TEXT NOT NULL,
-            status TEXT NOT NULL,
-            evidence JSONB,
-            justification TEXT,
-            risk_level TEXT,
-            mitigation TEXT,
-            due_date TIMESTAMP,
-            completed_date TIMESTAMP,
-            assigned_to TEXT,
-            created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-            updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-          )
-        `);
-        complianceTrackingTableReady = true;
-      }
 
       const orgId = getOrgId(req);
       const result = await pool.query(

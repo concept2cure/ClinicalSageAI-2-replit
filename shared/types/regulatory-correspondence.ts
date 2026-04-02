@@ -85,6 +85,7 @@ export interface Submission {
 
 export interface Correspondence {
   id: string;
+  organizationId?: number;
   projectId: number;
   submissionId: string;
   direction: CorrespondenceDirection;
@@ -139,6 +140,7 @@ export interface CorrespondenceIssue {
 
 export interface ResponsePackage {
   id: string;
+  organizationId?: number;
   sourceCorrespondenceId: string;
   title: string;
   status: 'draft' | 'review' | 'approval' | 'assembled' | 'sent';
@@ -150,6 +152,7 @@ export interface ResponsePackage {
 
 export interface MailboxConnection {
   id: string;
+  organizationId?: number;
   provider: 'microsoft365' | 'gmail' | 'imap' | 'other';
   mailboxIdentifier: string;
   authState: 'connected' | 'expired' | 'error' | 'revoked';

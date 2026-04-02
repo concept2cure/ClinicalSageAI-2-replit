@@ -113,24 +113,14 @@ import { NewDocumentDialog } from './NewDocumentDialog';
 import { canEscalateToEdit } from '../../contexts/DocumentModeContext';
 import { SectionRequirementsPanel, type SectionMetrics } from './SectionRequirementsPanel';
 
-// ── Left-rail mode type ──────────────────────────────────────────────────────
-type LeftRailMode = 'files' | 'dossier' | 'templates' | 'outline' | 'registry';
-type OperatingLayer = 'document_studio' | 'vault' | 'reports' | 'documents';
-type WorkspaceWorkbench = 'cmc' | 'biostats' | 'device' | 'clinical';
-type ProjectNav =
-  | 'submission_builder'
-  | 'communications'
-  | 'cmc'
-  | 'clinical_module5'
-  | 'verify'
-  | 'review'
-  | 'publish'
-  | 'haq'
-  | 'vault'
-  | 'communication_center'
-  | 'reports'
-  | 'activity'
-  | 'documents';
+// ── Left-rail mode type (imported from controllers to avoid duplication) ──────
+import type {
+  LeftRailMode,
+  OperatingLayer,
+  WorkspaceWorkbench,
+  ProjectNav,
+  GuidedSequenceStage,
+} from './workspaceShellControllers';
 type DocumentTab =
   | 'content'
   | 'evidence'
@@ -139,7 +129,6 @@ type DocumentTab =
   | 'signatures'
   | 'provenance'
   | 'export';
-type GuidedSequenceStage = 'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission';
 
 // ── Dossier metrics types ────────────────────────────────────────────────────
 interface OperatingLayerConfig {

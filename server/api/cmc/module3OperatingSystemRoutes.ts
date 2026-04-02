@@ -247,10 +247,6 @@ router.post('/contradictions/:projectId', async (req, res) => {
       ),
     ]);
 
-    await pool.query(`DELETE FROM cmc_contradictions WHERE organization_id = $1 AND project_id = $2`, [
-      orgId,
-      projectId,
-    ]);
     const contradictions = detectContradictions({
       specifications: specs.rows,
       methods: methods.rows,
@@ -258,20 +254,36 @@ router.post('/contradictions/:projectId', async (req, res) => {
       batch: batch.rows,
       comparability: comparability.rows,
     });
-    for (const c of contradictions) {
-      await pool.query(
-        `INSERT INTO cmc_contradictions (organization_id, project_id, severity, contradiction_type, details, impacted_sections, required_reviewers)
-         VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb)`,
-        [
-          orgId,
-          projectId,
-          c.severity,
-          c.contradictionType,
-          c.details,
-          JSON.stringify(c.impactedSections),
-          JSON.stringify(c.requiredReviewers),
-        ]
-      );
+
+    // Wrap DELETE + INSERT in a transaction to prevent partial state
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`DELETE FROM cmc_contradictions WHERE organization_id = $1 AND project_id = $2`, [
+        orgId,
+        projectId,
+      ]);
+      for (const c of contradictions) {
+        await client.query(
+          `INSERT INTO cmc_contradictions (organization_id, project_id, severity, contradiction_type, details, impacted_sections, required_reviewers)
+           VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb)`,
+          [
+            orgId,
+            projectId,
+            c.severity,
+            c.contradictionType,
+            c.details,
+            JSON.stringify(c.impactedSections),
+            JSON.stringify(c.requiredReviewers),
+          ]
+        );
+      }
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
     }
 
     res.json({ success: true, contradictions, impactTasks: deriveImpactTasks(contradictions) });
