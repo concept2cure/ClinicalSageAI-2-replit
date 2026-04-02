@@ -21,8 +21,8 @@ export default function ChangesBoard({ productId }: { productId: string }) {
   const [details, setDetails] = React.useState('');
 
   async function load() {
-    const r = await fetch(`/api/reg/changes?productId=${productId}`).then(r => r.json());
-    setChanges(r);
+    const response = await apiRequest('GET', `/api/reg/changes?productId=${productId}`);
+    setChanges(await response.json());
   }
 
   React.useEffect(() => {
@@ -35,28 +35,24 @@ export default function ChangesBoard({ productId }: { productId: string }) {
       title,
       change_json: { scope, details, specAttributes: [] },
     };
-    await fetch(`/api/reg/changes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    await apiRequest('POST', `/api/reg/changes`, payload);
     setTitle('');
     setDetails('');
     load();
   }
 
   async function classify(changeId: string) {
-    await fetch(`/api/reg/changes/${changeId}/classify`, { method: 'POST' });
+    await apiRequest('POST', `/api/reg/changes/${changeId}/classify`);
     load();
   }
 
   async function computeImpact(changeId: string) {
-    await fetch(`/api/reg/changes/${changeId}/impact`, { method: 'POST' });
+    await apiRequest('POST', `/api/reg/changes/${changeId}/impact`);
     load();
   }
 
   async function openTasks(changeId: string) {
-    await fetch(`/api/reg/changes/${changeId}/tasks`, { method: 'POST' });
+    await apiRequest('POST', `/api/reg/changes/${changeId}/tasks`);
     load();
   }
 
