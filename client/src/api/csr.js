@@ -142,18 +142,7 @@ export const detectSignals = async signalData => {
     indication: signalData.indication || signalData.drugName,
   };
 
-  const response = await fetch('/api/csr-builder/safety-signals', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to detect signals');
-  }
-
+  const response = await apiRequest('POST', '/api/csr-builder/safety-signals', payload);
   const data = await response.json();
   // Map backend response to expected frontend format
   return {
@@ -174,18 +163,7 @@ export const detectSignals = async signalData => {
  * @returns {Promise<Object>} Benefit-risk analysis results
  */
 export const analyzeBenefitRisk = async benefitRiskData => {
-  const response = await fetch('/api/csr/analyze-benefit-risk', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(benefitRiskData),
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to analyze benefit-risk profile');
-  }
-
+  const response = await apiRequest('POST', '/api/csr/analyze-benefit-risk', benefitRiskData);
   return response.json();
 };
 
@@ -196,18 +174,7 @@ export const analyzeBenefitRisk = async benefitRiskData => {
  * @returns {Promise<Object>} Generated insights
  */
 export const generateInsights = async insightsData => {
-  const response = await fetch('/api/csr/insights', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(insightsData),
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to generate CSR insights');
-  }
-
+  const response = await apiRequest('POST', '/api/csr/insights', insightsData);
   return response.json();
 };
 
@@ -218,18 +185,7 @@ export const generateInsights = async insightsData => {
  * @returns {Promise<Object>} Advanced search results with analytics
  */
 export const advancedSearch = async searchParams => {
-  const response = await fetch('/api/csr/advanced-search', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(searchParams),
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to perform advanced CSR search');
-  }
-
+  const response = await apiRequest('POST', '/api/csr/advanced-search', searchParams);
   return response.json();
 };
 
@@ -239,8 +195,7 @@ export const advancedSearch = async searchParams => {
  * Get ICH E3 section structure
  */
 export const getICHE3Structure = async () => {
-  const response = await fetch('/api/csr-builder/structure');
-  if (!response.ok) throw new Error('Failed to fetch ICH E3 structure');
+  const response = await apiRequest('GET', '/api/csr-builder/structure');
   return response.json();
 };
 

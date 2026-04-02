@@ -24,6 +24,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { apiRequest } from '@/lib/queryClient';
 import {
   Select,
   SelectContent,
@@ -131,8 +132,8 @@ export default function FulleCTDCoAuthor() {
     const loadData = async () => {
       try {
         // Fetch documents
-        const docsRes = await fetch('/api/coauthor/documents', {
-          headers: { 'x-organization-id': '1' },
+        const docsRes = await apiRequest('GET', '/api/coauthor/documents', undefined, {
+          'x-organization-id': '1',
         });
         if (docsRes.ok) {
           const docsData = await docsRes.json();

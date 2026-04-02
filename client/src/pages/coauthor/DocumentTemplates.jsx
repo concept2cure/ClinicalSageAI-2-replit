@@ -191,15 +191,9 @@ const DocumentTemplates = () => {
   // Duplicate template mutation
   const duplicateTemplateMutation = useMutation({
     mutationFn: async ({ templateId, newName }) => {
-      const response = await fetch(`/api/templates/${templateId}/duplicate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-organization-id': '7',
-        },
-        body: JSON.stringify({ newName }),
+      const response = await apiRequest('POST', `/api/templates/${templateId}/duplicate`, { newName }, {
+        'x-organization-id': '7',
       });
-      if (!response.ok) throw new Error('Failed to duplicate template');
       return response.json();
     },
     onSuccess: () => {
