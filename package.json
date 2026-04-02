@@ -159,7 +159,7 @@
     "@tiptap/extension-highlight": "3.21.0",
     "@tiptap/extension-link": "3.21.0",
     "@tiptap/extension-list": "3.21.0",
-    "@tiptap/extension-mention": "3.21.0",
+    "@tiptap/extension-mention": "3.22.0",
     "@tiptap/extension-placeholder": "3.21.0",
     "@tiptap/extension-subscript": "3.21.0",
     "@tiptap/extension-superscript": "3.21.0",
