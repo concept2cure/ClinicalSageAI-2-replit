@@ -604,9 +604,9 @@ Write a comprehensive draft for this CMC section following ICH guidelines.`,
         submissionType: submissionType || 'IND',
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('CMC blueprint generation error:', error);
-    res.status(500).json({ success: false, error: error.message || 'Generation failed' });
+    res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Generation failed' });
   }
 });
 
