@@ -184,10 +184,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
       setError(null);
 
       try {
-        const response = await fetch(
-          `/api/ana/memory/default-project/${memoryId}`,
-          { method: 'DELETE' }
-        );
+        const response = await apiRequest('DELETE', `/api/ana/memory/default-project/${memoryId}`);
 
         if (!response.ok)
           throw new Error(`Failed to delete (${response.status})`);

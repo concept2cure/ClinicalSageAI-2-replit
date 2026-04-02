@@ -24,16 +24,10 @@ import { apiRequest } from '@/lib/queryClient';
  */
 export async function autoLinkDocument(documentId, options = {}) {
   try {
-    const response = await fetch('/api/autolink/document', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        documentId,
-        autoAssign: options.autoAssign,
-        tenantId: options.tenantId,
-      }),
+    const response = await apiRequest('POST', '/api/autolink/document', {
+      documentId,
+      autoAssign: options.autoAssign,
+      tenantId: options.tenantId,
     });
 
     if (!response.ok) {
@@ -60,7 +54,7 @@ export async function getModuleRecommendations(documentId, tenantId) {
     params.append('documentId', documentId);
     if (tenantId) params.append('tenantId', tenantId);
 
-    const response = await fetch(`/api/autolink/recommendations?${params.toString()}`);
+    const response = await apiRequest('GET', `/api/autolink/recommendations?${params.toString()}`);
 
     if (!response.ok) {
       throw new Error(`Error getting module recommendations: ${response.statusText}`);
@@ -83,16 +77,10 @@ export async function getModuleRecommendations(documentId, tenantId) {
  */
 export async function assignDocumentToModules(documentId, moduleIds, tenantId) {
   try {
-    const response = await fetch('/api/autolink/assign', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        documentId,
-        moduleIds,
-        tenantId,
-      }),
+    const response = await apiRequest('POST', '/api/autolink/assign', {
+      documentId,
+      moduleIds,
+      tenantId,
     });
 
     if (!response.ok) {
@@ -119,7 +107,7 @@ export async function getDocumentModules(documentId, tenantId) {
     params.append('documentId', documentId);
     if (tenantId) params.append('tenantId', tenantId);
 
-    const response = await fetch(`/api/autolink/document-modules?${params.toString()}`);
+    const response = await apiRequest('GET', `/api/autolink/document-modules?${params.toString()}`);
 
     if (!response.ok) {
       throw new Error(`Error getting document modules: ${response.statusText}`);
@@ -145,7 +133,7 @@ export async function getModuleDocuments(moduleId, tenantId) {
     params.append('moduleId', moduleId);
     if (tenantId) params.append('tenantId', tenantId);
 
-    const response = await fetch(`/api/autolink/module-documents?${params.toString()}`);
+    const response = await apiRequest('GET', `/api/autolink/module-documents?${params.toString()}`);
 
     if (!response.ok) {
       throw new Error(`Error getting module documents: ${response.statusText}`);
@@ -168,16 +156,10 @@ export async function getModuleDocuments(moduleId, tenantId) {
  */
 export async function unassignDocumentFromModule(documentId, moduleId, tenantId) {
   try {
-    const response = await fetch('/api/autolink/unassign', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        documentId,
-        moduleId,
-        tenantId,
-      }),
+    const response = await apiRequest('POST', '/api/autolink/unassign', {
+      documentId,
+      moduleId,
+      tenantId,
     });
 
     if (!response.ok) {

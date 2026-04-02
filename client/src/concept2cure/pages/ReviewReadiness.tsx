@@ -1465,7 +1465,7 @@ export function ReviewReadiness({ onClose, projectId }: { onClose: () => void; p
   // Fetch real audit logs
   const { data: auditRaw } = useQuery({
     queryKey: [...queryKeys.auditLogs.list({ limit: 50 })],
-    queryFn: () => fetch('/api/concept2cure/audit-logs?limit=50').then(r => r.json()),
+    queryFn: () => apiRequest('GET', '/api/concept2cure/audit-logs?limit=50').then(r => r.json()),
   });
   const auditLogs = (auditRaw as any)?.data?.logs || [];
 

@@ -303,7 +303,7 @@ export function useReadinessStream({
     let interval: ReturnType<typeof setInterval> | undefined;
     const poll = async () => {
       try {
-        const res = await fetch(`/api/orchestration/projects/${projectId}/readiness`);
+        const res = await apiRequest('GET', `/api/orchestration/projects/${projectId}/readiness`);
         if (res.ok) {
           setReadiness(await res.json());
         }
@@ -372,7 +372,7 @@ export function useProjectIntelligenceStream({
     let interval: ReturnType<typeof setInterval> | undefined;
     const poll = async () => {
       try {
-        const res = await fetch(`/api/orchestration/projects/${projectId}/intelligence`);
+        const res = await apiRequest('GET', `/api/orchestration/projects/${projectId}/intelligence`);
         if (res.ok) {
           setIntelligence(await res.json());
         }
