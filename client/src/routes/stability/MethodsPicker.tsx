@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function MethodsPicker({ test, onLinked }: { test: any; onLinked: () => void }) {
   const [q, setQ] = useState('');
@@ -9,7 +10,7 @@ export default function MethodsPicker({ test, onLinked }: { test: any; onLinked:
 
   async function search() {
     try {
-      const r = await fetch(`/api/stability/methods?q=${encodeURIComponent(q)}`);
+      const r = await apiRequest('GET', `/api/stability/methods?q=${encodeURIComponent(q)}`);
       setRows(await r.json());
     } catch (error) {
       // search failed silently
@@ -18,13 +19,8 @@ export default function MethodsPicker({ test, onLinked }: { test: any; onLinked:
 
   async function link(method_id: string) {
     try {
-      const r = await fetch(`/api/stability/tests/${test.test_id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ method_id }),
-      });
-      if (r.ok) onLinked();
-      else toast({ title: 'Error', description: 'Method linking failed', variant: 'destructive' });
+      await apiRequest('PATCH', `/api/stability/tests/${test.test_id}`, { method_id });
+      onLinked();
     } catch (error) {
       toast({ title: 'Error', description: 'Method linking failed', variant: 'destructive' });
     }

@@ -33,9 +33,9 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
     setLoading(true);
     try {
       const [rpi, timeline, hist] = await Promise.all([
-        apiRequest('GET', `/api/reg/submissions/${subId}/rpi`),
-        apiRequest('GET', `/api/reg/submissions/${subId}/timeline-risk`),
-        apiRequest('GET', `/api/reg/submissions/${subId}/gatekeeper/history`),
+        apiRequest('GET', `/api/reg/submissions/${subId}/rpi`).then(r => r.json()),
+        apiRequest('GET', `/api/reg/submissions/${subId}/timeline-risk`).then(r => r.json()),
+        apiRequest('GET', `/api/reg/submissions/${subId}/gatekeeper/history`).then(r => r.json()),
       ]);
       setRpiData(rpi);
       setTimelineData(timeline);
@@ -54,7 +54,8 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
   const runGatekeeper = async () => {
     setLoading(true);
     try {
-      const result = await apiRequest('POST', `/api/reg/submissions/${subId}/gatekeeper/run`);
+      const response = await apiRequest('POST', `/api/reg/submissions/${subId}/gatekeeper/run`);
+      const result = await response.json();
       setGatekeeperData(result);
       loadData(); // Refresh all data
     } catch (error) {
@@ -79,7 +80,8 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
 
   const generateSlackDigest = async () => {
     try {
-      const digest = await apiRequest('POST', `/api/reg/submissions/${subId}/digest/slack`);
+      const response = await apiRequest('POST', `/api/reg/submissions/${subId}/digest/slack`);
+      const digest = await response.json();
 
       // Copy to clipboard
       navigator.clipboard.writeText(digest.message);
@@ -91,7 +93,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
 
   const downloadCalendar = async () => {
     try {
-      const response = await fetch(`/api/reg/submissions/${subId}/calendar`);
+      const response = await apiRequest('GET', `/api/reg/submissions/${subId}/calendar`);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');

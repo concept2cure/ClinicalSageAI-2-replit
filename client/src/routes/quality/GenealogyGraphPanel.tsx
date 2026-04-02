@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { GitBranch, Package, Leaf, Truck, Download } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
 
 interface GenealogyGraphPanelProps {
   batchId: string;
@@ -16,10 +17,7 @@ export default function GenealogyGraphPanel({ batchId }: GenealogyGraphPanelProp
   async function loadGraph() {
     try {
       setLoading(true);
-      const response = await fetch(`/api/quality/batches/${batchId}/genealogy/graph`);
-      if (!response.ok) {
-        throw new Error('Failed to load genealogy graph');
-      }
+      const response = await apiRequest('GET', `/api/quality/batches/${batchId}/genealogy/graph`);
       const data = await response.json();
       setGraphData(data);
     } catch (e) {

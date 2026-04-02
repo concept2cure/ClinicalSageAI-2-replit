@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function RegulatoryPanel({ batchId }: { batchId: string }) {
   const [compliance, setCompliance] = useState<any>(null);
@@ -20,24 +21,25 @@ export default function RegulatoryPanel({ batchId }: { batchId: string }) {
   }, [batchId, region]);
 
   async function load() {
-    const r = await fetch(
-      `/api/quality/batches/${batchId}/regulatory/compliance?region=${region}`
-    ).then(r => r.json());
-    setCompliance(r);
+    try {
+      const r = await apiRequest('GET', `/api/quality/batches/${batchId}/regulatory/compliance?region=${region}`);
+      setCompliance(await r.json());
+    } catch { setCompliance(null); }
   }
 
   async function generateReport() {
-    const r = await fetch(`/api/quality/batches/${batchId}/regulatory/report?region=${region}`, {
-      method: 'POST',
-    });
-    if (!r.ok) { toast({ title: 'Error', description: 'Report generation failed', variant: 'destructive' }); return; }
-    const blob = await r.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `regulatory_report_${batchId}_${region}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const r = await apiRequest('POST', `/api/quality/batches/${batchId}/regulatory/report?region=${region}`);
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `regulatory_report_${batchId}_${region}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message || 'Report generation failed', variant: 'destructive' });
+    }
   }
 
   return (

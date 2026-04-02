@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,10 +13,8 @@ export default function M3Builder({ subId }: { subId: string }) {
   async function load() {
     setLoading(true);
     try {
-      const r = await fetch(`/api/reg/submissions/${subId}/m3`);
-      if (r.ok) {
-        setData(await r.json());
-      }
+      const r = await apiRequest('GET', `/api/reg/submissions/${subId}/m3`);
+      setData(await r.json());
     } catch (error) {
     } finally {
       setLoading(false);
@@ -28,7 +27,7 @@ export default function M3Builder({ subId }: { subId: string }) {
 
   async function automap(secId: string) {
     try {
-      await fetch(`/api/reg/sections/${secId}/automap`, { method: 'POST' });
+      await apiRequest('POST', `/api/reg/sections/${secId}/automap`);
       await load();
     } catch (error) {
       toast({ title: 'Error', description: 'Auto-map failed', variant: 'destructive' });
@@ -37,9 +36,8 @@ export default function M3Builder({ subId }: { subId: string }) {
 
   async function draft(secId: string) {
     try {
-      const s = await fetch(`/api/reg/sections/${secId}/draft`, { method: 'POST' }).then(r =>
-        r.json()
-      );
+      const res = await apiRequest('POST', `/api/reg/sections/${secId}/draft`);
+      const s = await res.json();
       toast({ title: 'Draft Ready', description: 'AI draft is ready in Suggestions list' });
       await load();
     } catch (error) {
@@ -49,8 +47,8 @@ export default function M3Builder({ subId }: { subId: string }) {
 
   async function listSug(secId: string) {
     try {
-      const r = await fetch(`/api/reg/sections/${secId}/suggestions`).then(r => r.json());
-      return r;
+      const res = await apiRequest('GET', `/api/reg/sections/${secId}/suggestions`);
+      return await res.json();
     } catch (error) {
       return [];
     }
@@ -58,7 +56,7 @@ export default function M3Builder({ subId }: { subId: string }) {
 
   async function accept(sugId: string) {
     try {
-      await fetch(`/api/reg/suggestions/${sugId}/accept`, { method: 'POST' });
+      await apiRequest('POST', `/api/reg/suggestions/${sugId}/accept`);
       await load();
     } catch (error) {
     }

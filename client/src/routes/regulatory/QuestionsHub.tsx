@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Mail, Upload, FileText, Brain, CheckCircle, AlertTriangle, Calendar } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function QuestionsHub({ subId }: { subId: string }) {
   const [questions, setQuestions] = React.useState<any[]>([]);
@@ -25,8 +26,8 @@ export default function QuestionsHub({ subId }: { subId: string }) {
   });
 
   async function loadQuestions() {
-    const r = await fetch(`/api/reg/submissions/${subId}/questions`).then(r => r.json());
-    setQuestions(r);
+    const res = await apiRequest('GET', `/api/reg/submissions/${subId}/questions`);
+    setQuestions(await res.json());
   }
 
   React.useEffect(() => {
@@ -34,34 +35,22 @@ export default function QuestionsHub({ subId }: { subId: string }) {
   }, [subId]);
 
   async function ingestEmail() {
-    await fetch(`/api/reg/submissions/${subId}/questions/ingest`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(emailData),
-    });
+    await apiRequest('POST', `/api/reg/submissions/${subId}/questions/ingest`, emailData);
     setEmailData({ subject: '', from: '', to: '', body: '' });
     setShowIngest(false);
     loadQuestions();
   }
 
   async function draftResponse(questionId: string, tone: string = 'Neutral') {
-    const r = await fetch(`/api/reg/questions/${questionId}/draft`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tone }),
-    });
-    const result = await r.json();
+    const res = await apiRequest('POST', `/api/reg/questions/${questionId}/draft`, { tone });
+    const result = await res.json();
     // Refresh questions to show linked responses
     loadQuestions();
     return result;
   }
 
   async function approveResponse(responseId: string) {
-    await fetch(`/api/reg/responses/${responseId}/approve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ role: 'Regulatory Lead' }),
-    });
+    await apiRequest('POST', `/api/reg/responses/${responseId}/approve`, { role: 'Regulatory Lead' });
     loadQuestions();
   }
 

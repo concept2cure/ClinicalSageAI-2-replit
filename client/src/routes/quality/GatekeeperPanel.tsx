@@ -3,23 +3,26 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import InfoTip from '@/components/InfoTip';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function GatekeeperPanel({ batchId }: { batchId: string }) {
   const [out, setOut] = useState<any>(null);
   async function evalNow() {
-    const r = await fetch(`/api/quality/batches/${batchId}/gatekeeper/evaluate`);
-    setOut(await r.json());
+    try {
+      const r = await apiRequest('GET', `/api/quality/batches/${batchId}/gatekeeper/evaluate`);
+      setOut(await r.json());
+    } catch { setOut(null); }
   }
   async function applyFixes() {
-    const ids = (out?.blockers || []).filter((b: any) => b.fixable).map((b: any) => b.id);
-    const r = await fetch(`/api/quality/batches/${batchId}/gatekeeper/apply-fixes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ blocker_ids: ids }),
-    });
-    const d = await r.json();
-    toast({ title: 'Fixes Applied', description: `Applied ${d.applied} fixes` });
-    setOut(d.after);
+    try {
+      const ids = (out?.blockers || []).filter((b: any) => b.fixable).map((b: any) => b.id);
+      const r = await apiRequest('POST', `/api/quality/batches/${batchId}/gatekeeper/apply-fixes`, { blocker_ids: ids });
+      const d = await r.json();
+      toast({ title: 'Fixes Applied', description: `Applied ${d.applied} fixes` });
+      setOut(d.after);
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message || 'Apply fixes failed', variant: 'destructive' });
+    }
   }
   useEffect(() => {
     evalNow();
