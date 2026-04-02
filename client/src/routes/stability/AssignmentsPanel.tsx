@@ -7,8 +7,8 @@ export default function AssignmentsPanel({ studyId }: { studyId: string }) {
   const [rows, setRows] = useState<any[]>([]);
   async function load() {
     try {
-      const data = await apiRequest('GET', `/api/stability/studies/${studyId}/assignments`);
-      setRows(data);
+      const res = await apiRequest('GET', `/api/stability/studies/${studyId}/assignments`);
+      setRows(await res.json());
     } catch (err) {
       console.error('[AssignmentsPanel] Failed to load assignments:', err);
     }

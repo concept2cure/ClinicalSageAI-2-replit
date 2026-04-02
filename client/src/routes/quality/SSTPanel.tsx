@@ -10,22 +10,18 @@ export default function SSTPanel({ testId }: { testId: string }) {
   const [json, setJson] = useState<string>('{"plates": 5000, "tailing": 1.2, "r2": 0.9999}');
   const [latest, setLatest] = useState<any>(null);
   async function load() {
-    const r = await fetch(`/api/quality/tests/${testId}/sst/latest`);
-    setLatest(await r.json());
+    try {
+      const r = await apiRequest('GET', `/api/quality/tests/${testId}/sst/latest`);
+      setLatest(await r.json());
+    } catch { /* handled by apiRequest */ }
   }
   async function save() {
     try {
       const payload = JSON.parse(json);
-      const r = await fetch(`/api/quality/tests/${testId}/sst`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payload_json: payload, pass: true }),
-      });
-      const d = await r.json();
-      if (!r.ok) { toast({ title: 'SST Error', description: d.error || 'SST recording failed', variant: 'destructive' }); return; }
+      await apiRequest('POST', `/api/quality/tests/${testId}/sst`, { payload_json: payload, pass: true });
       load();
-    } catch {
-      toast({ title: 'Invalid Input', description: 'Please enter valid JSON', variant: 'destructive' });
+    } catch (e: any) {
+      toast({ title: 'SST Error', description: e.message || 'Please enter valid JSON', variant: 'destructive' });
     }
   }
   useEffect(() => {

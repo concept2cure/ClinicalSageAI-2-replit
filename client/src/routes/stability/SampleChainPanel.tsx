@@ -40,7 +40,8 @@ export default function SampleChainPanel({ sampleId, sampleCode }: SampleChainPa
   const loadChain = async () => {
     try {
       setLoading(true);
-      const data = await apiRequest('GET', `/api/stability/samples/${sampleId}/chain`);
+      const res = await apiRequest('GET', `/api/stability/samples/${sampleId}/chain`);
+      const data = await res.json();
       setChain(data || []);
     } catch (error) {
     } finally {

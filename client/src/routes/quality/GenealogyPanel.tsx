@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function GenealogyPanel({ batchId }: { batchId: string }) {
   const [items, setItems] = useState<any[]>([]);
@@ -24,24 +25,23 @@ export default function GenealogyPanel({ batchId }: { batchId: string }) {
 
   async function load() {
     try {
-      const r = await fetch(`/api/quality/batches/${batchId}/genealogy`);
+      const r = await apiRequest('GET', `/api/quality/batches/${batchId}/genealogy`);
       const data = await r.json();
       setItems(Array.isArray(data) ? data : []);
-    } catch (e) {
+    } catch {
       setItems([]);
     }
   }
 
   async function add() {
     if (!form.parent_code) { toast({ title: 'Input Required', description: 'Parent code is required', variant: 'destructive' }); return; }
-    const r = await fetch(`/api/quality/batches/${batchId}/genealogy`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    });
-    if (!r.ok) { toast({ title: 'Error', description: 'Failed to add genealogy entry', variant: 'destructive' }); return; }
-    setForm({ parent_type: 'RAW', parent_code: '', parent_lot: '', qty: '', unit: 'kg', note: '' });
-    load();
+    try {
+      await apiRequest('POST', `/api/quality/batches/${batchId}/genealogy`, form);
+      setForm({ parent_type: 'RAW', parent_code: '', parent_lot: '', qty: '', unit: 'kg', note: '' });
+      load();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message || 'Failed to add genealogy entry', variant: 'destructive' });
+    }
   }
 
   useEffect(() => {

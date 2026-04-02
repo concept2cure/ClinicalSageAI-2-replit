@@ -27,7 +27,8 @@ export default function SamplingWorkbench({ studyId }: { studyId: string }) {
 
   async function create(tp: any) {
     try {
-      const d = await apiRequest('POST', `/api/stability/studies/${studyId}/samples`, { tp_id: tp.tp_id });
+      const res = await apiRequest('POST', `/api/stability/studies/${studyId}/samples`, { tp_id: tp.tp_id });
+      const d = await res.json();
       await load();
       window.open(`/api/stability/samples/${d.sample_id}/barcode.png`, '_blank');
     } catch (err: any) {
