@@ -938,7 +938,7 @@ export default function CSRIntelligence({ sharedData = {}, onDataUpdate = () => 
             console.log('✅ Force loaded CSR data:', formattedData);
           }
         } catch (error) {
-          console.error('Force load failed:', error);
+          toast({ title: 'CSR data load failed', description: 'Could not load CSR intelligence data. Please refresh the page.', variant: 'destructive' });
         }
       };
       forceLoadData().catch(console.error);

@@ -292,7 +292,10 @@ export default function ClinicalEvidenceTracker() {
       apiRequest('GET', `/api/ivdr/clinical-evidence/${selected.id}/history`)
         .then(r => r.json())
         .then(data => setEvidenceHistory(data.history || []))
-        .catch(() => setEvidenceHistory([]));
+        .catch(() => {
+          toast({ title: 'Failed to load evidence history', description: 'Could not retrieve audit history for this study.', variant: 'destructive' });
+          setEvidenceHistory([]);
+        });
     }
   }, [selected]);
 

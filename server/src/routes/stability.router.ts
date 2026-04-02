@@ -113,8 +113,8 @@ const pool = getPool();
 async function executeQuery(req: any, queryText: string, params?: any[]) {
   const client = await pool.connect();
   try {
-    // Set tenant context for RLS policies
-    const tenantId = req.headers?.['x-tenant-id'] || req.headers?.['x-organization-id'];
+    // Set tenant context for RLS policies — derive from JWT-validated context, not raw headers
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       throw new Error('Tenant context required');
     }
@@ -156,8 +156,8 @@ async function audit(studyId: string, action: string, payload: any, req: any) {
   const actor = (req.headers['x-user-name'] || req.headers['x-user-email'] || 'user').toString();
   const client = await pool.connect();
   try {
-    // Set tenant context for audit - use parameterized set_config() to prevent SQL injection
-    const tenantId = req.headers?.['x-tenant-id'] || req.headers?.['x-organization-id'];
+    // Set tenant context for audit — derive from JWT-validated context, not raw headers
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       throw new Error('Tenant context required');
     }

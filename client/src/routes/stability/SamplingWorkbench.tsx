@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import InfoTip from '@/components/InfoTip';
 import HelpDrawer from '@/components/HelpDrawer';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function SamplingWorkbench({ studyId }: { studyId: string }) {
   const [due, setDue] = useState<any[]>([]);
@@ -13,10 +14,8 @@ export default function SamplingWorkbench({ studyId }: { studyId: string }) {
   const [helpOpen, setHelpOpen] = useState(false);
 
   async function load() {
-    const u = await fetch(`/api/stability/studies/${studyId}/timepoints/due?limit=20`).then(r =>
-      r.json()
-    );
-    const s = await fetch(`/api/stability/studies/${studyId}/samples`).then(r => r.json());
+    const u = await apiRequest('GET', `/api/stability/studies/${studyId}/timepoints/due?limit=20`);
+    const s = await apiRequest('GET', `/api/stability/studies/${studyId}/samples`);
     setDue(u || []);
     setSamples(s || []);
   }
@@ -25,24 +24,21 @@ export default function SamplingWorkbench({ studyId }: { studyId: string }) {
   }, [studyId]);
 
   async function create(tp: any) {
-    const r = await fetch(`/api/stability/studies/${studyId}/samples`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tp_id: tp.tp_id }),
-    });
-    const d = await r.json();
-    if (!r.ok) { toast({ title: 'Error', description: d.error || 'Create sample failed', variant: 'destructive' }); return; }
-    await load();
-    window.open(`/api/stability/samples/${d.sample_id}/barcode.png`, '_blank');
+    try {
+      const d = await apiRequest('POST', `/api/stability/studies/${studyId}/samples`, { tp_id: tp.tp_id });
+      await load();
+      window.open(`/api/stability/samples/${d.sample_id}/barcode.png`, '_blank');
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Create sample failed', variant: 'destructive' });
+    }
   }
   async function collect(sample: any) {
-    const r = await fetch(`/api/stability/studies/${studyId}/samples/collect`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sample_id: sample.sample_id }),
-    });
-    if (!r.ok) { toast({ title: 'Error', description: 'Sample collection failed', variant: 'destructive' }); return; }
-    load();
+    try {
+      await apiRequest('POST', `/api/stability/studies/${studyId}/samples/collect`, { sample_id: sample.sample_id });
+      load();
+    } catch {
+      toast({ title: 'Error', description: 'Sample collection failed', variant: 'destructive' });
+    }
   }
 
   return (

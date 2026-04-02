@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -88,8 +89,7 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
     if (!subId) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/reg/playbook/${subId}/cards`);
-      const data = await response.json();
+      const data = await apiRequest('GET', `/api/reg/playbook/${subId}/cards`);
       setCards(data);
     } catch (error) {
     } finally {

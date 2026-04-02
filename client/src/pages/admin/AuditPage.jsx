@@ -3,11 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, Calendar, User, Activity, FileText, Download, Search } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 /**
  * Audit Trail Page - Track and review user activities and document changes
  */
 const AuditPage = () => {
+  const { toast } = useToast();
   // Audit log state
   const [auditLogs, setAuditLogs] = useState([]);
   const [filteredLogs, setFilteredLogs] = useState([]);
@@ -41,7 +43,7 @@ const AuditPage = () => {
           setFilteredLogs(data.logs || []);
         }
       } catch (error) {
-        console.error('Error fetching audit logs:', error);
+        toast({ title: 'Failed to load audit logs', description: 'Could not retrieve audit trail data. Please try again.', variant: 'destructive' });
       } finally {
         setLoading(false);
       }
