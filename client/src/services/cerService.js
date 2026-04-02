@@ -66,11 +66,7 @@ export async function getCERJobs({ page = 1, limit = 10, status = null }) {
     params.append('status', status);
   }
 
-  const response = await fetch(`/api/cer/jobs?${params.toString()}`, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
-    },
-  });
+  const response = await apiRequest('GET', `/api/cer/jobs?${params.toString()}`);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch CER jobs: ${response.statusText}`);
@@ -86,11 +82,7 @@ export async function getCERJobs({ page = 1, limit = 10, status = null }) {
  * @returns {Promise<Object>} - The job details
  */
 export async function getCERJobDetails(jobId) {
-  const response = await fetch(`/api/cer/jobs/${jobId}`, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
-    },
-  });
+  const response = await apiRequest('GET', `/api/cer/jobs/${jobId}`);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch job details: ${response.statusText}`);
@@ -109,14 +101,7 @@ export async function getCERJobDetails(jobId) {
  * @returns {Promise<Object>} - The review submission result
  */
 export async function submitCERReview(review) {
-  const response = await fetch('/api/cer/reviews', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
-    },
-    body: JSON.stringify(review),
-  });
+  const response = await apiRequest('POST', '/api/cer/reviews', review);
 
   if (!response.ok) {
     throw new Error(`Failed to submit review: ${response.statusText}`);

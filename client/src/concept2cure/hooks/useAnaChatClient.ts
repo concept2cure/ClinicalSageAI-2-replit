@@ -203,13 +203,7 @@ export function useAnaChatClient(): UseAnaChatClientReturn {
   }, []);
 
   const sendViaChat = useCallback(async (request: AnaChatRequest): Promise<AnaChatResult> => {
-    const headers = getAuthHeaders();
-    const response = await fetch('/api/ana-ri/chat', {
-      method: 'POST',
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify(request),
-      credentials: 'include',
-    });
+    const response = await apiRequest('POST', '/api/ana-ri/chat', request);
 
     if (!response.ok) {
       const text = await response.text().catch(() => '');

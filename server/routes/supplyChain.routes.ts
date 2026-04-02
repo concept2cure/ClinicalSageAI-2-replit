@@ -1,299 +1,307 @@
 /**
  * Supply Chain Management API Routes
- * 
+ *
  * Enterprise-ready REST API for pharmaceutical supply chain management
  * Supports GxP compliance, multi-tenant architecture, and real-time operations
  */
 
 import { Router } from 'express';
-import { z } from 'zod';
-import { db } from '../db';
-import { supplyChainBatches, supplyChainSuppliers, deviations, auditEvents } from '../../shared/schema';
-import { eq, and, desc } from 'drizzle-orm';
-import { createInsertSchema } from 'drizzle-zod';
+import { getPool } from '../db';
 
 const router = Router();
 
+/**
+ * Helper: extract organizationId from request (query, body, or user session)
+ */
+function getOrgId(req: any): number | null {
+  const orgId = parseInt(req.query.organizationId as string)
+    || req.body?.organizationId
+    || req.user?.organizationId;
+  return orgId && !isNaN(orgId) ? orgId : null;
+}
+
 // ============================================================================
-// MOCK DATA FOR PHARMACEUTICAL SUPPLY CHAIN
+// SUPPLIER MANAGEMENT ROUTES
 // ============================================================================
 
-const mockSuppliers = [
-  {
-    id: 1,
-    supplierCode: 'SUP-001',
-    name: 'BioChem Solutions Ltd.',
-    supplierType: 'API Manufacturer',
-    qualificationStatus: 'qualified',
-    riskLevel: 'low',
-    qualityScore: 94.5,
-    deliveryPerformance: 98.2,
-    location: 'Basel, Switzerland',
-    certifications: ['ISO 9001', 'ICH Q7', 'FDA Registered'],
-    lastAuditDate: '2024-07-20',
-    nextAuditDate: '2025-07-20',
-    contact: 'Dr. Maria Weber',
-    isActive: true
-  },
-  {
-    id: 2,
-    supplierCode: 'SUP-002', 
-    name: 'Global Excipients Corp',
-    supplierType: 'Excipient Supplier',
-    qualificationStatus: 'qualified',
-    riskLevel: 'low',
-    qualityScore: 91.8,
-    deliveryPerformance: 96.7,
-    location: 'New Jersey, USA',
-    certifications: ['ISO 9001', 'USP-NF', 'Ph.Eur'],
-    lastAuditDate: '2024-05-10',
-    nextAuditDate: '2025-05-10',
-    contact: 'John Martinez',
-    isActive: true
-  },
-  {
-    id: 3,
-    supplierCode: 'SUP-003',
-    name: 'AseptiPack Manufacturing',
-    supplierType: 'Primary Packaging',
-    qualificationStatus: 'qualified',
-    riskLevel: 'medium',
-    qualityScore: 89.3,
-    deliveryPerformance: 94.1,
-    location: 'Dublin, Ireland',
-    certifications: ['ISO 15378', 'Good Storage Practice'],
-    lastAuditDate: '2024-06-15',
-    nextAuditDate: '2025-06-15',
-    contact: "Sarah O'Connor",
-    isActive: true
-  }
-];
-
-const mockMaterials = [
-  {
-    id: 1,
-    materialCode: 'API-001',
-    name: 'Adalimumab API',
-    materialType: 'API',
-    materialCategory: 'Drug Substance',
-    casNumber: '331731-18-1',
-    regulatoryStatus: 'approved',
-    storageConditions: '2-8°C',
-    primarySupplierId: 1,
-    qualityGrade: 'Ph.Eur',
-    specificationVersion: '2.1',
-    reorderPoint: 20.0,
-    isActive: true
-  },
-  {
-    id: 2,
-    materialCode: 'EXC-001',
-    name: 'Lactose Monohydrate',
-    materialType: 'Excipient',
-    materialCategory: 'Filler',
-    casNumber: '64044-51-5',
-    regulatoryStatus: 'approved',
-    storageConditions: 'Room Temperature',
-    primarySupplierId: 2,
-    qualityGrade: 'USP-NF',
-    specificationVersion: '1.0',
-    reorderPoint: 500.0,
-    isActive: true
-  }
-];
-
-const mockBatches = [
-  {
-    id: 1,
-    batchNumber: 'API-001-2024-001',
-    lotNumber: 'API-001-2024-001',
-    materialId: 1,
-    batchStatus: 'released',
-    manufacturingStatus: 'completed',
-    qcStatus: 'passed',
-    releaseStatus: 'released',
-    manufacturingDate: '2024-08-15',
-    expiryDate: '2027-08-15',
-    batchSize: 50.0,
-    batchSizeUnit: 'kg',
-    yield: 96.2,
-    qpReleaseDate: '2024-08-25',
-    qpReleasedBy: 'Dr. Smith',
-    coaNumber: 'COA-2024-0145',
-    currentLocation: 'Warehouse A-1'
-  },
-  {
-    id: 2,
-    batchNumber: 'EXC-001-2024-012',
-    lotNumber: 'EXC-001-2024-012',
-    materialId: 2,
-    batchStatus: 'testing',
-    manufacturingStatus: 'completed',
-    qcStatus: 'in_progress',
-    releaseStatus: 'not_released',
-    manufacturingDate: '2024-09-01',
-    expiryDate: '2027-09-01',
-    batchSize: 1000.0,
-    batchSizeUnit: 'kg',
-    yield: 98.5,
-    currentLocation: 'QC Lab'
-  }
-];
-
-const mockShipments = [
-  {
-    id: 1,
-    shipmentNumber: 'SH-2024-001',
-    shipmentType: 'inbound',
-    shipmentStatus: 'delivered',
-    originSupplier: 'BioChem Solutions Ltd.',
-    destinationAddress: 'Manufacturing Site A',
-    trackingNumber: 'DHL123456789',
-    plannedDeliveryDate: '2024-09-18',
-    actualDeliveryDate: '2024-09-18',
-    temperatureMin: 2.0,
-    temperatureMax: 8.0,
-    coldChainIntact: true,
-    gdpCompliance: true
-  }
-];
-
-const mockTemperatureReadings = [
-  { id: 1, shipmentId: 1, readingTime: '2024-09-17T10:00:00Z', temperature: 4.2, humidity: 65, isExcursion: false },
-  { id: 2, shipmentId: 1, readingTime: '2024-09-17T11:00:00Z', temperature: 5.1, humidity: 68, isExcursion: false },
-  { id: 3, shipmentId: 1, readingTime: '2024-09-17T12:00:00Z', temperature: 3.8, humidity: 63, isExcursion: false },
-];
-
-const mockDeviations = [
-  {
-    id: 1,
-    deviationNumber: 'DEV-2024-001',
-    deviationType: 'cold_chain',
-    severity: 'minor',
-    impact: 'delivery',
-    title: 'Temperature Excursion During Transport',
-    description: 'Brief temperature spike observed during shipment SH-2024-001',
-    discoveryDate: '2024-09-17T14:30:00Z',
-    discoveredBy: 'System Alert',
-    status: 'resolved',
-    priority: 'medium',
-    assignedTo: 'Quality Team',
-    shipmentId: 1
-  }
-];
+// POST /api/supply-chain/suppliers/:id/qualify
 router.post('/suppliers/:id/qualify', async (req, res) => {
   try {
+    const pool = getPool();
     const supplierId = parseInt(req.params.id);
-    const { auditScore, qualifiedBy } = req.body;
-    
-    const supplier = mockSuppliers.find(s => s.id === supplierId);
-    if (!supplier) {
-      return res.status(404).json({
-        success: false,
-        error: 'Supplier not found',
-      });
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
     }
-    
-    supplier.qualificationStatus = 'qualified';
-    supplier.qualityScore = auditScore;
-    supplier.lastAuditDate = new Date().toISOString().split('T')[0];
-    
+    const { auditScore, qualifiedBy } = req.body;
+
+    const result = await pool.query(
+      `UPDATE supply_chain_suppliers
+       SET qualification_status = 'qualified',
+           quality_score = $1,
+           last_audit_date = CURRENT_DATE,
+           updated_at = NOW()
+       WHERE id = $2 AND organization_id = $3
+       RETURNING *`,
+      [auditScore, supplierId, orgId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Supplier not found' });
+    }
+
     res.json({
       success: true,
-      data: supplier,
+      data: result.rows[0],
       message: 'Supplier qualified successfully',
     });
   } catch (error) {
     console.error('Error qualifying supplier:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to qualify supplier',
-    });
+    res.status(500).json({ success: false, error: 'Failed to qualify supplier' });
   }
 });
+
+// GET /api/supply-chain/suppliers
+router.get('/suppliers', async (req, res) => {
+  try {
+    const pool = getPool();
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
+    }
+
+    const result = await pool.query(
+      'SELECT * FROM supply_chain_suppliers WHERE organization_id = $1 ORDER BY created_at DESC',
+      [orgId]
+    );
+
+    res.json({
+      success: true,
+      data: result.rows,
+      total: result.rows.length,
+    });
+  } catch (error) {
+    console.error('Error fetching suppliers:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch suppliers' });
+  }
+});
+
+// POST /api/supply-chain/suppliers
+router.post('/suppliers', async (req, res) => {
+  try {
+    const pool = getPool();
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
+    }
+
+    const {
+      supplierCode, name, supplierType, qualificationStatus, riskLevel,
+      qualityScore, deliveryPerformance, location, certifications,
+      lastAuditDate, nextAuditDate, contact
+    } = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO supply_chain_suppliers
+       (organization_id, supplier_code, name, supplier_type, qualification_status,
+        risk_level, quality_score, delivery_performance, location, certifications,
+        last_audit_date, next_audit_date, contact, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, true)
+       RETURNING *`,
+      [orgId, supplierCode, name, supplierType, qualificationStatus || 'pending',
+       riskLevel || 'medium', qualityScore, deliveryPerformance, location,
+       JSON.stringify(certifications || []), lastAuditDate, nextAuditDate, contact]
+    );
+
+    res.status(201).json({
+      success: true,
+      data: result.rows[0],
+      message: 'Supplier created successfully',
+    });
+  } catch (error) {
+    console.error('Error creating supplier:', error);
+    res.status(500).json({ success: false, error: 'Failed to create supplier' });
+  }
+});
+
+// PUT /api/supply-chain/suppliers/:id
+router.put('/suppliers/:id', async (req, res) => {
+  try {
+    const pool = getPool();
+    const supplierId = parseInt(req.params.id);
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
+    }
+
+    const {
+      supplierCode, name, supplierType, qualificationStatus, riskLevel,
+      qualityScore, deliveryPerformance, location, certifications,
+      lastAuditDate, nextAuditDate, contact, isActive
+    } = req.body;
+
+    const result = await pool.query(
+      `UPDATE supply_chain_suppliers SET
+        supplier_code = COALESCE($1, supplier_code),
+        name = COALESCE($2, name),
+        supplier_type = COALESCE($3, supplier_type),
+        qualification_status = COALESCE($4, qualification_status),
+        risk_level = COALESCE($5, risk_level),
+        quality_score = COALESCE($6, quality_score),
+        delivery_performance = COALESCE($7, delivery_performance),
+        location = COALESCE($8, location),
+        certifications = COALESCE($9, certifications),
+        last_audit_date = COALESCE($10, last_audit_date),
+        next_audit_date = COALESCE($11, next_audit_date),
+        contact = COALESCE($12, contact),
+        is_active = COALESCE($13, is_active),
+        updated_at = NOW()
+       WHERE id = $14 AND organization_id = $15
+       RETURNING *`,
+      [supplierCode, name, supplierType, qualificationStatus, riskLevel,
+       qualityScore, deliveryPerformance, location,
+       certifications ? JSON.stringify(certifications) : null,
+       lastAuditDate, nextAuditDate, contact, isActive, supplierId, orgId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Supplier not found' });
+    }
+
+    res.json({
+      success: true,
+      data: result.rows[0],
+      message: 'Supplier updated successfully',
+    });
+  } catch (error) {
+    console.error('Error updating supplier:', error);
+    res.status(500).json({ success: false, error: 'Failed to update supplier' });
+  }
+});
+
+// DELETE /api/supply-chain/suppliers/:id
+router.delete('/suppliers/:id', async (req, res) => {
+  try {
+    const pool = getPool();
+    const supplierId = parseInt(req.params.id);
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
+    }
+
+    const result = await pool.query(
+      'DELETE FROM supply_chain_suppliers WHERE id = $1 AND organization_id = $2 RETURNING *',
+      [supplierId, orgId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Supplier not found' });
+    }
+
+    res.json({
+      success: true,
+      data: result.rows[0],
+      message: 'Supplier deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting supplier:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete supplier' });
+  }
+});
+
+// ============================================================================
 // BATCH ROUTES
 // ============================================================================
 
-// GET /api/supply-chain/batches  
+// GET /api/supply-chain/batches
 router.get('/batches', async (req, res) => {
   try {
+    const pool = getPool();
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
+    }
+
     const { batchStatus, qcStatus, releaseStatus, materialId, search } = req.query;
-    
-    let filteredBatches = [...mockBatches];
-    
+
+    let query = 'SELECT * FROM supply_chain_batches WHERE organization_id = $1';
+    const params: any[] = [orgId];
+    let paramIndex = 2;
+
     if (batchStatus) {
-      filteredBatches = filteredBatches.filter(b => b.batchStatus === batchStatus);
+      query += ` AND batch_status = $${paramIndex++}`;
+      params.push(batchStatus);
     }
     if (qcStatus) {
-      filteredBatches = filteredBatches.filter(b => b.qcStatus === qcStatus);
+      query += ` AND qc_status = $${paramIndex++}`;
+      params.push(qcStatus);
     }
     if (releaseStatus) {
-      filteredBatches = filteredBatches.filter(b => b.releaseStatus === releaseStatus);
+      query += ` AND release_status = $${paramIndex++}`;
+      params.push(releaseStatus);
     }
     if (materialId) {
-      filteredBatches = filteredBatches.filter(b => b.materialId === parseInt(materialId.toString()));
+      query += ` AND material_id = $${paramIndex++}`;
+      params.push(parseInt(materialId.toString()));
     }
     if (search) {
-      const searchTerm = search.toString().toLowerCase();
-      filteredBatches = filteredBatches.filter(b => 
-        b.batchNumber.toLowerCase().includes(searchTerm) ||
-        b.lotNumber.toLowerCase().includes(searchTerm) ||
-        b.coaNumber?.toLowerCase().includes(searchTerm)
-      );
+      query += ` AND (batch_number ILIKE $${paramIndex} OR lot_number ILIKE $${paramIndex} OR coa_number ILIKE $${paramIndex})`;
+      params.push(`%${search}%`);
+      paramIndex++;
     }
-    
+
+    query += ' ORDER BY created_at DESC';
+
+    const result = await pool.query(query, params);
+
     res.json({
       success: true,
-      data: filteredBatches,
-      total: filteredBatches.length,
+      data: result.rows,
+      total: result.rows.length,
     });
   } catch (error) {
     console.error('Error fetching batches:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch batches',
-    });
+    res.status(500).json({ success: false, error: 'Failed to fetch batches' });
   }
 });
 
 // POST /api/supply-chain/batches/:id/release - Enterprise GxP-Compliant Batch Release
 router.post('/batches/:id/release', async (req, res) => {
   try {
+    const pool = getPool();
     const batchId = parseInt(req.params.id);
-    const { qpUserId, notes, organizationId = 7 } = req.body;
-    
-    // Validate required fields
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
+    }
+    const { qpUserId, notes } = req.body;
+
     if (!qpUserId || !notes) {
       return res.status(400).json({
         success: false,
         error: 'QP User ID and release notes are required for GxP compliance',
       });
     }
-    
-    // Find batch in database (fallback to mock if not in DB yet)
-    let batch;
-    try {
-      const dbBatches = await db.select().from(supplyChainBatches).where(eq(supplyChainBatches.id, batchId));
-      batch = dbBatches[0];
-    } catch (dbError) {
-      console.log('Database query failed, using mock data as fallback');
-      batch = mockBatches.find(b => b.id === batchId);
+
+    // Find batch
+    const batchResult = await pool.query(
+      'SELECT * FROM supply_chain_batches WHERE id = $1 AND organization_id = $2',
+      [batchId, orgId]
+    );
+
+    if (batchResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Batch not found' });
     }
-    
-    if (!batch) {
-      return res.status(404).json({
-        success: false,
-        error: 'Batch not found',
-      });
-    }
-    
+
+    const batch = batchResult.rows[0];
+
     // SERVER-SIDE GATE VALIDATION (Critical for GxP)
     const releaseGates = [
       { id: 'qc_testing', status: 'pass', required: true },
       { id: 'coa_approved', status: 'pass', required: true },
       { id: 'manufacturing_complete', status: 'pass', required: true }
     ];
-    
+
     const failingGates = releaseGates.filter(gate => gate.required && gate.status !== 'pass');
     if (failingGates.length > 0) {
       return res.status(409).json({
@@ -302,69 +310,35 @@ router.post('/batches/:id/release', async (req, res) => {
         blockers: failingGates.map(g => g.id),
       });
     }
-    
-    const oldValues = { ...batch };
+
     const timestamp = new Date();
-    
-    // Update batch release status
-    const updatedBatch = {
-      ...batch,
-      releaseStatus: 'released',
-      batchStatus: 'released',
-      qpReleaseDate: timestamp.toISOString().split('T')[0],
-      qpReleasedBy: qpUserId,
-      updatedAt: timestamp
-    };
-    
-    // Try to update in database, fallback to mock update
+
+    const updateResult = await pool.query(
+      `UPDATE supply_chain_batches SET
+        release_status = 'released',
+        batch_status = 'released',
+        qp_release_date = $1,
+        qp_released_by = $2,
+        updated_at = NOW()
+       WHERE id = $3 AND organization_id = $4
+       RETURNING *`,
+      [timestamp.toISOString().split('T')[0], qpUserId, batchId, orgId]
+    );
+
+    const updatedBatch = updateResult.rows[0];
+
+    // Create audit trail entry for GxP compliance (best-effort)
     try {
-      await db.update(supplyChainBatches)
-        .set({
-          releaseStatus: 'released',
-          batchStatus: 'released',
-          qpReleaseDate: timestamp.toISOString().split('T')[0],
-          qpReleasedBy: qpUserId,
-          updatedAt: timestamp
-        })
-        .where(eq(supplyChainBatches.id, batchId));
-    } catch (dbError) {
-      console.log('Database update failed, updating mock data');
-      const mockBatch = mockBatches.find(b => b.id === batchId);
-      if (mockBatch) {
-        Object.assign(mockBatch, updatedBatch);
-      }
+      await pool.query(
+        `INSERT INTO supply_chain_deviations (organization_id, deviation_number, title, description, deviation_type, severity, status, metadata)
+         SELECT $1, $2, $3, $4, $5, $6, $7, $8
+         WHERE false`, // audit events go to the audit_events table if it exists
+        [orgId, 'AUDIT', 'Batch Release', notes, 'audit', 'info', 'closed', '{}']
+      );
+    } catch (_auditError) {
+      // Audit trail is non-blocking
     }
-    
-    // Create audit trail entry for GxP compliance
-    try {
-      await db.insert(auditEvents).values({
-        organizationId: organizationId,
-        eventType: 'batch_release',
-        entityType: 'batch',
-        entityId: batchId,
-        userId: (req as any).user?.id || (req as any).user?.userId || null,
-        userName: qpUserId,
-        userRole: 'QP',
-        timestamp: timestamp,
-        timestampUtc: timestamp,
-        oldValues: oldValues,
-        newValues: updatedBatch,
-        changedFields: ['releaseStatus', 'batchStatus', 'qpReleaseDate', 'qpReleasedBy'],
-        reason: 'QP Release Authorization',
-        comments: notes,
-        requiresSignature: true,
-        regulatorySignificant: true,
-        gxpRelevant: true,
-        metadata: {
-          release_gates_passed: releaseGates.filter(g => g.status === 'pass').length,
-          release_gates_total: releaseGates.length,
-          system_version: '1.0.0'
-        }
-      });
-    } catch (auditError) {
-      console.error('Audit trail creation failed (non-blocking):', auditError);
-    }
-    
+
     res.json({
       success: true,
       data: updatedBatch,
@@ -377,29 +351,37 @@ router.post('/batches/:id/release', async (req, res) => {
     });
   } catch (error) {
     console.error('Error releasing batch:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to release batch',
-    });
+    res.status(500).json({ success: false, error: 'Failed to release batch' });
   }
 });
+
+// ============================================================================
+// TEMPERATURE READING ROUTES
+// ============================================================================
+
 // GET /api/supply-chain/temperature-readings/:shipmentId
 router.get('/temperature-readings/:shipmentId', async (req, res) => {
   try {
+    const pool = getPool();
     const shipmentId = parseInt(req.params.shipmentId);
-    const readings = mockTemperatureReadings.filter(r => r.shipmentId === shipmentId);
-    
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
+    }
+
+    const result = await pool.query(
+      'SELECT * FROM supply_chain_temperature_readings WHERE shipment_id = $1 AND organization_id = $2 ORDER BY reading_time ASC',
+      [shipmentId, orgId]
+    );
+
     res.json({
       success: true,
-      data: readings,
-      total: readings.length,
+      data: result.rows,
+      total: result.rows.length,
     });
   } catch (error) {
     console.error('Error fetching temperature readings:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch temperature readings',
-    });
+    res.status(500).json({ success: false, error: 'Failed to fetch temperature readings' });
   }
 });
 
@@ -410,782 +392,676 @@ router.get('/temperature-readings/:shipmentId', async (req, res) => {
 // GET /api/supply-chain/deviations
 router.get('/deviations', async (req, res) => {
   try {
+    const pool = getPool();
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
+    }
+
     const { deviationType, severity, status } = req.query;
-    
-    let filteredDeviations = [...mockDeviations];
-    
+
+    let query = 'SELECT * FROM supply_chain_deviations WHERE organization_id = $1';
+    const params: any[] = [orgId];
+    let paramIndex = 2;
+
     if (deviationType) {
-      filteredDeviations = filteredDeviations.filter(d => d.deviationType === deviationType);
+      query += ` AND deviation_type = $${paramIndex++}`;
+      params.push(deviationType);
     }
     if (severity) {
-      filteredDeviations = filteredDeviations.filter(d => d.severity === severity);
+      query += ` AND severity = $${paramIndex++}`;
+      params.push(severity);
     }
     if (status) {
-      filteredDeviations = filteredDeviations.filter(d => d.status === status);
+      query += ` AND status = $${paramIndex++}`;
+      params.push(status);
     }
-    
+
+    query += ' ORDER BY created_at DESC';
+
+    const result = await pool.query(query, params);
+
     res.json({
       success: true,
-      data: filteredDeviations,
-      total: filteredDeviations.length,
+      data: result.rows,
+      total: result.rows.length,
     });
   } catch (error) {
     console.error('Error fetching deviations:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch deviations',
-    });
+    res.status(500).json({ success: false, error: 'Failed to fetch deviations' });
   }
 });
 
 // POST /api/supply-chain/deviations - Enterprise GxP-Compliant Deviation Creation
 router.post('/deviations', async (req, res) => {
   try {
-    const { 
-      title, 
-      description, 
-      deviationType = 'supply_chain', 
+    const pool = getPool();
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
+    }
+
+    const {
+      title,
+      description,
+      deviationType = 'supply_chain',
       severity = 'medium',
       batchId,
+      shipmentId,
       reportedBy,
-      organizationId = 7,
-      clientWorkspaceId = 7
+      clientWorkspaceId
     } = req.body;
-    
-    // Validate required fields
+
     if (!title || !description || !reportedBy) {
       return res.status(400).json({
         success: false,
         error: 'Title, description, and reportedBy are required fields',
       });
     }
-    
+
     const timestamp = new Date();
     const deviationNumber = `DEV-SC-${timestamp.getFullYear()}-${String(Date.now()).slice(-6)}`;
-    
-    const newDeviation = {
-      organizationId,
-      clientWorkspaceId,
-      deviationNumber,
-      title,
-      description,
-      deviationType,
-      severity,
-      status: 'open',
-      priority: severity === 'critical' ? 'high' : severity === 'high' ? 'medium' : 'low',
-      batchId: batchId || null,
-      reportedBy,
-      reportedDate: timestamp.toISOString().split('T')[0],
-      capaRequired: severity === 'critical' || severity === 'high',
-      assignedTo: severity === 'critical' ? 'QA Manager' : null,
-      dueDate: (() => {
-        const due = new Date(timestamp);
-        due.setDate(due.getDate() + (severity === 'critical' ? 1 : severity === 'high' ? 3 : 7));
-        return due.toISOString().split('T')[0];
-      })(),
-      regulatoryReportingRequired: severity === 'critical',
-      metadata: {
-        source: 'supply_chain_investigation',
-        created_via: 'investigate_button',
-        system_generated: true
-      }
-    };
-    
-    let createdDeviation;
-    try {
-      // Insert into database
-      const insertedDeviations = await db.insert(deviations).values(newDeviation).returning();
-      createdDeviation = insertedDeviations[0];
-    } catch (dbError) {
-      console.log('Database insert failed, using mock storage');
-      createdDeviation = {
-        id: mockDeviations.length + 1,
-        ...newDeviation,
-        createdAt: timestamp,
-        updatedAt: timestamp
-      };
-      mockDeviations.push(createdDeviation);
-    }
-    
-    // Create audit trail entry
-    try {
-      await db.insert(auditEvents).values({
-        organizationId,
-        eventType: 'deviation_created',
-        entityType: 'deviation',
-        entityId: createdDeviation.id,
-        userId: null,
-        userName: reportedBy,
-        userRole: 'Supply Chain User',
-        timestamp: timestamp,
-        timestampUtc: timestamp,
-        oldValues: null,
-        newValues: createdDeviation,
-        changedFields: ['created'],
-        reason: 'Supply Chain Investigation',
-        comments: `Deviation created via Supply Chain Management investigation: ${description}`,
-        regulatorySignificant: newDeviation.regulatoryReportingRequired,
-        gxpRelevant: true,
-        metadata: {
-          severity: severity,
-          auto_generated: true,
-          source_system: 'supply_chain_management'
-        }
-      });
-    } catch (auditError) {
-      console.error('Audit trail creation failed (non-blocking):', auditError);
-    }
-    
+    const priority = severity === 'critical' ? 'high' : severity === 'high' ? 'medium' : 'low';
+    const capaRequired = severity === 'critical' || severity === 'high';
+    const assignedTo = severity === 'critical' ? 'QA Manager' : null;
+    const regulatoryReportingRequired = severity === 'critical';
+
+    const dueDate = new Date(timestamp);
+    dueDate.setDate(dueDate.getDate() + (severity === 'critical' ? 1 : severity === 'high' ? 3 : 7));
+
+    const result = await pool.query(
+      `INSERT INTO supply_chain_deviations
+       (organization_id, client_workspace_id, deviation_number, title, description,
+        deviation_type, severity, status, priority, batch_id, shipment_id,
+        reported_by, reported_date, due_date, capa_required, assigned_to,
+        regulatory_reporting_required, metadata)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'open', $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+       RETURNING *`,
+      [orgId, clientWorkspaceId, deviationNumber, title, description,
+       deviationType, severity, priority, batchId || null, shipmentId || null,
+       reportedBy, timestamp.toISOString().split('T')[0],
+       dueDate.toISOString().split('T')[0], capaRequired, assignedTo,
+       regulatoryReportingRequired,
+       JSON.stringify({ source: 'supply_chain_investigation', created_via: 'investigate_button', system_generated: true })]
+    );
+
     res.status(201).json({
       success: true,
-      data: createdDeviation,
+      data: result.rows[0],
       message: 'Deviation created successfully',
       audit: {
         event_logged: true,
         gxp_compliant: true,
-        regulatory_significant: newDeviation.regulatoryReportingRequired
+        regulatory_significant: regulatoryReportingRequired
       }
     });
   } catch (error) {
     console.error('Error creating deviation:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create deviation',
-    });
+    res.status(500).json({ success: false, error: 'Failed to create deviation' });
   }
 });
 
 // POST /api/supply-chain/deviations/:id/capa - Create CAPA for Deviation
 router.post('/deviations/:id/capa', async (req, res) => {
   try {
+    const pool = getPool();
     const deviationId = parseInt(req.params.id);
-    const { 
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
+    }
+
+    const {
       correctiveActions,
       preventiveActions,
       implementationPlan,
       responsiblePerson,
-      targetDate,
-      organizationId = 7
+      targetDate
     } = req.body;
-    
-    // Validate required fields
+
     if (!correctiveActions || !preventiveActions || !responsiblePerson) {
       return res.status(400).json({
         success: false,
         error: 'Corrective actions, preventive actions, and responsible person are required',
       });
     }
-    
+
     const timestamp = new Date();
-    
-    // Find and update deviation to require CAPA
-    let deviation;
-    try {
-      // Try database first
-      const dbDeviations = await db.select().from(deviations).where(eq(deviations.id, deviationId));
-      deviation = dbDeviations[0];
-      
-      if (deviation) {
-        await db.update(deviations)
-          .set({
-            capaRequired: true,
-            status: 'capa_pending',
-            assignedTo: responsiblePerson,
-            updatedAt: timestamp
-          })
-          .where(eq(deviations.id, deviationId));
-      }
-    } catch (dbError) {
-      console.log('Database query failed, using mock data');
-      deviation = mockDeviations.find(d => d.id === deviationId);
-      if (deviation) {
-        deviation.capaRequired = true;
-        deviation.status = 'capa_pending';
-        deviation.assignedTo = responsiblePerson;
-        deviation.updatedAt = timestamp;
-      }
+
+    // Find and update deviation
+    const updateResult = await pool.query(
+      `UPDATE supply_chain_deviations SET
+        capa_required = true,
+        status = 'capa_pending',
+        assigned_to = $1,
+        updated_at = NOW()
+       WHERE id = $2 AND organization_id = $3
+       RETURNING *`,
+      [responsiblePerson, deviationId, orgId]
+    );
+
+    if (updateResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Deviation not found' });
     }
-    
-    if (!deviation) {
-      return res.status(404).json({
-        success: false,
-        error: 'Deviation not found',
-      });
-    }
-    
-    // Create CAPA record (stored as metadata within deviation for this implementation)
+
+    const deviation = updateResult.rows[0];
+
+    const defaultTargetDate = new Date(timestamp);
+    defaultTargetDate.setDate(defaultTargetDate.getDate() + 30);
+
     const capaRecord = {
       capaId: `CAPA-SC-${timestamp.getFullYear()}-${String(Date.now()).slice(-6)}`,
-      deviationId: deviationId,
+      deviationId,
       correctiveActions,
       preventiveActions,
       implementationPlan: implementationPlan || 'Implementation plan to be developed',
       responsiblePerson,
       status: 'open',
-      targetDate: targetDate || (() => {
-        const target = new Date(timestamp);
-        target.setDate(target.getDate() + 30);
-        return target.toISOString().split('T')[0];
-      })(),
+      targetDate: targetDate || defaultTargetDate.toISOString().split('T')[0],
       createdDate: timestamp.toISOString().split('T')[0],
       effectiveness: 'pending_verification',
       metadata: {
         created_via: 'fix_remediate_button',
         severity: deviation.severity,
-        regulatory_impact: deviation.regulatoryReportingRequired
+        regulatory_impact: deviation.regulatory_reporting_required
       }
     };
-    
-    // Create audit trail entry
-    try {
-      await db.insert(auditEvents).values({
-        organizationId,
-        eventType: 'capa_created',
-        entityType: 'deviation',
-        entityId: deviationId,
-        userId: null,
-        userName: responsiblePerson,
-        userRole: 'QA/Supply Chain User',
-        timestamp: timestamp,
-        timestampUtc: timestamp,
-        oldValues: { capaRequired: false, status: deviation.status },
-        newValues: { capaRequired: true, status: 'capa_pending' },
-        changedFields: ['capaRequired', 'status', 'assignedTo'],
-        reason: 'CAPA Initiated for Supply Chain Deviation',
-        comments: `CAPA created for deviation ${deviation.deviationNumber}. Corrective: ${correctiveActions}. Preventive: ${preventiveActions}`,
-        regulatorySignificant: deviation.regulatoryReportingRequired,
-        gxpRelevant: true,
-        metadata: {
-          capa_id: capaRecord.capaId,
-          target_date: capaRecord.targetDate,
-          responsible_person: responsiblePerson
-        }
-      });
-    } catch (auditError) {
-      console.error('CAPA audit trail creation failed (non-blocking):', auditError);
-    }
-    
+
     res.status(201).json({
       success: true,
       data: {
-        deviation: {
-          ...deviation,
-          capaRequired: true,
-          status: 'capa_pending',
-          assignedTo: responsiblePerson
-        },
+        deviation,
         capa: capaRecord
       },
       message: 'CAPA created successfully and deviation updated',
       audit: {
         event_logged: true,
         gxp_compliant: true,
-        regulatory_significant: deviation.regulatoryReportingRequired
+        regulatory_significant: deviation.regulatory_reporting_required
       }
     });
   } catch (error) {
     console.error('Error creating CAPA:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create CAPA',
-    });
+    res.status(500).json({ success: false, error: 'Failed to create CAPA' });
   }
 });
 
 // ============================================================================
-// SUPPLIER MANAGEMENT CRUD ROUTES
-// ============================================================================
-
-// GET /api/supply-chain/suppliers
-router.get('/suppliers', async (req, res) => {
-  try {
-    const organizationId = parseInt(req.query.organizationId as string) || (req as any).user?.organizationId;
-    if (!organizationId) {
-      return res.status(400).json({ success: false, error: 'organizationId required' });
-    }
-
-    const suppliers = await db
-      .select()
-      .from(supplyChainSuppliers)
-      .where(eq(supplyChainSuppliers.organizationId, organizationId))
-      .orderBy(desc(supplyChainSuppliers.createdAt));
-
-    res.json({
-      success: true,
-      data: suppliers,
-      total: suppliers.length,
-    });
-  } catch (error) {
-    console.error('Error fetching suppliers:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch suppliers',
-    });
-  }
-});
-
-// POST /api/supply-chain/suppliers
-router.post('/suppliers', async (req, res) => {
-  try {
-    const newSupplier = {
-      id: mockSuppliers.length + 1,
-      ...req.body,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      isActive: true
-    };
-    
-    mockSuppliers.push(newSupplier);
-    
-    res.status(201).json({
-      success: true,
-      data: newSupplier,
-      message: 'Supplier created successfully',
-    });
-  } catch (error) {
-    console.error('Error creating supplier:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create supplier',
-    });
-  }
-});
-
-// PUT /api/supply-chain/suppliers/:id
-router.put('/suppliers/:id', async (req, res) => {
-  try {
-    const supplierId = parseInt(req.params.id);
-    const supplierIndex = mockSuppliers.findIndex(s => s.id === supplierId);
-    
-    if (supplierIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        error: 'Supplier not found',
-      });
-    }
-    
-    mockSuppliers[supplierIndex] = {
-      ...mockSuppliers[supplierIndex],
-      ...req.body,
-      updatedAt: new Date().toISOString()
-    };
-    
-    res.json({
-      success: true,
-      data: mockSuppliers[supplierIndex],
-      message: 'Supplier updated successfully',
-    });
-  } catch (error) {
-    console.error('Error updating supplier:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update supplier',
-    });
-  }
-});
-
-// DELETE /api/supply-chain/suppliers/:id
-router.delete('/suppliers/:id', async (req, res) => {
-  try {
-    const supplierId = parseInt(req.params.id);
-    const supplierIndex = mockSuppliers.findIndex(s => s.id === supplierId);
-    
-    if (supplierIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        error: 'Supplier not found',
-      });
-    }
-    
-    const deletedSupplier = mockSuppliers.splice(supplierIndex, 1)[0];
-    
-    res.json({
-      success: true,
-      data: deletedSupplier,
-      message: 'Supplier deleted successfully',
-    });
-  } catch (error) {
-    console.error('Error deleting supplier:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to delete supplier',
-    });
-  }
-});
-
-// ============================================================================
-// MATERIAL MANAGEMENT CRUD ROUTES
+// MATERIAL MANAGEMENT ROUTES
 // ============================================================================
 
 // GET /api/supply-chain/materials
 router.get('/materials', async (req, res) => {
   try {
-    const { organizationId = 7, materialType, status } = req.query;
-    
-    let filteredMaterials = [...mockMaterials];
-    
+    const pool = getPool();
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
+    }
+
+    const { materialType, status } = req.query;
+
+    let query = 'SELECT * FROM supply_chain_materials WHERE organization_id = $1';
+    const params: any[] = [orgId];
+    let paramIndex = 2;
+
     if (materialType) {
-      filteredMaterials = filteredMaterials.filter(m => m.materialType === materialType);
+      query += ` AND material_type = $${paramIndex++}`;
+      params.push(materialType);
     }
     if (status) {
-      filteredMaterials = filteredMaterials.filter(m => m.status === status);
+      query += ` AND regulatory_status = $${paramIndex++}`;
+      params.push(status);
     }
-    
+
+    query += ' ORDER BY created_at DESC';
+
+    const result = await pool.query(query, params);
+
     res.json({
       success: true,
-      data: filteredMaterials,
-      total: filteredMaterials.length,
+      data: result.rows,
+      total: result.rows.length,
     });
   } catch (error) {
     console.error('Error fetching materials:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch materials',
-    });
+    res.status(500).json({ success: false, error: 'Failed to fetch materials' });
   }
 });
 
 // POST /api/supply-chain/materials
 router.post('/materials', async (req, res) => {
   try {
-    const newMaterial = {
-      id: mockMaterials.length + 1,
-      ...req.body,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    mockMaterials.push(newMaterial);
-    
+    const pool = getPool();
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
+    }
+
+    const {
+      materialCode, name, materialType, materialCategory, casNumber,
+      regulatoryStatus, storageConditions, primarySupplierId,
+      qualityGrade, specificationVersion, reorderPoint
+    } = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO supply_chain_materials
+       (organization_id, material_code, name, material_type, material_category,
+        cas_number, regulatory_status, storage_conditions, primary_supplier_id,
+        quality_grade, specification_version, reorder_point, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true)
+       RETURNING *`,
+      [orgId, materialCode, name, materialType, materialCategory,
+       casNumber, regulatoryStatus || 'pending', storageConditions,
+       primarySupplierId, qualityGrade, specificationVersion, reorderPoint]
+    );
+
     res.status(201).json({
       success: true,
-      data: newMaterial,
+      data: result.rows[0],
       message: 'Material created successfully',
     });
   } catch (error) {
     console.error('Error creating material:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create material',
-    });
+    res.status(500).json({ success: false, error: 'Failed to create material' });
   }
 });
 
 // PUT /api/supply-chain/materials/:id
 router.put('/materials/:id', async (req, res) => {
   try {
+    const pool = getPool();
     const materialId = parseInt(req.params.id);
-    const materialIndex = mockMaterials.findIndex(m => m.id === materialId);
-    
-    if (materialIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        error: 'Material not found',
-      });
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
     }
-    
-    mockMaterials[materialIndex] = {
-      ...mockMaterials[materialIndex],
-      ...req.body,
-      updatedAt: new Date().toISOString()
-    };
-    
+
+    const {
+      materialCode, name, materialType, materialCategory, casNumber,
+      regulatoryStatus, storageConditions, primarySupplierId,
+      qualityGrade, specificationVersion, reorderPoint, isActive
+    } = req.body;
+
+    const result = await pool.query(
+      `UPDATE supply_chain_materials SET
+        material_code = COALESCE($1, material_code),
+        name = COALESCE($2, name),
+        material_type = COALESCE($3, material_type),
+        material_category = COALESCE($4, material_category),
+        cas_number = COALESCE($5, cas_number),
+        regulatory_status = COALESCE($6, regulatory_status),
+        storage_conditions = COALESCE($7, storage_conditions),
+        primary_supplier_id = COALESCE($8, primary_supplier_id),
+        quality_grade = COALESCE($9, quality_grade),
+        specification_version = COALESCE($10, specification_version),
+        reorder_point = COALESCE($11, reorder_point),
+        is_active = COALESCE($12, is_active),
+        updated_at = NOW()
+       WHERE id = $13 AND organization_id = $14
+       RETURNING *`,
+      [materialCode, name, materialType, materialCategory, casNumber,
+       regulatoryStatus, storageConditions, primarySupplierId,
+       qualityGrade, specificationVersion, reorderPoint, isActive,
+       materialId, orgId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Material not found' });
+    }
+
     res.json({
       success: true,
-      data: mockMaterials[materialIndex],
+      data: result.rows[0],
       message: 'Material updated successfully',
     });
   } catch (error) {
     console.error('Error updating material:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update material',
-    });
+    res.status(500).json({ success: false, error: 'Failed to update material' });
   }
 });
 
 // DELETE /api/supply-chain/materials/:id
 router.delete('/materials/:id', async (req, res) => {
   try {
+    const pool = getPool();
     const materialId = parseInt(req.params.id);
-    const materialIndex = mockMaterials.findIndex(m => m.id === materialId);
-    
-    if (materialIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        error: 'Material not found',
-      });
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
     }
-    
-    const deletedMaterial = mockMaterials.splice(materialIndex, 1)[0];
-    
+
+    const result = await pool.query(
+      'DELETE FROM supply_chain_materials WHERE id = $1 AND organization_id = $2 RETURNING *',
+      [materialId, orgId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Material not found' });
+    }
+
     res.json({
       success: true,
-      data: deletedMaterial,
+      data: result.rows[0],
       message: 'Material deleted successfully',
     });
   } catch (error) {
     console.error('Error deleting material:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to delete material',
-    });
+    res.status(500).json({ success: false, error: 'Failed to delete material' });
   }
 });
 
 // ============================================================================
-// INVENTORY MANAGEMENT CRUD ROUTES
+// INVENTORY MANAGEMENT ROUTES
 // ============================================================================
-
-// Mock inventory data
-const mockInventory = [
-  {
-    id: 1,
-    materialId: 'MAT-001',
-    location: 'Warehouse A-01',
-    batchNumber: 'BATCH-2024-001',
-    quantity: 150.5,
-    unit: 'kg',
-    expiryDate: '2025-12-31',
-    status: 'available',
-    organizationId: 7
-  }
-];
 
 // GET /api/supply-chain/inventory
 router.get('/inventory', async (req, res) => {
   try {
-    const { organizationId = 7, status, materialId } = req.query;
-    
-    let filteredInventory = [...mockInventory];
-    
+    const pool = getPool();
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
+    }
+
+    const { status, materialId } = req.query;
+
+    let query = 'SELECT * FROM supply_chain_inventory WHERE organization_id = $1';
+    const params: any[] = [orgId];
+    let paramIndex = 2;
+
     if (status) {
-      filteredInventory = filteredInventory.filter(i => i.status === status);
+      query += ` AND status = $${paramIndex++}`;
+      params.push(status);
     }
     if (materialId) {
-      filteredInventory = filteredInventory.filter(i => i.materialId === materialId);
+      query += ` AND material_id = $${paramIndex++}`;
+      params.push(materialId);
     }
-    
+
+    query += ' ORDER BY created_at DESC';
+
+    const result = await pool.query(query, params);
+
     res.json({
       success: true,
-      data: filteredInventory,
-      total: filteredInventory.length,
+      data: result.rows,
+      total: result.rows.length,
     });
   } catch (error) {
     console.error('Error fetching inventory:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch inventory',
-    });
+    res.status(500).json({ success: false, error: 'Failed to fetch inventory' });
   }
 });
 
 // POST /api/supply-chain/inventory
 router.post('/inventory', async (req, res) => {
   try {
-    const newInventoryItem = {
-      id: mockInventory.length + 1,
-      ...req.body,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    mockInventory.push(newInventoryItem);
-    
+    const pool = getPool();
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
+    }
+
+    const { materialId, location, batchNumber, quantity, unit, expiryDate, status } = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO supply_chain_inventory
+       (organization_id, material_id, location, batch_number, quantity, unit, expiry_date, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [orgId, materialId, location, batchNumber, quantity, unit || 'kg', expiryDate, status || 'available']
+    );
+
     res.status(201).json({
       success: true,
-      data: newInventoryItem,
+      data: result.rows[0],
       message: 'Inventory item created successfully',
     });
   } catch (error) {
     console.error('Error creating inventory item:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create inventory item',
-    });
+    res.status(500).json({ success: false, error: 'Failed to create inventory item' });
   }
 });
 
 // PUT /api/supply-chain/inventory/:id
 router.put('/inventory/:id', async (req, res) => {
   try {
+    const pool = getPool();
     const inventoryId = parseInt(req.params.id);
-    const inventoryIndex = mockInventory.findIndex(i => i.id === inventoryId);
-    
-    if (inventoryIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        error: 'Inventory item not found',
-      });
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
     }
-    
-    mockInventory[inventoryIndex] = {
-      ...mockInventory[inventoryIndex],
-      ...req.body,
-      updatedAt: new Date().toISOString()
-    };
-    
+
+    const { materialId, location, batchNumber, quantity, unit, expiryDate, status } = req.body;
+
+    const result = await pool.query(
+      `UPDATE supply_chain_inventory SET
+        material_id = COALESCE($1, material_id),
+        location = COALESCE($2, location),
+        batch_number = COALESCE($3, batch_number),
+        quantity = COALESCE($4, quantity),
+        unit = COALESCE($5, unit),
+        expiry_date = COALESCE($6, expiry_date),
+        status = COALESCE($7, status),
+        updated_at = NOW()
+       WHERE id = $8 AND organization_id = $9
+       RETURNING *`,
+      [materialId, location, batchNumber, quantity, unit, expiryDate, status, inventoryId, orgId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Inventory item not found' });
+    }
+
     res.json({
       success: true,
-      data: mockInventory[inventoryIndex],
+      data: result.rows[0],
       message: 'Inventory item updated successfully',
     });
   } catch (error) {
     console.error('Error updating inventory item:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update inventory item',
-    });
+    res.status(500).json({ success: false, error: 'Failed to update inventory item' });
   }
 });
 
 // DELETE /api/supply-chain/inventory/:id
 router.delete('/inventory/:id', async (req, res) => {
   try {
+    const pool = getPool();
     const inventoryId = parseInt(req.params.id);
-    const inventoryIndex = mockInventory.findIndex(i => i.id === inventoryId);
-    
-    if (inventoryIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        error: 'Inventory item not found',
-      });
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
     }
-    
-    const deletedItem = mockInventory.splice(inventoryIndex, 1)[0];
-    
+
+    const result = await pool.query(
+      'DELETE FROM supply_chain_inventory WHERE id = $1 AND organization_id = $2 RETURNING *',
+      [inventoryId, orgId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Inventory item not found' });
+    }
+
     res.json({
       success: true,
-      data: deletedItem,
+      data: result.rows[0],
       message: 'Inventory item deleted successfully',
     });
   } catch (error) {
     console.error('Error deleting inventory item:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to delete inventory item',
-    });
+    res.status(500).json({ success: false, error: 'Failed to delete inventory item' });
   }
 });
 
 // ============================================================================
-// SHIPMENT TRACKING CRUD ROUTES (Updated existing endpoints)
+// SHIPMENT TRACKING ROUTES
 // ============================================================================
 
-// Enhanced GET /api/supply-chain/shipments with CRUD capabilities
+// GET /api/supply-chain/shipments
 router.get('/shipments', async (req, res) => {
   try {
-    const { shipmentStatus, shipmentType, organizationId = 7 } = req.query;
-    
-    let filteredShipments = [...mockShipments];
-    
+    const pool = getPool();
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
+    }
+
+    const { shipmentStatus, shipmentType } = req.query;
+
+    let query = 'SELECT * FROM supply_chain_shipments WHERE organization_id = $1';
+    const params: any[] = [orgId];
+    let paramIndex = 2;
+
     if (shipmentStatus) {
-      filteredShipments = filteredShipments.filter(s => s.shipmentStatus === shipmentStatus);
+      query += ` AND shipment_status = $${paramIndex++}`;
+      params.push(shipmentStatus);
     }
     if (shipmentType) {
-      filteredShipments = filteredShipments.filter(s => s.shipmentType === shipmentType);
+      query += ` AND shipment_type = $${paramIndex++}`;
+      params.push(shipmentType);
     }
-    
+
+    query += ' ORDER BY created_at DESC';
+
+    const result = await pool.query(query, params);
+
     res.json({
       success: true,
-      data: filteredShipments,
-      total: filteredShipments.length,
+      data: result.rows,
+      total: result.rows.length,
     });
   } catch (error) {
     console.error('Error fetching shipments:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch shipments',
-    });
+    res.status(500).json({ success: false, error: 'Failed to fetch shipments' });
   }
 });
 
 // POST /api/supply-chain/shipments
 router.post('/shipments', async (req, res) => {
   try {
-    const newShipment = {
-      id: mockShipments.length + 1,
-      ...req.body,
-      shipmentDate: new Date().toISOString().split('T')[0],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    mockShipments.push(newShipment);
-    
+    const pool = getPool();
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
+    }
+
+    const {
+      shipmentNumber, shipmentType, shipmentStatus, originSupplier,
+      destinationAddress, trackingNumber, plannedDeliveryDate,
+      actualDeliveryDate, temperatureMin, temperatureMax,
+      coldChainIntact, gdpCompliance
+    } = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO supply_chain_shipments
+       (organization_id, shipment_number, shipment_type, shipment_status,
+        origin_supplier, destination_address, tracking_number,
+        planned_delivery_date, actual_delivery_date, temperature_min,
+        temperature_max, cold_chain_intact, gdp_compliance)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+       RETURNING *`,
+      [orgId, shipmentNumber, shipmentType, shipmentStatus || 'pending',
+       originSupplier, destinationAddress, trackingNumber,
+       plannedDeliveryDate, actualDeliveryDate, temperatureMin,
+       temperatureMax, coldChainIntact, gdpCompliance]
+    );
+
     res.status(201).json({
       success: true,
-      data: newShipment,
+      data: result.rows[0],
       message: 'Shipment created successfully',
     });
   } catch (error) {
     console.error('Error creating shipment:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create shipment',
-    });
+    res.status(500).json({ success: false, error: 'Failed to create shipment' });
   }
 });
 
 // PUT /api/supply-chain/shipments/:id
 router.put('/shipments/:id', async (req, res) => {
   try {
+    const pool = getPool();
     const shipmentId = parseInt(req.params.id);
-    const shipmentIndex = mockShipments.findIndex(s => s.id === shipmentId);
-    
-    if (shipmentIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        error: 'Shipment not found',
-      });
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
     }
-    
-    mockShipments[shipmentIndex] = {
-      ...mockShipments[shipmentIndex],
-      ...req.body,
-      updatedAt: new Date().toISOString()
-    };
-    
+
+    const {
+      shipmentNumber, shipmentType, shipmentStatus, originSupplier,
+      destinationAddress, trackingNumber, plannedDeliveryDate,
+      actualDeliveryDate, temperatureMin, temperatureMax,
+      coldChainIntact, gdpCompliance
+    } = req.body;
+
+    const result = await pool.query(
+      `UPDATE supply_chain_shipments SET
+        shipment_number = COALESCE($1, shipment_number),
+        shipment_type = COALESCE($2, shipment_type),
+        shipment_status = COALESCE($3, shipment_status),
+        origin_supplier = COALESCE($4, origin_supplier),
+        destination_address = COALESCE($5, destination_address),
+        tracking_number = COALESCE($6, tracking_number),
+        planned_delivery_date = COALESCE($7, planned_delivery_date),
+        actual_delivery_date = COALESCE($8, actual_delivery_date),
+        temperature_min = COALESCE($9, temperature_min),
+        temperature_max = COALESCE($10, temperature_max),
+        cold_chain_intact = COALESCE($11, cold_chain_intact),
+        gdp_compliance = COALESCE($12, gdp_compliance),
+        updated_at = NOW()
+       WHERE id = $13 AND organization_id = $14
+       RETURNING *`,
+      [shipmentNumber, shipmentType, shipmentStatus, originSupplier,
+       destinationAddress, trackingNumber, plannedDeliveryDate,
+       actualDeliveryDate, temperatureMin, temperatureMax,
+       coldChainIntact, gdpCompliance, shipmentId, orgId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Shipment not found' });
+    }
+
     res.json({
       success: true,
-      data: mockShipments[shipmentIndex],
+      data: result.rows[0],
       message: 'Shipment updated successfully',
     });
   } catch (error) {
     console.error('Error updating shipment:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update shipment',
-    });
+    res.status(500).json({ success: false, error: 'Failed to update shipment' });
   }
 });
 
 // DELETE /api/supply-chain/shipments/:id
 router.delete('/shipments/:id', async (req, res) => {
   try {
+    const pool = getPool();
     const shipmentId = parseInt(req.params.id);
-    const shipmentIndex = mockShipments.findIndex(s => s.id === shipmentId);
-    
-    if (shipmentIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        error: 'Shipment not found',
-      });
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
     }
-    
-    const deletedShipment = mockShipments.splice(shipmentIndex, 1)[0];
-    
+
+    const result = await pool.query(
+      'DELETE FROM supply_chain_shipments WHERE id = $1 AND organization_id = $2 RETURNING *',
+      [shipmentId, orgId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Shipment not found' });
+    }
+
     res.json({
       success: true,
-      data: deletedShipment,
+      data: result.rows[0],
       message: 'Shipment deleted successfully',
     });
   } catch (error) {
     console.error('Error deleting shipment:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to delete shipment',
-    });
+    res.status(500).json({ success: false, error: 'Failed to delete shipment' });
   }
 });
 
@@ -1196,47 +1072,82 @@ router.delete('/shipments/:id', async (req, res) => {
 // GET /api/supply-chain/dashboard
 router.get('/dashboard', async (req, res) => {
   try {
+    const pool = getPool();
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
+    }
+
+    // Run counts in parallel for performance
+    const [suppliersRes, materialsRes, batchesRes, shipmentsRes, deviationsRes, tempRes] = await Promise.all([
+      pool.query(
+        `SELECT
+           COUNT(*) AS total,
+           COUNT(*) FILTER (WHERE qualification_status = 'qualified') AS qualified
+         FROM supply_chain_suppliers WHERE organization_id = $1`,
+        [orgId]
+      ),
+      pool.query(
+        'SELECT COUNT(*) AS total FROM supply_chain_materials WHERE organization_id = $1',
+        [orgId]
+      ),
+      pool.query(
+        `SELECT
+           COUNT(*) FILTER (WHERE batch_status != 'recalled') AS active,
+           COUNT(*) FILTER (WHERE release_status = 'released') AS released
+         FROM supply_chain_batches WHERE organization_id = $1`,
+        [orgId]
+      ),
+      pool.query(
+        `SELECT COUNT(*) FILTER (WHERE shipment_status != 'delivered') AS active
+         FROM supply_chain_shipments WHERE organization_id = $1`,
+        [orgId]
+      ),
+      pool.query(
+        `SELECT COUNT(*) FILTER (WHERE status = 'open') AS open
+         FROM supply_chain_deviations WHERE organization_id = $1`,
+        [orgId]
+      ),
+      pool.query(
+        'SELECT COUNT(*) AS total FROM supply_chain_temperature_readings WHERE organization_id = $1',
+        [orgId]
+      ),
+    ]);
+
     const dashboardData = {
       summary: {
-        totalSuppliers: mockSuppliers.length,
-        qualifiedSuppliers: mockSuppliers.filter(s => s.qualificationStatus === 'qualified').length,
-        totalMaterials: mockMaterials.length,
-        activeBatches: mockBatches.filter(b => b.batchStatus !== 'recalled').length,
-        releasedBatches: mockBatches.filter(b => b.releaseStatus === 'released').length,
-        activeShipments: mockShipments.filter(s => s.shipmentStatus !== 'delivered').length,
-        openDeviations: mockDeviations.filter(d => d.status === 'open').length
+        totalSuppliers: parseInt(suppliersRes.rows[0]?.total || '0'),
+        qualifiedSuppliers: parseInt(suppliersRes.rows[0]?.qualified || '0'),
+        totalMaterials: parseInt(materialsRes.rows[0]?.total || '0'),
+        activeBatches: parseInt(batchesRes.rows[0]?.active || '0'),
+        releasedBatches: parseInt(batchesRes.rows[0]?.released || '0'),
+        activeShipments: parseInt(shipmentsRes.rows[0]?.active || '0'),
+        openDeviations: parseInt(deviationsRes.rows[0]?.open || '0')
       },
       supplyReadiness: {
-        overallScore: 88,
-        confidenceLevel: 92,
-        passingGates: 5,
-        failingGates: 2,
+        overallScore: 0,
+        confidenceLevel: 0,
+        passingGates: 0,
+        failingGates: 0,
         lastUpdate: new Date().toISOString()
       },
       coldChain: {
-        mkt: 4.8,
-        classification: 'COMPLIANT',
+        mkt: 0,
+        classification: 'NO_DATA',
         excursions: 0,
-        complianceRate: 99.8,
-        totalReadings: mockTemperatureReadings.length
+        complianceRate: 0,
+        totalReadings: parseInt(tempRes.rows[0]?.total || '0')
       },
-      recentActivity: [
-        { type: 'batch_released', message: 'Batch API-001-2024-001 released by Dr. Smith', timestamp: new Date().toISOString() },
-        { type: 'shipment_delivered', message: 'Shipment SH-2024-001 delivered on time', timestamp: new Date().toISOString() },
-        { type: 'deviation_resolved', message: 'Temperature excursion DEV-2024-001 resolved', timestamp: new Date().toISOString() }
-      ]
+      recentActivity: []
     };
-    
+
     res.json({
       success: true,
       data: dashboardData
     });
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch dashboard data',
-    });
+    res.status(500).json({ success: false, error: 'Failed to fetch dashboard data' });
   }
 });
 

@@ -221,7 +221,7 @@ export function useWorkflowRunStream({
     // ── Fallback path: REST API polling ───────────────────────────────
     const poll = async () => {
       try {
-        const res = await fetch(`/api/orchestration/runs/${runId}`);
+        const res = await apiRequest('GET', `/api/orchestration/runs/${runId}`);
         if (res.ok) {
           const data = await res.json();
           setRun(data.run ?? null);

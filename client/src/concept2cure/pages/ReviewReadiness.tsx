@@ -36,6 +36,7 @@ import { useDeliverable } from '@/concept2cure/hooks/useDeliverable';
 import { GenerateButton, ExportButton, RunButton } from '@/concept2cure/components/ui/ActionButton';
 import { useProjects } from '@/concept2cure/hooks/useProjects';
 import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 import { useReadinessScore, useCrossModuleAnalysis } from '@/concept2cure/hooks/useIntelligence';
 
