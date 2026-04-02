@@ -11,6 +11,7 @@
  */
 
 import * as React from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -283,7 +284,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
   const loadPolicy = async (region: string) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/reg/policy/${region}`);
+      const response = await apiRequest('GET', `/api/reg/policy/${region}`);
       const policyData = await response.json();
       setPolicy(policyData);
     } catch (error) {
@@ -295,7 +296,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
 
   const loadVersions = async (region: string) => {
     try {
-      const response = await fetch(`/api/reg/policy/${region}/versions`);
+      const response = await apiRequest('GET', `/api/reg/policy/${region}/versions`);
       const versionsData = await response.json();
       setVersions(versionsData);
     } catch (error) {
@@ -307,11 +308,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
     if (!subId) return;
     try {
       setLoading(true);
-      const response = await fetch(`/api/reg/policy/evaluate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subId }),
-      });
+      const response = await apiRequest('POST', `/api/reg/policy/evaluate`, { subId });
       const evalData = await response.json();
       setEvaluation(evalData);
     } catch (error) {
@@ -325,11 +322,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
     try {
       setLoading(true);
       const policyJson = JSON.parse(editedPolicy);
-      const response = await fetch(`/api/reg/policy/${activeRegion}/draft`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(policyJson),
-      });
+      const response = await apiRequest('POST', `/api/reg/policy/${activeRegion}/draft`, policyJson);
 
       if (response.ok) {
         toast({ title: 'Draft Saved', description: 'Policy draft saved successfully' });

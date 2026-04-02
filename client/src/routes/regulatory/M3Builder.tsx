@@ -64,7 +64,7 @@ export default function M3Builder({ subId }: { subId: string }) {
 
   async function reject(sugId: string) {
     try {
-      await fetch(`/api/reg/suggestions/${sugId}/reject`, { method: 'POST' });
+      await apiRequest('POST', `/api/reg/suggestions/${sugId}/reject`);
       await load();
     } catch (error) {
     }
