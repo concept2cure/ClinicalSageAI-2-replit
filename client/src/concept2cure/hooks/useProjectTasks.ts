@@ -102,10 +102,7 @@ export function useProjectTasks(projectId: string | number | null) {
 
   const deleteTask = useMutation({
     mutationFn: async (taskId: number) => {
-      const res = await fetch(`/api/concept2cure/projects/${pid}/tasks/${taskId}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
+      const res = await apiRequest('DELETE', `/api/concept2cure/projects/${pid}/tasks/${taskId}`);
       if (!res.ok) throw new Error('Failed to delete task');
     },
     onSuccess: invalidate,
@@ -113,11 +110,7 @@ export function useProjectTasks(projectId: string | number | null) {
 
   const generateMilestones = useMutation({
     mutationFn: async ({ submissionType, targetDate }: { submissionType: string; targetDate?: string }) => {
-      const res = await fetch(`/api/concept2cure/projects/${pid}/tasks/bulk`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({ submissionType, targetDate }),
-      });
+      const res = await apiRequest('POST', `/api/concept2cure/projects/${pid}/tasks/bulk`, { submissionType, targetDate });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(payload?.error?.message || 'Failed to generate milestones');
       return payload?.data;
@@ -145,7 +138,7 @@ export function useSubmissionMilestones(submissionType?: string) {
     queryKey: ['submission-milestones', submissionType],
     queryFn: async (): Promise<SubmissionMilestone[]> => {
       if (!submissionType) return [];
-      const res = await fetch(`/api/concept2cure/submission-milestones/${submissionType}`);
+      const res = await apiRequest('GET', `/api/concept2cure/submission-milestones/${submissionType}`);
       const payload = await res.json().catch(() => ({}));
       return payload?.data ?? [];
     },

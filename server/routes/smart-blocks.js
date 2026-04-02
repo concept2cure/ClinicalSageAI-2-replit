@@ -10,7 +10,7 @@ const router = express.Router();
 // Get available smart blocks
 router.get('/', async (req, res) => {
   try {
-    const organizationId = req.headers['x-organization-id'];
+    const organizationId = req.tenantId || req.tenantContext?.organizationId || req.user?.organizationId;
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
@@ -118,7 +118,7 @@ router.post('/:blockId/render', async (req, res) => {
   try {
     const { blockId } = req.params;
     const { context } = req.body;
-    const organizationId = req.headers['x-organization-id'];
+    const organizationId = req.tenantId || req.tenantContext?.organizationId || req.user?.organizationId;
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
@@ -351,7 +351,7 @@ The overall residual risk is acceptable when weighed against the clinical benefi
 router.post('/', async (req, res) => {
   try {
     const { name, description, category, template, dataSource } = req.body;
-    const organizationId = req.headers['x-organization-id'];
+    const organizationId = req.tenantId || req.tenantContext?.organizationId || req.user?.organizationId;
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }

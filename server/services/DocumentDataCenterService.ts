@@ -187,7 +187,7 @@ class DocumentDataCenterService {
     this.storage = multer({
       storage: multer.diskStorage({
         destination: async (req, file, cb) => {
-          const orgId = req.headers['x-organization-id'] as string;
+          const orgId = String((req as any).tenantId || (req as any).tenantContext?.organizationId || (req as any).user?.organizationId || 'unknown');
           const uploadPath = path.join(this.uploadDir, orgId);
           await fs.mkdir(uploadPath, { recursive: true });
           cb(null, uploadPath);

@@ -413,13 +413,13 @@ router.post('/api/licenses', async (req, res) => {
 router.put('/api/licenses/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const orgId = req.headers['x-organization-id'];
+    const orgId = req.tenantId || req.tenantContext?.organizationId || req.user?.organizationId;
     const updates = req.body;
-    
+
     if (!orgId) {
-      return res.status(403).json({ error: 'Organization header required' });
+      return res.status(403).json({ error: 'Organization context required' });
     }
-    
+
     // First verify the license belongs to this organization (cast client_id to integer)
     const ownershipCheck = await db.query(`
       SELECT l.id 
