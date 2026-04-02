@@ -18,6 +18,7 @@ import {
   useRIMAssessment,
   type RIMSignalSummary,
   type RIMAssessment,
+  type RIMPatternMatch,
   type TrendConfidence,
 } from '../../hooks/useIntelligence';
 
@@ -78,7 +79,7 @@ function confidenceLabel(c: TrendConfidence): string {
   return labels[c] ?? c;
 }
 
-// ── Risk level bar ──────────────────────────────────────────────────────────────
+// ── Risk level breakdown ────────────────────────────────────────────────────────
 
 function RiskBreakdown({ byRiskLevel }: { byRiskLevel: Partial<Record<string, number>> }) {
   const levels = ['critical', 'high', 'medium', 'low'] as const;
@@ -91,11 +92,7 @@ function RiskBreakdown({ byRiskLevel }: { byRiskLevel: Partial<Record<string, nu
         const count = byRiskLevel[level] ?? 0;
         if (count === 0) return null;
         return (
-          <div
-            key={level}
-            className="flex items-center gap-1"
-            role="listitem"
-          >
+          <div key={level} className="flex items-center gap-1" role="listitem">
             <span
               className={`inline-block w-2 h-2 rounded-full ${
                 level === 'critical'
@@ -118,22 +115,14 @@ function RiskBreakdown({ byRiskLevel }: { byRiskLevel: Partial<Record<string, nu
 
 // ── Pattern alert row ───────────────────────────────────────────────────────────
 
-interface PatternAlertProps {
-  pattern: {
-    id: string;
-    name: string;
-    category: string;
-    severity: string;
-    description: string;
-    hitCount: number;
-    lastMatchedAt: string | null;
-  };
-  matchLocation?: string;
+interface PatternAlertRowProps {
+  match: RIMPatternMatch;
 }
 
-function PatternAlert({ pattern, matchLocation }: PatternAlertProps) {
+function PatternAlertRow({ match }: PatternAlertRowProps) {
+  const { pattern, matchLocation } = match;
   const severityStyle = SEVERITY_STYLES[pattern.severity] ?? SEVERITY_STYLES.low;
-  const categoryStyle = CATEGORY_STYLES[pattern.category] ?? 'bg-stone-100 text-stone-500';
+  const catStyle = CATEGORY_STYLES[pattern.category] ?? 'bg-stone-100 text-stone-500';
 
   return (
     <div
@@ -149,7 +138,7 @@ function PatternAlert({ pattern, matchLocation }: PatternAlertProps) {
         <div className="flex items-center gap-1.5 shrink-0">
           <Badge
             variant="outline"
-            className={`text-[10px] px-1.5 py-0 h-4 border-0 ${categoryStyle}`}
+            className={`text-[10px] px-1.5 py-0 h-4 border-0 ${catStyle}`}
           >
             {categoryLabel(pattern.category)}
           </Badge>
@@ -194,33 +183,24 @@ export function PatternSignalPanel({ projectId }: PatternSignalPanelProps) {
         </CardHeader>
         <CardContent className="px-3 pb-3">
           <DataStateWrapper<RIMAssessment>
-            query={assessmentQuery}
-            skeletonType="list"
-            skeletonCount={3}
-            emptyMessage="No pattern matches detected yet. Run a RIM assessment to scan for regulatory patterns."
-            renderData={(assessment) => {
-              const matches = assessment.patternMatches ?? [];
-              if (matches.length === 0) {
-                return (
-                  <p className="text-[12px] text-stone-400 py-2">
-                    No active pattern alerts. The submission looks clean.
-                  </p>
-                );
-              }
-
-              return (
-                <div className="space-y-2" role="list" aria-label="Pattern alerts">
-                  {matches.map((match, i) => (
-                    <PatternAlert
-                      key={match.patternId ?? i}
-                      pattern={match.pattern}
-                      matchLocation={match.matchLocation}
-                    />
-                  ))}
-                </div>
-              );
-            }}
-          />
+            isLoading={assessmentQuery.isLoading}
+            error={assessmentQuery.error ?? null}
+            data={assessmentQuery.data ?? null}
+            loadingMessage="Scanning patterns..."
+            emptyTitle="No patterns detected"
+            emptyDescription="Run a RIM assessment to scan for regulatory patterns."
+            isEmpty={(d) => !d.patternMatches || d.patternMatches.length === 0}
+            retry={() => { assessmentQuery.refetch(); }}
+            testId="pattern-alerts"
+          >
+            {(assessment) => (
+              <div className="space-y-2" role="list" aria-label="Pattern alerts">
+                {assessment.patternMatches.map((match, i) => (
+                  <PatternAlertRow key={match.patternId ?? i} match={match} />
+                ))}
+              </div>
+            )}
+          </DataStateWrapper>
         </CardContent>
       </Card>
 
@@ -234,11 +214,17 @@ export function PatternSignalPanel({ projectId }: PatternSignalPanelProps) {
         </CardHeader>
         <CardContent className="px-3 pb-3">
           <DataStateWrapper<RIMSignalSummary>
-            query={signalsQuery}
-            skeletonType="card"
-            skeletonCount={1}
-            emptyMessage="No signals captured yet. Signals accumulate as you work with documents and run assessments."
-            renderData={(signals) => (
+            isLoading={signalsQuery.isLoading}
+            error={signalsQuery.error ?? null}
+            data={signalsQuery.data ?? null}
+            loadingMessage="Loading signals..."
+            emptyTitle="No signals yet"
+            emptyDescription="Signals accumulate as you work with documents and run assessments."
+            isEmpty={(d) => d.totalSignals === 0}
+            retry={() => { signalsQuery.refetch(); }}
+            testId="signal-trend"
+          >
+            {(signals) => (
               <div className="space-y-3">
                 {/* Summary row */}
                 <div className="flex items-center justify-between">
@@ -289,7 +275,7 @@ export function PatternSignalPanel({ projectId }: PatternSignalPanelProps) {
                 )}
               </div>
             )}
-          />
+          </DataStateWrapper>
         </CardContent>
       </Card>
     </div>

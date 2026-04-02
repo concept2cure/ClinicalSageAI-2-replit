@@ -10,7 +10,7 @@
  */
 
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Activity, Cpu } from 'lucide-react';
+import { ChevronDown, ChevronRight, Cpu } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -160,7 +160,7 @@ export function KernelDecisionLog({
   limit = 20,
   compact = false,
 }: KernelDecisionLogProps) {
-  const { data, isLoading, isError, error, refetch } = useKernelDecisions(projectId, limit);
+  const { data, isLoading, error, refetch } = useKernelDecisions(projectId, limit);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const toggleExpand = (id: string) => {
@@ -181,13 +181,12 @@ export function KernelDecisionLog({
 
       <DataStateWrapper
         isLoading={isLoading}
-        isError={isError}
-        error={error}
+        error={error as Error | null}
         data={data?.decisions}
         loadingComponent={<SkeletonTable rows={5} columns={compact ? 4 : 6} />}
         emptyTitle="No decisions recorded"
         emptyDescription="AI routing decisions will appear here as you interact with AnA."
-        onRetry={refetch}
+        retry={refetch}
       >
         {(decisions: KernelDecision[]) => (
           <div className="border border-stone-100 rounded-lg overflow-hidden">
