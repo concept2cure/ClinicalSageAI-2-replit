@@ -1,9 +1,8 @@
 /**
  * Document Service
  *
- * This is a simplified mock implementation of the document service
- * for testing purposes. In a real application, this would interact
- * with a database and filesystem.
+ * Provides document retrieval and text conversion utilities.
+ * Document lookup should be wired to real DB queries.
  */
 
 /**
@@ -13,37 +12,9 @@
  * @returns {Promise<Object>} - The document object
  */
 const getDocumentById = async documentId => {
-  // In a real implementation, this would fetch from a database
-  const mockDocuments = {
-    'sample-cer-1': {
-      id: 'sample-cer-1',
-      title: 'Clinical Evaluation Report - Acme Medical Device',
-      type: 'cer',
-      version: '1.0',
-      deviceName: 'Acme Medical Device',
-      manufacturer: 'Acme Medical',
-      createdAt: '2025-01-15T00:00:00Z',
-      sections: [
-        {
-          id: 'executive-summary',
-          title: 'Executive Summary',
-          content: 'This is a sample executive summary for testing purposes.',
-        },
-        {
-          id: 'clinical-data',
-          title: 'Clinical Data',
-          content: 'This is sample clinical data content for testing purposes.',
-        },
-        {
-          id: 'safety',
-          title: 'Safety',
-          content: 'This is sample safety content for testing purposes.',
-        },
-      ],
-    },
-  };
-
-  return mockDocuments[documentId];
+  // TODO: Wire to real DB query (Drizzle ORM) when document tables are available
+  // Return null so callers handle 404 properly — no fabricated data
+  return null;
 };
 
 /**

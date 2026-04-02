@@ -2,16 +2,15 @@
  * CSR API - Client-side API helper for CSR Deep Intelligence module
  */
 
+import { apiRequest } from '@/lib/queryClient';
+
 // Base URL for API calls (empty string for relative paths)
 const API_BASE_URL = '';
 
 // --- Dashboard Metrics ---
 export const fetchDashboardMetrics = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/csr-real-data/stats`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    const response = await apiRequest('GET', `${API_BASE_URL}/api/csr-real-data/stats`);
     const data = await response.json();
 
     // Transform the real stats data structure to match expected format
@@ -43,12 +42,7 @@ export const searchCsrs = async (query, options = {}) => {
     if (phase) url += `&phase=${encodeURIComponent(phase)}`;
     if (therapeuticArea) url += `&indication=${encodeURIComponent(therapeuticArea)}`;
 
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
+    const response = await apiRequest('GET', url);
     const data = await response.json();
 
     // Transform the results to ensure proper data structure for display
@@ -84,10 +78,7 @@ export const searchCsrs = async (query, options = {}) => {
 // --- Fetch Single CSR Details ---
 export const fetchCsrDetails = async id => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/csr/report/${id}`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    const response = await apiRequest('GET', `${API_BASE_URL}/api/csr/report/${id}`);
     const data = await response.json();
     return data.success ? data.report : null;
   } catch (error) {
@@ -99,12 +90,7 @@ export const fetchCsrDetails = async id => {
 // --- Get CSR Summary Insights ---
 export const fetchCsrSummary = async query => {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/additional-csr/api/csrs/summary?query=${encodeURIComponent(query)}`
-    );
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    const response = await apiRequest('GET', `${API_BASE_URL}/api/additional-csr/api/csrs/summary?query=${encodeURIComponent(query)}`);
     const data = await response.json();
     return data;
   } catch (error) {

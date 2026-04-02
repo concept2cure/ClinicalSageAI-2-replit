@@ -121,26 +121,13 @@ router.post('/apply-auto-fix', async (req: Request, res: Response) => {
       tenantContext,
     });
 
-    // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // Return simulated auto-fix result
-    // In a production environment, this would actually modify the submission
-    const result = {
-      projectId,
-      sectionId,
-      checkId,
-      timestamp: new Date().toISOString(),
-      status: 'success',
-      message: 'Automatic fix applied successfully',
-      details: {
-        fixType: 'content-generation',
-        affectedDocument: 'substantial-equivalence.docx',
-        changesSummary: 'Added performance data comparison table with statistical analysis',
-      },
-    };
-
-    res.json(result);
+    // Auto-fix requires AI gateway to generate content fixes
+    res.status(503).json({
+      error: 'Service not configured',
+      message: 'This endpoint requires AI gateway configuration. Please migrate to /api/fda510k-unified/compliance.',
+      deprecated: true,
+      migrateTo: '/api/fda510k-unified/compliance',
+    });
   } catch (error: any) {
     console.error('Error applying auto-fix:', error);
     res.status(500).json({
@@ -166,23 +153,13 @@ router.post('/export-compliance-report', async (req: Request, res: Response) => 
       tenantContext,
     });
 
-    // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 1200));
-
-    // Return simulated export result
-    // In a production environment, this would generate and store a real report
-    const result = {
-      projectId,
-      timestamp: new Date().toISOString(),
-      status: 'success',
-      format,
-      fileName: `510k-compliance-report-${projectId}.${format}`,
-      fileSizeBytes: 1258000,
-      downloadUrl: `/api/fda510k/download-report/${projectId}?format=${format}&token=simulated-secure-token`,
-      expirationTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
-    };
-
-    res.json(result);
+    // Report export requires a completed compliance check and report generation service
+    res.status(501).json({
+      error: 'Not implemented',
+      message: 'Compliance report export is not yet implemented. Please migrate to /api/fda510k-unified/compliance.',
+      deprecated: true,
+      migrateTo: '/api/fda510k-unified/compliance',
+    });
   } catch (error: any) {
     console.error('Error exporting compliance report:', error);
     res.status(500).json({

@@ -48,6 +48,7 @@ import {
 } from '../../components/ui/dialog';
 import { useToast } from '../../hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 const DocumentTemplates = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,12 +90,9 @@ const DocumentTemplates = () => {
       if (selectedCategory !== 'all') params.append('category', selectedCategory);
       if (searchQuery) params.append('search', searchQuery);
 
-      const response = await fetch(`/api/templates?${params}`, {
-        headers: {
-          'x-organization-id': '7', // Use organization 7 which has the templates
-        },
+      const response = await apiRequest('GET', `/api/templates?${params}`, undefined, {
+        'x-organization-id': '7', // Use organization 7 which has the templates
       });
-      if (!response.ok) throw new Error('Failed to fetch templates');
       return response.json();
     },
   });
@@ -103,12 +101,9 @@ const DocumentTemplates = () => {
   const { data: recentData, isLoading: recentLoading } = useQuery({
     queryKey: ['/api/templates/recent/documents'],
     queryFn: async () => {
-      const response = await fetch('/api/templates/recent/documents', {
-        headers: {
-          'x-organization-id': '7',
-        },
+      const response = await apiRequest('GET', '/api/templates/recent/documents', undefined, {
+        'x-organization-id': '7',
       });
-      if (!response.ok) throw new Error('Failed to fetch recent documents');
       return response.json();
     },
   });
@@ -117,12 +112,9 @@ const DocumentTemplates = () => {
   const { data: featuredData, isLoading: featuredLoading } = useQuery({
     queryKey: ['/api/templates/featured/list'],
     queryFn: async () => {
-      const response = await fetch('/api/templates/featured/list', {
-        headers: {
-          'x-organization-id': '7',
-        },
+      const response = await apiRequest('GET', '/api/templates/featured/list', undefined, {
+        'x-organization-id': '7',
       });
-      if (!response.ok) throw new Error('Failed to fetch featured templates');
       return response.json();
     },
   });
