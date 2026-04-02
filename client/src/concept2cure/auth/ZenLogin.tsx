@@ -72,37 +72,37 @@ const STYLE = `
 }
 
 .za-title {
-  font-size: 32px !important;
+  font-size: 26px !important;
   font-weight: 300 !important;
   color: #0d0d0d !important;
   letter-spacing: -0.03em !important;
   text-align: center !important;
-  margin: 0 0 8px 0 !important;
+  margin: 0 0 4px 0 !important;
   line-height: 1.1 !important;
 }
 
 .za-subtitle {
-  font-size: 15px !important;
+  font-size: 14px !important;
   color: #8e8e8e !important;
   text-align: center !important;
-  margin: 0 0 40px 0 !important;
+  margin: 0 0 28px 0 !important;
   font-weight: 400 !important;
   line-height: 1.4 !important;
 }
 
 .za-label {
   display: block !important;
-  font-size: 14px !important;
+  font-size: 13px !important;
   font-weight: 500 !important;
   color: #3d3d3d !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 6px !important;
   letter-spacing: 0 !important;
 }
 
 .za-input {
   display: block !important;
   width: 100% !important;
-  padding: 14px 16px !important;
+  padding: 11px 14px !important;
   font-size: 15px !important;
   line-height: 1.5 !important;
   color: #0d0d0d !important;
@@ -122,7 +122,7 @@ const STYLE = `
 .za-select {
   display: block !important;
   width: 100% !important;
-  padding: 14px 40px 14px 16px !important;
+  padding: 11px 40px 11px 14px !important;
   font-size: 15px !important;
   color: #0d0d0d !important;
   background: #ffffff !important;
@@ -141,15 +141,15 @@ const STYLE = `
   box-shadow: 0 0 0 3px rgba(0,0,0,0.04) !important;
 }
 
-.za-field { margin-bottom: 20px !important; }
-.za-field-last { margin-bottom: 28px !important; }
+.za-field { margin-bottom: 14px !important; }
+.za-field-last { margin-bottom: 20px !important; }
 
 .za-btn {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   width: 100% !important;
-  padding: 14px 24px !important;
+  padding: 12px 24px !important;
   font-size: 15px !important;
   font-weight: 500 !important;
   border-radius: 12px !important;
@@ -198,7 +198,7 @@ const STYLE = `
   display: flex !important;
   align-items: center !important;
   gap: 16px !important;
-  margin: 28px 0 !important;
+  margin: 16px 0 !important;
   color: #c0c0c0 !important;
   font-size: 13px !important;
 }
@@ -225,7 +225,7 @@ const STYLE = `
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
-  margin-top: 20px !important;
+  margin-top: 14px !important;
 }
 
 .za-pw-toggle {
@@ -292,9 +292,9 @@ const STYLE = `
 .za-persona-item {
   display: flex !important;
   align-items: center !important;
-  gap: 14px !important;
+  gap: 12px !important;
   width: 100% !important;
-  padding: 14px 18px !important;
+  padding: 10px 16px !important;
   background: none !important;
   border: none !important;
   cursor: pointer !important;
@@ -306,8 +306,8 @@ const STYLE = `
 .za-persona-item + .za-persona-item { border-top: 1px solid #f0f0f0 !important; }
 
 .za-avatar {
-  width: 36px !important;
-  height: 36px !important;
+  width: 32px !important;
+  height: 32px !important;
   border-radius: 50% !important;
   background: #f0f0f0 !important;
   color: #666 !important;
