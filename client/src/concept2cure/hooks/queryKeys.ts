@@ -204,6 +204,16 @@ export const queryKeys = {
       ['intelligence', 'cross-module', projectId] as const,
     feedbackSummary: (projectId: number | string) =>
       ['intelligence', 'feedback-summary', projectId] as const,
+    rimAssessment: (projectId: number | string) =>
+      ['intelligence', 'rim-assessment', projectId] as const,
+  },
+
+  // ── Governance / Authoring Actions ────────────────────────────────────
+  governance: {
+    promotionBlockers: (projectId: number | string) =>
+      ['concept2cure', 'governance', 'promotion-blockers', projectId] as const,
+    decisions: (projectId: number | string) =>
+      ['concept2cure', 'governance', 'decisions', projectId] as const,
   },
 
   // ── AnA Intelligence (CLAUDE.md Memory Compression Model) ─────────────

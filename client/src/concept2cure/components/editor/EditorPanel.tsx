@@ -78,6 +78,7 @@ import SourceCitationsPanel from './SourceCitationsPanel';
 import { ReviewerAssignment } from './ReviewerAssignment';
 import { CollaborationPresence, CollaborationCursors } from './CollaborationPresence';
 import { DocumentWatermark } from './DocumentWatermark';
+import { GovernanceStatusBar } from './GovernanceStatusBar';
 import { useCollaboration } from '../../hooks/useCollaboration';
 import { SignatureWorkflow, SignatureList } from './SignatureWorkflow';
 import { SubmissionReadinessValidator } from '../submission/SubmissionReadinessValidator';
@@ -3340,6 +3341,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         activeInspector={activeInspector}
         onToggle={toggleInspector}
       />
+
+      {/* ── Governance escalation status bar ────────────────────────────────── */}
+      <GovernanceStatusBar projectId={projectId} />
 
       {/* ── AI Suggestion Diff Panel ──────────────────────────────────────── */}
       {aiResult && (

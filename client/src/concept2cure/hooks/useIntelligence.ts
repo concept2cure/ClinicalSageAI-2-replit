@@ -70,6 +70,8 @@ export const intelligenceKeys = {
     ['intelligence', 'feedback-summary', projectId] as const,
   crossModule: (projectId: number | string) =>
     ['intelligence', 'cross-module', projectId] as const,
+  rimAssessment: (projectId: number | string) =>
+    ['intelligence', 'rim-assessment', projectId] as const,
 } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -341,6 +343,89 @@ export function useSubmitFeedback(projectId: number | string | null) {
         qc.invalidateQueries({ queryKey: intelligenceKeys.dashboard(projectId) });
       }
     },
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RIM ASSESSMENT TYPES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export type JudgmentModel =
+  | 'evidence_sufficiency'
+  | 'defensibility'
+  | 'reviewer_sensitivity'
+  | 'claim_risk'
+  | 'cross_section_consistency'
+  | 'submission_risk';
+
+export type JudgmentVerdict =
+  | 'pass'
+  | 'acceptable'
+  | 'needs_attention'
+  | 'at_risk'
+  | 'fail';
+
+export interface JudgmentFinding {
+  id: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  category: string;
+  description: string;
+  remediation: string;
+  reviewerImpact: 'likely_question' | 'possible_question' | 'unlikely_question';
+}
+
+export interface JudgmentFactor {
+  name: string;
+  weight: number;
+  rawScore: number;
+  weightedScore: number;
+  detail: string;
+}
+
+export interface JudgmentScore {
+  model: JudgmentModel;
+  score: number;
+  confidence: number;
+  verdict: JudgmentVerdict;
+  factors: JudgmentFactor[];
+  findings: JudgmentFinding[];
+  scoredAt: string;
+}
+
+export interface JudgmentReport {
+  frameworkVersion: string;
+  scores: JudgmentScore[];
+  overallRisk: number;
+  overallVerdict: JudgmentVerdict;
+  topFindings: JudgmentFinding[];
+  generatedAt: string;
+}
+
+export interface RIMAssessment {
+  judgment: JudgmentReport;
+  rimScore: number;
+  rimVerdict: string;
+  topActions: string[];
+  assessedAt: string;
+  patternMatches: unknown[];
+  signalSummary: unknown;
+}
+
+/**
+ * RIM assessment — full judgment framework scores for a project.
+ * Calls POST because the endpoint runs a fresh assessment.
+ */
+export function useRIMAssessment(projectId: number | string | null) {
+  return useQuery<RIMAssessment>({
+    queryKey: intelligenceKeys.rimAssessment(projectId ?? 0),
+    queryFn: () =>
+      apiFetch(`/api/intelligence/projects/${projectId}/rim/assess`, {
+        method: 'POST',
+        body: JSON.stringify({}),
+      }),
+    enabled: !!projectId,
+    staleTime: 120_000, // 2 minutes — assessment is expensive
+    refetchOnWindowFocus: false,
   });
 }
 

@@ -52,6 +52,7 @@ import { ComputeJobPanel } from '../compute/ComputeJobPanel';
 import { IndEvidenceAskPanel } from './IndEvidenceAskPanel';
 import RegulatoryCommunicationsHub from '../correspondence/RegulatoryCommunicationsHub';
 import ReportCenter from '../reports/ReportCenter';
+import { SubmissionCommandCenter } from '../submission/SubmissionCommandCenter';
 import {
   ChevronLeft,
   Loader2,
@@ -2908,6 +2909,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     onOpenCSRWorkflow={onNavigate ? () => onNavigate('csr-workflow') : undefined}
                     onOpenINDChecklist={onNavigate ? () => onNavigate('ind-checklist') : undefined}
                   />
+                  {projectNav === 'submission_builder' && (
+                    <SubmissionCommandCenter projectId={projectId} />
+                  )}
                   {projectNav === 'haq' && (
                     <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-4 space-y-3">
                       <div className="flex items-center gap-2">
