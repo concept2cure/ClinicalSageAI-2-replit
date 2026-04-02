@@ -46,16 +46,29 @@ const router = Router();
 const log = createScopedLogger('governed-intelligence-routes');
 
 function getOrgId(req: Request): number {
-  return Number((req as Record<string, unknown>).organizationId ?? req.headers['x-organization-id'] ?? 1);
+  const orgId = Number(
+    (req as Record<string, unknown>).organizationId ??
+      (req as any).user?.organizationId ??
+      (req as any).tenantId
+  );
+  if (!orgId || orgId <= 0) throw new Error('Organization context required');
+  return orgId;
 }
 
 function getUserId(req: Request): string {
-  return String((req as Record<string, unknown>).userId ?? req.headers['x-user-id'] ?? 'system');
+  return String((req as Record<string, unknown>).userId ?? (req as any).user?.id ?? 'system');
 }
 
 function handleError(res: Response, error: unknown, context: string) {
-  log.error(`Error in ${context}`, { error: error instanceof Error ? error.message : String(error) });
-  res.status(500).json({ error: `Failed to ${context}`, details: error instanceof Error ? error.message : 'Unknown error' });
+  log.error(`Error in ${context}`, {
+    error: error instanceof Error ? error.message : String(error),
+  });
+  res
+    .status(500)
+    .json({
+      error: `Failed to ${context}`,
+      details: error instanceof Error ? error.message : 'Unknown error',
+    });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -64,16 +77,27 @@ function handleError(res: Response, error: unknown, context: string) {
 
 router.post('/assumptions/search', async (req: Request, res: Response) => {
   try {
-    const results = await assumptionRegistryService.search({ organizationId: getOrgId(req), ...req.body });
+    const results = await assumptionRegistryService.search({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.json({ assumptions: results, count: results.length });
-  } catch (error) { handleError(res, error, 'search assumptions'); }
+  } catch (error) {
+    handleError(res, error, 'search assumptions');
+  }
 });
 
 router.post('/assumptions', async (req: Request, res: Response) => {
   try {
-    const result = await assumptionRegistryService.create({ organizationId: getOrgId(req), createdBy: getUserId(req), ...req.body });
+    const result = await assumptionRegistryService.create({
+      organizationId: getOrgId(req),
+      createdBy: getUserId(req),
+      ...req.body,
+    });
     res.status(201).json(result);
-  } catch (error) { handleError(res, error, 'create assumption'); }
+  } catch (error) {
+    handleError(res, error, 'create assumption');
+  }
 });
 
 router.get('/assumptions/:id', async (req: Request, res: Response) => {
@@ -81,34 +105,50 @@ router.get('/assumptions/:id', async (req: Request, res: Response) => {
     const result = await assumptionRegistryService.getById(req.params.id, getOrgId(req));
     if (!result) return res.status(404).json({ error: 'Assumption not found' });
     res.json(result);
-  } catch (error) { handleError(res, error, 'get assumption'); }
+  } catch (error) {
+    handleError(res, error, 'get assumption');
+  }
 });
 
 router.post('/assumptions/:id/supersede', async (req: Request, res: Response) => {
   try {
     const result = await assumptionRegistryService.supersede(req.params.id, {
-      organizationId: getOrgId(req), performedBy: getUserId(req), ...req.body,
+      organizationId: getOrgId(req),
+      performedBy: getUserId(req),
+      ...req.body,
     });
     if (!result) return res.status(404).json({ error: 'Assumption not found' });
     res.json(result);
-  } catch (error) { handleError(res, error, 'supersede assumption'); }
+  } catch (error) {
+    handleError(res, error, 'supersede assumption');
+  }
 });
 
 router.patch('/assumptions/:id/status', async (req: Request, res: Response) => {
   try {
     const result = await assumptionRegistryService.updateStatus(
-      req.params.id, getOrgId(req), req.body.status, getUserId(req)
+      req.params.id,
+      getOrgId(req),
+      req.body.status,
+      getUserId(req)
     );
     if (!result) return res.status(404).json({ error: 'Assumption not found' });
     res.json(result);
-  } catch (error) { handleError(res, error, 'update assumption status'); }
+  } catch (error) {
+    handleError(res, error, 'update assumption status');
+  }
 });
 
 router.get('/assumptions/project/:projectId/summary', async (req: Request, res: Response) => {
   try {
-    const summary = await assumptionRegistryService.getByProject(getOrgId(req), Number(req.params.projectId));
+    const summary = await assumptionRegistryService.getByProject(
+      getOrgId(req),
+      Number(req.params.projectId)
+    );
     res.json(summary);
-  } catch (error) { handleError(res, error, 'get project assumption summary'); }
+  } catch (error) {
+    handleError(res, error, 'get project assumption summary');
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -117,16 +157,27 @@ router.get('/assumptions/project/:projectId/summary', async (req: Request, res: 
 
 router.post('/decisions/search', async (req: Request, res: Response) => {
   try {
-    const results = await decisionRecordService.search({ organizationId: getOrgId(req), ...req.body });
+    const results = await decisionRecordService.search({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.json({ decisions: results, count: results.length });
-  } catch (error) { handleError(res, error, 'search decisions'); }
+  } catch (error) {
+    handleError(res, error, 'search decisions');
+  }
 });
 
 router.post('/decisions', async (req: Request, res: Response) => {
   try {
-    const result = await decisionRecordService.create({ organizationId: getOrgId(req), decidedBy: getUserId(req), ...req.body });
+    const result = await decisionRecordService.create({
+      organizationId: getOrgId(req),
+      decidedBy: getUserId(req),
+      ...req.body,
+    });
     res.status(201).json(result);
-  } catch (error) { handleError(res, error, 'create decision'); }
+  } catch (error) {
+    handleError(res, error, 'create decision');
+  }
 });
 
 router.get('/decisions/:id', async (req: Request, res: Response) => {
@@ -134,17 +185,23 @@ router.get('/decisions/:id', async (req: Request, res: Response) => {
     const result = await decisionRecordService.getById(req.params.id, getOrgId(req));
     if (!result) return res.status(404).json({ error: 'Decision not found' });
     res.json(result);
-  } catch (error) { handleError(res, error, 'get decision'); }
+  } catch (error) {
+    handleError(res, error, 'get decision');
+  }
 });
 
 router.post('/decisions/:id/transition', async (req: Request, res: Response) => {
   try {
     const result = await decisionRecordService.transition(req.params.id, {
-      organizationId: getOrgId(req), performedBy: getUserId(req), ...req.body,
+      organizationId: getOrgId(req),
+      performedBy: getUserId(req),
+      ...req.body,
     });
     if (!result) return res.status(404).json({ error: 'Decision not found' });
     res.json(result);
-  } catch (error) { handleError(res, error, 'transition decision'); }
+  } catch (error) {
+    handleError(res, error, 'transition decision');
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -153,9 +210,14 @@ router.post('/decisions/:id/transition', async (req: Request, res: Response) => 
 
 router.post('/contradictions/search', async (req: Request, res: Response) => {
   try {
-    const results = await contradictionEngineService.searchFindings({ organizationId: getOrgId(req), ...req.body });
+    const results = await contradictionEngineService.searchFindings({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.json({ findings: results, count: results.length });
-  } catch (error) { handleError(res, error, 'search contradictions'); }
+  } catch (error) {
+    handleError(res, error, 'search contradictions');
+  }
 });
 
 router.get('/contradictions/:id', async (req: Request, res: Response) => {
@@ -163,42 +225,63 @@ router.get('/contradictions/:id', async (req: Request, res: Response) => {
     const result = await contradictionEngineService.getFinding(req.params.id, getOrgId(req));
     if (!result) return res.status(404).json({ error: 'Finding not found' });
     res.json(result);
-  } catch (error) { handleError(res, error, 'get contradiction'); }
+  } catch (error) {
+    handleError(res, error, 'get contradiction');
+  }
 });
 
 router.post('/contradictions/scan/:projectId', async (req: Request, res: Response) => {
   try {
-    const result = await contradictionEngineService.scanProject(getOrgId(req), Number(req.params.projectId));
+    const result = await contradictionEngineService.scanProject(
+      getOrgId(req),
+      Number(req.params.projectId)
+    );
     res.json(result);
-  } catch (error) { handleError(res, error, 'scan project for contradictions'); }
+  } catch (error) {
+    handleError(res, error, 'scan project for contradictions');
+  }
 });
 
 router.post('/contradictions/:id/review', async (req: Request, res: Response) => {
   try {
     const result = await contradictionEngineService.transitionReviewState(
-      req.params.id, getOrgId(req), req.body.reviewState, getUserId(req), req.body.notes
+      req.params.id,
+      getOrgId(req),
+      req.body.reviewState,
+      getUserId(req),
+      req.body.notes
     );
     if (!result) return res.status(404).json({ error: 'Finding not found' });
     res.json(result);
-  } catch (error) { handleError(res, error, 'review contradiction'); }
+  } catch (error) {
+    handleError(res, error, 'review contradiction');
+  }
 });
 
 router.post('/contradictions/:id/execute-consequence', async (req: Request, res: Response) => {
   try {
     const result = await contradictionEngineService.executeConsequence(
-      req.params.id, getOrgId(req), getUserId(req)
+      req.params.id,
+      getOrgId(req),
+      getUserId(req)
     );
     res.json(result);
-  } catch (error) { handleError(res, error, 'execute consequence'); }
+  } catch (error) {
+    handleError(res, error, 'execute consequence');
+  }
 });
 
 router.post('/contradictions/check-promotion', async (req: Request, res: Response) => {
   try {
     const result = await contradictionEngineService.checkPromotionBlocked(
-      getOrgId(req), req.body.projectId, req.body.artifactId
+      getOrgId(req),
+      req.body.projectId,
+      req.body.artifactId
     );
     res.json(result);
-  } catch (error) { handleError(res, error, 'check promotion'); }
+  } catch (error) {
+    handleError(res, error, 'check promotion');
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -207,38 +290,68 @@ router.post('/contradictions/check-promotion', async (req: Request, res: Respons
 
 router.post('/dependencies', async (req: Request, res: Response) => {
   try {
-    const result = await reactiveDependencyService.registerDependency({ organizationId: getOrgId(req), ...req.body });
+    const result = await reactiveDependencyService.registerDependency({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.status(201).json(result);
-  } catch (error) { handleError(res, error, 'register dependency'); }
+  } catch (error) {
+    handleError(res, error, 'register dependency');
+  }
 });
 
-router.get('/dependencies/downstream/:sourceType/:sourceId', async (req: Request, res: Response) => {
-  try {
-    const results = await reactiveDependencyService.getDownstream(getOrgId(req), req.params.sourceType, req.params.sourceId);
-    res.json({ dependencies: results, count: results.length });
-  } catch (error) { handleError(res, error, 'get downstream dependencies'); }
-});
+router.get(
+  '/dependencies/downstream/:sourceType/:sourceId',
+  async (req: Request, res: Response) => {
+    try {
+      const results = await reactiveDependencyService.getDownstream(
+        getOrgId(req),
+        req.params.sourceType,
+        req.params.sourceId
+      );
+      res.json({ dependencies: results, count: results.length });
+    } catch (error) {
+      handleError(res, error, 'get downstream dependencies');
+    }
+  }
+);
 
 router.get('/dependencies/stale/:projectId', async (req: Request, res: Response) => {
   try {
-    const results = await reactiveDependencyService.getStale(getOrgId(req), Number(req.params.projectId));
+    const results = await reactiveDependencyService.getStale(
+      getOrgId(req),
+      Number(req.params.projectId)
+    );
     res.json({ stale: results, count: results.length });
-  } catch (error) { handleError(res, error, 'get stale dependencies'); }
+  } catch (error) {
+    handleError(res, error, 'get stale dependencies');
+  }
 });
 
 router.post('/dependencies/:id/resolve', async (req: Request, res: Response) => {
   try {
-    const result = await reactiveDependencyService.resolveStale(req.params.id, getOrgId(req), getUserId(req));
+    const result = await reactiveDependencyService.resolveStale(
+      req.params.id,
+      getOrgId(req),
+      getUserId(req)
+    );
     if (!result) return res.status(404).json({ error: 'Dependency not found' });
     res.json(result);
-  } catch (error) { handleError(res, error, 'resolve stale dependency'); }
+  } catch (error) {
+    handleError(res, error, 'resolve stale dependency');
+  }
 });
 
 router.get('/impact-summary/:projectId', async (req: Request, res: Response) => {
   try {
-    const result = await reactiveDependencyService.getProjectImpactSummary(getOrgId(req), Number(req.params.projectId));
+    const result = await reactiveDependencyService.getProjectImpactSummary(
+      getOrgId(req),
+      Number(req.params.projectId)
+    );
     res.json(result);
-  } catch (error) { handleError(res, error, 'get impact summary'); }
+  } catch (error) {
+    handleError(res, error, 'get impact summary');
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -248,17 +361,26 @@ router.get('/impact-summary/:projectId', async (req: Request, res: Response) => 
 router.post('/overlays/search', async (req: Request, res: Response) => {
   try {
     const results = await contradictionEngineService.getOverlayRules(
-      getOrgId(req), req.body.contradictionType, req.body.regulatorBody
+      getOrgId(req),
+      req.body.contradictionType,
+      req.body.regulatorBody
     );
     res.json({ rules: results, count: results.length });
-  } catch (error) { handleError(res, error, 'search overlay rules'); }
+  } catch (error) {
+    handleError(res, error, 'search overlay rules');
+  }
 });
 
 router.post('/overlays', async (req: Request, res: Response) => {
   try {
-    const result = await contradictionEngineService.createOverlayRule({ organizationId: getOrgId(req), ...req.body });
+    const result = await contradictionEngineService.createOverlayRule({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.status(201).json(result);
-  } catch (error) { handleError(res, error, 'create overlay rule'); }
+  } catch (error) {
+    handleError(res, error, 'create overlay rule');
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -269,7 +391,13 @@ router.get('/health', (_req: Request, res: Response) => {
   res.json({
     service: 'governed-intelligence',
     status: 'healthy',
-    modules: ['assumption-registry', 'decision-records', 'contradiction-engine', 'overlay-rules', 'consequence-paths'],
+    modules: [
+      'assumption-registry',
+      'decision-records',
+      'contradiction-engine',
+      'overlay-rules',
+      'consequence-paths',
+    ],
     timestamp: new Date().toISOString(),
   });
 });

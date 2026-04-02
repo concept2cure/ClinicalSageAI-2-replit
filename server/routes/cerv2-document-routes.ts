@@ -14,10 +14,9 @@ const router = Router();
 const logger = createScopedLogger('cerv2-documents');
 
 const resolveOrganizationId = (req: any) => {
-  const headerOrg = req.header('x-organization-id') || req.header('x-org-id');
   const tenantOrg = req.tenantContext?.organizationId;
   const userOrg = req.user?.organizationId || req.tenantId;
-  const raw = headerOrg || tenantOrg || userOrg;
+  const raw = tenantOrg || userOrg;
   const parsed = Number(raw);
   return Number.isFinite(parsed) ? parsed : null;
 };

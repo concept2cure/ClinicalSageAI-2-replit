@@ -127,8 +127,9 @@ router.get('/', async (req: Request, res: Response) => {
     const projectId = parseInt(req.query.project_id as string, 10) || 0;
     const organizationId =
       parseInt(req.query.organization_id as string, 10) ||
-      parseInt(req.headers['x-organization-id'] as string, 10) ||
-      1;
+      Number((req as any).user?.organizationId) ||
+      Number((req as any).tenantId) ||
+      0;
 
     const packageDef = buildINDPackageDefinition();
 
@@ -198,8 +199,9 @@ router.get('/progress', async (req: Request, res: Response) => {
     const projectId = parseInt(req.query.project_id as string, 10) || 0;
     const organizationId =
       parseInt(req.query.organization_id as string, 10) ||
-      parseInt(req.headers['x-organization-id'] as string, 10) ||
-      1;
+      Number((req as any).user?.organizationId) ||
+      Number((req as any).tenantId) ||
+      0;
 
     const statusMap = new Map<string, SectionStatus>();
 

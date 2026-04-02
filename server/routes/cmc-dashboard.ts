@@ -11,7 +11,7 @@ import { authMiddleware } from '../auth';
 const router = Router();
 
 const resolveOrganizationId = (req: any): number | null => {
-  const headerOrg = req.header('x-organization-id') || req.header('x-org-id');
+  const headerOrg = null; // org from JWT only
   const tenantOrg = req.tenantContext?.organizationId;
   const userOrg = req.user?.organizationId || req.tenantId;
   const raw = headerOrg || tenantOrg || userOrg;

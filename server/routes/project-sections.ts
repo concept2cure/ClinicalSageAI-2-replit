@@ -42,7 +42,7 @@ const router = Router();
 function extractOrgId(req: Request): number {
   return (
     parseInt((req as any).tenantContext?.organizationId, 10) ||
-    parseInt(req.headers['x-organization-id'] as string, 10) ||
+    Number((req as any).user?.organizationId || (req as any).tenantId) ||
     1
   );
 }

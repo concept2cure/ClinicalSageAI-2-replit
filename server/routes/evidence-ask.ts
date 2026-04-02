@@ -41,7 +41,7 @@ const askRateLimiter = rateLimit({
   message: { error: 'Too many Data Room queries — please wait.' },
   keyGenerator: (req: Request) => {
     const userId = (req as Record<string, unknown>).userId as string || 'anon';
-    const orgId = req.header('x-organization-id') || 'unknown';
+    const orgId = String((req as any).user?.organizationId || (req as any).tenantId || 'unknown');
     return `evidence-ask:${orgId}:${userId}`;
   },
 });
@@ -68,7 +68,7 @@ router.post('/ask', authMiddleware, askRateLimiter, async (req: Request, res: Re
 
     // Tenant scoping — ensure queries are scoped to the user's organization
     const userId = (req as Record<string, unknown>).userId as number | undefined;
-    const orgId = req.header('x-organization-id') || (req as Record<string, unknown>).tenantId as string | undefined;
+    const orgId = String((req as any).user?.organizationId || (req as any).tenantId || '');
 
     // Build context prefix with project and tenant info
     const contextParts: string[] = [];

@@ -59,7 +59,7 @@ const complianceRules = loadComplianceRules();
  */
 const extractTenantContext = (req: Request, res: Response, next: Function) => {
   // Extract organization ID and client workspace ID from request headers
-  const organizationId = (req.headers['x-organization-id'] as string) || null;
+  const organizationId = String((req as any).user?.organizationId || '') || null;
   const clientWorkspaceId = (req.headers['x-client-workspace-id'] as string) || null;
   const module = (req.headers['x-module'] as string) || null;
 

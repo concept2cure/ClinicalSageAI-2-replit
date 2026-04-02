@@ -75,7 +75,7 @@ const upload = multer({
 // ── Helper: extract org/user from request ────────────────────────────────────
 function getRequestContext(req: Request) {
   const organizationId = parseInt(
-    (req.headers['x-organization-id'] as string) || '',
+    String((req as any).user?.organizationId || (req as any).tenantId || ''),
     10
   );
   if (!organizationId) {

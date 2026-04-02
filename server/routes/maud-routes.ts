@@ -24,7 +24,7 @@ try {
   validateTenantAccess = (req: Request, res: Response, next: Function) => {
     log.debug('Using fallback tenant middleware');
     // Extract organization ID from headers if available
-    const organizationId = req.headers['x-organization-id'] as string;
+    const organizationId = String((req as any).user?.organizationId || (req as any).tenantId || '');
     if (organizationId) {
       log.debug(`Request for organization: ${organizationId}`);
     }
@@ -87,7 +87,7 @@ router.get(
       const apiKey = req.headers['x-api-key'] as string;
 
       // Get tenant context from middleware
-      const organizationId = req.headers['x-organization-id'] as string;
+      const organizationId = String((req as any).user?.organizationId || (req as any).tenantId || '');
 
       // First, attempt to get validation status from our database
       const { getValidationStatus, getPendingRequests } = require('../db/maudDb');
@@ -212,7 +212,7 @@ router.post('/validate', requireMaudApiKey, async (req: Request, res: Response) 
     const apiKey = req.headers['x-api-key'] as string;
 
     // Get tenant context from middleware
-    const organizationId = req.headers['x-organization-id'] as string;
+    const organizationId = String((req as any).user?.organizationId || (req as any).tenantId || '');
 
     // Add organization context to the request
     const enrichedRequest = {
@@ -270,7 +270,7 @@ router.get('/algorithms', requireMaudApiKey, async (req: Request, res: Response)
     const apiKey = req.headers['x-api-key'] as string;
 
     // Get tenant context from middleware
-    const organizationId = req.headers['x-organization-id'] as string;
+    const organizationId = String((req as any).user?.organizationId || (req as any).tenantId || '');
 
     const response = await axios.get(`${MAUD_API_BASE_URL}/algorithms`, {
       headers: {
@@ -322,7 +322,7 @@ router.get(
       const apiKey = req.headers['x-api-key'] as string;
 
       // Get tenant context from middleware
-      const organizationId = req.headers['x-organization-id'] as string;
+      const organizationId = String((req as any).user?.organizationId || (req as any).tenantId || '');
 
       // Get limit from query params (default to 20)
       const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
@@ -476,7 +476,7 @@ router.post('/export-certificate', requireMaudApiKey, async (req: Request, res: 
     const apiKey = req.headers['x-api-key'] as string;
 
     // Get tenant context from middleware
-    const organizationId = req.headers['x-organization-id'] as string;
+    const organizationId = String((req as any).user?.organizationId || (req as any).tenantId || '');
 
     const response = await axios.post(
       `${MAUD_API_BASE_URL}/export-certificate`,

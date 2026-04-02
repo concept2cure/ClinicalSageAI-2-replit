@@ -95,7 +95,7 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
     console.error('[predicate-intel] program access check failed:', err.message);
     return res.status(500).json({
       error: 'Program access check failed',
-      detail: err.message,
+      detail: 'Service unavailable',
     });
   }
 }
@@ -220,7 +220,7 @@ router.post('/suggest', requireConfigured, requireProgramAccess, async (req, res
     sendProxyResponse(res, result);
   } catch (err: any) {
     console.error('[predicate-intel] suggest proxy error:', err.message);
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 
@@ -236,7 +236,7 @@ router.post('/candidates', requireConfigured, requireProgramAccess, async (req, 
     });
     sendProxyResponse(res, result);
   } catch (err: any) {
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 
@@ -247,7 +247,7 @@ router.get('/candidates', requireConfigured, requireProgramAccess, async (req, r
     });
     sendProxyResponse(res, result);
   } catch (err: any) {
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 
@@ -258,7 +258,7 @@ router.get('/candidates/:id', requireConfigured, requireProgramAccess, async (re
     });
     sendProxyResponse(res, result);
   } catch (err: any) {
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 
@@ -274,7 +274,7 @@ router.patch(
       });
       sendProxyResponse(res, result);
     } catch (err: any) {
-      res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
     }
   }
 );
@@ -291,7 +291,7 @@ router.post('/analyze', requireConfigured, requireProgramAccess, async (req, res
     });
     sendProxyResponse(res, result);
   } catch (err: any) {
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 
@@ -307,7 +307,7 @@ router.post('/defense-preview', requireConfigured, requireProgramAccess, async (
     });
     sendProxyResponse(res, result);
   } catch (err: any) {
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 
@@ -318,7 +318,7 @@ router.get('/defense-preview', requireConfigured, requireProgramAccess, async (r
     const result = await proxyToShadow('/predicate/defense-preview', { query });
     sendProxyResponse(res, result);
   } catch (err: any) {
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 
@@ -334,7 +334,7 @@ router.post('/se-matrix', requireConfigured, requireProgramAccess, async (req, r
     });
     sendProxyResponse(res, result);
   } catch (err: any) {
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 
@@ -345,7 +345,7 @@ router.get('/se-matrix', requireConfigured, requireProgramAccess, async (req, re
     const result = await proxyToShadow('/predicate/se-matrix', { query });
     sendProxyResponse(res, result);
   } catch (err: any) {
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 
@@ -357,7 +357,7 @@ router.patch('/se-matrix/:id', requireConfigured, requireProgramAccess, async (r
     });
     sendProxyResponse(res, result);
   } catch (err: any) {
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 
@@ -372,7 +372,7 @@ router.get('/radar', requireConfigured, requireProgramAccess, async (req, res) =
     });
     sendProxyResponse(res, result);
   } catch (err: any) {
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 
@@ -388,7 +388,7 @@ router.post('/generate-510k-preview', requireConfigured, requireProgramAccess, a
     });
     sendProxyResponse(res, result);
   } catch (err: any) {
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 
@@ -404,7 +404,7 @@ router.post('/generate-se-matrix', requireConfigured, requireProgramAccess, asyn
     });
     sendProxyResponse(res, result);
   } catch (err: any) {
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 
@@ -417,7 +417,7 @@ router.get('/health', requireConfigured, async (_req, res) => {
     const result = await proxyToShadow('/predicate/health');
     sendProxyResponse(res, result);
   } catch (err: any) {
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 
@@ -433,7 +433,7 @@ router.post('/reviewer-questions', requireConfigured, requireProgramAccess, asyn
     });
     sendProxyResponse(res, result);
   } catch (err: any) {
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 
@@ -448,7 +448,7 @@ router.get('/toxic-detail/:kNumber', requireConfigured, requireProgramAccess, as
     });
     sendProxyResponse(res, result);
   } catch (err: any) {
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 
@@ -474,7 +474,7 @@ router.post('/render-se-docx', requireConfigured, requireProgramAccess, async (r
     );
     sendProxyResponse(res, result);
   } catch (err: any) {
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 
@@ -500,7 +500,7 @@ router.post(
       res.set('Content-Type', 'application/zip');
       sendProxyResponse(res, result);
     } catch (err: any) {
-      res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
     }
   }
 );
@@ -538,7 +538,7 @@ router.post('/programs/:programId/suggestions', requireConfigured, async (req, r
       sendProxyResponse(res, result);
     } catch (err: any) {
       console.error('[predicate-intel] program-scoped suggest error:', err.message);
-      res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+      res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
     }
   });
 });
@@ -575,7 +575,7 @@ router.post('/generate-se-matrix-v2', requireConfigured, requireProgramAccess, a
     sendProxyResponse(res, result);
   } catch (err: any) {
     console.error('[predicate-intel] SE matrix V2 generation error:', err.message);
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 
@@ -616,7 +616,7 @@ router.post('/render-se-docx-v2', requireConfigured, requireProgramAccess, async
     sendProxyResponse(res, result);
   } catch (err: any) {
     console.error('[predicate-intel] SE DOCX V2 render error:', err.message);
-    res.status(502).json({ error: 'Shadow service unavailable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
 

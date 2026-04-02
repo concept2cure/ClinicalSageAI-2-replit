@@ -11,10 +11,9 @@ import { authMiddleware } from '../auth';
 const router = Router();
 
 const resolveOrganizationId = (req: any): number | null => {
-  const headerOrg = req.header('x-organization-id') || req.header('x-org-id');
   const tenantOrg = req.tenantContext?.organizationId;
   const userOrg = req.user?.organizationId || req.tenantId;
-  const raw = headerOrg || tenantOrg || userOrg;
+  const raw = tenantOrg || userOrg;
   const parsed = Number(raw);
   return Number.isFinite(parsed) ? parsed : null;
 };
@@ -37,11 +36,12 @@ router.get('/sessions', authMiddleware, async (req: any, res: Response) => {
 
     return res.json({
       sessions,
-      message: sessions.length > 0 ? `Found ${sessions.length} session(s)` : 'No co-author sessions yet',
+      message:
+        sessions.length > 0 ? `Found ${sessions.length} session(s)` : 'No co-author sessions yet',
     });
   } catch (error: any) {
     console.error('[Co-Author] List sessions error:', error);
-    return res.status(500).json({ error: 'Failed to fetch sessions', message: error.message });
+    return res.status(500).json({ error: 'Failed to fetch sessions', message: 'An unexpected error occurred' });
   }
 });
 
@@ -71,7 +71,7 @@ router.post('/sessions', authMiddleware, async (req: any, res: Response) => {
     });
   } catch (error: any) {
     console.error('[Co-Author] Create session error:', error);
-    return res.status(500).json({ error: 'Failed to create session', message: error.message });
+    return res.status(500).json({ error: 'Failed to create session', message: 'An unexpected error occurred' });
   }
 });
 
@@ -96,11 +96,14 @@ router.get('/documents', authMiddleware, async (req: any, res: Response) => {
     return res.json({
       documents,
       total: documents.length,
-      message: documents.length > 0 ? `Found ${documents.length} document(s)` : 'No co-author documents yet',
+      message:
+        documents.length > 0
+          ? `Found ${documents.length} document(s)`
+          : 'No co-author documents yet',
     });
   } catch (error: any) {
     console.error('[Co-Author] List documents error:', error);
-    return res.status(500).json({ error: 'Failed to fetch documents', message: error.message });
+    return res.status(500).json({ error: 'Failed to fetch documents', message: 'An unexpected error occurred' });
   }
 });
 
@@ -120,10 +123,7 @@ router.get('/documents/:id', authMiddleware, async (req: any, res: Response) => 
       .select()
       .from(coauthorDocuments)
       .where(
-        and(
-          eq(coauthorDocuments.id, docId),
-          eq(coauthorDocuments.organizationId, organizationId)
-        )
+        and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId))
       )
       .limit(1);
 
@@ -134,7 +134,7 @@ router.get('/documents/:id', authMiddleware, async (req: any, res: Response) => 
     return res.json({ document });
   } catch (error: any) {
     console.error('[Co-Author] Get document error:', error);
-    return res.status(500).json({ error: 'Failed to fetch document', message: error.message });
+    return res.status(500).json({ error: 'Failed to fetch document', message: 'An unexpected error occurred' });
   }
 });
 
@@ -172,7 +172,7 @@ router.post('/documents', authMiddleware, async (req: any, res: Response) => {
     });
   } catch (error: any) {
     console.error('[Co-Author] Create document error:', error);
-    return res.status(500).json({ error: 'Failed to create document', message: error.message });
+    return res.status(500).json({ error: 'Failed to create document', message: 'An unexpected error occurred' });
   }
 });
 
@@ -199,10 +199,7 @@ router.put('/documents/:id', authMiddleware, async (req: any, res: Response) => 
       .update(coauthorDocuments)
       .set(updateValues)
       .where(
-        and(
-          eq(coauthorDocuments.id, docId),
-          eq(coauthorDocuments.organizationId, organizationId)
-        )
+        and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId))
       )
       .returning();
 
@@ -216,7 +213,7 @@ router.put('/documents/:id', authMiddleware, async (req: any, res: Response) => 
     });
   } catch (error: any) {
     console.error('[Co-Author] Update document error:', error);
-    return res.status(500).json({ error: 'Failed to update document', message: error.message });
+    return res.status(500).json({ error: 'Failed to update document', message: 'An unexpected error occurred' });
   }
 });
 
@@ -235,10 +232,7 @@ router.delete('/documents/:id', authMiddleware, async (req: any, res: Response) 
     const [deleted] = await db
       .delete(coauthorDocuments)
       .where(
-        and(
-          eq(coauthorDocuments.id, docId),
-          eq(coauthorDocuments.organizationId, organizationId)
-        )
+        and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId))
       )
       .returning();
 
@@ -249,7 +243,7 @@ router.delete('/documents/:id', authMiddleware, async (req: any, res: Response) 
     return res.json({ success: true, deletedId: deleted.id });
   } catch (error: any) {
     console.error('[Co-Author] Delete document error:', error);
-    return res.status(500).json({ error: 'Failed to delete document', message: error.message });
+    return res.status(500).json({ error: 'Failed to delete document', message: 'An unexpected error occurred' });
   }
 });
 
@@ -276,10 +270,7 @@ router.get('/documents/:docId/sections', authMiddleware, async (req: any, res: R
       .select()
       .from(coauthorDocuments)
       .where(
-        and(
-          eq(coauthorDocuments.id, docId),
-          eq(coauthorDocuments.organizationId, organizationId)
-        )
+        and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId))
       )
       .limit(1);
 
@@ -305,7 +296,7 @@ router.get('/documents/:docId/sections', authMiddleware, async (req: any, res: R
     });
   } catch (error: any) {
     console.error('[Co-Author] List document sections error:', error);
-    return res.status(500).json({ error: 'Failed to fetch sections', message: error.message });
+    return res.status(500).json({ error: 'Failed to fetch sections', message: 'An unexpected error occurred' });
   }
 });
 
@@ -330,10 +321,7 @@ router.post('/documents/:docId/sections', authMiddleware, async (req: any, res: 
       .select()
       .from(coauthorDocuments)
       .where(
-        and(
-          eq(coauthorDocuments.id, docId),
-          eq(coauthorDocuments.organizationId, organizationId)
-        )
+        and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId))
       )
       .limit(1);
 
@@ -341,7 +329,8 @@ router.post('/documents/:docId/sections', authMiddleware, async (req: any, res: 
       return res.status(404).json({ error: 'Document not found' });
     }
 
-    const { sectionId, title, moduleNumber, sectionType, x, y, status, connections } = req.body || {};
+    const { sectionId, title, moduleNumber, sectionType, x, y, status, connections } =
+      req.body || {};
 
     if (!title) {
       return res.status(400).json({ error: 'title is required' });
@@ -372,7 +361,7 @@ router.post('/documents/:docId/sections', authMiddleware, async (req: any, res: 
     });
   } catch (error: any) {
     console.error('[Co-Author] Create document section error:', error);
-    return res.status(500).json({ error: 'Failed to create section', message: error.message });
+    return res.status(500).json({ error: 'Failed to create section', message: 'An unexpected error occurred' });
   }
 });
 
@@ -380,97 +369,105 @@ router.post('/documents/:docId/sections', authMiddleware, async (req: any, res: 
  * PUT /api/coauthor/documents/:docId/sections/:sectionId
  * Update a section's content/metadata
  */
-router.put('/documents/:docId/sections/:sectionId', authMiddleware, async (req: any, res: Response) => {
-  try {
-    const organizationId = resolveOrganizationId(req);
-    if (!organizationId) {
-      return res.status(400).json({ error: 'Organization ID required' });
-    }
+router.put(
+  '/documents/:docId/sections/:sectionId',
+  authMiddleware,
+  async (req: any, res: Response) => {
+    try {
+      const organizationId = resolveOrganizationId(req);
+      if (!organizationId) {
+        return res.status(400).json({ error: 'Organization ID required' });
+      }
 
-    const docId = Number(req.params.docId);
-    const sectionPk = Number(req.params.sectionId);
-    if (!Number.isFinite(docId) || !Number.isFinite(sectionPk)) {
-      return res.status(400).json({ error: 'Invalid document or section ID' });
-    }
+      const docId = Number(req.params.docId);
+      const sectionPk = Number(req.params.sectionId);
+      if (!Number.isFinite(docId) || !Number.isFinite(sectionPk)) {
+        return res.status(400).json({ error: 'Invalid document or section ID' });
+      }
 
-    const { title, moduleNumber, sectionType, x, y, status, connections } = req.body || {};
+      const { title, moduleNumber, sectionType, x, y, status, connections } = req.body || {};
 
-    const updateValues: Record<string, any> = { updatedAt: new Date() };
-    if (title !== undefined) updateValues.title = title;
-    if (moduleNumber !== undefined) updateValues.moduleNumber = moduleNumber;
-    if (sectionType !== undefined) updateValues.sectionType = sectionType;
-    if (x !== undefined) updateValues.x = x;
-    if (y !== undefined) updateValues.y = y;
-    if (status !== undefined) updateValues.status = status;
-    if (connections !== undefined) updateValues.connections = connections;
+      const updateValues: Record<string, any> = { updatedAt: new Date() };
+      if (title !== undefined) updateValues.title = title;
+      if (moduleNumber !== undefined) updateValues.moduleNumber = moduleNumber;
+      if (sectionType !== undefined) updateValues.sectionType = sectionType;
+      if (x !== undefined) updateValues.x = x;
+      if (y !== undefined) updateValues.y = y;
+      if (status !== undefined) updateValues.status = status;
+      if (connections !== undefined) updateValues.connections = connections;
 
-    const userId = req.user?.id || req.user?.userId;
-    if (userId) updateValues.lastModifiedBy = Number(userId);
+      const userId = req.user?.id || req.user?.userId;
+      if (userId) updateValues.lastModifiedBy = Number(userId);
 
-    const [section] = await db
-      .update(coauthorSections)
-      .set(updateValues)
-      .where(
-        and(
-          eq(coauthorSections.id, sectionPk),
-          eq(coauthorSections.organizationId, organizationId),
-          eq(coauthorSections.submissionId, String(docId))
+      const [section] = await db
+        .update(coauthorSections)
+        .set(updateValues)
+        .where(
+          and(
+            eq(coauthorSections.id, sectionPk),
+            eq(coauthorSections.organizationId, organizationId),
+            eq(coauthorSections.submissionId, String(docId))
+          )
         )
-      )
-      .returning();
+        .returning();
 
-    if (!section) {
-      return res.status(404).json({ error: 'Section not found' });
+      if (!section) {
+        return res.status(404).json({ error: 'Section not found' });
+      }
+
+      return res.json({
+        success: true,
+        section,
+      });
+    } catch (error: any) {
+      console.error('[Co-Author] Update document section error:', error);
+      return res.status(500).json({ error: 'Failed to update section', message: 'An unexpected error occurred' });
     }
-
-    return res.json({
-      success: true,
-      section,
-    });
-  } catch (error: any) {
-    console.error('[Co-Author] Update document section error:', error);
-    return res.status(500).json({ error: 'Failed to update section', message: error.message });
   }
-});
+);
 
 /**
  * DELETE /api/coauthor/documents/:docId/sections/:sectionId
  * Delete a section from a document
  */
-router.delete('/documents/:docId/sections/:sectionId', authMiddleware, async (req: any, res: Response) => {
-  try {
-    const organizationId = resolveOrganizationId(req);
-    if (!organizationId) {
-      return res.status(400).json({ error: 'Organization ID required' });
-    }
+router.delete(
+  '/documents/:docId/sections/:sectionId',
+  authMiddleware,
+  async (req: any, res: Response) => {
+    try {
+      const organizationId = resolveOrganizationId(req);
+      if (!organizationId) {
+        return res.status(400).json({ error: 'Organization ID required' });
+      }
 
-    const docId = Number(req.params.docId);
-    const sectionPk = Number(req.params.sectionId);
-    if (!Number.isFinite(docId) || !Number.isFinite(sectionPk)) {
-      return res.status(400).json({ error: 'Invalid document or section ID' });
-    }
+      const docId = Number(req.params.docId);
+      const sectionPk = Number(req.params.sectionId);
+      if (!Number.isFinite(docId) || !Number.isFinite(sectionPk)) {
+        return res.status(400).json({ error: 'Invalid document or section ID' });
+      }
 
-    const [deleted] = await db
-      .delete(coauthorSections)
-      .where(
-        and(
-          eq(coauthorSections.id, sectionPk),
-          eq(coauthorSections.organizationId, organizationId),
-          eq(coauthorSections.submissionId, String(docId))
+      const [deleted] = await db
+        .delete(coauthorSections)
+        .where(
+          and(
+            eq(coauthorSections.id, sectionPk),
+            eq(coauthorSections.organizationId, organizationId),
+            eq(coauthorSections.submissionId, String(docId))
+          )
         )
-      )
-      .returning();
+        .returning();
 
-    if (!deleted) {
-      return res.status(404).json({ error: 'Section not found' });
+      if (!deleted) {
+        return res.status(404).json({ error: 'Section not found' });
+      }
+
+      return res.json({ success: true, deletedId: deleted.id });
+    } catch (error: any) {
+      console.error('[Co-Author] Delete document section error:', error);
+      return res.status(500).json({ error: 'Failed to delete section', message: 'An unexpected error occurred' });
     }
-
-    return res.json({ success: true, deletedId: deleted.id });
-  } catch (error: any) {
-    console.error('[Co-Author] Delete document section error:', error);
-    return res.status(500).json({ error: 'Failed to delete section', message: error.message });
   }
-});
+);
 
 // ── Document Validation, Compilation & Compliance ───────────────────────────
 
@@ -519,10 +516,7 @@ router.post('/documents/:docId/validate', authMiddleware, async (req: any, res: 
       .select()
       .from(coauthorDocuments)
       .where(
-        and(
-          eq(coauthorDocuments.id, docId),
-          eq(coauthorDocuments.organizationId, organizationId)
-        )
+        and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId))
       )
       .limit(1);
 
@@ -555,7 +549,8 @@ router.post('/documents/:docId/validate', authMiddleware, async (req: any, res: 
     for (const [modNum, modDef] of Object.entries(relevantModules)) {
       if (!modDef) continue;
       for (const reqSection of modDef.requiredSections) {
-        const found = sectionIds.some(sid => sid.startsWith(reqSection)) ||
+        const found =
+          sectionIds.some(sid => sid.startsWith(reqSection)) ||
           sectionModules.some(mn => mn && mn.startsWith(reqSection));
         if (!found) {
           findings.push({
@@ -573,7 +568,8 @@ router.post('/documents/:docId/validate', authMiddleware, async (req: any, res: 
     for (const section of sections) {
       const connections: string[] = (section.connections as string[]) || [];
       for (const connId of connections) {
-        const targetExists = sectionIds.includes(connId) || sections.some(s => String(s.id) === connId);
+        const targetExists =
+          sectionIds.includes(connId) || sections.some(s => String(s.id) === connId);
         if (!targetExists) {
           findings.push({
             type: 'broken-reference',
@@ -586,7 +582,9 @@ router.post('/documents/:docId/validate', authMiddleware, async (req: any, res: 
     }
 
     // 3. Check section statuses
-    const incompleteSections = sections.filter(s => s.status === 'pending' || s.status === 'critical');
+    const incompleteSections = sections.filter(
+      s => s.status === 'pending' || s.status === 'critical'
+    );
     for (const sec of incompleteSections) {
       findings.push({
         type: 'incomplete-section',
@@ -624,7 +622,7 @@ router.post('/documents/:docId/validate', authMiddleware, async (req: any, res: 
     });
   } catch (error: any) {
     console.error('[Co-Author] Validate document error:', error);
-    return res.status(500).json({ error: 'Failed to validate document', message: error.message });
+    return res.status(500).json({ error: 'Failed to validate document', message: 'An unexpected error occurred' });
   }
 });
 
@@ -649,10 +647,7 @@ router.post('/documents/:docId/compile', authMiddleware, async (req: any, res: R
       .select()
       .from(coauthorDocuments)
       .where(
-        and(
-          eq(coauthorDocuments.id, docId),
-          eq(coauthorDocuments.organizationId, organizationId)
-        )
+        and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId))
       )
       .limit(1);
 
@@ -715,7 +710,13 @@ router.post('/documents/:docId/compile', authMiddleware, async (req: any, res: R
     // Update document status to indicate compilation
     await db
       .update(coauthorDocuments)
-      .set({ updatedAt: new Date(), metadata: { ...(document.metadata as any || {}), lastCompiledAt: new Date().toISOString() } })
+      .set({
+        updatedAt: new Date(),
+        metadata: {
+          ...((document.metadata as any) || {}),
+          lastCompiledAt: new Date().toISOString(),
+        },
+      })
       .where(eq(coauthorDocuments.id, docId));
 
     return res.json({
@@ -724,7 +725,7 @@ router.post('/documents/:docId/compile', authMiddleware, async (req: any, res: R
     });
   } catch (error: any) {
     console.error('[Co-Author] Compile document error:', error);
-    return res.status(500).json({ error: 'Failed to compile document', message: error.message });
+    return res.status(500).json({ error: 'Failed to compile document', message: 'An unexpected error occurred' });
   }
 });
 
@@ -749,10 +750,7 @@ router.get('/documents/:docId/compliance', authMiddleware, async (req: any, res:
       .select()
       .from(coauthorDocuments)
       .where(
-        and(
-          eq(coauthorDocuments.id, docId),
-          eq(coauthorDocuments.organizationId, organizationId)
-        )
+        and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId))
       )
       .limit(1);
 
@@ -779,16 +777,25 @@ router.get('/documents/:docId/compliance', authMiddleware, async (req: any, res:
 
     // M4 Organisation of the CTD checks
     const m4Rules = [
-      { rule: 'M4-001', description: 'Module 1 regional administrative information present', module: '1' },
+      {
+        rule: 'M4-001',
+        description: 'Module 1 regional administrative information present',
+        module: '1',
+      },
       { rule: 'M4-002', description: 'Module 2 CTD summaries present', module: '2' },
       { rule: 'M4-003', description: 'Module 3 quality data present', module: '3' },
-      { rule: 'M4-004', description: 'Module 2.5 Clinical Overview or Module 2.7 Clinical Summary present', module: '2.5' },
+      {
+        rule: 'M4-004',
+        description: 'Module 2.5 Clinical Overview or Module 2.7 Clinical Summary present',
+        module: '2.5',
+      },
       { rule: 'M4-005', description: 'Module 3.2.S Drug Substance present', module: '3.2.S' },
       { rule: 'M4-006', description: 'Module 3.2.P Drug Product present', module: '3.2.P' },
     ];
 
     for (const rule of m4Rules) {
-      const covered = sectionIds.some(sid => sid.startsWith(rule.module)) ||
+      const covered =
+        sectionIds.some(sid => sid.startsWith(rule.module)) ||
         sectionModules.some(mn => mn && mn.startsWith(rule.module));
 
       checks.push({
@@ -809,9 +816,10 @@ router.get('/documents/:docId/compliance', authMiddleware, async (req: any, res:
     checks.push({
       ruleId: 'M4-DOC-002',
       description: 'Document has content or sections',
-      status: (document.content && document.content.trim().length > 0) || sections.length > 0
-        ? 'compliant'
-        : 'non-compliant',
+      status:
+        (document.content && document.content.trim().length > 0) || sections.length > 0
+          ? 'compliant'
+          : 'non-compliant',
     });
 
     checks.push({
@@ -839,7 +847,7 @@ router.get('/documents/:docId/compliance', authMiddleware, async (req: any, res:
     });
   } catch (error: any) {
     console.error('[Co-Author] Compliance check error:', error);
-    return res.status(500).json({ error: 'Failed to check compliance', message: error.message });
+    return res.status(500).json({ error: 'Failed to check compliance', message: 'An unexpected error occurred' });
   }
 });
 

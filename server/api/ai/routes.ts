@@ -298,7 +298,7 @@ const regulatoryKnowledgeBase: Record<string, any> = {
 router.post('/analyze-compliance', async (req: Request, res: Response) => {
   try {
     const { content, templateName, analysisType } = req.body;
-    const organizationId = req.headers['x-organization-id'];
+    const organizationId = (req as any).user?.organizationId || (req as any).tenantId;
 
     if (!content || !templateName) {
       return res.status(400).json({
@@ -385,7 +385,7 @@ router.post('/analyze-compliance', async (req: Request, res: Response) => {
 router.post('/generate-boilerplate', async (req: Request, res: Response) => {
   try {
     const { section, context, templateType } = req.body;
-    const organizationId = req.headers['x-organization-id'];
+    const organizationId = (req as any).user?.organizationId || (req as any).tenantId;
 
     if (!section) {
       return res.status(400).json({ error: 'Section parameter is required' });
@@ -470,7 +470,7 @@ This documentation has been prepared in accordance with ICH guidelines and regul
 router.get('/regulatory-guidance/:section', async (req: Request, res: Response) => {
   try {
     const { section } = req.params;
-    const organizationId = req.headers['x-organization-id'];
+    const organizationId = (req as any).user?.organizationId || (req as any).tenantId;
 
     const guidance = regulatoryKnowledgeBase[section];
 

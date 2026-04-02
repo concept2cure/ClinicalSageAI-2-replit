@@ -317,7 +317,7 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
     if (!res.headersSent) {
       res.status(500).json({
         error: 'GOVERNED_EXPORT_FAILED',
-        message: err.message || 'Governed PDF export failed before consequence persistence',
+        message: 'An unexpected error occurred' || 'Governed PDF export failed before consequence persistence',
       });
     }
   }
@@ -383,7 +383,7 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
     if (!res.headersSent) {
       res.status(500).json({
         error: 'GOVERNED_EXPORT_FAILED',
-        message: err.message || 'Governed DOCX export failed before consequence persistence',
+        message: 'An unexpected error occurred' || 'Governed DOCX export failed before consequence persistence',
       });
     }
   }
@@ -451,7 +451,7 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
     if (!res.headersSent) {
       res.status(500).json({
         error: 'GOVERNED_EXPORT_FAILED',
-        message: err.message || 'Governed ZIP export failed before consequence persistence',
+        message: 'An unexpected error occurred' || 'Governed ZIP export failed before consequence persistence',
       });
     }
   }
@@ -482,7 +482,7 @@ router.get(
       res.send(pdfBuffer);
     } catch (err: any) {
       console.error('[CERV2 Export] Sample export error:', err);
-      res.status(500).json({ error: 'Sample export failed', message: err.message });
+      res.status(500).json({ error: 'Sample export failed', message: 'An unexpected error occurred' });
     }
   }
 );
@@ -547,7 +547,7 @@ router.get(
     } catch (err: any) {
       console.error('[CERV2 Export] Sample ZIP error:', err);
       if (!res.headersSent) {
-        res.status(500).json({ error: 'Sample ZIP failed', message: err.message });
+        res.status(500).json({ error: 'Sample ZIP failed', message: 'An unexpected error occurred' });
       }
     }
   }
@@ -581,7 +581,7 @@ router.get(
       res.send(docxBuffer);
     } catch (err: any) {
       console.error('[CERV2 Export] Sample DOCX error:', err);
-      res.status(500).json({ error: 'Sample DOCX export failed', message: err.message });
+      res.status(500).json({ error: 'Sample DOCX export failed', message: 'An unexpected error occurred' });
     }
   }
 );
@@ -618,7 +618,7 @@ router.get(
       });
     } catch (err: any) {
       console.error('[CERV2 Export] Sample JSON error:', err);
-      res.status(500).json({ error: 'Sample JSON retrieval failed', message: err.message });
+      res.status(500).json({ error: 'Sample JSON retrieval failed', message: 'An unexpected error occurred' });
     }
   }
 );
@@ -755,7 +755,7 @@ router.post(
       });
     } catch (err: any) {
       console.error('[CERV2 Export] AI-to-editor error:', err);
-      res.status(500).json({ error: 'AI-to-editor conversion failed', message: err.message });
+      res.status(500).json({ error: 'AI-to-editor conversion failed', message: 'An unexpected error occurred' });
     }
   }
 );
@@ -830,7 +830,7 @@ router.post(
       });
     } catch (err: any) {
       console.error('[CERV2 Export] eCTD assembly error:', err);
-      res.status(500).json({ error: 'eCTD package assembly failed', message: err.message });
+      res.status(500).json({ error: 'eCTD package assembly failed', message: 'An unexpected error occurred' });
     }
   }
 );

@@ -23,9 +23,9 @@ const logger = createScopedLogger('rtm-export');
 const router = Router();
 
 function getOrganizationId(req: Request): number {
-  const orgId = parseInt(req.headers['x-organization-id'] as string, 10);
+  const orgId = Number((req as any).user?.organizationId || (req as any).tenantId);
   if (isNaN(orgId) || orgId <= 0) {
-    throw new Error('Missing or invalid x-organization-id header');
+    throw new Error('Organization context required');
   }
   return orgId;
 }

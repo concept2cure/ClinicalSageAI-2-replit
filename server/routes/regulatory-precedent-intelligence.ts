@@ -77,14 +77,18 @@ const log = createScopedLogger('regulatory-precedent-intel-routes');
 // ─── Helper ──────────────────────────────────────────────────────────────────
 
 function getOrgId(req: Request): string {
-  return (req as Record<string, unknown>).organizationId as string
-    ?? (req.headers['x-organization-id'] as string)
-    ?? 'default';
+  return (
+    ((req as Record<string, unknown>).organizationId as string) ??
+    String((req as any).user?.organizationId || (req as any).tenantId) ??
+    'default'
+  );
 }
 
 function handleError(res: Response, error: unknown, context: string) {
-  log.error(`Error in ${context}`, { error: error instanceof Error ? error.message : String(error) });
-  res.status(500).json({ error: `Failed to ${context}`, details: error instanceof Error ? error.message : 'Unknown error' });
+  log.error(`Error in ${context}`, {
+    error: error instanceof Error ? error.message : String(error),
+  });
+  res.status(500).json({ error: `Failed to ${context}` });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -96,14 +100,18 @@ router.post('/crl/search', async (req: Request, res: Response) => {
     const orgId = getOrgId(req);
     const results = await crlTriggerService.searchPatterns({ organizationId: orgId, ...req.body });
     res.json({ patterns: results, count: results.length });
-  } catch (error) { handleError(res, error, 'search CRL patterns'); }
+  } catch (error) {
+    handleError(res, error, 'search CRL patterns');
+  }
 });
 
 router.get('/crl/stats/by-category', async (req: Request, res: Response) => {
   try {
     const stats = await crlTriggerService.getStatsByCategory(getOrgId(req));
     res.json({ stats });
-  } catch (error) { handleError(res, error, 'get CRL stats'); }
+  } catch (error) {
+    handleError(res, error, 'get CRL stats');
+  }
 });
 
 router.get('/crl/:id', async (req: Request, res: Response) => {
@@ -111,35 +119,57 @@ router.get('/crl/:id', async (req: Request, res: Response) => {
     const pattern = await crlTriggerService.getPattern(req.params.id, getOrgId(req));
     if (!pattern) return res.status(404).json({ error: 'Pattern not found' });
     res.json(pattern);
-  } catch (error) { handleError(res, error, 'get CRL pattern'); }
+  } catch (error) {
+    handleError(res, error, 'get CRL pattern');
+  }
 });
 
 router.post('/crl', async (req: Request, res: Response) => {
   try {
-    const pattern = await crlTriggerService.createPattern({ organizationId: getOrgId(req), ...req.body });
+    const pattern = await crlTriggerService.createPattern({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.status(201).json(pattern);
-  } catch (error) { handleError(res, error, 'create CRL pattern'); }
+  } catch (error) {
+    handleError(res, error, 'create CRL pattern');
+  }
 });
 
 router.post('/crl/risk-assessment', async (req: Request, res: Response) => {
   try {
-    const assessment = await crlTriggerService.assessCRLRisk({ organizationId: getOrgId(req), ...req.body });
+    const assessment = await crlTriggerService.assessCRLRisk({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.json(assessment);
-  } catch (error) { handleError(res, error, 'assess CRL risk'); }
+  } catch (error) {
+    handleError(res, error, 'assess CRL risk');
+  }
 });
 
 router.post('/crl/trajectories/search', async (req: Request, res: Response) => {
   try {
-    const results = await crlTriggerService.searchTrajectories({ organizationId: getOrgId(req), ...req.body });
+    const results = await crlTriggerService.searchTrajectories({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.json({ trajectories: results, count: results.length });
-  } catch (error) { handleError(res, error, 'search CRL trajectories'); }
+  } catch (error) {
+    handleError(res, error, 'search CRL trajectories');
+  }
 });
 
 router.post('/crl/trajectories', async (req: Request, res: Response) => {
   try {
-    const record = await crlTriggerService.recordTrajectory({ organizationId: getOrgId(req), ...req.body });
+    const record = await crlTriggerService.recordTrajectory({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.status(201).json(record);
-  } catch (error) { handleError(res, error, 'record CRL trajectory'); }
+  } catch (error) {
+    handleError(res, error, 'record CRL trajectory');
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -148,16 +178,23 @@ router.post('/crl/trajectories', async (req: Request, res: Response) => {
 
 router.post('/rtf/search', async (req: Request, res: Response) => {
   try {
-    const results = await rtfTriggerService.searchPatterns({ organizationId: getOrgId(req), ...req.body });
+    const results = await rtfTriggerService.searchPatterns({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.json({ patterns: results, count: results.length });
-  } catch (error) { handleError(res, error, 'search RTF patterns'); }
+  } catch (error) {
+    handleError(res, error, 'search RTF patterns');
+  }
 });
 
 router.get('/rtf/stats/by-center', async (req: Request, res: Response) => {
   try {
     const stats = await rtfTriggerService.getStatsByCenter(getOrgId(req));
     res.json({ stats });
-  } catch (error) { handleError(res, error, 'get RTF stats'); }
+  } catch (error) {
+    handleError(res, error, 'get RTF stats');
+  }
 });
 
 router.get('/rtf/:id', async (req: Request, res: Response) => {
@@ -165,21 +202,33 @@ router.get('/rtf/:id', async (req: Request, res: Response) => {
     const pattern = await rtfTriggerService.getPattern(req.params.id, getOrgId(req));
     if (!pattern) return res.status(404).json({ error: 'Pattern not found' });
     res.json(pattern);
-  } catch (error) { handleError(res, error, 'get RTF pattern'); }
+  } catch (error) {
+    handleError(res, error, 'get RTF pattern');
+  }
 });
 
 router.post('/rtf', async (req: Request, res: Response) => {
   try {
-    const pattern = await rtfTriggerService.createPattern({ organizationId: getOrgId(req), ...req.body });
+    const pattern = await rtfTriggerService.createPattern({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.status(201).json(pattern);
-  } catch (error) { handleError(res, error, 'create RTF pattern'); }
+  } catch (error) {
+    handleError(res, error, 'create RTF pattern');
+  }
 });
 
 router.post('/rtf/prevention-report', async (req: Request, res: Response) => {
   try {
-    const report = await rtfTriggerService.generatePreventionReport({ organizationId: getOrgId(req), ...req.body });
+    const report = await rtfTriggerService.generatePreventionReport({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.json(report);
-  } catch (error) { handleError(res, error, 'generate RTF prevention report'); }
+  } catch (error) {
+    handleError(res, error, 'generate RTF prevention report');
+  }
 });
 
 router.get('/rtf/:id/recovery-playbook', async (req: Request, res: Response) => {
@@ -187,7 +236,9 @@ router.get('/rtf/:id/recovery-playbook', async (req: Request, res: Response) => 
     const playbook = await rtfTriggerService.getRecoveryPlaybook(req.params.id, getOrgId(req));
     if (!playbook) return res.status(404).json({ error: 'Pattern not found' });
     res.json(playbook);
-  } catch (error) { handleError(res, error, 'get RTF recovery playbook'); }
+  } catch (error) {
+    handleError(res, error, 'get RTF recovery playbook');
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -196,9 +247,14 @@ router.get('/rtf/:id/recovery-playbook', async (req: Request, res: Response) => 
 
 router.post('/ema/search', async (req: Request, res: Response) => {
   try {
-    const results = await emaQuestionTaxonomyService.searchPatterns({ organizationId: getOrgId(req), ...req.body });
+    const results = await emaQuestionTaxonomyService.searchPatterns({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.json({ patterns: results, count: results.length });
-  } catch (error) { handleError(res, error, 'search EMA patterns'); }
+  } catch (error) {
+    handleError(res, error, 'search EMA patterns');
+  }
 });
 
 router.get('/ema/:id', async (req: Request, res: Response) => {
@@ -206,28 +262,45 @@ router.get('/ema/:id', async (req: Request, res: Response) => {
     const pattern = await emaQuestionTaxonomyService.getPattern(req.params.id, getOrgId(req));
     if (!pattern) return res.status(404).json({ error: 'Pattern not found' });
     res.json(pattern);
-  } catch (error) { handleError(res, error, 'get EMA pattern'); }
+  } catch (error) {
+    handleError(res, error, 'get EMA pattern');
+  }
 });
 
 router.post('/ema', async (req: Request, res: Response) => {
   try {
-    const pattern = await emaQuestionTaxonomyService.createPattern({ organizationId: getOrgId(req), ...req.body });
+    const pattern = await emaQuestionTaxonomyService.createPattern({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.status(201).json(pattern);
-  } catch (error) { handleError(res, error, 'create EMA pattern'); }
+  } catch (error) {
+    handleError(res, error, 'create EMA pattern');
+  }
 });
 
 router.post('/ema/preparation-report', async (req: Request, res: Response) => {
   try {
-    const report = await emaQuestionTaxonomyService.generatePreparationReport({ organizationId: getOrgId(req), ...req.body });
+    const report = await emaQuestionTaxonomyService.generatePreparationReport({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.json(report);
-  } catch (error) { handleError(res, error, 'generate EMA preparation report'); }
+  } catch (error) {
+    handleError(res, error, 'generate EMA preparation report');
+  }
 });
 
 router.post('/ema/clock-stop-prediction', async (req: Request, res: Response) => {
   try {
-    const prediction = await emaQuestionTaxonomyService.predictClockStop({ organizationId: getOrgId(req), ...req.body });
+    const prediction = await emaQuestionTaxonomyService.predictClockStop({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.json(prediction);
-  } catch (error) { handleError(res, error, 'predict EMA clock stop'); }
+  } catch (error) {
+    handleError(res, error, 'predict EMA clock stop');
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -236,16 +309,23 @@ router.post('/ema/clock-stop-prediction', async (req: Request, res: Response) =>
 
 router.post('/advisory-committee/search', async (req: Request, res: Response) => {
   try {
-    const results = await advisoryCommitteeService.searchPatterns({ organizationId: getOrgId(req), ...req.body });
+    const results = await advisoryCommitteeService.searchPatterns({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.json({ patterns: results, count: results.length });
-  } catch (error) { handleError(res, error, 'search AC patterns'); }
+  } catch (error) {
+    handleError(res, error, 'search AC patterns');
+  }
 });
 
 router.get('/advisory-committee/committee-types', async (req: Request, res: Response) => {
   try {
     const types = await advisoryCommitteeService.getCommitteeTypes(getOrgId(req));
     res.json({ committeeTypes: types });
-  } catch (error) { handleError(res, error, 'get committee types'); }
+  } catch (error) {
+    handleError(res, error, 'get committee types');
+  }
 });
 
 router.get('/advisory-committee/:id', async (req: Request, res: Response) => {
@@ -253,21 +333,33 @@ router.get('/advisory-committee/:id', async (req: Request, res: Response) => {
     const pattern = await advisoryCommitteeService.getPattern(req.params.id, getOrgId(req));
     if (!pattern) return res.status(404).json({ error: 'Pattern not found' });
     res.json(pattern);
-  } catch (error) { handleError(res, error, 'get AC pattern'); }
+  } catch (error) {
+    handleError(res, error, 'get AC pattern');
+  }
 });
 
 router.post('/advisory-committee', async (req: Request, res: Response) => {
   try {
-    const pattern = await advisoryCommitteeService.createPattern({ organizationId: getOrgId(req), ...req.body });
+    const pattern = await advisoryCommitteeService.createPattern({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.status(201).json(pattern);
-  } catch (error) { handleError(res, error, 'create AC pattern'); }
+  } catch (error) {
+    handleError(res, error, 'create AC pattern');
+  }
 });
 
 router.post('/advisory-committee/risk-assessment', async (req: Request, res: Response) => {
   try {
-    const assessment = await advisoryCommitteeService.assessRisk({ organizationId: getOrgId(req), ...req.body });
+    const assessment = await advisoryCommitteeService.assessRisk({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.json(assessment);
-  } catch (error) { handleError(res, error, 'assess AC risk'); }
+  } catch (error) {
+    handleError(res, error, 'assess AC risk');
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -276,39 +368,63 @@ router.post('/advisory-committee/risk-assessment', async (req: Request, res: Res
 
 router.post('/confidence/rules/search', async (req: Request, res: Response) => {
   try {
-    const results = await confidenceCalibrationService.searchRules({ organizationId: getOrgId(req), ...req.body });
+    const results = await confidenceCalibrationService.searchRules({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.json({ rules: results, count: results.length });
-  } catch (error) { handleError(res, error, 'search confidence rules'); }
+  } catch (error) {
+    handleError(res, error, 'search confidence rules');
+  }
 });
 
 router.post('/confidence/rules', async (req: Request, res: Response) => {
   try {
-    const rule = await confidenceCalibrationService.createRule({ organizationId: getOrgId(req), ...req.body });
+    const rule = await confidenceCalibrationService.createRule({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.status(201).json(rule);
-  } catch (error) { handleError(res, error, 'create confidence rule'); }
+  } catch (error) {
+    handleError(res, error, 'create confidence rule');
+  }
 });
 
 router.post('/confidence/calculate', async (req: Request, res: Response) => {
   try {
-    const score = await confidenceCalibrationService.calculateConfidence({ organizationId: getOrgId(req), ...req.body });
+    const score = await confidenceCalibrationService.calculateConfidence({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.json(score);
-  } catch (error) { handleError(res, error, 'calculate confidence'); }
+  } catch (error) {
+    handleError(res, error, 'calculate confidence');
+  }
 });
 
 router.post('/confidence/predictions', async (req: Request, res: Response) => {
   try {
-    const entry = await confidenceCalibrationService.recordPrediction({ organizationId: getOrgId(req), ...req.body });
+    const entry = await confidenceCalibrationService.recordPrediction({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.status(201).json(entry);
-  } catch (error) { handleError(res, error, 'record prediction'); }
+  } catch (error) {
+    handleError(res, error, 'record prediction');
+  }
 });
 
 router.post('/confidence/predictions/:id/resolve', async (req: Request, res: Response) => {
   try {
     const entry = await confidenceCalibrationService.resolvePrediction({
-      id: req.params.id, organizationId: getOrgId(req), ...req.body
+      id: req.params.id,
+      organizationId: getOrgId(req),
+      ...req.body,
     });
     res.json(entry);
-  } catch (error) { handleError(res, error, 'resolve prediction'); }
+  } catch (error) {
+    handleError(res, error, 'resolve prediction');
+  }
 });
 
 router.get('/confidence/calibration-report', async (req: Request, res: Response) => {
@@ -316,7 +432,9 @@ router.get('/confidence/calibration-report', async (req: Request, res: Response)
     const ruleId = req.query.ruleId as string | undefined;
     const report = await confidenceCalibrationService.getCalibrationReport(getOrgId(req), ruleId);
     res.json(report);
-  } catch (error) { handleError(res, error, 'get calibration report'); }
+  } catch (error) {
+    handleError(res, error, 'get calibration report');
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -325,65 +443,113 @@ router.get('/confidence/calibration-report', async (req: Request, res: Response)
 
 router.post('/cross-jurisdictional/frameworks/search', async (req: Request, res: Response) => {
   try {
-    const results = await crossJurisdictionalService.searchFrameworks({ organizationId: getOrgId(req), ...req.body });
+    const results = await crossJurisdictionalService.searchFrameworks({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.json({ frameworks: results, count: results.length });
-  } catch (error) { handleError(res, error, 'search frameworks'); }
+  } catch (error) {
+    handleError(res, error, 'search frameworks');
+  }
 });
 
 router.post('/cross-jurisdictional/frameworks', async (req: Request, res: Response) => {
   try {
-    const fw = await crossJurisdictionalService.createFramework({ organizationId: getOrgId(req), ...req.body });
+    const fw = await crossJurisdictionalService.createFramework({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.status(201).json(fw);
-  } catch (error) { handleError(res, error, 'create framework'); }
+  } catch (error) {
+    handleError(res, error, 'create framework');
+  }
 });
 
 router.post('/cross-jurisdictional/divergences/search', async (req: Request, res: Response) => {
   try {
-    const results = await crossJurisdictionalService.searchDivergences({ organizationId: getOrgId(req), ...req.body });
+    const results = await crossJurisdictionalService.searchDivergences({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.json({ divergences: results, count: results.length });
-  } catch (error) { handleError(res, error, 'search divergences'); }
+  } catch (error) {
+    handleError(res, error, 'search divergences');
+  }
 });
 
 router.post('/cross-jurisdictional/divergences', async (req: Request, res: Response) => {
   try {
-    const div = await crossJurisdictionalService.createDivergence({ organizationId: getOrgId(req), ...req.body });
+    const div = await crossJurisdictionalService.createDivergence({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.status(201).json(div);
-  } catch (error) { handleError(res, error, 'create divergence'); }
+  } catch (error) {
+    handleError(res, error, 'create divergence');
+  }
 });
 
 router.post('/cross-jurisdictional/reliance/search', async (req: Request, res: Response) => {
   try {
-    const results = await crossJurisdictionalService.searchReliancePathways({ organizationId: getOrgId(req), ...req.body });
+    const results = await crossJurisdictionalService.searchReliancePathways({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.json({ pathways: results, count: results.length });
-  } catch (error) { handleError(res, error, 'search reliance pathways'); }
+  } catch (error) {
+    handleError(res, error, 'search reliance pathways');
+  }
 });
 
 router.post('/cross-jurisdictional/reliance', async (req: Request, res: Response) => {
   try {
-    const pw = await crossJurisdictionalService.createReliancePathway({ organizationId: getOrgId(req), ...req.body });
+    const pw = await crossJurisdictionalService.createReliancePathway({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.status(201).json(pw);
-  } catch (error) { handleError(res, error, 'create reliance pathway'); }
+  } catch (error) {
+    handleError(res, error, 'create reliance pathway');
+  }
 });
 
-router.post('/cross-jurisdictional/filing-strategies/search', async (req: Request, res: Response) => {
-  try {
-    const results = await crossJurisdictionalService.searchFilingStrategies({ organizationId: getOrgId(req), ...req.body });
-    res.json({ strategies: results, count: results.length });
-  } catch (error) { handleError(res, error, 'search filing strategies'); }
-});
+router.post(
+  '/cross-jurisdictional/filing-strategies/search',
+  async (req: Request, res: Response) => {
+    try {
+      const results = await crossJurisdictionalService.searchFilingStrategies({
+        organizationId: getOrgId(req),
+        ...req.body,
+      });
+      res.json({ strategies: results, count: results.length });
+    } catch (error) {
+      handleError(res, error, 'search filing strategies');
+    }
+  }
+);
 
 router.post('/cross-jurisdictional/filing-strategies', async (req: Request, res: Response) => {
   try {
-    const strategy = await crossJurisdictionalService.createFilingStrategy({ organizationId: getOrgId(req), ...req.body });
+    const strategy = await crossJurisdictionalService.createFilingStrategy({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.status(201).json(strategy);
-  } catch (error) { handleError(res, error, 'create filing strategy'); }
+  } catch (error) {
+    handleError(res, error, 'create filing strategy');
+  }
 });
 
 router.post('/cross-jurisdictional/optimize-filing', async (req: Request, res: Response) => {
   try {
-    const result = await crossJurisdictionalService.optimizeFilingSequence({ organizationId: getOrgId(req), ...req.body });
+    const result = await crossJurisdictionalService.optimizeFilingSequence({
+      organizationId: getOrgId(req),
+      ...req.body,
+    });
     res.json(result);
-  } catch (error) { handleError(res, error, 'optimize filing sequence'); }
+  } catch (error) {
+    handleError(res, error, 'optimize filing sequence');
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

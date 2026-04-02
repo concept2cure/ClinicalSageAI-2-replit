@@ -15,10 +15,9 @@ const requireEditorAccess = (req: any, res: any, next: () => void) => {
   if (!role || !allowedRoles.has(role)) {
     return res.status(403).json({ error: 'Insufficient permissions' });
   }
-  const headerOrg = req.header('x-organization-id') || req.header('x-org-id');
   const tenantOrg = req.tenantContext?.organizationId;
   const userOrg = req.user?.organizationId || req.tenantId;
-  const orgId = headerOrg || tenantOrg || userOrg;
+  const orgId = tenantOrg || userOrg;
   if (!orgId) {
     return res.status(400).json({ error: 'Organization context required' });
   }
@@ -67,7 +66,7 @@ function getUserId(req: any): number {
 }
 
 function getOrganizationId(req: any): number {
-  const parsed = Number(req.resolvedOrganizationId ?? req.header('x-organization-id'));
+  const parsed = Number(req.resolvedOrganizationId ?? req.user?.organizationId ?? req.tenantId);
   if (!Number.isFinite(parsed) || parsed <= 0) {
     throw new Error('Valid numeric organizationId is required for governed eSTAR export');
   }

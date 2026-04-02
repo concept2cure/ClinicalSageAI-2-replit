@@ -28,7 +28,7 @@ router.use(create510kDeprecationNotice('/compliance'));
 
 // Multi-tenancy middleware to extract and validate organization context
 const extractTenantContext = (req: Request, res: Response, next: Function) => {
-  const organizationId = (req.headers['x-organization-id'] as string) || null;
+  const organizationId = String((req as any).user?.organizationId || '') || null;
   const clientWorkspaceId = (req.headers['x-client-workspace-id'] as string) || null;
 
   // Attach tenant context to request object for downstream use

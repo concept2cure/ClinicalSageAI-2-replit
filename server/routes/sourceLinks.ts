@@ -33,7 +33,7 @@ function getOrganizationId(req: Request): number {
   if (isNaN(orgId) || orgId <= 0) {
     throw new Error('Missing or invalid authenticated organization context');
   }
-  const headerOrgId = parseInt(String(req.headers['x-organization-id'] || ''), 10);
+  const headerOrgId = Number((req as any).user?.organizationId || (req as any).tenantId || 0);
   if (!isNaN(headerOrgId) && headerOrgId !== orgId) {
     throw new Error(ORG_MISMATCH_ERROR);
   }

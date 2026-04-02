@@ -28,7 +28,7 @@ const router = Router();
  * Extract tenant context from headers
  */
 const extractTenantContext = (req: Request, _res: Response, next: NextFunction) => {
-  const organizationId = (req.headers['x-organization-id'] as string) || null;
+  const organizationId = String((req as any).user?.organizationId || '') || null;
   const clientWorkspaceId = (req.headers['x-client-workspace-id'] as string) || null;
 
   (req as any).tenantContext = {

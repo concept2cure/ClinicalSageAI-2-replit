@@ -35,7 +35,9 @@ const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
  * Rate limiting middleware
  */
 const rateLimiter = (req: Request, res: Response, next: NextFunction) => {
-  const clientId = (req.headers['x-organization-id'] as string) || req.ip || 'anonymous';
+  const clientId = String(
+    (req as any).user?.organizationId || (req as any).tenantId || req.ip || 'anonymous'
+  );
   const now = Date.now();
   const windowStart = now - RATE_LIMIT_WINDOW_MS;
 
@@ -99,7 +101,7 @@ const extractTenantContext = (req: Request, _res: Response, next: NextFunction) 
   // Validate UUID format for IDs
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-  const organizationId = (req.headers['x-organization-id'] as string) || null;
+  const organizationId = String((req as any).user?.organizationId || '') || null;
   const clientWorkspaceId = (req.headers['x-client-workspace-id'] as string) || null;
   const module = (req.headers['x-module'] as string) || '510k';
 
@@ -352,17 +354,14 @@ mountSubRouters().catch(err => {
 router.use(errorHandler);
 
 // Cleanup rate limit map periodically (every 5 minutes)
-setInterval(
-  () => {
-    const now = Date.now();
-    const windowStart = now - RATE_LIMIT_WINDOW_MS;
-    Array.from(rateLimitMap.entries()).forEach(([key, value]) => {
-      if (value.resetTime < windowStart) {
-        rateLimitMap.delete(key);
-      }
-    });
-  },
-  5 * 60 * 1000
-);
+setInterval(() => {
+  const now = Date.now();
+  const windowStart = now - RATE_LIMIT_WINDOW_MS;
+  Array.from(rateLimitMap.entries()).forEach(([key, value]) => {
+    if (value.resetTime < windowStart) {
+      rateLimitMap.delete(key);
+    }
+  });
+}, 5 * 60 * 1000);
 
 export default router;

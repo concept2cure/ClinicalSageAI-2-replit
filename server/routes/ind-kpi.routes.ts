@@ -71,16 +71,16 @@ export default function createINDKpiRoutes(pool: Pool): Router {
       const parsed = parseInt(tenantCtx.organizationId, 10);
       if (Number.isFinite(parsed) && parsed > 0) return parsed;
     }
-    const header = req.headers['x-organization-id'];
-    if (header) {
-      const parsed = parseInt(header as string, 10);
+    const userOrg = (req as any).user?.organizationId || (req as any).tenantId;
+    if (userOrg) {
+      const parsed = parseInt(String(userOrg), 10);
       if (Number.isFinite(parsed) && parsed > 0) return parsed;
     }
     throw new Error('Organization context required');
   }
 
   function getUserId(req: Request): string | null {
-    return (req.headers['x-user-id'] as string) || null;
+    return String((req as any).user?.id || (req as any).userId || '') || null;
   }
 
   function clampWindowDays(raw: unknown): number {
@@ -129,7 +129,9 @@ export default function createINDKpiRoutes(pool: Pool): Router {
         });
       }
 
-      const submissionId = req.body?.submissionId ? String(req.body.submissionId).slice(0, 255) : null;
+      const submissionId = req.body?.submissionId
+        ? String(req.body.submissionId).slice(0, 255)
+        : null;
       const projectId = req.body?.projectId ? String(req.body.projectId).slice(0, 255) : null;
       const metadata = sanitizeMetadata(req.body?.metadata || req.body?.payload);
 

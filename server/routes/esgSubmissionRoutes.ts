@@ -14,7 +14,7 @@ router.post('/api/510k/:projectId/esg/submit', async (req, res) => {
   try {
     const { projectId } = req.params;
     const userId = parseInt(req.headers['x-user-id'] as string || '');
-    const organizationId = parseInt(req.headers['x-organization-id'] as string || '');
+    const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }

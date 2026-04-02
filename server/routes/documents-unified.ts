@@ -29,7 +29,7 @@ const RATE_LIMIT_MAX_REQUESTS = 200; // Higher limit for document operations
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
 const rateLimiter = (req: Request, res: Response, next: NextFunction) => {
-  const clientId = (req.headers['x-organization-id'] as string) || req.ip || 'anonymous';
+  const clientId = String((req as any).user?.organizationId || (req as any).tenantId || req.ip || 'anonymous');
   const now = Date.now();
   const windowStart = now - RATE_LIMIT_WINDOW_MS;
 
@@ -60,7 +60,7 @@ const rateLimiter = (req: Request, res: Response, next: NextFunction) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const extractTenantContext = (req: Request, _res: Response, next: NextFunction) => {
-  const organizationId = (req.headers['x-organization-id'] as string) || null;
+  const organizationId = String((req as any).user?.organizationId || '') || null;
   const clientWorkspaceId = (req.headers['x-client-workspace-id'] as string) || null;
 
   (req as any).tenantContext = {

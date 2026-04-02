@@ -481,7 +481,7 @@ router.post('/:projectId/generate', async (req: Request, res: Response) => {
     console.error('[IND-PDF] Generation failed:', error);
     res.status(500).json({
       error: 'PDF generation failed',
-      message: error.message,
+      message: 'An unexpected error occurred',
     });
   }
 });
@@ -565,7 +565,7 @@ router.post('/:projectId/section', async (req: Request, res: Response) => {
     res.send(pdfBuffer);
   } catch (error: any) {
     console.error('[IND-PDF] Section export failed:', error);
-    res.status(500).json({ error: 'Section PDF generation failed', message: error.message });
+    res.status(500).json({ error: 'Section PDF generation failed', message: 'An unexpected error occurred' });
   }
 });
 
@@ -589,7 +589,7 @@ router.get('/:projectId/download/:filename', async (req: Request, res: Response)
     fs.createReadStream(filepath).pipe(res);
   } catch (error: any) {
     console.error('[IND-PDF] Download failed:', error);
-    res.status(500).json({ error: 'Download failed', message: error.message });
+    res.status(500).json({ error: 'Download failed', message: 'An unexpected error occurred' });
   }
 });
 
@@ -642,7 +642,7 @@ router.post('/:projectId/extract', upload.single('file'), async (req: Request, r
     });
   } catch (error: any) {
     console.error('[IND-PDF] Extraction failed:', error);
-    res.status(500).json({ error: 'PDF extraction failed', message: error.message });
+    res.status(500).json({ error: 'PDF extraction failed', message: 'An unexpected error occurred' });
   }
 });
 
@@ -696,7 +696,7 @@ router.post('/:projectId/import-content', upload.single('file'), async (req: Req
     });
   } catch (error: any) {
     console.error('[IND-PDF] Import-content failed:', error);
-    res.status(500).json({ error: 'Import failed', message: error.message });
+    res.status(500).json({ error: 'Import failed', message: 'An unexpected error occurred' });
   }
 });
 
@@ -764,7 +764,7 @@ router.post('/convert/docx-to-pdf', docxUpload.single('file'), async (req: Reque
     console.error('[IND-PDF] DOCX-to-PDF conversion failed:', error);
     res.status(500).json({
       error: 'DOCX-to-PDF conversion failed',
-      message: error.message,
+      message: 'An unexpected error occurred',
     });
   }
 });

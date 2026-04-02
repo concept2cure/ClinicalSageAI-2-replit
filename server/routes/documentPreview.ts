@@ -12,10 +12,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import {
-  generateHtmlPreview,
-  DocumentPreviewError,
-} from '../services/documentPreviewService';
+import { generateHtmlPreview, DocumentPreviewError } from '../services/documentPreviewService';
 import fs from 'fs';
 
 const router = Router();
@@ -30,8 +27,8 @@ router.get('/:id/preview', async (req: Request, res: Response) => {
     const format = (req.query.format as string) || 'html';
 
     // Extract organization ID for tenant isolation
-    const orgHeader = req.headers['x-organization-id'] as string | undefined;
-    const organizationId = orgHeader ? Number(orgHeader) : null;
+    const organizationId =
+      Number((req as any).user?.organizationId || (req as any).tenantId) || null;
 
     const result = await generateHtmlPreview(documentId, organizationId);
 

@@ -195,7 +195,7 @@ const analysisLimiter = new SimpleRateLimiter(60000, 10, 'analysis');
 // Rate limiting middleware factory
 const createRateLimitMiddleware = (limiter: SimpleRateLimiter) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    const orgId = req.headers['x-organization-id'] as string;
+    const orgId = String((req as any).user?.organizationId || (req as any).tenantId || '');
     const ip = req.ip || req.socket.remoteAddress || 'unknown';
     const key = orgId ? `org-${orgId}` : ip.replace(/^::ffff:/, '');
 
@@ -520,7 +520,7 @@ router.use(requestMiddleware);
 
 // Multi-tenancy middleware with validation (now optional for demo)
 const extractTenantContext = (req: Request, res: Response, next: NextFunction) => {
-  const organizationId = req.headers['x-organization-id'] as string;
+  const organizationId = String((req as any).user?.organizationId || (req as any).tenantId || '');
   const clientWorkspaceId = req.headers['x-client-workspace-id'] as string;
 
   // Make organization ID optional for demo/testing

@@ -290,7 +290,7 @@ router.post('/batch/module3', async (req, res) => {
     res.json(results);
   } catch (error: any) {
     logger.error(`Error processing batch request: ${error.message}`);
-    res.status(500).json({ status: 'error', message: `Failed to process batch: ${error.message}` });
+    res.status(500).json({ status: 'error', message: 'Failed to process batch' });
   }
 });
 

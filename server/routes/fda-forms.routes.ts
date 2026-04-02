@@ -15,7 +15,7 @@ import { FDAFormsRegistryClass } from '../config/FDAFormsRegistry';
 const router = Router();
 
 function requireOrgId(req: Request, res: Response): number | null {
-  const orgId = parseInt(req.headers['x-organization-id'] as string || '');
+  const orgId = Number((req as any).user?.organizationId || (req as any).tenantId);
   if (!orgId) {
     res.status(401).json({ error: 'Organization context required' });
     return null;
@@ -47,7 +47,7 @@ router.get('/registry', async (req: Request, res: Response) => {
 // Get available FDA forms for a project
 router.get('/project/:projectId/forms', async (req: Request, res: Response) => {
   const { projectId } = req.params;
-  const organizationId = parseInt(req.headers['x-organization-id'] as string || '');
+  const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
   if (!organizationId) {
     return res.status(401).json({ error: 'Organization context required' });
   }
@@ -117,7 +117,7 @@ router.get('/project/:projectId/forms', async (req: Request, res: Response) => {
 // Generate a specific FDA form
 router.post('/project/:projectId/generate/:formType', async (req: Request, res: Response) => {
   const { projectId, formType } = req.params;
-  const organizationId = parseInt(req.headers['x-organization-id'] as string || '');
+  const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
   const userId = req.headers['x-user-id'] as string;
 
   try {
@@ -220,7 +220,7 @@ router.post('/project/:projectId/generate/:formType', async (req: Request, res: 
 // Generate all FDA forms for a project
 router.post('/project/:projectId/generate-all', async (req: Request, res: Response) => {
   const { projectId } = req.params;
-  const organizationId = parseInt(req.headers['x-organization-id'] as string || '');
+  const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
   const userId = req.headers['x-user-id'] as string;
 
   try {
@@ -248,7 +248,7 @@ router.post('/project/:projectId/generate-all', async (req: Request, res: Respon
 // Generate any SMART form from registry
 router.post('/project/:projectId/generate-smart/:formId', async (req: Request, res: Response) => {
   const { projectId, formId } = req.params;
-  const organizationId = parseInt(req.headers['x-organization-id'] as string || '');
+  const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
   const userId = req.headers['x-user-id'] as string;
 
   try {
@@ -332,7 +332,7 @@ router.post('/project/:projectId/generate-smart/:formId', async (req: Request, r
 // Auto-generate forms when workflow is updated
 router.post('/project/:projectId/auto-generate', async (req: Request, res: Response) => {
   const { projectId } = req.params;
-  const organizationId = parseInt(req.headers['x-organization-id'] as string || '');
+  const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
   const userId = req.headers['x-user-id'] as string;
 
   try {
@@ -441,7 +441,7 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
 // Get a specific generated form
 router.get('/project/:projectId/form/:formType', async (req: Request, res: Response) => {
   const { projectId, formType } = req.params;
-  const organizationId = parseInt(req.headers['x-organization-id'] as string || '');
+  const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
 
   try {
     const form = await db

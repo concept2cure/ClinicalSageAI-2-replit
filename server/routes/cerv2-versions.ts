@@ -11,10 +11,9 @@ import { db } from '../db';
 const router = Router();
 
 const resolveOrganizationId = (req: any) => {
-  const headerOrg = req.header('x-organization-id') || req.header('x-org-id');
   const tenantOrg = req.tenantContext?.organizationId;
   const userOrg = req.user?.organizationId || req.tenantId;
-  const raw = headerOrg || tenantOrg || userOrg;
+  const raw = tenantOrg || userOrg;
   const parsed = Number(raw);
   return Number.isFinite(parsed) ? parsed : null;
 };
@@ -47,7 +46,7 @@ router.get('/', authMiddleware, async (req: any, res) => {
     return res.json({ versions, count: versions.length });
   } catch (error: any) {
     console.error('[CERV2 Versions] List error:', error);
-    return res.status(500).json({ error: 'Failed to fetch versions', message: error.message });
+    return res.status(500).json({ error: 'Failed to fetch versions', message: 'An unexpected error occurred' });
   }
 });
 
@@ -84,7 +83,7 @@ router.get('/:versionId', authMiddleware, async (req: any, res) => {
     return res.json({ version });
   } catch (error: any) {
     console.error('[CERV2 Versions] Get error:', error);
-    return res.status(500).json({ error: 'Failed to fetch version', message: error.message });
+    return res.status(500).json({ error: 'Failed to fetch version', message: 'An unexpected error occurred' });
   }
 });
 
@@ -118,7 +117,9 @@ router.get('/section/:sectionId/history', authMiddleware, async (req: any, res) 
     return res.json({ versions, count: versions.length, sectionId });
   } catch (error: any) {
     console.error('[CERV2 Versions] Section history error:', error);
-    return res.status(500).json({ error: 'Failed to fetch section history', message: error.message });
+    return res
+      .status(500)
+      .json({ error: 'Failed to fetch section history', message: 'An unexpected error occurred' });
   }
 });
 

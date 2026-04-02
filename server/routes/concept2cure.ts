@@ -17162,9 +17162,9 @@ router.post(
     try {
       const conversationId = parseInt(req.params.conversationId, 10);
       const organizationId =
-        (req as any).organizationId ||
-        parseInt(req.headers['x-organization-id'] as string, 10) ||
-        1;
+        Number(
+          (req as any).organizationId || (req as any).user?.organizationId || (req as any).tenantId
+        ) || 0;
 
       if (!conversationId || isNaN(conversationId)) {
         return sendError(res, 400, 'Invalid conversation ID');
