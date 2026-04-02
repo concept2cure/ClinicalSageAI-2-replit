@@ -1053,6 +1053,32 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     staleTime: 30_000,
   });
 
+  // ── Moved up: requireActiveProject must be defined before hooks that reference it ──
+  const requireActiveProject = useCallback(
+    (
+      targetLayout: LayoutMode,
+      options?: {
+        reason?: string;
+        projectId?: string;
+      }
+    ): boolean => {
+      const resolvedProjectId = options?.projectId ?? activeProjectId;
+      if (resolvedProjectId) {
+        setLayoutMode(targetLayout);
+        return true;
+      }
+      setLayoutMode('projects');
+      setProjectSwitcherOpen(true);
+      toast({
+        title: 'No project selected',
+        description: options?.reason ?? 'Open or create a project first.',
+        variant: 'destructive',
+      });
+      return false;
+    },
+    [activeProjectId, toast]
+  );
+
   useEffect(() => {
     if (layoutMode !== 'biostatistics') return;
     requireActiveProject('regulatory-workspace');
@@ -1290,30 +1316,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     setActiveToolPanel(null);
   }, [activeProjectId]);
 
-  const requireActiveProject = useCallback(
-    (
-      targetLayout: LayoutMode,
-      options?: {
-        reason?: string;
-        projectId?: string;
-      }
-    ): boolean => {
-      const resolvedProjectId = options?.projectId ?? activeProjectId;
-      if (resolvedProjectId) {
-        setLayoutMode(targetLayout);
-        return true;
-      }
-      setLayoutMode('projects');
-      setProjectSwitcherOpen(true);
-      toast({
-        title: 'No project selected',
-        description: options?.reason ?? 'Open or create a project first.',
-        variant: 'destructive',
-      });
-      return false;
-    },
-    [activeProjectId, toast]
-  );
+  // requireActiveProject is now defined earlier (before hooks that reference it)
 
   // ─────────────────────────────────────────────────────────────────────────────
   // NAVIGATION HELPER — intercepts special paths before falling through to layoutMode
