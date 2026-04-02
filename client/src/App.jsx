@@ -75,9 +75,7 @@ import UnifiedTaskDashboard from './components/UnifiedTaskDashboard';
 
 // Clean loading component for lazy-loaded routes
 const LoadingPage = () => (
-  <div className="flex flex-col items-center justify-center p-8 h-screen bg-white">
-    <p className="text-sm text-stone-400">Loading...</p>
-  </div>
+  <div className="min-h-screen bg-transparent" aria-hidden="true" />
 );
 
 // Eagerly load the landing pages for faster initial render

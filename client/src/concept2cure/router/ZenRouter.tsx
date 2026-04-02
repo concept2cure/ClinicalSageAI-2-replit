@@ -79,11 +79,7 @@ const Project510kBridge: React.FC = () => {
   const projectId = exactParams?.projectId ?? nestedParams?.projectId ?? null;
   return (
     <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#FAF9F5]">
-          <p className="text-sm text-[#B0AEA5]">Loading workspace…</p>
-        </div>
-      }
+      fallback={<div className="min-h-screen bg-transparent" aria-hidden="true" />}
     >
       <CERV2Page projectId={projectId} />
     </Suspense>
@@ -99,11 +95,7 @@ const ProjectPMABridge: React.FC = () => {
   const projectId = exactParams?.projectId ?? nestedParams?.projectId ?? null;
   return (
     <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9]">
-          <p className="text-sm text-stone-400">Loading PMA workspace…</p>
-        </div>
-      }
+      fallback={<div className="min-h-screen bg-transparent" aria-hidden="true" />}
     >
       <PMAWorkspacePage projectId={projectId || ''} projectName="PMA Submission" />
     </Suspense>
@@ -121,15 +113,8 @@ const ProtectedZenApp: React.FC = () => (
 // ═══════════════════════════════════════════════════════════════════════════════
 // LOADING SCREEN
 // ═══════════════════════════════════════════════════════════════════════════════
-const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading...' }) => (
-  <div className="min-h-screen bg-white flex items-center justify-center">
-    <div className="flex flex-col items-center gap-4">
-      <p className="text-sm text-stone-400">{message}</p>
-      <div className="w-48 h-1 bg-stone-100 rounded-full overflow-hidden">
-        <div className="h-full rounded-full animate-pulse bg-stone-300" style={{ width: '60%' }} />
-      </div>
-    </div>
-  </div>
+const ZenLoadingScreen: React.FC<{ message?: string }> = () => (
+  <div className="min-h-screen bg-transparent" aria-hidden="true" />
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
