@@ -3,8 +3,8 @@
 
 CREATE TABLE IF NOT EXISTS concept2cure_submission_center_items (
   item_id text PRIMARY KEY,
-  organization_id integer NOT NULL,
-  project_id integer NOT NULL,
+  organization_id integer NOT NULL REFERENCES organizations(id),
+  project_id integer NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   title text NOT NULL,
   authority text NOT NULL,
   submission_type text NOT NULL,

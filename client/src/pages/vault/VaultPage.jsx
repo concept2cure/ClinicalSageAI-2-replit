@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import UnifiedDocumentUpload from '../../components/unified/UnifiedDocumentUpload';
 import DocumentDataCenter from '../../components/DocumentDataCenter';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -34,13 +36,16 @@ export default function VaultPage() {
     byProject: {},
   });
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+  const { toast } = useToast();
 
   // Load document statistics on mount and when documents are updated
   useEffect(() => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/vault/list', { credentials: 'include' });
+        setFetchError(null);
+        const res = await apiRequest('GET', '/api/vault/list');
         const data = await res.json();
 
         if (data.success) {
@@ -72,7 +77,8 @@ export default function VaultPage() {
           setDocumentStats(stats);
         }
       } catch (error) {
-        console.error('Error fetching vault statistics:', error);
+        setFetchError(error.message || 'Failed to load vault documents');
+        toast({ title: 'Vault load failed', description: 'Could not fetch document list. Please try again.', variant: 'destructive' });
       } finally {
         setLoading(false);
       }

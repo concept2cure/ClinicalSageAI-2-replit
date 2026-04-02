@@ -31,8 +31,6 @@ function getOrgId(req: express.Request): number {
   const orgId = parseInt(
     (req as any).tenantId ||
     (req as any).tenantContext?.organizationId ||
-    (req.headers['x-organization-id'] as string) ||
-    (req.query.organizationId as string) ||
     ''
   );
   if (isNaN(orgId) || orgId <= 0) {
@@ -308,8 +306,7 @@ router.post('/insights/take-action', async (req, res) => {
     }
 
     const { insightId, action, type } = validationResult.data;
-
-    console.log(`[CMC] Taking action on insight ${insightId}: ${action}`);
+    const orgId = getOrgId(req);
 
     // Persist task to project_workflows table
     let taskResult: any;
@@ -319,6 +316,7 @@ router.post('/insights/take-action', async (req, res) => {
         await pool.query(`
           CREATE TABLE IF NOT EXISTS project_workflows (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            organization_id INTEGER,
             project_id UUID,
             template_id UUID,
             workflow_name TEXT NOT NULL,
@@ -339,10 +337,11 @@ router.post('/insights/take-action', async (req, res) => {
       const dueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
       const result = await pool.query(
-        `INSERT INTO project_workflows (workflow_name, workflow_data, status, progress, assigned_to, start_date, end_date)
-         VALUES ($1, $2, 'active', 0, $3, NOW(), $4)
+        `INSERT INTO project_workflows (organization_id, workflow_name, workflow_data, status, progress, assigned_to, start_date, end_date)
+         VALUES ($1, $2, $3, 'active', 0, $4, NOW(), $5)
          RETURNING *`,
         [
+          orgId,
           `Insight Action: ${action}`,
           JSON.stringify({ insightId, action, type, priority, source: 'cmc-insights' }),
           'CMC Team Lead',
@@ -359,20 +358,10 @@ router.post('/insights/take-action', async (req, res) => {
         priority,
         dueDate: row.end_date,
         createdAt: row.created_at,
-        _persisted: true,
       };
     } catch (e) {
-      console.warn('[CMC] Could not persist to project_workflows:', e);
-      taskResult = {
-        taskId: `task_${Date.now()}`,
-        action,
-        status: 'created',
-        assignedTo: 'CMC Team Lead',
-        priority: type === 'compliance' ? 'high' : 'medium',
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        createdAt: new Date().toISOString(),
-        _persisted: false,
-      };
+      console.error('[CMC] Could not persist to project_workflows:', e);
+      return res.status(500).json({ success: false, error: 'Failed to persist workflow task' });
     }
 
     res.status(200).json({
@@ -470,22 +459,14 @@ router.post('/compliance/check-rules', async (req, res) => {
           }
         }
       } else {
-        rules = [
-          { rule: 'ICH Q8 Quality by Design', status: 'violation', severity: 'medium', description: 'Missing design space justification in process development section' },
-          { rule: 'ICH Q9 Quality Risk Management', status: 'compliant', severity: 'low', description: 'Risk assessment documentation is adequate' },
-          { rule: 'FDA 21 CFR 211.84', status: 'violation', severity: 'high', description: 'Incomplete validation documentation for cleaning procedures' },
-        ];
-        complianceScore = 75;
-        recommendedActions = [
-          'Complete design space documentation with DOE studies',
-          'Update cleaning validation protocols',
-          'Review risk assessment for manufacturing process',
-        ];
+        // No compliance tracking records exist yet — return clean state
+        rules = [];
+        complianceScore = 100;
+        recommendedActions = [];
       }
     } catch (e) {
-      console.warn('[CMC] Could not query compliance_tracking:', e);
-      rules = [{ rule: 'ICH Q8', status: 'violation', severity: 'medium', description: 'DB unavailable' }];
-      complianceScore = 75;
+      console.error('[CMC] Could not query compliance_tracking:', e);
+      return res.status(500).json({ success: false, error: 'Failed to check compliance rules' });
     }
 
     complianceScore = Math.max(complianceScore, 0);

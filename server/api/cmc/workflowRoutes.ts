@@ -13,7 +13,7 @@ const router = express.Router();
 
 function getOrganizationId(req: express.Request): number {
   const orgId = parseInt(
-    String((req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-organization-id'] || 0),
+    String((req as any).tenantId || (req as any).tenantContext?.organizationId || 0),
     10
   );
   if (!orgId || Number.isNaN(orgId)) {
@@ -378,9 +378,11 @@ let commandCounter = 1;
  */
 router.get('/', async (req, res) => {
   try {
+    const orgId = getOrganizationId(req);
     const rows = await db
       .select()
       .from(projectWorkflows)
+      .where(eq(projectWorkflows.organizationId, orgId))
       .orderBy(desc(projectWorkflows.createdAt))
       .limit(100);
 
@@ -488,10 +490,11 @@ router.post('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const orgId = getOrganizationId(req);
     const [workflow] = await db
       .select()
       .from(projectWorkflows)
-      .where(eq(projectWorkflows.id, id));
+      .where(and(eq(projectWorkflows.id, id), eq(projectWorkflows.organizationId, orgId)));
 
     if (!workflow) {
       return res.status(404).json({ success: false, error: 'Workflow not found' });

@@ -34,7 +34,7 @@ const linkDocumentSchema = z.object({
 router.get('/', async (req, res) => {
   try {
     const { drug_candidate_id, study_id } = req.query;
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -95,7 +95,7 @@ router.get('/', async (req, res) => {
 router.get('/module/:moduleSection', async (req, res) => {
   try {
     const { moduleSection } = req.params;
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -151,7 +151,7 @@ router.get('/module/:moduleSection', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -243,7 +243,7 @@ router.post('/', async (req, res) => {
     }
 
     const data = validationResult.data;
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -324,7 +324,7 @@ router.put('/:id', async (req, res) => {
     }
 
     const data = validationResult.data;
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -458,7 +458,7 @@ router.post('/:id/link', async (req, res) => {
     }
 
     const data = validationResult.data;
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -521,7 +521,7 @@ router.post('/:id/link', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }

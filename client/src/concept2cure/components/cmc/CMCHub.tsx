@@ -25,6 +25,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 import {
   Beaker,
   FileText,
@@ -312,6 +313,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
   submissionType,
   onDraftWithAI,
 }) => {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<CMCTab>('overview');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -401,7 +403,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
     { guideline: 'Q6B', title: 'Specifications: Biotech Products', status: 'pending' as const },
   ], [dsForm]);
 
-  // Handle document upload
+  // Handle document upload via real extraction API
   const handleUpload = useCallback(async (files: FileList) => {
     const newFiles = Array.from(files).map(f => ({
       name: f.name,
@@ -409,16 +411,29 @@ export const CMCHub: React.FC<CMCHubProps> = ({
     }));
     setUploadedFiles(prev => [...prev, ...newFiles]);
 
-    // Simulate extraction (in production, calls /api/cmc/extract-document)
     for (let i = 0; i < newFiles.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000));
-      setUploadedFiles(prev => prev.map((f, idx) =>
-        f.name === newFiles[i].name
-          ? { ...f, status: 'done', extractedFields: Math.floor(Math.random() * 20) + 5 }
-          : f
-      ));
+      try {
+        const formData = new FormData();
+        formData.append('file', files[i]);
+        if (projectId) formData.append('projectId', projectId);
+        const res = await fetch('/api/cmc/extract-document', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+        });
+        const data = res.ok ? await res.json() : null;
+        setUploadedFiles(prev => prev.map(f =>
+          f.name === newFiles[i].name
+            ? { ...f, status: res.ok ? 'done' : 'error', extractedFields: data?.extractedFields ?? 0 }
+            : f
+        ));
+      } catch {
+        setUploadedFiles(prev => prev.map(f =>
+          f.name === newFiles[i].name ? { ...f, status: 'error' } : f
+        ));
+      }
     }
-  }, []);
+  }, [projectId]);
 
   // Save form data to unified project CMC endpoint
   const handleSave = useCallback(async () => {
@@ -434,9 +449,10 @@ export const CMCHub: React.FC<CMCHubProps> = ({
       if (!res.ok) throw new Error('Save failed');
 
       setSaveSuccess(true);
+      toast({ title: 'CMC data saved', description: 'Drug substance and product data saved successfully.' });
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
-      console.error('[CMC] Save failed:', err);
+      toast({ title: 'Save failed', description: 'Could not save CMC data. Please try again.', variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
@@ -460,7 +476,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
           submissionType: submissionType || 'IND',
       });
     } catch (err) {
-      console.error('[CMC] Generation failed:', err);
+      toast({ title: 'Generation failed', description: 'Module 3 section generation failed. Please try again.', variant: 'destructive' });
     } finally {
       setGeneratingSection(null);
     }

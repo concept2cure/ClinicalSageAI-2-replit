@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface CommandCenterProps {
   projectId?: string;
@@ -31,6 +32,7 @@ interface ContradictionRow {
 }
 
 export default function CMCCommandCenter({ projectId }: CommandCenterProps) {
+  const { toast } = useToast();
   const [sections, setSections] = useState<SectionRow[]>([]);
   const [readiness, setReadiness] = useState<ReadinessSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
@@ -161,10 +163,15 @@ export default function CMCCommandCenter({ projectId }: CommandCenterProps) {
               <button
                 type="button"
                 onClick={async () => {
-                  await apiRequest('PATCH', `/api/cmc/module3-os/contradictions/${c.id}/resolve`, {
-                    resolutionNote: 'Resolved in command center',
-                  });
-                  await load();
+                  try {
+                    await apiRequest('PATCH', `/api/cmc/module3-os/contradictions/${c.id}/resolve`, {
+                      resolutionNote: 'Resolved in command center',
+                    });
+                    await load();
+                    toast({ title: 'Contradiction resolved' });
+                  } catch {
+                    toast({ title: 'Failed to resolve', description: 'Could not resolve contradiction. Please try again.', variant: 'destructive' });
+                  }
                 }}
                 className="mt-1 text-[11px] px-2 py-1 rounded border border-stone-300 bg-stone-50 hover:bg-stone-100"
               >
