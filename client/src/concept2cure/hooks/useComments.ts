@@ -9,17 +9,7 @@
  */
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { CommentThread } from '../components/editor/extensions/CommentMark';
-
-// ── Auth helper ──────────────────────────────────────────────────────────────
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
+import { apiRequest } from '@/lib/queryClient';
 
 /** Convert a server comment row into a client-side CommentThread */
 function serverToThread(sc: any): CommentThread {
@@ -90,10 +80,7 @@ export function useComments(): UseCommentsReturn {
     abortRef.current = ctrl;
     setLoading(true);
     try {
-      const res = await fetch(`/api/comments/documents/${documentId}/comments`, {
-        headers: getAuthHeaders(),
-        signal: ctrl.signal,
-      });
+      const res = await apiRequest('GET', `/api/comments/documents/${documentId}/comments`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const threads: CommentThread[] = (data.comments || []).map(serverToThread);
@@ -119,15 +106,11 @@ export function useComments(): UseCommentsReturn {
       }
     ): Promise<CommentThread | null> => {
       try {
-        const res = await fetch(`/api/comments/documents/${documentId}/comments`, {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({
-            content: data.content,
-            highlightedText: data.highlightedText,
-            sectionReference: data.sectionReference,
-            commentType: data.commentType || 'general',
-          }),
+        const res = await apiRequest('POST', `/api/comments/documents/${documentId}/comments`, {
+          content: data.content,
+          highlightedText: data.highlightedText,
+          sectionReference: data.sectionReference,
+          commentType: data.commentType || 'general',
         });
         if (!res.ok) {
           const errBody = await res.json().catch(() => ({}));
@@ -160,11 +143,7 @@ export function useComments(): UseCommentsReturn {
       }
     ) => {
       try {
-        const res = await fetch(`/api/comments/comments/${commentId}`, {
-          method: 'PATCH',
-          headers: getAuthHeaders(),
-          body: JSON.stringify(data),
-        });
+        const res = await apiRequest('PATCH', `/api/comments/comments/${commentId}`, data);
         if (!res.ok) {
           const errBody = await res.json().catch(() => ({}));
           console.warn('[useComments] Update failed:', errBody.error || `HTTP ${res.status}`);
@@ -178,10 +157,7 @@ export function useComments(): UseCommentsReturn {
 
   const deleteComment = useCallback(async (commentId: string) => {
     try {
-      const res = await fetch(`/api/comments/comments/${commentId}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
+      const res = await apiRequest('DELETE', `/api/comments/comments/${commentId}`);
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
         console.warn('[useComments] Delete failed:', errBody.error || `HTTP ${res.status}`);
@@ -193,11 +169,7 @@ export function useComments(): UseCommentsReturn {
 
   const addReply = useCallback(async (commentId: string, content: string) => {
     try {
-      const res = await fetch(`/api/comments/comments/${commentId}/replies`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ content }),
-      });
+      const res = await apiRequest('POST', `/api/comments/comments/${commentId}/replies`, { content });
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
         console.warn('[useComments] Reply failed:', errBody.error || `HTTP ${res.status}`);

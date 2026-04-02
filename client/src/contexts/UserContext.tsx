@@ -23,6 +23,7 @@ import React, {
 } from 'react';
 import { useAuth } from '@/portal-v2/services/authService';
 import { useTenant } from '@/contexts/TenantContext';
+import { apiRequest } from '@/lib/queryClient';
 
 // Types
 export type UserRole =
@@ -289,13 +290,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       // Fetch user's projects
       try {
-        const projectsResponse = await fetch(`/api/projects?userId=${userProfile.id}`);
-        if (projectsResponse.ok) {
-          const projectsData = await projectsResponse.json();
-          setProjects(projectsData.projects || projectsData || []);
-        } else {
-          setProjects([]);
-        }
+        const projectsResponse = await apiRequest('GET', `/api/projects?userId=${userProfile.id}`);
+        const projectsData = await projectsResponse.json();
+        setProjects(projectsData.projects || projectsData || []);
       } catch {
         setProjects([]);
       }
@@ -326,11 +323,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         });
 
         // Persist to server
-        await fetch('/api/users/preferences', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(prefs),
-        });
+        await apiRequest('PATCH', '/api/users/preferences', prefs);
       } catch (error) {
         console.error('[UserContext] Failed to persist preferences:', error);
       }

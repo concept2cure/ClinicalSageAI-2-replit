@@ -13,6 +13,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { useVisibleInterval } from './useVisibleInterval';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -66,15 +67,6 @@ export interface WorkspaceSummary {
   nextActions: WorkspaceSummaryNextAction[];
 }
 
-// ─── Auth helpers (mirror useProjects pattern) ────────────────────────────────
-
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 function getOrgId(): string {
   return localStorage.getItem('currentOrganizationId') || '1';
 }
@@ -83,9 +75,7 @@ function getOrgId(): string {
 
 async function fetchWorkspaceSummary(): Promise<WorkspaceSummary> {
   const orgId = getOrgId();
-  const res = await fetch(`/api/workspace/summary?orgId=${orgId}`, {
-    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-  });
+  const res = await apiRequest('GET', `/api/workspace/summary?orgId=${orgId}`);
 
   if (!res.ok) throw new Error(`workspace/summary: ${res.status}`);
   const body = await res.json();

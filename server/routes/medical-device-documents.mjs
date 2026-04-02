@@ -7,7 +7,10 @@ const router = express.Router();
 
 // Middleware to check tenant
 const checkTenant = (req, res, next) => {
-  const tenantId = req.headers['x-tenant-id'] || req.query.tenantId || 'default';
+  const tenantId = req.tenantId || req.tenantContext?.organizationId;
+  if (!tenantId) {
+    return res.status(401).json({ error: 'Tenant context required' });
+  }
   req.tenantId = tenantId;
   next();
 };
