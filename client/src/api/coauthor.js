@@ -2,6 +2,7 @@
  * API client for CoAuthor services
  * Provides functions to interact with the CoAuthor API endpoints
  */
+import { apiRequest } from '@/lib/queryClient';
 
 /**
  * Fetch CTD sections for display in the Canvas
@@ -9,7 +10,7 @@
  */
 export async function fetchCTDSections() {
   try {
-    const response = await fetch('/api/coauthor/sections');
+    const response = await apiRequest('GET', '/api/coauthor/sections');
     if (!response.ok) {
       console.error('Failed to fetch CTD sections:', response.status);
       return [];
@@ -27,7 +28,7 @@ export async function fetchCTDSections() {
  */
 export async function fetchRiskConnections() {
   try {
-    const response = await fetch('/api/coauthor/risks');
+    const response = await apiRequest('GET', '/api/coauthor/risks');
     if (!response.ok) {
       console.error('Failed to fetch risk connections:', response.status);
       return [];
@@ -46,7 +47,7 @@ export async function fetchRiskConnections() {
  */
 export async function fetchSectionGuidance(sectionId) {
   try {
-    const response = await fetch(`/api/coauthor/guidance/${sectionId}`);
+    const response = await apiRequest('GET', `/api/coauthor/guidance/${sectionId}`);
     if (!response.ok) {
       console.error(`Failed to fetch guidance for section ${sectionId}:`, response.status);
       return { text: '', examples: [] };
@@ -67,11 +68,7 @@ export async function fetchSectionGuidance(sectionId) {
  */
 export async function updateSectionPosition(sectionId, x, y) {
   try {
-    const response = await fetch(`/api/coauthor/layout/${sectionId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ x, y }),
-    });
+    const response = await apiRequest('POST', `/api/coauthor/layout/${sectionId}`, { x, y });
     if (!response.ok) {
       console.error(`Failed to update position for section ${sectionId}:`, response.status);
       return { id: sectionId, x, y, updated: false };

@@ -70,6 +70,10 @@ export const intelligenceKeys = {
     ['intelligence', 'feedback-summary', projectId] as const,
   crossModule: (projectId: number | string) =>
     ['intelligence', 'cross-module', projectId] as const,
+  rimAssessment: (projectId: number | string) =>
+    ['intelligence', 'rim-assessment', projectId] as const,
+  rimSignals: (projectId: number | string) =>
+    ['intelligence', 'rim-signals', projectId] as const,
 } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -362,5 +366,208 @@ export function useEnrichIntelligence(projectId: number | string | null) {
         qc.invalidateQueries({ queryKey: intelligenceKeys.dashboard(projectId) });
       }
     },
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RIM SIGNAL TYPES (mirrors backend SignalSummary from signal-capture.ts)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export type RIMSignalType =
+  | 'judgment'
+  | 'pattern_match'
+  | 'recommendation'
+  | 'feedback'
+  | 'artifact_change';
+
+export type TrendConfidence = 'high' | 'moderate' | 'low' | 'insufficient';
+
+export interface RIMSignalSummary {
+  totalSignals: number;
+  byType: Partial<Record<RIMSignalType, number>>;
+  byRiskLevel: Partial<Record<string, number>>;
+  averageScore: number;
+  averageConfidence: number;
+  topPatternIds: string[];
+  overallTrend: 'improving' | 'stable' | 'declining';
+  trendConfidence: TrendConfidence;
+  trendSampleSize: number;
+  periodStart: string;
+  periodEnd: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RIM ASSESSMENT TYPES (mirrors backend RIMAssessment from rim.ts)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export type JudgmentModel =
+  | 'evidence_sufficiency'
+  | 'defensibility'
+  | 'reviewer_sensitivity'
+  | 'claim_risk'
+  | 'cross_section_consistency'
+  | 'submission_risk';
+
+export type JudgmentVerdict =
+  | 'pass'
+  | 'acceptable'
+  | 'needs_attention'
+  | 'at_risk'
+  | 'fail';
+
+export interface JudgmentFinding {
+  id: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  category: string;
+  description: string;
+  remediation: string;
+  reviewerImpact: 'likely_question' | 'possible_question' | 'unlikely_question';
+}
+
+export interface JudgmentFactor {
+  name: string;
+  weight: number;
+  rawScore: number;
+  weightedScore: number;
+  detail: string;
+}
+
+export interface JudgmentScore {
+  model: JudgmentModel;
+  score: number;
+  confidence: number;
+  verdict: JudgmentVerdict;
+  factors: JudgmentFactor[];
+  findings: JudgmentFinding[];
+  scoredAt: string;
+}
+
+export interface JudgmentReport {
+  frameworkVersion: string;
+  scores: JudgmentScore[];
+  overallRisk: number;
+  overallVerdict: JudgmentVerdict;
+  topFindings: JudgmentFinding[];
+  generatedAt: string;
+}
+
+export interface RIMPatternMatch {
+  patternId: string;
+  matchedText: string;
+  matchLocation: string;
+  matchConfidence: number;
+  pattern: {
+    id: string;
+    category: string;
+    name: string;
+    description: string;
+    severity: 'critical' | 'high' | 'medium' | 'low';
+    remediation: string;
+    hitCount: number;
+    lastMatchedAt: string | null;
+  };
+}
+
+export interface RIMAssessment {
+  judgment: JudgmentReport;
+  rimScore: number;
+  rimVerdict: string;
+  topActions: string[];
+  assessedAt: string;
+  patternMatches: RIMPatternMatch[];
+  signalSummary: RIMSignalSummary | null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RIM HOOKS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * RIM signals summary — accumulated signals with types, scores, trends.
+ */
+export function useRIMSignals(projectId: number | string | null) {
+  return useQuery<RIMSignalSummary>({
+    queryKey: intelligenceKeys.rimSignals(projectId ?? 0),
+    queryFn: () => apiFetch(`/api/intelligence/projects/${projectId}/rim/signals`),
+    enabled: !!projectId,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+/**
+ * RIM assessment — full judgment framework scores for a project.
+ * Calls POST because the endpoint runs a fresh assessment.
+ */
+export function useRIMAssessment(projectId: number | string | null) {
+  return useQuery<RIMAssessment>({
+    queryKey: intelligenceKeys.rimAssessment(projectId ?? 0),
+    queryFn: () =>
+      apiFetch(`/api/intelligence/projects/${projectId}/rim/assess`, {
+        method: 'POST',
+        body: JSON.stringify({}),
+      }),
+    enabled: !!projectId,
+    staleTime: 120_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// KERNEL DECISION RECORDS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface KernelDecision {
+  id: string;
+  createdAt: string;
+  requestId: string | null;
+  threadId: string | null;
+  route: string;
+  organizationId: number | null;
+  userId: number | null;
+  projectId: number | null;
+  plannerVersion: string;
+  orchestratorName: string;
+  intentLens: string | null;
+  intentConfidence: number | null;
+  submissionType: string | null;
+  selectedTaskType: string | null;
+  selectedProvider: string | null;
+  selectedModel: string | null;
+  routingStrategy: string | null;
+  selectedTools: string[];
+  alternatives: Array<Record<string, unknown>>;
+  constraints: Record<string, unknown>;
+  decisionRationale: string | null;
+  estimatedCostUsd: number | null;
+  latencyMs: number | null;
+  outcome: 'success' | 'failed' | 'partial' | null;
+  errorMessage: string | null;
+}
+
+export interface KernelDecisionListResponse {
+  decisions: KernelDecision[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+/**
+ * Fetch kernel AI routing decision records for a project (or org-wide if no projectId).
+ */
+export function useKernelDecisions(projectId?: number | string | null, limit = 20) {
+  return useQuery<KernelDecisionListResponse>({
+    queryKey: ['concept2cure', 'kernel-decisions', projectId, limit],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (projectId) params.set('projectId', String(projectId));
+      params.set('limit', String(limit));
+      const res = await apiFetch<{ data: KernelDecisionListResponse }>(
+        `/api/ana-ri/kernel/decisions?${params.toString()}`,
+      );
+      return res.data;
+    },
+    staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 }

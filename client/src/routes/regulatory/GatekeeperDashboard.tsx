@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,9 +33,9 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
     setLoading(true);
     try {
       const [rpi, timeline, hist] = await Promise.all([
-        fetch(`/api/reg/submissions/${subId}/rpi`).then(r => r.json()),
-        fetch(`/api/reg/submissions/${subId}/timeline-risk`).then(r => r.json()),
-        fetch(`/api/reg/submissions/${subId}/gatekeeper/history`).then(r => r.json()),
+        apiRequest('GET', `/api/reg/submissions/${subId}/rpi`).then(r => r.json()),
+        apiRequest('GET', `/api/reg/submissions/${subId}/timeline-risk`).then(r => r.json()),
+        apiRequest('GET', `/api/reg/submissions/${subId}/gatekeeper/history`).then(r => r.json()),
       ]);
       setRpiData(rpi);
       setTimelineData(timeline);
@@ -53,10 +54,8 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
   const runGatekeeper = async () => {
     setLoading(true);
     try {
-      const result = await fetch(`/api/reg/submissions/${subId}/gatekeeper/run`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      }).then(r => r.json());
+      const response = await apiRequest('POST', `/api/reg/submissions/${subId}/gatekeeper/run`);
+      const result = await response.json();
       setGatekeeperData(result);
       loadData(); // Refresh all data
     } catch (error) {
@@ -70,11 +69,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
     if (!gatekeeperData?.blockers) return;
     setLoading(true);
     try {
-      await fetch(`/api/reg/submissions/${subId}/gatekeeper/autofix`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ blockers: gatekeeperData.blockers }),
-      });
+      await apiRequest('POST', `/api/reg/submissions/${subId}/gatekeeper/autofix`, { blockers: gatekeeperData.blockers });
       loadData(); // Refresh data after fixes
     } catch (error) {
       console.error('[Gatekeeper] Failed to apply auto-fix:', error);
@@ -85,9 +80,8 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
 
   const generateSlackDigest = async () => {
     try {
-      const digest = await fetch(`/api/reg/submissions/${subId}/digest/slack`, {
-        method: 'POST',
-      }).then(r => r.json());
+      const response = await apiRequest('POST', `/api/reg/submissions/${subId}/digest/slack`);
+      const digest = await response.json();
 
       // Copy to clipboard
       navigator.clipboard.writeText(digest.message);
@@ -99,7 +93,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
 
   const downloadCalendar = async () => {
     try {
-      const response = await fetch(`/api/reg/submissions/${subId}/calendar`);
+      const response = await apiRequest('GET', `/api/reg/submissions/${subId}/calendar`);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');

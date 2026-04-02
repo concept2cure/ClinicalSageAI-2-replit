@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function DependenciesPanel({ studyId }: { studyId: string }) {
   const [d, setD] = useState<any>(null);
   async function load() {
     try {
-      const r = await fetch(`/api/stability/studies/${studyId}/dependencies`);
-      if (r.ok) {
-        setD(await r.json());
-      }
+      const res = await apiRequest('GET', `/api/stability/studies/${studyId}/dependencies`);
+      setD(await res.json());
     } catch (err) {
       console.error('[DependenciesPanel] Failed to load dependencies:', err);
     }

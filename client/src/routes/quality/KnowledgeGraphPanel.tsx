@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function KnowledgeGraphPanel() {
   const [data, setData] = useState<any>({ nodes: [], edges: [] });
@@ -15,23 +16,17 @@ export default function KnowledgeGraphPanel() {
 
   async function query() {
     try {
-      const r = await fetch(`/api/quality/graph/query?kind=${encodeURIComponent(kind)}`);
-      
-      // Check if the response is successful and contains JSON
-      if (!r.ok) {
-        setData({ nodes: [], edges: [], error: 'Quality graph feature not enabled' });
-        return;
-      }
-      
+      const r = await apiRequest('GET', `/api/quality/graph/query?kind=${encodeURIComponent(kind)}`);
+
       const contentType = r.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         setData({ nodes: [], edges: [], error: 'Quality graph feature not available' });
         return;
       }
-      
+
       const jsonData = await r.json();
       setData(jsonData);
-    } catch (error) {
+    } catch {
       setData({ nodes: [], edges: [], error: 'Unable to load quality graph data' });
     }
   }

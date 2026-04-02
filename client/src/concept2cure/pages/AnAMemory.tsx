@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
 import {
   Brain,
@@ -119,7 +120,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
 
   const fetchMemories = useCallback(async () => {
     try {
-      const response = await fetch('/api/ana/memory/default-project');
+      const response = await apiRequest('GET', '/api/ana/memory/default-project');
       if (!response.ok) throw new Error(`Failed to load (${response.status})`);
       const data = await response.json();
       // Map server 'type' field to client 'category'
@@ -154,14 +155,10 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
     setError(null);
 
     try {
-      const response = await fetch('/api/ana/memory/default-project', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const response = await apiRequest('POST', '/api/ana/memory/default-project', {
           content: newMemory.trim(),
           type: newMemoryCategory.toLowerCase() as 'preference' | 'fact' | 'decision' | 'context',
-        }),
-      });
+        });
 
       if (!response.ok) throw new Error(`Failed to add (${response.status})`);
 
@@ -187,10 +184,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
       setError(null);
 
       try {
-        const response = await fetch(
-          `/api/ana/memory/default-project/${memoryId}`,
-          { method: 'DELETE' }
-        );
+        const response = await apiRequest('DELETE', `/api/ana/memory/default-project/${memoryId}`);
 
         if (!response.ok)
           throw new Error(`Failed to delete (${response.status})`);

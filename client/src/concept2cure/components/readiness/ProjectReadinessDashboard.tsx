@@ -18,6 +18,9 @@ import {
   useContinuity,
 } from '../../hooks/useOrchestration';
 import type { ReadinessBlocker, Recommendation, ReadinessAssessment } from '../../hooks/useOrchestration';
+import { useRIMAssessment } from '../../hooks/useIntelligence';
+import type { JudgmentScore, JudgmentVerdict, JudgmentModel } from '../../hooks/useIntelligence';
+import { Badge } from '@/components/ui/badge';
 import { ReadinessScoreRing } from './ReadinessScoreRing';
 import { ModuleBreakdown } from './ModuleBreakdown';
 import { BlockerList } from './BlockerList';
@@ -51,6 +54,7 @@ export function ProjectReadinessDashboard({
   const { data: readiness, isLoading: readinessLoading, error: readinessError } = useReadinessAssessment(projectId, module);
   const { data: recSet, isLoading: recsLoading } = useRecommendations(projectId, { module, limit: 20 });
   const { snapshot: continuity, isLoading: continuityLoading, refresh: refreshContinuity } = useContinuity(projectId);
+  const { data: rimAssessment, isLoading: rimLoading } = useRIMAssessment(projectId);
 
   const handleResolveBlocker = useCallback((blocker: ReadinessBlocker) => {
     // Phase 4: Wire to AI action dispatch for automated resolution
@@ -121,7 +125,12 @@ export function ProjectReadinessDashboard({
       {/* Tab content */}
       <div className="flex-1 overflow-y-auto p-4">
         {activeTab === 'overview' && readiness && (
-          <OverviewTab readiness={readiness} recCount={recSet?.summary.total ?? 0} />
+          <OverviewTab
+            readiness={readiness}
+            recCount={recSet?.summary.total ?? 0}
+            judgmentScores={rimAssessment?.judgment.scores}
+            rimLoading={rimLoading}
+          />
         )}
         {activeTab === 'modules' && readiness && (
           <ModuleBreakdown modules={readiness.moduleBreakdown} />
@@ -167,7 +176,131 @@ export function ProjectReadinessDashboard({
 // Overview Tab
 // ---------------------------------------------------------------------------
 
-function OverviewTab({ readiness, recCount }: { readiness: ReadinessAssessment; recCount: number }) {
+// ---------------------------------------------------------------------------
+// Judgment Analysis helpers
+// ---------------------------------------------------------------------------
+
+const JUDGMENT_MODEL_LABELS: Record<JudgmentModel, string> = {
+  evidence_sufficiency: 'Evidence Sufficiency',
+  defensibility: 'Defensibility',
+  reviewer_sensitivity: 'Reviewer Sensitivity',
+  claim_risk: 'Claim Risk',
+  cross_section_consistency: 'Cross-Section Consistency',
+  submission_risk: 'Submission Risk',
+};
+
+const VERDICT_STYLES: Record<JudgmentVerdict, { label: string; className: string }> = {
+  pass: { label: 'Pass', className: 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300' },
+  acceptable: { label: 'Acceptable', className: 'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400' },
+  needs_attention: { label: 'Needs Attention', className: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400' },
+  at_risk: { label: 'At Risk', className: 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400' },
+  fail: { label: 'Fail', className: 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300' },
+};
+
+function JudgmentScoreCard({ score }: { score: JudgmentScore }) {
+  const label = JUDGMENT_MODEL_LABELS[score.model] ?? score.model;
+  const verdictStyle = VERDICT_STYLES[score.verdict] ?? VERDICT_STYLES.acceptable;
+  const topFinding = score.findings[0];
+
+  return (
+    <div className="rounded-lg border border-stone-200 dark:border-stone-700 p-3 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[13px] font-medium text-stone-700 dark:text-stone-300 truncate">
+          {label}
+        </span>
+        <Badge
+          variant="secondary"
+          className={`text-[10px] px-1.5 py-0 font-medium shrink-0 ${verdictStyle.className}`}
+        >
+          {verdictStyle.label}
+        </Badge>
+      </div>
+
+      {/* Score bar */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1 h-1.5 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-200 ${
+              score.score >= 70
+                ? 'bg-stone-500 dark:bg-stone-400'
+                : score.score >= 50
+                  ? 'bg-amber-500 dark:bg-amber-400'
+                  : 'bg-red-500 dark:bg-red-400'
+            }`}
+            style={{ width: `${score.score}%` }}
+          />
+        </div>
+        <span className="text-[11px] font-medium text-stone-600 dark:text-stone-400 w-8 text-right tabular-nums">
+          {score.score}
+        </span>
+      </div>
+
+      {/* Top finding */}
+      {topFinding && (
+        <p className="text-[11px] text-stone-500 dark:text-stone-400 leading-snug line-clamp-2">
+          {topFinding.description}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function JudgmentAnalysisSection({
+  scores,
+  isLoading,
+}: {
+  scores?: JudgmentScore[];
+  isLoading: boolean;
+}) {
+  if (isLoading) {
+    return (
+      <div>
+        <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300 mb-3">
+          Judgment Analysis
+        </h3>
+        <div className="grid grid-cols-2 gap-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="rounded-lg border border-stone-200 dark:border-stone-700 p-3 space-y-2 animate-pulse"
+            >
+              <div className="h-3 w-24 bg-stone-200 dark:bg-stone-700 rounded" />
+              <div className="h-1.5 w-full bg-stone-200 dark:bg-stone-700 rounded-full" />
+              <div className="h-2.5 w-32 bg-stone-100 dark:bg-stone-800 rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!scores || scores.length === 0) return null;
+
+  return (
+    <div>
+      <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300 mb-3">
+        Judgment Analysis
+      </h3>
+      <div className="grid grid-cols-2 gap-2">
+        {scores.map((s) => (
+          <JudgmentScoreCard key={s.model} score={s} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OverviewTab({
+  readiness,
+  recCount,
+  judgmentScores,
+  rimLoading,
+}: {
+  readiness: ReadinessAssessment;
+  recCount: number;
+  judgmentScores?: JudgmentScore[];
+  rimLoading: boolean;
+}) {
   const scores = readiness.scores;
 
   const SUBSCORE_ITEMS = [
@@ -247,6 +380,9 @@ function OverviewTab({ readiness, recCount }: { readiness: ReadinessAssessment; 
           ))}
         </div>
       </div>
+
+      {/* Judgment Analysis — RIM scores */}
+      <JudgmentAnalysisSection scores={judgmentScores} isLoading={rimLoading} />
 
       {/* Quick blockers */}
       {readiness.blockers.length > 0 && (

@@ -10,6 +10,7 @@ import validateCompletenessRoutes from '../routes/validate-completeness';
 import anaGoldStandardRoutes from '../routes/ana-gold-standard';
 import anaContinuousEvalRoutes from '../routes/ana-continuous-eval';
 import submissionCenterRoutes from '../routes/submissionCenter.routes';
+import regulatoryPrecedentIntelligenceRoutes from '../routes/regulatory-precedent-intelligence';
 
 export async function registerGovernanceRoutes(app: Express) {
   try {
@@ -44,6 +45,7 @@ export async function registerGovernanceRoutes(app: Express) {
   app.use('/api/ana-gold-standard', anaGoldStandardRoutes);
   app.use('/api/ana-continuous-eval', anaContinuousEvalRoutes);
   app.use('/api/submission-center', submissionCenterRoutes);
+  app.use('/api/regulatory-precedent-intelligence', regulatoryPrecedentIntelligenceRoutes);
 
   console.log('✅ Governance and intelligence route bundle mounted');
 }

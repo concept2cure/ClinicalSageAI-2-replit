@@ -3,6 +3,7 @@
  * for the Submission Builder.
  */
 import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 interface SubmissionArtifact {
   id: string;
@@ -27,9 +28,7 @@ export function useSubmissionArtifacts(projectId: string | undefined) {
     queryKey: ['submission-artifacts', projectId],
     queryFn: async () => {
       if (!projectId) return [];
-      const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
-        credentials: 'include',
-      });
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts`);
       if (!res.ok) throw new Error('Failed to fetch artifacts');
       const json = await res.json();
       return json.data || json || [];

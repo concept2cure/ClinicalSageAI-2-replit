@@ -383,7 +383,7 @@ export async function getUsageStatistics(organizationId) {
  * Express middleware to enforce submission quotas
  */
 export function enforceSubmissionQuota(req, res, next) {
-  const organizationId = req.organizationId || req.headers['x-organization-id'];
+  const organizationId = req.organizationId || req.tenantId || req.tenantContext?.organizationId || req.user?.organizationId;
 
   if (!organizationId) {
     return res.status(400).json({
@@ -423,7 +423,7 @@ export function enforceSubmissionQuota(req, res, next) {
  * Express middleware to enforce project quotas
  */
 export function enforceProjectQuota(req, res, next) {
-  const organizationId = req.organizationId || req.headers['x-organization-id'];
+  const organizationId = req.organizationId || req.tenantId || req.tenantContext?.organizationId || req.user?.organizationId;
 
   if (!organizationId) {
     return res.status(400).json({
@@ -462,7 +462,7 @@ export function enforceProjectQuota(req, res, next) {
  * Express middleware to enforce user quotas
  */
 export function enforceUserQuota(req, res, next) {
-  const organizationId = req.organizationId || req.headers['x-organization-id'];
+  const organizationId = req.organizationId || req.tenantId || req.tenantContext?.organizationId || req.user?.organizationId;
 
   if (!organizationId) {
     return res.status(400).json({

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function FlowHealthPanel({ batchId }: { batchId: string }) {
   const [data, setData] = useState<any>(null);
@@ -9,16 +10,16 @@ export default function FlowHealthPanel({ batchId }: { batchId: string }) {
   const [stabId, setSID] = useState('');
 
   async function load() {
-    const r = await fetch(`/api/quality/batches/${batchId}/flow/verify`);
-    setData(await r.json());
+    try {
+      const r = await apiRequest('GET', `/api/quality/batches/${batchId}/flow/verify`);
+      setData(await r.json());
+    } catch { setData(null); }
   }
   async function save() {
-    const r = await fetch(`/api/quality/batches/${batchId}/linkages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ process_id: processId || null, stability_study_id: stabId || null }),
-    });
-    if (r.ok) load();
+    try {
+      await apiRequest('POST', `/api/quality/batches/${batchId}/linkages`, { process_id: processId || null, stability_study_id: stabId || null });
+      load();
+    } catch { /* handled by apiRequest */ }
   }
   useEffect(() => {
     load();

@@ -22,7 +22,7 @@ const logger = createScopedLogger('ind-routes');
 
 function tenantHeaders(req: Request) {
   return {
-    organizationId: String((req as any).user?.organizationId || '') || null,
+    organizationId: (req as any).tenantId || (req as any).tenantContext?.organizationId || (req as any).user?.organizationId || null,
     projectId: (req.headers['x-project-id'] as string) || null,
   };
 }

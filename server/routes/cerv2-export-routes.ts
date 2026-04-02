@@ -40,7 +40,7 @@ const exportRateLimiter = rateLimit({
   message: { error: 'Too many export requests — please wait before trying again.' },
   keyGenerator: (req: any) => {
     const userId = req.userId || req.user?.id || 'anon';
-    const orgId = req.user?.organizationId || req.tenantId || 'unknown';
+    const orgId = req.tenantId || req.tenantContext?.organizationId || 'unknown';
     return `cerv2-export:${orgId}:${userId}`;
   },
 });
@@ -48,9 +48,7 @@ const exportRateLimiter = rateLimit({
 router.use(['/pdf', '/docx', '/zip'], exportRateLimiter);
 
 function isSampleExportEnabled(): boolean {
-  return (
-    process.env.NODE_ENV !== 'production' && process.env.ENABLE_CERV2_SAMPLE_EXPORTS === 'true'
-  );
+  return process.env.NODE_ENV !== 'production' && process.env.ENABLE_CERV2_SAMPLE_EXPORTS === 'true';
 }
 
 function denySampleExportRoute(res: Response): Response {
@@ -68,9 +66,10 @@ const requireEditorAccess = (req: any, res: any, next: () => void) => {
     return res.status(403).json({ error: 'Insufficient permissions' });
   }
   // Verify organization context exists (prevents cross-org access)
+  const headerOrg = req.header('x-organization-id') || req.header('x-org-id');
   const tenantOrg = req.tenantContext?.organizationId;
   const userOrg = req.user?.organizationId || req.tenantId;
-  const orgId = tenantOrg || userOrg;
+  const orgId = headerOrg || tenantOrg || userOrg;
   if (!orgId) {
     return res.status(400).json({ error: 'Organization context required' });
   }
@@ -165,10 +164,8 @@ function validateExportGovernance(req: Request, res: Response) {
 }
 
 function resolveCtdPlacement(docType: (typeof validDocTypes)[number]) {
-  if (docType === 'cerv2_510k')
-    return { ctdSection: 'm1.5', suggestedPlacement: 'Module 1 / 510(k) dossier package' };
-  if (docType === 'cerv2_pma')
-    return { ctdSection: 'm2.5', suggestedPlacement: 'Module 2 / PMA summaries' };
+  if (docType === 'cerv2_510k') return { ctdSection: 'm1.5', suggestedPlacement: 'Module 1 / 510(k) dossier package' };
+  if (docType === 'cerv2_pma') return { ctdSection: 'm2.5', suggestedPlacement: 'Module 2 / PMA summaries' };
   return { ctdSection: 'm5.0', suggestedPlacement: 'Module 5 / Clinical Evaluation Report' };
 }
 
@@ -317,7 +314,7 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
     if (!res.headersSent) {
       res.status(500).json({
         error: 'GOVERNED_EXPORT_FAILED',
-        message: 'An unexpected error occurred' || 'Governed PDF export failed before consequence persistence',
+        message: err.message || 'Governed PDF export failed before consequence persistence',
       });
     }
   }
@@ -383,7 +380,7 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
     if (!res.headersSent) {
       res.status(500).json({
         error: 'GOVERNED_EXPORT_FAILED',
-        message: 'An unexpected error occurred' || 'Governed DOCX export failed before consequence persistence',
+        message: err.message || 'Governed DOCX export failed before consequence persistence',
       });
     }
   }
@@ -413,11 +410,7 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
 
     // Validate attachment filenames for path traversal
     for (const att of attachments) {
-      if (
-        att.filename.includes('..') ||
-        att.filename.includes('~') ||
-        att.filename.startsWith('/')
-      ) {
+      if (att.filename.includes('..') || att.filename.includes('~') || att.filename.startsWith('/')) {
         return res.status(400).json({ error: `Invalid attachment filename: ${att.filename}` });
       }
     }
@@ -451,7 +444,7 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
     if (!res.headersSent) {
       res.status(500).json({
         error: 'GOVERNED_EXPORT_FAILED',
-        message: 'An unexpected error occurred' || 'Governed ZIP export failed before consequence persistence',
+        message: err.message || 'Governed ZIP export failed before consequence persistence',
       });
     }
   }
@@ -459,169 +452,149 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
 
 // ── GET /sample/:docType ───────────────────────────────────────────────────────
 // Export simulation using sample data for local development verification.
-router.get(
-  '/sample/:docType',
-  authMiddleware,
-  requireEditorAccess,
-  async (req: Request, res: Response) => {
-    if (!isSampleExportEnabled()) return denySampleExportRoute(res);
-    try {
-      const docType = req.params.docType;
-      if (!validDocTypes.includes(docType as any)) {
-        return res.status(400).json({
-          error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
-        });
-      }
-
-      const mockContent = mockVault.getMockEditorJson(docType);
-      const pdfBuffer = await renderCombinedPdf(docType, mockContent);
-
-      const filename = sanitizeFilename(`${docType}_sample_export`) + '.pdf';
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.send(pdfBuffer);
-    } catch (err: any) {
-      console.error('[CERV2 Export] Sample export error:', err);
-      res.status(500).json({ error: 'Sample export failed', message: 'An unexpected error occurred' });
+router.get('/sample/:docType', async (req: Request, res: Response) => {
+  if (!isSampleExportEnabled()) return denySampleExportRoute(res);
+  try {
+    const docType = req.params.docType;
+    if (!validDocTypes.includes(docType as any)) {
+      return res.status(400).json({
+        error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
+      });
     }
+
+    const mockContent = mockVault.getMockEditorJson(docType);
+    const pdfBuffer = await renderCombinedPdf(docType, mockContent);
+
+    const filename = sanitizeFilename(`${docType}_sample_export`) + '.pdf';
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(pdfBuffer);
+  } catch (err: any) {
+    console.error('[CERV2 Export] Sample export error:', err);
+    res.status(500).json({ error: 'Sample export failed', message: err.message });
   }
-);
+});
 
 // ── GET /sample/:docType/zip ───────────────────────────────────────────────────
-router.get(
-  '/sample/:docType/zip',
-  authMiddleware,
-  requireEditorAccess,
-  async (req: Request, res: Response) => {
-    if (!isSampleExportEnabled()) return denySampleExportRoute(res);
-    try {
-      const docType = req.params.docType;
-      if (!validDocTypes.includes(docType as any)) {
-        return res.status(400).json({
-          error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
-        });
-      }
-
-      const mockContent = mockVault.getMockEditorJson(docType);
-      const title = sanitizeFilename(`${docType}_sample`);
-
-      res.setHeader('Content-Type', 'application/zip');
-      res.setHeader('Content-Disposition', `attachment; filename="${title}_export.zip"`);
-
-      const archive = archiver('zip', { zlib: { level: 9 } });
-      archive.on('error', err => {
-        console.error('[CERV2 Export] Sample ZIP error:', err);
-        if (!res.headersSent) res.status(500).end();
+router.get('/sample/:docType/zip', async (req: Request, res: Response) => {
+  if (!isSampleExportEnabled()) return denySampleExportRoute(res);
+  try {
+    const docType = req.params.docType;
+    if (!validDocTypes.includes(docType as any)) {
+      return res.status(400).json({
+        error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
       });
-      archive.pipe(res);
+    }
 
-      // Combined outputs
-      const [combinedPdf, combinedDocx] = await Promise.all([
-        renderCombinedPdf(docType, mockContent),
-        renderCombinedDocx(docType, mockContent),
-      ]);
-      archive.append(combinedPdf, { name: `${title}_Combined.pdf` });
-      archive.append(combinedDocx, { name: `${title}_Combined.docx` });
+    const mockContent = mockVault.getMockEditorJson(docType);
+    const title = sanitizeFilename(`${docType}_sample`);
 
-      // Metadata JSON
-      const mockDoc = mockVault.list(docType)[0];
-      if (mockDoc) {
-        archive.append(
-          JSON.stringify(
-            {
-              id: mockDoc.id,
-              documentType: mockDoc.documentType,
-              title: mockDoc.title,
-              version: mockDoc.version,
-              exportedAt: new Date().toISOString(),
-              generator: 'Concept2Cure CERV2 Sample Export',
-            },
-            null,
-            2
-          ),
-          { name: 'metadata.json' }
-        );
-      }
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${title}_export.zip"`);
 
-      await archive.finalize();
-    } catch (err: any) {
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.on('error', err => {
       console.error('[CERV2 Export] Sample ZIP error:', err);
-      if (!res.headersSent) {
-        res.status(500).json({ error: 'Sample ZIP failed', message: 'An unexpected error occurred' });
-      }
+      if (!res.headersSent) res.status(500).end();
+    });
+    archive.pipe(res);
+
+    // Combined outputs
+    const [combinedPdf, combinedDocx] = await Promise.all([
+      renderCombinedPdf(docType, mockContent),
+      renderCombinedDocx(docType, mockContent),
+    ]);
+    archive.append(combinedPdf, { name: `${title}_Combined.pdf` });
+    archive.append(combinedDocx, { name: `${title}_Combined.docx` });
+
+    // Metadata JSON
+    const mockDoc = mockVault.list(docType)[0];
+    if (mockDoc) {
+      archive.append(
+        JSON.stringify(
+          {
+            id: mockDoc.id,
+            documentType: mockDoc.documentType,
+            title: mockDoc.title,
+            version: mockDoc.version,
+            exportedAt: new Date().toISOString(),
+            generator: 'Concept2Cure CERV2 Sample Export',
+          },
+          null,
+          2
+        ),
+        { name: 'metadata.json' }
+      );
+    }
+
+    await archive.finalize();
+  } catch (err: any) {
+    console.error('[CERV2 Export] Sample ZIP error:', err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Sample ZIP failed', message: err.message });
     }
   }
-);
+});
 
 // ── GET /sample/:docType/docx ──────────────────────────────────────────────────
 // Phase 7.4: sample DOCX export using sample vault data
-router.get(
-  '/sample/:docType/docx',
-  authMiddleware,
-  requireEditorAccess,
-  async (req: Request, res: Response) => {
-    if (!isSampleExportEnabled()) return denySampleExportRoute(res);
-    try {
-      const docType = req.params.docType;
-      if (!validDocTypes.includes(docType as any)) {
-        return res.status(400).json({
-          error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
-        });
-      }
-
-      const mockContent = mockVault.getMockEditorJson(docType);
-      const docxBuffer = await renderCombinedDocx(docType, mockContent);
-
-      const filename = sanitizeFilename(`${docType}_sample_export`) + '.docx';
-      res.setHeader(
-        'Content-Type',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      );
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.send(docxBuffer);
-    } catch (err: any) {
-      console.error('[CERV2 Export] Sample DOCX error:', err);
-      res.status(500).json({ error: 'Sample DOCX export failed', message: 'An unexpected error occurred' });
+router.get('/sample/:docType/docx', async (req: Request, res: Response) => {
+  if (!isSampleExportEnabled()) return denySampleExportRoute(res);
+  try {
+    const docType = req.params.docType;
+    if (!validDocTypes.includes(docType as any)) {
+      return res.status(400).json({
+        error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
+      });
     }
+
+    const mockContent = mockVault.getMockEditorJson(docType);
+    const docxBuffer = await renderCombinedDocx(docType, mockContent);
+
+    const filename = sanitizeFilename(`${docType}_sample_export`) + '.docx';
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(docxBuffer);
+  } catch (err: any) {
+    console.error('[CERV2 Export] Sample DOCX error:', err);
+    res.status(500).json({ error: 'Sample DOCX export failed', message: err.message });
   }
-);
+});
 
 // ── GET /sample/:docType/json ──────────────────────────────────────────────────
 // Phase 7.4: Return raw sample editor JSON for client-side inspection or re-export.
-router.get(
-  '/sample/:docType/json',
-  authMiddleware,
-  requireEditorAccess,
-  async (req: Request, res: Response) => {
-    if (!isSampleExportEnabled()) return denySampleExportRoute(res);
-    try {
-      const docType = req.params.docType;
-      if (!validDocTypes.includes(docType as any)) {
-        return res.status(400).json({
-          error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
-        });
-      }
-
-      const mockContent = mockVault.getMockEditorJson(docType);
-      const mockDoc = mockVault.list(docType)[0];
-
-      return res.json({
-        docType,
-        editorJson: mockContent,
-        meta: mockDoc
-          ? {
-              id: mockDoc.id,
-              title: mockDoc.title,
-              version: mockDoc.version,
-            }
-          : null,
+router.get('/sample/:docType/json', async (req: Request, res: Response) => {
+  if (!isSampleExportEnabled()) return denySampleExportRoute(res);
+  try {
+    const docType = req.params.docType;
+    if (!validDocTypes.includes(docType as any)) {
+      return res.status(400).json({
+        error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
       });
-    } catch (err: any) {
-      console.error('[CERV2 Export] Sample JSON error:', err);
-      res.status(500).json({ error: 'Sample JSON retrieval failed', message: 'An unexpected error occurred' });
     }
+
+    const mockContent = mockVault.getMockEditorJson(docType);
+    const mockDoc = mockVault.list(docType)[0];
+
+    return res.json({
+      docType,
+      editorJson: mockContent,
+      meta: mockDoc
+        ? {
+            id: mockDoc.id,
+            title: mockDoc.title,
+            version: mockDoc.version,
+          }
+        : null,
+    });
+  } catch (err: any) {
+    console.error('[CERV2 Export] Sample JSON error:', err);
+    res.status(500).json({ error: 'Sample JSON retrieval failed', message: err.message });
   }
-);
+});
 
 // ── POST /ai-to-editor ────────────────────────────────────────────────────────
 // Phase 7.4: Convert AI-populated section map into TipTap editor JSON for export.
@@ -755,7 +728,7 @@ router.post(
       });
     } catch (err: any) {
       console.error('[CERV2 Export] AI-to-editor error:', err);
-      res.status(500).json({ error: 'AI-to-editor conversion failed', message: 'An unexpected error occurred' });
+      res.status(500).json({ error: 'AI-to-editor conversion failed', message: err.message });
     }
   }
 );
@@ -775,7 +748,7 @@ router.post(
 
       const projectId = Number(req.body.projectId);
       const organizationId = Number(
-        (req as any).user?.organizationId || (req as any).tenantId || 0
+        req.header('x-organization-id') || req.header('x-org-id') || '0'
       );
       const userId = Number((req as any).userId || (req as any).user?.id || 0);
 
@@ -830,7 +803,7 @@ router.post(
       });
     } catch (err: any) {
       console.error('[CERV2 Export] eCTD assembly error:', err);
-      res.status(500).json({ error: 'eCTD package assembly failed', message: 'An unexpected error occurred' });
+      res.status(500).json({ error: 'eCTD package assembly failed', message: err.message });
     }
   }
 );

@@ -5,6 +5,8 @@
  * the CER module's Literature AI component.
  */
 
+import { apiRequest } from '@/lib/queryClient';
+
 /**
  * Search PubMed for scientific literature
  * @param {Object} params - Search parameters
@@ -15,19 +17,7 @@
  */
 export const searchPubMed = async ({ query, manufacturer = '', limit = 20 }) => {
   try {
-    const response = await fetch('/api/literature/pubmed', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query, manufacturer, limit }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to search PubMed');
-    }
-
+    const response = await apiRequest('POST', '/api/literature/pubmed', { query, manufacturer, limit });
     return await response.json();
   } catch (error) {
     console.error('PubMed search error:', error);
@@ -56,19 +46,7 @@ export const searchLiterature = async ({
   limit = 20,
 }) => {
   try {
-    const response = await fetch('/api/literature/search', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query, sources, filters, limit }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to search for literature');
-    }
-
+    const response = await apiRequest('POST', '/api/literature/search', { query, sources, filters, limit });
     return await response.json();
   } catch (error) {
     console.error('Literature search error:', error);
@@ -88,19 +66,7 @@ export const searchLiterature = async ({
  */
 export const summarizePaper = async ({ text, context, options = {} }) => {
   try {
-    const response = await fetch('/api/literature/summarize', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text, context, options }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to summarize paper');
-    }
-
+    const response = await apiRequest('POST', '/api/literature/summarize', { text, context, options });
     return await response.json();
   } catch (error) {
     console.error('Paper summarization error:', error);
@@ -118,19 +84,7 @@ export const summarizePaper = async ({ text, context, options = {} }) => {
  */
 export const generateCitations = async ({ papers, format = 'vancouverStyle', numbered = true }) => {
   try {
-    const response = await fetch('/api/literature/generate-citations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ papers, format, numbered }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to generate citations');
-    }
-
+    const response = await apiRequest('POST', '/api/literature/generate-citations', { papers, format, numbered });
     return await response.json();
   } catch (error) {
     console.error('Citation generation error:', error);
@@ -150,19 +104,7 @@ export const generateCitations = async ({ papers, format = 'vancouverStyle', num
  */
 export const generateLiteratureReview = async ({ papers, context, options = {} }) => {
   try {
-    const response = await fetch('/api/literature/generate-review', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ papers, context, options }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to generate literature review');
-    }
-
+    const response = await apiRequest('POST', '/api/literature/generate-review', { papers, context, options });
     return await response.json();
   } catch (error) {
     console.error('Literature review generation error:', error);
@@ -183,6 +125,7 @@ export const analyzePaperPDF = async ({ file, context }) => {
     formData.append('file', file);
     formData.append('context', context || '');
 
+    // Raw fetch required: FormData body needs browser-set Content-Type with boundary
     const response = await fetch('/api/literature/analyze-pdf', {
       method: 'POST',
       body: formData,
@@ -275,24 +218,12 @@ export const generateRelevanceAppraisal = async (
     // Re-attempt with backend API as backup
     try {
       console.log('Attempting to use server API for relevance appraisal');
-      const response = await fetch('/api/literature/appraise-relevance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          study,
-          deviceName,
-          inclusionCriteria,
-          exclusionCriteria,
-        }),
+      const response = await apiRequest('POST', '/api/literature/appraise-relevance', {
+        study,
+        deviceName,
+        inclusionCriteria,
+        exclusionCriteria,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to generate relevance appraisal');
-      }
-
       return await response.json();
     } catch (backupError) {
       console.error('Backup server appraisal failed:', backupError);
@@ -371,22 +302,10 @@ export const generateBiasAssessment = async (study, biasDomains = []) => {
     // Re-attempt with backend API as backup
     try {
       console.log('Attempting to use server API for bias assessment');
-      const response = await fetch('/api/literature/assess-bias', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          study,
-          biasDomains,
-        }),
+      const response = await apiRequest('POST', '/api/literature/assess-bias', {
+        study,
+        biasDomains,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to generate bias assessment');
-      }
-
       return await response.json();
     } catch (backupError) {
       console.error('Backup server assessment failed:', backupError);
@@ -487,19 +406,7 @@ export const generateSearchSummary = async reviewData => {
     // Re-attempt with backend API as backup
     try {
       console.log('Attempting to use server API for search summary');
-      const response = await fetch('/api/literature/search-summary', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(reviewData),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to generate search summary');
-      }
-
+      const response = await apiRequest('POST', '/api/literature/search-summary', reviewData);
       return await response.json();
     } catch (backupError) {
       console.error('Backup server summary generation failed:', backupError);

@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -84,7 +85,7 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
         ...(agencyFilter !== 'all' && { region: agencyFilter }),
       });
 
-      const response = await fetch(`/api/regulatory/obligations/${subId}/obligations?${params}`);
+      const response = await apiRequest('GET', `/api/regulatory/obligations/${subId}/obligations?${params}`);
       const result = await response.json();
 
       if (result.success) {

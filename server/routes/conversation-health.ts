@@ -21,9 +21,9 @@ router.get('/:conversationId', async (req: Request, res: Response) => {
   try {
     const conversationId = parseInt(req.params.conversationId, 10);
     const organizationId =
-      parseInt(req.query.organizationId as string, 10) ||
-      (req as any).user?.organizationId ||
-      (req as any).tenantContext?.organizationId;
+      (req as any).tenantId ||
+      (req as any).tenantContext?.organizationId ||
+      (req as any).user?.organizationId;
 
     if (!conversationId || isNaN(conversationId)) {
       return res.status(400).json({ success: false, error: 'Valid conversationId is required' });

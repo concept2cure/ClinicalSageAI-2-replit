@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 
 export function useBetaWorkspaceTelemetry({ activeTab, currentProjectId }) {
   const trackEvent = useCallback(
@@ -11,11 +12,7 @@ export function useBetaWorkspaceTelemetry({ activeTab, currentProjectId }) {
         detail,
       };
 
-      return fetch('/api/telemetry/beta-workspace/event', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      }).catch(() => {});
+      return apiRequest('POST', '/api/telemetry/beta-workspace/event', payload).catch(() => {});
     },
     [activeTab, currentProjectId]
   );
@@ -61,11 +58,7 @@ export function useBetaWorkspaceTelemetry({ activeTab, currentProjectId }) {
         createdAt: new Date().toISOString(),
       };
 
-      return fetch('/api/telemetry/beta-workspace/issue', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      }).catch(() => {});
+      return apiRequest('POST', '/api/telemetry/beta-workspace/issue', payload).catch(() => {});
     },
     [activeTab, currentProjectId]
   );

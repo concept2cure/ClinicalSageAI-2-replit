@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { mkdir, appendFile } from 'node:fs/promises';
+import { mkdir, appendFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';
 
@@ -7,6 +7,7 @@ const router = Router();
 
 const inMemoryEvents: Array<Record<string, unknown>> = [];
 const MAX_EVENTS = 1000;
+const MAX_LOG_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB cap on telemetry log
 const TELEMETRY_DIR = path.resolve(process.cwd(), 'test-results', 'beta-telemetry');
 const TELEMETRY_LOG = path.join(TELEMETRY_DIR, 'events.ndjson');
 
@@ -36,6 +37,13 @@ const issueSchema = z.object({
 
 async function persistTelemetry(record: Record<string, unknown>) {
   await mkdir(TELEMETRY_DIR, { recursive: true });
+  // Guard against unbounded file growth
+  try {
+    const info = await stat(TELEMETRY_LOG);
+    if (info.size >= MAX_LOG_SIZE_BYTES) return; // stop writing once cap is reached
+  } catch {
+    // file doesn't exist yet, proceed
+  }
   await appendFile(TELEMETRY_LOG, `${JSON.stringify(record)}\n`, 'utf8');
 }
 

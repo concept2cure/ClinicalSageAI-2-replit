@@ -8,17 +8,13 @@ import { z } from 'zod';
 import { db, getPool } from '../../db';
 import { projectWorkflows, workflowTasks } from '../../../shared/cmc-schema';
 import { eq, desc, and } from 'drizzle-orm';
+import { getGateway } from '../../services/ai-gateway/index.js';
 
 const router = express.Router();
 
 function getOrganizationId(req: express.Request): number {
   const orgId = parseInt(
-    String(
-      (req as any).tenantId ||
-        (req as any).tenantContext?.organizationId ||
-        (req as any).user?.organizationId ||
-        0
-    ),
+    String((req as any).tenantId || (req as any).tenantContext?.organizationId || 0),
     10
   );
   if (!orgId || Number.isNaN(orgId)) {
@@ -383,15 +379,17 @@ let commandCounter = 1;
  */
 router.get('/', async (req, res) => {
   try {
+    const orgId = getOrganizationId(req);
     const rows = await db
       .select()
       .from(projectWorkflows)
+      .where(eq(projectWorkflows.organizationId, orgId))
       .orderBy(desc(projectWorkflows.createdAt))
       .limit(100);
 
     // Enrich with tasks
     const enriched = await Promise.all(
-      rows.map(async wf => {
+      rows.map(async (wf) => {
         const tasks = await db
           .select()
           .from(workflowTasks)
@@ -493,13 +491,20 @@ router.post('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const [workflow] = await db.select().from(projectWorkflows).where(eq(projectWorkflows.id, id));
+    const orgId = getOrganizationId(req);
+    const [workflow] = await db
+      .select()
+      .from(projectWorkflows)
+      .where(and(eq(projectWorkflows.id, id), eq(projectWorkflows.organizationId, orgId)));
 
     if (!workflow) {
       return res.status(404).json({ success: false, error: 'Workflow not found' });
     }
 
-    const tasks = await db.select().from(workflowTasks).where(eq(workflowTasks.workflowId, id));
+    const tasks = await db
+      .select()
+      .from(workflowTasks)
+      .where(eq(workflowTasks.workflowId, id));
 
     const completed = tasks.filter(t => t.status === 'completed').length;
 
@@ -546,7 +551,10 @@ router.put('/:id/tasks/:taskId', async (req, res) => {
     }
 
     // Recalculate workflow progress
-    const allTasks = await db.select().from(workflowTasks).where(eq(workflowTasks.workflowId, id));
+    const allTasks = await db
+      .select()
+      .from(workflowTasks)
+      .where(eq(workflowTasks.workflowId, id));
 
     const completed = allTasks.filter(t => t.status === 'completed').length;
     const progress = allTasks.length > 0 ? Math.round((completed / allTasks.length) * 100) : 0;
@@ -557,7 +565,10 @@ router.put('/:id/tasks/:taskId', async (req, res) => {
       .where(eq(projectWorkflows.id, id));
 
     // Fetch updated workflow
-    const [workflow] = await db.select().from(projectWorkflows).where(eq(projectWorkflows.id, id));
+    const [workflow] = await db
+      .select()
+      .from(projectWorkflows)
+      .where(eq(projectWorkflows.id, id));
 
     res.json({
       success: true,
@@ -566,9 +577,7 @@ router.put('/:id/tasks/:taskId', async (req, res) => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res
-        .status(400)
-        .json({ success: false, error: 'Invalid input data', details: error.errors });
+      return res.status(400).json({ success: false, error: 'Invalid input data', details: error.errors });
     }
     console.error('Error updating task:', error);
     res.status(500).json({ success: false, error: 'Operation failed' });
@@ -594,156 +603,55 @@ router.post('/ai-command', async (req, res) => {
     const commandConfig = AI_COPILOT_COMMANDS[command];
     const resultId = `cmd-${commandCounter++}`;
 
-    // Simulate AI processing based on command type
+    // Build prompts and call AI gateway for real content generation
     let generatedContent = '';
 
-    switch (command) {
-      case 'Generate analytical method summary':
-        generatedContent = `
-# Analytical Method Summary for ${drugName}
+    const systemPrompt = [
+      `You are a senior CMC (Chemistry, Manufacturing, and Controls) regulatory expert.`,
+      `You are executing the following command: "${command}"`,
+      `Category: ${commandConfig.category}`,
+      `Expected outputs: ${commandConfig.outputs.join(', ')}`,
+      `Produce a professional, regulatory-compliant markdown document.`,
+      `Use proper markdown headings, bullet points, and tables where appropriate.`,
+      `Be specific and technically accurate. Reference relevant ICH/FDA guidelines.`,
+    ].join('\n');
 
-## Method Overview
-- **Method Type**: HPLC-UV
-- **Application**: Assay and related substances determination
-- **Matrix**: Drug product/substance
+    const inputSummary = structuredInputs
+      ? Object.entries(structuredInputs)
+          .filter(([, v]) => v !== undefined && v !== '')
+          .map(([k, v]) => `- ${k}: ${v}`)
+          .join('\n')
+      : '(no additional structured inputs provided)';
 
-## Validation Parameters
-- **Specificity**: Confirmed for ${drugName} and known impurities
-- **Linearity**: 50-150% of nominal concentration (R² ≥ 0.999)
-- **Accuracy**: Recovery 98.0-102.0%
-- **Precision**: RSD ≤ 2.0% (repeatability), ≤ 3.0% (intermediate)
-- **Range**: 50-150% of nominal concentration
-- **Robustness**: Confirmed for critical parameters
+    const userPrompt = [
+      `Drug Name: ${drugName}`,
+      `Command: ${command}`,
+      `Structured Inputs:`,
+      inputSummary,
+      ``,
+      `Generate a complete, professional CMC document for this command.`,
+    ].join('\n');
 
-## System Suitability
-- **Resolution**: ≥ 2.0 between critical pairs
-- **Tailing Factor**: ≤ 2.0
-- **Theoretical Plates**: ≥ 2000
-- **Relative Standard Deviation**: ≤ 2.0%
-
-## Regulatory Compliance
-- ICH Q2(R1) compliant
-- USP General Chapters aligned
-- Ready for regulatory submission
-        `;
-        break;
-
-      case 'Update stability protocol for biologics':
-        generatedContent = `
-# Updated Stability Protocol for ${drugName} (Biologics)
-
-## Study Design (ICH Q5C Compliant)
-- **Storage Conditions**: 2-8°C, 25°C/60% RH, 40°C/75% RH
-- **Container Orientation**: Upright and inverted
-- **Time Points**: 0, 1, 3, 6, 9, 12, 18, 24, 36 months
-- **Sample Size**: Statistical justification provided
-
-## Test Parameters
-- **Appearance**: Visual inspection for particles, color, clarity
-- **pH**: Measurement and trend analysis
-- **Protein Content**: UV absorbance at 280 nm
-- **Biological Activity**: Cell-based potency assay
-- **Aggregation**: Size exclusion chromatography
-- **Fragmentation**: SDS-PAGE and capillary electrophoresis
-- **Oxidation**: Peptide mapping with LC-MS
-- **Deamidation**: Peptide mapping analysis
-- **Particulates**: Sub-visible and visible particle analysis
-
-## Acceptance Criteria
-- **Appearance**: Clear, colorless solution
-- **pH**: Target ± 0.3 units
-- **Protein Content**: 90-110% of initial
-- **Biological Activity**: 80-120% of initial
-- **Aggregation**: ≤ 5% total aggregates
-- **Fragmentation**: ≤ 5% total fragments
-
-## Updated for 2025 Guidelines
-- Enhanced analytical methods for aggregation detection
-- Improved statistical analysis for shelf-life determination
-- Risk-based approach for out-of-specification investigations
-        `;
-        break;
-
-      case 'Check nitrosamine risk assessment':
-        generatedContent = `
-# Nitrosamine Risk Assessment for ${drugName}
-
-## Initial Risk Evaluation
-- **Drug Substance**: ${drugName}
-- **Manufacturing Route Analysis**: Complete
-- **Nitrosamine Risk Category**: Low/Medium/High (based on structure)
-
-## Potential Nitrosamine Formation
-- **Direct Contamination**: Assessed for raw materials and reagents
-- **In-situ Formation**: Evaluated manufacturing conditions
-- **Cross-contamination**: Supply chain assessment complete
-
-## Control Measures
-- **Raw Material Testing**: Nitrosamine screening implemented
-- **Process Controls**: Temperature, pH, and timing optimization
-- **Equipment Cleaning**: Enhanced procedures for shared equipment
-- **Testing Strategy**: Validated analytical methods in place
-
-## Regulatory Compliance
-- **ICH M7(R1)**: Fully compliant assessment
-- **FDA Guidance**: February 2021 requirements met
-- **EMA Guidelines**: 2020 recommendations implemented
-
-## Recommendations
-1. Implement routine nitrosamine testing
-2. Establish supplier qualification program
-3. Update cleaning validation protocols
-4. Consider alternative synthetic routes if high risk
-        `;
-        break;
-
-      case 'Generate QbD control strategy':
-        generatedContent = `
-# Quality by Design Control Strategy for ${drugName}
-
-## Critical Quality Attributes (CQAs)
-- **Assay**: 95.0-105.0% of label claim
-- **Related Substances**: Individual ≤ 0.5%, Total ≤ 2.0%
-- **Dissolution**: Q≥80% in 30 minutes
-- **Content Uniformity**: AV ≤ 15.0
-
-## Critical Process Parameters (CPPs)
-- **Blending Time**: 8-12 minutes
-- **Compression Force**: 15-25 kN
-- **Tablet Hardness**: 80-120 N
-- **Coating Weight Gain**: 2.5-3.5%
-
-## Control Strategy Elements
-### Input Material Controls
-- **API**: Certificate of analysis verification
-- **Excipients**: Incoming inspection and testing
-- **Packaging Materials**: Functionality testing
-
-### In-Process Controls
-- **Blend Uniformity**: Content uniformity testing
-- **Tablet Weight**: 100% monitoring with feedback control
-- **Hardness**: Regular monitoring with trending
-- **Coating Thickness**: Process analytical technology (PAT)
-
-### Finished Product Testing
-- **Release Testing**: Full specification compliance
-- **Stability Monitoring**: Ongoing verification
-- **Annual Product Review**: Trend analysis
-
-## Real-Time Release Testing (RTRT)
-- **PAT Implementation**: NIR spectroscopy for blend uniformity
-- **Continuous Monitoring**: Weight variation control
-- **Statistical Process Control**: Trending and alerting
-
-## Change Control Protocol
-- **Level 1 Changes**: Pre-approved within design space
-- **Level 2 Changes**: Risk assessment and notification
-- **Level 3 Changes**: Prior approval required
-        `;
-        break;
-
-      default:
-        generatedContent = `AI-generated content for ${command} specific to ${drugName}`;
+    try {
+      const gateway = getGateway();
+      const gatewayResponse = await gateway.route({
+        taskType: 'document_drafting',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.4,
+        maxTokens: 4000,
+        callerModule: 'cmc-workflow-ai-command',
+        metadata: { command, drugName, category: commandConfig.category },
+      });
+      generatedContent = gatewayResponse.content;
+    } catch (aiError: any) {
+      console.error('AI gateway error for CMC command:', aiError?.message || aiError);
+      return res.status(503).json({
+        success: false,
+        error: 'AI gateway unavailable — unable to generate content. Please try again later.',
+      });
     }
 
     const result = {
@@ -867,12 +775,13 @@ router.get('/ai-commands/results', async (req, res) => {
 router.get('/download/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const orgId = getOrganizationId(req);
     const pool = getPool();
     const { rows } = await pool.query(
       `SELECT command, drug_name as "drugName", result
        FROM cmc_ai_command_results
-       WHERE id = $1`,
-      [id]
+       WHERE id = $1 AND organization_id = $2`,
+      [id, orgId]
     );
     const result = rows[0];
     if (!result) {
@@ -882,9 +791,7 @@ router.get('/download/:id', async (req, res) => {
       });
     }
 
-    const filename = `${result.command.replace(/\s+/g, '_')}_${result.drugName}_${
-      new Date().toISOString().split('T')[0]
-    }.md`;
+    const filename = `${result.command.replace(/\s+/g, '_')}_${result.drugName}_${new Date().toISOString().split('T')[0]}.md`;
 
     res.set({
       'Content-Type': 'text/markdown',
@@ -909,30 +816,82 @@ router.get('/analytics/performance', async (req, res) => {
   try {
     const allWorkflows = await db.select().from(projectWorkflows);
     const pool = getPool();
-    const commandRes = await pool.query(`SELECT category FROM cmc_ai_command_results`);
+    const commandRes = await pool.query(`SELECT category, status, command FROM cmc_ai_command_results`);
     const allCommands = commandRes.rows;
+
+    // Compute real metrics from workflow data
+    const completedWorkflows = allWorkflows.filter(w => (w.progress || 0) === 100);
+    const activeWorkflows = allWorkflows.filter(w => w.status === 'active');
+
+    // Average completion time: diff between createdAt and updatedAt for completed workflows
+    let averageCompletionTime = 'N/A';
+    if (completedWorkflows.length > 0) {
+      const totalDays = completedWorkflows.reduce((sum, w) => {
+        const created = new Date(w.createdAt).getTime();
+        const updated = new Date(w.updatedAt).getTime();
+        return sum + (updated - created) / (1000 * 60 * 60 * 24);
+      }, 0);
+      const avgDays = totalDays / completedWorkflows.length;
+      if (avgDays < 7) {
+        averageCompletionTime = `${Math.round(avgDays)} days`;
+      } else {
+        averageCompletionTime = `${(avgDays / 7).toFixed(1)} weeks`;
+      }
+    }
+
+    // On-time delivery: completed workflows that finished before their endDate
+    let onTimeDeliveryRate = 0;
+    const completedWithEndDate = completedWorkflows.filter(w => w.endDate);
+    if (completedWithEndDate.length > 0) {
+      const onTime = completedWithEndDate.filter(w => {
+        const finished = new Date(w.updatedAt).getTime();
+        const deadline = new Date(w.endDate!).getTime();
+        return finished <= deadline;
+      }).length;
+      onTimeDeliveryRate = Math.round((onTime / completedWithEndDate.length) * 100);
+    }
+
+    // Success rate: completed / total
+    const successRate = allWorkflows.length > 0
+      ? Math.round((completedWorkflows.length / allWorkflows.length) * 100)
+      : 0;
+
+    // AI command metrics from actual data
+    const completedCommands = allCommands.filter((c: any) => c.status === 'completed').length;
+    const commandSuccessRate = allCommands.length > 0
+      ? Math.round((completedCommands / allCommands.length) * 100)
+      : 0;
+
+    // Most used command from actual data
+    const commandCounts: Record<string, number> = {};
+    for (const cmd of allCommands as any[]) {
+      if (cmd.command) {
+        commandCounts[cmd.command] = (commandCounts[cmd.command] || 0) + 1;
+      }
+    }
+    const mostUsedCommand = Object.keys(commandCounts).length > 0
+      ? Object.entries(commandCounts).sort(([, a], [, b]) => b - a)[0][0]
+      : 'N/A';
 
     const analytics = {
       workflows: {
         total: allWorkflows.length,
-        active: allWorkflows.filter(w => w.status === 'active').length,
-        completed: allWorkflows.filter(w => (w.progress || 0) === 100).length,
+        active: activeWorkflows.length,
+        completed: completedWorkflows.length,
         averageProgress:
           allWorkflows.length > 0
             ? Math.round(
                 allWorkflows.reduce((sum, w) => sum + (w.progress || 0), 0) / allWorkflows.length
               )
             : 0,
-        averageCompletionTime: '3.2 weeks', // Calculate from actual data
-        onTimeDeliveryRate: 87,
-        qualityScore: 94,
+        averageCompletionTime,
+        onTimeDeliveryRate,
+        successRate,
       },
       aiCommands: {
         total: allCommands.length,
-        successRate: 98,
-        averageExecutionTime: '18 minutes',
-        timeSaved: '12.5 hours',
-        mostUsedCommand: 'Generate analytical method summary',
+        successRate: commandSuccessRate,
+        mostUsedCommand,
         categoryCounts: {
           Analytical: allCommands.filter((c: any) => c.category === 'Analytical').length,
           Stability: allCommands.filter((c: any) => c.category === 'Stability').length,
@@ -941,29 +900,7 @@ router.get('/analytics/performance', async (req, res) => {
           Impurities: allCommands.filter((c: any) => c.category === 'Impurities').length,
         },
       },
-      insights: [
-        {
-          type: 'recommendation',
-          priority: 'medium',
-          title: 'Consider parallelizing analytical method validation with stability studies',
-          description: 'This could reduce overall timeline by 2-3 weeks',
-          impact: 'efficiency',
-        },
-        {
-          type: 'success',
-          priority: 'low',
-          title: 'Your QbD workflows show 15% faster completion than industry average',
-          description: 'Template optimization is working well',
-          impact: 'performance',
-        },
-        {
-          type: 'warning',
-          priority: 'high',
-          title: 'Container closure system reviews taking longer than expected',
-          description: 'Consider using AI-assisted protocol generation',
-          impact: 'timeline',
-        },
-      ],
+      insights: [],
     };
 
     res.json({

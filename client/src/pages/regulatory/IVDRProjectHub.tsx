@@ -15,6 +15,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -187,7 +188,7 @@ export default function IVDRProjectHub() {
   const { data: projectData } = useQuery({
     queryKey: ['ivdr-project-tasks'],
     queryFn: async () => {
-      const res = await fetch('/api/submission-center/projects');
+      const res = await apiRequest('GET', '/api/submission-center/projects');
       if (!res.ok) return { tasks: [], stages: IVDR_STAGES };
       const json = await res.json();
       // Find an IVDR project
@@ -195,7 +196,7 @@ export default function IVDRProjectHub() {
       if (!ivdrProject) return { project: null, tasks: [], stages: IVDR_STAGES };
 
       // Fetch tasks for this project
-      const tasksRes = await fetch(`/api/submission-center/projects/${ivdrProject.id}/tasks`);
+      const tasksRes = await apiRequest('GET', `/api/submission-center/projects/${ivdrProject.id}/tasks`);
       const tasksJson = tasksRes.ok ? await tasksRes.json() : { data: [] };
       const tasks = tasksJson.data || [];
 
@@ -233,7 +234,7 @@ export default function IVDRProjectHub() {
   const { data: auditData } = useQuery({
     queryKey: ['ivdr-audit-events'],
     queryFn: async () => {
-      const res = await fetch('/api/ivdr/audit-events?limit=20');
+      const res = await apiRequest('GET', '/api/ivdr/audit-events?limit=20');
       if (!res.ok) return [];
       const json = await res.json();
       return json.data || [];

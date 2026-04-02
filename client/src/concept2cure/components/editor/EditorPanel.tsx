@@ -78,6 +78,7 @@ import SourceCitationsPanel from './SourceCitationsPanel';
 import { ReviewerAssignment } from './ReviewerAssignment';
 import { CollaborationPresence, CollaborationCursors } from './CollaborationPresence';
 import { DocumentWatermark } from './DocumentWatermark';
+import { GovernanceStatusBar } from './GovernanceStatusBar';
 import { useCollaboration } from '../../hooks/useCollaboration';
 import { SignatureWorkflow, SignatureList } from './SignatureWorkflow';
 import { SubmissionReadinessValidator } from '../submission/SubmissionReadinessValidator';
@@ -3341,6 +3342,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         onToggle={toggleInspector}
       />
 
+      {/* ── Governance escalation status bar ────────────────────────────────── */}
+      <GovernanceStatusBar projectId={projectId} />
+
       {/* ── AI Suggestion Diff Panel ──────────────────────────────────────── */}
       {aiResult && (
         <div className="border-b border-blue-200 bg-stone-50">
@@ -3809,6 +3813,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             submissionType={submissionType}
             indication={activeArtifact?.title}
             deviceName={activeArtifact?.title}
+            projectId={projectId}
             documentContent={activeArtifact?.content}
             onClose={() => setActiveInspector(null)}
             onCreateDocument={async (content: string, title: string, ctdSection?: string) => {

@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 // Plugins are not yet built — stubbed out to avoid TS errors
 // import { ValidationPlugin } from '../plugins/validationPlugin';
 // import { CitationsPlugin } from '../plugins/citationsPlugin';
@@ -166,15 +167,11 @@ export default function EditorCanvas({
     try {
       setIsValidating(true);
 
-      const response = await fetch('/api/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          docId: documentId,
-          content: editor.getHTML(),
-          region,
-          section: 'current',
-        }),
+      const response = await apiRequest('POST', '/api/validate', {
+        docId: documentId,
+        content: editor.getHTML(),
+        region,
+        section: 'current',
       });
 
       if (response.ok) {

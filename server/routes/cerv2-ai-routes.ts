@@ -39,7 +39,7 @@ const aiRateLimiter = rateLimit({
   keyGenerator: (req: any) => {
     // Rate limit by user + org to prevent abuse
     const userId = req.userId || req.user?.id || 'anon';
-    const orgId = String((req as any).user?.organizationId || (req as any).tenantId || 'unknown');
+    const orgId = req.tenantId || req.tenantContext?.organizationId || 'unknown';
     return `cerv2-ai:${orgId}:${userId}`;
   },
 });
@@ -55,7 +55,6 @@ const requireEditorAccess = (req: any, res: any, next: () => void) => {
     return res.status(403).json({ error: 'Insufficient permissions' });
   }
   // Verify organization context exists (prevents cross-org access)
-  const headerOrg = null; // org from JWT only
   const tenantOrg = req.tenantContext?.organizationId;
   const userOrg = req.user?.organizationId || req.tenantId;
   const orgId = tenantOrg || userOrg;

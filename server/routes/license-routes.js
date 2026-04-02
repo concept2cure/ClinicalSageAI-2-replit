@@ -42,10 +42,10 @@ function toCamelCase(obj) {
 router.get('/api/licenses/client/:clientId', async (req, res) => {
   try {
     const { clientId } = req.params;
-    const orgId = req.headers['x-organization-id'];
-    
+    const orgId = req.tenantId || req.tenantContext?.organizationId || req.user?.organizationId;
+
     console.log('Fetching license for client:', clientId, 'org:', orgId);
-    
+
     // Verify the client belongs to the requesting organization
     if (orgId) {
       const clientCheck = await db.query(`
@@ -113,10 +113,10 @@ router.get('/api/licenses/client/:clientId', async (req, res) => {
 router.get('/api/licenses/client/:clientId/usage', async (req, res) => {
   try {
     const { clientId } = req.params;
-    const orgId = req.headers['x-organization-id'];
-    
+    const orgId = req.tenantId || req.tenantContext?.organizationId || req.user?.organizationId;
+
     console.log('Fetching usage for client:', clientId, 'org:', orgId);
-    
+
     // Verify the client belongs to the requesting organization
     if (orgId) {
       const clientCheck = await db.query(`
@@ -224,12 +224,12 @@ router.get('/api/licenses/client/:clientId/usage', async (req, res) => {
 // Get all licenses for the organization
 router.get('/api/licenses', async (req, res) => {
   try {
-    const orgId = req.headers['x-organization-id'];
-    
+    const orgId = req.tenantId || req.tenantContext?.organizationId || req.user?.organizationId;
+
     if (!orgId) {
-      return res.status(403).json({ error: 'Organization header required' });
+      return res.status(403).json({ error: 'Organization context required' });
     }
-    
+
     // Build query with organization filtering (cast client_id to match integer type)
     const query = `
       SELECT 
@@ -266,14 +266,14 @@ router.get('/api/licenses', async (req, res) => {
 router.get('/api/licenses/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const orgId = req.headers['x-organization-id'];
-    
+    const orgId = req.tenantId || req.tenantContext?.organizationId || req.user?.organizationId;
+
     if (!orgId) {
-      return res.status(403).json({ error: 'Organization header required' });
+      return res.status(403).json({ error: 'Organization context required' });
     }
-    
+
     const result = await db.query(`
-      SELECT 
+      SELECT
         l.*,
         COUNT(DISTINCT lu.user_id) as active_users,
         COUNT(DISTINCT s.id) as submissions_used,
@@ -328,8 +328,8 @@ router.post('/api/licenses', async (req, res) => {
       notes,
     } = req.body;
     
-    const orgId = req.headers['x-organization-id'];
-    
+    const orgId = req.tenantId || req.tenantContext?.organizationId || req.user?.organizationId;
+
     console.log('Creating license with data:', {
       clientId,
       clientName,
@@ -413,13 +413,13 @@ router.post('/api/licenses', async (req, res) => {
 router.put('/api/licenses/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const orgId = req.headers['x-organization-id'];
+    const orgId = req.tenantId || req.tenantContext?.organizationId || req.user?.organizationId;
     const updates = req.body;
-    
+
     if (!orgId) {
-      return res.status(403).json({ error: 'Organization header required' });
+      return res.status(403).json({ error: 'Organization context required' });
     }
-    
+
     // First verify the license belongs to this organization (cast client_id to integer)
     const ownershipCheck = await db.query(`
       SELECT l.id 

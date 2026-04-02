@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2, Search, BarChart3, FileText, AlertTriangle, TrendingUp } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import DOMPurify from 'dompurify';
 import {
   generateNarrative,
@@ -28,6 +29,7 @@ import UnifiedDocumentUpload from '../../components/unified/UnifiedDocumentUploa
  * CSR Deep Intelligence - AI-driven CSR analysis and generation tools
  */
 const CSRPage = () => {
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [dashboardMetrics, setDashboardMetrics] = useState(null);
   const [narrativeInput, setNarrativeInput] = useState({
@@ -74,7 +76,7 @@ const CSRPage = () => {
         const metrics = await fetchDashboardMetrics();
         setDashboardMetrics(metrics);
       } catch (error) {
-        console.error('Error loading dashboard metrics:', error);
+        toast({ title: 'Dashboard load failed', description: 'Could not load CSR metrics.', variant: 'destructive' });
       }
     };
     loadDashboardMetrics();
@@ -87,7 +89,7 @@ const CSRPage = () => {
       const data = await generateNarrative(narrativeInput);
       setNarrativeResult(data.narrative);
     } catch (error) {
-      console.error('Error generating narrative:', error);
+      toast({ title: 'Narrative generation failed', description: 'Please try again.', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -100,7 +102,7 @@ const CSRPage = () => {
       const data = await detectSignals(signalInput);
       setSignalResults(data.signals);
     } catch (error) {
-      console.error('Error detecting signals:', error);
+      toast({ title: 'Signal detection failed', description: 'Could not detect safety signals.', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -117,7 +119,7 @@ const CSRPage = () => {
       const results = await searchCsrs(searchQuery, options);
       setSearchResults(Array.isArray(results) ? results : results?.results || []);
     } catch (error) {
-      console.error('Search failed:', error);
+      toast({ title: 'Search failed', description: 'CSR search encountered an error.', variant: 'destructive' });
       setSearchResults([]);
     } finally {
       setSearchLoading(false);
@@ -136,7 +138,7 @@ const CSRPage = () => {
       );
       setCompareResults(data.comparisons || []);
     } catch (error) {
-      console.error('Comparison failed:', error);
+      toast({ title: 'Comparison failed', description: 'Cross-study comparison encountered an error.', variant: 'destructive' });
       setCompareResults([]);
     } finally {
       setCompareLoading(false);
@@ -150,7 +152,7 @@ const CSRPage = () => {
       const data = await analyzeBenefitRisk(benefitRiskInput);
       setBenefitRiskResult(data);
     } catch (error) {
-      console.error('Error analyzing benefit-risk:', error);
+      toast({ title: 'Analysis failed', description: 'Benefit-risk analysis encountered an error.', variant: 'destructive' });
     } finally {
       setLoading(false);
     }

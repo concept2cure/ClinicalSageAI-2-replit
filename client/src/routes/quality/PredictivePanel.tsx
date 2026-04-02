@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function PredictivePanel({ batchId }: { batchId: string }) {
   const [predictions, setPredictions] = useState<any[]>([]);
@@ -13,18 +14,23 @@ export default function PredictivePanel({ batchId }: { batchId: string }) {
   }, [batchId]);
 
   async function load() {
-    setLoading(true);
-    const r = await fetch(`/api/quality/batches/${batchId}/predictive/analyze`).then(r => r.json());
-    setPredictions(r.predictions || []);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const r = await apiRequest('GET', `/api/quality/batches/${batchId}/predictive/analyze`).then(r => r.json());
+      setPredictions(r.predictions || []);
+    } catch { setPredictions([]); }
+    finally { setLoading(false); }
   }
 
   async function runAnalysis() {
-    setLoading(true);
-    const r = await fetch(`/api/quality/batches/${batchId}/predictive/run`, { method: 'POST' });
-    const d = await r.json();
-    if (!r.ok) { toast({ title: 'Error', description: d.error || 'Predictive analysis failed', variant: 'destructive' }); return; }
-    await load();
+    try {
+      setLoading(true);
+      await apiRequest('POST', `/api/quality/batches/${batchId}/predictive/run`);
+      await load();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message || 'Predictive analysis failed', variant: 'destructive' });
+      setLoading(false);
+    }
   }
 
   return (

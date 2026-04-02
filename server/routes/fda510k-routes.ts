@@ -1305,102 +1305,11 @@ router.post(
 
       res.setHeader('X-Cache-Hit', 'false');
 
-      // Simulate processing with enhanced logic
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const deviceClass = validatedData.deviceClass || 'II';
-      let results: any;
-
-      if (deviceClass === 'I') {
-        results = {
-          recommendedPathway: '510(k) Exempt',
-          alternativePathways: ['Traditional 510(k)'],
-          rationale:
-            'Based on the device classification and product code, this device appears to be Class I exempt from 510(k) requirements per 21 CFR Part 862-892.',
-          estimatedTimelineInDays: 0,
-          requirements: [
-            'General Controls compliance',
-            'Registration and Listing',
-            'Good Manufacturing Practices',
-            'Adequate labeling',
-            'Premarket notification (if not exempt)',
-          ],
-          confidenceScore: 0.95,
-          riskFactors: ['Low risk device', 'Well-established technology'],
-          regulatoryConsiderations: [
-            'Verify exemption status in FDA database',
-            'Check for specific limitations on exemption',
-            'Ensure compliance with general controls',
-          ],
-        };
-      } else if (deviceClass === 'II') {
-        results = {
-          recommendedPathway: 'Traditional 510(k)',
-          alternativePathways: [
-            'Special 510(k)',
-            'Abbreviated 510(k)',
-            'De Novo (if no predicate)',
-          ],
-          rationale:
-            'Based on the device characteristics and the presence of similar predicate devices, the most appropriate pathway is a Traditional 510(k) submission.',
-          estimatedTimelineInDays: 90,
-          requirements: [
-            'Substantial Equivalence demonstration',
-            'Performance testing (bench, animal, or clinical)',
-            'Software validation (if applicable)',
-            'Biocompatibility assessment (ISO 10993)',
-            'Electrical safety testing (IEC 60601)',
-            'Sterility validation (if applicable)',
-            'Shelf life testing',
-          ],
-          confidenceScore: 0.92,
-          riskFactors: ['Moderate risk device', 'Requires special controls'],
-          regulatoryConsiderations: [
-            'Identify appropriate predicate device(s)',
-            'Determine if clinical data is needed',
-            'Consider Q-Submission for FDA feedback',
-          ],
-        };
-      } else {
-        results = {
-          recommendedPathway: 'De Novo or PMA',
-          alternativePathways: [
-            'Traditional 510(k) with clinical data',
-            'Humanitarian Device Exemption (HDE)',
-          ],
-          rationale:
-            'Based on the device classification as Class III and the novel technological characteristics, this device likely requires a De Novo request or PMA pathway.',
-          estimatedTimelineInDays: 180,
-          requirements: [
-            'Clinical trial data (IDE may be required)',
-            'Comprehensive risk analysis (ISO 14971)',
-            'Full technical documentation',
-            'Manufacturing information (QSR compliance)',
-            'Post-market surveillance plan',
-            'Preclinical testing data',
-            'Human factors validation',
-          ],
-          confidenceScore: 0.88,
-          riskFactors: ['High risk device', 'Life-supporting/life-sustaining', 'Novel technology'],
-          regulatoryConsiderations: [
-            'Early FDA engagement through Q-Submission',
-            'Consider breakthrough device designation',
-            'Plan for advisory committee meeting if required',
-            'Develop comprehensive clinical trial protocol',
-          ],
-        };
-      }
-
-      // Add metadata
-      results.timestamp = new Date().toISOString();
-      results.processingTimeMs = Date.now() - (req as any).startTime;
-      results.organizationId = tenantContext.organizationId;
-      results.cacheExpiry = new Date(Date.now() + 3600000).toISOString();
-
-      // Cache the result with appropriate TTL
-      cache.set(cacheKey, results, CACHE_TTL.LONG);
-
-      res.json(results);
+      // This endpoint requires AI gateway configuration for real regulatory pathway analysis
+      return res.status(503).json({
+        error: 'Service not configured',
+        message: 'This endpoint requires AI gateway configuration for regulatory pathway analysis. Rule-based fallback has been removed.',
+      });
     } catch (error) {
       next(error);
     }

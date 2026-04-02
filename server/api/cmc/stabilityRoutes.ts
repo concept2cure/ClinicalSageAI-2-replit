@@ -38,7 +38,7 @@ const updateStudySchema = z.object({
 router.get('/:projectId', async (req, res) => {
   try {
     const { projectId } = req.params;
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -83,7 +83,7 @@ router.post('/', async (req, res) => {
 
     const data = validationResult.data;
     const pool = getPool();
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -136,6 +136,10 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    if (!tenantId) {
+      return res.status(403).json({ success: false, error: 'Tenant context required' });
+    }
     const validationResult = updateStudySchema.safeParse(req.body);
 
     if (!validationResult.success) {
@@ -152,7 +156,7 @@ router.put('/:id', async (req, res) => {
 
     // Verify study exists
     const existing = await pool.query(
-      `SELECT * FROM stability_studies WHERE id = $1`, [id]
+      `SELECT * FROM stability_studies WHERE id = $1 AND (tenant_id = $2 OR tenant_id IS NULL)`, [id, tenantId]
     );
     if (existing.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Study not found' });
@@ -226,11 +230,15 @@ router.put('/:id', async (req, res) => {
 router.get('/:id/projections', async (req, res) => {
   try {
     const { id } = req.params;
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    if (!tenantId) {
+      return res.status(403).json({ success: false, error: 'Tenant context required' });
+    }
     const pool = getPool();
 
 
     const result = await pool.query(
-      `SELECT * FROM stability_studies WHERE id = $1`, [id]
+      `SELECT * FROM stability_studies WHERE id = $1 AND (tenant_id = $2 OR tenant_id IS NULL)`, [id, tenantId]
     );
 
     if (result.rows.length === 0) {

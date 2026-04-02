@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -315,18 +316,7 @@ const BlueprintPage = () => {
         submissionDescription,
       };
 
-      const response = await fetch('/api/blueprint/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(blueprintRequest),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate blueprint');
-      }
-
+      const response = await apiRequest('POST', '/api/blueprint/generate', blueprintRequest);
       const data = await response.json();
       setGeneratedBlueprint(data);
       setActiveTab('result');
@@ -364,14 +354,7 @@ const BlueprintPage = () => {
 
     try {
       // Request validation from server
-      const response = await fetch(`/api/ectd/validate/${generatedBlueprint.id}`, {
-        method: 'GET',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to validate CTD package');
-      }
-
+      const response = await apiRequest('GET', `/api/ectd/validate/${generatedBlueprint.id}`);
       const data = await response.json();
       setValidationResults(data);
     } catch (error) {
@@ -397,28 +380,18 @@ const BlueprintPage = () => {
     setSubmissionResults(null);
 
     try {
-      // Build form data for submission
-      const formData = new FormData();
-      formData.append('submissionType', submissionType);
-      formData.append('applicationType', submissionType.toUpperCase());
-      formData.append('applicationNumber', applicationNumber);
-      formData.append('sponsorName', companyName);
-      formData.append('productName', productName);
-      formData.append(
-        'contactEmail',
-        'regulatory@' + companyName.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com'
-      );
+      // Build submission payload
+      const payload = {
+        submissionType,
+        applicationType: submissionType.toUpperCase(),
+        applicationNumber,
+        sponsorName: companyName,
+        productName,
+        contactEmail: 'regulatory@' + companyName.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com',
+      };
 
       // Request submission
-      const response = await fetch(`/api/submission/esg?blueprintId=${generatedBlueprint.id}`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to submit to FDA ESG');
-      }
-
+      const response = await apiRequest('POST', `/api/submission/esg?blueprintId=${generatedBlueprint.id}`, payload);
       const data = await response.json();
       setSubmissionResults(data);
     } catch (error) {
@@ -444,28 +417,18 @@ const BlueprintPage = () => {
     setSubmissionResults(null);
 
     try {
-      // Build form data for submission
-      const formData = new FormData();
-      formData.append('procedureType', 'Centralised');
-      formData.append('procedureNumber', 'EMEA/H/C/' + applicationNumber.replace(/[^0-9]/g, ''));
-      formData.append('marketingAuthorizationHolder', companyName);
-      formData.append('productName', productName);
-      formData.append('substanceName', productName.split(' ')[0]);
-      formData.append(
-        'contactEmail',
-        'regulatory@' + companyName.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com'
-      );
+      // Build submission payload
+      const payload = {
+        procedureType: 'Centralised',
+        procedureNumber: 'EMEA/H/C/' + applicationNumber.replace(/[^0-9]/g, ''),
+        marketingAuthorizationHolder: companyName,
+        productName,
+        substanceName: productName.split(' ')[0],
+        contactEmail: 'regulatory@' + companyName.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com',
+      };
 
       // Request submission
-      const response = await fetch(`/api/submission/cesp?blueprintId=${generatedBlueprint.id}`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to submit to EMA CESP');
-      }
-
+      const response = await apiRequest('POST', `/api/submission/cesp?blueprintId=${generatedBlueprint.id}`, payload);
       const data = await response.json();
       setSubmissionResults(data);
     } catch (error) {

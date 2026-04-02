@@ -18,6 +18,7 @@
  * - Command center aggregates
  */
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { db } from '../db';
 import {
   c2cSubmissionPackages,
@@ -55,8 +56,64 @@ function getOrgId(req: Request): number {
 }
 
 function getUserId(req: Request): number {
-  return (req as any).user?.id ?? (req as any).userId ?? 0;
+  const userId = (req as any).user?.id ?? (req as any).userId;
+  if (!userId || userId <= 0) throw new Error('Authenticated user context required');
+  return userId;
 }
+
+// ============================================================
+// ZOD VALIDATION SCHEMAS
+// ============================================================
+
+const createPackageSchema = z.object({
+  projectId: z.number({ required_error: 'projectId is required' }),
+  packageFamily: z.string({ required_error: 'packageFamily is required' }).min(1, 'packageFamily must not be empty'),
+  title: z.string({ required_error: 'title is required' }).min(1, 'title must not be empty'),
+  description: z.string().optional(),
+  targetDate: z.string().optional(),
+  sections: z.array(z.object({
+    key: z.string(),
+    label: z.string(),
+  })).optional(),
+});
+
+const createArtifactSectionMapSchema = z.object({
+  artifactId: z.number({ required_error: 'artifactId is required' }),
+  sectionDbId: z.number({ required_error: 'sectionDbId is required' }),
+  documentFamily: z.string().optional(),
+  ownerUserId: z.number().optional(),
+  ownerRole: z.string().optional(),
+  ownerFunction: z.string().optional(),
+  ownershipType: z.string().optional(),
+});
+
+const createMilestoneSchema = z.object({
+  title: z.string({ required_error: 'title is required' }).min(1, 'title must not be empty'),
+  description: z.string().optional(),
+  targetDate: z.string().optional(),
+  sectionIds: z.array(z.number()).optional(),
+});
+
+const createPolicySchema = z.object({
+  packageFamily: z.string().nullish(),
+  sectionKey: z.string().nullish(),
+  documentFamily: z.string().nullish(),
+  ownerFunction: z.string().nullish(),
+  reviewerClass: z.string().nullish(),
+  ownershipType: z.string().nullish(),
+  reviewDueHours: z.number().nullish(),
+  dueSoonThresholdHours: z.number().nullish(),
+  overdueThresholdHours: z.number().nullish(),
+  escalationThresholdHours: z.number().nullish(),
+  fallbackRole: z.string().nullish(),
+  requiredReviewerClasses: z.any().nullish(),
+  requiredApprovals: z.number().nullish(),
+  blockOnOpenCritical: z.boolean().optional().default(true),
+  blockPublishOnOpenCritical: z.boolean().optional().default(true),
+  requireSectionReadyForGate: z.boolean().optional().default(true),
+  ruleDescription: z.string().nullish(),
+  priority: z.number().optional().default(0),
+});
 
 // ============================================================
 // PACKAGES
@@ -77,8 +134,8 @@ router.get('/packages', async (req: Request, res: Response) => {
       .orderBy(desc(c2cSubmissionPackages.createdAt));
 
     res.json({ data: packages });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -86,11 +143,12 @@ router.post('/packages', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const { projectId, packageFamily, title, description, targetDate, sections } = req.body;
 
-    if (!projectId || !packageFamily || !title) {
-      return res.status(400).json({ error: 'projectId, packageFamily, and title required' });
+    const parsed = createPackageSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
     }
+    const { projectId, packageFamily, title, description, targetDate, sections } = parsed.data;
 
     const packageId = `pkg_${randomUUID()}`;
     const [pkg] = await db
@@ -123,8 +181,8 @@ router.post('/packages', async (req: Request, res: Response) => {
     }
 
     res.status(201).json({ data: pkg });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -150,8 +208,8 @@ router.get('/packages/:packageId', async (req: Request, res: Response) => {
       .orderBy(asc(c2cPackageSections.sortOrder));
 
     res.json({ data: { ...pkg, sections } });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -181,8 +239,8 @@ router.get('/packages/:packageId/sections', async (req: Request, res: Response) 
       .orderBy(asc(c2cPackageSections.sortOrder));
 
     res.json({ data: sections });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -194,6 +252,11 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const actorUserId = getUserId(req);
+
+    const parsed = createArtifactSectionMapSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
     const {
       artifactId,
       sectionDbId,
@@ -202,11 +265,7 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
       ownerRole,
       ownerFunction,
       ownershipType,
-    } = req.body;
-
-    if (!artifactId || !sectionDbId) {
-      return res.status(400).json({ error: 'artifactId and sectionDbId required' });
-    }
+    } = parsed.data;
 
     const [artifact] = await db
       .select({
@@ -269,8 +328,8 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
       .returning();
 
     res.status(201).json({ data: mapping });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -309,8 +368,8 @@ router.get('/sections/:sectionDbId/artifacts', async (req: Request, res: Respons
         },
       })),
     });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -361,8 +420,8 @@ router.get('/packages/:packageId/milestones', async (req: Request, res: Response
     );
 
     res.json({ data: result });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -382,8 +441,11 @@ router.post('/packages/:packageId/milestones', async (req: Request, res: Respons
 
     if (!pkg) return res.status(404).json({ error: 'Package not found' });
 
-    const { title, description, targetDate, sectionIds } = req.body;
-    if (!title) return res.status(400).json({ error: 'title required' });
+    const parsed = createMilestoneSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
+    const { title, description, targetDate, sectionIds } = parsed.data;
 
     const [milestone] = await db
       .insert(c2cMilestones)
@@ -418,8 +480,8 @@ router.post('/packages/:packageId/milestones', async (req: Request, res: Respons
     }
 
     res.status(201).json({ data: milestone });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -437,8 +499,8 @@ router.get('/policies', async (req: Request, res: Response) => {
       .orderBy(desc(c2cSubmissionPolicies.priority));
 
     res.json({ data: policies });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -446,6 +508,11 @@ router.post('/policies', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
+
+    const parsed = createPolicySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
     const {
       packageFamily,
       sectionKey,
@@ -465,7 +532,7 @@ router.post('/policies', async (req: Request, res: Response) => {
       requireSectionReadyForGate,
       ruleDescription,
       priority,
-    } = req.body;
+    } = parsed.data;
 
     const [policy] = await db
       .insert(c2cSubmissionPolicies)
@@ -485,18 +552,18 @@ router.post('/policies', async (req: Request, res: Response) => {
         fallbackRole: fallbackRole || null,
         requiredReviewerClasses: requiredReviewerClasses || null,
         requiredApprovals: requiredApprovals || null,
-        blockOnOpenCritical: blockOnOpenCritical ?? true,
-        blockPublishOnOpenCritical: blockPublishOnOpenCritical ?? true,
-        requireSectionReadyForGate: requireSectionReadyForGate ?? true,
+        blockOnOpenCritical,
+        blockPublishOnOpenCritical,
+        requireSectionReadyForGate,
         ruleDescription: ruleDescription || null,
-        priority: priority ?? 0,
+        priority,
         createdById: userId,
       })
       .returning();
 
     res.status(201).json({ data: policy });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -534,8 +601,8 @@ router.put('/policies/:policyId', async (req: Request, res: Response) => {
 
     if (!updated) return res.status(404).json({ error: 'Policy not found' });
     res.json({ data: updated });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -554,8 +621,8 @@ router.delete('/policies/:policyId', async (req: Request, res: Response) => {
 
     if (!deleted) return res.status(404).json({ error: 'Policy not found' });
     res.json({ data: { deleted: true } });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -566,8 +633,8 @@ router.post('/policies/resolve', async (req: Request, res: Response) => {
     const resolved = await resolvePolicy(ctx);
     const all = await resolveAllPolicies(ctx);
     res.json({ data: { resolved, allMatching: all } });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -606,8 +673,8 @@ router.get('/packages/:packageId/readiness', async (req: Request, res: Response)
     }
 
     res.json({ data: readiness, rimSignals, rimCrossArtifact });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -637,8 +704,8 @@ router.get('/packages/:packageId/readiness-history', async (req: Request, res: R
       .limit(limit);
 
     res.json({ data: snapshots });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -688,8 +755,8 @@ router.get('/blockers', async (req: Request, res: Response) => {
       );
 
     res.json({ data: blockers });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -713,8 +780,8 @@ router.patch('/blockers/:blockerId', async (req: Request, res: Response) => {
 
     if (!updated) return res.status(404).json({ error: 'Blocker not found' });
     res.json({ data: updated });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -769,8 +836,8 @@ router.get('/approval-bottlenecks', async (req: Request, res: Response) => {
     });
 
     res.json({ data: bottlenecks });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -784,8 +851,8 @@ router.get('/workload', async (req: Request, res: Response) => {
     const projectId = req.query.projectId ? Number(req.query.projectId) : undefined;
     const canonical = await readCanonicalDueSoonAndWorkload({ orgId, projectId });
     res.json({ data: canonical.workload, source: 'c2c_project_work_items' });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -860,8 +927,8 @@ router.get('/hotspots', async (req: Request, res: Response) => {
     );
 
     res.json({ data: hotspots });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -880,8 +947,8 @@ router.post('/automation/run', async (req: Request, res: Response) => {
 
     const result = await runAutomationSweep(orgId, projectId, packageDbId);
     res.json({ data: result });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -901,8 +968,8 @@ router.get('/automation/runs', async (req: Request, res: Response) => {
       .limit(50);
 
     res.json({ data: runs });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -925,8 +992,8 @@ router.get('/automation/runs/:runId/actions', async (req: Request, res: Response
       .orderBy(asc(c2cAutomationActions.createdAt));
 
     res.json({ data: actions });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -946,8 +1013,8 @@ router.get('/due-soon', async (req: Request, res: Response) => {
       },
       source: 'c2c_project_work_items',
     });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -974,8 +1041,8 @@ router.get('/digests', async (req: Request, res: Response) => {
       .limit(20);
 
     res.json({ data: digests });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -990,8 +1057,8 @@ router.post('/digests/:digestId/read', async (req: Request, res: Response) => {
 
     if (!updated) return res.status(404).json({ error: 'Digest not found' });
     res.json({ data: updated });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -1119,8 +1186,8 @@ router.get('/command-center', async (req: Request, res: Response) => {
         unresolvedCorrespondenceIssues: Number((unresolvedCorrespondence as any)?.count ?? 0),
       },
     });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 
@@ -1247,8 +1314,8 @@ router.post('/packages/:packageId/publish', async (req: Request, res: Response) 
       data: updated,
       readiness,
     });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
 

@@ -52,6 +52,7 @@ import { ComputeJobPanel } from '../compute/ComputeJobPanel';
 import { IndEvidenceAskPanel } from './IndEvidenceAskPanel';
 import RegulatoryCommunicationsHub from '../correspondence/RegulatoryCommunicationsHub';
 import ReportCenter from '../reports/ReportCenter';
+import { SubmissionCommandCenter } from '../submission/SubmissionCommandCenter';
 import {
   ChevronLeft,
   Loader2,
@@ -113,24 +114,14 @@ import { NewDocumentDialog } from './NewDocumentDialog';
 import { canEscalateToEdit } from '../../contexts/DocumentModeContext';
 import { SectionRequirementsPanel, type SectionMetrics } from './SectionRequirementsPanel';
 
-// ── Left-rail mode type ──────────────────────────────────────────────────────
-type LeftRailMode = 'files' | 'dossier' | 'templates' | 'outline' | 'registry';
-type OperatingLayer = 'document_studio' | 'vault' | 'reports' | 'documents';
-type WorkspaceWorkbench = 'cmc' | 'biostats' | 'device' | 'clinical';
-type ProjectNav =
-  | 'submission_builder'
-  | 'communications'
-  | 'cmc'
-  | 'clinical_module5'
-  | 'verify'
-  | 'review'
-  | 'publish'
-  | 'haq'
-  | 'vault'
-  | 'communication_center'
-  | 'reports'
-  | 'activity'
-  | 'documents';
+// ── Left-rail mode type (imported from controllers to avoid duplication) ──────
+import type {
+  LeftRailMode,
+  OperatingLayer,
+  WorkspaceWorkbench,
+  ProjectNav,
+  GuidedSequenceStage,
+} from './workspaceShellControllers';
 type DocumentTab =
   | 'content'
   | 'evidence'
@@ -139,7 +130,6 @@ type DocumentTab =
   | 'signatures'
   | 'provenance'
   | 'export';
-type GuidedSequenceStage = 'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission';
 
 // ── Dossier metrics types ────────────────────────────────────────────────────
 interface OperatingLayerConfig {
@@ -2919,6 +2909,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     onOpenCSRWorkflow={onNavigate ? () => onNavigate('csr-workflow') : undefined}
                     onOpenINDChecklist={onNavigate ? () => onNavigate('ind-checklist') : undefined}
                   />
+                  {projectNav === 'submission_builder' && (
+                    <SubmissionCommandCenter projectId={projectId} />
+                  )}
                   {projectNav === 'haq' && (
                     <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-4 space-y-3">
                       <div className="flex items-center gap-2">

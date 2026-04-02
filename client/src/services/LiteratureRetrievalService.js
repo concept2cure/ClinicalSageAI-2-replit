@@ -14,6 +14,7 @@
  */
 
 import OpenAI from 'openai';
+import { apiRequest } from '@/lib/queryClient';
 
 // SECURITY: OpenAI calls must go through the backend API gateway.
 // Direct client-side calls with API keys are forbidden in production.
@@ -29,24 +30,15 @@ const RATE_LIMIT_DELAY = 350;
  * Helper: call the server-side AI completion endpoint
  */
 async function callAI({ systemPrompt, userPrompt, jsonMode = false, temperature = 0.2 }) {
-  const response = await fetch('/api/ai/completion', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      taskType: 'document_analysis',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      jsonMode,
-      temperature,
-    }),
+  const response = await apiRequest('POST', '/api/ai/completion', {
+    taskType: 'document_analysis',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+    jsonMode,
+    temperature,
   });
-
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => response.statusText);
-    throw new Error(`AI completion failed (${response.status}): ${errorText}`);
-  }
 
   const data = await response.json();
   return jsonMode ? data : data.content;

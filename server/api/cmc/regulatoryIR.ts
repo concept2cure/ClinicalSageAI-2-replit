@@ -32,8 +32,8 @@ router.get('/submissions/:id/questions', async (req: Request, res: Response) => 
       [req.params.id]
     );
     res.json(rows);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Operation failed' });
   }
 });
 
@@ -60,8 +60,8 @@ router.post('/submissions/:id/questions', async (req: Request, res: Response) =>
       [rows[0].q_id, subId, (req.headers['x-user-name'] || 'user').toString(), rows[0]]
     );
     res.json(rows[0]);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Operation failed' });
   }
 });
 
@@ -81,8 +81,8 @@ router.post('/questions/:qId/ai-draft', async (req: Request, res: Response) => {
       [qrow.q_id, qrow.sub_id, (req.headers['x-user-name'] || 'user').toString()]
     );
     res.json({ ok: true, ai_draft_md: md, question: rows[0] });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Operation failed' });
   }
 });
 
@@ -123,8 +123,8 @@ router.patch('/questions/:qId', async (req: Request, res: Response) => {
       ]
     );
     res.json(rows[0]);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Operation failed' });
   }
 });
 
@@ -141,8 +141,8 @@ router.post('/questions/:qId/submit', async (req: Request, res: Response) => {
       [rows[0].q_id, rows[0].sub_id, (req.headers['x-user-name'] || 'user').toString()]
     );
     res.json(rows[0]);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Operation failed' });
   }
 });
 
@@ -154,8 +154,8 @@ router.get('/questions/:qId/events', async (req: Request, res: Response) => {
       [req.params.qId]
     );
     res.json(rows);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Operation failed' });
   }
 });
 
@@ -166,8 +166,8 @@ router.post('/submissions/:id/questions/pack', async (req: Request, res: Respons
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${path.basename(outPath)}"`);
     fs.createReadStream(outPath).pipe(res);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Operation failed' });
   }
 });
 

@@ -89,7 +89,9 @@ describe('project-modules tenant/workspace enforcement', () => {
 
     await handler!(req, res);
 
-    expect(bridgeMocks.updateModuleStatus).toHaveBeenCalledWith(12, 'cer', 44, 'completed', 3, 9);
+    expect(bridgeMocks.updateModuleLink).toHaveBeenCalledWith(
+      12, 3, 'cer', 44, { status: 'completed', metadata: { source: 'test' } }
+    );
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 1,

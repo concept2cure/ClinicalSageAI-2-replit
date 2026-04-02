@@ -3,27 +3,28 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import InfoTip from '@/components/InfoTip';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function CoachPanel({ batchId }: { batchId: string }) {
   const [rows, setRows] = useState<any[]>([]);
   const [note, setNote] = useState<string>('');
 
   async function load() {
-    const r = await fetch(`/api/quality/batches/${batchId}/coach`);
-    const d = await r.json();
-    setRows(d.recos || []);
-    setNote(d.rationale || '');
+    try {
+      const r = await apiRequest('GET', `/api/quality/batches/${batchId}/coach`);
+      const d = await r.json();
+      setRows(d.recos || []);
+      setNote(d.rationale || '');
+    } catch { setRows([]); setNote(''); }
   }
   async function apply(ids: string[]) {
     if (!ids.length) return;
-    const r = await fetch(`/api/quality/batches/${batchId}/coach/apply`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reco_ids: ids }),
-    });
-    const d = await r.json();
-    if (!r.ok) { toast({ title: 'Error', description: d.error || 'Apply failed', variant: 'destructive' }); return; }
-    load();
+    try {
+      await apiRequest('POST', `/api/quality/batches/${batchId}/coach/apply`, { reco_ids: ids });
+      load();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message || 'Apply failed', variant: 'destructive' });
+    }
   }
   useEffect(() => {
     load();

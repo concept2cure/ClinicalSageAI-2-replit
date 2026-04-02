@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import InfoTip from '@/components/InfoTip';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function WhatIfPanel({ batchId }: { batchId: string }) {
   interface TestRecord { test_id: string; name: string; value?: string; pass?: boolean }
@@ -11,7 +12,7 @@ export default function WhatIfPanel({ batchId }: { batchId: string }) {
 
   useEffect(() => {
     (async () => {
-      const s = await fetch(`/api/quality/batches/${batchId}/summary`).then(r => r.json());
+      const s = await apiRequest('GET', `/api/quality/batches/${batchId}/summary`).then(r => r.json());
       setTests(s.tests || []);
       setRows(
         (s.tests || []).map((t: { test_id: string; name: string }) => ({
@@ -34,14 +35,13 @@ export default function WhatIfPanel({ batchId }: { batchId: string }) {
     const overrides = rows
       .filter(r => r.value || typeof r.pass === 'boolean')
       .map(r => ({ test_id: r.test_id, override: { value: r.value || undefined, pass: r.pass } }));
-    const r = await fetch(`/api/quality/batches/${batchId}/whatif`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ overrides }),
-    });
-    const d = await r.json();
-    if (!r.ok) { toast({ title: 'Error', description: d.error || 'What-if simulation failed', variant: 'destructive' }); return; }
-    toast({ title: `Decision: ${d.decision?.decision}`, description: `Risk level: ${d.decision?.risk || 'N/A'}` });
+    try {
+      const r = await apiRequest('POST', `/api/quality/batches/${batchId}/whatif`, { overrides });
+      const d = await r.json();
+      toast({ title: `Decision: ${d.decision?.decision}`, description: `Risk level: ${d.decision?.risk || 'N/A'}` });
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message || 'What-if simulation failed', variant: 'destructive' });
+    }
   }
 
   return (

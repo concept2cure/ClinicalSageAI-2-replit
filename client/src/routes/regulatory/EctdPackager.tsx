@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface EctdPackagerProps {
   subId: string;
@@ -87,12 +88,7 @@ const EctdPackager: React.FC<EctdPackagerProps> = ({ subId }) => {
   // Create sequence mutation
   const createSequenceMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch(`/api/reg/submissions/${subId}/sequences`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Failed to create sequence');
+      const response = await apiRequest('POST', `/api/reg/submissions/${subId}/sequences`, data);
       return response.json();
     },
     onSuccess: data => {
@@ -109,10 +105,7 @@ const EctdPackager: React.FC<EctdPackagerProps> = ({ subId }) => {
   // Preflight mutation
   const preflightMutation = useMutation({
     mutationFn: async (seqId: string) => {
-      const response = await fetch(`/api/reg/sequences/${seqId}/preflight`, {
-        method: 'POST',
-      });
-      if (!response.ok) throw new Error('Failed to run preflight');
+      const response = await apiRequest('POST', `/api/reg/sequences/${seqId}/preflight`);
       return response.json();
     },
     onSuccess: data => {
@@ -128,10 +121,7 @@ const EctdPackager: React.FC<EctdPackagerProps> = ({ subId }) => {
   // Package mutation
   const packageMutation = useMutation({
     mutationFn: async (seqId: string) => {
-      const response = await fetch(`/api/reg/sequences/${seqId}/package`, {
-        method: 'POST',
-      });
-      if (!response.ok) throw new Error('Failed to create package');
+      const response = await apiRequest('POST', `/api/reg/sequences/${seqId}/package`);
       return response.json();
     },
     onSuccess: data => {

@@ -33,7 +33,7 @@ const updateSpecSchema = z.object({
 router.get('/:projectId', async (req, res) => {
   try {
     const { projectId } = req.params;
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -78,7 +78,7 @@ router.post('/', async (req, res) => {
 
     const data = validationResult.data;
     const pool = getPool();
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -148,7 +148,7 @@ router.put('/:id', async (req, res) => {
 
     const data = validationResult.data;
     const pool = getPool();
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -238,14 +238,19 @@ router.put('/:id', async (req, res) => {
 router.get('/:id/history', async (req, res) => {
   try {
     const { id } = req.params;
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    if (!tenantId) {
+      return res.status(403).json({ success: false, error: 'Tenant context required' });
+    }
     const pool = getPool();
 
 
     const result = await pool.query(
-      `SELECT * FROM specification_audit_log
-       WHERE specification_id = $1
-       ORDER BY created_at DESC`,
-      [id]
+      `SELECT sal.* FROM specification_audit_log sal
+       JOIN quality_specifications qs ON qs.id = sal.specification_id
+       WHERE sal.specification_id = $1 AND (qs.tenant_id = $2 OR qs.tenant_id IS NULL)
+       ORDER BY sal.created_at DESC`,
+      [id, tenantId]
     );
 
     res.json({

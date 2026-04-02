@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function DecisionsPanel({ batchId }: { batchId: string }) {
   const [logs, setLogs] = useState<any[]>([]);
   useEffect(() => {
     (async () => {
       try {
-        const r = await fetch(`/api/quality/batches/${batchId}/decisions`);
+        const r = await apiRequest('GET', `/api/quality/batches/${batchId}/decisions`);
         const data = await r.json();
         setLogs(Array.isArray(data) ? data : []);
       } catch (e) {

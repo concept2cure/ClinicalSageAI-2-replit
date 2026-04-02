@@ -9,6 +9,7 @@ import DossierTree from './DossierTree';
 import EditorCanvas from './EditorCanvas';
 import GuidancePanel from './RightRail/GuidancePanel';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // RightRail panels and Modals not yet built — inline stubs
@@ -92,11 +93,7 @@ export default function EditorPage() {
   const handleSave = async () => {
     try {
       // API call to save document
-      await fetch(`/api/documents/${docId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: editorContent }),
-      });
+      await apiRequest('PUT', `/api/documents/${docId}`, { content: editorContent });
 
       toast({
         title: 'Document saved',

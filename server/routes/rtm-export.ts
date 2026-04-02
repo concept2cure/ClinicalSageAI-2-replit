@@ -23,9 +23,10 @@ const logger = createScopedLogger('rtm-export');
 const router = Router();
 
 function getOrganizationId(req: Request): number {
-  const orgId = Number((req as any).user?.organizationId || (req as any).tenantId);
+  const raw = (req as any).tenantId || (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+  const orgId = typeof raw === 'number' ? raw : parseInt(String(raw), 10);
   if (isNaN(orgId) || orgId <= 0) {
-    throw new Error('Organization context required');
+    throw new Error('Missing or invalid organization context');
   }
   return orgId;
 }

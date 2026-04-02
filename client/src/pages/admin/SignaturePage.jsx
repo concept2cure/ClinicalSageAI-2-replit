@@ -23,11 +23,13 @@ import {
   Lock,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 /**
  * Digital Signature Page - Capture and manage electronic signatures for documents
  */
 const SignaturePage = () => {
+  const { toast } = useToast();
   // Auth context — signer identity must come from authenticated session per §11.100
   const { session } = useAuth();
   const authenticatedUser = session?.user;
@@ -132,7 +134,7 @@ const SignaturePage = () => {
         setSavedSignatures(data.signatures || []);
       }
     } catch (error) {
-      console.error('Error loading signatures:', error);
+      toast({ title: 'Failed to load signatures', description: 'Could not retrieve saved signatures. Please try again.', variant: 'destructive' });
     }
   };
 
@@ -216,7 +218,7 @@ const SignaturePage = () => {
         throw new Error(errorData.message || 'Failed to save signature');
       }
     } catch (error) {
-      console.error('Error saving signature:', error);
+      toast({ title: 'Signature save failed', description: 'An error occurred while saving the signature. Please try again.', variant: 'destructive' });
       setMessage('Error saving signature. Please try again.');
       setShowPasswordDialog(false);
     } finally {

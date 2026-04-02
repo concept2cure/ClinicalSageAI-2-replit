@@ -12,6 +12,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 
 interface Organization {
   id: string | number;
@@ -339,21 +340,17 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
       for (const org of organizations) {
         try {
           // Fetching client workspaces for organization
-          const clientResponse = await fetch(`/api/clients?organizationId=${org.id}`, {
-            headers: getAuthHeaders(),
-          });
-          if (clientResponse.ok) {
-            const clientResult = await clientResponse.json();
-            if (clientResult.success && clientResult.clients) {
-              // Found client workspaces for organization
-              const orgClients = clientResult.clients.map((client: any) => ({
-                id: client.id,
-                name: client.name,
-                organizationId: String(client.organizationId),
-                logo: client.logo,
-              }));
-              allClientWorkspaces = [...allClientWorkspaces, ...orgClients];
-            }
+          const clientResponse = await apiRequest('GET', `/api/clients?organizationId=${org.id}`);
+          const clientResult = await clientResponse.json();
+          if (clientResult.success && clientResult.clients) {
+            // Found client workspaces for organization
+            const orgClients = clientResult.clients.map((client: any) => ({
+              id: client.id,
+              name: client.name,
+              organizationId: String(client.organizationId),
+              logo: client.logo,
+            }));
+            allClientWorkspaces = [...allClientWorkspaces, ...orgClients];
           }
         } catch (error) {
           console.error('[TenantContext] Failed to load client workspaces:', error);

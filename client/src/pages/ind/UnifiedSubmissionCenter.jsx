@@ -250,12 +250,7 @@ export default function UnifiedSubmissionCenter() {
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/agent-swarm/swarms/${swarmId}`, { credentials: 'include' });
-        if (!res.ok) {
-          clearInterval(interval);
-          swarmPollRef.current = null;
-          return;
-        }
+        const res = await apiRequest('GET', `/api/agent-swarm/swarms/${swarmId}`);
         const data = await res.json();
         setActiveSwarm(data);
         // Collect HITL-pending tasks

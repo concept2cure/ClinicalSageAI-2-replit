@@ -181,3 +181,6 @@ export type {
   ProgramMilestone,
   InsertProgramMilestone,
 } from './programs';
+
+// CMC Operating System tables (PR #352)
+export * from './cmc-os';

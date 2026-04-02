@@ -11,6 +11,8 @@
  * - Multi-tenant isolated recommendations
  */
 
+import { apiRequest } from '@/lib/queryClient';
+
 /**
  * Get personalized document recommendations for a user
  *
@@ -30,7 +32,7 @@ export async function getPersonalizedRecommendations(options = {}) {
     if (options.context) params.append('context', options.context);
     if (options.tenantId) params.append('tenantId', options.tenantId);
 
-    const response = await fetch(`/api/recommendations/personalized?${params.toString()}`);
+    const response = await apiRequest('GET', `/api/recommendations/personalized?${params.toString()}`);
 
     if (!response.ok) {
       throw new Error(`Error getting personalized recommendations: ${response.statusText}`);
@@ -62,7 +64,7 @@ export async function getSimilarDocuments(documentId, options = {}) {
     if (options.includeContent) params.append('includeContent', options.includeContent.toString());
     if (options.tenantId) params.append('tenantId', options.tenantId);
 
-    const response = await fetch(`/api/recommendations/similar?${params.toString()}`);
+    const response = await apiRequest('GET', `/api/recommendations/similar?${params.toString()}`);
 
     if (!response.ok) {
       throw new Error(`Error getting similar documents: ${response.statusText}`);
@@ -98,7 +100,7 @@ export async function getTeamRecommendations(options = {}) {
     if (options.limit) params.append('limit', options.limit.toString());
     if (options.tenantId) params.append('tenantId', options.tenantId);
 
-    const response = await fetch(`/api/recommendations/team?${params.toString()}`);
+    const response = await apiRequest('GET', `/api/recommendations/team?${params.toString()}`);
 
     if (!response.ok) {
       throw new Error(`Error getting team recommendations: ${response.statusText}`);
@@ -128,7 +130,7 @@ export async function getTrendingDocuments(options = {}) {
     if (options.limit) params.append('limit', options.limit.toString());
     if (options.tenantId) params.append('tenantId', options.tenantId);
 
-    const response = await fetch(`/api/recommendations/trending?${params.toString()}`);
+    const response = await apiRequest('GET', `/api/recommendations/trending?${params.toString()}`);
 
     if (!response.ok) {
       throw new Error(`Error getting trending documents: ${response.statusText}`);
@@ -158,13 +160,7 @@ export async function logDocumentInteraction(interaction) {
       throw new Error('Document ID, user ID, and action are required for logging interactions');
     }
 
-    await fetch('/api/recommendations/log-interaction', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(interaction),
-    });
+    await apiRequest('POST', '/api/recommendations/log-interaction', interaction);
   } catch (error) {
     console.error('Recommendation Service Error (logDocumentInteraction):', error);
   }
@@ -187,7 +183,7 @@ export async function getRecentlyViewedDocuments(userId, options = {}) {
     if (options.limit) params.append('limit', options.limit.toString());
     if (options.tenantId) params.append('tenantId', options.tenantId);
 
-    const response = await fetch(`/api/recommendations/recent?${params.toString()}`);
+    const response = await apiRequest('GET', `/api/recommendations/recent?${params.toString()}`);
 
     if (!response.ok) {
       throw new Error(`Error getting recently viewed documents: ${response.statusText}`);

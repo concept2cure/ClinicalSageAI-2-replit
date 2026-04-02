@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -40,7 +41,7 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
   // Load recent Gmail ingests
   async function loadGmailData() {
     try {
-      const response = await fetch(`/api/reg/integrations/gmail/ingest/recent`);
+      const response = await apiRequest('GET', `/api/reg/integrations/gmail/ingest/recent`);
       const data = await response.json();
       setGmailRows(data);
     } catch (error) {
@@ -57,9 +58,7 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
   async function runGmailIngest() {
     setBusyGmail(true);
     try {
-      const response = await fetch(`/api/reg/integrations/gmail/ingest`, {
-        method: 'POST',
-      });
+      const response = await apiRequest('POST', `/api/reg/integrations/gmail/ingest`);
       const result = await response.json();
 
       if (result.error) {
@@ -87,11 +86,7 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
 
     setBusyCalendar(true);
     try {
-      const response = await fetch(`/api/reg/integrations/gcal/push`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subId }),
-      });
+      const response = await apiRequest('POST', `/api/reg/integrations/gcal/push`, { subId });
       const result = await response.json();
 
       if (result.error) {

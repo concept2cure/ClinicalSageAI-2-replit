@@ -48,6 +48,7 @@ import {
 } from '../../components/ui/dialog';
 import { useToast } from '../../hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 const DocumentTemplates = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,12 +90,9 @@ const DocumentTemplates = () => {
       if (selectedCategory !== 'all') params.append('category', selectedCategory);
       if (searchQuery) params.append('search', searchQuery);
 
-      const response = await fetch(`/api/templates?${params}`, {
-        headers: {
-          'x-organization-id': '7', // Use organization 7 which has the templates
-        },
+      const response = await apiRequest('GET', `/api/templates?${params}`, undefined, {
+        'x-organization-id': '7', // Use organization 7 which has the templates
       });
-      if (!response.ok) throw new Error('Failed to fetch templates');
       return response.json();
     },
   });
@@ -103,12 +101,9 @@ const DocumentTemplates = () => {
   const { data: recentData, isLoading: recentLoading } = useQuery({
     queryKey: ['/api/templates/recent/documents'],
     queryFn: async () => {
-      const response = await fetch('/api/templates/recent/documents', {
-        headers: {
-          'x-organization-id': '7',
-        },
+      const response = await apiRequest('GET', '/api/templates/recent/documents', undefined, {
+        'x-organization-id': '7',
       });
-      if (!response.ok) throw new Error('Failed to fetch recent documents');
       return response.json();
     },
   });
@@ -117,12 +112,9 @@ const DocumentTemplates = () => {
   const { data: featuredData, isLoading: featuredLoading } = useQuery({
     queryKey: ['/api/templates/featured/list'],
     queryFn: async () => {
-      const response = await fetch('/api/templates/featured/list', {
-        headers: {
-          'x-organization-id': '7',
-        },
+      const response = await apiRequest('GET', '/api/templates/featured/list', undefined, {
+        'x-organization-id': '7',
       });
-      if (!response.ok) throw new Error('Failed to fetch featured templates');
       return response.json();
     },
   });
@@ -137,15 +129,9 @@ const DocumentTemplates = () => {
   // Track template usage mutation
   const trackUsageMutation = useMutation({
     mutationFn: async ({ templateId, usageType, documentTitle }) => {
-      const response = await fetch(`/api/templates/${templateId}/use`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-organization-id': '7',
-        },
-        body: JSON.stringify({ usageType, documentTitle }),
+      const response = await apiRequest('POST', `/api/templates/${templateId}/use`, { usageType, documentTitle }, {
+        'x-organization-id': '7',
       });
-      if (!response.ok) throw new Error('Failed to track template usage');
       return response.json();
     },
     onSuccess: () => {
@@ -156,15 +142,9 @@ const DocumentTemplates = () => {
   // Create template mutation
   const createTemplateMutation = useMutation({
     mutationFn: async templateData => {
-      const response = await fetch('/api/templates', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-organization-id': '7',
-        },
-        body: JSON.stringify(templateData),
+      const response = await apiRequest('POST', '/api/templates', templateData, {
+        'x-organization-id': '7',
       });
-      if (!response.ok) throw new Error('Failed to create template');
       return response.json();
     },
     onSuccess: () => {
@@ -181,15 +161,9 @@ const DocumentTemplates = () => {
   // Update template mutation
   const updateTemplateMutation = useMutation({
     mutationFn: async ({ templateId, updateData }) => {
-      const response = await fetch(`/api/templates/${templateId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-organization-id': '7',
-        },
-        body: JSON.stringify(updateData),
+      const response = await apiRequest('PUT', `/api/templates/${templateId}`, updateData, {
+        'x-organization-id': '7',
       });
-      if (!response.ok) throw new Error('Failed to update template');
       return response.json();
     },
     onSuccess: () => {
@@ -203,11 +177,9 @@ const DocumentTemplates = () => {
   // Delete template mutation
   const deleteTemplateMutation = useMutation({
     mutationFn: async templateId => {
-      const response = await fetch(`/api/templates/${templateId}`, {
-        method: 'DELETE',
-        headers: { 'x-organization-id': '7' },
+      const response = await apiRequest('DELETE', `/api/templates/${templateId}`, undefined, {
+        'x-organization-id': '7',
       });
-      if (!response.ok) throw new Error('Failed to delete template');
       return response.json();
     },
     onSuccess: () => {
@@ -219,15 +191,9 @@ const DocumentTemplates = () => {
   // Duplicate template mutation
   const duplicateTemplateMutation = useMutation({
     mutationFn: async ({ templateId, newName }) => {
-      const response = await fetch(`/api/templates/${templateId}/duplicate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-organization-id': '7',
-        },
-        body: JSON.stringify({ newName }),
+      const response = await apiRequest('POST', `/api/templates/${templateId}/duplicate`, { newName }, {
+        'x-organization-id': '7',
       });
-      if (!response.ok) throw new Error('Failed to duplicate template');
       return response.json();
     },
     onSuccess: () => {

@@ -7,6 +7,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 export interface ProjectTask {
   id: number;
@@ -44,13 +45,6 @@ export interface SubmissionMilestone {
   order: number;
 }
 
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 export function useProjectTasks(projectId: string | number | null) {
   const queryClient = useQueryClient();
   const pid = projectId ? String(projectId) : null;
@@ -59,9 +53,7 @@ export function useProjectTasks(projectId: string | number | null) {
     queryKey: ['project-tasks', pid],
     queryFn: async (): Promise<ProjectTask[]> => {
       if (!pid) return [];
-      const res = await fetch(`/api/concept2cure/projects/${pid}/tasks`, {
-        headers: getAuthHeaders(),
-      });
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${pid}/tasks`);
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(payload?.error?.message || 'Failed to fetch tasks');
       return payload?.data ?? [];
@@ -74,9 +66,7 @@ export function useProjectTasks(projectId: string | number | null) {
     queryKey: ['project-tasks-summary', pid],
     queryFn: async (): Promise<TaskSummary> => {
       if (!pid) return { total: 0, completed: 0, overdue: 0, byStatus: {}, byPriority: {}, healthScore: 100, completionRate: 0 };
-      const res = await fetch(`/api/concept2cure/projects/${pid}/tasks/summary`, {
-        headers: getAuthHeaders(),
-      });
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${pid}/tasks/summary`);
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(payload?.error?.message || 'Failed to fetch summary');
       return payload?.data ?? { total: 0, completed: 0, overdue: 0, byStatus: {}, byPriority: {}, healthScore: 100, completionRate: 0 };
@@ -92,11 +82,7 @@ export function useProjectTasks(projectId: string | number | null) {
 
   const createTask = useMutation({
     mutationFn: async (data: Partial<ProjectTask>) => {
-      const res = await fetch(`/api/concept2cure/projects/${pid}/tasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify(data),
-      });
+      const res = await apiRequest('POST', `/api/concept2cure/projects/${pid}/tasks`, data);
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(payload?.error?.message || 'Failed to create task');
       return payload?.data;
@@ -106,11 +92,7 @@ export function useProjectTasks(projectId: string | number | null) {
 
   const updateTask = useMutation({
     mutationFn: async ({ taskId, updates }: { taskId: number; updates: Partial<ProjectTask> }) => {
-      const res = await fetch(`/api/concept2cure/projects/${pid}/tasks/${taskId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify(updates),
-      });
+      const res = await apiRequest('PUT', `/api/concept2cure/projects/${pid}/tasks/${taskId}`, updates);
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(payload?.error?.message || 'Failed to update task');
       return payload?.data;
@@ -120,10 +102,7 @@ export function useProjectTasks(projectId: string | number | null) {
 
   const deleteTask = useMutation({
     mutationFn: async (taskId: number) => {
-      const res = await fetch(`/api/concept2cure/projects/${pid}/tasks/${taskId}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
+      const res = await apiRequest('DELETE', `/api/concept2cure/projects/${pid}/tasks/${taskId}`);
       if (!res.ok) throw new Error('Failed to delete task');
     },
     onSuccess: invalidate,
@@ -131,11 +110,7 @@ export function useProjectTasks(projectId: string | number | null) {
 
   const generateMilestones = useMutation({
     mutationFn: async ({ submissionType, targetDate }: { submissionType: string; targetDate?: string }) => {
-      const res = await fetch(`/api/concept2cure/projects/${pid}/tasks/bulk`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({ submissionType, targetDate }),
-      });
+      const res = await apiRequest('POST', `/api/concept2cure/projects/${pid}/tasks/bulk`, { submissionType, targetDate });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(payload?.error?.message || 'Failed to generate milestones');
       return payload?.data;
@@ -163,7 +138,7 @@ export function useSubmissionMilestones(submissionType?: string) {
     queryKey: ['submission-milestones', submissionType],
     queryFn: async (): Promise<SubmissionMilestone[]> => {
       if (!submissionType) return [];
-      const res = await fetch(`/api/concept2cure/submission-milestones/${submissionType}`);
+      const res = await apiRequest('GET', `/api/concept2cure/submission-milestones/${submissionType}`);
       const payload = await res.json().catch(() => ({}));
       return payload?.data ?? [];
     },

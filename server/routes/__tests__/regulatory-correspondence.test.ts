@@ -103,6 +103,7 @@ describe('Regulatory Correspondence Routes (integration)', () => {
 
   it('returns correspondence detail and allows issue review updates', async () => {
     if (!correspondenceId || !issueId) {
+      console.warn('[SKIP] No correspondenceId/issueId from prior test (DB likely unavailable)');
       return;
     }
     const detail = await request(app).get(
@@ -129,6 +130,7 @@ describe('Regulatory Correspondence Routes (integration)', () => {
 
   it('creates response package and returns timeline records', async () => {
     if (!correspondenceId) {
+      console.warn('[SKIP] No correspondenceId from prior test (DB likely unavailable)');
       return;
     }
     const responsePackage = await request(app)

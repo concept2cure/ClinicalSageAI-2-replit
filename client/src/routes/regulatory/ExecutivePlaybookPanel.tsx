@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -88,7 +89,7 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
     if (!subId) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/reg/playbook/${subId}/cards`);
+      const response = await apiRequest('GET', `/api/reg/playbook/${subId}/cards`);
       const data = await response.json();
       setCards(data);
     } catch (error) {
@@ -102,7 +103,7 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
     if (!subId) return;
     setGenerating(true);
     try {
-      const response = await fetch(`/api/reg/playbook/${subId}/generate`);
+      const response = await apiRequest('GET', `/api/reg/playbook/${subId}/generate`);
       const data = await response.json();
       if (data.error) {
         toast({ title: 'Generation Failed', description: data.error, variant: 'destructive' });
@@ -120,11 +121,7 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
   // Accept card
   const acceptCard = async (cardId: string) => {
     try {
-      const response = await fetch(`/api/reg/playbook/cards/${cardId}/accept`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ actor: 'user' }),
-      });
+      const response = await apiRequest('POST', `/api/reg/playbook/cards/${cardId}/accept`, { actor: 'user' });
       const result = await response.json();
       if (result.error) {
         toast({ title: 'Accept Failed', description: result.error, variant: 'destructive' });
@@ -141,15 +138,11 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
   const snoozeCard = async () => {
     if (!showSnoozeDialog || !snoozeDate) return;
     try {
-      const response = await fetch(`/api/reg/playbook/cards/${showSnoozeDialog}/snooze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const response = await apiRequest('POST', `/api/reg/playbook/cards/${showSnoozeDialog}/snooze`, {
           until: snoozeDate,
           reason: snoozeReason || 'Snoozed via playbook',
           actor: 'user',
-        }),
-      });
+        });
       const result = await response.json();
       if (result.error) {
         toast({ title: 'Snooze Failed', description: result.error, variant: 'destructive' });
@@ -168,14 +161,10 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
   const rejectCard = async () => {
     if (!showRejectDialog) return;
     try {
-      const response = await fetch(`/api/reg/playbook/cards/${showRejectDialog}/reject`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const response = await apiRequest('POST', `/api/reg/playbook/cards/${showRejectDialog}/reject`, {
           reason: rejectReason || 'Rejected via playbook',
           actor: 'user',
-        }),
-      });
+        });
       const result = await response.json();
       if (result.error) {
         toast({ title: 'Reject Failed', description: result.error, variant: 'destructive' });
@@ -193,11 +182,7 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
   const simulateRPI = async () => {
     if (!subId || selectedCards.length === 0) return;
     try {
-      const response = await fetch(`/api/reg/playbook/simulate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subId, cardIds: selectedCards }),
-      });
+      const response = await apiRequest('POST', `/api/reg/playbook/simulate`, { subId, cardIds: selectedCards });
       const data = await response.json();
       setSimulation(data);
     } catch (error) {

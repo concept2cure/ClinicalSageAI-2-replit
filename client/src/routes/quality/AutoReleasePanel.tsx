@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function AutoReleasePanel({ batchId }: { batchId: string }) {
   const [rules, setRules] = useState<any[]>([]);
@@ -10,30 +11,33 @@ export default function AutoReleasePanel({ batchId }: { batchId: string }) {
 
   useEffect(() => {
     (async () => {
-      const r = await fetch(`/api/quality/batches/${batchId}/auto-release/status`).then(r =>
-        r.json()
-      );
-      setStatus(r);
-      setRules(r.rules || []);
+      try {
+        const r = await apiRequest('GET', `/api/quality/batches/${batchId}/auto-release/status`).then(r =>
+          r.json()
+        );
+        setStatus(r);
+        setRules(r.rules || []);
+      } catch { /* handled by apiRequest */ }
     })();
   }, [batchId]);
 
   async function enableAutoRelease() {
-    const r = await fetch(`/api/quality/batches/${batchId}/auto-release/enable`, {
-      method: 'POST',
-    });
-    const d = await r.json();
-    if (!r.ok) { toast({ title: 'Error', description: d.error || 'Enable failed', variant: 'destructive' }); return; }
-    setStatus({ ...status, enabled: true });
+    try {
+      await apiRequest('POST', `/api/quality/batches/${batchId}/auto-release/enable`);
+      setStatus({ ...status, enabled: true });
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message || 'Enable failed', variant: 'destructive' });
+    }
   }
 
   async function trigger() {
-    const r = await fetch(`/api/quality/batches/${batchId}/auto-release/trigger`, {
-      method: 'POST',
-    });
-    const d = await r.json();
-    if (!r.ok) { toast({ title: 'Error', description: d.error || 'Trigger failed', variant: 'destructive' }); return; }
-    toast({ title: `Auto-release ${d.executed ? 'Executed' : 'Skipped'}`, description: d.decision || 'N/A' });
+    try {
+      const r = await apiRequest('POST', `/api/quality/batches/${batchId}/auto-release/trigger`);
+      const d = await r.json();
+      toast({ title: `Auto-release ${d.executed ? 'Executed' : 'Skipped'}`, description: d.decision || 'N/A' });
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message || 'Trigger failed', variant: 'destructive' });
+    }
   }
 
   return (

@@ -22,6 +22,7 @@
  */
 
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { Message, Artifact, SubmissionType } from '../types';
 
 /**
@@ -195,12 +196,7 @@ export function useChat() {
     }: SendMessageParams): Promise<ChatResponse> => {
       const systemPrompt = getSystemPrompt(submissionType);
       
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await apiRequest('POST', '/api/chat', {
           message,
           thread_id: threadId,
           system_prompt: systemPrompt,
@@ -209,8 +205,7 @@ export function useChat() {
             submissionType,
             conversationLength: conversationHistory.length,
           },
-        }),
-      });
+        });
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
@@ -262,7 +257,7 @@ export function useThread(threadId: string | null) {
     queryFn: async () => {
       if (!threadId) return null;
       
-      const response = await fetch(`/api/chat/thread/${threadId}`);
+      const response = await apiRequest('GET', `/api/chat/thread/${threadId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch thread');
       }

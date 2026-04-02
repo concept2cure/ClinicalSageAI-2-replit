@@ -46,7 +46,7 @@ const releaseSchema = z.object({
 router.get('/:projectId', async (req, res) => {
   try {
     const { projectId } = req.params;
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -91,7 +91,7 @@ router.post('/', async (req, res) => {
 
     const data = validationResult.data;
     const pool = getPool();
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -157,11 +157,14 @@ router.put('/:id', async (req, res) => {
 
     const data = validationResult.data;
     const pool = getPool();
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    if (!tenantId) {
+      return res.status(401).json({ success: false, error: 'Tenant context required' });
+    }
 
-
-    // Verify record exists
+    // Verify record exists and belongs to tenant
     const existing = await pool.query(
-      `SELECT * FROM cmc_batch_records WHERE id = $1`, [id]
+      `SELECT * FROM cmc_batch_records WHERE id = $1 AND (tenant_id = $2 OR tenant_id IS NULL)`, [id, tenantId]
     );
     if (existing.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Batch record not found' });
@@ -248,11 +251,14 @@ router.post('/:id/release', async (req, res) => {
 
     const data = validationResult.data;
     const pool = getPool();
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    if (!tenantId) {
+      return res.status(401).json({ success: false, error: 'Tenant context required' });
+    }
 
-
-    // Verify record exists
+    // Verify record exists and belongs to tenant
     const existing = await pool.query(
-      `SELECT * FROM cmc_batch_records WHERE id = $1`, [id]
+      `SELECT * FROM cmc_batch_records WHERE id = $1 AND (tenant_id = $2 OR tenant_id IS NULL)`, [id, tenantId]
     );
     if (existing.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Batch record not found' });

@@ -113,8 +113,8 @@ const pool = getPool();
 async function executeQuery(req: any, queryText: string, params?: any[]) {
   const client = await pool.connect();
   try {
-    // Set tenant context for RLS policies
-    const tenantId = req.headers?.['x-tenant-id'] || req.headers?.['x-organization-id'];
+    // Set tenant context for RLS policies — derive from JWT-validated context, not raw headers
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       throw new Error('Tenant context required');
     }
@@ -156,8 +156,8 @@ async function audit(studyId: string, action: string, payload: any, req: any) {
   const actor = (req.headers['x-user-name'] || req.headers['x-user-email'] || 'user').toString();
   const client = await pool.connect();
   try {
-    // Set tenant context for audit - use parameterized set_config() to prevent SQL injection
-    const tenantId = req.headers?.['x-tenant-id'] || req.headers?.['x-organization-id'];
+    // Set tenant context for audit — derive from JWT-validated context, not raw headers
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       throw new Error('Tenant context required');
     }
@@ -180,8 +180,8 @@ async function audit(studyId: string, action: string, payload: any, req: any) {
 router.get('/studies', async (req, res) => {
   const client = await pool.connect();
   try {
-    // Set tenant context for RLS policies
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    // Set tenant context for RLS policies — derive from JWT-validated context, not raw headers
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -270,8 +270,8 @@ router.post('/studies', async (req, res) => {
       status,
     } = req.body;
 
-    // Get tenant ID from request headers
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    // Get tenant ID from JWT-validated context, not raw headers
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -521,8 +521,8 @@ router.get('/studies/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Set tenant context for RLS policies - use parameterized set_config()
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    // Set tenant context for RLS policies — derive from JWT-validated context, not raw headers
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -606,8 +606,8 @@ router.post('/studies/:id/conditions', async (req, res) => {
     const { id } = req.params;
     const { kind, temp, rh, description } = req.body;
 
-    // Set tenant context for RLS policies - use parameterized set_config()
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    // Set tenant context for RLS policies — derive from JWT-validated context, not raw headers
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -641,8 +641,8 @@ router.delete('/conditions/:condId', async (req, res) => {
   try {
     const { condId } = req.params;
 
-    // Set tenant context for RLS policies - use parameterized set_config()
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    // Set tenant context for RLS policies — derive from JWT-validated context, not raw headers
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }

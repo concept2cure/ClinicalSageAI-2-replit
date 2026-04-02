@@ -1,8 +1,17 @@
 import React, { Suspense } from 'react';
 import { MessageSquare, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { ZenChat } from '../chat/ZenChat';
 import { ErrorBoundary } from '../ErrorBoundary';
+
+interface EmbeddedModulePageProps {
+  embedded?: boolean;
+  projectId?: string;
+  projectName?: string;
+  onBackToProject?: () => void;
+  initialDocumentType?: string;
+}
 
 interface BaseEmbeddedHostProps {
   moduleAssistantOpen: boolean;
@@ -17,7 +26,7 @@ interface BaseEmbeddedHostProps {
 }
 
 interface Embedded510kHostProps extends BaseEmbeddedHostProps {
-  EmbeddedCERV2Page: React.ComponentType<any>;
+  EmbeddedCERV2Page: React.ComponentType<EmbeddedModulePageProps>;
   ModuleLoadingFallback: React.ComponentType;
   onBackToProject: () => void;
 }
@@ -63,7 +72,7 @@ export const Embedded510kHost: React.FC<Embedded510kHostProps> = ({
 );
 
 interface EmbeddedPMAHostProps extends BaseEmbeddedHostProps {
-  EmbeddedPMAWorkspace: React.ComponentType<any>;
+  EmbeddedPMAWorkspace: React.ComponentType<EmbeddedModulePageProps>;
   ModuleLoadingFallback: React.ComponentType;
   onBackToProject: () => void;
 }
@@ -99,7 +108,7 @@ export const EmbeddedPMAHost: React.FC<EmbeddedPMAHostProps> = props => (
 );
 
 interface EmbeddedCERHostProps extends BaseEmbeddedHostProps {
-  EmbeddedCERV2Page: React.ComponentType<any>;
+  EmbeddedCERV2Page: React.ComponentType<EmbeddedModulePageProps>;
   ModuleLoadingFallback: React.ComponentType;
   onBackToProject: () => void;
 }
@@ -169,27 +178,31 @@ const EmbeddedAssistantRail: React.FC<EmbeddedAssistantRailProps> = ({
 }) => {
   if (!open) {
     return (
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={onOpen}
-        className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-stone-50 hover:bg-stone-100 border-l border-stone-200 transition-colors"
-        title="Open AI Assistant"
+        className="flex-shrink-0 w-10 h-full rounded-none flex flex-col items-center justify-center gap-1 bg-stone-50 hover:bg-stone-100 border-l border-stone-200 transition-colors"
+        aria-label="Open AI Assistant"
+        aria-expanded={false}
+        aria-controls={panelTestId}
         data-testid={toggleTestId}
       >
         <MessageSquare className="w-4 h-4 text-stone-500" />
         <span className="text-[10px] text-stone-400 writing-mode-vertical" style={{ writingMode: 'vertical-rl' }}>
           Assistant
         </span>
-      </button>
+      </Button>
     );
   }
 
   return (
-    <div className="flex-shrink-0 w-[380px] flex flex-col border-l border-stone-200 bg-white" data-testid={panelTestId}>
+    <div className="flex-shrink-0 w-[380px] flex flex-col border-l border-stone-200 bg-white" role="complementary" aria-label="AI Assistant" data-testid={panelTestId}>
       <div className="flex items-center justify-between px-3 py-2 border-b border-stone-100 bg-stone-50">
         <span className="text-sm font-medium text-stone-700">AI Assistant</span>
-        <button onClick={onClose} className="p-1 rounded hover:bg-stone-200 text-stone-400 hover:text-stone-600">
+        <Button variant="ghost" size="icon" onClick={onClose} className="h-7 w-7" aria-label="Close AI Assistant">
           <X className="w-4 h-4" />
-        </button>
+        </Button>
       </div>
       <div className="flex-1 min-h-0 overflow-hidden">
         <ZenChat

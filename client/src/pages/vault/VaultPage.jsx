@@ -3,11 +3,21 @@
 import { useState, useEffect } from 'react';
 import UnifiedDocumentUpload from '../../components/unified/UnifiedDocumentUpload';
 import DocumentDataCenter from '../../components/DocumentDataCenter';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { LoadingState } from '@/components/ui/statesV2';
 import {
   FileText,
   Upload,
@@ -34,13 +44,16 @@ export default function VaultPage() {
     byProject: {},
   });
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+  const { toast } = useToast();
 
   // Load document statistics on mount and when documents are updated
   useEffect(() => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/vault/list', { credentials: 'include' });
+        setFetchError(null);
+        const res = await apiRequest('GET', '/api/vault/list');
         const data = await res.json();
 
         if (data.success) {
@@ -72,7 +85,8 @@ export default function VaultPage() {
           setDocumentStats(stats);
         }
       } catch (error) {
-        console.error('Error fetching vault statistics:', error);
+        setFetchError(error.message || 'Failed to load vault documents');
+        toast({ title: 'Vault load failed', description: 'Could not fetch document list. Please try again.', variant: 'destructive' });
       } finally {
         setLoading(false);
       }
@@ -251,36 +265,35 @@ export default function VaultPage() {
                         onChange={e => setQuery(e.target.value)}
                       />
                     </div>
-                    <select
-                      value={selectedModule}
-                      onChange={e => setSelectedModule(e.target.value)}
-                      className="rounded-md border px-3 py-2 text-sm bg-white"
-                    >
-                      {moduleOptions.map(option => (
-                        <option key={option} value={option}>
-                          {option === 'all' ? 'All Modules' : option}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={selectedType}
-                      onChange={e => setSelectedType(e.target.value)}
-                      className="rounded-md border px-3 py-2 text-sm bg-white"
-                    >
-                      {typeOptions.map(option => (
-                        <option key={option} value={option}>
-                          {option === 'all' ? 'All Types' : option}
-                        </option>
-                      ))}
-                    </select>
+                    <Select value={selectedModule} onValueChange={setSelectedModule}>
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="All Modules" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {moduleOptions.map(option => (
+                          <SelectItem key={option} value={option}>
+                            {option === 'all' ? 'All Modules' : option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={selectedType} onValueChange={setSelectedType}>
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="All Types" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {typeOptions.map(option => (
+                          <SelectItem key={option} value={option}>
+                            {option === 'all' ? 'All Types' : option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </CardHeader>
                 <CardContent>
                   {loading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-                      <p className="text-gray-600">Loading documents...</p>
-                    </div>
+                    <LoadingState message="Loading documents..." />
                   ) : (
                     <div className="space-y-4">
                       <div className="flex flex-wrap items-center justify-between gap-2 bg-gray-50 rounded-lg p-4">

@@ -11,6 +11,8 @@
  * - Relevance scoring with multi-parameter ranking
  */
 
+import { apiRequest } from '@/lib/queryClient';
+
 /**
  * Perform a smart search across documents
  *
@@ -41,7 +43,7 @@ export async function smartSearch(queryParams) {
       params.append('semanticSearch', queryParams.semanticSearch.toString());
     if (queryParams.tenantId) params.append('tenantId', queryParams.tenantId);
 
-    const response = await fetch(`/api/search/documents?${params.toString()}`);
+    const response = await apiRequest('GET', `/api/search/documents?${params.toString()}`);
 
     if (!response.ok) {
       throw new Error(`Error searching documents: ${response.statusText}`);
@@ -69,7 +71,7 @@ export async function getSearchSuggestions(partialQuery, tenantId) {
     params.append('query', partialQuery);
     if (tenantId) params.append('tenantId', tenantId);
 
-    const response = await fetch(`/api/search/suggestions?${params.toString()}`);
+    const response = await apiRequest('GET', `/api/search/suggestions?${params.toString()}`);
 
     if (!response.ok) {
       throw new Error(`Error getting search suggestions: ${response.statusText}`);
@@ -98,7 +100,7 @@ export async function getRelatedDocuments(documentId, options = {}) {
     if (options.limit) params.append('limit', options.limit.toString());
     if (options.tenantId) params.append('tenantId', options.tenantId);
 
-    const response = await fetch(`/api/search/related?${params.toString()}`);
+    const response = await apiRequest('GET', `/api/search/related?${params.toString()}`);
 
     if (!response.ok) {
       throw new Error(`Error getting related documents: ${response.statusText}`);
@@ -124,7 +126,7 @@ export async function getTrendingSearchTerms(tenantId, limit = 10) {
     if (tenantId) params.append('tenantId', tenantId);
     params.append('limit', limit.toString());
 
-    const response = await fetch(`/api/search/trending?${params.toString()}`);
+    const response = await apiRequest('GET', `/api/search/trending?${params.toString()}`);
 
     if (!response.ok) {
       throw new Error(`Error getting trending search terms: ${response.statusText}`);
@@ -149,17 +151,11 @@ export async function getTrendingSearchTerms(tenantId, limit = 10) {
  */
 export async function saveSearchQuery(query, options = {}) {
   try {
-    await fetch('/api/search/save-query', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        query,
-        tenantId: options.tenantId,
-        userId: options.userId,
-        resultCount: options.resultCount,
-      }),
+    await apiRequest('POST', '/api/search/save-query', {
+      query,
+      tenantId: options.tenantId,
+      userId: options.userId,
+      resultCount: options.resultCount,
     });
   } catch (error) {
     console.error('Smart Search Service Error (saveSearchQuery):', error);

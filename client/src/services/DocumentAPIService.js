@@ -6,6 +6,8 @@
  * downloading, and managing document metadata.
  */
 
+import { apiRequest } from '@/lib/queryClient';
+
 // Create a single export object for consistent API access
 const documentApiService = {};
 
@@ -30,15 +32,7 @@ documentApiService.getDocuments = async (options = {}) => {
       }
     });
 
-    const response = await fetch(`/api/documents?${queryParams.toString()}`);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.error || `Error fetching documents: ${response.status} ${response.statusText}`
-      );
-    }
-
+    const response = await apiRequest('GET', `/api/documents?${queryParams.toString()}`);
     const data = await response.json();
     return data;
   } catch (error) {
@@ -54,12 +48,7 @@ documentApiService.getDocuments = async (options = {}) => {
  */
 documentApiService.getDocument = async id => {
   try {
-    const response = await fetch(`/api/documents/${id}`);
-
-    if (!response.ok) {
-      throw new Error(`Error fetching document: ${response.statusText}`);
-    }
-
+    const response = await apiRequest('GET', `/api/documents/${id}`);
     const data = await response.json();
     return data;
   } catch (error) {
@@ -75,6 +64,7 @@ documentApiService.getDocument = async id => {
  */
 documentApiService.uploadDocument = async formData => {
   try {
+    // Raw fetch required: FormData body needs browser-set Content-Type with boundary
     const response = await fetch('/api/documents/upload', {
       method: 'POST',
       body: formData,
@@ -102,18 +92,7 @@ documentApiService.uploadDocument = async formData => {
  */
 documentApiService.createDocument = async documentData => {
   try {
-    const response = await fetch('/api/documents', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(documentData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error creating document: ${response.statusText}`);
-    }
-
+    const response = await apiRequest('POST', '/api/documents', documentData);
     const data = await response.json();
     return data;
   } catch (error) {
@@ -130,18 +109,7 @@ documentApiService.createDocument = async documentData => {
  */
 documentApiService.updateDocument = async (id, documentData) => {
   try {
-    const response = await fetch(`/api/documents/${id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(documentData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error updating document: ${response.statusText}`);
-    }
-
+    const response = await apiRequest('PATCH', `/api/documents/${id}`, documentData);
     const data = await response.json();
     return data;
   } catch (error) {
@@ -157,13 +125,7 @@ documentApiService.updateDocument = async (id, documentData) => {
  */
 documentApiService.deleteDocument = async id => {
   try {
-    const response = await fetch(`/api/documents/${id}`, {
-      method: 'DELETE',
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error deleting document: ${response.statusText}`);
-    }
+    const response = await apiRequest('DELETE', `/api/documents/${id}`);
 
     return true;
   } catch (error) {
@@ -188,12 +150,7 @@ documentApiService.getFolders = async (options = {}) => {
       }
     });
 
-    const response = await fetch(`/api/documents/folders?${queryParams.toString()}`);
-
-    if (!response.ok) {
-      throw new Error(`Error fetching folders: ${response.statusText}`);
-    }
-
+    const response = await apiRequest('GET', `/api/documents/folders?${queryParams.toString()}`);
     const data = await response.json();
     return data;
   } catch (error) {
@@ -209,18 +166,7 @@ documentApiService.getFolders = async (options = {}) => {
  */
 documentApiService.createFolder = async folderData => {
   try {
-    const response = await fetch('/api/documents/folders', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(folderData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error creating folder: ${response.statusText}`);
-    }
-
+    const response = await apiRequest('POST', '/api/documents/folders', folderData);
     const data = await response.json();
     return data;
   } catch (error) {
@@ -236,12 +182,7 @@ documentApiService.createFolder = async folderData => {
  */
 documentApiService.downloadDocument = async (id, filename) => {
   try {
-    const response = await fetch(`/api/documents/${id}/download`);
-
-    if (!response.ok) {
-      throw new Error(`Error downloading document: ${response.statusText}`);
-    }
-
+    const response = await apiRequest('GET', `/api/documents/${id}/download`);
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -288,18 +229,7 @@ documentApiService.saveCerToVault = async (cerData, metadata = {}) => {
     };
 
     // Create document
-    const response = await fetch('/api/documents', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(documentData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error saving CER to vault: ${response.statusText}`);
-    }
-
+    const response = await apiRequest('POST', '/api/documents', documentData);
     const data = await response.json();
     return data;
   } catch (error) {

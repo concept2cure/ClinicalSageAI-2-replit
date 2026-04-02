@@ -22,17 +22,12 @@ import { eq, and } from 'drizzle-orm';
 
 const router = express.Router();
 
-// Module-level DDL init guards
-let projectWorkflowsTableReady = false;
-let complianceTrackingTableReady = false;
-
 // Helper to read organization ID from authenticated context
 function getOrgId(req: express.Request): number {
   const orgId = parseInt(
     (req as any).tenantId ||
-      (req as any).tenantContext?.organizationId ||
-      (req as any).user?.organizationId ||
-      ''
+    (req as any).tenantContext?.organizationId ||
+    ''
   );
   if (isNaN(orgId) || orgId <= 0) {
     throw new Error('Organization context required');
@@ -70,10 +65,7 @@ router.post('/analytical-methods', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertAnalyticalMethodSchema.parse(req.body);
-    const [method] = await db
-      .insert(analyticalMethods)
-      .values({ ...validatedData, organizationId: orgId })
-      .returning();
+    const [method] = await db.insert(analyticalMethods).values({ ...validatedData, organizationId: orgId }).returning();
     res.json({ success: true, data: method });
   } catch (error) {
     console.error('Error creating analytical method:', error);
@@ -118,10 +110,7 @@ router.post('/process-validation', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertProcessValidationSchema.parse(req.body);
-    const [validation] = await db
-      .insert(processValidation)
-      .values({ ...validatedData, organizationId: orgId })
-      .returning();
+    const [validation] = await db.insert(processValidation).values({ ...validatedData, organizationId: orgId }).returning();
     res.json({ success: true, data: validation });
   } catch (error) {
     console.error('Error creating process validation:', error);
@@ -159,10 +148,7 @@ router.post('/stability-studies', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertStabilityStudySchema.parse(req.body);
-    const [study] = await db
-      .insert(stabilityStudies)
-      .values({ ...validatedData, organizationId: orgId })
-      .returning();
+    const [study] = await db.insert(stabilityStudies).values({ ...validatedData, organizationId: orgId }).returning();
     res.json({ success: true, data: study });
   } catch (error) {
     console.error('Error creating stability study:', error);
@@ -186,10 +172,7 @@ router.post('/qc-testing', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertQcTestingSchema.parse(req.body);
-    const [test] = await db
-      .insert(qcTesting)
-      .values({ ...validatedData, organizationId: orgId })
-      .returning();
+    const [test] = await db.insert(qcTesting).values({ ...validatedData, organizationId: orgId }).returning();
     res.json({ success: true, data: test });
   } catch (error) {
     console.error('Error creating QC test:', error);
@@ -216,10 +199,7 @@ router.post('/change-control', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertCmcChangeControlSchema.parse(req.body);
-    const [change] = await db
-      .insert(cmcChangeControl)
-      .values({ ...validatedData, organizationId: orgId })
-      .returning();
+    const [change] = await db.insert(cmcChangeControl).values({ ...validatedData, organizationId: orgId }).returning();
     res.json({ success: true, data: change });
   } catch (error) {
     console.error('Error creating change control:', error);
@@ -257,10 +237,7 @@ router.post('/drug-substances', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertDrugSubstanceSchema.parse(req.body);
-    const [substance] = await db
-      .insert(drugSubstances)
-      .values({ ...validatedData, organizationId: orgId })
-      .returning();
+    const [substance] = await db.insert(drugSubstances).values({ ...validatedData, organizationId: orgId }).returning();
     res.json({ success: true, data: substance });
   } catch (error) {
     console.error('Error creating drug substance:', error);
@@ -298,10 +275,7 @@ router.post('/drug-products', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertDrugProductSchema.parse(req.body);
-    const [product] = await db
-      .insert(drugProducts)
-      .values({ ...validatedData, organizationId: orgId })
-      .returning();
+    const [product] = await db.insert(drugProducts).values({ ...validatedData, organizationId: orgId }).returning();
     res.json({ success: true, data: product });
   } catch (error) {
     console.error('Error creating drug product:', error);
@@ -328,41 +302,22 @@ router.post('/insights/take-action', async (req, res) => {
     }
 
     const { insightId, action, type } = validationResult.data;
-
-    console.log(`[CMC] Taking action on insight ${insightId}: ${action}`);
+    const orgId = getOrgId(req);
 
     // Persist task to project_workflows table
     let taskResult: any;
     try {
       const pool = getPool();
-      if (!projectWorkflowsTableReady) {
-        await pool.query(`
-          CREATE TABLE IF NOT EXISTS project_workflows (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            project_id UUID,
-            template_id UUID,
-            workflow_name TEXT NOT NULL,
-            workflow_data JSONB NOT NULL DEFAULT '{}',
-            status TEXT DEFAULT 'active',
-            progress INTEGER DEFAULT 0,
-            start_date TIMESTAMP,
-            end_date TIMESTAMP,
-            assigned_to TEXT,
-            created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-            updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-          )
-        `);
-        projectWorkflowsTableReady = true;
-      }
 
       const priority = type === 'compliance' ? 'high' : 'medium';
       const dueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
       const result = await pool.query(
-        `INSERT INTO project_workflows (workflow_name, workflow_data, status, progress, assigned_to, start_date, end_date)
-         VALUES ($1, $2, 'active', 0, $3, NOW(), $4)
+        `INSERT INTO project_workflows (organization_id, workflow_name, workflow_data, status, progress, assigned_to, start_date, end_date)
+         VALUES ($1, $2, $3, 'active', 0, $4, NOW(), $5)
          RETURNING *`,
         [
+          orgId,
           `Insight Action: ${action}`,
           JSON.stringify({ insightId, action, type, priority, source: 'cmc-insights' }),
           'CMC Team Lead',
@@ -379,20 +334,10 @@ router.post('/insights/take-action', async (req, res) => {
         priority,
         dueDate: row.end_date,
         createdAt: row.created_at,
-        _persisted: true,
       };
     } catch (e) {
-      console.warn('[CMC] Could not persist to project_workflows:', e);
-      taskResult = {
-        taskId: `task_${Date.now()}`,
-        action,
-        status: 'created',
-        assignedTo: 'CMC Team Lead',
-        priority: type === 'compliance' ? 'high' : 'medium',
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        createdAt: new Date().toISOString(),
-        _persisted: false,
-      };
+      console.error('[CMC] Could not persist to project_workflows:', e);
+      return res.status(500).json({ success: false, error: 'Failed to persist workflow task' });
     }
 
     res.status(200).json({
@@ -441,28 +386,6 @@ router.post('/compliance/check-rules', async (req, res) => {
 
     try {
       const pool = getPool();
-      if (!complianceTrackingTableReady) {
-        await pool.query(`
-          CREATE TABLE IF NOT EXISTS compliance_tracking (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            project_id UUID,
-            organization_id INTEGER,
-            guideline TEXT NOT NULL,
-            requirement TEXT NOT NULL,
-            status TEXT NOT NULL,
-            evidence JSONB,
-            justification TEXT,
-            risk_level TEXT,
-            mitigation TEXT,
-            due_date TIMESTAMP,
-            completed_date TIMESTAMP,
-            assigned_to TEXT,
-            created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-            updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-          )
-        `);
-        complianceTrackingTableReady = true;
-      }
 
       const orgId = getOrgId(req);
       const result = await pool.query(
@@ -490,39 +413,14 @@ router.post('/compliance/check-rules', async (req, res) => {
           }
         }
       } else {
-        rules = [
-          {
-            rule: 'ICH Q8 Quality by Design',
-            status: 'violation',
-            severity: 'medium',
-            description: 'Missing design space justification in process development section',
-          },
-          {
-            rule: 'ICH Q9 Quality Risk Management',
-            status: 'compliant',
-            severity: 'low',
-            description: 'Risk assessment documentation is adequate',
-          },
-          {
-            rule: 'FDA 21 CFR 211.84',
-            status: 'violation',
-            severity: 'high',
-            description: 'Incomplete validation documentation for cleaning procedures',
-          },
-        ];
-        complianceScore = 75;
-        recommendedActions = [
-          'Complete design space documentation with DOE studies',
-          'Update cleaning validation protocols',
-          'Review risk assessment for manufacturing process',
-        ];
+        // No compliance tracking records exist yet — return clean state
+        rules = [];
+        complianceScore = 100;
+        recommendedActions = [];
       }
     } catch (e) {
-      console.warn('[CMC] Could not query compliance_tracking:', e);
-      rules = [
-        { rule: 'ICH Q8', status: 'violation', severity: 'medium', description: 'DB unavailable' },
-      ];
-      complianceScore = 75;
+      console.error('[CMC] Could not query compliance_tracking:', e);
+      return res.status(500).json({ success: false, error: 'Failed to check compliance rules' });
     }
 
     complianceScore = Math.max(complianceScore, 0);
@@ -668,16 +566,10 @@ router.post('/generate-enhanced-blueprint', async (req: express.Request, res: ex
 
     // Build prompt context from drug substance/product form data
     const dsInfo = drugSubstance
-      ? `Drug Substance: ${drugSubstance.name || 'N/A'}, INN: ${
-          drugSubstance.inn || 'N/A'
-        }, Route: ${drugSubstance.route || 'N/A'}, Dosage Form: ${
-          drugSubstance.dosageForm || 'N/A'
-        }`
+      ? `Drug Substance: ${drugSubstance.name || 'N/A'}, INN: ${drugSubstance.inn || 'N/A'}, Route: ${drugSubstance.route || 'N/A'}, Dosage Form: ${drugSubstance.dosageForm || 'N/A'}`
       : 'Drug substance information not provided.';
     const dpInfo = drugProduct
-      ? `Drug Product: ${drugProduct.name || 'N/A'}, Strength: ${
-          drugProduct.strength || 'N/A'
-        }, Container: ${drugProduct.container || 'N/A'}`
+      ? `Drug Product: ${drugProduct.name || 'N/A'}, Strength: ${drugProduct.strength || 'N/A'}, Container: ${drugProduct.container || 'N/A'}`
       : 'Drug product information not provided.';
 
     const { ai: aiClient } = await import('../../lib/unified-ai-client.js');
@@ -686,9 +578,7 @@ router.post('/generate-enhanced-blueprint', async (req: express.Request, res: ex
       [
         {
           role: 'system',
-          content: `You are a CMC regulatory writer generating Module 3 content for an ${
-            submissionType || 'IND'
-          } submission following ICH Q1-Q14 guidelines. Generate a compliant draft for section ${section} with regulatory-grade technical language. Include relevant specifications, acceptance criteria, and cross-references to ICH guidelines where applicable.`,
+          content: `You are a CMC regulatory writer generating Module 3 content for an ${submissionType || 'IND'} submission following ICH Q1-Q14 guidelines. Generate a compliant draft for section ${section} with regulatory-grade technical language. Include relevant specifications, acceptance criteria, and cross-references to ICH guidelines where applicable.`,
         },
         {
           role: 'user',
@@ -702,12 +592,7 @@ Project ID: ${projectId || 'N/A'}
 Write a comprehensive draft for this CMC section following ICH guidelines.`,
         },
       ],
-      {
-        taskType: 'regulatory_review',
-        temperature: 0.3,
-        maxTokens: 3000,
-        callerModule: 'cmc-blueprint-generator',
-      }
+      { taskType: 'regulatory_review', temperature: 0.3, maxTokens: 3000, callerModule: 'cmc-blueprint-generator' }
     );
 
     res.json({
@@ -719,9 +604,9 @@ Write a comprehensive draft for this CMC section following ICH guidelines.`,
         submissionType: submissionType || 'IND',
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('CMC blueprint generation error:', error);
-    res.status(500).json({ success: false, error: error.message || 'Generation failed' });
+    res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Generation failed' });
   }
 });
 

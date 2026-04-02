@@ -22,6 +22,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { getFirestoreDb, isFirebaseConfigured } from '../config/firebase';
 import {
   doc,
@@ -220,7 +221,7 @@ export function useWorkflowRunStream({
     // ── Fallback path: REST API polling ───────────────────────────────
     const poll = async () => {
       try {
-        const res = await fetch(`/api/orchestration/runs/${runId}`);
+        const res = await apiRequest('GET', `/api/orchestration/runs/${runId}`);
         if (res.ok) {
           const data = await res.json();
           setRun(data.run ?? null);
@@ -302,7 +303,7 @@ export function useReadinessStream({
     let interval: ReturnType<typeof setInterval> | undefined;
     const poll = async () => {
       try {
-        const res = await fetch(`/api/orchestration/projects/${projectId}/readiness`);
+        const res = await apiRequest('GET', `/api/orchestration/projects/${projectId}/readiness`);
         if (res.ok) {
           setReadiness(await res.json());
         }
@@ -371,7 +372,7 @@ export function useProjectIntelligenceStream({
     let interval: ReturnType<typeof setInterval> | undefined;
     const poll = async () => {
       try {
-        const res = await fetch(`/api/orchestration/projects/${projectId}/intelligence`);
+        const res = await apiRequest('GET', `/api/orchestration/projects/${projectId}/intelligence`);
         if (res.ok) {
           setIntelligence(await res.json());
         }

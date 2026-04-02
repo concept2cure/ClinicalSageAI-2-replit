@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { TestTube, Settings, AlertCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function SSTTemplatesPanel() {
   const [rows, setRows] = useState<any[]>([]);
@@ -18,10 +19,10 @@ export default function SSTTemplatesPanel() {
 
   async function load() {
     try {
-      const r = await fetch(`/api/quality/sst/templates`);
+      const r = await apiRequest('GET', `/api/quality/sst/templates`);
       const data = await r.json();
       setRows(Array.isArray(data) ? data : []);
-    } catch (e) {
+    } catch {
       setRows([]);
     }
   }
@@ -30,25 +31,16 @@ export default function SSTTemplatesPanel() {
     try {
       setLoading(true);
       const thr = JSON.parse(json);
-      const r = await fetch(`/api/quality/sst/templates`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          test_name: test,
-          valid_hours: Number(hours || 8),
-          thresholds_json: thr,
-        }),
+      await apiRequest('POST', `/api/quality/sst/templates`, {
+        test_name: test,
+        valid_hours: Number(hours || 8),
+        thresholds_json: thr,
       });
-      if (!r.ok) {
-        const error = await r.json();
-        toast({ title: 'Save Failed', description: error.error || 'Unknown error', variant: 'destructive' });
-        return;
-      }
       load();
       setTest('');
       setJson('{"plates":{"min":3000},"tailing":{"max":2.0},"r2":{"min":0.999}}');
-    } catch (e) {
-      toast({ title: 'Invalid Input', description: 'Please enter valid JSON format', variant: 'destructive' });
+    } catch (e: any) {
+      toast({ title: 'Save Failed', description: e.message || 'Please enter valid JSON format', variant: 'destructive' });
     } finally {
       setLoading(false);
     }

@@ -26,6 +26,19 @@ export const PUBLISHOPS_SERVICE_STATES = [
 
 export type PublishOpsServiceState = (typeof PUBLISHOPS_SERVICE_STATES)[number];
 
+export const SUBMISSION_CENTER_ITEM_STATES = [
+  'draft',
+  'preparing',
+  'ready_for_publish',
+  'published',
+  'submitted_to_gateway',
+  'acknowledged_by_gateway',
+  'accepted_by_authority',
+  'rejected_or_remediation',
+] as const;
+
+export type SubmissionCenterItemState = (typeof SUBMISSION_CENTER_ITEM_STATES)[number];
+
 export interface AuthorityProfileRecord {
   id: string;
   organizationId: number;
