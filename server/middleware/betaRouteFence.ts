@@ -32,20 +32,17 @@ export function createBetaRouteFence(
     if (!enabled) return next();
 
     const reqPath = req.path || '';
-    const isBlocked = blockedPrefixes.some(prefix => reqPath === prefix || reqPath.startsWith(`${prefix}/`));
+    const isBlocked = blockedPrefixes.some(
+      prefix => reqPath === prefix || reqPath.startsWith(`${prefix}/`)
+    );
     if (!isBlocked) return next();
 
     res.setHeader('X-Route-Hardening', 'beta-route-fenced');
     return res.status(503).json({
       success: false,
-      error: 'Route unavailable in guided beta mode',
+      error: 'Route temporarily unavailable',
       code: 'BETA_ROUTE_FENCED',
-      path: reqPath,
-      blockedBy: 'ENABLE_BETA_ROUTE_FENCE',
       timestamp: new Date().toISOString(),
-      message:
-        'This route is intentionally disabled for guided beta to prevent mock/scaffold surfaces from being exposed.',
     });
   };
 }
-

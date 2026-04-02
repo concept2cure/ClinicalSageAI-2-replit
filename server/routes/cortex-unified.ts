@@ -15,6 +15,7 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
+import crypto from 'node:crypto';
 import { createScopedLogger } from '../utils/logger';
 import { requireAuth } from '../middleware/auth.js';
 import { buildContextAwarePrompt } from '../services/ana-context-builder.js';
@@ -77,7 +78,9 @@ function isSafeToolName(toolName: string): boolean {
 }
 
 const rateLimiter = (req: Request, res: Response, next: NextFunction) => {
-  const clientId = (req.headers['x-organization-id'] as string) || req.ip || 'anonymous';
+  const clientId = String(
+    (req as any).user?.organizationId || (req as any).tenantId || req.ip || 'anonymous'
+  );
   const now = Date.now();
   const windowStart = now - RATE_LIMIT_WINDOW_MS;
 
@@ -129,7 +132,7 @@ const extractTenantContext = (req: Request, _res: Response, next: NextFunction) 
 const errorHandler = (err: Error, req: Request, res: Response, _next: NextFunction) => {
   logger.error('Cortex route error:', { error: err.message, path: req.path });
   res.status(500).json({
-    error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message,
+    error: 'Internal server error',
     requestId: req.headers['x-request-id'] || 'unknown',
   });
 };
@@ -237,9 +240,10 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
     }
 
     const organizationId =
-      parseInt((req as any).tenantContext?.organizationId, 10) ||
-      parseInt(req.headers['x-organization-id'] as string, 10) ||
-      1;
+      Number((req as any).user?.organizationId) || Number((req as any).tenantId);
+    if (!organizationId || organizationId <= 0) {
+      return res.status(400).json({ error: 'Organization context required', code: 'MISSING_ORG' });
+    }
     const userId = (req as any).userId || (req as any).user?.id || null;
 
     // Resolve project ID — strip "proj_" prefix if present (concept2cure format)
@@ -271,8 +275,9 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       // Governed intelligence context: inject live contradiction/assumption data when on precedent-intelligence
       if (clientContext?.screen === 'precedent-intelligence' && numericProjectId) {
         try {
-          const { contradictionEngineService } =
-            await import('../services/contradiction-engine-service');
+          const { contradictionEngineService } = await import(
+            '../services/contradiction-engine-service'
+          );
           const findings = await contradictionEngineService.searchFindings({
             organizationId,
             projectId: numericProjectId,
@@ -282,7 +287,9 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
           if (findings.length > 0) {
             modePrefix += `\n[LIVE GOVERNED INTELLIGENCE — ${findings.length} unresolved contradiction(s) in this project]\n`;
             for (const f of findings) {
-              modePrefix += `- ${f.severity.toUpperCase()}: ${f.title} (${f.contradictionType}, authority: ${f.authorityState}, source: ${f.sourceClassification})\n`;
+              modePrefix += `- ${f.severity.toUpperCase()}: ${f.title} (${
+                f.contradictionType
+              }, authority: ${f.authorityState}, source: ${f.sourceClassification})\n`;
             }
             modePrefix += `\nWhen asked about contradictions, provide this real data. Do not summarize vaguely.\n\n`;
           }
@@ -442,7 +449,9 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
     // Log orchestration metadata for debugging
     logger.info(
       `[AnA RI] Orchestrator: intent=${orchestratorResult.detectedIntent.lens} ` +
-        `(${orchestratorResult.orchestrationMeta.intentSource}, conf=${orchestratorResult.detectedIntent.confidence.toFixed(2)}), ` +
+        `(${
+          orchestratorResult.orchestrationMeta.intentSource
+        }, conf=${orchestratorResult.detectedIntent.confidence.toFixed(2)}), ` +
         `submission=${orchestratorResult.detectedSubmissionType || 'none'} ` +
         `(${orchestratorResult.orchestrationMeta.submissionTypeSource}), ` +
         `role=${orchestratorResult.appliedRole}, ` +
@@ -572,9 +581,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
 
           if (detectedToolCalls.length > 0 && openaiTools.length > 0) {
             if (!executionPlan.allowToolExecution) {
-              logger.warn(
-                '[Chat] Tool execution blocked by kernel risk policy for this request'
-              );
+              logger.warn('[Chat] Tool execution blocked by kernel risk policy for this request');
               aiMessages.push({
                 role: 'user' as const,
                 content:
@@ -602,10 +609,17 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
 
             // Notify client that tools are being executed
             res.write(
-              `data: ${JSON.stringify({ type: 'thinking', phase: 'executing_tools', toolCount: dedupedCalls.length })}\n\n`
+              `data: ${JSON.stringify({
+                type: 'thinking',
+                phase: 'executing_tools',
+                toolCount: dedupedCalls.length,
+              })}\n\n`
             );
             res.write(
-              `data: ${JSON.stringify({ type: 'status', text: `Running ${dedupedCalls.length} tool(s)...` })}\n\n`
+              `data: ${JSON.stringify({
+                type: 'status',
+                text: `Running ${dedupedCalls.length} tool(s)...`,
+              })}\n\n`
             );
 
             // Push the assistant message
@@ -697,8 +711,9 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
                   try {
                     const chained = await nextTool.execute(toolArgs, toolContext);
                     const chainLatencyMs = Date.now() - ct0;
-                    const chainPayload =
-                      chained.artifact || { message: chained.message?.content || 'ok' };
+                    const chainPayload = chained.artifact || {
+                      message: chained.message?.content || 'ok',
+                    };
                     if (chained.artifact) toolArtifacts.push(chained.artifact);
                     aiMessages.push({
                       role: 'user' as const,
@@ -801,7 +816,10 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         logger.warn(`[Chat] AI stream failed, using demo response: ${streamErr.message}`);
         fullContent = generateContextAwareDemoResponse(message, context);
         res.write(
-          `data: ${JSON.stringify({ type: 'demo_warning', message: 'AI service unavailable — showing pre-generated response' })}\n\n`
+          `data: ${JSON.stringify({
+            type: 'demo_warning',
+            message: 'AI service unavailable — showing pre-generated response',
+          })}\n\n`
         );
         res.write(`data: ${JSON.stringify({ type: 'chunk', text: fullContent })}\n\n`);
       }
@@ -819,7 +837,9 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
           message,
           fullContent,
           organizationId
-        ).catch((err: any) => logger.warn(`[WorkingMemory] Auto-summarization failed: ${err.message}`));
+        ).catch((err: any) =>
+          logger.warn(`[WorkingMemory] Auto-summarization failed: ${err.message}`)
+        );
       }
 
       // Include artifacts in the done event so the client can display them
@@ -852,7 +872,9 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
     if (gw && gw.getEnabledProviders().length > 0) {
       try {
         logger.info(
-          `[Chat] Sending context-aware message (project=${numericProjectId || 'none'}, sub=${context.project?.submissionType || 'none'}, section=${section_code || 'none'})`
+          `[Chat] Sending context-aware message (project=${numericProjectId || 'none'}, sub=${
+            context.project?.submissionType || 'none'
+          }, section=${section_code || 'none'})`
         );
 
         const gwResponse: GatewayResponse = await gw.route({
@@ -898,7 +920,9 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         message,
         assistantMessage,
         organizationId
-      ).catch((err: any) => logger.warn(`[WorkingMemory] Auto-summarization failed: ${err.message}`));
+      ).catch((err: any) =>
+        logger.warn(`[WorkingMemory] Auto-summarization failed: ${err.message}`)
+      );
     }
 
     res.json({
@@ -949,7 +973,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
 // POST /api/cortex/save-draft
 // ═══════════════════════════════════════════════════════════════════════════════
 
-router.post('/save-draft', async (req: Request, res: Response) => {
+router.post('/save-draft', requireAuth, async (req: Request, res: Response) => {
   try {
     const { project_id, section_code, title, content, status } = req.body || {};
 
@@ -960,9 +984,10 @@ router.post('/save-draft', async (req: Request, res: Response) => {
     }
 
     const organizationId =
-      parseInt((req as any).tenantContext?.organizationId, 10) ||
-      parseInt(req.headers['x-organization-id'] as string, 10) ||
-      1;
+      Number((req as any).user?.organizationId) || Number((req as any).tenantId);
+    if (!organizationId || organizationId <= 0) {
+      return res.status(400).json({ error: 'Organization context required', code: 'MISSING_ORG' });
+    }
     const userId = (req as any).userId || (req as any).user?.id || null;
 
     const numericProjectId = parseInt(String(project_id).replace(/^proj_/, ''), 10);
@@ -986,7 +1011,9 @@ router.post('/save-draft', async (req: Request, res: Response) => {
     });
 
     logger.info(
-      `[SaveDraft] Artifact ${result.isNew ? 'created' : 'updated'}: ${result.artifactId} for section ${section_code}`
+      `[SaveDraft] Artifact ${result.isNew ? 'created' : 'updated'}: ${
+        result.artifactId
+      } for section ${section_code}`
     );
 
     res.json({
@@ -1024,7 +1051,11 @@ Welcome to **${projectName}**. I'm AnA, your regulatory intelligence co-pilot.
 
 ${
   progress > 0
-    ? `Your **${subType}** is at **${progress}%** progress.${context.documents ? ` You have ${context.documents.completedDocuments}/${context.documents.totalDocuments} documents completed.` : ''}`
+    ? `Your **${subType}** is at **${progress}%** progress.${
+        context.documents
+          ? ` You have ${context.documents.completedDocuments}/${context.documents.totalDocuments} documents completed.`
+          : ''
+      }`
     : `I see you're working on a **${subType}**. Let's make progress together.`
 }
 
@@ -1041,11 +1072,21 @@ What would you like to work on?`;
 
 **Submission Type**: ${subType}
 **Overall Progress**: ${progress}%
-${context.documents ? `**Documents**: ${context.documents.completedDocuments}/${context.documents.totalDocuments} completed` : ''}
+${
+  context.documents
+    ? `**Documents**: ${context.documents.completedDocuments}/${context.documents.totalDocuments} completed`
+    : ''
+}
 
 ### Recommended Next Steps
 
-1. ${progress < 30 ? 'Complete Module 1 administrative forms (FDA 1571, 1572)' : progress < 60 ? 'Finalize Module 2 summaries and Module 3 CMC data' : 'Complete QA review and prepare eCTD package for submission'}
+1. ${
+      progress < 30
+        ? 'Complete Module 1 administrative forms (FDA 1571, 1572)'
+        : progress < 60
+        ? 'Finalize Module 2 summaries and Module 3 CMC data'
+        : 'Complete QA review and prepare eCTD package for submission'
+    }
 2. Review any open document gaps in the CTD section navigator
 3. Run a compliance check before advancing to the next phase
 
@@ -1064,11 +1105,21 @@ The IND application follows the ICH Common Technical Document (CTD) format with 
 
 | Module | Content | Status |
 |--------|---------|--------|
-| **M1** | Regional Administrative (FDA Forms, Cover Letter) | ${progress > 20 ? '✅ In Progress' : '⬜ Not Started'} |
-| **M2** | CTD Summaries (QOS, Nonclinical/Clinical Overviews) | ${progress > 40 ? '✅ In Progress' : '⬜ Not Started'} |
-| **M3** | Quality/CMC (Drug Substance S.1-S.7, Drug Product P.1-P.8) | ${progress > 50 ? '✅ In Progress' : '⬜ Not Started'} |
-| **M4** | Nonclinical Study Reports (Pharm, PK, Tox) | ${progress > 60 ? '✅ In Progress' : '⬜ Not Started'} |
-| **M5** | Clinical (Phase 1 Protocol, Study Reports) | ${progress > 70 ? '✅ In Progress' : '⬜ Not Started'} |
+| **M1** | Regional Administrative (FDA Forms, Cover Letter) | ${
+      progress > 20 ? '✅ In Progress' : '⬜ Not Started'
+    } |
+| **M2** | CTD Summaries (QOS, Nonclinical/Clinical Overviews) | ${
+      progress > 40 ? '✅ In Progress' : '⬜ Not Started'
+    } |
+| **M3** | Quality/CMC (Drug Substance S.1-S.7, Drug Product P.1-P.8) | ${
+      progress > 50 ? '✅ In Progress' : '⬜ Not Started'
+    } |
+| **M4** | Nonclinical Study Reports (Pharm, PK, Tox) | ${
+      progress > 60 ? '✅ In Progress' : '⬜ Not Started'
+    } |
+| **M5** | Clinical (Phase 1 Protocol, Study Reports) | ${
+      progress > 70 ? '✅ In Progress' : '⬜ Not Started'
+    } |
 
 ### Key References
 - **21 CFR 312.23(a)** — Content and format of an IND
@@ -1205,10 +1256,9 @@ function extractUserId(req: Request): number | null {
   try {
     const token = (req.headers.authorization || '').replace('Bearer ', '');
     if (!token) return null;
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || 'trialsage-codespace-jwt-secret-2026'
-    ) as any;
+    const secret = process.env.JWT_SECRET;
+    if (!secret) return null;
+    const decoded = jwt.verify(token, secret) as any;
     return decoded?.userId ? Number(decoded.userId) : null;
   } catch {
     return null;
@@ -1260,7 +1310,9 @@ router.get('/threads', async (req: Request, res: Response) => {
       query += ` AND ct.metadata->>'projectId' = $${params.length}`;
     }
 
-    query += ` GROUP BY ct.id ORDER BY ct.updated_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    query += ` GROUP BY ct.id ORDER BY ct.updated_at DESC LIMIT $${params.length + 1} OFFSET $${
+      params.length + 2
+    }`;
     params.push(limit, offset);
 
     const result = await pool.query(query, params);
@@ -1346,7 +1398,7 @@ router.post('/threads', async (req: Request, res: Response) => {
     const userId = requireAuthenticatedUserId(req, res, 'CORTEX_THREAD_CREATE_AUTH_REQUIRED');
     if (!userId) return;
     const { title, projectId, submissionType, systemPrompt } = req.body || {};
-    const newId = `cortex_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const newId = `cortex_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
     const metadata = { projectId: projectId || null, submissionType: submissionType || null };
 
     await pool.query(
@@ -1437,18 +1489,15 @@ mountSubRouters().catch(error => {
 });
 
 // Cleanup interval for rate limiter
-setInterval(
-  () => {
-    const now = Date.now();
-    const windowStart = now - RATE_LIMIT_WINDOW_MS;
-    Array.from(rateLimitMap.entries()).forEach(([key, value]) => {
-      if (value.resetTime < windowStart) {
-        rateLimitMap.delete(key);
-      }
-    });
-  },
-  5 * 60 * 1000
-);
+setInterval(() => {
+  const now = Date.now();
+  const windowStart = now - RATE_LIMIT_WINDOW_MS;
+  Array.from(rateLimitMap.entries()).forEach(([key, value]) => {
+    if (value.resetTime < windowStart) {
+      rateLimitMap.delete(key);
+    }
+  });
+}, 5 * 60 * 1000);
 
 router.use(errorHandler);
 

@@ -72,7 +72,9 @@ export async function registerGovernedExport(
   const pool = getPool();
   const client = await pool.connect();
   const now = new Date();
-  const externalArtifactId = `artifact_export_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+  const externalArtifactId = `artifact_export_${Date.now()}_${crypto
+    .randomBytes(4)
+    .toString('hex')}`;
   const sourceContentHash = crypto.createHash('sha256').update(input.sourceContent).digest('hex');
 
   try {
@@ -90,7 +92,9 @@ export async function registerGovernedExport(
         input.projectId,
         input.organizationId,
         input.title,
-        `[Governed Export: ${input.exportFormat.toUpperCase()}] ${input.exportFilename} (${input.exportFileSize} bytes)`,
+        `[Governed Export: ${input.exportFormat.toUpperCase()}] ${input.exportFilename} (${
+          input.exportFileSize
+        } bytes)`,
         sourceContentHash,
         input.ctdSection ?? null,
         input.userId,
@@ -130,7 +134,9 @@ export async function registerGovernedExport(
         input.organizationId,
         `[Governed Export: ${input.exportFormat.toUpperCase()}] ${input.exportFilename}`,
         sourceContentHash,
-        `Governed ${input.exportFormat.toUpperCase()} export of ${input.docType} document "${input.title}"`,
+        `Governed ${input.exportFormat.toUpperCase()} export of ${input.docType} document "${
+          input.title
+        }"`,
         input.userId,
         now,
       ]
@@ -167,7 +173,7 @@ export async function registerGovernedExport(
         }),
         `Governed ${input.exportFormat.toUpperCase()} export: ${input.title}`,
         input.backendRoute,
-        input.ipAddress || '127.0.0.1',
+        input.ipAddress || 'ip-not-captured',
         now,
       ]
     );
@@ -197,7 +203,7 @@ export async function registerGovernedExport(
         input.userId,
         input.userName,
         input.userRole,
-        input.ipAddress || '127.0.0.1',
+        input.ipAddress || 'ip-not-captured',
         now,
         JSON.stringify({
           source: 'governed_export',
@@ -250,7 +256,13 @@ export async function registerGovernedExport(
       traceId,
       timestamp: now.toISOString(),
       event: 'export_success',
-      sourceSystem: (input.docType === 'cerv2_510k' ? 'cerv2_510k' : input.docType === 'cerv2_pma' ? 'cerv2_pma' : input.docType === 'cerv2_cer' ? 'cerv2_cer' : 'document_builder') as any,
+      sourceSystem: (input.docType === 'cerv2_510k'
+        ? 'cerv2_510k'
+        : input.docType === 'cerv2_pma'
+        ? 'cerv2_pma'
+        : input.docType === 'cerv2_cer'
+        ? 'cerv2_cer'
+        : 'document_builder') as any,
       projectId: input.projectId,
       artifactId: externalArtifactId,
       userId: input.userId,
@@ -325,13 +337,16 @@ export async function registerExportGovernanceQuick(opts: {
   allowDegradedMode?: boolean;
 }): Promise<ExportGovernanceResult | null> {
   try {
-    const contentHash = opts.exportHash ?? crypto.createHash('sha256')
-      .update(`${opts.title}:${opts.exportFilename}:${opts.exportFileSize}`)
-      .digest('hex');
+    const contentHash =
+      opts.exportHash ??
+      crypto
+        .createHash('sha256')
+        .update(`${opts.title}:${opts.exportFilename}:${opts.exportFileSize}`)
+        .digest('hex');
 
-    const normalizedFormat = (['pdf', 'docx', 'zip'].includes(opts.exportFormat)
-      ? opts.exportFormat
-      : 'zip') as 'pdf' | 'docx' | 'zip';
+    const normalizedFormat = (
+      ['pdf', 'docx', 'zip'].includes(opts.exportFormat) ? opts.exportFormat : 'zip'
+    ) as 'pdf' | 'docx' | 'zip';
 
     return await registerGovernedExport({
       organizationId: opts.organizationId,

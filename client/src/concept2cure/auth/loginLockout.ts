@@ -1,7 +1,10 @@
 export const LOGIN_LOCKOUT_THRESHOLD = 5;
-export const LOGIN_LOCKOUT_MS = 30_000;
+export const LOGIN_LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes — matches server-side policy
 
-export const getLockoutRemainingSeconds = (lockedUntil: number | null, now: number = Date.now()): number => {
+export const getLockoutRemainingSeconds = (
+  lockedUntil: number | null,
+  now: number = Date.now()
+): number => {
   if (!lockedUntil) return 0;
   return Math.max(0, Math.ceil((lockedUntil - now) / 1000));
 };

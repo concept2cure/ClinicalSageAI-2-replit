@@ -29,15 +29,11 @@ export function sendStaticDataDisabled(
   requiredFlag: string
 ): Response {
   res.setHeader('X-Route-Hardening', 'static-business-data-blocked');
-  res.setHeader('X-Route-Enable-Flag', requiredFlag);
   return res.status(503).json({
     success: false,
-    error: `${routeName} is temporarily unavailable`,
+    error: 'Endpoint temporarily unavailable',
     code: 'STATIC_BUSINESS_DATA_DISABLED',
-    requiredFlag,
     timestamp: new Date().toISOString(),
-    message:
-      'This endpoint was fail-closed because it serves hardcoded or static business data. Re-enable only after migrating to governed persisted data.',
   });
 }
 

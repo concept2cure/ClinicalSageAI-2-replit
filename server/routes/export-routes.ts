@@ -16,8 +16,8 @@ router.get('/study-bundle', async (req, res) => {
   try {
     const { study_id, persona } = req.query;
 
-    if (!study_id || typeof study_id !== 'string') {
-      return res.status(400).json({ error: 'Study ID is required' });
+    if (!study_id || typeof study_id !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(study_id)) {
+      return res.status(400).json({ error: 'Invalid study_id format' });
     }
 
     // Create archive file
@@ -77,7 +77,9 @@ router.get('/download/study-bundle', async (req, res) => {
       // Register governed export (fail-closed for governed flows)
       const user = (req as any).user;
       if (!user?.organizationId || !user?.id) {
-        return res.status(401).json({ error: 'Authenticated organization and user context required' });
+        return res
+          .status(401)
+          .json({ error: 'Authenticated organization and user context required' });
       }
 
       try {
@@ -102,9 +104,9 @@ router.get('/download/study-bundle', async (req, res) => {
         });
       }
 
-      // Set headers for file download
+      const safeFilename = zipFiles[0].replace(/[^a-zA-Z0-9._-]/g, '_');
       res.setHeader('Content-Type', 'application/zip');
-      res.setHeader('Content-Disposition', `attachment; filename=${zipFiles[0]}`);
+      res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
 
       // Stream the file to the response
       const fileStream = fs.createReadStream(zipPath);
