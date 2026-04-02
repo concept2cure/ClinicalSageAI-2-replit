@@ -254,7 +254,7 @@
     "node-fetch": "^2.7.0",
     "node-html-parser": "7.0.1",
     "nodemailer": "^8.0.0",
-    "openai": "^4.93.0",
+    "openai": "^6.33.0",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "pdf-annotate.js": "^1.0.0",
