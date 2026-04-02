@@ -70,7 +70,7 @@ redis==7.4.0
 
 # Cryptography and security
 cryptography==42.0.4
-bcrypt==4.0.1
+bcrypt==5.0.0
 
 # Monitoring and logging
 structlog==23.1.0
