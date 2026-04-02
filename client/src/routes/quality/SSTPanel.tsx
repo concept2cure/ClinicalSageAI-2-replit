@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import InfoTip from '@/components/InfoTip';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function SSTPanel({ testId }: { testId: string }) {
   const [json, setJson] = useState<string>('{"plates": 5000, "tailing": 1.2, "r2": 0.9999}');

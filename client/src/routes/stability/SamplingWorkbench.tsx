@@ -14,8 +14,10 @@ export default function SamplingWorkbench({ studyId }: { studyId: string }) {
   const [helpOpen, setHelpOpen] = useState(false);
 
   async function load() {
-    const u = await apiRequest('GET', `/api/stability/studies/${studyId}/timepoints/due?limit=20`);
-    const s = await apiRequest('GET', `/api/stability/studies/${studyId}/samples`);
+    const uRes = await apiRequest('GET', `/api/stability/studies/${studyId}/timepoints/due?limit=20`);
+    const u = await uRes.json();
+    const sRes = await apiRequest('GET', `/api/stability/studies/${studyId}/samples`);
+    const s = await sRes.json();
     setDue(u || []);
     setSamples(s || []);
   }

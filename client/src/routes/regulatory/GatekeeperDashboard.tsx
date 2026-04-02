@@ -68,11 +68,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
     if (!gatekeeperData?.blockers) return;
     setLoading(true);
     try {
-      await fetch(`/api/reg/submissions/${subId}/gatekeeper/autofix`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ blockers: gatekeeperData.blockers }),
-      });
+      await apiRequest('POST', `/api/reg/submissions/${subId}/gatekeeper/autofix`, { blockers: gatekeeperData.blockers });
       loadData(); // Refresh data after fixes
     } catch (error) {
       console.error('[Gatekeeper] Failed to apply auto-fix:', error);
@@ -83,9 +79,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
 
   const generateSlackDigest = async () => {
     try {
-      const digest = await fetch(`/api/reg/submissions/${subId}/digest/slack`, {
-        method: 'POST',
-      }).then(r => r.json());
+      const digest = await apiRequest('POST', `/api/reg/submissions/${subId}/digest/slack`);
 
       // Copy to clipboard
       navigator.clipboard.writeText(digest.message);
