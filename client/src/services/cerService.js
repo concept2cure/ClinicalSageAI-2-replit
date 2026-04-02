@@ -5,6 +5,8 @@
  * providing methods for generating and retrieving CER data.
  */
 
+import { apiRequest } from '@/lib/queryClient';
+
 /**
  * Generate a full CER report
  *

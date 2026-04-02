@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { queryClient } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -85,16 +85,8 @@ export default function NewProjectWizard() {
   // Create project mutation
   const createProjectMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch('/api/510k-project/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-organization-id': projectData.organizationId
-        },
-        body: JSON.stringify(data)
-      });
-      if (!response.ok) throw new Error('Failed to create project');
-      return response.json();
+      const res = await apiRequest('POST', '/api/510k-project/create', data);
+      return res.json();
     },
     onSuccess: (data) => {
       toast({

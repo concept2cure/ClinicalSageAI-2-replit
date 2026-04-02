@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -26,11 +27,7 @@ const CitationManagerPage = () => {
 
     setSearching(true);
     try {
-      const response = await fetch(`/api/citation/search?query=${encodeURIComponent(searchQuery)}`);
-      if (!response.ok) {
-        throw new Error('Citation search failed');
-      }
-
+      const response = await apiRequest('GET', `/api/citation/search?query=${encodeURIComponent(searchQuery)}`);
       const data = await response.json();
       setSearchResults(data.results || []);
     } catch (error) {
