@@ -521,8 +521,8 @@ router.get('/studies/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Set tenant context for RLS policies - use parameterized set_config()
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    // Set tenant context for RLS policies — derive from JWT-validated context, not raw headers
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -606,8 +606,8 @@ router.post('/studies/:id/conditions', async (req, res) => {
     const { id } = req.params;
     const { kind, temp, rh, description } = req.body;
 
-    // Set tenant context for RLS policies - use parameterized set_config()
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    // Set tenant context for RLS policies — derive from JWT-validated context, not raw headers
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
@@ -641,8 +641,8 @@ router.delete('/conditions/:condId', async (req, res) => {
   try {
     const { condId } = req.params;
 
-    // Set tenant context for RLS policies - use parameterized set_config()
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    // Set tenant context for RLS policies — derive from JWT-validated context, not raw headers
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }

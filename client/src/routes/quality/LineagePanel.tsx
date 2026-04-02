@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function LineagePanel({ batchId }: { batchId: string }) {
   const [rows, setRows] = useState<any[]>([]);
   async function load() {
     try {
-      const r = await fetch(`/api/quality/batches/${batchId}/lineage`);
+      const r = await apiRequest('GET', `/api/quality/batches/${batchId}/lineage`);
       const data = await r.json();
       setRows(Array.isArray(data) ? data : []);
     } catch (e) {

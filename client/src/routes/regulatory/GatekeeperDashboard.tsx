@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,9 +33,9 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
     setLoading(true);
     try {
       const [rpi, timeline, hist] = await Promise.all([
-        fetch(`/api/reg/submissions/${subId}/rpi`).then(r => r.json()),
-        fetch(`/api/reg/submissions/${subId}/timeline-risk`).then(r => r.json()),
-        fetch(`/api/reg/submissions/${subId}/gatekeeper/history`).then(r => r.json()),
+        apiRequest('GET', `/api/reg/submissions/${subId}/rpi`),
+        apiRequest('GET', `/api/reg/submissions/${subId}/timeline-risk`),
+        apiRequest('GET', `/api/reg/submissions/${subId}/gatekeeper/history`),
       ]);
       setRpiData(rpi);
       setTimelineData(timeline);
@@ -53,10 +54,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
   const runGatekeeper = async () => {
     setLoading(true);
     try {
-      const result = await fetch(`/api/reg/submissions/${subId}/gatekeeper/run`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      }).then(r => r.json());
+      const result = await apiRequest('POST', `/api/reg/submissions/${subId}/gatekeeper/run`);
       setGatekeeperData(result);
       loadData(); // Refresh all data
     } catch (error) {

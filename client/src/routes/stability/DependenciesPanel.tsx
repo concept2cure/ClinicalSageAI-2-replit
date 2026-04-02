@@ -6,10 +6,8 @@ export default function DependenciesPanel({ studyId }: { studyId: string }) {
   const [d, setD] = useState<any>(null);
   async function load() {
     try {
-      const r = await fetch(`/api/stability/studies/${studyId}/dependencies`);
-      if (r.ok) {
-        setD(await r.json());
-      }
+      const data = await apiRequest('GET', `/api/stability/studies/${studyId}/dependencies`);
+      setD(data);
     } catch (err) {
       console.error('[DependenciesPanel] Failed to load dependencies:', err);
     }

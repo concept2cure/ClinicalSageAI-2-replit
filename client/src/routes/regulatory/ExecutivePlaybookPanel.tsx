@@ -177,12 +177,7 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
   const simulateRPI = async () => {
     if (!subId || selectedCards.length === 0) return;
     try {
-      const response = await fetch(`/api/reg/playbook/simulate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subId, cardIds: selectedCards }),
-      });
-      const data = await response.json();
+      const data = await apiRequest('POST', `/api/reg/playbook/simulate`, { subId, cardIds: selectedCards });
       setSimulation(data);
     } catch (error) {
     }

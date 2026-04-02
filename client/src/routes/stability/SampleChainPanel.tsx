@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Upload, Download, Plus, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import InfoTip from '@/components/InfoTip';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ChainEntry {
   chain_id: string;
@@ -39,8 +40,7 @@ export default function SampleChainPanel({ sampleId, sampleCode }: SampleChainPa
   const loadChain = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/stability/samples/${sampleId}/chain`);
-      const data = await response.json();
+      const data = await apiRequest('GET', `/api/stability/samples/${sampleId}/chain`);
       setChain(data || []);
     } catch (error) {
     } finally {
@@ -56,30 +56,20 @@ export default function SampleChainPanel({ sampleId, sampleCode }: SampleChainPa
     if (!newAction) return;
 
     try {
-      const response = await fetch(`/api/stability/samples/${sampleId}/chain`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: newAction,
-          notes: newNotes || undefined,
-        }),
+      await apiRequest('POST', `/api/stability/samples/${sampleId}/chain`, {
+        action: newAction,
+        notes: newNotes || undefined,
       });
-
-      if (response.ok) {
-        toast({ title: 'Chain Entry Added', description: `${newAction} event recorded` });
-        setNewAction('');
-        setNewNotes('');
-        loadChain();
-      } else {
-        const error = await response.json();
-        toast({
-          title: 'Error',
-          description: error.error || 'Failed to add entry',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      toast({ title: 'Error', description: 'Network error', variant: 'destructive' });
+      toast({ title: 'Chain Entry Added', description: `${newAction} event recorded` });
+      setNewAction('');
+      setNewNotes('');
+      loadChain();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to add entry',
+        variant: 'destructive',
+      });
     }
   };
 
