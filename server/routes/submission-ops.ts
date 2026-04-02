@@ -18,6 +18,7 @@
  * - Command center aggregates
  */
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { db } from '../db';
 import {
   c2cSubmissionPackages,
@@ -61,6 +62,60 @@ function getUserId(req: Request): number {
 }
 
 // ============================================================
+// ZOD VALIDATION SCHEMAS
+// ============================================================
+
+const createPackageSchema = z.object({
+  projectId: z.number({ required_error: 'projectId is required' }),
+  packageFamily: z.string({ required_error: 'packageFamily is required' }).min(1, 'packageFamily must not be empty'),
+  title: z.string({ required_error: 'title is required' }).min(1, 'title must not be empty'),
+  description: z.string().optional(),
+  targetDate: z.string().optional(),
+  sections: z.array(z.object({
+    key: z.string(),
+    label: z.string(),
+  })).optional(),
+});
+
+const createArtifactSectionMapSchema = z.object({
+  artifactId: z.number({ required_error: 'artifactId is required' }),
+  sectionDbId: z.number({ required_error: 'sectionDbId is required' }),
+  documentFamily: z.string().optional(),
+  ownerUserId: z.number().optional(),
+  ownerRole: z.string().optional(),
+  ownerFunction: z.string().optional(),
+  ownershipType: z.string().optional(),
+});
+
+const createMilestoneSchema = z.object({
+  title: z.string({ required_error: 'title is required' }).min(1, 'title must not be empty'),
+  description: z.string().optional(),
+  targetDate: z.string().optional(),
+  sectionIds: z.array(z.number()).optional(),
+});
+
+const createPolicySchema = z.object({
+  packageFamily: z.string().nullish(),
+  sectionKey: z.string().nullish(),
+  documentFamily: z.string().nullish(),
+  ownerFunction: z.string().nullish(),
+  reviewerClass: z.string().nullish(),
+  ownershipType: z.string().nullish(),
+  reviewDueHours: z.number().nullish(),
+  dueSoonThresholdHours: z.number().nullish(),
+  overdueThresholdHours: z.number().nullish(),
+  escalationThresholdHours: z.number().nullish(),
+  fallbackRole: z.string().nullish(),
+  requiredReviewerClasses: z.any().nullish(),
+  requiredApprovals: z.number().nullish(),
+  blockOnOpenCritical: z.boolean().optional().default(true),
+  blockPublishOnOpenCritical: z.boolean().optional().default(true),
+  requireSectionReadyForGate: z.boolean().optional().default(true),
+  ruleDescription: z.string().nullish(),
+  priority: z.number().optional().default(0),
+});
+
+// ============================================================
 // PACKAGES
 // ============================================================
 
@@ -88,11 +143,12 @@ router.post('/packages', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const { projectId, packageFamily, title, description, targetDate, sections } = req.body;
 
-    if (!projectId || !packageFamily || !title) {
-      return res.status(400).json({ error: 'projectId, packageFamily, and title required' });
+    const parsed = createPackageSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
     }
+    const { projectId, packageFamily, title, description, targetDate, sections } = parsed.data;
 
     const packageId = `pkg_${randomUUID()}`;
     const [pkg] = await db
@@ -196,6 +252,11 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const actorUserId = getUserId(req);
+
+    const parsed = createArtifactSectionMapSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
     const {
       artifactId,
       sectionDbId,
@@ -204,11 +265,7 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
       ownerRole,
       ownerFunction,
       ownershipType,
-    } = req.body;
-
-    if (!artifactId || !sectionDbId) {
-      return res.status(400).json({ error: 'artifactId and sectionDbId required' });
-    }
+    } = parsed.data;
 
     const [artifact] = await db
       .select({
@@ -384,8 +441,11 @@ router.post('/packages/:packageId/milestones', async (req: Request, res: Respons
 
     if (!pkg) return res.status(404).json({ error: 'Package not found' });
 
-    const { title, description, targetDate, sectionIds } = req.body;
-    if (!title) return res.status(400).json({ error: 'title required' });
+    const parsed = createMilestoneSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
+    const { title, description, targetDate, sectionIds } = parsed.data;
 
     const [milestone] = await db
       .insert(c2cMilestones)
@@ -448,6 +508,11 @@ router.post('/policies', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
+
+    const parsed = createPolicySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
     const {
       packageFamily,
       sectionKey,
@@ -467,7 +532,7 @@ router.post('/policies', async (req: Request, res: Response) => {
       requireSectionReadyForGate,
       ruleDescription,
       priority,
-    } = req.body;
+    } = parsed.data;
 
     const [policy] = await db
       .insert(c2cSubmissionPolicies)
@@ -487,11 +552,11 @@ router.post('/policies', async (req: Request, res: Response) => {
         fallbackRole: fallbackRole || null,
         requiredReviewerClasses: requiredReviewerClasses || null,
         requiredApprovals: requiredApprovals || null,
-        blockOnOpenCritical: blockOnOpenCritical ?? true,
-        blockPublishOnOpenCritical: blockPublishOnOpenCritical ?? true,
-        requireSectionReadyForGate: requireSectionReadyForGate ?? true,
+        blockOnOpenCritical,
+        blockPublishOnOpenCritical,
+        requireSectionReadyForGate,
         ruleDescription: ruleDescription || null,
-        priority: priority ?? 0,
+        priority,
         createdById: userId,
       })
       .returning();
