@@ -1310,17 +1310,6 @@ router.post(
         error: 'Service not configured',
         message: 'This endpoint requires AI gateway configuration for regulatory pathway analysis. Rule-based fallback has been removed.',
       });
-
-      // Add metadata
-      results.timestamp = new Date().toISOString();
-      results.processingTimeMs = Date.now() - (req as any).startTime;
-      results.organizationId = tenantContext.organizationId;
-      results.cacheExpiry = new Date(Date.now() + 3600000).toISOString();
-
-      // Cache the result with appropriate TTL
-      cache.set(cacheKey, results, CACHE_TTL.LONG);
-
-      res.json(results);
     } catch (error) {
       next(error);
     }

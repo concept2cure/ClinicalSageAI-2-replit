@@ -827,14 +827,7 @@ export default function FulleCTDCoAuthor() {
                                             template.name
                                           );
                                           // Create document from template
-                                          fetch('/api/coauthor/documents', {
-                                            method: 'POST',
-                                            headers: {
-                                              'Content-Type': 'application/json',
-                                              'x-organization-id':
-                                                localStorage.getItem('organizationId') || '6',
-                                            },
-                                            body: JSON.stringify({
+                                          apiRequest('POST', '/api/coauthor/documents', {
                                               title: `New ${template.name}`,
                                               content:
                                                 template.content ||
@@ -848,8 +841,10 @@ export default function FulleCTDCoAuthor() {
                                                 template_name: template.name,
                                                 regions: template.regions,
                                               },
-                                            }),
-                                          })
+                                            }, {
+                                              'x-organization-id':
+                                                localStorage.getItem('organizationId') || '6',
+                                            })
                                             .then(res => res.json())
                                             .then(data => {
                                               if (data.success) {
