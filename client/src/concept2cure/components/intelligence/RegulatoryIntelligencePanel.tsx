@@ -57,6 +57,8 @@ export interface RegulatoryIntelligencePanelProps {
   deviceClass?: string;
   therapeuticArea?: string;
   phase?: string;
+  /** Project ID for RIM signal and pattern queries */
+  projectId?: number | string;
   /** Current document content (for context-aware analysis) */
   documentContent?: string;
   onClose?: () => void;
@@ -64,7 +66,7 @@ export interface RegulatoryIntelligencePanelProps {
   onCreateDocument?: (content: string, title: string, ctdSection?: string) => void;
 }
 
-type Tab = 'insights' | 'precedents' | 'risk' | 'strategy' | 'evidence' | 'alerts' | 'kernel';
+type Tab = 'insights' | 'precedents' | 'risk' | 'strategy' | 'evidence' | 'signals' | 'alerts' | 'kernel';
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'insights', label: 'Insights', icon: Brain },
@@ -72,6 +74,7 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'risk', label: 'Risk', icon: ShieldAlert },
   { id: 'strategy', label: 'Strategy', icon: Target },
   { id: 'evidence', label: 'Evidence', icon: FileCheck },
+  { id: 'signals', label: 'Signals', icon: Activity },
   { id: 'alerts', label: 'Alerts', icon: ShieldAlert },
   { id: 'kernel', label: 'Kernel', icon: Activity },
 ];
@@ -120,6 +123,7 @@ export function RegulatoryIntelligencePanel({
   deviceClass,
   therapeuticArea,
   phase,
+  projectId,
   documentContent: _documentContent,
   onClose,
   onCreateDocument,
@@ -1150,6 +1154,19 @@ export function RegulatoryIntelligencePanel({
                   Search 779+ clinical study reports or set an indication to auto-discover evidence.
                 </p>
               </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Signals tab (RIM patterns + signal trends) ──────────────── */}
+        {activeTab === 'signals' && (
+          <div className="p-3">
+            {projectId ? (
+              <PatternSignalPanel projectId={projectId} />
+            ) : (
+              <p className="text-[12px] text-stone-400 py-4 text-center">
+                Select a project to view RIM pattern signals and trend data.
+              </p>
             )}
           </div>
         )}

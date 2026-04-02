@@ -3813,6 +3813,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             submissionType={submissionType}
             indication={activeArtifact?.title}
             deviceName={activeArtifact?.title}
+            projectId={projectId}
             documentContent={activeArtifact?.content}
             onClose={() => setActiveInspector(null)}
             onCreateDocument={async (content: string, title: string, ctdSection?: string) => {
