@@ -356,7 +356,7 @@
     "@types/ws": "^8.5.13",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
-    "@vitejs/plugin-react": "^4.3.2",
+    "@vitejs/plugin-react": "^6.0.1",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "autoprefixer": "^10.4.20",
