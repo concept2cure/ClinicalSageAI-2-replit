@@ -73,17 +73,10 @@ import { ModuleErrorBoundary } from './components/ui/error-boundary.jsx';
 import EnhancedDocumentEditor from './components/EnhancedDocumentEditor';
 import UnifiedTaskDashboard from './components/UnifiedTaskDashboard';
 
-// Branded loading component for lazy-loaded routes
+// Clean loading component for lazy-loaded routes
 const LoadingPage = () => (
-  <div className="flex flex-col items-center justify-center p-8 h-screen" style={{ background: '#faf9f5' }}>
-    <div className="relative w-16 h-16 rounded-2xl overflow-hidden shadow-md mb-4">
-      <img src="/src/assets/concept2cure-logo.jpg" alt="Concept2Cure" className="w-full h-full object-cover" />
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, transparent 40%, #faf9f5 100%)' }} />
-    </div>
-    <p className="text-sm" style={{ color: '#8a8880', fontFamily: "'Poppins', Arial, sans-serif" }}>Loading...</p>
-    <div className="w-32 h-1 mt-3 rounded-full overflow-hidden" style={{ background: '#e8e6dc' }}>
-      <div className="h-full rounded-full animate-pulse" style={{ background: 'linear-gradient(135deg, #d97757, #c15f3c)', width: '60%' }} />
-    </div>
+  <div className="flex flex-col items-center justify-center p-8 h-screen bg-white">
+    <p className="text-sm text-stone-400">Loading...</p>
   </div>
 );
 
@@ -140,8 +133,8 @@ const VaultPage = lazy(() => import('./pages/vault/VaultPage'));
 
 // CoAuthor and Canvas-related pages
 const CoAuthor = lazy(() => import('./pages/coauthor/CoAuthor'));
-const ComponentManagementSystem = lazy(
-  () => import('./components/coauthor/ComponentManagementSystem')
+const ComponentManagementSystem = lazy(() =>
+  import('./components/coauthor/ComponentManagementSystem')
 );
 // DocumentEditor removed - using enhanced CMC document authoring module instead
 
@@ -165,8 +158,8 @@ const RegulatoryRiskDashboard = lazy(() => import('./pages/admin/RegulatoryRiskD
 const RegulatoryAITesting = lazy(() => import('./pages/admin/RegulatoryAITesting'));
 
 // Unified Study & Regulatory Intelligence Suite - comprehensive module combining all features
-const StudyRegulatoryIntelligenceSuite = lazy(
-  () => import('./components/unified/StudyRegulatoryIntelligenceSuite')
+const StudyRegulatoryIntelligenceSuite = lazy(() =>
+  import('./components/unified/StudyRegulatoryIntelligenceSuite')
 );
 
 // Analytics and Dashboard pages
@@ -284,7 +277,8 @@ function MainApp() {
   const isCERV2Page = location === '/cerv2' || location.startsWith('/cerv2/');
 
   // Concept2Cure pages (and root landing) have their own layout, no top nav needed
-  const isConcept2CurePage = location === '/' || location === '/concept2cure' || location.startsWith('/concept2cure/');
+  const isConcept2CurePage =
+    location === '/' || location === '/concept2cure' || location.startsWith('/concept2cure/');
 
   // Always show navigation for CERV2 pages
   const shouldShowNav =
@@ -297,9 +291,7 @@ function MainApp() {
 
   // Keep top-nav links aligned to routes that are actually mounted in this shell.
   // Stage 7 honesty pass: remove dead-signage links that route to non-mounted pages.
-  const csrNavItems = [
-    { label: 'Library', path: '/csr' },
-  ];
+  const csrNavItems = [{ label: 'Library', path: '/csr' }];
 
   // Only show CSR nav items on CSR pages
   const navItems =
@@ -321,22 +313,20 @@ function MainApp() {
   return (
     <div>
       {/* Only show the UnifiedTopNavV3 if we're not on the landing page, regulatory hub, or dashboard */}
-      {shouldShowNav && (
-        <UnifiedTopNavV3 navItems={navItems} />
-      )}
+      {shouldShowNav && <UnifiedTopNavV3 navItems={navItems} />}
       <div
         className={
           isConcept2CurePage
             ? '' // No padding/margins for Concept2Cure - full-screen Claude.ai-style layout
             : isLandingPage
-              ? 'p-4'
-              : isRegulatoryHub
-                ? 'p-0'
-                : isCoAuthorPage
-                  ? 'p-0' // No padding for CoAuthor pages
-                  : isDashboardPage
-                    ? 'p-0' // No padding for Dashboard page
-                    : 'p-4 mt-24'
+            ? 'p-4'
+            : isRegulatoryHub
+            ? 'p-0'
+            : isCoAuthorPage
+            ? 'p-0' // No padding for CoAuthor pages
+            : isDashboardPage
+            ? 'p-0' // No padding for Dashboard page
+            : 'p-4 mt-24'
         }
       >
         {/* Main Content */}
@@ -397,12 +387,8 @@ function MainApp() {
               )}
             </Route>
             {/* Legacy portal paths are intentionally fenced to canonical beta shell */}
-            <Route path="/client-portal">
-              {() => <Redirect to="/concept2cure" />}
-            </Route>
-            <Route path="/client-portal/:rest*">
-              {() => <Redirect to="/concept2cure" />}
-            </Route>
+            <Route path="/client-portal">{() => <Redirect to="/concept2cure" />}</Route>
+            <Route path="/client-portal/:rest*">{() => <Redirect to="/concept2cure" />}</Route>
             {/* ── Secondary/deep-link surfaces (module worlds) ─────────────────────── */}
             {/* These remain routable, but are not first-rank beta entry points. */}
             {/* Public Sales Landing Page */}
@@ -414,12 +400,8 @@ function MainApp() {
               )}
             </Route>
             {/* Billing Dashboard - accessible from /billing shortcut */}
-            <Route path="/billing">
-              {() => <Redirect to="/concept2cure/billing" />}
-            </Route>
-            <Route path="/billing/*">
-              {() => <Redirect to="/concept2cure/billing" />}
-            </Route>
+            <Route path="/billing">{() => <Redirect to="/concept2cure/billing" />}</Route>
+            <Route path="/billing/*">{() => <Redirect to="/concept2cure/billing" />}</Route>
             <Route path="/submission-center" component={UnifiedSubmissionCenter} />
             {/* AnA Cortex AI Assistant - Full Page */}
             <Route path="/ana">
@@ -429,9 +411,7 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            <Route path="/ana-cortex">
-              {() => <Redirect to="/ana" />}
-            </Route>
+            <Route path="/ana-cortex">{() => <Redirect to="/ana" />}</Route>
             <Route path="/module-settings">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
@@ -455,8 +435,8 @@ function MainApp() {
             </Route>
             <Route path="/analytical-monitoring">
               {() => {
-                const RealTimeMonitoringDashboard = lazy(
-                  () => import('./components/cmc/RealTimeMonitoringDashboard')
+                const RealTimeMonitoringDashboard = lazy(() =>
+                  import('./components/cmc/RealTimeMonitoringDashboard')
                 );
                 return (
                   <Suspense fallback={<LoadingPage />}>
@@ -480,9 +460,7 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            <Route path="/cmc-module">
-              {() => <Redirect to="/cmc-wizard" />}
-            </Route>
+            <Route path="/cmc-module">{() => <Redirect to="/cmc-wizard" />}</Route>
             <Route path="/csr-analyzer">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
@@ -650,9 +628,7 @@ function MainApp() {
               )}
             </Route>
             {/* CSR Detail page route */}
-            <Route path="/cmc">
-              {() => <Redirect to="/cmc-wizard" />}
-            </Route>
+            <Route path="/cmc">{() => <Redirect to="/cmc-wizard" />}</Route>
             {/* Legacy CMC Module page route */}
             <Route path="/cmc-classic">
               {() => (

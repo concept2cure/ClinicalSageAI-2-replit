@@ -122,43 +122,18 @@ const ProtectedZenApp: React.FC = () => (
 // LOADING SCREEN
 // ═══════════════════════════════════════════════════════════════════════════════
 const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading...' }) => (
-  <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center gap-6"
-    >
-      <motion.div
-        animate={{ scale: [1, 1.03, 1], opacity: [0.8, 1, 0.8] }}
-        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-        className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-md"
-      >
-        <img
-          src="/src/assets/concept2cure-logo.jpg"
-          alt="Concept2Cure"
-          className="w-full h-full object-cover object-center"
-        />
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(circle at center, transparent 40%, #faf9f5 100%)' }}
-        />
-      </motion.div>
-
-      <p className="text-sm text-stone-500" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
+  <div className="min-h-screen bg-white flex items-center justify-center">
+    <div className="flex flex-col items-center gap-4">
+      <p className="text-sm text-stone-400">
         {message}
       </p>
-
-      {/* Progress bar */}
-      <div className="w-48 h-1 bg-[#E8E6DC] rounded-full overflow-hidden">
-        <motion.div
-          className="h-full rounded-full"
-          style={{ background: 'linear-gradient(135deg, #d97757, #c15f3c)' }}
-          initial={{ x: '-100%' }}
-          animate={{ x: '100%' }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+      <div className="w-48 h-1 bg-stone-100 rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full animate-pulse bg-stone-300"
+          style={{ width: '60%' }}
         />
       </div>
-    </motion.div>
+    </div>
   </div>
 );
 
@@ -327,8 +302,12 @@ export const ZenRouter: React.FC = () => {
             )}
           </Route>
           {/* Billing return paths from Stripe Checkout */}
-          <Route path="/billing/success">{() => <Redirect to="/concept2cure/billing?checkout=success" />}</Route>
-          <Route path="/billing/canceled">{() => <Redirect to="/concept2cure/billing?checkout=canceled" />}</Route>
+          <Route path="/billing/success">
+            {() => <Redirect to="/concept2cure/billing?checkout=success" />}
+          </Route>
+          <Route path="/billing/canceled">
+            {() => <Redirect to="/concept2cure/billing?checkout=canceled" />}
+          </Route>
           {/* Alias: /billing redirects to /concept2cure/billing */}
           <Route path="/billing">{() => <Redirect to="/concept2cure/billing" />}</Route>
 
@@ -344,9 +323,7 @@ export const ZenRouter: React.FC = () => {
           </Route>
 
           {/* Legacy onboarding route redirects to main app entry */}
-          <Route path="/concept2cure/onboarding">
-            {() => <Redirect to="/concept2cure" />}
-          </Route>
+          <Route path="/concept2cure/onboarding">{() => <Redirect to="/concept2cure" />}</Route>
 
           {/* Proof Certificate Explorer */}
           <Route path="/concept2cure/proofs/:workflowRunId">
