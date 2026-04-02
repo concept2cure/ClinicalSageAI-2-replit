@@ -322,16 +322,10 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
     try {
       setLoading(true);
       const policyJson = JSON.parse(editedPolicy);
-      const response = await apiRequest('POST', `/api/reg/policy/${activeRegion}/draft`, policyJson);
-
-      if (response.ok) {
-        toast({ title: 'Draft Saved', description: 'Policy draft saved successfully' });
-        setEditMode(false);
-        loadVersions(activeRegion);
-      } else {
-        const error = await response.json();
-        toast({ title: 'Validation Failed', description: error.details?.[0] || error.error, variant: 'destructive' });
-      }
+      await apiRequest('POST', `/api/reg/policy/${activeRegion}/draft`, policyJson);
+      toast({ title: 'Draft Saved', description: 'Policy draft saved successfully' });
+      setEditMode(false);
+      loadVersions(activeRegion);
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } finally {
@@ -342,17 +336,10 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
   const activateVersion = async (version: string) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/reg/policy/${activeRegion}/activate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ version }),
-      });
-
-      if (response.ok) {
-        toast({ title: 'Version Activated', description: `Version ${version} is now active` });
-        loadPolicy(activeRegion);
-        loadVersions(activeRegion);
-      }
+      await apiRequest('POST', `/api/reg/policy/${activeRegion}/activate`, { version });
+      toast({ title: 'Version Activated', description: `Version ${version} is now active` });
+      loadPolicy(activeRegion);
+      loadVersions(activeRegion);
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to activate version', variant: 'destructive' });
     } finally {

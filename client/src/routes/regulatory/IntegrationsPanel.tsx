@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
