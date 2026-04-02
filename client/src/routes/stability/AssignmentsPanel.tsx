@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function AssignmentsPanel({ studyId }: { studyId: string }) {
   const [rows, setRows] = useState<any[]>([]);
   async function load() {
     try {
-      const r = await fetch(`/api/stability/studies/${studyId}/assignments`);
-      if (r.ok) {
-        setRows(await r.json());
-      }
+      const data = await apiRequest('GET', `/api/stability/studies/${studyId}/assignments`);
+      setRows(data);
     } catch (err) {
       console.error('[AssignmentsPanel] Failed to load assignments:', err);
     }
@@ -20,12 +19,8 @@ export default function AssignmentsPanel({ studyId }: { studyId: string }) {
 
   async function markDone(id: string) {
     try {
-      const r = await fetch(`/api/stability/assignments/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'DONE' }),
-      });
-      if (r.ok) load();
+      await apiRequest('PATCH', `/api/stability/assignments/${id}`, { status: 'DONE' });
+      load();
     } catch (err) {
       console.error('[AssignmentsPanel] Failed to mark assignment done:', err);
     }

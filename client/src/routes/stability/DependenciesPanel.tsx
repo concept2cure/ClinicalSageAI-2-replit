@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function DependenciesPanel({ studyId }: { studyId: string }) {
   const [d, setD] = useState<any>(null);

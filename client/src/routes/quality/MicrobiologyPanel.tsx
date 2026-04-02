@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Microscope, AlertTriangle, CheckCircle } from 'lucide-react';
 import InfoTip from '@/components/InfoTip';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface MicrobiologyPanelProps {
   testId: string;
@@ -21,22 +22,11 @@ export default function MicrobiologyPanel({ testId }: MicrobiologyPanelProps) {
 
     try {
       setLoading(true);
-      const response = await fetch(`/api/quality/tests/${testId}/micro/evaluate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ value }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        toast({ title: 'Evaluation Failed', description: error.error || 'Unknown error', variant: 'destructive' });
-        return;
-      }
-
+      const response = await apiRequest('POST', `/api/quality/tests/${testId}/micro/evaluate`, { value });
       const data = await response.json();
       setResult(data);
-    } catch (e) {
-      toast({ title: 'Error', description: 'Failed to evaluate microbiology result', variant: 'destructive' });
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message || 'Failed to evaluate microbiology result', variant: 'destructive' });
     } finally {
       setLoading(false);
     }

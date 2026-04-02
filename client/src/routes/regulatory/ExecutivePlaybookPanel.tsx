@@ -102,8 +102,7 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
     if (!subId) return;
     setGenerating(true);
     try {
-      const response = await fetch(`/api/reg/playbook/${subId}/generate`);
-      const data = await response.json();
+      const data = await apiRequest('GET', `/api/reg/playbook/${subId}/generate`);
       if (data.error) {
         toast({ title: 'Generation Failed', description: data.error, variant: 'destructive' });
       } else {
@@ -120,12 +119,7 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
   // Accept card
   const acceptCard = async (cardId: string) => {
     try {
-      const response = await fetch(`/api/reg/playbook/cards/${cardId}/accept`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ actor: 'user' }),
-      });
-      const result = await response.json();
+      const result = await apiRequest('POST', `/api/reg/playbook/cards/${cardId}/accept`, { actor: 'user' });
       if (result.error) {
         toast({ title: 'Accept Failed', description: result.error, variant: 'destructive' });
       } else {
@@ -141,16 +135,11 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
   const snoozeCard = async () => {
     if (!showSnoozeDialog || !snoozeDate) return;
     try {
-      const response = await fetch(`/api/reg/playbook/cards/${showSnoozeDialog}/snooze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const result = await apiRequest('POST', `/api/reg/playbook/cards/${showSnoozeDialog}/snooze`, {
           until: snoozeDate,
           reason: snoozeReason || 'Snoozed via playbook',
           actor: 'user',
-        }),
-      });
-      const result = await response.json();
+        });
       if (result.error) {
         toast({ title: 'Snooze Failed', description: result.error, variant: 'destructive' });
       } else {
@@ -168,15 +157,10 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
   const rejectCard = async () => {
     if (!showRejectDialog) return;
     try {
-      const response = await fetch(`/api/reg/playbook/cards/${showRejectDialog}/reject`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const result = await apiRequest('POST', `/api/reg/playbook/cards/${showRejectDialog}/reject`, {
           reason: rejectReason || 'Rejected via playbook',
           actor: 'user',
-        }),
-      });
-      const result = await response.json();
+        });
       if (result.error) {
         toast({ title: 'Reject Failed', description: result.error, variant: 'destructive' });
       } else {

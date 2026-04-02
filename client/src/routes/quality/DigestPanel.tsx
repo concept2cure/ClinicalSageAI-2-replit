@@ -2,15 +2,19 @@ import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function DigestPanel() {
   const [result, setResult] = useState<any>(null);
 
   async function trigger() {
-    const r = await fetch(`/api/quality/digest/daily`, { method: 'GET' });
-    const d = await r.json();
-    if (!r.ok) { toast({ title: 'Error', description: d.error || 'Digest generation failed', variant: 'destructive' }); return; }
-    setResult(d);
+    try {
+      const r = await apiRequest('GET', `/api/quality/digest/daily`);
+      const d = await r.json();
+      setResult(d);
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message || 'Digest generation failed', variant: 'destructive' });
+    }
   }
 
   return (
