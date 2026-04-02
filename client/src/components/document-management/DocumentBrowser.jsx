@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDocuShare } from '@/hooks/useDocuShareComponents';
+import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -52,6 +53,7 @@ import {
  */
 export default function DocumentBrowser({ onDocumentSelect, moduleContext, height = 500 }) {
   const { documents, loading, downloadDocument } = useDocuShare();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDocuments, setSelectedDocuments] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: 'lastModified', direction: 'desc' });
@@ -503,16 +505,25 @@ export default function DocumentBrowser({ onDocumentSelect, moduleContext, heigh
                             Download
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="cursor-pointer">
+                          <DropdownMenuItem
+                            className="cursor-pointer"
+                            onClick={() => toast({ title: 'Version history', description: 'Version history is not yet available for this document.' })}
+                          >
                             <History className="h-4 w-4 mr-2" />
                             Version History
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="cursor-pointer">
+                          <DropdownMenuItem
+                            className="cursor-pointer"
+                            onClick={() => toast({ title: 'Edit properties', description: 'Document property editing is not yet available.' })}
+                          >
                             <Edit className="h-4 w-4 mr-2" />
                             Edit Properties
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="cursor-pointer text-red-600">
+                          <DropdownMenuItem
+                            className="cursor-pointer text-red-600"
+                            onClick={() => toast({ title: 'Delete', description: 'Document deletion requires admin approval and is not yet available.', variant: 'destructive' })}
+                          >
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete
                           </DropdownMenuItem>
