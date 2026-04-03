@@ -756,6 +756,26 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>(
     initialConversationId
   );
+
+  // MOVED UP TO FIX TDZ CRASH
+  // Project-scoped artifacts for section navigation and Outputs tab
+  const { data: projectArtifacts = [] } = useQuery({
+    queryKey: ['project-artifacts', activeProjectId],
+    queryFn: async () => {
+      if (!activeProjectId) return [];
+      const token =
+        sessionStorage.getItem('trialsage_access_token') ||
+        localStorage.getItem('trialsage_access_token');
+      const res = await fetch(`/api/concept2cure/projects/${activeProjectId}/artifacts`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : data?.data ?? data?.artifacts ?? [];
+    },
+    enabled: !!activeProjectId,
+    staleTime: 30_000,
+  });
   const [activeThreadId, setActiveThreadId] = useState<string | undefined>();
 
   const approvedRouteDecision = useMemo(
@@ -1034,24 +1054,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     [layoutMode]
   );
 
-  // Project-scoped artifacts for section navigation and Outputs tab
-  const { data: projectArtifacts = [] } = useQuery({
-    queryKey: ['project-artifacts', activeProjectId],
-    queryFn: async () => {
-      if (!activeProjectId) return [];
-      const token =
-        sessionStorage.getItem('trialsage_access_token') ||
-        localStorage.getItem('trialsage_access_token');
-      const res = await fetch(`/api/concept2cure/projects/${activeProjectId}/artifacts`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return Array.isArray(data) ? data : data?.data ?? data?.artifacts ?? [];
-    },
-    enabled: !!activeProjectId,
-    staleTime: 30_000,
-  });
 
   // ── Moved up: requireActiveProject must be defined before hooks that reference it ──
   const requireActiveProject = useCallback(

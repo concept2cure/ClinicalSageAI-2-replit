@@ -57,3 +57,4 @@ playwright-report/
 test-artifacts/
 generated_documents/
 .claude/worktrees/
+.gstack/

@@ -14,6 +14,7 @@ import crypto from 'crypto';
 import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import { db } from '../db';
+import { sql } from 'drizzle-orm';
 import { eq, and } from 'drizzle-orm';
 import { users, organizations, organizationUsers } from '../../shared/schema';
 import { sendPasswordResetEmail, sendLoginOtpEmail } from '../services/emailService';
@@ -201,7 +202,10 @@ router.get('/session', async (req: Request, res: Response) => {
         .select({ role: organizationUsers.role })
         .from(organizationUsers)
         .where(
-          and(eq(organizationUsers.userId, userData.id), eq(organizationUsers.organizationId, orgId))
+          and(
+            eq(organizationUsers.userId, userData.id),
+            eq(organizationUsers.organizationId, orgId)
+          )
         )
         .limit(1);
       if (!sessionMembership) {
@@ -1660,6 +1664,73 @@ router.post('/password/change', async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       error: { code: 'AUTH_010', message: 'Password change failed' },
+    });
+  }
+});
+
+// ─── License Request ────────────────────────────────────────────────────────
+// Public endpoint: accepts a license / demo request from unauthenticated users.
+// Stores in DB (license_requests table) and optionally emails the sales team.
+
+const licenseRequestLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { success: false, error: { message: 'Too many requests. Please try again later.' } },
+});
+
+const licenseRequestSchema = z.object({
+  name: z.string().min(1).max(200),
+  email: z.string().email().max(254),
+  organization: z.string().min(1).max(300),
+  message: z.string().max(2000).optional().default(''),
+});
+
+router.post('/license-request', licenseRequestLimiter, async (req: Request, res: Response) => {
+  try {
+    const parsed = licenseRequestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: { message: parsed.error.issues[0]?.message || 'Invalid request data.' },
+      });
+    }
+
+    const { name, email, organization, message } = parsed.data;
+
+    // Persist to database (best-effort — table may not exist yet)
+    try {
+      await db.execute(sql`INSERT INTO license_requests (name, email, organization, message, status, created_at)
+              VALUES (${name}, ${email}, ${organization}, ${message}, 'pending', NOW())`);
+    } catch (dbErr: any) {
+      // If table doesn't exist, create it and retry once
+      if (dbErr?.message?.includes('license_requests') || dbErr?.code === '42P01') {
+        await db.execute(sql`CREATE TABLE IF NOT EXISTS license_requests (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(200) NOT NULL,
+            email VARCHAR(254) NOT NULL,
+            organization VARCHAR(300) NOT NULL,
+            message TEXT DEFAULT '',
+            status VARCHAR(20) DEFAULT 'pending',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            reviewed_at TIMESTAMPTZ,
+            reviewed_by INTEGER
+          )`);
+        await db.execute(sql`INSERT INTO license_requests (name, email, organization, message, status, created_at)
+                VALUES (${name}, ${email}, ${organization}, ${message}, 'pending', NOW())`);
+      } else {
+        console.error('[auth] License request DB error:', dbErr);
+        // Still return success to the user — we log the request
+      }
+    }
+
+    console.log(`[auth] License request from ${email} (${organization})`);
+
+    return res.json({ success: true, message: 'License request submitted.' });
+  } catch (error) {
+    console.error('[auth] License request error:', error);
+    return res.status(500).json({
+      success: false,
+      error: { message: 'Unable to submit request. Please try again.' },
     });
   }
 });

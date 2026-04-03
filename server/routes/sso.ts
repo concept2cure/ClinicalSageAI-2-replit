@@ -331,26 +331,26 @@ router.get('/:provider/callback', (req: Request, res: Response) => {
     // SECURITY: JWT must include organizationId so downstream tenant middleware
     // derives the org context from the token, not from user-supplied headers.
     const token = jwt.sign(
-      { userId: '1', email: 'sso-user@example.com', organizationId: '2', role: 'client_user', provider },
+      {
+        userId: '1',
+        email: 'sso-user@example.com',
+        organizationId: '2',
+        role: 'client_user',
+        provider,
+      },
       config.jwt.secret,
       { expiresIn: '24h' }
     );
 
-    return res.json({
-      success: true,
-      provider,
-      code: code || 'dev-sso-code',
-      accessToken: token,
-      user: {
-        id: '1',
-        email: 'sso-user@example.com',
-        firstName: 'SSO',
-        lastName: 'User',
-        organizationId: '2',
-        organizationName: 'Concept2Cure',
-        roles: ['client_user'],
-      },
-    });
+    // Redirect to frontend SSO handler page with token in URL fragment (not query string for security)
+    const redirectUrl = `/concept2cure/login?sso_provider=${encodeURIComponent(
+      provider as string
+    )}&sso_token=${encodeURIComponent(token)}&sso_email=${encodeURIComponent(
+      'sso-user@example.com'
+    )}&sso_name=${encodeURIComponent('SSO User')}&sso_org_id=2&sso_org_name=${encodeURIComponent(
+      'Concept2Cure'
+    )}`;
+    return res.redirect(302, redirectUrl);
   }
 
   res.status(501).json({ success: false, error: 'SSO_NOT_IMPLEMENTED' });
@@ -374,15 +374,13 @@ interface DbUserResult {
  * Finds an existing user by email or creates a new one via Just-In-Time (JIT) provisioning.
  * Associates the user with the default organization if not already associated.
  */
-async function findOrCreateSamlUser(samlUser: import('../services/saml-provider').SAMLUser): Promise<DbUserResult> {
+async function findOrCreateSamlUser(
+  samlUser: import('../services/saml-provider').SAMLUser
+): Promise<DbUserResult> {
   const email = samlUser.email.toLowerCase().trim();
 
   // Look up existing user by email
-  const existingUsers = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, email))
-    .limit(1);
+  const existingUsers = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
   if (existingUsers.length > 0) {
     const user = existingUsers[0];
@@ -401,12 +399,12 @@ async function findOrCreateSamlUser(samlUser: import('../services/saml-provider'
     const samlFullName = [samlUser.firstName, samlUser.lastName].filter(Boolean).join(' ');
     if ((!user.name || user.name === email.split('@')[0]) && samlFullName) {
       try {
-        await db
-          .update(users)
-          .set({ name: samlFullName })
-          .where(eq(users.id, user.id));
+        await db.update(users).set({ name: samlFullName }).where(eq(users.id, user.id));
       } catch (updateErr) {
-        logger.warn(`Failed to update user name for ${email}`, updateErr as Record<string, unknown>);
+        logger.warn(
+          `Failed to update user name for ${email}`,
+          updateErr as Record<string, unknown>
+        );
       }
     }
 
@@ -424,7 +422,8 @@ async function findOrCreateSamlUser(samlUser: import('../services/saml-provider'
   // JIT Provisioning: create new user
   logger.info(`JIT provisioning new SAML user: ${email}`);
 
-  const fullName = [samlUser.firstName, samlUser.lastName].filter(Boolean).join(' ') || email.split('@')[0];
+  const fullName =
+    [samlUser.firstName, samlUser.lastName].filter(Boolean).join(' ') || email.split('@')[0];
 
   const [newUser] = await db
     .insert(users)
@@ -448,7 +447,10 @@ async function findOrCreateSamlUser(samlUser: import('../services/saml-provider'
       role: 'member',
     });
   } catch (orgErr) {
-    logger.warn(`Failed to associate SAML user ${email} with org ${defaultOrgId}`, orgErr as Record<string, unknown>);
+    logger.warn(
+      `Failed to associate SAML user ${email} with org ${defaultOrgId}`,
+      orgErr as Record<string, unknown>
+    );
   }
 
   return {

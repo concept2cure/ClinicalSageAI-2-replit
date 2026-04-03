@@ -591,6 +591,39 @@ export class AuthService {
     return { success: true, data: result.data!.user };
   }
 
+
+  async devLogin(): Promise<AuthResult<{ mfaRequired: boolean }>> {
+    const result = await this.api.post<{
+      accessToken?: string;
+      refreshToken?: string;
+      expiresIn?: number;
+      user?: AuthUser;
+      mfaRequired: boolean;
+    }>(
+      `${this.baseUrl}/dev-login`,
+      { email: 'jm.smith@concept2cure.pro' },
+      { skipAuth: true }
+    );
+
+    if (!result.success || !result.data?.accessToken || !result.data?.user) {
+      return { success: false, error: result.error || { code: 'NETWORK_ERROR', message: 'Dev login failed' } };
+    }
+
+    this.setAuth(
+      {
+        accessToken: result.data.accessToken,
+        refreshToken: result.data.refreshToken || result.data.accessToken,
+        expiresAt: new Date(Date.now() + (result.data.expiresIn || 3600) * 1000),
+        tokenType: 'Bearer',
+      },
+      result.data.user,
+      false
+    );
+
+    this.events.emit('login', { user: result.data.user });
+    return { success: true, data: { mfaRequired: false } };
+  }
+
   async logout(terminateAllSessions: boolean = false): Promise<void> {
     try {
       await this.api.post(`${this.baseUrl}/logout`, { terminateAllSessions });
@@ -920,6 +953,7 @@ interface AuthContextValue {
   login: (
     credentials: LoginCredentials
   ) => Promise<AuthResult<{ mfaRequired: boolean; methods?: MfaMethod[]; maskedEmail?: string }>>;
+  devLogin: () => Promise<AuthResult<{ mfaRequired: boolean }>>;
   verifyMfa: (verification: MfaVerification) => Promise<AuthResult<AuthUser>>;
   logout: (terminateAll?: boolean) => Promise<void>;
   hasPermission: (permission: string) => boolean;
@@ -1012,6 +1046,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return authService.login(credentials);
   }, []);
 
+  const devLogin = useCallback(async () => {
+    return authService.devLogin();
+  }, []);
+
   const verifyMfa = useCallback(async (verification: MfaVerification) => {
     return authService.verifyMfa(verification);
   }, []);
@@ -1034,9 +1072,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isLoading: isBootstrapping,
     isBootstrapping,
     login,
-    verifyMfa,
-    logout,
-    hasPermission,
+      devLogin,
+      verifyMfa,
+      logout,
+      hasPermission,
     hasRole,
   };
 
