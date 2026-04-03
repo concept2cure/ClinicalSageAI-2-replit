@@ -319,26 +319,16 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     // Governed context unavailable — continue without
   }
 
-  // === Project document toolkit context ===
-  let toolkitContextBlock = '';
-  if (projectId && orchestration.detectedSubmissionType) {
-    try {
-      const { getSubmissionTypeAnaContext, getRequiredDocuments } = await import('../../services/project-document-toolkit.js');
-      const anaContext = getSubmissionTypeAnaContext(orchestration.detectedSubmissionType);
-      if (anaContext) {
-        const requiredDocs = getRequiredDocuments(orchestration.detectedSubmissionType);
-        const docNames = requiredDocs.slice(0, 5).map((d: { name: string; ctdSection: string }) => `${d.name} (${d.ctdSection})`).join(', ');
-        toolkitContextBlock = `\n\n## Project Document Toolkit\n${anaContext}\nKey documents: ${docNames}`;
-      }
-    } catch {
-      // Toolkit unavailable — continue without
-    }
-  }
-
-  // === Account skill bundles, terms, and templates ===
-  // Resolves org-level execution bundles scoped by submission type.
-  // Includes prompt fragments, evidence preferences, term dictionary,
-  // template registry, and policy bindings — all auto-loaded by context.
+  // === Account skill bundles, terms, templates, and regulatory context ===
+  // Single canonical context loader. Resolves org-level execution bundles
+  // scoped by submission type + project. Includes:
+  //   - Prompt fragments (priority-sorted execution instructions)
+  //   - Evidence preferences and citation style
+  //   - Term dictionary (approved terms, do-not-use terms)
+  //   - Template registry (section overrides, formatting rules)
+  //   - Policy bindings (enforcement rules)
+  //   - Authority response style
+  // All loaded automatically by project type — no UI needed.
   let skillBundleBlock = '';
   if (numericOrgId) {
     try {
@@ -352,11 +342,11 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
         skillBundleBlock = '\n\n' + formatResolvedContextForPrompt(resolved);
       }
     } catch {
-      // Account skill bundles unavailable — continue without
+      // Account context unavailable — continue without
     }
   }
 
-  const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + governedContextBlock + toolkitContextBlock + skillBundleBlock + memoryResult.memoryBlock + enrichment.block;
+  const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + governedContextBlock + skillBundleBlock + memoryResult.memoryBlock + enrichment.block;
 
   // Build messages array
   const messages: GatewayMessage[] = [{ role: 'system', content: fullSystemPrompt }];
