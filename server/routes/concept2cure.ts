@@ -80,6 +80,7 @@ import {
 } from '../services/intelligence/rim-interceptors.js';
 import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
 import { resolveGovernedContext } from '../services/concept2cure/governedDocumentContractService';
+import { evaluateGovernedDocument } from '../src/control-plane/governed-document-evaluator';
 import {
   buildWorkingMemoryPrompt,
   storeWorkingMemory,
@@ -7059,11 +7060,55 @@ router.put(
         to: toSection,
       });
 
+      // === Governed Document Decision Fabric evaluation ===
+      let governedFabric;
+      try {
+        const fabricResult = evaluateGovernedDocument({
+          context: {
+            organizationId,
+            projectId: dbArtifact.projectId,
+            actorId: userId,
+            intendedAction: operation === 'relocate' ? 'relocate' : 'place',
+            artifactId: dbArtifact.artifactId,
+            documentType: dbArtifact.type || undefined,
+            ctdSection: toSection,
+            currentPlacement: previousSection || undefined,
+            intendedPlacementTarget: toSection,
+            originSurface: 'concept2cure',
+            currentLifecycleStatus: dbArtifact.status || 'draft',
+          },
+          documentState: {
+            hasContent: Boolean(dbArtifact.content),
+            hasEvidence: false,
+            hasBeenReviewed: dbArtifact.status === 'review' || dbArtifact.status === 'approved',
+            hasApproval: dbArtifact.status === 'approved' || dbArtifact.status === 'locked',
+            hasPlacement: Boolean(toSection),
+            placementValid: true,
+            hasProvenance: true,
+            unresolvedContradictionCount: 0,
+            criticalContradictionCount: 0,
+          },
+        });
+        governedFabric = {
+          decisionId: fabricResult.decisionReference.decisionId,
+          outcome: fabricResult.decisionReference.outcome,
+          readiness: fabricResult.evaluation.readiness.level,
+          readinessScore: fabricResult.evaluation.readiness.score,
+          placementOutcome: fabricResult.evaluation.placement.outcome,
+          blockerCount: fabricResult.evaluation.decision.blockerCount,
+          warningCount: fabricResult.evaluation.decision.warningCount,
+          consequenceCount: fabricResult.evaluation.decision.consequenceCount,
+        };
+      } catch {
+        governedFabric = { outcome: 'degraded', error: 'Fabric evaluation unavailable' };
+      }
+
       return sendSuccess(res, {
         id: updated.artifactId,
         ctdSection: updated.ctdSection,
         operation,
         previousSection,
+        governedFabric,
       });
     } catch (error: any) {
       logConcept2cureError('artifact placement', error, {

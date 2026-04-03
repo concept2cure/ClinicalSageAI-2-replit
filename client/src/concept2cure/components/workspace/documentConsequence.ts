@@ -34,6 +34,23 @@ export interface ConsequenceProposal {
   auditRef?: string;
 }
 
+/**
+ * Governed fabric state surfaced from the control-plane decision fabric.
+ * Optional — populated when the backend includes governedFabric in responses.
+ */
+export interface GovernedFabricState {
+  decisionId?: string;
+  outcome?: 'allow' | 'block' | 'review' | 'degraded';
+  readiness?: string;
+  readinessScore?: number;
+  placementOutcome?: string;
+  exportEligible?: boolean;
+  publishEligible?: boolean;
+  blockerCount?: number;
+  warningCount?: number;
+  consequenceCount?: number;
+}
+
 export interface DocumentConsequenceRow {
   rowKey: string;
   title: string;
@@ -45,6 +62,8 @@ export interface DocumentConsequenceRow {
   provenancePresent: boolean;
   auditPresent: boolean;
   openable: boolean;
+  /** Governed fabric evaluation state — present when fabric has evaluated this artifact */
+  governedFabric?: GovernedFabricState;
 }
 
 function inferSourceType(artifact: ConsequenceArtifact): ConsequenceSourceType | null {
@@ -59,6 +78,8 @@ export function buildDocumentConsequenceRows(args: {
   computeJobs: ConsequenceComputeJob[];
   proposals: ConsequenceProposal[];
   canOpenArtifact?: (artifactId: string, status: string) => boolean;
+  /** Map of artifactId → governed fabric state from backend evaluations */
+  fabricStateMap?: Record<string, GovernedFabricState>;
 }): DocumentConsequenceRow[] {
   const rows: DocumentConsequenceRow[] = [];
   const seen = new Set<string>();
@@ -66,6 +87,10 @@ export function buildDocumentConsequenceRows(args: {
   const record = (row: DocumentConsequenceRow) => {
     if (seen.has(row.artifactId)) return;
     seen.add(row.artifactId);
+    // Attach governed fabric state if available
+    if (args.fabricStateMap && args.fabricStateMap[row.artifactId]) {
+      row.governedFabric = args.fabricStateMap[row.artifactId];
+    }
     rows.push(row);
   };
 

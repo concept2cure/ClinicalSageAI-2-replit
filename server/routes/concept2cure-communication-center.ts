@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import * as crypto from 'crypto';
+import { evaluateGovernedDocument } from '../src/control-plane/governed-document-evaluator';
 import { db, pool } from '../db';
 import { concept2cureNotifications, projectTasks } from '../../shared/schema';
 import {
@@ -817,7 +818,49 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
         status: item.status,
       });
 
-      return sendSuccess(res, { ...item, generatedTaskId: task?.id });
+      // Governed Document Decision Fabric evaluation on creation — surface initial blockers/warnings
+      let governedFabric: Record<string, unknown> | undefined;
+      try {
+        const fabricResult = evaluateGovernedDocument({
+          context: {
+            organizationId: String(organizationId),
+            projectId: String(projectId),
+            actorId: String(getUserId(req)),
+            intendedAction: 'create',
+            artifactId: item.id,
+            documentType: 'submission_package',
+            regulatorBody: item.authority,
+            submissionType: item.submissionType,
+          },
+          documentState: {
+            hasContent: false,
+            hasEvidence: false,
+            hasBeenReviewed: false,
+            hasApproval: false,
+            hasPlacement: !!item.ectdPath,
+            placementValid: !!item.ectdPath,
+            hasProvenance: false,
+            unresolvedContradictionCount: 0,
+            criticalContradictionCount: 0,
+          },
+        });
+        governedFabric = {
+          decision: fabricResult.evaluation.decision,
+          readiness: {
+            level: fabricResult.evaluation.readiness.level,
+            confidence: fabricResult.evaluation.readiness.confidence,
+            blockers: fabricResult.evaluation.readiness.blockers,
+            warnings: fabricResult.evaluation.readiness.warnings,
+          },
+          consequences: fabricResult.evaluation.consequences,
+          decisionReference: fabricResult.decisionReference,
+        };
+      } catch (fabricError) {
+        // Fabric evaluation is non-blocking — degrade gracefully
+        governedFabric = { error: 'Fabric evaluation unavailable', degraded: true };
+      }
+
+      return sendSuccess(res, { ...item, generatedTaskId: task?.id, governedFabric });
     } catch (error: any) {
       return sendError(
         res,
@@ -894,7 +937,66 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
       }
 
       await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, previous, updated);
-      return sendSuccess(res, updated);
+
+      // Governed Document Decision Fabric evaluation for dispatch readiness
+      let governedFabric: Record<string, unknown> | undefined;
+      try {
+        const fabricResult = evaluateGovernedDocument({
+          context: {
+            organizationId: String(organizationId),
+            projectId: String(projectId),
+            actorId: String(getUserId(req)),
+            intendedAction: 'dispatch',
+            artifactId: updated.id,
+            documentType: 'submission_package',
+            regulatorBody: updated.authority,
+            submissionType: updated.submissionType,
+          },
+          documentState: {
+            hasContent: true,
+            hasEvidence: !!updated.ectdPath,
+            hasBeenReviewed: ['ready_for_publish', 'published', 'submitted_to_gateway'].includes(updated.status),
+            hasApproval: ['ready_for_publish', 'published', 'submitted_to_gateway'].includes(updated.status),
+            hasPlacement: !!updated.ectdPath,
+            placementValid: !!updated.ectdPath,
+            hasProvenance: true,
+            unresolvedContradictionCount: 0,
+            criticalContradictionCount: 0,
+          },
+          publishState: {
+            exportCompleted: ['ready_for_publish', 'published', 'submitted_to_gateway'].includes(updated.status),
+            hasGatewayProfile: !!updated.gatewayProfile,
+            gatewayProfileValid: !!updated.gatewayProfile,
+            hasSequenceNumber: !!updated.sequenceNumber,
+            hasAuthorityProfile: !!updated.authority,
+            authorityAcceptsFormat: true,
+            allSectionsApproved: ['ready_for_publish', 'published', 'submitted_to_gateway'].includes(updated.status),
+            staleSectionCount: 0,
+          },
+        });
+        governedFabric = {
+          decision: fabricResult.evaluation.decision,
+          publishGate: {
+            dispatchReady: fabricResult.evaluation.publishGate.dispatchReady,
+            outcome: fabricResult.evaluation.publishGate.outcome,
+            blockingReasons: fabricResult.evaluation.publishGate.blockingReasons,
+            remediationSteps: fabricResult.evaluation.publishGate.remediationSteps,
+          },
+          readiness: {
+            level: fabricResult.evaluation.readiness.level,
+            confidence: fabricResult.evaluation.readiness.confidence,
+            blockers: fabricResult.evaluation.readiness.blockers,
+            warnings: fabricResult.evaluation.readiness.warnings,
+          },
+          consequences: fabricResult.evaluation.consequences,
+          decisionReference: fabricResult.decisionReference,
+        };
+      } catch (fabricError) {
+        // Fabric evaluation is non-blocking — degrade gracefully
+        governedFabric = { error: 'Fabric evaluation unavailable', degraded: true };
+      }
+
+      return sendSuccess(res, { ...updated, governedFabric });
     } catch (error: any) {
       return sendError(
         res,

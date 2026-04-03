@@ -14,6 +14,22 @@ import {
 import { buildAnaAuditReport } from '../control-plane/audit-report';
 import { ANA_RULE_CATALOG } from '../control-plane/rule-catalog';
 import { runAnaSelfTest } from '../control-plane/self-test';
+import {
+  getRecentGovernedDecisions,
+  getGovernedDecisionSummary,
+  getGovernedDecision,
+  getArtifactDecisionTrace,
+  GOVERNED_DECISION_SERVICE_VERSION,
+} from '../control-plane/governed-decision-service';
+import {
+  evaluateGovernedDocument,
+  GOVERNED_DOCUMENT_EVALUATOR_VERSION,
+} from '../control-plane/governed-document-evaluator';
+import { READINESS_GATES_VERSION } from '../control-plane/readiness-gates';
+import { PLACEMENT_AUTHORITY_VERSION } from '../control-plane/placement-authority';
+import { EXPORT_PUBLISH_GATES_VERSION } from '../control-plane/export-publish-gates';
+import { DOCUMENT_CONSEQUENCE_ENGINE_VERSION } from '../control-plane/document-consequence-engine';
+import { DOCUMENT_CONTEXT_RESOLVER_VERSION } from '../control-plane/document-context-resolver';
 
 const router = Router();
 
@@ -129,6 +145,150 @@ router.post('/kernel/simulate', requireControlPlaneAccess, (req, res) => {
 router.post('/kernel/recent/clear', requireControlPlaneAccess, (_req, res) => {
   clearKernelDecisionLog();
   res.json({ ok: true });
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// Governed Document Decision Fabric — Inspection Endpoints
+// ═══════════════════════════════════════════════════════════════════════
+
+const governedDecisionQuerySchema = z.object({
+  limit: z.coerce.number().min(1).max(500).default(50),
+  projectId: z.string().optional(),
+  artifactId: z.string().optional(),
+  intent: z.string().optional(),
+  outcome: z.string().optional(),
+  since: z.string().optional(),
+});
+
+/**
+ * GET /governed/fabric-version — Version info for all fabric modules
+ */
+router.get('/governed/fabric-version', requireControlPlaneAccess, (_req, res) => {
+  res.json({
+    fabric: {
+      evaluator: GOVERNED_DOCUMENT_EVALUATOR_VERSION,
+      contextResolver: DOCUMENT_CONTEXT_RESOLVER_VERSION,
+      readinessGates: READINESS_GATES_VERSION,
+      placementAuthority: PLACEMENT_AUTHORITY_VERSION,
+      exportPublishGates: EXPORT_PUBLISH_GATES_VERSION,
+      consequenceEngine: DOCUMENT_CONSEQUENCE_ENGINE_VERSION,
+      decisionService: GOVERNED_DECISION_SERVICE_VERSION,
+    },
+  });
+});
+
+/**
+ * GET /governed/decisions — Recent governed document decisions
+ */
+router.get('/governed/decisions', requireControlPlaneAccess, (req, res) => {
+  const parsed = governedDecisionQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    return res.status(400).json({ error: { code: 'INVALID_QUERY', details: parsed.error.flatten() } });
+  }
+  const entries = getRecentGovernedDecisions(parsed.data as any);
+  return res.json({ entries, count: entries.length });
+});
+
+/**
+ * GET /governed/decisions/summary — Aggregated decision summary
+ */
+router.get('/governed/decisions/summary', requireControlPlaneAccess, (req, res) => {
+  const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : undefined;
+  const since = typeof req.query.since === 'string' ? req.query.since : undefined;
+  const summary = getGovernedDecisionSummary({ projectId, since });
+  res.json({ summary });
+});
+
+/**
+ * GET /governed/decisions/:decisionId — Single decision detail
+ */
+router.get('/governed/decisions/:decisionId', requireControlPlaneAccess, (req, res) => {
+  const decision = getGovernedDecision(req.params.decisionId);
+  if (!decision) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Decision not found' } });
+  }
+  return res.json({ decision });
+});
+
+/**
+ * GET /governed/trace/:projectId/:artifactId — Decision trace for an artifact
+ */
+router.get('/governed/trace/:projectId/:artifactId', requireControlPlaneAccess, (req, res) => {
+  const trace = getArtifactDecisionTrace(req.params.projectId, req.params.artifactId);
+  res.json({ trace, count: trace.length });
+});
+
+/**
+ * POST /governed/evaluate — Simulate a governed document evaluation
+ */
+const evaluateSchema = z.object({
+  context: z.object({
+    organizationId: z.string(),
+    projectId: z.string(),
+    actorId: z.string(),
+    intendedAction: z.string(),
+    artifactId: z.string().optional(),
+    artifactVersionId: z.string().optional(),
+    documentType: z.string().optional(),
+    regulatorBody: z.string().optional(),
+    submissionType: z.string().optional(),
+    ctdSection: z.string().optional(),
+    moduleCode: z.string().optional(),
+    sectionCode: z.string().optional(),
+    dossierId: z.string().optional(),
+    clientTrack: z.string().optional(),
+    workspaceTarget: z.string().optional(),
+    originSurface: z.string().optional(),
+    currentLifecycleStatus: z.string().optional(),
+    currentPlacement: z.string().optional(),
+    intendedPlacementTarget: z.string().optional(),
+    actorRole: z.string().optional(),
+  }),
+  documentState: z.object({
+    hasContent: z.boolean().default(false),
+    hasEvidence: z.boolean().default(false),
+    evidenceCount: z.number().optional(),
+    hasBeenReviewed: z.boolean().default(false),
+    reviewApprovalCount: z.number().optional(),
+    requiredReviewCount: z.number().optional(),
+    hasApproval: z.boolean().default(false),
+    approvalDate: z.string().optional(),
+    hasPlacement: z.boolean().default(false),
+    placementValid: z.boolean().default(false),
+    hasProvenance: z.boolean().default(false),
+    unresolvedContradictionCount: z.number().default(0),
+    criticalContradictionCount: z.number().default(0),
+    isStale: z.boolean().optional(),
+    staleReason: z.string().optional(),
+    completenessScore: z.number().optional(),
+    missingRequiredFields: z.array(z.string()).optional(),
+  }),
+  exportState: z.object({
+    contentHash: z.string().optional(),
+    humanReviewApproved: z.boolean(),
+    aiGenerated: z.boolean(),
+    provenanceComplete: z.boolean(),
+  }).optional(),
+  publishState: z.object({
+    exportCompleted: z.boolean(),
+    exportHash: z.string().optional(),
+    hasGatewayProfile: z.boolean(),
+    gatewayProfileValid: z.boolean(),
+    hasSequenceNumber: z.boolean(),
+    hasAuthorityProfile: z.boolean(),
+    authorityAcceptsFormat: z.boolean(),
+    allSectionsApproved: z.boolean(),
+    staleSectionCount: z.number(),
+  }).optional(),
+});
+
+router.post('/governed/evaluate', requireControlPlaneAccess, (req, res) => {
+  const parsed = evaluateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: { code: 'INVALID_EVALUATION_INPUT', details: parsed.error.flatten() } });
+  }
+  const result = evaluateGovernedDocument(parsed.data as any);
+  return res.json({ result });
 });
 
 export default router;

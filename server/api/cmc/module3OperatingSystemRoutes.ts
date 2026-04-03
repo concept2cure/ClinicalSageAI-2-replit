@@ -9,6 +9,7 @@ import {
 } from '../../services/cmc-module3-compiler';
 import { composeModule3FromCanonicalSources, impactedSectionsForSourceType } from '../../services/module3Composer';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
+import { evaluateGovernedDocument } from '../../src/control-plane/governed-document-evaluator';
 
 const router = express.Router();
 
@@ -385,6 +386,47 @@ router.get('/readiness/:projectId', async (req, res) => {
       (r: any) => r.severity === 'critical' && r.status !== 'resolved'
     ).length;
 
+    const exportReady = totalSections > 0 && approvedSections === totalSections && staleSections === 0 && openCriticalContradictions === 0;
+
+    // Governed Document Decision Fabric evaluation
+    let governedFabric: Record<string, any> | null = null;
+    try {
+      const unresolvedContradictions = contradictions.rows.filter(
+        (r: any) => r.status !== 'resolved'
+      ).length;
+      const fabricResult = evaluateGovernedDocument({
+        context: {
+          organizationId: orgId,
+          projectId: Number(projectId),
+          actorId: (req as any).user?.id || 'system',
+          intendedAction: 'export',
+          documentType: 'cmc_module3',
+          ctdSection: '3',
+        },
+        documentState: {
+          hasContent: totalSections > 0,
+          hasEvidence: totalSections > 0,
+          hasBeenReviewed: approvedSections > 0,
+          hasApproval: exportReady,
+          hasPlacement: true,
+          placementValid: true,
+          hasProvenance: true,
+          unresolvedContradictionCount: unresolvedContradictions,
+          criticalContradictionCount: openCriticalContradictions,
+          isStale: staleSections > 0,
+          completenessScore: totalSections > 0 ? approvedSections / totalSections : 0,
+        },
+      });
+      governedFabric = {
+        decision: fabricResult.evaluation.decision,
+        readiness: fabricResult.evaluation.readiness,
+        decisionReference: fabricResult.decisionReference,
+      };
+    } catch (fabricErr) {
+      // Non-blocking — fabric failure does not break readiness endpoint
+      governedFabric = { error: 'Fabric evaluation failed', degraded: true };
+    }
+
     return res.json({
       success: true,
       data: {
@@ -392,7 +434,8 @@ router.get('/readiness/:projectId', async (req, res) => {
         approvedSections,
         staleSections,
         openCriticalContradictions,
-        exportReady: totalSections > 0 && approvedSections === totalSections && staleSections === 0 && openCriticalContradictions === 0,
+        exportReady,
+        governedFabric,
       },
     });
   } catch (error) {
@@ -451,6 +494,42 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
         .json({ success: false, error: 'Critical contradictions must be resolved before approval.' });
     }
 
+    // Governed Document Decision Fabric — evaluate before approval
+    let governedFabric: Record<string, any> | null = null;
+    try {
+      const unresolvedContradictions = blocking.rows.length; // already queried above
+      const fabricResult = evaluateGovernedDocument({
+        context: {
+          organizationId: orgId,
+          projectId: Number(projectId),
+          actorId: (req as any).user?.id || 'system',
+          intendedAction: 'approve',
+          documentType: 'cmc_module3',
+          ctdSection: sectionKey,
+        },
+        documentState: {
+          hasContent: true,
+          hasEvidence: true,
+          hasBeenReviewed: true,
+          hasApproval: false, // not yet approved — that is what we are doing
+          hasPlacement: true,
+          placementValid: true,
+          hasProvenance: true,
+          unresolvedContradictionCount: unresolvedContradictions,
+          criticalContradictionCount: unresolvedContradictions,
+          isStale: false,
+        },
+      });
+      governedFabric = {
+        decision: fabricResult.evaluation.decision,
+        readiness: fabricResult.evaluation.readiness,
+        decisionReference: fabricResult.decisionReference,
+      };
+    } catch (fabricErr) {
+      // Non-blocking for approval — log but proceed
+      governedFabric = { error: 'Fabric evaluation failed', degraded: true };
+    }
+
     const sectionRes = await pool.query(
       `SELECT id, deterministic_json, approval_state
        FROM cmc_module3_sections
@@ -503,6 +582,7 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
       sectionKey,
       versionNumber,
       approvedVersionId: insertedVersion.rows[0].id,
+      governedFabric,
     });
   } catch (error) {
     if (String(error?.message || '').includes('Organization context required')) {
@@ -576,19 +656,71 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
       contradictions: contradictionsRes.rows || [],
     });
 
-    if (!allowed) {
+    // Governed Document Decision Fabric evaluation
+    const approvedCount = sections.filter((s: any) => s.approval_state === 'approved').length;
+    const openCritical = (contradictionsRes.rows || []).filter((c: any) => c.severity === 'critical' && c.status !== 'resolved').length;
+    const unresolvedCount = (contradictionsRes.rows || []).filter((c: any) => c.status !== 'resolved').length;
+
+    let governedFabric: Record<string, any> | null = null;
+    let fabricBlocks = false;
+    try {
+      const fabricResult = evaluateGovernedDocument({
+        context: {
+          organizationId: orgId,
+          projectId: Number(projectId),
+          actorId: (req as any).user?.id || 'system',
+          intendedAction: 'export',
+          documentType: 'cmc_module3',
+          ctdSection: '3',
+        },
+        documentState: {
+          hasContent: sections.length > 0,
+          hasEvidence: sections.length > 0,
+          hasBeenReviewed: approvedCount > 0,
+          hasApproval: allApproved,
+          hasPlacement: true,
+          placementValid: true,
+          hasProvenance: true,
+          unresolvedContradictionCount: unresolvedCount,
+          criticalContradictionCount: openCritical,
+          isStale: false,
+          completenessScore: sections.length > 0 ? approvedCount / sections.length : 0,
+        },
+        exportState: {
+          humanReviewApproved: allApproved,
+          aiGenerated: false,
+          provenanceComplete: true,
+        },
+      });
+      fabricBlocks = fabricResult.evaluation.decision.outcome === 'block';
+      governedFabric = {
+        decision: fabricResult.evaluation.decision,
+        exportGate: fabricResult.evaluation.exportGate,
+        decisionReference: fabricResult.decisionReference,
+      };
+    } catch (fabricErr) {
+      // Fail-closed: if fabric errors, treat as blocking
+      fabricBlocks = true;
+      governedFabric = { error: 'Fabric evaluation failed', degraded: true, blocked: true };
+    }
+
+    // Fail-closed convergence: block if EITHER the existing check OR the fabric blocks
+    if (!allowed || fabricBlocks) {
       return res.status(409).json({
         success: false,
-        error: 'Critical contradictions or missing approvals block final export',
+        error: fabricBlocks && allowed
+          ? 'Governed document fabric blocked final export'
+          : 'Critical contradictions or missing approvals block final export',
         data: {
           totalSections: sections.length,
-          approvedSections: sections.filter((s: any) => s.approval_state === 'approved').length,
-          openCriticalContradictions: (contradictionsRes.rows || []).filter((c: any) => c.severity === 'critical' && c.status !== 'resolved').length,
+          approvedSections: approvedCount,
+          openCriticalContradictions: openCritical,
+          governedFabric,
         },
       });
     }
 
-    return res.json({ success: true, message: 'Final export gate passed' });
+    return res.json({ success: true, message: 'Final export gate passed', governedFabric });
   } catch (error) {
     if (String(error?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
