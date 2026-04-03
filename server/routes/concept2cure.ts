@@ -81,6 +81,15 @@ import {
 import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
 import { resolveGovernedContext } from '../services/concept2cure/governedDocumentContractService';
 import { evaluateAndInterceptGovernedDocument } from '../src/control-plane/governed-document-evaluator';
+import { getProjectDocumentToolkit } from '../services/project-document-toolkit';
+
+function getProjectDocumentToolkitSafe(submissionType: string) {
+  try {
+    return getProjectDocumentToolkit(submissionType);
+  } catch {
+    return null;
+  }
+}
 import {
   buildWorkingMemoryPrompt,
   storeWorkingMemory,
@@ -2172,6 +2181,7 @@ router.post('/projects', async (req: Request, res: Response) => {
       updatedAt: newProject.updatedAt,
       initialThreadId,
       suggestedActions: getSuggestedActionsForType(data.submissionType),
+      documentToolkit: getProjectDocumentToolkitSafe(data.submissionType),
     };
 
     logger.info('Created new project', {
@@ -7115,6 +7125,69 @@ router.put(
         artifactId: req.params.artifactId,
       });
       return sendError(res, 500, 'Failed to update placement');
+    }
+  }
+);
+
+/**
+ * GET /api/concept2cure/projects/:projectId/document-toolkit
+ * Returns the document toolkit for this project's submission type — required documents,
+ * templates, regulatory context, and document checklist with completion status.
+ */
+router.get(
+  '/projects/:projectId/document-toolkit',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const [project] = await db
+        .select()
+        .from(projects)
+        .where(
+          and(
+            eq(projects.id, Number(req.params.projectId)),
+            eq(projects.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!project) return sendError(res, 404, 'Project not found');
+
+      const metadata = project.metadata as Record<string, unknown> | null;
+      const submissionType = String(metadata?.submissionType || 'IND');
+
+      const { buildDocumentChecklist } = await import('../services/project-document-toolkit');
+      const toolkit = getProjectDocumentToolkitSafe(submissionType);
+      if (!toolkit) {
+        return sendSuccess(res, { toolkit: null, message: `No toolkit for submission type: ${submissionType}` });
+      }
+
+      // Get existing document types in this project
+      const existingArtifacts = await db
+        .select({ type: concept2cureArtifacts.type })
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.projectId, project.id),
+            eq(concept2cureArtifacts.organizationId, organizationId)
+          )
+        );
+
+      const existingDocTypes = existingArtifacts.map(a => a.type).filter(Boolean) as string[];
+      const checklist = buildDocumentChecklist(submissionType, existingDocTypes);
+
+      return sendSuccess(res, {
+        toolkit,
+        checklist,
+        completionRate: checklist.length > 0
+          ? Math.round((checklist.filter(c => c.exists).length / checklist.filter(c => c.required).length) * 100)
+          : 0,
+      });
+    } catch (error: unknown) {
+      logConcept2cureError('document-toolkit', error, { projectId: req.params.projectId });
+      return sendError(res, 500, 'Failed to load document toolkit');
     }
   }
 );
