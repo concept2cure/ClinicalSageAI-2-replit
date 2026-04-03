@@ -108,6 +108,16 @@ export interface GovernedEvaluationInput {
     allSectionsApproved: boolean;
     staleSectionCount: number;
   };
+
+  // RIM context (optional — injected by callers that have access to the RIM bridge)
+  rimContext?: {
+    signalSummary: { totalSignals: number; averageScore: number; overallTrend: string };
+    topPatternIds: string[];
+    recentBlockerHistory: number;
+    hasHighRiskSignals: boolean;
+    hasCriticalPatterns: boolean;
+    compactSummary: string;
+  };
 }
 
 /**
@@ -401,7 +411,10 @@ function buildUIPresentationHints(
   const nextAction = deriveNextAction(readiness, exportGate, publishGate, consequences);
 
   return {
-    readinessBadge: { label: readiness.level.replace(/_/g, ' '), tone: readinessTone() },
+    readinessBadge: {
+      label: readiness.level.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+      tone: readinessTone(),
+    },
     exportBadge: { label: exportGate.outcome, tone: gateTone(exportGate.outcome) },
     publishBadge: { label: publishGate.outcome, tone: gateTone(publishGate.outcome) },
     topBlockerMessages: readiness.blockers.slice(0, 3).map(b => b.message),
@@ -433,13 +446,13 @@ function deriveNextAction(
   if (readiness.level === 'approval_ready') return 'Submit for approval';
   if (readiness.level === 'export_ready') {
     if (exportGate.outcome === 'blocked') {
-      return exportGate.remediationSteps[0] || 'Resolve export gate issues';
+      return exportGate.remediationSteps?.[0] || 'Resolve export gate issues';
     }
     return 'Document is ready for export';
   }
   if (readiness.level === 'publish_ready') {
     if (publishGate.outcome === 'blocked') {
-      return publishGate.remediationSteps[0] || 'Resolve publish gate issues';
+      return publishGate.remediationSteps?.[0] || 'Resolve publish gate issues';
     }
     return 'Document is ready for publishing';
   }

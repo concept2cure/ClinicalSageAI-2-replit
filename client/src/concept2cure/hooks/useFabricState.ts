@@ -112,7 +112,7 @@ export function selectPromotionBlockersFromFabric(
   const blockers = latestBlockedDecisions.map((d) => ({
     type: d.intent,
     severity: d.blockerCount > 0 ? 'critical' : 'minor',
-    message: `${d.intent} blocked: readiness ${d.readinessLevel} (score ${d.readinessScore}/100), ${d.blockerCount} blocker(s)`,
+    message: `${d.intent ?? 'unknown'} blocked: readiness ${d.readinessLevel ?? 'unknown'} (score ${d.readinessScore ?? 0}/100), ${d.blockerCount ?? 0} blocker(s)`,
   }));
 
   return {
