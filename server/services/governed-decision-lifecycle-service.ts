@@ -161,6 +161,28 @@ export async function transitionGovernedDecision(
       by: input.performedBy,
     });
 
+    // Record durable transition event
+    try {
+      const { recordTransitionEvent } = await import('./governed-decision-transition-log-service.js');
+      recordTransitionEvent({
+        decisionId: input.decisionId,
+        organizationId: input.organizationId,
+        projectId: input.projectId,
+        fromState: currentState,
+        toState: input.targetState,
+        action: input.targetState,
+        actorId: input.performedBy,
+        actorRole: input.performedByRole,
+        reason: input.reason,
+        notes: input.notes,
+        linkedArtifactId: input.executedArtifactId ? String(input.executedArtifactId) : undefined,
+        linkedWorkflowRunId: input.executedWorkflowRunId,
+        supersededByDecisionId: input.supersededByDecisionId,
+      });
+    } catch {
+      // Transition log write failed — transition itself succeeded
+    }
+
     return {
       success: true,
       decisionId: input.decisionId,
@@ -337,30 +359,23 @@ export async function supersedeDecision(
 
 /**
  * Get lifecycle history for a decision (all transitions).
+ * Returns real durable transition events, not reconstructed pseudo-history.
  */
 export async function getDecisionLifecycleHistory(
   decisionId: string,
   organizationId: number
 ): Promise<GovernedLifecycleHistoryEntry[]> {
   try {
-    const { decisionRecordService } = await import('./decision-record-service.js');
-    const decision = await decisionRecordService.getById(decisionId, organizationId);
-    if (!decision) return [];
-
-    // Build history from current state + timestamps
-    // In a full implementation, this would query an audit/transition log table
-    const entries: GovernedLifecycleHistoryEntry[] = [
-      {
-        decisionId,
-        state: decision.actionState,
-        performedBy: decision.approvedBy || decision.decidedBy || 'system',
-        reason: decision.rejectionReason || decision.escalationReason || undefined,
-        timestamp: decision.updatedAt || decision.createdAt,
-        artifactRef: decision.executedArtifactId ? String(decision.executedArtifactId) : undefined,
-      },
-    ];
-
-    return entries;
+    const { getDecisionTimelineDurable } = await import('./governed-decision-transition-log-service.js');
+    const events = await getDecisionTimelineDurable(decisionId, organizationId);
+    return events.map(e => ({
+      decisionId: e.decisionId,
+      state: e.toState,
+      performedBy: e.actorId,
+      reason: e.reason,
+      timestamp: e.createdAt,
+      artifactRef: e.linkedArtifactId,
+    }));
   } catch {
     return [];
   }

@@ -427,6 +427,15 @@ router.get('/readiness/:projectId', async (req, res) => {
       governedFabric = { error: 'Fabric evaluation failed', degraded: true };
     }
 
+    // Check for unresolved governed decisions affecting readiness
+    let governedDecisionReadiness;
+    try {
+      const { hasUnresolvedGovernedDecisions } = await import('../../services/governed-decision-transition-log-service.js');
+      governedDecisionReadiness = hasUnresolvedGovernedDecisions(Number(req.params.projectId), orgId);
+    } catch {
+      governedDecisionReadiness = { hasUnresolved: false, unresolvedCount: 0, escalatedCount: 0, states: {} };
+    }
+
     return res.json({
       success: true,
       data: {
@@ -436,6 +445,7 @@ router.get('/readiness/:projectId', async (req, res) => {
         openCriticalContradictions,
         exportReady,
         governedFabric,
+        governedDecisionReadiness,
       },
     });
   } catch (error) {
@@ -704,23 +714,39 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
       governedFabric = { error: 'Fabric evaluation failed', degraded: true, blocked: true };
     }
 
-    // Fail-closed convergence: block if EITHER the existing check OR the fabric blocks
-    if (!allowed || fabricBlocks) {
+    // Check for unresolved governed decisions affecting export
+    let governedDecisionReadiness;
+    try {
+      const { hasUnresolvedGovernedDecisions } = await import('../../services/governed-decision-transition-log-service.js');
+      governedDecisionReadiness = hasUnresolvedGovernedDecisions(Number(projectId), orgId);
+    } catch {
+      governedDecisionReadiness = { hasUnresolved: false, unresolvedCount: 0, escalatedCount: 0, states: {} };
+    }
+
+    // Block export if governed decisions are unresolved
+    const governedDecisionsBlock = governedDecisionReadiness?.hasUnresolved === true;
+
+    // Fail-closed convergence: block if EITHER the existing check OR the fabric blocks OR governed decisions are unresolved
+    if (!allowed || fabricBlocks || governedDecisionsBlock) {
+      const errorMsg = governedDecisionsBlock && allowed && !fabricBlocks
+        ? `Unresolved governed decisions block final export (${governedDecisionReadiness.unresolvedCount} unresolved, ${governedDecisionReadiness.escalatedCount} escalated)`
+        : fabricBlocks && allowed
+          ? 'Governed document fabric blocked final export'
+          : 'Critical contradictions or missing approvals block final export';
       return res.status(409).json({
         success: false,
-        error: fabricBlocks && allowed
-          ? 'Governed document fabric blocked final export'
-          : 'Critical contradictions or missing approvals block final export',
+        error: errorMsg,
         data: {
           totalSections: sections.length,
           approvedSections: approvedCount,
           openCriticalContradictions: openCritical,
           governedFabric,
+          governedDecisionReadiness,
         },
       });
     }
 
-    return res.json({ success: true, message: 'Final export gate passed', governedFabric });
+    return res.json({ success: true, message: 'Final export gate passed', governedFabric, governedDecisionReadiness });
   } catch (error) {
     if (String(error?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });

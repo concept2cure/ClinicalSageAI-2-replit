@@ -3462,6 +3462,28 @@ router.get('/projects/:projectId/governance/decisions/:decisionId/history', asyn
 });
 
 /**
+ * GET /api/concept2cure/projects/:projectId/governance/review-queue
+ * Returns the project's governed decision review queue — decisions requiring action.
+ */
+router.get('/projects/:projectId/governance/review-queue', async (req, res) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+    const { getProjectReviewQueue, hasUnresolvedGovernedDecisions } =
+      await import('../services/governed-decision-transition-log-service.js');
+
+    const queue = getProjectReviewQueue(Number(req.params.projectId), organizationId);
+    const unresolved = hasUnresolvedGovernedDecisions(Number(req.params.projectId), organizationId);
+
+    return sendSuccess(res, { queue, unresolved });
+  } catch (error) {
+    return sendError(res, 500, 'Failed to load review queue');
+  }
+});
+
+/**
  * PATCH /api/concept2cure/projects/:projectId/knowledge
  * Update knowledge base metadata (custom instructions, context).
  */

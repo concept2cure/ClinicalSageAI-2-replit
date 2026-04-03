@@ -11,7 +11,7 @@
  * @module concept2cure/hooks/useFabricState
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { queryKeys } from './queryKeys';
 
@@ -142,4 +142,49 @@ export function selectGovernanceDecisionBadge(
     return { label: 'Governed', tone: 'green', count: summary.total };
   }
   return { label: 'No decisions', tone: 'stone', count: 0 };
+}
+
+// ── Governed Review Queue Hooks ────────────────────────────────────────────
+
+/**
+ * Fetch the governed decision review queue for a project.
+ */
+export function useGovernedReviewQueue(projectId: string | undefined) {
+  return useQuery({
+    queryKey: ['concept2cure', 'governance', 'review-queue', projectId],
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/governance/review-queue`);
+      return (await res.json()) as { data: { queue: { pending: string[]; escalated: string[]; deferred: string[]; rejected: string[] }; unresolved: { hasUnresolved: boolean; unresolvedCount: number; escalatedCount: number } } };
+    },
+    enabled: !!projectId,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+  });
+}
+
+/**
+ * Fetch lifecycle transition history for a specific decision.
+ */
+export function useGovernedDecisionHistory(projectId: string | undefined, decisionId: string | undefined) {
+  return useQuery({
+    queryKey: ['concept2cure', 'governance', 'decision-history', projectId, decisionId],
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/governance/decisions/${decisionId}/history`);
+      return (await res.json()) as { data: { history: Array<{ decisionId: string; state: string; performedBy: string; reason?: string; timestamp: string }> } };
+    },
+    enabled: !!projectId && !!decisionId,
+    staleTime: 10_000,
+  });
+}
+
+/**
+ * Perform a lifecycle transition on a governed decision.
+ */
+export function useGovernedDecisionTransition(projectId: string | undefined) {
+  return useMutation({
+    mutationFn: async (input: { decisionId: string; action: string; reason?: string; escalatedTo?: string }) => {
+      const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/governance/decisions/${input.decisionId}/transition`, input);
+      return (await res.json()) as { data: { success: boolean; previousState: string; newState: string; error?: string } };
+    },
+  });
 }
