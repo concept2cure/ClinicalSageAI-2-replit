@@ -1,12 +1,12 @@
 /**
  * useFabricState — Canonical fabric governance state hooks.
  *
- * Queries the control-plane governed decision endpoints and provides
- * canonical governance state for the document system.
+ * Queries client-safe project-scoped governance endpoints backed by
+ * durable storage (decision_records table).
  *
  * Endpoints consumed:
- *   GET /api/control-plane/governed/decisions
- *   GET /api/control-plane/governed/decisions/summary
+ *   GET /api/concept2cure/projects/:projectId/governance/decisions
+ *   GET /api/concept2cure/projects/:projectId/governance/summary
  *
  * @module concept2cure/hooks/useFabricState
  */
@@ -58,11 +58,10 @@ export function useFabricDecisions(
     queryKey: queryKeys.governance.fabricDecisions(projectId),
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (projectId) params.set('projectId', projectId);
       if (options?.limit) params.set('limit', String(options.limit));
       const res = await apiRequest(
         'GET',
-        `/api/control-plane/governed/decisions?${params}`
+        `/api/concept2cure/projects/${projectId}/governance/decisions?${params}`
       );
       return (await res.json()) as { entries: FabricDecisionEntry[]; count: number };
     },
@@ -79,11 +78,9 @@ export function useFabricSummary(projectId: string | undefined) {
   return useQuery({
     queryKey: queryKeys.governance.fabricSummary(projectId),
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (projectId) params.set('projectId', projectId);
       const res = await apiRequest(
         'GET',
-        `/api/control-plane/governed/decisions/summary?${params}`
+        `/api/concept2cure/projects/${projectId}/governance/summary`
       );
       return ((await res.json()) as { summary: FabricSummary }).summary;
     },

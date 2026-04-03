@@ -57,6 +57,39 @@ import { recordGovernedDecision } from './governed-decision-service';
 
 export const GOVERNED_DOCUMENT_EVALUATOR_VERSION = '1.0.0';
 
+// ═══════════════════════════════════════════════════════════════════════
+// RIM Learning Emitter — injectable side-effect adapter
+// Avoids circular imports by using a narrow interface + lazy registration.
+// ═══════════════════════════════════════════════════════════════════════
+
+interface FabricDecisionEmitPayload {
+  organizationId: number;
+  projectId: number;
+  decisionId: string;
+  intent: string;
+  outcome: string;
+  readinessLevel: string;
+  readinessScore: number;
+  blockerCount: number;
+  warningCount: number;
+  blockerCategories: string[];
+  exportGateOutcome: string;
+  publishGateOutcome: string;
+  consequenceTypes: string[];
+}
+
+type FabricDecisionEmitter = (payload: FabricDecisionEmitPayload) => void;
+
+let registeredEmitter: FabricDecisionEmitter | null = null;
+
+/**
+ * Register the RIM learning emitter. Called once at startup by the
+ * RIM bridge module — no circular imports needed.
+ */
+export function registerFabricDecisionEmitter(emitter: FabricDecisionEmitter): void {
+  registeredEmitter = emitter;
+}
+
 /**
  * Full evaluation input — what a lane provides to evaluate a governed document action.
  *
@@ -296,12 +329,12 @@ export function evaluateAndInterceptGovernedDocument(
 ): GovernedEvaluationResult {
   const result = evaluateGovernedDocument(input);
 
-  // Emit to RIM learning loop (non-blocking, fire-and-forget)
-  try {
-    // Dynamic import to avoid circular dependency
-    const bridgeModule = require('../../../server/services/intelligence/fabric-signal-bridge');
-    if (bridgeModule?.interceptFabricDecision) {
-      bridgeModule.interceptFabricDecision({
+  // Emit to RIM learning loop via registered emitter (non-blocking)
+  // The emitter is registered at startup by the RIM bridge module —
+  // no dynamic require() or circular imports needed.
+  if (registeredEmitter) {
+    try {
+      registeredEmitter({
         organizationId: Number(result.evaluation.context.organizationId) || 0,
         projectId: Number(result.evaluation.context.projectId) || 0,
         decisionId: result.decisionReference.decisionId,
@@ -320,9 +353,9 @@ export function evaluateAndInterceptGovernedDocument(
           (c: { consequenceType: string }) => c.consequenceType
         ),
       });
+    } catch {
+      // Emitter failure — evaluation still valid
     }
-  } catch {
-    // RIM bridge unavailable — evaluation still valid
   }
 
   return result;

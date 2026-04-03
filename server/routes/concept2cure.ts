@@ -3271,6 +3271,88 @@ router.get(
   }
 );
 
+// ─── Client-Safe Governance Routes ──────────────────────────────────────────
+// These expose governed fabric decisions via project-scoped paths,
+// removing the dependency on admin-only /api/control-plane routes.
+
+/**
+ * GET /api/concept2cure/projects/:projectId/governance/decisions
+ * Client-safe: returns governed decisions for a project.
+ * Uses durable storage, not admin-only control-plane.
+ */
+router.get('/projects/:projectId/governance/decisions', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+    const limit = Math.min(Number(req.query.limit) || 50, 200);
+    const { getRecentGovernedDecisionsDurable } = await import(
+      '../src/control-plane/governed-decision-service.js'
+    );
+    const entries = await getRecentGovernedDecisionsDurable({
+      organizationId: String(organizationId),
+      projectId: req.params.projectId,
+      limit,
+    });
+
+    return sendSuccess(res, { entries, count: entries.length });
+  } catch (error: any) {
+    logger.error('Failed to load governance decisions', { error: error.message });
+    return sendError(res, 500, 'Failed to load governance decisions');
+  }
+});
+
+/**
+ * GET /api/concept2cure/projects/:projectId/governance/summary
+ * Client-safe governance decision summary.
+ */
+router.get('/projects/:projectId/governance/summary', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+    const { getGovernedDecisionSummaryDurable } = await import(
+      '../src/control-plane/governed-decision-service.js'
+    );
+    const summary = await getGovernedDecisionSummaryDurable({
+      organizationId: String(organizationId),
+      projectId: req.params.projectId,
+      since: req.query.since as string | undefined,
+    });
+
+    return sendSuccess(res, { summary });
+  } catch (error: any) {
+    logger.error('Failed to load governance summary', { error: error.message });
+    return sendError(res, 500, 'Failed to load governance summary');
+  }
+});
+
+/**
+ * GET /api/concept2cure/projects/:projectId/governance/artifacts/:artifactId/trace
+ * Client-safe artifact decision trace.
+ */
+router.get('/projects/:projectId/governance/artifacts/:artifactId/trace', async (req: Request, res: Response) => {
+  try {
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+    const { getArtifactDecisionTraceDurable } = await import(
+      '../src/control-plane/governed-decision-service.js'
+    );
+    const trace = await getArtifactDecisionTraceDurable(
+      req.params.projectId,
+      req.params.artifactId
+    );
+
+    return sendSuccess(res, { trace, count: trace.length });
+  } catch (error: any) {
+    logger.error('Failed to load artifact decision trace', { error: error.message });
+    return sendError(res, 500, 'Failed to load artifact decision trace');
+  }
+});
+
 /**
  * PATCH /api/concept2cure/projects/:projectId/knowledge
  * Update knowledge base metadata (custom instructions, context).

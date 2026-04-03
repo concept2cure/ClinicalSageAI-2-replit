@@ -250,6 +250,147 @@ export function clearGovernedDecisionLog(): void {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
+// Durable Query Functions
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Map a decision_records row back to GovernedDecisionRecord shape.
+ * Handles both snake_case (DB row) and camelCase (mapped JS object) field names.
+ */
+function mapDecisionRecordToGovernedDecision(record: Record<string, unknown>): GovernedDecisionRecord {
+  const rawNotes = record.notes ?? record.notes;
+  const notes = typeof rawNotes === 'string' ? (() => { try { return JSON.parse(rawNotes); } catch { return {}; } })() : (rawNotes || {});
+  const rawCtx = record.decision_context ?? record.decisionContext;
+  const ctx = typeof rawCtx === 'string' ? (() => { try { return JSON.parse(rawCtx); } catch { return {}; } })() : (rawCtx || {});
+
+  return {
+    decisionId: (ctx as any).governedDecisionId || String(record.id),
+    projectId: String(record.project_id ?? record.projectId ?? ''),
+    organizationId: String(record.organization_id ?? record.organizationId ?? ''),
+    artifactId: (notes as any).artifactId,
+    intent: (ctx as any).intent || (notes as any).intent || 'unknown',
+    outcome: (ctx as any).outcome || (notes as any).outcome || 'degraded',
+    rationale: String(record.recommendation_summary ?? record.recommendationSummary ?? ''),
+    blockerCount: (notes as any).blockerCount ?? 0,
+    warningCount: (notes as any).warningCount ?? 0,
+    consequenceCount: (notes as any).consequenceCount ?? 0,
+    readinessLevel: (ctx as any).readinessLevel || (notes as any).readinessLevel || 'draft',
+    readinessScore: (notes as any).readinessScore ?? 0,
+    placementOutcome: (notes as any).placementOutcome || 'insufficient_context',
+    exportGateOutcome: (notes as any).exportGateOutcome || 'insufficient_context',
+    publishGateOutcome: (notes as any).publishGateOutcome || 'insufficient_context',
+    actorId: String(record.decided_by ?? record.decidedBy ?? 'system'),
+    timestamp: String(record.created_at ?? record.createdAt ?? new Date().toISOString()),
+    fabricVersion: (notes as any).fabricVersion || '1.0.0',
+  };
+}
+
+/**
+ * Query governed decisions from durable storage (decision_records table).
+ * Falls back to in-memory if durable storage is unavailable.
+ */
+export async function getRecentGovernedDecisionsDurable(options: {
+  organizationId?: string;
+  projectId?: string;
+  limit?: number;
+} = {}): Promise<GovernedDecisionRecord[]> {
+  try {
+    const { decisionRecordService } = await import('../../../server/services/decision-record-service.js');
+    const limit = Math.max(1, Math.min(options.limit ?? 50, 500));
+
+    const records = await decisionRecordService.search({
+      organizationId: options.organizationId ? Number(options.organizationId) : 1,
+      projectId: options.projectId ? Number(options.projectId) : undefined,
+      recommendationType: 'governed_fabric_decision' as any,
+      limit,
+    });
+
+    return records.map((r) => mapDecisionRecordToGovernedDecision(r as unknown as Record<string, unknown>));
+  } catch {
+    // Durable storage unavailable — fall back to in-memory
+    return getRecentGovernedDecisions(options);
+  }
+}
+
+/**
+ * Get governed decision summary from durable storage.
+ * Falls back to in-memory if durable storage is unavailable.
+ */
+export async function getGovernedDecisionSummaryDurable(options: {
+  organizationId?: string;
+  projectId?: string;
+  since?: string;
+} = {}): Promise<GovernedDecisionSummaryReport> {
+  try {
+    const decisions = await getRecentGovernedDecisionsDurable({
+      organizationId: options.organizationId,
+      projectId: options.projectId,
+      limit: 500,
+    });
+
+    let filtered = decisions;
+    if (options.since) {
+      filtered = filtered.filter(d => d.timestamp >= options.since!);
+    }
+
+    const summary: GovernedDecisionSummaryReport = {
+      total: filtered.length,
+      byOutcome: { allow: 0, block: 0, review: 0, degraded: 0 },
+      byIntent: {},
+      byReadinessLevel: {},
+      averageReadinessScore: 0,
+      blockedCount: 0,
+      exportBlockedCount: 0,
+      publishBlockedCount: 0,
+      uniqueProjects: new Set(filtered.map(d => d.projectId)).size,
+      uniqueArtifacts: new Set(filtered.filter(d => d.artifactId).map(d => d.artifactId!)).size,
+      windowStart: filtered[0]?.timestamp || null,
+      windowEnd: filtered[filtered.length - 1]?.timestamp || null,
+    };
+
+    let totalScore = 0;
+    for (const d of filtered) {
+      summary.byOutcome[d.outcome] = (summary.byOutcome[d.outcome] || 0) + 1;
+      summary.byIntent[d.intent] = (summary.byIntent[d.intent] || 0) + 1;
+      summary.byReadinessLevel[d.readinessLevel] = (summary.byReadinessLevel[d.readinessLevel] || 0) + 1;
+      totalScore += d.readinessScore;
+      if (d.outcome === 'block') summary.blockedCount++;
+      if (d.exportGateOutcome === 'blocked') summary.exportBlockedCount++;
+      if (d.publishGateOutcome === 'blocked') summary.publishBlockedCount++;
+    }
+
+    summary.averageReadinessScore = filtered.length > 0
+      ? Math.round(totalScore / filtered.length)
+      : 0;
+
+    return summary;
+  } catch {
+    // Durable storage unavailable — fall back to in-memory
+    return getGovernedDecisionSummary(options);
+  }
+}
+
+/**
+ * Get durable decision trace for a specific artifact — all governed decisions for it.
+ * Falls back to in-memory if durable storage is unavailable.
+ */
+export async function getArtifactDecisionTraceDurable(
+  projectId: string,
+  artifactId: string
+): Promise<GovernedDecisionRecord[]> {
+  try {
+    const decisions = await getRecentGovernedDecisionsDurable({
+      projectId,
+      limit: 500,
+    });
+    return decisions.filter(d => d.artifactId === artifactId);
+  } catch {
+    // Durable storage unavailable — fall back to in-memory
+    return getArtifactDecisionTrace(projectId, artifactId);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
 // Durable Persistence Bridge
 // ═══════════════════════════════════════════════════════════════════════
 

@@ -190,6 +190,23 @@ function computeFabricConfidence(input: FabricDecisionInterceptInput): number {
 }
 
 /**
+ * Self-register the RIM learning emitter with the fabric evaluator.
+ * Called at module load time — no circular imports because this module
+ * only imports from the evaluator's registration function.
+ */
+try {
+  import('../../src/control-plane/governed-document-evaluator.js').then(mod => {
+    if (mod.registerFabricDecisionEmitter) {
+      mod.registerFabricDecisionEmitter(interceptFabricDecision);
+    }
+  }).catch(() => {
+    // Evaluator not available — emitter not registered
+  });
+} catch {
+  // Static import resolution failed — non-fatal
+}
+
+/**
  * Intercept a governed fabric decision and emit it as a RIM signal.
  * Non-blocking, fire-and-forget pattern (matches existing interceptors).
  */
