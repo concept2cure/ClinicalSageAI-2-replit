@@ -16,17 +16,11 @@
  *   - Scale discipline for 1366x768
  */
 
-import React, { useState, useCallback, useEffect, useMemo, lazy, Suspense, useRef } from 'react';
-// @ts-expect-error -- error-boundary is a .jsx file without type declarations
-import ErrorBoundary from '@/components/ui/error-boundary';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { ProjectFileTree, type TreeArtifact } from './ProjectFileTree';
-import { DocumentListPane } from './DocumentListPane';
-import { DossierTree } from './DossierTree';
+import { type TreeArtifact } from './ProjectFileTree';
 import { useSubmissionSections, type SectionNode } from '../../hooks/useSubmissionSections';
-import type { DossierNode } from '../../models/ctdHierarchy';
-import { TemplateTree } from './TemplateTree';
-import { DocumentOutlineTree } from './DocumentOutlineTree';
+
 import {
   PlacementDialog,
   type PlacementConfirmation,
@@ -37,56 +31,30 @@ import {
   getSectionLabel,
   getSectionRequirements,
   type SectionRequirement,
+  type DossierNode,
 } from '../../models/ctdHierarchy';
-import { ProjectDashboard } from './ProjectDashboard';
-import { OperatingSystemRegistryPanel, type RegistryKind } from './OperatingSystemRegistryPanel';
-import { DocumentStudioSurface } from './DocumentStudioSurface';
-import { RegulatoryTransformCanvas } from './RegulatoryTransformCanvas';
-import { GoldenDossierVerificationPanel } from './GoldenDossierVerificationPanel';
-import { ProgramTwinPanel } from './ProgramTwinPanel';
-import { SubmissionAppsPanel } from './SubmissionAppsPanel';
-import { ReviewPulseDashboard } from './ReviewPulseDashboard';
-import { NotificationCenter } from './NotificationCenter';
-import { CommunicationCenter } from './CommunicationCenter';
-import { ComputeJobPanel } from '../compute/ComputeJobPanel';
-import { IndEvidenceAskPanel } from './IndEvidenceAskPanel';
-import RegulatoryCommunicationsHub from '../correspondence/RegulatoryCommunicationsHub';
-import ReportCenter from '../reports/ReportCenter';
-import { SubmissionCommandCenter } from '../submission/SubmissionCommandCenter';
+import { type RegistryKind } from './OperatingSystemRegistryPanel';
+import { WorkspaceTopBar } from './WorkspaceTopBar';
+import { WorkspaceCenterSurface } from './WorkspaceCenterSurface';
+import { WorkspaceLeftRail } from './WorkspaceLeftRail';
+import WorkspaceContextBars from './WorkspaceContextBars';
 import {
-  ChevronLeft,
   Loader2,
   FileText,
   Plus,
   FolderOpen,
-  Brain,
-  Files,
-  BookOpen,
-  Layers,
-  List,
   Scissors,
   X,
-  MapPin,
-  Copy,
-  Info,
   AlertTriangle,
-  ChevronDown,
-  ChevronUp,
-  ChevronRight,
   Sparkles,
   ShieldCheck,
   Target,
   AppWindow,
   Activity,
-  GitBranch,
-  Eye,
-  Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
-import { SkeletonText, LoadingState } from '@/components/ui/statesV2';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+
 import {
   DocumentModeProvider,
   resolveDocumentMode,
@@ -107,28 +75,20 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const ENABLE_GOVERNED_DND = false;
 
-// Lazy-load the existing EditorPanel
-const EditorPanel = lazy(() => import('../editor/EditorPanel').then(m => ({ default: m.default })));
-
 import { NewDocumentDialog } from './NewDocumentDialog';
 import { canEscalateToEdit } from '../../contexts/DocumentModeContext';
 import { SectionRequirementsPanel, type SectionMetrics } from './SectionRequirementsPanel';
 
 // ── Left-rail mode type (imported from controllers to avoid duplication) ──────
 import type {
-  LeftRailMode,
   OperatingLayer,
   WorkspaceWorkbench,
-  ProjectNav,
   GuidedSequenceStage,
 } from './workspaceShellControllers';
 import {
   type DocumentTab,
   FOLDER_LABELS,
-  OPERATING_LAYERS,
   WORKBENCHES,
-  PROJECT_NAV_ITEMS,
-  DOCUMENT_TAB_ITEMS,
   buildTemplateContent,
 } from './workspaceShellConstants';
 
@@ -1618,429 +1578,128 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   return (
     <DocumentModeProvider initialStage={workflowStage} key={workflowStage}>
       <div className="flex-1 flex flex-col min-h-0" data-testid="project-workspace-shell">
-        {/* ── Compact breadcrumb bar — minimal chrome ─────────────────────── */}
-        <div className="flex items-center gap-2.5 px-4 h-10 border-b border-stone-150 bg-white shrink-0">
-          <button
-            onClick={onBackToProjects}
-            className="flex items-center gap-1 text-xs text-stone-400 hover:text-stone-700 transition-colors duration-150"
-            aria-label="Back to projects"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-          </button>
-          {projectType && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-medium uppercase tracking-tight flex-shrink-0">
-              {projectType}
-            </span>
-          )}
-          <span className="text-[14px] font-semibold text-stone-800 truncate">
-            {projectName || 'Untitled Project'}
-          </span>
-          {(mode === 'edit' || mode === 'browse') && (
-            <div className="flex items-center gap-1.5 text-stone-300">
-              <span>/</span>
-              <button
-                onClick={() => {
-                  setSelectedDocId(undefined);
-                  applyWorkflowTransition('project_home', {});
-                }}
-                className="text-[11px] text-stone-500 hover:text-stone-700 font-medium transition-colors"
-              >
-                Home
-              </button>
-              {mode === 'edit' && selectedDocId && (
-                <>
-                  <span>/</span>
-                  <button
-                    onClick={() => applyWorkflowTransition('browse_list', {})}
-                    className="text-[11px] text-stone-500 hover:text-stone-700 font-medium transition-colors"
-                  >
-                    Files
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-          {/* Spacer */}
-          <div className="flex-1" />
-          {/* Intelligence link — subtle, not a toggle */}
-          {onSwitchToIntelligence && (
-            <button
-              onClick={onSwitchToIntelligence}
-              className="text-[11px] font-medium text-stone-400 hover:text-stone-600 transition-colors flex items-center gap-1"
-            >
-              <Brain className="w-3 h-3" />
-              Intelligence
-            </button>
-          )}
-          {/* Context bars expand/collapse */}
-          <button
-            onClick={() => setShowContextBars(prev => !prev)}
-            className="flex items-center justify-center w-5 h-5 rounded text-stone-300 hover:text-stone-600 hover:bg-stone-100 transition-colors"
-            title={showContextBars ? 'Hide advanced controls' : 'Show workflow controls'}
-            aria-label={showContextBars ? 'Hide advanced controls' : 'Show workflow controls'}
-          >
-            {showContextBars ? (
-              <ChevronUp className="w-3 h-3" />
-            ) : (
-              <ChevronDown className="w-3 h-3" />
-            )}
-          </button>
-        </div>
+        {/* ── Compact breadcrumb bar — extracted to WorkspaceTopBar ──────── */}
+        <WorkspaceTopBar
+          projectType={projectType}
+          projectName={projectName}
+          mode={mode}
+          selectedDocId={selectedDocId}
+          showContextBars={showContextBars}
+          onBackToProjects={onBackToProjects}
+          onNavigateHome={() => {
+            setSelectedDocId(undefined);
+            applyWorkflowTransition('project_home', {});
+          }}
+          onNavigateFiles={() => applyWorkflowTransition('browse_list', {})}
+          onToggleContextBars={() => setShowContextBars(prev => !prev)}
+          onSwitchToIntelligence={onSwitchToIntelligence}
+        />
 
-        {/* ── Collapsible context bars (workflow, guided sequence, work modes, context band, dossier, nav) ──── */}
-        <div
-          className={cn(
-            'overflow-hidden transition-all duration-200',
-            showContextBars ? 'max-h-[320px]' : 'max-h-0'
-          )}
-          aria-hidden={!showContextBars}
-        >
-          <div className="flex items-center gap-1.5 px-4 h-8 border-b border-stone-100 bg-stone-50/60 shrink-0 overflow-x-auto">
-            <span className="text-[10px] uppercase tracking-wide text-stone-400 font-medium whitespace-nowrap">
-              Workflow
-            </span>
-            {['Select section', 'Open document', 'Draft & review', 'Readiness', 'Package'].map(
-              (step, idx) => (
-                <React.Fragment key={step}>
-                  <span
-                    className={cn(
-                      'text-[11px] px-1.5 py-0.5 rounded-md border whitespace-nowrap',
-                      idx + 1 <= workflowStep
-                        ? 'border-blue-200 bg-blue-50 text-blue-700'
-                        : 'border-stone-200 bg-white text-stone-500'
-                    )}
-                  >
-                    {idx + 1}. {step}
-                  </span>
-                  {idx < 4 && <ChevronRight className="w-3 h-3 text-stone-300 shrink-0" />}
-                </React.Fragment>
-              )
-            )}
-            <span className="ml-auto text-[11px] text-stone-500 whitespace-nowrap">
-              {mode === 'edit'
-                ? 'Focused edit mode'
-                : mode === 'browse'
-                ? 'Browse then open a document'
-                : 'Start from project home'}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1.5 px-4 h-9 border-b border-stone-100 bg-stone-50/50 shrink-0 overflow-x-auto">
-            <span className="text-[10px] uppercase tracking-wide text-stone-500 font-semibold whitespace-nowrap">
-              Guided sequence
-            </span>
-            {guidedSequence.map((step, idx) => {
-              const currentIndex = guidedSequence.findIndex(s => s.id === currentGuidedStage);
-              const isCurrent = step.id === currentGuidedStage;
-              const isDone = idx < currentIndex;
-              return (
-                <React.Fragment key={step.id}>
-                  <button
-                    onClick={() => handleGuidedStageAction(step.id)}
-                    className={cn(
-                      'text-[11px] px-2 py-0.5 rounded-md border whitespace-nowrap transition-colors',
-                      isCurrent
-                        ? 'border-stone-300 bg-white text-stone-800 font-semibold'
-                        : isDone
-                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-100'
-                    )}
-                    title={step.hint}
-                  >
-                    {step.label}
-                  </button>
-                  {idx < guidedSequence.length - 1 && (
-                    <ChevronRight className="w-3 h-3 text-stone-300 shrink-0" />
-                  )}
-                </React.Fragment>
-              );
-            })}
-            <div className="ml-auto flex items-center gap-1.5">
-              <span className="text-[10px] text-stone-500 uppercase tracking-wide">Control</span>
-              <button
-                onClick={() => setGuidedControlMode('ana')}
-                className={cn(
-                  'text-[10px] px-2 py-0.5 rounded border',
-                  guidedControlMode === 'ana'
-                    ? 'border-violet-300 bg-violet-50 text-violet-700'
-                    : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
-                )}
-              >
-                AnA-led
-              </button>
-              <button
-                onClick={() => setGuidedControlMode('client')}
-                className={cn(
-                  'text-[10px] px-2 py-0.5 rounded border',
-                  guidedControlMode === 'client'
-                    ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                    : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
-                )}
-              >
-                Client-led
-              </button>
-              <button
-                onClick={handleGuidedContinue}
-                className="text-[11px] px-2 py-0.5 rounded border border-stone-200 bg-white text-stone-700 hover:bg-stone-100"
-              >
-                Continue
-              </button>
-            </div>
-          </div>
-
-          {/* ── Work modes / workbench bar ─────────────────────────────────── */}
-          {!isINDWorkspace && (
-            <div className="flex items-center gap-3 px-4 h-10 border-b border-stone-150 bg-stone-50/50 shrink-0 overflow-x-auto">
-              <div className="text-[10px] font-medium tracking-wide text-stone-400 uppercase whitespace-nowrap">
-                Mode
-              </div>
-              <div className="flex items-center gap-1.5">
-                {OPERATING_LAYERS.map(layer => {
-                  const LayerIcon = layer.icon;
-                  const selected = activeLayer === layer.id;
-                  return (
-                    <button
-                      key={layer.id}
-                      onClick={() => handleLayerChange(layer.id)}
-                      className={cn(
-                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors',
-                        selected
-                          ? 'bg-stone-900 text-white'
-                          : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-100'
-                      )}
-                      title={layer.description}
-                    >
-                      <LayerIcon className="w-3.5 h-3.5" />
-                      {layer.label}
-                    </button>
-                  );
-                })}
-              </div>
-              <span className="text-stone-200">|</span>
-              <div className="text-[10px] font-medium tracking-wide text-stone-400 uppercase whitespace-nowrap">
-                Focus
-              </div>
-              <div className="flex items-center gap-1.5">
-                {WORKBENCHES.map(workbench => {
-                  const WorkbenchIcon = workbench.icon;
-                  const selected = activeWorkbench === workbench.id;
-                  return (
-                    <button
-                      key={workbench.id}
-                      onClick={() => handleWorkbenchChange(workbench.id)}
-                      className={cn(
-                        'inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors',
-                        selected
-                          ? 'bg-stone-800 text-white'
-                          : 'bg-white text-stone-600 border border-stone-200 hover:bg-blue-50'
-                      )}
-                      title={workbench.description}
-                    >
-                      <WorkbenchIcon className="w-3.5 h-3.5" />
-                      {workbench.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* ── Context band ─────────────────────────────────────────────────────── */}
-          <div className="flex items-center gap-2 px-4 h-9 border-b border-stone-150 bg-white/95 shrink-0">
-            <span className="text-[11px] text-stone-500 truncate max-w-[240px]">
-              {activeArtifact?.title ? activeArtifact.title.slice(0, 50) : 'No document selected'}
-            </span>
-            {reviewInFlight > 0 && (
-              <>
-                <span className="text-stone-200">·</span>
-                <span className="text-[11px] text-amber-600">{reviewInFlight} in review</span>
-              </>
-            )}
-            <div className="ml-auto flex items-center gap-1">
-              <button
-                onClick={() => {
-                  applyWorkflowTransition('project_home', {});
-                  setPhase4Panel('pulse');
-                }}
-                className="text-[11px] px-2 py-0.5 rounded border border-rose-200 text-rose-700 hover:bg-rose-50"
-              >
-                Reviews
-              </button>
-              <button
-                onClick={() => setOperatingLayer('reports')}
-                className="text-[11px] px-2 py-0.5 rounded border border-blue-200 text-stone-700 hover:bg-blue-50"
-              >
-                Reports
-              </button>
-              <button
-                onClick={() => {
-                  setProjectNav('submission_builder');
-                  setActiveLayer('document_studio');
-                  setLeftRailMode('dossier');
-                  setMode(selectedDocId ? 'edit' : 'browse');
-                }}
-                className="text-[11px] px-2 py-0.5 rounded border border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-              >
-                Submission Builder
-              </button>
-            </div>
-          </div>
-
-          {!isINDWorkspace && (
-            <div className="flex items-center gap-2 px-4 h-9 border-b border-zinc-200 bg-emerald-50/40 shrink-0 overflow-x-auto">
-              <span className="text-[10px] font-medium text-emerald-600 uppercase tracking-wide whitespace-nowrap">
-                Dossier modules
-              </span>
-              {[
-                { module: 'Module 1', focus: 'Administrative / regional' },
-                { module: 'Module 2', focus: 'Summaries & overviews' },
-                { module: 'Module 3', focus: 'CMC' },
-                { module: 'Module 5', focus: 'Clinical reports' },
-              ].map(step => (
-                <span
-                  key={step.module}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-white px-2 py-0.5 text-[11px] text-emerald-800 whitespace-nowrap"
-                  title={step.focus}
-                >
-                  <MapPin className="w-3 h-3 text-emerald-600" />
-                  <span className="font-medium">{step.module}</span>
-                  <span className="text-emerald-600">{step.focus}</span>
-                </span>
-              ))}
-            </div>
-          )}
-
-          {!isINDWorkspace && (
-            <div className="flex items-center gap-1 px-4 h-9 border-b border-zinc-200 bg-zinc-50/70 shrink-0 overflow-x-auto">
-              {PROJECT_NAV_ITEMS.map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setProjectNav(item.id);
-                    if (item.id === 'communication_center') {
-                      applyWorkflowTransition('project_home', {});
-                      setPhase4Panel('communication_center');
-                    } else if (item.id === 'submission_builder') {
-                      setActiveLayer('document_studio');
-                      setLeftRailMode('dossier');
-                      setMode(selectedDocId ? 'edit' : 'browse');
-                      setPhase4Panel('none');
-                    } else if (item.id === 'cmc') {
-                      setActiveLayer('document_studio');
-                      setActiveWorkbench('cmc');
-                      setSelectedFolder('cmc');
-                      setLeftRailMode('dossier');
-                      applyWorkflowTransition('browse_list', {});
-                      setPhase4Panel('none');
-                    } else if (item.id === 'clinical_module5') {
-                      setActiveLayer('document_studio');
-                      setActiveWorkbench('clinical');
-                      setSelectedCtdSection('5');
-                      setLeftRailMode('dossier');
-                      applyWorkflowTransition('browse_list', {});
-                      setPhase4Panel('none');
-                    } else if (item.id === 'verify') {
-                      setActiveLayer('reports');
-                      applyWorkflowTransition('browse_list', {});
-                      setPhase4Panel('verification');
-                    } else if (item.id === 'review') {
-                      setActiveLayer('reports');
-                      applyWorkflowTransition('browse_list', {});
-                      setPhase4Panel('pulse');
-                    } else if (item.id === 'publish') {
-                      if (onNavigate) {
-                        onNavigate('submissions');
-                      } else if (
-                        !applyWorkflowTransition('publish_package', {
-                          submissionContext: submissionReady,
-                        })
-                      ) {
-                        pushShellToast(
-                          'Submission context missing. Complete verify/review before publish.',
-                          'warning'
-                        );
-                      }
-                    } else if (item.id === 'haq') {
-                      setActiveLayer('reports');
-                      applyWorkflowTransition('project_home', {});
-                      setPhase4Panel('pulse');
-                    } else if (item.id === 'vault') {
-                      setActiveLayer('vault');
-                      applyWorkflowTransition('browse_list', {});
-                      setLeftRailMode('files');
-                    }
-                  }}
-                  className={cn(
-                    'px-2.5 py-1 text-xs rounded-md border whitespace-nowrap transition-colors',
-                    projectNav === item.id
-                      ? 'bg-stone-900 text-white border-stone-900'
-                      : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-100'
-                  )}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        {/* close collapsible context bars container */}
-
-        {isINDWorkspace && (
-          <div className="border-b border-blue-200 bg-blue-50/50 px-4 py-2.5 shrink-0">
-            <div className="flex items-center gap-2 text-xs text-blue-900">
-              <span className="font-semibold">IND / eCTD Workspace</span>
-              <span className="text-blue-300">•</span>
-              <span>Readiness {readinessPercent}%</span>
-              <span className="text-blue-300">•</span>
-              <span>
-                Next step:{' '}
-                {nextRecommendedSection
-                  ? `${nextRecommendedSection.code} ${nextRecommendedSection.title}`
-                  : selectedCtdSection
-                  ? `Open ${selectedCtdSection}`
-                  : 'Select a section'}
-              </span>
-              <div className="ml-auto flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    setLeftRailMode('dossier');
-                    applyWorkflowTransition('browse_list', {});
-                  }}
-                  className="inline-flex items-center gap-1 rounded border border-blue-200 bg-white px-2 py-1 text-[11px] font-medium text-stone-700 hover:bg-blue-100"
-                >
-                  Section tree
-                </button>
-                <button
-                  onClick={() => {
-                    if (nextRecommendedSection?.code) {
-                      setSelectedCtdSection(nextRecommendedSection.code);
-                    }
-                    setLeftRailMode('dossier');
-                    applyWorkflowTransition('browse_list', {});
-                    setTimeout(() => {
-                      handleCreateSectionDraftWithRI();
-                    }, 0);
-                  }}
-                  className="inline-flex items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100"
-                >
-                  Start next with RI
-                </button>
-                <button
-                  onClick={() => onNavigate?.('haq')}
-                  className="inline-flex items-center gap-1 rounded border border-blue-200 bg-white px-2 py-1 text-[11px] font-medium text-stone-700 hover:bg-blue-100"
-                >
-                  HAQ path
-                </button>
-                <button
-                  onClick={() => onNavigate?.('submissions')}
-                  className="inline-flex items-center gap-1 rounded border border-blue-200 bg-white px-2 py-1 text-[11px] font-medium text-stone-700 hover:bg-blue-100"
-                >
-                  Assemble/export
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <WorkspaceContextBars
+          showContextBars={showContextBars}
+          isINDWorkspace={isINDWorkspace}
+          mode={mode}
+          workflowStep={workflowStep}
+          guidedSequence={guidedSequence}
+          currentGuidedStage={currentGuidedStage}
+          guidedControlMode={guidedControlMode}
+          activeLayer={activeLayer}
+          activeWorkbench={activeWorkbench}
+          activeArtifactTitle={activeArtifact?.title}
+          reviewInFlight={reviewInFlight}
+          projectNav={projectNav}
+          selectedDocId={selectedDocId}
+          selectedCtdSection={selectedCtdSection}
+          readinessPercent={readinessPercent}
+          nextRecommendedSection={nextRecommendedSection}
+          onGuidedStageAction={handleGuidedStageAction}
+          onGuidedContinue={handleGuidedContinue}
+          onSetGuidedControlMode={setGuidedControlMode}
+          onLayerChange={handleLayerChange}
+          onWorkbenchChange={handleWorkbenchChange}
+          onOpenReviews={() => {
+            applyWorkflowTransition('project_home', {});
+            setPhase4Panel('pulse');
+          }}
+          onOpenReports={() => setOperatingLayer('reports')}
+          onOpenSubmissionBuilder={() => {
+            setProjectNav('submission_builder');
+            setActiveLayer('document_studio');
+            setLeftRailMode('dossier');
+            setMode(selectedDocId ? 'edit' : 'browse');
+          }}
+          onNavItemClick={id => {
+            setProjectNav(id);
+            if (id === 'communication_center') {
+              applyWorkflowTransition('project_home', {});
+              setPhase4Panel('communication_center');
+            } else if (id === 'submission_builder') {
+              setActiveLayer('document_studio');
+              setLeftRailMode('dossier');
+              setMode(selectedDocId ? 'edit' : 'browse');
+              setPhase4Panel('none');
+            } else if (id === 'cmc') {
+              setActiveLayer('document_studio');
+              setActiveWorkbench('cmc');
+              setSelectedFolder('cmc');
+              setLeftRailMode('dossier');
+              applyWorkflowTransition('browse_list', {});
+              setPhase4Panel('none');
+            } else if (id === 'clinical_module5') {
+              setActiveLayer('document_studio');
+              setActiveWorkbench('clinical');
+              setSelectedCtdSection('5');
+              setLeftRailMode('dossier');
+              applyWorkflowTransition('browse_list', {});
+              setPhase4Panel('none');
+            } else if (id === 'verify') {
+              setActiveLayer('reports');
+              applyWorkflowTransition('browse_list', {});
+              setPhase4Panel('verification');
+            } else if (id === 'review') {
+              setActiveLayer('reports');
+              applyWorkflowTransition('browse_list', {});
+              setPhase4Panel('pulse');
+            } else if (id === 'publish') {
+              if (onNavigate) {
+                onNavigate('submissions');
+              } else if (
+                !applyWorkflowTransition('publish_package', {
+                  submissionContext: submissionReady,
+                })
+              ) {
+                pushShellToast(
+                  'Submission context missing. Complete verify/review before publish.',
+                  'warning'
+                );
+              }
+            } else if (id === 'haq') {
+              setActiveLayer('reports');
+              applyWorkflowTransition('project_home', {});
+              setPhase4Panel('pulse');
+            } else if (id === 'vault') {
+              setActiveLayer('vault');
+              applyWorkflowTransition('browse_list', {});
+              setLeftRailMode('files');
+            }
+          }}
+          onOpenSectionTree={() => {
+            setLeftRailMode('dossier');
+            applyWorkflowTransition('browse_list', {});
+          }}
+          onStartNextWithRI={() => {
+            if (nextRecommendedSection?.code) {
+              setSelectedCtdSection(nextRecommendedSection.code);
+            }
+            setLeftRailMode('dossier');
+            applyWorkflowTransition('browse_list', {});
+            setTimeout(() => {
+              handleCreateSectionDraftWithRI();
+            }, 0);
+          }}
+          onHAQPath={() => onNavigate?.('haq')}
+          onAssembleExport={() => onNavigate?.('submissions')}
+        />
 
         {/* ── Pending move banner ───────────────────────────────────────────── */}
         {pendingMove && (
@@ -2223,252 +1882,52 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         <div className="flex-1 flex min-h-0">
           {/* Left: Tree panel with mode toggle — hidden in dashboard mode for full-width layout */}
           {mode !== 'dashboard' && (
-            <div className="w-[200px] 2xl:w-[240px] border-r border-zinc-200 shrink-0 flex flex-col bg-white">
-              {!isINDWorkspace && (
-                <div className="grid grid-cols-3 gap-1 p-1.5 border-b border-zinc-200 bg-white">
-                  {[
-                    { key: 'documents' as OperatingLayer, label: 'Docs' },
-                    { key: 'vault' as OperatingLayer, label: 'Vault' },
-                    { key: 'reports' as OperatingLayer, label: 'Readiness' },
-                  ].map(layer => (
-                    <button
-                      key={layer.key}
-                      onClick={() => {
-                        setOperatingLayer(layer.key);
-                        if (layer.key === 'vault') setActiveRegistry('vault');
-                        if (layer.key === 'reports') setActiveRegistry('reports');
-                        if (layer.key === 'documents' && activeRegistry !== 'projects') {
-                          setActiveRegistry('documents');
-                        }
-                      }}
-                      className={cn(
-                        'rounded-md px-2 py-1 text-[11px] font-medium transition-colors',
-                        operatingLayer === layer.key
-                          ? 'bg-stone-900 text-white'
-                          : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                      )}
-                    >
-                      {layer.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {/* Mode toggle tabs */}
-              <div className="flex border-b border-zinc-200 shrink-0 bg-zinc-50/60">
-                {(isINDWorkspace
-                  ? [
-                      {
-                        key: 'dossier' as LeftRailMode,
-                        icon: BookOpen,
-                        label: 'Sections',
-                        disabled: false,
-                      },
-                      {
-                        key: 'outline' as LeftRailMode,
-                        icon: List,
-                        label: 'Outline',
-                        disabled: !outlineAvailable,
-                      },
-                    ]
-                  : [
-                      {
-                        key: 'files' as LeftRailMode,
-                        icon: Files,
-                        label: 'Files',
-                        disabled: false,
-                      },
-                      {
-                        key: 'dossier' as LeftRailMode,
-                        icon: BookOpen,
-                        label: 'Dossier',
-                        disabled: false,
-                      },
-                      {
-                        key: 'templates' as LeftRailMode,
-                        icon: Layers,
-                        label: 'Tmpl',
-                        disabled: false,
-                      },
-                      {
-                        key: 'outline' as LeftRailMode,
-                        icon: List,
-                        label: 'Outline',
-                        disabled: !outlineAvailable,
-                      },
-                      {
-                        key: 'registry' as LeftRailMode,
-                        icon: Brain,
-                        label: 'OS',
-                        disabled: false,
-                      },
-                    ]
-                ).map(tab => (
-                  <button
-                    key={tab.key}
-                    onClick={() => !tab.disabled && setLeftRailMode(tab.key)}
-                    disabled={tab.disabled}
-                    className={cn(
-                      'flex-1 flex items-center justify-center gap-1 py-2.5 text-xs font-medium transition-colors duration-150',
-                      leftRailMode === tab.key
-                        ? 'text-stone-900 bg-white border-b-2 border-stone-900'
-                        : tab.disabled
-                        ? 'text-stone-400 cursor-not-allowed'
-                        : 'text-stone-500 hover:text-stone-700 hover:bg-stone-100/60'
-                    )}
-                    data-testid={`rail-mode-${tab.key}`}
-                    title={tab.disabled ? 'Open a document to use Outline' : tab.label}
-                  >
-                    <tab.icon className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">{tab.label}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* ── Active document context band ──────────────────────────────── */}
-              {activeArtifact && (
-                <div
-                  className="border-b border-stone-200 bg-stone-50/60 px-2.5 py-2 shrink-0"
-                  data-testid="active-doc-context"
-                >
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <FileText className="w-3.5 h-3.5 text-stone-400 shrink-0" />
-                    <span className="text-xs font-medium text-stone-700 truncate flex-1">
-                      {activeArtifact.title}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {activeArtifact.ctdSection && (
-                      <span className="text-xs px-1.5 py-0.5 rounded-md bg-blue-50 text-stone-700 font-medium">
-                        {activeArtifact.ctdSection}
-                      </span>
-                    )}
-                    {activeArtifact.templateId && (
-                      <span className="text-xs px-1.5 py-0.5 rounded-md bg-violet-50 text-stone-700">
-                        {activeArtifact.templateId.replace('tpl-', '')}
-                      </span>
-                    )}
-                    <span
-                      className={cn(
-                        'text-xs px-1.5 py-0.5 rounded-md font-medium',
-                        activeArtifact.status === 'locked'
-                          ? 'bg-red-50 text-red-700'
-                          : activeArtifact.status === 'approved'
-                          ? 'bg-green-50 text-green-700'
-                          : activeArtifact.status === 'review'
-                          ? 'bg-yellow-50 text-yellow-700'
-                          : 'bg-stone-100 text-stone-500'
-                      )}
-                    >
-                      {activeArtifact.status || 'draft'}
-                    </span>
-                    {activeArtifact.version && (
-                      <span className="text-xs text-stone-400">v{activeArtifact.version}</span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Tree content based on mode */}
-              {loading && artifacts.length === 0 ? (
-                <div className="flex-1 p-4" data-testid="workspace-files-loading">
-                  <SkeletonText lines={6} label="Loading files" testId="workspace-skeleton" />
-                </div>
-              ) : leftRailMode === 'files' ? (
-                <ProjectFileTree
-                  artifacts={artifacts}
-                  selectedId={selectedDocId}
-                  onSelect={handleSelectDoc}
-                  onSelectFolder={handleSelectFolder}
-                  selectedFolder={selectedFolder}
-                  onCreateNew={() => setShowNewDoc(true)}
-                  onCutDocument={handleCutDocument}
-                  onOpenPlacement={art =>
-                    handleOpenPlacementForDoc(art, art.ctdSection ? 'relocate' : 'place')
-                  }
-                  onCopyCtdPath={handleCopyCtdPath}
-                  pendingMove={pendingMove}
-                  onPasteHere={pendingMove ? handlePasteHere : undefined}
-                />
-              ) : leftRailMode === 'dossier' ? (
-                <DossierTree
-                  artifacts={artifacts}
-                  selectedSection={selectedCtdSection}
-                  onSelectSection={handleSelectSection}
-                  onPlaceArtifact={selectedDocId || pendingMove ? handlePlaceArtifact : undefined}
-                  customHierarchy={submissionDossierHierarchy}
-                  metrics={dossierMetrics}
-                  pendingMove={pendingMove}
-                  onPasteHere={pendingMove ? handlePasteHere : undefined}
-                  onViewRequirements={handleViewSectionReqs}
-                  onOpenTransformCanvas={(ctdSection: string) => openTransformCanvas(ctdSection)}
-                  onOpenProgramTwin={openProgramTwin}
-                  onOpenSubmissionApps={(ctdSection: string) => openSubmissionApps(ctdSection)}
-                  onCreateFromTemplate={(ctdSection: string) => {
-                    setLeftRailMode('templates');
-                    setSelectedCtdSection(ctdSection);
-                  }}
-                  onDraftWithAI={(ctdSection: string) => {
-                    setSelectedCtdSection(ctdSection);
-                    setShowNewDocDialog(true);
-                  }}
-                  onAttachExisting={(ctdSection: string) => {
-                    setSelectedCtdSection(ctdSection);
-                    setLeftRailMode('files');
-                    applyWorkflowTransition('browse_list', {});
-                  }}
-                />
-              ) : leftRailMode === 'outline' ? (
-                outlineAvailable ? (
-                  <DocumentOutlineTree
-                    content={activeDocContent}
-                    title={activeDocTitle || activeArtifact?.title || ''}
-                    templateKey={activeArtifact?.templateId}
-                    ctdSection={activeArtifact?.ctdSection}
-                    onNavigate={handleOutlineNavigate}
-                    onCreateSubsection={handleCreateSubsection}
-                  />
-                ) : (
-                  <div className="flex-1 flex items-center justify-center p-4">
-                    <p className="text-xs text-stone-400 text-center">
-                      Open a document to view its outline
-                    </p>
-                  </div>
-                )
-              ) : leftRailMode === 'registry' ? (
-                <OperatingSystemRegistryPanel
-                  projectId={projectId}
-                  projectName={projectName}
-                  artifacts={artifacts}
-                  activeRegistry={activeRegistry}
-                  onRegistryChange={setActiveRegistry}
-                />
-              ) : (
-                <TemplateTree
-                  submissionType={submissionType || projectType}
-                  onCreateFromTemplate={handleCreateFromTemplate}
-                  onOpenTransformCanvas={(ctdSection: string, templateKey: string) =>
-                    openTransformCanvas(ctdSection, templateKey)
-                  }
-                />
-              )}
-
-              {/* Project-level Review Pulse button */}
-              <div className="shrink-0 border-t border-stone-200 p-2">
-                <button
-                  onClick={openReviewPulse}
-                  className={cn(
-                    'w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs font-medium transition-colors duration-150',
-                    phase4Panel === 'pulse'
-                      ? 'text-rose-700 bg-rose-50'
-                      : 'text-stone-500 hover:text-rose-600 hover:bg-rose-50'
-                  )}
-                  title="Review Pulse — project-wide review status"
-                >
-                  <Activity className="w-3.5 h-3.5" />
-                  Review Pulse
-                </button>
-              </div>
-            </div>
+            <WorkspaceLeftRail
+              isINDWorkspace={isINDWorkspace}
+              operatingLayer={operatingLayer}
+              setOperatingLayer={setOperatingLayer}
+              activeRegistry={activeRegistry}
+              setActiveRegistry={setActiveRegistry}
+              leftRailMode={leftRailMode}
+              setLeftRailMode={setLeftRailMode}
+              outlineAvailable={outlineAvailable}
+              activeArtifact={activeArtifact}
+              loading={loading}
+              artifacts={artifacts}
+              selectedDocId={selectedDocId}
+              selectedFolder={selectedFolder}
+              pendingMove={pendingMove}
+              selectedCtdSection={selectedCtdSection}
+              setSelectedCtdSection={setSelectedCtdSection}
+              submissionDossierHierarchy={submissionDossierHierarchy}
+              dossierMetrics={dossierMetrics}
+              activeDocContent={activeDocContent}
+              activeDocTitle={activeDocTitle}
+              submissionType={submissionType}
+              projectType={projectType}
+              projectId={projectId}
+              projectName={projectName}
+              phase4Panel={phase4Panel}
+              handleSelectDoc={handleSelectDoc}
+              handleSelectFolder={handleSelectFolder}
+              setShowNewDoc={setShowNewDoc}
+              handleCutDocument={handleCutDocument}
+              handleOpenPlacementForDoc={handleOpenPlacementForDoc}
+              handleCopyCtdPath={handleCopyCtdPath}
+              handlePasteHere={handlePasteHere}
+              handleSelectSection={handleSelectSection}
+              handlePlaceArtifact={selectedDocId || pendingMove ? handlePlaceArtifact : undefined}
+              handleViewSectionReqs={handleViewSectionReqs}
+              openTransformCanvas={openTransformCanvas}
+              openProgramTwin={openProgramTwin}
+              openSubmissionApps={openSubmissionApps}
+              handleCreateFromTemplate={handleCreateFromTemplate}
+              setShowNewDocDialog={setShowNewDocDialog}
+              applyWorkflowTransition={applyWorkflowTransition}
+              handleOutlineNavigate={handleOutlineNavigate}
+              handleCreateSubsection={handleCreateSubsection}
+              openReviewPulse={openReviewPulse}
+            />
           )}
 
           {/* Center + Right: Content area */}
@@ -2517,587 +1976,109 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             )}
 
             {/* Mode: browse = DocumentListPane, edit = EditorPanel, Phase 4 overlay */}
-            <DocumentStudioSurface
-              osLayer={operatingLayer}
-              onOpenWorkbench={domain => {
-                if (domain === 'biostatistics') onNavigate?.('biostatistics');
-                if (domain === 'safety-narrative') onNavigate?.('safety-narrative');
-                if (domain === 'precedent-intelligence') onNavigate?.('precedent-intelligence');
+            <WorkspaceCenterSurface
+              mode={mode}
+              phase4Panel={phase4Panel}
+              phase4Ctx={phase4Ctx}
+              operatingLayer={operatingLayer}
+              projectId={projectId}
+              projectName={projectName}
+              projectType={projectType}
+              submissionType={submissionType}
+              artifacts={artifacts}
+              onClosePhase4Panel={closePhase4Panel}
+              onPhase4CreateDraft={handlePhase4CreateDraft}
+              onOpenEditorForArtifact={(artId: string) => {
+                const art = artifacts.find(a => a.id === artId);
+                if (!tryOpenForEdit(art?.status)) return;
+                setSelectedDocId(artId);
+                applyWorkflowTransition('edit_document', { hasDoc: true });
+                closePhase4Panel();
               }}
-            >
-              {phase4Panel === 'transform' ? (
-                <RegulatoryTransformCanvas
-                  projectId={projectId}
-                  projectName={projectName || 'Project'}
-                  ctdSection={phase4Ctx.ctdSection}
-                  templateKey={phase4Ctx.templateKey}
-                  artifactId={phase4Ctx.artifactId}
-                  artifactTitle={phase4Ctx.artifactTitle}
-                  onClose={closePhase4Panel}
-                  onCreateDraft={handlePhase4CreateDraft}
-                  onOpenEditor={(artId: string) => {
-                    const art = artifacts.find(a => a.id === artId);
-                    if (!tryOpenForEdit(art?.status)) return;
-                    setSelectedDocId(artId);
-                    applyWorkflowTransition('edit_document', { hasDoc: true });
-                    closePhase4Panel();
-                  }}
-                  onOpenPlacement={(artId?: string) => {
-                    if (artId) {
-                      const art = artifacts.find(a => a.id === artId);
-                      if (art)
-                        handleOpenPlacementForDoc(art, art.ctdSection ? 'relocate' : 'place');
-                    }
-                    closePhase4Panel();
-                  }}
-                  onOpenVerification={(artId: string) => openVerification(artId)}
-                />
-              ) : phase4Panel === 'verification' && phase4Ctx.artifactId ? (
-                <GoldenDossierVerificationPanel
-                  projectId={projectId}
-                  artifactId={phase4Ctx.artifactId}
-                  onClose={closePhase4Panel}
-                  onOpenEditor={(artId: string) => {
-                    const art = artifacts.find(a => a.id === artId);
-                    if (!tryOpenForEdit(art?.status)) return;
-                    setSelectedDocId(artId);
-                    applyWorkflowTransition('edit_document', { hasDoc: true });
-                    closePhase4Panel();
-                  }}
-                  onOpenPlacement={(artId: string) => {
-                    const art = artifacts.find(a => a.id === artId);
-                    if (art) handleOpenPlacementForDoc(art, art.ctdSection ? 'relocate' : 'place');
-                    closePhase4Panel();
-                  }}
-                  onOpenProvenance={() => {
-                    if (phase4Ctx.artifactId) {
-                      const art = artifacts.find(a => a.id === phase4Ctx.artifactId);
-                      if (!tryOpenForEdit(art?.status)) {
-                        closePhase4Panel();
-                        return;
-                      }
-                      setSelectedDocId(phase4Ctx.artifactId);
-                      applyWorkflowTransition('edit_document', { hasDoc: true });
-                    }
-                    closePhase4Panel();
-                  }}
-                  onOpenAudit={() => closePhase4Panel()}
-                  onOpenCompare={() => closePhase4Panel()}
-                  onOpenTransformCanvas={() =>
-                    openTransformCanvas(
-                      undefined,
-                      undefined,
-                      phase4Ctx.artifactId,
-                      phase4Ctx.artifactTitle
-                    )
-                  }
-                  onCreateSubsection={handleCreateSubsection}
-                />
-              ) : phase4Panel === 'twin' ? (
-                <ProgramTwinPanel
-                  projectId={projectId}
-                  projectName={projectName || 'Project'}
-                  onClose={closePhase4Panel}
-                  onOpenVerification={openVerification}
-                  onOpenTransformCanvas={() => openTransformCanvas()}
-                  onSelectSection={(section: string) => {
-                    setSelectedCtdSection(section);
+              onOpenPlacementForArtifact={(artId: string) => {
+                const art = artifacts.find(a => a.id === artId);
+                if (art) handleOpenPlacementForDoc(art, art.ctdSection ? 'relocate' : 'place');
+              }}
+              onOpenVerification={openVerification}
+              onOpenTransformCanvas={openTransformCanvas}
+              onCreateSubsection={handleCreateSubsection}
+              onSelectSection={(section: string) => {
+                setSelectedCtdSection(section);
+                applyWorkflowTransition('browse_list', {});
+              }}
+              onNavigateToArtifact={(artifactId: string) => {
+                const art = artifacts.find(a => a.id === artifactId);
+                closePhase4Panel();
+                if (!tryOpenForEdit(art?.status)) {
+                  setSelectedDocId(artifactId);
+                  applyWorkflowTransition('browse_list', {});
+                  return;
+                }
+                setSelectedDocId(artifactId);
+                applyWorkflowTransition('edit_document', { hasDoc: true });
+              }}
+              onNavigate={onNavigate}
+              dashboardProps={{
+                projectNav,
+                reviewInFlight,
+                documentConsequenceRows,
+                proposals: conversationSnapshot.proposals,
+                onSetComputeJobs: (jobs: any[]) => setComputeJobs(jobs),
+                onOpenComputeArtifact: openComputeArtifact,
+                onOpenPlacementForDoc: handleOpenPlacementForDoc,
+                onOpenDocument: (docId: string) => {
+                  const art = artifacts.find(a => a.id === docId);
+                  if (!tryOpenForEdit(art?.status)) {
+                    setSelectedDocId(docId);
                     applyWorkflowTransition('browse_list', {});
-                    closePhase4Panel();
-                  }}
-                />
-              ) : phase4Panel === 'apps' ? (
-                <SubmissionAppsPanel
-                  projectId={projectId}
-                  projectName={projectName || 'Project'}
-                  onClose={closePhase4Panel}
-                  onCreateDraft={handlePhase4CreateDraft}
-                  onOpenTransformCanvas={(ctdSec?: string, tmplKey?: string) =>
-                    openTransformCanvas(ctdSec, tmplKey)
+                    return;
                   }
-                />
-              ) : phase4Panel === 'pulse' ? (
-                <div className="flex-1 overflow-y-auto px-6 py-4">
-                  <ReviewPulseDashboard
-                    projectId={projectId}
-                    onNavigateToArtifact={artifactId => {
-                      const art = artifacts.find(a => a.id === artifactId);
-                      closePhase4Panel();
-                      if (!tryOpenForEdit(art?.status)) {
-                        setSelectedDocId(artifactId);
-                        applyWorkflowTransition('browse_list', {});
-                        return;
-                      }
-                      setSelectedDocId(artifactId);
-                      applyWorkflowTransition('edit_document', { hasDoc: true });
-                    }}
-                  />
-                </div>
-              ) : phase4Panel === 'communication_center' ? (
-                <div className="flex-1 overflow-y-auto px-6 py-4">
-                  <CommunicationCenter
-                    projectId={projectId}
-                    projectName={projectName || 'Project'}
-                    submissionType={(submissionType as any) || (projectType as any) || 'NDA'}
-                    artifacts={artifacts.map(a => ({
-                      id: a.id,
-                      title: a.title,
-                      ctdSection: a.ctdSection,
-                      status: a.status || 'draft',
-                      version: a.version || 1,
-                    }))}
-                  />
-                </div>
-              ) : mode === 'dashboard' ? (
-                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-                  {projectNav === 'communications' && (
-                    <div className="rounded-xl border border-stone-200 overflow-hidden bg-white">
-                      <RegulatoryCommunicationsHub projectId={projectId} />
-                    </div>
-                  )}
-                  {projectNav !== 'communications' && (
-                    <>
-                      <ComputeJobPanel
-                        projectId={projectId}
-                        onJobsLoaded={jobs => setComputeJobs(jobs)}
-                        onOpenArtifact={artifactId => openComputeArtifact(artifactId)}
-                        onOpenProvenance={artifactId =>
-                          openComputeArtifact(artifactId, 'provenance')
-                        }
-                        onOpenAudit={artifactId => openComputeArtifact(artifactId, 'audit')}
-                        onPlaceArtifact={artifactId => {
-                          const art = artifacts.find(a => a.id === artifactId);
-                          if (!art) return;
-                          handleOpenPlacementForDoc(art, art.ctdSection ? 'relocate' : 'place');
-                        }}
-                      />
-                      <ProjectDashboard
-                        projectId={projectId}
-                        projectName={projectName || 'Untitled Project'}
-                        projectType={projectType}
-                        submissionType={submissionType}
-                        artifacts={artifacts}
-                        onOpenDocument={(docId: string) => {
-                          const art = artifacts.find(a => a.id === docId);
-                          if (!tryOpenForEdit(art?.status)) {
-                            setSelectedDocId(docId);
-                            applyWorkflowTransition('browse_list', {});
-                            return;
-                          }
-                          setSelectedDocId(docId);
-                          applyWorkflowTransition('edit_document', { hasDoc: true });
-                          setShowGovernedPanel(true);
-                        }}
-                        onCreateDocument={() => setShowNewDocDialog(true)}
-                        onOpenEditor={() => applyWorkflowTransition('browse_list', {})}
-                        onOpenDossier={() => {
-                          setLeftRailMode('dossier');
-                          applyWorkflowTransition('browse_list', {});
-                        }}
-                        onOpenIntelligence={onSwitchToIntelligence}
-                        onOpenSubmissions={onNavigate ? () => onNavigate('submissions') : undefined}
-                        onOpenTemplates={
-                          onNavigate ? () => onNavigate('template-library') : undefined
-                        }
-                        onOpenTaskBoard={onNavigate ? () => onNavigate('task-board') : undefined}
-                        onOpenCSRWorkflow={
-                          onNavigate ? () => onNavigate('csr-workflow') : undefined
-                        }
-                        onOpenINDChecklist={
-                          onNavigate ? () => onNavigate('ind-checklist') : undefined
-                        }
-                      />
-                      {projectNav === 'submission_builder' && (
-                        <SubmissionCommandCenter projectId={projectId} />
-                      )}
-                      {projectNav === 'haq' && (
-                        <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-4 space-y-3">
-                          <div className="flex items-center gap-2">
-                            <ShieldCheck className="w-4 h-4 text-emerald-700" />
-                            <span className="text-sm font-semibold text-emerald-900">
-                              HAQ Manager — Governed Artifact Queue
-                            </span>
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] ml-auto border-emerald-200 text-emerald-700"
-                            >
-                              {
-                                artifacts.filter(a => a.status === 'review' || a.status === 'draft')
-                                  .length
-                              }{' '}
-                              open
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-emerald-800">
-                            Triage governed artifacts, review pulse signals, and proposal
-                            accept/reject actions in one quality queue.
-                          </p>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            <div className="rounded border border-emerald-200 bg-white px-3 py-2 text-xs text-emerald-800">
-                              Draft artifacts:{' '}
-                              <span className="font-semibold">
-                                {artifacts.filter(a => a.status === 'draft').length}
-                              </span>
-                            </div>
-                            <div className="rounded border border-emerald-200 bg-white px-3 py-2 text-xs text-emerald-800">
-                              Reviews in flight:{' '}
-                              <span className="font-semibold">{reviewInFlight}</span>
-                            </div>
-                            <div className="rounded border border-emerald-200 bg-white px-3 py-2 text-xs text-emerald-800">
-                              Pending proposals:{' '}
-                              <span className="font-semibold">
-                                {
-                                  conversationSnapshot.proposals.filter(p => p.status === 'pending')
-                                    .length
-                                }
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
-                        <div className="flex items-center gap-2">
-                          <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                          <span className="text-sm font-semibold text-slate-900">
-                            Document Consequence Ledger
-                          </span>
-                          <Badge variant="outline" className="text-[10px] ml-auto">
-                            {documentConsequenceRows.length} tracked
-                          </Badge>
-                        </div>
-                        {documentConsequenceRows.length === 0 ? (
-                          <div className="text-xs text-slate-500">
-                            No generated or accepted document consequences yet.
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            {documentConsequenceRows.map(row => (
-                              <div
-                                key={row.rowKey}
-                                className="rounded border border-slate-100 px-3 py-2 space-y-1.5"
-                              >
-                                <div className="flex items-center justify-between gap-2">
-                                  <div className="text-xs font-medium text-slate-800 truncate">
-                                    {row.title}
-                                  </div>
-                                  <Badge
-                                    variant="outline"
-                                    className={cn(
-                                      'text-[10px]',
-                                      row.status === 'draft' && 'text-amber-700 border-amber-200',
-                                      row.status === 'approved' &&
-                                        'text-emerald-700 border-emerald-200',
-                                      row.status === 'review' && 'text-stone-700 border-blue-200',
-                                      row.status === 'locked' && 'text-slate-700 border-slate-200'
-                                    )}
-                                  >
-                                    {row.status}
-                                  </Badge>
-                                </div>
-                                <div className="text-[11px] text-slate-500 flex items-center gap-2 flex-wrap">
-                                  <span>v{row.version}</span>
-                                  <span className="text-slate-300">·</span>
-                                  <span>{row.placement}</span>
-                                  <span className="text-slate-300">·</span>
-                                  <span>
-                                    {row.sourceType === 'compute'
-                                      ? 'Compute'
-                                      : row.sourceType === 'proposal_accept'
-                                      ? 'Proposal'
-                                      : 'Generated'}
-                                  </span>
-                                  {row.provenancePresent && (
-                                    <>
-                                      <span className="text-slate-300">·</span>
-                                      <span className="text-violet-600">Prov ✓</span>
-                                    </>
-                                  )}
-                                  {row.auditPresent && (
-                                    <>
-                                      <span className="text-slate-300">·</span>
-                                      <span className="text-sky-600">Audit ✓</span>
-                                    </>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-2 pt-0.5">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 px-2 text-[11px] text-blue-600"
-                                    disabled={!row.openable}
-                                    onClick={() => openComputeArtifact(row.artifactId)}
-                                  >
-                                    {row.openable ? 'Open in editor' : 'View only'}
-                                  </Button>
-                                  {row.provenancePresent && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-6 px-2 text-[11px] text-violet-600"
-                                      onClick={() =>
-                                        openComputeArtifact(row.artifactId, 'provenance')
-                                      }
-                                    >
-                                      Provenance
-                                    </Button>
-                                  )}
-                                  {row.auditPresent && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-6 px-2 text-[11px] text-emerald-600"
-                                      onClick={() => openComputeArtifact(row.artifactId, 'audit')}
-                                    >
-                                      Audit
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Conversation proposals with governed consequence visibility */}
-                      {conversationSnapshot.proposals.length > 0 && (
-                        <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
-                          <div className="flex items-center gap-2">
-                            <Target className="w-4 h-4 text-blue-600" />
-                            <span className="text-sm font-semibold text-slate-900">
-                              Document Proposals
-                            </span>
-                            <Badge variant="outline" className="text-[10px] ml-auto">
-                              {conversationSnapshot.proposals.length}
-                            </Badge>
-                          </div>
-                          {conversationSnapshot.proposals.map(p => (
-                            <div
-                              key={p.id}
-                              className="rounded border border-slate-100 px-3 py-2 space-y-1.5"
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs font-medium text-slate-800">
-                                  {p.id.slice(0, 12)}
-                                </span>
-                                <Badge
-                                  variant="outline"
-                                  className={cn(
-                                    'text-[10px]',
-                                    p.status === 'pending' && 'text-amber-700 border-amber-200',
-                                    p.status === 'accepted' &&
-                                      'text-emerald-700 border-emerald-200',
-                                    p.status === 'rejected' && 'text-rose-700 border-rose-200'
-                                  )}
-                                >
-                                  {p.status}
-                                </Badge>
-                              </div>
-
-                              {/* Governance consequence (visible after accept) */}
-                              {p.status === 'accepted' && p.governanceState && (
-                                <div className="rounded bg-slate-50 border border-slate-100 px-2.5 py-1.5 text-[11px] space-y-1">
-                                  <div className="flex items-center gap-1.5">
-                                    <ShieldCheck
-                                      className={cn('w-3 h-3', normalizeGovernanceState(p).tone)}
-                                    />
-                                    <span
-                                      className={cn(
-                                        'font-medium',
-                                        normalizeGovernanceState(p).tone
-                                      )}
-                                    >
-                                      {normalizeGovernanceState(p).label}
-                                    </span>
-                                  </div>
-                                  {p.artifactId && (
-                                    <div className="text-slate-600 space-y-0.5">
-                                      <div>
-                                        Artifact:{' '}
-                                        <span className="font-medium text-slate-800">
-                                          {p.artifactId.slice(0, 20)}
-                                        </span>{' '}
-                                        · v{p.artifactVersion ?? 1} · {p.artifactStatus || 'draft'}
-                                      </div>
-                                      <div>
-                                        Placement: {p.placementState || 'unplaced'} · Provenance:{' '}
-                                        {p.provenanceRef ? p.provenanceRef.slice(0, 12) : 'none'} ·
-                                        Audit: {p.auditRef ? p.auditRef.slice(0, 12) : 'none'}
-                                      </div>
-                                    </div>
-                                  )}
-                                  {p.artifactId && (
-                                    <div className="flex items-center gap-2 pt-0.5">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-5 px-1.5 text-[10px] text-blue-600"
-                                        onClick={() => openComputeArtifact(p.artifactId!)}
-                                      >
-                                        Open in editor
-                                      </Button>
-                                      {p.provenanceRef && (
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-5 px-1.5 text-[10px] text-violet-600"
-                                          onClick={() =>
-                                            openComputeArtifact(p.artifactId!, 'provenance')
-                                          }
-                                        >
-                                          Provenance
-                                        </Button>
-                                      )}
-                                      {p.auditRef && (
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-5 px-1.5 text-[10px] text-emerald-600"
-                                          onClick={() =>
-                                            openComputeArtifact(p.artifactId!, 'audit')
-                                          }
-                                        >
-                                          Audit
-                                        </Button>
-                                      )}
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-5 px-1.5 text-[10px] text-indigo-600"
-                                        onClick={() => captureReviewPackage(p)}
-                                      >
-                                        Review package
-                                      </Button>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-
-                              {/* Actions for pending proposals */}
-                              {p.status === 'pending' && (
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-6 px-2.5 text-[11px] text-emerald-700 border-emerald-200 hover:bg-emerald-50"
-                                    onClick={() => actOnProposal(p.id, 'accept')}
-                                  >
-                                    Accept
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-6 px-2.5 text-[11px] text-rose-700 border-rose-200 hover:bg-rose-50"
-                                    onClick={() => actOnProposal(p.id, 'reject')}
-                                  >
-                                    Reject
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              ) : mode === 'browse' ? (
-                <div className="flex-1 min-h-0 flex flex-col">
-                  {activeLayer === 'reports' ? (
-                    <div className="flex-1 overflow-y-auto">
-                      <ReportCenter projectId={projectId} />
-                    </div>
-                  ) : (
-                    <>
-                      {isINDWorkspace && leftRailMode === 'dossier' && (
-                        <div className="px-4 pt-3">
-                          <IndEvidenceAskPanel
-                            projectId={projectId}
-                            sectionCode={selectedCtdSection}
-                            sectionTitle={
-                              selectedCtdSection ? getSectionLabel(selectedCtdSection) : undefined
-                            }
-                          />
-                        </div>
-                      )}
-                      <div className="flex-1 min-h-0">
-                        <DocumentListPane
-                          folderLabel={browseLabel}
-                          documents={browseDocs}
-                          selectedId={selectedDocId}
-                          onSelect={handleSelectDoc}
-                          onCreateNew={() => setShowNewDoc(true)}
-                          onAIDraft={
-                            leftRailMode === 'dossier' && selectedCtdSection
-                              ? handleCreateSectionDraftWithRI
-                              : undefined
-                          }
-                          onStartFromTemplate={
-                            leftRailMode === 'dossier' && selectedCtdSection
-                              ? () =>
-                                  handleDialogCreateFromTemplate(
-                                    'clinical-overview',
-                                    `${selectedCtdSection} — ${getSectionLabel(
-                                      selectedCtdSection
-                                    )}`,
-                                    selectedCtdSection
-                                  )
-                              : undefined
-                          }
-                          onWriteManually={
-                            leftRailMode === 'dossier' && selectedCtdSection
-                              ? () =>
-                                  handleDialogCreateBlank(
-                                    `${selectedCtdSection} — ${getSectionLabel(
-                                      selectedCtdSection
-                                    )}`,
-                                    selectedCtdSection
-                                  )
-                              : undefined
-                          }
-                          sectionAIDraftable={leftRailMode === 'dossier' && !!selectedCtdSection}
-                          onCutDocument={handleCutDocument}
-                          onCopyCtdPath={handleCopyCtdPath}
-                          onOpenPlacement={handleOpenPlacementForDoc}
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
-              ) : (
-                <div ref={editorContainerRef} className="flex-1 flex min-h-0 min-w-0">
-                  <ErrorBoundary>
-                    <Suspense
-                      fallback={
-                        <div
-                          className="flex-1 flex flex-col items-center justify-center gap-3"
-                          data-testid="editor-loading"
-                        >
-                          <LoadingState
-                            message="Loading editor..."
-                            size="sm"
-                            testId="editor-suspense"
-                          />
-                        </div>
-                      }
-                    >
-                      <EditorPanel
-                        projectId={projectId}
-                        submissionType={submissionType || projectType}
-                        initialContent={initialContent}
-                        initialTitle={initialTitle}
-                        initialCtdSection={initialCtdSection}
-                        initialTemplateId={initialTemplateId}
-                        onInitialContentConsumed={onInitialContentConsumed}
-                        openArtifactId={openArtifactId}
-                        onOpenArtifactConsumed={onOpenArtifactConsumed}
-                        onContentChange={handleDocContentChange}
-                        initialInspector={editorInitialInspector}
-                      />
-                    </Suspense>
-                  </ErrorBoundary>
-                </div>
-              )}
-            </DocumentStudioSurface>
+                  setSelectedDocId(docId);
+                  applyWorkflowTransition('edit_document', { hasDoc: true });
+                  setShowGovernedPanel(true);
+                },
+                onCreateDocument: () => setShowNewDocDialog(true),
+                onOpenEditor: () => applyWorkflowTransition('browse_list', {}),
+                onOpenDossier: () => {
+                  setLeftRailMode('dossier');
+                  applyWorkflowTransition('browse_list', {});
+                },
+                onSwitchToIntelligence,
+                onNavigate,
+                onActOnProposal: actOnProposal,
+                normalizeGovernanceState,
+                captureReviewPackage,
+              }}
+              browseProps={{
+                activeLayer,
+                isINDWorkspace,
+                leftRailMode,
+                selectedCtdSection,
+                browseLabel,
+                browseDocs,
+                selectedDocId,
+                onSelectDoc: handleSelectDoc,
+                onShowNewDoc: () => setShowNewDoc(true),
+                onCreateSectionDraftWithRI: handleCreateSectionDraftWithRI,
+                onDialogCreateFromTemplate: handleDialogCreateFromTemplate,
+                onDialogCreateBlank: handleDialogCreateBlank,
+                onCutDocument: handleCutDocument,
+                onCopyCtdPath: handleCopyCtdPath,
+                onOpenPlacementForDoc: handleOpenPlacementForDoc,
+              }}
+              editProps={{
+                initialContent,
+                initialTitle,
+                initialCtdSection,
+                initialTemplateId,
+                onInitialContentConsumed,
+                openArtifactId,
+                onOpenArtifactConsumed,
+                onContentChange: handleDocContentChange,
+                editorInitialInspector,
+                editorContainerRef,
+              }}
+            />
           </div>
 
           {/* ── Section requirements side panel ─────────────────────────────── */}
