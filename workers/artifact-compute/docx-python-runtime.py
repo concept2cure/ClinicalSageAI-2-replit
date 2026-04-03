@@ -21,13 +21,16 @@ import sys
 from datetime import datetime
 
 from docx import Document
-from docx.shared import Pt, Inches, RGBColor, Cm
+from docx.shared import Pt, Inches, Emu, RGBColor, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 
 def render_docx(payload: dict) -> dict:
     title = payload.get("title", "Untitled")
     content = payload.get("content", "")
+    # Images dict: key → base64 encoded image data
+    # Used by ![alt](key) syntax in content
+    images: dict = payload.get("images", {}) or {}
     output_type = "invalid" if payload.get("force_invalid_output") else "docx"
 
     if output_type == "invalid":
@@ -74,7 +77,7 @@ def render_docx(payload: dict) -> dict:
     doc.add_heading(title, level=0)
 
     # Parse and render content
-    _render_content(doc, content)
+    _render_content(doc, content, images)
 
     # Serialize to buffer
     buf = io.BytesIO()
@@ -92,7 +95,7 @@ def render_docx(payload: dict) -> dict:
     }
 
 
-def _render_content(doc: Document, content: str) -> None:
+def _render_content(doc: Document, content: str, images: dict | None = None) -> None:
     """Parse content string and render as structured DOCX elements.
 
     Supports:
@@ -101,6 +104,8 @@ def _render_content(doc: Document, content: str) -> None:
     - Lines starting with 1. / 2. etc → numbered list items
     - Lines of --- → page breaks
     - Lines starting with | → table rows (pipe-delimited)
+    - Lines matching ![alt](key) → inline images from images dict
+    - Lines matching ![alt](data:image/...) → inline base64 images
     - Everything else → body paragraphs
     """
     lines = content.split("\n")
@@ -141,6 +146,10 @@ def _render_content(doc: Document, content: str) -> None:
             text = re.sub(r"^\d+\.\s*", "", stripped)
             doc.add_paragraph(text, style="List Number")
 
+        # Inline image: ![alt text](key_or_data_uri)
+        elif stripped.startswith("!["):
+            _render_image(doc, stripped, images)
+
         # Table row
         elif stripped.startswith("|"):
             table_buffer.append(stripped)
@@ -156,6 +165,71 @@ def _render_content(doc: Document, content: str) -> None:
     # Flush remaining table
     if table_buffer:
         _render_table(doc, table_buffer)
+
+
+def _render_image(doc: Document, line: str, images: dict | None) -> None:
+    """Render an image from markdown ![alt](src) syntax.
+
+    Supports three source types:
+    1. Key lookup: ![alt](chart_1) — looks up 'chart_1' in images dict (base64)
+    2. Data URI:   ![alt](data:image/png;base64,...) — inline base64
+    3. File path:  ![alt](/path/to/file.png) — reads from disk
+
+    Images are embedded inline using python-docx add_picture with
+    proper width constraints (max 6 inches to fit page margins).
+    """
+    match = re.match(r"!\[(.*?)\]\((.*?)\)", line)
+    if not match:
+        doc.add_paragraph(line)
+        return
+
+    alt_text = match.group(1)
+    src = match.group(2).strip()
+    img_stream: io.BytesIO | None = None
+
+    try:
+        # Data URI: data:image/png;base64,iVBOR...
+        if src.startswith("data:image/"):
+            b64_part = src.split(",", 1)
+            if len(b64_part) == 2:
+                img_stream = io.BytesIO(base64.b64decode(b64_part[1]))
+
+        # Key lookup from images dict
+        elif images and src in images:
+            raw = images[src]
+            if isinstance(raw, str):
+                img_stream = io.BytesIO(base64.b64decode(raw))
+            elif isinstance(raw, bytes):
+                img_stream = io.BytesIO(raw)
+
+        # File path
+        elif os.path.isfile(src):
+            with open(src, "rb") as f:
+                img_stream = io.BytesIO(f.read())
+
+        if img_stream:
+            doc.add_picture(img_stream, width=Inches(5.5))
+            # Add caption below image
+            if alt_text:
+                caption = doc.add_paragraph()
+                run = caption.add_run(alt_text)
+                run.italic = True
+                run.font.size = Pt(9)
+                run.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
+                caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        else:
+            # Source not found — render as text placeholder
+            para = doc.add_paragraph()
+            run = para.add_run(f"[Image: {alt_text or src}]")
+            run.italic = True
+            run.font.color.rgb = RGBColor(0x99, 0x99, 0x99)
+
+    except Exception:
+        # Image rendering failed — degrade to text
+        para = doc.add_paragraph()
+        run = para.add_run(f"[Image could not be rendered: {alt_text or src}]")
+        run.italic = True
+        run.font.color.rgb = RGBColor(0x99, 0x99, 0x99)
 
 
 def _render_inline_formatting(para, text: str) -> None:
