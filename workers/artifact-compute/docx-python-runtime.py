@@ -21,7 +21,7 @@ import sys
 from datetime import datetime
 
 from docx import Document
-from docx.shared import Pt, Inches, Emu, RGBColor, Cm
+from docx.shared import Pt, Inches, RGBColor, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 
@@ -60,8 +60,8 @@ def render_docx(payload: dict) -> dict:
     section.right_margin = Cm(2.54)
     header = section.header
     header_para = header.paragraphs[0]
-    header_para.text = title
-    header_run = header_para.runs[0] if header_para.runs else header_para.add_run()
+    header_para.clear()
+    header_run = header_para.add_run(title)
     header_run.font.size = Pt(9)
     header_run.font.color.rgb = RGBColor(0x99, 0x99, 0x99)
 
@@ -233,13 +233,20 @@ def _render_image(doc: Document, line: str, images: dict | None) -> None:
 
 
 def _render_inline_formatting(para, text: str) -> None:
-    """Render inline **bold** and *italic* formatting."""
-    parts = re.split(r"(\*\*.*?\*\*|\*.*?\*)", text)
+    """Render inline **bold** and *italic* formatting.
+
+    Uses non-greedy matching with word-boundary awareness:
+    - **bold text** → bold (double asterisk, no spaces inside delimiters)
+    - *italic text* → italic (single asterisk, no spaces inside delimiters)
+    - Standalone * or ** in math/prose are left as-is
+    """
+    # Match **bold** first (greedy for double), then *italic* (no space after/before *)
+    parts = re.split(r"(\*\*\S.*?\S\*\*|\*\S.*?\S\*|\*\*\S+\*\*|\*\S+\*)", text)
     for part in parts:
-        if part.startswith("**") and part.endswith("**"):
+        if part.startswith("**") and part.endswith("**") and len(part) > 4:
             run = para.add_run(part[2:-2])
             run.bold = True
-        elif part.startswith("*") and part.endswith("*"):
+        elif part.startswith("*") and part.endswith("*") and len(part) > 2 and not part.startswith("**"):
             run = para.add_run(part[1:-1])
             run.italic = True
         else:
@@ -251,8 +258,8 @@ def _render_table(doc: Document, rows: list[str]) -> None:
     parsed = []
     for row in rows:
         cells = [c.strip() for c in row.strip("|").split("|")]
-        # Skip separator rows (e.g., |---|---|)
-        if all(re.match(r"^-+$", c) for c in cells):
+        # Skip separator rows (e.g., |---|---|, |:---:|, |---:|)
+        if all(re.match(r"^:?-+:?$", c) for c in cells if c):
             continue
         parsed.append(cells)
 
