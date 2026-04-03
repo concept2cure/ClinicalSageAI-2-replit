@@ -3319,7 +3319,7 @@ router.get('/projects/:projectId/governance/summary', async (req: Request, res: 
     const summary = await getGovernedDecisionSummaryDurable({
       organizationId: String(organizationId),
       projectId: req.params.projectId,
-      since: req.query.since as string | undefined,
+      since: typeof req.query.since === 'string' ? req.query.since : undefined,
     });
 
     return sendSuccess(res, { summary });
