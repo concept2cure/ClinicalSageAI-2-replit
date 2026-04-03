@@ -216,6 +216,18 @@ export const queryKeys = {
       ['intelligence', 'rim-signals', projectId] as const,
   },
 
+  // ── Governance ────────────────────────────────────────────────────────
+  governance: {
+    promotionBlockers: (projectId: string | number) =>
+      ['concept2cure', 'governance', 'promotion-blockers', projectId] as const,
+    decisions: (projectId: string | number) =>
+      ['concept2cure', 'governance', 'decisions', projectId] as const,
+    fabricDecisions: (projectId?: string) =>
+      ['concept2cure', 'governance', 'fabric-decisions', projectId] as const,
+    fabricSummary: (projectId?: string) =>
+      ['concept2cure', 'governance', 'fabric-summary', projectId] as const,
+  },
+
   // ── AnA Intelligence (CLAUDE.md Memory Compression Model) ─────────────
   anaIntelligence: {
     /** Company context (Global.md) */

@@ -126,3 +126,8 @@ export {
   buildFallbackMarker,
   buildEmptyEvidenceVerdict,
 } from './response-contract.js';
+export {
+  buildGovernedContextEnvelope,
+  formatFabricStateForPrompt,
+  type GovernedContextEnvelope,
+} from './governed-context-envelope.js';

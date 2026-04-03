@@ -27,6 +27,8 @@ import type {
   ExportGateDecision,
   PublishGateDecision,
   DownstreamOperatingConsequence,
+  RIMContextHints,
+  UIPresentationHints,
 } from '../../../shared/types/governed-document-fabric';
 
 import {
@@ -218,7 +220,26 @@ export function evaluateGovernedDocument(
   // 7. Determine overall decision
   const decision = deriveDecision(context, readiness, placement, exportGate, publishGate, consequences);
 
-  // 8. Build full evaluation
+  // 8. Build RIM context hints
+  const rimContextHints: RIMContextHints = {
+    readinessLevel: readiness.level,
+    blockerCategories: readiness.blockers.map(b => b.category),
+    warningCategories: readiness.warnings.map(w => w.category),
+    exportGateOutcome: exportGate.outcome,
+    publishGateOutcome: publishGate.outcome,
+    consequenceTypes: consequences.map(c => c.consequenceType),
+    placementOutcome: placement.outcome,
+    documentClass: context.documentType,
+    regulatorScope: context.regulatorBody,
+    submissionType: context.submissionType,
+  };
+
+  // 9. Build UI presentation hints
+  const uiPresentationHints: UIPresentationHints = buildUIPresentationHints(
+    readiness, placement, exportGate, publishGate, decision, consequences
+  );
+
+  // 10. Build full evaluation
   const evaluation: GovernedDocumentEvaluation = {
     context,
     readiness,
@@ -227,6 +248,8 @@ export function evaluateGovernedDocument(
     publishGate,
     consequences,
     decision,
+    rimContextHints,
+    uiPresentationHints,
     evaluatedAt: timestamp,
   };
 
@@ -348,4 +371,77 @@ function deriveDecision(
     consequenceCount,
     timestamp: new Date().toISOString(),
   };
+}
+
+/**
+ * Build compact UI presentation hints from the evaluation.
+ */
+function buildUIPresentationHints(
+  readiness: LifecycleReadinessState,
+  placement: PlacementAuthorityDecision,
+  exportGate: ExportGateDecision,
+  publishGate: PublishGateDecision,
+  decision: GovernedDecisionSummary,
+  consequences: DownstreamOperatingConsequence[]
+): UIPresentationHints {
+  const gateTone = (outcome: string): 'green' | 'amber' | 'red' | 'stone' => {
+    if (outcome === 'eligible') return 'green';
+    if (outcome === 'blocked') return 'red';
+    if (outcome === 'insufficient_context') return 'stone';
+    return 'amber';
+  };
+
+  const readinessTone = (): 'green' | 'amber' | 'red' | 'stone' => {
+    if (readiness.level === 'blocked') return 'red';
+    if (readiness.level === 'degraded') return 'stone';
+    if (['publish_ready', 'export_ready'].includes(readiness.level)) return 'green';
+    return 'amber';
+  };
+
+  const nextAction = deriveNextAction(readiness, exportGate, publishGate, consequences);
+
+  return {
+    readinessBadge: { label: readiness.level.replace(/_/g, ' '), tone: readinessTone() },
+    exportBadge: { label: exportGate.outcome, tone: gateTone(exportGate.outcome) },
+    publishBadge: { label: publishGate.outcome, tone: gateTone(publishGate.outcome) },
+    topBlockerMessages: readiness.blockers.slice(0, 3).map(b => b.message),
+    topWarningMessages: readiness.warnings.slice(0, 3).map(w => w.message),
+    nextRecommendedAction: nextAction,
+    placementLabel: placement.canonicalDestination
+      ? `${placement.outcome} (${placement.canonicalDestination})`
+      : placement.outcome,
+    decisionOutcomeLabel: decision.outcome,
+  };
+}
+
+/**
+ * Derive the next recommended action based on the evaluation state.
+ */
+function deriveNextAction(
+  readiness: LifecycleReadinessState,
+  exportGate: ExportGateDecision,
+  publishGate: PublishGateDecision,
+  consequences: DownstreamOperatingConsequence[]
+): string {
+  if (readiness.level === 'blocked') {
+    const topBlocker = readiness.blockers[0];
+    return topBlocker?.remediationHint || 'Resolve critical blockers before proceeding';
+  }
+  if (readiness.level === 'evidence_gap') return 'Add evidence to support document claims';
+  if (readiness.level === 'draft') return 'Complete document content';
+  if (readiness.level === 'review_ready') return 'Submit for review';
+  if (readiness.level === 'approval_ready') return 'Submit for approval';
+  if (readiness.level === 'export_ready') {
+    if (exportGate.outcome === 'blocked') {
+      return exportGate.remediationSteps[0] || 'Resolve export gate issues';
+    }
+    return 'Document is ready for export';
+  }
+  if (readiness.level === 'publish_ready') {
+    if (publishGate.outcome === 'blocked') {
+      return publishGate.remediationSteps[0] || 'Resolve publish gate issues';
+    }
+    return 'Document is ready for publishing';
+  }
+  return 'Continue working on document';
 }

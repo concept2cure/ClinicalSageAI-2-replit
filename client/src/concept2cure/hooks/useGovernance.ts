@@ -93,3 +93,13 @@ export function useGovernanceDecisions(projectId: string | number | undefined) {
     refetchInterval: 120_000,
   });
 }
+
+// === Canonical fabric state hooks (Build Order #2) ===
+export {
+  useFabricDecisions,
+  useFabricSummary,
+  selectPromotionBlockersFromFabric,
+  selectGovernanceDecisionBadge,
+} from './useFabricState';
+
+export type { FabricDecisionEntry, FabricSummary } from './useFabricState';

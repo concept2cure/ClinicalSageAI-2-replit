@@ -183,3 +183,11 @@ export {
   type PhaseGateAlert,
   type CriticalPathWarning,
 } from './proactive-commitment-engine.js';
+
+export {
+  interceptFabricDecision,
+  buildRIMContextForFabric,
+  type FabricDecisionInterceptInput,
+  type RIMFabricContext,
+  type GovernedFabricLearningEvent,
+} from './fabric-signal-bridge.js';

@@ -176,8 +176,42 @@ export interface GovernedDocumentEvaluation {
   publishGate: PublishGateDecision;
   consequences: DownstreamOperatingConsequence[];
   decision: GovernedDecisionSummary;
+  /** RIM-facing context hints for signal enrichment */
+  rimContextHints?: RIMContextHints;
+  /** UI-facing presentation hints for workspace rendering */
+  uiPresentationHints?: UIPresentationHints;
   /** ISO 8601 timestamp of when this evaluation was produced. */
   evaluatedAt: string;
+}
+
+// ─── RIM Context Hints ─────────────────────────────────────────────────────
+
+/** Compact hints for RIM signal bridge — what the fabric wants RIM to know */
+export interface RIMContextHints {
+  readinessLevel: string;
+  blockerCategories: string[];
+  warningCategories: string[];
+  exportGateOutcome: string;
+  publishGateOutcome: string;
+  consequenceTypes: string[];
+  placementOutcome: string;
+  documentClass?: string;
+  regulatorScope?: string;
+  submissionType?: string;
+}
+
+// ─── UI Presentation Hints ────────────────────────────────────────────────
+
+/** Compact hints for workspace/hook rendering — what the UI needs to know */
+export interface UIPresentationHints {
+  readinessBadge: { label: string; tone: 'green' | 'amber' | 'red' | 'stone' };
+  exportBadge: { label: string; tone: 'green' | 'amber' | 'red' | 'stone' };
+  publishBadge: { label: string; tone: 'green' | 'amber' | 'red' | 'stone' };
+  topBlockerMessages: string[];
+  topWarningMessages: string[];
+  nextRecommendedAction: string;
+  placementLabel: string;
+  decisionOutcomeLabel: string;
 }
 
 // ─── Placement Authority ────────────────────────────────────────────────────
