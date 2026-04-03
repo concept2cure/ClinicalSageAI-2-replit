@@ -148,7 +148,7 @@ export function getRecentGovernedDecisions(options: {
     filtered = filtered.filter(d => d.outcome === options.outcome);
   }
   if (options.since) {
-    filtered = filtered.filter(d => d.timestamp >= options.since!);
+    filtered = filtered.filter(d => options.since ? d.timestamp >= options.since : true);
   }
 
   return filtered.slice(-limit);
@@ -172,7 +172,7 @@ export function getGovernedDecisionSummary(options: {
     filtered = filtered.filter(d => d.projectId === options.projectId);
   }
   if (options.since) {
-    filtered = filtered.filter(d => d.timestamp >= options.since!);
+    filtered = filtered.filter(d => options.since ? d.timestamp >= options.since : true);
   }
 
   const summary: GovernedDecisionSummaryReport = {
@@ -258,30 +258,36 @@ export function clearGovernedDecisionLog(): void {
  * Handles both snake_case (DB row) and camelCase (mapped JS object) field names.
  */
 function mapDecisionRecordToGovernedDecision(record: Record<string, unknown>): GovernedDecisionRecord {
-  const rawNotes = record.notes ?? record.notes;
-  const notes = typeof rawNotes === 'string' ? (() => { try { return JSON.parse(rawNotes); } catch { return {}; } })() : (rawNotes || {});
-  const rawCtx = record.decision_context ?? record.decisionContext;
-  const ctx = typeof rawCtx === 'string' ? (() => { try { return JSON.parse(rawCtx); } catch { return {}; } })() : (rawCtx || {});
+  // Parse JSON fields safely — handle string, object, null
+  const rawNotes = record.notes ?? '';
+  const notes: Record<string, unknown> = typeof rawNotes === 'string'
+    ? (() => { try { return JSON.parse(rawNotes) as Record<string, unknown>; } catch { return {}; } })()
+    : (rawNotes && typeof rawNotes === 'object' ? rawNotes as Record<string, unknown> : {});
+
+  const rawCtx = record.decision_context ?? record.decisionContext ?? '';
+  const ctx: Record<string, unknown> = typeof rawCtx === 'string'
+    ? (() => { try { return JSON.parse(rawCtx) as Record<string, unknown>; } catch { return {}; } })()
+    : (rawCtx && typeof rawCtx === 'object' ? rawCtx as Record<string, unknown> : {});
 
   return {
-    decisionId: (ctx as any).governedDecisionId || String(record.id),
+    decisionId: String(ctx.governedDecisionId ?? record.id ?? ''),
     projectId: String(record.project_id ?? record.projectId ?? ''),
     organizationId: String(record.organization_id ?? record.organizationId ?? ''),
-    artifactId: (notes as any).artifactId,
-    intent: (ctx as any).intent || (notes as any).intent || 'unknown',
-    outcome: (ctx as any).outcome || (notes as any).outcome || 'degraded',
+    artifactId: notes.artifactId != null ? String(notes.artifactId) : undefined,
+    intent: String(ctx.intent ?? notes.intent ?? 'unknown'),
+    outcome: String(ctx.outcome ?? notes.outcome ?? 'degraded') as GovernedDecisionOutcome,
     rationale: String(record.recommendation_summary ?? record.recommendationSummary ?? ''),
-    blockerCount: (notes as any).blockerCount ?? 0,
-    warningCount: (notes as any).warningCount ?? 0,
-    consequenceCount: (notes as any).consequenceCount ?? 0,
-    readinessLevel: (ctx as any).readinessLevel || (notes as any).readinessLevel || 'draft',
-    readinessScore: (notes as any).readinessScore ?? 0,
-    placementOutcome: (notes as any).placementOutcome || 'insufficient_context',
-    exportGateOutcome: (notes as any).exportGateOutcome || 'insufficient_context',
-    publishGateOutcome: (notes as any).publishGateOutcome || 'insufficient_context',
+    blockerCount: Number(notes.blockerCount ?? 0),
+    warningCount: Number(notes.warningCount ?? 0),
+    consequenceCount: Number(notes.consequenceCount ?? 0),
+    readinessLevel: String(ctx.readinessLevel ?? notes.readinessLevel ?? 'draft'),
+    readinessScore: Number(notes.readinessScore ?? 0),
+    placementOutcome: String(notes.placementOutcome ?? 'insufficient_context'),
+    exportGateOutcome: String(notes.exportGateOutcome ?? 'insufficient_context'),
+    publishGateOutcome: String(notes.publishGateOutcome ?? 'insufficient_context'),
     actorId: String(record.decided_by ?? record.decidedBy ?? 'system'),
     timestamp: String(record.created_at ?? record.createdAt ?? new Date().toISOString()),
-    fabricVersion: (notes as any).fabricVersion || '1.0.0',
+    fabricVersion: String(notes.fabricVersion ?? '1.0.0'),
   };
 }
 
@@ -295,17 +301,17 @@ export async function getRecentGovernedDecisionsDurable(options: {
   limit?: number;
 } = {}): Promise<GovernedDecisionRecord[]> {
   try {
-    const { decisionRecordService } = await import('../../../server/services/decision-record-service.js');
+    const { decisionRecordService } = await import('../../services/decision-record-service.js');
     const limit = Math.max(1, Math.min(options.limit ?? 50, 500));
 
     const records = await decisionRecordService.search({
       organizationId: options.organizationId ? Number(options.organizationId) : 1,
       projectId: options.projectId ? Number(options.projectId) : undefined,
-      recommendationType: 'governed_fabric_decision' as any,
+      recommendationType: 'governed_fabric_decision',
       limit,
     });
 
-    return records.map((r) => mapDecisionRecordToGovernedDecision(r as unknown as Record<string, unknown>));
+    return records.map((r: Record<string, unknown>) => mapDecisionRecordToGovernedDecision(r));
   } catch {
     // Durable storage unavailable — fall back to in-memory
     return getRecentGovernedDecisions(options);
@@ -330,7 +336,7 @@ export async function getGovernedDecisionSummaryDurable(options: {
 
     let filtered = decisions;
     if (options.since) {
-      filtered = filtered.filter(d => d.timestamp >= options.since!);
+      filtered = filtered.filter(d => options.since ? d.timestamp >= options.since : true);
     }
 
     const summary: GovernedDecisionSummaryReport = {
@@ -401,7 +407,7 @@ export async function getArtifactDecisionTraceDurable(
  */
 async function persistGovernedDecisionDurably(record: GovernedDecisionRecord): Promise<boolean> {
   try {
-    const { decisionRecordService } = await import('../../../server/services/decision-record-service.js');
+    const { decisionRecordService } = await import('../../services/decision-record-service.js');
     if (!decisionRecordService?.create) return false;
 
     await decisionRecordService.create({
