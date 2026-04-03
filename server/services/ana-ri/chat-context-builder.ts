@@ -335,7 +335,28 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     }
   }
 
-  const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + governedContextBlock + toolkitContextBlock + memoryResult.memoryBlock + enrichment.block;
+  // === Account skill bundles, terms, and templates ===
+  // Resolves org-level execution bundles scoped by submission type.
+  // Includes prompt fragments, evidence preferences, term dictionary,
+  // template registry, and policy bindings — all auto-loaded by context.
+  let skillBundleBlock = '';
+  if (numericOrgId) {
+    try {
+      const { resolveAccountContext, formatResolvedContextForPrompt } = await import('../../services/account-canon.js');
+      const resolved = await resolveAccountContext({
+        organizationId: numericOrgId,
+        submissionType: orchestration.detectedSubmissionType || undefined,
+        projectId: projectId ? Number(projectId) : undefined,
+      });
+      if (resolved && (resolved.bundles?.length > 0 || resolved.terms?.length > 0 || resolved.templates?.length > 0)) {
+        skillBundleBlock = '\n\n' + formatResolvedContextForPrompt(resolved);
+      }
+    } catch {
+      // Account skill bundles unavailable — continue without
+    }
+  }
+
+  const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + governedContextBlock + toolkitContextBlock + skillBundleBlock + memoryResult.memoryBlock + enrichment.block;
 
   // Build messages array
   const messages: GatewayMessage[] = [{ role: 'system', content: fullSystemPrompt }];
