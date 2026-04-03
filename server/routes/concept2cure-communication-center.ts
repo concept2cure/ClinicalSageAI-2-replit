@@ -1,8 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import * as crypto from 'crypto';
-import { evaluateGovernedDocument } from '../src/control-plane/governed-document-evaluator';
-import { interceptFabricDecision } from '../services/intelligence/fabric-signal-bridge';
+import { evaluateAndInterceptGovernedDocument } from '../src/control-plane/governed-document-evaluator';
 import { db, pool } from '../db';
 import { concept2cureNotifications, projectTasks } from '../../shared/schema';
 import {
@@ -822,7 +821,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
       // Governed Document Decision Fabric evaluation on creation — surface initial blockers/warnings
       let governedFabric: Record<string, unknown> | undefined;
       try {
-        const fabricResult = evaluateGovernedDocument({
+        const fabricResult = evaluateAndInterceptGovernedDocument({
           context: {
             organizationId: String(organizationId),
             projectId: String(projectId),
@@ -856,24 +855,6 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
           consequences: fabricResult.evaluation.consequences,
           decisionReference: fabricResult.decisionReference,
         };
-        // Emit fabric decision to RIM learning loop (non-blocking)
-        try {
-          interceptFabricDecision({
-            organizationId: Number(fabricResult.evaluation.context.organizationId) || 0,
-            projectId: Number(fabricResult.evaluation.context.projectId) || 0,
-            decisionId: fabricResult.decisionReference.decisionId,
-            intent: fabricResult.evaluation.context.intendedAction,
-            outcome: fabricResult.evaluation.decision.outcome,
-            readinessLevel: fabricResult.evaluation.readiness.level,
-            readinessScore: fabricResult.evaluation.readiness.score,
-            blockerCount: fabricResult.evaluation.decision.blockerCount,
-            warningCount: fabricResult.evaluation.decision.warningCount,
-            blockerCategories: fabricResult.evaluation.readiness.blockers.map(b => b.category),
-            exportGateOutcome: fabricResult.evaluation.exportGate.outcome,
-            publishGateOutcome: fabricResult.evaluation.publishGate.outcome,
-            consequenceTypes: fabricResult.evaluation.consequences.map(c => c.consequenceType),
-          });
-        } catch { /* non-blocking */ }
       } catch (fabricError) {
         // Fabric evaluation is non-blocking — degrade gracefully
         governedFabric = { error: 'Fabric evaluation unavailable', degraded: true };
@@ -960,7 +941,7 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
       // Governed Document Decision Fabric evaluation for dispatch readiness
       let governedFabric: Record<string, unknown> | undefined;
       try {
-        const fabricResult = evaluateGovernedDocument({
+        const fabricResult = evaluateAndInterceptGovernedDocument({
           context: {
             organizationId: String(organizationId),
             projectId: String(projectId),
@@ -1010,24 +991,6 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
           consequences: fabricResult.evaluation.consequences,
           decisionReference: fabricResult.decisionReference,
         };
-        // Emit fabric decision to RIM learning loop (non-blocking)
-        try {
-          interceptFabricDecision({
-            organizationId: Number(fabricResult.evaluation.context.organizationId) || 0,
-            projectId: Number(fabricResult.evaluation.context.projectId) || 0,
-            decisionId: fabricResult.decisionReference.decisionId,
-            intent: fabricResult.evaluation.context.intendedAction,
-            outcome: fabricResult.evaluation.decision.outcome,
-            readinessLevel: fabricResult.evaluation.readiness.level,
-            readinessScore: fabricResult.evaluation.readiness.score,
-            blockerCount: fabricResult.evaluation.decision.blockerCount,
-            warningCount: fabricResult.evaluation.decision.warningCount,
-            blockerCategories: fabricResult.evaluation.readiness.blockers.map(b => b.category),
-            exportGateOutcome: fabricResult.evaluation.exportGate.outcome,
-            publishGateOutcome: fabricResult.evaluation.publishGate.outcome,
-            consequenceTypes: fabricResult.evaluation.consequences.map(c => c.consequenceType),
-          });
-        } catch { /* non-blocking */ }
       } catch (fabricError) {
         // Fabric evaluation is non-blocking — degrade gracefully
         governedFabric = { error: 'Fabric evaluation unavailable', degraded: true };

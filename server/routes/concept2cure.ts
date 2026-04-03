@@ -80,8 +80,7 @@ import {
 } from '../services/intelligence/rim-interceptors.js';
 import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
 import { resolveGovernedContext } from '../services/concept2cure/governedDocumentContractService';
-import { evaluateGovernedDocument } from '../src/control-plane/governed-document-evaluator';
-import { interceptFabricDecision } from '../services/intelligence/fabric-signal-bridge';
+import { evaluateAndInterceptGovernedDocument } from '../src/control-plane/governed-document-evaluator';
 import {
   buildWorkingMemoryPrompt,
   storeWorkingMemory,
@@ -7064,7 +7063,7 @@ router.put(
       // === Governed Document Decision Fabric evaluation ===
       let governedFabric;
       try {
-        const fabricResult = evaluateGovernedDocument({
+        const fabricResult = evaluateAndInterceptGovernedDocument({
           context: {
             organizationId,
             projectId: dbArtifact.projectId,
@@ -7100,24 +7099,6 @@ router.put(
           warningCount: fabricResult.evaluation.decision.warningCount,
           consequenceCount: fabricResult.evaluation.decision.consequenceCount,
         };
-        // Emit fabric decision to RIM learning loop (non-blocking)
-        try {
-          interceptFabricDecision({
-            organizationId: Number(fabricResult.evaluation.context.organizationId) || 0,
-            projectId: Number(fabricResult.evaluation.context.projectId) || 0,
-            decisionId: fabricResult.decisionReference.decisionId,
-            intent: fabricResult.evaluation.context.intendedAction,
-            outcome: fabricResult.evaluation.decision.outcome,
-            readinessLevel: fabricResult.evaluation.readiness.level,
-            readinessScore: fabricResult.evaluation.readiness.score,
-            blockerCount: fabricResult.evaluation.decision.blockerCount,
-            warningCount: fabricResult.evaluation.decision.warningCount,
-            blockerCategories: fabricResult.evaluation.readiness.blockers.map(b => b.category),
-            exportGateOutcome: fabricResult.evaluation.exportGate.outcome,
-            publishGateOutcome: fabricResult.evaluation.publishGate.outcome,
-            consequenceTypes: fabricResult.evaluation.consequences.map(c => c.consequenceType),
-          });
-        } catch { /* non-blocking */ }
       } catch {
         governedFabric = { outcome: 'degraded', error: 'Fabric evaluation unavailable' };
       }

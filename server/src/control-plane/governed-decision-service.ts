@@ -96,6 +96,13 @@ export function recordGovernedDecision(
     governedDecisionLog.splice(0, governedDecisionLog.length - MAX_GOVERNED_DECISIONS);
   }
 
+  // Durable persistence bridge — non-blocking, fire-and-forget
+  // Bridges governed fabric decisions into the formal decision_records table
+  // via the existing decisionRecordService infrastructure.
+  persistGovernedDecisionDurably(record).catch(() => {
+    // Persistence failure is non-blocking — in-memory log is still authoritative for hot queries
+  });
+
   return {
     decisionId,
     projectId: evaluation.context.projectId,
@@ -240,4 +247,68 @@ export function getArtifactDecisionTrace(
  */
 export function clearGovernedDecisionLog(): void {
   governedDecisionLog.length = 0;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Durable Persistence Bridge
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Persist a governed decision durably via the existing decisionRecordService.
+ * Non-blocking — failures are logged but do not break the evaluation flow.
+ * Uses the existing `decision_records` table from shared/schema/operating-system.ts.
+ */
+async function persistGovernedDecisionDurably(record: GovernedDecisionRecord): Promise<boolean> {
+  try {
+    const { decisionRecordService } = await import('../../../server/services/decision-record-service.js');
+    if (!decisionRecordService?.create) return false;
+
+    await decisionRecordService.create({
+      organizationId: Number(record.organizationId) || 1,
+      projectId: Number(record.projectId) || 0,
+      decisionCode: `governed-fabric:${record.decisionId}`,
+      title: `Governed ${record.intent}: ${record.outcome}`.slice(0, 200),
+      domainTrack: 'governance',
+      recommendationType: 'governed_fabric_decision',
+      recommendationSummary: record.rationale.slice(0, 500),
+      recommendationRationale: record.rationale,
+      confidenceLevel: record.readinessScore >= 75 ? 'high' : record.readinessScore >= 40 ? 'moderate' : 'low',
+      decidedBy: record.actorId || 'system',
+      notes: JSON.stringify({
+        fabricVersion: record.fabricVersion,
+        intent: record.intent,
+        outcome: record.outcome,
+        readinessLevel: record.readinessLevel,
+        readinessScore: record.readinessScore,
+        blockerCount: record.blockerCount,
+        warningCount: record.warningCount,
+        consequenceCount: record.consequenceCount,
+        placementOutcome: record.placementOutcome,
+        exportGateOutcome: record.exportGateOutcome,
+        publishGateOutcome: record.publishGateOutcome,
+        originSurface: record.originSurface,
+        regulatorBody: record.regulatorBody,
+        submissionType: record.submissionType,
+        ctdSection: record.ctdSection,
+        artifactId: record.artifactId,
+      }),
+      decisionContext: {
+        governedDecisionId: record.decisionId,
+        kind: 'governed-fabric-decision',
+        intent: record.intent,
+        outcome: record.outcome,
+        readinessLevel: record.readinessLevel,
+        regulatorBody: record.regulatorBody,
+        submissionType: record.submissionType,
+      },
+    });
+
+    return true;
+  } catch (err) {
+    console.warn('[governed-decision-service] Durable persistence failed (non-blocking)', {
+      decisionId: record.decisionId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return false;
+  }
 }
