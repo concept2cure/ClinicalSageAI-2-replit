@@ -319,7 +319,23 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     // Governed context unavailable — continue without
   }
 
-  const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + governedContextBlock + memoryResult.memoryBlock + enrichment.block;
+  // === Project document toolkit context ===
+  let toolkitContextBlock = '';
+  if (projectId && orchestration.detectedSubmissionType) {
+    try {
+      const { getSubmissionTypeAnaContext, getRequiredDocuments } = await import('../../services/project-document-toolkit.js');
+      const anaContext = getSubmissionTypeAnaContext(orchestration.detectedSubmissionType);
+      if (anaContext) {
+        const requiredDocs = getRequiredDocuments(orchestration.detectedSubmissionType);
+        const docNames = requiredDocs.slice(0, 5).map((d: { name: string; ctdSection: string }) => `${d.name} (${d.ctdSection})`).join(', ');
+        toolkitContextBlock = `\n\n## Project Document Toolkit\n${anaContext}\nKey documents: ${docNames}`;
+      }
+    } catch {
+      // Toolkit unavailable — continue without
+    }
+  }
+
+  const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + governedContextBlock + toolkitContextBlock + memoryResult.memoryBlock + enrichment.block;
 
   // Build messages array
   const messages: GatewayMessage[] = [{ role: 'system', content: fullSystemPrompt }];
