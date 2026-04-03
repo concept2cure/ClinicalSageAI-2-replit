@@ -8,6 +8,7 @@
  * Part of the Governed Document Decision Fabric.
  */
 
+import { randomUUID } from 'crypto';
 import type {
   GovernedDocumentContext,
   PlacementAuthorityDecision,
@@ -130,7 +131,7 @@ export function evaluatePlacementAuthority(
     // Validate CTD format
     if (!isValidCtdReference(context.intendedPlacementTarget)) {
       blockingReasons.push({
-        id: `plc_${Date.now()}_1`,
+        id: `plc_${randomUUID()}`,
         category: 'missing_placement',
         severity: 'major',
         message: `Invalid CTD section reference: ${context.intendedPlacementTarget}`,
@@ -138,7 +139,7 @@ export function evaluatePlacementAuthority(
         remediationHint: 'Provide a valid CTD section reference (e.g., m2.5, m3.2.P.1)',
       });
       outcome = 'blocked';
-    } else if (allowedDestinations.length > 0 && !allowedDestinations.some(d => context.intendedPlacementTarget!.startsWith(d))) {
+    } else if (allowedDestinations.length > 0 && !allowedDestinations.some(d => isCtdDescendantOrEqual(context.intendedPlacementTarget!, d))) {
       // Target doesn't match known canonical destinations — warn but allow with fallback
       outcome = 'fallback_allowed';
     } else {
@@ -148,7 +149,7 @@ export function evaluatePlacementAuthority(
     // Relocation: check if moving from current placement
     if (context.intendedAction === 'relocate' && !context.currentPlacement) {
       blockingReasons.push({
-        id: `plc_${Date.now()}_2`,
+        id: `plc_${randomUUID()}`,
         category: 'missing_placement',
         severity: 'major',
         message: 'Cannot relocate: no current placement on record',
@@ -194,4 +195,14 @@ export function isValidCtdReference(ref: string): boolean {
 export function getCanonicalPlacement(documentType: string): string | undefined {
   const placements = DOCUMENT_TYPE_PLACEMENT_MAP[documentType];
   return placements?.[0];
+}
+
+/**
+ * Check if a CTD reference is equal to or a descendant of a parent reference.
+ * Uses dot-boundary matching to avoid false positives (e.g., m2.5 should NOT match m2.50).
+ */
+function isCtdDescendantOrEqual(target: string, parent: string): boolean {
+  if (target === parent) return true;
+  // Target must start with parent followed by a dot separator
+  return target.startsWith(parent + '.');
 }

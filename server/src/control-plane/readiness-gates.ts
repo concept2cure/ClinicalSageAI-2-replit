@@ -15,6 +15,7 @@
  * - degraded: Evaluation could not complete fully
  */
 
+import { randomUUID } from 'crypto';
 import type {
   GovernedDocumentContext,
   LifecycleReadinessState,
@@ -302,10 +303,8 @@ export function meetsReadinessLevel(
 
 // === Helper factories ===
 
-let blockerCounter = 0;
-
 /**
- * Create a GovernedBlockingReason with a generated ID.
+ * Create a GovernedBlockingReason with a UUID-based ID (concurrency-safe).
  */
 function createBlocker(
   category: GovernedBlockingReason['category'],
@@ -315,7 +314,7 @@ function createBlocker(
   remediationHint?: string
 ): GovernedBlockingReason {
   return {
-    id: `blk_${Date.now()}_${++blockerCounter}`,
+    id: `blk_${randomUUID()}`,
     category,
     severity,
     message,
@@ -324,10 +323,8 @@ function createBlocker(
   };
 }
 
-let warningCounter = 0;
-
 /**
- * Create a GovernedWarning with a generated ID.
+ * Create a GovernedWarning with a UUID-based ID (concurrency-safe).
  */
 function createWarning(
   category: string,
@@ -335,7 +332,7 @@ function createWarning(
   source: string
 ): GovernedWarning {
   return {
-    id: `wrn_${Date.now()}_${++warningCounter}`,
+    id: `wrn_${randomUUID()}`,
     category,
     severity: 'warning',
     message,

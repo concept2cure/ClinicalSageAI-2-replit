@@ -10,6 +10,7 @@
  * Part of the Governed Document Decision Fabric.
  */
 
+import { randomUUID } from 'crypto';
 import type {
   GovernedDocumentContext,
   ExportGateDecision,
@@ -67,7 +68,7 @@ export function evaluateExportGate(input: ExportGateInput): ExportGateDecision {
   const checks: GateCheck[] = [];
   const blockingReasons: GovernedBlockingReason[] = [];
   const remediationSteps: string[] = [];
-  let blockerCounter = 0;
+
 
   // Check 1: Content exists
   checks.push({
@@ -78,7 +79,7 @@ export function evaluateExportGate(input: ExportGateInput): ExportGateDecision {
     required: true,
   });
   if (!input.hasContent) {
-    blockingReasons.push(makeBlocker('export_gate_failed', 'critical', 'Cannot export document with no content', ++blockerCounter));
+    blockingReasons.push(makeBlocker('export_gate_failed', 'critical', 'Cannot export document with no content'));
     remediationSteps.push('Add content to the document before exporting');
   }
 
@@ -94,7 +95,7 @@ export function evaluateExportGate(input: ExportGateInput): ExportGateDecision {
     required: true,
   });
   if (!hasPlacement) {
-    blockingReasons.push(makeBlocker('missing_placement', 'major', 'Document must be placed in a CTD section before export', ++blockerCounter));
+    blockingReasons.push(makeBlocker('missing_placement', 'major', 'Document must be placed in a CTD section before export'));
     remediationSteps.push('Place the document in the appropriate CTD section');
   }
 
@@ -109,7 +110,7 @@ export function evaluateExportGate(input: ExportGateInput): ExportGateDecision {
     required: true,
   });
   if (!input.hasApproval) {
-    blockingReasons.push(makeBlocker('missing_approval', 'critical', 'Document must be approved before export', ++blockerCounter));
+    blockingReasons.push(makeBlocker('missing_approval', 'critical', 'Document must be approved before export'));
     remediationSteps.push('Complete the approval workflow for this document');
   }
 
@@ -122,7 +123,7 @@ export function evaluateExportGate(input: ExportGateInput): ExportGateDecision {
     required: true,
   });
   if (!input.provenanceComplete) {
-    blockingReasons.push(makeBlocker('export_gate_failed', 'major', 'Provenance chain is incomplete — audit trail required for export', ++blockerCounter));
+    blockingReasons.push(makeBlocker('export_gate_failed', 'major', 'Provenance chain is incomplete — audit trail required for export'));
     remediationSteps.push('Ensure all document modifications have been tracked with provenance events');
   }
 
@@ -138,7 +139,7 @@ export function evaluateExportGate(input: ExportGateInput): ExportGateDecision {
     required: true,
   });
   if (!noContradictions) {
-    blockingReasons.push(makeBlocker('unresolved_contradiction', 'critical', `${input.unresolvedContradictionCount} unresolved contradiction(s) block export`, ++blockerCounter));
+    blockingReasons.push(makeBlocker('unresolved_contradiction', 'critical', `${input.unresolvedContradictionCount} unresolved contradiction(s) block export`));
     remediationSteps.push('Resolve all contradictions before exporting');
   }
 
@@ -151,7 +152,7 @@ export function evaluateExportGate(input: ExportGateInput): ExportGateDecision {
     required: true,
   });
   if (input.isStale) {
-    blockingReasons.push(makeBlocker('export_gate_failed', 'major', 'Document is stale — refresh before export', ++blockerCounter));
+    blockingReasons.push(makeBlocker('export_gate_failed', 'major', 'Document is stale — refresh before export'));
     remediationSteps.push('Refresh or recompile the document to incorporate source changes');
   }
 
@@ -167,7 +168,7 @@ export function evaluateExportGate(input: ExportGateInput): ExportGateDecision {
       required: true,
     });
     if (!input.humanReviewApproved) {
-      blockingReasons.push(makeBlocker('missing_review', 'critical', 'AI-generated content requires human review before export', ++blockerCounter));
+      blockingReasons.push(makeBlocker('missing_review', 'critical', 'AI-generated content requires human review before export'));
       remediationSteps.push('Complete human review of AI-generated content');
     }
   }
@@ -215,7 +216,7 @@ export function evaluatePublishGate(input: PublishGateInput): PublishGateDecisio
   const blockingReasons: GovernedBlockingReason[] = [...exportResult.blockingReasons];
   const remediationSteps: string[] = [...exportResult.remediationSteps];
   const dispatchBlockers: GovernedBlockingReason[] = [];
-  let blockerCounter = blockingReasons.length;
+
 
   // Publish-specific check 1: Export completed
   checks.push({
@@ -226,7 +227,7 @@ export function evaluatePublishGate(input: PublishGateInput): PublishGateDecisio
     required: true,
   });
   if (!input.exportCompleted) {
-    blockingReasons.push(makeBlocker('export_gate_failed', 'critical', 'Document must be exported before publishing', ++blockerCounter));
+    blockingReasons.push(makeBlocker('export_gate_failed', 'critical', 'Document must be exported before publishing'));
     remediationSteps.push('Complete document export before attempting to publish');
   }
 
@@ -254,7 +255,7 @@ export function evaluatePublishGate(input: PublishGateInput): PublishGateDecisio
       required: true,
     });
     if (!input.hasSequenceNumber) {
-      blockingReasons.push(makeBlocker('publish_gate_failed', 'critical', 'eCTD submissions require a sequence number', ++blockerCounter));
+      blockingReasons.push(makeBlocker('publish_gate_failed', 'critical', 'eCTD submissions require a sequence number'));
       remediationSteps.push('Assign an eCTD sequence number before publishing');
     }
   }
@@ -282,7 +283,7 @@ export function evaluatePublishGate(input: PublishGateInput): PublishGateDecisio
       required: true,
     });
     if (!input.allSectionsApproved) {
-      blockingReasons.push(makeBlocker('missing_approval', 'critical', 'All sections must be approved before publishing', ++blockerCounter));
+      blockingReasons.push(makeBlocker('missing_approval', 'critical', 'All sections must be approved before publishing'));
       remediationSteps.push('Approve all sections before publishing');
     }
   }
@@ -317,10 +318,9 @@ function makeBlocker(
   category: GovernedBlockingReason['category'],
   severity: GovernedBlockingReason['severity'],
   message: string,
-  counter: number
 ): GovernedBlockingReason {
   return {
-    id: `gate_${Date.now()}_${counter}`,
+    id: `gate_${randomUUID()}`,
     category,
     severity,
     message,

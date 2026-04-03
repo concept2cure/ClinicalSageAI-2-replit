@@ -114,6 +114,7 @@ export function recordGovernedDecision(
  */
 export function getRecentGovernedDecisions(options: {
   limit?: number;
+  organizationId?: string;
   projectId?: string;
   artifactId?: string;
   intent?: GovernedMutationIntent;
@@ -123,6 +124,10 @@ export function getRecentGovernedDecisions(options: {
   const limit = Math.max(1, Math.min(options.limit ?? 50, 500));
   let filtered = governedDecisionLog;
 
+  // Tenant scoping — filter by organization first (multi-tenant isolation)
+  if (options.organizationId) {
+    filtered = filtered.filter(d => d.organizationId === options.organizationId);
+  }
   if (options.projectId) {
     filtered = filtered.filter(d => d.projectId === options.projectId);
   }
@@ -146,11 +151,16 @@ export function getRecentGovernedDecisions(options: {
  * Get a summary of governed decisions.
  */
 export function getGovernedDecisionSummary(options: {
+  organizationId?: string;
   projectId?: string;
   since?: string;
 } = {}): GovernedDecisionSummaryReport {
   let filtered = governedDecisionLog;
 
+  // Tenant scoping — filter by organization first (multi-tenant isolation)
+  if (options.organizationId) {
+    filtered = filtered.filter(d => d.organizationId === options.organizationId);
+  }
   if (options.projectId) {
     filtered = filtered.filter(d => d.projectId === options.projectId);
   }

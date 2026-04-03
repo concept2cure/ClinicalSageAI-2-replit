@@ -95,7 +95,7 @@ function deriveReadinessConsequences(
 
   // Blocked readiness → open blocker consequence
   if (readiness.level === 'blocked') {
-    for (const blocker of readiness.blockers.filter(b => b.severity === 'critical')) {
+    for (const blocker of (readiness.blockers || []).filter(b => b.severity === 'critical')) {
       consequences.push({
         consequenceType: 'open_blocker',
         description: blocker.message,
@@ -137,13 +137,15 @@ function deriveReadinessConsequences(
   });
 
   // Workspace consequence row for any non-trivial readiness state
-  if (readiness.level !== 'draft' && readiness.blockers.length > 0) {
+  const blockerList = readiness.blockers || [];
+  const warningList = readiness.warnings || [];
+  if (readiness.level !== 'draft' && blockerList.length > 0) {
     consequences.push({
       consequenceType: 'flag_workspace_consequence_row',
-      description: `${readiness.blockers.length} blocker(s), ${readiness.warnings.length} warning(s) for ${context.artifactId || 'document'}`,
+      description: `${blockerList.length} blocker(s), ${warningList.length} warning(s) for ${context.artifactId || 'document'}`,
       targetObjectType: 'artifact',
       targetObjectId: context.artifactId,
-      severity: readiness.blockers.some(b => b.severity === 'critical') ? 'critical' : 'major',
+      severity: blockerList.some(b => b.severity === 'critical') ? 'critical' : 'major',
       actionRequired: true,
       autoExecutable: true,
       executed: false,

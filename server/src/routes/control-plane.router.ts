@@ -185,7 +185,7 @@ router.get('/governed/decisions', requireControlPlaneAccess, (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: { code: 'INVALID_QUERY', details: parsed.error.flatten() } });
   }
-  const entries = getRecentGovernedDecisions(parsed.data as any);
+  const entries = getRecentGovernedDecisions(parsed.data);
   return res.json({ entries, count: entries.length });
 });
 
@@ -287,7 +287,7 @@ router.post('/governed/evaluate', requireControlPlaneAccess, (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: { code: 'INVALID_EVALUATION_INPUT', details: parsed.error.flatten() } });
   }
-  const result = evaluateGovernedDocument(parsed.data as any);
+  const result = evaluateGovernedDocument(parsed.data as Parameters<typeof evaluateGovernedDocument>[0]);
   return res.json({ result });
 });
 
