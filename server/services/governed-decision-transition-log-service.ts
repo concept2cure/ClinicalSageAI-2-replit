@@ -168,6 +168,75 @@ export function hasUnresolvedGovernedDecisions(
   };
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// Durable-first queue queries (survive restart)
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Durable-first review queue. Queries governed_decision_transitions table,
+ * falls back to in-memory if DB unavailable.
+ */
+export async function getProjectReviewQueueDurable(
+  projectId: number,
+  organizationId: number
+): Promise<{ pending: string[]; escalated: string[]; deferred: string[]; rejected: string[] }> {
+  try {
+    const { pool } = await import('../db.js');
+    // Get latest state per decision using window function
+    const result = await pool.query(
+      `WITH latest AS (
+        SELECT DISTINCT ON (decision_id) decision_id, to_state
+        FROM governed_decision_transitions
+        WHERE project_id = $1 AND organization_id = $2
+        ORDER BY decision_id, created_at DESC
+      )
+      SELECT decision_id, to_state FROM latest
+      WHERE to_state IN ('under_review', 'escalated', 'deferred', 'rejected')`,
+      [projectId, organizationId]
+    );
+
+    const pending: string[] = [];
+    const escalated: string[] = [];
+    const deferred: string[] = [];
+    const rejected: string[] = [];
+
+    for (const row of result.rows) {
+      const id = String(row.decision_id);
+      if (row.to_state === 'under_review') pending.push(id);
+      else if (row.to_state === 'escalated') escalated.push(id);
+      else if (row.to_state === 'deferred') deferred.push(id);
+      else if (row.to_state === 'rejected') rejected.push(id);
+    }
+
+    return { pending, escalated, deferred, rejected };
+  } catch {
+    // DB unavailable — fall back to memory
+    return getProjectReviewQueue(projectId, organizationId);
+  }
+}
+
+/**
+ * Durable-first unresolved check. Survives restart.
+ */
+export async function hasUnresolvedGovernedDecisionsDurable(
+  projectId: number,
+  organizationId: number
+): Promise<{ hasUnresolved: boolean; unresolvedCount: number; escalatedCount: number; states: Record<string, number> }> {
+  const queue = await getProjectReviewQueueDurable(projectId, organizationId);
+  const unresolvedCount = queue.pending.length + queue.escalated.length;
+  return {
+    hasUnresolved: unresolvedCount > 0,
+    unresolvedCount,
+    escalatedCount: queue.escalated.length,
+    states: {
+      under_review: queue.pending.length,
+      escalated: queue.escalated.length,
+      deferred: queue.deferred.length,
+      rejected: queue.rejected.length,
+    },
+  };
+}
+
 /**
  * Clear transition log (for testing).
  */

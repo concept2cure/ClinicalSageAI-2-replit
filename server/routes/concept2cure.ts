@@ -3471,11 +3471,11 @@ router.get('/projects/:projectId/governance/review-queue', async (req, res) => {
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-    const { getProjectReviewQueue, hasUnresolvedGovernedDecisions } =
+    const { getProjectReviewQueueDurable, hasUnresolvedGovernedDecisionsDurable } =
       await import('../services/governed-decision-transition-log-service.js');
 
-    const queue = getProjectReviewQueue(Number(req.params.projectId), organizationId);
-    const unresolved = hasUnresolvedGovernedDecisions(Number(req.params.projectId), organizationId);
+    const queue = await getProjectReviewQueueDurable(Number(req.params.projectId), organizationId);
+    const unresolved = await hasUnresolvedGovernedDecisionsDurable(Number(req.params.projectId), organizationId);
 
     return sendSuccess(res, { queue, unresolved });
   } catch (error) {

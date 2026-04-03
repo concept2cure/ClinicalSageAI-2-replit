@@ -860,7 +860,16 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
         governedFabric = { error: 'Fabric evaluation unavailable', degraded: true };
       }
 
-      return sendSuccess(res, { ...item, generatedTaskId: task?.id, governedFabric });
+      // Check governed decision lifecycle state for initial readiness
+      let governedDecisionReadiness;
+      try {
+        const { hasUnresolvedGovernedDecisionsDurable } = await import('../services/governed-decision-transition-log-service.js');
+        governedDecisionReadiness = await hasUnresolvedGovernedDecisionsDurable(Number(projectId), organizationId);
+      } catch {
+        governedDecisionReadiness = { hasUnresolved: false, unresolvedCount: 0, escalatedCount: 0, states: {} };
+      }
+
+      return sendSuccess(res, { ...item, generatedTaskId: task?.id, governedFabric, governedDecisionReadiness });
     } catch (error: any) {
       return sendError(
         res,
@@ -996,7 +1005,16 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
         governedFabric = { error: 'Fabric evaluation unavailable', degraded: true };
       }
 
-      return sendSuccess(res, { ...updated, governedFabric });
+      // Check for unresolved governed decisions affecting dispatch readiness
+      let governedDecisionReadiness;
+      try {
+        const { hasUnresolvedGovernedDecisionsDurable } = await import('../services/governed-decision-transition-log-service.js');
+        governedDecisionReadiness = await hasUnresolvedGovernedDecisionsDurable(Number(projectId), organizationId);
+      } catch {
+        governedDecisionReadiness = { hasUnresolved: false, unresolvedCount: 0, escalatedCount: 0, states: {} };
+      }
+
+      return sendSuccess(res, { ...updated, governedFabric, governedDecisionReadiness });
     } catch (error: any) {
       return sendError(
         res,
