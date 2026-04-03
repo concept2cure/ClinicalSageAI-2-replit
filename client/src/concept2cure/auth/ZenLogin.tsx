@@ -1,22 +1,12 @@
 /// <reference types="vite/client" />
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'wouter';
-import {
-  AlertCircle,
-  CheckCircle2,
-  Mail,
-  Eye,
-  EyeOff,
-  ArrowLeft,
-  Building2,
-  Send,
-} from 'lucide-react';
+import { AlertCircle, CheckCircle2, Mail, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Spinner } from '@/components/ui/spinner';
 import {
   authService,
@@ -36,12 +26,10 @@ type View =
   | 'forgot-password'
   | 'reset-password'
   | 'reset-sent'
-  | 'request-license'
-  | 'license-sent'
   | 'success';
 
 interface AuthError {
-  field?: 'email' | 'password' | 'mfa' | 'reset' | 'license';
+  field?: 'email' | 'password' | 'mfa' | 'reset';
   message: string;
 }
 
@@ -80,7 +68,7 @@ const MicrosoftIcon = () => (
 );
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   PASSWORD FIELD — integrated show/hide
+   PASSWORD FIELD — integrated show/hide (governed Button for toggle)
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 interface PasswordFieldProps {
@@ -113,16 +101,18 @@ const PasswordField: React.FC<PasswordFieldProps> = ({
         <Label htmlFor={id} className="text-[12px] font-medium text-stone-600">
           {label}
         </Label>
-        <button
+        <Button
           type="button"
-          className="inline-flex items-center gap-1 text-[11px] text-stone-400 hover:text-stone-700 transition-colors select-none"
+          variant="ghost"
+          size="sm"
+          className="h-auto px-1.5 py-0.5 text-[11px] text-stone-400 hover:text-stone-700 gap-1"
           onClick={() => setShow(v => !v)}
           tabIndex={-1}
           aria-label={show ? 'Hide password' : 'Show password'}
         >
           {show ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
           {show ? 'Hide' : 'Show'}
-        </button>
+        </Button>
       </div>
       <Input
         id={id}
@@ -234,12 +224,6 @@ export const ZenLogin: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDevLoading, setIsDevLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
-
-  // License request state
-  const [licName, setLicName] = useState('');
-  const [licEmail, setLicEmail] = useState('');
-  const [licOrg, setLicOrg] = useState('');
-  const [licMessage, setLicMessage] = useState('');
 
   const supportsRecoveryCodes = useMemo(
     () => availableMfaMethods.some(m => m.type === 'backup_code'),
@@ -436,47 +420,6 @@ export const ZenLogin: React.FC = () => {
     setResendCountdown(60);
   }, [maskedEmail, mfaMethod, resendCountdown]);
 
-  const handleLicenseRequest = useCallback(async () => {
-    if (!licName.trim()) {
-      setError({ field: 'license', message: 'Enter your name.' });
-      return;
-    }
-    if (!validateEmail(licEmail)) {
-      setError({ field: 'license', message: 'Enter a valid email.' });
-      return;
-    }
-    if (!licOrg.trim()) {
-      setError({ field: 'license', message: 'Enter your organization.' });
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/auth/license-request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: licName.trim(),
-          email: licEmail.trim(),
-          organization: licOrg.trim(),
-          message: licMessage.trim(),
-        }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        throw new Error(body?.error?.message || 'Request failed.');
-      }
-      setView('license-sent');
-    } catch (err) {
-      setError({
-        field: 'license',
-        message: err instanceof Error ? err.message : 'Unable to submit request.',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [licName, licEmail, licOrg, licMessage, validateEmail]);
-
   /* ── heading text per view ─────────────────────────────────────────────── */
 
   const headingText: Record<View, string> = {
@@ -485,8 +428,6 @@ export const ZenLogin: React.FC = () => {
     'forgot-password': 'Reset your password',
     'reset-password': 'Create new password',
     'reset-sent': 'Check your inbox',
-    'request-license': 'Request a license',
-    'license-sent': 'Request submitted',
     success: 'Welcome back',
   };
 
@@ -496,8 +437,6 @@ export const ZenLogin: React.FC = () => {
     'forgot-password': "We'll send you a link to reset your password.",
     'reset-password': 'Choose a strong password for your account.',
     'reset-sent': "If the account exists, you'll receive a reset link.",
-    'request-license': "Tell us about your organization and we'll be in touch.",
-    'license-sent': "We've received your request and will respond within one business day.",
     success: 'Redirecting you now...',
   };
 
@@ -507,11 +446,10 @@ export const ZenLogin: React.FC = () => {
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-[#f5f4f1] font-sans antialiased text-stone-900 p-0 sm:p-6 lg:p-10">
-      {/* ── Auth Shell ─────────────────────────────────────────────────────── */}
-      <div className="flex w-full max-w-[1120px] min-h-[700px] overflow-hidden bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_30px_rgba(0,0,0,0.06)] sm:rounded-2xl flex-col lg:flex-row">
-        {/* ── LEFT PANEL — Dark Brand ────────────────────────────────────── */}
-        <div className="relative flex w-full lg:w-[40%] shrink-0 flex-col justify-between bg-stone-950 p-10 lg:p-14 overflow-hidden">
-          {/* Subtle background texture */}
+      {/* ── Auth Shell — locked geometry ───────────────────────────────────── */}
+      <div className="flex w-full max-w-[1160px] min-h-[700px] max-h-[740px] overflow-hidden bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_30px_rgba(0,0,0,0.06)] sm:rounded-2xl flex-col lg:flex-row">
+        {/* ── LEFT PANEL — Restrained dark brand (40%) ───────────────────── */}
+        <div className="relative hidden lg:flex w-[40%] shrink-0 flex-col justify-center bg-stone-950 p-14 overflow-hidden">
           <div
             className="pointer-events-none absolute inset-0 opacity-[0.03]"
             style={{
@@ -519,51 +457,32 @@ export const ZenLogin: React.FC = () => {
               backgroundSize: '24px 24px',
             }}
           />
-
-          {/* Top — Brand name */}
           <div className="relative z-10">
-            <div className="inline-flex items-center gap-2.5 rounded-lg bg-white/[0.06] px-3 py-1.5 mb-10">
-              <div className="h-2 w-2 rounded-full bg-emerald-400" />
-              <span className="text-[11px] font-medium tracking-wide text-stone-400 uppercase">
-                Regulatory Intelligence Platform
-              </span>
-            </div>
-          </div>
-
-          {/* Center — Headline */}
-          <div className="relative z-10 flex-1 flex flex-col justify-center -mt-8">
-            <h1 className="text-[38px] lg:text-[44px] font-semibold tracking-[-0.02em] leading-[1.1] text-white">
+            <h1 className="text-[40px] font-semibold tracking-[-0.02em] leading-[1.1] text-white">
               AnA 1.0 RI
             </h1>
             <p className="mt-4 max-w-[260px] text-[15px] leading-relaxed text-stone-400">
               Regulatory intelligence for governed document work.
             </p>
           </div>
-
-          {/* Bottom — Trust signals */}
-          <div className="relative z-10 flex items-center gap-4 pt-8 border-t border-white/[0.06]">
-            <span className="text-[11px] text-stone-500">21 CFR Part 11</span>
-            <span className="text-stone-700">·</span>
-            <span className="text-[11px] text-stone-500">SOC 2 Type II</span>
-            <span className="text-stone-700">·</span>
-            <span className="text-[11px] text-stone-500">HIPAA</span>
-          </div>
         </div>
 
-        {/* ── RIGHT PANEL — Form ─────────────────────────────────────────── */}
+        {/* ── RIGHT PANEL — Form (60%) ───────────────────────────────────── */}
         <div className="flex flex-1 flex-col justify-center px-6 sm:px-14 lg:px-20 py-12 lg:py-0">
-          <div className="mx-auto w-full max-w-[360px]">
+          <div className="mx-auto w-full max-w-[340px]">
             {/* ── Header ───────────────────────────────────────────────── */}
             <div className="mb-8">
               {view !== 'sign-in' && view !== 'success' && (
-                <button
+                <Button
                   type="button"
-                  className="inline-flex items-center gap-1.5 text-[12px] text-stone-400 hover:text-stone-700 transition-colors mb-5"
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto px-0 py-0 text-[12px] text-stone-400 hover:text-stone-700 gap-1.5 mb-5"
                   onClick={() => setView('sign-in')}
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   Back to sign in
-                </button>
+                </Button>
               )}
               <h2 className="text-[22px] font-semibold tracking-[-0.01em] text-stone-900">
                 {headingText[view]}
@@ -576,21 +495,14 @@ export const ZenLogin: React.FC = () => {
               {view === 'sign-in' && (
                 <p className="mt-1.5 text-[13px] text-stone-400">
                   New here?{' '}
-                  <button
+                  <Button
                     type="button"
-                    className="font-medium text-stone-700 hover:text-stone-900 underline underline-offset-2 decoration-stone-300 hover:decoration-stone-500 transition-colors"
+                    variant="link"
+                    className="h-auto p-0 text-[13px] font-medium text-stone-700 hover:text-stone-900 underline underline-offset-2 decoration-stone-300 hover:decoration-stone-500"
                     onClick={() => setLocation('/concept2cure/signup')}
                   >
-                    Create an account
-                  </button>{' '}
-                  or{' '}
-                  <button
-                    type="button"
-                    className="font-medium text-stone-700 hover:text-stone-900 underline underline-offset-2 decoration-stone-300 hover:decoration-stone-500 transition-colors"
-                    onClick={() => setView('request-license')}
-                  >
-                    request a license
-                  </button>
+                    Request access
+                  </Button>
                 </p>
               )}
             </div>
@@ -611,24 +523,26 @@ export const ZenLogin: React.FC = () => {
                ══════════════════════════════════════════════════════════════ */}
             {view === 'sign-in' && (
               <div className="space-y-5">
-                {/* SSO Buttons */}
+                {/* SSO — governed Button variant="outline" */}
                 <div className="grid grid-cols-2 gap-3">
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
                     onClick={() => handleSsoRedirect('google')}
-                    className="group flex h-[44px] items-center justify-center gap-2.5 rounded-[10px] border border-stone-200 bg-white text-[13px] font-medium text-stone-600 transition-all hover:border-stone-300 hover:bg-stone-50 hover:shadow-sm active:scale-[0.98]"
+                    className="h-[44px] rounded-[10px] border-stone-200 bg-white text-[13px] font-medium text-stone-600 hover:border-stone-300 hover:bg-stone-50 hover:shadow-sm active:scale-[0.98] gap-2.5"
                   >
                     <GoogleIcon />
-                    <span>Google</span>
-                  </button>
-                  <button
+                    Google
+                  </Button>
+                  <Button
                     type="button"
+                    variant="outline"
                     onClick={() => handleSsoRedirect('microsoft')}
-                    className="group flex h-[44px] items-center justify-center gap-2.5 rounded-[10px] border border-stone-200 bg-white text-[13px] font-medium text-stone-600 transition-all hover:border-stone-300 hover:bg-stone-50 hover:shadow-sm active:scale-[0.98]"
+                    className="h-[44px] rounded-[10px] border-stone-200 bg-white text-[13px] font-medium text-stone-600 hover:border-stone-300 hover:bg-stone-50 hover:shadow-sm active:scale-[0.98] gap-2.5"
                   >
                     <MicrosoftIcon />
-                    <span>Microsoft</span>
-                  </button>
+                    Microsoft
+                  </Button>
                 </div>
 
                 {/* OR divider */}
@@ -684,13 +598,14 @@ export const ZenLogin: React.FC = () => {
                       />
                       Remember me
                     </label>
-                    <button
+                    <Button
                       type="button"
-                      className="text-[12px] font-medium text-stone-400 hover:text-stone-700 transition-colors"
+                      variant="link"
+                      className="h-auto p-0 text-[12px] font-medium text-stone-400 hover:text-stone-700"
                       onClick={() => setView('forgot-password')}
                     >
                       Forgot password?
-                    </button>
+                    </Button>
                   </div>
 
                   <Button
@@ -713,10 +628,11 @@ export const ZenLogin: React.FC = () => {
                       </span>
                       <div className="flex-1 border-t border-dashed border-stone-100" />
                     </div>
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
                       disabled={isLoading || isDevLoading}
-                      className="flex h-[36px] w-full items-center justify-center rounded-[8px] text-[12px] font-medium text-stone-400 hover:text-stone-600 hover:bg-stone-50 transition-all disabled:opacity-40"
+                      className="h-[36px] w-full rounded-[8px] text-[12px] font-medium text-stone-400 hover:text-stone-600"
                       onClick={async () => {
                         setIsDevLoading(true);
                         setError(null);
@@ -741,7 +657,7 @@ export const ZenLogin: React.FC = () => {
                     >
                       {isDevLoading ? <Spinner size="sm" className="mr-1.5" /> : null}
                       Demo Access
-                    </button>
+                    </Button>
                   </>
                 )}
               </div>
@@ -763,26 +679,28 @@ export const ZenLogin: React.FC = () => {
                 </Button>
                 <div className="flex flex-col items-center gap-1.5 pt-1">
                   {mfaMethod === 'email' && (
-                    <button
+                    <Button
                       type="button"
-                      className="text-[12px] text-stone-400 hover:text-stone-700 disabled:opacity-40 transition-colors"
+                      variant="link"
+                      className="h-auto p-0 text-[12px] text-stone-400 hover:text-stone-700 disabled:opacity-40"
                       onClick={handleResendCode}
                       disabled={resendCountdown > 0 || isLoading}
                     >
                       {resendCountdown > 0 ? `Resend code (${resendCountdown}s)` : 'Resend code'}
-                    </button>
+                    </Button>
                   )}
                   {supportsRecoveryCodes && mfaMethod !== 'backup_code' && (
-                    <button
+                    <Button
                       type="button"
-                      className="text-[12px] text-stone-400 hover:text-stone-700 transition-colors"
+                      variant="link"
+                      className="h-auto p-0 text-[12px] text-stone-400 hover:text-stone-700"
                       onClick={() => {
                         setMfaMethod('backup_code');
                         setMfaCode('');
                       }}
                     >
                       Use a recovery code
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -865,99 +783,6 @@ export const ZenLogin: React.FC = () => {
                 >
                   {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
                   Save and continue
-                </Button>
-              </div>
-            )}
-
-            {/* ══════════════════════════════════════════════════════════════
-               VIEW: REQUEST LICENSE
-               ══════════════════════════════════════════════════════════════ */}
-            {view === 'request-license' && (
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="lic-name" className="text-[12px] font-medium text-stone-600">
-                    Full name
-                  </Label>
-                  <Input
-                    id="lic-name"
-                    value={licName}
-                    onChange={e => setLicName(e.target.value)}
-                    placeholder="Jane Smith"
-                    autoFocus
-                    className="h-[44px] rounded-[10px] border-stone-200 bg-white px-3.5 text-[14px] placeholder:text-stone-300 focus-visible:ring-1 focus-visible:ring-stone-300"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="lic-email" className="text-[12px] font-medium text-stone-600">
-                    Work email
-                  </Label>
-                  <Input
-                    id="lic-email"
-                    type="email"
-                    value={licEmail}
-                    onChange={e => setLicEmail(e.target.value)}
-                    placeholder="jane@pharma.com"
-                    className="h-[44px] rounded-[10px] border-stone-200 bg-white px-3.5 text-[14px] placeholder:text-stone-300 focus-visible:ring-1 focus-visible:ring-stone-300"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="lic-org" className="text-[12px] font-medium text-stone-600">
-                    Organization
-                  </Label>
-                  <Input
-                    id="lic-org"
-                    value={licOrg}
-                    onChange={e => setLicOrg(e.target.value)}
-                    placeholder="Acme Pharmaceuticals"
-                    className="h-[44px] rounded-[10px] border-stone-200 bg-white px-3.5 text-[14px] placeholder:text-stone-300 focus-visible:ring-1 focus-visible:ring-stone-300"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="lic-msg" className="text-[12px] font-medium text-stone-600">
-                    Message <span className="text-stone-300 font-normal">(optional)</span>
-                  </Label>
-                  <textarea
-                    id="lic-msg"
-                    value={licMessage}
-                    onChange={e => setLicMessage(e.target.value)}
-                    placeholder="Tell us about your use case..."
-                    rows={3}
-                    className="flex w-full rounded-[10px] border border-stone-200 bg-white px-3.5 py-3 text-[14px] placeholder:text-stone-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-stone-300 focus-visible:border-stone-300 transition-shadow resize-none"
-                  />
-                </div>
-                <Button
-                  className="h-[44px] w-full rounded-[10px] bg-stone-900 text-[13px] font-semibold text-white hover:bg-stone-800 transition-all mt-1"
-                  onClick={handleLicenseRequest}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Spinner size="sm" className="mr-2" />
-                  ) : (
-                    <Send className="w-4 h-4 mr-2" />
-                  )}
-                  Submit request
-                </Button>
-              </div>
-            )}
-
-            {/* ══════════════════════════════════════════════════════════════
-               VIEW: LICENSE SENT
-               ══════════════════════════════════════════════════════════════ */}
-            {view === 'license-sent' && (
-              <div className="flex flex-col items-center space-y-5 pt-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50">
-                  <CheckCircle2 className="h-6 w-6 text-emerald-500" />
-                </div>
-                <p className="text-center text-[13px] text-stone-500 max-w-[280px]">
-                  We'll review your request and reach out to{' '}
-                  <span className="font-medium text-stone-700">{licEmail}</span> shortly.
-                </p>
-                <Button
-                  variant="outline"
-                  className="h-[44px] w-full rounded-[10px] border-stone-200 text-[13px] font-medium"
-                  onClick={() => setView('sign-in')}
-                >
-                  Return to sign in
                 </Button>
               </div>
             )}
