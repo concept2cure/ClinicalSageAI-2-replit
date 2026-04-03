@@ -148,6 +148,14 @@ export function evaluateGovernedDocument(
   const readinessInput: ReadinessEvaluationInput = {
     context,
     ...input.documentState,
+    rimContext: input.rimContext ? {
+      totalSignals: input.rimContext.signalSummary.totalSignals,
+      averageScore: input.rimContext.signalSummary.averageScore,
+      overallTrend: input.rimContext.signalSummary.overallTrend,
+      recentBlockerHistory: input.rimContext.recentBlockerHistory,
+      hasHighRiskSignals: input.rimContext.hasHighRiskSignals,
+      hasCriticalPatterns: input.rimContext.hasCriticalPatterns,
+    } : undefined,
   };
   const readiness: LifecycleReadinessState = evaluateReadiness(readinessInput);
 
@@ -274,6 +282,50 @@ export function evaluateGovernedDocument(
     decisionReference,
     contextResolution,
   };
+}
+
+/**
+ * Evaluate a governed document action AND emit the decision to the RIM learning loop.
+ *
+ * This is the canonical public entry point. All production callers should use this
+ * instead of calling evaluateGovernedDocument() + interceptFabricDecision() separately.
+ * Evaluation and interception are coupled — you cannot evaluate without learning.
+ */
+export function evaluateAndInterceptGovernedDocument(
+  input: GovernedEvaluationInput
+): GovernedEvaluationResult {
+  const result = evaluateGovernedDocument(input);
+
+  // Emit to RIM learning loop (non-blocking, fire-and-forget)
+  try {
+    // Dynamic import to avoid circular dependency
+    const bridgeModule = require('../../../server/services/intelligence/fabric-signal-bridge');
+    if (bridgeModule?.interceptFabricDecision) {
+      bridgeModule.interceptFabricDecision({
+        organizationId: Number(result.evaluation.context.organizationId) || 0,
+        projectId: Number(result.evaluation.context.projectId) || 0,
+        decisionId: result.decisionReference.decisionId,
+        intent: result.evaluation.context.intendedAction,
+        outcome: result.evaluation.decision.outcome,
+        readinessLevel: result.evaluation.readiness.level,
+        readinessScore: result.evaluation.readiness.score,
+        blockerCount: result.evaluation.decision.blockerCount,
+        warningCount: result.evaluation.decision.warningCount,
+        blockerCategories: result.evaluation.readiness.blockers.map(
+          (b: { category: string }) => b.category
+        ),
+        exportGateOutcome: result.evaluation.exportGate.outcome,
+        publishGateOutcome: result.evaluation.publishGate.outcome,
+        consequenceTypes: result.evaluation.consequences.map(
+          (c: { consequenceType: string }) => c.consequenceType
+        ),
+      });
+    }
+  } catch {
+    // RIM bridge unavailable — evaluation still valid
+  }
+
+  return result;
 }
 
 /**

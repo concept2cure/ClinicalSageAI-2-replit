@@ -302,7 +302,24 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
   ]);
 
   const effectiveMessage = enrichment.rewrittenMessage || message;
-  const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + memoryResult.memoryBlock + enrichment.block;
+
+  // === Governed context enrichment (fabric state) ===
+  let governedContextBlock = '';
+  try {
+    const { buildGovernedContextEnvelope } = await import('./governed-context-envelope.js');
+    const governedEnvelope = await buildGovernedContextEnvelope({
+      organizationId: String(numericOrgId ?? ''),
+      projectId: String(projectId ?? ''),
+      actorId: String(userId),
+    });
+    if (governedEnvelope.hasMeaningfulContext) {
+      governedContextBlock = '\n\n' + governedEnvelope.promptBlock;
+    }
+  } catch {
+    // Governed context unavailable — continue without
+  }
+
+  const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + governedContextBlock + memoryResult.memoryBlock + enrichment.block;
 
   // Build messages array
   const messages: GatewayMessage[] = [{ role: 'system', content: fullSystemPrompt }];

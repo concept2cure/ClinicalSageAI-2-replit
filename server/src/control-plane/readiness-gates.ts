@@ -69,6 +69,24 @@ export interface ReadinessEvaluationInput {
   completenessScore?: number;
   /** Names of required fields that are not yet populated. */
   missingRequiredFields?: string[];
+
+  // === RIM context (enrichment from signal bridge) ===
+
+  /** Compact RIM signal context injected by callers with RIM bridge access. */
+  rimContext?: {
+    /** Total signal count for this project. */
+    totalSignals: number;
+    /** Average signal quality score (0-100). */
+    averageScore: number;
+    /** Overall intelligence trend. */
+    overallTrend: string;
+    /** Number of recent fabric decisions with outcome=block. */
+    recentBlockerHistory: number;
+    /** Whether high-risk signals exist for this project. */
+    hasHighRiskSignals: boolean;
+    /** Whether critical regulatory patterns were detected. */
+    hasCriticalPatterns: boolean;
+  };
 }
 
 /**
@@ -257,6 +275,47 @@ export function evaluateReadiness(input: ReadinessEvaluationInput): LifecycleRea
       `${nonCriticalContradictions} non-critical contradiction(s) remain unresolved`,
       'readiness-gates'
     ));
+  }
+
+  // === RIM context influence (when available) ===
+  if (input.rimContext) {
+    const rim = input.rimContext;
+
+    // Effect 1: Prior blocker history increases review sensitivity
+    // If this project has been repeatedly blocked, add a warning and reduce score
+    if (rim.recentBlockerHistory >= 3) {
+      warnings.push(createWarning(
+        'repeated_blocker_history',
+        `RIM: ${rim.recentBlockerHistory} recent blocked decisions — review carefully before promotion`,
+        'readiness-gates/rim'
+      ));
+      score = Math.max(0, score - 10);
+    }
+
+    // Effect 2: Critical patterns detected → add blocker for export/publish
+    // If RIM has flagged critical regulatory patterns, block export readiness
+    if (rim.hasCriticalPatterns && (level === 'export_ready' || level === 'publish_ready')) {
+      blockers.push(createBlocker(
+        'export_gate_failed',
+        'major',
+        'RIM: Critical regulatory patterns detected — human review required before export',
+        'readiness-gates/rim',
+        'Review and resolve flagged regulatory patterns before exporting'
+      ));
+      level = 'approval_ready'; // downgrade from export/publish ready
+      score = Math.max(0, score - 15);
+    }
+
+    // Effect 3: Declining trend + high risk signals → add warning and reduce confidence
+    if (rim.overallTrend === 'declining' && rim.hasHighRiskSignals) {
+      warnings.push(createWarning(
+        'declining_quality_trend',
+        `RIM: Quality trend is declining with high-risk signals (avg score: ${rim.averageScore}/100)`,
+        'readiness-gates/rim'
+      ));
+      confidence = confidence === 'high' ? 'moderate' : confidence;
+      score = Math.max(0, score - 5);
+    }
   }
 
   // === Determine final state ===

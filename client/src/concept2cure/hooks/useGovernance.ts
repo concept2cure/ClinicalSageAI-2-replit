@@ -1,19 +1,24 @@
 /**
  * useGovernance — Hooks for governance escalation visibility.
  *
- * Wires the backend authoring-actions governance endpoints:
- *   GET /api/authoring-actions/promotion-blockers/:projectId
- *   GET /api/authoring-actions/decisions/:projectId
+ * Delegates to fabric state hooks internally. The old direct API calls
+ * to /api/authoring-actions/... have been replaced by fabric selectors
+ * from useFabricState, making the control-plane governed decisions
+ * endpoint the single source of truth.
  *
  * @module concept2cure/hooks/useGovernance
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { queryKeys } from './queryKeys';
+import {
+  useFabricDecisions,
+  useFabricSummary,
+  selectPromotionBlockersFromFabric,
+  selectGovernanceDecisionBadge,
+} from './useFabricState';
 
-// ── Types ───────────────────────────────────────────────────────────────────
+// ── Types (kept for backward compatibility) ────────────────────────────────
 
+/** @deprecated Use FabricDecisionEntry from useFabricState instead */
 export interface PromotionBlocker {
   type: string;
   severity: 'critical' | 'major' | 'minor';
@@ -21,6 +26,7 @@ export interface PromotionBlocker {
   source: string;
 }
 
+/** @deprecated Use fabric decisions response shape instead */
 export interface PromotionBlockersResponse {
   projectId: string;
   artifactId: string | null;
@@ -30,6 +36,7 @@ export interface PromotionBlockersResponse {
   blockers: PromotionBlocker[];
 }
 
+/** @deprecated Use FabricDecisionEntry from useFabricState instead */
 export interface GovernanceDecision {
   id: string;
   kind: string;
@@ -46,52 +53,55 @@ export interface GovernanceDecision {
   hasReceipt: boolean;
 }
 
+/** @deprecated Use fabric decisions response shape instead */
 export interface GovernanceDecisionsResponse {
   projectId: string;
   count: number;
   decisions: GovernanceDecision[];
 }
 
-// ── Hooks ───────────────────────────────────────────────────────────────────
+// ── Hooks (now delegate to fabric state) ───────────────────────────────────
 
 /**
  * Fetches promotion blockers for a project.
- * Polls every 60s to stay fresh without being noisy.
+ * Delegates to useFabricDecisions + selectPromotionBlockersFromFabric.
  */
 export function usePromotionBlockers(projectId: string | number | undefined) {
-  return useQuery<PromotionBlockersResponse>({
-    queryKey: queryKeys.governance.promotionBlockers(projectId ?? ''),
-    queryFn: async () => {
-      const res = await apiRequest(
-        'GET',
-        `/api/authoring-actions/promotion-blockers/${projectId}`
-      );
-      return res.json();
-    },
-    enabled: !!projectId,
-    staleTime: 30_000,
-    refetchInterval: 60_000,
-  });
+  const fabricQuery = useFabricDecisions(projectId != null ? String(projectId) : undefined);
+
+  return {
+    ...fabricQuery,
+    data: fabricQuery.data
+      ? selectPromotionBlockersFromFabric(fabricQuery.data.entries)
+      : undefined,
+  };
 }
 
 /**
  * Fetches governance decision history for a project.
- * Light polling — decisions don't change frequently.
+ * Delegates to useFabricDecisions with limit 20.
  */
 export function useGovernanceDecisions(projectId: string | number | undefined) {
-  return useQuery<GovernanceDecisionsResponse>({
-    queryKey: queryKeys.governance.decisions(projectId ?? ''),
-    queryFn: async () => {
-      const res = await apiRequest(
-        'GET',
-        `/api/authoring-actions/decisions/${projectId}`
-      );
-      return res.json();
-    },
-    enabled: !!projectId,
-    staleTime: 30_000,
-    refetchInterval: 120_000,
-  });
+  const fabricQuery = useFabricDecisions(projectId != null ? String(projectId) : undefined, { limit: 20 });
+
+  return {
+    ...fabricQuery,
+    data: fabricQuery.data
+      ? {
+          count: fabricQuery.data.count,
+          decisions: fabricQuery.data.entries.map(e => ({
+            id: e.decisionId,
+            kind: e.intent,
+            status: e.outcome,
+            summary: `${e.intent}: ${e.outcome} (readiness: ${e.readinessLevel})`,
+            authority: e.outcome === 'block' ? 'blocked' : 'allowed',
+            createdAt: e.timestamp,
+            sourceSignalCount: e.blockerCount + e.warningCount,
+            hasReceipt: true,
+          })),
+        }
+      : undefined,
+  };
 }
 
 // === Canonical fabric state hooks (Build Order #2) ===
@@ -100,6 +110,6 @@ export {
   useFabricSummary,
   selectPromotionBlockersFromFabric,
   selectGovernanceDecisionBadge,
-} from './useFabricState';
+};
 
 export type { FabricDecisionEntry, FabricSummary } from './useFabricState';

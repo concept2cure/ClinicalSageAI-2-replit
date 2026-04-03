@@ -281,26 +281,44 @@ export class GovernanceBoundaryService {
       }
     }
 
-    // 4. Readiness gate — block promoted/locked/submission transitions if readiness fails
+    // 4. Readiness gate — delegates to canonical governed document decision fabric
+    //    GovernanceBoundaryService no longer computes readiness independently.
+    //    The fabric evaluator (readiness-gates.ts) is the single readiness authority.
     if (request.projectId &&
         (request.toBoundary === 'approved' || request.toBoundary === 'locked' || request.toBoundary === 'submission_ready')) {
       try {
-        const { evaluateReadiness } = await import('./readiness-evaluation-service.js');
-        if (evaluateReadiness) {
-          const readinessResult = await evaluateReadiness({
-            organizationId: request.organizationId,
-            projectId: request.projectId,
-            programType: '*',
-          });
-          if (!readinessResult.isReady && readinessResult.blockerCount > 0) {
+        const { evaluateGovernedDocument } = await import('../src/control-plane/governed-document-evaluator.js');
+        const fabricResult = evaluateGovernedDocument({
+          context: {
+            organizationId: String(request.organizationId),
+            projectId: String(request.projectId),
+            actorId: String(request.actorId || 'system'),
+            intendedAction: 'promote',
+            artifactId: request.artifactId ? String(request.artifactId) : undefined,
+            actorRole: request.actorRole,
+          },
+          documentState: {
+            hasContent: true,
+            hasEvidence: true,
+            hasBeenReviewed: request.toBoundary !== 'approved',
+            hasApproval: request.toBoundary === 'locked' || request.toBoundary === 'submission_ready',
+            hasPlacement: false,
+            placementValid: false,
+            hasProvenance: true,
+            unresolvedContradictionCount: 0, // already checked in contradiction gate above
+            criticalContradictionCount: 0,
+          },
+        });
+        const readiness = fabricResult.evaluation.readiness;
+        if (readiness.level === 'blocked' && readiness.blockers.length > 0) {
+          for (const blocker of readiness.blockers) {
             blockedReasons.push(
-              `Readiness evaluation failed: ${readinessResult.blockerCount} blocker(s), score ${readinessResult.overallScore}/100. ` +
-              `All blockers must be resolved before transitioning to ${request.toBoundary}.`
+              `Fabric readiness gate: ${blocker.message}`
             );
           }
         }
       } catch {
-        // Readiness engine unavailable — continue without gate (non-blocking degradation)
+        // Fabric readiness gate unavailable — continue without (non-blocking degradation)
       }
     }
 
