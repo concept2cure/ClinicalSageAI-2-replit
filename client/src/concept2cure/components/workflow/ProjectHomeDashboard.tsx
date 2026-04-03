@@ -29,9 +29,6 @@ import {
   Upload,
   MessageSquare,
   ChevronRight,
-  Plus,
-  CheckCircle2,
-  Circle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -179,28 +176,6 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
   // Intelligence — fetched quietly for prompt context, NOT for display
   const { data: intelligence } = useIntelligenceDashboard(project.id);
 
-  // Document toolkit — what documents this project type needs
-  const { data: toolkitData } = useQuery<{
-    data: {
-      toolkit: {
-        submissionType: string;
-        displayName: string;
-        documents: Array<{ docType: string; name: string; ctdSection: string; required: boolean; description: string }>;
-        focusAreas: string[];
-      } | null;
-      checklist: Array<{ docType: string; name: string; ctdSection: string; required: boolean; exists: boolean }>;
-      completionRate: number;
-    };
-  }>({
-    queryKey: ['concept2cure', 'document-toolkit', project.id],
-    queryFn: async () => {
-      const res = await apiRequest('GET', `/api/concept2cure/projects/${project.id}/document-toolkit`);
-      if (!res.ok) return { data: { toolkit: null, checklist: [], completionRate: 0 } };
-      return res.json();
-    },
-    staleTime: 60_000,
-  });
-
   const upperType = (project.type || '').toUpperCase();
   const isPharma = PHARMA_TYPES.includes(upperType);
   const isDevice = DEVICE_TYPES.includes(upperType);
@@ -334,76 +309,6 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
                 className="h-auto px-1 py-0.5 text-[11px] text-stone-500 hover:text-stone-700 flex-shrink-0"
               >
                 +{summary.docCount - 3} more
-                <ChevronRight className="w-3 h-3" />
-              </Button>
-            )}
-          </div>
-        )}
-
-        {/* ── Document toolkit: required documents for this submission type ── */}
-        {toolkitData?.data?.toolkit && toolkitData.data.checklist.length > 0 && (
-          <div className="mt-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-[12px] font-medium text-stone-500 uppercase tracking-wide">
-                {toolkitData.data.toolkit.displayName} Documents
-              </h3>
-              <span className="text-[11px] text-stone-400">
-                {toolkitData.data.completionRate}% complete
-              </span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-              {toolkitData.data.checklist
-                .filter(doc => doc.required)
-                .slice(0, 6)
-                .map(doc => (
-                  <Button
-                    key={doc.docType}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (doc.exists) {
-                        onNavigate('documents');
-                      } else {
-                        onSuggestedPrompt?.(
-                          `Draft a ${doc.name} for this ${toolkitData.data.toolkit!.displayName} project. Place it in CTD section ${doc.ctdSection}.`
-                        );
-                      }
-                    }}
-                    className={`flex items-center gap-2 px-2.5 py-2 h-auto text-left group ${
-                      doc.exists
-                        ? 'border-emerald-200/80 bg-emerald-50/30 hover:bg-emerald-50'
-                        : 'border-stone-200/80 hover:border-stone-300 hover:bg-stone-50'
-                    }`}
-                  >
-                    {doc.exists ? (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-                    ) : (
-                      <Circle className="w-3.5 h-3.5 text-stone-300 flex-shrink-0" />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <span className={`text-[12px] leading-snug block truncate ${
-                        doc.exists ? 'text-emerald-700' : 'text-stone-600 group-hover:text-stone-800'
-                      }`}>
-                        {doc.name}
-                      </span>
-                      <span className="text-[10px] text-stone-400">
-                        {doc.ctdSection}
-                      </span>
-                    </div>
-                    {!doc.exists && (
-                      <Plus className="w-3 h-3 text-stone-400 group-hover:text-stone-600 flex-shrink-0" />
-                    )}
-                  </Button>
-                ))}
-            </div>
-            {toolkitData.data.checklist.filter(d => d.required).length > 6 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onNavigate('documents')}
-                className="mt-1 h-auto px-1 py-0.5 text-[11px] text-stone-500 hover:text-stone-700"
-              >
-                View all {toolkitData.data.checklist.filter(d => d.required).length} required documents
                 <ChevronRight className="w-3 h-3" />
               </Button>
             )}
