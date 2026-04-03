@@ -31,6 +31,8 @@ import {
   Footer,
   PageNumber,
   NumberFormat,
+  PageBreak,
+  LevelFormat,
   convertInchesToTwip,
 } from 'docx';
 
@@ -88,6 +90,10 @@ export interface DocxSection {
   sectionCode?: string;
   /** Body paragraphs — each string becomes a paragraph */
   paragraphs: string[];
+  /** Optional bulleted list items */
+  bulletItems?: string[];
+  /** Optional numbered list items */
+  numberedItems?: string[];
   /** Optional tables within this section */
   tables?: DocxTable[];
   /** Page break before this section */
@@ -376,6 +382,11 @@ export async function generateRegulatory(input: DocxInput): Promise<DocxOutput> 
   const contentChildren: (Paragraph | Table)[] = [];
 
   for (const section of sections) {
+    // Page break before section (if requested)
+    if (section.pageBreak) {
+      contentChildren.push(new Paragraph({ children: [new PageBreak()] }));
+    }
+
     // Section heading
     const headingLevel = section.sectionCode
       ? section.sectionCode.split('.').length <= 2
@@ -389,6 +400,46 @@ export async function generateRegulatory(input: DocxInput): Promise<DocxOutput> 
     // Body paragraphs
     for (const text of section.paragraphs) {
       contentChildren.push(bodyParagraph(text));
+    }
+
+    // Bulleted list items
+    if (section.bulletItems) {
+      for (const item of section.bulletItems) {
+        contentChildren.push(
+          new Paragraph({
+            bullet: { level: 0 },
+            children: [
+              new TextRun({
+                text: item,
+                font: FONTS.body,
+                size: FONT_SIZES.body,
+                color: COLORS.textDark,
+              }),
+            ],
+            spacing: { after: 60 },
+          })
+        );
+      }
+    }
+
+    // Numbered list items
+    if (section.numberedItems) {
+      for (const item of section.numberedItems) {
+        contentChildren.push(
+          new Paragraph({
+            numbering: { reference: 'regulatory-numbered-list', level: 0 },
+            children: [
+              new TextRun({
+                text: item,
+                font: FONTS.body,
+                size: FONT_SIZES.body,
+                color: COLORS.textDark,
+              }),
+            ],
+            spacing: { after: 60 },
+          })
+        );
+      }
     }
 
     // Tables
@@ -474,6 +525,21 @@ export async function generateRegulatory(input: DocxInput): Promise<DocxOutput> 
 
   // Build document
   const doc = new Document({
+    numbering: {
+      config: [
+        {
+          reference: 'regulatory-numbered-list',
+          levels: [
+            {
+              level: 0,
+              format: LevelFormat.DECIMAL,
+              text: '%1.',
+              alignment: AlignmentType.LEFT,
+            },
+          ],
+        },
+      ],
+    },
     sections: [
       // Cover page
       {
