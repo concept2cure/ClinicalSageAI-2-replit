@@ -3354,6 +3354,114 @@ router.get('/projects/:projectId/governance/artifacts/:artifactId/trace', async 
 });
 
 /**
+ * POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition
+ * Transition a governed decision through its lifecycle.
+ * Body: { action: 'review'|'approve'|'reject'|'escalate'|'defer'|'execute'|'supersede', reason?, escalatedTo?, executedArtifactId?, executedArtifactVersion?, workflowRunId?, supersededByDecisionId? }
+ */
+router.post('/projects/:projectId/governance/decisions/:decisionId/transition', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+    const { decisionId } = req.params;
+    const projectId = req.params.projectId;
+    const orgId = String(organizationId);
+    const performedBy = String(userId);
+    const { action, reason, escalatedTo, executedArtifactId, executedArtifactVersion, workflowRunId, supersededByDecisionId } = req.body;
+
+    if (!action || typeof action !== 'string') {
+      return sendError(res, 400, 'Missing required field: action');
+    }
+
+    const validActions = ['review', 'approve', 'reject', 'escalate', 'defer', 'execute', 'supersede'];
+    if (!validActions.includes(action)) {
+      return sendError(res, 400, `Invalid action: ${action}. Must be one of: ${validActions.join(', ')}`);
+    }
+
+    // Validate required fields per action
+    if (action === 'reject' && !reason) {
+      return sendError(res, 400, 'Reject action requires a reason');
+    }
+    if (action === 'escalate' && !escalatedTo) {
+      return sendError(res, 400, 'Escalate action requires escalatedTo');
+    }
+    if (action === 'supersede' && !supersededByDecisionId) {
+      return sendError(res, 400, 'Supersede action requires supersededByDecisionId');
+    }
+
+    const {
+      submitForReview,
+      approveDecision,
+      rejectDecision,
+      escalateDecision,
+      deferDecision,
+      executeDecision,
+      supersedeDecision,
+    } = await import('../services/governed-decision-lifecycle-service.js');
+
+    let result;
+    switch (action) {
+      case 'review':
+        result = await submitForReview(decisionId, orgId, projectId, performedBy, reason);
+        break;
+      case 'approve':
+        result = await approveDecision(decisionId, orgId, projectId, performedBy, reason);
+        break;
+      case 'reject':
+        result = await rejectDecision(decisionId, orgId, projectId, performedBy, reason);
+        break;
+      case 'escalate':
+        result = await escalateDecision(decisionId, orgId, projectId, performedBy, escalatedTo, reason);
+        break;
+      case 'defer':
+        result = await deferDecision(decisionId, orgId, projectId, performedBy, reason);
+        break;
+      case 'execute':
+        result = await executeDecision(decisionId, orgId, projectId, performedBy, {
+          artifactId: executedArtifactId,
+          artifactVersion: executedArtifactVersion,
+          workflowRunId,
+        });
+        break;
+      case 'supersede':
+        result = await supersedeDecision(decisionId, orgId, projectId, performedBy, supersededByDecisionId, reason);
+        break;
+    }
+
+    if (result && !result.success) {
+      return sendError(res, 400, result.error || 'Transition failed');
+    }
+
+    return sendSuccess(res, result);
+  } catch (error: any) {
+    logger.error('Failed to transition governed decision', { error: error.message });
+    return sendError(res, 500, 'Failed to transition governed decision');
+  }
+});
+
+/**
+ * GET /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/history
+ * Get lifecycle transition history for a decision.
+ */
+router.get('/projects/:projectId/governance/decisions/:decisionId/history', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+    const { getDecisionLifecycleHistory } = await import('../services/governed-decision-lifecycle-service.js');
+    const history = await getDecisionLifecycleHistory(req.params.decisionId, String(organizationId));
+
+    return sendSuccess(res, { history, count: history.length });
+  } catch (error: any) {
+    logger.error('Failed to load decision lifecycle history', { error: error.message });
+    return sendError(res, 500, 'Failed to load decision lifecycle history');
+  }
+});
+
+/**
  * PATCH /api/concept2cure/projects/:projectId/knowledge
  * Update knowledge base metadata (custom instructions, context).
  */
