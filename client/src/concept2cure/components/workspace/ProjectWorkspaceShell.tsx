@@ -27,6 +27,7 @@ import {
   type PlacementOperation,
 } from './PlacementDialog';
 import { GovernedDocumentPanel } from './GovernedDocumentPanel';
+import { GovernedDecisionReviewPanel } from './GovernedDecisionReviewPanel';
 import {
   getSectionLabel,
   getSectionRequirements,
@@ -275,7 +276,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       auditRef?: string;
     }>;
   }>({ proposals: [] });
-  const { computeJobs, setComputeJobs, showGovernedPanel, setShowGovernedPanel } =
+  const { computeJobs, setComputeJobs, showGovernedPanel, setShowGovernedPanel, reviewQueueVisible, setReviewQueueVisible } =
     useDocumentConsequenceState();
 
   // Editor ref for outline scroll
@@ -2103,6 +2104,15 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 applyWorkflowTransition('edit_document', { hasDoc: true });
                 setDocumentTab('versions');
               }}
+            />
+          )}
+
+          {/* ── Governed decision review queue panel ─────────────────────────── */}
+          {reviewQueueVisible && projectId && (
+            <GovernedDecisionReviewPanel
+              projectId={String(projectId)}
+              className="w-[320px] shrink-0 h-full"
+              onClose={() => setReviewQueueVisible(false)}
             />
           )}
         </div>

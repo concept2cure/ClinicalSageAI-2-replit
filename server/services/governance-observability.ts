@@ -134,12 +134,40 @@ class GovernanceMetricsService {
     try {
       const { pool } = await import('../db.js');
       const result = await pool.query(
-        `SELECT 1 FROM governed_decision_transitions LIMIT 1`
+        `SELECT EXISTS (
+          SELECT FROM information_schema.tables
+          WHERE table_name = 'governed_decision_transitions'
+        ) AS table_exists`
       );
-      return result.rows.length > 0;
+      return result.rows[0]?.table_exists === true;
     } catch {
       return false;
     }
+  }
+
+  async checkDecisionRecordTableHealth(): Promise<boolean> {
+    try {
+      const { pool } = await import('../db.js');
+      const result = await pool.query(
+        `SELECT EXISTS (
+          SELECT FROM information_schema.tables
+          WHERE table_name = 'decision_records'
+        ) AS table_exists`
+      );
+      return result.rows[0]?.table_exists === true;
+    } catch {
+      return false;
+    }
+  }
+
+  recordCorrespondenceGate(): void {
+    this.counters.transitionsExecuted++;
+    this.counters.transitionsByAction['correspondence_lifecycle_gate'] =
+      (this.counters.transitionsByAction['correspondence_lifecycle_gate'] || 0) + 1;
+  }
+
+  recordCorrespondenceGateFailure(error: unknown): void {
+    this.addFailure('transition', 'correspondence_lifecycle_gate', error);
   }
 
   // ── Getters ──
@@ -156,13 +184,17 @@ class GovernanceMetricsService {
     status: 'healthy' | 'degraded' | 'unhealthy';
     dbReachable: boolean;
     transitionTableReachable: boolean;
+    decisionRecordTableReachable: boolean;
     counters: GovernanceCounters;
     recentFailures: FailureEntry[];
     failureRate: number;
     uptimeSeconds: number;
   }> {
-    const dbOk = await this.checkDatabaseHealth();
-    const tableOk = await this.checkTransitionTableHealth();
+    const [dbOk, tableOk, decisionTableOk] = await Promise.all([
+      this.checkDatabaseHealth(),
+      this.checkTransitionTableHealth(),
+      this.checkDecisionRecordTableHealth(),
+    ]);
 
     const totalOps = this.counters.persistenceWrites + this.counters.queryExecuted;
     const totalFailures = this.counters.persistenceFailures + this.counters.queryFailures;
@@ -172,13 +204,14 @@ class GovernanceMetricsService {
 
     let status: 'healthy' | 'degraded' | 'unhealthy';
     if (!dbOk) status = 'unhealthy';
-    else if (failureRate > 0.1 || !tableOk) status = 'degraded';
+    else if (failureRate > 0.1 || !tableOk || !decisionTableOk) status = 'degraded';
     else status = 'healthy';
 
     return {
       status,
       dbReachable: dbOk,
       transitionTableReachable: tableOk,
+      decisionRecordTableReachable: decisionTableOk,
       counters: this.getCounters(),
       recentFailures: this.getRecentFailures(),
       failureRate: Math.round(failureRate * 1000) / 1000,

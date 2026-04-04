@@ -57,10 +57,7 @@ import {
   generateConsequences,
 } from '../server/src/control-plane/document-consequence-engine';
 
-// Decision service
-import {
-  clearGovernedDecisionLog,
-} from '../server/services/governed-decision-repository';
+// clearGovernedDecisionLog removed — was a no-op shim (DB is authoritative)
 
 // Main evaluator
 import {
@@ -595,7 +592,7 @@ describe('Governed Decision Recording', () => {
 
 describe('Governed Document Evaluator — Full Integration', () => {
   beforeEach(() => {
-    clearGovernedDecisionLog();
+    /* no-op: DB is authoritative */;
   });
 
   it('produces a complete evaluation for a basic update', () => {
