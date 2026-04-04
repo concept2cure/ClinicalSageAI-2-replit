@@ -71,7 +71,7 @@ export {
   type MeetingQuestion,
   type ActionItem,
   type FDAMeeting,
-} from './regulatory/FDAMeetingWorkspace';
+} from '../regulatory/FDAMeetingWorkspace';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MEDICAL WRITING COMPONENTS
@@ -86,7 +86,7 @@ export {
   type DocumentSection,
   type DocumentVersion,
   type RegulatoryDocument,
-} from './writing/ClinicalDocAuthoringWorkspace';
+} from '../writing/ClinicalDocAuthoringWorkspace';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MEDTECH / DEVICE COMPONENTS - "THE PATHFINDER"
