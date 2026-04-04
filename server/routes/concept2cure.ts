@@ -3445,8 +3445,17 @@ router.get('/projects/:projectId/governance/review-queue', async (req, res) => {
 router.get('/governance/health', async (_req, res) => {
   try {
     const { governanceMetrics } = await import('../services/governance-observability.js');
-    const health = await governanceMetrics.getHealth();
-    return sendSuccess(res, health);
+    const { getRevocationHealth } = await import('../services/token-revocation.js');
+
+    const [governanceHealth, revocationHealth] = await Promise.all([
+      governanceMetrics.getHealth(),
+      getRevocationHealth(),
+    ]);
+
+    return sendSuccess(res, {
+      governance: governanceHealth,
+      tokenRevocation: revocationHealth,
+    });
   } catch (error: any) {
     logger.error('Failed to check governance health', { error: error.message });
     return sendError(res, 500, 'Failed to check governance health');

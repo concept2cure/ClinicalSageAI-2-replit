@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from 'react';
-// import { ReactFlow, Background, Controls, MiniMap, addEdge, useEdgesState, useNodesState } from "@xyflow/react";
-// import "@xyflow/react/dist/style.css";
+// @xyflow/react removed (Build Order #11) — dependency was dead/unused
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';

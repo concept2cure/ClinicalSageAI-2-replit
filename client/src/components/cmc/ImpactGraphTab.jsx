@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-// import { ReactFlow, Background, Controls, MiniMap } from "@xyflow/react";
-// import "@xyflow/react/dist/style.css";
+// @xyflow/react removed (Build Order #11) — dependency was dead/unused
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { GitBranch, RefreshCw } from 'lucide-react';
