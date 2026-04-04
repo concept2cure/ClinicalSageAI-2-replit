@@ -26,12 +26,12 @@ Duplicate authorities are classified as: preserve | wrap | deprecate | delete.
 
 | Concern | Canonical Authority | File | Duplicates | Decision |
 |---------|-------------------|------|------------|----------|
-| Governance decision truth | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| Workflow preflight truth | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| Review queue/history | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| Promotion/export/publish | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| Nav gating truth | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| Readiness scoring | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
+| Governance decision truth | `governed-decision-repository.ts` | `server/services/` | None (consolidated v2.0) | **Preserve** |
+| Workflow preflight truth | `readiness-gates.ts` | `server/src/control-plane/` | scoring-engine (supplementary), reg/preflight (specific) | **Preserve** gate, **wrap** score |
+| Review queue/history | `ApprovalOrchestrator.ts` | `server/services/workflow/` | DecisionLineageService (broader scope) | **Preserve**, extract thread mgmt |
+| Promotion/export/publish | `export-publish-gates.ts` | `server/src/control-plane/` | None | **Preserve** |
+| Nav gating truth | `approvedRoutePolicy.ts` | `client/router/` | None | **Preserve** |
+| Readiness scoring | `readiness-scoring-engine.ts` | `server/services/intelligence/` | readiness-gates (categorical complement) | **Preserve both** |
 
 ### Artifact Authorities
 
