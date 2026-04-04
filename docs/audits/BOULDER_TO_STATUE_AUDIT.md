@@ -21,14 +21,18 @@
 - Canonical paths declared: drizzle+pg (DB), reactflow (graph), vitest (test), @aws-sdk/* (storage)
 
 ### Phase 3: Monolith Surgery
-- **`ProjectWorkspaceShell.tsx`**: 3 modules extracted
-  - `workspaceNavigationOrchestrator.ts` (~280 LOC) — navigation, workflow transitions, guided sequence
-  - `workspaceArtifactManager.ts` (~340 LOC) — artifact loading, creation (5 paths), placement, move ops
-  - `workspacePhase4Orchestrator.ts` (~250 LOC) — phase4 panels, consequence rows, governance normalization
-  - Shell reduced from owning 13 responsibilities to composition + layout + surface assembly
-- **`server/index.ts`**: Device-project CRUD extracted
-  - `server/routes/device-projects.ts` (~260 LOC) — 4 CRUD endpoints moved to dedicated router
-  - index.ts reduced by ~280 lines of inline domain logic
+- **`ProjectWorkspaceShell.tsx`**: 3 modules extracted AND wired — shell materially shrunk
+  - `workspaceNavigationOrchestrator.ts` (~355 LOC) — navigation, workflow transitions, guided sequence
+  - `workspaceArtifactManager.ts` (~545 LOC) — artifact loading, creation (5 paths), placement, move ops, toasts, escalation
+  - `workspacePhase4Orchestrator.ts` (~270 LOC) — phase4 panels, consequence rows, governance normalization
+  - Shell reduced from 2,163 → 1,446 LOC (**-717 lines, -33%**)
+  - Shell reduced from owning 13 responsibilities to ~5 (composition, layout, surface assembly, callback routing, state wiring)
+  - All extracted hooks imported and called — inline code deleted, stale imports cleaned
+- **`server/index.ts`**: 3 route families extracted — index materially shrunk
+  - `server/routes/device-projects.ts` (~283 LOC) — 4 CRUD endpoints
+  - `server/routes/cro.ts` (~340 LOC) — 14 CRO endpoints (dashboard, clients, studies, submissions, milestones)
+  - `server/routes/csr-analytics.ts` (~155 LOC) — 2 CSR analytics endpoints (all, stats)
+  - index.ts reduced from 7,256 → 6,478 LOC (**-778 lines, -11%**)
 
 ### Phase 4: Dirty Code Excavation
 - `@xyflow/react` removed from package.json (zero consumers)
@@ -57,12 +61,15 @@
 | `client/src/concept2cure/components/workspace/workspaceNavigationOrchestrator.ts` | Extracted navigation orchestration |
 | `client/src/concept2cure/components/workspace/workspaceArtifactManager.ts` | Extracted artifact management |
 | `client/src/concept2cure/components/workspace/workspacePhase4Orchestrator.ts` | Extracted phase4/governance orchestration |
-| `server/routes/device-projects.ts` | Extracted device-project CRUD router |
+| `server/routes/device-projects.ts` | Extracted device-project CRUD router (4 endpoints) |
+| `server/routes/cro.ts` | Extracted CRO management router (14 endpoints) |
+| `server/routes/csr-analytics.ts` | Extracted CSR analytics router (2 endpoints) |
 
 ## Files Modified
 | File | Change |
 |---|---|
-| `server/index.ts` | Replaced 280 lines of inline device-project CRUD with 3-line router mount |
+| `ProjectWorkspaceShell.tsx` | Replaced ~717 lines of inline logic with calls to 3 extracted hook modules; cleaned stale imports |
+| `server/index.ts` | Replaced ~778 lines of inline routes with 3 router mounts (device-projects, CRO, CSR analytics) |
 | `package.json` | Removed unused `@xyflow/react` dependency |
 
 ## Files Moved to Archive (28)

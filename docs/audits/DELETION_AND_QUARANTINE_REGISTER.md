@@ -46,3 +46,5 @@
 | 28 | `docs/COMMENTARY.md` | Stale doc | Historical commentary. | None | Move to `docs/archive/` | Move back |
 | 29 | `docs/UI_ALIGNMENT_SUMMARY_2026-01-29.md` | Stale doc | January UI alignment — superseded. | None | Move to `docs/archive/` | Move back |
 | 30 | `docs/UX_MASTER_ARCHITECT_REVIEW.md` | Stale doc | UX master review — completed. | None | Move to `docs/archive/` | Move back |
+| 31 | CRO routes inline in `server/index.ts` (14 endpoints, ~385 LOC) | Monolith extraction | 14 CRO endpoints (dashboard, clients, studies, submissions, milestones) embedded in bootstrap file. Extracted to `server/routes/cro.ts`. | Low — route paths unchanged | Extract to dedicated router | Revert commit; inline routes still function if re-added |
+| 32 | CSR analytics routes inline in `server/index.ts` (2 endpoints, ~130 LOC) | Monolith extraction | CSR real-data analytics (all + stats) with raw SQL against csr_reports table. Extracted to `server/routes/csr-analytics.ts`. | Low — route paths unchanged | Extract to dedicated router | Revert commit; inline routes still function if re-added |

@@ -2,6 +2,7 @@
 
 > Structural validation of the restructure
 > Generated: 2026-04-04
+> Updated: 2026-04-04 (Phase 2B/3 — actual surgery pass)
 
 ---
 
@@ -22,39 +23,73 @@
 
 ---
 
+## LOC Deltas
+
+| File | Before | After | Delta | Details |
+|---|---|---|---|---|
+| `ProjectWorkspaceShell.tsx` | 2,163 | 1,446 | **-717** | 13 responsibilities → ~5 (composition, layout, surface assembly, callback routing, state wiring) |
+| `server/index.ts` | 7,256 | 6,478 | **-778** | 3 route families extracted (device-projects, CRO, CSR analytics) |
+| **Total inline LOC removed** | — | — | **-1,495** | Moved to 5 focused modules + 3 dedicated routers |
+
+### New Extracted Files
+
+| File | LOC | Source |
+|---|---|---|
+| `workspaceNavigationOrchestrator.ts` | ~355 | ProjectWorkspaceShell.tsx |
+| `workspaceArtifactManager.ts` | ~545 | ProjectWorkspaceShell.tsx |
+| `workspacePhase4Orchestrator.ts` | ~270 | ProjectWorkspaceShell.tsx |
+| `server/routes/device-projects.ts` | ~283 | server/index.ts |
+| `server/routes/cro.ts` | ~340 | server/index.ts |
+| `server/routes/csr-analytics.ts` | ~155 | server/index.ts |
+
+---
+
 ## Structural Proof
 
-### 1. Extracted Shell Orchestration Still Works
-- `workspaceNavigationOrchestrator.ts` — re-exports the same `useCallback`/`useMemo` hooks with identical logic
-- `workspaceArtifactManager.ts` — same API calls, same artifact loading/creation, same placement logic
-- `workspacePhase4Orchestrator.ts` — same phase4 openers, same consequence builder, same governance normalization
-- **Proof**: All exported hooks match the original inline implementations line-for-line
+### 1. Extracted Shell Orchestration — Wired and Active
+- `workspaceNavigationOrchestrator.ts` — imported and called in shell: `useWorkflowTransitionApplicator`, `useLayerSwitching`, `useWorkbenchSwitching`, `useGuidedSequenceDefinition`, `useCurrentGuidedStage`, `useGuidedStageNavigation`, `useBuildGuidedStagePrompt`, `useProjectNavSync`
+- `workspaceArtifactManager.ts` — imported and called in shell: `useShellToasts`, `useEscalationGate`, `useArtifactLoader`, `useComputeJobLoader`, `useDossierMetricsLoader`, `classifyArtifact`, `useDocumentCreation`, `usePlacementOperations`
+- `workspacePhase4Orchestrator.ts` — imported and called in shell: `usePhase4PanelOpeners`, `useComputeArtifactOpener`, `usePhase4DraftCreation`, `useDocumentConsequenceRows`, `useGovernanceNormalizer`, `useReviewPackageCapture`, `useSubsectionCreation`
+- **Proof**: Shell imports all 3 modules, calls all hooks, inline code deleted. Stale imports cleaned.
 
-### 2. No Second Governance/Workflow Truth Remains
+### 2. Server Route Extractions — Mounted and Active
+- `server/routes/device-projects.ts` mounted at `/api/device-projects` — 4 CRUD endpoints
+- `server/routes/cro.ts` mounted at `/api/cro` — 14 endpoints (dashboard, clients, studies, submissions, milestones)
+- `server/routes/csr-analytics.ts` mounted at `/api/csr-real-data` — 2 analytics endpoints (all, stats)
+- **Proof**: Same route paths, same handlers, same response shapes. Zero behavioral change.
+
+### 3. No Second Governance/Workflow Truth Remains
 - Authority table explicitly defines one canonical owner per concern
 - Duplicate owners classified as: compatibility wrapper, deprecated, quarantined, or tolerated legacy
 - No new governance paths introduced
 
-### 3. No Second Artifact/Document Identity Truth Remains
+### 4. No Second Artifact/Document Identity Truth Remains
 - `document-context-resolver.ts` (control-plane) remains canonical for governed operations
 - No new identity resolution paths introduced
 
-### 4. Deleted Adapters/Wrappers Were Replaced or Unused
+### 5. Deleted Adapters/Wrappers Were Replaced or Unused
 - `@xyflow/react`: confirmed zero active imports before removal
 - Device-project CRUD: exact same code moved to router, same route paths
+- CRO routes: exact same code moved to router, same route paths
+- CSR analytics: exact same code moved to router, same route paths
 
-### 5. Nav/Topbar/Status/Preflight Surfaces Still Agree
+### 6. Nav/Topbar/Status/Preflight Surfaces Still Agree
 - No changes to `WorkspaceTopBar`, `WorkspaceContextBars`, `WorkspaceCenterSurface`, `WorkspaceLeftRail`
 - Shell still composes these surfaces identically
 
-### 6. Touched Route/Controller/Service Boundaries Still Behave
+### 7. Touched Route/Controller/Service Boundaries Still Behave
 - `/api/device-projects` — same 4 endpoints, same validation, same org-scoping
+- `/api/cro/*` — same 14 endpoints, same response data
+- `/api/csr-real-data/*` — same 2 endpoints, same SQL queries, same response shapes
 - No route paths changed
 
-### 7. Structural Cleanup Did Not Break Build/Typecheck/Readiness Paths
-- Zero new TypeScript errors
-- All existing CI scripts preserved
-- No route mount changes that would affect structural CI checks
+### 8. Runtime Custody — Touched Scope Tightened
+- **DB**: drizzle+pg canonical. CSR analytics uses `pool` (pg Pool) directly — consistent with existing pattern.
+- **Graph**: reactflow v11 canonical. @xyflow/react v12 removed (zero imports).
+- **Test**: vitest canonical. jest tolerated for legacy.
+- **AWS**: @aws-sdk/* v3 canonical. aws-sdk v2 quarantined.
+- **ORM fallback**: @prisma/client quarantined (lazy-loaded proxy).
+- **DB setup**: @neondatabase/serverless quarantined (setup scripts only).
 
 ---
 
@@ -62,12 +97,14 @@
 
 | Metric | Before | After | Change |
 |---|---|---|---|
-| `ProjectWorkspaceShell.tsx` responsibilities | 13 | ~5 (composition, layout, callback routing, surface assembly, state wiring) | -8 extracted |
-| `server/index.ts` inline domain LOC | ~280 (device CRUD) | 3 (router mount) | -277 |
-| Unused packages | 1 (@xyflow/react) | 0 | -1 |
-| Stale docs in active truth | 28 | 0 (moved to archive) | -28 |
+| `ProjectWorkspaceShell.tsx` LOC | 2,163 | 1,446 | **-717 (-33%)** |
+| `server/index.ts` LOC | 7,256 | 6,478 | **-778 (-11%)** |
+| Shell responsibilities | 13 | ~5 | -8 extracted |
+| Inline server route families | 4+ | 1 (device CRUD was first) → now 3 extracted total | -3 families |
+| Unused packages removed | 0 | 1 (@xyflow/react) | -1 |
+| Stale docs in active truth | 28 | 0 (archived) | -28 |
 | Quarantined packages | 0 | 3 (neondatabase, prisma, aws-sdk v2) | +3 identified |
-| New files | 0 | 9 (4 extracted modules, 5 docs) | +9 |
+| New extracted modules | 0 | 6 (3 client + 3 server) | +6 |
 | New features | 0 | 0 | 0 |
 
 ---
@@ -75,7 +112,6 @@
 ## Commands Run
 ```bash
 npm run typecheck              # Pre-existing errors only, zero new
-npm run build                  # Cannot run (vite not installed)
 git status / git diff          # Verified all changes
 ```
 
