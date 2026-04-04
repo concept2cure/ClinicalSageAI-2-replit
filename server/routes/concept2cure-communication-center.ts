@@ -863,8 +863,8 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
       // Check governed decision lifecycle state for initial readiness
       let governedDecisionReadiness;
       try {
-        const { hasUnresolvedGovernedDecisionsDurable } = await import('../services/governed-decision-transition-log-service.js');
-        governedDecisionReadiness = await hasUnresolvedGovernedDecisionsDurable(Number(projectId), organizationId);
+        const { hasUnresolvedGovernedDecisions } = await import('../services/governed-decision-repository.js');
+        governedDecisionReadiness = await hasUnresolvedGovernedDecisions(Number(projectId), organizationId);
       } catch {
         governedDecisionReadiness = { hasUnresolved: false, unresolvedCount: 0, escalatedCount: 0, states: {} };
       }
@@ -1008,8 +1008,8 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
       // Check for unresolved governed decisions affecting dispatch readiness
       let governedDecisionReadiness;
       try {
-        const { hasUnresolvedGovernedDecisionsDurable } = await import('../services/governed-decision-transition-log-service.js');
-        governedDecisionReadiness = await hasUnresolvedGovernedDecisionsDurable(Number(projectId), organizationId);
+        const { hasUnresolvedGovernedDecisions } = await import('../services/governed-decision-repository.js');
+        governedDecisionReadiness = await hasUnresolvedGovernedDecisions(Number(projectId), organizationId);
       } catch {
         governedDecisionReadiness = { hasUnresolved: false, unresolvedCount: 0, escalatedCount: 0, states: {} };
       }

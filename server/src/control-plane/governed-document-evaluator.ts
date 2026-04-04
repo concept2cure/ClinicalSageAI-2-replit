@@ -53,7 +53,7 @@ import {
 
 import { generateConsequences } from './document-consequence-engine';
 
-import { recordGovernedDecision } from './governed-decision-service';
+import { recordGovernedDecisionSync } from '../../services/governed-decision-repository';
 
 export const GOVERNED_DOCUMENT_EVALUATOR_VERSION = '1.0.0';
 
@@ -305,7 +305,7 @@ export function evaluateGovernedDocument(
   };
 
   // 9. Persist decision
-  const decisionReference = recordGovernedDecision(evaluation);
+  const decisionReference = recordGovernedDecisionSync(evaluation);
 
   // Update decision with reference
   decision.decisionReference = decisionReference;

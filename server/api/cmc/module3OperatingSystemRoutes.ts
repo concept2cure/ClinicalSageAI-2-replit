@@ -430,8 +430,8 @@ router.get('/readiness/:projectId', async (req, res) => {
     // Check for unresolved governed decisions affecting readiness
     let governedDecisionReadiness;
     try {
-      const { hasUnresolvedGovernedDecisionsDurable } = await import('../../services/governed-decision-transition-log-service.js');
-      governedDecisionReadiness = await hasUnresolvedGovernedDecisionsDurable(Number(req.params.projectId), orgId);
+      const { hasUnresolvedGovernedDecisions } = await import('../../services/governed-decision-repository.js');
+      governedDecisionReadiness = await hasUnresolvedGovernedDecisions(Number(req.params.projectId), orgId);
     } catch {
       governedDecisionReadiness = { hasUnresolved: false, unresolvedCount: 0, escalatedCount: 0, states: {} };
     }
@@ -717,8 +717,8 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
     // Check for unresolved governed decisions affecting export
     let governedDecisionReadiness;
     try {
-      const { hasUnresolvedGovernedDecisionsDurable } = await import('../../services/governed-decision-transition-log-service.js');
-      governedDecisionReadiness = await hasUnresolvedGovernedDecisionsDurable(Number(projectId), orgId);
+      const { hasUnresolvedGovernedDecisions } = await import('../../services/governed-decision-repository.js');
+      governedDecisionReadiness = await hasUnresolvedGovernedDecisions(Number(projectId), orgId);
     } catch {
       governedDecisionReadiness = { hasUnresolved: false, unresolvedCount: 0, escalatedCount: 0, states: {} };
     }

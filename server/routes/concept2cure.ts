@@ -3287,10 +3287,10 @@ router.get('/projects/:projectId/governance/decisions', async (req: Request, res
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
     const limit = Math.min(Number(req.query.limit) || 50, 200);
-    const { getRecentGovernedDecisionsDurable } = await import(
-      '../src/control-plane/governed-decision-service.js'
+    const { getRecentGovernedDecisions } = await import(
+      '../src/control-plane/governed-decision-repository.js'
     );
-    const entries = await getRecentGovernedDecisionsDurable({
+    const entries = await getRecentGovernedDecisions({
       organizationId: String(organizationId),
       projectId: req.params.projectId,
       limit,
@@ -3313,10 +3313,10 @@ router.get('/projects/:projectId/governance/summary', async (req: Request, res: 
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-    const { getGovernedDecisionSummaryDurable } = await import(
-      '../src/control-plane/governed-decision-service.js'
+    const { getGovernedDecisionSummary } = await import(
+      '../src/control-plane/governed-decision-repository.js'
     );
-    const summary = await getGovernedDecisionSummaryDurable({
+    const summary = await getGovernedDecisionSummary({
       organizationId: String(organizationId),
       projectId: req.params.projectId,
       since: typeof req.query.since === 'string' ? req.query.since : undefined,
@@ -3338,10 +3338,10 @@ router.get('/projects/:projectId/governance/artifacts/:artifactId/trace', async 
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-    const { getArtifactDecisionTraceDurable } = await import(
-      '../src/control-plane/governed-decision-service.js'
+    const { getArtifactDecisionTrace } = await import(
+      '../src/control-plane/governed-decision-repository.js'
     );
-    const trace = await getArtifactDecisionTraceDurable(
+    const trace = await getArtifactDecisionTrace(
       req.params.projectId,
       req.params.artifactId
     );
@@ -3399,7 +3399,7 @@ router.post('/projects/:projectId/governance/decisions/:decisionId/transition', 
       deferDecision,
       executeDecision,
       supersedeDecision,
-    } = await import('../services/governed-decision-lifecycle-service.js');
+    } = await import('../services/governed-decision-repository.js');
 
     let result;
     switch (action) {
@@ -3451,7 +3451,7 @@ router.get('/projects/:projectId/governance/decisions/:decisionId/history', asyn
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-    const { getDecisionLifecycleHistory } = await import('../services/governed-decision-lifecycle-service.js');
+    const { getDecisionLifecycleHistory } = await import('../services/governed-decision-repository.js');
     const history = await getDecisionLifecycleHistory(req.params.decisionId, String(organizationId));
 
     return sendSuccess(res, { history, count: history.length });
@@ -3471,11 +3471,11 @@ router.get('/projects/:projectId/governance/review-queue', async (req, res) => {
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-    const { getProjectReviewQueueDurable, hasUnresolvedGovernedDecisionsDurable } =
-      await import('../services/governed-decision-transition-log-service.js');
+    const { getProjectReviewQueue, hasUnresolvedGovernedDecisions } =
+      await import('../services/governed-decision-repository.js');
 
-    const queue = await getProjectReviewQueueDurable(Number(req.params.projectId), organizationId);
-    const unresolved = await hasUnresolvedGovernedDecisionsDurable(Number(req.params.projectId), organizationId);
+    const queue = await getProjectReviewQueue(Number(req.params.projectId), organizationId);
+    const unresolved = await hasUnresolvedGovernedDecisions(Number(req.params.projectId), organizationId);
 
     return sendSuccess(res, { queue, unresolved });
   } catch (error) {

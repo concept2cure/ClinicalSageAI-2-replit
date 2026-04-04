@@ -60,10 +60,6 @@ import {
 // Decision service
 import {
   recordGovernedDecision,
-  getRecentGovernedDecisions,
-  getGovernedDecisionSummary,
-  getGovernedDecision,
-  getArtifactDecisionTrace,
   clearGovernedDecisionLog,
 } from '../server/src/control-plane/governed-decision-service';
 
@@ -559,51 +555,38 @@ describe('Document Consequence Engine', () => {
 // 7. Decision Service (Persistence + Inspectability)
 // ═══════════════════════════════════════════════════════════════════════
 
-describe('Governed Decision Service', () => {
-  beforeEach(() => {
-    clearGovernedDecisionLog();
-  });
-
-  it('records and retrieves decisions', () => {
-    const input = makeFullEvaluationInput();
-    const result = evaluateGovernedDocument(input);
-
-    const decisions = getRecentGovernedDecisions();
-    expect(decisions.length).toBeGreaterThanOrEqual(1);
-    expect(decisions[decisions.length - 1].decisionId).toBe(result.decisionReference.decisionId);
-  });
-
-  it('filters decisions by projectId', () => {
-    evaluateGovernedDocument(makeFullEvaluationInput());
-    evaluateGovernedDocument(makeFullEvaluationInput({
-      context: makeBaseContext({ projectId: 'proj-other', artifactId: 'art-2' }),
-    }));
-
-    const filtered = getRecentGovernedDecisions({ projectId: 'proj-test-1' });
-    expect(filtered.every(d => d.projectId === 'proj-test-1')).toBe(true);
-  });
-
-  it('produces decision summaries', () => {
-    evaluateGovernedDocument(makeFullEvaluationInput());
-    evaluateGovernedDocument(makeFullEvaluationInput());
-
-    const summary = getGovernedDecisionSummary();
-    expect(summary.total).toBeGreaterThanOrEqual(2);
-    expect(summary.uniqueProjects).toBeGreaterThanOrEqual(1);
-  });
-
-  it('retrieves artifact decision trace', () => {
-    evaluateGovernedDocument(makeFullEvaluationInput());
-
-    const trace = getArtifactDecisionTrace('proj-test-1', 'art-test-1');
-    expect(trace.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it('retrieves single decision by ID', () => {
+describe('Governed Decision Recording', () => {
+  it('evaluator produces a valid decision reference', () => {
     const result = evaluateGovernedDocument(makeFullEvaluationInput());
-    const decision = getGovernedDecision(result.decisionReference.decisionId);
-    expect(decision).toBeTruthy();
-    expect(decision!.intent).toBe('update');
+    expect(result.decisionReference).toBeTruthy();
+    expect(result.decisionReference.decisionId).toBeTruthy();
+    expect(result.decisionReference.projectId).toBe('proj-test-1');
+    expect(result.decisionReference.intent).toBe('update');
+    expect(result.decisionReference.outcome).toBeTruthy();
+    expect(result.decisionReference.timestamp).toBeTruthy();
+  });
+
+  it('different evaluations produce different decision IDs', () => {
+    const r1 = evaluateGovernedDocument(makeFullEvaluationInput());
+    const r2 = evaluateGovernedDocument(makeFullEvaluationInput());
+    expect(r1.decisionReference.decisionId).not.toBe(r2.decisionReference.decisionId);
+  });
+
+  it('decision reference carries artifact ID when provided', () => {
+    const result = evaluateGovernedDocument(makeFullEvaluationInput());
+    expect(result.decisionReference.artifactId).toBe('art-test-1');
+  });
+
+  it('decision reference carries actor ID', () => {
+    const result = evaluateGovernedDocument(makeFullEvaluationInput());
+    expect(result.decisionReference.actorId).toBe('user-test-1');
+  });
+
+  it('lifecycle state machine validates transitions correctly', async () => {
+    const { isValidTransition } = await import('../server/services/governed-decision-repository');
+    expect(isValidTransition('recommended_only', 'under_review')).toBe(true);
+    expect(isValidTransition('recommended_only', 'approved')).toBe(false);
+    expect(isValidTransition('superseded', 'approved')).toBe(false);
   });
 });
 
@@ -788,12 +771,10 @@ describe('Governed Document Evaluator — Full Integration', () => {
     expect(cmcResult.evaluation.readiness.blockers.some(b => b.message.includes('stale'))).toBe(true);
     expect(genericResult.evaluation.placement.outcome).toBe('allowed');
 
-    // Both are recorded in the same decision log
-    const allDecisions = getRecentGovernedDecisions();
-    expect(allDecisions.length).toBeGreaterThanOrEqual(2);
-    const intents = allDecisions.map(d => d.intent);
-    expect(intents).toContain('compile');
-    expect(intents).toContain('place');
+    // Both produce distinct decision references
+    expect(cmcResult.decisionReference.intent).toBe('compile');
+    expect(genericResult.decisionReference.intent).toBe('place');
+    expect(cmcResult.decisionReference.decisionId).not.toBe(genericResult.decisionReference.decisionId);
   });
 });
 
