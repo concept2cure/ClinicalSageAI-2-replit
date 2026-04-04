@@ -28,6 +28,7 @@ import {
 } from './PlacementDialog';
 import { GovernedDocumentPanel } from './GovernedDocumentPanel';
 import { GovernedDecisionReviewPanel } from './GovernedDecisionReviewPanel';
+import { WorkspaceGovernanceProvider } from './WorkspaceGovernanceContext';
 import {
   getSectionLabel,
   getSectionRequirements,
@@ -1582,6 +1583,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
   return (
     <DocumentModeProvider initialStage={workflowStage} key={workflowStage}>
+      <WorkspaceGovernanceProvider value={governance}>
       <div className="flex-1 flex flex-col min-h-0" data-testid="project-workspace-shell">
         {/* ── Compact breadcrumb bar — extracted to WorkspaceTopBar ──────── */}
         <WorkspaceTopBar
@@ -2176,6 +2178,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           </div>
         )}
       </div>
+        </WorkspaceGovernanceProvider>
     </DocumentModeProvider>
   );
 };

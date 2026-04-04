@@ -246,15 +246,9 @@ describe('Client fabric selectors — code structure verification', () => {
     expect(content).toContain('export function useGovernedDecisionTransition');
   });
 
-  it('useGovernance re-exports from useFabricState', () => {
+  it('useGovernance.ts retired (legacy adapters deleted in BO18)', () => {
     const root = path.resolve(__dirname, '..');
-    const content = fs.readFileSync(
-      path.join(root, 'client/src/concept2cure/hooks/useGovernance.ts'),
-      'utf-8'
-    );
-    expect(content).toContain("from './useFabricState'");
-    expect(content).toContain('export function usePromotionBlockers');
-    expect(content).toContain('export function useGovernanceDecisions');
+    expect(fs.existsSync(path.join(root, 'client/src/concept2cure/hooks/useGovernance.ts'))).toBe(false);
   });
 });
 

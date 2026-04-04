@@ -37,6 +37,7 @@ import {
   selectPromotionBlockersFromFabric,
   type FabricDecisionEntry,
 } from '../../hooks/useFabricState';
+import { useWorkspaceGovernance, selectGovernanceBadge, selectNeedsAttention } from '../workspace/WorkspaceGovernanceContext';
 
 /** Blocker derived from fabric decisions */
 interface PromotionBlocker {
@@ -212,6 +213,11 @@ export function GovernanceStatusBar({
 
   const refetchAll = () => fabricQuery.refetch();
 
+  // Consume shared governance model if available (workspace context)
+  const governanceModel = useWorkspaceGovernance();
+  const governanceBadge = governanceModel ? selectGovernanceBadge(governanceModel) : null;
+  const needsAttention = governanceModel ? selectNeedsAttention(governanceModel) : false;
+
   // Don't render if no projectId
   if (!projectId) return null;
 
@@ -249,6 +255,16 @@ export function GovernanceStatusBar({
               className="text-[10px] px-1.5 py-0 h-4 font-semibold"
             >
               {blockerCount} blocker{blockerCount !== 1 ? 's' : ''}
+            </Badge>
+          )}
+
+          {governanceBadge && governanceBadge.count > 0 && (
+            <Badge
+              variant="outline"
+              className="text-[10px] px-1.5 py-0 h-4"
+              data-testid="governance-queue-badge"
+            >
+              {governanceBadge.label}
             </Badge>
           )}
 

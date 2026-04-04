@@ -124,21 +124,8 @@ describe('Consequence model — governance as first-class', () => {
 // ── 3. Hook/State Simplification ────────────────────────────────────────────
 
 describe('Hook simplification — governance hooks cleaned', () => {
-  it('useGovernance.ts removes deprecated type exports', () => {
-    const content = read('client/src/concept2cure/hooks/useGovernance.ts');
-    // Deprecated interfaces should be removed
-    expect(content).not.toContain('export interface PromotionBlocker');
-    expect(content).not.toContain('export interface PromotionBlockersResponse');
-    expect(content).not.toContain('export interface GovernanceDecision');
-    expect(content).not.toContain('export interface GovernanceDecisionsResponse');
-    expect(content).not.toContain('@deprecated');
-  });
-
-  it('useGovernance.ts re-exports all canonical hooks from useFabricState', () => {
-    const content = read('client/src/concept2cure/hooks/useGovernance.ts');
-    expect(content).toContain('useGovernedReviewQueue');
-    expect(content).toContain('useGovernedDecisionHistory');
-    expect(content).toContain('useGovernedDecisionTransition');
+  it('useGovernance.ts deleted (legacy adapters fully retired in BO18)', () => {
+    expect(fs.existsSync(path.join(ROOT, 'client/src/concept2cure/hooks/useGovernance.ts'))).toBe(false);
   });
 
   it('workspaceShellControllers uses governance model, not loose booleans', () => {
@@ -166,9 +153,8 @@ describe('Hook simplification — governance hooks cleaned', () => {
 describe('Touched-slice cleanup', () => {
   it('GovernanceStatusBar inlines its own type shapes', () => {
     const content = read('client/src/concept2cure/components/editor/GovernanceStatusBar.tsx');
-    // Should not import deprecated types from useGovernance
-    expect(content).not.toContain("type PromotionBlocker } from '../../hooks/useGovernance'");
-    expect(content).not.toContain("type GovernanceDecision } from '../../hooks/useGovernance'");
+    // Should not import from deleted useGovernance
+    expect(content).not.toContain("from '../../hooks/useGovernance'");
     // Should have local interfaces
     expect(content).toContain('interface PromotionBlocker');
     expect(content).toContain('interface GovernanceDecision');

@@ -157,10 +157,8 @@ describe('No regression — backend and hooks intact', () => {
     expect(content).toContain('export function useGovernedDecisionTransition');
   });
 
-  it('useGovernance still re-exports canonical hooks', () => {
-    const content = read('client/src/concept2cure/hooks/useGovernance.ts');
-    expect(content).toContain('useGovernedReviewQueue');
-    expect(content).toContain('useGovernedDecisionHistory');
+  it('useGovernance.ts deleted (legacy adapters retired)', () => {
+    expect(fs.existsSync(path.join(ROOT, 'client/src/concept2cure/hooks/useGovernance.ts'))).toBe(false);
   });
 
   it('governance-controller still exports all handlers', () => {
