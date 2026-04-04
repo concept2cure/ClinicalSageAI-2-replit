@@ -3446,15 +3446,18 @@ router.get('/governance/health', async (_req, res) => {
   try {
     const { governanceMetrics } = await import('../services/governance-observability.js');
     const { getRevocationHealth } = await import('../services/token-revocation.js');
+    const { getBridgeHealth } = await import('../services/artifact-document-bridge.js');
 
-    const [governanceHealth, revocationHealth] = await Promise.all([
+    const [governanceHealth, revocationHealth, bridgeHealth] = await Promise.all([
       governanceMetrics.getHealth(),
       getRevocationHealth(),
+      getBridgeHealth(),
     ]);
 
     return sendSuccess(res, {
       governance: governanceHealth,
       tokenRevocation: revocationHealth,
+      documentBridge: bridgeHealth,
     });
   } catch (error: any) {
     logger.error('Failed to check governance health', { error: error.message });
