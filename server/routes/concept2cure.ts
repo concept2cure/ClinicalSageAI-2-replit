@@ -3288,7 +3288,7 @@ router.get('/projects/:projectId/governance/decisions', async (req: Request, res
 
     const limit = Math.min(Number(req.query.limit) || 50, 200);
     const { getRecentGovernedDecisions } = await import(
-      '../src/control-plane/governed-decision-repository.js'
+      '../services/governed-decision-repository.js'
     );
     const entries = await getRecentGovernedDecisions({
       organizationId: String(organizationId),
@@ -3314,7 +3314,7 @@ router.get('/projects/:projectId/governance/summary', async (req: Request, res: 
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
     const { getGovernedDecisionSummary } = await import(
-      '../src/control-plane/governed-decision-repository.js'
+      '../services/governed-decision-repository.js'
     );
     const summary = await getGovernedDecisionSummary({
       organizationId: String(organizationId),
@@ -3339,7 +3339,7 @@ router.get('/projects/:projectId/governance/artifacts/:artifactId/trace', async 
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
     const { getArtifactDecisionTrace } = await import(
-      '../src/control-plane/governed-decision-repository.js'
+      '../services/governed-decision-repository.js'
     );
     const trace = await getArtifactDecisionTrace(
       req.params.projectId,
