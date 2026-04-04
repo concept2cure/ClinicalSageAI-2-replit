@@ -1672,6 +1672,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             setLeftRailMode('dossier');
             setMode(selectedDocId ? 'edit' : 'browse');
           }}
+          navAffordances={{
+            verify: verifyNavAffordance,
+            publish: publishNavAffordance,
+          }}
           onNavItemClick={id => {
             setProjectNav(id);
             if (id === 'communication_center') {

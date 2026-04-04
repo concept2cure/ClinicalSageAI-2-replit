@@ -70,6 +70,9 @@ export interface WorkspaceContextBarsProps {
   // Callbacks — project nav
   onNavItemClick: (id: ProjectNav) => void;
 
+  // Governance-aware nav affordances for gated transitions
+  navAffordances?: Record<string, { gateStatus: string; tooltip: string; disabled: boolean; badgeLabel?: string; badgeTone?: string }>;
+
   // Callbacks — IND workspace bar
   onOpenSectionTree: () => void;
   onStartNextWithRI: () => void;
@@ -105,6 +108,7 @@ export default function WorkspaceContextBars(props: WorkspaceContextBarsProps) {
     onOpenReports,
     onOpenSubmissionBuilder,
     onNavItemClick,
+    navAffordances,
     onOpenSectionTree,
     onStartNextWithRI,
     onHAQPath,
@@ -334,19 +338,41 @@ export default function WorkspaceContextBars(props: WorkspaceContextBarsProps) {
         {/* Project nav items */}
         {!isINDWorkspace && (
           <div className="flex items-center gap-1 px-4 h-9 border-b border-zinc-200 bg-zinc-50/70 shrink-0 overflow-x-auto">
-            {PROJECT_NAV_ITEMS.map(item => (
-              <button
-                key={item.id}
-                onClick={() => onNavItemClick(item.id)}
-                className={cn(
-                  'px-2.5 py-1 text-xs rounded-md border whitespace-nowrap transition-colors',
-                  projectNav === item.id
-                    ? 'bg-stone-900 text-white border-stone-900'
-                    : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-100'
-                )}
-              >
-                {item.label}
-              </button>
+            {PROJECT_NAV_ITEMS.map(item => {
+              const affordance = navAffordances?.[item.id];
+              const isGated = affordance && affordance.gateStatus !== 'ungated';
+              const badgeToneClass = affordance?.badgeTone === 'red' ? 'bg-red-100 text-red-700'
+                : affordance?.badgeTone === 'amber' ? 'bg-amber-100 text-amber-700'
+                : affordance?.badgeTone === 'green' ? 'bg-emerald-100 text-emerald-700'
+                : '';
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onNavItemClick(item.id)}
+                  title={affordance?.tooltip || undefined}
+                  className={cn(
+                    'px-2.5 py-1 text-xs rounded-md border whitespace-nowrap transition-colors flex items-center gap-1',
+                    projectNav === item.id
+                      ? 'bg-stone-900 text-white border-stone-900'
+                      : affordance?.disabled
+                        ? 'bg-stone-50 text-stone-400 border-stone-200 cursor-not-allowed'
+                        : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-100'
+                  )}
+                  data-testid={`nav-item-${item.id}`}
+                  data-gate-status={affordance?.gateStatus}
+                >
+                  {item.label}
+                  {isGated && affordance?.badgeLabel && (
+                    <span className={cn('text-[8px] px-1 py-0 rounded-full font-medium', badgeToneClass)}
+                      data-testid={`nav-badge-${item.id}`}
+                    >
+                      {affordance.badgeLabel}
+                    </span>
+                  )}
+                </button>
+              );
+            }
             ))}
           </div>
         )}
