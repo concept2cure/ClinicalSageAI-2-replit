@@ -14,6 +14,7 @@
 
 import { randomUUID } from 'crypto';
 import { createScopedLogger } from '../utils/logger';
+import { governanceMetrics } from './governance-observability';
 import type {
   GovernedDocumentEvaluation,
   GovernedDecisionReference,
@@ -207,7 +208,10 @@ export async function recordGovernedDecision(
         submissionType: evaluation.context.submissionType,
       },
     });
+    governanceMetrics.recordDecisionCreated(evaluation.decision.outcome);
+    governanceMetrics.recordPersistenceWrite();
   } catch (err) {
+    governanceMetrics.recordPersistenceFailure('recordGovernedDecision', err);
     log.warn('Governed decision durable write failed', {
       decisionId,
       error: err instanceof Error ? err.message : String(err),

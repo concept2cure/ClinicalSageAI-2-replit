@@ -161,6 +161,20 @@ const governedDecisionQuerySchema = z.object({
 });
 
 /**
+ * GET /governed/health — Governance system health check
+ */
+router.get('/governed/health', requireControlPlaneAccess, async (_req, res) => {
+  try {
+    const { governanceMetrics } = await import('../../../server/services/governance-observability.js');
+    const health = await governanceMetrics.getHealth();
+    const statusCode = health.status === 'healthy' ? 200 : health.status === 'degraded' ? 200 : 503;
+    res.status(statusCode).json({ health });
+  } catch (err) {
+    res.status(503).json({ health: { status: 'unhealthy', error: 'Health check failed' } });
+  }
+});
+
+/**
  * GET /governed/fabric-version — Version info for all fabric modules
  */
 router.get('/governed/fabric-version', requireControlPlaneAccess, (_req, res) => {

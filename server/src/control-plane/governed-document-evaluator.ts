@@ -163,14 +163,15 @@ export interface GovernedEvaluationResult {
 }
 
 /**
- * Evaluate a governed document action.
+ * Pure evaluation — no side effects. Computes the full governed evaluation
+ * without persisting, emitting, or logging anything.
  *
- * This is the primary entry point for all lanes.
- * Returns a complete evaluation with decision, consequences, and a persistent reference.
+ * Use this for testing, dry-runs, or when the caller wants to inspect
+ * the evaluation before deciding whether to persist it.
  */
-export function evaluateGovernedDocument(
+export function computeGovernedEvaluation(
   input: GovernedEvaluationInput
-): GovernedEvaluationResult {
+): { evaluation: GovernedDocumentEvaluation; contextResolution: ContextResolutionResult } {
   const timestamp = new Date().toISOString();
 
   // 1. Resolve context
@@ -304,17 +305,26 @@ export function evaluateGovernedDocument(
     evaluatedAt: timestamp,
   };
 
-  // 9. Persist decision
+  return { evaluation, contextResolution };
+}
+
+/**
+ * Evaluate a governed document action.
+ *
+ * Thin orchestrator: calls computeGovernedEvaluation() (pure), then
+ * persists the decision (side effect). Use computeGovernedEvaluation()
+ * directly for testing or dry-runs.
+ */
+export function evaluateGovernedDocument(
+  input: GovernedEvaluationInput
+): GovernedEvaluationResult {
+  const { evaluation, contextResolution } = computeGovernedEvaluation(input);
+
+  // Side effect: persist decision
   const decisionReference = recordGovernedDecisionSync(evaluation);
+  evaluation.decision.decisionReference = decisionReference;
 
-  // Update decision with reference
-  decision.decisionReference = decisionReference;
-
-  return {
-    evaluation,
-    decisionReference,
-    contextResolution,
-  };
+  return { evaluation, decisionReference, contextResolution };
 }
 
 /**
