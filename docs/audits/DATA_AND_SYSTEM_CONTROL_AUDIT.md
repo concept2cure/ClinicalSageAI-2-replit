@@ -17,44 +17,54 @@ and structural violations of the core law:
 
 ---
 
-## Plane A — Identity
+## Plane A — Identity (MAPPED)
 
 ### Session/Token Creation
 | Aspect | Detail |
 |--------|--------|
-| Canonical owner | _Pending research_ |
-| Duplicate owners | _Pending research_ |
-| Read paths | _Pending research_ |
-| Write paths | _Pending research_ |
-| Decision | _Pending_ |
+| Canonical owner | `server/routes/auth.ts` — `POST /api/auth/login` (JWT via `jwt.sign`) |
+| Duplicate owners | `server/auth.ts` (redundant login fn), `server/routes/authEnterprise.ts` (enterprise multi-step) |
+| Read paths | Client `authToken.ts` `getAuthToken()` -> memory/sessionStorage |
+| Write paths | Login -> JWT sign -> response cookie/body -> client stores |
+| Decision | **Preserve** routes/auth.ts. **Absorb** auth.ts login into routes/auth.ts. **Preserve** authEnterprise as separate route group. |
 
 ### Session Revocation
 | Aspect | Detail |
 |--------|--------|
-| Canonical owner | _Pending research_ |
-| Duplicate owners | _Pending research_ |
-| Decision | _Pending_ |
+| Canonical owner | `server/routes/auth.ts` — in-memory `tokenBlacklist` Set |
+| Duplicate owners | `authEnterprise.ts` logout (STUB — returns 200 but does NOT revoke), `users.ts` logout (STUB) |
+| Critical gap | **In-memory only** — resets on restart. No Redis persistence. Client logout doesn't invalidate server token. |
+| Decision | **Preserve** canonical. **Delete** stub logouts. **Migrate** to Redis-backed blacklist for production. |
 
 ### Auth Middleware
 | Aspect | Detail |
 |--------|--------|
-| Canonical owner | _Pending research_ |
-| Duplicate owners | _Pending research_ |
-| Decision | _Pending_ |
+| Canonical owner | `server/middleware/auth.ts` — `authenticateToken()` (aliases: authenticateJWT, requireAuth) |
+| Duplicate owners | `server/middleware/auth.js` (STRICTER — enforces orgId, blocks tenant impersonation), `server/auth.ts` (legacy `authMiddleware()`), `server/middleware/authAdapter.ts` (ESM wrapper for auth.js) |
+| Critical gap | **Two incompatible implementations** — auth.js is more secure but less used. auth.ts comment says "Post-beta: merge security features from .js into .ts" |
+| Decision | **Merge** security features from auth.js INTO auth.ts. **Delete** auth.js + authAdapter.ts. **Deprecate** server/auth.ts standalone middleware. |
 
 ### Org/User Identity Resolution
 | Aspect | Detail |
 |--------|--------|
-| Canonical owner | _Pending research_ |
-| Duplicate owners | _Pending research_ |
-| Decision | _Pending_ |
+| Canonical owner | `server/routes/auth.ts` login (resolves org membership from `organizationUsers` table) |
+| Duplicate owners | 4 req augmentation patterns: `req.user.organizationId`, `req.tenantContext.organizationId`, `req.userId` + `req.tenantId`, `x-organization-id` header (SECURITY RISK — spoofable) |
+| Client side | `client/src/utils/authToken.ts` `getOrgId()` — fallback chain: currentOrganizationId -> currentOrganization -> trialsage_user -> '1' |
+| Decision | **Standardize** to single `req.user` object. **Deprecate** req.tenantContext, req.tenantId. **Reject** x-organization-id header override. |
 
 ### Access/Entitlement (RBAC)
 | Aspect | Detail |
 |--------|--------|
-| Canonical owner | _Pending research_ |
-| Duplicate owners | _Pending research_ |
-| Decision | _Pending_ |
+| Canonical owner | `server/services/roleBasedAccess.ts` — `checkPermission()`, `requirePermission()`, `requireRole()` with role hierarchy + fine-grained permissions |
+| Duplicate owners | `server/middleware/auth.ts` simple `requirePermission()` (less sophisticated), `server/src/mw/rbac.ts` (CMC-specific roles, incompatible hierarchy) |
+| Decision | **Preserve** RoleBasedAccess service. **Migrate** middleware simple checks to use RBACService. **Wrap** CMC RBAC as domain-specific extension. |
+
+### MFA
+| Aspect | Detail |
+|--------|--------|
+| Canonical owner | `server/services/mfaService.ts` (TOTP via native crypto) + `server/services/emailOtpService.ts` (email OTP) |
+| Duplicate owners | `server/services/auth-security-service.ts` (speakeasy library — older TOTP impl) |
+| Decision | **Preserve** mfaService + emailOtpService. **Deprecate** speakeasy in auth-security-service. |
 
 ---
 

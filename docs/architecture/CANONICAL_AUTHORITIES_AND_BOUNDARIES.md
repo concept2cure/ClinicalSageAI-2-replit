@@ -15,12 +15,12 @@ Duplicate authorities are classified as: preserve | wrap | deprecate | delete.
 
 | Concern | Canonical Authority | File | Duplicates | Decision |
 |---------|-------------------|------|------------|----------|
-| JWT creation | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| Session revocation | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| Auth middleware | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| Org/user resolution | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| RBAC/permissions | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| MFA | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
+| JWT creation | `routes/auth.ts` POST /login | `server/routes/auth.ts` | `auth.ts` login fn, `authEnterprise.ts` | **Absorb** auth.ts into routes/auth.ts |
+| Session revocation | `tokenBlacklist` Set | `server/routes/auth.ts` | authEnterprise logout (stub), users.ts logout (stub) | **Delete** stubs, **migrate** to Redis |
+| Auth middleware | `authenticateToken()` | `server/middleware/auth.ts` | `auth.js` (stricter), `auth.ts` (legacy), `authAdapter.ts` | **Merge** .js security into .ts, **delete** rest |
+| Org/user resolution | Login org resolution | `server/routes/auth.ts` | 4 req patterns, x-org-id header | **Standardize** to `req.user` only |
+| RBAC/permissions | `roleBasedAccess.ts` | `server/services/` | middleware simple checks, CMC rbac.ts | **Preserve** RBACService, **migrate** others |
+| MFA | `mfaService.ts` + `emailOtpService.ts` | `server/services/` | auth-security-service.ts (speakeasy) | **Deprecate** speakeasy |
 
 ### Governance Authorities
 
