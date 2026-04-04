@@ -12,7 +12,7 @@
  */
 
 import { assertCanonFact } from './account-canon.js';
-import { createSkillBundle } from './account-skill-bundles.js';
+import { createSkillBundle, getSkillBundles } from './account-skill-bundles.js';
 import { createScopedLogger } from '../utils/logger';
 
 const log = createScopedLogger('seed-default-canon');
@@ -258,9 +258,18 @@ export async function seedDefaultCanon(organizationId: number): Promise<{
     }
   }
 
-  // 3. Document authoring skill bundles
+  // 3. Document authoring skill bundles (idempotent — skip if name+org already exists)
   for (const bundle of DOCUMENT_SKILL_BUNDLES) {
     try {
+      // Check if bundle already exists for this org
+      const existing = await getSkillBundles(organizationId, { bundleType: 'authoring' });
+      const alreadyExists = existing.some(
+        (b: Record<string, unknown>) => b.name === bundle.name
+      );
+      if (alreadyExists) {
+        skillBundles++;
+        continue;
+      }
       await createSkillBundle({
         organizationId,
         name: bundle.name,
