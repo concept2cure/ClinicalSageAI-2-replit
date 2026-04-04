@@ -1,3 +1,7 @@
+// DOCX Runtime: JS docx v9.5.1 (canonical)
+// Owner: document-export team
+// See: docs/architecture/docx-pipeline-canonical-designation.md
+
 import path from 'path';
 import fs from 'fs/promises';
 import {

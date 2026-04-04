@@ -723,20 +723,15 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
   }
 });
 
-// In-memory token blacklist (replace with Redis in production for persistence across restarts)
-const tokenBlacklist = new Set<string>();
+// Durable token revocation — Redis-backed with in-memory fallback.
+// See: server/services/token-revocation.ts
+// Legacy in-memory set removed; all revocation now goes through the service.
 
-// Clean up expired tokens every hour
-setInterval(() => {
-  // Simple TTL: clear the set every 24 hours to prevent memory growth
-  if (tokenBlacklist.size > 10000) {
-    tokenBlacklist.clear();
-  }
-}, 60 * 60 * 1000);
-
-/** Check if a token has been blacklisted (logout) */
+/** Check if a token has been blacklisted (logout) — sync check for backward compat */
 export function isTokenBlacklisted(token: string): boolean {
-  return tokenBlacklist.has(token);
+  // Sync check uses memory fallback only. The async isTokenRevoked() is preferred.
+  const { isTokenRevokedSync } = require('../services/token-revocation');
+  return isTokenRevokedSync(token);
 }
 
 /**
@@ -745,16 +740,18 @@ export function isTokenBlacklisted(token: string): boolean {
  */
 router.post('/logout', async (req: Request, res: Response) => {
   try {
-    // Extract token from Authorization header and blacklist it
+    const { revokeToken } = await import('../services/token-revocation.js');
+
+    // Extract token from Authorization header and revoke it
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.slice(7);
-      tokenBlacklist.add(token);
+      await revokeToken(token);
     }
 
-    // Also blacklist any refresh token sent in body
+    // Also revoke any refresh token sent in body
     if (req.body?.refreshToken) {
-      tokenBlacklist.add(req.body.refreshToken);
+      await revokeToken(req.body.refreshToken);
     }
 
     res.json({ success: true, message: 'Logged out successfully. Tokens invalidated.' });
@@ -782,8 +779,9 @@ router.post('/refresh', async (req: Request, res: Response) => {
       });
     }
 
-    // SECURITY: Check if refresh token has been blacklisted (via logout or previous rotation)
-    if (isTokenBlacklisted(refreshToken)) {
+    // SECURITY: Check if refresh token has been revoked (via logout or previous rotation)
+    const { isTokenRevoked } = await import('../services/token-revocation.js');
+    if (await isTokenRevoked(refreshToken)) {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Refresh token has been revoked' },
@@ -867,8 +865,9 @@ router.post('/refresh', async (req: Request, res: Response) => {
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
 
-    // SECURITY: Blacklist the old refresh token to prevent reuse (token rotation)
-    tokenBlacklist.add(refreshToken);
+    // SECURITY: Revoke the old refresh token to prevent reuse (token rotation)
+    const { revokeToken: revokeOldToken } = await import('../services/token-revocation.js');
+    await revokeOldToken(refreshToken);
 
     res.json({
       success: true,

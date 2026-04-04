@@ -3365,12 +3365,7 @@ router.post('/projects/:projectId/governance/decisions/:decisionId/transition', 
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-    const { decisionId } = req.params;
-    const projectId = req.params.projectId;
-    const orgId = String(organizationId);
-    const performedBy = String(userId);
-    const { action, reason, escalatedTo, executedArtifactId, executedArtifactVersion, workflowRunId, supersededByDecisionId } = req.body;
-
+    const { action } = req.body;
     if (!action || typeof action !== 'string') {
       return sendError(res, 400, 'Missing required field: action');
     }
@@ -3380,55 +3375,18 @@ router.post('/projects/:projectId/governance/decisions/:decisionId/transition', 
       return sendError(res, 400, `Invalid action: ${action}. Must be one of: ${validActions.join(', ')}`);
     }
 
-    // Validate required fields per action
-    if (action === 'reject' && !reason) {
-      return sendError(res, 400, 'Reject action requires a reason');
-    }
-    if (action === 'escalate' && !escalatedTo) {
-      return sendError(res, 400, 'Escalate action requires escalatedTo');
-    }
-    if (action === 'supersede' && !supersededByDecisionId) {
-      return sendError(res, 400, 'Supersede action requires supersededByDecisionId');
-    }
-
-    const {
-      submitForReview,
-      approveDecision,
-      rejectDecision,
-      escalateDecision,
-      deferDecision,
-      executeDecision,
-      supersedeDecision,
-    } = await import('../services/governed-decision-repository.js');
-
-    let result;
-    switch (action) {
-      case 'review':
-        result = await submitForReview(decisionId, orgId, projectId, performedBy, reason);
-        break;
-      case 'approve':
-        result = await approveDecision(decisionId, orgId, projectId, performedBy, reason);
-        break;
-      case 'reject':
-        result = await rejectDecision(decisionId, orgId, projectId, performedBy, reason);
-        break;
-      case 'escalate':
-        result = await escalateDecision(decisionId, orgId, projectId, performedBy, escalatedTo, reason);
-        break;
-      case 'defer':
-        result = await deferDecision(decisionId, orgId, projectId, performedBy, reason);
-        break;
-      case 'execute':
-        result = await executeDecision(decisionId, orgId, projectId, performedBy, {
-          artifactId: executedArtifactId,
-          artifactVersion: executedArtifactVersion,
-          workflowRunId,
-        });
-        break;
-      case 'supersede':
-        result = await supersedeDecision(decisionId, orgId, projectId, performedBy, supersededByDecisionId, reason);
-        break;
-    }
+    const { handleTransition } = await import('../controllers/governance-controller.js');
+    const result = await handleTransition({
+      decisionId: req.params.decisionId,
+      organizationId,
+      projectId: Number(req.params.projectId),
+      actorId: String(userId),
+      action,
+      reason: req.body.reason,
+      escalatedTo: req.body.escalatedTo,
+      executedArtifactId: req.body.executedArtifactId,
+      supersededByDecisionId: req.body.supersededByDecisionId,
+    });
 
     if (result && !result.success) {
       return sendError(res, 400, result.error || 'Transition failed');
@@ -3451,10 +3409,10 @@ router.get('/projects/:projectId/governance/decisions/:decisionId/history', asyn
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-    const { getDecisionLifecycleHistory } = await import('../services/governed-decision-repository.js');
-    const history = await getDecisionLifecycleHistory(req.params.decisionId, String(organizationId));
+    const { handleGetHistory } = await import('../controllers/governance-controller.js');
+    const result = await handleGetHistory(req.params.decisionId, organizationId);
 
-    return sendSuccess(res, { history, count: history.length });
+    return sendSuccess(res, result);
   } catch (error: any) {
     logger.error('Failed to load decision lifecycle history', { error: error.message });
     return sendError(res, 500, 'Failed to load decision lifecycle history');
@@ -3471,15 +3429,71 @@ router.get('/projects/:projectId/governance/review-queue', async (req, res) => {
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-    const { getProjectReviewQueue, hasUnresolvedGovernedDecisions } =
-      await import('../services/governed-decision-repository.js');
+    const { handleGetReviewQueue } = await import('../controllers/governance-controller.js');
+    const result = await handleGetReviewQueue(organizationId, Number(req.params.projectId));
 
-    const queue = await getProjectReviewQueue(Number(req.params.projectId), organizationId);
-    const unresolved = await hasUnresolvedGovernedDecisions(Number(req.params.projectId), organizationId);
-
-    return sendSuccess(res, { queue, unresolved });
+    return sendSuccess(res, result);
   } catch (error) {
     return sendError(res, 500, 'Failed to load review queue');
+  }
+});
+
+/**
+ * GET /api/concept2cure/governance/health
+ * Returns governance system health — DB reachability, table status, counters, failure rate.
+ */
+router.get('/governance/health', async (_req, res) => {
+  try {
+    const { governanceMetrics } = await import('../services/governance-observability.js');
+    const { getRevocationHealth } = await import('../services/token-revocation.js');
+    const { getBridgeHealth } = await import('../services/artifact-document-bridge.js');
+
+    const [governanceHealth, revocationHealth, bridgeHealth] = await Promise.all([
+      governanceMetrics.getHealth(),
+      getRevocationHealth(),
+      getBridgeHealth(),
+    ]);
+
+    return sendSuccess(res, {
+      governance: governanceHealth,
+      tokenRevocation: revocationHealth,
+      documentBridge: bridgeHealth,
+    });
+  } catch (error: any) {
+    logger.error('Failed to check governance health', { error: error.message });
+    return sendError(res, 500, 'Failed to check governance health');
+  }
+});
+
+/**
+ * POST /api/concept2cure/maintenance/run
+ * Run platform maintenance tasks (token cleanup, bridge integrity, backfill).
+ * Requires admin/operator access in production.
+ */
+router.post('/maintenance/run', async (req, res) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const { runPlatformMaintenance } = await import('../services/maintenance/platform-maintenance.js');
+    const result = await runPlatformMaintenance(organizationId);
+    return sendSuccess(res, result);
+  } catch (error: any) {
+    logger.error('Maintenance run failed', { error: error.message });
+    return sendError(res, 500, 'Maintenance run failed');
+  }
+});
+
+/**
+ * GET /api/concept2cure/startup/invariants
+ * Returns startup invariant check results.
+ */
+router.get('/startup/invariants', async (_req, res) => {
+  try {
+    const { runStartupInvariants } = await import('../lib/startup-invariants.js');
+    const report = await runStartupInvariants();
+    return sendSuccess(res, report);
+  } catch (error: any) {
+    logger.error('Startup invariant check failed', { error: error.message });
+    return sendError(res, 500, 'Startup invariant check failed');
   }
 });
 

@@ -317,7 +317,9 @@ router.get('/:provider/initiate', (req: Request, res: Response) => {
     return res.redirect(302, callbackUrl);
   }
 
-  // In production, this would redirect to the provider's authorization endpoint
+  // Production: Google/Microsoft OAuth not yet integrated.
+  // Client hides these buttons in production (import.meta.env.DEV check in ZenLogin).
+  // When real OAuth is added, replace this with provider-specific redirect.
   res.status(501).json({ success: false, error: 'SSO_NOT_IMPLEMENTED', provider });
 });
 

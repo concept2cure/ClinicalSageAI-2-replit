@@ -27,6 +27,10 @@ import {
   type PlacementOperation,
 } from './PlacementDialog';
 import { GovernedDocumentPanel } from './GovernedDocumentPanel';
+import { GovernedDecisionReviewPanel } from './GovernedDecisionReviewPanel';
+import { WorkspaceGovernanceProvider, runTransitionPreflight, selectNavGovernanceAffordance, type TransitionPreflightResult } from './WorkspaceGovernanceContext';
+import { TransitionPreflightBanner } from './TransitionPreflightBanner';
+import { useFabricDecisions } from '../../hooks/useFabricState';
 import {
   getSectionLabel,
   getSectionRequirements,
@@ -275,8 +279,23 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       auditRef?: string;
     }>;
   }>({ proposals: [] });
-  const { computeJobs, setComputeJobs, showGovernedPanel, setShowGovernedPanel } =
+  const { computeJobs, setComputeJobs, governance } =
     useDocumentConsequenceState();
+  const showGovernedPanel = governance.governedPanelOpen;
+  const setShowGovernedPanel = (open: boolean) => open ? governance.openGovernedPanel() : governance.closeGovernedPanel();
+  const reviewQueueVisible = governance.isActive;
+  const setReviewQueueVisible = (visible: boolean) => visible ? governance.openQueue() : governance.closeQueue();
+
+  // Shared fabric decision fetch — pushes into governance model for all consumers
+  const fabricQuery = useFabricDecisions(projectId != null ? String(projectId) : undefined, { limit: 20 });
+  useEffect(() => {
+    governance.setFabricDetail(fabricQuery.data?.entries ?? [], fabricQuery.isLoading);
+  }, [fabricQuery.data, fabricQuery.isLoading, governance.setFabricDetail]);
+
+  // Wire manual refresh into governance model
+  useEffect(() => {
+    governance.setRefreshFn(() => fabricQuery.refetch());
+  }, [fabricQuery.refetch, governance.setRefreshFn]);
 
   // Editor ref for outline scroll
   const editorContainerRef = useRef<HTMLDivElement>(null);
@@ -284,6 +303,19 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const { phase4Panel, setPhase4Panel, phase4Ctx, setPhase4Ctx } = usePhase4Panels();
 
   const workflowTransitionModel = useWorkflowTransitionModel();
+
+  // Governance-aware nav affordances for gated transitions
+  const verifyNavAffordance = useMemo(
+    () => selectNavGovernanceAffordance(governance, 'verify_review', workflowTransitionModel),
+    [governance, workflowTransitionModel],
+  );
+  const publishNavAffordance = useMemo(
+    () => selectNavGovernanceAffordance(governance, 'publish_package', workflowTransitionModel),
+    [governance, workflowTransitionModel],
+  );
+
+  // Governance-aware transition preflight state
+  const [pendingPreflight, setPendingPreflight] = useState<TransitionPreflightResult | null>(null);
 
   const applyWorkflowTransition = useCallback(
     (
@@ -303,6 +335,16 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         return false;
       }
 
+      // Governance-aware preflight — declarative gate from transition map
+      if (transition.governanceGate) {
+        const preflight = runTransitionPreflight(governance, transition.governanceGate);
+        if (!preflight.allowed) {
+          setPendingPreflight(preflight);
+          return false;
+        }
+        setPendingPreflight(null);
+      }
+
       const requirement = transition.requires;
       if (requirement === 'selectedDocOrCreateIntent' && !context.hasDoc && !context.createIntent) {
         setMode(transition.fallback);
@@ -320,7 +362,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       setMode(transition.to);
       return true;
     },
-    [mode, setMode, workflowTransitionModel]
+    [mode, setMode, workflowTransitionModel, governance]
   );
 
   // If initialContent is provided, go straight to edit mode
@@ -1472,9 +1514,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       }
       if (stage === 'verify') {
         setProjectNav('verify');
-        setActiveLayer('reports');
-        applyWorkflowTransition('browse_list', {});
-        setPhase4Panel('verification');
+        if (applyWorkflowTransition('verify_review', { reviewContext: true })) {
+          setActiveLayer('reports');
+          setPhase4Panel('verification');
+        }
         return;
       }
       setProjectNav('publish');
@@ -1577,6 +1620,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
   return (
     <DocumentModeProvider initialStage={workflowStage} key={workflowStage}>
+      <WorkspaceGovernanceProvider value={governance}>
       <div className="flex-1 flex flex-col min-h-0" data-testid="project-workspace-shell">
         {/* ── Compact breadcrumb bar — extracted to WorkspaceTopBar ──────── */}
         <WorkspaceTopBar
@@ -1628,6 +1672,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             setLeftRailMode('dossier');
             setMode(selectedDocId ? 'edit' : 'browse');
           }}
+          navAffordances={{
+            verify: verifyNavAffordance,
+            publish: publishNavAffordance,
+          }}
           onNavItemClick={id => {
             setProjectNav(id);
             if (id === 'communication_center') {
@@ -1653,9 +1701,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               applyWorkflowTransition('browse_list', {});
               setPhase4Panel('none');
             } else if (id === 'verify') {
-              setActiveLayer('reports');
-              applyWorkflowTransition('browse_list', {});
-              setPhase4Panel('verification');
+              // Route through governance-gated verify transition
+              if (applyWorkflowTransition('verify_review', { reviewContext: true })) {
+                setActiveLayer('reports');
+                setPhase4Panel('verification');
+              }
             } else if (id === 'review') {
               setActiveLayer('reports');
               applyWorkflowTransition('browse_list', {});
@@ -1737,6 +1787,18 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               </kbd>
             </button>
           </div>
+        )}
+
+        {/* ── Governance transition preflight banner ─────────────────────── */}
+        {pendingPreflight && !pendingPreflight.allowed && (
+          <TransitionPreflightBanner
+            preflight={pendingPreflight}
+            onOpenQueue={() => { setPendingPreflight(null); governance.openQueue(); }}
+            onInspectDecision={(id) => { setPendingPreflight(null); governance.inspectDecision(id, 'under_review'); }}
+            onRefresh={() => { governance.requestRefresh(); }}
+            onDismiss={() => setPendingPreflight(null)}
+            className="mx-3 mt-2 mb-1"
+          />
         )}
 
         {/* ── Cut/move blocked feedback ───────────────────────────────────── */}
@@ -2105,6 +2167,21 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               }}
             />
           )}
+
+          {/* ── Governed decision review queue panel ─────────────────────────── */}
+          {reviewQueueVisible && projectId && (
+            <GovernedDecisionReviewPanel
+              projectId={String(projectId)}
+              className="w-[320px] shrink-0 h-full"
+              onClose={() => governance.closeQueue()}
+              onInspectDecision={(id, state) => governance.inspectDecision(id, state)}
+              onActionStarted={(id, action) => governance.startAction(id, action)}
+              onActionCompleted={(result) => governance.completeAction({
+                ...result,
+                completedAt: new Date().toISOString(),
+              })}
+            />
+          )}
         </div>
 
         {/* ── Placement dialog ──────────────────────────────────────────────── */}
@@ -2156,6 +2233,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           </div>
         )}
       </div>
+        </WorkspaceGovernanceProvider>
     </DocumentModeProvider>
   );
 };

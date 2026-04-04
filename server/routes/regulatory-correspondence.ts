@@ -409,6 +409,33 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
         escalatedCount: unresolvedCheck.escalatedCount,
         message: `${unresolvedCheck.unresolvedCount} governed decision(s) require review before this submission can proceed.`,
       };
+
+      // Durably record the blocker — creates an auditable transition event
+      try {
+        const { recordTransitionEvent } = await import('../services/governed-decision-repository.js');
+        const { governanceMetrics } = await import('../services/governance-observability.js');
+
+        await recordTransitionEvent({
+          decisionId: 'correspondence-lifecycle-gate',
+          organizationId: orgId,
+          projectId: Number(upd.rows[0].project_id),
+          fromState: 'unknown',
+          toState: lifecycleState,
+          action: 'correspondence_lifecycle_gate',
+          actorId: String(actor.userId || 'system'),
+          reason: `Correspondence lifecycle transition to ${lifecycleState} with ${unresolvedCheck.unresolvedCount} unresolved governed decision(s)`,
+          notes: JSON.stringify({
+            unresolvedCount: unresolvedCheck.unresolvedCount,
+            escalatedCount: unresolvedCheck.escalatedCount,
+            submissionId: String(req.params.submissionId),
+            gateOutcome: 'warn_and_proceed',
+          }),
+        });
+
+        governanceMetrics.recordTransitionExecuted('correspondence_lifecycle_gate');
+      } catch {
+        // Non-blocking — durable record is best-effort; correspondence flow must not break
+      }
     }
   } catch {
     // Non-blocking — governed decision check is advisory only

@@ -35,8 +35,11 @@ export interface ConsequenceProposal {
 }
 
 /**
- * Governed fabric state surfaced from the control-plane decision fabric.
- * Optional — populated when the backend includes governedFabric in responses.
+ * Governed fabric state — first-class operating truth for document consequences.
+ *
+ * This is the canonical governance evaluation state for an artifact.
+ * When present, it is the authoritative source for readiness, eligibility,
+ * and blocker information. Not optional metadata — operating truth.
  */
 export interface GovernedFabricState {
   decisionId?: string;
@@ -49,6 +52,8 @@ export interface GovernedFabricState {
   blockerCount?: number;
   warningCount?: number;
   consequenceCount?: number;
+  /** Lifecycle state from the governed decision queue */
+  lifecycleState?: 'recommended_only' | 'under_review' | 'approved' | 'rejected' | 'executed' | 'deferred' | 'escalated' | 'superseded';
 }
 
 export interface DocumentConsequenceRow {
@@ -147,4 +152,99 @@ export function buildDocumentConsequenceRows(args: {
   }
 
   return rows.slice(0, 10);
+}
+
+// ── Governance-Aware Consequence Summary ��────────────────────────────────────
+
+export interface ConsequenceGovernanceSummary {
+  totalRows: number;
+  governedRows: number;
+  ungoverned: number;
+  blocked: number;
+  allowed: number;
+  underReview: number;
+  hasBlockers: boolean;
+}
+
+/**
+ * Derive governance summary from consequence rows.
+ * Makes governance the primary lens for viewing consequence state.
+ */
+export function summarizeConsequenceGovernance(
+  rows: DocumentConsequenceRow[]
+): ConsequenceGovernanceSummary {
+  let governed = 0;
+  let blocked = 0;
+  let allowed = 0;
+  let underReview = 0;
+
+  for (const row of rows) {
+    if (row.governedFabric) {
+      governed++;
+      if (row.governedFabric.outcome === 'block') blocked++;
+      else if (row.governedFabric.outcome === 'allow') allowed++;
+      else if (row.governedFabric.outcome === 'review') underReview++;
+    }
+  }
+
+  return {
+    totalRows: rows.length,
+    governedRows: governed,
+    ungoverned: rows.length - governed,
+    blocked,
+    allowed,
+    underReview,
+    hasBlockers: blocked > 0,
+  };
+}
+
+// ── Queue-to-Consequence Bridge ─────────────────────────────────────────────
+
+export interface GovernanceQueueItem {
+  decisionId: string;
+  state: string;
+  artifactId?: string;
+  title?: string;
+  actionable: boolean;
+  actionsAvailable: string[];
+}
+
+/**
+ * Map review queue decision IDs to actionable queue items.
+ * Bridges the queue (decision IDs) with consequence rows (artifact context).
+ * This makes queue items and consequence rows part of one operating surface.
+ */
+export function mapQueueToGovernanceItems(
+  queue: { pending: string[]; escalated: string[]; deferred: string[]; rejected: string[] },
+  consequenceRows: DocumentConsequenceRow[],
+): GovernanceQueueItem[] {
+  const rowByDecision = new Map<string, DocumentConsequenceRow>();
+  for (const row of consequenceRows) {
+    if (row.governedFabric?.decisionId) {
+      rowByDecision.set(row.governedFabric.decisionId, row);
+    }
+  }
+
+  const items: GovernanceQueueItem[] = [];
+
+  const mapIds = (ids: string[], state: string, actions: string[]) => {
+    for (const id of ids) {
+      const row = rowByDecision.get(id);
+      items.push({
+        decisionId: id,
+        state,
+        artifactId: row?.artifactId,
+        title: row?.title,
+        actionable: actions.length > 0,
+        actionsAvailable: actions,
+      });
+    }
+  };
+
+  mapIds(queue.pending, 'under_review', ['approve', 'reject', 'escalate', 'defer']);
+  mapIds(queue.escalated, 'escalated', ['approve', 'reject', 'review']);
+  mapIds(queue.deferred, 'deferred', ['review']);
+  mapIds(queue.rejected, 'rejected', ['review']);
+
+  return items;
 }

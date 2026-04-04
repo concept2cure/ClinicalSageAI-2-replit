@@ -8,7 +8,7 @@
  *   - Expands on click to show full blocker list + decision history
  *
  * Uses governed components: Badge, Button, Collapsible.
- * Data from usePromotionBlockers + useGovernanceDecisions hooks.
+ * Data from useFabricDecisions + selectPromotionBlockersFromFabric.
  *
  * @module concept2cure/components/editor/GovernanceStatusBar
  */
@@ -32,16 +32,30 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  usePromotionBlockers,
-  useGovernanceDecisions,
-  type PromotionBlocker,
-  type GovernanceDecision,
-} from '../../hooks/useGovernance';
+import { selectPromotionBlockersFromFabric } from '../../hooks/useFabricState';
+import { useWorkspaceGovernance, selectGovernanceBadge, selectNeedsAttention, selectVerifyGate, selectNextActions } from '../workspace/WorkspaceGovernanceContext';
+
+/** Blocker derived from fabric decisions */
+interface PromotionBlocker {
+  type: string;
+  severity: string;
+  message: string;
+}
+
+/** Decision derived from fabric entries */
+interface GovernanceDecision {
+  id: string;
+  kind: string;
+  status: string;
+  summary: string;
+  authority: string;
+  createdAt: string;
+}
 
 interface GovernanceStatusBarProps {
   projectId: string | number | undefined;
   className?: string;
+  onOpenReviewQueue?: () => void;
 }
 
 type ReadinessLevel = 'clear' | 'warnings' | 'blocked';
@@ -168,30 +182,37 @@ function DecisionItem({ decision }: { decision: GovernanceDecision }) {
 export function GovernanceStatusBar({
   projectId,
   className,
+  onOpenReviewQueue,
 }: GovernanceStatusBarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const {
-    data: blockersData,
-    isLoading: blockersLoading,
-    refetch: refetchBlockers,
-  } = usePromotionBlockers(projectId);
+  // Consume shared governance model — single source of truth for all governance data
+  const governanceModel = useWorkspaceGovernance();
+  const entries = governanceModel?.fabricEntries ?? [];
+  const isLoading = governanceModel?.fabricLoading ?? false;
 
-  const {
-    data: decisionsData,
-    isLoading: decisionsLoading,
-    refetch: refetchDecisions,
-  } = useGovernanceDecisions(projectId);
+  // Derive blockers and decisions from shared fabric entries
+  const { blockers: rawBlockers, blocked } = selectPromotionBlockersFromFabric(entries);
+  const blockers: PromotionBlocker[] = rawBlockers;
+  const blockerCount = rawBlockers.length;
+
+  const decisions: GovernanceDecision[] = entries.slice(0, 5).map(e => ({
+    id: e.decisionId,
+    kind: e.intent,
+    status: e.outcome,
+    summary: `${e.intent}: ${e.outcome} (readiness: ${e.readinessLevel})`,
+    authority: e.outcome === 'block' ? 'blocked' : 'allowed',
+    createdAt: e.timestamp,
+  }));
+  const lastDecision = decisions[0] ?? null;
+
+  const governanceBadge = governanceModel ? selectGovernanceBadge(governanceModel) : null;
+  const needsAttention = governanceModel ? selectNeedsAttention(governanceModel) : false;
+  const verifyGate = governanceModel ? selectVerifyGate(governanceModel) : null;
+  const nextActions = governanceModel ? selectNextActions(governanceModel) : [];
 
   // Don't render if no projectId
   if (!projectId) return null;
-
-  const blocked = blockersData?.blocked ?? false;
-  const blockerCount = blockersData?.blockerCount ?? 0;
-  const blockers = blockersData?.blockers ?? [];
-  const decisions = decisionsData?.decisions ?? [];
-  const lastDecision = decisions[0] ?? null;
-  const isLoading = blockersLoading || decisionsLoading;
 
   const readiness = getReadinessLevel(blocked, blockerCount);
   const config = readinessConfig[readiness];
@@ -199,8 +220,7 @@ export function GovernanceStatusBar({
 
   const handleRefresh = (e: React.MouseEvent) => {
     e.stopPropagation();
-    refetchBlockers();
-    refetchDecisions();
+    governanceModel?.requestRefresh();
   };
 
   return (
@@ -228,6 +248,16 @@ export function GovernanceStatusBar({
               className="text-[10px] px-1.5 py-0 h-4 font-semibold"
             >
               {blockerCount} blocker{blockerCount !== 1 ? 's' : ''}
+            </Badge>
+          )}
+
+          {governanceBadge && governanceBadge.count > 0 && (
+            <Badge
+              variant="outline"
+              className="text-[10px] px-1.5 py-0 h-4"
+              data-testid="governance-queue-badge"
+            >
+              {governanceBadge.label}
             </Badge>
           )}
 
@@ -289,9 +319,22 @@ export function GovernanceStatusBar({
 
             {/* Decisions panel */}
             <div className="px-3 py-2">
-              <h4 className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider mb-1.5">
-                Recent Decisions
-              </h4>
+              <div className="flex items-center justify-between mb-1.5">
+                <h4 className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
+                  Recent Decisions
+                </h4>
+                {onOpenReviewQueue && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => { e.stopPropagation(); onOpenReviewQueue(); }}
+                    className="text-[10px] h-5 px-2 text-blue-600 hover:text-blue-700"
+                    data-testid="open-review-queue-btn"
+                  >
+                    Review Queue
+                  </Button>
+                )}
+              </div>
               {decisions.length === 0 ? (
                 <div className="flex items-center gap-1.5 py-1.5">
                   <Clock className="w-3 h-3 text-stone-400" />
@@ -313,6 +356,41 @@ export function GovernanceStatusBar({
               )}
             </div>
           </div>
+
+          {/* Next actions + verify gate */}
+          {nextActions.length > 0 && (
+            <div className="px-3 py-2 border-t border-stone-100">
+              <h4 className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider mb-1.5">
+                Next Actions
+              </h4>
+              <div className="space-y-1" data-testid="governance-next-actions">
+                {nextActions.map((a, i) => (
+                  <div key={i} className="flex items-start gap-1.5 text-[11px]">
+                    <span className={cn(
+                      'w-1.5 h-1.5 rounded-full mt-1.5 shrink-0',
+                      a.priority === 'high' ? 'bg-red-400' : a.priority === 'medium' ? 'bg-amber-400' : 'bg-stone-300',
+                    )} />
+                    <div>
+                      <span className="font-medium text-stone-700">{a.label}</span>
+                      <span className="text-stone-400 ml-1">— {a.reason}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {verifyGate && (
+                <div className="mt-2 flex items-center gap-1.5" data-testid="verify-gate-status">
+                  <span className={cn(
+                    'text-[10px] font-medium px-1.5 py-0.5 rounded',
+                    verifyGate.status === 'allowed' ? 'bg-emerald-50 text-emerald-700' :
+                    verifyGate.status === 'review_required' ? 'bg-amber-50 text-amber-700' :
+                    'bg-red-50 text-red-700',
+                  )}>
+                    Verify: {verifyGate.status === 'allowed' ? 'Ready' : verifyGate.status === 'review_required' ? 'Review needed' : 'Blocked'}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </CollapsibleContent>
     </Collapsible>
