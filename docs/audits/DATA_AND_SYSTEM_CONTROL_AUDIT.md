@@ -181,16 +181,74 @@ and structural violations of the core law:
 
 ---
 
-## Plane D — Workspace
+## Plane D — Workspace (MAPPED)
 
 ### Monolith Surgery Targets
 
-| File | Lines | Responsibilities | Status |
-|------|-------|-----------------|--------|
-| `ProjectWorkspaceShell.tsx` | _Pending_ | _Pending_ | Surgery needed |
-| `workspaceShellControllers.ts` | _Pending_ | _Pending_ | Surgery needed |
-| `server/index.ts` | ~285KB | _Pending_ | Reduce to bootstrap |
-| `server/routes/concept2cure.ts` | ~17,823 | 150 endpoints | Split into domain modules |
+| File | Lines | Imports | Responsibilities | Extract Count |
+|------|-------|---------|-----------------|---------------|
+| `ProjectWorkspaceShell.tsx` | 2,163 | 23 | **12 distinct concerns** | 8 hooks to extract |
+| `workspaceShellControllers.ts` | 147 | 3 | 6 hooks (skeleton) | 2 need expansion |
+| `server/index.ts` | 7,256 | 143 | 7 bootstrap + 20+ direct mounts | 2+ bootstrap files |
+| `server/routes/concept2cure.ts` | 17,823 | 72 | 150 endpoints in 1 file | 10 domain files |
+
+### ProjectWorkspaceShell.tsx — 12 Responsibilities (Must Reduce)
+
+1. Workspace layout rendering (top bar, left rail, center, inspector)
+2. Artifact/document navigation state (19 useState + hooks)
+3. Submission hierarchy resolution (section trees -> dossier nodes)
+4. File system operations (load/filter artifacts, folders, sections)
+5. Edit workflow escalation (canEscalate, tryOpenForEdit)
+6. Document lifecycle (create, cut/paste, placement dialogs, status)
+7. Template management (creation flows, subsection generation)
+8. Governed document evaluation (consequence jobs, proposals, review)
+9. Guided authoring sequences (stage commands, prompts, phase4 panels)
+10. Metric aggregation (readiness, dossier metrics, work items)
+11. Toast notification system (3 types)
+12. Context awareness (document snapshots, conversation context)
+
+**Extraction targets:**
+- `useArtifactManager` (~250 lines) — load/filter/classify artifacts
+- `useGuidedSequence` (~200 lines) — stage execution, history, results
+- `usePhase4Orchestration` (~150 lines) — panel switching with context
+- `usePlacementDialogState` — expand existing skeleton
+- `useSubmissionHierarchy` — wrap useSubmissionSections
+- `useDossierMetrics` — section readiness tracking
+- `useGovernedDocumentContext` — consequence state
+- `useShellToasts` — notification system
+
+### server/index.ts — Direct Mounts to Extract
+
+20+ route mounts NOT in bootstrap manifests (lines 562-1500+):
+- Device projects CRUD (lines 562-800) — **should be its own route file**
+- Health/diag endpoints (lines 434-522) — **should be in registerPlatformRoutes**
+- CSR search, AnA Cortex, Nano Banana, predictive sections
+- Biotech RAG, IVDR, manufacturing, pharmacovigilance
+- FDA, CER, stability, GCC, document-authoring, HAQ, IND
+
+### server/routes/concept2cure.ts — Domain Split Plan
+
+| Domain Module | Endpoints | Line Range |
+|--------------|-----------|------------|
+| `concept2cure/projects.ts` | 13 | 1753-3800 |
+| `concept2cure/governance.ts` | 7 | 3283-3500 |
+| `concept2cure/artifacts.ts` | 15 | 3809-7300 |
+| `concept2cure/ai-services.ts` | 8 | 4226-5900 |
+| `concept2cure/reviews.ts` | 20 | 13863-15700 |
+| `concept2cure/exports.ts` | 3 | 11520-11900 |
+| `concept2cure/notifications.ts` | 5 | 16127-16300 |
+| `concept2cure/tasks.ts` | 5 | 12009-13000 |
+| `concept2cure/communication.ts` | 7 | 13024-13400 |
+| `concept2cure/intelligence.ts` | 6 | 17015-17823 |
+
+### Shared Utilities to Extract First
+
+| Utility | Current Location | Target |
+|---------|-----------------|--------|
+| `sendSuccess` / `sendError` | concept2cure.ts:122-140 | `server/lib/response-helpers.ts` |
+| `logAuditEntry` | concept2cure.ts:278+ | `server/services/audit-logger.ts` |
+| `parseProjectParam` | concept2cure.ts:233-239 | `server/lib/id-parsers.ts` |
+| `canViewVisibilityTier` | concept2cure.ts:241-265 | `server/services/communication-center-access.ts` |
 
 ---
 

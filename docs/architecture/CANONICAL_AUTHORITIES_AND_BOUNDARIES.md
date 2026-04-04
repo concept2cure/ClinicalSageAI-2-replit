@@ -48,11 +48,11 @@ Duplicate authorities are classified as: preserve | wrap | deprecate | delete.
 
 | Concern | Canonical Authority | File | Duplicates | Decision |
 |---------|-------------------|------|------------|----------|
-| Layout/composition | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| Nav state | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| Panel switching | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| Governance consumption | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| Artifact consumption | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
+| Layout/composition | `ProjectWorkspaceShell.tsx` | `client/.../workspace/` | None (but shell does too much) | **Preserve** shell, **extract** 8 hooks |
+| Nav state | `useWorkspaceNavigationState()` | `workspaceShellControllers.ts` | Shell-local state (19 useState) | **Expand** controller, **migrate** shell state |
+| Panel switching | `usePhase4Panels()` | `workspaceShellControllers.ts` | Bare skeleton | **Expand** with context persistence |
+| Governance consumption | Shell inline logic | `ProjectWorkspaceShell.tsx` | Shell computes governance locally | **Extract** to `useGovernedDocumentContext` |
+| Artifact consumption | Shell inline logic | `ProjectWorkspaceShell.tsx` | Shell manages artifacts directly | **Extract** to `useArtifactManager` |
 
 ---
 

@@ -55,15 +55,17 @@ Any behavior outside that chain must be: absorbed, wrapped, deprecated, or delet
 | Dossier placement | _Pending_ | _Pending_ | |
 | Export pipeline | _Pending_ | _Pending_ | |
 
-### Plane D — Workspace
+### Plane D — Workspace (MAPPED)
 **Scope:** composition, layout, nav state, workflow UI, panel switching, topbar/rail rendering
 
 | Data Path | Canonical Owner | Persistence | Notes |
 |-----------|----------------|-------------|-------|
-| Layout/composition | _Pending_ | Client state | |
-| Nav state | _Pending_ | Client state | |
-| Panel switching | _Pending_ | Client state | |
-| Topbar model | _Pending_ | Client state | |
+| Layout/composition | `ProjectWorkspaceShell.tsx` (4-pane: topbar, rail, center, inspector) | Client state | Shell has 12 responsibilities — needs extraction |
+| Nav state | `useWorkspaceNavigationState()` in `workspaceShellControllers.ts` | Client state (React state) | Manages mode, projectNav, leftRailMode, activeLayer, workbench, selectedDoc |
+| Panel switching | `usePhase4Panels()` in controllers | Client state | Skeleton — needs context persistence and guards |
+| Topbar model | Inline in `ProjectWorkspaceShell.tsx` | Client state | Should consume governance truth, not compute it |
+| Guided authoring | Inline in shell (lines 1441-1565) | Client state | **Major extraction target** — 200+ lines |
+| Artifact management | Inline in shell | Client state + API | 19 useState hooks — extract to `useArtifactManager` |
 
 ### Plane E — Domain Engines
 **Scope:** RI Copilot, CMC Module 3 OS, eCTD/IND, 510(k)/CER/PMA/device, communication/submission logic
