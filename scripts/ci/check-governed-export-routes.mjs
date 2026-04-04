@@ -57,15 +57,23 @@ for (const check of checks) {
     }
   }
 
-  // Guard against regressions to direct-stream ZIP bypass in CERV2 route
+  // Guard against regressions to direct-stream ZIP bypass in the governed CERV2 POST /zip route.
+  // Scan only the governed POST route, not the dev-only sample GET routes.
   if (check.file === 'server/routes/cerv2-export-routes.ts') {
-    const zipSection = findSection(src, "router.post('/zip'", "router.get('/mock/:docType'");
+    const zipSection = findSection(src, "router.post('/zip'", "router.get('/sample/");
     const forbidden = ['archive.pipe(res)', "res.setHeader('Content-Disposition'"];
     for (const token of forbidden) {
       if (zipSection.includes(token)) {
-        console.error(`❌ ${check.file} ZIP route contains forbidden token: ${token}`);
+        console.error(`❌ ${check.file} governed ZIP route contains forbidden token: ${token}`);
         failures++;
       }
+    }
+
+    // Also verify sample routes are dev-gated
+    const sampleSection = findSection(src, "router.get('/sample/", '');
+    if (sampleSection && !sampleSection.includes('isSampleExportEnabled')) {
+      console.error(`❌ ${check.file} sample routes must be gated by isSampleExportEnabled()`);
+      failures++;
     }
   }
 }

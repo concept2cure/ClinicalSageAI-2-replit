@@ -25,7 +25,8 @@ export type ScheduledJobType =
   | 'compliance_sweep'
   | 'dependency_staleness_audit'
   | 'external_data_refresh'
-  | 'automation_digest';
+  | 'automation_digest'
+  | 'platform_maintenance';
 
 export interface ScheduledJobConfig {
   readonly type: ScheduledJobType;
@@ -145,10 +146,52 @@ async function handleAutomationDigest(config: ScheduledJobConfig): Promise<Sched
   };
 }
 
+// ─── Built-in Handler: Platform Maintenance ───────────────────────────────
+
+async function handlePlatformMaintenance(config: ScheduledJobConfig): Promise<ScheduledJobRun> {
+  const startedAt = new Date().toISOString();
+  const start = Date.now();
+
+  try {
+    const { runPlatformMaintenance } = await import('../maintenance/platform-maintenance.js');
+    const result = await runPlatformMaintenance(config.organizationId);
+
+    const processed =
+      result.tokenCleanup.expiredRemoved +
+      result.bridgeIntegrity.linkedDocuments +
+      result.bridgeBackfill.linked;
+    const flagged = result.bridgeIntegrity.orphanedLinks;
+
+    return {
+      jobType: config.type,
+      organizationId: config.organizationId,
+      status: 'completed',
+      itemsProcessed: processed,
+      itemsFlagged: flagged,
+      durationMs: Date.now() - start,
+      startedAt,
+      completedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      jobType: config.type,
+      organizationId: config.organizationId,
+      status: 'failed',
+      itemsProcessed: 0,
+      itemsFlagged: 0,
+      durationMs: Date.now() - start,
+      startedAt,
+      completedAt: new Date().toISOString(),
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
 // Register built-in handlers
 handlers.set('data_freshness_check', handleDataFreshnessCheck);
 handlers.set('dependency_staleness_audit', handleDependencyStalenessAudit);
 handlers.set('automation_digest', handleAutomationDigest);
+handlers.set('platform_maintenance', handlePlatformMaintenance);
 
 // ─── Queue Setup ────────────────────────────────────────────────────────────
 
@@ -306,6 +349,15 @@ export async function registerDefaultSchedules(organizationId: number): Promise<
       name: 'Daily Automation Digest',
       description: 'Send a daily summary of all automation activity to configured channels',
       cron: '0 17 * * 1-5',  // 5 PM weekdays
+      enabled: true,
+      organizationId,
+      parameters: {},
+    },
+    {
+      type: 'platform_maintenance',
+      name: 'Platform Maintenance',
+      description: 'Token revocation cleanup, bridge integrity check, and artifact-document backfill',
+      cron: '0 3 * * *',  // 3 AM daily
       enabled: true,
       organizationId,
       parameters: {},
