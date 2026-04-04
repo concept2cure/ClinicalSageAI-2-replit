@@ -176,9 +176,9 @@ describe('No regression — backend and hooks intact', () => {
     expect(content).toContain('export async function getProjectReviewQueue');
   });
 
-  it('GovernanceStatusBar still uses usePromotionBlockers', () => {
+  it('GovernanceStatusBar uses canonical useFabricDecisions path', () => {
     const content = read('client/src/concept2cure/components/editor/GovernanceStatusBar.tsx');
-    expect(content).toContain('usePromotionBlockers');
-    expect(content).toContain('useGovernanceDecisions');
+    expect(content).toContain('useFabricDecisions');
+    expect(content).toContain('selectPromotionBlockersFromFabric');
   });
 });

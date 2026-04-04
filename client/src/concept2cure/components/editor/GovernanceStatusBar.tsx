@@ -8,7 +8,7 @@
  *   - Expands on click to show full blocker list + decision history
  *
  * Uses governed components: Badge, Button, Collapsible.
- * Data from usePromotionBlockers + useGovernanceDecisions hooks.
+ * Data from useFabricDecisions + selectPromotionBlockersFromFabric.
  *
  * @module concept2cure/components/editor/GovernanceStatusBar
  */
@@ -33,18 +33,19 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
-  usePromotionBlockers,
-  useGovernanceDecisions,
-} from '../../hooks/useGovernance';
+  useFabricDecisions,
+  selectPromotionBlockersFromFabric,
+  type FabricDecisionEntry,
+} from '../../hooks/useFabricState';
 
-/** Blocker shape from usePromotionBlockers selector */
+/** Blocker derived from fabric decisions */
 interface PromotionBlocker {
   type: string;
   severity: string;
   message: string;
 }
 
-/** Decision shape from useGovernanceDecisions adapter */
+/** Decision derived from fabric entries */
 interface GovernanceDecision {
   id: string;
   kind: string;
@@ -52,8 +53,6 @@ interface GovernanceDecision {
   summary: string;
   authority: string;
   createdAt: string;
-  sourceSignalCount: number;
-  hasReceipt: boolean;
 }
 
 interface GovernanceStatusBarProps {
@@ -190,27 +189,31 @@ export function GovernanceStatusBar({
 }: GovernanceStatusBarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const {
-    data: blockersData,
-    isLoading: blockersLoading,
-    refetch: refetchBlockers,
-  } = usePromotionBlockers(projectId);
+  // Single canonical data source — useFabricDecisions
+  const fabricQuery = useFabricDecisions(projectId != null ? String(projectId) : undefined, { limit: 20 });
+  const entries = fabricQuery.data?.entries ?? [];
 
-  const {
-    data: decisionsData,
-    isLoading: decisionsLoading,
-    refetch: refetchDecisions,
-  } = useGovernanceDecisions(projectId);
+  // Derive blockers from fabric decisions
+  const { blockers: rawBlockers, blocked } = selectPromotionBlockersFromFabric(entries);
+  const blockers: PromotionBlocker[] = rawBlockers;
+  const blockerCount = rawBlockers.length;
+
+  // Derive decisions from fabric entries
+  const decisions: GovernanceDecision[] = entries.slice(0, 5).map(e => ({
+    id: e.decisionId,
+    kind: e.intent,
+    status: e.outcome,
+    summary: `${e.intent}: ${e.outcome} (readiness: ${e.readinessLevel})`,
+    authority: e.outcome === 'block' ? 'blocked' : 'allowed',
+    createdAt: e.timestamp,
+  }));
+  const lastDecision = decisions[0] ?? null;
+  const isLoading = fabricQuery.isLoading;
+
+  const refetchAll = () => fabricQuery.refetch();
 
   // Don't render if no projectId
   if (!projectId) return null;
-
-  const blocked = blockersData?.blocked ?? false;
-  const blockerCount = blockersData?.blockerCount ?? 0;
-  const blockers = blockersData?.blockers ?? [];
-  const decisions = decisionsData?.decisions ?? [];
-  const lastDecision = decisions[0] ?? null;
-  const isLoading = blockersLoading || decisionsLoading;
 
   const readiness = getReadinessLevel(blocked, blockerCount);
   const config = readinessConfig[readiness];
@@ -218,8 +221,7 @@ export function GovernanceStatusBar({
 
   const handleRefresh = (e: React.MouseEvent) => {
     e.stopPropagation();
-    refetchBlockers();
-    refetchDecisions();
+    refetchAll();
   };
 
   return (

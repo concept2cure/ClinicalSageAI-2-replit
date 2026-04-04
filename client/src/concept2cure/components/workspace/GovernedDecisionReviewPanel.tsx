@@ -68,10 +68,16 @@ function DecisionRow({
   decisionId,
   state,
   projectId,
+  onInspect,
+  onActionStart,
+  onActionComplete,
 }: {
   decisionId: string;
   state: string;
   projectId: string;
+  onInspect?: (decisionId: string, state: string) => void;
+  onActionStart?: (decisionId: string, action: string) => void;
+  onActionComplete?: (result: { success: boolean; decisionId: string; action: string; previousState: string; newState: string; error?: string }) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [actionReason, setActionReason] = useState('');
@@ -86,6 +92,15 @@ function DecisionRow({
 
   const transitionMutation = useGovernedDecisionTransition(projectId);
 
+  // Notify governance model when expanding to inspect
+  const handleExpand = () => {
+    const newExpanded = !expanded;
+    setExpanded(newExpanded);
+    if (newExpanded) {
+      onInspect?.(decisionId, state);
+    }
+  };
+
   const handleAction = async (action: string) => {
     if ((action === 'reject' || action === 'defer') && !actionReason.trim()) {
       toast({ title: `${action === 'reject' ? 'Rejection' : 'Deferral'} requires a reason`, variant: 'destructive' });
@@ -95,6 +110,9 @@ function DecisionRow({
       toast({ title: 'Escalation requires a target', variant: 'destructive' });
       return;
     }
+
+    // Notify governance model: action starting
+    onActionStart?.(decisionId, action);
 
     try {
       const result = await transitionMutation.mutateAsync({
@@ -108,13 +126,24 @@ function DecisionRow({
         toast({ title: `Decision ${action}d successfully` });
         setActionReason('');
         setEscalateTarget('');
+        // Notify governance model: action completed successfully
+        onActionComplete?.({
+          success: true,
+          decisionId,
+          action,
+          previousState: result.data.previousState,
+          newState: result.data.newState,
+        });
         queryClient.invalidateQueries({ queryKey: ['concept2cure', 'governance', 'review-queue', projectId] });
         queryClient.invalidateQueries({ queryKey: ['concept2cure', 'governance', 'decision-history', projectId, decisionId] });
       } else {
-        toast({ title: result?.data?.error || 'Action failed', variant: 'destructive' });
+        const error = result?.data?.error || 'Action failed';
+        toast({ title: error, variant: 'destructive' });
+        onActionComplete?.({ success: false, decisionId, action, previousState: state, newState: state, error });
       }
     } catch {
       toast({ title: 'Failed to perform action', variant: 'destructive' });
+      onActionComplete?.({ success: false, decisionId, action, previousState: state, newState: state, error: 'Network error' });
     }
   };
 
@@ -124,7 +153,7 @@ function DecisionRow({
   return (
     <div className="border border-stone-200 rounded-lg mb-1.5 overflow-hidden">
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={handleExpand}
         className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-stone-50/50 transition-colors"
         aria-expanded={expanded}
         data-testid={`decision-row-${shortId}`}
@@ -384,6 +413,9 @@ export function GovernedDecisionReviewPanel({
               decisionId={decisionId}
               state={activeTab === 'pending' ? 'under_review' : activeTab}
               projectId={projectId}
+              onInspect={onInspectDecision}
+              onActionStart={onActionStarted}
+              onActionComplete={onActionCompleted}
             />
           ))
         )}
