@@ -28,7 +28,7 @@ import {
 } from './PlacementDialog';
 import { GovernedDocumentPanel } from './GovernedDocumentPanel';
 import { GovernedDecisionReviewPanel } from './GovernedDecisionReviewPanel';
-import { WorkspaceGovernanceProvider, runTransitionPreflight, type TransitionPreflightResult } from './WorkspaceGovernanceContext';
+import { WorkspaceGovernanceProvider, runTransitionPreflight, selectNavGovernanceAffordance, type TransitionPreflightResult } from './WorkspaceGovernanceContext';
 import { TransitionPreflightBanner } from './TransitionPreflightBanner';
 import { useFabricDecisions } from '../../hooks/useFabricState';
 import {
@@ -303,6 +303,16 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const { phase4Panel, setPhase4Panel, phase4Ctx, setPhase4Ctx } = usePhase4Panels();
 
   const workflowTransitionModel = useWorkflowTransitionModel();
+
+  // Governance-aware nav affordances for gated transitions
+  const verifyNavAffordance = useMemo(
+    () => selectNavGovernanceAffordance(governance, 'verify_review', workflowTransitionModel),
+    [governance, workflowTransitionModel],
+  );
+  const publishNavAffordance = useMemo(
+    () => selectNavGovernanceAffordance(governance, 'publish_package', workflowTransitionModel),
+    [governance, workflowTransitionModel],
+  );
 
   // Governance-aware transition preflight state
   const [pendingPreflight, setPendingPreflight] = useState<TransitionPreflightResult | null>(null);
@@ -1504,9 +1514,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       }
       if (stage === 'verify') {
         setProjectNav('verify');
-        setActiveLayer('reports');
-        applyWorkflowTransition('browse_list', {});
-        setPhase4Panel('verification');
+        if (applyWorkflowTransition('verify_review', { reviewContext: true })) {
+          setActiveLayer('reports');
+          setPhase4Panel('verification');
+        }
         return;
       }
       setProjectNav('publish');
@@ -1686,9 +1697,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               applyWorkflowTransition('browse_list', {});
               setPhase4Panel('none');
             } else if (id === 'verify') {
-              setActiveLayer('reports');
-              applyWorkflowTransition('browse_list', {});
-              setPhase4Panel('verification');
+              // Route through governance-gated verify transition
+              if (applyWorkflowTransition('verify_review', { reviewContext: true })) {
+                setActiveLayer('reports');
+                setPhase4Panel('verification');
+              }
             } else if (id === 'review') {
               setActiveLayer('reports');
               applyWorkflowTransition('browse_list', {});

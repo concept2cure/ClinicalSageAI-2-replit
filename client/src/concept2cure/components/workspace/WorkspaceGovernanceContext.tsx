@@ -337,3 +337,64 @@ export function runTransitionPreflight(
     cta,
   };
 }
+
+// ── Nav Affordance Selector ─────────────────────────────────────────────────
+
+export type NavGateStatus = 'ready' | 'review_needed' | 'blocked' | 'ungated';
+
+export interface NavGovernanceAffordance {
+  transitionKey: string;
+  gateStatus: NavGateStatus;
+  tooltip: string;
+  disabled: boolean;
+  badgeLabel?: string;
+  badgeTone?: 'green' | 'amber' | 'red';
+}
+
+/**
+ * Derive governance-aware nav affordance for a transition key.
+ * Used by sidebar/nav items to show proactive gate status before click.
+ */
+export function selectNavGovernanceAffordance(
+  model: WorkspaceGovernanceViewModel,
+  transitionKey: string,
+  transitionMap: Record<string, { governanceGate?: string }>,
+): NavGovernanceAffordance {
+  const transition = transitionMap[transitionKey];
+  if (!transition?.governanceGate) {
+    return { transitionKey, gateStatus: 'ungated', tooltip: '', disabled: false };
+  }
+
+  const preflight = runTransitionPreflight(model, transition.governanceGate);
+
+  if (preflight.allowed) {
+    return {
+      transitionKey,
+      gateStatus: 'ready',
+      tooltip: 'Ready to proceed',
+      disabled: false,
+      badgeLabel: 'Ready',
+      badgeTone: 'green',
+    };
+  }
+
+  if (preflight.status === 'review_required') {
+    return {
+      transitionKey,
+      gateStatus: 'review_needed',
+      tooltip: preflight.reasons[0] || 'Review needed before proceeding',
+      disabled: false,
+      badgeLabel: 'Review',
+      badgeTone: 'amber',
+    };
+  }
+
+  return {
+    transitionKey,
+    gateStatus: 'blocked',
+    tooltip: preflight.reasons[0] || 'Blocked by governance decisions',
+    disabled: true,
+    badgeLabel: 'Blocked',
+    badgeTone: 'red',
+  };
+}
