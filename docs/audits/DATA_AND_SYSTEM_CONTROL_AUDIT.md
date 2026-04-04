@@ -129,42 +129,55 @@ and structural violations of the core law:
 
 ---
 
-## Plane C — Artifacts
+## Plane C — Artifacts (MAPPED)
+
+**Critical finding:** Artifacts and documents are ONE system. `concept2cureArtifacts` is the single table. No bridge needed.
 
 ### Artifact/Document Identity
 | Aspect | Detail |
 |--------|--------|
-| Canonical owner | _Pending research_ |
-| Duplicate owners | _Pending research_ |
-| Decision | _Pending_ |
+| Canonical owner | `concept2cureArtifacts` table (`shared/schema.ts:5267`) — single unified model |
+| Creation route | `POST /api/concept2cure/projects/:projectId/artifacts` (`concept2cure.ts:6487`) |
+| Duplicate owners | None for creation. `unifiedDocuments` table exists but **orphaned** (zero queries). `authoring_documents` is a **separate legacy system** in authoring.router.ts. |
+| Decision | **Preserve** concept2cureArtifacts as canonical. **Quarantine** unifiedDocuments (unused). **Document** authoring_documents as legacy plane. |
 
 ### Editor Open Path
 | Aspect | Detail |
 |--------|--------|
-| Canonical owner | _Pending research_ |
-| Duplicate owners | _Pending research_ |
-| Decision | _Pending_ |
+| Canonical owner | `client/.../editor/EditorPanel.tsx` -> renders `UnifiedDocumentEditor` |
+| Flow | Click (VaultPage/ArtifactsPage) -> API fetch artifacts -> select artifact -> EditorPanel receives props -> TipTap editor |
+| Save path | EditorPanel -> `PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId` (concept2cure.ts:6796) |
+| Duplicate owners | ZenApp.tsx line 1145 has **direct status fetch** bypassing unified pattern |
+| Decision | **Preserve** EditorPanel as canonical. **Absorb** ZenApp direct fetch into unified hook. |
 
 ### Dossier Placement
 | Aspect | Detail |
 |--------|--------|
-| Canonical owner | _Pending research_ |
-| Duplicate owners | _Pending research_ |
-| Decision | _Pending_ |
+| Canonical owner | `PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement` (concept2cure.ts:7107) |
+| Storage | `concept2cureArtifacts.ctdSection` (e.g., "3.2.S.1") + metadata JSON |
+| Governance | `governedDocumentContractService.ts` infers workspace target (dossier vs project vs vault) |
+| Provenance | All placements logged to `concept2cureProvenanceEvents` |
+| Duplicate owners | None |
+| Decision | **Preserve** — clean canonical path |
 
 ### Version Management
 | Aspect | Detail |
 |--------|--------|
-| Canonical owner | _Pending research_ |
-| Duplicate owners | _Pending research_ |
-| Decision | _Pending_ |
+| Canonical owner | `concept2cureArtifactVersions` table (`shared/schema.ts:5315`) — immutable append-only |
+| Creation | Auto on artifact create (v1), increment on PUT update (concept2cure.ts:6817) |
+| Comparison | `GET /compare-versions/:projectId/:artifactId` (in authoring-actions.ts, separate domain) |
+| Provenance | `concept2cureProvenanceEvents.artifactVersionId` links versions to events |
+| Duplicate owners | Version comparison lives in authoring-actions.ts rather than concept2cure.ts |
+| Decision | **Preserve** — consider migrating comparison endpoint to concept2cure domain |
 
 ### Export Contract
 | Aspect | Detail |
 |--------|--------|
-| Canonical owner | _Pending research_ |
-| Duplicate owners | _Pending research_ |
-| Decision | _Pending_ |
+| Canonical owner | `server/services/compute/exportGovernance.ts` — `validateExportGovernance()` (fail-closed) |
+| Endpoints | `POST /artifacts/export-{docx,pdf,pptx}` (concept2cure.ts:11520-11900) |
+| Audit | `registerExportGovernanceQuick()` logs every export with org/project/user/format/IP |
+| Duplicate owners | `docx-factory.ts` BFF proxy to Shadow Service (different auth model, X-Admin-Token) |
+| Decision | **Preserve** concept2cure exports as canonical. **Wrap** docx-factory as integration adapter. |
 
 ---
 

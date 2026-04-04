@@ -37,12 +37,12 @@ Duplicate authorities are classified as: preserve | wrap | deprecate | delete.
 
 | Concern | Canonical Authority | File | Duplicates | Decision |
 |---------|-------------------|------|------------|----------|
-| Artifact/document identity | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| Editor open path | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| Dossier placement | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| Version management | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| Export contract | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
-| Document generation | _Pending_ | _Pending_ | _Pending_ | _Pending_ |
+| Artifact/document identity | `concept2cureArtifacts` table | `shared/schema.ts:5267` | `unifiedDocuments` (orphaned), `authoring_documents` (legacy) | **Preserve**; quarantine orphans |
+| Editor open path | `EditorPanel.tsx` -> `UnifiedDocumentEditor` | `client/.../editor/` | ZenApp direct fetch (line 1145) | **Preserve**; absorb bypass |
+| Dossier placement | PUT `/artifacts/:id/placement` | `concept2cure.ts:7107` | None | **Preserve** — clean |
+| Version management | `concept2cureArtifactVersions` (append-only) | `shared/schema.ts:5315` | Compare in authoring-actions.ts | **Preserve** |
+| Export contract | `exportGovernance.ts` (fail-closed) | `server/services/compute/` | `docx-factory.ts` (Shadow Service proxy) | **Preserve**; wrap factory |
+| Document generation | Inline in export routes | `concept2cure.ts:11520+` | None | **Preserve** |
 
 ### Workspace Authorities
 
