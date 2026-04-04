@@ -69,6 +69,10 @@ export interface WorkspaceGovernanceViewModel {
   fabricLoading: boolean;
   setFabricDetail: (entries: FabricDecisionEntry[], loading: boolean) => void;
 
+  // Manual refresh — shell provides the refetch function
+  requestRefresh: () => void;
+  setRefreshFn: (fn: () => void) => void;
+
   // Actions
   openQueue: () => void;
   closeQueue: () => void;
@@ -106,6 +110,10 @@ export function useWorkspaceGovernanceModel(): WorkspaceGovernanceViewModel {
     setFabricEntries(entries);
     setFabricLoading(loading);
   }, []);
+
+  const [refreshFnRef, setRefreshFnState] = useState<{ fn: () => void }>({ fn: () => {} });
+  const setRefreshFn = useCallback((fn: () => void) => setRefreshFnState({ fn }), []);
+  const requestRefresh = useCallback(() => refreshFnRef.fn(), [refreshFnRef]);
 
   const openQueue = useCallback(() => {
     setSurface('queue');
@@ -184,6 +192,8 @@ export function useWorkspaceGovernanceModel(): WorkspaceGovernanceViewModel {
     fabricEntries,
     fabricLoading,
     setFabricDetail,
+    requestRefresh,
+    setRefreshFn,
     reset,
     isActive: surface !== 'idle',
     hasUnresolved: unresolvedCount > 0,
@@ -191,9 +201,10 @@ export function useWorkspaceGovernanceModel(): WorkspaceGovernanceViewModel {
   }), [
     surface, selectedDecisionId, selectedDecisionState, actionInProgress,
     lastResult, governedPanelOpen, queueCounts, unresolvedCount, totalQueueItems,
-    fabricEntries, fabricLoading,
+    fabricEntries, fabricLoading, refreshFnRef,
     openQueue, closeQueue, inspectDecision, startAction, completeAction,
-    dismissResult, openGovernedPanel, closeGovernedPanel, setFabricDetail, reset,
+    dismissResult, openGovernedPanel, closeGovernedPanel, setFabricDetail,
+    requestRefresh, setRefreshFn, reset,
   ]);
 }
 

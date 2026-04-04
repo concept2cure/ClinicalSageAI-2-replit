@@ -125,3 +125,132 @@ export function selectBlockerSummary(model: WorkspaceGovernanceViewModel): {
   }
   return { blocked: count > 0, blockerCount: count };
 }
+
+// ── Workflow Gating Selectors ───────────────────────────────────────────────
+
+export type WorkflowGateStatus = 'allowed' | 'blocked' | 'review_required';
+
+export interface WorkflowGateResult {
+  status: WorkflowGateStatus;
+  reasons: string[];
+  blockerCount: number;
+  unresolvedCount: number;
+}
+
+/**
+ * Determine if the verify workflow stage is allowed based on governance truth.
+ * Verify requires: no unresolved escalated decisions + no critical blockers.
+ */
+export function selectVerifyGate(model: WorkspaceGovernanceViewModel): WorkflowGateResult {
+  const reasons: string[] = [];
+  let status: WorkflowGateStatus = 'allowed';
+
+  if (model.queueCounts.escalated > 0) {
+    status = 'blocked';
+    reasons.push(`${model.queueCounts.escalated} escalated decision(s) require resolution`);
+  }
+
+  const blockerCount = model.fabricEntries.filter(e => e.outcome === 'block').length;
+  if (blockerCount > 0) {
+    status = 'blocked';
+    reasons.push(`${blockerCount} document(s) blocked by governance`);
+  }
+
+  if (status === 'allowed' && model.unresolvedCount > 0) {
+    status = 'review_required';
+    reasons.push(`${model.unresolvedCount} decision(s) pending review`);
+  }
+
+  return { status, reasons, blockerCount, unresolvedCount: model.unresolvedCount };
+}
+
+/**
+ * Determine if the publish workflow stage is allowed based on governance truth.
+ * Publish requires: verify gate passed + all decisions approved/executed.
+ */
+export function selectPublishGate(model: WorkspaceGovernanceViewModel): WorkflowGateResult {
+  const verifyGate = selectVerifyGate(model);
+  if (verifyGate.status === 'blocked') {
+    return { ...verifyGate, reasons: [...verifyGate.reasons, 'Verify gate not passed'] };
+  }
+
+  const reasons: string[] = [];
+  let status: WorkflowGateStatus = 'allowed';
+
+  const notPublishable = model.fabricEntries.filter(
+    e => e.publishGateOutcome === 'blocked' || e.publishGateOutcome === 'insufficient_context',
+  );
+  if (notPublishable.length > 0) {
+    status = 'blocked';
+    reasons.push(`${notPublishable.length} document(s) not yet publish-eligible`);
+  }
+
+  if (verifyGate.status === 'review_required') {
+    status = 'review_required';
+    reasons.push(...verifyGate.reasons);
+  }
+
+  return { status, reasons, blockerCount: verifyGate.blockerCount, unresolvedCount: model.unresolvedCount };
+}
+
+/**
+ * Derive the next recommended action(s) for the user based on current governance state.
+ */
+export interface NextActionRecommendation {
+  action: string;
+  label: string;
+  priority: 'high' | 'medium' | 'low';
+  reason: string;
+}
+
+export function selectNextActions(model: WorkspaceGovernanceViewModel): NextActionRecommendation[] {
+  const actions: NextActionRecommendation[] = [];
+
+  if (model.queueCounts.escalated > 0) {
+    actions.push({
+      action: 'resolve_escalated',
+      label: 'Resolve escalated decisions',
+      priority: 'high',
+      reason: `${model.queueCounts.escalated} decision(s) escalated and blocking progress`,
+    });
+  }
+
+  const blockerCount = model.fabricEntries.filter(e => e.outcome === 'block').length;
+  if (blockerCount > 0) {
+    actions.push({
+      action: 'fix_blockers',
+      label: 'Address governance blockers',
+      priority: 'high',
+      reason: `${blockerCount} document(s) blocked by governance evaluation`,
+    });
+  }
+
+  if (model.queueCounts.pending > 0) {
+    actions.push({
+      action: 'review_pending',
+      label: 'Review pending decisions',
+      priority: 'medium',
+      reason: `${model.queueCounts.pending} decision(s) awaiting review`,
+    });
+  }
+
+  if (model.queueCounts.deferred > 0) {
+    actions.push({
+      action: 'revisit_deferred',
+      label: 'Revisit deferred decisions',
+      priority: 'low',
+      reason: `${model.queueCounts.deferred} deferred decision(s)`,
+    });
+  }
+
+  if (actions.length === 0 && model.fabricEntries.length > 0) {
+    actions.push({
+      action: 'proceed_to_verify',
+      label: 'Ready to verify',
+      priority: 'low',
+      reason: 'No governance blockers — verification can proceed',
+    });
+  }
+
+  return actions;
+}

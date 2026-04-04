@@ -291,6 +291,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     governance.setFabricDetail(fabricQuery.data?.entries ?? [], fabricQuery.isLoading);
   }, [fabricQuery.data, fabricQuery.isLoading, governance.setFabricDetail]);
 
+  // Wire manual refresh into governance model
+  useEffect(() => {
+    governance.setRefreshFn(() => fabricQuery.refetch());
+  }, [fabricQuery.refetch, governance.setRefreshFn]);
+
   // Editor ref for outline scroll
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
