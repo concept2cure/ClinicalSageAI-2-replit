@@ -197,3 +197,54 @@ export function summarizeConsequenceGovernance(
     hasBlockers: blocked > 0,
   };
 }
+
+// ── Queue-to-Consequence Bridge ─────────────────────────────────────────────
+
+export interface GovernanceQueueItem {
+  decisionId: string;
+  state: string;
+  artifactId?: string;
+  title?: string;
+  actionable: boolean;
+  actionsAvailable: string[];
+}
+
+/**
+ * Map review queue decision IDs to actionable queue items.
+ * Bridges the queue (decision IDs) with consequence rows (artifact context).
+ * This makes queue items and consequence rows part of one operating surface.
+ */
+export function mapQueueToGovernanceItems(
+  queue: { pending: string[]; escalated: string[]; deferred: string[]; rejected: string[] },
+  consequenceRows: DocumentConsequenceRow[],
+): GovernanceQueueItem[] {
+  const rowByDecision = new Map<string, DocumentConsequenceRow>();
+  for (const row of consequenceRows) {
+    if (row.governedFabric?.decisionId) {
+      rowByDecision.set(row.governedFabric.decisionId, row);
+    }
+  }
+
+  const items: GovernanceQueueItem[] = [];
+
+  const mapIds = (ids: string[], state: string, actions: string[]) => {
+    for (const id of ids) {
+      const row = rowByDecision.get(id);
+      items.push({
+        decisionId: id,
+        state,
+        artifactId: row?.artifactId,
+        title: row?.title,
+        actionable: actions.length > 0,
+        actionsAvailable: actions,
+      });
+    }
+  };
+
+  mapIds(queue.pending, 'under_review', ['approve', 'reject', 'escalate', 'defer']);
+  mapIds(queue.escalated, 'escalated', ['approve', 'reject', 'review']);
+  mapIds(queue.deferred, 'deferred', ['review']);
+  mapIds(queue.rejected, 'rejected', ['review']);
+
+  return items;
+}

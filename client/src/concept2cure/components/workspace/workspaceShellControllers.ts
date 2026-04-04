@@ -92,28 +92,16 @@ export const usePlacementAndMoveState = () => {
 /**
  * Document consequence + governance operating state.
  *
- * Uses the unified WorkspaceGovernanceModel for governance surface state.
- * Backward-compatible: still exports showGovernedPanel, reviewQueueVisible
- * as derived getters from the governance model.
+ * Uses the unified WorkspaceGovernanceModel as the single source of truth
+ * for all governance surface state. No more loose boolean toggles.
  */
 export const useDocumentConsequenceState = () => {
   const [computeJobs, setComputeJobs] = useState<ConsequenceComputeJob[]>([]);
   const governance = useWorkspaceGovernanceModel();
 
-  // Backward-compatible accessors (delegate to governance model)
-  const showGovernedPanel = governance.governedPanelOpen;
-  const setShowGovernedPanel = (open: boolean) => open ? governance.openGovernedPanel() : governance.closeGovernedPanel();
-  const reviewQueueVisible = governance.surface === 'queue' || governance.surface === 'inspecting' || governance.surface === 'acting' || governance.surface === 'result';
-  const setReviewQueueVisible = (visible: boolean) => visible ? governance.openQueue() : governance.closeQueue();
-
   return {
     computeJobs,
     setComputeJobs,
-    showGovernedPanel,
-    setShowGovernedPanel,
-    reviewQueueVisible,
-    setReviewQueueVisible,
-    // New: full governance model access
     governance,
   };
 };

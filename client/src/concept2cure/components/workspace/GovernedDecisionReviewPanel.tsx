@@ -47,6 +47,10 @@ interface GovernedDecisionReviewPanelProps {
   projectId: string | undefined;
   className?: string;
   onClose?: () => void;
+  /** Governance model callbacks for coordinated state updates */
+  onInspectDecision?: (decisionId: string, state: string) => void;
+  onActionStarted?: (decisionId: string, action: string) => void;
+  onActionCompleted?: (result: { success: boolean; decisionId: string; action: string; previousState: string; newState: string; error?: string }) => void;
 }
 
 type QueueTab = 'pending' | 'escalated' | 'deferred' | 'rejected';
@@ -269,6 +273,9 @@ export function GovernedDecisionReviewPanel({
   projectId,
   className,
   onClose,
+  onInspectDecision,
+  onActionStarted,
+  onActionCompleted,
 }: GovernedDecisionReviewPanelProps) {
   const [activeTab, setActiveTab] = useState<QueueTab>('pending');
 

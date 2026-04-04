@@ -276,8 +276,12 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       auditRef?: string;
     }>;
   }>({ proposals: [] });
-  const { computeJobs, setComputeJobs, showGovernedPanel, setShowGovernedPanel, reviewQueueVisible, setReviewQueueVisible } =
+  const { computeJobs, setComputeJobs, governance } =
     useDocumentConsequenceState();
+  const showGovernedPanel = governance.governedPanelOpen;
+  const setShowGovernedPanel = (open: boolean) => open ? governance.openGovernedPanel() : governance.closeGovernedPanel();
+  const reviewQueueVisible = governance.isActive;
+  const setReviewQueueVisible = (visible: boolean) => visible ? governance.openQueue() : governance.closeQueue();
 
   // Editor ref for outline scroll
   const editorContainerRef = useRef<HTMLDivElement>(null);
@@ -2112,7 +2116,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             <GovernedDecisionReviewPanel
               projectId={String(projectId)}
               className="w-[320px] shrink-0 h-full"
-              onClose={() => setReviewQueueVisible(false)}
+              onClose={() => governance.closeQueue()}
+              onInspectDecision={(id, state) => governance.inspectDecision(id, state)}
+              onActionStarted={(id, action) => governance.startAction(id, action)}
+              onActionCompleted={(result) => governance.completeAction({
+                ...result,
+                completedAt: new Date().toISOString(),
+              })}
             />
           )}
         </div>
