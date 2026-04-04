@@ -75,6 +75,7 @@
     "ci:reasoning-tier-uat-evidence:strict": "node scripts/ci/check-reasoning-tier-uat-evidence.mjs --strict",
     "ci:reasoning-tier-readiness": "node scripts/ci/check-reasoning-tier-readiness-suite.mjs",
     "ci:reasoning-tier-readiness:strict": "node scripts/ci/check-reasoning-tier-readiness-suite.mjs --strict-uat-evidence",
+    "ci:report-branch-drift": "node scripts/ci/report-branch-drift.mjs",
     "audit:last-20-prs": "node scripts/audits/generate-last-pr-wiring-audit.mjs --limit 20",
     "audit:last-20-prs:plan": "node scripts/audits/execute-last-pr-audit-build-plan.mjs --limit 20",
     "audit:last-20-prs:plan:strict": "node scripts/audits/execute-last-pr-audit-build-plan.mjs --limit 20 --strict",
