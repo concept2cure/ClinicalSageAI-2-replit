@@ -58,42 +58,64 @@ and structural violations of the core law:
 
 ---
 
-## Plane B — Governance
+## Plane B — Governance (MAPPED)
 
 ### Governance Decision Truth
 | Aspect | Detail |
 |--------|--------|
-| Canonical owner | _Pending research_ |
-| Duplicate owners | _Pending research_ |
-| Decision | _Pending_ |
+| Canonical owner | `server/services/governed-decision-repository.ts` (v2.0.0) |
+| Orchestrator | `server/src/control-plane/governed-document-evaluator.ts` |
+| Controller | `server/controllers/governance-controller.ts` |
+| Duplicate owners | None — consolidated from 3 prior files |
+| Read paths | governance-controller -> routes/concept2cure.ts |
+| Write paths | evaluator -> repository -> PostgreSQL |
+| Decision | **Preserve** — clean canonical path |
 
 ### Workflow Preflight Truth
 | Aspect | Detail |
 |--------|--------|
-| Canonical owner | _Pending research_ |
-| Duplicate owners | _Pending research_ |
-| Decision | _Pending_ |
+| Canonical owner | `server/src/control-plane/readiness-gates.ts` (v1.0.0) |
+| Duplicate owners | `server/services/intelligence/readiness-scoring-engine.ts` (numerical scores, different purpose), `server/src/services/reg/preflight.ts` (regulatory-specific), `server/submission-ops/readiness-engine.ts` (legacy) |
+| Read paths | authoring-actions.ts `/promotion-blockers/:projectId` |
+| Write paths | None — purely evaluative, derives from document/review/contradiction state |
+| Decision | **Preserve** readiness-gates as categorical authority. **Wrap** scoring-engine as supplementary. **Deprecate** submission-ops readiness-engine. |
 
 ### Review Queue/History
 | Aspect | Detail |
 |--------|--------|
-| Canonical owner | _Pending research_ |
-| Duplicate owners | _Pending research_ |
-| Decision | _Pending_ |
+| Canonical owner | `server/routes/approval-workflow.ts` + `server/services/workflow/ApprovalOrchestrator.ts` |
+| Lineage | `server/services/workflow/DecisionLineageService.ts` (immutable audit chain, 21 CFR Part 11) |
+| Schema | `concept2cureReviewThreads`, `concept2cureReviewComments`, `concept2cureReviewTasks`, `concept2cureReviewAssignments`, `concept2cureReviewDecisions` |
+| Duplicate owners | DecisionLineageService overlaps with governed-decision-repository (broader vs governance-specific) |
+| Gap | Review threads/comments have schema but **no dedicated service** — managed inline in concept2cure.ts routes |
+| Decision | **Preserve** ApprovalOrchestrator. **Extract** review thread management from concept2cure.ts into dedicated service. |
 
 ### Promotion/Export/Publish Decisions
 | Aspect | Detail |
 |--------|--------|
-| Canonical owner | _Pending research_ |
-| Duplicate owners | _Pending research_ |
-| Decision | _Pending_ |
+| Canonical owner | `server/src/control-plane/export-publish-gates.ts` (v1.0.0, fail-closed) |
+| Consequence | `server/services/export/governedExportConsequence.ts` |
+| Orchestrator | `server/src/control-plane/governed-document-evaluator.ts` (combines readiness + placement + gates + consequence + decision) |
+| Duplicate owners | None |
+| Write paths | evaluator -> decision-repo -> PostgreSQL |
+| Decision | **Preserve** — clean single-owner architecture |
 
 ### Nav Gating Truth
 | Aspect | Detail |
 |--------|--------|
-| Canonical owner | _Pending research_ |
-| Duplicate owners | _Pending research_ |
-| Decision | _Pending_ |
+| Canonical owner | `client/src/concept2cure/router/approvedRoutePolicy.ts` (client-side policy table) |
+| Helper | `client/src/concept2cure/router/projectModuleRoutePolicy.ts` (per-project module access) |
+| Integration | ZenApp.tsx evaluates `evaluateApprovedRoute()` before rendering |
+| Duplicate owners | None |
+| Decision | **Preserve** — single canonical policy |
+
+### Readiness Scoring
+| Aspect | Detail |
+|--------|--------|
+| Canonical owner | `server/services/intelligence/readiness-scoring-engine.ts` (numerical dimensions) |
+| Complement | `server/src/control-plane/readiness-gates.ts` (categorical lifecycle states) |
+| Client | `useReadinessAssessment` hook, `WorkspaceReadinessStrip.tsx` |
+| Decision | **Preserve both** — different purposes (scores vs gates). Document boundary. |
 
 ---
 
