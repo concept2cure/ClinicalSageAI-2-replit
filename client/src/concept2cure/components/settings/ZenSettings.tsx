@@ -16,6 +16,7 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
+import { authService } from '@/portal-v2/services/authService';
 import {
   X,
   User,
@@ -1435,7 +1436,14 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({
 
               {/* Sign out */}
               <div className="p-2 border-t border-stone-200">
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors duration-150">
+                <button
+                  onClick={async () => {
+                    await authService.logout();
+                    window.location.href = '/concept2cure/login';
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors duration-150"
+                  data-testid="settings-sign-out-btn"
+                >
                   <LogOut className="w-4 h-4" />
                   Sign Out
                 </button>

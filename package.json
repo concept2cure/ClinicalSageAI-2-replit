@@ -40,6 +40,7 @@
     "ci:governed-export-routes": "node scripts/ci/check-governed-export-routes.mjs",
     "ci:governed-export-consequence-shape": "node scripts/ci/check-governed-export-consequence-shape.mjs",
     "ci:check-docx-runtime": "node scripts/ci/check-docx-runtime-canonicality.mjs",
+    "ci:check-editor-integrity": "node scripts/ci/check-editor-extension-integrity.mjs",
     "ci:audit-route-mounts": "node scripts/ci/audit-route-mounts.mjs",
     "ci:audit-route-mounts:no-regression": "node scripts/ci/audit-route-mounts.mjs --strict-no-regression --baseline docs/reports/route-mount-audit-baseline.json --owners docs/reports/route-mount-owners.json --write-json docs/reports/route-mount-audit-latest.json",
     "ci:audit-route-mounts:strict": "node scripts/ci/audit-route-mounts.mjs --strict-no-regression --baseline docs/reports/route-mount-audit-baseline.json --owners docs/reports/route-mount-owners.json --write-json docs/reports/route-mount-audit-latest.json",

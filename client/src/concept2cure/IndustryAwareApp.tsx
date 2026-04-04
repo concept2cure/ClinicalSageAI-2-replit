@@ -17,6 +17,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { authService } from '@/portal-v2/services/authService';
 import {
   Building2,
   Pill,
@@ -288,7 +289,15 @@ const Sidebar: React.FC<{
                 </p>
               </div>
             </div>
-            <button className="p-2 text-stone-400 hover:text-stone-600 transition-colors duration-150">
+            <button
+              onClick={async () => {
+                await authService.logout();
+                window.location.href = '/concept2cure/login';
+              }}
+              className="p-2 text-stone-400 hover:text-stone-600 transition-colors duration-150"
+              aria-label="Sign out"
+              data-testid="industry-sign-out-btn"
+            >
               <LogOut className="w-4 h-4" />
             </button>
           </div>
