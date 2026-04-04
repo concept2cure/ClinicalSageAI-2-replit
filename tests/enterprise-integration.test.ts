@@ -261,51 +261,7 @@ describe('UI State Components Module', () => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// PORTAL SHELL MODULE TESTS (no DOM)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-describe('Portal Shell Module', () => {
-  it('should export PortalShell component', async () => {
-    const module = await import('../client/src/components/shell/PortalShell');
-    expect(module.PortalShell).toBeDefined();
-    expect(typeof module.PortalShell).toBe('function');
-  });
-
-  it('should export useShell hook', async () => {
-    const module = await import('../client/src/components/shell/PortalShell');
-    expect(module.useShell).toBeDefined();
-    expect(typeof module.useShell).toBe('function');
-  });
-
-  it('should export default as PortalShell', async () => {
-    const module = await import('../client/src/components/shell/PortalShell');
-    expect(module.default).toBeDefined();
-    expect(typeof module.default).toBe('function');
-  });
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// PROGRAMS API ROUTES MODULE TESTS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-describe('Programs API Routes Module', () => {
-  it('should export router', async () => {
-    const module = await import('../server/routes/programsV2');
-    expect(module.default).toBeDefined();
-  });
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// EVIDENCE API ROUTES MODULE TESTS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-describe('Evidence API Routes Module', () => {
-  it('should export router', async () => {
-    const module = await import('../server/routes/evidenceV2');
-    expect(module.default).toBeDefined();
-  });
-});
+// Portal Shell, Programs V2, and Evidence V2 tests removed — modules deleted in dead code purge.
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SCHEMA TESTS
