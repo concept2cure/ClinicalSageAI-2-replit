@@ -3466,6 +3466,38 @@ router.get('/governance/health', async (_req, res) => {
 });
 
 /**
+ * POST /api/concept2cure/maintenance/run
+ * Run platform maintenance tasks (token cleanup, bridge integrity, backfill).
+ * Requires admin/operator access in production.
+ */
+router.post('/maintenance/run', async (req, res) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const { runPlatformMaintenance } = await import('../services/maintenance/platform-maintenance.js');
+    const result = await runPlatformMaintenance(organizationId);
+    return sendSuccess(res, result);
+  } catch (error: any) {
+    logger.error('Maintenance run failed', { error: error.message });
+    return sendError(res, 500, 'Maintenance run failed');
+  }
+});
+
+/**
+ * GET /api/concept2cure/startup/invariants
+ * Returns startup invariant check results.
+ */
+router.get('/startup/invariants', async (_req, res) => {
+  try {
+    const { runStartupInvariants } = await import('../lib/startup-invariants.js');
+    const report = await runStartupInvariants();
+    return sendSuccess(res, report);
+  } catch (error: any) {
+    logger.error('Startup invariant check failed', { error: error.message });
+    return sendError(res, 500, 'Startup invariant check failed');
+  }
+});
+
+/**
  * PATCH /api/concept2cure/projects/:projectId/knowledge
  * Update knowledge base metadata (custom instructions, context).
  */
