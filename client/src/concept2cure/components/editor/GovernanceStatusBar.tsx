@@ -35,9 +35,26 @@ import { cn } from '@/lib/utils';
 import {
   usePromotionBlockers,
   useGovernanceDecisions,
-  type PromotionBlocker,
-  type GovernanceDecision,
 } from '../../hooks/useGovernance';
+
+/** Blocker shape from usePromotionBlockers selector */
+interface PromotionBlocker {
+  type: string;
+  severity: string;
+  message: string;
+}
+
+/** Decision shape from useGovernanceDecisions adapter */
+interface GovernanceDecision {
+  id: string;
+  kind: string;
+  status: string;
+  summary: string;
+  authority: string;
+  createdAt: string;
+  sourceSignalCount: number;
+  hasReceipt: boolean;
+}
 
 interface GovernanceStatusBarProps {
   projectId: string | number | undefined;

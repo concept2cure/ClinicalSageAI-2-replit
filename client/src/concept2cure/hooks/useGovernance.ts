@@ -1,10 +1,12 @@
 /**
- * useGovernance — Hooks for governance escalation visibility.
+ * useGovernance — Governance hooks (canonical re-exports).
  *
- * Delegates to fabric state hooks internally. The old direct API calls
- * to /api/authoring-actions/... have been replaced by fabric selectors
- * from useFabricState, making the control-plane governed decisions
- * endpoint the single source of truth.
+ * All governance state comes from useFabricState.ts.
+ * This module provides convenience re-exports and two thin adapters
+ * (usePromotionBlockers, useGovernanceDecisions) for backward compatibility.
+ *
+ * Deprecated types removed in Build Order #15 — use FabricDecisionEntry
+ * and FabricSummary from useFabricState instead.
  *
  * @module concept2cure/hooks/useGovernance
  */
@@ -12,63 +14,22 @@
 import {
   useFabricDecisions,
   useFabricSummary,
+  useGovernedReviewQueue,
+  useGovernedDecisionHistory,
+  useGovernedDecisionTransition,
   selectPromotionBlockersFromFabric,
   selectGovernanceDecisionBadge,
+  type FabricDecisionEntry,
+  type FabricSummary,
 } from './useFabricState';
 
-// ── Types (kept for backward compatibility) ────────────────────────────────
-
-/** @deprecated Use FabricDecisionEntry from useFabricState instead */
-export interface PromotionBlocker {
-  type: string;
-  severity: 'critical' | 'major' | 'minor';
-  message: string;
-  source: string;
-}
-
-/** @deprecated Use fabric decisions response shape instead */
-export interface PromotionBlockersResponse {
-  projectId: string;
-  artifactId: string | null;
-  sectionCode: string | null;
-  blocked: boolean;
-  blockerCount: number;
-  blockers: PromotionBlocker[];
-}
-
-/** @deprecated Use FabricDecisionEntry from useFabricState instead */
-export interface GovernanceDecision {
-  id: string;
-  kind: string;
-  status: string;
-  summary: string;
-  rationale: string;
-  authority: string;
-  sectionCode?: string;
-  moduleCode?: string;
-  artifactId?: string;
-  createdByType: string;
-  createdAt: string;
-  sourceSignalCount: number;
-  hasReceipt: boolean;
-}
-
-/** @deprecated Use fabric decisions response shape instead */
-export interface GovernanceDecisionsResponse {
-  projectId: string;
-  count: number;
-  decisions: GovernanceDecision[];
-}
-
-// ── Hooks (now delegate to fabric state) ───────────────────────────────────
+// ── Thin adapters (backward compat) ──────────────────────────────────────
 
 /**
- * Fetches promotion blockers for a project.
- * Delegates to useFabricDecisions + selectPromotionBlockersFromFabric.
+ * Derive promotion blockers from fabric decisions.
  */
 export function usePromotionBlockers(projectId: string | number | undefined) {
   const fabricQuery = useFabricDecisions(projectId != null ? String(projectId) : undefined);
-
   return {
     ...fabricQuery,
     data: fabricQuery.data
@@ -78,12 +39,10 @@ export function usePromotionBlockers(projectId: string | number | undefined) {
 }
 
 /**
- * Fetches governance decision history for a project.
- * Delegates to useFabricDecisions with limit 20.
+ * Derive governance decisions in the legacy shape.
  */
 export function useGovernanceDecisions(projectId: string | number | undefined) {
   const fabricQuery = useFabricDecisions(projectId != null ? String(projectId) : undefined, { limit: 20 });
-
   return {
     ...fabricQuery,
     data: fabricQuery.data
@@ -104,12 +63,16 @@ export function useGovernanceDecisions(projectId: string | number | undefined) {
   };
 }
 
-// === Canonical fabric state hooks (Build Order #2) ===
+// ── Canonical re-exports ─────────────────────────────────────────────────
+
 export {
   useFabricDecisions,
   useFabricSummary,
+  useGovernedReviewQueue,
+  useGovernedDecisionHistory,
+  useGovernedDecisionTransition,
   selectPromotionBlockersFromFabric,
   selectGovernanceDecisionBadge,
 };
 
-export type { FabricDecisionEntry, FabricSummary } from './useFabricState';
+export type { FabricDecisionEntry, FabricSummary };

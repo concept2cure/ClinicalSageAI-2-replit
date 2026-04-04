@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { TreeArtifact } from './ProjectFileTree';
 import type { ConsequenceComputeJob } from './documentConsequence';
+import { useWorkspaceGovernanceModel } from './workspaceGovernanceModel';
 
 export type WorkspaceMode = 'dashboard' | 'browse' | 'edit';
 export type LeftRailMode = 'files' | 'dossier' | 'templates' | 'outline' | 'registry';
@@ -88,25 +89,32 @@ export const usePlacementAndMoveState = () => {
   };
 };
 
+/**
+ * Document consequence + governance operating state.
+ *
+ * Uses the unified WorkspaceGovernanceModel for governance surface state.
+ * Backward-compatible: still exports showGovernedPanel, reviewQueueVisible
+ * as derived getters from the governance model.
+ */
 export const useDocumentConsequenceState = () => {
   const [computeJobs, setComputeJobs] = useState<ConsequenceComputeJob[]>([]);
-  const [showGovernedPanel, setShowGovernedPanel] = useState(false);
-  const [proposalActionState, setProposalActionState] = useState<Record<string, 'idle' | 'running'>>(
-    {}
-  );
+  const governance = useWorkspaceGovernanceModel();
 
-  // Governed decision review queue
-  const [reviewQueueVisible, setReviewQueueVisible] = useState(false);
+  // Backward-compatible accessors (delegate to governance model)
+  const showGovernedPanel = governance.governedPanelOpen;
+  const setShowGovernedPanel = (open: boolean) => open ? governance.openGovernedPanel() : governance.closeGovernedPanel();
+  const reviewQueueVisible = governance.surface === 'queue' || governance.surface === 'inspecting' || governance.surface === 'acting' || governance.surface === 'result';
+  const setReviewQueueVisible = (visible: boolean) => visible ? governance.openQueue() : governance.closeQueue();
 
   return {
     computeJobs,
     setComputeJobs,
     showGovernedPanel,
     setShowGovernedPanel,
-    proposalActionState,
-    setProposalActionState,
     reviewQueueVisible,
     setReviewQueueVisible,
+    // New: full governance model access
+    governance,
   };
 };
 
