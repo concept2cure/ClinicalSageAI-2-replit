@@ -105,10 +105,10 @@ describe('GovernanceStatusBar — off legacy adapters', () => {
     expect(content).toContain('selectPromotionBlockersFromFabric');
   });
 
-  it('derives decisions from fabric entries (single data source)', () => {
+  it('derives decisions from shared governance model (BO19 unified)', () => {
     const content = read('client/src/concept2cure/components/editor/GovernanceStatusBar.tsx');
-    // Should have one refetchAll, not separate refetchBlockers/refetchDecisions
-    expect(content).toContain('refetchAll');
+    // StatusBar reads from governanceModel, not its own fetch
+    expect(content).toContain('governanceModel?.fabricEntries');
     expect(content).not.toContain('refetchBlockers');
     expect(content).not.toContain('refetchDecisions');
   });
@@ -117,11 +117,11 @@ describe('GovernanceStatusBar — off legacy adapters', () => {
 // ── 4. Touched-Slice Cleanup ────────────────────────────────────────────────
 
 describe('Touched-slice cleanup — leaner', () => {
-  it('GovernanceStatusBar has single data source (useFabricDecisions)', () => {
+  it('GovernanceStatusBar reads from shared governance model (no own fetch)', () => {
     const content = read('client/src/concept2cure/components/editor/GovernanceStatusBar.tsx');
-    // Count useFabricDecisions calls — should be exactly 1
-    const matches = content.match(/useFabricDecisions\(/g);
-    expect(matches?.length).toBe(1);
+    // BO19: StatusBar no longer owns useFabricDecisions — reads from model
+    expect(content).toContain('governanceModel?.fabricEntries');
+    expect(content).not.toContain('useFabricDecisions(');
   });
 
   it('DecisionRow no longer silently ignores governance model', () => {

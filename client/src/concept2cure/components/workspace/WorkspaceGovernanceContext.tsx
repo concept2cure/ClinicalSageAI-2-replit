@@ -101,3 +101,27 @@ export function selectAvailableActions(decisionState: string | null): string[] {
 export function selectNeedsAttention(model: WorkspaceGovernanceViewModel): boolean {
   return model.hasUnresolved || model.queueCounts.escalated > 0 || model.surface === 'result';
 }
+
+/**
+ * Derive the selected decision's detail from the shared fabric entries.
+ * Returns the matching FabricDecisionEntry if found, or null.
+ */
+export function selectSelectedGovernanceDetail(model: WorkspaceGovernanceViewModel) {
+  if (!model.selectedDecisionId) return null;
+  return model.fabricEntries.find(e => e.decisionId === model.selectedDecisionId) ?? null;
+}
+
+/**
+ * Derive blocker summary from shared fabric entries.
+ * Replaces scattered selectPromotionBlockersFromFabric calls.
+ */
+export function selectBlockerSummary(model: WorkspaceGovernanceViewModel): {
+  blocked: boolean;
+  blockerCount: number;
+} {
+  let count = 0;
+  for (const e of model.fabricEntries) {
+    if (e.outcome === 'block') count++;
+  }
+  return { blocked: count > 0, blockerCount: count };
+}

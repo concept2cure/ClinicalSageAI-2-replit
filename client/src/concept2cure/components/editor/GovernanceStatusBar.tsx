@@ -32,11 +32,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  useFabricDecisions,
-  selectPromotionBlockersFromFabric,
-  type FabricDecisionEntry,
-} from '../../hooks/useFabricState';
+import { selectPromotionBlockersFromFabric } from '../../hooks/useFabricState';
 import { useWorkspaceGovernance, selectGovernanceBadge, selectNeedsAttention } from '../workspace/WorkspaceGovernanceContext';
 
 /** Blocker derived from fabric decisions */
@@ -190,16 +186,16 @@ export function GovernanceStatusBar({
 }: GovernanceStatusBarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Single canonical data source — useFabricDecisions
-  const fabricQuery = useFabricDecisions(projectId != null ? String(projectId) : undefined, { limit: 20 });
-  const entries = fabricQuery.data?.entries ?? [];
+  // Consume shared governance model — single source of truth for all governance data
+  const governanceModel = useWorkspaceGovernance();
+  const entries = governanceModel?.fabricEntries ?? [];
+  const isLoading = governanceModel?.fabricLoading ?? false;
 
-  // Derive blockers from fabric decisions
+  // Derive blockers and decisions from shared fabric entries
   const { blockers: rawBlockers, blocked } = selectPromotionBlockersFromFabric(entries);
   const blockers: PromotionBlocker[] = rawBlockers;
   const blockerCount = rawBlockers.length;
 
-  // Derive decisions from fabric entries
   const decisions: GovernanceDecision[] = entries.slice(0, 5).map(e => ({
     id: e.decisionId,
     kind: e.intent,
@@ -209,12 +205,7 @@ export function GovernanceStatusBar({
     createdAt: e.timestamp,
   }));
   const lastDecision = decisions[0] ?? null;
-  const isLoading = fabricQuery.isLoading;
 
-  const refetchAll = () => fabricQuery.refetch();
-
-  // Consume shared governance model if available (workspace context)
-  const governanceModel = useWorkspaceGovernance();
   const governanceBadge = governanceModel ? selectGovernanceBadge(governanceModel) : null;
   const needsAttention = governanceModel ? selectNeedsAttention(governanceModel) : false;
 
@@ -227,7 +218,7 @@ export function GovernanceStatusBar({
 
   const handleRefresh = (e: React.MouseEvent) => {
     e.stopPropagation();
-    refetchAll();
+    // Refresh is handled at the shell level — the shared query auto-refreshes
   };
 
   return (

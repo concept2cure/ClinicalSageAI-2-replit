@@ -29,6 +29,7 @@ import {
 import { GovernedDocumentPanel } from './GovernedDocumentPanel';
 import { GovernedDecisionReviewPanel } from './GovernedDecisionReviewPanel';
 import { WorkspaceGovernanceProvider } from './WorkspaceGovernanceContext';
+import { useFabricDecisions } from '../../hooks/useFabricState';
 import {
   getSectionLabel,
   getSectionRequirements,
@@ -283,6 +284,12 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const setShowGovernedPanel = (open: boolean) => open ? governance.openGovernedPanel() : governance.closeGovernedPanel();
   const reviewQueueVisible = governance.isActive;
   const setReviewQueueVisible = (visible: boolean) => visible ? governance.openQueue() : governance.closeQueue();
+
+  // Shared fabric decision fetch — pushes into governance model for all consumers
+  const fabricQuery = useFabricDecisions(projectId != null ? String(projectId) : undefined, { limit: 20 });
+  useEffect(() => {
+    governance.setFabricDetail(fabricQuery.data?.entries ?? [], fabricQuery.isLoading);
+  }, [fabricQuery.data, fabricQuery.isLoading, governance.setFabricDetail]);
 
   // Editor ref for outline scroll
   const editorContainerRef = useRef<HTMLDivElement>(null);

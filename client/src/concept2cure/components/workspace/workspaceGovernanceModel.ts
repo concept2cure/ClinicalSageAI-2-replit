@@ -24,6 +24,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
+import type { FabricDecisionEntry } from '../../hooks/useFabricState';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -63,6 +64,11 @@ export interface WorkspaceGovernanceViewModel {
   queueCounts: { pending: number; escalated: number; deferred: number; rejected: number };
   unresolvedCount: number;
 
+  // Detail truth — fabric decision entries shared across all consumers
+  fabricEntries: FabricDecisionEntry[];
+  fabricLoading: boolean;
+  setFabricDetail: (entries: FabricDecisionEntry[], loading: boolean) => void;
+
   // Actions
   openQueue: () => void;
   closeQueue: () => void;
@@ -93,6 +99,13 @@ export function useWorkspaceGovernanceModel(): WorkspaceGovernanceViewModel {
   const [governedPanelOpen, setGovernedPanelOpen] = useState(false);
   const [queueCounts, setQueueCounts] = useState({ pending: 0, escalated: 0, deferred: 0, rejected: 0 });
   const [unresolvedCount, setUnresolvedCount] = useState(0);
+  const [fabricEntries, setFabricEntries] = useState<FabricDecisionEntry[]>([]);
+  const [fabricLoading, setFabricLoading] = useState(false);
+
+  const setFabricDetail = useCallback((entries: FabricDecisionEntry[], loading: boolean) => {
+    setFabricEntries(entries);
+    setFabricLoading(loading);
+  }, []);
 
   const openQueue = useCallback(() => {
     setSurface('queue');
@@ -168,6 +181,9 @@ export function useWorkspaceGovernanceModel(): WorkspaceGovernanceViewModel {
     closeGovernedPanel,
     setQueueCounts,
     setUnresolvedCount,
+    fabricEntries,
+    fabricLoading,
+    setFabricDetail,
     reset,
     isActive: surface !== 'idle',
     hasUnresolved: unresolvedCount > 0,
@@ -175,8 +191,9 @@ export function useWorkspaceGovernanceModel(): WorkspaceGovernanceViewModel {
   }), [
     surface, selectedDecisionId, selectedDecisionState, actionInProgress,
     lastResult, governedPanelOpen, queueCounts, unresolvedCount, totalQueueItems,
+    fabricEntries, fabricLoading,
     openQueue, closeQueue, inspectDecision, startAction, completeAction,
-    dismissResult, openGovernedPanel, closeGovernedPanel, reset,
+    dismissResult, openGovernedPanel, closeGovernedPanel, setFabricDetail, reset,
   ]);
 }
 
