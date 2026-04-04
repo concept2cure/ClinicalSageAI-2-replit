@@ -259,14 +259,17 @@ export async function seedDefaultCanon(organizationId: number): Promise<{
   }
 
   // 3. Document authoring skill bundles (idempotent — skip if name+org already exists)
+  let existingBundleNames: Set<string>;
+  try {
+    const existing = await getSkillBundles(organizationId, { bundleType: 'authoring' });
+    existingBundleNames = new Set(existing.map((b: Record<string, unknown>) => String(b.name ?? '')));
+  } catch {
+    existingBundleNames = new Set(); // If query fails, attempt all inserts
+  }
+
   for (const bundle of DOCUMENT_SKILL_BUNDLES) {
     try {
-      // Check if bundle already exists for this org
-      const existing = await getSkillBundles(organizationId, { bundleType: 'authoring' });
-      const alreadyExists = existing.some(
-        (b: Record<string, unknown>) => b.name === bundle.name
-      );
-      if (alreadyExists) {
+      if (existingBundleNames.has(bundle.name)) {
         skillBundles++;
         continue;
       }

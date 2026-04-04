@@ -134,7 +134,7 @@ class GovernanceMetricsService {
     try {
       const { pool } = await import('../db.js');
       const result = await pool.query(
-        `SELECT COUNT(*)::int AS total FROM governed_decision_transitions LIMIT 1`
+        `SELECT 1 FROM governed_decision_transitions LIMIT 1`
       );
       return result.rows.length > 0;
     } catch {

@@ -153,9 +153,10 @@ export function isValidTransition(from: string, to: GovernedLifecycleState): boo
  * Record a governed decision durably. Async, DB-first.
  */
 export async function recordGovernedDecision(
-  evaluation: GovernedDocumentEvaluation
+  evaluation: GovernedDocumentEvaluation,
+  preGeneratedDecisionId?: string
 ): Promise<GovernedDecisionReference> {
-  const decisionId = randomUUID();
+  const decisionId = preGeneratedDecisionId || randomUUID();
   const timestamp = new Date().toISOString();
   const ref: GovernedDecisionReference = {
     decisionId,
@@ -231,8 +232,8 @@ export function recordGovernedDecisionSync(
   const decisionId = randomUUID();
   const timestamp = new Date().toISOString();
 
-  // Fire-and-forget DB write
-  recordGovernedDecision(evaluation).catch(() => {
+  // Fire-and-forget DB write — pass pre-generated ID so persisted record matches returned ref
+  recordGovernedDecision(evaluation, decisionId).catch(() => {
     // Already logged inside recordGovernedDecision
   });
 
@@ -298,8 +299,10 @@ export async function getRecentGovernedDecisions(options: {
       recommendationType: 'governed_fabric_decision',
       limit,
     });
+    governanceMetrics.recordQueryExecuted();
     return records.map((r: Record<string, unknown>) => mapRow(r));
-  } catch {
+  } catch (err) {
+    governanceMetrics.recordQueryFailure('getRecentGovernedDecisions', err);
     return [];
   }
 }

@@ -81,6 +81,7 @@ interface FabricDecisionEmitPayload {
 type FabricDecisionEmitter = (payload: FabricDecisionEmitPayload) => void;
 
 let registeredEmitter: FabricDecisionEmitter | null = null;
+let emitterWarningLogged = false;
 
 /**
  * Register the RIM learning emitter. Called once at startup by the
@@ -363,8 +364,15 @@ export function evaluateAndInterceptGovernedDocument(
           (c: { consequenceType: string }) => c.consequenceType
         ),
       });
-    } catch {
-      // Emitter failure — evaluation still valid
+    } catch (err) {
+      // Emitter failure — evaluation still valid, log it
+      console.warn('[governed-evaluator] RIM emission failed:', err instanceof Error ? err.message : String(err));
+    }
+  } else {
+    // Emitter not registered — log once per process to avoid spam
+    if (!emitterWarningLogged) {
+      console.warn('[governed-evaluator] RIM emitter not registered — learning loop inactive');
+      emitterWarningLogged = true;
     }
   }
 
