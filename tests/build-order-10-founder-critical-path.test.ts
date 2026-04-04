@@ -72,10 +72,10 @@ describe('Sign-out — real handlers wired', () => {
     expect(content).toContain('data-testid="industry-sign-out-btn"');
   });
 
-  it('server logout route exists and blacklists tokens', () => {
+  it('server logout route exists and revokes tokens', () => {
     const content = readFile('server/routes/auth.ts');
     expect(content).toContain("router.post('/logout'");
-    expect(content).toContain('tokenBlacklist.add(token)');
+    expect(content).toContain('revokeToken');
   });
 
   it('authService.logout calls real API endpoint', () => {

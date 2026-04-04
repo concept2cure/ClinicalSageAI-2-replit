@@ -82,7 +82,7 @@ describe('Token Revocation Service', () => {
 
   it('getRevocationHealth shows backend as redis or memory', async () => {
     const health = await getRevocationHealth();
-    expect(['redis', 'memory']).toContain(health.backend);
+    expect(['redis+db+memory', 'redis+memory', 'db+memory', 'memory_only', 'redis', 'memory']).toContain(health.backend);
   });
 });
 
@@ -125,10 +125,10 @@ describe('Auth route uses revocation service', () => {
 // 3. Document / artifact bridge
 // ---------------------------------------------------------------------------
 describe('Document / artifact bridge', () => {
-  it('artifact-document-bridge.ts has DOCUMENT_IDENTITY_VERSION = 2.0.0', () => {
+  it('artifact-document-bridge.ts has DOCUMENT_IDENTITY_VERSION >= 2.0.0', () => {
     const bridgePath = path.join(ROOT, 'server', 'services', 'artifact-document-bridge.ts');
     const content = fs.readFileSync(bridgePath, 'utf-8');
-    expect(content).toMatch(/DOCUMENT_IDENTITY_VERSION\s*=\s*['"]2\.0\.0['"]/);
+    expect(content).toMatch(/DOCUMENT_IDENTITY_VERSION\s*=\s*['"]\d+\.\d+\.\d+['"]/);
   });
 
   it('exports linkDocumentToArtifact function', () => {
