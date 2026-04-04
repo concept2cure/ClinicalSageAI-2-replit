@@ -28,7 +28,7 @@ const ActivityMonitor = lazy(() => import('./components/monitoring/ActivityMonit
 const ComplianceDashboard = lazy(() => import('./components/compliance/ComplianceDashboard'));
 
 // Lazy load actual module page components (connected to real implementations)
-const CERV2Page = lazy(() => import('../pages/CERV2Page'));
+const CERV2Page = lazy(() => import('../pages/csr/CERV2Page'));
 const AnalyticsDashboard = lazy(() => import('../modules/AnalyticsDashboard'));
 const CmcWizard = lazy(() => import('../modules/CmcWizard'));
 

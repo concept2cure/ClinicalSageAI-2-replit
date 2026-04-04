@@ -26,7 +26,7 @@ export {
   type VendorDeliverable,
   type FDAInteraction,
   type BiotechProgram,
-} from './biotech/BiotechProgramDashboard';
+} from '../biotech/BiotechProgramDashboard';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PHARMA COMPONENTS
@@ -41,7 +41,7 @@ export {
   type GlobalRegistration,
   type PharmaProduct,
   type TherapeuticAreaPortfolio,
-} from './pharma/PharmaPortfolioDashboard';
+} from '../pharma/PharmaPortfolioDashboard';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CRO COMPONENTS
@@ -57,7 +57,7 @@ export {
   type CROProgram,
   type CROClient,
   type CROResource,
-} from './cro/CROClientPortal';
+} from '../cro/CROClientPortal';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // REGULATORY COMPONENTS
