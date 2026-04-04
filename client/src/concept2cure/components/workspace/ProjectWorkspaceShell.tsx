@@ -28,7 +28,8 @@ import {
 } from './PlacementDialog';
 import { GovernedDocumentPanel } from './GovernedDocumentPanel';
 import { GovernedDecisionReviewPanel } from './GovernedDecisionReviewPanel';
-import { WorkspaceGovernanceProvider } from './WorkspaceGovernanceContext';
+import { WorkspaceGovernanceProvider, runTransitionPreflight, type TransitionPreflightResult } from './WorkspaceGovernanceContext';
+import { TransitionPreflightBanner } from './TransitionPreflightBanner';
 import { useFabricDecisions } from '../../hooks/useFabricState';
 import {
   getSectionLabel,
@@ -303,6 +304,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
   const workflowTransitionModel = useWorkflowTransitionModel();
 
+  // Governance-aware transition preflight state
+  const [pendingPreflight, setPendingPreflight] = useState<TransitionPreflightResult | null>(null);
+
   const applyWorkflowTransition = useCallback(
     (
       key: keyof typeof workflowTransitionModel,
@@ -319,6 +323,16 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       if (!transition.from.includes(mode)) {
         setMode(transition.fallback);
         return false;
+      }
+
+      // Governance-aware preflight for verify/publish transitions
+      if (key === 'verify_review' || key === 'publish_package') {
+        const preflight = runTransitionPreflight(governance, key);
+        if (!preflight.allowed) {
+          setPendingPreflight(preflight);
+          return false;
+        }
+        setPendingPreflight(null);
       }
 
       const requirement = transition.requires;
@@ -338,7 +352,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       setMode(transition.to);
       return true;
     },
-    [mode, setMode, workflowTransitionModel]
+    [mode, setMode, workflowTransitionModel, governance]
   );
 
   // If initialContent is provided, go straight to edit mode
@@ -1756,6 +1770,18 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               </kbd>
             </button>
           </div>
+        )}
+
+        {/* ── Governance transition preflight banner ─────────────────────── */}
+        {pendingPreflight && !pendingPreflight.allowed && (
+          <TransitionPreflightBanner
+            preflight={pendingPreflight}
+            onOpenQueue={() => { setPendingPreflight(null); governance.openQueue(); }}
+            onInspectDecision={(id) => { setPendingPreflight(null); governance.inspectDecision(id, 'under_review'); }}
+            onRefresh={() => { governance.requestRefresh(); }}
+            onDismiss={() => setPendingPreflight(null)}
+            className="mx-3 mt-2 mb-1"
+          />
         )}
 
         {/* ── Cut/move blocked feedback ───────────────────────────────────── */}

@@ -254,3 +254,71 @@ export function selectNextActions(model: WorkspaceGovernanceViewModel): NextActi
 
   return actions;
 }
+
+// ── Transition Preflight ────────────────────────────────────────────────────
+
+export interface TransitionPreflightResult {
+  target: string;
+  allowed: boolean;
+  status: WorkflowGateStatus;
+  reasons: string[];
+  nextActions: NextActionRecommendation[];
+  blockingDecisionIds: string[];
+  fallbackNav?: string;
+  cta?: { label: string; action: 'open_queue' | 'inspect_decision' | 'refresh' | 'proceed' };
+}
+
+/**
+ * Run a governance-aware preflight check for a workspace transition.
+ * Returns whether the transition is allowed, and why/why not.
+ */
+export function runTransitionPreflight(
+  model: WorkspaceGovernanceViewModel,
+  target: 'verify_review' | 'publish_package' | string,
+): TransitionPreflightResult {
+  // Non-gated transitions always pass
+  if (target !== 'verify_review' && target !== 'publish_package') {
+    return {
+      target,
+      allowed: true,
+      status: 'allowed',
+      reasons: [],
+      nextActions: [],
+      blockingDecisionIds: [],
+    };
+  }
+
+  const gate = target === 'verify_review'
+    ? selectVerifyGate(model)
+    : selectPublishGate(model);
+
+  const nextActions = gate.status !== 'allowed' ? selectNextActions(model) : [];
+
+  // Collect blocking decision IDs
+  const blockingDecisionIds = model.fabricEntries
+    .filter(e => e.outcome === 'block')
+    .map(e => e.decisionId);
+
+  // Determine CTA
+  let cta: TransitionPreflightResult['cta'];
+  if (gate.status === 'blocked') {
+    if (blockingDecisionIds.length > 0) {
+      cta = { label: 'Review blocking decisions', action: 'open_queue' };
+    } else {
+      cta = { label: 'Refresh governance', action: 'refresh' };
+    }
+  } else if (gate.status === 'review_required') {
+    cta = { label: 'Open review queue', action: 'open_queue' };
+  }
+
+  return {
+    target,
+    allowed: gate.status === 'allowed',
+    status: gate.status,
+    reasons: gate.reasons,
+    nextActions,
+    blockingDecisionIds,
+    fallbackNav: gate.status === 'blocked' ? 'browse' : undefined,
+    cta,
+  };
+}
