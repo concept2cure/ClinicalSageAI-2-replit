@@ -59,9 +59,8 @@ import {
 
 // Decision service
 import {
-  recordGovernedDecision,
   clearGovernedDecisionLog,
-} from '../server/src/control-plane/governed-decision-service';
+} from '../server/services/governed-decision-repository';
 
 // Main evaluator
 import {

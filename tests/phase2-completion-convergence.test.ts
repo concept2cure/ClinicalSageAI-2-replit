@@ -19,7 +19,7 @@ import {
 } from '../server/src/control-plane/governed-document-evaluator';
 import {
   clearGovernedDecisionLog,
-} from '../server/src/control-plane/governed-decision-service';
+} from '../server/services/governed-decision-repository';
 import { evaluateReadiness } from '../server/src/control-plane/readiness-gates';
 import { resolveDocumentContext } from '../server/src/control-plane/document-context-resolver';
 import { formatFabricStateForPrompt } from '../server/services/ana-ri/governed-context-envelope';

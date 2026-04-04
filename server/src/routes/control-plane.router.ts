@@ -19,8 +19,8 @@ import {
   getGovernedDecisionSummary,
   getGovernedDecision,
   getArtifactDecisionTrace,
-  GOVERNED_DECISION_SERVICE_VERSION,
-} from '../control-plane/governed-decision-service';
+  GOVERNED_DECISION_REPOSITORY_VERSION as GOVERNED_DECISION_SERVICE_VERSION,
+} from '../../services/governed-decision-repository';
 import {
   evaluateGovernedDocument,
   GOVERNED_DOCUMENT_EVALUATOR_VERSION,

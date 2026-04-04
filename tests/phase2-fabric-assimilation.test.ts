@@ -14,7 +14,7 @@ import {
 } from '../server/src/control-plane/governed-document-evaluator';
 import {
   clearGovernedDecisionLog,
-} from '../server/src/control-plane/governed-decision-service';
+} from '../server/services/governed-decision-repository';
 
 // Shared types
 import type {

@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 import {
   isValidTransition,
   type GovernedLifecycleState,
-} from '../server/services/governed-decision-lifecycle-service';
+} from '../server/services/governed-decision-repository';
 
 // ═══════════════════════════════════════════════════════════════════════
 // Lifecycle Transition Validation
