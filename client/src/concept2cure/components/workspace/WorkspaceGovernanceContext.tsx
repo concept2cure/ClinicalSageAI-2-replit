@@ -272,6 +272,21 @@ export interface TransitionPreflightResult {
  * Run a governance-aware preflight check for a workspace transition.
  * Returns whether the transition is allowed, and why/why not.
  */
+/**
+ * Check if a transition key has a governance gate and whether it's currently passable.
+ * Useful for navigation sources to show disabled/enabled state declaratively.
+ */
+export function isTransitionGovernanceAllowed(
+  model: WorkspaceGovernanceViewModel,
+  transitionKey: string,
+  transitionMap: Record<string, { governanceGate?: string }>,
+): { allowed: boolean; gate: string | undefined } {
+  const transition = transitionMap[transitionKey];
+  if (!transition?.governanceGate) return { allowed: true, gate: undefined };
+  const preflight = runTransitionPreflight(model, transition.governanceGate);
+  return { allowed: preflight.allowed, gate: transition.governanceGate };
+}
+
 export function runTransitionPreflight(
   model: WorkspaceGovernanceViewModel,
   target: 'verify_review' | 'publish_package' | string,

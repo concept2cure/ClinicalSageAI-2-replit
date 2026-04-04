@@ -62,15 +62,10 @@ describe('Transition preflight — shared contract', () => {
 // ── 2. Shell Workflow Enforcement ───────────────────────────────────────────
 
 describe('Shell — governance-aware transitions', () => {
-  it('applyWorkflowTransition calls runTransitionPreflight for verify', () => {
+  it('applyWorkflowTransition uses declarative governance gate (BO22)', () => {
     const content = read('client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx');
-    expect(content).toContain("key === 'verify_review'");
-    expect(content).toContain('runTransitionPreflight(governance, key)');
-  });
-
-  it('applyWorkflowTransition calls runTransitionPreflight for publish', () => {
-    const content = read('client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx');
-    expect(content).toContain("key === 'publish_package'");
+    expect(content).toContain('transition.governanceGate');
+    expect(content).toContain('runTransitionPreflight(governance, transition.governanceGate)');
   });
 
   it('blocked transition sets pendingPreflight state', () => {

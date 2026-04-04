@@ -325,9 +325,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         return false;
       }
 
-      // Governance-aware preflight for verify/publish transitions
-      if (key === 'verify_review' || key === 'publish_package') {
-        const preflight = runTransitionPreflight(governance, key);
+      // Governance-aware preflight — declarative gate from transition map
+      if (transition.governanceGate) {
+        const preflight = runTransitionPreflight(governance, transition.governanceGate);
         if (!preflight.allowed) {
           setPendingPreflight(preflight);
           return false;

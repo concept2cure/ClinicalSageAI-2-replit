@@ -116,6 +116,8 @@ export interface WorkflowTransition {
   from: WorkspaceMode[];
   to: WorkspaceMode;
   requires?: 'selectedDocOrCreateIntent' | 'reviewContext' | 'submissionContext';
+  /** Governance gate — checked via runTransitionPreflight when set */
+  governanceGate?: 'verify_review' | 'publish_package';
   fallback: WorkspaceMode;
 }
 
@@ -129,11 +131,18 @@ export const WORKFLOW_TRANSITION_MAP: Record<string, WorkflowTransition> = {
     requires: 'selectedDocOrCreateIntent',
     fallback: 'browse',
   },
-  verify_review: { from: ['browse', 'edit'], to: 'browse', requires: 'reviewContext', fallback: 'browse' },
+  verify_review: {
+    from: ['browse', 'edit'],
+    to: 'browse',
+    requires: 'reviewContext',
+    governanceGate: 'verify_review',
+    fallback: 'browse',
+  },
   publish_package: {
     from: ['browse'],
     to: 'browse',
     requires: 'submissionContext',
+    governanceGate: 'publish_package',
     fallback: 'dashboard',
   },
 };
@@ -141,3 +150,13 @@ export const WORKFLOW_TRANSITION_MAP: Record<string, WorkflowTransition> = {
 export const useWorkflowTransitionModel = () => {
   return useMemo(() => WORKFLOW_TRANSITION_MAP, []);
 };
+
+/**
+ * Get all transition keys that have governance gates.
+ * Useful for navigation sources that need to know which items are gated.
+ */
+export function getGovernanceGatedTransitions(): string[] {
+  return Object.entries(WORKFLOW_TRANSITION_MAP)
+    .filter(([, t]) => t.governanceGate != null)
+    .map(([k]) => k);
+}
