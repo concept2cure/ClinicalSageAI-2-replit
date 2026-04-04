@@ -95,6 +95,9 @@ export const useDocumentConsequenceState = () => {
     {}
   );
 
+  // Governed decision review queue
+  const [reviewQueueVisible, setReviewQueueVisible] = useState(false);
+
   return {
     computeJobs,
     setComputeJobs,
@@ -102,6 +105,8 @@ export const useDocumentConsequenceState = () => {
     setShowGovernedPanel,
     proposalActionState,
     setProposalActionState,
+    reviewQueueVisible,
+    setReviewQueueVisible,
   };
 };
 

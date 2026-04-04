@@ -388,7 +388,33 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
     eventType: 'submission_state_changed',
     summary: `Submission transitioned to ${lifecycleState}.`,
   });
-  return res.json({ data: upd.rows[0] });
+
+  // Check for unresolved governed decisions
+  let governedDecisionWarning: {
+    hasUnresolved: boolean;
+    unresolvedCount: number;
+    escalatedCount: number;
+    message: string;
+  } | undefined;
+  try {
+    const { hasUnresolvedGovernedDecisions } = await import('../services/governed-decision-repository.js');
+    const unresolvedCheck = await hasUnresolvedGovernedDecisions(
+      Number(upd.rows[0].project_id),
+      orgId
+    );
+    if (unresolvedCheck.hasUnresolved) {
+      governedDecisionWarning = {
+        hasUnresolved: true,
+        unresolvedCount: unresolvedCheck.unresolvedCount,
+        escalatedCount: unresolvedCheck.escalatedCount,
+        message: `${unresolvedCheck.unresolvedCount} governed decision(s) require review before this submission can proceed.`,
+      };
+    }
+  } catch {
+    // Non-blocking — governed decision check is advisory only
+  }
+
+  return res.json({ data: upd.rows[0], ...(governedDecisionWarning ? { governedDecisionWarning } : {}) });
 });
 
 router.post('/correspondence/intake', async (req, res) => {
