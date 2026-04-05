@@ -285,23 +285,15 @@ export function useUpdateWorkQueueStatus() {
  * Layout mode → module ID mapping.
  * Maps each UI layout mode to the module that must be enabled to access it.
  */
-// [BATCH 4] Simplified — most standalone modes removed. Core workflow is always available.
+// 7 canonical layout modes — all map to core. WorkspaceView sub-routing doesn't need license gating.
 const LAYOUT_MODULE_MAP: Record<string, string> = {
-  assistant: 'core',
-  editor: 'doc-canvas',
+  chats: 'core',
   projects: 'core',
   'project-home': 'core',
-  'dossier-map': 'core',
-  documents: 'core',
-  review: 'core',
-  submissions: 'core',
-  'section-workspace': 'core',
-  'regulatory-workspace': 'core',
-  biostatistics: 'core',
-  'review-readiness': 'core',
-  'report-engine': 'core',
-  'safety-narrative': 'core',
-  'precedent-intelligence': 'core',
+  'project-workspace': 'core',
+  'communication-center': 'core',
+  apps: 'core',
+  settings: 'core',
 };
 
 /**

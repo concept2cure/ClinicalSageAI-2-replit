@@ -120,7 +120,7 @@ function getInitialState(): EnablementState {
     drSageActiveTab: 'help',
     enablementCenterOpen: false,
     contextProfile: DEFAULT_CONTEXT_PROFILE,
-    currentLayoutMode: 'default',
+    currentLayoutMode: 'chats',
   };
 }
 

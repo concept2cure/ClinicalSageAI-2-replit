@@ -1042,11 +1042,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       setPendingEditorContent({ title, content, ctdSection });
       // Switch to documents mode where EditorPanel will consume the pending content
       if (
-        layoutMode !== 'documents' &&
-        layoutMode !== 'workspace' &&
-        layoutMode !== 'regulatory-workspace'
+        layoutMode !== 'project-workspace'
       ) {
-        setLayoutMode('documents');
+        openWorkspaceView('documents');
       }
     },
     [layoutMode]
@@ -1054,9 +1052,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
 
   // ── Moved up: requireActiveProject must be defined before hooks that reference it ──
+  // Accepts either a LayoutMode (project-home) or a WorkspaceView (documents, review, etc.)
   const requireActiveProject = useCallback(
     (
-      targetLayout: LayoutMode,
+      targetView: string,
       options?: {
         reason?: string;
         projectId?: string;
@@ -1064,7 +1063,14 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     ): boolean => {
       const resolvedProjectId = options?.projectId ?? activeProjectId;
       if (resolvedProjectId) {
-        setLayoutMode(targetLayout);
+        // If it's a top-level layout mode, set it directly
+        if (targetView === 'project-home' || targetView === 'project-workspace') {
+          setLayoutMode(targetView as LayoutMode);
+        } else {
+          // Otherwise it's a workspace sub-view
+          setWorkspaceView(targetView as WorkspaceView);
+          setLayoutMode('project-workspace');
+        }
         return true;
       }
       setLayoutMode('projects');
@@ -1107,7 +1113,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         });
       }
       setRiViewMode('editor');
-      setLayoutMode('regulatory-workspace');
+      openWorkspaceView('regulatory-workspace');
     },
     [activeProjectId, projectArtifacts, requireActiveProject]
   );
@@ -1121,7 +1127,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       setActiveArtifactId(artifactId);
       if (layoutMode !== 'project-home') {
         setOpenArtifactId(artifactId);
-        setLayoutMode('documents');
+        openWorkspaceView('documents');
       }
     },
     [activeProjectId, layoutMode, requireActiveProject]
@@ -1184,7 +1190,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // ── Authoring intelligence — real readiness/contradiction data for active section ──
   const authoringIntelligence = useAuthoringIntelligence(
     activeProjectId,
-    layoutMode === 'section-workspace' ? activeSectionCode : null
+    layoutMode === 'project-workspace' && workspaceView === 'section-workspace' ? activeSectionCode : null
   );
   // Feed real intelligence data into authoring context when available
   useEffect(() => {
@@ -1257,7 +1263,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     if (urlProjectId && urlProjectId !== activeProjectId) {
       setActiveProjectId(urlProjectId);
       setRiViewMode('editor');
-      setLayoutMode('regulatory-workspace');
+      openWorkspaceView('regulatory-workspace');
     }
     // Also support legacy ?projectId= query param for backwards compat
     try {
@@ -1266,7 +1272,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       if (qp && !urlProjectId) {
         setActiveProjectId(qp);
         setRiViewMode('editor');
-        setLayoutMode('regulatory-workspace');
+        openWorkspaceView('regulatory-workspace');
         // Upgrade to path-based URL
         navigate(`/concept2cure/project/${qp}`);
       }
@@ -1303,7 +1309,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   // Clear stale pending state when switching layout modes
   useEffect(() => {
-    if (layoutMode !== 'workspace' && layoutMode !== 'regulatory-workspace') {
+    if (layoutMode !== 'project-workspace') {
       setPendingDraftSection(null);
     }
   }, [layoutMode]);
@@ -1394,7 +1400,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           guided_submission: 'submission',
         };
         const stage = stageMap[normalizedPath];
-        setLayoutMode('regulatory-workspace');
+        openWorkspaceView('regulatory-workspace');
         setGuidedStageRequest({
           stage,
           controlMode: 'client',
@@ -2316,7 +2322,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       if (!requireActiveProject('regulatory-workspace')) return;
                       setOpenArtifactId(docId);
                       setRiViewMode('editor');
-                      setLayoutMode('regulatory-workspace');
+                      openWorkspaceView('regulatory-workspace');
                     }}
                     onDraftFromSource={(sourceTitle, _sourceId) => {
                       if (!requireActiveProject('regulatory-workspace')) return;
@@ -2326,7 +2332,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         ctdSection: undefined,
                       });
                       setRiViewMode('editor');
-                      setLayoutMode('regulatory-workspace');
+                      openWorkspaceView('regulatory-workspace');
                     }}
                   />
                 </Suspense>
@@ -3134,7 +3140,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 readiness={sectionReadiness}
                 contradictions={sectionContradictions}
                 onContextChange={handleAuthoringContextChange}
-                onBack={() => setLayoutMode('dossier-map')}
+                onBack={() => openWorkspaceView('dossier-map')}
                 onOpenInEditor={(() => {
                   // If there's a matching artifact, provide a way to open it in the full editor
                   const code = activeSectionCode || '2.5';
@@ -3639,7 +3645,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       }}
                       onSaveToVault={_id => {
                         setActiveArtifactId(undefined);
-                        setLayoutMode('vault');
+                        openWorkspaceView('vault-workspace');
                       }}
                     />
                   </Suspense>
