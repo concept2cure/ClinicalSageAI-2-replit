@@ -244,21 +244,117 @@ Execute in this order to minimize risk:
 9. Verify and delete knip-ignored directories (Tier 2A)
 10. `npm run build && npm run test` to confirm
 
+### Pass 3B: Client Dead Code (~15 min)
+11. Delete 46 orphaned client files (Tier 1H — see below)
+12. Delete 12 experimental feature files (innovation/ + gcc/)
+13. `npm run build` to confirm
+
 ### Pass 4: Architectural Consolidation (Future sessions)
-11. Consolidate 510k route family (7 → 2)
-12. Consolidate document route family (10 → 3)
-13. Consolidate IND route family (11 → 3)
-14. Migrate client imports from `components/` to `concept2cure/components/`
-15. Resolve `server/` vs `server/src/` split
+14. Consolidate 510k route family (7 → 2)
+15. Consolidate document route family (10 → 3)
+16. Consolidate IND route family (11 → 3)
+17. Migrate client imports from `components/` to `concept2cure/components/`
+18. Resolve `server/` vs `server/src/` split
+
+---
+
+## TIER 1H: Dead Client Components (Zero Risk)
+
+### Duplicate Component (944 lines)
+- `concept2cure/components/canvas/ConvergentCanvas.tsx` — exact duplicate of `layout/ConvergentCanvas.tsx`
+
+### Old 510(k) Framework (6 files, ~1,950 lines)
+All replaced by CERV2Page:
+- `components/510k/EnhancedLiteratureDiscovery.jsx` (127)
+- `components/510k/PredicateAnalysis.jsx` (182)
+- `components/510k/TeamAssignment.jsx` (546)
+- `components/510k/DocumentGenerationPanel.jsx` (427)
+- `components/510k/ProgressTracker.jsx` (317)
+- `components/510k/PredicateComparison.jsx` (351)
+
+### Unused UI Components (9 files, ~1,300 lines)
+Never imported — shadcn/ui library includes exist but nothing references these:
+- `components/ui/carousel.tsx`, `drawer.tsx`, `hover-card.tsx`, `input-otp.tsx`
+- `menubar.tsx`, `navigation-menu.tsx`, `pagination.tsx`, `toggle-group.tsx`
+- `components/ui/file-upload.jsx` (duplicate of .tsx version)
+
+### Legacy Context Providers (8 files, ~1,600 lines)
+Replaced by portal-v2/services/authService and TenantContext:
+- `contexts/AuthContext.jsx`, `DialogContext.jsx`, `DocuShareContext.jsx`
+- `contexts/OnboardingContext.jsx`, `SubmissionContext.jsx`
+- `contexts/TooltipLearningContext.jsx`, `UserContext.jsx`, `UserContext.tsx`
+
+### Portal-V2 Legacy (7 files, ~1,784 lines)
+Old portal experiment, ZenApp is the active shell:
+- `portal-v2/ClientPortalV2.tsx` (422)
+- `portal-v2/components/AdminPortalIndex.tsx` (761)
+- `portal-v2/components/cortex/*` (5 files)
+
+### Concept2Cure Legacy Layouts (3 files, ~779 lines)
+ZenApp is the active entry point:
+- `concept2cure/IndustryAwareApp.tsx` (453)
+- `concept2cure/ZenAppWithSession.tsx` (200)
+- `concept2cure/layouts/Concept2CureLayout.tsx` (126)
+
+### Orphaned Hooks (2 files)
+- `hooks/useFetchFAERS.jsx`, `hooks/useQCWebSocket.tsx`
+
+### Demo File (1 file)
+- `concept2cure/demo/UnifiedWorkspaceDemo.tsx`
+
+### Complete Feature Dead Zones (12 files, ~8,400 lines)
+
+**Innovation Module** (7 files, never integrated):
+- `components/innovation/AdaptiveReviewerWorkspace.tsx` (582)
+- `components/innovation/AutoTraceabilityPanel.tsx` (523)
+- `components/innovation/ComplianceGuardrailsSDK.tsx` (814)
+- `components/innovation/OutcomeBasedTemplateLearning.tsx` (544)
+- `components/innovation/RegulatoryDeltaRadar.tsx` (474)
+- `components/innovation/RegulatoryNegotiationLogbook.tsx` (667)
+- `components/innovation/SubmissionReadinessTwin.tsx` (545)
+
+**GCC Module** (5 files, never integrated):
+- `components/gcc/ECTDModuleBrowser.tsx` (396)
+- `components/gcc/EvidenceVaultDashboard.tsx` (579)
+- `components/gcc/LabelImpactSimulator.tsx` (892)
+- `components/gcc/SigningWorkflowDashboard.tsx` (621)
+- `components/gcc/SiteIntelligenceDashboard.tsx` (638)
+
+### Client Files Needing Verification (25+ files, ~10,000 lines)
+
+**Regulatory components** — check feature flags before deleting:
+- `concept2cure/components/regulatory/ClinicalEvidenceTracker.tsx` (1,142)
+- `concept2cure/components/regulatory/IVDRAnnexVIIIClassifier.tsx` (1,043)
+- `concept2cure/components/regulatory/AnalyticalValidationTracker.tsx` (912)
+- `concept2cure/components/medtech/MedicalDeviceDashboard.tsx` (1,181)
+
+**ForesightAI modules** — verify /unified-suite route:
+- `components/ForesightAI/CrossSpeciesPKPDModule.tsx` (617)
+- `components/ForesightAI/DoseEscalationModule.tsx` (536)
+- `components/ForesightAI/INDNarrativeModule.tsx` (498)
+- `components/ForesightAI/Phase0I/DoseEscalation.jsx` (439)
+- `components/ForesightAI/PhaseJourneyNavigator.jsx` (364)
+
+### FALSE POSITIVES — Do NOT Delete
+- `InteractiveDemoPage.tsx` — routed in ZenRouter
+- `RegulatoryAITesting.jsx` — routed at /regulatory-ai-test
+- `RegulatoryRiskDashboard.jsx` — routed in App.jsx
+- `PlatformReadinessDashboard.tsx` — routed in App.jsx
+- `ComponentManagementSystem.jsx` — lazy-loaded in App.jsx
+- `CMCBlueprintGenerator.jsx` — lazy-loaded in App.jsx
+- `RealTimeMonitoringDashboard.jsx` — lazy-loaded in App.jsx
+- `concept2cure/components/layout/ConvergentCanvas.tsx` — active (NOT the canvas/ duplicate)
+
+**Client subtotal: 58 safe files (~16,757 lines) + 12 experimental (~8,400 lines)**
 
 ---
 
 ## METRICS
 
 - **Current repo file count**: 5,586
-- **Tier 1 deletions (safe)**: ~127 files/dirs
-- **Tier 2 deletions (after verify)**: ~15 dirs + files
-- **Estimated post-cleanup file count**: ~5,440 (Tier 1) → ~5,400 (Tier 2)
+- **Tier 1 deletions (safe)**: ~185 files/dirs (server: 127, client: 58)
+- **Tier 2 deletions (after verify)**: ~15 dirs + 25 client files + 4 route files
+- **Estimated post-cleanup file count**: ~5,380 (Tier 1) → ~5,330 (Tier 2)
 - **Disk savings**: ~8 MB (code) + ~8.6 MB (data dirs if verified)
 - **Build verified**: Yes — `npm run build` passes as of this audit
 - **Test baseline**: 132 passing, 9 pre-existing failures (CJS/Vitest config)
