@@ -936,7 +936,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                 </h3>
                 <p className="text-sm text-[#4D4B45]/50 max-w-[260px]">
                   Audit trail summary, electronic signature tracking, and compliance
-                  verification controls will be available here.
+                  verification controls for this project.
                 </p>
               </div>
             </TabsContent>

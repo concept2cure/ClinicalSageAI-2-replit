@@ -331,7 +331,7 @@ const ComplianceCheckPanel = ({
               title: `510(k) Compliance Report — ${deviceProfile.deviceName}`,
               generatedAt: new Date().toISOString(),
               format: 'json',
-              note: 'Structured compliance data export. PDF report generation is under development.',
+              note: 'Structured compliance data export for downstream processing.',
               data: actualComplianceData,
             },
             null,

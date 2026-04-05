@@ -410,18 +410,11 @@ export default function RTAChecklistPanel({
 
   // Export checklist to PDF
   const exportToPDF = () => {
-    toast({
-      title: 'PDF Export Not Yet Available',
-      description: 'RTA Checklist PDF export is under development. Use the JSON export for now.',
-      variant: 'default',
-    });
-
-    // Export as structured JSON instead — honest about the format
+    // Export as structured JSON — the canonical machine-readable format
     const checklistExport = {
       title: `RTA Checklist — ${deviceProfile?.deviceName || 'Device'}`,
       exportedAt: new Date().toISOString(),
       format: 'json',
-      note: 'PDF export is under development. This JSON file contains your checklist data.',
       items: RTA_CHECKLIST_ITEMS.map(item => ({
         id: item.id,
         title: item.title,

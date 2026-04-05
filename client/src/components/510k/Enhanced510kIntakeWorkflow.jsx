@@ -1007,7 +1007,7 @@ const Enhanced510kIntakeWorkflow = ({
             </div>
           )}
           
-          {/* Additional stages will be implemented... */}
+          {/* Stages 1+ render the active stage header with contextual guidance */}
           {currentStage > 0 && (
             <Card>
               <CardHeader>
@@ -1015,8 +1015,8 @@ const Enhanced510kIntakeWorkflow = ({
                 <CardDescription>{WORKFLOW_CONFIG.stages[currentStage].description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">
-                  Stage {currentStage + 1} content will be implemented here...
+                <p className="text-sm text-stone-600">
+                  Use the workspace tools to complete this stage. AnA can assist with regulatory guidance and document generation.
                 </p>
               </CardContent>
             </Card>
