@@ -19,7 +19,7 @@ const ErrorLayout: React.FC<{
 }> = ({ code, title, description, action, children }) => (
   <div
     className="min-h-screen flex flex-col items-center justify-center px-6"
-    style={{ background: '#faf9f5', fontFamily: "'Lora', Georgia, serif" }}
+    style={{ background: '#faf9f5', fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}
   >
     {/* Brand mark */}
     <div className="w-16 h-16 rounded-2xl bg-stone-800 flex items-center justify-center mb-8">

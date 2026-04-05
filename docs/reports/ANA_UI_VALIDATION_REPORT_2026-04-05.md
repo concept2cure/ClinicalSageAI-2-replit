@@ -2,7 +2,9 @@
 
 **Date:** 2026-04-05
 **Branch:** `concept2cure-v2`
-**Sprint:** Phase 1-6 (Audit → Dead Code → Nav Collapse → Content Collapse → Token Cleanup)
+**Sprint:** Phase 1-9 (Audit → Dead Code → Nav Collapse → Content Collapse → Token Cleanup → GlobalOS Delete → Typography Reset → Font Purge → Lora Cleanup)
+
+> **Update (Phase 7-9):** Added GlobalOperatingShell deletion, complete Poppins purge (0 remaining), LayoutMode type cleanup (93 → 28 values), shell accent neutralization, Lora isolation to document surfaces only.
 
 ---
 
