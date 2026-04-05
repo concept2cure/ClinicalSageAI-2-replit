@@ -12,9 +12,7 @@ import {
   evaluateGovernedDocument,
   type GovernedEvaluationInput,
 } from '../server/src/control-plane/governed-document-evaluator';
-import {
-  clearGovernedDecisionLog,
-} from '../server/services/governed-decision-repository';
+// clearGovernedDecisionLog removed — was a no-op shim (DB is authoritative)
 
 // Shared types
 import type {
@@ -80,7 +78,7 @@ function makeEvaluationInput(overrides: Partial<GovernedEvaluationInput> = {}): 
 // ═══════════════════════════════════════════════════════════════════════
 
 describe('Phase 2 — RIM Context Hints', () => {
-  beforeEach(() => clearGovernedDecisionLog());
+  beforeEach(() => /* no-op: DB is authoritative */);
 
   it('evaluation includes rimContextHints', () => {
     const result = evaluateGovernedDocument(makeEvaluationInput());
@@ -127,7 +125,7 @@ describe('Phase 2 — RIM Context Hints', () => {
 // ═══════════════════════════════════════════════════════════════════════
 
 describe('Phase 2 — UI Presentation Hints', () => {
-  beforeEach(() => clearGovernedDecisionLog());
+  beforeEach(() => /* no-op: DB is authoritative */);
 
   it('evaluation includes uiPresentationHints', () => {
     const result = evaluateGovernedDocument(makeEvaluationInput());
@@ -384,7 +382,7 @@ describe('Phase 2 — Fabric Hook Types', () => {
 // ═══════════════════════════════════════════════════════════════════════
 
 describe('Phase 2 — Cross-Layer Integration', () => {
-  beforeEach(() => clearGovernedDecisionLog());
+  beforeEach(() => /* no-op: DB is authoritative */);
 
   it('full flow: evaluate → RIM hints → chat envelope → UI hints', () => {
     // 1. Fabric evaluation

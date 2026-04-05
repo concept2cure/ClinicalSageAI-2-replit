@@ -42,6 +42,7 @@ import {
 interface GovernanceStatusBarProps {
   projectId: string | number | undefined;
   className?: string;
+  onOpenReviewQueue?: () => void;
 }
 
 type ReadinessLevel = 'clear' | 'warnings' | 'blocked';
@@ -168,6 +169,7 @@ function DecisionItem({ decision }: { decision: GovernanceDecision }) {
 export function GovernanceStatusBar({
   projectId,
   className,
+  onOpenReviewQueue,
 }: GovernanceStatusBarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -289,9 +291,22 @@ export function GovernanceStatusBar({
 
             {/* Decisions panel */}
             <div className="px-3 py-2">
-              <h4 className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider mb-1.5">
-                Recent Decisions
-              </h4>
+              <div className="flex items-center justify-between mb-1.5">
+                <h4 className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
+                  Recent Decisions
+                </h4>
+                {onOpenReviewQueue && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => { e.stopPropagation(); onOpenReviewQueue(); }}
+                    className="text-[10px] h-5 px-2 text-blue-600 hover:text-blue-700"
+                    data-testid="open-review-queue-btn"
+                  >
+                    Review Queue
+                  </Button>
+                )}
+              </div>
               {decisions.length === 0 ? (
                 <div className="flex items-center gap-1.5 py-1.5">
                   <Clock className="w-3 h-3 text-stone-400" />

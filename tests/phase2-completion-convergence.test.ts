@@ -17,9 +17,7 @@ import {
   evaluateAndInterceptGovernedDocument,
   type GovernedEvaluationInput,
 } from '../server/src/control-plane/governed-document-evaluator';
-import {
-  clearGovernedDecisionLog,
-} from '../server/services/governed-decision-repository';
+// clearGovernedDecisionLog removed — was a no-op shim (DB is authoritative)
 import { evaluateReadiness } from '../server/src/control-plane/readiness-gates';
 import { resolveDocumentContext } from '../server/src/control-plane/document-context-resolver';
 import { formatFabricStateForPrompt } from '../server/services/ana-ri/governed-context-envelope';
@@ -156,12 +154,12 @@ describe('Convergence: GovernanceBoundaryService readiness delegation', () => {
 // ═══════════════════════════════════════════════════════════════════════
 
 describe('Convergence: evaluateAndInterceptGovernedDocument', () => {
-  beforeEach(() => clearGovernedDecisionLog());
+  beforeEach(() => /* no-op: DB is authoritative */);
 
   it('produces the same evaluation as evaluateGovernedDocument', () => {
     const input = makeInput();
     const standalone = evaluateGovernedDocument(input);
-    clearGovernedDecisionLog();
+    /* no-op: DB is authoritative */;
     const coupled = evaluateAndInterceptGovernedDocument(input);
 
     expect(coupled.evaluation.readiness.level).toBe(standalone.evaluation.readiness.level);
@@ -190,11 +188,11 @@ describe('Convergence: evaluateAndInterceptGovernedDocument', () => {
 // ═══════════════════════════════════════════════════════════════════════
 
 describe('Convergence: RIM context influences evaluation outcomes', () => {
-  beforeEach(() => clearGovernedDecisionLog());
+  beforeEach(() => /* no-op: DB is authoritative */);
 
   it('Effect 1: repeated blocker history reduces score and adds warning', () => {
     const withoutRIM = evaluateGovernedDocument(makeInput());
-    clearGovernedDecisionLog();
+    /* no-op: DB is authoritative */;
     const withRIM = evaluateGovernedDocument(makeInput({
       rimContext: {
         signalSummary: { totalSignals: 50, averageScore: 40, overallTrend: 'stable' },
@@ -233,7 +231,7 @@ describe('Convergence: RIM context influences evaluation outcomes', () => {
     });
 
     const withoutRIM = evaluateGovernedDocument(input);
-    clearGovernedDecisionLog();
+    /* no-op: DB is authoritative */;
 
     const withCriticalPatterns = evaluateGovernedDocument({
       ...input,
@@ -261,7 +259,7 @@ describe('Convergence: RIM context influences evaluation outcomes', () => {
 
   it('Effect 3: declining trend with high-risk signals reduces confidence', () => {
     const withoutRIM = evaluateGovernedDocument(makeInput());
-    clearGovernedDecisionLog();
+    /* no-op: DB is authoritative */;
     const withDeclining = evaluateGovernedDocument(makeInput({
       rimContext: {
         signalSummary: { totalSignals: 40, averageScore: 35, overallTrend: 'declining' },
@@ -288,7 +286,7 @@ describe('Convergence: RIM context influences evaluation outcomes', () => {
 // ═══════════════════════════════════════════════════════════════════════
 
 describe('Convergence: Chat context includes governed truth', () => {
-  beforeEach(() => clearGovernedDecisionLog());
+  beforeEach(() => /* no-op: DB is authoritative */);
 
   it('formatFabricStateForPrompt includes all key sections', () => {
     const result = evaluateGovernedDocument(makeInput());
@@ -438,7 +436,7 @@ describe('Convergence: Workspace derives from fabric state', () => {
 // ═══════════════════════════════════════════════════════════════════════
 
 describe('Convergence: UI hints are properly formatted', () => {
-  beforeEach(() => clearGovernedDecisionLog());
+  beforeEach(() => /* no-op: DB is authoritative */);
 
   it('readiness badge label is Title Case', () => {
     const result = evaluateGovernedDocument(makeInput());
