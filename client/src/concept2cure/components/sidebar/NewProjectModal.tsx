@@ -56,15 +56,7 @@ interface SubmissionTypeOption {
 }
 
 const submissionTypes: SubmissionTypeOption[] = [
-  {
-    type: '510K',
-    name: '510(k)',
-    fullName: 'Premarket Notification',
-    description: 'Medical device clearance demonstrating substantial equivalence',
-    icon: FileText,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
-  },
+  // ── Biotech / Pharma (first-class beta tracks) ──
   {
     type: 'IND',
     name: 'IND',
@@ -73,7 +65,6 @@ const submissionTypes: SubmissionTypeOption[] = [
     icon: FlaskConical,
     color: 'text-purple-600',
     bgColor: 'bg-purple-50 hover:bg-purple-100 border-purple-200',
-    earlyAccess: true,
   },
   {
     type: 'NDA',
@@ -83,7 +74,6 @@ const submissionTypes: SubmissionTypeOption[] = [
     icon: Pill,
     color: 'text-green-600',
     bgColor: 'bg-green-50 hover:bg-green-100 border-green-200',
-    earlyAccess: true,
   },
   {
     type: 'BLA',
@@ -93,7 +83,16 @@ const submissionTypes: SubmissionTypeOption[] = [
     icon: Syringe,
     color: 'text-orange-600',
     bgColor: 'bg-orange-50 hover:bg-orange-100 border-orange-200',
-    earlyAccess: true,
+  },
+  // ── Medical Device ──
+  {
+    type: '510K',
+    name: '510(k)',
+    fullName: 'Premarket Notification',
+    description: 'Medical device clearance demonstrating substantial equivalence',
+    icon: FileText,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
   },
   {
     type: 'MAA',
