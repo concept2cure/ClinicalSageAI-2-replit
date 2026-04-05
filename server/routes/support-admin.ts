@@ -15,6 +15,9 @@ import { z } from 'zod';
 import { pool } from '../db';
 
 const router = Router();
+const ANALYTICS_CACHE_TTL_MS = 20_000;
+const MAX_ANALYTICS_CACHE_ENTRIES = 500;
+const supportAnalyticsCache = new Map<string, { expiresAt: number; payload: unknown }>();
 
 // ============================================================
 // VALIDATION SCHEMAS
@@ -121,6 +124,37 @@ function getUserId(req: Request): number | null {
   const uid = req.user?.userId || req.user?.id || req.userId;
   if (!uid) return null;
   return typeof uid === 'string' ? parseInt(uid, 10) : (uid as number);
+}
+
+function getCachedSupportAnalytics(cacheKey: string): unknown | null {
+  const cached = supportAnalyticsCache.get(cacheKey);
+  if (!cached) return null;
+  if (Date.now() > cached.expiresAt) {
+    supportAnalyticsCache.delete(cacheKey);
+    return null;
+  }
+  return cached.payload;
+}
+
+function setCachedSupportAnalytics(cacheKey: string, payload: unknown): void {
+  while (supportAnalyticsCache.size >= MAX_ANALYTICS_CACHE_ENTRIES) {
+    const oldestKey = supportAnalyticsCache.keys().next().value;
+    if (!oldestKey) break;
+    supportAnalyticsCache.delete(oldestKey);
+  }
+  supportAnalyticsCache.set(cacheKey, {
+    expiresAt: Date.now() + ANALYTICS_CACHE_TTL_MS,
+    payload,
+  });
+}
+
+function invalidateSupportAnalyticsCacheForOrg(orgId: number): void {
+  const orgScope = `:${orgId}:`;
+  for (const cacheKey of supportAnalyticsCache.keys()) {
+    if (cacheKey.includes(orgScope)) {
+      supportAnalyticsCache.delete(cacheKey);
+    }
+  }
 }
 
 /** Generate a unique ticket number using a PostgreSQL sequence (atomic, race-free) */
@@ -331,6 +365,7 @@ router.post('/tickets', async (req: Request, res: Response) => {
     );
 
     console.log(`Support ticket ${ticketNumber} created by user ${userId} in org ${orgId}`);
+    invalidateSupportAnalyticsCacheForOrg(orgId);
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Error creating support ticket:', error);
@@ -416,6 +451,7 @@ router.patch('/tickets/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Ticket not found' });
     }
 
+    invalidateSupportAnalyticsCacheForOrg(orgId);
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Error updating support ticket:', error);
@@ -466,6 +502,7 @@ router.delete('/tickets/:id', async (req: Request, res: Response) => {
       client.release();
     }
 
+    invalidateSupportAnalyticsCacheForOrg(orgId);
     res.json({ message: 'Ticket deleted successfully' });
   } catch (error) {
     console.error('Error deleting support ticket:', error);
@@ -521,6 +558,7 @@ router.post('/tickets/:id/messages', async (req: Request, res: Response) => {
       [ticketId, data.isInternal]
     );
 
+    invalidateSupportAnalyticsCacheForOrg(orgId);
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Error adding ticket message:', error);
@@ -969,8 +1007,18 @@ router.get('/analytics', async (req: Request, res: Response) => {
     const orgId = getOrgId(req);
     if (!orgId) return res.status(400).json({ error: 'Organization context required' });
 
-    const { days = '30' } = req.query;
+    const { days = '30', refresh = 'false' } = req.query;
     const daysNum = Math.min(365, Math.max(1, parseInt(days as string, 10) || 30));
+    const bypassCache = String(refresh).toLowerCase() === 'true';
+    const cacheKey = `analytics:${orgId}:${daysNum}`;
+
+    if (!bypassCache) {
+      const cached = getCachedSupportAnalytics(cacheKey);
+      if (cached) {
+        res.setHeader('X-Cache', 'HIT');
+        return res.json(cached);
+      }
+    }
 
     // Run analytics queries in parallel (SLA + satisfaction merged into one scan)
     const [statusCounts, priorityCounts, categoryCounts, slaAndSatisfaction, volumeByDay] =
@@ -1049,7 +1097,7 @@ router.get('/analytics', async (req: Request, res: Response) => {
       unsatisfied: combined.unsatisfied,
     };
 
-    res.json({
+    const payload = {
       period: { days: daysNum },
       byStatus: statusCounts.rows,
       byPriority: priorityCounts.rows,
@@ -1057,7 +1105,11 @@ router.get('/analytics', async (req: Request, res: Response) => {
       sla,
       satisfaction,
       volumeByDay: volumeByDay.rows,
-    });
+    };
+
+    setCachedSupportAnalytics(cacheKey, payload);
+    res.setHeader('X-Cache', 'MISS');
+    res.json(payload);
   } catch (error) {
     console.error('Error fetching support analytics:', error);
     res.status(500).json({ error: 'Failed to fetch support analytics' });
@@ -1074,8 +1126,18 @@ router.get('/analytics/agents', async (req: Request, res: Response) => {
     const orgId = getOrgId(req);
     if (!orgId) return res.status(400).json({ error: 'Organization context required' });
 
-    const { days = '30' } = req.query;
+    const { days = '30', refresh = 'false' } = req.query;
     const daysNum = Math.min(365, Math.max(1, parseInt(days as string, 10) || 30));
+    const bypassCache = String(refresh).toLowerCase() === 'true';
+    const cacheKey = `analytics:agents:${orgId}:${daysNum}`;
+
+    if (!bypassCache) {
+      const cached = getCachedSupportAnalytics(cacheKey);
+      if (cached) {
+        res.setHeader('X-Cache', 'HIT');
+        return res.json(cached);
+      }
+    }
 
     const result = await pool.query(
       `SELECT
@@ -1094,7 +1156,10 @@ router.get('/analytics/agents', async (req: Request, res: Response) => {
       [orgId, daysNum]
     );
 
-    res.json({ agents: result.rows });
+    const payload = { agents: result.rows };
+    setCachedSupportAnalytics(cacheKey, payload);
+    res.setHeader('X-Cache', 'MISS');
+    res.json(payload);
   } catch (error) {
     console.error('Error fetching agent analytics:', error);
     res.status(500).json({ error: 'Failed to fetch agent analytics' });
