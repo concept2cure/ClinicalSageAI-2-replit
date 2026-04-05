@@ -88,6 +88,7 @@
     "audit:repo-health:no-regression": "node scripts/audits/repo-health-scan.mjs --strict-no-regression --baseline docs/reports/repo-health-scan-latest.json --owners docs/reports/repo-health-owners.json --write-markdown docs/reports/repo-health-scan-latest.md",
     "audit:repo-health:full-strict": "node scripts/audits/repo-health-scan.mjs --strict --owners docs/reports/repo-health-owners.json --write-markdown docs/reports/repo-health-scan-latest.md",
     "beta:seed:510k": "node scripts/seed-beta-510k-workspace.mjs",
+    "beta:seed:biotech": "node scripts/seed-beta-biotech-workspace.mjs",
     "beta:typecheck": "NODE_OPTIONS=\"--max-old-space-size=4096\" tsc --noEmit -p tsconfig.beta-slice.json",
     "beta:founder-proof": "npx playwright test tests/e2e/510k-founder-path.e2e.spec.ts",
     "beta:proof": "node scripts/run-beta-founder-proof.mjs"
