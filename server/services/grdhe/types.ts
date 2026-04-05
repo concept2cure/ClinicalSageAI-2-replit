@@ -533,7 +533,7 @@ export interface SignatureRequest {
 // =============================================================================
 
 export type CaseType = 'spontaneous' | 'clinical_trial' | 'literature' | 'solicited' | 'other';
-export type ReportType = 'initial' | 'followup' | 'amendment' | 'nullification';
+export type ReportType = 'initial' | 'followup' | 'amendment' | 'nullification' | 'final';
 export type DatePrecision = 'year' | 'month' | 'day';
 export type CaseOutcome =
   | 'recovered'
@@ -938,6 +938,7 @@ export interface TransformDataResponse {
 }
 
 export interface ExportResult {
+  success?: boolean;
   xml?: string;
   json?: string;
   content?: string;
@@ -945,7 +946,7 @@ export interface ExportResult {
   fileName?: string;
   metadata?: Record<string, unknown>;
   warnings: ValidationWarning[];
-  errors: ValidationError[];
+  errors?: ValidationError[];
   terminologyVersionsUsed?: Record<string, TerminologyVersionLock>;
   exportTimestamp?: string;
   contentHash?: string;

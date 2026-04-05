@@ -47,7 +47,7 @@ function sanitizeMembers(raw: unknown): ProjectShareMember[] {
     valid.push({
       userId,
       role,
-      status: status ?? 'active',
+      status: (status as 'active' | 'revoked' | undefined) ?? 'active',
       addedById: member.addedById ? Number(member.addedById) : null,
       addedAt:
         typeof member.addedAt === 'string' ? member.addedAt : new Date().toISOString(),

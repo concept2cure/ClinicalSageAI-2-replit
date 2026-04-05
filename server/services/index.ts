@@ -28,6 +28,7 @@ export * as literature from './literature';
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export * as openaiService from './openai-service';
+// @ts-expect-error — kimiAIService is a plain .js file without type declarations
 export { default as kimiAIService } from './kimiAIService';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -75,7 +76,7 @@ export { default as sapGeneratorService } from './sap-generator-service';
 // ANALYTICS / INTELLIGENCE SERVICES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export { default as monteCarloService } from './monte-carlo-service';
+export { MonteCarloService as monteCarloService } from './monte-carlo-service';
 export { default as reportGeneratorService } from './report-generator-service';
 
 // ═══════════════════════════════════════════════════════════════════════════════

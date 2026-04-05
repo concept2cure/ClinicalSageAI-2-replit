@@ -32,7 +32,7 @@ export interface StartWorkflowParams {
   documentId: number;
   templateId: number;
   startedBy: string;
-  organizationId: string;
+  organizationId: string | number;
   metadata?: Record<string, unknown>;
 }
 
@@ -121,7 +121,7 @@ export class ApprovalOrchestrator {
         status: 'active',
         currentStep: 1,
         startedBy,
-        organizationId,
+        organizationId: typeof organizationId === 'string' ? parseInt(organizationId, 10) : organizationId,
         metadata: metadata || {},
       })
       .returning();
@@ -391,7 +391,7 @@ export class ApprovalOrchestrator {
       .from(documentWorkflows)
       .where(
         and(
-          eq(documentWorkflows.organizationId, organizationId),
+          eq(documentWorkflows.organizationId, typeof organizationId === 'string' ? parseInt(organizationId, 10) : organizationId),
           eq(documentWorkflows.status, 'active'),
         ),
       );

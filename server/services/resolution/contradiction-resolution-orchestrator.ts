@@ -39,6 +39,8 @@ import type {
   OrchestratorDecision,
   CreateBundleItemRequest,
   BundleExecutionReceipt,
+  ResolutionPath,
+  ResolutionConfidence,
 } from '../../../shared/types/resolution';
 import { ACTION_KIND_TO_BUNDLE_ACTION as actionMap } from '../../../shared/types/resolution';
 

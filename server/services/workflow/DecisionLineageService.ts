@@ -167,7 +167,7 @@ export class DecisionLineageService {
         const approvals = await db.select()
           .from(workflowApprovals)
           .where(eq(workflowApprovals.workflowId, wf.id))
-          .orderBy(workflowApprovals.createdAt);
+          .orderBy(workflowApprovals.stepOrder);
 
         for (const approval of approvals) {
           const nodeId = `approval-${approval.id}`;
@@ -182,8 +182,8 @@ export class DecisionLineageService {
             entityType: 'workflow_approval',
             entityId: approval.id,
             action: status === 'pending' ? 'awaiting_decision' : status,
-            performedBy: (approval.assignedTo as string) || 'unassigned',
-            performedAt: approval.createdAt?.toISOString() || new Date().toISOString(),
+            performedBy: (approval.assignedTo as string[])?.[0] || 'unassigned',
+            performedAt: approval.completedAt?.toISOString() || new Date().toISOString(),
             details: {
               workflowId: wf.id,
               stepId: approval.stepId,

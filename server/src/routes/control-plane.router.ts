@@ -194,30 +194,30 @@ router.get('/governed/fabric-version', requireControlPlaneAccess, (_req, res) =>
 /**
  * GET /governed/decisions — Recent governed document decisions
  */
-router.get('/governed/decisions', requireControlPlaneAccess, (req, res) => {
+router.get('/governed/decisions', requireControlPlaneAccess, async (req, res) => {
   const parsed = governedDecisionQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     return res.status(400).json({ error: { code: 'INVALID_QUERY', details: parsed.error.flatten() } });
   }
-  const entries = getRecentGovernedDecisions(parsed.data);
+  const entries = await getRecentGovernedDecisions(parsed.data);
   return res.json({ entries, count: entries.length });
 });
 
 /**
  * GET /governed/decisions/summary — Aggregated decision summary
  */
-router.get('/governed/decisions/summary', requireControlPlaneAccess, (req, res) => {
+router.get('/governed/decisions/summary', requireControlPlaneAccess, async (req, res) => {
   const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : undefined;
-  const since = typeof req.query.since === 'string' ? req.query.since : undefined;
-  const summary = getGovernedDecisionSummary({ projectId, since });
+  const summary = await getGovernedDecisionSummary({ projectId });
   res.json({ summary });
 });
 
 /**
  * GET /governed/decisions/:decisionId — Single decision detail
  */
-router.get('/governed/decisions/:decisionId', requireControlPlaneAccess, (req, res) => {
-  const decision = getGovernedDecision(req.params.decisionId);
+router.get('/governed/decisions/:decisionId', requireControlPlaneAccess, async (req, res) => {
+  const organizationId = Number(req.user?.organizationId ?? 0);
+  const decision = await getGovernedDecision(req.params.decisionId, organizationId);
   if (!decision) {
     return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Decision not found' } });
   }
@@ -227,8 +227,8 @@ router.get('/governed/decisions/:decisionId', requireControlPlaneAccess, (req, r
 /**
  * GET /governed/trace/:projectId/:artifactId — Decision trace for an artifact
  */
-router.get('/governed/trace/:projectId/:artifactId', requireControlPlaneAccess, (req, res) => {
-  const trace = getArtifactDecisionTrace(req.params.projectId, req.params.artifactId);
+router.get('/governed/trace/:projectId/:artifactId', requireControlPlaneAccess, async (req, res) => {
+  const trace = await getArtifactDecisionTrace(req.params.projectId, req.params.artifactId);
   res.json({ trace, count: trace.length });
 });
 

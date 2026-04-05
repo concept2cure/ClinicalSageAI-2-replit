@@ -842,7 +842,7 @@ function generateDrugInformation(event: CanonicalAdverseEvent, meddraVersion: st
   const concomitantProducts = (event.concomitantProducts || []) as AnyData[];
   const reactions = (event.reactions || []) as AnyData[];
 
-  const allProducts = [
+  const allProducts: AnyData[] = [
     ...suspectProducts.map((p: AnyData) => ({ ...p, role: 'suspect' })),
     ...concomitantProducts.map((p: AnyData) => ({ ...p, role: 'concomitant' })),
   ];

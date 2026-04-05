@@ -21,6 +21,7 @@ describe('Session B integration guards', () => {
       docType: 'document',
       title: 'Doc',
       text: 'Example',
+      source: 'test',
     });
 
     expect(result.indexed).toBe(false);

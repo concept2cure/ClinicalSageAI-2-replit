@@ -92,7 +92,7 @@ export function resolveDocumentContext(input: ContextResolutionInput): ContextRe
   // Check for missing required fields
   const missingFields: string[] = [];
   for (const field of requiredFields) {
-    const value = (input as Record<string, unknown>)[field];
+    const value = (input as unknown as Record<string, unknown>)[field];
     if (value === undefined || value === null || value === '') {
       missingFields.push(field);
     }

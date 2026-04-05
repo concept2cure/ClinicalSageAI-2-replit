@@ -297,10 +297,9 @@ export async function resolveContradiction(
     sourceSignals: [
       {
         kind: 'contradiction',
-        sourceId: findingId,
-        sourceLabel: finding.title,
+        id: findingId,
+        summary: finding.title,
         severity: finding.severity as 'info' | 'critical' | 'major' | 'minor',
-        detail: finding.description,
       },
     ],
     createdByType: 'ana',
@@ -457,9 +456,9 @@ async function triggerPreflightRefresh(
           organizationId,
           projectId,
           triggerType: 'contradiction_resolved' as TriggerType,
-          triggerObjectType: step.targetType,
-          triggerObjectId: step.targetId,
-          triggerObjectLabel: step.targetTitle ?? `${step.targetType}:${step.targetId}`,
+          sourceType: step.targetType,
+          sourceId: step.targetId,
+          sourceLabel: step.targetTitle ?? `${step.targetType}:${step.targetId}`,
           reason: `Post-resolution update (bundle: ${receipt.bundleId})`,
         });
       } catch (innerErr: unknown) {
