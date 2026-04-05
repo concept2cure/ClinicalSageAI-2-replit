@@ -11,6 +11,8 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   CheckCircle2,
   Circle,
@@ -25,8 +27,7 @@ import {
   Sparkles,
   ArrowLeft,
   Loader2,
-  Clock,
-  ExternalLink,
+  PenLine,
 } from 'lucide-react';
 import { useINDStatus, getNextRecommendedSection, type INDSectionStatus } from '../../hooks/useINDStatus';
 import { DataStateWrapper } from '@/components/ui/statesV2';
@@ -139,9 +140,15 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-stone-200 bg-white/95 backdrop-blur-sm px-6 py-4">
         <div className="flex items-center gap-3 mb-3">
-          <button onClick={onBack} className="text-stone-500 hover:text-stone-700">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onBack}
+            className="h-7 w-7 text-stone-500 hover:text-stone-700"
+            aria-label="Back to project"
+          >
             <ArrowLeft className="h-4 w-4" />
-          </button>
+          </Button>
           <div>
             <h1 className="text-lg font-semibold text-stone-900">IND Requirements — 21 CFR 312.23</h1>
             <p className="text-xs text-stone-500">{projectName || 'IND Application'}</p>
@@ -164,14 +171,15 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
         {/* Next recommended + stats */}
         <div className="flex items-center gap-4 mt-3">
           {nextSection && (
-            <button
+            <Button
+              size="sm"
               onClick={() => onSectionClick(nextSection.code)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-stone-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-stone-800 transition-colors"
+              className="gap-1.5 bg-stone-900 hover:bg-stone-800"
             >
               <Sparkles className="h-3 w-3" />
               Next: {nextSection.code} — {nextSection.title}
               <ChevronRight className="h-3 w-3" />
-            </button>
+            </Button>
           )}
           <div className="flex gap-3 ml-auto">
             <span className="text-xs text-emerald-600">{overallStats.completed} complete</span>
@@ -198,20 +206,21 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
 
               return (
                 <div key={group.number} className="rounded-xl border border-stone-200 bg-white overflow-hidden">
-                  {/* Module header */}
-                  <button
+                  {/* Module header — full-width toggle */}
+                  <Button
+                    variant="ghost"
                     onClick={() => toggleModule(group.number)}
                     className={cn(
-                      'w-full flex items-center gap-3 px-4 py-3 text-left transition-colors',
+                      'w-full flex items-center gap-3 px-4 py-3 h-auto text-left rounded-none justify-start hover:bg-transparent',
                       group.bg,
                     )}
                   >
                     {isExpanded ? (
-                      <ChevronDown className={cn('h-4 w-4', group.color)} />
+                      <ChevronDown className={cn('h-4 w-4 shrink-0', group.color)} />
                     ) : (
-                      <ChevronRight className={cn('h-4 w-4', group.color)} />
+                      <ChevronRight className={cn('h-4 w-4 shrink-0', group.color)} />
                     )}
-                    <group.icon className={cn('h-4 w-4', group.color)} />
+                    <group.icon className={cn('h-4 w-4 shrink-0', group.color)} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className={cn('text-sm font-semibold', group.color)}>
@@ -219,7 +228,7 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
                         </span>
                         <span className="text-sm text-stone-700">{group.name}</span>
                       </div>
-                      <p className="text-xs text-stone-500 mt-0.5">{group.description}</p>
+                      <p className="text-xs text-stone-500 mt-0.5 font-normal">{group.description}</p>
                     </div>
 
                     {/* Module progress */}
@@ -244,7 +253,7 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
                         />
                       </div>
                     </div>
-                  </button>
+                  </Button>
 
                   {/* Section list */}
                   {isExpanded && group.sections.length > 0 && (
@@ -266,10 +275,11 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
                               <Circle className={cn('h-4 w-4 flex-shrink-0', statusCfg.color)} />
                             )}
 
-                            {/* Section info */}
-                            <button
+                            {/* Section info — click to open */}
+                            <Button
+                              variant="ghost"
                               onClick={() => onSectionClick(section.code)}
-                              className="flex-1 min-w-0 text-left"
+                              className="flex-1 min-w-0 text-left h-auto py-0 px-0 hover:bg-transparent justify-start"
                             >
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-mono text-stone-400">{section.code}</span>
@@ -280,34 +290,49 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
                                   {section.title}
                                 </span>
                                 {section.required && (
-                                  <span className="text-[9px] font-semibold uppercase tracking-wider text-red-600 bg-red-50 px-1 py-0.5 rounded">
+                                  <Badge variant="destructive" className="text-[9px] font-semibold uppercase tracking-wider px-1 py-0 h-4">
                                     Required
-                                  </span>
+                                  </Badge>
                                 )}
                               </div>
-                            </button>
+                            </Button>
 
                             {/* Status badge */}
-                            <span className={cn(
-                              'flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
-                              isComplete ? 'bg-emerald-50 text-emerald-700' :
-                              section.status === 'review' ? 'bg-blue-50 text-stone-700' :
-                              section.status === 'draft' ? 'bg-amber-50 text-amber-700' :
-                              'bg-stone-50 text-stone-400'
-                            )}>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'flex-shrink-0 text-[10px] font-medium border-0',
+                                isComplete ? 'bg-emerald-50 text-emerald-700' :
+                                section.status === 'review' ? 'bg-blue-50 text-stone-700' :
+                                section.status === 'draft' ? 'bg-amber-50 text-amber-700' :
+                                'bg-stone-50 text-stone-400',
+                              )}
+                            >
                               {statusCfg.label}
-                            </span>
+                            </Badge>
 
-                            {/* AI Draft button for not-started sections */}
+                            {/* Action buttons — context-aware */}
                             {section.status === 'not_started' && (
-                              <button
+                              <Button
+                                size="sm"
                                 onClick={() => handleAIDraft(section.code, section.title)}
                                 disabled={isDrafting}
-                                className="flex-shrink-0 opacity-0 group-hover:opacity-100 inline-flex items-center gap-1 rounded-md bg-stone-900 px-2.5 py-1 text-[10px] font-medium text-white hover:bg-stone-800 disabled:opacity-50 transition-opacity"
+                                className="flex-shrink-0 opacity-0 group-hover:opacity-100 gap-1 h-7 text-[10px] transition-opacity bg-stone-900 hover:bg-stone-800"
                               >
                                 {isDrafting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
                                 AI Draft
-                              </button>
+                              </Button>
+                            )}
+                            {section.status === 'draft' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onSectionClick(section.code)}
+                                className="flex-shrink-0 opacity-0 group-hover:opacity-100 gap-1 h-7 text-[10px] transition-opacity"
+                              >
+                                <PenLine className="h-3 w-3" />
+                                Edit
+                              </Button>
                             )}
                           </div>
                         );

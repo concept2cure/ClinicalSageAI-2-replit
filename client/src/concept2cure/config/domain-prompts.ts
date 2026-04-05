@@ -275,6 +275,30 @@ const LABELING: DomainPromptGroup = {
   ],
 };
 
+const IND_AUTHORING: DomainPromptGroup = {
+  domain: 'ind-authoring',
+  label: 'IND Authoring',
+  prompts: [
+    // Module 1 — Administrative
+    { id: 'ind-cover', label: 'Draft the IND cover letter (Section 1.1)', intent: 'ind_draft_section', description: 'Generate a complete FDA IND cover letter for your product' },
+    { id: 'ind-1571', label: 'Prepare FDA Form 1571 data (Section 1.2)', intent: 'ind_draft_section', description: 'Generate structured data for the IND Application form' },
+    { id: 'ind-1572', label: 'Prepare FDA Form 1572 data (Section 1.3)', intent: 'ind_draft_section', description: 'Statement of Investigator form data' },
+    { id: 'ind-toc', label: 'Generate Table of Contents (Section 1.5)', intent: 'ind_draft_section', description: 'ICH M4 CTD structure with all modules' },
+    // Module 2 — CTD Summaries
+    { id: 'ind-intro', label: 'Draft CTD Introduction (Section 2.2)', intent: 'ind_draft_section', description: 'Product overview, mechanism of action, development rationale' },
+    { id: 'ind-qos', label: 'Draft Quality Overall Summary (Section 2.3)', intent: 'ind_draft_section', description: 'Drug substance and drug product quality summary' },
+    { id: 'ind-nco', label: 'Draft Nonclinical Overview (Section 2.4)', intent: 'ind_draft_section', description: 'Integrated pharmacology, PK, and toxicology assessment' },
+    { id: 'ind-co', label: 'Draft Clinical Overview (Section 2.5)', intent: 'ind_draft_section', description: 'Clinical development rationale and safety/efficacy overview' },
+    { id: 'ind-ncs', label: 'Draft Nonclinical Summaries (Section 2.6)', intent: 'ind_draft_section', description: 'Written and tabulated nonclinical summaries' },
+    { id: 'ind-cs', label: 'Draft Clinical Summary (Section 2.7)', intent: 'ind_draft_section', description: 'Biopharmaceutics, pharmacology, efficacy, safety summaries' },
+    // General IND workflow
+    { id: 'ind-gap', label: 'Run IND gap analysis', description: 'Identify missing sections and data gaps across Module 1-5' },
+    { id: 'ind-readiness', label: 'Assess IND submission readiness', description: 'Score each module and identify blockers' },
+    { id: 'ind-reviewer', label: 'Anticipate FDA reviewer questions', description: 'Predict likely deficiency letters based on your submission state' },
+    { id: 'ind-strategy', label: 'Review my IND regulatory strategy', description: 'Fast Track, Breakthrough, Orphan designation assessment' },
+  ],
+};
+
 const DOSSIER: DomainPromptGroup = {
   domain: 'dossier',
   label: 'Dossier & Submission',
@@ -342,6 +366,7 @@ export const ALL_DOMAIN_GROUPS: DomainPromptGroup[] = [
   REGULATORY_STRATEGY,
   MULTI_AGENCY_STRATEGY,
   LABELING,
+  IND_AUTHORING,
   DOSSIER,
   KNOWLEDGE,
   CONTEXT_TRANSPARENCY,
@@ -374,6 +399,13 @@ const CONTEXT_DOMAIN_MAP: Record<string, string[]> = {
   'device':             ['device', 'strategy', 'dossier', 'authoring'],
   'diagnostics':        ['diagnostics', 'device', 'clinical', 'biostatistics', 'risk'],
   'cms':                ['cms', 'strategy', 'reports', 'recommendations', 'risk'],
+
+  // IND-specific contexts
+  'ind':                ['ind-authoring', 'dossier', 'risk', 'recommendations'],
+  'ind-checklist':      ['ind-authoring', 'dossier', 'authoring', 'risk'],
+  'ind-workspace':      ['ind-authoring', 'authoring', 'dossier', 'risk'],
+  'bla':                ['ind-authoring', 'cmc', 'clinical', 'dossier'],
+  'nda':                ['ind-authoring', 'clinical', 'safety', 'dossier'],
 
   // Workflow views
   'verify':             ['recommendations', 'risk', 'doc-lifecycle', 'authoring'],
