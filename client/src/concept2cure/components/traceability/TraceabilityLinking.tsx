@@ -89,11 +89,11 @@ export interface TraceabilityLinkingProps {
 
 const DocumentTypeBadge: React.FC<{ type: SourceDocument['documentType'] }> = ({ type }) => {
   const config = {
-    clinical_study: { label: 'Clinical Study', color: 'bg-purple-100 text-purple-700' },
+    clinical_study: { label: 'Clinical Study', color: 'bg-stone-200 text-stone-700' },
     regulatory_guidance: { label: 'Guidance', color: 'bg-blue-100 text-stone-700' },
-    literature: { label: 'Literature', color: 'bg-green-100 text-green-700' },
-    internal_sop: { label: 'SOP', color: 'bg-orange-100 text-orange-700' },
-    device_spec: { label: 'Device Spec', color: 'bg-cyan-100 text-cyan-700' },
+    literature: { label: 'Literature', color: 'bg-emerald-100 text-emerald-700' },
+    internal_sop: { label: 'SOP', color: 'bg-amber-100 text-amber-700' },
+    device_spec: { label: 'Device Spec', color: 'bg-blue-100 text-blue-700' },
     test_report: { label: 'Test Report', color: 'bg-yellow-100 text-yellow-700' },
     other: { label: 'Other', color: 'bg-stone-100 text-stone-700' },
   };

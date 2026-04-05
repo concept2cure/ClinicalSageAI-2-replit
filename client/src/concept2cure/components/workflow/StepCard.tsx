@@ -363,7 +363,7 @@ export const StepCard: React.FC<StepCardProps> = ({
                 </>
               )}
               {canSign && (
-                <EnterpriseButton variant="purple" icon={PenTool} onClick={onSign}>
+                <EnterpriseButton variant="muted" icon={PenTool} onClick={onSign}>
                   Sign
                 </EnterpriseButton>
               )}

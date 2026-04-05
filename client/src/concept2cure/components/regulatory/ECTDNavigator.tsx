@@ -472,7 +472,7 @@ const STATUS_CONFIG: Record<
   },
   approved: {
     label: 'Approved',
-    color: 'bg-green-100 text-green-700',
+    color: 'bg-emerald-100 text-emerald-700',
     icon: <CheckCircle2 className="w-4 h-4" />,
   },
   pending: {
@@ -582,7 +582,7 @@ function SectionNode({
           {counts.total > 0 && (
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               {counts.approved > 0 && (
-                <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+                <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700">
                   {counts.approved} ✓
                 </Badge>
               )}
@@ -719,7 +719,7 @@ function SubmissionSequences({ sequences }: { sequences: SubmissionSequence[] })
             key={seq.id}
             className={`border border-border/40 rounded-sm bg-background ${
               seq.status === 'submitted'
-                ? 'border-green-200'
+                ? 'border-emerald-200'
                 : seq.status === 'ready'
                   ? 'border-blue-200'
                   : ''
@@ -993,9 +993,9 @@ export function ECTDNavigator() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Approved</p>
-                <p className="text-base font-semibold text-green-600">{overallStats.approved}</p>
+                <p className="text-base font-semibold text-emerald-600">{overallStats.approved}</p>
               </div>
-              <CheckCircle2 className="w-8 h-8 text-green-500" />
+              <CheckCircle2 className="w-8 h-8 text-emerald-500" />
             </div>
           </div>
         </div>

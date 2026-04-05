@@ -83,7 +83,7 @@ const DESTINATIONS: SaveDestination[] = [
     label: 'Project Vault',
     description: 'Save to the project document vault (internal DMS)',
     icon: Database,
-    iconColor: 'text-indigo-600 bg-indigo-50',
+    iconColor: 'text-blue-600 bg-blue-50',
     requiresSetup: false,
     category: 'local',
   },
@@ -92,7 +92,7 @@ const DESTINATIONS: SaveDestination[] = [
     label: 'Veeva Vault',
     description: 'Upload to your Veeva Vault document library',
     icon: FolderOpen,
-    iconColor: 'text-orange-600 bg-orange-50',
+    iconColor: 'text-amber-600 bg-amber-50',
     requiresSetup: true,
     category: 'cloud',
   },
@@ -287,7 +287,7 @@ export function SaveToDialog({
       aria-label="Save document to destination"
     >
       <div
-        className="bg-white rounded-xl shadow-lg w-full max-w-lg mx-4 overflow-hidden"
+        className="bg-white rounded-xl shadow-sm w-full max-w-lg mx-4 overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* ── Header ── */}

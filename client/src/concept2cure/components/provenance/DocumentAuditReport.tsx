@@ -596,7 +596,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             report.generationLineage.map((g, i) => (
               <div key={i} className="py-1.5 border-b border-stone-50 last:border-0">
                 <div className="flex items-center gap-1.5 text-xs">
-                  <Server className="w-3 h-3 text-violet-400" />
+                  <Server className="w-3 h-3 text-stone-400" />
                   <span className="font-medium text-stone-700">{actionLabel(g.action)}</span>
                   <span className="text-xs text-stone-400 ml-auto">
                     {formatDate(g.timestamp)}
@@ -770,7 +770,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             {onOpenProvenance && (
               <button
                 onClick={onOpenProvenance}
-                className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded bg-violet-50 text-stone-700 hover:bg-violet-100 font-medium"
+                className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded bg-stone-100 text-stone-700 hover:bg-stone-200 font-medium"
               >
                 Open Provenance
               </button>
@@ -778,7 +778,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             {onOpenCompare && (
               <button
                 onClick={onOpenCompare}
-                className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded bg-purple-50 text-purple-700 hover:bg-purple-100 font-medium"
+                className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded bg-stone-100 text-stone-700 hover:bg-stone-200 font-medium"
               >
                 Compare Versions
               </button>

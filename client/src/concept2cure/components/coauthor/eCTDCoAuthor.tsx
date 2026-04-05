@@ -166,9 +166,9 @@ const MODULE_CONFIG: Record<
 > = {
   m1: { label: 'M1', fullName: 'Administrative', color: 'text-stone-600', bgColor: 'bg-stone-100' },
   m2: { label: 'M2', fullName: 'Summaries', color: 'text-blue-600', bgColor: 'bg-blue-100' },
-  m3: { label: 'M3', fullName: 'Quality (CMC)', color: 'text-green-600', bgColor: 'bg-green-100' },
+  m3: { label: 'M3', fullName: 'Quality (CMC)', color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
   m4: { label: 'M4', fullName: 'Nonclinical', color: 'text-amber-600', bgColor: 'bg-amber-100' },
-  m5: { label: 'M5', fullName: 'Clinical', color: 'text-purple-600', bgColor: 'bg-purple-100' },
+  m5: { label: 'M5', fullName: 'Clinical', color: 'text-stone-600', bgColor: 'bg-stone-200' },
 };
 
 const STATUS_CONFIG: Record<
@@ -355,7 +355,7 @@ const SmartTagBadge: React.FC<{
 }> = ({ tag, onVerify }) => {
   const config: Record<SmartTagType, { color: string; icon: React.ReactNode }> = {
     data: {
-      color: 'bg-green-100 text-green-700 border-green-200',
+      color: 'bg-emerald-100 text-emerald-700 border-emerald-200',
       icon: <Target className="w-3 h-3" />,
     },
     citation: {
@@ -363,7 +363,7 @@ const SmartTagBadge: React.FC<{
       icon: <BookOpen className="w-3 h-3" />,
     },
     cross_ref: {
-      color: 'bg-purple-100 text-purple-700 border-purple-200',
+      color: 'bg-stone-200 text-stone-700 border-stone-200',
       icon: <Link className="w-3 h-3" />,
     },
     guideline: {
@@ -440,7 +440,7 @@ const RedlineAlertPanel: React.FC<{
             <p className="text-sm text-red-800 font-medium mb-1">"{alert.claimText}"</p>
             <p className="text-xs text-red-600">{alert.message}</p>
             {alert.suggestion && (
-              <p className="text-xs text-green-700 mt-2 flex items-center gap-1">
+              <p className="text-xs text-emerald-700 mt-2 flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
                 Suggestion: {alert.suggestion}
               </p>
@@ -528,7 +528,7 @@ const SectionEditor: React.FC<{
         {onSubmitForReview && ['editing', 'ai_draft'].includes(section.status) && (
           <button
             onClick={onSubmitForReview}
-            className="px-3 py-1.5 text-sm font-medium bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center gap-2 ml-1"
+            className="px-3 py-1.5 text-sm font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700 flex items-center gap-2 ml-1"
             title="Submit section for review"
           >
             <Eye className="w-4 h-4" />
@@ -540,7 +540,7 @@ const SectionEditor: React.FC<{
         {onApprove && (modeCaps ? modeCaps.canApprove : true) && section.status === 'in_review' && (
           <button
             onClick={onApprove}
-            className="px-3 py-1.5 text-sm font-medium bg-green-700 text-white rounded-lg hover:bg-green-800 flex items-center gap-2 ml-1"
+            className="px-3 py-1.5 text-sm font-medium bg-emerald-700 text-white rounded-lg hover:bg-emerald-800 flex items-center gap-2 ml-1"
             title="Approve with 21 CFR Part 11 electronic signature"
           >
             <FileSignature className="w-4 h-4" />
@@ -631,11 +631,11 @@ const SectionEditor: React.FC<{
 
             {/* Electronic Signatures Display (21 CFR Part 11) */}
             {section.signatures && section.signatures.length > 0 && (
-              <div className="mt-6 pt-4 border-t border-green-200">
-                <h4 className="text-xs font-bold text-green-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <div className="mt-6 pt-4 border-t border-emerald-200">
+                <h4 className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <ShieldCheck className="w-3.5 h-3.5" />
                   Electronic Signatures ({section.signatures.length})
-                  <span className="text-[10px] font-normal normal-case bg-green-100 text-green-600 px-1.5 py-0.5 rounded">
+                  <span className="text-[10px] font-normal normal-case bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded">
                     21 CFR Part 11
                   </span>
                 </h4>
@@ -643,18 +643,18 @@ const SectionEditor: React.FC<{
                   {section.signatures.map(sig => (
                     <div
                       key={sig.id}
-                      className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg"
+                      className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-lg"
                     >
                       <div className="flex items-center gap-3">
-                        <ShieldCheck className="w-4 h-4 text-green-600" />
+                        <ShieldCheck className="w-4 h-4 text-emerald-600" />
                         <div>
-                          <span className="text-sm font-medium text-green-900">{sig.signerName}</span>
-                          <span className="text-xs text-green-600 ml-2 capitalize">{sig.meaning}</span>
+                          <span className="text-sm font-medium text-emerald-900">{sig.signerName}</span>
+                          <span className="text-xs text-emerald-600 ml-2 capitalize">{sig.meaning}</span>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-green-700">{new Date(sig.timestamp).toLocaleString()}</p>
-                        <p className="text-[10px] font-mono text-green-500">{sig.signatureHash.slice(0, 16)}...</p>
+                        <p className="text-xs text-emerald-700">{new Date(sig.timestamp).toLocaleString()}</p>
+                        <p className="text-[10px] font-mono text-emerald-500">{sig.signatureHash.slice(0, 16)}...</p>
                       </div>
                     </div>
                   ))}
@@ -1083,14 +1083,14 @@ export const ECTDCoAuthorStandalone: React.FC<{
       {signingSection && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-sm max-w-lg w-full mx-4 overflow-hidden">
-            <div className="bg-gradient-to-r from-green-700 to-green-800 px-6 py-4">
+            <div className="bg-emerald-700 px-6 py-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-white/20 rounded-lg">
                   <ShieldCheck className="h-6 w-6 text-white" />
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-white">Electronic Signature Required</h2>
-                  <p className="text-green-100 text-sm">21 CFR Part 11 Compliant</p>
+                  <p className="text-emerald-100 text-sm">21 CFR Part 11 Compliant</p>
                 </div>
               </div>
             </div>
@@ -1127,7 +1127,7 @@ export const ECTDCoAuthorStandalone: React.FC<{
               </button>
               <button
                 onClick={() => handleSignatureComplete(signingSection)}
-                className="px-6 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 flex items-center gap-2"
+                className="px-6 py-2 bg-emerald-700 text-white rounded-lg hover:bg-emerald-800 flex items-center gap-2"
               >
                 <FileSignature className="h-4 w-4" />
                 Sign &amp; Approve

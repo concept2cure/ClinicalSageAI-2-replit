@@ -565,10 +565,10 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
           ) : (
             <div className="space-y-2">
               {generationLineage.events.map(ge => (
-                <div key={ge.eventId} className="bg-violet-50/50 rounded-md p-2">
+                <div key={ge.eventId} className="bg-stone-100/50 rounded-md p-2">
                   <div className="flex items-center gap-1.5 mb-1">
                     {ge.action === 'ai_generate' ? (
-                      <Sparkles className="w-3 h-3 text-violet-500" />
+                      <Sparkles className="w-3 h-3 text-stone-500" />
                     ) : (
                       <PenTool className="w-3 h-3 text-blue-500" />
                     )}
@@ -594,7 +594,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                   )}
                   {ge.details && Object.keys(ge.details).length > 0 && (
                     <details className="mt-1">
-                      <summary className="text-xs text-violet-500 cursor-pointer">
+                      <summary className="text-xs text-stone-500 cursor-pointer">
                         View generation details
                       </summary>
                       <div className="mt-1 text-xs font-mono text-stone-500 bg-white rounded p-1.5 max-h-32 overflow-y-auto">
@@ -934,7 +934,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
           {onOpenCompare && (
             <button
               onClick={onOpenCompare}
-              className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded bg-purple-50 text-purple-700 hover:bg-purple-100 font-medium"
+              className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded bg-stone-100 text-stone-700 hover:bg-stone-200 font-medium"
             >
               <GitBranch className="w-3 h-3" />
               Compare Versions

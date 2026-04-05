@@ -250,19 +250,19 @@ interface MetricCardProps {
 
 // Static Tailwind color maps to prevent CSS purge issues
 const COLOR_BG_100: Record<string, string> = {
-  blue: 'bg-blue-100', indigo: 'bg-blue-100', green: 'bg-green-100', purple: 'bg-purple-100',
-  violet: 'bg-violet-100', amber: 'bg-amber-100', teal: 'bg-teal-100', cyan: 'bg-cyan-100',
-  rose: 'bg-rose-100', slate: 'bg-stone-100', sky: 'bg-sky-100', orange: 'bg-orange-100',
+  blue: 'bg-blue-100', indigo: 'bg-blue-100', green: 'bg-emerald-100', purple: 'bg-stone-200',
+  violet: 'bg-stone-200', amber: 'bg-amber-100', teal: 'bg-emerald-100', cyan: 'bg-blue-100',
+  rose: 'bg-stone-200', slate: 'bg-stone-100', sky: 'bg-blue-100', orange: 'bg-amber-100',
 };
 const COLOR_TEXT_600: Record<string, string> = {
-  blue: 'text-blue-600', indigo: 'text-blue-600', green: 'text-green-600', purple: 'text-purple-600',
-  violet: 'text-violet-600', amber: 'text-amber-600', teal: 'text-teal-600', cyan: 'text-cyan-600',
-  rose: 'text-rose-600', slate: 'text-stone-600', sky: 'text-sky-600', orange: 'text-orange-600',
+  blue: 'text-blue-600', indigo: 'text-blue-600', green: 'text-emerald-600', purple: 'text-stone-600',
+  violet: 'text-stone-600', amber: 'text-amber-600', teal: 'text-emerald-600', cyan: 'text-blue-600',
+  rose: 'text-stone-600', slate: 'text-stone-600', sky: 'text-blue-600', orange: 'text-amber-600',
 };
 const COLOR_TEXT_700: Record<string, string> = {
-  blue: 'text-stone-700', indigo: 'text-stone-700', green: 'text-green-700', purple: 'text-purple-700',
-  violet: 'text-stone-700', amber: 'text-amber-700', teal: 'text-teal-700', cyan: 'text-cyan-700',
-  rose: 'text-rose-700', slate: 'text-stone-700', sky: 'text-sky-700', orange: 'text-orange-700',
+  blue: 'text-stone-700', indigo: 'text-stone-700', green: 'text-emerald-700', purple: 'text-stone-700',
+  violet: 'text-stone-700', amber: 'text-amber-700', teal: 'text-emerald-700', cyan: 'text-stone-700',
+  rose: 'text-stone-700', slate: 'text-stone-700', sky: 'text-stone-700', orange: 'text-amber-700',
 };
 
 const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
@@ -288,7 +288,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
             <div
               className={cn(
                 'flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full',
-                metric.trend === 'up' && 'bg-green-100 text-green-700',
+                metric.trend === 'up' && 'bg-emerald-100 text-emerald-700',
                 metric.trend === 'down' && 'bg-red-100 text-red-700',
                 metric.trend === 'stable' && 'bg-stone-100 text-stone-700'
               )}
@@ -330,7 +330,7 @@ interface TaskListProps {
 const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
   const priorityColors = {
     critical: 'bg-red-100 text-red-700 border-red-200',
-    high: 'bg-orange-100 text-orange-700 border-orange-200',
+    high: 'bg-amber-100 text-amber-700 border-amber-200',
     medium: 'bg-amber-100 text-amber-700 border-amber-200',
     low: 'bg-stone-100 text-stone-700 border-stone-200',
   };

@@ -47,7 +47,7 @@ interface SourceCitationsPanelProps {
 const SOURCE_TYPE_META: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   trial_data: { label: 'Clinical Trial', icon: <Microscope className="w-3 h-3" />, color: 'text-blue-600 bg-blue-50' },
   literature: { label: 'Literature', icon: <BookOpen className="w-3 h-3" />, color: 'text-emerald-600 bg-emerald-50' },
-  regulatory_guidance: { label: 'Regulatory', icon: <Building2 className="w-3 h-3" />, color: 'text-violet-600 bg-violet-50' },
+  regulatory_guidance: { label: 'Regulatory', icon: <Building2 className="w-3 h-3" />, color: 'text-stone-600 bg-stone-100' },
   internal_data: { label: 'Internal Data', icon: <Database className="w-3 h-3" />, color: 'text-amber-600 bg-amber-50' },
 };
 
@@ -119,7 +119,7 @@ const SourceCitationsPanel: React.FC<SourceCitationsPanelProps> = ({ artifactId,
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 bg-gradient-to-r from-blue-50/50 to-white">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
             <Shield className="w-4 h-4 text-blue-600" />

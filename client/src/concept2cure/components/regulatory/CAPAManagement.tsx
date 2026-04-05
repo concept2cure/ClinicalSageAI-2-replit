@@ -176,7 +176,7 @@ const STATUS_CONFIG: Record<CAPAStatus, { label: string; color: string; icon: Re
   },
   root_cause_identified: {
     label: 'Root Cause Identified',
-    color: 'bg-purple-100 text-purple-800',
+    color: 'bg-stone-200 text-stone-800',
     icon: <GitBranch className="w-4 h-4" />,
   },
   action_planning: {
@@ -186,22 +186,22 @@ const STATUS_CONFIG: Record<CAPAStatus, { label: string; color: string; icon: Re
   },
   implementation: {
     label: 'Implementation',
-    color: 'bg-orange-100 text-orange-800',
+    color: 'bg-amber-100 text-amber-800',
     icon: <ArrowRight className="w-4 h-4" />,
   },
   verification: {
     label: 'Verification',
-    color: 'bg-cyan-100 text-cyan-800',
+    color: 'bg-blue-100 text-blue-800',
     icon: <CheckCircle2 className="w-4 h-4" />,
   },
   effectiveness_check: {
     label: 'Effectiveness Check',
-    color: 'bg-teal-100 text-teal-800',
+    color: 'bg-emerald-100 text-emerald-800',
     icon: <TrendingUp className="w-4 h-4" />,
   },
   closed: {
     label: 'Closed',
-    color: 'bg-green-100 text-green-800',
+    color: 'bg-emerald-100 text-emerald-800',
     icon: <CheckCircle2 className="w-4 h-4" />,
   },
   closed_ineffective: {
@@ -214,7 +214,7 @@ const STATUS_CONFIG: Record<CAPAStatus, { label: string; color: string; icon: Re
 const PRIORITY_CONFIG: Record<CAPAPriority, { label: string; color: string; daysToClose: number }> =
   {
     critical: { label: 'Critical', color: 'bg-red-500 text-white', daysToClose: 30 },
-    major: { label: 'Major', color: 'bg-orange-500 text-white', daysToClose: 60 },
+    major: { label: 'Major', color: 'bg-amber-500 text-white', daysToClose: 60 },
     minor: { label: 'Minor', color: 'bg-yellow-500 text-white', daysToClose: 90 },
   };
 
@@ -410,9 +410,9 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Critical</p>
-              <p className="text-base font-semibold text-orange-600">{metrics.critical}</p>
+              <p className="text-base font-semibold text-amber-600">{metrics.critical}</p>
             </div>
-            <AlertTriangle className="w-8 h-8 text-orange-500" />
+            <AlertTriangle className="w-8 h-8 text-amber-500" />
           </div>
         </div>
       </div>
@@ -422,9 +422,9 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Regulatory</p>
-              <p className="text-base font-semibold text-purple-600">{metrics.regulatory}</p>
+              <p className="text-base font-semibold text-stone-600">{metrics.regulatory}</p>
             </div>
-            <FileWarning className="w-8 h-8 text-purple-500" />
+            <FileWarning className="w-8 h-8 text-stone-500" />
           </div>
         </div>
       </div>
@@ -560,11 +560,11 @@ function RootCausePanel({
           />
         </div>
 
-        <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
-          <Sparkles className="w-5 h-5 text-purple-600" />
+        <div className="flex items-center gap-2 p-3 bg-stone-100 rounded-lg">
+          <Sparkles className="w-5 h-5 text-stone-600" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-purple-800">AnA Analysis</p>
-            <p className="text-xs text-purple-600">
+            <p className="text-sm font-medium text-stone-800">AnA Analysis</p>
+            <p className="text-xs text-stone-600">
               Let AnA analyze similar CAPAs and suggest potential root causes based on historical data
             </p>
           </div>
@@ -795,8 +795,8 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
                 (capa.riskScore || 0) >= 80
                   ? 'text-red-600'
                   : (capa.riskScore || 0) >= 50
-                    ? 'text-orange-600'
-                    : 'text-green-600'
+                    ? 'text-amber-600'
+                    : 'text-emerald-600'
               }`}
             >
               {capa.riskScore || 'N/A'}
@@ -850,7 +850,7 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
               </Badge>
             )}
             {capa.customerImpact && (
-              <Badge variant="outline" className="border-orange-500 text-orange-600">
+              <Badge variant="outline" className="border-amber-500 text-amber-600">
                 Customer Impact
               </Badge>
             )}

@@ -79,7 +79,7 @@ const CATEGORY_CONFIG: Record<MemoryCategory, { label: string; icon: React.Eleme
   strategy: { label: 'Strategy', icon: Target, color: 'text-blue-600 bg-blue-50' },
   feedback: { label: 'Feedback', icon: FileText, color: 'text-emerald-600 bg-emerald-50' },
   regulatory: { label: 'Regulatory', icon: Shield, color: 'text-red-600 bg-red-50' },
-  clinical: { label: 'Clinical', icon: Brain, color: 'text-cyan-600 bg-cyan-50' },
+  clinical: { label: 'Clinical', icon: Brain, color: 'text-blue-600 bg-blue-50' },
   technical: { label: 'Technical', icon: Database, color: 'text-stone-600 bg-stone-50' },
 };
 

@@ -311,7 +311,7 @@ export function PrecedentIntelligenceDashboard({
             </TabsTrigger>
             <TabsTrigger
               value="adcom"
-              className="gap-1.5 data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700"
+              className="gap-1.5 data-[state=active]:bg-stone-100 data-[state=active]:text-stone-700"
             >
               <Users className="w-3.5 h-3.5" /> AdCom
             </TabsTrigger>
@@ -1223,7 +1223,7 @@ export function PrecedentIntelligenceDashboard({
                         </div>
                         <Badge variant="secondary" className={cn('text-xs flex-shrink-0',
                           c.category === 'clinical' && 'bg-blue-50 text-stone-700',
-                          c.category === 'cmc' && 'bg-purple-50 text-purple-700',
+                          c.category === 'cmc' && 'bg-stone-100 text-stone-700',
                           c.category === 'nonclinical' && 'bg-green-50 text-green-700',
                           c.category === 'administrative' && 'bg-stone-100 text-stone-700',
                           c.category === 'safety' && 'bg-red-50 text-red-700',
@@ -1366,7 +1366,7 @@ export function PrecedentIntelligenceDashboard({
           <div className="border border-border/40 rounded-sm bg-background">
             <div className="px-3 py-2 border-b border-border/30 pb-3">
               <h3 className="text-sm font-semibold flex items-center gap-2">
-                <Users className="w-4 h-4 text-purple-600" />
+                <Users className="w-4 h-4 text-stone-600" />
                 Advisory Committee (AdCom) Risk Analysis
               </h3>
             </div>
@@ -1377,7 +1377,7 @@ export function PrecedentIntelligenceDashboard({
               <Button
                 onClick={() => setAdcomActive(true)}
                 disabled={adcomLoading || !searchSubmissionType}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
+                className="bg-stone-600 hover:bg-stone-700 text-white"
                 size="sm"
               >
                 {adcomLoading ? <Spinner size="sm" className="mr-1" /> : <Users className="w-4 h-4 mr-1" />}
@@ -1392,7 +1392,7 @@ export function PrecedentIntelligenceDashboard({
                 'border border-border/40 rounded-sm bg-background border-l-4',
                 adcomResult.overallAdcomRisk === 'low' && 'border-l-emerald-500',
                 adcomResult.overallAdcomRisk === 'medium' && 'border-l-amber-500',
-                adcomResult.overallAdcomRisk === 'high' && 'border-l-purple-500',
+                adcomResult.overallAdcomRisk === 'high' && 'border-l-stone-500',
               )}>
                 <div className="px-3 py-3">
                   <div className="flex items-center justify-between">
@@ -1424,13 +1424,13 @@ export function PrecedentIntelligenceDashboard({
               <div className="border border-border/40 rounded-sm bg-background">
                 <div className="px-3 py-2 border-b border-border/30 pb-2">
                   <h3 className="text-sm font-semibold flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-purple-500" /> Voting Pattern Insights
+                    <Sparkles className="w-4 h-4 text-stone-500" /> Voting Pattern Insights
                   </h3>
                 </div>
                 <div className="px-3 py-2 space-y-1.5">
                   {adcomResult.votingInsights.map((v: string, i: number) => (
-                    <div key={i} className="text-xs text-stone-600 flex items-start gap-2 p-2 bg-purple-50/30 rounded">
-                      <Sparkles className="w-3 h-3 text-purple-400 flex-shrink-0 mt-0.5" />
+                    <div key={i} className="text-xs text-stone-600 flex items-start gap-2 p-2 bg-stone-100/30 rounded">
+                      <Sparkles className="w-3 h-3 text-stone-400 flex-shrink-0 mt-0.5" />
                       {v}
                     </div>
                   ))}

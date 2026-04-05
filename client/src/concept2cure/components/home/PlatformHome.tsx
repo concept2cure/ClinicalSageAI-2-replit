@@ -73,8 +73,8 @@ const QUICK_ACTIONS = [
     label: 'AI Copilot',
     subtitle: 'Chat with AnA',
     icon: Sparkles,
-    color: 'text-violet-600',
-    bg: 'bg-violet-50',
+    color: 'text-stone-600',
+    bg: 'bg-stone-100',
     action: 'assistant',
   },
   {
@@ -91,8 +91,8 @@ const QUICK_ACTIONS = [
     label: 'Biostatistics',
     subtitle: 'Statistical analysis',
     icon: FlaskConical,
-    color: 'text-teal-600',
-    bg: 'bg-teal-50',
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50',
     action: 'biostatistics',
   },
 ];
@@ -110,7 +110,7 @@ const MODULE_CATALOG = [
     label: 'eCTD Co-Author',
     subtitle: 'Document authoring',
     icon: PenLine,
-    color: 'text-violet-600',
+    color: 'text-stone-600',
   },
   {
     id: 'intelligence-hub',
@@ -145,7 +145,7 @@ const MODULE_CATALOG = [
     label: 'Biostatistics',
     subtitle: 'Statistical platform',
     icon: FlaskConical,
-    color: 'text-teal-600',
+    color: 'text-emerald-600',
   },
   {
     id: 'training-center',
@@ -173,7 +173,7 @@ const MODULE_CATALOG = [
     label: 'Knowledge Base',
     subtitle: 'Skills & uploads',
     icon: Upload,
-    color: 'text-violet-600',
+    color: 'text-stone-600',
   },
   {
     id: 'project-knowledge',
@@ -193,11 +193,11 @@ const MODULE_CATALOG = [
 
 const TYPE_COLORS: Record<string, string> = {
   '510K': 'bg-stone-600',
-  IND: 'bg-violet-500',
+  IND: 'bg-stone-500',
   NDA: 'bg-emerald-500',
-  BLA: 'bg-teal-500',
-  PMA: 'bg-orange-500',
-  CER: 'bg-pink-500',
+  BLA: 'bg-emerald-500',
+  PMA: 'bg-amber-500',
+  CER: 'bg-stone-500',
   MAA: 'bg-stone-600',
 };
 
@@ -394,7 +394,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
                   key={a.id}
                   className="flex items-center gap-3 px-4 py-2.5 hover:bg-stone-50 transition-colors"
                 >
-                  <FileText className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
+                  <FileText className="w-3.5 h-3.5 text-stone-500 flex-shrink-0" />
                   <span className="text-sm font-medium text-stone-900 truncate flex-1">
                     {a.title || a.type}
                   </span>

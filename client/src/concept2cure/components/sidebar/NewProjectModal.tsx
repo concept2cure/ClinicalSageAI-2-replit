@@ -76,8 +76,8 @@ const submissionTypes: SubmissionTypeOption[] = [
     fullName: 'Investigational New Drug',
     description: 'Permission to begin clinical trials for a new drug',
     icon: FlaskConical,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50 hover:bg-purple-100 border-purple-200',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-100 hover:bg-stone-200 border-stone-200',
     category: 'biotech',
   },
   {
@@ -86,8 +86,8 @@ const submissionTypes: SubmissionTypeOption[] = [
     fullName: 'New Drug Application',
     description: 'Full approval application for new pharmaceutical drugs',
     icon: Pill,
-    color: 'text-green-600',
-    bgColor: 'bg-green-50 hover:bg-green-100 border-green-200',
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200',
     category: 'biotech',
   },
   {
@@ -96,8 +96,8 @@ const submissionTypes: SubmissionTypeOption[] = [
     fullName: 'Biologics License Application',
     description: 'Approval for biological products like vaccines and blood products',
     icon: Syringe,
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-50 hover:bg-orange-100 border-orange-200',
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-50 hover:bg-amber-100 border-amber-200',
     category: 'biotech',
   },
   // ── Medical Device ──
@@ -117,8 +117,8 @@ const submissionTypes: SubmissionTypeOption[] = [
     fullName: 'Marketing Authorization Application',
     description: 'European approval for medicinal products (EMA)',
     icon: Globe,
-    color: 'text-pink-600',
-    bgColor: 'bg-pink-50 hover:bg-pink-100 border-pink-200',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-100 hover:bg-stone-200 border-stone-200',
     category: 'international',
     earlyAccess: true,
   },
@@ -128,8 +128,8 @@ const submissionTypes: SubmissionTypeOption[] = [
     fullName: 'Premarket Approval',
     description: 'FDA approval for Class III high-risk medical devices',
     icon: Shield,
-    color: 'text-cyan-600',
-    bgColor: 'bg-cyan-50 hover:bg-cyan-100 border-cyan-200',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
     category: 'device',
   },
   {
@@ -432,7 +432,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
             {step === 'success' ? (
               <CheckCircle2 className="h-5 w-5 text-emerald-600" />
             ) : (
-              <Sparkles className="h-5 w-5 text-violet-600" />
+              <Sparkles className="h-5 w-5 text-stone-600" />
             )}
             {step === 'type'
               ? 'New Project'

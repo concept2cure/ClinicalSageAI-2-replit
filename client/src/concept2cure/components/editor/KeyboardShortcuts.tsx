@@ -204,7 +204,7 @@ export function KeyboardShortcutsOverlay({ isOpen, onClose }: KeyboardShortcutsO
       <div
         className={cn(
           'relative w-full max-w-2xl max-h-[80vh] overflow-hidden rounded-xl',
-          'bg-gradient-to-br from-slate-900/95 to-slate-800/95',
+          'bg-stone-800/95',
           'border border-white/10',
           'shadow-sm shadow-black/40',
           'backdrop-blur-xl',

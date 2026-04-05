@@ -342,7 +342,7 @@ export function RegulatoryIntelligencePanel({
             {/* CSR Learnings */}
             <div>
               <div className="flex items-center gap-1.5 mb-2">
-                <BookOpen className="w-3.5 h-3.5 text-teal-600" />
+                <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
                 <span className="text-xs font-semibold text-stone-700">CSR Learnings</span>
                 {csrSearch.isLoading && <Spinner size="sm" />}
               </div>
@@ -357,13 +357,13 @@ export function RegulatoryIntelligencePanel({
                   {csrSearch.data.map((csr, i) => (
                     <div
                       key={csr.id || i}
-                      className="p-2 bg-teal-50/60 border border-teal-100 rounded-lg"
+                      className="p-2 bg-emerald-50/60 border border-emerald-100 rounded-lg"
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-medium text-stone-900 truncate">
                           {csr.title}
                         </span>
-                        <span className="text-xs px-1.5 py-0.5 bg-teal-100 text-teal-700 rounded-full">
+                        <span className="text-xs px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded-full">
                           {csr.phase}
                         </span>
                       </div>

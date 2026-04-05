@@ -105,7 +105,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
           <div
             className={cn(
               'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
-              isUser ? 'bg-stone-800 text-white' : 'bg-purple-600 text-white'
+              isUser ? 'bg-stone-800 text-white' : 'bg-stone-600 text-white'
             )}
           >
             {isUser ? (
@@ -415,8 +415,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
 const EmptyState: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-4">
-      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
-        <Sparkles className="h-8 w-8 text-purple-600" />
+      <div className="w-12 h-12 bg-stone-100 rounded-lg flex items-center justify-center mb-6">
+        <Sparkles className="h-8 w-8 text-stone-600" />
       </div>
       <h2 className="text-base font-medium text-stone-900 mb-2">
         Hello! I'm AnA
@@ -631,7 +631,7 @@ export const ChatPanel: React.FC = () => {
               <div className="py-4 bg-stone-50">
                 <div className="max-w-3xl mx-auto px-4">
                   <div className="flex gap-4">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-stone-600 flex items-center justify-center">
                       <Sparkles className="h-4 w-4 text-white" />
                     </div>
                     <div className="flex items-center gap-1">

@@ -243,7 +243,7 @@ const VersionItem: React.FC<VersionItemProps> = ({
                         e.stopPropagation();
                         onCompare();
                       }}
-                      className="p-1.5 rounded-md text-stone-400 hover:text-purple-600 hover:bg-purple-50"
+                      className="p-1.5 rounded-md text-stone-400 hover:text-stone-600 hover:bg-stone-100"
                     >
                       <GitCompare className="h-4 w-4" />
                     </button>
@@ -415,7 +415,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
             )}
 
             {compareMode && (
-              <div className="p-3 bg-purple-50 rounded-lg text-sm text-purple-700 mb-4">
+              <div className="p-3 bg-stone-100 rounded-lg text-sm text-stone-700 mb-4">
                 {!selectedVersionId
                   ? 'Select the first version to compare'
                   : !compareTargetId
@@ -507,7 +507,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <GitCompare className="h-5 w-5 text-purple-600" />
+              <GitCompare className="h-5 w-5 text-stone-600" />
               Compare Versions
             </DialogTitle>
             <DialogDescription className="flex items-center gap-2 pt-1">

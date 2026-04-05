@@ -219,7 +219,7 @@ const ProfileSection: React.FC = () => {
       {/* Avatar */}
       <div className="flex items-center gap-4 mb-6 pb-6 border-b border-stone-200">
         <div className="relative">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-base font-semibold">
+          <div className="w-20 h-20 rounded-full bg-stone-800 flex items-center justify-center text-white text-base font-semibold">
             {initials}
           </div>
           <button

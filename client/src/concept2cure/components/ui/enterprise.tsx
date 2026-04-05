@@ -224,7 +224,7 @@ export function IconBox({ icon: Icon, className, size = 'md' }: IconBoxProps) {
 // STATUS PILL — unified status badge
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type StatusVariant = 'default' | 'info' | 'success' | 'warning' | 'danger' | 'purple' | 'active';
+type StatusVariant = 'default' | 'info' | 'success' | 'warning' | 'danger' | 'muted' | 'active';
 
 interface StatusPillProps {
   readonly label: string;
@@ -240,7 +240,7 @@ const statusVariants: Record<StatusVariant, string> = {
   success: 'bg-emerald-100 text-emerald-700',
   warning: 'bg-amber-100 text-amber-700',
   danger: 'bg-red-100 text-red-700',
-  purple: 'bg-purple-100 text-purple-700',
+  muted: 'bg-stone-200 text-stone-700',
   active: 'bg-blue-100 text-stone-700',
 };
 
@@ -260,7 +260,7 @@ export function StatusPill({ label, variant = 'default', className, dot }: Statu
           variant === 'info' && 'bg-stone-600',
           variant === 'active' && 'bg-stone-600 animate-pulse',
           variant === 'default' && 'bg-stone-400',
-          variant === 'purple' && 'bg-purple-500',
+          variant === 'muted' && 'bg-stone-600',
         )} />
       )}
       {label}
@@ -272,7 +272,7 @@ export function StatusPill({ label, variant = 'default', className, dot }: Statu
 // ENTERPRISE BUTTON — consistent action buttons
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'warning' | 'purple';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'warning' | 'muted';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface EnterpriseButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -291,7 +291,7 @@ const buttonVariantStyles: Record<ButtonVariant, string> = {
   danger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm',
   success: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm',
   warning: 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm',
-  purple: 'bg-purple-600 text-white hover:bg-purple-700 shadow-sm',
+  muted: 'bg-stone-600 text-white hover:bg-stone-700 shadow-sm',
 };
 
 const buttonSizeStyles: Record<ButtonSize, string> = {
@@ -988,11 +988,11 @@ export const LIFECYCLE: Record<ArtifactLifecycleStage, LifecycleStageConfig> = {
   },
   superseded: {
     label: 'Superseded',
-    variant: 'purple',
-    bg: 'bg-purple-50',
-    text: 'text-purple-700',
-    dot: 'bg-purple-500',
-    border: 'border-purple-200',
+    variant: 'muted',
+    bg: 'bg-stone-100',
+    text: 'text-stone-700',
+    dot: 'bg-stone-600',
+    border: 'border-stone-200',
     order: 5,
   },
   archived: {
@@ -1146,7 +1146,7 @@ export function LoadingState({ label = 'Loading', size = 'section', className }:
 // readiness, and program analytics panel MUST derive colors from here.
 //
 // Four levels: critical → high → medium → low
-// Consistent palette: red → orange → amber → blue
+// Consistent palette: red → amber → blue
 
 export type SeverityLevel = 'critical' | 'high' | 'medium' | 'low';
 
@@ -1168,7 +1168,7 @@ interface SeverityConfig {
 
 export const SEVERITY: Record<SeverityLevel, SeverityConfig> = {
   critical: { label: 'Critical', variant: 'danger',  bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500',    border: 'border-red-200',    order: 0 },
-  high:     { label: 'High',     variant: 'warning', bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500', border: 'border-orange-200', order: 1 },
+  high:     { label: 'High',     variant: 'warning', bg: 'bg-amber-50',  text: 'text-amber-700',  dot: 'bg-amber-500',  border: 'border-amber-200',  order: 1 },
   medium:   { label: 'Medium',   variant: 'warning', bg: 'bg-amber-50',  text: 'text-amber-700',  dot: 'bg-amber-500',  border: 'border-amber-200',  order: 2 },
   low:      { label: 'Low',      variant: 'info',    bg: 'bg-blue-50',   text: 'text-stone-700',   dot: 'bg-stone-600',   border: 'border-blue-200',   order: 3 },
 };

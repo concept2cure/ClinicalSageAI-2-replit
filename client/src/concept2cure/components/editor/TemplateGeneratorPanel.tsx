@@ -187,10 +187,10 @@ const TemplateGeneratorPanel: React.FC<TemplateGeneratorPanelProps> = ({
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 bg-gradient-to-r from-violet-50/50 to-white">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center">
-            <FileText className="w-4 h-4 text-violet-600" />
+          <div className="w-7 h-7 rounded-lg bg-stone-200 flex items-center justify-center">
+            <FileText className="w-4 h-4 text-stone-600" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-stone-800">Template Generator</h3>
@@ -234,7 +234,7 @@ const TemplateGeneratorPanel: React.FC<TemplateGeneratorPanelProps> = ({
                       <button
                         key={t.id}
                         onClick={() => handleSelectTemplate(t)}
-                        className="w-full text-left px-3 py-2.5 rounded-lg border border-stone-150 hover:border-violet-200 hover:bg-violet-50/30 transition-all duration-150 group"
+                        className="w-full text-left px-3 py-2.5 rounded-lg border border-stone-150 hover:border-stone-300 hover:bg-stone-100/30 transition-all duration-150 group"
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-stone-700 group-hover:text-stone-700">
@@ -267,7 +267,7 @@ const TemplateGeneratorPanel: React.FC<TemplateGeneratorPanelProps> = ({
           <div className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-violet-500" />
+                <Sparkles className="w-4 h-4 text-stone-500" />
                 <span className="text-sm font-semibold text-stone-700">
                   Generated: {selectedTemplate.name}
                 </span>
@@ -364,7 +364,7 @@ const TemplateGeneratorPanel: React.FC<TemplateGeneratorPanelProps> = ({
                     <select
                       value={variableValues[v.name] || ''}
                       onChange={e => setVariableValues(prev => ({ ...prev, [v.name]: e.target.value }))}
-                      className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-violet-400 outline-none bg-white"
+                      className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none bg-white"
                     >
                       <option value="">{v.placeholder}</option>
                       {v.options?.map(opt => (
@@ -377,7 +377,7 @@ const TemplateGeneratorPanel: React.FC<TemplateGeneratorPanelProps> = ({
                       onChange={e => setVariableValues(prev => ({ ...prev, [v.name]: e.target.value }))}
                       placeholder={v.placeholder}
                       rows={3}
-                      className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-violet-400 outline-none resize-none"
+                      className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none resize-none"
                     />
                   ) : (
                     <input
@@ -385,7 +385,7 @@ const TemplateGeneratorPanel: React.FC<TemplateGeneratorPanelProps> = ({
                       value={variableValues[v.name] || ''}
                       onChange={e => setVariableValues(prev => ({ ...prev, [v.name]: e.target.value }))}
                       placeholder={v.placeholder}
-                      className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-violet-400 outline-none"
+                      className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
                     />
                   )}
                 </div>

@@ -95,7 +95,7 @@ const ComplianceStatusBadge: React.FC<{
     ready: { 
       icon: CheckCircle, 
       label: 'Ready', 
-      color: 'bg-green-100 text-green-700 border-green-200'
+      color: 'bg-emerald-100 text-emerald-700 border-emerald-200'
     },
     'needs-attention': { 
       icon: AlertTriangle, 
@@ -131,10 +131,10 @@ const SourceSuggestionCard: React.FC<{
 }> = ({ source, onLink, onPreview }) => {
   const getSourceIcon = (type: SourceSuggestion['sourceType']) => {
     switch (type) {
-      case 'clinical_study': return <Activity className="w-4 h-4 text-purple-500" />;
+      case 'clinical_study': return <Activity className="w-4 h-4 text-stone-500" />;
       case 'predicate_device': return <Target className="w-4 h-4 text-blue-500" />;
-      case 'literature': return <BookOpen className="w-4 h-4 text-green-500" />;
-      case 'test_report': return <FileText className="w-4 h-4 text-orange-500" />;
+      case 'literature': return <BookOpen className="w-4 h-4 text-emerald-500" />;
+      case 'test_report': return <FileText className="w-4 h-4 text-amber-500" />;
       case 'regulatory_document': return <Shield className="w-4 h-4 text-blue-500" />;
       default: return <Database className="w-4 h-4 text-stone-500" />;
     }
@@ -240,8 +240,8 @@ const CommandCenterPanel: React.FC<{
   const statusMap = {
     ready: {
       label: 'Submission Ready',
-      color: 'text-green-600',
-      bg: 'bg-green-50',
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50',
       icon: CheckCircle,
     },
     'needs-attention': {
@@ -349,7 +349,7 @@ const CommandCenterPanel: React.FC<{
         </button>
         <div className="p-3 rounded-xl border border-stone-200 bg-white shadow-sm">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-purple-500" />
+            <Sparkles className="w-4 h-4 text-stone-500" />
             <span className="text-sm font-medium text-stone-900">Claims</span>
           </div>
           <p className="text-xs text-stone-500 mt-1">
@@ -412,7 +412,7 @@ const CommandCenterPanel: React.FC<{
         {onRequestReview && complianceScore >= 90 && (
           <button
             onClick={onRequestReview}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm hover:shadow"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm hover:shadow"
             data-testid="button-request-review"
           >
             <Users className="w-4 h-4" />
@@ -579,7 +579,7 @@ const SherpaGuidanceCard: React.FC<{
               {guidance.estimatedTime}
             </span>
             <span className="flex items-center gap-1">
-              <CheckCircle className="w-3 h-3 text-green-500" />
+              <CheckCircle className="w-3 h-3 text-emerald-500" />
               {guidance.expectedOutcome}
             </span>
           </div>
@@ -608,7 +608,7 @@ const DataBridgeCard: React.FC<{
   onView: () => void;
 }> = ({ bridge, onSync, onView }) => {
   const statusConfig = {
-    connected: { icon: CheckCircle, color: 'text-green-500', label: 'Connected' },
+    connected: { icon: CheckCircle, color: 'text-emerald-500', label: 'Connected' },
     available: { icon: Database, color: 'text-blue-500', label: 'Available' },
     'needs-update': { icon: RefreshCw, color: 'text-amber-500', label: 'Needs Update' },
     missing: { icon: XCircle, color: 'text-stone-400', label: 'No Data' },
@@ -1173,7 +1173,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                   Unsaved changes
                 </span>
               ) : state.lastSavedAt ? (
-                <span className="text-xs text-green-600 flex items-center gap-1">
+                <span className="text-xs text-emerald-600 flex items-center gap-1">
                   <CheckCircle className="w-3 h-3" />
                   Saved
                 </span>
@@ -1214,7 +1214,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                 <Sparkles className="w-4 h-4 inline mr-1.5 text-blue-500" />
                 {state.detectedClaims.length} claims detected
               </span>
-              <span className="flex items-center gap-1.5 text-green-600">
+              <span className="flex items-center gap-1.5 text-emerald-600">
                 <CheckCircle className="w-4 h-4" />
                 {state.detectedClaims.filter(c => c.sourceStatus === 'supported').length} supported
               </span>
@@ -1397,7 +1397,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                   </h3>
                   <span className={`text-xs px-2 py-0.5 rounded-full
                     ${state.complianceGuards.length === 0
-                      ? 'bg-green-100 text-green-600'
+                      ? 'bg-green-100 text-emerald-600'
                       : 'bg-amber-100 text-amber-600'
                     }`}
                   >
@@ -1407,9 +1407,9 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                 
                 {state.complianceGuards.length === 0 ? (
                   <div className="text-center py-8 text-stone-500">
-                    <ShieldCheck className="w-8 h-8 mx-auto mb-3 text-green-500" />
+                    <ShieldCheck className="w-8 h-8 mx-auto mb-3 text-emerald-500" />
                     <p className="text-sm">No compliance issues found!</p>
-                    <p className="text-xs mt-1 text-green-600">Document is ready for review</p>
+                    <p className="text-xs mt-1 text-emerald-600">Document is ready for review</p>
                   </div>
                 ) : (
                   state.complianceGuards.map(guard => (

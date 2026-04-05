@@ -143,9 +143,9 @@ const AGENTS: Record<
   SYNTHESIZER: {
     name: 'Cortex Core',
     title: 'Expedition Leader',
-    color: 'text-purple-700',
-    bgColor: 'bg-purple-100',
-    bubbleColor: 'bg-white border border-purple-200 text-stone-700',
+    color: 'text-stone-700',
+    bgColor: 'bg-stone-200',
+    bubbleColor: 'bg-white border border-stone-200 text-stone-700',
     icon: <Sparkles className="w-4 h-4" />,
   },
   PATHFINDER: {
@@ -284,7 +284,7 @@ const MessageBubble: React.FC<{
                       <div
                         className={cn(
                           'h-full rounded-full transition-all duration-150',
-                          message.confidence >= 90 && 'bg-green-500',
+                          message.confidence >= 90 && 'bg-emerald-500',
                           message.confidence >= 70 && message.confidence < 90 && 'bg-stone-600',
                           message.confidence >= 50 && message.confidence < 70 && 'bg-amber-500',
                           message.confidence < 50 && 'bg-red-500'
@@ -335,7 +335,7 @@ const MessageBubble: React.FC<{
                   action.variant === 'primary' && 'bg-stone-800 text-white hover:bg-stone-900',
                   action.variant === 'danger' && 'bg-red-100 text-red-700 hover:bg-red-200',
                   !action.variant &&
-                    'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50 hover:border-blue-300'
+                    'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50 hover:border-stone-300'
                 )}
               >
                 {action.icon}
@@ -350,7 +350,7 @@ const MessageBubble: React.FC<{
           <div className="flex items-center gap-2 mt-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => onFeedback?.(true)}
-              className="p-1 text-stone-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors duration-150"
+              className="p-1 text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors duration-150"
               title="Good response"
             >
               <ThumbsUp className="w-3.5 h-3.5" />
@@ -371,7 +371,7 @@ const MessageBubble: React.FC<{
             </button>
             <button
               onClick={onRetry}
-              className="p-1 text-stone-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors duration-150"
+              className="p-1 text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded transition-colors duration-150"
               title="Regenerate"
             >
               <RefreshCw className="w-3.5 h-3.5" />

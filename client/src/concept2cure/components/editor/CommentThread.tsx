@@ -82,10 +82,10 @@ function formatRelativeTime(dateString: string): string {
 const AUTHOR_COLORS = [
   "bg-stone-600",
   "bg-emerald-500",
-  "bg-violet-500",
+  "bg-stone-500",
   "bg-amber-500",
   "bg-rose-500",
-  "bg-cyan-500",
+  "bg-blue-500",
   "bg-fuchsia-500",
   "bg-lime-500",
 ];
@@ -220,16 +220,16 @@ function AIRewritePreview({
 }) {
   return (
     <div
-      className="mt-2 ml-8 rounded-md border border-violet-200 bg-violet-50/40 p-3 space-y-2 transition-all duration-200"
+      className="mt-2 ml-8 rounded-md border border-stone-200 bg-stone-100/40 p-3 space-y-2 transition-all duration-200"
       role="region"
       aria-label="AI rewrite suggestion"
     >
       <div className="flex items-center gap-1.5">
-        <Sparkles className="h-3 w-3 text-violet-500" />
-        <span className="text-[11px] font-semibold text-violet-700">AI Suggestion</span>
+        <Sparkles className="h-3 w-3 text-stone-500" />
+        <span className="text-[11px] font-semibold text-stone-700">AI Suggestion</span>
       </div>
       <p className="text-[10px] text-stone-500 italic">{explanation}</p>
-      <div className="rounded border border-violet-100 bg-white p-2 text-xs text-stone-700 leading-relaxed max-h-40 overflow-y-auto">
+      <div className="rounded border border-stone-200 bg-white p-2 text-xs text-stone-700 leading-relaxed max-h-40 overflow-y-auto">
         {rewrittenText.length > 600 ? rewrittenText.substring(0, 600) + '...' : rewrittenText}
       </div>
       <div className="flex items-center gap-2">
@@ -361,7 +361,7 @@ function CommentCard({
                 disabled={aiLoading}
                 title="Address with AI"
                 aria-label="Address comment with AI"
-                className="p-1 rounded hover:bg-violet-50 text-muted-foreground hover:text-violet-600 transition-colors duration-150 disabled:opacity-50"
+                className="p-1 rounded hover:bg-stone-100 text-muted-foreground hover:text-stone-600 transition-colors duration-150 disabled:opacity-50"
               >
                 {aiLoading ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -450,7 +450,7 @@ function CommentCard({
 
       {/* AI Rewrite Loading */}
       {aiLoading && (
-        <div className="mt-2 ml-8 flex items-center gap-2 text-xs text-violet-600" role="status" aria-live="polite">
+        <div className="mt-2 ml-8 flex items-center gap-2 text-xs text-stone-600" role="status" aria-live="polite">
           <Loader2 className="h-3 w-3 animate-spin" />
           <span>Generating AI suggestion...</span>
         </div>

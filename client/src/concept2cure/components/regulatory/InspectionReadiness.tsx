@@ -190,7 +190,7 @@ const SEVERITY_CONFIG: Record<
   { label: string; color: string; responseTime: string }
 > = {
   critical: { label: 'Critical', color: 'bg-red-500 text-white', responseTime: '5 business days' },
-  major: { label: 'Major', color: 'bg-orange-500 text-white', responseTime: '15 business days' },
+  major: { label: 'Major', color: 'bg-amber-500 text-white', responseTime: '15 business days' },
   minor: { label: 'Minor', color: 'bg-yellow-500 text-white', responseTime: '30 business days' },
   observation: {
     label: 'Observation',
@@ -489,9 +489,9 @@ function InspectionMetrics({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Open Findings</p>
-              <p className="text-base font-semibold text-orange-600">{openFindings}</p>
+              <p className="text-base font-semibold text-amber-600">{openFindings}</p>
             </div>
-            <AlertTriangle className="w-8 h-8 text-orange-500" />
+            <AlertTriangle className="w-8 h-8 text-amber-500" />
           </div>
         </div>
       </div>

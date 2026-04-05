@@ -43,14 +43,14 @@ function StateBadge({ state }: { state: string }) {
     unresolved: 'bg-amber-100 text-amber-800',
     proposed_resolution: 'bg-blue-100 text-blue-800',
     in_resolution: 'bg-stone-100 text-stone-800',
-    resolved_pending_review: 'bg-purple-100 text-purple-800',
+    resolved_pending_review: 'bg-stone-200 text-stone-800',
     resolved_approved: 'bg-green-100 text-green-800',
-    superseded: 'bg-gray-100 text-gray-500',
-    cancelled: 'bg-gray-100 text-gray-400',
-    draft: 'bg-gray-100 text-gray-600',
+    superseded: 'bg-stone-100 text-stone-500',
+    cancelled: 'bg-stone-100 text-stone-400',
+    draft: 'bg-stone-100 text-stone-600',
     proposed: 'bg-blue-100 text-blue-800',
     in_progress: 'bg-stone-100 text-stone-800',
-    pending_review: 'bg-purple-100 text-purple-800',
+    pending_review: 'bg-stone-200 text-stone-800',
     approved: 'bg-green-100 text-green-800',
     applied: 'bg-emerald-100 text-emerald-800',
     rejected: 'bg-red-100 text-red-800',
@@ -59,7 +59,7 @@ function StateBadge({ state }: { state: string }) {
   };
 
   const label = state.replace(/_/g, ' ');
-  const colorClass = colorMap[state] || 'bg-gray-100 text-gray-600';
+  const colorClass = colorMap[state] || 'bg-stone-100 text-stone-600';
 
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${colorClass}`}>
@@ -107,7 +107,7 @@ function ResolutionPlanCard({ plan, onCreateBundle }: {
   const affectedCount = plan.affectedObjects?.length ?? 0;
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 space-y-3 bg-white">
+    <div className="border border-stone-200 rounded-lg p-4 space-y-3 bg-white">
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -164,7 +164,7 @@ function ResolutionPlanCard({ plan, onCreateBundle }: {
         )}
         {plan.state === 'in_resolution' && (
           <button
-            className="text-xs px-3 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 transition-colors"
+            className="text-xs px-3 py-1 bg-stone-100 text-stone-700 rounded hover:bg-stone-200 transition-colors"
             onClick={() => transitionState.mutate({ planId: plan.id, targetState: 'resolved_pending_review' })}
           >
             Submit for Review
@@ -191,7 +191,7 @@ function ResolutionBundleCard({ bundle }: { bundle: any }) {
   const transitionState = useTransitionBundleState();
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 space-y-3 bg-white">
+    <div className="border border-stone-200 rounded-lg p-4 space-y-3 bg-white">
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -230,7 +230,7 @@ function ResolutionBundleCard({ bundle }: { bundle: any }) {
         )}
         {bundle.state === 'in_progress' && (
           <button
-            className="text-xs px-3 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 transition-colors"
+            className="text-xs px-3 py-1 bg-stone-100 text-stone-700 rounded hover:bg-stone-200 transition-colors"
             onClick={() => transitionState.mutate({ bundleId: bundle.id, targetState: 'pending_review' })}
           >
             Submit for Review
@@ -255,7 +255,7 @@ function ResolutionBundleCard({ bundle }: { bundle: any }) {
 
 function SupersessionCard({ record }: { record: any }) {
   return (
-    <div className="border border-gray-200 rounded-lg p-4 space-y-2 bg-white">
+    <div className="border border-stone-200 rounded-lg p-4 space-y-2 bg-white">
       <div className="flex items-center gap-2">
         <StateBadge state={record.state} />
         <span className="text-xs text-gray-400">{record.supersededObjectType}</span>
@@ -310,7 +310,7 @@ export default function ResolutionPanel({ projectId, className = '' }: Resolutio
   return (
     <div className={`flex flex-col h-full bg-gray-50 ${className}`}>
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200 bg-white">
+      <div className="px-4 py-3 border-b border-stone-200 bg-white">
         <h3 className="text-sm font-semibold text-gray-900">Resolution</h3>
         <p className="text-xs text-gray-500 mt-0.5">
           Orchestrated resolution of conflicts, contradictions, and impact chains
@@ -318,7 +318,7 @@ export default function ResolutionPanel({ projectId, className = '' }: Resolutio
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-gray-200 bg-white px-4">
+      <div className="flex border-b border-stone-200 bg-white px-4">
         {tabs.map(tab => (
           <button
             key={tab.id}
@@ -332,7 +332,7 @@ export default function ResolutionPanel({ projectId, className = '' }: Resolutio
             {tab.label}
             {tab.count > 0 && (
               <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${
-                activeTab === tab.id ? 'bg-blue-100 text-stone-700' : 'bg-gray-100 text-gray-500'
+                activeTab === tab.id ? 'bg-blue-100 text-stone-700' : 'bg-stone-100 text-stone-500'
               }`}>
                 {tab.count}
               </span>

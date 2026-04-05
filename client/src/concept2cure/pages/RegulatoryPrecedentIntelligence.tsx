@@ -254,7 +254,7 @@ function EMAPanel() {
                 meta={
                   <div className="flex items-center gap-2">
                     {(pattern.escalationRisk as number) > 0.3 && <StatusPill label="Major Objection Risk" variant="danger" dot />}
-                    {(pattern.clockStopProbability as number) > 0.4 && <StatusPill label="Clock Stop" variant="purple" dot />}
+                    {(pattern.clockStopProbability as number) > 0.4 && <StatusPill label="Clock Stop" variant="muted" dot />}
                   </div>
                 }
                 chevron

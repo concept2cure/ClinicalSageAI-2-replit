@@ -345,7 +345,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
       <div className="h-full flex flex-col bg-white border-l border-stone-200">
         <div className="flex items-center justify-between px-3 py-2 border-b border-stone-200">
           <span className="text-xs font-semibold text-stone-700 flex items-center gap-1.5">
-            <GitCompare className="w-4 h-4 text-purple-500" /> Version Compare
+            <GitCompare className="w-4 h-4 text-stone-500" /> Version Compare
           </span>
           <button onClick={onClose} className="text-stone-400 hover:text-stone-600">
             <X className="w-4 h-4" />
@@ -369,7 +369,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-stone-200 bg-stone-50 shrink-0">
         <div className="flex items-center gap-2">
-          <GitCompare className="w-4 h-4 text-purple-500" />
+          <GitCompare className="w-4 h-4 text-stone-500" />
           <span className="text-xs font-semibold text-stone-900">Version Compare</span>
         </div>
         <button onClick={onClose} className="text-stone-400 hover:text-stone-600">
@@ -486,7 +486,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
                 onClick={() => setViewMode('side-by-side')}
                 className={`px-2 py-0.5 text-xs rounded ${
                   viewMode === 'side-by-side'
-                    ? 'bg-purple-100 text-purple-700'
+                    ? 'bg-stone-200 text-stone-700'
                     : 'text-stone-400 hover:text-stone-600'
                 }`}
               >
@@ -497,7 +497,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
                 onClick={() => setViewMode('unified')}
                 className={`px-2 py-0.5 text-xs rounded ${
                   viewMode === 'unified'
-                    ? 'bg-purple-100 text-purple-700'
+                    ? 'bg-stone-200 text-stone-700'
                     : 'text-stone-400 hover:text-stone-600'
                 }`}
               >
@@ -586,7 +586,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
           {onOpenProvenance && (
             <button
               onClick={onOpenProvenance}
-              className="flex-1 flex items-center justify-center gap-1 px-2 py-1 text-xs rounded bg-violet-50 text-stone-700 hover:bg-violet-100 font-medium"
+              className="flex-1 flex items-center justify-center gap-1 px-2 py-1 text-xs rounded bg-stone-100 text-stone-700 hover:bg-stone-200 font-medium"
             >
               Provenance
             </button>

@@ -157,24 +157,24 @@ const STAGE_CONFIG: Record<DevelopmentStage, {
 }> = {
   discovery: { label: 'Discovery', shortLabel: 'Disc', color: 'bg-stone-400', phase: 'preclinical' },
   lead_optimization: { label: 'Lead Optimization', shortLabel: 'Lead Opt', color: 'bg-stone-500', phase: 'preclinical' },
-  preclinical: { label: 'Preclinical', shortLabel: 'Preclin', color: 'bg-purple-500', phase: 'preclinical' },
-  ind_enabling: { label: 'IND-Enabling Studies', shortLabel: 'IND-En', color: 'bg-violet-500', phase: 'preclinical' },
+  preclinical: { label: 'Preclinical', shortLabel: 'Preclin', color: 'bg-stone-500', phase: 'preclinical' },
+  ind_enabling: { label: 'IND-Enabling Studies', shortLabel: 'IND-En', color: 'bg-stone-500', phase: 'preclinical' },
   pre_ind_meeting: { label: 'Pre-IND Meeting', shortLabel: 'Pre-IND', color: 'bg-blue-400', phase: 'regulatory' },
   ind_prep: { label: 'IND Preparation', shortLabel: 'IND Prep', color: 'bg-stone-600', phase: 'regulatory' },
   ind_filed: { label: 'IND Filed', shortLabel: 'IND Filed', color: 'bg-stone-800', phase: 'regulatory' },
-  ind_active: { label: 'IND Active', shortLabel: 'IND Active', color: 'bg-cyan-500', phase: 'clinical' },
+  ind_active: { label: 'IND Active', shortLabel: 'IND Active', color: 'bg-blue-500', phase: 'clinical' },
   phase_1: { label: 'Phase 1', shortLabel: 'Ph1', color: 'bg-emerald-500', phase: 'clinical' },
   phase_1b: { label: 'Phase 1b', shortLabel: 'Ph1b', color: 'bg-emerald-600', phase: 'clinical' },
   phase_2: { label: 'Phase 2', shortLabel: 'Ph2', color: 'bg-amber-500', phase: 'clinical' },
   phase_2b: { label: 'Phase 2b', shortLabel: 'Ph2b', color: 'bg-amber-600', phase: 'clinical' },
-  eop2_meeting: { label: 'EOP2 Meeting', shortLabel: 'EOP2', color: 'bg-orange-500', phase: 'regulatory' },
+  eop2_meeting: { label: 'EOP2 Meeting', shortLabel: 'EOP2', color: 'bg-amber-500', phase: 'regulatory' },
   phase_3: { label: 'Phase 3', shortLabel: 'Ph3', color: 'bg-red-500', phase: 'clinical' },
-  pre_nda_meeting: { label: 'Pre-NDA Meeting', shortLabel: 'Pre-NDA', color: 'bg-pink-500', phase: 'regulatory' },
+  pre_nda_meeting: { label: 'Pre-NDA Meeting', shortLabel: 'Pre-NDA', color: 'bg-stone-500', phase: 'regulatory' },
   nda_prep: { label: 'NDA Preparation', shortLabel: 'NDA Prep', color: 'bg-rose-500', phase: 'regulatory' },
   nda_filed: { label: 'NDA Filed', shortLabel: 'NDA Filed', color: 'bg-rose-600', phase: 'regulatory' },
   fda_review: { label: 'FDA Review', shortLabel: 'Review', color: 'bg-red-600', phase: 'regulatory' },
   advisory_committee: { label: 'Advisory Committee', shortLabel: 'AdCom', color: 'bg-red-700', phase: 'regulatory' },
-  approved: { label: 'Approved', shortLabel: 'Approved', color: 'bg-green-600', phase: 'regulatory' },
+  approved: { label: 'Approved', shortLabel: 'Approved', color: 'bg-emerald-600', phase: 'regulatory' },
 };
 
 const VENDOR_TYPE_CONFIG: Record<VendorDeliverable['vendorType'], {
@@ -313,7 +313,7 @@ const CriticalPathTracker: React.FC<{
             >
               <div className={cn(
                 'w-8 h-8 rounded-lg flex items-center justify-center',
-                d.status === 'delivered' ? 'bg-green-100' : 'bg-stone-100'
+                d.status === 'delivered' ? 'bg-emerald-100' : 'bg-stone-100'
               )}>
                 <VendorIcon className={cn(
                   'w-4 h-4',
@@ -426,7 +426,7 @@ const FDAInteractionTimeline: React.FC<{
                 {interaction.outcome && (
                   <span className={cn(
                     'px-1.5 py-0.5 rounded text-xs',
-                    interaction.outcome === 'favorable' && 'bg-green-100 text-green-700',
+                    interaction.outcome === 'favorable' && 'bg-green-100 text-emerald-700',
                     interaction.outcome === 'neutral' && 'bg-stone-100 text-stone-600',
                     interaction.outcome === 'unfavorable' && 'bg-red-100 text-red-700'
                   )}>
@@ -476,14 +476,14 @@ const FundingMilestoneCard: React.FC<{
             'text-xs font-medium px-2 py-0.5 rounded-full',
             milestone.type === 'regulatory' && 'bg-blue-100 text-stone-700',
             milestone.type === 'clinical' && 'bg-emerald-100 text-emerald-700',
-            milestone.type === 'scientific' && 'bg-purple-100 text-purple-700',
+            milestone.type === 'scientific' && 'bg-stone-200 text-stone-700',
             milestone.type === 'commercial' && 'bg-amber-100 text-amber-700'
           )}>
             {milestone.type}
           </span>
         </div>
         {milestone.linkedFunding && (
-          <span className="text-xs font-semibold text-violet-600 bg-violet-100 px-2 py-0.5 rounded-full">
+          <span className="text-xs font-semibold text-stone-600 bg-stone-200 px-2 py-0.5 rounded-full">
             {milestone.linkedFunding}
           </span>
         )}
@@ -557,12 +557,12 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
             {companyRunway && (
               <div className={cn(
                 'px-4 py-2 rounded-lg',
-                companyRunway <= 12 ? 'bg-red-100' : companyRunway <= 18 ? 'bg-amber-100' : 'bg-green-100'
+                companyRunway <= 12 ? 'bg-red-100' : companyRunway <= 18 ? 'bg-amber-100' : 'bg-emerald-100'
               )}>
                 <p className="text-xs text-stone-600">Runway</p>
                 <p className={cn(
                   'text-lg font-semibold',
-                  companyRunway <= 12 ? 'text-red-700' : companyRunway <= 18 ? 'text-amber-700' : 'text-green-700'
+                  companyRunway <= 12 ? 'text-red-700' : companyRunway <= 18 ? 'text-amber-700' : 'text-emerald-700'
                 )}>
                   {companyRunway} months
                 </p>

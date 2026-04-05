@@ -169,9 +169,9 @@ const ROLE_CONFIG: Record<
     icon: BadgeCheck,
   },
   QA: {
-    color: 'text-purple-600',
-    bg: 'bg-purple-50',
-    border: 'border-purple-200',
+    color: 'text-stone-600',
+    bg: 'bg-stone-100',
+    border: 'border-stone-200',
     icon: Shield,
   },
 };

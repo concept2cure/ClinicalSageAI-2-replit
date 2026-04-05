@@ -99,7 +99,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       {!isUser && persona && (
         <div className={cn(
           "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-lg",
-          `bg-gradient-to-br ${persona.color}`
+          `${persona.color}`
         )}>
           {persona.avatar}
         </div>
@@ -469,7 +469,7 @@ export const CouncilThreadPanel: React.FC<CouncilThreadPanelProps> = ({
         <div className="flex items-center gap-3">
           <div className={cn(
             "w-12 h-12 rounded-lg flex items-center justify-center text-base font-medium",
-            `bg-gradient-to-br ${persona.color}`
+            `${persona.color}`
           )}>
             {persona.avatar}
           </div>
@@ -492,7 +492,7 @@ export const CouncilThreadPanel: React.FC<CouncilThreadPanelProps> = ({
           <div className="h-full flex flex-col items-center justify-center text-center">
             <div className={cn(
               "w-20 h-20 rounded-xl flex items-center justify-center text-lg font-semibold mb-4",
-              `bg-gradient-to-br ${persona.color}`
+              `${persona.color}`
             )}>
               {persona.avatar}
             </div>

@@ -131,14 +131,14 @@ const DOCUMENT_TYPE_CONFIG: Record<DocumentType, {
   avgDays: number;
 }> = {
   csr: { label: 'Clinical Study Report', shortLabel: 'CSR', color: 'bg-stone-600', avgDays: 45 },
-  ib: { label: 'Investigator Brochure', shortLabel: 'IB', color: 'bg-violet-500', avgDays: 21 },
+  ib: { label: 'Investigator Brochure', shortLabel: 'IB', color: 'bg-stone-500', avgDays: 21 },
   protocol: { label: 'Protocol', shortLabel: 'Protocol', color: 'bg-emerald-500', avgDays: 14 },
-  protocol_amend: { label: 'Protocol Amendment', shortLabel: 'Amendment', color: 'bg-teal-500', avgDays: 7 },
+  protocol_amend: { label: 'Protocol Amendment', shortLabel: 'Amendment', color: 'bg-emerald-500', avgDays: 7 },
   icf: { label: 'Informed Consent Form', shortLabel: 'ICF', color: 'bg-amber-500', avgDays: 10 },
   ctd_2_5: { label: 'Clinical Overview (2.5)', shortLabel: 'CTD 2.5', color: 'bg-red-500', avgDays: 30 },
-  ctd_2_7: { label: 'Clinical Summary (2.7)', shortLabel: 'CTD 2.7', color: 'bg-pink-500', avgDays: 35 },
-  response: { label: 'Regulatory Response', shortLabel: 'Response', color: 'bg-orange-500', avgDays: 14 },
-  briefing: { label: 'Briefing Document', shortLabel: 'Briefing', color: 'bg-cyan-500', avgDays: 21 },
+  ctd_2_7: { label: 'Clinical Summary (2.7)', shortLabel: 'CTD 2.7', color: 'bg-stone-500', avgDays: 35 },
+  response: { label: 'Regulatory Response', shortLabel: 'Response', color: 'bg-amber-500', avgDays: 14 },
+  briefing: { label: 'Briefing Document', shortLabel: 'Briefing', color: 'bg-blue-500', avgDays: 21 },
   nonclinical_summary: { label: 'Nonclinical Summary', shortLabel: 'CTD 2.4', color: 'bg-lime-500', avgDays: 21 },
   quality_summary: { label: 'Quality Summary', shortLabel: 'CTD 2.3', color: 'bg-stone-600', avgDays: 14 },
 };
@@ -151,11 +151,11 @@ const STAGE_CONFIG: Record<ReviewStage, {
 }> = {
   draft: { label: 'Drafting', icon: PenTool, color: 'text-stone-600', bgColor: 'bg-stone-100' },
   internal_review: { label: 'Internal Review', icon: Eye, color: 'text-blue-600', bgColor: 'bg-blue-100' },
-  sme_review: { label: 'SME Review', icon: User, color: 'text-violet-600', bgColor: 'bg-violet-100' },
+  sme_review: { label: 'SME Review', icon: User, color: 'text-stone-600', bgColor: 'bg-stone-200' },
   qc: { label: 'QC', icon: FileCheck, color: 'text-amber-600', bgColor: 'bg-amber-100' },
-  sponsor_review: { label: 'Sponsor Review', icon: Send, color: 'text-cyan-600', bgColor: 'bg-cyan-100' },
+  sponsor_review: { label: 'Sponsor Review', icon: Send, color: 'text-blue-600', bgColor: 'bg-blue-100' },
   final_qc: { label: 'Final QC', icon: CheckCircle, color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
-  approved: { label: 'Approved', icon: Star, color: 'text-green-600', bgColor: 'bg-green-100' },
+  approved: { label: 'Approved', icon: Star, color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
   published: { label: 'Published', icon: BookOpen, color: 'text-stone-600', bgColor: 'bg-stone-100' },
 };
 
@@ -239,7 +239,7 @@ const TaskCard: React.FC<{
             <div
               className={cn(
                 'h-full rounded-full transition-all',
-                task.progress >= 100 ? 'bg-green-500' : 'bg-stone-600'
+                task.progress >= 100 ? 'bg-emerald-500' : 'bg-stone-600'
               )}
               style={{ width: `${task.progress}%` }}
             />
@@ -333,7 +333,7 @@ const TaskCard: React.FC<{
           <div
             className={cn(
               'h-full rounded-full transition-all',
-              task.progress >= 100 ? 'bg-green-500' : 'bg-stone-600'
+              task.progress >= 100 ? 'bg-emerald-500' : 'bg-stone-600'
             )}
             style={{ width: `${task.progress}%` }}
           />
