@@ -77,7 +77,7 @@ export function sanitizeHtml(raw: string): string {
 
 const PREVIEW_CSS = `
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Poppins', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     line-height: 1.6;
     color: #292524;
     margin: 0;

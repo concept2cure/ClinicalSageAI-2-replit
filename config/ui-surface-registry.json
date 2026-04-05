@@ -40,10 +40,9 @@
       },
       "GlobalOperatingShell.tsx": {
         "path": "client/src/concept2cure/components/shell/GlobalOperatingShell.tsx",
-        "status": "demoted",
-        "action": "evaluate-for-removal",
-        "lines": 74,
-        "role": "Breadcrumb wrapper — still rendered but non-authoritative"
+        "status": "deleted",
+        "deletedIn": "phase-7",
+        "role": "Former breadcrumb wrapper — deleted, replaced with plain div"
       },
       "ProjectWorkspaceShell.tsx": {
         "path": "client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx",
@@ -145,10 +144,10 @@
       },
       "settings": {
         "status": "active",
-        "layoutMode": "setup",
+        "layoutMode": "settings",
         "component": "SetupPage",
-        "navId": "setup",
-        "notes": "Layout mode is 'setup'. Future: rename to 'settings'."
+        "navId": "settings",
+        "notes": "Renamed from 'setup' to 'settings' in phase 10."
       }
     },
     "deletedFiles": [

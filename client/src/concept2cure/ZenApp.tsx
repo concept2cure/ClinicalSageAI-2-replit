@@ -1996,18 +1996,16 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             'projects',
             'home',
             'apps',
-            'artifacts-center',
             'communication-center',
-            'setup',
+            'settings',
           ]);
           switch (id) {
             // ── Global destinations + project tabs (mapped via SIDEBAR_NAV_TO_LAYOUT) ──
             case 'projects':
             case 'home':
             case 'apps':
-            case 'artifacts-center':
             case 'communication-center':
-            case 'setup':
+            case 'settings':
             case 'overview':
             case 'work':
             case 'vault':
@@ -2236,27 +2234,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             </div>
           )}
 
-          {/* ── Global destination: Artifacts browser ── */}
-          {!embeddedModule && layoutMode === 'artifacts-center' && (
-            <div
-              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
-              data-testid="workspace-artifacts-center"
-            >
-              <ErrorBoundary>
-                <Suspense fallback={<ModuleLoadingFallback />}>
-                  <ArtifactsPage
-                    onOpenArtifact={(projectId, artifactId) => {
-                      setActiveProjectId(projectId);
-                      setLayoutMode('regulatory-workspace');
-                      setOpenArtifactId(artifactId);
-                      setRiViewMode('editor');
-                    }}
-                  />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
-
           {/* ── Global destination: Communication Center ── */}
           {!embeddedModule && layoutMode === 'communication-center' && (
             <div
@@ -2277,7 +2254,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           )}
 
           {/* ── Global destination: Setup ── */}
-          {!embeddedModule && layoutMode === 'setup' && (
+          {!embeddedModule && layoutMode === 'settings' && (
             <div
               className="flex-1 flex flex-col min-h-0 overflow-y-auto"
               data-testid="workspace-setup"
@@ -3585,7 +3562,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               projectIntelligence={projectIntelligenceStats}
               greeting={
                 activeProject
-                  ? `Working on ${activeProject.name}. What would you like to do?`
+                  ? `You're working on ${activeProject.name}. Ask me anything — draft a section, check readiness, find precedents, or just tell me what's on your mind.`
                   : platformGreeting?.text
               }
               externalMessage={externalChatMessage}
@@ -3655,7 +3632,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 layoutMode === 'deep-research' ||
                 layoutMode === 'communication-center' ||
                 layoutMode === 'apps' ||
-                layoutMode === 'setup'
+                layoutMode === 'settings'
                   ? 'full'
                   : 'compact'
               }

@@ -968,7 +968,7 @@ function generateLegalPage(page) {
     }
 
     .legal-header h1 {
-      font-family: 'Poppins', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       font-size: 2.25rem;
       font-weight: 700;
       color: var(--primary-dark);
@@ -986,7 +986,7 @@ function generateLegalPage(page) {
     }
 
     .legal-body h2 {
-      font-family: 'Poppins', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       font-size: 1.35rem;
       font-weight: 600;
       color: var(--primary-dark);
@@ -1070,7 +1070,7 @@ function generateLegalPage(page) {
     }
 
     .legal-footer-nav h3 {
-      font-family: 'Poppins', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       font-size: 1rem;
       font-weight: 600;
       margin-bottom: 0.75rem;
@@ -1123,7 +1123,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
   <title>${title} | Concept2Cure™</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     :root {
@@ -1197,7 +1197,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
     .logo {
       font-size: 1.5rem;
       font-weight: 800;
-      font-family: 'Poppins', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       color: var(--primary);
       display: flex;
       align-items: center;
@@ -1347,7 +1347,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
       color: var(--primary-dark);
       margin-bottom: 1.5rem;
       line-height: 1.2;
-      font-family: 'Poppins', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
     
     .hero p {
@@ -1370,7 +1370,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
       color: var(--text);
       margin-bottom: 1.5rem;
       text-align: center;
-      font-family: 'Poppins', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
     
     .section-subtitle {
@@ -1418,7 +1418,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
       font-weight: 700;
       color: var(--text);
       margin-bottom: 1rem;
-      font-family: 'Poppins', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
     
     .feature-card p {
@@ -1437,7 +1437,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
       color: var(--text);
       margin-bottom: 1.5rem;
       text-align: center;
-      font-family: 'Poppins', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
     
     .related-grid {
@@ -1476,7 +1476,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
       font-size: 2rem;
       font-weight: 700;
       margin-bottom: 1.5rem;
-      font-family: 'Poppins', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
     
     .cta-section p {
@@ -1510,7 +1510,7 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
       font-weight: 600;
       color: var(--text);
       margin-bottom: 1rem;
-      font-family: 'Poppins', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
     
     .footer-links {

@@ -16,6 +16,7 @@ export const DEMOTED_LAYOUT_REDIRECTS: Record<string, LayoutMode> = {
   'clinical-trial': 'documents',
   'document-builder': 'documents',
   artifacts: 'apps',
+  'artifacts-center': 'apps',
   sherpa: 'projects',
   analytics: 'projects',
   timeline: 'projects',
@@ -44,6 +45,7 @@ export const DEMOTED_LAYOUT_REDIRECTS: Record<string, LayoutMode> = {
   'ana-dashboard': 'projects',
   integrations: 'projects',
   // ── Compatibility redirects ──
+  setup: 'settings',
   workspace: 'regulatory-workspace',
   assistant: 'projects',
   ctd: 'projects',

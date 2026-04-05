@@ -863,7 +863,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
     return {
       projects: h('projects'),
       apps: h('apps'),
-      setup: h('setup'),
+      settings: h('settings'),
       'communication-center': h('communication-center'),
       // Project-scoped (kept for internal use but not top-level nav)
       'project-home': h('project-home'),
@@ -922,7 +922,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <IconBtn label="Apps" active={activeNavId === 'apps'} onClick={nav.apps}>
           <Sparkles className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="Settings" active={activeNavId === 'setup'} onClick={nav.setup}>
+        <IconBtn label="Settings" active={activeNavId === 'settings'} onClick={nav.settings}>
           <Settings className="w-4 h-4" />
         </IconBtn>
 
@@ -985,7 +985,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <NewDropdown
             onNewChat={onNewChat}
             onNewProject={onOpenProjects}
-            onNewArtifact={() => onNavigate?.('artifacts-center')}
+            onNewArtifact={() => onNavigate?.('apps')}
           />
 
           <NavItem
@@ -1027,8 +1027,8 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <NavItem
             icon={<Settings className="w-3.5 h-3.5" />}
             label="Settings"
-            active={activeNavId === 'setup'}
-            onClick={nav.setup}
+            active={activeNavId === 'settings'}
+            onClick={nav.settings}
           />
         </div>
 

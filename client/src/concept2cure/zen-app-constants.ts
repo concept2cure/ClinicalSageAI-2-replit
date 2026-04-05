@@ -29,8 +29,7 @@ export type LayoutMode =
   | 'projects'
   | 'apps'
   | 'communication-center'
-  | 'artifacts-center'
-  | 'setup'
+  | 'settings'
   // ── Project tabs ──
   | 'project-home'
   | 'documents'
@@ -82,9 +81,8 @@ export const PRIMARY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
 
 export const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
   apps: 'apps',
-  'artifacts-center': 'artifacts-center',
   'communication-center': 'communication-center',
-  setup: 'setup',
+  settings: 'settings',
   projects: 'projects',
   home: 'projects',
   documents: 'regulatory-workspace',

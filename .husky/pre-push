@@ -1,5 +1,8 @@
 #!/usr/bin/env sh
 
+# Ensure node_modules/.bin is in PATH for tsx and other local binaries
+export PATH="$PATH:$(cd "$(dirname "$0")/.." && pwd)/node_modules/.bin"
+
 # ============================================
 # PRE-PUSH HOOK - eCTD Contract Enforcement (unconditional)
 # Added: Phase 6.6.H
