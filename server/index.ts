@@ -100,11 +100,21 @@ import { fda510kStageProgress, fda510kProjects, projects, draftingTasks } from '
 
   // Warn about recommended vars in production
   if (isProduction) {
-    const recommended = ['ANTHROPIC_API_KEY', 'SENTRY_DSN', 'REDIS_URL'];
+    const recommended = ['SENTRY_DSN', 'REDIS_URL'];
     const missingRecommended = recommended.filter(k => !process.env[k]);
     if (missingRecommended.length > 0) {
       console.warn(`⚠️  Recommended env vars not set: ${missingRecommended.join(', ')}`);
     }
+  }
+
+  // Dedicated ANTHROPIC_API_KEY check — always run, not just in production
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.warn('');
+    console.warn('='.repeat(70));
+    console.warn('⚠️  ANTHROPIC_API_KEY not set — AI features will be unavailable');
+    console.warn('   Set ANTHROPIC_API_KEY in your environment to enable AI capabilities.');
+    console.warn('='.repeat(70));
+    console.warn('');
   }
 })();
 

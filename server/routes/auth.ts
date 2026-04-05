@@ -18,6 +18,7 @@ import { sql } from 'drizzle-orm';
 import { eq, and } from 'drizzle-orm';
 import { users, organizations, organizationUsers } from '../../shared/schema';
 import { sendPasswordResetEmail, sendLoginOtpEmail } from '../services/emailService';
+import { getRedisClient } from '../services/ai-actions/redis-manager';
 import * as mfaService from '../services/mfaService';
 import * as emailOtpService from '../services/emailOtpService';
 import {
@@ -723,20 +724,57 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
   }
 });
 
-// In-memory token blacklist (replace with Redis in production for persistence across restarts)
-const tokenBlacklist = new Set<string>();
+// Token blacklist — Redis-backed with in-memory fallback.
+// Redis provides persistence across restarts and shared state for horizontal scaling.
+// In-memory Set is used as fallback when Redis is unavailable.
+const TOKEN_BLACKLIST_TTL = 24 * 60 * 60; // 24h in seconds (matches JWT expiry)
+const TOKEN_BLACKLIST_PREFIX = 'csai:token:revoked:';
+const memoryBlacklist = new Set<string>();
 
-// Clean up expired tokens every hour
+// Clean up in-memory fallback periodically to prevent memory growth
 setInterval(() => {
-  // Simple TTL: clear the set every 24 hours to prevent memory growth
-  if (tokenBlacklist.size > 10000) {
-    tokenBlacklist.clear();
+  if (memoryBlacklist.size > 10000) {
+    memoryBlacklist.clear();
   }
 }, 60 * 60 * 1000);
 
-/** Check if a token has been blacklisted (logout) */
+/** Add a token to the blacklist (Redis if available, else in-memory) */
+async function blacklistToken(token: string): Promise<void> {
+  memoryBlacklist.add(token);
+  try {
+    const redis = getRedisClient();
+    if (redis) {
+      await redis.setex(`${TOKEN_BLACKLIST_PREFIX}${token}`, TOKEN_BLACKLIST_TTL, '1');
+    }
+  } catch {
+    // Redis write failed — in-memory fallback already has it
+  }
+}
+
+/** Check if a token has been blacklisted (logout/rotation) */
 export function isTokenBlacklisted(token: string): boolean {
-  return tokenBlacklist.has(token);
+  // Synchronous check — memory first (fast path)
+  if (memoryBlacklist.has(token)) return true;
+  // Redis check is async; for middleware compatibility, expose an async variant
+  return false;
+}
+
+/** Async blacklist check — use in middleware for Redis persistence */
+export async function isTokenBlacklistedAsync(token: string): Promise<boolean> {
+  if (memoryBlacklist.has(token)) return true;
+  try {
+    const redis = getRedisClient();
+    if (redis) {
+      const result = await redis.get(`${TOKEN_BLACKLIST_PREFIX}${token}`);
+      if (result) {
+        memoryBlacklist.add(token); // backfill memory cache
+        return true;
+      }
+    }
+  } catch {
+    // Redis read failed — rely on memory only
+  }
+  return false;
 }
 
 /**
@@ -749,12 +787,12 @@ router.post('/logout', async (req: Request, res: Response) => {
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.slice(7);
-      tokenBlacklist.add(token);
+      await blacklistToken(token);
     }
 
     // Also blacklist any refresh token sent in body
     if (req.body?.refreshToken) {
-      tokenBlacklist.add(req.body.refreshToken);
+      await blacklistToken(req.body.refreshToken);
     }
 
     res.json({ success: true, message: 'Logged out successfully. Tokens invalidated.' });
@@ -783,7 +821,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
     }
 
     // SECURITY: Check if refresh token has been blacklisted (via logout or previous rotation)
-    if (isTokenBlacklisted(refreshToken)) {
+    if (await isTokenBlacklistedAsync(refreshToken)) {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Refresh token has been revoked' },
@@ -868,7 +906,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
     );
 
     // SECURITY: Blacklist the old refresh token to prevent reuse (token rotation)
-    tokenBlacklist.add(refreshToken);
+    await blacklistToken(refreshToken);
 
     res.json({
       success: true,

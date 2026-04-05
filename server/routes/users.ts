@@ -9,11 +9,38 @@
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import rateLimit from 'express-rate-limit';
 import { db } from '../db';
 import { eq } from 'drizzle-orm';
 import { users, organizations, notificationPreferences } from '../../shared/schema';
 
 import { config } from '../config/environment';
+
+/** Login: 10 attempts per 15 minutes per IP */
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: { code: 'RATE_LIMIT', message: 'Too many login attempts. Please try again later.' },
+  },
+  validate: { xForwardedForHeader: false },
+});
+
+/** Register: 5 attempts per 15 minutes per IP */
+const registerLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: { code: 'RATE_LIMIT', message: 'Too many registration attempts. Please try again later.' },
+  },
+  validate: { xForwardedForHeader: false },
+});
 
 const router = Router();
 
@@ -410,7 +437,7 @@ router.get('/:id(\\d+)', async (req: Request, res: Response) => {
  * POST /api/login
  * Legacy login endpoint for compatibility with useAuth hook
  */
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', loginLimiter, async (req: Request, res: Response) => {
   const { username, password, email } = req.body;
   const loginEmail = email || username;
 
@@ -493,7 +520,7 @@ router.post('/logout', (req: Request, res: Response) => {
  * POST /api/register
  * User registration endpoint
  */
-router.post('/register', async (req: Request, res: Response) => {
+router.post('/register', registerLimiter, async (req: Request, res: Response) => {
   const { username, password, email, firstName, lastName } = req.body;
   const registrationEmail = email || (username ? `${username}@trialsage.ai` : null);
 

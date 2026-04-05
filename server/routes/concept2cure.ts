@@ -11519,6 +11519,10 @@ function validateExportGovernance(
  */
 router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
   try {
+    // Auth & tenant scoping — security fix B3
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+
     const schema = z.object({
       title: z.string().min(1).max(500),
       content: z.string().min(1).max(1000000),
@@ -11558,16 +11562,19 @@ router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
  * Generate a PDF from artifact content
  */
 router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
-  // Validate input
-  const { title, content } = req.body;
-  if (!title || !content) {
-    return res.status(400).json({ error: 'title and content are required' });
-  }
-
-  const governance = validateExportGovernance(req, res);
-  if (!governance) return;
-
   try {
+    // Auth & tenant scoping — security fix B3
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+
+    // Validate input
+    const { title, content } = req.body;
+    if (!title || !content) {
+      return sendError(res, 400, 'title and content are required');
+    }
+
+    const governance = validateExportGovernance(req, res);
+    if (!governance) return;
     // Use pdf-lib to create a PDF from the content
     const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
 
@@ -11794,6 +11801,10 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
  */
 router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
   try {
+    // Auth & tenant scoping — security fix B3
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+
     const schema = z.object({
       title: z.string().min(1).max(500),
       content: z.string().min(1).max(1000000),

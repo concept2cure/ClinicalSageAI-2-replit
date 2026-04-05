@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { getAuthToken, getOrgId } from '@/utils/authToken';
+import { getAuthToken, getOrgId, clearAuthToken } from '@/utils/authToken';
 
 export type ApiRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -73,6 +73,11 @@ export const getQueryFn = (options: GetQueryFnOptions = {}) => {
     if (response.status === 401) {
       if (options.on401 === 'returnNull') {
         return null;
+      }
+      // Clear auth state and redirect to login (unless already there)
+      clearAuthToken();
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.href = '/login';
       }
       throw new Error('Unauthorized');
     }
