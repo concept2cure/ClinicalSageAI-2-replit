@@ -158,9 +158,11 @@
       "client/src/components/layout/Sidebar.tsx"
     ],
     "toolPanels": {
-      "status": "keep-all",
+      "status": "active",
+      "action": "canonical",
       "count": 10,
-      "panels": ["ectd", "protocol", "intelligence", "vault", "doc-editor", "ana-biostats", "sop", "capa", "pms", "inspection"]
+      "panels": ["ectd", "protocol", "intelligence", "vault", "doc-editor", "ana-biostats", "sop", "capa", "pms", "inspection"],
+      "role": "Canonical right-side context drawer. ToolPanel is the sole right-side overlay system. ProjectKnowledgePanel is a layout sidebar (non-conflicting). Future: add tab support to ToolPanel for knowledge/context content."
     },
     "theme": {
       "fonts": {

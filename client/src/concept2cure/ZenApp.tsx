@@ -329,7 +329,6 @@ const AnaBiostatsPanel = lazy(() => import('@/concept2cure/components/biostats/A
 // ─── New global destination pages (Phase 1 OS restructure) ──────────────────
 const AppsPage = lazy(() => import('./pages/AppsPage'));
 const CommunicationCenter = lazy(() => import('./components/workspace/CommunicationCenter'));
-const ArtifactsPage = lazy(() => import('./pages/ArtifactsPage'));
 const VaultPage = lazy(() => import('./pages/VaultPage'));
 const SetupPage = lazy(() => import('./pages/SetupPage'));
 
