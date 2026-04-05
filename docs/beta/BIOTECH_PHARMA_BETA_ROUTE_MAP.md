@@ -7,7 +7,7 @@
 
 ```
 LOGIN          /concept2cure/login         → ZenLogin.tsx (829 lines)
-SIGNUP         /concept2cure/signup        → ZenSignup.tsx (1026 lines)
+SIGNUP         /concept2cure/signup        → ZenSignup.tsx (340 lines, converged)
 PROJECT LIST   /concept2cure/projects      → ProjectsSidebar.tsx (756 lines)
 PROJECT HOME   /concept2cure/project/:id   → project-home layout
 510K WORKSPACE /concept2cure/project/:id/510k → CERV2Page.jsx (9429 lines)
