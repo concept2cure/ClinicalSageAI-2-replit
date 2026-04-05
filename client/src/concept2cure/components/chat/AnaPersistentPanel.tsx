@@ -16,6 +16,8 @@ import { apiRequest } from '@/lib/queryClient';
 import { getAuthHeaders, getOrgId } from '@/utils/authToken';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAIAction } from '../../hooks/useAIAction';
 import { useAnaQueueState } from '../../hooks/useAnaQueueState';
 import type { AIActionType, AIActionSourceSurface } from '../../hooks/useAIAction';
@@ -4143,8 +4145,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 aria-label="Slash commands"
               >
                 {filteredSlashCommands.map((cmd, i) => (
-                  <button
+                  <Button
                     key={cmd.command}
+                    variant="ghost"
                     type="button"
                     role="option"
                     aria-selected={i === slashMenuIndex}
@@ -4154,7 +4157,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     }}
                     onMouseEnter={() => setSlashMenuIndex(i)}
                     className={cn(
-                      'w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors',
+                      'w-full flex items-center gap-3 px-3.5 py-2 h-auto text-left justify-start rounded-none',
                       i === slashMenuIndex ? 'bg-[#FAF9F5]' : 'hover:bg-[#FAF9F5]/50'
                     )}
                   >
@@ -4172,16 +4175,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     >
                       {cmd.category}
                     </span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
             <div
               className={cn(
-                'flex items-end gap-2 px-3.5 py-2.5 bg-[#FAF9F5] border rounded-2xl transition-colors duration-150',
+                'flex items-end gap-2 px-4 py-3 bg-[#FAF9F5] border rounded-2xl transition-all duration-200',
                 isFocused
-                  ? 'border-[#D8D5CA] ring-2 ring-[#F5F4EF] bg-white shadow-sm'
-                  : 'border-[#E8E6DC] hover:border-[#D8D5CA]'
+                  ? 'border-[#C8C5BA] ring-2 ring-[#E8E6DC]/50 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.04)]'
+                  : 'border-[#E8E6DC] hover:border-[#D8D5CA] shadow-[0_1px_3px_rgba(0,0,0,0.02)]'
               )}
             >
               <div className="flex items-center gap-1.5 flex-shrink-0 self-center">
@@ -4201,12 +4204,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       Queued: {conversationQueue.filter(i => i.status === 'queued').length}
                     </span>
                   )}
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setConversationQueue([])}
-                    className="ml-auto text-stone-400 hover:text-stone-600"
+                    className="ml-auto h-auto py-0 px-1 text-stone-400 hover:text-stone-600"
                   >
                     Clear
-                  </button>
+                  </Button>
                 </div>
               )}
               <textarea
@@ -4224,24 +4229,31 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
               />
               {hasMessages && (
-                <button
-                  onClick={() => {
-                    setMessages([]);
-                    threadIdRef.current = null;
-                    // Keep selection state in sync with cleared local thread context.
-                    onThreadChange?.(undefined);
-                  }}
-                  className="flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors"
-                  title="New thread"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setMessages([]);
+                        threadIdRef.current = null;
+                        onThreadChange?.(undefined);
+                      }}
+                      className="flex-shrink-0 h-7 w-7 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg"
+                      aria-label="New thread"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">New thread</TooltipContent>
+                </Tooltip>
               )}
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => handleSend()}
                 disabled={!input.trim() || isThinking}
                 className={cn(
-                  'flex-shrink-0 p-2 rounded-full transition-colors duration-150',
+                  'flex-shrink-0 p-2 h-auto rounded-full transition-colors duration-150',
                   input.trim() && !isThinking
                     ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
                     : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
@@ -4249,7 +4261,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 aria-label="Send message"
               >
                 <ArrowUp className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -4259,6 +4271,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
   // ── Full mode: fills available space like Claude.ai ──
   return (
+    <TooltipProvider delayDuration={300}>
     <div className="flex-1 flex flex-col min-h-0 bg-white">
       {/* ── E3: Persistent project context banner ── */}
       {contextProfile?.activeProject && (
@@ -4310,10 +4323,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       )}
       {contextProfile?.activeProject && (
         <div className="shrink-0 border-b border-zinc-200 bg-white px-4 py-2">
-          <button
+          <Button
+            variant="ghost"
             type="button"
             onClick={() => setDecisionRailExpanded(prev => !prev)}
-            className="w-full text-left rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 hover:bg-zinc-100 transition-colors"
+            className="w-full h-auto text-left rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 hover:bg-zinc-100 justify-start"
             aria-expanded={decisionRailExpanded}
             aria-label="Toggle decision status details"
           >
@@ -4366,7 +4380,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               <span className="text-zinc-400">·</span>
               <span>{decisionStatus.count} tracked</span>
             </div>
-          </button>
+          </Button>
           {decisionRailExpanded && (
             <div className="mt-2 rounded-lg border border-zinc-200 bg-white px-3 py-2">
               {decisionStatus.error ? (
@@ -4385,13 +4399,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               ) : (
                 <p className="text-xs text-zinc-600">No recent decisions for this scope.</p>
               )}
-              <button
+              <Button
+                variant="link"
                 type="button"
                 onClick={() => void loadDecisionRail()}
-                className="mt-2 text-[11px] text-zinc-500 hover:text-zinc-700"
+                className="mt-2 h-auto p-0 text-[11px] text-zinc-500 hover:text-zinc-700 no-underline"
               >
                 Refresh
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -4467,22 +4482,23 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
               {/* Suggested actions — up to 6 chips (authoring + intelligence + parent) */}
               {effectiveSuggestedActions && effectiveSuggestedActions.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-lg mx-auto">
                   {effectiveSuggestedActions.slice(0, 6).map(action => (
-                    <button
+                    <Button
                       key={action.id}
+                      variant="outline"
                       onClick={() => handleSuggestedAction(action)}
-                      className="text-left px-4 py-3 rounded-xl border border-[#E8E6DC] hover:border-[#D8D5CA] hover:bg-[#FAF9F5] transition-colors group"
+                      className="h-auto text-left px-4 py-3.5 rounded-xl border border-[#E8E6DC] hover:border-[#D8D5CA] hover:bg-[#FAF9F5] shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.05)] transition-all duration-200 group flex-col items-start justify-start whitespace-normal"
                     >
                       <p className="text-sm font-medium text-[#4D4B45] group-hover:text-[#141413]">
                         {action.label}
                       </p>
                       {action.description && (
-                        <p className="text-xs text-[#B0AEA5] mt-0.5 line-clamp-1">
+                        <p className="text-xs text-[#B0AEA5] mt-0.5 line-clamp-1 font-normal">
                           {action.description}
                         </p>
                       )}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               )}
@@ -4639,7 +4655,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           )}
                           {/* Nano Banana PPTX download button */}
                           {msg.pptx && (
-                            <button
+                            <Button
+                              variant="outline"
+                              size="sm"
                               onClick={() => {
                                 const blob = new Blob(
                                   [Uint8Array.from(atob(msg.pptx!.base64), c => c.charCodeAt(0))],
@@ -4652,40 +4670,53 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 a.click();
                                 URL.revokeObjectURL(url);
                               }}
-                              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors"
+                              className="mt-2 gap-1.5 text-xs rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200"
                             >
                               <Download className="w-3.5 h-3.5" />
                               {msg.pptx.filename}
-                            </button>
+                            </Button>
                           )}
                         </>
                       )}
                       {isUser && (
                         <div
                           className={cn(
-                            'flex items-center gap-1 mt-1.5 transition-opacity duration-150',
+                            'flex items-center gap-0.5 mt-1.5 transition-opacity duration-150',
                             showActions === msg.id ? 'opacity-100' : 'opacity-0'
                           )}
                         >
-                          <button
-                            onClick={() => handleRecallPrompt(msg.id, msg.content)}
-                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
-                            title="Recall this prompt to edit"
-                            aria-label="Recall this prompt to edit"
-                          >
-                            <RotateCcw className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={() => handleCopy(msg.id, msg.content)}
-                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
-                            title="Copy"
-                          >
-                            {copiedId === msg.id ? (
-                              <Check className="w-3 h-3 text-green-600" />
-                            ) : (
-                              <Copy className="w-3 h-3" />
-                            )}
-                          </button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRecallPrompt(msg.id, msg.content)}
+                                className="h-6 w-6 text-zinc-400 hover:text-zinc-700"
+                                aria-label="Recall this prompt to edit"
+                              >
+                                <RotateCcw className="w-3 h-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="text-xs">Edit prompt</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleCopy(msg.id, msg.content)}
+                                className="h-6 w-6 text-zinc-400 hover:text-zinc-700"
+                                aria-label="Copy message"
+                              >
+                                {copiedId === msg.id ? (
+                                  <Check className="w-3 h-3 text-green-600" />
+                                ) : (
+                                  <Copy className="w-3 h-3" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="text-xs">Copy</TooltipContent>
+                          </Tooltip>
                           {(msg as any).recalledToInput && (
                             <span className="text-[11px] text-stone-600 font-medium ml-1">
                               Loaded to input
@@ -4738,128 +4769,160 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 : 'Firecrawl requested'}
                             </span>
                           )}
-                          <button
-                            onClick={() => handleCopy(msg.id, msg.content)}
-                            className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors"
-                            title="Copy"
-                          >
-                            {copiedId === msg.id ? (
-                              <Check className="w-3 h-3 text-green-600" />
-                            ) : (
-                              <Copy className="w-3 h-3" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => {
-                              apiRequest('POST', '/api/concept2cure/feedback', {
-                                messageId: msg.id,
-                                positive: true,
-                              }).catch(() => {});
-                            }}
-                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
-                            title="Good"
-                          >
-                            <ThumbsUp className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              apiRequest('POST', '/api/concept2cure/feedback', {
-                                messageId: msg.id,
-                                positive: false,
-                              }).catch(() => {});
-                            }}
-                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
-                            title="Bad"
-                          >
-                            <ThumbsDown className="w-3 h-3" />
-                          </button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleCopy(msg.id, msg.content)}
+                                className="h-6 w-6 text-[#B0AEA5] hover:text-[#4D4B45]"
+                                aria-label="Copy"
+                              >
+                                {copiedId === msg.id ? (
+                                  <Check className="w-3 h-3 text-green-600" />
+                                ) : (
+                                  <Copy className="w-3 h-3" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="text-xs">Copy</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  apiRequest('POST', '/api/concept2cure/feedback', {
+                                    messageId: msg.id,
+                                    positive: true,
+                                  }).catch(() => {});
+                                }}
+                                className="h-6 w-6 text-zinc-400 hover:text-zinc-700"
+                                aria-label="Good response"
+                              >
+                                <ThumbsUp className="w-3 h-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="text-xs">Good response</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  apiRequest('POST', '/api/concept2cure/feedback', {
+                                    messageId: msg.id,
+                                    positive: false,
+                                  }).catch(() => {});
+                                }}
+                                className="h-6 w-6 text-zinc-400 hover:text-zinc-700"
+                                aria-label="Bad response"
+                              >
+                                <ThumbsDown className="w-3 h-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="text-xs">Bad response</TooltipContent>
+                          </Tooltip>
                           {/* Save to Vault — persist AI response as a governed artifact */}
                           {contextProfile?.projectId &&
                             msg.content.length > 100 &&
                             !msg.savedAsArtifact && (
-                              <button
-                                onClick={async () => {
-                                  const numProjId = String(contextProfile.projectId).replace(
-                                    /^proj_/,
-                                    ''
-                                  );
-                                  try {
-                                    const saveRes = await apiRequest(
-                                      'POST',
-                                      `/api/concept2cure/projects/${numProjId}/artifacts`,
-                                      {
-                                        title: `AnA Response — ${
-                                          new Date().toISOString().split('T')[0]
-                                        }`,
-                                        content: msg.content,
-                                        type: 'document_section',
-                                        category: 'document',
-                                      }
-                                    );
-                                    if (saveRes.ok) {
-                                      setMessages(prev =>
-                                        prev.map(m =>
-                                          m.id === msg.id ? { ...m, savedAsArtifact: true } : m
-                                        )
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={async () => {
+                                      const numProjId = String(contextProfile.projectId).replace(
+                                        /^proj_/,
+                                        ''
                                       );
-                                    }
-                                  } catch {
-                                    /* non-blocking */
-                                  }
-                                }}
-                                className="p-1 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
-                                title="Save to Vault"
-                              >
-                                <Download className="w-3 h-3" />
-                              </button>
+                                      try {
+                                        const saveRes = await apiRequest(
+                                          'POST',
+                                          `/api/concept2cure/projects/${numProjId}/artifacts`,
+                                          {
+                                            title: `AnA Response — ${
+                                              new Date().toISOString().split('T')[0]
+                                            }`,
+                                            content: msg.content,
+                                            type: 'document_section',
+                                            category: 'document',
+                                          }
+                                        );
+                                        if (saveRes.ok) {
+                                          setMessages(prev =>
+                                            prev.map(m =>
+                                              m.id === msg.id ? { ...m, savedAsArtifact: true } : m
+                                            )
+                                          );
+                                        }
+                                      } catch {
+                                        /* non-blocking */
+                                      }
+                                    }}
+                                    className="h-6 w-6 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50"
+                                    aria-label="Save to Vault"
+                                  >
+                                    <Download className="w-3 h-3" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" className="text-xs">Save to Vault</TooltipContent>
+                              </Tooltip>
                             )}
                           {/* Insert into Editor — when onDraftInsert is available and content is substantial */}
                           {onDraftInsert &&
                             contextProfile?.projectId &&
                             msg.content.length > 100 &&
                             authoringContext?.sectionCode && (
-                              <button
-                                onClick={() => {
-                                  // Extract draft content: try code block, then content after "---", then strip markdown metadata
-                                  let insertContent = msg.content;
-                                  const codeBlockMatch = msg.content.match(
-                                    /```(?:\w+)?\n([\s\S]*?)```/
-                                  );
-                                  if (codeBlockMatch && codeBlockMatch[1].trim().length > 50) {
-                                    insertContent = codeBlockMatch[1].trim();
-                                  } else {
-                                    // Strip markdown headers that look like meta commentary (not section content)
-                                    insertContent = insertContent
-                                      .replace(/^\*\*[A-Z][^*]+\*\*\s*[-—]\s*/gm, '') // "**Draft Ready** —" prefix
-                                      .replace(
-                                        /^#{1,3}\s+(?:Draft|Note|Summary|Action)\b[^\n]*/gm,
-                                        ''
-                                      ) // Meta headers
-                                      .trim();
-                                  }
-                                  // Wrap in HTML paragraphs for TipTap consumption
-                                  if (!insertContent.startsWith('<')) {
-                                    insertContent = insertContent
-                                      .split('\n\n')
-                                      .filter(p => p.trim())
-                                      .map(p => `<p>${p.trim()}</p>`)
-                                      .join('\n');
-                                  }
-                                  const title = authoringContext.sectionTitle
-                                    ? `${authoringContext.sectionCode} — ${authoringContext.sectionTitle}`
-                                    : `Section ${authoringContext.sectionCode} Draft`;
-                                  onDraftInsert(insertContent, title, authoringContext.sectionCode);
-                                  setMessages(prev =>
-                                    prev.map(m =>
-                                      m.id === msg.id ? { ...m, insertedToEditor: true } : m
-                                    )
-                                  );
-                                }}
-                                className="p-1 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                title="Insert into Editor"
-                              >
-                                <FileEdit className="w-3 h-3" />
-                              </button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => {
+                                      let insertContent = msg.content;
+                                      const codeBlockMatch = msg.content.match(
+                                        /```(?:\w+)?\n([\s\S]*?)```/
+                                      );
+                                      if (codeBlockMatch && codeBlockMatch[1].trim().length > 50) {
+                                        insertContent = codeBlockMatch[1].trim();
+                                      } else {
+                                        insertContent = insertContent
+                                          .replace(/^\*\*[A-Z][^*]+\*\*\s*[-—]\s*/gm, '')
+                                          .replace(
+                                            /^#{1,3}\s+(?:Draft|Note|Summary|Action)\b[^\n]*/gm,
+                                            ''
+                                          )
+                                          .trim();
+                                      }
+                                      if (!insertContent.startsWith('<')) {
+                                        insertContent = insertContent
+                                          .split('\n\n')
+                                          .filter(p => p.trim())
+                                          .map(p => `<p>${p.trim()}</p>`)
+                                          .join('\n');
+                                      }
+                                      const title = authoringContext.sectionTitle
+                                        ? `${authoringContext.sectionCode} — ${authoringContext.sectionTitle}`
+                                        : `Section ${authoringContext.sectionCode} Draft`;
+                                      onDraftInsert(insertContent, title, authoringContext.sectionCode);
+                                      setMessages(prev =>
+                                        prev.map(m =>
+                                          m.id === msg.id ? { ...m, insertedToEditor: true } : m
+                                        )
+                                      );
+                                    }}
+                                    className="h-6 w-6 text-zinc-400 hover:text-blue-600 hover:bg-blue-50"
+                                    aria-label="Insert into Editor"
+                                  >
+                                    <FileEdit className="w-3 h-3" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" className="text-xs">Insert into Editor</TooltipContent>
+                              </Tooltip>
                             )}
                           {(msg as any).insertedToEditor && (
                             <span className="text-[11px] text-blue-600 font-medium ml-1">
@@ -4890,8 +4953,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               )
                                 .slice(0, 5)
                                 .map(action => (
-                                  <button
+                                  <Button
                                     key={action.type}
+                                    variant="outline"
+                                    size="sm"
                                     disabled={isThinking}
                                     onClick={async () => {
                                       if (isThinking) return;
@@ -4961,15 +5026,15 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                       }
                                     }}
                                     className={cn(
-                                      'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors',
+                                      'gap-1.5 h-auto px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors',
                                       isThinking
-                                        ? 'border-[#E8E6DC] text-[#D8D5CA] cursor-not-allowed'
+                                        ? 'border-[#E8E6DC] text-[#D8D5CA]'
                                         : 'border-[#E8E6DC] text-[#6B6962] hover:bg-[#FAF9F5] hover:border-[#D8D5CA] hover:text-[#4D4B45]'
                                     )}
                                   >
                                     {action.icon}
                                     {action.label}
-                                  </button>
+                                  </Button>
                                 ))}
                             </div>
                             {lastOrchestration.detectedSubmissionType && (
@@ -5079,18 +5144,19 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           {/* Clear conversation button */}
           {hasMessages && (
             <div className="flex justify-center mb-2">
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setMessages([]);
                   threadIdRef.current = null;
-                  // Keep selection state in sync with cleared local thread context.
                   onThreadChange?.(undefined);
                 }}
-                className="flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors"
+                className="gap-1.5 px-3 h-7 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full"
               >
                 <RotateCcw className="w-3 h-3" />
                 New thread
-              </button>
+              </Button>
             </div>
           )}
 
@@ -5103,8 +5169,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               aria-label="Slash commands"
             >
               {filteredSlashCommands.map((cmd, i) => (
-                <button
+                <Button
                   key={cmd.command}
+                  variant="ghost"
                   type="button"
                   role="option"
                   aria-selected={i === slashMenuIndex}
@@ -5114,7 +5181,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   }}
                   onMouseEnter={() => setSlashMenuIndex(i)}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors',
+                    'w-full flex items-center gap-3 px-3.5 py-2 h-auto text-left justify-start rounded-none',
                     i === slashMenuIndex ? 'bg-[#FAF9F5]' : 'hover:bg-[#FAF9F5]/50'
                   )}
                 >
@@ -5130,26 +5197,27 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   >
                     {cmd.category}
                   </span>
-                </button>
+                </Button>
               ))}
             </div>
           )}
 
           <div
             className={cn(
-              'flex items-end gap-2 px-3.5 py-2.5 bg-[#FAF9F5] border rounded-2xl transition-colors duration-150',
+              'flex items-end gap-2 px-4 py-3 bg-[#FAF9F5] border rounded-2xl transition-all duration-200',
               isFocused
-                ? 'border-[#D8D5CA] ring-2 ring-[#F5F4EF] bg-white shadow-sm'
-                : 'border-[#E8E6DC] hover:border-[#D8D5CA]'
+                ? 'border-[#C8C5BA] ring-2 ring-[#E8E6DC]/50 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.04)]'
+                : 'border-[#E8E6DC] hover:border-[#D8D5CA] shadow-[0_1px_3px_rgba(0,0,0,0.02)]'
             )}
           >
             {/* Mode selector — Claude.ai model-picker style */}
             <div className="relative flex-shrink-0 self-center" ref={modeDropdownRef}>
-              <button
+              <Button
+                variant="ghost"
                 type="button"
                 onClick={() => setShowModeDropdown(prev => !prev)}
                 className={cn(
-                  'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
+                  'gap-1 px-2 h-7 text-xs font-medium rounded-lg',
                   chatMode === 'deep-research'
                     ? 'bg-[#FBF0EB] text-[#D97757] hover:bg-[#F6E6DF]'
                     : chatMode === 'nano-banana'
@@ -5172,11 +5240,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     : 'AnA'}
                 </span>
                 <ChevronDown className="w-3 h-3 opacity-50" />
-              </button>
+              </Button>
 
               {showModeDropdown && (
                 <div className="absolute bottom-full left-0 mb-1.5 w-56 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
-                  <button
+                  <Button
+                    variant="ghost"
                     type="button"
                     onClick={() => {
                       setChatMode('standard');
@@ -5184,102 +5253,104 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       setShowModeDropdown(false);
                     }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-[#FAF9F5] transition-colors',
+                      'w-full flex items-start gap-3 px-3 py-2.5 h-auto text-left justify-start rounded-none',
                       chatMode === 'standard' && 'bg-[#FAF9F5]'
                     )}
                   >
                     <MessageSquare className="w-4 h-4 mt-0.5 text-[#8A8880] flex-shrink-0" />
-                    <div>
+                    <div className="text-left">
                       <div className="text-sm font-medium text-[#141413]">AnA</div>
-                      <div className="text-[11px] text-[#B0AEA5] leading-tight">
+                      <div className="text-[11px] text-[#B0AEA5] leading-tight font-normal">
                         Fast regulatory co-pilot for everyday questions
                       </div>
                     </div>
                     {chatMode === 'standard' && (
                       <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />
                     )}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="ghost"
                     type="button"
                     onClick={() => {
                       setChatMode('deep-research');
                       setShowModeDropdown(false);
                     }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-[#FAF9F5] transition-colors',
+                      'w-full flex items-start gap-3 px-3 py-2.5 h-auto text-left justify-start rounded-none',
                       chatMode === 'deep-research' && 'bg-[#FBF0EB]'
                     )}
                   >
                     <Zap className="w-4 h-4 mt-0.5 text-[#D97757] flex-shrink-0" />
-                    <div>
+                    <div className="text-left">
                       <div className="text-sm font-medium text-[#141413]">Deep Research</div>
-                      <div className="text-[11px] text-[#B0AEA5] leading-tight">
+                      <div className="text-[11px] text-[#B0AEA5] leading-tight font-normal">
                         Multi-source search across ClinicalTrials.gov, PubMed, FDA &amp; more
                       </div>
                     </div>
                     {chatMode === 'deep-research' && (
                       <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />
                     )}
-                  </button>
+                  </Button>
                   <div className="mx-2 my-0.5 border-t border-zinc-100" />
-                  <button
+                  <Button
+                    variant="ghost"
                     type="button"
                     onClick={() => {
                       setChatMode('nano-banana');
                       setShowModeDropdown(false);
                     }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors',
+                      'w-full flex items-start gap-3 px-3 py-2.5 h-auto text-left justify-start rounded-none',
                       chatMode === 'nano-banana' && 'bg-amber-50'
                     )}
                   >
                     <ImageIcon className="w-4 h-4 mt-0.5 text-amber-600 flex-shrink-0" />
-                    <div>
+                    <div className="text-left">
                       <div className="text-sm font-medium text-zinc-900">Nano Banana</div>
-                      <div className="text-[11px] text-zinc-400 leading-tight">
+                      <div className="text-[11px] text-zinc-400 leading-tight font-normal">
                         AI image generation, presentations &amp; visual design via Gemini
                       </div>
                     </div>
                     {chatMode === 'nano-banana' && (
                       <Check className="w-4 h-4 text-amber-600 ml-auto mt-0.5 flex-shrink-0" />
                     )}
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
 
             {/* External tool selector (+) */}
             <div className="relative flex-shrink-0 self-center" ref={toolsDropdownRef}>
-              <button
+              <Button
+                variant="ghost"
                 type="button"
                 onClick={() => setShowToolDropdown(prev => !prev)}
-                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]"
-                title="Add tools"
+                className="gap-1 px-2 h-7 text-xs font-medium text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]"
+                aria-label="Add tools"
               >
                 <FolderPlus className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Tools</span>
-              </button>
+              </Button>
               {showToolDropdown && (
                 <div className="absolute bottom-full left-0 mb-1.5 w-64 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
-                  <button
+                  <Button
+                    variant="ghost"
                     type="button"
+                    disabled={!!firecrawlDisabledReason}
                     onClick={() => {
                       if (firecrawlDisabledReason) return;
                       setUseFirecrawl(v => !v);
                       setShowToolDropdown(false);
                     }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2 text-left transition-colors',
-                      firecrawlDisabledReason
-                        ? 'opacity-60 cursor-not-allowed'
-                        : 'hover:bg-[#FAF9F5]',
+                      'w-full flex items-start gap-3 px-3 py-2 h-auto text-left justify-start rounded-none',
                       useFirecrawl && 'bg-[#FAF9F5]'
                     )}
                   >
                     <Search className="w-4 h-4 mt-0.5 text-[#D97757] flex-shrink-0" />
-                    <div className="min-w-0">
+                    <div className="min-w-0 text-left">
                       <div className="text-sm font-medium text-[#141413]">Use Firecrawl</div>
-                      <div className="text-[10px] text-[#8A8880] leading-tight">
+                      <div className="text-[10px] text-[#8A8880] leading-tight font-normal">
                         {firecrawlDisabledReason === 'quota_exhausted'
                           ? 'On but quota exhausted'
                           : firecrawlDisabledReason === 'admin_disabled'
@@ -5290,18 +5361,19 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       </div>
                     </div>
                     {useFirecrawl && <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5" />}
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
 
             {/* AI Provider / Model Selector — clean, minimal like Claude.ai */}
             <div className="relative flex-shrink-0 self-center" ref={providerDropdownRef}>
-              <button
+              <Button
+                variant="ghost"
                 type="button"
                 onClick={() => setShowProviderDropdown(prev => !prev)}
                 className={cn(
-                  'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
+                  'gap-1 px-2 h-7 text-xs font-medium rounded-lg',
                   selectedProvider !== 'auto'
                     ? `bg-[#F5F4EF] ${
                         AI_PROVIDERS.find(p => p.id === selectedProvider)?.activeColor ||
@@ -5309,27 +5381,28 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       } hover:bg-[#EDEAE0]`
                     : 'text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]'
                 )}
-                title="Select AI model"
+                aria-label="Select AI model"
               >
                 <Bot className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">
                   {AI_PROVIDERS.find(p => p.id === selectedProvider)?.label}
                 </span>
                 <ChevronDown className="w-3 h-3 opacity-50" />
-              </button>
+              </Button>
 
               {showProviderDropdown && (
                 <div className="absolute bottom-full left-0 mb-1.5 w-52 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
                   {AI_PROVIDERS.map(prov => (
-                    <button
+                    <Button
                       key={prov.id}
+                      variant="ghost"
                       type="button"
                       onClick={() => {
                         setSelectedProvider(prov.id);
                         setShowProviderDropdown(false);
                       }}
                       className={cn(
-                        'w-full flex items-start gap-3 px-3 py-2 text-left hover:bg-[#FAF9F5] transition-colors',
+                        'w-full flex items-start gap-3 px-3 py-2 h-auto text-left justify-start rounded-none',
                         selectedProvider === prov.id && 'bg-[#FAF9F5]'
                       )}
                     >
@@ -5341,9 +5414,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       >
                         <Bot className="w-3.5 h-3.5" />
                       </span>
-                      <div className="min-w-0">
+                      <div className="min-w-0 text-left">
                         <div className="text-sm font-medium text-[#141413]">{prov.label}</div>
-                        <div className="text-[10px] text-[#B0AEA5] leading-tight">
+                        <div className="text-[10px] text-[#B0AEA5] leading-tight font-normal">
                           {prov.description}
                         </div>
                       </div>
@@ -5352,7 +5425,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           className={cn('w-4 h-4 ml-auto mt-0.5 flex-shrink-0', prov.activeColor)}
                         />
                       )}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               )}
@@ -5366,12 +5439,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 {conversationQueue.filter(i => i.status === 'queued').length > 0 && (
                   <span>Queued: {conversationQueue.filter(i => i.status === 'queued').length}</span>
                 )}
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setConversationQueue([])}
-                  className="ml-auto text-stone-400 hover:text-stone-600"
+                  className="ml-auto h-auto py-0 px-1 text-stone-400 hover:text-stone-600"
                 >
                   Clear
-                </button>
+                </Button>
               </div>
             )}
             <textarea
@@ -5398,11 +5473,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             />
 
             {/* Send */}
-            <button
+            <Button
+              variant="ghost"
               onClick={() => handleSend()}
               disabled={!input.trim() || isThinking}
               className={cn(
-                'flex-shrink-0 p-2 rounded-full transition-colors duration-150',
+                'flex-shrink-0 p-2 h-auto rounded-full transition-colors duration-150',
                 input.trim() && !isThinking
                   ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
                   : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
@@ -5410,19 +5486,20 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               aria-label="Send message"
             >
               <ArrowUp className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
 
           {useFirecrawl && (
             <div className="mt-1.5 pl-1">
-              <button
+              <Button
+                variant="ghost"
                 type="button"
                 onClick={() => setUseFirecrawl(false)}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#FBF0EB] text-[#D97757] hover:bg-[#F6E6DF]"
-                title="Disable Firecrawl for this message"
+                className="h-auto gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#FBF0EB] text-[#D97757] hover:bg-[#F6E6DF]"
+                aria-label="Disable Firecrawl"
               >
                 Firecrawl On
-              </button>
+              </Button>
             </div>
           )}
 
@@ -5430,21 +5507,22 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           {chatMode === 'standard' && (
             <div className="flex items-center gap-1.5 mt-1.5 pl-1" ref={lensDropdownRef}>
               {INTENT_LENSES.map(lens => (
-                <button
+                <Button
                   key={lens.id}
+                  variant="ghost"
                   type="button"
                   onClick={() => setIntentLens(lens.id)}
                   className={cn(
-                    'flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors',
+                    'gap-1 px-2 h-auto py-0.5 rounded-full text-[11px] font-medium',
                     intentLens === lens.id
                       ? 'bg-[#FBF0EB] text-[#D97757]'
                       : 'text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]'
                   )}
-                  title={lens.description}
+                  aria-label={lens.description}
                 >
                   {lens.icon}
                   <span className="hidden sm:inline">{lens.label}</span>
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -5455,13 +5533,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             {onNavigate ? (
               <>
                 {' '}
-                <button
+                <Button
+                  variant="link"
                   type="button"
                   onClick={() => onNavigate('apps')}
-                  className="font-semibold text-[#6B6962] underline decoration-[#D8D5CA] underline-offset-2 hover:text-[#4D4B45]"
+                  className="h-auto p-0 text-[11px] font-semibold text-[#6B6962] underline decoration-[#D8D5CA] underline-offset-2 hover:text-[#4D4B45]"
                 >
                   Browse all capabilities
-                </button>
+                </Button>
                 .
               </>
             ) : null}
@@ -5469,6 +5548,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 };
 
