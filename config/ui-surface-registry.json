@@ -88,11 +88,11 @@
         "path": "client/src/concept2cure/zen-app-constants.ts",
         "status": "active",
         "action": "keep",
-        "layoutModeCount": 93,
-        "activeLayoutModes": 23,
-        "demotedLayoutModes": 70,
-        "sidebarNavEntries": 32,
-        "role": "LayoutMode type + nav mappings + tool panel registry. LEGACY_NAV_ID_BY_LAYOUT removed."
+        "layoutModeCount": 7,
+        "layoutModes": ["chats", "projects", "project-home", "project-workspace", "communication-center", "apps", "settings"],
+        "workspaceViews": 18,
+        "sidebarNavEntries": 5,
+        "role": "7 canonical LayoutMode values + WorkspaceView sub-routing. All project-scoped modes consolidated."
       },
       "zenRouteNormalization.ts": {
         "path": "client/src/concept2cure/router/zenRouteNormalization.ts",

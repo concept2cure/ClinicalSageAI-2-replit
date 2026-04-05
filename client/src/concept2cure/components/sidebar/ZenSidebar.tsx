@@ -861,6 +861,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   const nav = useMemo(() => {
     const h = (id: string) => () => onNavigate?.(id);
     return {
+      chats: h('chats'),
       projects: h('projects'),
       apps: h('apps'),
       settings: h('settings'),
@@ -906,10 +907,10 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="w-8 border-t border-stone-200 my-1" />
 
         {/* ── Zone B: 5 Primary Destinations ── */}
-        <IconBtn label="Chats" active={activeNavId === 'projects' || activeNavId === 'ri-copilot'} onClick={onOpenProjects}>
+        <IconBtn label="Chats" active={activeNavId === 'chats'} onClick={nav.chats}>
           <MessageSquare className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="Projects" active={activeNavId === 'project-home'} onClick={nav.projects}>
+        <IconBtn label="Projects" active={activeNavId === 'projects'} onClick={nav.projects}>
           <FolderOpen className="w-4 h-4" />
         </IconBtn>
         <IconBtn
@@ -1003,13 +1004,13 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <NavItem
             icon={<MessageSquare className="w-3.5 h-3.5" />}
             label="Chats"
-            active={activeNavId === 'projects' || activeNavId === 'ri-copilot'}
-            onClick={onOpenProjects}
+            active={activeNavId === 'chats'}
+            onClick={nav.chats}
           />
           <NavItem
             icon={<FolderOpen className="w-3.5 h-3.5" />}
             label="Projects"
-            active={activeNavId === 'project-home'}
+            active={activeNavId === 'projects'}
             onClick={nav.projects}
           />
           <NavItem

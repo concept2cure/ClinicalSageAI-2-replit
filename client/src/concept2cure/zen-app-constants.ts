@@ -25,91 +25,66 @@ export type ToolPanel =
   | null;
 
 export type LayoutMode =
-  // ── Global destinations (5 allowed top-level) ──
-  | 'projects'
-  | 'apps'
-  | 'communication-center'
-  | 'settings'
-  // ── Project tabs ──
-  | 'project-home'
-  | 'documents'
-  | 'vault'
-  | 'review'
-  | 'submissions'
-  | 'dossier-map'
-  | 'section-workspace'
-  | 'csr-workflow'
-  | 'ind-checklist'
-  | 'template-library'
-  // ── Canonical workspace + editor ──
-  | 'regulatory-workspace'
-  | 'editor'
-  | 'deep-research'
-  // ── Specialist tools (launched from Apps) ──
-  | 'precedent-intelligence'
-  | 'biostatistics'
-  | 'review-readiness'
-  | 'report-engine'
-  | 'safety-narrative'
-  | 'vault-workspace'
-  // ── Task board ──
-  | 'task-board';
-  // All demoted/legacy/compatibility modes removed from type.
-  // They are handled as untyped strings in zenRouteNormalization.ts DEMOTED_LAYOUT_REDIRECTS.
+  // ── 7 canonical layout modes ──
+  | 'chats'                  // Conversation home (ChatGPT-style)
+  | 'projects'               // Project browser grid
+  | 'project-home'           // Project landing (conversation-first)
+  | 'project-workspace'      // All project-scoped tools (internal sub-routing via WorkspaceView)
+  | 'communication-center'   // Tasks, reviews, submissions routing
+  | 'apps'                   // App launcher + specialist tools
+  | 'settings';              // Account, workspace, preferences
+  // All project-scoped modes (documents, vault, review, etc.) are now WorkspaceView values
+  // inside the project-workspace layout. Deep-research is a chat mode, not a layout mode.
+  // All demoted/legacy modes handled as untyped strings in zenRouteNormalization.ts.
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // NAV MAPPINGS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const PRIMARY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
+  chats: 'chats',
   projects: 'projects',
+  'project-home': 'projects',
+  'project-workspace': 'projects',
   'communication-center': 'communication-center',
-  'project-home': 'ri-copilot',
-  'dossier-map': 'clinical-module5',
-  documents: 'work',
-  review: 'review',
-  submissions: 'publish',
-  'section-workspace': 'clinical-module5',
-  'vault-workspace': 'vault',
-  'review-readiness': 'verify',
-  'report-engine': 'haq',
-  'task-board': 'task-board',
-  'csr-workflow': 'csr-workflow',
-  'ind-checklist': 'ind-checklist',
-  'template-library': 'templates',
+  apps: 'apps',
+  settings: 'settings',
 };
 
 export const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
-  apps: 'apps',
-  'communication-center': 'communication-center',
-  settings: 'settings',
+  // ── 5 primary destinations ──
+  chats: 'chats',
   projects: 'projects',
+  'communication-center': 'communication-center',
+  apps: 'apps',
+  settings: 'settings',
+  // ── Project context entries (all route to project-workspace) ──
   home: 'projects',
-  documents: 'regulatory-workspace',
-  submissions: 'submissions',
-  reports: 'report-engine',
-  dossier: 'dossier-map',
-  'ri-copilot': 'regulatory-workspace',
-  'submission-builder': 'regulatory-workspace',
-  cmc: 'section-workspace',
-  'clinical-module5': 'section-workspace',
-  verify: 'review-readiness',
-  vault: 'vault-workspace',
-  review: 'review',
-  publish: 'submissions',
-  haq: 'report-engine',
-  'task-board': 'task-board',
-  'csr-workflow': 'csr-workflow',
-  'ind-checklist': 'ind-checklist',
   overview: 'project-home',
-  work: 'documents',
-  'review-tab': 'review',
-  submit: 'submissions',
-  templates: 'template-library',
-  'template-library': 'template-library',
-  tools: 'documents',
-  dataroom: 'regulatory-workspace',
-  upload: 'regulatory-workspace',
+  documents: 'project-workspace',
+  submissions: 'project-workspace',
+  reports: 'project-workspace',
+  dossier: 'project-workspace',
+  'ri-copilot': 'project-workspace',
+  'submission-builder': 'project-workspace',
+  cmc: 'project-workspace',
+  'clinical-module5': 'project-workspace',
+  verify: 'project-workspace',
+  vault: 'project-workspace',
+  review: 'project-workspace',
+  publish: 'project-workspace',
+  haq: 'project-workspace',
+  'task-board': 'project-workspace',
+  'csr-workflow': 'project-workspace',
+  'ind-checklist': 'project-workspace',
+  work: 'project-workspace',
+  'review-tab': 'project-workspace',
+  submit: 'project-workspace',
+  templates: 'project-workspace',
+  'template-library': 'project-workspace',
+  tools: 'project-workspace',
+  dataroom: 'project-workspace',
+  upload: 'project-workspace',
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
