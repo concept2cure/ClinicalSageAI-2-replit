@@ -26,7 +26,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
@@ -551,6 +551,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // ─────────────────────────────────────────────────────────────────────────────
   const [location, navigate] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const embedModulesEnabled = isFeatureEnabled('EMBED_MODULES_IN_SHELL');
   const projectModuleRoutePolicy = useMemo(
     () => getProjectModuleRoutePolicy(location, embedModulesEnabled),
@@ -2967,12 +2968,30 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   }
                 }}
                 onAIDraft={async (sectionCode, sectionTitle) => {
-                  // Create a new draft and open in editor
-                  setPendingEditorContent({
-                    title: sectionTitle,
-                    content: '',
-                    ctdSection: sectionCode,
-                  });
+                  // Call IND generation API to produce content, then open in editor
+                  try {
+                    const res = await apiRequest('POST', '/api/ind-generation/generate-section', {
+                      projectId: activeProjectId,
+                      sectionCode,
+                      productName: activeProject?.name || '',
+                      indication: activeProject?.description || '',
+                    });
+                    if (res.ok) {
+                      const json = await res.json();
+                      const generated = json.data;
+                      setPendingEditorContent({
+                        title: `${sectionCode} ${sectionTitle}`,
+                        content: generated?.fullContent || generated?.content || '',
+                        ctdSection: sectionCode,
+                      });
+                      // Invalidate IND status so checklist reflects the new draft immediately
+                      queryClient.invalidateQueries({ queryKey: ['concept2cure', 'ind', 'status', activeProjectId] });
+                    } else {
+                      setPendingEditorContent({ title: `${sectionCode} ${sectionTitle}`, content: '', ctdSection: sectionCode });
+                    }
+                  } catch {
+                    setPendingEditorContent({ title: `${sectionCode} ${sectionTitle}`, content: '', ctdSection: sectionCode });
+                  }
                   setRiViewMode('editor');
                 }}
                 onBack={() => requireActiveProject('project-home')}
@@ -3009,12 +3028,30 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   }
                 }}
                 onAIDraft={async (sectionCode, sectionTitle) => {
-                  // Create a new draft and open in editor
-                  setPendingEditorContent({
-                    title: sectionTitle,
-                    content: '',
-                    ctdSection: sectionCode,
-                  });
+                  // Call IND generation API to produce content, then open in editor
+                  try {
+                    const res = await apiRequest('POST', '/api/ind-generation/generate-section', {
+                      projectId: activeProjectId,
+                      sectionCode,
+                      productName: activeProject?.name || '',
+                      indication: activeProject?.description || '',
+                    });
+                    if (res.ok) {
+                      const json = await res.json();
+                      const generated = json.data;
+                      setPendingEditorContent({
+                        title: `${sectionCode} ${sectionTitle}`,
+                        content: generated?.fullContent || generated?.content || '',
+                        ctdSection: sectionCode,
+                      });
+                      // Invalidate IND status so checklist reflects the new draft immediately
+                      queryClient.invalidateQueries({ queryKey: ['concept2cure', 'ind', 'status', activeProjectId] });
+                    } else {
+                      setPendingEditorContent({ title: `${sectionCode} ${sectionTitle}`, content: '', ctdSection: sectionCode });
+                    }
+                  } catch {
+                    setPendingEditorContent({ title: `${sectionCode} ${sectionTitle}`, content: '', ctdSection: sectionCode });
+                  }
                   setRiViewMode('editor');
                 }}
                 onBack={() => requireActiveProject('project-home')}
