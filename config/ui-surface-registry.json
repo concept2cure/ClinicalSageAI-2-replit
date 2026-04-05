@@ -1,0 +1,161 @@
+{
+  "$schema": "UI Surface Registry — tracks status of every shell surface in convergence",
+  "lastUpdated": "2026-04-05",
+  "auditFile": "docs/audits/ANA_UI_FORENSIC_AUDIT_2026-04-05.md",
+  "workOrderFile": "docs/plans/ANA_UI_CONVERGENCE_WORK_ORDER_2026-04-05.md",
+  "allowedDestinations": ["chats", "projects", "communication-center", "apps", "settings"],
+  "surfaces": {
+    "shells": {
+      "ZenApp.tsx": {
+        "path": "client/src/concept2cure/ZenApp.tsx",
+        "status": "active",
+        "action": "refactor",
+        "lines": 4100,
+        "role": "Primary application shell"
+      },
+      "ZenRouter.tsx": {
+        "path": "client/src/concept2cure/router/ZenRouter.tsx",
+        "status": "active",
+        "action": "keep",
+        "lines": 495,
+        "role": "URL routing dispatcher"
+      },
+      "ZenShell.tsx": {
+        "path": "client/src/concept2cure/layouts/ZenShell.tsx",
+        "status": "dormant",
+        "action": "delete",
+        "lines": 300,
+        "role": "Unused alternative shell"
+      },
+      "IndustryWorkspaceShell.tsx": {
+        "path": "client/src/concept2cure/components/shell/IndustryWorkspaceShell.tsx",
+        "status": "dormant",
+        "action": "delete",
+        "lines": 150,
+        "role": "Unused industry-aware shell"
+      },
+      "GlobalOperatingShell.tsx": {
+        "path": "client/src/concept2cure/components/shell/GlobalOperatingShell.tsx",
+        "status": "active",
+        "action": "demote",
+        "lines": 74,
+        "role": "Breadcrumb wrapper — fold into ZenApp or delete"
+      },
+      "ProjectWorkspaceShell.tsx": {
+        "path": "client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx",
+        "status": "active",
+        "action": "keep",
+        "lines": 200,
+        "role": "Document workspace sub-shell (sacred)"
+      },
+      "EmbeddedModuleHosts.tsx": {
+        "path": "client/src/concept2cure/components/shell/EmbeddedModuleHosts.tsx",
+        "status": "active",
+        "action": "keep",
+        "lines": 200,
+        "role": "510k/PMA/CER module adapters"
+      }
+    },
+    "navigation": {
+      "ZenSidebar.tsx": {
+        "path": "client/src/concept2cure/components/sidebar/ZenSidebar.tsx",
+        "status": "active",
+        "action": "refactor",
+        "lines": 1290,
+        "currentItems": 6,
+        "targetItems": 5,
+        "role": "Left sidebar navigation"
+      },
+      "ProjectsSidebar.tsx": {
+        "path": "client/src/concept2cure/components/sidebar/ProjectsSidebar.tsx",
+        "status": "active",
+        "action": "keep",
+        "lines": 761,
+        "role": "Project browser sub-component"
+      },
+      "Sidebar.tsx (legacy)": {
+        "path": "client/src/components/layout/Sidebar.tsx",
+        "status": "legacy",
+        "action": "verify-and-delete",
+        "lines": 284,
+        "role": "Legacy generic sidebar — verify orphaned"
+      }
+    },
+    "constants": {
+      "zen-app-constants.ts": {
+        "path": "client/src/concept2cure/zen-app-constants.ts",
+        "status": "active",
+        "action": "refactor",
+        "lines": 314,
+        "layoutModeCount": 92,
+        "targetLayoutModeCount": 8,
+        "sidebarNavEntries": 31,
+        "targetSidebarNavEntries": 5,
+        "role": "LayoutMode type + nav mappings + tool panel registry"
+      }
+    },
+    "chat": {
+      "AnaPersistentPanel.tsx": {
+        "path": "client/src/concept2cure/components/chat/AnaPersistentPanel.tsx",
+        "status": "active",
+        "action": "keep",
+        "lines": 5555,
+        "modes": ["full", "compact"],
+        "chatModes": ["standard", "deep-research", "nano-banana"],
+        "role": "Unified AI chat surface — primary content area"
+      }
+    },
+    "destinations": {
+      "chats": {
+        "status": "needs-refactor",
+        "currentLayoutMode": "projects",
+        "targetLayoutMode": "chats",
+        "component": "Conversation list + active chat"
+      },
+      "projects": {
+        "status": "needs-refactor",
+        "currentLayoutMode": "projects (shared)",
+        "targetLayoutMode": "projects",
+        "component": "Project management hub"
+      },
+      "communication-center": {
+        "status": "needs-promotion",
+        "currentLayoutMode": "none (sub-view)",
+        "targetLayoutMode": "communication-center",
+        "component": "CommunicationCenter.tsx",
+        "componentPath": "client/src/concept2cure/components/workspace/CommunicationCenter.tsx"
+      },
+      "apps": {
+        "status": "wired",
+        "currentLayoutMode": "apps",
+        "targetLayoutMode": "apps",
+        "component": "AppsPage.tsx",
+        "componentPath": "client/src/concept2cure/pages/AppsPage.tsx"
+      },
+      "settings": {
+        "status": "needs-rename",
+        "currentLayoutMode": "setup",
+        "targetLayoutMode": "settings",
+        "component": "Settings panel (modal or inline)"
+      }
+    },
+    "toolPanels": {
+      "status": "keep-all",
+      "count": 10,
+      "panels": ["ectd", "protocol", "intelligence", "vault", "doc-editor", "ana-biostats", "sop", "capa", "pms", "inspection"]
+    },
+    "theme": {
+      "fonts": {
+        "heading": "Poppins",
+        "body": "Lora",
+        "status": "correct"
+      },
+      "colors": {
+        "accent": "#d97757",
+        "canvas": "#FAFAF9",
+        "hardcodedInstances": 15,
+        "action": "replace-hardcoded-with-tokens"
+      }
+    }
+  }
+}
