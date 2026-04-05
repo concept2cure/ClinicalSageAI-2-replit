@@ -1546,13 +1546,18 @@ router.post('/generate', async (req: Request, res: Response) => {
       sectionCode: section_code,
     });
 
-    if (!result.success) {
+    if (!result.success || result.persistenceStatus !== 'persisted') {
       return sendError(
         res,
         502,
-        result.error || 'Artifact generation failed',
-        null,
-        'GENERATION_FAILED'
+        result.error || result.persistenceError || 'Artifact generation failed',
+        {
+          persisted: result.persisted,
+          persistenceStatus: result.persistenceStatus,
+        },
+        result.persistenceStatus && result.persistenceStatus !== 'persisted'
+          ? 'PERSISTENCE_FAILED'
+          : 'GENERATION_FAILED'
       );
     }
 

@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import * as crypto from 'crypto';
-import { evaluateAndInterceptGovernedDocument } from '../src/control-plane/governed-document-evaluator';
+import { buildCanonicalGovernedState } from '../services/governed-ana-execution.js';
 import { db, pool } from '../db';
 import { concept2cureNotifications, projectTasks } from '../../shared/schema';
 import {
@@ -819,9 +819,9 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
       });
 
       // Governed Document Decision Fabric evaluation on creation — surface initial blockers/warnings
-      let governedFabric: Record<string, unknown> | undefined;
+      let canonicalGovernedState: Record<string, unknown> | undefined;
       try {
-        const fabricResult = evaluateAndInterceptGovernedDocument({
+        canonicalGovernedState = await buildCanonicalGovernedState({
           context: {
             organizationId: String(organizationId),
             projectId: String(projectId),
@@ -844,32 +844,11 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
             criticalContradictionCount: 0,
           },
         });
-        governedFabric = {
-          decision: fabricResult.evaluation.decision,
-          readiness: {
-            level: fabricResult.evaluation.readiness.level,
-            confidence: fabricResult.evaluation.readiness.confidence,
-            blockers: fabricResult.evaluation.readiness.blockers,
-            warnings: fabricResult.evaluation.readiness.warnings,
-          },
-          consequences: fabricResult.evaluation.consequences,
-          decisionReference: fabricResult.decisionReference,
-        };
       } catch (fabricError) {
-        // Fabric evaluation is non-blocking — degrade gracefully
-        governedFabric = { error: 'Fabric evaluation unavailable', degraded: true };
+        canonicalGovernedState = { error: 'Canonical governed-state evaluation unavailable', degraded: true };
       }
 
-      // Check governed decision lifecycle state for initial readiness
-      let governedDecisionReadiness;
-      try {
-        const { hasUnresolvedGovernedDecisions } = await import('../services/governed-decision-repository.js');
-        governedDecisionReadiness = await hasUnresolvedGovernedDecisions(Number(projectId), organizationId);
-      } catch {
-        governedDecisionReadiness = { hasUnresolved: false, unresolvedCount: 0, escalatedCount: 0, states: {} };
-      }
-
-      return sendSuccess(res, { ...item, generatedTaskId: task?.id, governedFabric, governedDecisionReadiness });
+      return sendSuccess(res, { ...item, generatedTaskId: task?.id, canonicalGovernedState });
     } catch (error: any) {
       return sendError(
         res,
@@ -948,9 +927,9 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
       await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, previous, updated);
 
       // Governed Document Decision Fabric evaluation for dispatch readiness
-      let governedFabric: Record<string, unknown> | undefined;
+      let canonicalGovernedState: Record<string, unknown> | undefined;
       try {
-        const fabricResult = evaluateAndInterceptGovernedDocument({
+        canonicalGovernedState = await buildCanonicalGovernedState({
           context: {
             organizationId: String(organizationId),
             projectId: String(projectId),
@@ -983,38 +962,11 @@ export function registerCommunicationCenterRoutes(router: Router, deps: RouteDep
             staleSectionCount: 0,
           },
         });
-        governedFabric = {
-          decision: fabricResult.evaluation.decision,
-          publishGate: {
-            dispatchReady: fabricResult.evaluation.publishGate.dispatchReady,
-            outcome: fabricResult.evaluation.publishGate.outcome,
-            blockingReasons: fabricResult.evaluation.publishGate.blockingReasons,
-            remediationSteps: fabricResult.evaluation.publishGate.remediationSteps,
-          },
-          readiness: {
-            level: fabricResult.evaluation.readiness.level,
-            confidence: fabricResult.evaluation.readiness.confidence,
-            blockers: fabricResult.evaluation.readiness.blockers,
-            warnings: fabricResult.evaluation.readiness.warnings,
-          },
-          consequences: fabricResult.evaluation.consequences,
-          decisionReference: fabricResult.decisionReference,
-        };
       } catch (fabricError) {
-        // Fabric evaluation is non-blocking — degrade gracefully
-        governedFabric = { error: 'Fabric evaluation unavailable', degraded: true };
+        canonicalGovernedState = { error: 'Canonical governed-state evaluation unavailable', degraded: true };
       }
 
-      // Check for unresolved governed decisions affecting dispatch readiness
-      let governedDecisionReadiness;
-      try {
-        const { hasUnresolvedGovernedDecisions } = await import('../services/governed-decision-repository.js');
-        governedDecisionReadiness = await hasUnresolvedGovernedDecisions(Number(projectId), organizationId);
-      } catch {
-        governedDecisionReadiness = { hasUnresolved: false, unresolvedCount: 0, escalatedCount: 0, states: {} };
-      }
-
-      return sendSuccess(res, { ...updated, governedFabric, governedDecisionReadiness });
+      return sendSuccess(res, { ...updated, canonicalGovernedState });
     } catch (error: any) {
       return sendError(
         res,

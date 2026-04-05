@@ -15,8 +15,8 @@
  */
 
 import { getPool } from '../../db.ts';
-import { tagArtifact } from '../artifact-tagger.js';
 import { logGeneration, validateArtifactQuality } from './enforcement.js';
+import { executeGovernedAnaOperation } from '../governed-ana-execution.js';
 
 const pool = getPool();
 
@@ -52,6 +52,81 @@ export interface CommandResult {
   data?: Record<string, unknown>;
   message: string;
   error?: string;
+}
+
+async function persistGovernedCommandArtifact(
+  ctx: CommandContext,
+  params: {
+    projectId: number;
+    artifactId?: number;
+    sectionCode?: string;
+    title: string;
+    content: string;
+    status?: string;
+    documentType?: string;
+    artifactClass: string;
+    intendedAction: 'create' | 'update' | 'rollback';
+    originSurface: string;
+    metadata?: Record<string, unknown>;
+  }
+) {
+  const qualityResult = validateArtifactQuality(params.content, params.documentType || 'general');
+  const execution = await executeGovernedAnaOperation({
+    evaluationInput: {
+      context: {
+        organizationId: String(ctx.organizationId),
+        projectId: String(params.projectId),
+        artifactId: params.artifactId ? String(params.artifactId) : undefined,
+        actorId: String(ctx.userId),
+        actorRole: ctx.userRole,
+        intendedAction: params.intendedAction,
+        documentType: params.documentType || 'general',
+        sectionCode: params.sectionCode,
+        ctdSection: params.sectionCode,
+        originSurface: params.originSurface,
+      },
+      documentState: {
+        hasContent: Boolean(params.content?.trim()),
+        hasEvidence: /\[(KNOWN|INFERRED|MISSING)\]/.test(params.content || ''),
+        hasBeenReviewed: false,
+        hasApproval: false,
+        hasPlacement: Boolean(params.sectionCode),
+        placementValid: true,
+        hasProvenance: true,
+        unresolvedContradictionCount: 0,
+        criticalContradictionCount: 0,
+      },
+    },
+    artifactMutation: {
+      projectId: params.projectId,
+      organizationId: ctx.organizationId,
+      artifactId: params.artifactId,
+      documentType: params.documentType || 'general',
+      artifactClass: params.artifactClass,
+      sectionCode: params.sectionCode || 'unassigned',
+      title: params.title,
+      content: params.content,
+      status: params.status || 'draft',
+      source: 'AnA',
+      intentLens: 'command',
+      originSurface: params.originSurface,
+      provenance: params.metadata || {},
+      structureSections: [],
+      qualityGate: {
+        grade: qualityResult.grade,
+        score: qualityResult.score,
+        pass: qualityResult.pass,
+        issues: qualityResult.issues,
+      },
+      versioningMode: params.artifactId ? 'update' : 'create',
+    },
+  });
+
+  if (execution.persistenceStatus !== 'persisted' || !execution.artifactMutation) {
+    throw new Error(`Governed persistence failed: ${execution.persistenceStatus}`);
+  }
+
+  return execution.artifactMutation;
 }
 
 function hasPrivacyAdminRole(role?: string): boolean {
@@ -250,21 +325,67 @@ export async function createArtifact(
       };
     }
 
-    const result = await tagArtifact({
-      projectId: params.projectId,
-      organizationId: ctx.organizationId,
-      userId: ctx.userId,
-      sectionCode: params.ctdSection || 'unassigned',
-      title: params.title,
-      content: params.content,
-      status: params.status || 'draft',
-      source: params.source || 'ana_ri',
-      metadata: {
-        ...params.metadata,
-        createdVia: 'ana_command',
-        createdBy: ctx.userName || ctx.userId,
+    const execution = await executeGovernedAnaOperation({
+      evaluationInput: {
+        context: {
+          organizationId: String(ctx.organizationId),
+          projectId: String(params.projectId),
+          actorId: String(ctx.userId),
+          actorRole: ctx.userRole,
+          intendedAction: 'create',
+          documentType: params.type || 'general',
+          sectionCode: params.ctdSection,
+          ctdSection: params.ctdSection,
+          originSurface: 'ana-ri-command',
+        },
+        documentState: {
+          hasContent: Boolean(params.content?.trim()),
+          hasEvidence: /\\[(KNOWN|INFERRED|MISSING)\\]/.test(params.content || ''),
+          hasBeenReviewed: false,
+          hasApproval: false,
+          hasPlacement: Boolean(params.ctdSection),
+          placementValid: true,
+          hasProvenance: true,
+          unresolvedContradictionCount: 0,
+          criticalContradictionCount: 0,
+        },
+      },
+      artifactMutation: {
+        projectId: params.projectId,
+        organizationId: ctx.organizationId,
+        documentType: params.type || 'general',
+        artifactClass: 'ana_command_artifact',
+        sectionCode: params.ctdSection || 'unassigned',
+        title: params.title,
+        content: params.content,
+        status: params.status || 'draft',
+        source: 'AnA',
+        intentLens: 'command',
+        originSurface: 'ana-ri-command',
+        provenance: {
+          ...params.metadata,
+          createdVia: 'ana_command',
+          createdBy: ctx.userName || ctx.userId,
+        },
+        structureSections: [],
+        qualityGate: {
+          grade: qualityResult.grade,
+          score: qualityResult.score,
+          pass: qualityResult.pass,
+          issues: qualityResult.issues,
+        },
+        versioningMode: 'create',
       },
     });
+
+    if (execution.persistenceStatus !== 'persisted' || !execution.artifactMutation) {
+      return {
+        success: false,
+        action: 'create_artifact',
+        message: `Governed persistence failed for "${params.title}"`,
+        error: execution.persistenceStatus,
+      };
+    }
 
     logGeneration({
       timestamp: new Date().toISOString(),
@@ -274,7 +395,7 @@ export async function createArtifact(
       organizationId: ctx.organizationId,
       userId: ctx.userId,
       artifactCreated: true,
-      artifactId: result.artifactId,
+      artifactId: execution.artifactMutation.artifactId,
       anaRiOrchestrated: true,
     });
 
@@ -287,12 +408,12 @@ export async function createArtifact(
       success: true,
       action: 'create_artifact',
       data: {
-        artifactId: result.artifactId,
-        isNew: result.isNew,
-        sectionCode: result.sectionCode,
+        artifactId: execution.artifactMutation.artifactId,
+        isNew: execution.artifactMutation.isNew,
+        sectionCode: execution.artifactMutation.sectionCode,
         title: params.title,
       },
-      message: `Created "${params.title}"${sectionLabel} — ID: ${result.artifactId}, status: ${statusLabel}.`,
+      message: `Created "${params.title}"${sectionLabel} — ID: ${execution.artifactMutation.artifactId}, status: ${statusLabel}.`,
     };
   } catch (err: unknown) {
     return {
@@ -352,16 +473,17 @@ export async function updateArtifact(
       };
     }
 
-    const result = await tagArtifact({
+    const result = await persistGovernedCommandArtifact(ctx, {
       projectId: params.projectId,
-      organizationId: ctx.organizationId,
-      userId: ctx.userId,
-      sectionCode: current.ctd_section || '',
+      artifactId: params.artifactId,
+      sectionCode: current.ctd_section || undefined,
       title: params.title || current.title || '',
       content: params.content,
       status: 'draft',
-      artifactId: params.artifactId,
-      source: 'ana_ri',
+      documentType: 'general',
+      artifactClass: 'ana_command_artifact_update',
+      intendedAction: 'update',
+      originSurface: 'ana-ri-command',
       metadata: {
         updatedVia: 'ana_command',
         changeDescription: params.changeDescription || 'Updated by AnA RI',
@@ -1897,15 +2019,16 @@ What should be done BEFORE this version is submitted? Be specific.`;
         const impactTitle = `Version Impact Review — ${artifactMeta.title || 'Artifact'} (v${
           older.version
         } → v${newer.version})`;
-        const tagResult = await tagArtifact({
+        const tagResult = await persistGovernedCommandArtifact(ctx, {
           projectId: params.projectId,
-          organizationId: ctx.organizationId,
-          userId: ctx.userId,
           sectionCode: `ana-ri.version_impact.${params.artifactId}`,
           title: impactTitle,
           content: response.content,
           status: 'draft',
-          source: 'ana_ri',
+          documentType: 'version_impact_review',
+          artifactClass: 'ana_command_version_impact',
+          intendedAction: 'create',
+          originSurface: 'ana-ri-command',
           metadata: {
             anaRiActionType: 'version_impact_review',
             sourceArtifactId: params.artifactId,
@@ -2181,15 +2304,17 @@ export async function revertToVersion(
     const oldContent = versionResult.rows[0].content;
 
     // Create new version with old content (same pattern as concept2cure.ts rollback endpoint)
-    const result = await tagArtifact({
+    const result = await persistGovernedCommandArtifact(ctx, {
       projectId: params.projectId,
-      organizationId: ctx.organizationId,
-      userId: ctx.userId,
-      sectionCode: '',
-      title: '',
-      content: oldContent,
       artifactId: artifact.id,
-      source: 'ana_ri',
+      sectionCode: artifact.ctd_section || undefined,
+      title: artifact.title || `Artifact ${params.artifactId}`,
+      content: oldContent,
+      status: 'draft',
+      documentType: 'artifact_revert',
+      artifactClass: 'ana_command_artifact_revert',
+      intendedAction: 'rollback',
+      originSurface: 'ana-ri-command',
       metadata: {
         revertedFrom: params.targetVersion,
         revertedBy: ctx.userId,

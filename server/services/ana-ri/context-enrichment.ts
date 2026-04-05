@@ -27,6 +27,7 @@ import { getDeficienciesBySubmissionType, getCriticalDeficiencies, type Submissi
 import { buildWorkflowContext } from './workflow-orchestration.js';
 import { detectDocumentType, buildDocumentGenerationContext } from './document-routing.js';
 import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
+import type { CanonicalGovernedState } from '../../../shared/types/governed-document-fabric.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -49,6 +50,34 @@ interface EnrichmentResult {
     detectedCommand?: string;
     /** Whether project context was available */
     hasProjectContext: boolean;
+  };
+}
+
+export interface AnaGovernedContextEnvelope {
+  artifactSummary: string;
+  decisionSummary: string;
+  readinessSummary: string;
+  topBlockers: string[];
+  topWarnings: string[];
+  nextRecommendedAction: string;
+  exportPublishReadinessSummary: string;
+  unresolvedGovernedDecisionSummary: string;
+  topRimSignals: string[];
+  freshnessTimestamp: string;
+}
+
+function buildAnaGovernedContextEnvelope(state: CanonicalGovernedState): AnaGovernedContextEnvelope {
+  return {
+    artifactSummary: `artifact=${state.artifactBinding.artifactId || 'pending'} section=${state.artifactBinding.sectionCode || 'unassigned'}`,
+    decisionSummary: `outcome=${state.decision.outcome} reference=${state.decisionReference.decisionId}`,
+    readinessSummary: `${state.readinessState.level} (${state.readinessState.score})`,
+    topBlockers: state.blockers.slice(0, 3).map(b => b.message),
+    topWarnings: state.warnings.slice(0, 3).map(w => w.message),
+    nextRecommendedAction: state.nextRecommendedAction,
+    exportPublishReadinessSummary: `export=${state.exportDecision.outcome}, publish=${state.publishDecision.outcome}`,
+    unresolvedGovernedDecisionSummary: `${state.decisionLifecycle.unresolvedCount} unresolved, ${state.decisionLifecycle.escalatedCount} escalated`,
+    topRimSignals: state.rimContextHints?.blockerCategories?.slice(0, 3) || [],
+    freshnessTimestamp: state.stateFreshness.generatedAt,
   };
 }
 
@@ -790,8 +819,9 @@ export async function enrichContextForChat(params: {
   projectId?: string | number;
   organizationId?: number;
   submissionType?: string;
+  canonicalGovernedState?: CanonicalGovernedState;
 }): Promise<EnrichmentResult> {
-  const { message, projectId, organizationId, submissionType } = params;
+  const { message, projectId, organizationId, submissionType, canonicalGovernedState } = params;
   const blocks: string[] = [];
   const sources: string[] = [];
   const sourcesFailed: string[] = [];
@@ -811,6 +841,15 @@ export async function enrichContextForChat(params: {
       hasProjectContext: false,
     },
   };
+
+  // ── Always inject project intelligence summary when available ──
+  if (canonicalGovernedState) {
+    const envelope = buildAnaGovernedContextEnvelope(canonicalGovernedState);
+    blocks.push(
+      `\n\n## Governed Execution Envelope\nDecision: ${envelope.decisionSummary}\nReadiness: ${envelope.readinessSummary}\nArtifact: ${envelope.artifactSummary}\nTop blockers: ${envelope.topBlockers.join('; ') || 'none'}\nTop warnings: ${envelope.topWarnings.join('; ') || 'none'}\nNext action: ${envelope.nextRecommendedAction}\nGates: ${envelope.exportPublishReadinessSummary}\nUnresolved decisions: ${envelope.unresolvedGovernedDecisionSummary}\nRIM signals: ${envelope.topRimSignals.join(', ') || 'none'}\nFreshness: ${envelope.freshnessTimestamp}`
+    );
+    sources.push('governed-envelope');
+  }
 
   // ── Always inject project intelligence summary when available ──
   const projectSummary = await enrichWithProjectSummary(projectId, organizationId).catch(() => '');

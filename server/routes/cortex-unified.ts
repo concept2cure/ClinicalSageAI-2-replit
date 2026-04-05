@@ -43,6 +43,7 @@ import {
   parseSharedMemoryContract,
   renderSharedMemoryForPrompt,
 } from '../services/shared-memory-contract.js';
+import { executeGovernedAnaOperation } from '../services/governed-ana-execution.js';
 
 const logger = createScopedLogger('cortex-unified');
 const router = Router();
@@ -995,33 +996,73 @@ router.post('/save-draft', requireAuth, async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid project_id' });
     }
 
-    // Lazy-import to avoid circular deps
-    const { tagArtifact } = await import('../services/artifact-tagger.js');
-
-    const result = await tagArtifact({
-      projectId: numericProjectId,
-      organizationId,
-      userId: userId || undefined,
-      sectionCode: section_code,
-      title: title || `Draft: ${section_code}`,
-      content,
-      status: status || 'draft',
-      source: 'ana_cortex',
-      metadata: { savedVia: 'cortex-save-draft' },
+    const execution = await executeGovernedAnaOperation({
+      evaluationInput: {
+        context: {
+          organizationId: String(organizationId),
+          projectId: String(numericProjectId),
+          actorId: String(userId || 'system'),
+          intendedAction: 'create',
+          documentType: 'cortex_draft',
+          sectionCode: section_code,
+          ctdSection: section_code,
+          originSurface: 'cortex-save-draft',
+        },
+        documentState: {
+          hasContent: Boolean(content?.trim()),
+          hasEvidence: /\[(KNOWN|INFERRED|MISSING)\]/.test(content),
+          hasBeenReviewed: false,
+          hasApproval: false,
+          hasPlacement: Boolean(section_code),
+          placementValid: true,
+          hasProvenance: true,
+          unresolvedContradictionCount: 0,
+          criticalContradictionCount: 0,
+        },
+      },
+      artifactMutation: {
+        projectId: numericProjectId,
+        organizationId,
+        documentType: 'cortex_draft',
+        artifactClass: 'ana_cortex_draft',
+        sectionCode: section_code,
+        title: title || `Draft: ${section_code}`,
+        content,
+        status: status || 'draft',
+        source: 'AnA',
+        intentLens: 'auto',
+        originSurface: 'cortex-save-draft',
+        provenance: { savedVia: 'cortex-save-draft' },
+        structureSections: [],
+        qualityGate: { grade: 'pending', pass: true, issues: [] },
+        versioningMode: 'create',
+      },
     });
 
+    if (execution.persistenceStatus !== 'persisted' || !execution.artifactMutation) {
+      return res.status(409).json({
+        error: 'Governed draft persistence rejected',
+        code: 'GOVERNED_PERSISTENCE_REJECTED',
+        details: {
+          persistenceStatus: execution.persistenceStatus,
+          decisionReference: execution.decisionReference,
+        },
+      });
+    }
+
     logger.info(
-      `[SaveDraft] Artifact ${result.isNew ? 'created' : 'updated'}: ${
-        result.artifactId
+      `[SaveDraft] Artifact ${execution.artifactMutation.isNew ? 'created' : 'updated'}: ${
+        execution.artifactMutation.artifactId
       } for section ${section_code}`
     );
 
     res.json({
       success: true,
-      artifactId: result.artifactId,
-      sectionCode: result.sectionCode,
-      isNew: result.isNew,
-      sectionStatusUpdated: result.sectionStatusUpdated,
+      artifactId: execution.artifactMutation.artifactId,
+      sectionCode: execution.artifactMutation.sectionCode,
+      isNew: execution.artifactMutation.isNew,
+      sectionStatusUpdated: execution.artifactMutation.sectionStatusUpdated,
+      decisionReference: execution.decisionReference,
     });
   } catch (error: any) {
     logger.error(`[SaveDraft] Error: ${error.message}`);
