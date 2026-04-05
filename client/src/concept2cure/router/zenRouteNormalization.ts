@@ -1,6 +1,7 @@
 import type { LayoutMode } from '../zen-app-constants';
 
 export const DEMOTED_LAYOUT_REDIRECTS: Partial<Record<LayoutMode, LayoutMode>> = {
+  // ── Demoted modes (redirect to active destinations) ──
   'mission-control': 'projects',
   snowglobe: 'projects',
   'snowglobe-chambers': 'projects',
@@ -8,11 +9,9 @@ export const DEMOTED_LAYOUT_REDIRECTS: Partial<Record<LayoutMode, LayoutMode>> =
   'ectd-coauthor': 'documents',
   cmc: 'documents',
   'document-vault': 'vault',
-  'vault-workspace': 'vault',
-  'review-readiness': 'review',
   'clinical-trial': 'documents',
   'document-builder': 'documents',
-  artifacts: 'artifacts-center',
+  artifacts: 'apps',
   sherpa: 'projects',
   analytics: 'projects',
   timeline: 'projects',
@@ -30,6 +29,40 @@ export const DEMOTED_LAYOUT_REDIRECTS: Partial<Record<LayoutMode, LayoutMode>> =
   'knowledge-base': 'projects',
   'project-knowledge': 'projects',
   'ana-platform-control': 'projects',
+  // ── Legacy batch-1 modes ──
+  'ind-workspace': 'projects',
+  'submission-workspace': 'projects',
+  author: 'projects',
+  'intelligence-hub': 'projects',
+  'command-center': 'projects',
+  'legal-center': 'projects',
+  'about-training': 'projects',
+  'ana-dashboard': 'projects',
+  integrations: 'projects',
+  // ── Compatibility redirects ──
+  workspace: 'regulatory-workspace',
+  assistant: 'projects',
+  ctd: 'projects',
+  'medtech-dashboard': 'projects',
+  dossier: 'dossier-map',
+  // ── Unused MissionControl sub-modes ──
+  'intelligence-feed': 'projects',
+  'gap-analysis': 'projects',
+  'change-impact': 'projects',
+  'ana-memory': 'projects',
+  'artifact-graph': 'projects',
+  'review-center': 'projects',
+  'dossier-view': 'projects',
+  'risk-cockpit': 'projects',
+  'route-planner': 'projects',
+  'evidence-manager': 'projects',
+  'decision-log': 'projects',
+  'authority-tracker': 'projects',
+  'provenance-trail': 'projects',
+  notifications: 'projects',
+  'program-wizard': 'projects',
+  'team-workspace': 'projects',
+  'program-analytics': 'projects',
 };
 
 export const normalizeLayoutMode = (layoutMode: LayoutMode): LayoutMode => {

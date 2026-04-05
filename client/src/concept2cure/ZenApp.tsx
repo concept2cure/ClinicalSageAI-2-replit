@@ -40,7 +40,6 @@ import {
   type ToolPanel,
   type LayoutMode,
   PRIMARY_NAV_ID_BY_LAYOUT,
-  LEGACY_NAV_ID_BY_LAYOUT,
   SIDEBAR_NAV_TO_LAYOUT as SIDEBAR_NAV_TO_LAYOUT_EXTRACTED,
   normalizeIndustryMode,
   TOOL_PANELS,
@@ -130,19 +129,8 @@ const ModuleLoadingFallback = () => (
   </div>
 );
 
-// Utility: instantly redirect dead layout modes to regulatory-workspace
-const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect }) => {
-  React.useEffect(() => {
-    onRedirect();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  return null;
-};
-
-// Lazy load the Convergent Canvas for the Sherpa System
-// [BATCH 3] ConvergentCanvas (Sherpa mode) — renderer removed
-
-// Enablement Center — Dr. Sage + AnA 1.0 dual-AI enablement hub
-// [BATCH 3] EnablementCenter — renderer removed
+// [BATCH 3] Dead code removed: RedirectToWorkspace, ConvergentCanvas, EnablementCenter
+// All demoted modes now redirect via normalizeLayoutMode useEffect
 
 // [Phase A] Dr. Sage removed — AnA is the single guide identity
 // import DrSageGlobalLayer from './components/dr-sage/DrSagePanel';
@@ -380,7 +368,7 @@ const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.Component
 
 // ToolPanel and LayoutMode types imported from ./zen-app-constants
 
-// PRIMARY_NAV_ID_BY_LAYOUT and LEGACY_NAV_ID_BY_LAYOUT imported from ./zen-app-constants
+// PRIMARY_NAV_ID_BY_LAYOUT imported from ./zen-app-constants
 
 // INDUSTRY_MODES and normalizeIndustryMode imported from ./zen-app-constants
 
@@ -1831,7 +1819,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     if (layoutMode === 'regulatory-workspace') {
       return riViewMode === 'intelligence' ? 'ri-copilot' : 'submission-builder';
     }
-    return PRIMARY_NAV_ID_BY_LAYOUT[layoutMode] ?? LEGACY_NAV_ID_BY_LAYOUT[layoutMode];
+    return PRIMARY_NAV_ID_BY_LAYOUT[layoutMode];
   }, [activeToolPanel, layoutMode, riViewMode]);
 
   const currentGlobalNodeLabel = useMemo(() => {
@@ -2115,62 +2103,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             case 'deep-research':
               requireActiveProject('deep-research');
               break;
-            // [BATCH 3] All demoted/deleted modes — set the layout mode and let
-            // the DEMOTED_REDIRECTS useEffect handle the redirect.
-            default: {
-              // If it's a known LayoutMode string, set it (useEffect will redirect).
-              // Otherwise ignore.
-              const knownModes: string[] = [
-                'mission-control',
-                'snowglobe',
-                'snowglobe-chambers',
-                'rules',
-                'ectd-coauthor',
-                'cmc',
-                'document-vault',
-                'clinical-trial',
-                'templates',
-                'sherpa',
-                'analytics',
-                'timeline',
-                'audit',
-                'enablement-center',
-                'platform-admin',
-                'biologics-dashboard',
-                'ctd-onboarding',
-                'client-intelligence',
-                'collaboration-hub',
-                'user-inbox',
-                'client-branding',
-                'training-center',
-                'client-onboarding',
-                'knowledge-base',
-                'project-knowledge',
-                'artifacts',
-                'document-builder',
-                'ana-platform-control',
-                'author',
-                'ind-workspace',
-                'submission-workspace',
-                'intelligence-hub',
-                'command-center',
-                'legal-center',
-                'about-training',
-                'ana-dashboard',
-                'integrations',
-                'agents',
-                'tasks',
-              ];
-              if (knownModes.includes(id)) {
-                const candidate = id as LayoutMode;
-                if (PROJECT_SCOPED_LAYOUTS.has(candidate)) {
-                  requireActiveProject(candidate);
-                } else {
-                  setLayoutMode(candidate);
-                }
-              }
+            // All demoted/deleted modes — redirect to projects.
+            // The normalizeLayoutMode useEffect (line ~830) also catches stale bookmarks.
+            default:
+              setLayoutMode('projects');
               break;
-            }
           }
         }}
         userName={userName}
@@ -2466,11 +2403,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 />
               </Suspense>
             </div>
-          )}
-
-          {/* Redirect deprecated routes to unified workspace */}
-          {['workspace', 'medtech-dashboard', 'dossier'].includes(layoutMode) && (
-            <RedirectToWorkspace onRedirect={() => requireActiveProject('regulatory-workspace')} />
           )}
 
           {/* ── Project Workspace (3-pane: tree | content | inspector) ───── */}
@@ -3361,14 +3293,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               </ErrorBoundary>
             </div>
           )}
-          {/* assistant/ctd mode → redirect to workspace (ONE chat via AnA) */}
-          {!embeddedModule && (layoutMode === 'assistant' || layoutMode === 'ctd') && (
-            <RedirectToWorkspace
-              onRedirect={() =>
-                setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'projects')
-              }
-            />
-          )}
+          {/* assistant/ctd modes redirected by normalizeLayoutMode useEffect */}
         </div>
 
         {/* ── Project Cards Grid — Simplified entry ── */}
