@@ -4145,7 +4145,35 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   // ── Compact mode: just input bar + expandable overlay ──
   if (isCompact) {
     return (
-      <div className="flex-shrink-0 border-t border-[#E8E6DC] bg-white relative z-30">
+      <div
+        className={cn(
+          "flex-shrink-0 border-t border-[#E8E6DC] bg-white relative z-30 transition-colors",
+          isDragging && "border-terracotta-300 ring-2 ring-terracotta-100 bg-terracotta-50/30"
+        )}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {/* Drag overlay */}
+        {isDragging && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 border-2 border-dashed border-terracotta-300 rounded-lg pointer-events-none">
+            <span className="text-sm text-terracotta-500 font-medium">Drop files to attach</span>
+          </div>
+        )}
+        {/* Attached files preview */}
+        {attachedFiles.length > 0 && (
+          <div className="flex gap-1.5 px-4 pt-2 flex-wrap">
+            {attachedFiles.map((file, idx) => (
+              <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 bg-stone-100 rounded text-[11px] text-stone-600">
+                {file.name.length > 20 ? file.name.slice(0, 17) + '...' : file.name}
+                <button onClick={() => removeAttachedFile(idx)} className="hover:text-stone-900" aria-label="Remove file">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
         {/* Expanded conversation overlay (slides up from bottom) */}
         {hasMessages && (
           <div
