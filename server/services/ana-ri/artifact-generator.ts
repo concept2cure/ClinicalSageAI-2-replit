@@ -11,7 +11,6 @@
 
 import { getGateway } from '../ai-gateway/index.js';
 import type { GatewayMessage } from '../ai-gateway/types.js';
-import { tagArtifact, type TagArtifactParams, type TagArtifactResult } from '../artifact-tagger.js';
 import { buildAnaRISystemPrompt } from './persona.js';
 import type { DocumentActionType } from './document-actions.js';
 import type { IntentLens, UserRole } from './persona.js';
@@ -19,9 +18,9 @@ import {
   validateArtifactQuality,
   checkEvidenceDiscipline,
   validateResponseStructure,
-  logGeneration,
-  buildArtifactContract,
+  logGeneration
 } from './enforcement.js';
+import { executeGovernedAnaOperation } from '../governed-ana-execution.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -64,6 +63,8 @@ export interface ArtifactGenerationResult {
   qualityGrade?: string;
   /** Error message if generation itself failed */
   error?: string;
+  /** Canonical persistence status from governed wrapper */
+  persistenceStatus?: 'persisted' | 'rejected' | 'failed' | 'not_requested';
   /** AI provider/model used */
   provider?: string;
   model?: string;
@@ -493,42 +494,65 @@ export async function generateArtifact(
     };
   }
 
-  // 6. Persist as governed artifact
-  let artifactResult: TagArtifactResult | undefined;
-  let persistenceError: string | undefined;
-  try {
-    const tagParams: TagArtifactParams = {
+  const execution = await executeGovernedAnaOperation({
+    evaluationInput: {
+      context: {
+        organizationId: String(organizationId),
+        projectId: String(projectId),
+        actorId: String(userId || 0),
+        actorRole: userRole,
+        intendedAction: 'create',
+        documentType: actionType,
+        sectionCode,
+        ctdSection: sectionCode,
+        originSurface: 'ana-ri-generate',
+      },
+      documentState: {
+        hasContent: Boolean(generatedContent.trim()),
+        hasEvidence: evidenceResult.totalLabels > 0,
+        evidenceCount: evidenceResult.totalLabels,
+        hasBeenReviewed: false,
+        hasApproval: false,
+        hasPlacement: Boolean(sectionCode),
+        placementValid: true,
+        hasProvenance: true,
+        unresolvedContradictionCount: 0,
+        criticalContradictionCount: 0,
+        completenessScore: structureResult.score,
+      },
+    },
+    artifactMutation: {
       projectId,
       organizationId,
-      userId,
+      documentType: actionType,
+      artifactClass: 'ana_ri_generated_document',
       sectionCode: sectionCode || `ana-ri.${actionType}`,
       title: artifactTitle,
       content: generatedContent,
       status: 'draft',
-      source: 'ana_ri',
-      metadata: {
+      source: 'AnA',
+      intentLens: intentLens || 'auto',
+      originSurface: 'ana-ri-generate',
+      provenance: {
         anaRiActionType: actionType,
-        anaRiIntentLens: intentLens || 'auto',
         anaRiUserRole: userRole || 'general',
         generatedAt: new Date().toISOString(),
         aiProvider: response.provider || 'unknown',
         aiModel: response.model || 'unknown',
-        conversationMessagesUsed: usedContext.length,
-        conversationMessagesTotal: conversationContext.length,
-        qualityGrade: qualityResult.grade,
-        qualityScore: qualityResult.score,
-        evidenceLabels: evidenceResult.totalLabels,
+      },
+      structureSections: structureResult.present,
+      qualityGate: {
+        grade: qualityResult.grade,
+        score: qualityResult.score,
+        pass: qualityResult.pass,
+        issues: qualityResult.issues,
         evidenceCompliant: evidenceResult.compliant,
         structureScore: structureResult.score,
-        structureSections: structureResult.present,
       },
-    };
-
-    artifactResult = await tagArtifact(tagParams);
-  } catch (err: any) {
-    console.error('[AnA RI] Artifact persistence failed:', err?.message);
-    persistenceError = err?.message || 'Unknown persistence error';
-  }
+      versioningMode: 'create',
+      placementTarget: sectionCode,
+    },
+  });
 
   // 7. Log generation event for observability
   logGeneration({
@@ -538,8 +562,8 @@ export async function generateArtifact(
     projectId,
     organizationId,
     userId,
-    artifactCreated: !!artifactResult,
-    artifactId: artifactResult?.artifactId,
+    artifactCreated: !!execution.artifactMutation,
+    artifactId: execution.artifactMutation?.artifactId,
     provider: response.provider || 'unknown',
     model: response.model || 'unknown',
     anaRiOrchestrated: true,
@@ -552,10 +576,11 @@ export async function generateArtifact(
     success: true,
     content: generatedContent,
     title: artifactTitle,
-    artifactId: artifactResult?.artifactId,
-    isNew: artifactResult?.isNew,
-    persisted: !!artifactResult,
-    persistenceError,
+    artifactId: execution.artifactMutation?.artifactId,
+    isNew: execution.artifactMutation?.isNew,
+    persisted: execution.persistenceStatus === 'persisted',
+    persistenceError: execution.persistenceStatus === 'failed' ? 'Persistence failed in governed wrapper' : undefined,
+    persistenceStatus: execution.persistenceStatus,
     qualityGrade: qualityResult.grade,
     provider: response.provider || 'unknown',
     model: response.model || 'unknown',

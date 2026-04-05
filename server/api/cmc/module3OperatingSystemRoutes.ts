@@ -9,7 +9,7 @@ import {
 } from '../../services/cmc-module3-compiler';
 import { composeModule3FromCanonicalSources, impactedSectionsForSourceType } from '../../services/module3Composer';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
-import { evaluateAndInterceptGovernedDocument } from '../../src/control-plane/governed-document-evaluator';
+import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
 
 const router = express.Router();
 
@@ -388,16 +388,13 @@ router.get('/readiness/:projectId', async (req, res) => {
 
     const exportReady = totalSections > 0 && approvedSections === totalSections && staleSections === 0 && openCriticalContradictions === 0;
 
-    // Governed Document Decision Fabric evaluation
-    let governedFabric: Record<string, any> | null = null;
+    let canonicalGovernedState: Record<string, any> | null = null;
     try {
-      const unresolvedContradictions = contradictions.rows.filter(
-        (r: any) => r.status !== 'resolved'
-      ).length;
-      const fabricResult = evaluateAndInterceptGovernedDocument({
+      const unresolvedContradictions = contradictions.rows.filter((r: any) => r.status !== 'resolved').length;
+      canonicalGovernedState = await buildCanonicalGovernedState({
         context: {
-          organizationId: orgId,
-          projectId: Number(projectId),
+          organizationId: String(orgId),
+          projectId: String(projectId),
           actorId: (req as any).user?.id || 'system',
           intendedAction: 'export',
           documentType: 'cmc_module3',
@@ -417,23 +414,8 @@ router.get('/readiness/:projectId', async (req, res) => {
           completenessScore: totalSections > 0 ? approvedSections / totalSections : 0,
         },
       });
-      governedFabric = {
-        decision: fabricResult.evaluation.decision,
-        readiness: fabricResult.evaluation.readiness,
-        decisionReference: fabricResult.decisionReference,
-      };
     } catch (fabricErr) {
-      // Non-blocking — fabric failure does not break readiness endpoint
-      governedFabric = { error: 'Fabric evaluation failed', degraded: true };
-    }
-
-    // Check for unresolved governed decisions affecting readiness
-    let governedDecisionReadiness;
-    try {
-      const { hasUnresolvedGovernedDecisions } = await import('../../services/governed-decision-repository.js');
-      governedDecisionReadiness = await hasUnresolvedGovernedDecisions(Number(req.params.projectId), orgId);
-    } catch {
-      governedDecisionReadiness = { hasUnresolved: false, unresolvedCount: 0, escalatedCount: 0, states: {} };
+      canonicalGovernedState = { error: 'Canonical governed-state evaluation failed', degraded: true };
     }
 
     return res.json({
@@ -444,8 +426,7 @@ router.get('/readiness/:projectId', async (req, res) => {
         staleSections,
         openCriticalContradictions,
         exportReady,
-        governedFabric,
-        governedDecisionReadiness,
+        canonicalGovernedState,
       },
     });
   } catch (error) {
@@ -504,14 +485,13 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
         .json({ success: false, error: 'Critical contradictions must be resolved before approval.' });
     }
 
-    // Governed Document Decision Fabric — evaluate before approval
-    let governedFabric: Record<string, any> | null = null;
+    let canonicalGovernedState: Record<string, any> | null = null;
     try {
       const unresolvedContradictions = blocking.rows.length; // already queried above
-      const fabricResult = evaluateAndInterceptGovernedDocument({
+      canonicalGovernedState = await buildCanonicalGovernedState({
         context: {
-          organizationId: orgId,
-          projectId: Number(projectId),
+          organizationId: String(orgId),
+          projectId: String(projectId),
           actorId: (req as any).user?.id || 'system',
           intendedAction: 'approve',
           documentType: 'cmc_module3',
@@ -530,14 +510,8 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
           isStale: false,
         },
       });
-      governedFabric = {
-        decision: fabricResult.evaluation.decision,
-        readiness: fabricResult.evaluation.readiness,
-        decisionReference: fabricResult.decisionReference,
-      };
     } catch (fabricErr) {
-      // Non-blocking for approval — log but proceed
-      governedFabric = { error: 'Fabric evaluation failed', degraded: true };
+      canonicalGovernedState = { error: 'Canonical governed-state evaluation failed', degraded: true };
     }
 
     const sectionRes = await pool.query(
@@ -592,7 +566,7 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
       sectionKey,
       versionNumber,
       approvedVersionId: insertedVersion.rows[0].id,
-      governedFabric,
+      canonicalGovernedState,
     });
   } catch (error) {
     if (String(error?.message || '').includes('Organization context required')) {
@@ -671,13 +645,13 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
     const openCritical = (contradictionsRes.rows || []).filter((c: any) => c.severity === 'critical' && c.status !== 'resolved').length;
     const unresolvedCount = (contradictionsRes.rows || []).filter((c: any) => c.status !== 'resolved').length;
 
-    let governedFabric: Record<string, any> | null = null;
+    let canonicalGovernedState: Record<string, any> | null = null;
     let fabricBlocks = false;
     try {
-      const fabricResult = evaluateAndInterceptGovernedDocument({
+      canonicalGovernedState = await buildCanonicalGovernedState({
         context: {
-          organizationId: orgId,
-          projectId: Number(projectId),
+          organizationId: String(orgId),
+          projectId: String(projectId),
           actorId: (req as any).user?.id || 'system',
           intendedAction: 'export',
           documentType: 'cmc_module3',
@@ -702,34 +676,23 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
           provenanceComplete: true,
         },
       });
-      fabricBlocks = fabricResult.evaluation.decision.outcome === 'block';
-      governedFabric = {
-        decision: fabricResult.evaluation.decision,
-        exportGate: fabricResult.evaluation.exportGate,
-        decisionReference: fabricResult.decisionReference,
-      };
+      fabricBlocks =
+        canonicalGovernedState.derivedFlags?.isBlocked === true ||
+        canonicalGovernedState.derivedFlags?.hasUnresolvedGovernedDecisions === true;
     } catch (fabricErr) {
-      // Fail-closed: if fabric errors, treat as blocking
       fabricBlocks = true;
-      governedFabric = { error: 'Fabric evaluation failed', degraded: true, blocked: true };
+      canonicalGovernedState = { error: 'Canonical governed-state evaluation failed', degraded: true, blocked: true };
     }
 
-    // Check for unresolved governed decisions affecting export
-    let governedDecisionReadiness;
-    try {
-      const { hasUnresolvedGovernedDecisions } = await import('../../services/governed-decision-repository.js');
-      governedDecisionReadiness = await hasUnresolvedGovernedDecisions(Number(projectId), orgId);
-    } catch {
-      governedDecisionReadiness = { hasUnresolved: false, unresolvedCount: 0, escalatedCount: 0, states: {} };
-    }
-
-    // Block export if governed decisions are unresolved
-    const governedDecisionsBlock = governedDecisionReadiness?.hasUnresolved === true;
+    const governedDecisionsBlock =
+      canonicalGovernedState &&
+      typeof canonicalGovernedState === 'object' &&
+      (canonicalGovernedState as any).derivedFlags?.hasUnresolvedGovernedDecisions === true;
 
     // Fail-closed convergence: block if EITHER the existing check OR the fabric blocks OR governed decisions are unresolved
     if (!allowed || fabricBlocks || governedDecisionsBlock) {
       const errorMsg = governedDecisionsBlock && allowed && !fabricBlocks
-        ? `Unresolved governed decisions block final export (${governedDecisionReadiness.unresolvedCount} unresolved, ${governedDecisionReadiness.escalatedCount} escalated)`
+        ? `Unresolved governed decisions block final export (${(canonicalGovernedState as any).decisionLifecycle?.unresolvedCount || 0} unresolved, ${(canonicalGovernedState as any).decisionLifecycle?.escalatedCount || 0} escalated)`
         : fabricBlocks && allowed
           ? 'Governed document fabric blocked final export'
           : 'Critical contradictions or missing approvals block final export';
@@ -740,13 +703,12 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
           totalSections: sections.length,
           approvedSections: approvedCount,
           openCriticalContradictions: openCritical,
-          governedFabric,
-          governedDecisionReadiness,
+          canonicalGovernedState,
         },
       });
     }
 
-    return res.json({ success: true, message: 'Final export gate passed', governedFabric, governedDecisionReadiness });
+    return res.json({ success: true, message: 'Final export gate passed', canonicalGovernedState });
   } catch (error) {
     if (String(error?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });

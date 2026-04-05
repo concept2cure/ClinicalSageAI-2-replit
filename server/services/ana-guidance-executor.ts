@@ -16,18 +16,19 @@
  * @compliance FDA 21 CFR Part 11 — all executions audit-trailed
  */
 
-import { db } from '../db.js';
 import {
-  concept2cureArtifacts,
-  concept2cureArtifactVersions,
   concept2cureReviewThreads,
   concept2cureThreadComments,
   concept2cureProvenanceEvents,
 } from '../../shared/schema.js';
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
-import { createHash } from 'crypto';
-import { resolveGovernedContext } from './concept2cure/governedDocumentContractService.js';
+import { executeGovernedAnaOperation } from './governed-ana-execution.js';
+
+async function getDbClient() {
+  const mod = await import('../db.js');
+  return mod.db;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -248,89 +249,45 @@ async function executeArtifactCreation(payload: AnaActionPayload): Promise<AnaAc
     return failResult(payload, 'Artifact title is empty');
   }
 
-  const externalId = `ana_${payload.type}_${uuidv4().slice(0, 8)}`;
-  const contentHash = createHash('sha256').update(payload.content, 'utf8').digest('hex');
-  const mockReq = {
-    body: {
-      projectId: payload.projectId,
-      metadata: {
-        source: payload.metadata.source,
-        runId: payload.metadata.runId,
-        sourceRefs: payload.metadata.conversationId
-          ? [`conversation:${payload.metadata.conversationId}`]
-          : [`ana_guidance:${payload.metadata.runId}`],
-      },
-      recommendationSource: 'ana_ri',
-      originSurface: 'ri_copilot',
-      clientTrack: 'biotech',
-      submissionProgram: 'general_ri',
-      persona: 'regulatory',
-      regulatorScope: 'fda',
-      evidenceMode: 'mixed',
-      documentClass: 'strategy_memo',
-      readinessGate: 'exploratory',
-      approvalPathType: 'single_reviewer',
-      workspaceTarget: 'project',
-      regulatorIntent: 'strategy',
-    },
-    userId: payload.userId,
-    userEmail: `${payload.userName || 'ana'}@ana.local`,
-    userRole: 'regulatory',
-  } as any;
-  const governedResolution = resolveGovernedContext({
-    req: mockReq,
-    projectId: payload.projectId,
-    artifactId: null,
-    documentType: 'regulatory_document',
-    generationMode: 'ai_generated',
-    lifecycleStatus: 'draft',
-    originSurface: 'ri_copilot',
-    clientTrack: 'biotech',
-    submissionProgram: 'general_ri',
-    persona: 'regulatory',
-    regulatorScope: 'fda',
-    evidenceMode: 'mixed',
-    documentClass: 'strategy_memo',
-    readinessGate: 'exploratory',
-    approvalPathType: 'single_reviewer',
-    recommendationSource: 'ana_ri',
-    workspaceTarget: 'project',
-    regulatorIntent: 'strategy',
-    placementContainerId: String(payload.projectId),
-    title: payload.title,
-    content: payload.content,
-    ctdSection: payload.sectionCode || null,
-    sourceRefs: payload.metadata.conversationId
-      ? [`conversation:${payload.metadata.conversationId}`]
-      : [`ana_guidance:${payload.metadata.runId}`],
-    provider: 'ana_guidance_executor',
-    model: 'ana_ri',
-    exportAllowed: false,
-    eventType: 'artifact.generated.ai',
-  });
-  if (!governedResolution.validation.valid) {
-    return failResult(payload, `governed contract invalid: ${governedResolution.validation.errors.join('; ')}`);
-  }
-
   try {
-    // Transaction wrapping — artifact + version + provenance must all succeed or all roll back.
-    // This ensures no orphaned artifacts without version history (21 CFR Part 11 § 11.10(c)).
-    const result = await db.transaction(async (tx) => {
-      // 1. Insert artifact — returns the auto-generated integer PK
-      const [artifact] = await tx.insert(concept2cureArtifacts).values({
-        artifactId: externalId,
-        organizationId: payload.organizationId,
+    const execution = await executeGovernedAnaOperation({
+      evaluationInput: {
+        context: {
+          organizationId: String(payload.organizationId),
+          projectId: String(payload.projectId),
+          actorId: String(payload.userId),
+          actorRole: payload.userName || 'ana_guidance',
+          intendedAction: 'create',
+          documentType: payload.type,
+          sectionCode: payload.sectionCode,
+          ctdSection: payload.sectionCode,
+          originSurface: 'ri_copilot',
+        },
+        documentState: {
+          hasContent: Boolean(payload.content?.trim()),
+          hasEvidence: /\[(KNOWN|INFERRED|MISSING)\]/.test(payload.content),
+          hasBeenReviewed: false,
+          hasApproval: false,
+          hasPlacement: Boolean(payload.sectionCode),
+          placementValid: true,
+          hasProvenance: true,
+          unresolvedContradictionCount: 0,
+          criticalContradictionCount: 0,
+        },
+      },
+      artifactMutation: {
         projectId: payload.projectId,
+        organizationId: payload.organizationId,
+        documentType: payload.type,
+        artifactClass: 'ana_guidance_generated_artifact',
+        sectionCode: payload.sectionCode,
         title: payload.title,
         content: payload.content,
-        contentHash,
-        type: 'markdown',
-        category: 'document',
         status: 'draft',
-        version: 1,
-        createdById: payload.userId,
-        ctdSection: payload.sectionCode || null,
-        metadata: {
+        source: 'AnA',
+        intentLens: payload.metadata.decisionContext || 'guidance',
+        originSurface: 'ri_copilot',
+        provenance: {
           anaGenerated: true,
           anaActionType: payload.type,
           confidence: payload.metadata.confidence,
@@ -340,66 +297,23 @@ async function executeArtifactCreation(payload: AnaActionPayload): Promise<AnaAc
           guidanceSummary: payload.metadata.guidanceSummary,
           threadId: payload.metadata.threadId,
           conversationId: payload.metadata.conversationId,
-          harness: {
-            clientTrack: governedResolution.contract.clientTrack,
-            submissionProgram: governedResolution.contract.submissionProgram,
-            persona: governedResolution.contract.persona,
-            regulatorScope: governedResolution.contract.regulatorScope,
-            documentClass: governedResolution.contract.documentClass,
-            readinessGate: governedResolution.contract.readinessGate,
-            workspaceTarget: governedResolution.contract.workspaceTarget,
-            originSurface: governedResolution.contract.originSurface,
-            recommendationSource: governedResolution.contract.recommendationSource,
-            regulatorIntent: governedResolution.contract.regulatorIntent,
-            gateChecks: governedResolution.contract.exportEligibility.gateChecks,
-            blockingReasons: governedResolution.contract.exportEligibility.blockingReasons,
-            readinessOutcome: governedResolution.contract.exportEligibility.readinessOutcome,
-          },
         },
-      }).returning();
-
-      const artifactPk = artifact.id; // integer PK from serial
-
-      // 2. Insert version snapshot — artifactId here is the integer FK
-      const [version] = await tx.insert(concept2cureArtifactVersions).values({
-        artifactId: artifactPk,
-        organizationId: payload.organizationId,
-        version: 1,
-        content: payload.content,
-        contentHash,
-        createdById: payload.userId,
-        changeDescription: `AnA 1.0 RI auto-generated ${payload.type.replace(/_/g, ' ')} (confidence: ${payload.metadata.confidence})`,
-      }).returning();
-
-      // 3. Provenance event — 21 CFR Part 11 § 11.10(e) audit trail
-      await tx.insert(concept2cureProvenanceEvents).values({
-        eventId: uuidv4(),
-        artifactId: artifactPk,
-        artifactVersionId: version.id,
-        organizationId: payload.organizationId,
-        eventType: 'generation',
-        eventAction: 'ai_generate',
-        actorId: payload.userId,
-        actorName: payload.userName,
-        sourceDescription: `AnA 1.0 RI auto-generated ${payload.type.replace(/_/g, ' ')}`,
-        backendRoute: 'POST /api/chat',
-        backendService: 'ana-guidance-executor',
-        details: {
-          confidence: payload.metadata.confidence,
-          runId: payload.metadata.runId,
-          source: 'ana_guidance',
-          contentHash,
-          externalId,
-          decisionContext: payload.metadata.decisionContext,
-          guidanceSummary: payload.metadata.guidanceSummary,
+        structureSections: [],
+        qualityGate: {
+          grade: payload.metadata.confidence === 'strong' ? 'A' : payload.metadata.confidence === 'moderate' ? 'B' : 'C',
+          pass: true,
+          issues: [],
         },
-      });
-
-      return artifactPk;
+        versioningMode: 'create',
+      },
     });
 
+    if (execution.persistenceStatus !== 'persisted' || !execution.artifactMutation) {
+      return failResult(payload, `governed persistence rejected: ${execution.persistenceStatus}`);
+    }
+
     console.log(
-      `[AnA Executor] Created ${payload.type}: id=${result}, externalId=${externalId}, project=${payload.projectId}, org=${payload.organizationId}`
+      `[AnA Executor] Created ${payload.type}: id=${execution.artifactMutation.artifactId}, project=${payload.projectId}, org=${payload.organizationId}`
     );
 
     return {
@@ -407,8 +321,8 @@ async function executeArtifactCreation(payload: AnaActionPayload): Promise<AnaAc
       executed: true,
       actionType: payload.type,
       confidence: payload.metadata.confidence,
-      artifactId: externalId,
-      artifactPk: result,
+      artifactId: String(execution.artifactMutation.artifactId),
+      artifactPk: Number(execution.artifactMutation.artifactId),
       threadId: null,
       payload,
       error: null,
@@ -434,6 +348,7 @@ async function executeReviewThreadCreation(payload: AnaActionPayload): Promise<A
   const commentExtId = uuidv4();
 
   try {
+    const db = await getDbClient();
     // Review threads require an artifact. If none provided, create a memo artifact first.
     let artifactPk = payload.existingArtifactId || null;
     let createdArtifactId: string | null = null;

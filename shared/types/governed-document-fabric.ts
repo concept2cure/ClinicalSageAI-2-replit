@@ -327,6 +327,107 @@ export interface GovernedDecisionReference {
   formalReceiptId?: string;
 }
 
+// ─── Canonical Governed Convergence Contracts ───────────────────────────────
+
+export interface CanonicalGovernedDerivedFlags {
+  isBlocked: boolean;
+  isReviewRequired: boolean;
+  isExportReady: boolean;
+  isPublishReady: boolean;
+  hasUnresolvedGovernedDecisions: boolean;
+  hasCriticalContradictions: boolean;
+  hasPlacementGap: boolean;
+  hasEvidenceGap: boolean;
+  requiresHumanApproval: boolean;
+  isDegraded: boolean;
+}
+
+export interface CanonicalGovernedState {
+  context: GovernedDocumentContext;
+  decision: GovernedDecisionSummary;
+  readinessState: LifecycleReadinessState;
+  blockers: GovernedBlockingReason[];
+  warnings: GovernedWarning[];
+  placementDecision: PlacementAuthorityDecision;
+  exportDecision: ExportGateDecision;
+  publishDecision: PublishGateDecision;
+  nextRecommendedAction: string;
+  downstreamConsequences: DownstreamOperatingConsequence[];
+  decisionReference: GovernedDecisionReference;
+  uiPresentationHints?: UIPresentationHints;
+  rimContextHints?: RIMContextHints;
+  decisionLifecycle: {
+    hasUnresolved: boolean;
+    unresolvedCount: number;
+    escalatedCount: number;
+    states: Record<string, number>;
+  };
+  artifactBinding: {
+    artifactId?: string;
+    artifactVersionId?: string;
+    sectionCode?: string;
+    placementTarget?: string;
+  };
+  stateFreshness: {
+    evaluatedAt: string;
+    generatedAt: string;
+  };
+  derivedFlags: CanonicalGovernedDerivedFlags;
+}
+
+export interface GovernedArtifactMutationContract {
+  projectId: number;
+  organizationId: number;
+  artifactId?: number;
+  documentType: string;
+  artifactClass: string;
+  sectionCode?: string;
+  title: string;
+  content: string;
+  status: string;
+  source: 'AnA';
+  intentLens: string;
+  originSurface: string;
+  provenance: Record<string, unknown>;
+  structureSections: string[];
+  qualityGate: {
+    grade: string;
+    score?: number;
+    pass: boolean;
+    issues: string[];
+    evidenceCompliant?: boolean;
+    structureScore?: number;
+  };
+  versioningMode: 'create' | 'update' | 'append';
+  placementTarget?: string;
+  decisionReference?: string;
+}
+
+export interface GovernedLearningEvent {
+  organizationId: number;
+  projectId: number;
+  artifactId?: string;
+  decisionId: string;
+  intent: string;
+  outcome: string;
+  readinessLevel: string;
+  readinessScore: number;
+  blockerCategories: string[];
+  warningCategories: string[];
+  placementOutcome: string;
+  exportGateOutcome: string;
+  publishGateOutcome: string;
+  unresolvedDecisionCount: number;
+  criticalContradictionCount: number;
+  documentType?: string;
+  submissionType?: string;
+  regulatorBody?: string;
+  originSurface?: string;
+  qualityGateGrade?: string;
+  artifactMutationType: string;
+  executedAt: string;
+}
+
 // ─── Regulatory Context Binding ─────────────────────────────────────────────
 
 export interface RegulatoryContextBinding {

@@ -80,7 +80,7 @@ import {
 } from '../services/intelligence/rim-interceptors.js';
 import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
 import { resolveGovernedContext } from '../services/concept2cure/governedDocumentContractService';
-import { evaluateAndInterceptGovernedDocument } from '../src/control-plane/governed-document-evaluator';
+import { buildCanonicalGovernedState } from '../services/governed-ana-execution.js';
 import {
   buildWorkingMemoryPrompt,
   storeWorkingMemory,
@@ -7273,15 +7273,15 @@ router.put(
       });
 
       // === Governed Document Decision Fabric evaluation ===
-      let governedFabric;
+      let canonicalGovernedState;
       try {
-        const fabricResult = evaluateAndInterceptGovernedDocument({
+        const canonical = await buildCanonicalGovernedState({
           context: {
-            organizationId,
-            projectId: dbArtifact.projectId,
-            actorId: userId,
+            organizationId: String(organizationId),
+            projectId: String(dbArtifact.projectId),
+            actorId: String(userId),
             intendedAction: operation === 'relocate' ? 'relocate' : 'place',
-            artifactId: dbArtifact.artifactId,
+            artifactId: String(dbArtifact.artifactId),
             documentType: dbArtifact.type || undefined,
             ctdSection: toSection,
             currentPlacement: previousSection || undefined,
@@ -7301,18 +7301,19 @@ router.put(
             criticalContradictionCount: 0,
           },
         });
-        governedFabric = {
-          decisionId: fabricResult.decisionReference.decisionId,
-          outcome: fabricResult.decisionReference.outcome,
-          readiness: fabricResult.evaluation.readiness.level,
-          readinessScore: fabricResult.evaluation.readiness.score,
-          placementOutcome: fabricResult.evaluation.placement.outcome,
-          blockerCount: fabricResult.evaluation.decision.blockerCount,
-          warningCount: fabricResult.evaluation.decision.warningCount,
-          consequenceCount: fabricResult.evaluation.decision.consequenceCount,
+        canonicalGovernedState = {
+          decisionId: canonical.decisionReference.decisionId,
+          outcome: canonical.decisionReference.outcome,
+          readiness: canonical.readinessState.level,
+          readinessScore: canonical.readinessState.score,
+          placementOutcome: canonical.placementDecision.outcome,
+          blockerCount: canonical.decision.blockerCount,
+          warningCount: canonical.decision.warningCount,
+          consequenceCount: canonical.decision.consequenceCount,
+          hasUnresolvedGovernedDecisions: canonical.derivedFlags.hasUnresolvedGovernedDecisions,
         };
       } catch {
-        governedFabric = { outcome: 'degraded', error: 'Fabric evaluation unavailable' };
+        canonicalGovernedState = { outcome: 'degraded', error: 'Canonical governed-state unavailable' };
       }
 
       return sendSuccess(res, {
@@ -7320,7 +7321,7 @@ router.put(
         ctdSection: updated.ctdSection,
         operation,
         previousSection,
-        governedFabric,
+        canonicalGovernedState,
       });
     } catch (error: any) {
       logConcept2cureError('artifact placement', error, {
