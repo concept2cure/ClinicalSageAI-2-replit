@@ -600,7 +600,7 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
                 <p className="text-xs text-stone-500">Total</p>
               </div>
               <div>
-                <p className="text-base font-semibold text-green-700">{result.adjustedForDropout}</p>
+                <p className="text-base font-semibold text-emerald-700">{result.adjustedForDropout}</p>
                 <p className="text-xs text-stone-500">With Dropout</p>
               </div>
             </div>
@@ -609,7 +609,7 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
               <ul className="text-xs text-stone-500 space-y-1">
                 {result.assumptions.map((assumption, idx) => (
                   <li key={idx} className="flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3 text-green-500" />
+                    <CheckCircle2 className="h-3 w-3 text-emerald-500" />
                     {assumption}
                   </li>
                 ))}
@@ -708,8 +708,8 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b bg-white">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-            <Beaker className="h-5 w-5 text-purple-600" />
+          <div className="w-10 h-10 rounded-lg bg-stone-200 flex items-center justify-center">
+            <Beaker className="h-5 w-5 text-stone-600" />
           </div>
           <div>
             <h1 className="text-lg font-semibold text-stone-900">Study Protocol Designer</h1>
@@ -950,7 +950,7 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
                           section.status === 'not_started' && 'bg-stone-100 text-stone-600',
                           section.status === 'ai_draft' && 'bg-blue-100 text-stone-700',
                           section.status === 'in_review' && 'bg-amber-100 text-amber-700',
-                          section.status === 'approved' && 'bg-green-100 text-green-700'
+                          section.status === 'approved' && 'bg-emerald-100 text-emerald-700'
                         )}
                       >
                         {section.status.replace('_', ' ')}

@@ -356,12 +356,12 @@ export function NewDocumentDialog({
                 className={cn(
                   'flex flex-col items-center gap-2 p-4 rounded-lg border transition-all text-center',
                   mode === 'ai-generate'
-                    ? 'border-violet-400 bg-violet-50'
+                    ? 'border-stone-400 bg-stone-100'
                     : 'border-stone-200 hover:border-blue-200 hover:bg-blue-50/50',
                 )}
               >
-                <div className="h-10 w-10 rounded-lg bg-violet-100 flex items-center justify-center">
-                  <Sparkles className="h-5 w-5 text-violet-500" />
+                <div className="h-10 w-10 rounded-lg bg-stone-200 flex items-center justify-center">
+                  <Sparkles className="h-5 w-5 text-stone-1000" />
                 </div>
                 <span className="text-sm font-semibold text-stone-900">AI Generate</span>
                 <span className="text-[11px] text-stone-500">AI-drafted content</span>
@@ -424,7 +424,7 @@ export function NewDocumentDialog({
                   <p className="text-[10px] text-blue-500">{selectedTemplate.sections.length} sections · {selectedTemplate.complexity}</p>
                 </div>
                 {mode === 'ai-generate' && (
-                  <span className="text-[10px] font-medium text-violet-600 bg-violet-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-[10px] font-medium text-stone-600 bg-stone-200 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <Sparkles className="h-2.5 w-2.5" />
                     AI will generate content
                   </span>

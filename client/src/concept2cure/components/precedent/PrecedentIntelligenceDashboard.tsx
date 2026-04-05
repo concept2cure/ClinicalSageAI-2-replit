@@ -269,7 +269,7 @@ export function PrecedentIntelligenceDashboard({
           <TabsList className="h-11 bg-transparent gap-1">
             <TabsTrigger
               value="search"
-              className="gap-1.5 data-[state=active]:bg-violet-50 data-[state=active]:text-stone-700"
+              className="gap-1.5 data-[state=active]:bg-stone-100 data-[state=active]:text-stone-700"
             >
               <Search className="w-3.5 h-3.5" /> Search
             </TabsTrigger>
@@ -299,7 +299,7 @@ export function PrecedentIntelligenceDashboard({
             </TabsTrigger>
             <TabsTrigger
               value="rtf"
-              className="gap-1.5 data-[state=active]:bg-orange-50 data-[state=active]:text-orange-700"
+              className="gap-1.5 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700"
             >
               <ClipboardCheck className="w-3.5 h-3.5" /> RTF
             </TabsTrigger>
@@ -324,7 +324,7 @@ export function PrecedentIntelligenceDashboard({
           <div className="border border-border/40 rounded-sm bg-background">
             <div className="px-3 py-2 border-b border-border/30 pb-3">
               <h3 className="text-sm font-semibold text-sm flex items-center gap-2">
-                <Search className="w-4 h-4 text-violet-600" />
+                <Search className="w-4 h-4 text-stone-600" />
                 Search Regulatory Precedents
               </h3>
             </div>
@@ -437,7 +437,7 @@ export function PrecedentIntelligenceDashboard({
                         className={cn(
                           'w-full text-left p-3 rounded-lg border transition-all hover:shadow-sm',
                           selectedPrecedent?.id === p.id
-                            ? 'border-violet-300 bg-violet-50/50'
+                            ? 'border-stone-300 bg-stone-100/50'
                             : 'border-stone-200 hover:border-stone-300 bg-white'
                         )}
                       >
@@ -713,9 +713,9 @@ export function PrecedentIntelligenceDashboard({
                           {compareResult.recommendations.map((r, i) => (
                             <li
                               key={i}
-                              className="text-xs text-stone-600 flex items-start gap-2 p-2 bg-violet-50/50 rounded"
+                              className="text-xs text-stone-600 flex items-start gap-2 p-2 bg-stone-100/50 rounded"
                             >
-                              <ArrowUpRight className="w-3 h-3 text-violet-500 flex-shrink-0 mt-0.5" />
+                              <ArrowUpRight className="w-3 h-3 text-stone-500 flex-shrink-0 mt-0.5" />
                               {r}
                             </li>
                           ))}
@@ -1028,7 +1028,7 @@ export function PrecedentIntelligenceDashboard({
                 <div className="border border-border/40 rounded-sm bg-background">
                   <div className="px-3 py-2 border-b border-border/30 pb-2">
                     <h3 className="text-sm font-semibold text-sm flex items-center gap-2">
-                      <Scale className="w-4 h-4 text-violet-600" />
+                      <Scale className="w-4 h-4 text-stone-600" />
                       Testing Requirements
                     </h3>
                   </div>
@@ -1036,7 +1036,7 @@ export function PrecedentIntelligenceDashboard({
                     <ul className="space-y-1">
                       {strategyResult.testingRequirements.map((t, i) => (
                         <li key={i} className="flex items-center gap-2 text-xs text-stone-600 p-1.5">
-                          <CheckCircle className="w-3 h-3 text-violet-400 flex-shrink-0" />
+                          <CheckCircle className="w-3 h-3 text-stone-400 flex-shrink-0" />
                           {t}
                         </li>
                       ))}
@@ -1176,7 +1176,7 @@ export function PrecedentIntelligenceDashboard({
           <div className="border border-border/40 rounded-sm bg-background">
             <div className="px-3 py-2 border-b border-border/30 pb-3">
               <h3 className="text-sm font-semibold flex items-center gap-2">
-                <ClipboardCheck className="w-4 h-4 text-orange-600" />
+                <ClipboardCheck className="w-4 h-4 text-amber-600" />
                 Refuse to File (RTF) Trigger Analysis
               </h3>
             </div>
@@ -1187,7 +1187,7 @@ export function PrecedentIntelligenceDashboard({
               <Button
                 onClick={() => setRtfActive(true)}
                 disabled={rtfLoading || !searchSubmissionType}
-                className="bg-orange-600 hover:bg-orange-700 text-white"
+                className="bg-amber-600 hover:bg-amber-700 text-white"
                 size="sm"
               >
                 {rtfLoading ? <Spinner size="sm" className="mr-1" /> : <ClipboardCheck className="w-4 h-4 mr-1" />}
@@ -1201,7 +1201,7 @@ export function PrecedentIntelligenceDashboard({
               <div className="border border-border/40 rounded-sm bg-background">
                 <div className="px-3 py-2 border-b border-border/30 pb-2">
                   <h3 className="text-sm font-semibold flex items-center gap-2">
-                    <ClipboardCheck className="w-4 h-4 text-orange-600" />
+                    <ClipboardCheck className="w-4 h-4 text-amber-600" />
                     Submission Checklist ({rtfResult.requiredItems} required of {rtfResult.totalChecklistItems})
                   </h3>
                 </div>
@@ -1210,9 +1210,9 @@ export function PrecedentIntelligenceDashboard({
                     {rtfResult.checklist.map((c: any, i: number) => (
                       <div key={i} className="flex items-center gap-2 p-2 rounded text-xs hover:bg-stone-50">
                         <div className={cn('w-5 h-5 rounded border flex items-center justify-center flex-shrink-0',
-                          c.required ? 'border-orange-300 bg-orange-50' : 'border-stone-200'
+                          c.required ? 'border-amber-300 bg-amber-50' : 'border-stone-200'
                         )}>
-                          {c.required && <AlertTriangle className="w-3 h-3 text-orange-500" />}
+                          {c.required && <AlertTriangle className="w-3 h-3 text-amber-500" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
@@ -1224,7 +1224,7 @@ export function PrecedentIntelligenceDashboard({
                         <Badge variant="secondary" className={cn('text-xs flex-shrink-0',
                           c.category === 'clinical' && 'bg-blue-50 text-stone-700',
                           c.category === 'cmc' && 'bg-stone-100 text-stone-700',
-                          c.category === 'nonclinical' && 'bg-green-50 text-green-700',
+                          c.category === 'nonclinical' && 'bg-emerald-50 text-emerald-700',
                           c.category === 'administrative' && 'bg-stone-100 text-stone-700',
                           c.category === 'safety' && 'bg-red-50 text-red-700',
                         )}>{c.category}</Badge>

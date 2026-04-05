@@ -156,7 +156,7 @@ const STATUS_CONFIG: Record<
   locked: { icon: <Lock className="w-3 h-3" />, color: LIFECYCLE.published.text, label: 'Locked' },
   missing_evidence: {
     icon: <AlertCircle className="w-3 h-3" />,
-    color: 'text-orange-500',
+    color: 'text-amber-500',
     label: 'Missing Evidence',
   },
   ready: { icon: <ShieldCheck className="w-3 h-3" />, color: LIFECYCLE.approved.text, label: 'Ready' },
@@ -394,7 +394,7 @@ function DossierNodeRow({
         )}
         {metrics?.[node.ctdSection] && metrics[node.ctdSection].precedentCount > 0 && (
           <span
-            className="text-xs text-violet-600 bg-violet-50 rounded px-0.5 shrink-0"
+            className="text-xs text-stone-600 bg-stone-100 rounded px-0.5 shrink-0"
             title="Precedents"
           >
             P{metrics[node.ctdSection].precedentCount}
@@ -696,7 +696,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onOpenTransformCanvas(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-blue-50 transition-colors flex items-center gap-2 focus-visible:bg-violet-50 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-blue-50 transition-colors flex items-center gap-2 focus-visible:bg-stone-100 focus-visible:outline-none"
               role="menuitem"
             >
               <Sparkles className="w-3 h-3" />
@@ -709,7 +709,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onOpenSubmissionApps(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-orange-700 hover:bg-orange-50 transition-colors flex items-center gap-2 focus-visible:bg-orange-50 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-2 focus-visible:bg-amber-50 focus-visible:outline-none"
               role="menuitem"
             >
               <AppWindow className="w-3 h-3" />

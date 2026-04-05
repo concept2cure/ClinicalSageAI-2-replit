@@ -171,12 +171,12 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
                   </span>
                 )}
                 {changeRequests > 0 && (
-                  <span className="text-[8px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-medium">
+                  <span className="text-[8px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">
                     {changeRequests} changes requested
                   </span>
                 )}
                 {approvalsNeeded > 0 && (
-                  <span className="text-[8px] bg-violet-100 text-stone-700 px-1.5 py-0.5 rounded-full font-medium">
+                  <span className="text-[8px] bg-stone-200 text-stone-700 px-1.5 py-0.5 rounded-full font-medium">
                     {approvalsNeeded} awaiting approval
                   </span>
                 )}

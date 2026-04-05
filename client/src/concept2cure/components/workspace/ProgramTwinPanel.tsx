@@ -236,7 +236,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
         <TwinSection
           title="Dossier State"
           subtitle={`confidence: ${data.dossier.confidence}`}
-          icon={<Layers className="w-3.5 h-3.5 text-violet-500" />}
+          icon={<Layers className="w-3.5 h-3.5 text-stone-500" />}
           expanded={expanded.has('dossier')}
           onToggle={() => toggle('dossier')}
         >
@@ -324,7 +324,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
         <TwinSection
           title="Template State"
           subtitle={`confidence: ${data.template.confidence}`}
-          icon={<FileText className="w-3.5 h-3.5 text-cyan-500" />}
+          icon={<FileText className="w-3.5 h-3.5 text-blue-500" />}
           expanded={expanded.has('template')}
           onToggle={() => toggle('template')}
         >
@@ -375,7 +375,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
           {onOpenTransformCanvas && (
             <button
               onClick={onOpenTransformCanvas}
-              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-violet-50 text-violet-600 hover:bg-violet-100 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-stone-100 text-stone-600 hover:bg-stone-200 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
             >
               <Sparkles className="w-3 h-3" />
               Transform Canvas
@@ -392,7 +392,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
 function TwinHeader({ onClose, projectName }: { onClose: () => void; projectName?: string }) {
   return (
     <div className="flex items-center gap-2 px-4 h-10 border-b border-stone-200 shrink-0">
-      <Brain className="w-4 h-4 text-violet-500" />
+      <Brain className="w-4 h-4 text-stone-500" />
       <h2 className="text-sm font-semibold text-stone-900">Program Twin</h2>
       {projectName && (
         <>

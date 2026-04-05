@@ -454,7 +454,7 @@ const CROProjectManagerView: React.FC<{
         {/* Client Review */}
         <div className="bg-stone-50 rounded-xl p-4">
           <h3 className="text-sm font-semibold text-stone-700 mb-3 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-violet-500" />
+            <div className="w-2 h-2 rounded-full bg-stone-1000" />
             Client Review ({grouped.client_review.length})
           </h3>
           <div className="space-y-2">

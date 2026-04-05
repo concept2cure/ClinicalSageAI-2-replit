@@ -35,9 +35,9 @@ import {
 // App icon map
 const APP_ICONS: Record<string, React.ReactNode> = {
   'evidence-memo': <FileText className="w-5 h-5 text-blue-500" />,
-  'protocol-rationale': <FlaskConical className="w-5 h-5 text-violet-500" />,
+  'protocol-rationale': <FlaskConical className="w-5 h-5 text-stone-500" />,
   'clinical-overview': <BookOpen className="w-5 h-5 text-emerald-500" />,
-  'module3-builder': <Layers className="w-5 h-5 text-cyan-500" />,
+  'module3-builder': <Layers className="w-5 h-5 text-blue-500" />,
   'risk-benefit': <ShieldCheck className="w-5 h-5 text-amber-500" />,
   'audit-report': <ClipboardList className="w-5 h-5 text-red-500" />,
 };
@@ -204,7 +204,7 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
             <div className="flex items-center gap-2 text-xs text-stone-500">
               <span className="px-2 py-1 rounded bg-blue-50 text-blue-600 font-medium">Input</span>
               <ArrowRight className="w-3 h-3" />
-              <span className="px-2 py-1 rounded bg-violet-50 text-violet-600 font-medium">
+              <span className="px-2 py-1 rounded bg-stone-100 text-stone-600 font-medium">
                 Transform
               </span>
               <ArrowRight className="w-3 h-3" />

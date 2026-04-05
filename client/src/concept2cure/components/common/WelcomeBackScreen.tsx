@@ -258,7 +258,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                     className={cn(
                       'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
                       lastProject.type === '510K' && 'bg-blue-100',
-                      lastProject.type === 'IND' && 'bg-purple-100',
+                      lastProject.type === 'IND' && 'bg-stone-200',
                       lastProject.type === 'NDA' && 'bg-emerald-100'
                     )}
                   >
@@ -266,7 +266,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                       className={cn(
                         'w-5 h-5',
                         lastProject.type === '510K' && 'text-blue-600',
-                        lastProject.type === 'IND' && 'text-purple-600',
+                        lastProject.type === 'IND' && 'text-stone-600',
                         lastProject.type === 'NDA' && 'text-emerald-600'
                       )}
                     />
@@ -279,7 +279,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                         className={cn(
                           'text-xs font-medium px-2 py-0.5 rounded-full',
                           lastProject.type === '510K' && 'bg-blue-100 text-stone-700',
-                          lastProject.type === 'IND' && 'bg-purple-100 text-purple-700',
+                          lastProject.type === 'IND' && 'bg-stone-200 text-stone-700',
                           lastProject.type === 'NDA' && 'bg-emerald-100 text-emerald-700'
                         )}
                       >
@@ -329,7 +329,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                       action.color === 'blue' &&
                         'border-blue-200 bg-blue-50/50 hover:border-blue-300',
                       action.color === 'purple' &&
-                        'border-purple-200 bg-purple-50/50 hover:border-purple-300',
+                        'border-stone-200 bg-stone-100/50 hover:border-stone-300',
                       action.color === 'emerald' &&
                         'border-emerald-200 bg-emerald-50/50 hover:border-emerald-300',
                       action.color === 'amber' &&
@@ -340,7 +340,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                       className={cn(
                         'w-5 h-5 mb-3',
                         action.color === 'blue' && 'text-blue-600',
-                        action.color === 'purple' && 'text-purple-600',
+                        action.color === 'purple' && 'text-stone-600',
                         action.color === 'emerald' && 'text-emerald-600',
                         action.color === 'amber' && 'text-amber-600'
                       )}
@@ -378,7 +378,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                         item.type === 'task' && 'bg-blue-100',
                         item.type === 'review' && 'bg-amber-100',
                         item.type === 'milestone' && 'bg-emerald-100',
-                        item.type === 'notification' && 'bg-purple-100'
+                        item.type === 'notification' && 'bg-stone-200'
                       )}
                     >
                       {item.type === 'task' && <CheckCircle className="w-5 h-5 text-blue-600" />}
@@ -386,7 +386,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                       {item.type === 'milestone' && (
                         <Calendar className="w-5 h-5 text-emerald-600" />
                       )}
-                      {item.type === 'notification' && <Bell className="w-5 h-5 text-purple-600" />}
+                      {item.type === 'notification' && <Bell className="w-5 h-5 text-stone-600" />}
                     </div>
 
                     <div className="flex-1 min-w-0">

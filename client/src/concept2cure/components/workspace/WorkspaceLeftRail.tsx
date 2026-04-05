@@ -235,7 +235,7 @@ export const WorkspaceLeftRail: React.FC<WorkspaceLeftRailProps> = ({
             </span>
           )}
           {activeArtifact.templateId && (
-            <span className="text-xs px-1.5 py-0.5 rounded-md bg-violet-50 text-stone-700">
+            <span className="text-xs px-1.5 py-0.5 rounded-md bg-stone-100 text-stone-700">
               {activeArtifact.templateId.replace('tpl-', '')}
             </span>
           )}
@@ -245,7 +245,7 @@ export const WorkspaceLeftRail: React.FC<WorkspaceLeftRailProps> = ({
               activeArtifact.status === 'locked'
                 ? 'bg-red-50 text-red-700'
                 : activeArtifact.status === 'approved'
-                ? 'bg-green-50 text-green-700'
+                ? 'bg-emerald-50 text-emerald-700'
                 : activeArtifact.status === 'review'
                 ? 'bg-yellow-50 text-yellow-700'
                 : 'bg-stone-100 text-stone-500'

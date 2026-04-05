@@ -44,18 +44,18 @@ function StateBadge({ state }: { state: string }) {
     proposed_resolution: 'bg-blue-100 text-blue-800',
     in_resolution: 'bg-stone-100 text-stone-800',
     resolved_pending_review: 'bg-stone-200 text-stone-800',
-    resolved_approved: 'bg-green-100 text-green-800',
+    resolved_approved: 'bg-emerald-100 text-emerald-800',
     superseded: 'bg-stone-100 text-stone-500',
     cancelled: 'bg-stone-100 text-stone-400',
     draft: 'bg-stone-100 text-stone-600',
     proposed: 'bg-blue-100 text-blue-800',
     in_progress: 'bg-stone-100 text-stone-800',
     pending_review: 'bg-stone-200 text-stone-800',
-    approved: 'bg-green-100 text-green-800',
+    approved: 'bg-emerald-100 text-emerald-800',
     applied: 'bg-emerald-100 text-emerald-800',
     rejected: 'bg-red-100 text-red-800',
-    confirmed: 'bg-green-100 text-green-800',
-    reverted: 'bg-orange-100 text-orange-800',
+    confirmed: 'bg-emerald-100 text-emerald-800',
+    reverted: 'bg-amber-100 text-amber-800',
   };
 
   const label = state.replace(/_/g, ' ');
@@ -74,23 +74,23 @@ function StateBadge({ state }: { state: string }) {
 
 function ConfidenceIndicator({ confidence }: { confidence: string }) {
   const indicators: Record<string, { dots: number; color: string }> = {
-    strong: { dots: 4, color: 'bg-green-500' },
+    strong: { dots: 4, color: 'bg-emerald-500' },
     moderate: { dots: 3, color: 'bg-stone-600' },
     provisional: { dots: 2, color: 'bg-amber-500' },
     uncertain: { dots: 1, color: 'bg-red-500' },
   };
 
-  const { dots, color } = indicators[confidence] || { dots: 0, color: 'bg-gray-300' };
+  const { dots, color } = indicators[confidence] || { dots: 0, color: 'bg-stone-300' };
 
   return (
     <div className="flex items-center gap-0.5" title={`Confidence: ${confidence}`}>
       {[1, 2, 3, 4].map(i => (
         <div
           key={i}
-          className={`w-1.5 h-1.5 rounded-full ${i <= dots ? color : 'bg-gray-200'}`}
+          className={`w-1.5 h-1.5 rounded-full ${i <= dots ? color : 'bg-stone-200'}`}
         />
       ))}
-      <span className="text-xs text-gray-500 ml-1">{confidence}</span>
+      <span className="text-xs text-stone-500 ml-1">{confidence}</span>
     </div>
   );
 }
@@ -112,18 +112,18 @@ function ResolutionPlanCard({ plan, onCreateBundle }: {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <StateBadge state={plan.state} />
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-stone-400">
               {plan.triggerType?.replace(/_/g, ' ')}
             </span>
           </div>
-          <p className="text-sm font-medium text-gray-900 truncate">
+          <p className="text-sm font-medium text-stone-900 truncate">
             {plan.triggerDescription}
           </p>
         </div>
         <ConfidenceIndicator confidence={plan.confidence} />
       </div>
 
-      <div className="flex items-center gap-4 text-xs text-gray-500">
+      <div className="flex items-center gap-4 text-xs text-stone-500">
         <span>{affectedCount} affected object{affectedCount !== 1 ? 's' : ''}</span>
         <span>Path: {plan.recommendedPath?.replace(/_/g, ' ')}</span>
         {plan.requiresReview && <span className="text-amber-600">Review required</span>}
@@ -131,7 +131,7 @@ function ResolutionPlanCard({ plan, onCreateBundle }: {
       </div>
 
       {plan.rationale && (
-        <p className="text-xs text-gray-600 line-clamp-2">{plan.rationale}</p>
+        <p className="text-xs text-stone-600 line-clamp-2">{plan.rationale}</p>
       )}
 
       {/* Actions */}
@@ -172,7 +172,7 @@ function ResolutionPlanCard({ plan, onCreateBundle }: {
         )}
         {plan.state === 'resolved_pending_review' && (
           <button
-            className="text-xs px-3 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors"
+            className="text-xs px-3 py-1 bg-emerald-50 text-emerald-700 rounded hover:bg-emerald-100 transition-colors"
             onClick={() => transitionState.mutate({ planId: plan.id, targetState: 'resolved_approved' })}
           >
             Approve
@@ -197,16 +197,16 @@ function ResolutionBundleCard({ bundle }: { bundle: any }) {
           <div className="flex items-center gap-2 mb-1">
             <StateBadge state={bundle.state} />
           </div>
-          <p className="text-sm font-medium text-gray-900 truncate">{bundle.title}</p>
+          <p className="text-sm font-medium text-stone-900 truncate">{bundle.title}</p>
         </div>
         <ConfidenceIndicator confidence={bundle.confidence} />
       </div>
 
       {bundle.description && (
-        <p className="text-xs text-gray-600 line-clamp-2">{bundle.description}</p>
+        <p className="text-xs text-stone-600 line-clamp-2">{bundle.description}</p>
       )}
 
-      <div className="flex items-center gap-4 text-xs text-gray-500">
+      <div className="flex items-center gap-4 text-xs text-stone-500">
         {bundle.requiresReview && <span className="text-amber-600">Review required</span>}
         {bundle.requiresReapproval && <span className="text-red-600">Reapproval required</span>}
       </div>
@@ -238,7 +238,7 @@ function ResolutionBundleCard({ bundle }: { bundle: any }) {
         )}
         {bundle.state === 'pending_review' && (
           <button
-            className="text-xs px-3 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors"
+            className="text-xs px-3 py-1 bg-emerald-50 text-emerald-700 rounded hover:bg-emerald-100 transition-colors"
             onClick={() => transitionState.mutate({ bundleId: bundle.id, targetState: 'approved' })}
           >
             Approve
@@ -258,18 +258,18 @@ function SupersessionCard({ record }: { record: any }) {
     <div className="border border-stone-200 rounded-lg p-4 space-y-2 bg-white">
       <div className="flex items-center gap-2">
         <StateBadge state={record.state} />
-        <span className="text-xs text-gray-400">{record.supersededObjectType}</span>
+        <span className="text-xs text-stone-400">{record.supersededObjectType}</span>
       </div>
-      <div className="text-sm text-gray-900">
-        <span className="text-gray-500 line-through">
+      <div className="text-sm text-stone-900">
+        <span className="text-stone-500 line-through">
           {record.supersededObjectTitle || record.supersededObjectId}
         </span>
-        <span className="mx-2 text-gray-400">&rarr;</span>
+        <span className="mx-2 text-stone-400">&rarr;</span>
         <span className="font-medium">
           {record.successorObjectTitle || record.successorObjectId}
         </span>
       </div>
-      <p className="text-xs text-gray-600">{record.rationale}</p>
+      <p className="text-xs text-stone-600">{record.rationale}</p>
     </div>
   );
 }
@@ -308,11 +308,11 @@ export default function ResolutionPanel({ projectId, className = '' }: Resolutio
   };
 
   return (
-    <div className={`flex flex-col h-full bg-gray-50 ${className}`}>
+    <div className={`flex flex-col h-full bg-stone-50 ${className}`}>
       {/* Header */}
       <div className="px-4 py-3 border-b border-stone-200 bg-white">
-        <h3 className="text-sm font-semibold text-gray-900">Resolution</h3>
-        <p className="text-xs text-gray-500 mt-0.5">
+        <h3 className="text-sm font-semibold text-stone-900">Resolution</h3>
+        <p className="text-xs text-stone-500 mt-0.5">
           Orchestrated resolution of conflicts, contradictions, and impact chains
         </p>
       </div>
@@ -326,7 +326,7 @@ export default function ResolutionPanel({ projectId, className = '' }: Resolutio
             className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
               activeTab === tab.id
                 ? 'border-stone-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                : 'border-transparent text-stone-500 hover:text-stone-700'
             }`}
           >
             {tab.label}
@@ -346,7 +346,7 @@ export default function ResolutionPanel({ projectId, className = '' }: Resolutio
         {activeTab === 'plans' && (
           <>
             {plans.length === 0 && (
-              <div className="text-center py-8 text-xs text-gray-400">
+              <div className="text-center py-8 text-xs text-stone-400">
                 No resolution plans for this project
               </div>
             )}
@@ -363,7 +363,7 @@ export default function ResolutionPanel({ projectId, className = '' }: Resolutio
         {activeTab === 'bundles' && (
           <>
             {bundles.length === 0 && (
-              <div className="text-center py-8 text-xs text-gray-400">
+              <div className="text-center py-8 text-xs text-stone-400">
                 No resolution bundles for this project
               </div>
             )}
@@ -376,7 +376,7 @@ export default function ResolutionPanel({ projectId, className = '' }: Resolutio
         {activeTab === 'supersessions' && (
           <>
             {supersessions.length === 0 && (
-              <div className="text-center py-8 text-xs text-gray-400">
+              <div className="text-center py-8 text-xs text-stone-400">
                 No supersession records for this project
               </div>
             )}

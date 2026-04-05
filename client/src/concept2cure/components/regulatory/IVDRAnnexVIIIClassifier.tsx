@@ -132,9 +132,9 @@ const STEPS = [
 ] as const;
 
 const CLASS_COLORS: Record<IVDRClass, string> = {
-  A: 'bg-green-100 text-green-800 border-green-300',
+  A: 'bg-emerald-100 text-emerald-800 border-emerald-300',
   B: 'bg-blue-100 text-blue-800 border-blue-300',
-  C: 'bg-orange-100 text-orange-800 border-orange-300',
+  C: 'bg-amber-100 text-amber-800 border-amber-300',
   D: 'bg-red-100 text-red-800 border-red-300',
 };
 
@@ -514,7 +514,7 @@ export default function IVDRAnnexVIIIClassifier() {
                   idx === currentStep
                     ? 'text-primary font-semibold'
                     : idx < currentStep
-                      ? 'text-green-600'
+                      ? 'text-emerald-600'
                       : ''
                 }`}
               >
@@ -691,8 +691,8 @@ export default function IVDRAnnexVIIIClassifier() {
                   </div>
                 </div>
                 {(answers.isCompanionDiagnostic || answers.detectsCancer) && (
-                  <div className="p-3 rounded-lg bg-orange-50 border border-orange-200 text-sm">
-                    <Info className="inline h-4 w-4 mr-1 text-orange-600" />
+                  <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm">
+                    <Info className="inline h-4 w-4 mr-1 text-amber-600" />
                     <strong>Rule 3a/3b trigger:</strong> CDx and cancer-related IVDs are classified
                     as <strong>Class C</strong> — requiring full Notified Body assessment.
                   </div>
@@ -889,12 +889,12 @@ export default function IVDRAnnexVIIIClassifier() {
                   </TableHeader>
                   <TableBody>
                     {result.ruleTrace.map((entry, idx) => (
-                      <TableRow key={idx} className={entry.matched ? 'bg-green-50' : ''}>
+                      <TableRow key={idx} className={entry.matched ? 'bg-emerald-50' : ''}>
                         <TableCell className="font-mono text-xs">{entry.rule}</TableCell>
                         <TableCell className="text-sm">{entry.description}</TableCell>
                         <TableCell className="text-center">
                           {entry.matched ? (
-                            <Badge variant="default" className="bg-green-600">
+                            <Badge variant="default" className="bg-emerald-600">
                               <CheckCircle2 className="h-3 w-3 mr-1" />
                               MATCH
                             </Badge>

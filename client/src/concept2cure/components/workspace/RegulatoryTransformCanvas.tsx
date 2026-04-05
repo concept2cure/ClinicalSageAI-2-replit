@@ -156,7 +156,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
     <div className="flex-1 flex flex-col bg-white min-h-0 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 h-10 border-b border-stone-200 shrink-0">
-        <Sparkles className="w-4 h-4 text-violet-500" />
+        <Sparkles className="w-4 h-4 text-stone-1000" />
         <h2 className="text-sm font-semibold text-stone-900">Regulatory Transform Canvas</h2>
         {projectName && (
           <>
@@ -219,7 +219,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
           {/* ── Lane 2: Structured Transform ── */}
           <div className="bg-white p-3 flex flex-col gap-3">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-700 pb-1 border-b border-stone-200">
-              <Layers className="w-3.5 h-3.5 text-violet-500" />
+              <Layers className="w-3.5 h-3.5 text-stone-1000" />
               Structured Transform
             </div>
             {selectedCtd ? (
@@ -268,7 +268,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
                     </span>
                     <ul className="mt-1 space-y-0.5">
                       {matchingApps.map(app => (
-                        <li key={app.appId} className="text-xs text-violet-600">
+                        <li key={app.appId} className="text-xs text-stone-600">
                           {app.label}
                         </li>
                       ))}

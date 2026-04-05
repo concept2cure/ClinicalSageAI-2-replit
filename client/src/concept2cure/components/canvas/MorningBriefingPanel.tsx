@@ -66,9 +66,9 @@ const AlertCard: React.FC<AlertCardProps> = ({
       badge: 'bg-red-600 text-white',
     },
     HIGH: {
-      bg: 'bg-orange-50 border-orange-200',
-      icon: 'bg-orange-100 text-orange-600',
-      badge: 'bg-orange-600 text-white',
+      bg: 'bg-amber-50 border-amber-200',
+      icon: 'bg-amber-100 text-amber-600',
+      badge: 'bg-amber-600 text-white',
     },
     MEDIUM: {
       bg: 'bg-amber-50 border-amber-200',
@@ -201,7 +201,7 @@ const StatWidget: React.FC<StatWidgetProps> = ({
     amber: 'bg-amber-50 text-amber-600',
     blue: 'bg-blue-50 text-blue-600',
     red: 'bg-red-50 text-red-600',
-    purple: 'bg-purple-50 text-purple-600',
+    purple: 'bg-stone-100 text-stone-600',
   };
 
   return (

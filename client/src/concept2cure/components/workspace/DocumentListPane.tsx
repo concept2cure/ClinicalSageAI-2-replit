@@ -331,7 +331,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                             </p>
                             <div className="flex items-center gap-2 text-[11px]">
                               {doc.ctdSection && (
-                                <span className="text-violet-500 font-medium">CTD {doc.ctdSection}</span>
+                                <span className="text-stone-1000 font-medium">CTD {doc.ctdSection}</span>
                               )}
                               <span className="text-stone-400">
                                 {doc.status === 'locked'
@@ -410,7 +410,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                               </span>
                             )}
                             {doc.templateId && (
-                              <span className="flex items-center gap-1.5 text-violet-600">
+                              <span className="flex items-center gap-1.5 text-stone-600">
                                 <Layers className="w-3 h-3" />
                                 {doc.templateId.replace('tpl-', '')}
                               </span>

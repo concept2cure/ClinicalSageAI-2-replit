@@ -330,7 +330,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-stone-700/60">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-violet-400" />
+          <Sparkles className="w-4 h-4 text-stone-400" />
           <span className="text-sm font-semibold tracking-tight">Batch AI Operations</span>
         </div>
         <button
@@ -356,7 +356,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
               className={cn(
                 'w-full flex items-center justify-between px-3 py-2 rounded-md border text-sm transition-colors duration-150',
                 selectedAction
-                  ? 'border-violet-500/50 bg-violet-500/10 text-violet-200'
+                  ? 'border-stone-500/50 bg-stone-500/10 text-stone-200'
                   : 'border-stone-600 bg-stone-800 text-stone-300 hover:border-stone-500',
                 isRunning && 'opacity-50 cursor-not-allowed',
               )}
@@ -380,10 +380,10 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                     }}
                     className={cn(
                       'w-full flex items-start gap-2.5 px-3 py-2 text-left hover:bg-stone-700/60 transition-colors duration-150',
-                      selectedAction === action.value && 'bg-violet-500/10',
+                      selectedAction === action.value && 'bg-stone-500/10',
                     )}
                   >
-                    <span className="mt-0.5 text-violet-400">{action.icon}</span>
+                    <span className="mt-0.5 text-stone-400">{action.icon}</span>
                     <div>
                       <div className="text-sm font-medium text-stone-100">{action.label}</div>
                       <div className="text-xs text-stone-400">{action.description}</div>
@@ -496,7 +496,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
               <div
                 className={cn(
                   'h-full rounded-full transition-all duration-200',
-                  allDone ? 'bg-emerald-500' : isPaused ? 'bg-amber-500' : 'bg-violet-500',
+                  allDone ? 'bg-emerald-500' : isPaused ? 'bg-amber-500' : 'bg-stone-500',
                 )}
                 style={{ width: `${progressPct}%` }}
               />
@@ -557,7 +557,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                             </div>
                             <div>
                               <span className="text-stone-500 block mb-0.5">Updated</span>
-                              <div className="bg-violet-500/5 border border-violet-500/10 rounded p-2 max-h-32 overflow-y-auto text-stone-200 leading-relaxed">
+                              <div className="bg-stone-500/5 border border-stone-500/10 rounded p-2 max-h-32 overflow-y-auto text-stone-200 leading-relaxed">
                                 {stripHtml(result.result).slice(0, 500)}
                                 {stripHtml(result.result).length > 500 && '…'}
                               </div>
@@ -654,7 +654,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
 function StatusBadge({ status }: { status: SectionStatus }) {
   const map: Record<SectionStatus, { label: string; className: string }> = {
     pending: { label: 'Pending', className: 'text-stone-500 bg-stone-700/40' },
-    processing: { label: 'Running', className: 'text-violet-300 bg-violet-500/20' },
+    processing: { label: 'Running', className: 'text-stone-300 bg-stone-500/20' },
     done: { label: 'Done', className: 'text-emerald-300 bg-emerald-500/20' },
     error: { label: 'Error', className: 'text-red-300 bg-red-500/20' },
   };
@@ -671,7 +671,7 @@ function StatusIcon({ status }: { status: SectionStatus }) {
     case 'pending':
       return <div className="w-3.5 h-3.5 rounded-full border border-stone-500" />;
     case 'processing':
-      return <Loader2 className="w-3.5 h-3.5 text-violet-400 animate-spin" />;
+      return <Loader2 className="w-3.5 h-3.5 text-stone-400 animate-spin" />;
     case 'done':
       return <Check className="w-3.5 h-3.5 text-emerald-400" />;
     case 'error':

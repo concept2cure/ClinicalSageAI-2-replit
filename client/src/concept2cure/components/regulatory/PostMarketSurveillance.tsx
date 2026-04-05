@@ -417,9 +417,9 @@ function PMSMetrics({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Overdue</p>
-              <p className="text-base font-semibold text-orange-600">{overdueReports}</p>
+              <p className="text-base font-semibold text-amber-600">{overdueReports}</p>
             </div>
-            <Clock className="w-8 h-8 text-orange-500" />
+            <Clock className="w-8 h-8 text-amber-500" />
           </div>
         </div>
       </div>
@@ -431,7 +431,7 @@ function PMSMetrics({
               <p className="text-sm text-muted-foreground">Open Vigilance</p>
               <p className="text-base font-semibold">{openVigilance}</p>
             </div>
-            <Shield className="w-8 h-8 text-purple-500" />
+            <Shield className="w-8 h-8 text-stone-500" />
           </div>
         </div>
       </div>
@@ -511,8 +511,8 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
                       selectedSignal.riskScore >= 70
                         ? 'text-red-600'
                         : selectedSignal.riskScore >= 50
-                          ? 'text-orange-600'
-                          : 'text-green-600'
+                          ? 'text-amber-600'
+                          : 'text-emerald-600'
                     }`}
                   >
                     {selectedSignal.riskScore}
@@ -647,8 +647,8 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
                     signal.riskScore >= 70
                       ? 'text-red-600'
                       : signal.riskScore >= 50
-                        ? 'text-orange-600'
-                        : 'text-green-600'
+                        ? 'text-amber-600'
+                        : 'text-emerald-600'
                   }`}
                 >
                   {signal.riskScore}
@@ -661,20 +661,20 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
       </Table>
 
       {/* RI Signal Detection */}
-      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-stone-50">
+      <div className="border border-border/40 rounded-sm bg-background border-stone-200 bg-stone-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-100 rounded-full">
-              <Sparkles className="w-6 h-6 text-purple-600" />
+            <div className="p-3 bg-stone-200 rounded-full">
+              <Sparkles className="w-6 h-6 text-stone-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-purple-900">RI Signal Detection</h3>
-              <p className="text-sm text-purple-700">
+              <h3 className="font-semibold text-stone-900">RI Signal Detection</h3>
+              <p className="text-sm text-stone-700">
                 Automated signal detection using disproportionality analysis, machine learning, and
                 natural language processing of case narratives.
               </p>
             </div>
-            <Button className="bg-purple-600 hover:bg-purple-700">Run Analysis</Button>
+            <Button className="bg-stone-600 hover:bg-stone-700">Run Analysis</Button>
           </div>
         </div>
       </div>
@@ -961,33 +961,33 @@ function RiskBenefitTab() {
           <div className="grid md:grid-cols-2 gap-6">
             {/* Benefits */}
             <div>
-              <h4 className="font-semibold text-green-700 flex items-center gap-2 mb-3">
+              <h4 className="font-semibold text-emerald-700 flex items-center gap-2 mb-3">
                 <TrendingUp className="w-5 h-5" />
                 Benefits
               </h4>
               <div className="space-y-3">
-                <div className="p-3 bg-green-50 rounded-lg">
+                <div className="p-3 bg-emerald-50 rounded-lg">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium">Cardiovascular Event Reduction</span>
-                    <span className="text-sm text-green-700">Weight: 40%</span>
+                    <span className="text-sm text-emerald-700">Weight: 40%</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     32% reduction in major cardiovascular events vs placebo
                   </p>
                 </div>
-                <div className="p-3 bg-green-50 rounded-lg">
+                <div className="p-3 bg-emerald-50 rounded-lg">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium">Mortality Benefit</span>
-                    <span className="text-sm text-green-700">Weight: 35%</span>
+                    <span className="text-sm text-emerald-700">Weight: 35%</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     18% reduction in all-cause mortality
                   </p>
                 </div>
-                <div className="p-3 bg-green-50 rounded-lg">
+                <div className="p-3 bg-emerald-50 rounded-lg">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium">Quality of Life</span>
-                    <span className="text-sm text-green-700">Weight: 25%</span>
+                    <span className="text-sm text-emerald-700">Weight: 25%</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     Significant improvement in functional capacity
@@ -1025,10 +1025,10 @@ function RiskBenefitTab() {
                   </p>
                   <p className="text-xs text-blue-600 mt-1">Mitigation: Gradual dose titration</p>
                 </div>
-                <div className="p-3 bg-orange-50 rounded-lg">
+                <div className="p-3 bg-amber-50 rounded-lg">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium">Drug Interactions</span>
-                    <span className="text-sm text-orange-700">Weight: 20%</span>
+                    <span className="text-sm text-amber-700">Weight: 20%</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     CYP3A4 inhibitor interactions require monitoring
@@ -1045,7 +1045,7 @@ function RiskBenefitTab() {
           <div className="mt-6 p-4 bg-blue-50 rounded-lg">
             <h4 className="font-semibold text-blue-800 mb-2">Overall Conclusion</h4>
             <div className="flex items-center gap-3">
-              <Badge className="bg-green-600">Favorable</Badge>
+              <Badge className="bg-emerald-600">Favorable</Badge>
               <p className="text-sm text-stone-700">
                 The benefit-risk balance remains favorable for the approved indication when used in
                 accordance with the prescribing information.
@@ -1056,20 +1056,20 @@ function RiskBenefitTab() {
       </div>
 
       {/* RI Assistance */}
-      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-stone-50">
+      <div className="border border-border/40 rounded-sm bg-background border-stone-200 bg-stone-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-100 rounded-full">
-              <Sparkles className="w-6 h-6 text-purple-600" />
+            <div className="p-3 bg-stone-200 rounded-full">
+              <Sparkles className="w-6 h-6 text-stone-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-purple-900">RI Risk-Benefit Analysis</h3>
-              <p className="text-sm text-purple-700">
+              <h3 className="font-semibold text-stone-900">RI Risk-Benefit Analysis</h3>
+              <p className="text-sm text-stone-700">
                 Generate structured benefit-risk analysis using the PrOACT-URL framework,
                 incorporating latest safety data and literature evidence.
               </p>
             </div>
-            <Button className="bg-purple-600 hover:bg-purple-700">Generate Analysis</Button>
+            <Button className="bg-stone-600 hover:bg-stone-700">Generate Analysis</Button>
           </div>
         </div>
       </div>
@@ -1096,7 +1096,7 @@ export function PostMarketSurveillance() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-base font-semibold flex items-center gap-3">
-            <Shield className="w-8 h-8 text-purple-600" />
+            <Shield className="w-8 h-8 text-stone-600" />
             Post-Market Surveillance
           </h1>
           <p className="text-muted-foreground">

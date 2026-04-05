@@ -2815,7 +2815,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   {/* Metadata row */}
                   <div className="flex items-center gap-1.5 mt-1.5">
                     {a.ctdSection && (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 text-xs font-semibold ring-1 ring-violet-200/60 tracking-wide">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 text-xs font-semibold ring-1 ring-stone-200/60 tracking-wide">
                         CTD {a.ctdSection}
                       </span>
                     )}
@@ -2876,7 +2876,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           <Button
             variant="ghost"
             onClick={() => setShowCtdInput(prev => !prev)}
-            className="text-xs px-2 py-0.5 rounded-md bg-violet-50 text-stone-700 font-semibold shrink-0 ring-1 ring-violet-200/60 hover:bg-violet-100 transition-colors cursor-pointer"
+            className="text-xs px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 font-semibold shrink-0 ring-1 ring-stone-200/60 hover:bg-stone-200 transition-colors cursor-pointer"
             title="Edit CTD section placement"
           >
             CTD {activeArtifact.ctdSection}
@@ -3349,13 +3349,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       {aiResult && (
         <div className="border-b border-blue-200 bg-stone-50">
           {/* Header bar */}
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-violet-100">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-stone-200">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md bg-violet-100 flex items-center justify-center">
-                <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+              <div className="w-6 h-6 rounded-md bg-stone-200 flex items-center justify-center">
+                <Sparkles className="w-3.5 h-3.5 text-stone-600" />
               </div>
-              <span className="text-sm font-semibold text-violet-900">AI Suggestion</span>
-              <span className="text-xs text-violet-500 ml-1">Review changes before applying</span>
+              <span className="text-sm font-semibold text-stone-900">AI Suggestion</span>
+              <span className="text-xs text-stone-500 ml-1">Review changes before applying</span>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -3378,7 +3378,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           {/* Diff content */}
           <div className="flex gap-0 max-h-64 overflow-hidden">
             {/* Current content */}
-            <div className="flex-1 border-r border-violet-100 overflow-hidden">
+            <div className="flex-1 border-r border-stone-200 overflow-hidden">
               <div className="px-3 py-1.5 bg-red-50/60 border-b border-red-100">
                 <span className="text-xs font-medium text-red-700 flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-red-400" /> Current
@@ -3419,17 +3419,17 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
       {/* ── AI Loading Indicator ──────────────────────────────────────────── */}
       {aiLoading && (
-        <div className="border-b border-blue-200 bg-violet-50/60 px-4 py-3 flex items-center gap-3">
+        <div className="border-b border-stone-200 bg-stone-100/60 px-4 py-3 flex items-center gap-3">
           <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
-            <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse [animation-delay:150ms]" />
-            <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse [animation-delay:300ms]" />
+            <div className="w-2 h-2 rounded-full bg-stone-400 animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-stone-400 animate-pulse [animation-delay:150ms]" />
+            <div className="w-2 h-2 rounded-full bg-stone-400 animate-pulse [animation-delay:300ms]" />
           </div>
           <span className="text-sm text-stone-700 font-medium">Generating AI suggestion...</span>
           <Button
             variant="ghost"
             onClick={() => setAiLoading(false)}
-            className="ml-auto text-xs text-violet-500 hover:text-stone-700"
+            className="ml-auto text-xs text-stone-500 hover:text-stone-700"
           >
             Cancel
           </Button>

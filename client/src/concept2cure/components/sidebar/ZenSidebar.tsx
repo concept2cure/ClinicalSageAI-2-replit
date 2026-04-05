@@ -159,18 +159,18 @@ const FALLBACK_BADGE = {
 function statusDotColor(status?: string): string {
   switch (status) {
     case 'active':
-      return 'bg-emerald-400';
+      return 'bg-stone-900';
     case 'in_review':
-      return 'bg-amber-400';
+      return 'bg-stone-600';
     case 'submitted':
-      return 'bg-blue-400';
+      return 'bg-stone-700';
     case 'approved':
-      return 'bg-emerald-500';
+      return 'bg-stone-900';
     case 'archived':
       return 'bg-stone-300';
     case 'draft':
     default:
-      return 'bg-stone-300';
+      return 'bg-stone-400';
   }
 }
 
@@ -234,7 +234,7 @@ const NavItem: React.FC<{
   ({ icon, label, active, accentColor, badge, subtitle, onClick }) => {
     const accentMap = {
       blue: { bg: 'bg-blue-100', text: 'text-blue-600', iconColor: 'text-blue-500' },
-      violet: { bg: 'bg-violet-100', text: 'text-violet-600', iconColor: 'text-violet-500' },
+      violet: { bg: 'bg-stone-200', text: 'text-stone-600', iconColor: 'text-stone-1000' },
       emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', iconColor: 'text-emerald-500' },
     };
     const accent = accentColor && accentMap[accentColor];
@@ -954,7 +954,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
-          <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-full bg-stone-200 flex items-center justify-center">
             <span className="text-[10px] font-bold text-blue-600 leading-none">
               {avatarInitial}
             </span>
@@ -1267,7 +1267,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             onClick={onOpenSettings}
             className="h-auto w-full justify-start gap-2 px-2 py-1.5 rounded-lg text-stone-500 hover:bg-stone-100 hover:text-stone-800 text-xs transition-colors"
           >
-            <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
+            <div className="w-6 h-6 rounded-full bg-stone-200 flex items-center justify-center flex-shrink-0">
               <span className="text-[10px] font-bold text-blue-600 leading-none">
                 {avatarInitial}
               </span>

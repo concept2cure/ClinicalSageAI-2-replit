@@ -295,23 +295,23 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
   const Icon = config.icon;
 
   const colorClasses = {
-    purple: 'bg-purple-100 border-purple-200',
-    green: 'bg-green-100 border-green-200',
+    purple: 'bg-stone-200 border-stone-200',
+    green: 'bg-emerald-100 border-emerald-200',
     blue: 'bg-blue-100 border-blue-200',
     indigo: 'bg-blue-100 border-blue-200',
-    orange: 'bg-orange-100 border-orange-200',
-    cyan: 'bg-cyan-100 border-cyan-200',
+    orange: 'bg-amber-100 border-amber-200',
+    cyan: 'bg-blue-100 border-blue-200',
     amber: 'bg-amber-100 border-amber-200',
     rose: 'bg-rose-100 border-rose-200',
   };
 
   const iconColorClasses = {
-    purple: 'text-purple-600',
-    green: 'text-green-600',
+    purple: 'text-stone-600',
+    green: 'text-emerald-600',
     blue: 'text-blue-600',
     indigo: 'text-blue-600',
-    orange: 'text-orange-600',
-    cyan: 'text-cyan-600',
+    orange: 'text-amber-600',
+    cyan: 'text-blue-600',
     amber: 'text-amber-600',
     rose: 'text-rose-600',
   };
@@ -359,11 +359,11 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
         {topSuggestion && (
           <div className="mt-4 p-3 bg-white rounded-lg border border-stone-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-green-600 flex items-center gap-1">
+              <span className="text-xs font-medium text-emerald-600 flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
                 Best Match
               </span>
-              <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
+              <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full">
                 {topSuggestion.relevanceScore}% match
               </span>
             </div>
@@ -378,7 +378,7 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
             <div className="flex items-center gap-2 mt-3">
               <button
                 onClick={() => onLink(topSuggestion)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors duration-150"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors duration-150"
                 data-testid={`button-link-claim-${claim.id}`}
               >
                 <Link2 className="w-3.5 h-3.5" />
@@ -446,7 +446,7 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => onLink(source)}
-                  className="p-1.5 text-green-600 hover:bg-green-50 rounded"
+                  className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded"
                   title="Link this source"
                   data-testid={`button-claim-link-source-${source.id}`}
                   aria-label="Link source"
@@ -485,25 +485,25 @@ const BulkLinkPanel: React.FC<BulkLinkPanelProps> = ({ pendingLinks, onConfirmAl
   if (pendingLinks.length === 0) return null;
 
   return (
-    <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+    <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Zap className="w-5 h-5 text-green-600" />
-          <span className="font-semibold text-green-800">Quick Link All</span>
+          <Zap className="w-5 h-5 text-emerald-600" />
+          <span className="font-semibold text-emerald-800">Quick Link All</span>
         </div>
-        <span className="text-sm text-green-600">
+        <span className="text-sm text-emerald-600">
           {pendingLinks.length} claims ready
         </span>
       </div>
 
-      <p className="text-sm text-green-700 mb-4">
+      <p className="text-sm text-emerald-700 mb-4">
         The RI has found matching sources for these claims. Click below to link them all at once.
       </p>
 
       <div className="flex items-center gap-2">
         <button
           onClick={onConfirmAll}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors duration-150"
+          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors duration-150"
           data-testid="button-bulk-link-confirm"
         >
           <Link2 className="w-4 h-4" />
@@ -511,7 +511,7 @@ const BulkLinkPanel: React.FC<BulkLinkPanelProps> = ({ pendingLinks, onConfirmAl
         </button>
         <button
           onClick={onClear}
-          className="px-4 py-2 text-green-700 hover:bg-green-100 rounded-lg transition-colors duration-150"
+          className="px-4 py-2 text-emerald-700 hover:bg-emerald-100 rounded-lg transition-colors duration-150"
           data-testid="button-bulk-link-clear"
         >
           Review Individually
@@ -684,7 +684,7 @@ export const AutoTraceabilityEngine: React.FC<AutoTraceabilityEngineProps> = ({
           </span>
         ) : (
           <div className="flex items-center gap-3 text-xs">
-            <span className="px-2 py-1 rounded-full bg-green-100 text-green-700">
+            <span className="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">
               {supportedClaims} sourced
             </span>
             <span className="px-2 py-1 rounded-full bg-amber-100 text-amber-700">
@@ -704,7 +704,7 @@ export const AutoTraceabilityEngine: React.FC<AutoTraceabilityEngineProps> = ({
       {/* Claims List */}
       {visibleClaims.length === 0 ? (
         <div className="text-center py-10 text-stone-500 bg-white rounded-xl border border-stone-200/70 shadow-sm">
-          <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
+          <CheckCircle className="w-12 h-12 mx-auto mb-3 text-emerald-500" />
           <p className="font-medium text-stone-700">All claims sourced!</p>
           <p className="text-sm mt-1">Your document is fully traceable.</p>
         </div>

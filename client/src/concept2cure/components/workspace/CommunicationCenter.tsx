@@ -181,9 +181,9 @@ export function CommunicationCenter({ projectId, projectName, submissionType = '
         <TabsContent value="publishops" className="mt-3">
           <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
             <div className="flex items-center gap-2">
-              <Send className="h-4 w-4 text-indigo-600" />
+              <Send className="h-4 w-4 text-blue-600" />
               <h3 className="text-sm font-semibold text-stone-900">C2C PublishOps</h3>
-              <Badge className="bg-indigo-50 text-indigo-700 border-indigo-200" variant="outline">Managed service lane</Badge>
+              <Badge className="bg-blue-50 text-blue-700 border-blue-200" variant="outline">Managed service lane</Badge>
             </div>
             <p className="text-xs text-stone-600">
               Entitlement-aware service queue for technical publishing, compile, validation remediation, dispatch, acknowledgment monitoring, and response support.

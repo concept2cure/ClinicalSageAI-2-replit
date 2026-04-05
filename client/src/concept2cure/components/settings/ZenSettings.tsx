@@ -300,7 +300,7 @@ const ProfileSection: React.FC = () => {
           {saving ? 'Saving...' : 'Save Changes'}
         </button>
         {saveStatus === 'saved' && (
-          <span className="text-sm text-green-600 font-medium">Saved</span>
+          <span className="text-sm text-emerald-600 font-medium">Saved</span>
         )}
         {saveStatus === 'error' && (
           <span className="text-sm text-red-600 font-medium">Failed to save</span>
@@ -1018,7 +1018,7 @@ const IntegrationsSection: React.FC = () => {
               key={integration.id}
               className={cn(
                 'rounded-xl border transition-all duration-200',
-                isConnected ? 'border-green-200 bg-green-50/50' : 'border-stone-200 bg-white',
+                isConnected ? 'border-emerald-200 bg-emerald-50/50' : 'border-stone-200 bg-white',
                 isConfiguring && 'ring-2 ring-stone-300'
               )}
             >
@@ -1028,7 +1028,7 @@ const IntegrationsSection: React.FC = () => {
                   <div
                     className={cn(
                       'w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold',
-                      isConnected ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'
+                      isConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-100 text-stone-600'
                     )}
                   >
                     {integration.icon}
@@ -1040,7 +1040,7 @@ const IntegrationsSection: React.FC = () => {
                         {AUTH_TYPE_LABELS[integration.authType]}
                       </span>
                       {isConnected && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">
                           Connected
                         </span>
                       )}
@@ -1115,7 +1115,7 @@ const IntegrationsSection: React.FC = () => {
                       Save & Connect
                     </button>
                     {testResult === 'success' && (
-                      <span className="text-xs text-green-600 font-medium">
+                      <span className="text-xs text-emerald-600 font-medium">
                         Connection successful
                       </span>
                     )}

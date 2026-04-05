@@ -504,7 +504,7 @@ function InspectionMetrics({
               <p
                 className={`text-base font-semibold ${
                   avgReadiness >= 80
-                    ? 'text-green-600'
+                    ? 'text-emerald-600'
                     : avgReadiness >= 60
                       ? 'text-yellow-600'
                       : 'text-red-600'
@@ -513,7 +513,7 @@ function InspectionMetrics({
                 {avgReadiness}%
               </p>
             </div>
-            <TrendingUp className="w-8 h-8 text-green-500" />
+            <TrendingUp className="w-8 h-8 text-emerald-500" />
           </div>
         </div>
       </div>
@@ -527,7 +527,7 @@ function InspectionMetrics({
                 {readyItems}/{totalItems}
               </p>
             </div>
-            <CheckCircle2 className="w-8 h-8 text-green-500" />
+            <CheckCircle2 className="w-8 h-8 text-emerald-500" />
           </div>
         </div>
       </div>
@@ -557,7 +557,7 @@ function InspectionList({
           <div
             key={inspection.id}
             className={`border border-border/40 rounded-sm bg-background cursor-pointer transition-shadow ${
-              inspection.status === 'preparing' && daysUntil <= 14 ? 'border-orange-300' : ''
+              inspection.status === 'preparing' && daysUntil <= 14 ? 'border-amber-300' : ''
             }`}
             onClick={() => onSelect(inspection)}
           >
@@ -604,7 +604,7 @@ function InspectionList({
                   <p className="text-sm font-medium">{inspection.scheduledDate}</p>
                   {daysUntil > 0 && inspection.status !== 'completed' && (
                     <p
-                      className={`text-sm ${daysUntil <= 14 ? 'text-orange-600 font-medium' : 'text-muted-foreground'}`}
+                      className={`text-sm ${daysUntil <= 14 ? 'text-amber-600 font-medium' : 'text-muted-foreground'}`}
                     >
                       {daysUntil} days
                     </p>
@@ -818,7 +818,7 @@ function SMEDirectory({ smes }: { smes: SubjectMatterExpert[] }) {
                 </div>
                 <div className="flex flex-col gap-1">
                   {sme.trainingCompleted ? (
-                    <Badge className="bg-green-100 text-green-800">
+                    <Badge className="bg-emerald-100 text-emerald-800">
                       <CheckCircle2 className="w-3 h-3 mr-1" />
                       Trained
                     </Badge>
@@ -829,7 +829,7 @@ function SMEDirectory({ smes }: { smes: SubjectMatterExpert[] }) {
                     </Badge>
                   )}
                   {sme.available ? (
-                    <Badge variant="outline" className="text-green-600">
+                    <Badge variant="outline" className="text-emerald-600">
                       Available
                     </Badge>
                   ) : (
@@ -873,7 +873,7 @@ function FindingsTracker({ inspections }: { inspections: InspectionEvent[] }) {
       {openFindings.length === 0 ? (
         <div className="border border-border/40 rounded-sm bg-background">
           <div className="px-3 py-2 p-8 text-center">
-            <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-green-500 opacity-50" />
+            <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-emerald-500 opacity-50" />
             <p className="text-muted-foreground">No open findings</p>
           </div>
         </div>
@@ -1023,7 +1023,7 @@ export function InspectionReadiness() {
                         className="flex items-center justify-between p-2 bg-muted/50 rounded"
                       >
                         <span className="text-sm">{doc}</span>
-                        <Badge variant="outline" className="text-green-600">
+                        <Badge variant="outline" className="text-emerald-600">
                           Ready
                         </Badge>
                       </div>
@@ -1054,23 +1054,23 @@ export function InspectionReadiness() {
       </Tabs>
 
       {/* RI Assistance */}
-      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-stone-50">
+      <div className="border border-border/40 rounded-sm bg-background border-stone-200 bg-stone-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-100 rounded-full">
-              <Sparkles className="w-6 h-6 text-purple-600" />
+            <div className="p-3 bg-stone-200 rounded-full">
+              <Sparkles className="w-6 h-6 text-stone-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-purple-900">RI Inspection Prep</h3>
-              <p className="text-sm text-purple-700">
+              <h3 className="font-semibold text-stone-900">RI Inspection Prep</h3>
+              <p className="text-sm text-stone-700">
                 Generate inspection-specific document requests, identify documentation gaps, prepare
                 Q&A guides, and simulate inspector questions based on historical patterns.
               </p>
             </div>
-            <Button variant="outline" className="border-purple-300 text-purple-700">
+            <Button variant="outline" className="border-stone-300 text-stone-700">
               Gap Analysis
             </Button>
-            <Button className="bg-purple-600 hover:bg-purple-700">Mock Interview</Button>
+            <Button className="bg-stone-600 hover:bg-stone-700">Mock Interview</Button>
           </div>
         </div>
       </div>

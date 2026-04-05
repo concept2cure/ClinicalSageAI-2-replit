@@ -73,7 +73,7 @@ export interface AnAMemoryProps {
 // ── Category Config ────────────────────────────────────────────────────────────
 
 const CATEGORY_CONFIG: Record<MemoryCategory, { label: string; icon: React.ElementType; color: string }> = {
-  decision: { label: 'Decisions', icon: Target, color: 'text-violet-600 bg-violet-50' },
+  decision: { label: 'Decisions', icon: Target, color: 'text-stone-600 bg-stone-100' },
   preference: { label: 'Preferences', icon: Lightbulb, color: 'text-amber-600 bg-amber-50' },
   context: { label: 'Context', icon: Database, color: 'text-blue-600 bg-blue-50' },
   strategy: { label: 'Strategy', icon: Target, color: 'text-blue-600 bg-blue-50' },
@@ -310,7 +310,7 @@ export function AnAMemory({
       <div className="px-4 py-3 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <Brain className="w-5 h-5 text-violet-600" />
+            <Brain className="w-5 h-5 text-stone-600" />
             <div>
               <h2 className="text-sm font-semibold text-stone-900">AnA Memory</h2>
               <p className="text-[10px] text-stone-500">
@@ -324,7 +324,7 @@ export function AnAMemory({
               className="p-1.5 rounded-md hover:bg-white/60 transition-colors duration-150"
               title="Add memory entry"
             >
-              <Plus className="w-3.5 h-3.5 text-violet-600" />
+              <Plus className="w-3.5 h-3.5 text-stone-600" />
             </button>
             <button
               onClick={handleExport}
@@ -349,7 +349,7 @@ export function AnAMemory({
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search memory..."
-            className="w-full pl-8 pr-3 py-1.5 text-xs border border-stone-200 rounded-lg bg-white focus:ring-2 focus:ring-violet-200 focus:border-violet-300 outline-none"
+            className="w-full pl-8 pr-3 py-1.5 text-xs border border-stone-200 rounded-lg bg-white focus:ring-2 focus:ring-stone-200 focus:border-stone-300 outline-none"
           />
         </div>
 
@@ -390,7 +390,7 @@ export function AnAMemory({
 
       {/* Add form */}
       {showAddForm && (
-        <div className="px-4 py-3 border-b border-blue-200 bg-violet-50/50">
+        <div className="px-4 py-3 border-b border-blue-200 bg-stone-100/50">
           <div className="space-y-2">
             <select
               value={newCategory}
@@ -408,14 +408,14 @@ export function AnAMemory({
               onChange={e => setNewContent(e.target.value)}
               placeholder="What should AnA remember about this project?"
               rows={3}
-              className="w-full text-xs px-2.5 py-1.5 border border-stone-200 rounded-lg bg-white resize-none focus:ring-2 focus:ring-violet-200 focus:border-violet-300 outline-none"
+              className="w-full text-xs px-2.5 py-1.5 border border-stone-200 rounded-lg bg-white resize-none focus:ring-2 focus:ring-stone-200 focus:border-stone-300 outline-none"
             />
             <input
               type="text"
               value={newTags}
               onChange={e => setNewTags(e.target.value)}
               placeholder="Tags (comma-separated)"
-              className="w-full text-xs px-2.5 py-1.5 border border-stone-200 rounded-lg bg-white focus:ring-2 focus:ring-violet-200 focus:border-violet-300 outline-none"
+              className="w-full text-xs px-2.5 py-1.5 border border-stone-200 rounded-lg bg-white focus:ring-2 focus:ring-stone-200 focus:border-stone-300 outline-none"
             />
             <div className="flex items-center justify-end gap-2">
               <button
@@ -489,7 +489,7 @@ export function AnAMemory({
                               value={editContent}
                               onChange={e => setEditContent(e.target.value)}
                               rows={3}
-                              className="w-full text-xs px-2 py-1 border border-stone-200 rounded bg-white resize-none focus:ring-2 focus:ring-violet-200 outline-none"
+                              className="w-full text-xs px-2 py-1 border border-stone-200 rounded bg-white resize-none focus:ring-2 focus:ring-stone-200 outline-none"
                             />
                             <div className="flex items-center gap-1.5 justify-end">
                               <button
@@ -524,7 +524,7 @@ export function AnAMemory({
                                 {entry.tags.map(tag => (
                                   <span
                                     key={tag}
-                                    className="px-1 py-0.5 rounded bg-violet-50 text-[10px] text-violet-600"
+                                    className="px-1 py-0.5 rounded bg-stone-100 text-[10px] text-stone-600"
                                   >
                                     {tag}
                                   </span>

@@ -123,16 +123,16 @@ const SubmissionBadge: React.FC<{ type: SubmissionType; compact?: boolean }> = (
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STATUS DOT — active (green), in review (amber), submitted (blue), archived (gray)
+// STATUS DOT — monochrome intensity indicates state
 // ─────────────────────────────────────────────────────────────────────────────
 
 const statusDotColor: Record<string, string> = {
-  active: 'bg-emerald-500',
-  in_review: 'bg-amber-500',
-  submitted: 'bg-stone-600',
-  archived: 'bg-stone-400',
-  draft: 'bg-stone-300',
-  planning: 'bg-stone-300',
+  active: 'bg-stone-900',
+  in_review: 'bg-stone-600',
+  submitted: 'bg-stone-700',
+  archived: 'bg-stone-300',
+  draft: 'bg-stone-400',
+  planning: 'bg-stone-400',
 };
 
 const StatusDot: React.FC<{ status?: string }> = ({ status }) => (

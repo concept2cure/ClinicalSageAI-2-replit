@@ -69,7 +69,7 @@ export function ProjectReadinessDashboard({
   if (readinessLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-gray-500 dark:text-gray-400">
+        <div className="animate-pulse text-stone-500 dark:text-stone-400">
           Computing readiness...
         </div>
       </div>
@@ -89,19 +89,19 @@ export function ProjectReadinessDashboard({
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+      <div className="px-4 py-3 border-b border-stone-200 dark:border-stone-700">
+        <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
           {projectName ? `${projectName} — Readiness` : 'Submission Readiness'}
         </h2>
         {readiness && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
             Last assessed: {new Date(readiness.assessedAt).toLocaleString()}
           </p>
         )}
       </div>
 
       {/* Tab bar */}
-      <div className="px-4 border-b border-gray-200 dark:border-gray-700 flex gap-0 overflow-x-auto">
+      <div className="px-4 border-b border-stone-200 dark:border-stone-700 flex gap-0 overflow-x-auto">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -109,7 +109,7 @@ export function ProjectReadinessDashboard({
             className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeTab === tab.id
                 ? 'border-stone-600 text-stone-600 dark:text-stone-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                : 'border-transparent text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-300'
             }`}
           >
             {tab.label}
@@ -156,7 +156,7 @@ export function ProjectReadinessDashboard({
         )}
         {activeTab === 'continuity' && !continuity && !continuityLoading && (
           <div className="text-center py-8">
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            <p className="text-sm text-stone-500 dark:text-stone-400 mb-3">
               No continuity data yet. Generate a snapshot to start tracking.
             </p>
             <button
@@ -324,26 +324,26 @@ function OverviewTab({
           />
         </div>
         <div className="flex-1">
-          <div className="text-lg font-semibold text-gray-900 dark:text-gray-100 capitalize">
+          <div className="text-lg font-semibold text-stone-900 dark:text-stone-100 capitalize">
             {readiness.status.replace(/_/g, ' ')}
           </div>
           <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
             <div>
-              <span className="text-gray-500">Documents:</span>{' '}
+              <span className="text-stone-500">Documents:</span>{' '}
               <span className="font-medium">{readiness.documentInventory.length}</span>
             </div>
             <div>
-              <span className="text-gray-500">Modules:</span>{' '}
+              <span className="text-stone-500">Modules:</span>{' '}
               <span className="font-medium">{readiness.moduleBreakdown.length}</span>
             </div>
             <div>
-              <span className="text-gray-500">Blockers:</span>{' '}
-              <span className={`font-medium ${readiness.blockers.length > 0 ? 'text-red-600' : 'text-green-600'}`}>
+              <span className="text-stone-500">Blockers:</span>{' '}
+              <span className={`font-medium ${readiness.blockers.length > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
                 {readiness.blockers.length}
               </span>
             </div>
             <div>
-              <span className="text-gray-500">Recommendations:</span>{' '}
+              <span className="text-stone-500">Recommendations:</span>{' '}
               <span className="font-medium">{recCount}</span>
             </div>
           </div>
@@ -352,20 +352,20 @@ function OverviewTab({
 
       {/* Subscores */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+        <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300 mb-3">
           Score Breakdown
         </h3>
         <div className="space-y-2">
           {SUBSCORE_ITEMS.map((item) => (
             <div key={item.label} className="flex items-center gap-3">
-              <span className="text-xs text-gray-500 dark:text-gray-400 w-24 shrink-0">
+              <span className="text-xs text-stone-500 dark:text-stone-400 w-24 shrink-0">
                 {item.label}
               </span>
-              <div className="flex-1 h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+              <div className="flex-1 h-2 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-200 ${
                     item.value >= 70
-                      ? 'bg-green-500'
+                      ? 'bg-emerald-500'
                       : item.value >= 40
                         ? 'bg-amber-500'
                         : 'bg-red-500'
@@ -373,7 +373,7 @@ function OverviewTab({
                   style={{ width: `${item.value}%` }}
                 />
               </div>
-              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 w-10 text-right">
+              <span className="text-xs font-medium text-stone-700 dark:text-stone-300 w-10 text-right">
                 {item.value}%
               </span>
             </div>

@@ -633,7 +633,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
           {activeTab === 'evidence' && <div className="mb-3">
             <div className="flex items-center justify-between mb-1.5">
               <h2 className="text-[13px] font-semibold text-stone-900 flex items-center gap-1.5">
-                <Database className="w-3.5 h-3.5 text-violet-500" />
+                <Database className="w-3.5 h-3.5 text-stone-500" />
                 CSR Studies
                 {csrLoading && <Spinner size="sm" className="ml-1" />}
               </h2>
@@ -806,7 +806,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                 strategyData.alternativeStrategies.length > 0 && (
                   <div className="rounded-lg border border-stone-200 bg-white p-3">
                     <h3 className="text-[13px] font-semibold text-stone-900 flex items-center gap-1.5 mb-2">
-                      <Target className="w-3.5 h-3.5 text-violet-500" />
+                      <Target className="w-3.5 h-3.5 text-stone-500" />
                       Alternative Pathways
                     </h3>
                     <div className="space-y-2">
@@ -819,7 +819,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                             <span className="font-medium text-stone-700">{alt.strategy}</span>
                             <p className="text-stone-500 mt-0.5">{alt.rationale}</p>
                           </div>
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-violet-50 text-violet-600 font-medium shrink-0">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 font-medium shrink-0">
                             {Math.round((alt.confidence || 0) * 100)}%
                           </span>
                         </div>
@@ -950,7 +950,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
             </span>
             <div className="space-y-1.5">
               <LineageItem
-                icon={<Database className="w-3 h-3 text-violet-500" />}
+                icon={<Database className="w-3 h-3 text-stone-500" />}
                 label="CSR Repository"
                 detail={`${csrResults.length} reports matched`}
                 active={csrResults.length > 0}
@@ -1036,7 +1036,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                 <span>Part 11 audit trail active</span>
               </div>
               <div className="flex items-center gap-1.5 text-stone-600">
-                <Eye className="w-3 h-3 text-violet-500" />
+                <Eye className="w-3 h-3 text-stone-500" />
                 <span>Provenance tracking enabled</span>
               </div>
             </div>
@@ -1256,7 +1256,7 @@ const PrecedentCard: React.FC<{
         </span>
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           {precedent.submissionType && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-violet-50 text-stone-700 font-medium">
+            <span className="text-xs px-1.5 py-0.5 rounded bg-stone-100 text-stone-700 font-medium">
               {precedent.submissionType}
             </span>
           )}

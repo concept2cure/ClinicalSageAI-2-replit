@@ -12,10 +12,10 @@ interface RecommendationListProps {
 
 const SEVERITY_COLORS: Record<string, string> = {
   critical: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
-  high: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300',
+  high: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
   medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
   low: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
-  info: 'bg-gray-100 text-gray-800 dark:bg-gray-800/40 dark:text-gray-300',
+  info: 'bg-stone-100 text-stone-800 dark:bg-stone-800/40 dark:text-stone-300',
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -41,7 +41,7 @@ export function RecommendationList({
 
   if (items.length === 0) {
     return (
-      <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+      <div className="p-4 text-center text-sm text-stone-500 dark:text-stone-400">
         No recommendations at this time. Looking good!
       </div>
     );
@@ -52,7 +52,7 @@ export function RecommendationList({
       {items.map((rec) => (
         <div
           key={rec.id}
-          className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-white dark:bg-gray-900 hover:shadow-sm transition-shadow"
+          className="rounded-lg border border-stone-200 dark:border-stone-700 p-3 bg-white dark:bg-stone-900 hover:shadow-sm transition-shadow"
         >
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
@@ -64,19 +64,19 @@ export function RecommendationList({
                 >
                   {rec.severity}
                 </span>
-                <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                <span className="text-xs px-2 py-0.5 rounded bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400">
                   {TYPE_LABELS[rec.recommendationType] || rec.recommendationType}
                 </span>
                 {rec.module && (
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-stone-400">
                     {rec.module}
                   </span>
                 )}
               </div>
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              <p className="text-sm font-medium text-stone-900 dark:text-stone-100">
                 {rec.reason}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
                 {rec.suggestedAction}
               </p>
               {rec.evidence.length > 0 && (
@@ -84,7 +84,7 @@ export function RecommendationList({
                   {rec.evidence.slice(0, 3).map((e, i) => (
                     <span
                       key={i}
-                      className="text-xs px-1.5 py-0.5 rounded bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                      className="text-xs px-1.5 py-0.5 rounded bg-stone-50 dark:bg-stone-800 text-stone-500 dark:text-stone-400"
                     >
                       {e}
                     </span>
@@ -102,13 +102,13 @@ export function RecommendationList({
             )}
           </div>
           <div className="mt-1.5 flex items-center gap-2">
-            <div className="flex-1 h-1 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+            <div className="flex-1 h-1 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
               <div
                 className="h-full rounded-full bg-stone-600 transition-all duration-300"
                 style={{ width: `${Math.round(rec.confidence * 100)}%` }}
               />
             </div>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-stone-400">
               {Math.round(rec.confidence * 100)}% confidence
             </span>
           </div>

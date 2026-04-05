@@ -90,7 +90,7 @@ export const INDRightRail: React.FC<INDRightRailProps> = ({
             </h3>
             {csrLoading || precedentLoading ? (
               <div className="flex items-center gap-2 py-4 justify-center">
-                <Loader2 className="w-4 h-4 animate-spin text-violet-500" />
+                <Loader2 className="w-4 h-4 animate-spin text-stone-1000" />
                 <span className="text-xs text-stone-500">Loading evidence…</span>
               </div>
             ) : (

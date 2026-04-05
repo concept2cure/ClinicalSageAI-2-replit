@@ -137,13 +137,13 @@ export function RegulatoryStatusCard({
             {/* Submission Readiness */}
             <div className="p-3">
               <div className="flex items-center gap-1.5 mb-1.5">
-                <Target className="w-3.5 h-3.5 text-violet-500" />
+                <Target className="w-3.5 h-3.5 text-stone-1000" />
                 <span className="text-xs text-stone-500 font-medium">Readiness</span>
               </div>
               <div className="text-base font-semibold text-stone-900">{statusData.submissionReadiness}%</div>
               <div className="h-1.5 bg-stone-100 rounded-full mt-1.5 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-violet-500 transition-all duration-150"
+                  className="h-full rounded-full bg-stone-1000 transition-all duration-150"
                   style={{ width: `${statusData.submissionReadiness}%` }}
                 />
               </div>

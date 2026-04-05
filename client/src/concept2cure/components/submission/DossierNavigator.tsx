@@ -425,7 +425,7 @@ const ModuleHeader: React.FC<{
           moduleId === '2' && 'bg-blue-100 text-stone-700',
           moduleId === '3' && 'bg-emerald-100 text-emerald-700',
           moduleId === '4' && 'bg-amber-100 text-amber-700',
-          moduleId === '5' && 'bg-pink-100 text-pink-700'
+          moduleId === '5' && 'bg-stone-200 text-stone-700'
         )}
       >
         {moduleId}

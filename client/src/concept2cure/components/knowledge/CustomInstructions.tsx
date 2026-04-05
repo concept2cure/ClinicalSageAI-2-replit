@@ -178,7 +178,7 @@ export const CustomInstructions: React.FC<CustomInstructionsProps> = ({
             )}
           >
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-purple-600" />
+              <Sparkles className="h-4 w-4 text-stone-600" />
               <span className="text-sm font-medium text-stone-900">Custom Instructions</span>
               {value && !isOpen && (
                 <span className="text-xs text-stone-500 truncate max-w-[150px]">(configured)</span>
@@ -265,7 +265,7 @@ Example:
                 size="sm"
                 onClick={handleSave}
                 disabled={disabled || !hasChanges || isOverLimit || isSaving}
-                className={cn(saveSuccess && 'bg-green-600 hover:bg-green-600')}
+                className={cn(saveSuccess && 'bg-emerald-600 hover:bg-emerald-600')}
               >
                 {isSaving ? (
                   <>

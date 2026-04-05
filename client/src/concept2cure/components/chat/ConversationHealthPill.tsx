@@ -34,10 +34,10 @@ interface ConversationHealthPillProps {
 }
 
 const STATE_CONFIG: Record<HealthState, { badgeClass: string; dotClass: string; label: string }> = {
-  healthy: { badgeClass: 'border-stone-200 bg-stone-50 text-stone-600', dotClass: 'bg-emerald-500', label: 'Healthy' },
-  heavy: { badgeClass: 'border-amber-200 bg-amber-50 text-amber-700', dotClass: 'bg-amber-500', label: 'Heavy' },
-  degrading: { badgeClass: 'border-amber-200 bg-amber-50 text-amber-700', dotClass: 'bg-amber-500', label: 'Degrading' },
-  at_risk: { badgeClass: 'border-red-200 bg-red-50 text-red-700', dotClass: 'bg-red-500', label: 'At Risk' },
+  healthy: { badgeClass: 'border-stone-200 bg-white text-stone-600', dotClass: 'bg-stone-900', label: 'Healthy' },
+  heavy: { badgeClass: 'border-stone-300 bg-stone-50 text-stone-700', dotClass: 'bg-stone-600', label: 'Heavy' },
+  degrading: { badgeClass: 'border-stone-400 bg-stone-100 text-stone-800', dotClass: 'bg-stone-700', label: 'Degrading' },
+  at_risk: { badgeClass: 'border-stone-500 bg-stone-200 text-stone-900', dotClass: 'bg-stone-900', label: 'At Risk' },
 };
 
 export function ConversationHealthPill({
@@ -118,7 +118,7 @@ export function ConversationHealthPill({
 
           {report.warnings.length > 0 && (
             <div className="mb-3">
-              <div className="font-semibold text-amber-700 mb-1 text-[12px]">Warnings</div>
+              <div className="font-semibold text-stone-900 mb-1 text-[12px]">Warnings</div>
               {report.warnings.map((w, i) => (
                 <div key={i} className="text-[12px] text-stone-500 mb-0.5 pl-2">
                   {w}

@@ -348,8 +348,8 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
       <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[200px] max-h-[300px]">
         {messages.length === 0 ? (
           <div className="text-center py-8">
-            <div className="w-12 h-12 rounded-full bg-violet-100 flex items-center justify-center mx-auto mb-4">
-              <Sparkles className="w-6 h-6 text-violet-600" />
+            <div className="w-12 h-12 rounded-full bg-stone-200 flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-6 h-6 text-stone-600" />
             </div>
             <h4 className="text-sm font-medium text-stone-900 mb-1">Hi, I'm AnA!</h4>
             <p className="text-xs text-stone-500 max-w-xs mx-auto">
@@ -395,7 +395,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                             'hover:border-blue-200 hover:bg-blue-50 transition-colors duration-150'
                           )}
                         >
-                          <Icon className="w-4 h-4 text-violet-600" />
+                          <Icon className="w-4 h-4 text-stone-600" />
                           <span className="flex-1 text-left">{action.label}</span>
                           <ArrowRight className="w-3 h-3 text-stone-400" />
                         </button>
@@ -444,8 +444,8 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                     'text-left group'
                   )}
                 >
-                  <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-4 h-4 text-violet-600" />
+                  <div className="w-8 h-8 rounded-lg bg-stone-200 flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-4 h-4 text-stone-600" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-stone-900">{suggestion.label}</p>
@@ -453,7 +453,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                       <p className="text-xs text-stone-500">{suggestion.description}</p>
                     )}
                   </div>
-                  <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-violet-600 transition-colors duration-150" />
+                  <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-stone-600 transition-colors duration-150" />
                 </button>
               );
             })}
@@ -474,7 +474,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                   className={cn(
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-full',
                     'bg-stone-100 text-stone-700 text-xs',
-                    'hover:bg-violet-100 hover:text-stone-700 transition-colors duration-150'
+                    'hover:bg-stone-200 hover:text-stone-700 transition-colors duration-150'
                   )}
                 >
                   <Icon className="w-3 h-3" />

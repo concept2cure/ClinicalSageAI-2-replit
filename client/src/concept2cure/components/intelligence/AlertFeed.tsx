@@ -223,7 +223,7 @@ function SourceBadge({ source }: { source: AlertSource }) {
     FDA: 'bg-blue-50 text-stone-700 border-blue-200',
     EMA: 'bg-blue-50 text-stone-700 border-blue-200',
     'Health Canada': 'bg-red-50 text-red-700 border-red-200',
-    ICH: 'bg-violet-50 text-stone-700 border-blue-200',
+    ICH: 'bg-stone-100 text-stone-700 border-blue-200',
     WHO: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     Internal: 'bg-stone-50 text-stone-600 border-stone-200',
   };

@@ -239,7 +239,7 @@ export const SearchAndReplace = Extension.create<SearchAndReplaceOptions, Search
                   Decoration.inline(from, to, {
                     class:
                       i === currentIndex
-                        ? 'search-result-active bg-orange-300 ring-2 ring-orange-500'
+                        ? 'search-result-active bg-amber-300 ring-2 ring-amber-500'
                         : 'search-result bg-yellow-200',
                   })
                 );

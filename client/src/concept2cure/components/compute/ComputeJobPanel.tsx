@@ -242,7 +242,7 @@ export function ComputeJobPanel({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-5 px-1.5 text-[10px] text-violet-600 hover:text-violet-800"
+                    className="h-5 px-1.5 text-[10px] text-stone-600 hover:text-stone-800"
                     onClick={() => onOpenProvenance?.(job.artifact_id!)}
                   >
                     Open provenance
@@ -259,7 +259,7 @@ export function ComputeJobPanel({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-5 px-1.5 text-[10px] text-orange-600 hover:text-orange-800"
+                      className="h-5 px-1.5 text-[10px] text-amber-600 hover:text-amber-800"
                       onClick={() => onPlaceArtifact?.(job.artifact_id!)}
                     >
                       Apply placement
@@ -315,7 +315,7 @@ export function ComputeJobPanel({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-5 px-1.5 text-[10px] text-violet-600 hover:text-violet-800"
+                        className="h-5 px-1.5 text-[10px] text-stone-600 hover:text-stone-800"
                         onClick={() => onOpenProvenance?.(job.artifact_id!)}
                       >
                         Provenance
@@ -331,7 +331,7 @@ export function ComputeJobPanel({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-5 px-1.5 text-[10px] text-orange-600 hover:text-orange-800"
+                        className="h-5 px-1.5 text-[10px] text-amber-600 hover:text-amber-800"
                         onClick={() => onPlaceArtifact?.(job.artifact_id!)}
                       >
                         Place

@@ -174,7 +174,7 @@ const ConnectionStatusBadge: React.FC<{
     connected: {
       icon: CheckCircle,
       label: 'Connected',
-      color: 'text-green-500 bg-green-50',
+      color: 'text-emerald-500 bg-emerald-50',
     },
     available: {
       icon: Download,
@@ -230,9 +230,9 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
 }) => {
   const colorClasses = {
     blue: 'bg-stone-600',
-    green: 'bg-green-500',
-    orange: 'bg-orange-500',
-    purple: 'bg-purple-500',
+    green: 'bg-emerald-500',
+    orange: 'bg-amber-500',
+    purple: 'bg-stone-500',
     slate: 'bg-stone-500',
     red: 'bg-red-500',
     amber: 'bg-amber-500',
@@ -400,7 +400,7 @@ const DataFlowDiagram: React.FC<{
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm
                 ${
                   conn.status === 'connected'
-                    ? 'bg-green-100 text-green-700'
+                    ? 'bg-emerald-100 text-emerald-700'
                     : 'bg-stone-100 text-stone-500'
                 }`}
             >
@@ -432,7 +432,7 @@ const DataFlowDiagram: React.FC<{
       </div>
 
       <div className="flex items-center justify-center gap-6 mt-4 text-sm">
-        <span className="flex items-center gap-1.5 text-green-600">
+        <span className="flex items-center gap-1.5 text-emerald-600">
           <CheckCircle className="w-4 h-4" />
           {connectedCount} modules connected
         </span>

@@ -43,11 +43,11 @@ interface OperationsCommandCenterProps {
 }
 
 const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
-  IND: { bg: 'bg-purple-100', text: 'text-purple-700' },
+  IND: { bg: 'bg-stone-200', text: 'text-stone-700' },
   NDA: { bg: 'bg-emerald-100', text: 'text-emerald-700' },
   '510K': { bg: 'bg-blue-100', text: 'text-stone-700' },
   '510(K)': { bg: 'bg-blue-100', text: 'text-stone-700' },
-  BLA: { bg: 'bg-orange-100', text: 'text-orange-700' },
+  BLA: { bg: 'bg-amber-100', text: 'text-amber-700' },
   PMA: { bg: 'bg-red-100', text: 'text-red-700' },
 };
 

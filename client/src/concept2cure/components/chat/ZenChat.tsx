@@ -226,7 +226,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
           className={cn(
             'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150',
             isSaved
-              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+              ? 'bg-stone-900 text-white border border-stone-900'
               : 'bg-stone-100 text-stone-800 border border-stone-200 hover:bg-stone-200'
           )}
         >
@@ -268,7 +268,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
                   onClick={() => { onExportPdf(artifact); setShowExportMenu(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50"
                 >
-                  <FileText className="w-4 h-4 text-red-500" />
+                  <FileText className="w-4 h-4 text-stone-500" />
                   <div className="text-left">
                     <div className="font-medium text-xs">PDF Document (.pdf)</div>
                     <div className="text-xs text-stone-400">Read-only, print-ready</div>
@@ -513,7 +513,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   title="Copy"
                 >
                   {copied ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <Check className="w-3.5 h-3.5 text-stone-900" />
                   ) : (
                     <Copy className="w-3.5 h-3.5" />
                   )}
@@ -1391,7 +1391,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     <div className="flex flex-col flex-1 min-h-0 bg-white">
       {/* Connection status indicator - only show if confirmed unhealthy after load */}
       {health && !isConnected && (
-        <div className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-100 text-amber-700 text-sm">
+        <div className="flex items-center justify-center gap-2 px-4 py-2 bg-stone-100 border-b border-stone-200 text-stone-700 text-sm">
           <WifiOff className="w-4 h-4" />
           <span>Connecting to AnA...</span>
         </div>
@@ -1399,7 +1399,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
 
       {/* Error banner */}
       {chatError && (
-        <div className="flex items-center justify-between gap-2 px-4 py-2 bg-red-50 border-b border-red-100 text-red-700 text-sm">
+        <div className="flex items-center justify-between gap-2 px-4 py-2 bg-stone-100 border-b border-stone-200 text-stone-900 text-sm font-medium">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             <span>{chatError.message}</span>
@@ -1410,7 +1410,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
                 type="button"
                 variant="ghost"
                 onClick={() => streamMessage((chatError as any).failedMessage)}
-                className="h-auto px-1 py-0 text-xs underline hover:text-red-900"
+                className="h-auto px-1 py-0 text-xs underline hover:text-stone-900"
               >
                 Retry
               </Button>

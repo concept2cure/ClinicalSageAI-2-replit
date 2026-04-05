@@ -47,7 +47,7 @@ const StatusBadge: React.FC<{ status: string; color: string }> = ({ status, colo
 );
 
 const ProgressBar: React.FC<{ label: string; value: number; color?: string }> = ({
-  label, value, color = 'bg-violet-500',
+  label, value, color = 'bg-stone-500',
 }) => (
   <div className="space-y-1">
     <div className="flex justify-between text-xs">
@@ -69,7 +69,7 @@ const MetricBox: React.FC<{ label: string; value: string; trend?: string }> = ({
 );
 
 const TableRow: React.FC<{ cells: string[]; highlight?: boolean }> = ({ cells, highlight }) => (
-  <tr className={highlight ? 'bg-violet-50/50' : ''}>
+  <tr className={highlight ? 'bg-stone-100/50' : ''}>
     {cells.map((c, i) => (
       <td key={i} className="px-3 py-2 text-xs text-stone-700 border-b border-stone-200">{c}</td>
     ))}
@@ -97,7 +97,7 @@ const HeroPreview: React.FC = () => (
     </div>
     <div className="grid grid-cols-3 gap-2 mt-4 w-full max-w-lg">
       {['15+ Submission Types', '12+ AI Agents', '102 CMC Endpoints'].map((s) => (
-        <div key={s} className="bg-violet-50 rounded-lg py-2 px-3 text-xs font-medium text-stone-700 text-center">{s}</div>
+        <div key={s} className="bg-stone-100 rounded-lg py-2 px-3 text-xs font-medium text-stone-700 text-center">{s}</div>
       ))}
     </div>
   </div>
@@ -107,7 +107,7 @@ const HeroPreview: React.FC = () => (
 
 const CTAPreview: React.FC = () => (
   <div className="flex flex-col items-center justify-center h-full text-center px-8">
-    <Award className="w-16 h-16 text-violet-500 mb-6" />
+    <Award className="w-16 h-16 text-stone-500 mb-6" />
     <h2 className="text-base font-semibold text-stone-900 mb-2">Ready to Transform Your Workflow?</h2>
     <p className="text-sm text-stone-500 max-w-md mb-6">
       Join teams at leading biotech, pharma, and CRO organizations who have consolidated their regulatory workflows into one platform.
@@ -125,7 +125,7 @@ const CTAPreview: React.FC = () => (
 
 const SubPortfolioPreview: React.FC = () => (
   <div className="space-y-4">
-    <MockCard title="Submission Portfolio" icon={<LayoutDashboard className="w-4 h-4 text-violet-500" />}>
+    <MockCard title="Submission Portfolio" icon={<LayoutDashboard className="w-4 h-4 text-stone-500" />}>
       <div className="grid grid-cols-4 gap-3 mb-4">
         <MetricBox label="Active" value="12" />
         <MetricBox label="In Review" value="4" />
@@ -180,7 +180,7 @@ const Sub510kPreview: React.FC = () => (
         ))}
       </div>
     </MockCard>
-    <MockCard title="SE Comparison Matrix" icon={<Layers className="w-4 h-4 text-violet-500" />}>
+    <MockCard title="SE Comparison Matrix" icon={<Layers className="w-4 h-4 text-stone-500" />}>
       <div className="grid grid-cols-3 gap-2">
         {['Intended Use', 'Technology', 'Performance', 'Biocompat.', 'Software', 'Labeling'].map((d) => (
           <div key={d} className="flex items-center gap-1 text-xs text-stone-600">
@@ -219,7 +219,7 @@ const SubGlobalPreview: React.FC = () => (
           { agency: 'FDA (US)', type: 'NDA', status: 'Filing', color: 'bg-emerald-50 text-emerald-700' },
           { agency: 'EMA (EU)', type: 'MAA', status: 'Drafting', color: 'bg-amber-50 text-amber-700' },
           { agency: 'PMDA (Japan)', type: 'CTN', status: 'Planning', color: 'bg-blue-50 text-stone-700' },
-          { agency: 'NMPA (China)', type: 'NDA', status: 'Translation', color: 'bg-violet-50 text-stone-700' },
+          { agency: 'NMPA (China)', type: 'NDA', status: 'Translation', color: 'bg-stone-100 text-stone-700' },
         ].map((a) => (
           <div key={a.agency} className="p-3 bg-stone-50 rounded-lg">
             <div className="flex justify-between items-start mb-2">
@@ -236,7 +236,7 @@ const SubGlobalPreview: React.FC = () => (
 
 const SubMeetingsPreview: React.FC = () => (
   <div className="space-y-4">
-    <MockCard title="FDA Meeting Tracker" icon={<Clock className="w-4 h-4 text-orange-500" />}>
+    <MockCard title="FDA Meeting Tracker" icon={<Clock className="w-4 h-4 text-amber-500" />}>
       {[
         { type: 'Pre-IND', date: 'Apr 15, 2026', status: 'Briefing Doc Ready', icon: <CheckCircle className="w-3 h-3 text-emerald-500" /> },
         { type: 'EOP2', date: 'Jul 22, 2026', status: 'Drafting Package', icon: <Clock className="w-3 h-3 text-amber-500" /> },
@@ -263,7 +263,7 @@ const ResSearchPreview: React.FC = () => (
   <div className="space-y-4">
     <MockCard title="AnA Research" icon={<Search className="w-4 h-4 text-blue-500" />}>
       <div className="flex items-center gap-2 px-3 py-2 bg-stone-50 rounded-lg text-xs mb-3">
-        <Brain className="w-3 h-3 text-violet-500" />
+        <Brain className="w-3 h-3 text-stone-500" />
         <span className="text-stone-600">"What are the latest Phase 3 trials for GLP-1 agonists in obesity?"</span>
       </div>
       <div className="flex gap-2 mb-3">
@@ -325,7 +325,7 @@ const ResIntelligencePreview: React.FC = () => (
 
 const ResPrecedentPreview: React.FC = () => (
   <div className="space-y-4">
-    <MockCard title="Precedent Finder" icon={<Target className="w-4 h-4 text-violet-500" />}>
+    <MockCard title="Precedent Finder" icon={<Target className="w-4 h-4 text-stone-500" />}>
       {[
         { name: 'Ozempic (semaglutide)', pathway: 'NDA — Standard', timeline: '10 months', outcome: 'Approved' },
         { name: 'Wegovy (semaglutide)', pathway: 'NDA — Priority', timeline: '6 months', outcome: 'Approved' },
@@ -393,7 +393,7 @@ const DocCSRPreview: React.FC = () => (
         { section: 'Statistical Analysis', status: 'Queued', progress: 10 },
       ].map((s) => (
         <div key={s.section} className="mb-3">
-          <ProgressBar label={s.section} value={s.progress} color={s.progress === 100 ? 'bg-emerald-500' : 'bg-violet-500'} />
+          <ProgressBar label={s.section} value={s.progress} color={s.progress === 100 ? 'bg-emerald-500' : 'bg-stone-500'} />
         </div>
       ))}
     </MockCard>
@@ -402,7 +402,7 @@ const DocCSRPreview: React.FC = () => (
 
 const DocTemplatesPreview: React.FC = () => (
   <div className="space-y-4">
-    <MockCard title="Template Library" icon={<BookOpen className="w-4 h-4 text-violet-500" />}>
+    <MockCard title="Template Library" icon={<BookOpen className="w-4 h-4 text-stone-500" />}>
       <div className="grid grid-cols-2 gap-2">
         {[
           { agency: 'FDA', types: 'IND, NDA, 510(k), PMA, De Novo' },
@@ -449,7 +449,7 @@ const DocVaultPreview: React.FC = () => (
 
 const DocSherpaPreview: React.FC = () => (
   <div className="space-y-4">
-    <MockCard title="AnA Guided Authoring" icon={<Eye className="w-4 h-4 text-violet-500" />}>
+    <MockCard title="AnA Guided Authoring" icon={<Eye className="w-4 h-4 text-stone-500" />}>
       <div className="space-y-2">
         {[
           { check: 'Cross-reference validation', status: '2 issues found', icon: <AlertTriangle className="w-3 h-3 text-amber-500" /> },
@@ -519,7 +519,7 @@ const CMCAnalyticalPreview: React.FC = () => (
 
 const CMCManufacturingPreview: React.FC = () => (
   <div className="space-y-4">
-    <MockCard title="Manufacturing & Scale-Up" icon={<Gauge className="w-4 h-4 text-orange-500" />}>
+    <MockCard title="Manufacturing & Scale-Up" icon={<Gauge className="w-4 h-4 text-amber-500" />}>
       {[
         { step: 'Synthesis Step 1 — Starting Material', status: 'Production', scale: 'Commercial' },
         { step: 'Purification — Column Chromatography', status: 'Validation', scale: 'Pilot' },
@@ -540,7 +540,7 @@ const CMCManufacturingPreview: React.FC = () => (
 
 const CMCReadinessPreview: React.FC = () => (
   <div className="space-y-4">
-    <MockCard title="CMC Readiness — Module 3" icon={<Gauge className="w-4 h-4 text-violet-500" />}>
+    <MockCard title="CMC Readiness — Module 3" icon={<Gauge className="w-4 h-4 text-stone-500" />}>
       <div className="grid grid-cols-2 gap-3 mb-4">
         <MetricBox label="Overall Readiness" value="74%" trend="Improving" />
         <MetricBox label="Gaps Found" value="6" trend="2 critical" />
@@ -566,7 +566,7 @@ const CMCReadinessPreview: React.FC = () => (
 
 const AISwarmPreview: React.FC = () => (
   <div className="space-y-4">
-    <MockCard title="AnA Agents — Active" icon={<Bot className="w-4 h-4 text-violet-500" />}>
+    <MockCard title="AnA Agents — Active" icon={<Bot className="w-4 h-4 text-stone-500" />}>
       <div className="grid grid-cols-3 gap-2">
         {[
           { name: 'Predicate Researcher', status: 'Complete', phase: 'Planning' },
@@ -580,9 +580,9 @@ const AISwarmPreview: React.FC = () => (
           { name: 'Compiler', status: 'Queued', phase: 'Assembly' },
         ].map((a) => (
           <div key={a.name} className="p-2 bg-stone-50 rounded-lg text-center">
-            <Bot className={cn('w-4 h-4 mx-auto mb-1', a.status === 'Running' ? 'text-violet-500' : a.status === 'Complete' ? 'text-emerald-500' : 'text-stone-400')} />
+            <Bot className={cn('w-4 h-4 mx-auto mb-1', a.status === 'Running' ? 'text-stone-500' : a.status === 'Complete' ? 'text-emerald-500' : 'text-stone-400')} />
             <p className="text-xs font-medium text-stone-700 truncate">{a.name}</p>
-            <StatusBadge status={a.status} color={a.status === 'Running' ? 'bg-violet-50 text-stone-700' : a.status === 'Complete' ? 'bg-emerald-50 text-emerald-700' : 'bg-stone-100 text-stone-500'} />
+            <StatusBadge status={a.status} color={a.status === 'Running' ? 'bg-stone-100 text-stone-700' : a.status === 'Complete' ? 'bg-emerald-50 text-emerald-700' : 'bg-stone-100 text-stone-500'} />
           </div>
         ))}
       </div>
@@ -592,7 +592,7 @@ const AISwarmPreview: React.FC = () => (
 
 const AISnowglobePreview: React.FC = () => (
   <div className="space-y-4">
-    <MockCard title="AnA Predictions — Scenario Modeling" icon={<Brain className="w-4 h-4 text-violet-500" />}>
+    <MockCard title="AnA Predictions — Scenario Modeling" icon={<Brain className="w-4 h-4 text-stone-500" />}>
       <div className="grid grid-cols-2 gap-3">
         {[
           { scenario: 'Baseline Filing', probability: '72%', timeline: '10 months', risk: 'Medium' },
@@ -640,12 +640,12 @@ const AIReviewPulsePreview: React.FC = () => (
 const AIDualPreview: React.FC = () => (
   <div className="space-y-4">
     <div className="grid grid-cols-2 gap-4">
-      <MockCard title="AnA 1.0" icon={<Sparkles className="w-4 h-4 text-violet-500" />}>
+      <MockCard title="AnA 1.0" icon={<Sparkles className="w-4 h-4 text-stone-500" />}>
         <p className="text-xs text-stone-600 mb-2">Regulatory strategy & authoring co-pilot</p>
         <div className="space-y-1">
           {['Submission strategy', 'Document co-writing', 'Regulatory Q&A', 'Compliance checking'].map((f) => (
             <div key={f} className="flex items-center gap-1 text-xs text-stone-600">
-              <CheckCircle className="w-3 h-3 text-violet-500" /> {f}
+              <CheckCircle className="w-3 h-3 text-stone-500" /> {f}
             </div>
           ))}
         </div>
@@ -668,7 +668,7 @@ const AIDualPreview: React.FC = () => (
 
 const PMMissionPreview: React.FC = () => (
   <div className="space-y-4">
-    <MockCard title="Mission Control" icon={<LayoutDashboard className="w-4 h-4 text-violet-500" />}>
+    <MockCard title="Mission Control" icon={<LayoutDashboard className="w-4 h-4 text-stone-500" />}>
       <div className="grid grid-cols-4 gap-3 mb-3">
         <MetricBox label="Programs" value="3" />
         <MetricBox label="Projects" value="12" />
@@ -702,7 +702,7 @@ const PMTimelinesPreview: React.FC = () => (
         { milestone: 'PDUFA Date', date: 'Dec 2027', status: 'upcoming' },
       ].map((m) => (
         <div key={m.milestone} className="flex items-center gap-3 py-2">
-          <div className={cn('w-3 h-3 rounded-full border-2', m.status === 'complete' ? 'bg-emerald-500 border-emerald-500' : m.status === 'current' ? 'bg-violet-500 border-violet-500' : 'bg-white border-stone-300')} />
+          <div className={cn('w-3 h-3 rounded-full border-2', m.status === 'complete' ? 'bg-emerald-500 border-emerald-500' : m.status === 'current' ? 'bg-stone-500 border-stone-500' : 'bg-white border-stone-300')} />
           <div className="flex-1 flex justify-between">
             <span className="text-xs text-stone-700">{m.milestone}</span>
             <span className="text-xs text-stone-500">{m.date}</span>
@@ -805,7 +805,7 @@ const SecAuditPreview: React.FC = () => (
 
 const SecRBACPreview: React.FC = () => (
   <div className="space-y-4">
-    <MockCard title="Role-Based Access Control" icon={<Lock className="w-4 h-4 text-violet-500" />}>
+    <MockCard title="Role-Based Access Control" icon={<Lock className="w-4 h-4 text-stone-500" />}>
       <div className="space-y-2">
         {[
           { role: 'Regulatory Writer', access: 'Draft, Edit, Submit for Review', count: 12 },
@@ -852,7 +852,7 @@ const SecInspectionPreview: React.FC = () => (
 
 const SecGovernancePreview: React.FC = () => (
   <div className="space-y-4">
-    <MockCard title="Data Governance & Certificates" icon={<Award className="w-4 h-4 text-violet-500" />}>
+    <MockCard title="Data Governance & Certificates" icon={<Award className="w-4 h-4 text-stone-500" />}>
       <div className="grid grid-cols-2 gap-2">
         {[
           { standard: '21 CFR Part 11', status: 'Compliant' },
@@ -885,7 +885,7 @@ const CollabHubPreview: React.FC = () => (
       ].map((t) => (
         <div key={t.thread} className="flex items-center justify-between p-2 border-b border-stone-50 last:border-0">
           <div className="flex items-center gap-2">
-            {t.unread && <div className="w-2 h-2 rounded-full bg-violet-500" />}
+            {t.unread && <div className="w-2 h-2 rounded-full bg-stone-500" />}
             <div>
               <p className="text-xs text-stone-900">{t.thread}</p>
               <p className="text-xs text-stone-400">{t.replies} replies — {t.last}</p>
@@ -920,7 +920,7 @@ const CollabReviewPreview: React.FC = () => (
 
 const CollabReportsPreview: React.FC = () => (
   <div className="space-y-4">
-    <MockCard title="Report Center" icon={<BarChart3 className="w-4 h-4 text-violet-500" />}>
+    <MockCard title="Report Center" icon={<BarChart3 className="w-4 h-4 text-stone-500" />}>
       <div className="grid grid-cols-3 gap-2 mb-3">
         {['PDF', 'Word', 'eCTD XML'].map((f) => (
           <div key={f} className="bg-stone-50 rounded-lg py-2 text-center text-xs font-medium text-stone-600">{f} Export</div>
@@ -985,7 +985,7 @@ const CollabAcademyPreview: React.FC = () => (
             <span className="text-stone-700">{c.course}</span>
             <span className="text-stone-400">{c.duration}</span>
           </div>
-          <ProgressBar label="" value={c.progress} color={c.progress === 100 ? 'bg-emerald-500' : 'bg-violet-500'} />
+          <ProgressBar label="" value={c.progress} color={c.progress === 100 ? 'bg-emerald-500' : 'bg-stone-500'} />
         </div>
       ))}
     </MockCard>
@@ -1004,7 +1004,7 @@ const NanoBananaOverviewPreview: React.FC = () => (
     <div className="grid grid-cols-3 gap-3">
       {[
         { title: 'Infographics', metric: '4K', desc: 'Publication-ready', color: 'bg-amber-50 border-amber-200' },
-        { title: 'Slide Decks', metric: 'PPTX', desc: 'Auto-generated', color: 'bg-orange-50 border-orange-200' },
+        { title: 'Slide Decks', metric: 'PPTX', desc: 'Auto-generated', color: 'bg-amber-50 border-amber-200' },
         { title: 'Diagrams', metric: '<12s', desc: 'Per image', color: 'bg-yellow-50 border-yellow-200' },
       ].map(c => (
         <div key={c.title} className={cn('rounded-xl border p-3 text-center', c.color)}>
@@ -1021,7 +1021,7 @@ const NanoBananaOverviewPreview: React.FC = () => (
         ))}
       </div>
     </MockCard>
-    <MockCard title="Platform Integration" icon={<Layers className="w-4 h-4 text-violet-500" />}>
+    <MockCard title="Platform Integration" icon={<Layers className="w-4 h-4 text-stone-500" />}>
       {['AnA Chat', 'Report Center', 'Document Builder', 'Program Analytics', 'Training'].map(m => (
         <div key={m} className="flex items-center gap-2 py-1">
           <CheckCircle className="w-3 h-3 text-emerald-500" />
@@ -1068,11 +1068,11 @@ const NanoBananaGeneratePreview: React.FC = () => (
 const NanoBananaIntegrationsPreview: React.FC = () => (
   <div className="space-y-4">
     {[
-      { name: 'AnA Chat', desc: 'Switch to AnA Visual mode, describe what you need', icon: <Bot className="w-4 h-4 text-violet-500" />, color: 'border-blue-200' },
+      { name: 'AnA Chat', desc: 'Switch to AnA Visual mode, describe what you need', icon: <Bot className="w-4 h-4 text-stone-500" />, color: 'border-blue-200' },
       { name: 'Report Center', desc: 'Generate visuals alongside readiness briefs & transmittals', icon: <BarChart3 className="w-4 h-4 text-blue-500" />, color: 'border-blue-200' },
       { name: 'Document Builder', desc: 'Insert AI figures into CSR/CTD sections during review', icon: <FileText className="w-4 h-4 text-emerald-500" />, color: 'border-emerald-200' },
-      { name: 'Program Analytics', desc: 'Export dashboards as infographics or slide decks', icon: <Activity className="w-4 h-4 text-orange-500" />, color: 'border-orange-200' },
-      { name: 'Training Center', desc: 'Auto-generate training materials with regulatory visuals', icon: <BookOpen className="w-4 h-4 text-pink-500" />, color: 'border-pink-200' },
+      { name: 'Program Analytics', desc: 'Export dashboards as infographics or slide decks', icon: <Activity className="w-4 h-4 text-amber-500" />, color: 'border-amber-200' },
+      { name: 'Training Center', desc: 'Auto-generate training materials with regulatory visuals', icon: <BookOpen className="w-4 h-4 text-stone-500" />, color: 'border-stone-200' },
       { name: 'PPTX Export', desc: 'Any export enhanced with AI cover images automatically', icon: <FolderOpen className="w-4 h-4 text-amber-500" />, color: 'border-amber-200' },
     ].map(item => (
       <MockCard key={item.name} title={item.name} icon={item.icon} className={cn('border', item.color)}>

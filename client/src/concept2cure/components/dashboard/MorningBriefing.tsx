@@ -97,7 +97,7 @@ export interface MorningBriefingProps {
 const getGreeting = (): { greeting: string; icon: React.ReactNode } => {
   const hour = new Date().getHours();
   if (hour < 12) return { greeting: 'Good Morning', icon: <Sun className="text-amber-400" size={24} /> };
-  if (hour < 18) return { greeting: 'Good Afternoon', icon: <Sun className="text-orange-400" size={24} /> };
+  if (hour < 18) return { greeting: 'Good Afternoon', icon: <Sun className="text-amber-400" size={24} /> };
   return { greeting: 'Good Evening', icon: <Moon className="text-blue-300" size={24} /> };
 };
 
@@ -108,9 +108,9 @@ const SOURCE_CONFIG: Record<AlertSource, {
 }> = {
   FDA_ENFORCEMENT: { label: 'FDA ENFORCEMENT', color: 'text-red-600 bg-red-50', icon: <Shield className="w-3 h-3" /> },
   FDA_GUIDANCE: { label: 'FDA GUIDANCE', color: 'text-blue-600 bg-blue-50', icon: <FileText className="w-3 h-3" /> },
-  COMPETITOR: { label: 'COMPETITOR INTEL', color: 'text-purple-600 bg-purple-50', icon: <Activity className="w-3 h-3" /> },
-  PROJECT: { label: 'PROJECT UPDATE', color: 'text-green-600 bg-green-50', icon: <TrendingUp className="w-3 h-3" /> },
-  DEADLINE: { label: 'DEADLINE', color: 'text-orange-600 bg-orange-50', icon: <Calendar className="w-3 h-3" /> },
+  COMPETITOR: { label: 'COMPETITOR INTEL', color: 'text-stone-600 bg-stone-100', icon: <Activity className="w-3 h-3" /> },
+  PROJECT: { label: 'PROJECT UPDATE', color: 'text-emerald-600 bg-emerald-50', icon: <TrendingUp className="w-3 h-3" /> },
+  DEADLINE: { label: 'DEADLINE', color: 'text-amber-600 bg-amber-50', icon: <Calendar className="w-3 h-3" /> },
   REVIEW: { label: 'REVIEW REQUIRED', color: 'text-amber-600 bg-amber-50', icon: <CheckCircle className="w-3 h-3" /> },
   SYSTEM: { label: 'SYSTEM', color: 'text-stone-600 bg-stone-50', icon: <Bell className="w-3 h-3" /> },
 };
@@ -121,7 +121,7 @@ const PRIORITY_CONFIG: Record<AlertPriority, {
   icon?: React.ReactNode;
 }> = {
   CRITICAL: { indicator: 'bg-red-500', border: 'border-l-red-500', icon: <AlertTriangle className="w-3 h-3 text-red-500" /> },
-  HIGH: { indicator: 'bg-orange-500', border: 'border-l-orange-500', icon: <Zap className="w-3 h-3 text-orange-500" /> },
+  HIGH: { indicator: 'bg-amber-500', border: 'border-l-amber-500', icon: <Zap className="w-3 h-3 text-amber-500" /> },
   MEDIUM: { indicator: 'bg-amber-500', border: 'border-l-amber-500' },
   LOW: { indicator: 'bg-stone-600', border: 'border-l-blue-500' },
   INFO: { indicator: 'bg-stone-400', border: 'border-l-slate-400' },
@@ -383,7 +383,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
             {/* Empty State */}
             {alerts.length === 0 && priorities.length === 0 && (
               <div className="text-center py-8">
-                <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
+                <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
                 <h3 className="text-lg font-semibold text-stone-900">All Clear</h3>
                 <p className="text-sm text-stone-500">No critical updates while you were away.</p>
               </div>

@@ -203,7 +203,7 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
   const getRiskColor = (level: string) => {
     switch (level) {
       case 'CRITICAL': return 'bg-red-100 text-red-700 border-red-200';
-      case 'HIGH': return 'bg-orange-100 text-orange-700 border-orange-200';
+      case 'HIGH': return 'bg-amber-100 text-amber-700 border-amber-200';
       case 'MEDIUM': return 'bg-amber-100 text-amber-700 border-amber-200';
       case 'LOW': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
       default: return 'bg-stone-100 text-stone-700 border-stone-200';
@@ -251,7 +251,7 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
           <div className="text-xs text-stone-500">Malfunctions</div>
         </div>
         <div className="text-center">
-          <div className="text-base font-semibold text-orange-600">
+          <div className="text-base font-semibold text-amber-600">
             {hazardAnalysis.summary.injuries}
           </div>
           <div className="text-xs text-stone-500">Injuries</div>
@@ -319,10 +319,10 @@ const SubmissionTracker: React.FC = () => {
       case 'DRAFT': return 'bg-stone-100 text-stone-600';
       case 'INTERNAL_REVIEW': return 'bg-blue-100 text-blue-600';
       case 'READY_FOR_SUBMISSION': return 'bg-emerald-100 text-emerald-600';
-      case 'SUBMITTED': return 'bg-purple-100 text-purple-600';
+      case 'SUBMITTED': return 'bg-stone-200 text-stone-600';
       case 'RTA_HOLD': return 'bg-amber-100 text-amber-600';
       case 'SUBSTANTIVE_REVIEW': return 'bg-blue-100 text-blue-600';
-      case 'AI_REQUEST': return 'bg-orange-100 text-orange-600';
+      case 'AI_REQUEST': return 'bg-amber-100 text-amber-600';
       case 'SE_DETERMINATION': return 'bg-emerald-100 text-emerald-600';
       default: return 'bg-stone-100 text-stone-600';
     }

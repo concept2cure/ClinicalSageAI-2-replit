@@ -206,7 +206,7 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
                       {row.provenancePresent && (
                         <>
                           <span className="text-slate-300">·</span>
-                          <span className="text-violet-600">Prov ✓</span>
+                          <span className="text-stone-600">Prov ✓</span>
                         </>
                       )}
                       {row.auditPresent && (
@@ -230,7 +230,7 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 px-2 text-[11px] text-violet-600"
+                          className="h-6 px-2 text-[11px] text-stone-600"
                           onClick={() => onOpenComputeArtifact(row.artifactId, 'provenance')}
                         >
                           Provenance
@@ -319,7 +319,7 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-5 px-1.5 text-[10px] text-violet-600"
+                              className="h-5 px-1.5 text-[10px] text-stone-600"
                               onClick={() => onOpenComputeArtifact(p.artifactId!, 'provenance')}
                             >
                               Provenance
@@ -338,7 +338,7 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-5 px-1.5 text-[10px] text-indigo-600"
+                            className="h-5 px-1.5 text-[10px] text-blue-600"
                             onClick={() => captureReviewPackage(p)}
                           >
                             Review package

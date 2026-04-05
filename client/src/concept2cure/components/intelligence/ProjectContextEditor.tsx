@@ -467,7 +467,7 @@ export function ProjectContextEditor({
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-violet-500" />
+            <Brain className="h-5 w-5 text-stone-1000" />
             <CardTitle className="text-base">
               {projectName
                 ? `${projectName} -- Project Context`

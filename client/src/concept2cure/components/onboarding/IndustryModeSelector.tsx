@@ -66,8 +66,8 @@ const INDUSTRY_OPTIONS: Array<{
     label: 'Biotech',
     description: 'Small to mid-cap companies with focused pipeline',
     icon: <Flask className="w-8 h-8" />,
-    color: 'text-green-600',
-    bgColor: 'bg-green-50',
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50',
     features: [
       'Development pipeline tracking',
       'Funding milestone management',
@@ -94,8 +94,8 @@ const INDUSTRY_OPTIONS: Array<{
     label: 'CRO',
     description: 'Contract research organization',
     icon: <Briefcase className="w-8 h-8" />,
-    color: 'text-violet-600',
-    bgColor: 'bg-violet-50',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-100',
     features: [
       'Client engagement portal',
       'SOW/deliverable management',
@@ -108,8 +108,8 @@ const INDUSTRY_OPTIONS: Array<{
     label: 'MedTech',
     description: 'Medical devices and diagnostics',
     icon: <Stethoscope className="w-8 h-8" />,
-    color: 'text-cyan-600',
-    bgColor: 'bg-cyan-50',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50',
     features: [
       '510(k) / PMA workflow',
       'Design history file tracking',
@@ -234,7 +234,7 @@ const IndustryStep: React.FC<{
             <ul className="mt-4 space-y-1">
               {industry.features.map(feature => (
                 <li key={feature} className="text-xs text-stone-500 flex items-center gap-2">
-                  <CheckCircle className="w-3 h-3 text-green-500" />
+                  <CheckCircle className="w-3 h-3 text-emerald-500" />
                   {feature}
                 </li>
               ))}
@@ -297,7 +297,7 @@ const RoleStep: React.FC<{
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-stone-900">{role.label}</h3>
                   {isRecommended && (
-                    <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">
+                    <span className="px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 rounded-full">
                       Recommended
                     </span>
                   )}

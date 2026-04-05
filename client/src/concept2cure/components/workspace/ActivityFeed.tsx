@@ -90,8 +90,8 @@ const ACTIVITY_CONFIG: Record<ActivityType, {
   },
   review_requested: {
     icon: Eye,
-    color: 'text-violet-500',
-    bgColor: 'bg-violet-50',
+    color: 'text-stone-1000',
+    bgColor: 'bg-stone-100',
     verb: 'requested review for',
   },
   review_completed: {
@@ -102,8 +102,8 @@ const ACTIVITY_CONFIG: Record<ActivityType, {
   },
   ai_action: {
     icon: Sparkles,
-    color: 'text-violet-500',
-    bgColor: 'bg-violet-50',
+    color: 'text-stone-1000',
+    bgColor: 'bg-stone-100',
     verb: 'used AI on',
   },
   exported: {

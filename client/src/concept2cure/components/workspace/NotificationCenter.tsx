@@ -64,7 +64,7 @@ function getNotifIcon(type: string) {
     case 'overdue':
       return <AlertTriangle className="w-3 h-3 text-red-500" />;
     case 'approval_needed':
-      return <CheckCircle2 className="w-3 h-3 text-violet-500" />;
+      return <CheckCircle2 className="w-3 h-3 text-stone-1000" />;
     case 'changes_requested':
       return <AlertTriangle className="w-3 h-3 text-amber-600" />;
     case 'thread_reply':

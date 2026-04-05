@@ -820,7 +820,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 activeArtifact.status === 'locked'
                   ? 'bg-red-100/60 text-red-600'
                   : activeArtifact.status === 'approved'
-                  ? 'bg-green-100/60 text-green-600'
+                  ? 'bg-emerald-100/60 text-emerald-600'
                   : 'bg-stone-100 text-stone-500'
               )}
             >
@@ -856,7 +856,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 activeArtifact.status === 'locked'
                   ? 'bg-red-50 text-red-600'
                   : activeArtifact.status === 'approved'
-                  ? 'bg-green-50 text-green-600'
+                  ? 'bg-emerald-50 text-emerald-600'
                   : activeArtifact.status === 'review'
                   ? 'bg-amber-50 text-amber-600'
                   : 'bg-stone-50 text-stone-400'
@@ -887,7 +887,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     activeArtifact.title
                   )
                 }
-                className="p-1.5 text-stone-400 hover:text-violet-600 rounded-md hover:bg-blue-50"
+                className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-blue-50"
                 title="Transform Canvas"
               >
                 <Sparkles className="w-3.5 h-3.5" />
@@ -903,7 +903,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 onClick={() =>
                   openSubmissionApps(activeArtifact.ctdSection, activeArtifact.templateId)
                 }
-                className="p-1.5 text-stone-400 hover:text-orange-600 rounded-md hover:bg-orange-50"
+                className="p-1.5 text-stone-400 hover:text-amber-600 rounded-md hover:bg-amber-50"
                 title="AI Assistants"
               >
                 <AppWindow className="w-3.5 h-3.5" />

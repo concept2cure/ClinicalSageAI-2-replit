@@ -1099,23 +1099,23 @@ export function ECTDNavigator() {
       </Tabs>
 
       {/* RI Assistance */}
-      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-stone-50">
+      <div className="border border-border/40 rounded-sm bg-background border-stone-200 bg-stone-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-100 rounded-full">
-              <Sparkles className="w-6 h-6 text-purple-600" />
+            <div className="p-3 bg-stone-200 rounded-full">
+              <Sparkles className="w-6 h-6 text-stone-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-purple-900">RI eCTD Assistant</h3>
-              <p className="text-sm text-purple-700">
+              <h3 className="font-semibold text-stone-900">RI eCTD Assistant</h3>
+              <p className="text-sm text-stone-700">
                 Validate eCTD structure, identify missing documents, generate section templates, and
                 ensure compliance with regional requirements.
               </p>
             </div>
-            <Button variant="outline" className="border-purple-300 text-purple-700">
+            <Button variant="outline" className="border-stone-300 text-stone-700">
               Validate Structure
             </Button>
-            <Button className="bg-purple-600 hover:bg-purple-700">RI Guidance</Button>
+            <Button className="bg-stone-600 hover:bg-stone-700">RI Guidance</Button>
           </div>
         </div>
       </div>

@@ -221,8 +221,8 @@ function detectVerdictSignals(content: string): VerdictSignal[] {
     signals.push({
       type: 'action',
       label: 'Escalation Recommended',
-      color: 'text-violet-700',
-      bgColor: 'bg-violet-50 border-violet-200',
+      color: 'text-stone-700',
+      bgColor: 'bg-stone-100 border-stone-200',
     });
   else if (/\bno[- ]go\b/.test(lower))
     signals.push({
@@ -618,12 +618,12 @@ const SLASH_COMMANDS: SlashCommand[] = [
 ];
 
 const SLASH_CATEGORY_COLORS: Record<string, string> = {
-  Intelligence: 'text-violet-600',
+  Intelligence: 'text-stone-600',
   Analysis: 'text-blue-600',
   Biostatistics: 'text-emerald-600',
   Subspecialties: 'text-amber-600',
   Authoring: 'text-rose-600',
-  Lifecycle: 'text-teal-600',
+  Lifecycle: 'text-emerald-600',
   Navigation: 'text-zinc-500',
 };
 
@@ -4299,15 +4299,15 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     contextProfile.productType.includes('510')
                       ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
                       : contextProfile.productType.includes('PMA')
-                      ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+                      ? 'bg-stone-200 text-stone-700 dark:bg-stone-900/40 dark:text-stone-300'
                       : contextProfile.productType.includes('NDA')
                       ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
                       : contextProfile.productType.includes('BLA')
                       ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
                       : contextProfile.productType.includes('IND')
-                      ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300'
+                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
                       : contextProfile.productType.includes('ANDA')
-                      ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300'
+                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
                       : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
                   )}
                 >
@@ -4364,7 +4364,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 </span>
               )}
               {decisionStatus.provisional && (
-                <span className="rounded-full border border-orange-200 bg-orange-50 px-1.5 py-0.5 text-orange-700">
+                <span className="rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-amber-700">
                   provisional decisions
                 </span>
               )}
@@ -4709,7 +4709,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 aria-label="Copy message"
                               >
                                 {copiedId === msg.id ? (
-                                  <Check className="w-3 h-3 text-green-600" />
+                                  <Check className="w-3 h-3 text-emerald-600" />
                                 ) : (
                                   <Copy className="w-3 h-3" />
                                 )}
@@ -4741,7 +4741,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                   : msg.modelProvider === 'openai'
                                   ? 'text-[#10A37F] bg-emerald-50'
                                   : msg.modelProvider === 'moonshot'
-                                  ? 'text-[#6366F1] bg-indigo-50'
+                                  ? 'text-[#6366F1] bg-blue-50'
                                   : 'text-zinc-500 bg-zinc-50'
                               )}
                             >
@@ -4779,7 +4779,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 aria-label="Copy"
                               >
                                 {copiedId === msg.id ? (
-                                  <Check className="w-3 h-3 text-green-600" />
+                                  <Check className="w-3 h-3 text-emerald-600" />
                                 ) : (
                                   <Copy className="w-3 h-3" />
                                 )}

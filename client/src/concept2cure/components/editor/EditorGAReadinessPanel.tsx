@@ -86,7 +86,7 @@ export function EditorGAReadinessPanel({
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">
-            <Rocket className="w-4 h-4 text-violet-600" />
+            <Rocket className="w-4 h-4 text-stone-600" />
             GA & Competitive Readiness
           </CardTitle>
         </CardHeader>

@@ -136,7 +136,7 @@ const STATUS_CONFIG: Record<TeamMember['status'], {
   bgColor: string;
   label: string;
 }> = {
-  online: { color: 'bg-green-500', bgColor: 'bg-green-100', label: 'Online' },
+  online: { color: 'bg-emerald-500', bgColor: 'bg-emerald-100', label: 'Online' },
   away: { color: 'bg-amber-500', bgColor: 'bg-amber-100', label: 'Away' },
   busy: { color: 'bg-red-500', bgColor: 'bg-red-100', label: 'Busy' },
   offline: { color: 'bg-stone-400', bgColor: 'bg-stone-100', label: 'Offline' },
@@ -149,15 +149,15 @@ const ACTIVITY_CONFIG: Record<ActivityType, {
 }> = {
   document_edit: { icon: PenTool, color: 'text-blue-600', label: 'edited' },
   document_view: { icon: Eye, color: 'text-stone-500', label: 'viewed' },
-  comment_added: { icon: MessageSquare, color: 'text-violet-600', label: 'commented on' },
-  comment_resolved: { icon: CheckCircle, color: 'text-green-600', label: 'resolved comment on' },
+  comment_added: { icon: MessageSquare, color: 'text-stone-600', label: 'commented on' },
+  comment_resolved: { icon: CheckCircle, color: 'text-emerald-600', label: 'resolved comment on' },
   task_assigned: { icon: UserPlus, color: 'text-amber-600', label: 'assigned task' },
-  task_completed: { icon: CheckCircle, color: 'text-green-600', label: 'completed' },
-  review_requested: { icon: Eye, color: 'text-cyan-600', label: 'requested review on' },
-  review_completed: { icon: CheckCircle, color: 'text-green-600', label: 'completed review of' },
+  task_completed: { icon: CheckCircle, color: 'text-emerald-600', label: 'completed' },
+  review_requested: { icon: Eye, color: 'text-blue-600', label: 'requested review on' },
+  review_completed: { icon: CheckCircle, color: 'text-emerald-600', label: 'completed review of' },
   approval_granted: { icon: CheckCircle, color: 'text-emerald-600', label: 'approved' },
   document_uploaded: { icon: FileText, color: 'text-blue-600', label: 'uploaded' },
-  mention: { icon: AtSign, color: 'text-pink-600', label: 'mentioned you in' },
+  mention: { icon: AtSign, color: 'text-stone-600', label: 'mentioned you in' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -261,7 +261,7 @@ const TeamPresenceSection: React.FC<{
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-stone-900">Team</h3>
-        <span className="text-xs text-green-600 font-medium">
+        <span className="text-xs text-emerald-600 font-medium">
           {onlineMembers.length} online
         </span>
       </div>
@@ -351,7 +351,7 @@ const ActivityFeed: React.FC<{
       {/* My mentions */}
       {myMentions.length > 0 && (
         <div className="mb-4">
-          <p className="text-xs font-medium text-pink-600 mb-2 flex items-center gap-1">
+          <p className="text-xs font-medium text-stone-600 mb-2 flex items-center gap-1">
             <AtSign className="w-3 h-3" />
             Mentions
           </p>
@@ -364,14 +364,14 @@ const ActivityFeed: React.FC<{
                 <button
                   key={activity.id}
                   onClick={() => onActivityClick?.(activity)}
-                  className="w-full flex items-start gap-2 p-2 bg-pink-50 rounded-lg hover:bg-pink-100 transition-colors text-left"
+                  className="w-full flex items-start gap-2 p-2 bg-stone-100 rounded-lg hover:bg-stone-200 transition-colors text-left"
                 >
                   <MemberAvatar member={activity.actor} size="sm" showStatus={false} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-stone-900">
                       <span className="font-medium">{activity.actor.name}</span>
                       {' '}{config.label}{' '}
-                      <span className="text-pink-600">{activity.documentName || activity.taskTitle}</span>
+                      <span className="text-stone-600">{activity.documentName || activity.taskTitle}</span>
                     </p>
                     {activity.message && (
                       <p className="text-xs text-stone-500 truncate mt-0.5">{activity.message}</p>
@@ -506,7 +506,7 @@ export const TeamCollaborationPanel: React.FC<TeamCollaborationPanelProps> = ({
           >
             Activity
             {unreadMentions > 0 && (
-              <span className="ml-1.5 px-1.5 py-0.5 text-xs font-medium text-white bg-pink-500 rounded-full">
+              <span className="ml-1.5 px-1.5 py-0.5 text-xs font-medium text-white bg-stone-500 rounded-full">
                 {unreadMentions}
               </span>
             )}
@@ -521,7 +521,7 @@ export const TeamCollaborationPanel: React.FC<TeamCollaborationPanelProps> = ({
             )}
           >
             Team
-            <span className="ml-1.5 text-xs text-green-600">
+            <span className="ml-1.5 text-xs text-emerald-600">
               {teamMembers.filter(m => m.status !== 'offline').length}
             </span>
           </button>

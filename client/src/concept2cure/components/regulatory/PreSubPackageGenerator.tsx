@@ -134,11 +134,11 @@ const MEETING_TYPES = [
 ];
 
 const QUESTION_CATEGORIES = [
-  { value: 'clinical', label: 'Clinical', color: 'bg-green-100 text-green-700' },
+  { value: 'clinical', label: 'Clinical', color: 'bg-emerald-100 text-emerald-700' },
   { value: 'nonclinical', label: 'Nonclinical', color: 'bg-blue-100 text-stone-700' },
-  { value: 'labeling', label: 'Labeling', color: 'bg-purple-100 text-purple-700' },
-  { value: 'manufacturing', label: 'Manufacturing', color: 'bg-orange-100 text-orange-700' },
-  { value: 'testing', label: 'Testing', color: 'bg-cyan-100 text-cyan-700' },
+  { value: 'labeling', label: 'Labeling', color: 'bg-stone-200 text-stone-700' },
+  { value: 'manufacturing', label: 'Manufacturing', color: 'bg-amber-100 text-amber-700' },
+  { value: 'testing', label: 'Testing', color: 'bg-blue-100 text-blue-700' },
   { value: 'other', label: 'Other', color: 'bg-stone-100 text-stone-700' },
 ];
 
@@ -368,7 +368,7 @@ const SectionChecklist: React.FC<SectionChecklistProps> = ({
             key={section.id}
             className={cn(
               'p-3 rounded-lg border transition-colors duration-150',
-              section.status === 'complete' && 'bg-green-50 border-green-200',
+              section.status === 'complete' && 'bg-emerald-50 border-emerald-200',
               section.status === 'in-progress' && 'bg-blue-50 border-blue-200',
               section.status === 'not-started' && 'bg-white border-stone-200',
               section.status === 'not-applicable' && 'bg-stone-50 border-stone-200 opacity-60'
@@ -382,14 +382,14 @@ const SectionChecklist: React.FC<SectionChecklistProps> = ({
                 }
                 className={cn(
                   'mt-0.5',
-                  section.status === 'complete' && 'border-green-600 bg-green-600'
+                  section.status === 'complete' && 'border-emerald-600 bg-emerald-600'
                 )}
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className={cn(
                     'text-sm font-medium',
-                    section.status === 'complete' && 'text-green-800',
+                    section.status === 'complete' && 'text-emerald-800',
                     section.status === 'in-progress' && 'text-blue-800',
                     section.status === 'not-started' && 'text-stone-900',
                     section.status === 'not-applicable' && 'text-stone-500 line-through'

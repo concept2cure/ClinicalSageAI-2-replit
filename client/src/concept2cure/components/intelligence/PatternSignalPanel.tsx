@@ -32,21 +32,21 @@ export interface PatternSignalPanelProps {
 
 const SEVERITY_STYLES: Record<string, string> = {
   critical: 'bg-red-50 text-red-700 border-red-200',
-  high: 'bg-orange-50 text-orange-700 border-orange-200',
+  high: 'bg-amber-50 text-amber-700 border-amber-200',
   medium: 'bg-amber-50 text-amber-700 border-amber-200',
   low: 'bg-stone-100 text-stone-600 border-stone-200',
 };
 
 const CATEGORY_STYLES: Record<string, string> = {
   deficiency: 'bg-red-50 text-red-600',
-  reviewer_trigger: 'bg-orange-50 text-orange-600',
+  reviewer_trigger: 'bg-amber-50 text-amber-600',
   rejection: 'bg-red-50 text-red-700',
   strong_language: 'bg-emerald-50 text-emerald-600',
   weak_language: 'bg-amber-50 text-amber-600',
-  data_gap: 'bg-violet-50 text-violet-600',
+  data_gap: 'bg-stone-100 text-stone-600',
   consistency_issue: 'bg-blue-50 text-blue-600',
   formatting: 'bg-stone-100 text-stone-500',
-  risk_signal: 'bg-orange-50 text-orange-600',
+  risk_signal: 'bg-amber-50 text-amber-600',
 };
 
 function categoryLabel(cat: string): string {
@@ -98,7 +98,7 @@ function RiskBreakdown({ byRiskLevel }: { byRiskLevel: Partial<Record<string, nu
                 level === 'critical'
                   ? 'bg-red-500'
                   : level === 'high'
-                    ? 'bg-orange-400'
+                    ? 'bg-amber-400'
                     : level === 'medium'
                       ? 'bg-amber-400'
                       : 'bg-stone-300'

@@ -190,7 +190,7 @@ export default function WorkspaceContextBars(props: WorkspaceContextBarsProps) {
               className={cn(
                 'text-[10px] px-2 py-0.5 rounded border',
                 guidedControlMode === 'ana'
-                  ? 'border-violet-300 bg-violet-50 text-violet-700'
+                  ? 'border-stone-300 bg-stone-100 text-stone-700'
                   : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
               )}
             >

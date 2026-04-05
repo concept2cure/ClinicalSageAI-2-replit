@@ -155,7 +155,7 @@ const STATUS_CONFIG: Record<CROProject['status'], {
   color: string;
   bgColor: string;
 }> = {
-  active: { label: 'Active', color: 'text-green-700', bgColor: 'bg-green-100' },
+  active: { label: 'Active', color: 'text-emerald-700', bgColor: 'bg-emerald-100' },
   on_hold: { label: 'On Hold', color: 'text-amber-700', bgColor: 'bg-amber-100' },
   at_risk: { label: 'At Risk', color: 'text-red-700', bgColor: 'bg-red-100' },
   completed: { label: 'Completed', color: 'text-stone-700', bgColor: 'bg-blue-100' },
@@ -166,7 +166,7 @@ const TIER_CONFIG: Record<CROClient['tier'], {
   label: string;
   color: string;
 }> = {
-  enterprise: { label: 'Enterprise', color: 'text-violet-600' },
+  enterprise: { label: 'Enterprise', color: 'text-stone-600' },
   strategic: { label: 'Strategic', color: 'text-blue-600' },
   standard: { label: 'Standard', color: 'text-stone-600' },
 };
@@ -186,7 +186,7 @@ const formatCurrency = (amount: number): string => {
 };
 
 const getHealthColor = (score: number): string => {
-  if (score >= 80) return 'text-green-600';
+  if (score >= 80) return 'text-emerald-600';
   if (score >= 60) return 'text-amber-600';
   return 'text-red-600';
 };
@@ -243,7 +243,7 @@ const ClientCard: React.FC<{
               <div
                 className={cn(
                   'h-full rounded-full',
-                  revenueProgress > 90 ? 'bg-green-500' : revenueProgress > 70 ? 'bg-amber-500' : 'bg-stone-600'
+                  revenueProgress > 90 ? 'bg-emerald-500' : revenueProgress > 70 ? 'bg-amber-500' : 'bg-stone-600'
                 )}
                 style={{ width: `${Math.min(revenueProgress, 100)}%` }}
               />
@@ -344,7 +344,7 @@ const UtilizationChart: React.FC<{
                 <span className="text-sm font-medium text-stone-700">{dept}</span>
                 <span className={cn(
                   'text-sm font-medium',
-                  avgUtil > 100 ? 'text-red-600' : avgUtil > 85 ? 'text-amber-600' : 'text-green-600'
+                  avgUtil > 100 ? 'text-red-600' : avgUtil > 85 ? 'text-amber-600' : 'text-emerald-600'
                 )}>
                   {avgUtil.toFixed(0)}% avg
                 </span>
@@ -360,7 +360,7 @@ const UtilizationChart: React.FC<{
                       'h-full transition-opacity hover:opacity-80',
                       resource.utilizationRate > 100 && 'bg-red-500',
                       resource.utilizationRate > 85 && resource.utilizationRate <= 100 && 'bg-amber-500',
-                      resource.utilizationRate >= 70 && resource.utilizationRate <= 85 && 'bg-green-500',
+                      resource.utilizationRate >= 70 && resource.utilizationRate <= 85 && 'bg-emerald-500',
                       resource.utilizationRate < 70 && 'bg-blue-300'
                     )}
                     style={{ width: `${100 / deptResources.length}%` }}
@@ -394,7 +394,7 @@ const UtilizationChart: React.FC<{
           <span className="text-xs text-stone-500">85-100%</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded bg-green-500" />
+          <span className="w-3 h-3 rounded bg-emerald-500" />
           <span className="text-xs text-stone-500">70-85%</span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -446,7 +446,7 @@ const ChangeOrderPanel: React.FC<{
             <span className={cn(
               'px-2 py-0.5 text-xs font-medium rounded-full',
               co.status === 'pending_approval' && 'bg-amber-100 text-amber-700',
-              co.status === 'approved' && 'bg-green-100 text-green-700',
+              co.status === 'approved' && 'bg-emerald-100 text-emerald-700',
               co.status === 'rejected' && 'bg-red-100 text-red-700',
               co.status === 'draft' && 'bg-stone-100 text-stone-600'
             )}>
@@ -454,7 +454,7 @@ const ChangeOrderPanel: React.FC<{
             </span>
             <span className={cn(
               'text-sm font-medium',
-              co.financialImpact >= 0 ? 'text-green-600' : 'text-red-600'
+              co.financialImpact >= 0 ? 'text-emerald-600' : 'text-red-600'
             )}>
               {co.financialImpact >= 0 ? '+' : ''}{formatCurrency(co.financialImpact)}
             </span>
@@ -526,12 +526,12 @@ export const CROResourceDashboard: React.FC<CROResourceDashboardProps> = ({
             <p className="text-xs text-blue-600 mb-0.5">Total Contract Value</p>
             <p className="text-lg font-semibold text-stone-700">{formatCurrency(metrics.totalContractValue)}</p>
           </div>
-          <div className="p-3 bg-green-50 rounded-lg">
-            <p className="text-xs text-green-600 mb-0.5">Billed YTD</p>
-            <p className="text-lg font-semibold text-green-700">{formatCurrency(metrics.totalBilled)}</p>
+          <div className="p-3 bg-emerald-50 rounded-lg">
+            <p className="text-xs text-emerald-600 mb-0.5">Billed YTD</p>
+            <p className="text-lg font-semibold text-emerald-700">{formatCurrency(metrics.totalBilled)}</p>
           </div>
-          <div className="p-3 bg-violet-50 rounded-lg">
-            <p className="text-xs text-violet-600 mb-0.5">Active Projects</p>
+          <div className="p-3 bg-stone-100 rounded-lg">
+            <p className="text-xs text-stone-600 mb-0.5">Active Projects</p>
             <p className="text-lg font-semibold text-stone-700">{metrics.activeProjects}</p>
           </div>
           <div className={cn(

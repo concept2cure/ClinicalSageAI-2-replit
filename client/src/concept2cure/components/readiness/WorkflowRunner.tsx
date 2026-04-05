@@ -17,11 +17,11 @@ interface WorkflowRunnerProps {
 }
 
 const STEP_STATUS_STYLES: Record<string, { bg: string; icon: string }> = {
-  pending: { bg: 'bg-gray-200 dark:bg-gray-700', icon: '○' },
+  pending: { bg: 'bg-stone-200 dark:bg-stone-700', icon: '○' },
   running: { bg: 'bg-stone-600', icon: '◉' },
-  completed: { bg: 'bg-green-500', icon: '✓' },
+  completed: { bg: 'bg-emerald-500', icon: '✓' },
   failed: { bg: 'bg-red-500', icon: '✗' },
-  skipped: { bg: 'bg-gray-400', icon: '–' },
+  skipped: { bg: 'bg-stone-400', icon: '–' },
 };
 
 export function WorkflowRunner({ projectId, module, onComplete }: WorkflowRunnerProps) {
@@ -48,7 +48,7 @@ export function WorkflowRunner({ projectId, module, onComplete }: WorkflowRunner
       {!execution && (
         <div className="flex items-end gap-3">
           <div className="flex-1">
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-xs font-medium text-stone-700 dark:text-stone-300 mb-1">
               Workflow
             </label>
             <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
@@ -86,10 +86,10 @@ export function WorkflowRunner({ projectId, module, onComplete }: WorkflowRunner
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              <h4 className="text-sm font-medium text-stone-900 dark:text-stone-100">
                 {execution.templateId.replace(/_/g, ' ')}
               </h4>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-stone-500">
                 {execution.status === 'running'
                   ? `Step ${execution.currentStepIndex + 1}/${execution.steps.length}`
                   : execution.status}
@@ -120,7 +120,7 @@ export function WorkflowRunner({ projectId, module, onComplete }: WorkflowRunner
           </div>
 
           {/* Progress bar */}
-          <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+          <div className="h-2 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-300 ${
                 execution.status === 'failed' ? 'bg-red-500' : 'bg-stone-600'
@@ -145,11 +145,11 @@ export function WorkflowRunner({ projectId, module, onComplete }: WorkflowRunner
                       style.icon
                     )}
                   </span>
-                  <span className={`text-sm ${step.status === 'completed' ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                  <span className={`text-sm ${step.status === 'completed' ? 'text-stone-600 dark:text-stone-400' : 'text-stone-900 dark:text-stone-100'}`}>
                     {step.name}
                   </span>
                   {step.durationMs && (
-                    <span className="text-xs text-gray-400 ml-auto">
+                    <span className="text-xs text-stone-400 ml-auto">
                       {(step.durationMs / 1000).toFixed(1)}s
                     </span>
                   )}
@@ -165,19 +165,19 @@ export function WorkflowRunner({ projectId, module, onComplete }: WorkflowRunner
 
           {/* Result summary */}
           {execution.result && (
-            <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
+            <div className="mt-3 p-3 rounded-lg bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700">
+              <p className="text-sm text-stone-700 dark:text-stone-300">
                 {execution.result.summary}
               </p>
               {execution.result.blockers.length > 0 && (
                 <div className="mt-2">
-                  <span className="text-xs font-medium text-gray-500">
+                  <span className="text-xs font-medium text-stone-500">
                     {execution.result.blockers.length} blocker(s) found
                   </span>
                 </div>
               )}
               {execution.totalDurationMs && (
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-stone-400 mt-1">
                   Completed in {(execution.totalDurationMs / 1000).toFixed(1)}s
                 </p>
               )}

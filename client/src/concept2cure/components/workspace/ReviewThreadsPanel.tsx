@@ -692,7 +692,7 @@ function ThreadCard({
               </span>
             )}
             {thread.anchorLabel && (
-              <span className="text-xs text-violet-500 bg-violet-50 px-1 rounded">
+              <span className="text-xs text-stone-1000 bg-stone-100 px-1 rounded">
                 {thread.anchorLabel}
               </span>
             )}

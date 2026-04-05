@@ -70,7 +70,7 @@ function getFileIcon(type: string) {
   if (t.includes('pdf') || t.includes('document'))
     return <FileText className="w-4 h-4 text-red-500" />;
   if (t.includes('spreadsheet') || t.includes('excel') || t.includes('csv'))
-    return <FileSpreadsheet className="w-4 h-4 text-green-500" />;
+    return <FileSpreadsheet className="w-4 h-4 text-emerald-500" />;
   if (t.includes('image') || t.includes('jpeg') || t.includes('png'))
     return <FileImage className="w-4 h-4 text-blue-500" />;
   return <File className="w-4 h-4 text-stone-500" />;
@@ -525,7 +525,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                             handleExtractMetadata(source.id);
                           }}
                           disabled={extracting === source.id}
-                          className="mt-2 flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700"
+                          className="mt-2 flex items-center gap-1 text-xs text-stone-600 hover:text-stone-700"
                         >
                           {extracting === source.id ? (
                             <Loader2 className="w-3 h-3 animate-spin" />

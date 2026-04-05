@@ -48,7 +48,7 @@ const COLUMNS: { key: TaskStatus; label: string; icon: React.ElementType; color:
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   urgent: { label: 'Urgent', color: 'text-red-700', bg: 'bg-red-100' },
-  high:   { label: 'High',   color: 'text-orange-700', bg: 'bg-orange-100' },
+  high:   { label: 'High',   color: 'text-amber-700', bg: 'bg-amber-100' },
   medium: { label: 'Medium', color: 'text-stone-600', bg: 'bg-stone-100' },
   low:    { label: 'Low',    color: 'text-stone-400', bg: 'bg-stone-50' },
 };

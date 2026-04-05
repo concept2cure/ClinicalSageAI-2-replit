@@ -42,7 +42,7 @@ export function ReadinessScoreRing({
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-gray-200 dark:text-gray-700"
+          className="text-stone-200 dark:text-stone-700"
         />
         <circle
           cx={size / 2}
@@ -65,7 +65,7 @@ export function ReadinessScoreRing({
           {score}%
         </span>
         {label && (
-          <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
+          <span className="text-xs text-stone-500 dark:text-stone-400">{label}</span>
         )}
       </div>
     </div>

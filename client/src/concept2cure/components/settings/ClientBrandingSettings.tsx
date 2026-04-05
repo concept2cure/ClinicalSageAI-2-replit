@@ -256,7 +256,7 @@ const ClientBrandingSettings: React.FC = () => {
           {/* Colors */}
           <div className="bg-white rounded-xl border p-5">
             <h3 className="text-sm font-semibold text-stone-800 mb-3 flex items-center gap-2">
-              <Paintbrush className="w-4 h-4 text-violet-500" />
+              <Paintbrush className="w-4 h-4 text-stone-1000" />
               Brand Colors
             </h3>
             <div className="grid grid-cols-3 gap-4">

@@ -78,7 +78,7 @@ const FORMATS: ExportOption[] = [
     label: 'PowerPoint (.pptx)',
     description: 'Presentation slides for regulatory meetings',
     icon: Presentation,
-    iconColor: 'text-orange-600 bg-orange-50',
+    iconColor: 'text-amber-600 bg-amber-50',
     available: true,
   },
   {
@@ -153,7 +153,7 @@ export function ExportDialog({
         <div className="px-5 py-3 bg-stone-50 border-b border-stone-100 flex items-center gap-4">
           <span className="text-xs text-stone-500">{wordCount.toLocaleString()} words</span>
           {ctdSection && (
-            <span className="text-xs text-violet-600 font-medium">CTD {ctdSection}</span>
+            <span className="text-xs text-stone-600 font-medium">CTD {ctdSection}</span>
           )}
         </div>
 

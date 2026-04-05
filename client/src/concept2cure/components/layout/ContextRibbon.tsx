@@ -74,11 +74,11 @@ const MODE_CONFIG: Record<
     color: 'text-blue-600',
     icon: <Activity className="w-3 h-3" />,
   },
-  drafting: { label: 'Drafting', color: 'text-violet-600', icon: <Target className="w-3 h-3" /> },
+  drafting: { label: 'Drafting', color: 'text-stone-600', icon: <Target className="w-3 h-3" /> },
   review: { label: 'Review', color: 'text-amber-600', icon: <Activity className="w-3 h-3" /> },
   submission: {
     label: 'Submission',
-    color: 'text-green-600',
+    color: 'text-emerald-600',
     icon: <Mountain className="w-3 h-3" />,
   },
   audit: { label: 'Audit Mode', color: 'text-red-600', icon: <ShieldCheck className="w-3 h-3" /> },

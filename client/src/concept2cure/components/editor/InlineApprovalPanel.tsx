@@ -70,7 +70,7 @@ interface InlineApprovalPanelProps {
 
 const ANNOTATION_TYPES = [
   { key: 'approval_request', label: 'Request Approval', icon: Shield, color: 'text-blue-600', bg: 'bg-blue-50' },
-  { key: 'review_request', label: 'Request Review', icon: Eye, color: 'text-violet-600', bg: 'bg-violet-50' },
+  { key: 'review_request', label: 'Request Review', icon: Eye, color: 'text-stone-600', bg: 'bg-stone-100' },
   { key: 'comment', label: 'Comment', icon: MessageSquare, color: 'text-stone-600', bg: 'bg-stone-50' },
   { key: 'question', label: 'Question', icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50' },
   { key: 'suggestion', label: 'Suggestion', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },

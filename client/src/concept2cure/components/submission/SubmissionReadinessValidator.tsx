@@ -499,7 +499,7 @@ export function SubmissionReadinessValidator({
                       </div>
                       {check.autoFixable && (
                         <button
-                          className="shrink-0 px-2 py-1 text-[10px] font-medium text-violet-600 bg-violet-50 rounded hover:bg-violet-100 transition-colors duration-150"
+                          className="shrink-0 px-2 py-1 text-[10px] font-medium text-stone-600 bg-stone-100 rounded hover:bg-stone-200 transition-colors duration-150"
                           onClick={() => {
                             // Extract artifact ID from check.id
                             const artifactId = check.id.replace(/-(?:wordcount|placeholder|headings|status)$/, '');

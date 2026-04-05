@@ -400,7 +400,7 @@ export function CitationSearchPanel({
     >
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-stone-100 bg-stone-50/50">
-        <BookOpen className="w-4 h-4 text-violet-600" />
+        <BookOpen className="w-4 h-4 text-stone-600" />
         <span className="text-sm font-semibold text-stone-900">Insert Citation</span>
         <div className="flex-1" />
         <Button

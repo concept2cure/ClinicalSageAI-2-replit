@@ -227,7 +227,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
           <div className={cn(
             'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
             artifact.type === 'document' && 'bg-blue-100',
-            artifact.type === 'code' && 'bg-violet-100',
+            artifact.type === 'code' && 'bg-stone-200',
             artifact.type === 'table' && 'bg-emerald-100',
             artifact.type === 'markdown' && 'bg-amber-100',
           )}>
@@ -236,7 +236,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
               className={cn(
                 'w-5 h-5',
                 artifact.type === 'document' && 'text-blue-600',
-                artifact.type === 'code' && 'text-violet-600',
+                artifact.type === 'code' && 'text-stone-600',
                 artifact.type === 'table' && 'text-emerald-600',
                 artifact.type === 'markdown' && 'text-amber-600',
               )}

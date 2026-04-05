@@ -120,7 +120,7 @@ const StatCard: React.FC<{
 const REVIEW_STATUS_CONFIG: Record<string, StatusBadgeConfig> = {
   blocked: { key: 'blocked', label: 'Blocked', color: 'bg-red-100 text-red-700' },
   in_review: { key: 'in_review', label: 'In Review', color: 'bg-amber-100 text-amber-700' },
-  clear: { key: 'clear', label: 'Clear', color: 'bg-green-100 text-green-700' },
+  clear: { key: 'clear', label: 'Clear', color: 'bg-emerald-100 text-emerald-700' },
 };
 
 const ReviewStatusBadge: React.FC<{ status: string }> = ({ status }) => (
@@ -218,7 +218,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
           icon={CheckCircle2}
           label="Resolved"
           value={s.resolvedThreads}
-          color="text-green-500"
+          color="text-emerald-500"
         />
         <StatCard
           icon={ShieldAlert}
@@ -236,7 +236,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
           icon={Target}
           label="Change Requests"
           value={s.changeRequests}
-          color="text-violet-500"
+          color="text-stone-1000"
         />
         <StatCard
           icon={Users}
@@ -248,7 +248,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
           icon={UserCheck}
           label="Completion"
           value={`${s.reviewCompletionRate}%`}
-          color={s.reviewCompletionRate >= 80 ? 'text-green-500' : 'text-amber-500'}
+          color={s.reviewCompletionRate >= 80 ? 'text-emerald-500' : 'text-amber-500'}
         />
       </div>
 
@@ -336,7 +336,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
                     </td>
                     <td className="px-3 py-2 text-center tabular-nums">
                       {a.activeTasks > 0 ? (
-                        <span className="text-violet-600 font-medium">{a.activeTasks}</span>
+                        <span className="text-stone-600 font-medium">{a.activeTasks}</span>
                       ) : (
                         <span className="text-stone-400">0</span>
                       )}
@@ -363,7 +363,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
       {assigneeWorkload.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-stone-700 flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5 text-violet-500" />
+            <Users className="w-3.5 h-3.5 text-stone-1000" />
             Team Workload
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">

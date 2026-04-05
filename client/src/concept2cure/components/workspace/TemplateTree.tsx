@@ -127,7 +127,7 @@ function TemplateNodeRow({
 
         {/* Icon */}
         {isParent ? (
-          <Layers className="w-3.5 h-3.5 text-violet-500 shrink-0" />
+          <Layers className="w-3.5 h-3.5 text-stone-500 shrink-0" />
         ) : (
           <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
         )}
@@ -157,11 +157,11 @@ function TemplateNodeRow({
         {/* Create button */}
         <button
           onClick={() => onCreateFromTemplate(node.templateKey, node.ctdSection, node.label)}
-          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-violet-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           title={`Create "${node.label}" from template`}
           aria-label={`Create ${node.label} from template`}
         >
-          <Plus className="w-3 h-3 text-violet-600" />
+          <Plus className="w-3 h-3 text-stone-600" />
         </button>
         {/* Transform Canvas button */}
         {onOpenTransformCanvas && (
@@ -253,8 +253,8 @@ export const TemplateTree: React.FC<TemplateTreeProps> = ({
       </div>
 
       {/* Tip */}
-      <div className="px-3 py-2 border-b border-stone-200 bg-violet-50/40">
-        <p className="text-xs text-violet-600 leading-relaxed">
+      <div className="px-3 py-2 border-b border-stone-200 bg-stone-100/40">
+        <p className="text-xs text-stone-600 leading-relaxed">
           Templates are pre-structured documents wired to CTD sections. Click + to create a new
           document from any template.
         </p>
@@ -294,11 +294,11 @@ export const TemplateTree: React.FC<TemplateTreeProps> = ({
               </span>
               <button
                 onClick={() => onCreateFromTemplate(node.templateKey, node.ctdSection, node.label)}
-                className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-violet-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+                className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
                 title={`Create "${node.label}" from template`}
                 aria-label={`Create ${node.label} from template`}
               >
-                <Plus className="w-3 h-3 text-violet-600" />
+                <Plus className="w-3 h-3 text-stone-600" />
               </button>
               {onOpenTransformCanvas && (
                 <button

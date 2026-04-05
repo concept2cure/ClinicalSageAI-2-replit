@@ -1022,7 +1022,7 @@ function RiskBadge({ risk }: { risk: string }) {
   const colorMap: Record<string, string> = {
     low: 'text-emerald-400',
     moderate: 'text-amber-400',
-    high: 'text-orange-400',
+    high: 'text-amber-400',
     critical: 'text-red-400',
   };
   return <span className={`font-medium ${colorMap[risk] ?? ''}`}>{risk}</span>;

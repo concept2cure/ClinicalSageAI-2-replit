@@ -115,7 +115,7 @@ const MODE_CONFIG: Record<IndustryMode, {
 }> = {
   biotech: { label: 'Biotech', icon: Beaker, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
   pharma: { label: 'Pharma', icon: Building2, color: 'text-blue-600', bgColor: 'bg-blue-50' },
-  cro: { label: 'CRO', icon: Briefcase, color: 'text-violet-600', bgColor: 'bg-violet-50' },
+  cro: { label: 'CRO', icon: Briefcase, color: 'text-stone-600', bgColor: 'bg-stone-100' },
   medtech: { label: 'MedTech', icon: Microscope, color: 'text-sky-600', bgColor: 'bg-sky-50' },
   academic: { label: 'Academic', icon: GraduationCap, color: 'text-amber-600', bgColor: 'bg-amber-50' },
   regulatory: { label: 'Regulatory', icon: FileCheck, color: 'text-blue-600', bgColor: 'bg-blue-50' },

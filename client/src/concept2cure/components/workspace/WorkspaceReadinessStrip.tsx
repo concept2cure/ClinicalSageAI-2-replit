@@ -35,7 +35,7 @@ interface StatPillProps {
 const ICON_COLOR_MAP: Record<string, string> = {
   stone: 'text-stone-500',
   blue: 'text-blue-500',
-  violet: 'text-violet-500',
+  violet: 'text-stone-1000',
   amber: 'text-amber-500',
   emerald: 'text-emerald-500',
   red: 'text-red-500',
@@ -97,7 +97,7 @@ export const WorkspaceReadinessStrip: React.FC<Props> = ({
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border',
             complianceScore >= 95
-              ? 'bg-green-50 border-green-200 text-green-700'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
               : complianceScore >= 80
                 ? 'bg-amber-50 border-amber-200 text-amber-700'
                 : 'bg-red-50 border-red-200 text-red-700'

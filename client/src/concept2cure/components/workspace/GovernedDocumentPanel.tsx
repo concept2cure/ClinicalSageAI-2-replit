@@ -163,13 +163,13 @@ function EventIcon({ type }: { type: string }) {
     case 'status_change':
       return <Shield className="w-3 h-3 text-blue-500" />;
     case 'placement':
-      return <MapPin className="w-3 h-3 text-violet-500" />;
+      return <MapPin className="w-3 h-3 text-stone-1000" />;
     case 'edit':
       return <PenTool className="w-3 h-3 text-amber-500" />;
     case 'generation':
-      return <Sparkles className="w-3 h-3 text-violet-500" />;
+      return <Sparkles className="w-3 h-3 text-stone-1000" />;
     case 'rollback':
-      return <RotateCcw className="w-3 h-3 text-orange-500" />;
+      return <RotateCcw className="w-3 h-3 text-amber-500" />;
     case 'export':
       return <FileText className="w-3 h-3 text-emerald-500" />;
     case 'approval':
@@ -946,9 +946,9 @@ function GovernanceTrailTab({ projectId, artifactId }: { projectId: string | num
   const boundaryColor: Record<string, string> = {
     advisory: 'bg-stone-100 text-stone-600',
     governed_draft: 'bg-blue-100 text-stone-700',
-    approved: 'bg-green-100 text-green-700',
+    approved: 'bg-emerald-100 text-emerald-700',
     locked: 'bg-amber-100 text-amber-700',
-    submission_ready: 'bg-purple-100 text-purple-700',
+    submission_ready: 'bg-stone-200 text-stone-700',
   };
 
   return (
@@ -965,7 +965,7 @@ function GovernanceTrailTab({ projectId, artifactId }: { projectId: string | num
             <div key={t.id} className="flex items-start gap-2 relative">
               <div className="relative z-10 mt-1 bg-white">
                 {t.transitionAllowed ? (
-                  <CheckCircle className="w-3 h-3 text-green-500" />
+                  <CheckCircle className="w-3 h-3 text-emerald-500" />
                 ) : (
                   <AlertCircle className="w-3 h-3 text-red-400" />
                 )}
@@ -979,7 +979,7 @@ function GovernanceTrailTab({ projectId, artifactId }: { projectId: string | num
                   <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium', boundaryColor[t.toBoundary] || 'bg-stone-100 text-stone-600')}>
                     {boundaryLabel[t.toBoundary] || t.toBoundary}
                   </span>
-                  <span className={cn('ml-1 text-[10px]', t.transitionAllowed ? 'text-green-600' : 'text-red-500')}>
+                  <span className={cn('ml-1 text-[10px]', t.transitionAllowed ? 'text-emerald-600' : 'text-red-500')}>
                     {t.transitionAllowed ? 'allowed' : 'blocked'}
                   </span>
                 </div>

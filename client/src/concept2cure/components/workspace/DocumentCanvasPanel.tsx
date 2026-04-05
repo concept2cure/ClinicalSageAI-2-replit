@@ -184,7 +184,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
           <div className="h-3.5 w-48 bg-stone-100 rounded animate-pulse" />
         </div>
         <div className="flex-1 overflow-y-auto bg-stone-50 p-6">
-          <div className="bg-white mx-auto shadow-sm border border-stone-200 rounded-sm px-12 py-8">
+          <div className="bg-white mx-auto shadow-sm border border-stone-200 rounded-sm px-6 py-8">
             <div className="space-y-3">
               {Array.from({ length: 15 }, (_, i) => (
                 <div key={i} className="h-4 bg-stone-100 rounded animate-pulse" style={{ width: `${85 - i * 3}%` }} />
@@ -336,7 +336,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
             </div>
 
             {/* Content / Editor */}
-            <div className="flex-1 px-12 py-12 text-sm text-stone-800 leading-7">
+            <div className="flex-1 px-6 py-12 text-sm text-stone-800 leading-7">
               {isEditing ? (
                 <textarea
                   value={editContent}

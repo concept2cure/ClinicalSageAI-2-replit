@@ -95,7 +95,7 @@ export function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqs
             </div>
             {reqs.starterTemplatesAvailable.map((t, i) => (
               <div key={i} className="text-stone-600 flex items-center gap-1 py-0.5">
-                <Layers className="w-2.5 h-2.5 text-violet-500" />
+                <Layers className="w-2.5 h-2.5 text-stone-1000" />
                 {t}
               </div>
             ))}

@@ -209,7 +209,7 @@ const DocumentUploadPanel: React.FC<{
         className={cn(
           'border border-dashed rounded-xl p-8 text-center transition-colors duration-150',
           isDragOver
-            ? 'border-violet-400 bg-violet-50'
+            ? 'border-stone-400 bg-stone-100'
             : 'border-stone-200 hover:border-stone-300 bg-stone-50/50'
         )}
       >
@@ -240,7 +240,7 @@ const DocumentUploadPanel: React.FC<{
               <FileText className="w-4 h-4 text-stone-500" />
               <span className="flex-1 text-sm text-stone-700 truncate">{file.name}</span>
               {file.status === 'processing' && (
-                <span className="flex items-center gap-1.5 text-xs text-violet-600">
+                <span className="flex items-center gap-1.5 text-xs text-stone-600">
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   Extracting...
                 </span>
@@ -283,7 +283,7 @@ const GuardrailStatusCard: React.FC<{
     status === 'pending' && 'border-l-stone-300',
   )}>
     <div className="flex items-center justify-between mb-1">
-      <span className="text-xs font-semibold text-violet-600">ICH {guideline}</span>
+      <span className="text-xs font-semibold text-stone-600">ICH {guideline}</span>
       <span className={cn(
         'flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded',
         status === 'pass' && 'bg-emerald-50 text-emerald-700',
@@ -531,7 +531,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
               className={cn(
                 'flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-t-lg border-b-2 transition-colors whitespace-nowrap',
                 activeTab === tab.id
-                  ? 'border-violet-500 text-stone-700 bg-white'
+                  ? 'border-stone-500 text-stone-700 bg-white'
                   : 'border-transparent text-stone-500 hover:text-stone-700 hover:bg-stone-50'
               )}
             >
@@ -557,12 +557,12 @@ export const CMCHub: React.FC<CMCHubProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white rounded-xl border p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <FlaskConical className="w-4 h-4 text-violet-500" />
+                    <FlaskConical className="w-4 h-4 text-stone-500" />
                     <span className="text-xs font-medium text-stone-500">Drug Substance (3.2.S)</span>
                   </div>
                   <div className="text-base font-semibold text-stone-900">{dsCompletion}%</div>
                   <div className="mt-2 h-1.5 bg-stone-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-violet-500 rounded-full transition-all duration-150" style={{ width: `${dsCompletion}%` }} />
+                    <div className="h-full bg-stone-500 rounded-full transition-all duration-150" style={{ width: `${dsCompletion}%` }} />
                   </div>
                 </div>
                 <div className="bg-white rounded-xl border p-4">
@@ -590,7 +590,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
               {/* ICH Guardrails */}
               <div>
                 <h2 className="text-sm font-semibold text-stone-900 mb-3 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-violet-500" />
+                  <Shield className="w-4 h-4 text-stone-500" />
                   ICH Quality Guardrails
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -603,7 +603,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
               {/* Document Upload */}
               <div>
                 <h2 className="text-sm font-semibold text-stone-900 mb-3 flex items-center gap-2">
-                  <Upload className="w-4 h-4 text-violet-500" />
+                  <Upload className="w-4 h-4 text-stone-500" />
                   Upload Documents to Auto-Populate
                 </h2>
                 <DocumentUploadPanel onUpload={handleUpload} uploadedFiles={uploadedFiles} />
@@ -617,7 +617,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                     onClick={() => setActiveTab('drug-substance')}
                     className="flex items-center gap-3 p-4 bg-white rounded-xl border hover:border-blue-200 hover:bg-blue-50/30 transition-colors text-left"
                   >
-                    <FlaskConical className="w-5 h-5 text-violet-500" />
+                    <FlaskConical className="w-5 h-5 text-stone-500" />
                     <div>
                       <p className="text-sm font-medium text-stone-900">Enter Drug Substance Data</p>
                       <p className="text-xs text-stone-500">CTD Section 3.2.S</p>
@@ -674,7 +674,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                 </div>
                 <div className="flex items-center gap-2 text-xs text-stone-500">
                   <div className="w-20 h-1.5 bg-stone-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-violet-500 rounded-full" style={{ width: `${dsCompletion}%` }} />
+                    <div className="h-full bg-stone-500 rounded-full" style={{ width: `${dsCompletion}%` }} />
                   </div>
                   {dsCompletion}% complete
                 </div>
@@ -721,7 +721,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
               {/* Upload section */}
               <div className="bg-white rounded-xl border p-5">
                 <h3 className="text-sm font-semibold text-stone-900 mb-4 flex items-center gap-2">
-                  <Upload className="w-4 h-4 text-violet-500" />
+                  <Upload className="w-4 h-4 text-stone-500" />
                   Upload Drug Substance Documents
                 </h3>
                 <p className="text-xs text-stone-500 mb-3">
@@ -982,7 +982,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
               {/* Drug Substance sections */}
               <div>
                 <h3 className="text-sm font-semibold text-stone-900 mb-3 flex items-center gap-2">
-                  <FlaskConical className="w-4 h-4 text-violet-500" />
+                  <FlaskConical className="w-4 h-4 text-stone-500" />
                   Drug Substance Sections (3.2.S)
                 </h3>
                 <div className="space-y-2">
@@ -991,14 +991,14 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                     const isGenerating = generatingSection === section.code;
                     return (
                       <div key={section.code} className="flex items-center gap-3 p-3 bg-white rounded-lg border hover:border-blue-200 transition-colors duration-150">
-                        <Icon className="w-4 h-4 text-violet-500 flex-shrink-0" />
+                        <Icon className="w-4 h-4 text-stone-500 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-stone-900">{section.code} — {section.title}</p>
                         </div>
                         <button
                           onClick={() => handleGenerateSection(section.code, section.title)}
                           disabled={isGenerating}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-50 text-stone-700 border border-blue-200 rounded-lg hover:bg-violet-100 transition-colors disabled:opacity-60"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-stone-100 text-stone-700 border border-blue-200 rounded-lg hover:bg-stone-200 transition-colors disabled:opacity-60"
                         >
                           {isGenerating ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />

@@ -190,8 +190,8 @@ const STATUS_CONFIG: Record<RegistrationStatus, {
   not_started: { label: 'Not Started', color: 'text-stone-500', bgColor: 'bg-stone-100' },
   dossier_prep: { label: 'Dossier Prep', color: 'text-blue-600', bgColor: 'bg-blue-100' },
   submitted: { label: 'Submitted', color: 'text-amber-600', bgColor: 'bg-amber-100' },
-  under_review: { label: 'Under Review', color: 'text-violet-600', bgColor: 'bg-violet-100' },
-  approved: { label: 'Approved', color: 'text-green-600', bgColor: 'bg-green-100' },
+  under_review: { label: 'Under Review', color: 'text-stone-600', bgColor: 'bg-stone-200' },
+  approved: { label: 'Approved', color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
   rejected: { label: 'Rejected', color: 'text-red-600', bgColor: 'bg-red-100' },
   withdrawn: { label: 'Withdrawn', color: 'text-stone-500', bgColor: 'bg-stone-100' },
 };
@@ -298,7 +298,7 @@ const PDUFACalendar: React.FC<{
                       </div>
                     </div>
                     {pdufa.priority && (
-                      <span className="mt-2 inline-block px-2 py-0.5 text-xs font-medium text-stone-700 bg-violet-100 rounded-full">
+                      <span className="mt-2 inline-block px-2 py-0.5 text-xs font-medium text-stone-700 bg-stone-200 rounded-full">
                         Priority Review
                       </span>
                     )}
@@ -513,7 +513,7 @@ const TherapeuticAreaCard: React.FC<{
           {/* Health Score */}
           <div className={cn(
             'w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold',
-            portfolio.healthScore >= 80 && 'bg-green-100 text-green-700',
+            portfolio.healthScore >= 80 && 'bg-emerald-100 text-emerald-700',
             portfolio.healthScore >= 60 && portfolio.healthScore < 80 && 'bg-amber-100 text-amber-700',
             portfolio.healthScore < 60 && 'bg-red-100 text-red-700'
           )}>
@@ -565,7 +565,7 @@ const TherapeuticAreaCard: React.FC<{
                   )}
                   <span className={cn(
                     'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold',
-                    product.healthScore >= 80 && 'bg-green-100 text-green-700',
+                    product.healthScore >= 80 && 'bg-emerald-100 text-emerald-700',
                     product.healthScore >= 60 && product.healthScore < 80 && 'bg-amber-100 text-amber-700',
                     product.healthScore < 60 && 'bg-red-100 text-red-700'
                   )}>
@@ -683,8 +683,8 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
               {metrics.overdueCommitments}
             </p>
           </div>
-          <div className="p-3 bg-violet-50 rounded-lg">
-            <p className="text-xs text-violet-600">At Risk (30d)</p>
+          <div className="p-3 bg-stone-100 rounded-lg">
+            <p className="text-xs text-stone-600">At Risk (30d)</p>
             <p className="text-base font-medium text-stone-700">{metrics.atRiskCommitments}</p>
           </div>
         </div>

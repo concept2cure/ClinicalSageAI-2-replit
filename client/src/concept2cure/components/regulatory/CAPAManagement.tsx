@@ -1239,27 +1239,27 @@ export function CAPAManagement() {
       </div>
 
       {/* RI Integration */}
-      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-stone-50">
+      <div className="border border-border/40 rounded-sm bg-background border-stone-200 bg-stone-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-100 rounded-full">
-              <Sparkles className="w-6 h-6 text-purple-600" />
+            <div className="p-3 bg-stone-200 rounded-full">
+              <Sparkles className="w-6 h-6 text-stone-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-purple-900">AnA CAPA Intelligence</h3>
-              <p className="text-sm text-purple-700">
+              <h3 className="font-semibold text-stone-900">AnA CAPA Intelligence</h3>
+              <p className="text-sm text-stone-700">
                 Analyze CAPA trends, identify recurring issues, and get RI-powered recommendations
                 for root cause analysis and preventive actions.
               </p>
             </div>
             <Button
               variant="outline"
-              className="border-purple-300 text-purple-700 hover:bg-purple-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
+              className="border-stone-300 text-stone-700 hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
             >
               <BarChart3 className="w-4 h-4 mr-2" />
               View Trends
             </Button>
-            <Button className="bg-purple-600 hover:bg-purple-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none">
+            <Button className="bg-stone-600 hover:bg-stone-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none">
               <Brain className="w-4 h-4 mr-2" />
               RI Analysis
             </Button>

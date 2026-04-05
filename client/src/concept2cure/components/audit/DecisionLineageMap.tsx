@@ -89,9 +89,9 @@ interface DecisionLineageMapProps {
 const NODE_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
   decision: { label: 'Decision', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
   document_state: { label: 'Document', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
-  workflow_step: { label: 'Workflow', color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-200' },
+  workflow_step: { label: 'Workflow', color: 'text-stone-600', bg: 'bg-stone-100', border: 'border-stone-200' },
   evidence_link: { label: 'Evidence', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
-  delegation: { label: 'Delegation', color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200' },
+  delegation: { label: 'Delegation', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
 };
 
 const ACTION_ICONS: Record<string, React.ReactNode> = {
@@ -99,7 +99,7 @@ const ACTION_ICONS: Record<string, React.ReactNode> = {
   rejected: <XCircle className="w-3.5 h-3.5 text-red-600" />,
   pending: <Clock className="w-3.5 h-3.5 text-amber-600" />,
   awaiting_decision: <Clock className="w-3.5 h-3.5 text-amber-500" />,
-  delegated: <ArrowRight className="w-3.5 h-3.5 text-orange-600" />,
+  delegated: <ArrowRight className="w-3.5 h-3.5 text-amber-600" />,
 };
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -243,7 +243,7 @@ const DecisionLineageMap: React.FC<DecisionLineageMapProps> = ({
             <span className="font-semibold text-red-600">{graphData.metadata.totalRejections}</span> rejected
           </span>
           <span className="text-stone-500">
-            <span className="font-semibold text-orange-600">{graphData.metadata.totalDelegations}</span> delegated
+            <span className="font-semibold text-amber-600">{graphData.metadata.totalDelegations}</span> delegated
           </span>
         </div>
       </div>

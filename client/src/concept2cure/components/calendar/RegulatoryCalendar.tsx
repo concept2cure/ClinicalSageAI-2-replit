@@ -122,8 +122,8 @@ const EVENT_CONFIG: Record<EventType, {
   filing: {
     icon: FileText,
     color: 'text-stone-700',
-    bgColor: 'bg-violet-100',
-    borderColor: 'border-violet-300',
+    bgColor: 'bg-stone-200',
+    borderColor: 'border-stone-300',
     label: 'Filing',
   },
   internal: {
@@ -142,16 +142,16 @@ const EVENT_CONFIG: Record<EventType, {
   },
   variation: {
     icon: FileText,
-    color: 'text-pink-700',
-    bgColor: 'bg-pink-100',
-    borderColor: 'border-pink-300',
+    color: 'text-stone-700',
+    bgColor: 'bg-stone-200',
+    borderColor: 'border-stone-300',
     label: 'Variation',
   },
   psur: {
     icon: AlertTriangle,
-    color: 'text-orange-700',
-    bgColor: 'bg-orange-100',
-    borderColor: 'border-orange-300',
+    color: 'text-amber-700',
+    bgColor: 'bg-amber-100',
+    borderColor: 'border-amber-300',
     label: 'PSUR/PBRER',
   },
 };

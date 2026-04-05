@@ -103,7 +103,7 @@ function RiskBadge({ level }: { level: string }) {
   const colors: Record<string, string> = {
     low: 'bg-emerald-100 text-emerald-700',
     medium: 'bg-amber-100 text-amber-700',
-    high: 'bg-orange-100 text-orange-700',
+    high: 'bg-amber-100 text-amber-700',
     critical: 'bg-red-100 text-red-700',
   };
   return (
@@ -322,14 +322,14 @@ export function RegulatoryIntelligencePanel({
 
                 {/* Recommendations */}
                 {analysisResult.ana_1_0_ri_recommendations?.length > 0 && (
-                  <div className="p-2.5 bg-violet-50 border border-violet-100 rounded-lg">
+                  <div className="p-2.5 bg-stone-100 border border-stone-200 rounded-lg">
                     <span className="text-xs font-semibold text-stone-700 uppercase tracking-wider">
                       Recommendations
                     </span>
                     <ul className="mt-1.5 space-y-1">
                       {analysisResult.ana_1_0_ri_recommendations.map((rec, i) => (
                         <li key={i} className="flex items-start gap-1.5 text-xs text-stone-700">
-                          <Lightbulb className="w-3 h-3 flex-shrink-0 mt-0.5 text-violet-500" />
+                          <Lightbulb className="w-3 h-3 flex-shrink-0 mt-0.5 text-stone-500" />
                           {rec}
                         </li>
                       ))}
@@ -520,7 +520,7 @@ export function RegulatoryIntelligencePanel({
                     <ul className="mt-1 space-y-0.5">
                       {compareResult.recommendations.map((r, i) => (
                         <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
-                          <Lightbulb className="w-3 h-3 flex-shrink-0 mt-0.5 text-violet-500" />
+                          <Lightbulb className="w-3 h-3 flex-shrink-0 mt-0.5 text-stone-500" />
                           {r}
                         </li>
                       ))}
@@ -553,7 +553,7 @@ export function RegulatoryIntelligencePanel({
             <button
               onClick={handleRunRiskAnalysis}
               disabled={clinicalRisk.isPending}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-orange-600 text-white text-xs font-medium rounded-lg hover:bg-orange-700 disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 disabled:opacity-60"
             >
               {clinicalRisk.isPending ? (
                 <Spinner size="sm" />
@@ -651,10 +651,10 @@ export function RegulatoryIntelligencePanel({
 
             {/* Clinical risk results */}
             {riskResult && (
-              <div className="p-2.5 bg-orange-50 border border-orange-100 rounded-lg space-y-2">
+              <div className="p-2.5 bg-amber-50 border border-amber-100 rounded-lg space-y-2">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <ShieldAlert className="w-3.5 h-3.5 text-orange-600" />
-                  <span className="text-xs font-semibold text-orange-800 uppercase tracking-wider">
+                  <ShieldAlert className="w-3.5 h-3.5 text-amber-600" />
+                  <span className="text-xs font-semibold text-amber-800 uppercase tracking-wider">
                     Clinical Risk Assessment
                   </span>
                 </div>
@@ -664,12 +664,12 @@ export function RegulatoryIntelligencePanel({
                     <ScoreBar
                       value={(riskResult.mitigationPlan.overallRiskScore || 0) / 100}
                       label="Overall Risk Score"
-                      color="bg-orange-500"
+                      color="bg-amber-500"
                     />
 
                     {riskResult.mitigationPlan.goNoGoRecommendation && (
-                      <div className="p-2 bg-white rounded border border-orange-200">
-                        <span className="text-xs font-semibold text-orange-700">Go/No-Go:</span>
+                      <div className="p-2 bg-white rounded border border-amber-200">
+                        <span className="text-xs font-semibold text-amber-700">Go/No-Go:</span>
                         <p className="text-xs text-stone-700 mt-0.5">
                           {riskResult.mitigationPlan.goNoGoRecommendation}
                         </p>
@@ -718,10 +718,10 @@ export function RegulatoryIntelligencePanel({
             {precedentStrategy.data && (
               <div className="space-y-2">
                 {/* Recommended strategy */}
-                <div className="p-2.5 bg-violet-50 border border-violet-100 rounded-lg">
+                <div className="p-2.5 bg-stone-100 border border-stone-200 rounded-lg">
                   <div className="flex items-center gap-1.5 mb-2">
-                    <Target className="w-3.5 h-3.5 text-violet-600" />
-                    <span className="text-xs font-semibold text-violet-800">
+                    <Target className="w-3.5 h-3.5 text-stone-600" />
+                    <span className="text-xs font-semibold text-stone-800">
                       Recommended Strategy
                     </span>
                   </div>
@@ -737,7 +737,7 @@ export function RegulatoryIntelligencePanel({
                           <ScoreBar
                             value={rs.confidence}
                             label="Confidence"
-                            color="bg-violet-500"
+                            color="bg-stone-500"
                           />
                         </div>
                       )}

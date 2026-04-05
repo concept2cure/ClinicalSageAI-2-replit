@@ -190,7 +190,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                       isLatest
                         ? 'bg-stone-600 border-stone-600'
                         : iSelected
-                          ? 'bg-violet-500 border-violet-500'
+                          ? 'bg-stone-1000 border-stone-1000'
                           : 'bg-white border-stone-300'
                     )}
                   />
@@ -204,7 +204,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                   className={cn(
                     'flex-1 min-w-0 mb-3 rounded-lg border p-3 cursor-pointer transition-all duration-150',
                     iSelected
-                      ? 'border-violet-300 bg-violet-50 shadow-sm'
+                      ? 'border-stone-300 bg-stone-100 shadow-sm'
                       : isLatest
                         ? 'border-blue-200 bg-blue-50/50'
                         : 'border-stone-200 bg-white hover:border-stone-300 hover:shadow-sm'
