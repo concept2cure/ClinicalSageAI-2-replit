@@ -383,7 +383,7 @@ export class ApprovalOrchestrator {
    */
   async getPendingApprovals(
     userId: string,
-    organizationId: string,
+    organizationId: string | number,
   ): Promise<PendingApproval[]> {
     // Get all active workflows for the org
     const activeWorkflows = await db

@@ -35,7 +35,7 @@
     "typecheck": "NODE_OPTIONS=\"--max-old-space-size=6144\" tsc --noEmit",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern scripts --ignore-pattern client/src --ignore-pattern tests/integration/api/vault.test.js --ignore-pattern server/events/eventBus.js --ignore-pattern server/routes/fda510k-routes.ts --ignore-pattern server/services/pdfGenerator.js",
     "lint:fix": "eslint . --fix --ignore-pattern dist --ignore-pattern scripts --ignore-pattern client/src --ignore-pattern tests/integration/api/vault.test.js --ignore-pattern server/events/eventBus.js --ignore-pattern server/routes/fda510k-routes.ts --ignore-pattern server/services/pdfGenerator.js",
-    "test": "jest --config scripts/jest.config.js && NODE_OPTIONS=\"--max-old-space-size=4096\" vitest run --config vitest.config.ts",
+    "test": "jest --config scripts/jest.config.js && NODE_OPTIONS=\"--max-old-space-size=4096\" vitest run --workspace vitest.workspace.ts",
     "ci:ban-new-pool": "bash scripts/ci/ban-new-pool.sh",
     "ci:governed-export-routes": "node scripts/ci/check-governed-export-routes.mjs",
     "ci:governed-export-consequence-shape": "node scripts/ci/check-governed-export-consequence-shape.mjs",
