@@ -874,8 +874,9 @@ export async function enrichContextForChat(params: {
   const sources: string[] = [];
   const sourcesFailed: string[] = [];
   let sourcesAttempted = 0;
-  let triggerType: 'slash_command' | 'natural_language' | 'proactive' | 'none' = 'none';
+  let triggerType: 'slash_command' | 'app_mention' | 'natural_language' | 'proactive' | 'none' = 'none';
   let detectedCommand: string | undefined;
+  let detectedAppMentionId: string | undefined;
   let rewrittenMessage: string | undefined;
 
   if (!projectId) return {
@@ -1091,6 +1092,7 @@ export async function enrichContextForChat(params: {
   if (appMention) {
     triggerType = 'app_mention';
     detectedCommand = `@${appMention.appId}`;
+    detectedAppMentionId = appMention.appId;
 
     // Resolve enrichment sources for this app
     const appEnrichFnMap: Record<string, () => Promise<string>> = {
@@ -1225,6 +1227,7 @@ export async function enrichContextForChat(params: {
       sourcesFailed,
       triggerType,
       detectedCommand,
+      detectedAppMention: detectedAppMentionId,
       hasProjectContext: true,
     },
   };

@@ -108,6 +108,13 @@ export {
   type CommandResult,
   type CommandName,
 } from './command-executor.js';
+export {
+  enrichContextForChat,
+  detectSlashCommand,
+  detectAppMention,
+  KNOWN_APPS,
+  SUPPORTED_SLASH_COMMANDS,
+} from './context-enrichment.js';
 export { validateEvidence, quickEvidenceCheck } from './evidence-validation.js';
 export {
   evaluateMemoryCandidate,

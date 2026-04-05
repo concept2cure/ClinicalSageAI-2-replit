@@ -4304,87 +4304,115 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             )}
             <div
               className={cn(
-                'flex items-end gap-2 px-4 py-3 bg-stone-50/80 border rounded-2xl transition-all duration-200',
+                'relative flex flex-col bg-stone-50/80 border rounded-2xl transition-all duration-200',
                 isFocused
                   ? 'border-stone-300 ring-2 ring-stone-200/50 bg-white shadow-sm'
-                  : 'border-stone-200 hover:border-stone-300'
+                  : 'border-stone-200 hover:border-stone-300',
+                isDragging && 'border-terracotta-300 ring-2 ring-terracotta-100 bg-terracotta-50/30'
               )}
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
             >
-              <div className="flex items-center gap-1.5 flex-shrink-0 self-center">
-                <Sparkles className="w-4 h-4 text-stone-500" />
-                {screenLabel && (
-                  <span className="text-[10px] text-[#B0AEA5] font-medium hidden sm:inline">
-                    {screenLabel}
-                  </span>
-                )}
-              </div>
-              {/* Queue Status Banner */}
-              {conversationQueue.length > 0 && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 border-t border-stone-100 text-[11px] text-stone-500">
-                  {activeQueueItemId && <span className="text-stone-600">● Working</span>}
-                  {conversationQueue.filter(i => i.status === 'queued').length > 0 && (
-                    <span>
-                      Queued: {conversationQueue.filter(i => i.status === 'queued').length}
-                    </span>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setConversationQueue([])}
-                    className="ml-auto h-auto py-0 px-1 text-stone-400 hover:text-stone-600"
-                  >
-                    Clear
-                  </Button>
+              {isDragging && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/80 border-2 border-dashed border-terracotta-300 pointer-events-none">
+                  <div className="flex items-center gap-2 text-sm text-terracotta-500 font-medium">
+                    <Upload className="w-4 h-4" />
+                    Drop files to attach
+                  </div>
                 </div>
               )}
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => {
-                  setIsFocused(false);
-                  setTimeout(() => setSlashMenuOpen(false), 150);
-                }}
-                placeholder="Message AnA — type / for commands, @ for apps..."
-                rows={1}
-                className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
-              />
-              {hasMessages && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
+              {attachedFiles.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 px-4 pt-2.5 pb-0">
+                  {attachedFiles.map((file, idx) => (
+                    <div key={`${file.name}-${idx}`} className="flex items-center gap-1.5 px-2 py-1 bg-stone-100 rounded-lg text-[11px] text-stone-600 max-w-[180px]">
+                      <Paperclip className="w-3 h-3 flex-shrink-0 text-stone-400" />
+                      <span className="truncate">{file.name}</span>
+                      <button type="button" onClick={() => removeAttachedFile(idx)} className="flex-shrink-0 text-stone-400 hover:text-stone-600 transition-colors" aria-label={`Remove ${file.name}`}>
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-end gap-2 px-4 py-3">
+                <div className="flex items-center gap-1.5 flex-shrink-0 self-center">
+                  <Sparkles className="w-4 h-4 text-stone-500" />
+                  {screenLabel && (
+                    <span className="text-[10px] text-[#B0AEA5] font-medium hidden sm:inline">
+                      {screenLabel}
+                    </span>
+                  )}
+                </div>
+                {/* Queue Status Banner */}
+                {conversationQueue.length > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 border-t border-stone-100 text-[11px] text-stone-500">
+                    {activeQueueItemId && <span className="text-stone-600">● Working</span>}
+                    {conversationQueue.filter(i => i.status === 'queued').length > 0 && (
+                      <span>
+                        Queued: {conversationQueue.filter(i => i.status === 'queued').length}
+                      </span>
+                    )}
                     <Button
                       variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        setMessages([]);
-                        threadIdRef.current = null;
-                        onThreadChange?.(undefined);
-                      }}
-                      className="flex-shrink-0 h-7 w-7 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg"
-                      aria-label="New thread"
+                      size="sm"
+                      onClick={() => setConversationQueue([])}
+                      className="ml-auto h-auto py-0 px-1 text-stone-400 hover:text-stone-600"
                     >
-                      <RotateCcw className="w-3.5 h-3.5" />
+                      Clear
                     </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">New thread</TooltipContent>
-                </Tooltip>
-              )}
-              <Button
-                variant="ghost"
-                onClick={() => handleSend()}
-                disabled={!input.trim() || isThinking}
-                className={cn(
-                  'flex-shrink-0 p-2 h-auto rounded-full transition-colors duration-150',
-                  input.trim() && !isThinking
-                    ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
-                    : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
+                  </div>
                 )}
-                aria-label="Send message"
-              >
-                <ArrowUp className="w-4 h-4" />
-              </Button>
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => {
+                    setIsFocused(false);
+                    setTimeout(() => setSlashMenuOpen(false), 150);
+                  }}
+                  placeholder="Message AnA — type / for commands, @ for apps..."
+                  rows={1}
+                  className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
+                />
+                {hasMessages && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setMessages([]);
+                          threadIdRef.current = null;
+                          onThreadChange?.(undefined);
+                        }}
+                        className="flex-shrink-0 h-7 w-7 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg"
+                        aria-label="New thread"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">New thread</TooltipContent>
+                  </Tooltip>
+                )}
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSend()}
+                  disabled={!input.trim() || isThinking}
+                  className={cn(
+                    'flex-shrink-0 p-2 h-auto rounded-full transition-colors duration-150',
+                    input.trim() && !isThinking
+                      ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
+                      : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
+                  )}
+                  aria-label="Send message"
+                >
+                  <ArrowUp className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -5360,12 +5388,39 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
           <div
             className={cn(
-              'flex items-end gap-2 px-4 py-3 bg-stone-50/80 border rounded-2xl transition-all duration-200',
+              'relative flex flex-col bg-stone-50/80 border rounded-2xl transition-all duration-200',
               isFocused
                 ? 'border-stone-300 ring-2 ring-stone-200/50 bg-white shadow-sm'
-                : 'border-stone-200 hover:border-stone-300'
+                : 'border-stone-200 hover:border-stone-300',
+              isDragging && 'border-terracotta-300 ring-2 ring-terracotta-100 bg-terracotta-50/30'
             )}
+            onDragOver={handleDragOver}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
           >
+            {isDragging && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/80 border-2 border-dashed border-terracotta-300 pointer-events-none">
+                <div className="flex items-center gap-2 text-sm text-terracotta-500 font-medium">
+                  <Upload className="w-4 h-4" />
+                  Drop files to attach
+                </div>
+              </div>
+            )}
+            {attachedFiles.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 px-4 pt-2.5 pb-0">
+                {attachedFiles.map((file, idx) => (
+                  <div key={`${file.name}-${idx}`} className="flex items-center gap-1.5 px-2 py-1 bg-stone-100 rounded-lg text-[11px] text-stone-600 max-w-[180px]">
+                    <Paperclip className="w-3 h-3 flex-shrink-0 text-stone-400" />
+                    <span className="truncate">{file.name}</span>
+                    <button type="button" onClick={() => removeAttachedFile(idx)} className="flex-shrink-0 text-stone-400 hover:text-stone-600 transition-colors" aria-label={`Remove ${file.name}`}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex items-end gap-2 px-4 py-3">
             {/* Mode selector — Claude.ai model-picker style */}
             <div className="relative flex-shrink-0 self-center" ref={modeDropdownRef}>
               <Button

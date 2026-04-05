@@ -482,7 +482,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       }
     }
 
-    // Add current message (use rewritten version if slash command detected)
+    // Add current message (use rewritten version if slash command or @app mention detected)
     const chatEffectiveMessage = chatEnrichment.rewrittenMessage || message;
     messages.push({ role: 'user', content: chatEffectiveMessage });
 
@@ -900,7 +900,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       console.log(`[AnA RI Stream] Context enriched with: ${enrichment.sources.join(', ')}`);
     }
 
-    // Use rewritten message if slash command was detected
+    // Use rewritten message if slash command or @app mention was detected
     const effectiveMessage = enrichment.rewrittenMessage || message;
 
     const fullSystemPrompt =
