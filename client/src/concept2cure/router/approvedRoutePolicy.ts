@@ -19,7 +19,7 @@ export interface RoutePolicyRule {
 
 const APPROVED_EXACT_ROUTES = ['/concept2cure', '/concept2cure/projects'] as const;
 const APPROVED_PREFIX_ROUTES = ['/concept2cure/vault', '/concept2cure/review', '/concept2cure/setup'] as const;
-const APPROVED_PROJECT_MODULES: ReadonlySet<ProjectModuleKey> = new Set(['510k', 'pma', 'cer']);
+const APPROVED_PROJECT_MODULES: ReadonlySet<ProjectModuleKey> = new Set(['510k', 'pma', 'cer', 'ind', 'ectd', 'cmc']);
 const HIDDEN_PATTERNS = ['/concept2cure/admin', '/concept2cure/internal', '/concept2cure/labs', '/concept2cure/legacy'] as const;
 
 export const ROUTE_POLICY_TABLE: RoutePolicyRule[] = [
