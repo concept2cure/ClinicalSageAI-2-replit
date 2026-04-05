@@ -1,4 +1,0 @@
-# IND Automation Service - Service-specific dependencies
-# Note: Core dependencies (FastAPI, uvicorn, pydantic, requests, python-multipart) are in server/services/python/requirements.txt
-# Only service-specific dependencies listed here to avoid duplicates
-docxtpl==0.16.7

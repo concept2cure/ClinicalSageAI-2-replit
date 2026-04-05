@@ -3,12 +3,9 @@ import clientIntelligenceRoutes from '../routes/client-intelligence';
 import accountIntelligenceRoutes from '../routes/account-intelligence';
 import universalPackagerRoutes from '../routes/universal-packager';
 import precedentEngineRoutes from '../routes/precedent-engine';
-import crossJurisdictionalRoutes from '../routes/cross-jurisdictional';
 import harmonizeRoutes from '../routes/harmonize';
 import escalateRoutes from '../routes/escalate';
 import validateCompletenessRoutes from '../routes/validate-completeness';
-import anaGoldStandardRoutes from '../routes/ana-gold-standard';
-import anaContinuousEvalRoutes from '../routes/ana-continuous-eval';
 import submissionCenterRoutes from '../routes/submissionCenter.routes';
 import regulatoryPrecedentIntelligenceRoutes from '../routes/regulatory-precedent-intelligence';
 
@@ -38,12 +35,9 @@ export async function registerGovernanceRoutes(app: Express) {
   app.use('/api/account-intelligence', accountIntelligenceRoutes);
   app.use('/api/packager', universalPackagerRoutes);
   app.use('/api/precedent-engine', precedentEngineRoutes);
-  app.use('/api/cross-jurisdictional', crossJurisdictionalRoutes);
   app.use('/api/harmonize', harmonizeRoutes);
   app.use('/api/escalate', escalateRoutes);
   app.use('/api/validate-completeness', validateCompletenessRoutes);
-  app.use('/api/ana-gold-standard', anaGoldStandardRoutes);
-  app.use('/api/ana-continuous-eval', anaContinuousEvalRoutes);
   app.use('/api/submission-center', submissionCenterRoutes);
   app.use('/api/regulatory-precedent-intelligence', regulatoryPrecedentIntelligenceRoutes);
 

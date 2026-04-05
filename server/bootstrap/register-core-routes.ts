@@ -7,7 +7,6 @@ import enterpriseRoutes from '../api/enterprise/routes.js';
 import rbacRoutes from '../api/enterprise/rbac-routes.js';
 import cmcProjectRoutes from '../api/cmc/projectRoutes';
 import cmcBlueprintRoutes from '../api/cmc/blueprintRoutes';
-import cmcDashboardRoutes from '../routes/cmc-dashboard';
 import cmcAggregatorRoutes from '../api/cmc/index.js';
 import cmcDashboardPrisma from '../routes/cmc-dashboard-prisma';
 import cmcCoreRoutes from '../api/cmc/routes';
@@ -44,7 +43,6 @@ export function registerCoreRoutes({ app, pool, aiCircuitBreaker }: RouteBootstr
     app.use('/api/cmc/module3-os', cmcModule3OperatingSystemRoutes);
     app.use('/api/cmc/collaboration', cmcCollaborationRoutes);
     app.use('/api/cmc/documents', cmcDocumentRoutes);
-    app.use('/api/cmc/dashboard-legacy', cmcDashboardRoutes);
     app.use('/api/cmc/dashboard', cmcDashboardPrisma);
     console.log('✅ CMC Module API routes mounted');
   } catch (error) {

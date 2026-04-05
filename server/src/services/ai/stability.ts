@@ -4,7 +4,7 @@
  * Real implementations that call the AI Gateway for ICH-compliant
  * stability analysis, drafting, and decision support.
  */
-import { getGateway } from '../ai-gateway/index.js';
+import { getGateway } from '../../../services/ai-gateway/index.js';
 
 // ──────────────────────────────────────────────
 // 1. aiExplainStability

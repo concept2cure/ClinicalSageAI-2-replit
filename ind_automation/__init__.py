@@ -1,1 +1,0 @@
-"""IND Automation Package."""

@@ -264,8 +264,7 @@ if (DEBUG) {
 // Beta-ops telemetry collection for guided user-test API lanes only.
 app.use('/api', betaFlowTelemetryMiddleware);
 
-const betaOpsTelemetryRoutes = (await import('./routes/beta-ops-telemetry')).default;
-app.use('/api/ops', authMiddleware, betaOpsTelemetryRoutes);
+// beta-ops-telemetry route removed (stub with no functionality)
 
 // ============================================================================
 // FAST-PATH ENDPOINTS — before all middleware for minimal latency
@@ -1401,21 +1400,13 @@ try {
 
 console.log('🧠 Cortex Prime AI Brain fully initialized with unified gateway');
 
-// Mount Unified Document Management System routes
+// Mount folder management routes (document-management and template-management stubs removed)
 try {
-  const [documentManagementRouter, folderManagementRouter, templateManagementRouter] =
-    await Promise.all([
-      import('./routes/document-management'),
-      import('./routes/folder-management.js'),
-      import('./routes/template-management.js'),
-    ]);
-
-  app.use('/api', documentManagementRouter.default);
+  const folderManagementRouter = await import('./routes/folder-management.js');
   app.use('/api', folderManagementRouter.default);
-  app.use('/api', templateManagementRouter.default);
-  console.log('✅ Document Management System routes mounted successfully');
+  console.log('✅ Folder management routes mounted');
 } catch (error) {
-  console.error('❌ Failed to mount Document Management routes:', error);
+  console.error('❌ Failed to mount folder management routes:', error);
 }
 
 // Serve uploaded SOPs
@@ -5735,23 +5726,21 @@ async function startServer() {
   }
 
   try {
-    const [versionDiffModule, documentsUnified, sourceLinksRoutes, documentIntelligenceRoutes] =
+    const [documentsUnified, sourceLinksRoutes, documentIntelligenceRoutes] =
       await Promise.all([
-        import('./routes/versionDiff'),
         import('./routes/documents-unified'),
         import('./routes/sourceLinks'),
         import('./routes/document-intelligence-routes'),
       ]);
 
     const documentsGateway = express.Router();
-    documentsGateway.use(versionDiffModule.default);
     documentsGateway.use(documentsUnified.default);
     documentsGateway.use(sourceLinksRoutes.default);
     documentsGateway.use(documentIntelligenceRoutes.default);
 
     app.use('/api/documents', documentsGateway);
     console.log(
-      '✅ Documents gateway mounted at /api/documents (versionDiff + unified + sourceLinks + intelligence)'
+      '✅ Documents gateway mounted at /api/documents (unified + sourceLinks + intelligence)'
     );
   } catch (error) {
     console.error('Failed to mount consolidated documents gateway routes:', error);

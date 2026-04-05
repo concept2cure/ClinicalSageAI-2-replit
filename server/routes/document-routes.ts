@@ -5,7 +5,7 @@ import { insertDocumentSchema, insertDocumentFolderSchema } from '@shared/schema
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import documentPreviewRouter from './documentPreview';
+// documentPreview stub removed — was a placeholder with no functionality
 import { randomUUID } from 'crypto';
 // Use cryptographically secure UUID for regulatory document identifiers
 const uuidv4 = () => randomUUID();
@@ -355,7 +355,6 @@ function generateHtmlFromDocument(document: any): string {
   `;
 }
 
-// Mount document preview sub-router
-router.use('/', documentPreviewRouter);
+// documentPreview sub-router removed (was a stub)
 
 export default router;
