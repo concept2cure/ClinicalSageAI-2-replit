@@ -91,6 +91,7 @@
     "beta:seed:biotech": "node scripts/seed-beta-biotech-workspace.mjs",
     "beta:typecheck": "NODE_OPTIONS=\"--max-old-space-size=4096\" tsc --noEmit -p tsconfig.beta-slice.json",
     "beta:founder-proof": "npx playwright test tests/e2e/510k-founder-path.e2e.spec.ts",
+    "beta:founder-proof:biotech": "npx playwright test tests/e2e/biotech-founder-path.e2e.spec.ts",
     "beta:proof": "node scripts/run-beta-founder-proof.mjs"
   },
   "lint-staged": {
