@@ -186,14 +186,38 @@ interface CacheOptions {
   ttl?: number;
   keyGenerator?: (req: Request) => string;
   condition?: (req: Request) => boolean;
+  /**
+   * When false (default), requests with authorization/session headers are never cached
+   * to prevent cross-tenant or cross-user response leakage.
+   */
+  allowAuthorizedRequestCaching?: boolean;
+}
+
+interface CachedApiResponse {
+  statusCode: number;
+  body: unknown;
+}
+
+function createDeterministicQueryKey(req: Request): string {
+  const queryEntries = Object.entries(req.query || {}).sort(([left], [right]) =>
+    left.localeCompare(right)
+  );
+  return `${req.path}?${JSON.stringify(queryEntries)}`;
 }
 
 export function cacheResponse(options: CacheOptions = {}) {
   const ttl = options.ttl || 60_000; // 1 minute default
+  const allowAuthorizedRequestCaching = options.allowAuthorizedRequestCaching === true;
 
   return (req: Request, res: Response, next: NextFunction) => {
     // Only cache GET requests
     if (req.method !== 'GET') return next();
+
+    // Prevent accidental caching of user/tenant-scoped responses unless explicitly enabled.
+    const hasAuthHeaders = Boolean(req.headers.authorization || req.headers.cookie);
+    if (hasAuthHeaders && !allowAuthorizedRequestCaching) {
+      return next();
+    }
 
     // Check condition
     if (options.condition && !options.condition(req)) return next();
@@ -201,13 +225,14 @@ export function cacheResponse(options: CacheOptions = {}) {
     // Generate cache key
     const key = options.keyGenerator
       ? options.keyGenerator(req)
-      : `${req.path}?${JSON.stringify(req.query)}`;
+      : createDeterministicQueryKey(req);
 
     // Check cache
     const cached = apiCache.get(key);
     if (cached) {
       res.setHeader('X-Cache', 'HIT');
-      return res.json(cached);
+      const payload = cached as CachedApiResponse;
+      return res.status(payload.statusCode).json(payload.body);
     }
 
     // Store original json method
@@ -215,9 +240,20 @@ export function cacheResponse(options: CacheOptions = {}) {
 
     // Override json to cache the response
     res.json = (body: any) => {
+      const cacheControl = String(res.getHeader('cache-control') || '').toLowerCase();
+      const responseSetsCookie = Boolean(res.getHeader('set-cookie'));
+      const responseDisablesCaching =
+        cacheControl.includes('no-store') || cacheControl.includes('private');
+
       if (res.statusCode >= 200 && res.statusCode < 300) {
-        apiCache.set(key, body, ttl);
-        res.setHeader('X-Cache', 'MISS');
+        if (!responseSetsCookie && !responseDisablesCaching) {
+          const payload: CachedApiResponse = {
+            statusCode: res.statusCode,
+            body,
+          };
+          apiCache.set(key, payload, ttl);
+          res.setHeader('X-Cache', 'MISS');
+        }
       }
       return originalJson(body);
     };
@@ -357,12 +393,12 @@ class PerformanceMonitor {
       );
     }
 
-    // Trim old metrics
+    // Trim old metrics with queue-style eviction to avoid repeated array copies.
     if (this.metrics.length > this.maxMetrics) {
-      this.metrics = this.metrics.slice(-this.maxMetrics);
+      this.metrics.shift();
     }
     if (this.slowRequests.length > 100) {
-      this.slowRequests = this.slowRequests.slice(-100);
+      this.slowRequests.shift();
     }
   }
 
@@ -581,22 +617,27 @@ export function applyPerformanceMiddleware(app: any) {
   // Start memory monitoring
   startMemoryMonitoring();
 
-  // Add performance stats endpoint
-  app.get('/api/perf/stats', (req: Request, res: Response) => {
-    res.json({
-      performance: performanceMonitor.getStats(),
-      memory: checkMemoryUsage(),
-      cache: {
-        global: globalCache.stats(),
-        api: apiCache.stats(),
-        embedding: embeddingCache.stats(),
-      },
-    });
-  });
+  // Add performance stats endpoints only in non-production and when explicitly enabled.
+  const performanceRoutesEnabled =
+    process.env.NODE_ENV !== 'production' && process.env.ENABLE_PERF_DEBUG_ROUTES === 'true';
 
-  app.get('/api/perf/slow-requests', (req: Request, res: Response) => {
-    res.json(performanceMonitor.getSlowRequests());
-  });
+  if (performanceRoutesEnabled) {
+    app.get('/api/perf/stats', (req: Request, res: Response) => {
+      res.json({
+        performance: performanceMonitor.getStats(),
+        memory: checkMemoryUsage(),
+        cache: {
+          global: globalCache.stats(),
+          api: apiCache.stats(),
+          embedding: embeddingCache.stats(),
+        },
+      });
+    });
+
+    app.get('/api/perf/slow-requests', (req: Request, res: Response) => {
+      res.json(performanceMonitor.getSlowRequests());
+    });
+  }
 
   console.log('✅ Enterprise performance middleware applied');
 }
