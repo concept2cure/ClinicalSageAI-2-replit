@@ -44,10 +44,12 @@ interface EnrichmentResult {
     sourcesSucceeded: string[];
     /** Sources that failed or had no data */
     sourcesFailed: string[];
-    /** Whether this was a slash-command-triggered or natural-language-triggered enrichment */
-    triggerType: 'slash_command' | 'natural_language' | 'proactive' | 'none';
+    /** Whether this was a slash-command-triggered, app-mention-triggered, or natural-language-triggered enrichment */
+    triggerType: 'slash_command' | 'app_mention' | 'natural_language' | 'proactive' | 'none';
     /** The detected slash command, if any */
     detectedCommand?: string;
+    /** The detected @app mention, if any */
+    detectedAppMention?: string;
     /** Whether project context was available */
     hasProjectContext: boolean;
   };
@@ -154,6 +156,52 @@ export function detectSlashCommand(message: string): SlashCommand | null {
   if (!match) return null;
   return { command: match[1].toLowerCase(), args: match[2].trim() };
 }
+
+// ─── @app mention detection ─────────────────────────────────────────────────
+
+interface AppMention {
+  appId: string;
+  remainingText: string;
+}
+
+/** Known app IDs that can be @-mentioned in chat messages */
+export const KNOWN_APPS = new Set([
+  'deep-research', 'precedent', '510k', 'pma', 'cer',
+  'safety', 'biostats', 'vault', 'ectd', 'protocol',
+]);
+
+/**
+ * Detect @app mentions in user messages.
+ * Returns the app ID and remaining message text, or null if no known app is mentioned.
+ */
+export function detectAppMention(message: string): AppMention | null {
+  const trimmed = message.trim();
+  if (!trimmed.startsWith('@')) return null;
+
+  const match = trimmed.match(/^@([\w-]+)\s*(.*)/s);
+  if (!match) return null;
+
+  const appId = match[1].toLowerCase();
+  const remainingText = match[2].trim();
+
+  if (!KNOWN_APPS.has(appId)) return null;
+
+  return { appId, remainingText };
+}
+
+/** Map from app ID to the enrichment sources it activates */
+const APP_ENRICHMENT_MAP: Record<string, string[]> = {
+  'deep-research': ['foresight', 'precedent', 'claims', 'readiness'],
+  'precedent': ['precedent'],
+  '510k': ['device', 'precedent'],
+  'pma': ['device', 'readiness'],
+  'cer': ['device', 'safety', 'claims'],
+  'safety': ['safety'],
+  'biostats': ['biostatistics'],
+  'vault': ['ectd'],
+  'ectd': ['ectd'],
+  'protocol': ['biostatistics', 'readiness'],
+};
 
 // ─── Trigger patterns ────────────────────────────────────────────────────────
 
@@ -1038,8 +1086,58 @@ export async function enrichContextForChat(params: {
       (slash.args ? `${slash.command.slice(1)} ${slash.args}` : message);
   }
 
-  // ── Natural language trigger detection (runs if no slash command) ──
-  if (!slash) {
+  // ── @app mention detection (runs if no slash command) ──
+  const appMention = !slash ? detectAppMention(message) : null;
+  if (appMention) {
+    triggerType = 'app_mention';
+    detectedCommand = `@${appMention.appId}`;
+
+    // Resolve enrichment sources for this app
+    const appEnrichFnMap: Record<string, () => Promise<string>> = {
+      'foresight': () => enrichWithForesight(projectId, organizationId),
+      'precedent': () => enrichWithPrecedents(projectId),
+      'device': () => enrichWithDevice(projectId),
+      'readiness': () => enrichWithReadiness(projectId, organizationId),
+      'safety': () => enrichWithSafety(projectId),
+      'claims': () => enrichWithClaims(projectId),
+      'biostatistics': () => enrichWithBiostatContext(projectId, submissionType),
+      'ectd': () => enrichWithECTD(projectId),
+    };
+
+    const enrichSources = APP_ENRICHMENT_MAP[appMention.appId] || [];
+    await Promise.allSettled(
+      enrichSources.map(async sourceName => {
+        sourcesAttempted++;
+        const fn = appEnrichFnMap[sourceName];
+        if (!fn) { sourcesFailed.push(`app-${sourceName}`); return; }
+        try {
+          const block = await fn();
+          if (block) {
+            blocks.push(block);
+            sources.push(`app:${appMention.appId}/${sourceName}`);
+          } else {
+            sourcesFailed.push(`app:${appMention.appId}/${sourceName}`);
+          }
+        } catch {
+          sourcesFailed.push(`app:${appMention.appId}/${sourceName}`);
+        }
+      })
+    );
+
+    // Inject app-specific system context header
+    blocks.push(
+      `\n\n## @${appMention.appId} App Context\nThe user invoked the **${appMention.appId}** specialist app. ` +
+      `Focus your response on ${appMention.appId} domain expertise. ` +
+      `User request: ${appMention.remainingText || '(no specific request — ask what they need)'}`
+    );
+    sources.push(`app:${appMention.appId}`);
+
+    // Rewrite message to strip the @mention prefix
+    rewrittenMessage = appMention.remainingText || message;
+  }
+
+  // ── Natural language trigger detection (runs if no slash command and no app mention) ──
+  if (!slash && !appMention) {
     const triggers: Array<{ test: RegExp[]; fn: () => Promise<string>; name: string }> = [
       { test: FORESIGHT_TRIGGERS, fn: () => enrichWithForesight(projectId, organizationId), name: 'foresight' },
       { test: PRECEDENT_TRIGGERS, fn: () => enrichWithPrecedents(projectId), name: 'precedent' },

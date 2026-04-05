@@ -803,6 +803,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [slashMenuOpen, setSlashMenuOpen] = useState(false);
   const [slashMenuIndex, setSlashMenuIndex] = useState(0);
   const slashMenuRef = useRef<HTMLDivElement>(null);
+  // Drag-and-drop file attachments
+  const [isDragging, setIsDragging] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const dragCounterRef = useRef(0);
   // @app mention autocomplete
   const [appMenuOpen, setAppMenuOpen] = useState(false);
   const [appMenuIndex, setAppMenuIndex] = useState(0);
@@ -2334,6 +2338,31 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     setAppMenuOpen(false);
     setAppMenuIndex(0);
     inputRef.current?.focus();
+  }, []);
+
+  // ── Drag/drop file attachment handlers ──
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    dragCounterRef.current += 1;
+    if (dragCounterRef.current === 1) setIsDragging(true);
+  }, []);
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    dragCounterRef.current -= 1;
+    if (dragCounterRef.current === 0) setIsDragging(false);
+  }, []);
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault(); e.stopPropagation();
+  }, []);
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    dragCounterRef.current = 0;
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) setAttachedFiles(prev => [...prev, ...files]);
+  }, []);
+  const removeAttachedFile = useCallback((idx: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== idx));
   }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -4318,7 +4347,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   setIsFocused(false);
                   setTimeout(() => setSlashMenuOpen(false), 150);
                 }}
-                placeholder="Message AnA — type / for commands..."
+                placeholder="Message AnA — type / for commands, @ for apps..."
                 rows={1}
                 className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
               />
@@ -5593,7 +5622,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   ? 'Describe an image, infographic, or presentation...'
                   : intentLens !== 'auto'
                   ? `Message AnA (${intentLens} lens)...`
-                  : 'Message AnA — type / for commands...'
+                  : 'Message AnA — type / for commands, @ for apps...'
               }
               rows={1}
               className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
