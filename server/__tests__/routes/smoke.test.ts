@@ -260,7 +260,7 @@ describe('Stage 4: Backend beta contract smoke net', () => {
     expect(content).toContain("path: '/api/ectd-validate'");
     expect(content).toContain("path: '/api/ectd-compile'");
     expect(content).toContain("path: '/api/ectd/export'");
-    expect(content).toContain("app.use('/api/ind', indGenerationRoutes)");
+    expect(content).toContain("app.use('/api/ind-generation', indGenerationRoutes)");
 
     // Evidence / external evidence
     expect(content).toContain("app.use('/api/firecrawl', firecrawlRoutes.default)");

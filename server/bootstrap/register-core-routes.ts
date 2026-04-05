@@ -22,6 +22,8 @@ import intelligentDocsRoutes from '../routes/intelligentDocs';
 import controlPlaneRouter from '../src/routes/control-plane.router';
 import pmSettingsRouter from '../src/routes/pm-settings.router';
 import { getAIRouter } from '../services/aiProviderRouter.js';
+import taskManagementRoutes from '../routes/taskManagement.routes';
+import unifiedTaskRoutes from '../routes/unifiedTasks.routes';
 
 export function registerCoreRoutes({ app, pool, aiCircuitBreaker }: RouteBootstrapContext) {
   app.use('/api/templates', templateRoutes);
@@ -66,5 +68,13 @@ export function registerCoreRoutes({ app, pool, aiCircuitBreaker }: RouteBootstr
     console.log('✅ Intelligent Docs + PM Settings routes mounted');
   } catch (error) {
     console.error('❌ Failed to mount core feature routes:', error);
+  }
+
+  try {
+    app.use('/api/tasks', taskManagementRoutes);
+    app.use('/api/regulatory/tasks', unifiedTaskRoutes);
+    console.log('✅ Task Management routes mounted');
+  } catch (error) {
+    console.error('❌ Failed to mount Task Management routes:', error);
   }
 }

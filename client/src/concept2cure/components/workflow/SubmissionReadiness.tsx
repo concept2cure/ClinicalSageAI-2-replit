@@ -165,7 +165,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
   const { data: indStatus } = useQuery<{ sections: Array<{ code: string; title: string; status: string }> }>({
     queryKey: queryKeys.ind.status(projectId || 'none'),
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/ind/status/${projectId}`);
+      const res = await apiRequest('GET', `/api/ind-generation/status/${projectId}`);
       const json = await res.json();
       return json.data || { sections: [] };
     },
@@ -178,7 +178,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
   const { data: deviceStatus } = useQuery<{ sections: Array<{ code: string; title: string; status: string }> }>({
     queryKey: queryKeys.device.status(upperType, projectId || 'none'),
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/ind/device-status/${upperType}/${projectId}`);
+      const res = await apiRequest('GET', `/api/ind-generation/device-status/${upperType}/${projectId}`);
       const json = await res.json();
       return json.data || { sections: [] };
     },

@@ -50,7 +50,7 @@ export function useINDStatus(projectId: string | number | null | undefined) {
     queryKey: ['concept2cure', 'ind', 'status', projectId],
     queryFn: async () => {
       if (!projectId) throw new Error('No project ID');
-      const res = await apiRequest('GET', `/api/ind/status/${projectId}`);
+      const res = await apiRequest('GET', `/api/ind-generation/status/${projectId}`);
       if (!res.ok) throw new Error('Failed to fetch IND status');
       const json = await res.json();
       return json.data;
@@ -64,7 +64,7 @@ export function useINDStructure() {
   return useQuery({
     queryKey: ['concept2cure', 'ind', 'structure'],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/ind/structure');
+      const res = await apiRequest('GET', '/api/ind-generation/structure');
       if (!res.ok) throw new Error('Failed to fetch IND structure');
       const json = await res.json();
       return json.data;

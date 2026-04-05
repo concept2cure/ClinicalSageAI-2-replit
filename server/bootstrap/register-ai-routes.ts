@@ -30,7 +30,7 @@ export async function registerAiRoutes({ app, pool, aiCircuitBreaker }: RouteBoo
   }
 
   app.use('/api/chat', chatRoutes);
-  app.use('/api/ind', indGenerationRoutes);
+  app.use('/api/ind-generation', indGenerationRoutes);
   app.use('/api/regulatory', regulatoryRegistryRoutes);
 
   try {

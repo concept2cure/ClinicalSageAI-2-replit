@@ -220,7 +220,7 @@ export const DossierMap: React.FC<DossierMapProps> = ({
   const { data: indStatus } = useQuery<{ sections: Array<{ code: string; title: string; status: string }> }>({
     queryKey: ['concept2cure', 'ind', 'status', projectId],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/ind/status/${projectId}`);
+      const res = await apiRequest('GET', `/api/ind-generation/status/${projectId}`);
       if (!res.ok) return { sections: [] };
       const json = await res.json();
       return json.data || { sections: [] };
@@ -233,7 +233,7 @@ export const DossierMap: React.FC<DossierMapProps> = ({
   const { data: deviceStatus } = useQuery<{ sections: Array<{ code: string; title: string; status: string }> }>({
     queryKey: ['concept2cure', 'device', 'status', upperType, projectId],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/ind/device-status/${upperType}/${projectId}`);
+      const res = await apiRequest('GET', `/api/ind-generation/device-status/${upperType}/${projectId}`);
       if (!res.ok) return { sections: [] };
       const json = await res.json();
       return json.data || { sections: [] };
