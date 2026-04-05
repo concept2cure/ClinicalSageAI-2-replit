@@ -24,9 +24,9 @@ import type { IngestFreshnessStatus } from '../../../shared/types/predicate-inte
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const FRESHNESS_COLORS: Record<IngestFreshnessStatus, string> = {
-  GREEN: 'bg-green-100 text-green-800 border-green-300',
-  YELLOW: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  RED: 'bg-red-100 text-red-800 border-red-300',
+  GREEN: 'bg-stone-100 text-stone-800 border-stone-300',
+  YELLOW: 'bg-stone-100 text-stone-800 border-stone-300',
+  RED: 'bg-stone-100 text-stone-800 border-stone-300',
 };
 
 const FRESHNESS_LABELS: Record<IngestFreshnessStatus, string> = {
@@ -59,7 +59,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
             className="inline-flex items-center gap-0.5 text-muted-foreground hover:text-foreground transition-colors"
             aria-label={`Copy ${label}`}
           >
-            {copied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+            {copied ? <Check className="h-3 w-3 text-stone-700" /> : <Copy className="h-3 w-3" />}
           </button>
         </TooltipTrigger>
         <TooltipContent side="bottom">
@@ -115,7 +115,7 @@ export function ProofStrip({ programId, subjectHash = '' }: ProofStripProps) {
     >
       {/* Contract badge */}
       <div className="flex items-center gap-1.5">
-        <Shield className="h-3.5 w-3.5 text-blue-600" />
+        <Shield className="h-3.5 w-3.5 text-stone-600" />
         <span className="font-medium">Contract:</span>
         <Badge variant="outline" className="text-xs px-1.5 py-0">
           v{proof.risk_vocab_version}
@@ -130,7 +130,7 @@ export function ProofStrip({ programId, subjectHash = '' }: ProofStripProps) {
 
       {/* Manifest badge */}
       <div className="flex items-center gap-1.5">
-        <FileCheck className="h-3.5 w-3.5 text-purple-600" />
+        <FileCheck className="h-3.5 w-3.5 text-stone-600" />
         <span className="font-medium">Manifest:</span>
         <code className="text-[11px] text-muted-foreground font-mono">
           {proof.manifest_hash ? `${proof.manifest_hash.slice(0, 12)}…` : '—'}
@@ -142,7 +142,7 @@ export function ProofStrip({ programId, subjectHash = '' }: ProofStripProps) {
 
       {/* Freshness badge */}
       <div className="flex items-center gap-1.5">
-        <RefreshCw className="h-3.5 w-3.5 text-green-600" />
+        <RefreshCw className="h-3.5 w-3.5 text-stone-700" />
         <span className="font-medium">FDA data updated:</span>
         <Badge variant="outline" className={`text-xs px-1.5 py-0 ${freshnessClass}`}>
           {freshnessLabel}
@@ -154,7 +154,7 @@ export function ProofStrip({ programId, subjectHash = '' }: ProofStripProps) {
 
       {/* Audit badge */}
       <div className="flex items-center gap-1.5">
-        <Key className="h-3.5 w-3.5 text-amber-600" />
+        <Key className="h-3.5 w-3.5 text-stone-600" />
         <span className="font-medium">Audit:</span>
         <Badge variant="outline" className="text-xs px-1.5 py-0">
           {proof.audit.signature_method}

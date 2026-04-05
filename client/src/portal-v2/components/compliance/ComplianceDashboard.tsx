@@ -573,8 +573,8 @@ const ComplianceOverview: React.FC<{ frameworks: ComplianceFramework[] }> = ({ f
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <Shield className="h-6 w-6 text-blue-600" />
+            <div className="p-3 bg-stone-100 rounded-lg">
+              <Shield className="h-6 w-6 text-stone-600" />
             </div>
             <div>
               <CardTitle>Regulatory Compliance Overview</CardTitle>
@@ -584,7 +584,7 @@ const ComplianceOverview: React.FC<{ frameworks: ComplianceFramework[] }> = ({ f
             </div>
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-500">Overall Score</p>
+            <p className="text-sm text-stone-500">Overall Score</p>
             <p className="text-4xl font-bold" style={{ color: getScoreColor(overallScore) }}>
               {overallScore}%
             </p>
@@ -601,7 +601,7 @@ const ComplianceOverview: React.FC<{ frameworks: ComplianceFramework[] }> = ({ f
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <h3 className="font-semibold">{framework.shortName}</h3>
-                      <p className="text-xs text-gray-500">{framework.region}</p>
+                      <p className="text-xs text-stone-500">{framework.region}</p>
                     </div>
                     <Badge
                       style={{
@@ -616,7 +616,7 @@ const ComplianceOverview: React.FC<{ frameworks: ComplianceFramework[] }> = ({ f
 
                   <div className="mb-3">
                     <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-gray-500">Compliance Score</span>
+                      <span className="text-stone-500">Compliance Score</span>
                       <span
                         className="font-semibold"
                         style={{ color: getScoreColor(framework.overallScore) }}
@@ -627,7 +627,7 @@ const ComplianceOverview: React.FC<{ frameworks: ComplianceFramework[] }> = ({ f
                     <Progress value={framework.overallScore} className="h-2" />
                   </div>
 
-                  <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div className="flex items-center justify-between text-xs text-stone-500">
                     <span>Last Audit: {framework.lastAuditDate.toLocaleDateString()}</span>
                     <span>Next: {framework.nextAuditDate.toLocaleDateString()}</span>
                   </div>
@@ -664,8 +664,8 @@ const ALCOAPlusScorecard: React.FC<{ scores: ALCOAPlusScore[] }> = ({ scores }) 
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <Award className="h-6 w-6 text-purple-600" />
+            <div className="p-3 bg-stone-100 rounded-lg">
+              <Award className="h-6 w-6 text-stone-600" />
             </div>
             <div>
               <CardTitle>ALCOA+ Data Integrity</CardTitle>
@@ -673,8 +673,8 @@ const ALCOAPlusScorecard: React.FC<{ scores: ALCOAPlusScore[] }> = ({ scores }) 
             </div>
           </div>
           <div className="text-center">
-            <p className="text-3xl font-bold text-purple-600">{totalScore}%</p>
-            <p className="text-xs text-gray-500">Overall Score</p>
+            <p className="text-3xl font-bold text-stone-600">{totalScore}%</p>
+            <p className="text-xs text-stone-500">Overall Score</p>
           </div>
         </div>
       </CardHeader>
@@ -683,16 +683,16 @@ const ALCOAPlusScorecard: React.FC<{ scores: ALCOAPlusScore[] }> = ({ scores }) 
           {scores.map(score => (
             <div
               key={score.principle}
-              className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              className="p-3 bg-stone-50 rounded-lg hover:bg-stone-100 transition-colors"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 flex items-center justify-center bg-purple-100 text-purple-600 rounded text-xs font-bold">
+                  <span className="w-6 h-6 flex items-center justify-center bg-stone-100 text-stone-600 rounded text-xs font-bold">
                     {score.code}
                   </span>
                   <span className="text-sm font-medium">{score.principle}</span>
                 </div>
-                <span className="text-sm font-semibold text-purple-600">{score.score}%</span>
+                <span className="text-sm font-semibold text-stone-600">{score.score}%</span>
               </div>
               <div className="flex gap-1">
                 {score.indicators.map((ind, i) => (
@@ -760,9 +760,9 @@ const MetricsGrid: React.FC<{ metrics: ComplianceMetric[] }> = ({ metrics }) => 
               </div>
               <p className="text-2xl font-bold">
                 {metric.value}
-                <span className="text-sm text-gray-500 font-normal">{metric.unit}</span>
+                <span className="text-sm text-stone-500 font-normal">{metric.unit}</span>
               </p>
-              <p className="text-xs text-gray-500 mt-1">{metric.name}</p>
+              <p className="text-xs text-stone-500 mt-1">{metric.name}</p>
               <div className="mt-2">
                 <Progress
                   value={
@@ -772,7 +772,7 @@ const MetricsGrid: React.FC<{ metrics: ComplianceMetric[] }> = ({ metrics }) => 
                   }
                   className="h-1"
                 />
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-stone-400 mt-1">
                   Target: {metric.target}
                   {metric.unit}
                 </p>
@@ -812,8 +812,8 @@ const FindingsOverview: React.FC<{ frameworks: ComplianceFramework[] }> = ({ fra
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-amber-100 rounded-lg">
-              <AlertTriangle className="h-6 w-6 text-amber-600" />
+            <div className="p-3 bg-stone-100 rounded-lg">
+              <AlertTriangle className="h-6 w-6 text-stone-600" />
             </div>
             <div>
               <CardTitle>Compliance Findings</CardTitle>
@@ -822,20 +822,20 @@ const FindingsOverview: React.FC<{ frameworks: ComplianceFramework[] }> = ({ fra
           </div>
           <div className="flex gap-4 text-center">
             <div>
-              <p className="text-2xl font-bold text-amber-600">{openFindings.length}</p>
-              <p className="text-xs text-gray-500">Open</p>
+              <p className="text-2xl font-bold text-stone-600">{openFindings.length}</p>
+              <p className="text-xs text-stone-500">Open</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-red-600">{overdueFindings.length}</p>
-              <p className="text-xs text-gray-500">Overdue</p>
+              <p className="text-2xl font-bold text-stone-700">{overdueFindings.length}</p>
+              <p className="text-xs text-stone-500">Overdue</p>
             </div>
           </div>
         </div>
       </CardHeader>
       <CardContent>
         {openFindings.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-500" />
+          <div className="text-center py-8 text-stone-500">
+            <CheckCircle className="h-12 w-12 mx-auto mb-4 text-stone-1000" />
             <p className="font-medium">No Open Findings</p>
             <p className="text-sm">All compliance findings have been resolved</p>
           </div>
@@ -844,7 +844,7 @@ const FindingsOverview: React.FC<{ frameworks: ComplianceFramework[] }> = ({ fra
             {openFindings.map(finding => (
               <div
                 key={finding.id}
-                className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                className="p-4 border rounded-lg hover:bg-stone-50 transition-colors"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
@@ -856,15 +856,15 @@ const FindingsOverview: React.FC<{ frameworks: ComplianceFramework[] }> = ({ fra
                     >
                       {SEVERITY_CONFIG[finding.severity].label}
                     </Badge>
-                    <span className="text-sm text-gray-500">{finding.framework}</span>
+                    <span className="text-sm text-stone-500">{finding.framework}</span>
                   </div>
                   <Badge variant={finding.status === 'overdue' ? 'destructive' : 'outline'}>
                     {finding.status.replace('_', ' ')}
                   </Badge>
                 </div>
                 <p className="font-medium mb-1">{finding.description}</p>
-                <p className="text-sm text-gray-500 mb-2">{finding.requirement}</p>
-                <div className="flex items-center justify-between text-xs text-gray-500">
+                <p className="text-sm text-stone-500 mb-2">{finding.requirement}</p>
+                <div className="flex items-center justify-between text-xs text-stone-500">
                   <span>Due: {finding.dueDate.toLocaleDateString()}</span>
                   {finding.assignee && <span>Assignee: {finding.assignee}</span>}
                 </div>
@@ -913,7 +913,7 @@ const FrameworkDetails: React.FC<{ framework: ComplianceFramework }> = ({ framew
             return (
               <div key={category.id} className="border rounded-lg overflow-hidden">
                 <button
-                  className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                  className="w-full p-4 flex items-center justify-between hover:bg-stone-50 transition-colors"
                   onClick={() => setExpandedCategory(isExpanded ? null : category.id)}
                 >
                   <div className="flex items-center gap-3">
@@ -923,24 +923,24 @@ const FrameworkDetails: React.FC<{ framework: ComplianceFramework }> = ({ framew
                     />
                     <div className="text-left">
                       <p className="font-medium">{category.name}</p>
-                      <p className="text-xs text-gray-500">{category.description}</p>
+                      <p className="text-xs text-stone-500">{category.description}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <p className="font-semibold">{category.score}%</p>
-                      <p className="text-xs text-gray-500">Weight: {category.weight}%</p>
+                      <p className="text-xs text-stone-500">Weight: {category.weight}%</p>
                     </div>
                     {isExpanded ? (
-                      <ChevronRight className="h-5 w-5 rotate-90 text-gray-400" />
+                      <ChevronRight className="h-5 w-5 rotate-90 text-stone-400" />
                     ) : (
-                      <ChevronRight className="h-5 w-5 text-gray-400" />
+                      <ChevronRight className="h-5 w-5 text-stone-400" />
                     )}
                   </div>
                 </button>
 
                 {isExpanded && category.requirements.length > 0 && (
-                  <div className="border-t bg-gray-50 p-4">
+                  <div className="border-t bg-stone-50 p-4">
                     <div className="space-y-3">
                       {category.requirements.map(req => {
                         const ReqStatusIcon = STATUS_CONFIG[req.status].icon;
@@ -956,11 +956,11 @@ const FrameworkDetails: React.FC<{ framework: ComplianceFramework }> = ({ framew
                                   {req.code}: {req.title}
                                 </span>
                               </div>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-stone-500">
                                 Verified: {req.lastVerified.toLocaleDateString()}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-600 mb-2">{req.description}</p>
+                            <p className="text-sm text-stone-600 mb-2">{req.description}</p>
                             {req.evidence.length > 0 && (
                               <div className="flex flex-wrap gap-1">
                                 {req.evidence.map((e, i) => (
@@ -971,12 +971,12 @@ const FrameworkDetails: React.FC<{ framework: ComplianceFramework }> = ({ framew
                               </div>
                             )}
                             {req.findings && req.findings.length > 0 && (
-                              <div className="mt-3 p-2 bg-amber-50 rounded border border-amber-200">
-                                <p className="text-xs font-medium text-amber-700 mb-1">
+                              <div className="mt-3 p-2 bg-stone-100 rounded border border-stone-200">
+                                <p className="text-xs font-medium text-stone-700 mb-1">
                                   {req.findings.length} Finding(s)
                                 </p>
                                 {req.findings.map(f => (
-                                  <p key={f.id} className="text-xs text-amber-600">
+                                  <p key={f.id} className="text-xs text-stone-600">
                                     • {f.description}
                                   </p>
                                 ))}
@@ -1019,7 +1019,7 @@ export const ComplianceDashboard: React.FC = () => {
             <ShieldCheck className="h-6 w-6" />
             Compliance Dashboard
           </h1>
-          <p className="text-gray-500">Real-time regulatory compliance monitoring and reporting</p>
+          <p className="text-stone-500">Real-time regulatory compliance monitoring and reporting</p>
         </div>
         <div className="flex items-center gap-2">
           <Select value={selectedFramework} onValueChange={setSelectedFramework}>
@@ -1111,16 +1111,16 @@ export const ComplianceDashboard: React.FC = () => {
                   <div key={principle.principle} className="p-4 border rounded-lg">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <span className="w-10 h-10 flex items-center justify-center bg-purple-100 text-purple-600 rounded-lg text-lg font-bold">
+                        <span className="w-10 h-10 flex items-center justify-center bg-stone-100 text-stone-600 rounded-lg text-lg font-bold">
                           {principle.code}
                         </span>
                         <div>
                           <h3 className="font-semibold">{principle.principle}</h3>
-                          <p className="text-sm text-gray-500">{principle.description}</p>
+                          <p className="text-sm text-stone-500">{principle.description}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-purple-600">{principle.score}%</p>
+                        <p className="text-2xl font-bold text-stone-600">{principle.score}%</p>
                         <Progress value={principle.score} className="w-24 h-2 mt-1" />
                       </div>
                     </div>
@@ -1130,10 +1130,10 @@ export const ComplianceDashboard: React.FC = () => {
                           key={i}
                           className={`p-2 rounded text-xs flex items-center gap-2 ${
                             ind.status === 'pass'
-                              ? 'bg-green-50 text-green-700'
+                              ? 'bg-stone-100 text-stone-800'
                               : ind.status === 'warning'
-                                ? 'bg-amber-50 text-amber-700'
-                                : 'bg-red-50 text-red-700'
+                                ? 'bg-stone-100 text-stone-700'
+                                : 'bg-stone-100 text-stone-800'
                           }`}
                         >
                           {ind.status === 'pass' ? (
@@ -1174,13 +1174,13 @@ export const ComplianceDashboard: React.FC = () => {
                   { name: 'Training Compliance Summary', type: 'PDF', date: '2026-01-15' },
                   { name: 'Access Control Review', type: 'PDF', date: '2026-01-10' },
                 ].map((report, i) => (
-                  <div key={i} className="p-4 border rounded-lg hover:bg-gray-50">
+                  <div key={i} className="p-4 border rounded-lg hover:bg-stone-50">
                     <div className="flex items-start justify-between mb-2">
-                      <FileText className="h-8 w-8 text-blue-600" />
+                      <FileText className="h-8 w-8 text-stone-600" />
                       <Badge variant="outline">{report.type}</Badge>
                     </div>
                     <h3 className="font-medium mb-1">{report.name}</h3>
-                    <p className="text-xs text-gray-500 mb-3">Generated: {report.date}</p>
+                    <p className="text-xs text-stone-500 mb-3">Generated: {report.date}</p>
                     <Button variant="outline" size="sm" className="w-full">
                       <Download className="mr-2 h-4 w-4" />
                       Download

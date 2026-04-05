@@ -49,7 +49,7 @@ const ReadinessRing: React.FC<{ value: number; size?: number; color?: string }> 
   const radius = (size - 8) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (value / 100) * circumference;
-  const ringColor = color || (value >= 75 ? '#647746' : value >= 50 ? '#ca8a04' : '#dc2626');
+  const ringColor = color || (value >= 75 ? '#57534e' : value >= 50 ? '#57534e' : '#44403c');
 
   return (
     <svg width={size} height={size} style={{ display: 'block' }}>
@@ -567,7 +567,7 @@ export const TaskCardNode: React.FC<NodeProps<TaskCardData>> = memo(({ data }) =
           <div style={{ fontSize: 10, color: '#8a8880', marginTop: 4 }}>
             ⏱ {task.effort}
             {task.dependency && (
-              <span style={{ marginLeft: 8, color: '#f59e0b' }}>⤵ {task.dependency}</span>
+              <span style={{ marginLeft: 8, color: '#a8a29e' }}>⤵ {task.dependency}</span>
             )}
           </div>
         </div>
@@ -594,8 +594,8 @@ interface ArchComponentData {
 }
 
 const statusBorderColors: Record<ConnectionStatus, string> = {
-  connected: '#647746',
-  broken: '#dc2626',
+  connected: '#57534e',
+  broken: '#44403c',
   unmounted: '#b0aea5',
 };
 

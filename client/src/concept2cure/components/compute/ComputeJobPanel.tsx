@@ -59,11 +59,11 @@ const SURFACE_PRESETS = [
 function statusTone(status: ComputeStatus) {
   switch (status) {
     case 'completed':
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      return 'bg-stone-100 text-stone-800 border-stone-200';
     case 'failed':
-      return 'bg-red-50 text-red-700 border-red-200';
+      return 'bg-stone-100 text-stone-800 border-stone-200';
     case 'running':
-      return 'bg-blue-50 text-stone-700 border-blue-200';
+      return 'bg-stone-100 text-stone-700 border-stone-200';
     default:
       return 'bg-stone-50 text-stone-700 border-stone-200';
   }
@@ -202,7 +202,7 @@ export function ComputeJobPanel({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-5 px-1.5 text-[11px] text-blue-600 hover:text-blue-800"
+                className="h-5 px-1.5 text-[11px] text-stone-600 hover:text-stone-800"
                 onClick={async () => {
                   if (expandedJobId === job.job_id) {
                     setExpandedJobId(null);
@@ -217,7 +217,7 @@ export function ComputeJobPanel({
             </div>
             {/* Governed artifact summary — visible without expanding */}
             {job.artifact_id && job.status === 'completed' && (
-              <div className="mt-1.5 rounded bg-emerald-50/60 border border-emerald-100 px-2 py-1 text-[11px] text-emerald-800">
+              <div className="mt-1.5 rounded bg-stone-100/60 border border-stone-100 px-2 py-1 text-[11px] text-stone-800">
                 <div className="font-medium">{job.artifact_title || job.artifact_id}</div>
                 <div>
                   Artifact ID: {job.artifact_id} · v{job.artifact_version || 1} ·{' '}
@@ -234,7 +234,7 @@ export function ComputeJobPanel({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-5 px-1.5 text-[10px] text-blue-600 hover:text-blue-800"
+                    className="h-5 px-1.5 text-[10px] text-stone-600 hover:text-stone-800"
                     onClick={() => onOpenArtifact?.(job.artifact_id!)}
                   >
                     Open in editor
@@ -250,7 +250,7 @@ export function ComputeJobPanel({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-5 px-1.5 text-[10px] text-emerald-600 hover:text-emerald-800"
+                    className="h-5 px-1.5 text-[10px] text-stone-700 hover:text-stone-800"
                     onClick={() => onOpenAudit?.(job.artifact_id!)}
                   >
                     Open audit
@@ -259,7 +259,7 @@ export function ComputeJobPanel({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-5 px-1.5 text-[10px] text-amber-600 hover:text-amber-800"
+                      className="h-5 px-1.5 text-[10px] text-stone-600 hover:text-stone-800"
                       onClick={() => onPlaceArtifact?.(job.artifact_id!)}
                     >
                       Apply placement
@@ -278,7 +278,7 @@ export function ComputeJobPanel({
                   </div>
                 )}
                 {detailByJob[job.job_id]?.attempts?.[0]?.error_message && (
-                  <div className="text-red-600">
+                  <div className="text-stone-700">
                     Error: {detailByJob[job.job_id].attempts[0].error_message}
                   </div>
                 )}
@@ -307,7 +307,7 @@ export function ComputeJobPanel({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-5 px-1.5 text-[10px] text-blue-600 hover:text-blue-800"
+                        className="h-5 px-1.5 text-[10px] text-stone-600 hover:text-stone-800"
                         onClick={() => onOpenArtifact?.(job.artifact_id!)}
                       >
                         Open editor
@@ -323,7 +323,7 @@ export function ComputeJobPanel({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-5 px-1.5 text-[10px] text-emerald-600 hover:text-emerald-800"
+                        className="h-5 px-1.5 text-[10px] text-stone-700 hover:text-stone-800"
                         onClick={() => onOpenAudit?.(job.artifact_id!)}
                       >
                         Audit
@@ -331,7 +331,7 @@ export function ComputeJobPanel({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-5 px-1.5 text-[10px] text-amber-600 hover:text-amber-800"
+                        className="h-5 px-1.5 text-[10px] text-stone-600 hover:text-stone-800"
                         onClick={() => onPlaceArtifact?.(job.artifact_id!)}
                       >
                         Place

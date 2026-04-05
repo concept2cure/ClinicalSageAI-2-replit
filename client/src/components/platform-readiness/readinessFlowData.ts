@@ -593,16 +593,16 @@ export const SEVERITY_COLORS: Record<
   GapSeverity,
   { bg: string; border: string; text: string; badge: string }
 > = {
-  critical: { bg: '#fef2f2', border: '#dc2626', text: '#991b1b', badge: '#dc2626' },
+  critical: { bg: '#fafaf9', border: '#44403c', text: '#1c1917', badge: '#44403c' },
   high: { bg: '#fff7ed', border: '#ea580c', text: '#9a3412', badge: '#ea580c' },
-  medium: { bg: '#fefce8', border: '#ca8a04', text: '#854d0e', badge: '#ca8a04' },
-  low: { bg: '#f0fdf4', border: '#647746', text: '#166534', badge: '#647746' },
+  medium: { bg: '#fafaf9', border: '#57534e', text: '#292524', badge: '#57534e' },
+  low: { bg: '#fafaf9', border: '#57534e', text: '#1c1917', badge: '#57534e' },
 };
 
 export const MODULE_COLORS: Record<string, { bg: string; border: string; header: string }> = {
-  ectd: { bg: '#e6f7ff', border: '#007acc', header: '#005a9e' },
-  cmc: { bg: '#fffbe6', border: '#d4a017', header: '#8b6914' },
-  cerv2: { bg: '#f0fdf4', border: '#647746', header: '#15803d' },
+  ectd: { bg: '#fafaf9', border: '#44403c', header: '#292524' },
+  cmc: { bg: '#fffbe6', border: '#a8a29e', header: '#8b6914' },
+  cerv2: { bg: '#fafaf9', border: '#57534e', header: '#292524' },
 };
 
 export const STATUS_ICONS: Record<string, string> = {
@@ -723,7 +723,7 @@ export function buildOverviewEdges(): Edge[] {
     type: 'smoothstep',
     animated: true,
     label: 'Module 3 → eCTD',
-    style: { stroke: '#647746', strokeWidth: 2 },
+    style: { stroke: '#57534e', strokeWidth: 2 },
     labelStyle: { fontSize: 11, fontWeight: 600 },
   });
 
@@ -734,7 +734,7 @@ export function buildOverviewEdges(): Edge[] {
     type: 'smoothstep',
     animated: true,
     label: 'Device docs → eCTD',
-    style: { stroke: '#647746', strokeWidth: 2 },
+    style: { stroke: '#57534e', strokeWidth: 2 },
     labelStyle: { fontSize: 11, fontWeight: 600 },
   });
 
@@ -758,36 +758,36 @@ const PHASES: PhaseConfig[] = [
     id: '0A',
     label: 'Phase 0A — Immediate Fixes',
     dates: 'Feb 13',
-    color: '#dc2626',
+    color: '#44403c',
     module: 'cerv2',
   },
   {
     id: '0C',
     label: 'Phase 0C — eCTD Co-Author',
     dates: 'Feb 14–20',
-    color: '#007acc',
+    color: '#44403c',
     module: 'ectd',
   },
-  { id: '0D', label: 'Phase 0D — CMC Wizard', dates: 'Feb 14–17', color: '#d4a017', module: 'cmc' },
+  { id: '0D', label: 'Phase 0D — CMC Wizard', dates: 'Feb 14–17', color: '#a8a29e', module: 'cmc' },
   {
     id: '0B',
     label: 'Phase 0B — Templates',
     dates: 'Feb 21–Mar 3',
-    color: '#d97757',
+    color: '#78716c',
     module: 'all',
   },
   {
     id: '1A',
     label: 'Phase 1A — AI Integration',
     dates: 'Mar 4–11',
-    color: '#6a9bcc',
+    color: '#78716c',
     module: 'all',
   },
   {
     id: '1B',
     label: 'Phase 1B — Polish & QA',
     dates: 'Mar 12–17',
-    color: '#22c55e',
+    color: '#78716c',
     module: 'all',
   },
 ];
@@ -852,9 +852,9 @@ export function buildRoadmapEdges(): Edge[] {
         target: `task-${task.id}`,
         type: 'smoothstep',
         animated: true,
-        style: { stroke: '#f59e0b', strokeWidth: 2, strokeDasharray: '5 5' },
+        style: { stroke: '#a8a29e', strokeWidth: 2, strokeDasharray: '5 5' },
         label: 'depends on',
-        labelStyle: { fontSize: 10, fill: '#92400e' },
+        labelStyle: { fontSize: 10, fill: '#44403c' },
       });
     }
   });
@@ -1139,8 +1139,8 @@ export function buildArchitectureEdges(): Edge[] {
     ConnectionStatus,
     { stroke: string; animated: boolean; dasharray?: string }
   > = {
-    connected: { stroke: '#647746', animated: false },
-    broken: { stroke: '#dc2626', animated: true, dasharray: '5 5' },
+    connected: { stroke: '#57534e', animated: false },
+    broken: { stroke: '#44403c', animated: true, dasharray: '5 5' },
     unmounted: { stroke: '#b0aea5', animated: false, dasharray: '8 4' },
   };
 

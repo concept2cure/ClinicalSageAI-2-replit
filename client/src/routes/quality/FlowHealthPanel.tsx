@@ -53,11 +53,11 @@ export default function FlowHealthPanel({ batchId }: { batchId: string }) {
           <div className="text-slate-600">Loading…</div>
         ) : (
           <ul className="list-disc ml-6">
-            {!data.issues?.length && <li className="text-emerald-700">All checks OK</li>}
+            {!data.issues?.length && <li className="text-stone-800">All checks OK</li>}
             {data.issues?.map((i: any, idx: number) => (
               <li
                 key={idx}
-                className={/CRITICAL/.test(i.severity) ? 'text-red-700' : 'text-amber-700'}
+                className={/CRITICAL/.test(i.severity) ? 'text-stone-800' : 'text-stone-700'}
               >
                 [{i.severity}] {i.msg}
               </li>

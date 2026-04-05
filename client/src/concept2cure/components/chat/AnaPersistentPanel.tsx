@@ -156,29 +156,29 @@ function detectVerdictSignals(content: string): VerdictSignal[] {
     signals.push({
       type: 'verdict',
       label: 'Defensible',
-      color: 'text-emerald-700',
-      bgColor: 'bg-emerald-50 border-emerald-200',
+      color: 'text-stone-800',
+      bgColor: 'bg-stone-100 border-stone-200',
     });
   else if (/\bvulnerable\b/.test(lower) && /\bverdict\b/i.test(content))
     signals.push({
       type: 'verdict',
       label: 'Vulnerable',
-      color: 'text-amber-700',
-      bgColor: 'bg-amber-50 border-amber-200',
+      color: 'text-stone-700',
+      bgColor: 'bg-stone-100 border-stone-200',
     });
   else if (/\boverclaimed\b/.test(lower))
     signals.push({
       type: 'verdict',
       label: 'Overclaimed',
-      color: 'text-red-700',
-      bgColor: 'bg-red-50 border-red-200',
+      color: 'text-stone-800',
+      bgColor: 'bg-stone-100 border-stone-200',
     });
   else if (/\bsupportable with revision\b/.test(lower))
     signals.push({
       type: 'verdict',
       label: 'Supportable with Revision',
-      color: 'text-blue-700',
-      bgColor: 'bg-blue-50 border-blue-200',
+      color: 'text-stone-700',
+      bgColor: 'bg-stone-100 border-stone-200',
     });
 
   // Priority detection
@@ -189,15 +189,15 @@ function detectVerdictSignals(content: string): VerdictSignal[] {
     signals.push({
       type: 'priority',
       label: 'Blocker Identified',
-      color: 'text-red-700',
-      bgColor: 'bg-red-50 border-red-200',
+      color: 'text-stone-800',
+      bgColor: 'bg-stone-100 border-stone-200',
     });
   else if (/\breviewer friction\b/.test(lower))
     signals.push({
       type: 'priority',
       label: 'Reviewer Friction',
-      color: 'text-amber-700',
-      bgColor: 'bg-amber-50 border-amber-200',
+      color: 'text-stone-700',
+      bgColor: 'bg-stone-100 border-stone-200',
     });
 
   // Confidence detection
@@ -205,15 +205,15 @@ function detectVerdictSignals(content: string): VerdictSignal[] {
     signals.push({
       type: 'confidence',
       label: 'High Confidence',
-      color: 'text-emerald-700',
-      bgColor: 'bg-emerald-50 border-emerald-200',
+      color: 'text-stone-800',
+      bgColor: 'bg-stone-100 border-stone-200',
     });
   else if (/\bprovisional\b.*\bpending\b/.test(lower))
     signals.push({
       type: 'confidence',
       label: 'Provisional',
-      color: 'text-amber-700',
-      bgColor: 'bg-amber-50 border-amber-200',
+      color: 'text-stone-700',
+      bgColor: 'bg-stone-100 border-stone-200',
     });
 
   // Action detection
@@ -228,15 +228,15 @@ function detectVerdictSignals(content: string): VerdictSignal[] {
     signals.push({
       type: 'action',
       label: 'No-Go',
-      color: 'text-red-700',
-      bgColor: 'bg-red-50 border-red-200',
+      color: 'text-stone-800',
+      bgColor: 'bg-stone-100 border-stone-200',
     });
   else if (/\bproceed\b/.test(lower) && /\bmitigation\b/.test(lower))
     signals.push({
       type: 'action',
       label: 'Proceed with Mitigation',
-      color: 'text-blue-700',
-      bgColor: 'bg-blue-50 border-blue-200',
+      color: 'text-stone-700',
+      bgColor: 'bg-stone-100 border-stone-200',
     });
 
   return signals;
@@ -619,11 +619,11 @@ const SLASH_COMMANDS: SlashCommand[] = [
 
 const SLASH_CATEGORY_COLORS: Record<string, string> = {
   Intelligence: 'text-stone-600',
-  Analysis: 'text-blue-600',
-  Biostatistics: 'text-emerald-600',
-  Subspecialties: 'text-amber-600',
+  Analysis: 'text-stone-600',
+  Biostatistics: 'text-stone-700',
+  Subspecialties: 'text-stone-600',
   Authoring: 'text-rose-600',
-  Lifecycle: 'text-emerald-600',
+  Lifecycle: 'text-stone-700',
   Navigation: 'text-zinc-500',
 };
 
@@ -4198,7 +4198,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               {/* Queue Status Banner */}
               {conversationQueue.length > 0 && (
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 border-t border-stone-100 text-[11px] text-stone-500">
-                  {activeQueueItemId && <span className="text-amber-600">● Working</span>}
+                  {activeQueueItemId && <span className="text-stone-600">● Working</span>}
                   {conversationQueue.filter(i => i.status === 'queued').length > 0 && (
                     <span>
                       Queued: {conversationQueue.filter(i => i.status === 'queued').length}
@@ -4297,17 +4297,17 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   className={cn(
                     'text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded',
                     contextProfile.productType.includes('510')
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                      ? 'bg-stone-100 text-stone-700 dark:bg-stone-900/40 dark:text-stone-300'
                       : contextProfile.productType.includes('PMA')
                       ? 'bg-stone-200 text-stone-700 dark:bg-stone-900/40 dark:text-stone-300'
                       : contextProfile.productType.includes('NDA')
-                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+                      ? 'bg-stone-100 text-stone-700 dark:bg-stone-900/40 dark:text-stone-300'
                       : contextProfile.productType.includes('BLA')
-                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                      ? 'bg-stone-100 text-stone-800 dark:bg-stone-900/40 dark:text-stone-300'
                       : contextProfile.productType.includes('IND')
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                      ? 'bg-stone-100 text-stone-700 dark:bg-stone-900/40 dark:text-stone-300'
                       : contextProfile.productType.includes('ANDA')
-                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+                      ? 'bg-stone-100 text-stone-700 dark:bg-stone-900/40 dark:text-stone-300'
                       : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
                   )}
                 >
@@ -4349,22 +4349,22 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             </div>
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px] text-zinc-600">
               {decisionStatus.pendingConfirmations > 0 && (
-                <span className="rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-amber-700">
+                <span className="rounded-full border border-stone-200 bg-stone-100 px-1.5 py-0.5 text-stone-700">
                   {decisionStatus.pendingConfirmations} confirmation
                 </span>
               )}
               {decisionStatus.pendingApprovals > 0 && (
-                <span className="rounded-full border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-blue-700">
+                <span className="rounded-full border border-stone-200 bg-stone-100 px-1.5 py-0.5 text-stone-700">
                   {decisionStatus.pendingApprovals} approval
                 </span>
               )}
               {decisionStatus.unresolvedContradictions && (
-                <span className="rounded-full border border-red-200 bg-red-50 px-1.5 py-0.5 text-red-700">
+                <span className="rounded-full border border-stone-200 bg-stone-100 px-1.5 py-0.5 text-stone-800">
                   unresolved contradictions
                 </span>
               )}
               {decisionStatus.provisional && (
-                <span className="rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-amber-700">
+                <span className="rounded-full border border-stone-200 bg-stone-100 px-1.5 py-0.5 text-stone-700">
                   provisional decisions
                 </span>
               )}
@@ -4373,7 +4373,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 decisionStatus.pendingApprovals === 0 &&
                 !decisionStatus.unresolvedContradictions &&
                 !decisionStatus.provisional && (
-                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-emerald-700">
+                  <span className="rounded-full border border-stone-200 bg-stone-100 px-1.5 py-0.5 text-stone-800">
                     clear
                   </span>
                 )}
@@ -4384,7 +4384,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           {decisionRailExpanded && (
             <div className="mt-2 rounded-lg border border-zinc-200 bg-white px-3 py-2">
               {decisionStatus.error ? (
-                <p className="text-xs text-red-600">{decisionStatus.error}</p>
+                <p className="text-xs text-stone-700">{decisionStatus.error}</p>
               ) : decisionStatus.details.length > 0 ? (
                 <ul className="space-y-1.5">
                   {decisionStatus.details.map(row => (
@@ -4615,16 +4615,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                   className={cn(
                                     'flex items-center gap-2 px-3 py-2 rounded-lg border text-xs',
                                     action.executed && !action.error
-                                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                                      ? 'bg-stone-100 border-stone-200 text-stone-800'
                                       : action.error
-                                      ? 'bg-red-50 border-red-200 text-red-800'
+                                      ? 'bg-stone-100 border-stone-200 text-stone-800'
                                       : 'bg-zinc-50 border-zinc-200 text-zinc-600'
                                   )}
                                 >
                                   {action.executed && !action.error ? (
                                     <Check className="w-3.5 h-3.5 flex-shrink-0" />
                                   ) : action.error ? (
-                                    <span className="w-3.5 h-3.5 flex-shrink-0 text-red-500">
+                                    <span className="w-3.5 h-3.5 flex-shrink-0 text-stone-1000">
                                       !
                                     </span>
                                   ) : (
@@ -4640,12 +4640,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                         })`}
                                   </span>
                                   {action.artifactId && (
-                                    <span className="text-emerald-600 font-mono text-[10px]">
+                                    <span className="text-stone-700 font-mono text-[10px]">
                                       {action.artifactId}
                                     </span>
                                   )}
                                   {action.threadId && (
-                                    <span className="text-emerald-600 font-mono text-[10px]">
+                                    <span className="text-stone-700 font-mono text-[10px]">
                                       thread:{action.threadId.slice(0, 8)}
                                     </span>
                                   )}
@@ -4670,7 +4670,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 a.click();
                                 URL.revokeObjectURL(url);
                               }}
-                              className="mt-2 gap-1.5 text-xs rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200"
+                              className="mt-2 gap-1.5 text-xs rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-100 border-stone-200"
                             >
                               <Download className="w-3.5 h-3.5" />
                               {msg.pptx.filename}
@@ -4709,7 +4709,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 aria-label="Copy message"
                               >
                                 {copiedId === msg.id ? (
-                                  <Check className="w-3 h-3 text-emerald-600" />
+                                  <Check className="w-3 h-3 text-stone-700" />
                                 ) : (
                                   <Copy className="w-3 h-3" />
                                 )}
@@ -4739,9 +4739,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 msg.modelProvider === 'anthropic'
                                   ? 'text-[#CC785C] bg-[#FBF0EB]'
                                   : msg.modelProvider === 'openai'
-                                  ? 'text-[#10A37F] bg-emerald-50'
+                                  ? 'text-[#10A37F] bg-stone-100'
                                   : msg.modelProvider === 'moonshot'
-                                  ? 'text-[#6366F1] bg-blue-50'
+                                  ? 'text-[#6366F1] bg-stone-100'
                                   : 'text-zinc-500 bg-zinc-50'
                               )}
                             >
@@ -4779,7 +4779,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 aria-label="Copy"
                               >
                                 {copiedId === msg.id ? (
-                                  <Check className="w-3 h-3 text-emerald-600" />
+                                  <Check className="w-3 h-3 text-stone-700" />
                                 ) : (
                                   <Copy className="w-3 h-3" />
                                 )}
@@ -4863,7 +4863,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                         /* non-blocking */
                                       }
                                     }}
-                                    className="h-6 w-6 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50"
+                                    className="h-6 w-6 text-zinc-400 hover:text-stone-700 hover:bg-stone-100"
                                     aria-label="Save to Vault"
                                   >
                                     <Download className="w-3 h-3" />
@@ -4915,7 +4915,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                         )
                                       );
                                     }}
-                                    className="h-6 w-6 text-zinc-400 hover:text-blue-600 hover:bg-blue-50"
+                                    className="h-6 w-6 text-zinc-400 hover:text-stone-600 hover:bg-stone-100"
                                     aria-label="Insert into Editor"
                                   >
                                     <FileEdit className="w-3 h-3" />
@@ -4925,12 +4925,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               </Tooltip>
                             )}
                           {(msg as any).insertedToEditor && (
-                            <span className="text-[11px] text-blue-600 font-medium ml-1">
+                            <span className="text-[11px] text-stone-600 font-medium ml-1">
                               Inserted
                             </span>
                           )}
                           {msg.savedAsArtifact && (
-                            <span className="text-[11px] text-emerald-600 font-medium ml-1">
+                            <span className="text-[11px] text-stone-700 font-medium ml-1">
                               Saved
                             </span>
                           )}
@@ -5083,19 +5083,19 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               </div>
                             )}
                             {lastOrchestration.workstreamHandoff && (
-                              <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-                                <p className="text-[10px] font-medium text-amber-700 uppercase tracking-wide">
+                              <div className="mt-2 rounded-lg border border-stone-200 bg-stone-100 px-3 py-2">
+                                <p className="text-[10px] font-medium text-stone-700 uppercase tracking-wide">
                                   Workstream Handoff
                                 </p>
-                                <p className="mt-1 text-[11px] text-amber-900">
+                                <p className="mt-1 text-[11px] text-stone-900">
                                   {lastOrchestration.workstreamHandoff.from.replace(/_/g, ' ')} to{' '}
                                   {lastOrchestration.workstreamHandoff.to.replace(/_/g, ' ')}
                                 </p>
-                                <p className="mt-1 text-[11px] text-amber-800">
+                                <p className="mt-1 text-[11px] text-stone-800">
                                   {lastOrchestration.workstreamHandoff.transitionReason}
                                 </p>
                                 {lastOrchestration.workstreamHandoff.openLoops.length > 0 && (
-                                  <p className="mt-1 text-[11px] text-amber-800">
+                                  <p className="mt-1 text-[11px] text-stone-800">
                                     Open loops:{' '}
                                     {lastOrchestration.workstreamHandoff.openLoops.join(' | ')}
                                   </p>
@@ -5221,7 +5221,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   chatMode === 'deep-research'
                     ? 'bg-[#FBF0EB] text-[#D97757] hover:bg-[#F6E6DF]'
                     : chatMode === 'nano-banana'
-                    ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                    ? 'bg-stone-100 text-stone-700 hover:bg-stone-100'
                     : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
                 )}
               >
@@ -5301,10 +5301,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     }}
                     className={cn(
                       'w-full flex items-start gap-3 px-3 py-2.5 h-auto text-left justify-start rounded-none',
-                      chatMode === 'nano-banana' && 'bg-amber-50'
+                      chatMode === 'nano-banana' && 'bg-stone-100'
                     )}
                   >
-                    <ImageIcon className="w-4 h-4 mt-0.5 text-amber-600 flex-shrink-0" />
+                    <ImageIcon className="w-4 h-4 mt-0.5 text-stone-600 flex-shrink-0" />
                     <div className="text-left">
                       <div className="text-sm font-medium text-zinc-900">Nano Banana</div>
                       <div className="text-[11px] text-zinc-400 leading-tight font-normal">
@@ -5312,7 +5312,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       </div>
                     </div>
                     {chatMode === 'nano-banana' && (
-                      <Check className="w-4 h-4 text-amber-600 ml-auto mt-0.5 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-stone-600 ml-auto mt-0.5 flex-shrink-0" />
                     )}
                   </Button>
                 </div>
@@ -5435,7 +5435,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             {/* Queue Status Banner */}
             {conversationQueue.length > 0 && (
               <div className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 border-t border-stone-100 text-[11px] text-stone-500">
-                {activeQueueItemId && <span className="text-amber-600">● Working</span>}
+                {activeQueueItemId && <span className="text-stone-600">● Working</span>}
                 {conversationQueue.filter(i => i.status === 'queued').length > 0 && (
                   <span>Queued: {conversationQueue.filter(i => i.status === 'queued').length}</span>
                 )}

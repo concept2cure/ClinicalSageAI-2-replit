@@ -652,7 +652,7 @@ function CapabilityCard({ cap }: { cap: AgentCapability }) {
       {/* Expandable section */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-1 text-sm text-blue-600 hover:underline mb-2"
+        className="flex items-center gap-1 text-sm text-stone-600 hover:underline mb-2"
       >
         What it does
         <ChevronDown

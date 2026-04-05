@@ -174,17 +174,17 @@ const ConnectionStatusBadge: React.FC<{
     connected: {
       icon: CheckCircle,
       label: 'Connected',
-      color: 'text-emerald-500 bg-emerald-50',
+      color: 'text-stone-1000 bg-stone-100',
     },
     available: {
       icon: Download,
       label: 'Available',
-      color: 'text-blue-500 bg-blue-50',
+      color: 'text-stone-1000 bg-stone-100',
     },
     'needs-update': {
       icon: RefreshCw,
       label: 'Update',
-      color: 'text-amber-500 bg-amber-50',
+      color: 'text-stone-1000 bg-stone-100',
     },
     missing: {
       icon: Unplug,
@@ -230,12 +230,12 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
 }) => {
   const colorClasses = {
     blue: 'bg-stone-600',
-    green: 'bg-emerald-500',
-    orange: 'bg-amber-500',
+    green: 'bg-stone-1000',
+    orange: 'bg-stone-1000',
     purple: 'bg-stone-500',
     slate: 'bg-stone-500',
-    red: 'bg-red-500',
-    amber: 'bg-amber-500',
+    red: 'bg-stone-1000',
+    amber: 'bg-stone-1000',
     indigo: 'bg-stone-600',
   };
 
@@ -306,7 +306,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
             <button
               onClick={onSync}
               disabled={isLoading}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-150"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-100 rounded-lg transition-colors duration-150"
               data-testid={`button-bridge-sync-${config.id}`}
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
@@ -339,7 +339,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
           <button
             onClick={onSync}
             disabled={isLoading}
-            className="flex items-center gap-1.5 px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-60"
+            className="flex items-center gap-1.5 px-4 py-2 bg-stone-600 text-white text-sm font-medium rounded-lg hover:bg-stone-700 transition-colors disabled:opacity-60"
             data-testid={`button-bridge-update-${config.id}`}
           >
             {isLoading ? (
@@ -376,7 +376,7 @@ const DataFlowDiagram: React.FC<{
   const totalSources = connections.reduce((sum, c) => sum + c.itemCount, 0);
 
   return (
-    <div className="p-6 bg-blue-50 rounded-xl border border-blue-200">
+    <div className="p-6 bg-stone-100 rounded-xl border border-stone-200">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-semibold text-stone-900">Data Flow Overview</h3>
@@ -385,7 +385,7 @@ const DataFlowDiagram: React.FC<{
           </p>
         </div>
         <div className="text-right">
-          <p className="text-base font-semibold text-blue-600">{totalSources}</p>
+          <p className="text-base font-semibold text-stone-600">{totalSources}</p>
           <p className="text-xs text-stone-500">Total Sources</p>
         </div>
       </div>
@@ -400,7 +400,7 @@ const DataFlowDiagram: React.FC<{
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm
                 ${
                   conn.status === 'connected'
-                    ? 'bg-emerald-100 text-emerald-700'
+                    ? 'bg-stone-100 text-stone-800'
                     : 'bg-stone-100 text-stone-500'
                 }`}
             >
@@ -415,7 +415,7 @@ const DataFlowDiagram: React.FC<{
           {Array.from({ length: Math.min(connectedCount, 4) }).map((_, i) => (
             <ArrowRight
               key={i}
-              className="w-6 h-6 text-blue-500 animate-pulse"
+              className="w-6 h-6 text-stone-1000 animate-pulse"
               style={{ animationDelay: `${i * 0.2}s` }}
             />
           ))}
@@ -423,7 +423,7 @@ const DataFlowDiagram: React.FC<{
 
         {/* Document */}
         <div className="p-4 bg-white rounded-xl border border-stone-300 shadow-sm">
-          <FileText className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+          <FileText className="w-8 h-8 text-stone-1000 mx-auto mb-2" />
           <p className="text-sm font-medium text-stone-700 text-center">
             {submissionType}
           </p>
@@ -432,11 +432,11 @@ const DataFlowDiagram: React.FC<{
       </div>
 
       <div className="flex items-center justify-center gap-6 mt-4 text-sm">
-        <span className="flex items-center gap-1.5 text-emerald-600">
+        <span className="flex items-center gap-1.5 text-stone-700">
           <CheckCircle className="w-4 h-4" />
           {connectedCount} modules connected
         </span>
-        <span className="flex items-center gap-1.5 text-blue-600">
+        <span className="flex items-center gap-1.5 text-stone-600">
           <Link2 className="w-4 h-4" />
           Auto-syncing enabled
         </span>

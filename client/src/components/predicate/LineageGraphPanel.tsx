@@ -116,7 +116,7 @@ function FamilyToxicityIndicator({ score }: { score: number }) {
     return (
       <Badge
         variant="outline"
-        className="bg-orange-50 text-orange-700 border-orange-300 text-xs"
+        className="bg-stone-100 text-stone-700 border-stone-300 text-xs"
         data-testid="family-toxicity-moderate"
       >
         <ShieldAlert className="h-3 w-3 mr-1" />
@@ -127,7 +127,7 @@ function FamilyToxicityIndicator({ score }: { score: number }) {
   return (
     <Badge
       variant="outline"
-      className="bg-green-50 text-green-700 border-green-300 text-xs"
+      className="bg-stone-100 text-stone-800 border-stone-300 text-xs"
       data-testid="family-toxicity-low"
     >
       <ShieldCheck className="h-3 w-3 mr-1" />

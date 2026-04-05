@@ -118,9 +118,9 @@ const StatCard: React.FC<{
 
 // ── Readiness badge (maps review statuses to WorkspaceStatusBadge) ───────────
 const REVIEW_STATUS_CONFIG: Record<string, StatusBadgeConfig> = {
-  blocked: { key: 'blocked', label: 'Blocked', color: 'bg-red-100 text-red-700' },
-  in_review: { key: 'in_review', label: 'In Review', color: 'bg-amber-100 text-amber-700' },
-  clear: { key: 'clear', label: 'Clear', color: 'bg-emerald-100 text-emerald-700' },
+  blocked: { key: 'blocked', label: 'Blocked', color: 'bg-stone-100 text-stone-800' },
+  in_review: { key: 'in_review', label: 'In Review', color: 'bg-stone-100 text-stone-700' },
+  clear: { key: 'clear', label: 'Clear', color: 'bg-stone-100 text-stone-800' },
 };
 
 const ReviewStatusBadge: React.FC<{ status: string }> = ({ status }) => (
@@ -212,25 +212,25 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
           icon={MessageSquare}
           label="Open Threads"
           value={s.openThreads}
-          color="text-blue-500"
+          color="text-stone-1000"
         />
         <StatCard
           icon={CheckCircle2}
           label="Resolved"
           value={s.resolvedThreads}
-          color="text-emerald-500"
+          color="text-stone-1000"
         />
         <StatCard
           icon={ShieldAlert}
           label="High Priority"
           value={s.highPriorityOpen}
-          color="text-red-500"
+          color="text-stone-1000"
         />
         <StatCard
           icon={Clock}
           label="Overdue Tasks"
           value={s.overdueTasks}
-          color={s.overdueTasks > 0 ? 'text-red-500' : 'text-stone-400'}
+          color={s.overdueTasks > 0 ? 'text-stone-1000' : 'text-stone-400'}
         />
         <StatCard
           icon={Target}
@@ -242,13 +242,13 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
           icon={Users}
           label="Unassigned"
           value={s.unassignedThreads + s.unassignedTasks}
-          color={s.unassignedThreads + s.unassignedTasks > 0 ? 'text-amber-500' : 'text-stone-400'}
+          color={s.unassignedThreads + s.unassignedTasks > 0 ? 'text-stone-1000' : 'text-stone-400'}
         />
         <StatCard
           icon={UserCheck}
           label="Completion"
           value={`${s.reviewCompletionRate}%`}
-          color={s.reviewCompletionRate >= 80 ? 'text-emerald-500' : 'text-amber-500'}
+          color={s.reviewCompletionRate >= 80 ? 'text-stone-1000' : 'text-stone-1000'}
         />
       </div>
 
@@ -256,7 +256,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
       {riskSignals.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-stone-700 flex items-center gap-1.5">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+            <AlertTriangle className="w-3.5 h-3.5 text-stone-1000" />
             Risk Signals
           </h3>
           <div className="space-y-1.5">
@@ -266,8 +266,8 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
                 className={cn(
                   'flex items-start gap-2 px-3 py-2 rounded-md border text-sm',
                   rs.severity === 'high'
-                    ? 'bg-red-50 border-red-200 text-red-700'
-                    : 'bg-amber-50 border-amber-200 text-amber-700'
+                    ? 'bg-stone-100 border-stone-200 text-stone-800'
+                    : 'bg-stone-100 border-stone-200 text-stone-700'
                 )}
               >
                 <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
@@ -281,10 +281,10 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
       {/* ── Artifact readiness table ───────────────────────────────────── */}
       <div className="space-y-2">
         <h3 className="text-sm font-semibold text-stone-700 flex items-center gap-1.5">
-          <FileText className="w-3.5 h-3.5 text-blue-500" />
+          <FileText className="w-3.5 h-3.5 text-stone-1000" />
           Artifact Review Readiness
           {blockedArtifacts.length > 0 && (
-            <span className="text-xs font-normal text-red-600 ml-1">
+            <span className="text-xs font-normal text-stone-700 ml-1">
               ({blockedArtifacts.length} blocked)
             </span>
           )}
@@ -316,7 +316,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
                     key={a.artifactId}
                     className={cn(
                       'border-b last:border-0 hover:bg-stone-50/50 transition-colors duration-150',
-                      a.reviewStatus === 'blocked' && 'bg-red-50/30',
+                      a.reviewStatus === 'blocked' && 'bg-stone-100/30',
                       onNavigateToArtifact && 'cursor-pointer'
                     )}
                     onClick={() => onNavigateToArtifact?.(a.artifactId)}
@@ -329,7 +329,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
                     </td>
                     <td className="px-3 py-2 text-center tabular-nums">
                       {a.openThreads > 0 ? (
-                        <span className="text-blue-600 font-medium">{a.openThreads}</span>
+                        <span className="text-stone-600 font-medium">{a.openThreads}</span>
                       ) : (
                         <span className="text-stone-400">0</span>
                       )}
@@ -343,7 +343,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
                     </td>
                     <td className="px-3 py-2 text-center tabular-nums">
                       {a.overdueTasks > 0 ? (
-                        <span className="text-red-600 font-semibold">{a.overdueTasks}</span>
+                        <span className="text-stone-700 font-semibold">{a.overdueTasks}</span>
                       ) : (
                         <span className="text-stone-400">0</span>
                       )}
@@ -372,7 +372,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
                 key={aw.userId}
                 className={cn(
                   'px-3 py-2 rounded-lg border bg-white space-y-1',
-                  aw.overdue > 0 && 'border-red-200'
+                  aw.overdue > 0 && 'border-stone-200'
                 )}
               >
                 <p className="text-sm font-medium text-stone-900 truncate">{aw.name}</p>
@@ -380,7 +380,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
                   <span>{aw.threads} threads</span>
                   <span>{aw.tasks} tasks</span>
                   {aw.overdue > 0 && (
-                    <span className="text-red-600 font-medium">{aw.overdue} overdue</span>
+                    <span className="text-stone-700 font-medium">{aw.overdue} overdue</span>
                   )}
                 </div>
               </div>

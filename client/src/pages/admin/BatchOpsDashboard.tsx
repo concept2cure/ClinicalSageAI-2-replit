@@ -103,11 +103,11 @@ const STATUS_CONFIG: Record<
   string,
   { color: string; icon: React.ComponentType<{ className?: string }> }
 > = {
-  queued: { color: 'bg-blue-100 text-blue-800', icon: Clock },
-  processing: { color: 'bg-yellow-100 text-yellow-800', icon: Activity },
-  completed: { color: 'bg-green-100 text-green-800', icon: CheckCircle },
-  failed: { color: 'bg-red-100 text-red-800', icon: AlertTriangle },
-  cancelled: { color: 'bg-gray-100 text-gray-800', icon: Pause },
+  queued: { color: 'bg-stone-100 text-stone-800', icon: Clock },
+  processing: { color: 'bg-stone-100 text-stone-800', icon: Activity },
+  completed: { color: 'bg-stone-100 text-stone-800', icon: CheckCircle },
+  failed: { color: 'bg-stone-100 text-stone-800', icon: AlertTriangle },
+  cancelled: { color: 'bg-stone-100 text-stone-800', icon: Pause },
 };
 
 const PAGE_SIZE = 20;
@@ -267,7 +267,7 @@ export default function BatchOpsDashboard() {
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const getStatusBadge = (status: string) => {
-    const config = STATUS_CONFIG[status] || { color: 'bg-gray-100 text-gray-800', icon: Info };
+    const config = STATUS_CONFIG[status] || { color: 'bg-stone-100 text-stone-800', icon: Info };
     const Icon = config.icon;
     return (
       <Badge className={`${config.color} flex items-center gap-1`}>
@@ -336,8 +336,8 @@ export default function BatchOpsDashboard() {
       <div className="container mx-auto py-6 px-4 max-w-md">
         <Card>
           <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-4">
-              <Lock className="h-6 w-6 text-amber-600" />
+            <div className="mx-auto w-12 h-12 bg-stone-100 rounded-full flex items-center justify-center mb-4">
+              <Lock className="h-6 w-6 text-stone-600" />
             </div>
             <CardTitle className="text-xl">Admin Authentication Required</CardTitle>
             <CardDescription>
@@ -358,7 +358,7 @@ export default function BatchOpsDashboard() {
                 />
               </div>
               {tokenError && (
-                <div className="text-sm text-red-600 flex items-center gap-1">
+                <div className="text-sm text-stone-700 flex items-center gap-1">
                   <AlertTriangle className="h-4 w-4" />
                   {tokenError}
                 </div>
@@ -377,9 +377,9 @@ export default function BatchOpsDashboard() {
   return (
     <div className="container mx-auto py-6 px-4 max-w-7xl">
       {/* Security Warning Banner */}
-      <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3">
-        <ShieldAlert className="h-5 w-5 text-amber-600 flex-shrink-0" />
-        <div className="flex-1 text-sm text-amber-800">
+      <div className="mb-4 bg-stone-100 border border-stone-200 rounded-lg p-3 flex items-center gap-3">
+        <ShieldAlert className="h-5 w-5 text-stone-600 flex-shrink-0" />
+        <div className="flex-1 text-sm text-stone-800">
           <strong>Internal Admin Area</strong> — Actions taken here affect production batch jobs.
           All operations are logged and audited.
         </div>
@@ -387,7 +387,7 @@ export default function BatchOpsDashboard() {
           variant="ghost"
           size="sm"
           onClick={handleLogout}
-          className="text-amber-700 hover:text-amber-900 hover:bg-amber-100"
+          className="text-stone-700 hover:text-stone-900 hover:bg-stone-100"
         >
           <LogOut className="h-4 w-4 mr-1" />
           Logout
@@ -417,7 +417,7 @@ export default function BatchOpsDashboard() {
           {/* Filters */}
           <div className="flex flex-wrap gap-4 mb-6">
             <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-gray-500" />
+              <Search className="h-4 w-4 text-stone-500" />
               <Input
                 placeholder="Filter by Program ID..."
                 value={programIdFilter}
@@ -475,7 +475,7 @@ export default function BatchOpsDashboard() {
                   </TableRow>
                 ) : batches.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={8} className="text-center py-8 text-stone-500">
                       No batches found matching your filters.
                     </TableCell>
                   </TableRow>
@@ -492,26 +492,26 @@ export default function BatchOpsDashboard() {
                             {batch.claimed_by}
                           </span>
                         ) : (
-                          <span className="text-gray-400">-</span>
+                          <span className="text-stone-400">-</span>
                         )}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">{batch.attempts}</Badge>
                       </TableCell>
-                      <TableCell className="text-sm text-gray-600">
+                      <TableCell className="text-sm text-stone-600">
                         {formatRelativeTime(batch.last_heartbeat_at)}
                       </TableCell>
                       <TableCell className="max-w-xs">
                         {batch.last_error ? (
                           <span
-                            className="text-sm text-red-600 truncate block"
+                            className="text-sm text-stone-700 truncate block"
                             title={batch.last_error}
                           >
                             {batch.last_error.slice(0, 50)}
                             {batch.last_error.length > 50 ? '...' : ''}
                           </span>
                         ) : (
-                          <span className="text-gray-400">-</span>
+                          <span className="text-stone-400">-</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -530,7 +530,7 @@ export default function BatchOpsDashboard() {
                               size="sm"
                               onClick={() => openCancelDialog(batch)}
                               title="Cancel Batch"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              className="text-stone-700 hover:text-stone-800 hover:bg-stone-100"
                             >
                               <XCircle className="h-4 w-4" />
                             </Button>
@@ -541,7 +541,7 @@ export default function BatchOpsDashboard() {
                               size="sm"
                               onClick={() => openRequeueDialog(batch)}
                               title="Requeue Batch"
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              className="text-stone-600 hover:text-stone-700 hover:bg-stone-100"
                             >
                               <RotateCcw className="h-4 w-4" />
                             </Button>
@@ -558,7 +558,7 @@ export default function BatchOpsDashboard() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-stone-600">
                 Showing {page * PAGE_SIZE + 1} - {Math.min((page + 1) * PAGE_SIZE, total)} of{' '}
                 {total} batches
               </p>
@@ -572,7 +572,7 @@ export default function BatchOpsDashboard() {
                   <ChevronLeft className="h-4 w-4" />
                   Previous
                 </Button>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-stone-600">
                   Page {page + 1} of {totalPages}
                 </span>
                 <Button
@@ -595,7 +595,7 @@ export default function BatchOpsDashboard() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <XCircle className="h-5 w-5 text-red-600" />
+              <XCircle className="h-5 w-5 text-stone-700" />
               Cancel Batch
             </DialogTitle>
             <DialogDescription>
@@ -636,7 +636,7 @@ export default function BatchOpsDashboard() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <RotateCcw className="h-5 w-5 text-blue-600" />
+              <RotateCcw className="h-5 w-5 text-stone-600" />
               Requeue Batch
             </DialogTitle>
             <DialogDescription>
@@ -666,7 +666,7 @@ export default function BatchOpsDashboard() {
               </Label>
             </div>
             {selectedBatch && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-stone-600">
                 Current attempts: <strong>{selectedBatch.attempts}</strong>
               </p>
             )}
@@ -713,60 +713,60 @@ export default function BatchOpsDashboard() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-gray-500">Program ID</Label>
+                    <Label className="text-stone-500">Program ID</Label>
                     <p className="font-medium">{adminDetails.batch.program_id}</p>
                   </div>
                   <div>
-                    <Label className="text-gray-500">Status</Label>
+                    <Label className="text-stone-500">Status</Label>
                     <div className="mt-1">{getStatusBadge(adminDetails.batch.status)}</div>
                   </div>
                   <div>
-                    <Label className="text-gray-500">Claimed By</Label>
+                    <Label className="text-stone-500">Claimed By</Label>
                     <p className="font-medium">{adminDetails.batch.claimed_by || '-'}</p>
                   </div>
                   <div>
-                    <Label className="text-gray-500">Claim Expires</Label>
+                    <Label className="text-stone-500">Claim Expires</Label>
                     <p className="font-medium">{formatDate(adminDetails.batch.claim_expires_at)}</p>
                   </div>
                   <div>
-                    <Label className="text-gray-500">Attempts</Label>
+                    <Label className="text-stone-500">Attempts</Label>
                     <p className="font-medium">{adminDetails.batch.attempts}</p>
                   </div>
                   <div>
-                    <Label className="text-gray-500">Last Heartbeat</Label>
+                    <Label className="text-stone-500">Last Heartbeat</Label>
                     <p className="font-medium">
                       {formatDate(adminDetails.batch.last_heartbeat_at)}
                     </p>
                   </div>
                   <div>
-                    <Label className="text-gray-500">Created</Label>
+                    <Label className="text-stone-500">Created</Label>
                     <p className="font-medium">{formatDate(adminDetails.batch.created_at)}</p>
                   </div>
                   <div>
-                    <Label className="text-gray-500">Updated</Label>
+                    <Label className="text-stone-500">Updated</Label>
                     <p className="font-medium">{formatDate(adminDetails.batch.updated_at)}</p>
                   </div>
                 </div>
                 {adminDetails.batch.last_error && (
                   <div>
-                    <Label className="text-gray-500">Last Error</Label>
-                    <pre className="mt-1 p-3 bg-red-50 text-red-800 rounded text-sm overflow-x-auto">
+                    <Label className="text-stone-500">Last Error</Label>
+                    <pre className="mt-1 p-3 bg-stone-100 text-stone-800 rounded text-sm overflow-x-auto">
                       {adminDetails.batch.last_error}
                     </pre>
                   </div>
                 )}
                 {adminDetails.history && adminDetails.history.length > 0 && (
                   <div>
-                    <Label className="text-gray-500">History</Label>
+                    <Label className="text-stone-500">History</Label>
                     <div className="mt-2 space-y-2 max-h-48 overflow-y-auto">
                       {adminDetails.history.map((entry, idx) => (
-                        <div key={idx} className="p-2 bg-gray-50 rounded text-sm">
+                        <div key={idx} className="p-2 bg-stone-50 rounded text-sm">
                           <div className="flex justify-between">
                             <span className="font-medium">{entry.action}</span>
-                            <span className="text-gray-500">{formatDate(entry.timestamp)}</span>
+                            <span className="text-stone-500">{formatDate(entry.timestamp)}</span>
                           </div>
-                          <p className="text-gray-600">{entry.details}</p>
-                          <p className="text-gray-400 text-xs">by {entry.actor}</p>
+                          <p className="text-stone-600">{entry.details}</p>
+                          <p className="text-stone-400 text-xs">by {entry.actor}</p>
                         </div>
                       ))}
                     </div>
@@ -774,7 +774,7 @@ export default function BatchOpsDashboard() {
                 )}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-4">Failed to load details</p>
+              <p className="text-stone-500 text-center py-4">Failed to load details</p>
             )}
           </div>
           <DialogFooter>

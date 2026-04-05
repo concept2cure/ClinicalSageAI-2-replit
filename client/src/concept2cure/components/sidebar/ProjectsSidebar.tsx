@@ -139,7 +139,7 @@ const StatusDot: React.FC<{ status?: string }> = ({ status }) => (
   <span
     className={cn(
       'inline-block w-1.5 h-1.5 rounded-full flex-shrink-0',
-      statusDotColor[status || 'active'] ?? 'bg-emerald-500'
+      statusDotColor[status || 'active'] ?? 'bg-stone-1000'
     )}
     title={status || 'active'}
   />
@@ -356,7 +356,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({
               Archive
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onDelete} className="text-red-600 focus:text-red-600">
+            <DropdownMenuItem onClick={onDelete} className="text-stone-700 focus:text-stone-700">
               <Trash2 className="mr-2 h-3.5 w-3.5" />
               Delete
             </DropdownMenuItem>
@@ -370,7 +370,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({
           {/* New conversation link */}
           <button
             onClick={onNewConversation}
-            className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+            className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-stone-600 hover:bg-stone-100 rounded-md transition-colors"
           >
             <Plus className="h-3 w-3" />
             New chat

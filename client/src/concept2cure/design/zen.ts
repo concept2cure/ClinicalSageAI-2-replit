@@ -397,9 +397,9 @@ export const zenClasses = {
   buttonPrimary: 'bg-stone-800 text-white hover:bg-stone-900 shadow-sm px-4 py-2 text-sm',
   buttonSecondary: 'bg-white text-stone-700 border border-stone-200 hover:bg-stone-50 hover:border-stone-300 px-4 py-2 text-sm',
   buttonGhost: 'text-stone-600 hover:text-stone-900 hover:bg-stone-100 px-3 py-2 text-sm',
-  buttonDanger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm px-4 py-2 text-sm',
-  buttonSuccess: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm px-4 py-2 text-sm',
-  buttonWarning: 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm px-4 py-2 text-sm',
+  buttonDanger: 'bg-stone-700 text-white hover:bg-stone-800 shadow-sm px-4 py-2 text-sm',
+  buttonSuccess: 'bg-stone-700 text-white hover:bg-stone-800 shadow-sm px-4 py-2 text-sm',
+  buttonWarning: 'bg-stone-1000 text-white hover:bg-stone-600 shadow-sm px-4 py-2 text-sm',
   buttonIcon: 'p-2 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded-lg',
   // Size modifiers (combine with variant)
   buttonSm: 'px-3 py-1.5 text-xs gap-1.5',

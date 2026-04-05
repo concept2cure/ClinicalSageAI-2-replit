@@ -78,22 +78,22 @@ function renderMarkdown(text: string): string {
   return (
     escapeHtml(text)
       // Headers
-      .replace(/^### (.*$)/gm, '<h3 class="text-lg font-semibold mt-4 mb-2 text-gray-800">$1</h3>')
-      .replace(/^## (.*$)/gm, '<h2 class="text-xl font-semibold mt-5 mb-3 text-gray-900">$1</h2>')
-      .replace(/^# (.*$)/gm, '<h1 class="text-2xl font-bold mt-6 mb-4 text-gray-900">$1</h1>')
+      .replace(/^### (.*$)/gm, '<h3 class="text-lg font-semibold mt-4 mb-2 text-stone-800">$1</h3>')
+      .replace(/^## (.*$)/gm, '<h2 class="text-xl font-semibold mt-5 mb-3 text-stone-900">$1</h2>')
+      .replace(/^# (.*$)/gm, '<h1 class="text-2xl font-bold mt-6 mb-4 text-stone-900">$1</h1>')
       // Bold
-      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-stone-900">$1</strong>')
       // Italic
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       // Code blocks
       .replace(
         /```(\w*)\n([\s\S]*?)```/g,
-        '<pre class="bg-gray-100 rounded-lg p-4 my-3 overflow-x-auto text-sm"><code>$2</code></pre>'
+        '<pre class="bg-stone-100 rounded-lg p-4 my-3 overflow-x-auto text-sm"><code>$2</code></pre>'
       )
       // Inline code
       .replace(
         /`([^`]+)`/g,
-        '<code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono">$1</code>'
+        '<code class="bg-stone-100 px-1.5 py-0.5 rounded text-sm font-mono">$1</code>'
       )
       // Tables (basic)
       .replace(/\|(.+)\|/g, match => {
@@ -323,14 +323,14 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
   return (
     <div className={cn('flex flex-col h-full bg-white rounded-xl border shadow-sm', className)}>
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-indigo-50 to-purple-50">
+      <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-stone-100 to-stone-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-stone-1000 to-stone-600 flex items-center justify-center">
             <Brain className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="font-semibold text-gray-900">AnA <span className="text-xs font-normal text-gray-400">v1.0</span></h2>
-            <p className="text-xs text-gray-500">Audit & Narrative Assistant — RI Co-pilot</p>
+            <h2 className="font-semibold text-stone-900">AnA <span className="text-xs font-normal text-stone-400">v1.0</span></h2>
+            <p className="text-xs text-stone-500">Audit & Narrative Assistant — RI Co-pilot</p>
           </div>
           {/* Model selector — shown when fine-tuned models are available */}
           {models.length > 0 && (
@@ -340,8 +340,8 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
                 className={cn(
                   'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors',
                   activeModel !== 'base'
-                    ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                    : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                    ? 'bg-stone-100 border-stone-200 text-stone-700'
+                    : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'
                 )}
               >
                 {activeModel !== 'base' && <Zap className="w-3 h-3" />}
@@ -358,12 +358,12 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
                       setShowModelSelector(false);
                     }}
                     className={cn(
-                      'w-full text-left px-3 py-2 text-sm hover:bg-gray-50',
-                      activeModel === 'base' && 'bg-indigo-50'
+                      'w-full text-left px-3 py-2 text-sm hover:bg-stone-50',
+                      activeModel === 'base' && 'bg-stone-100'
                     )}
                   >
                     <span className="font-medium">Base Model</span>
-                    <span className="block text-xs text-gray-400">General regulatory AI</span>
+                    <span className="block text-xs text-stone-400">General regulatory AI</span>
                   </button>
                   {models
                     .filter(m => m.status === 'active')
@@ -375,14 +375,14 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
                           setShowModelSelector(false);
                         }}
                         className={cn(
-                          'w-full text-left px-3 py-2 text-sm hover:bg-gray-50',
-                          activeModel === model.modelId && 'bg-indigo-50'
+                          'w-full text-left px-3 py-2 text-sm hover:bg-stone-50',
+                          activeModel === model.modelId && 'bg-stone-100'
                         )}
                       >
                         <span className="font-medium flex items-center gap-1">
-                          {model.name} <Zap className="w-3 h-3 text-indigo-500" />
+                          {model.name} <Zap className="w-3 h-3 text-stone-1000" />
                         </span>
-                        <span className="block text-xs text-gray-400">
+                        <span className="block text-xs text-stone-400">
                           {model.domain || model.type}
                         </span>
                       </button>
@@ -392,7 +392,7 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
             </div>
           )}
         </div>
-        <Button variant="ghost" size="sm" onClick={handleNewChat} className="text-gray-500">
+        <Button variant="ghost" size="sm" onClick={handleNewChat} className="text-stone-500">
           <RefreshCw className="w-4 h-4 mr-2" />
           New Chat
         </Button>
@@ -403,11 +403,11 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
         {messages.length === 0 ? (
           // Welcome state
           <div className="h-full flex flex-col items-center justify-center text-center px-8">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mb-6">
-              <Sparkles className="w-10 h-10 text-indigo-600" />
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-stone-100 to-stone-100 flex items-center justify-center mb-6">
+              <Sparkles className="w-10 h-10 text-stone-600" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Meet AnA v1.0 — Your RI Co-pilot</h3>
-            <p className="text-gray-500 mb-8 max-w-md">
+            <h3 className="text-xl font-semibold text-stone-900 mb-2">Meet AnA v1.0 — Your RI Co-pilot</h3>
+            <p className="text-stone-500 mb-8 max-w-md">
               Your Audit & Narrative Assistant. Ask me about FDA submissions,
               clinical trials, compliance requirements, and more.
             </p>
@@ -418,10 +418,10 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
                 <button
                   key={index}
                   onClick={() => setInput(action.query)}
-                  className="p-4 text-left border rounded-lg hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
+                  className="p-4 text-left border rounded-lg hover:border-stone-300 hover:bg-stone-100 transition-colors"
                 >
-                  <FileText className="w-4 h-4 text-indigo-600 mb-2" />
-                  <span className="text-sm font-medium text-gray-700">{action.label}</span>
+                  <FileText className="w-4 h-4 text-stone-600 mb-2" />
+                  <span className="text-sm font-medium text-stone-700">{action.label}</span>
                 </button>
               ))}
             </div>
@@ -439,8 +439,8 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
                   className={cn(
                     'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
                     message.role === 'user'
-                      ? 'bg-blue-500'
-                      : 'bg-gradient-to-br from-indigo-500 to-purple-600'
+                      ? 'bg-stone-1000'
+                      : 'bg-gradient-to-br from-stone-1000 to-stone-600'
                   )}
                 >
                   {message.role === 'user' ? (
@@ -454,7 +454,7 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
                 <div
                   className={cn(
                     'flex-1 max-w-[85%] rounded-2xl px-4 py-3',
-                    message.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-800'
+                    message.role === 'user' ? 'bg-stone-1000 text-white' : 'bg-stone-100 text-stone-800'
                   )}
                 >
                   {message.role === 'user' ? (
@@ -473,7 +473,7 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
                     <div className="mt-2 flex items-center gap-3">
                       <button
                         onClick={() => copyToClipboard(message.content, message.id)}
-                        className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                        className="flex items-center gap-1 text-xs text-stone-400 hover:text-stone-600 transition-colors"
                       >
                         {copiedId === message.id ? (
                           <>
@@ -488,7 +488,7 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
                         )}
                       </button>
                       {message.modelUsed && (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] bg-indigo-50 text-indigo-600 border border-indigo-100">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] bg-stone-100 text-stone-600 border border-stone-100">
                           <Zap className="w-2.5 h-2.5" />
                           {message.modelUsed}
                         </span>
@@ -498,8 +498,8 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
 
                   {/* Structured intelligence enrichment panel */}
                   {message.intelligence && (
-                    <div className="mt-3 space-y-2 border-t border-gray-200 pt-3">
-                      <span className="text-[11px] font-semibold text-indigo-600 uppercase tracking-wider flex items-center gap-1">
+                    <div className="mt-3 space-y-2 border-t border-stone-200 pt-3">
+                      <span className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider flex items-center gap-1">
                         <ShieldCheck className="w-3 h-3" /> Regulatory Intelligence
                       </span>
 
@@ -507,23 +507,23 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
                       {message.intelligence.precedents &&
                         message.intelligence.precedents.length > 0 && (
                           <div className="space-y-1">
-                            <span className="text-[11px] font-medium text-gray-500 flex items-center gap-1">
+                            <span className="text-[11px] font-medium text-stone-500 flex items-center gap-1">
                               <Search className="w-2.5 h-2.5" /> Precedent Evidence
                             </span>
                             {message.intelligence.precedents.map((p, i) => (
                               <div
                                 key={i}
-                                className="flex items-center justify-between p-1.5 bg-white/80 rounded border border-gray-200 text-[11px]"
+                                className="flex items-center justify-between p-1.5 bg-white/80 rounded border border-stone-200 text-[11px]"
                               >
                                 <div>
-                                  <span className="font-medium text-gray-700">{p.deviceName}</span>
-                                  <span className="text-gray-400 ml-1.5">{p.clearanceNumber}</span>
+                                  <span className="font-medium text-stone-700">{p.deviceName}</span>
+                                  <span className="text-stone-400 ml-1.5">{p.clearanceNumber}</span>
                                 </div>
                                 <span
                                   className={`px-1.5 py-0.5 rounded-full text-[11px] font-semibold ${
                                     p.decision === 'CLEARED' || p.decision === 'APPROVED'
-                                      ? 'bg-emerald-100 text-emerald-700'
-                                      : 'bg-red-100 text-red-700'
+                                      ? 'bg-stone-100 text-stone-800'
+                                      : 'bg-stone-100 text-stone-800'
                                   }`}
                                 >
                                   {p.decision}
@@ -537,24 +537,24 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
                       <div className="flex gap-3">
                         {message.intelligence.approvalProbability != null && (
                           <div className="flex items-center gap-1 text-[11px]">
-                            <TrendingUp className="w-3 h-3 text-emerald-500" />
-                            <span className="text-gray-600">Approval:</span>
-                            <span className="font-semibold text-gray-800">
+                            <TrendingUp className="w-3 h-3 text-stone-1000" />
+                            <span className="text-stone-600">Approval:</span>
+                            <span className="font-semibold text-stone-800">
                               {message.intelligence.approvalProbability}%
                             </span>
                           </div>
                         )}
                         {message.intelligence.riskScore != null && (
                           <div className="flex items-center gap-1 text-[11px]">
-                            <Target className="w-3 h-3 text-amber-500" />
-                            <span className="text-gray-600">Risk:</span>
+                            <Target className="w-3 h-3 text-stone-1000" />
+                            <span className="text-stone-600">Risk:</span>
                             <span
                               className={`font-semibold ${
                                 message.intelligence.riskScore < 30
-                                  ? 'text-emerald-700'
+                                  ? 'text-stone-800'
                                   : message.intelligence.riskScore < 60
-                                    ? 'text-amber-700'
-                                    : 'text-red-700'
+                                    ? 'text-stone-700'
+                                    : 'text-stone-800'
                               }`}
                             >
                               {message.intelligence.riskScore < 30
@@ -575,13 +575,13 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
             {/* Loading indicator */}
             {isLoading && (
               <div className="flex gap-4">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-stone-1000 to-stone-600 flex items-center justify-center">
                   <Brain className="w-4 h-4 text-white" />
                 </div>
-                <div className="flex-1 max-w-[85%] bg-gray-100 rounded-2xl px-4 py-3">
+                <div className="flex-1 max-w-[85%] bg-stone-100 rounded-2xl px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
-                    <span className="text-gray-500 text-sm">Thinking...</span>
+                    <Loader2 className="w-4 h-4 animate-spin text-stone-600" />
+                    <span className="text-stone-500 text-sm">Thinking...</span>
                   </div>
                 </div>
               </div>
@@ -593,7 +593,7 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
       </div>
 
       {/* Input area */}
-      <div className="p-4 border-t bg-gray-50">
+      <div className="p-4 border-t bg-stone-50">
         <div className="flex gap-3 items-end">
           <Textarea
             ref={textareaRef}
@@ -609,7 +609,7 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
           <Button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="h-11 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+            className="h-11 px-4 bg-gradient-to-r from-stone-1000 to-stone-600 hover:from-stone-600 hover:to-stone-700"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -618,7 +618,7 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
             )}
           </Button>
         </div>
-        <p className="text-xs text-gray-400 mt-2 text-center">
+        <p className="text-xs text-stone-400 mt-2 text-center">
           AnA provides regulatory intelligence guidance. Always verify with official FDA sources.
         </p>
       </div>

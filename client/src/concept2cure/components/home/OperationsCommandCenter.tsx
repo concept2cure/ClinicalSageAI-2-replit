@@ -44,11 +44,11 @@ interface OperationsCommandCenterProps {
 
 const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
   IND: { bg: 'bg-stone-200', text: 'text-stone-700' },
-  NDA: { bg: 'bg-emerald-100', text: 'text-emerald-700' },
-  '510K': { bg: 'bg-blue-100', text: 'text-stone-700' },
-  '510(K)': { bg: 'bg-blue-100', text: 'text-stone-700' },
-  BLA: { bg: 'bg-amber-100', text: 'text-amber-700' },
-  PMA: { bg: 'bg-red-100', text: 'text-red-700' },
+  NDA: { bg: 'bg-stone-100', text: 'text-stone-800' },
+  '510K': { bg: 'bg-stone-100', text: 'text-stone-700' },
+  '510(K)': { bg: 'bg-stone-100', text: 'text-stone-700' },
+  BLA: { bg: 'bg-stone-100', text: 'text-stone-700' },
+  PMA: { bg: 'bg-stone-100', text: 'text-stone-800' },
 };
 
 const STATUS_VARIANT: Record<string, 'success' | 'default' | 'warning' | 'info'> = {
@@ -127,8 +127,8 @@ export function OperationsCommandCenter({
 
     return [
       { label: 'Total', value: projects.length, icon: FolderKanban, iconClassName: 'text-stone-500' },
-      { label: 'Active', value: projects.filter((p) => p.status?.toLowerCase() === 'active').length, icon: Briefcase, iconClassName: 'text-emerald-600', valueClassName: 'text-emerald-600' },
-      { label: 'In Review', value: projects.filter((p) => p.status?.toLowerCase().includes('review')).length, icon: FileSearch, iconClassName: 'text-amber-600', valueClassName: 'text-amber-600' },
+      { label: 'Active', value: projects.filter((p) => p.status?.toLowerCase() === 'active').length, icon: Briefcase, iconClassName: 'text-stone-700', valueClassName: 'text-stone-700' },
+      { label: 'In Review', value: projects.filter((p) => p.status?.toLowerCase().includes('review')).length, icon: FileSearch, iconClassName: 'text-stone-600', valueClassName: 'text-stone-600' },
       { label: 'Completed', value: projects.filter((p) => p.status?.toLowerCase() === 'completed').length, icon: CheckCircle2, iconClassName: 'text-stone-400' },
       { label: 'This Month', value: projects.filter((p) => { if (!p.createdAt) return false; const d = new Date(p.createdAt); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; }).length, icon: CalendarDays, iconClassName: 'text-sky-600', valueClassName: 'text-sky-600' },
     ];

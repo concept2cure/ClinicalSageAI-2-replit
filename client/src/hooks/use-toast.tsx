@@ -47,11 +47,11 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           <div
             key={toast.id}
             className={`toast p-4 rounded-md shadow-md flex items-start max-w-md 
-            ${toast.type === 'success' ? 'bg-green-100 border-l-4 border-green-500' : ''}
-            ${toast.type === 'error' ? 'bg-red-100 border-l-4 border-red-500' : ''}
-            ${toast.type === 'warning' ? 'bg-yellow-100 border-l-4 border-yellow-500' : ''}
-            ${toast.type === 'info' ? 'bg-blue-100 border-l-4 border-blue-500' : ''}
-            ${toast.type === 'default' ? 'bg-white border-l-4 border-gray-300' : ''}
+            ${toast.type === 'success' ? 'bg-stone-100 border-l-4 border-stone-1000' : ''}
+            ${toast.type === 'error' ? 'bg-stone-100 border-l-4 border-stone-1000' : ''}
+            ${toast.type === 'warning' ? 'bg-stone-100 border-l-4 border-stone-1000' : ''}
+            ${toast.type === 'info' ? 'bg-stone-100 border-l-4 border-stone-1000' : ''}
+            ${toast.type === 'default' ? 'bg-white border-l-4 border-stone-300' : ''}
             `}
           >
             <div className="flex-grow">
@@ -60,7 +60,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             </div>
             <button
               onClick={() => removeToast(toast.id)}
-              className="ml-4 text-gray-500 hover:text-gray-800"
+              className="ml-4 text-stone-500 hover:text-stone-800"
             >
               &times;
             </button>

@@ -405,7 +405,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
               <button
                 onClick={selectAll}
                 disabled={isRunning}
-                className="text-xs text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-40"
+                className="text-xs text-stone-400 hover:text-stone-300 transition-colors disabled:opacity-40"
               >
                 All
               </button>
@@ -496,7 +496,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
               <div
                 className={cn(
                   'h-full rounded-full transition-all duration-200',
-                  allDone ? 'bg-emerald-500' : isPaused ? 'bg-amber-500' : 'bg-stone-500',
+                  allDone ? 'bg-stone-1000' : isPaused ? 'bg-stone-1000' : 'bg-stone-500',
                 )}
                 style={{ width: `${progressPct}%` }}
               />
@@ -567,7 +567,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                             onClick={() =>
                               handleApplySelected(new Set([section.id]))
                             }
-                            className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors duration-150"
+                            className="text-xs text-stone-400 hover:text-stone-300 transition-colors duration-150"
                           >
                             Apply this section only
                           </button>
@@ -576,7 +576,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
 
                       {isExpanded && result.status === 'error' && (
                         <div className="border-t border-stone-700/60 px-3 py-2">
-                          <p className="text-xs text-red-400">{result.error}</p>
+                          <p className="text-xs text-stone-400">{result.error}</p>
                         </div>
                       )}
                     </div>
@@ -609,14 +609,14 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
           <div className="flex gap-2">
             <button
               onClick={handlePauseResume}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-amber-600/20 text-amber-300 hover:bg-amber-600/30 transition-colors duration-150"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-stone-600/20 text-stone-300 hover:bg-stone-600/30 transition-colors duration-150"
             >
               {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
               {isPaused ? 'Resume' : 'Pause'}
             </button>
             <button
               onClick={handleCancel}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-red-600/20 text-red-300 hover:bg-red-600/30 transition-colors duration-150"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-stone-700/20 text-stone-300 hover:bg-stone-700/30 transition-colors duration-150"
             >
               <X className="w-4 h-4" />
               Cancel
@@ -628,7 +628,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
           <div className="space-y-2">
             <button
               onClick={handleApplyAll}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition-colors duration-150"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-stone-700 hover:bg-stone-1000 text-white transition-colors duration-150"
             >
               <Check className="w-4 h-4" />
               Apply All Changes
@@ -655,8 +655,8 @@ function StatusBadge({ status }: { status: SectionStatus }) {
   const map: Record<SectionStatus, { label: string; className: string }> = {
     pending: { label: 'Pending', className: 'text-stone-500 bg-stone-700/40' },
     processing: { label: 'Running', className: 'text-stone-300 bg-stone-500/20' },
-    done: { label: 'Done', className: 'text-emerald-300 bg-emerald-500/20' },
-    error: { label: 'Error', className: 'text-red-300 bg-red-500/20' },
+    done: { label: 'Done', className: 'text-stone-300 bg-stone-1000/20' },
+    error: { label: 'Error', className: 'text-stone-300 bg-stone-1000/20' },
   };
   const info = map[status];
   return (
@@ -673,9 +673,9 @@ function StatusIcon({ status }: { status: SectionStatus }) {
     case 'processing':
       return <Loader2 className="w-3.5 h-3.5 text-stone-400 animate-spin" />;
     case 'done':
-      return <Check className="w-3.5 h-3.5 text-emerald-400" />;
+      return <Check className="w-3.5 h-3.5 text-stone-400" />;
     case 'error':
-      return <AlertCircle className="w-3.5 h-3.5 text-red-400" />;
+      return <AlertCircle className="w-3.5 h-3.5 text-stone-400" />;
   }
 }
 
@@ -686,7 +686,7 @@ function WordCountDelta({ original, updated }: { original: number; updated: numb
     <span
       className={cn(
         'text-[10px] font-medium',
-        delta > 0 ? 'text-emerald-400' : 'text-red-400',
+        delta > 0 ? 'text-stone-400' : 'text-stone-400',
       )}
     >
       {delta > 0 ? '+' : ''}

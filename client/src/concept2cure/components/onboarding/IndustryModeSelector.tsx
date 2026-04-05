@@ -66,8 +66,8 @@ const INDUSTRY_OPTIONS: Array<{
     label: 'Biotech',
     description: 'Small to mid-cap companies with focused pipeline',
     icon: <Flask className="w-8 h-8" />,
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-50',
+    color: 'text-stone-700',
+    bgColor: 'bg-stone-100',
     features: [
       'Development pipeline tracking',
       'Funding milestone management',
@@ -80,8 +80,8 @@ const INDUSTRY_OPTIONS: Array<{
     label: 'Pharma',
     description: 'Large enterprise with diverse portfolio',
     icon: <Pill className="w-8 h-8" />,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-100',
     features: [
       'Global portfolio management',
       'PDUFA date tracking',
@@ -108,8 +108,8 @@ const INDUSTRY_OPTIONS: Array<{
     label: 'MedTech',
     description: 'Medical devices and diagnostics',
     icon: <Stethoscope className="w-8 h-8" />,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-100',
     features: [
       '510(k) / PMA workflow',
       'Design history file tracking',
@@ -122,8 +122,8 @@ const INDUSTRY_OPTIONS: Array<{
     label: 'Academic',
     description: 'Research institutions and universities',
     icon: <GraduationCap className="w-8 h-8" />,
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-100',
     features: [
       'Grant/study management',
       'Publication tracking',
@@ -234,7 +234,7 @@ const IndustryStep: React.FC<{
             <ul className="mt-4 space-y-1">
               {industry.features.map(feature => (
                 <li key={feature} className="text-xs text-stone-500 flex items-center gap-2">
-                  <CheckCircle className="w-3 h-3 text-emerald-500" />
+                  <CheckCircle className="w-3 h-3 text-stone-1000" />
                   {feature}
                 </li>
               ))}
@@ -282,13 +282,13 @@ const RoleStep: React.FC<{
               className={cn(
                 'p-4 rounded-lg border text-left transition-all flex items-start gap-4',
                 selected === role.id
-                  ? 'bg-blue-50 border-stone-600 ring-2 ring-stone-300'
+                  ? 'bg-stone-100 border-stone-600 ring-2 ring-stone-300'
                   : 'bg-white border-stone-200 hover:border-stone-300'
               )}
             >
               <div className={cn(
                 'p-2 rounded-lg',
-                selected === role.id ? 'bg-blue-100 text-blue-600' : 'bg-stone-100 text-stone-600'
+                selected === role.id ? 'bg-stone-100 text-stone-600' : 'bg-stone-100 text-stone-600'
               )}>
                 {role.icon}
               </div>
@@ -297,7 +297,7 @@ const RoleStep: React.FC<{
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-stone-900">{role.label}</h3>
                   {isRecommended && (
-                    <span className="px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 rounded-full">
+                    <span className="px-2 py-0.5 text-xs font-medium bg-stone-100 text-stone-800 rounded-full">
                       Recommended
                     </span>
                   )}
@@ -349,9 +349,9 @@ const ConfirmationStep: React.FC<{
           <ArrowRight className="w-6 h-6 text-stone-400" />
         </div>
         
-        <div className="px-6 py-4 rounded-xl bg-blue-50">
-          <div className="mb-2 text-blue-600">{roleConfig.icon}</div>
-          <p className="font-semibold text-blue-600">{roleConfig.label}</p>
+        <div className="px-6 py-4 rounded-xl bg-stone-100">
+          <div className="mb-2 text-stone-600">{roleConfig.icon}</div>
+          <p className="font-semibold text-stone-600">{roleConfig.label}</p>
         </div>
       </div>
       

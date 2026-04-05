@@ -189,12 +189,12 @@ const SEVERITY_CONFIG: Record<
   FindingSeverity,
   { label: string; color: string; responseTime: string }
 > = {
-  critical: { label: 'Critical', color: 'bg-red-500 text-white', responseTime: '5 business days' },
-  major: { label: 'Major', color: 'bg-amber-500 text-white', responseTime: '15 business days' },
-  minor: { label: 'Minor', color: 'bg-yellow-500 text-white', responseTime: '30 business days' },
+  critical: { label: 'Critical', color: 'bg-stone-1000 text-white', responseTime: '5 business days' },
+  major: { label: 'Major', color: 'bg-stone-1000 text-white', responseTime: '15 business days' },
+  minor: { label: 'Minor', color: 'bg-stone-1000 text-white', responseTime: '30 business days' },
   observation: {
     label: 'Observation',
-    color: 'bg-blue-100 text-blue-800',
+    color: 'bg-stone-100 text-stone-800',
     responseTime: 'No formal response',
   },
 };
@@ -479,7 +479,7 @@ function InspectionMetrics({
               <p className="text-sm text-muted-foreground">Upcoming</p>
               <p className="text-base font-semibold">{upcoming}</p>
             </div>
-            <Calendar className="w-8 h-8 text-blue-500" />
+            <Calendar className="w-8 h-8 text-stone-1000" />
           </div>
         </div>
       </div>
@@ -489,9 +489,9 @@ function InspectionMetrics({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Open Findings</p>
-              <p className="text-base font-semibold text-amber-600">{openFindings}</p>
+              <p className="text-base font-semibold text-stone-600">{openFindings}</p>
             </div>
-            <AlertTriangle className="w-8 h-8 text-amber-500" />
+            <AlertTriangle className="w-8 h-8 text-stone-1000" />
           </div>
         </div>
       </div>
@@ -504,16 +504,16 @@ function InspectionMetrics({
               <p
                 className={`text-base font-semibold ${
                   avgReadiness >= 80
-                    ? 'text-emerald-600'
+                    ? 'text-stone-700'
                     : avgReadiness >= 60
-                      ? 'text-yellow-600'
-                      : 'text-red-600'
+                      ? 'text-stone-600'
+                      : 'text-stone-700'
                 }`}
               >
                 {avgReadiness}%
               </p>
             </div>
-            <TrendingUp className="w-8 h-8 text-emerald-500" />
+            <TrendingUp className="w-8 h-8 text-stone-1000" />
           </div>
         </div>
       </div>
@@ -527,7 +527,7 @@ function InspectionMetrics({
                 {readyItems}/{totalItems}
               </p>
             </div>
-            <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+            <CheckCircle2 className="w-8 h-8 text-stone-1000" />
           </div>
         </div>
       </div>
@@ -557,7 +557,7 @@ function InspectionList({
           <div
             key={inspection.id}
             className={`border border-border/40 rounded-sm bg-background cursor-pointer transition-shadow ${
-              inspection.status === 'preparing' && daysUntil <= 14 ? 'border-amber-300' : ''
+              inspection.status === 'preparing' && daysUntil <= 14 ? 'border-stone-300' : ''
             }`}
             onClick={() => onSelect(inspection)}
           >
@@ -568,7 +568,7 @@ function InspectionList({
                     className={`p-2 rounded-lg ${
                       inspection.status === 'completed' || inspection.status === 'follow_up'
                         ? 'bg-stone-100'
-                        : 'bg-blue-100'
+                        : 'bg-stone-100'
                     }`}
                   >
                     {typeConfig.icon}
@@ -604,7 +604,7 @@ function InspectionList({
                   <p className="text-sm font-medium">{inspection.scheduledDate}</p>
                   {daysUntil > 0 && inspection.status !== 'completed' && (
                     <p
-                      className={`text-sm ${daysUntil <= 14 ? 'text-amber-600 font-medium' : 'text-muted-foreground'}`}
+                      className={`text-sm ${daysUntil <= 14 ? 'text-stone-600 font-medium' : 'text-muted-foreground'}`}
                     >
                       {daysUntil} days
                     </p>
@@ -801,8 +801,8 @@ function SMEDirectory({ smes }: { smes: SubjectMatterExpert[] }) {
             <div className="px-3 py-2 p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3">
-                  <div className="p-2 bg-blue-100 rounded-full">
-                    <UserCheck className="w-5 h-5 text-blue-600" />
+                  <div className="p-2 bg-stone-100 rounded-full">
+                    <UserCheck className="w-5 h-5 text-stone-600" />
                   </div>
                   <div>
                     <h4 className="font-semibold">{sme.name}</h4>
@@ -818,7 +818,7 @@ function SMEDirectory({ smes }: { smes: SubjectMatterExpert[] }) {
                 </div>
                 <div className="flex flex-col gap-1">
                   {sme.trainingCompleted ? (
-                    <Badge className="bg-emerald-100 text-emerald-800">
+                    <Badge className="bg-stone-100 text-stone-800">
                       <CheckCircle2 className="w-3 h-3 mr-1" />
                       Trained
                     </Badge>
@@ -829,11 +829,11 @@ function SMEDirectory({ smes }: { smes: SubjectMatterExpert[] }) {
                     </Badge>
                   )}
                   {sme.available ? (
-                    <Badge variant="outline" className="text-emerald-600">
+                    <Badge variant="outline" className="text-stone-700">
                       Available
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="text-red-600">
+                    <Badge variant="outline" className="text-stone-700">
                       Unavailable
                     </Badge>
                   )}
@@ -873,7 +873,7 @@ function FindingsTracker({ inspections }: { inspections: InspectionEvent[] }) {
       {openFindings.length === 0 ? (
         <div className="border border-border/40 rounded-sm bg-background">
           <div className="px-3 py-2 p-8 text-center">
-            <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-emerald-500 opacity-50" />
+            <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-stone-1000 opacity-50" />
             <p className="text-muted-foreground">No open findings</p>
           </div>
         </div>
@@ -899,7 +899,7 @@ function FindingsTracker({ inspections }: { inspections: InspectionEvent[] }) {
               const isOverdue = daysRemaining < 0;
 
               return (
-                <TableRow key={finding.id} className={isOverdue ? 'bg-red-50' : ''}>
+                <TableRow key={finding.id} className={isOverdue ? 'bg-stone-100' : ''}>
                   <TableCell className="font-mono text-sm">{finding.reference}</TableCell>
                   <TableCell className="text-sm">{finding.inspectionTitle}</TableCell>
                   <TableCell className="max-w-xs truncate">{finding.description}</TableCell>
@@ -907,7 +907,7 @@ function FindingsTracker({ inspections }: { inspections: InspectionEvent[] }) {
                     <Badge className={severityConfig.color}>{severityConfig.label}</Badge>
                   </TableCell>
                   <TableCell>
-                    <span className={isOverdue ? 'text-red-600 font-medium' : ''}>
+                    <span className={isOverdue ? 'text-stone-700 font-medium' : ''}>
                       {finding.responseDeadline}
                       {isOverdue && ' (Overdue)'}
                     </span>
@@ -950,7 +950,7 @@ export function InspectionReadiness() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-base font-semibold flex items-center gap-3">
-            <ClipboardCheck className="w-8 h-8 text-blue-600" />
+            <ClipboardCheck className="w-8 h-8 text-stone-600" />
             Inspection Readiness
           </h1>
           <p className="text-muted-foreground">Prepare for regulatory inspections and audits</p>
@@ -1023,7 +1023,7 @@ export function InspectionReadiness() {
                         className="flex items-center justify-between p-2 bg-muted/50 rounded"
                       >
                         <span className="text-sm">{doc}</span>
-                        <Badge variant="outline" className="text-emerald-600">
+                        <Badge variant="outline" className="text-stone-700">
                           Ready
                         </Badge>
                       </div>

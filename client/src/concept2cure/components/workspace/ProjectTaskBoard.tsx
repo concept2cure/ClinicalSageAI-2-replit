@@ -40,15 +40,15 @@ interface ProjectTaskBoardProps {
 
 const COLUMNS: { key: TaskStatus; label: string; icon: React.ElementType; color: string; bg: string; dot: string }[] = [
   { key: 'todo',        label: 'To Do',       icon: Circle,         color: 'text-stone-600', bg: 'bg-stone-50',  dot: 'bg-stone-400' },
-  { key: 'in-progress', label: 'In Progress', icon: Loader2,        color: 'text-blue-600',  bg: 'bg-blue-50',   dot: 'bg-stone-600' },
-  { key: 'review',      label: 'Review',      icon: ArrowUpRight,   color: 'text-amber-600', bg: 'bg-amber-50',  dot: 'bg-amber-500' },
-  { key: 'done',        label: 'Done',        icon: CheckCircle2,   color: 'text-emerald-600', bg: 'bg-emerald-50', dot: 'bg-emerald-500' },
-  { key: 'blocked',     label: 'Blocked',     icon: AlertTriangle,  color: 'text-red-600',   bg: 'bg-red-50',    dot: 'bg-red-500' },
+  { key: 'in-progress', label: 'In Progress', icon: Loader2,        color: 'text-stone-600',  bg: 'bg-stone-100',   dot: 'bg-stone-600' },
+  { key: 'review',      label: 'Review',      icon: ArrowUpRight,   color: 'text-stone-600', bg: 'bg-stone-100',  dot: 'bg-stone-1000' },
+  { key: 'done',        label: 'Done',        icon: CheckCircle2,   color: 'text-stone-700', bg: 'bg-stone-100', dot: 'bg-stone-1000' },
+  { key: 'blocked',     label: 'Blocked',     icon: AlertTriangle,  color: 'text-stone-700',   bg: 'bg-stone-100',    dot: 'bg-stone-1000' },
 ];
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  urgent: { label: 'Urgent', color: 'text-red-700', bg: 'bg-red-100' },
-  high:   { label: 'High',   color: 'text-amber-700', bg: 'bg-amber-100' },
+  urgent: { label: 'Urgent', color: 'text-stone-800', bg: 'bg-stone-100' },
+  high:   { label: 'High',   color: 'text-stone-700', bg: 'bg-stone-100' },
   medium: { label: 'Medium', color: 'text-stone-600', bg: 'bg-stone-100' },
   low:    { label: 'Low',    color: 'text-stone-400', bg: 'bg-stone-50' },
 };
@@ -152,7 +152,7 @@ function TaskCard({
     <div
       className={cn(
         'group rounded-lg border bg-white p-3 transition-all hover:shadow-sm cursor-default',
-        overdue ? 'border-red-200' : 'border-stone-200',
+        overdue ? 'border-stone-200' : 'border-stone-200',
       )}
     >
       <div className="flex items-start gap-2">
@@ -161,7 +161,7 @@ function TaskCard({
           onClick={() => onStatusChange(task.id, nextStatus[task.status as TaskStatus] || 'in-progress')}
           className={cn(
             'mt-0.5 flex-shrink-0 rounded-full p-0.5 transition-colors',
-            task.status === 'done' ? 'text-emerald-500' : 'text-stone-300 hover:text-stone-500',
+            task.status === 'done' ? 'text-stone-1000' : 'text-stone-300 hover:text-stone-500',
           )}
           title={task.status === 'done' ? 'Completed' : 'Advance status'}
         >
@@ -196,7 +196,7 @@ function TaskCard({
 
         {/* Module type */}
         {task.moduleType && (
-          <span className="inline-flex items-center rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-stone-700">
+          <span className="inline-flex items-center rounded bg-stone-100 px-1.5 py-0.5 text-[10px] font-medium text-stone-700">
             {task.moduleType}
           </span>
         )}
@@ -205,7 +205,7 @@ function TaskCard({
         {task.dueDate && (
           <span className={cn(
             'inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium',
-            overdue ? 'bg-red-100 text-red-700' : 'bg-stone-100 text-stone-500',
+            overdue ? 'bg-stone-100 text-stone-800' : 'bg-stone-100 text-stone-500',
           )}>
             <Calendar className="h-2.5 w-2.5" />
             {formatDate(task.dueDate)}
@@ -221,8 +221,8 @@ function TaskCard({
 function TaskSummaryBar({ summary }: { summary: TaskSummary | null }) {
   if (!summary || summary.total === 0) return null;
 
-  const healthColor = summary.healthScore >= 80 ? 'text-emerald-600' : summary.healthScore >= 50 ? 'text-amber-600' : 'text-red-600';
-  const healthBg = summary.healthScore >= 80 ? 'bg-emerald-50' : summary.healthScore >= 50 ? 'bg-amber-50' : 'bg-red-50';
+  const healthColor = summary.healthScore >= 80 ? 'text-stone-700' : summary.healthScore >= 50 ? 'text-stone-600' : 'text-stone-700';
+  const healthBg = summary.healthScore >= 80 ? 'bg-stone-100' : summary.healthScore >= 50 ? 'bg-stone-100' : 'bg-stone-100';
 
   return (
     <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -235,7 +235,7 @@ function TaskSummaryBar({ summary }: { summary: TaskSummary | null }) {
         {summary.completed}/{summary.total} complete
       </div>
       {summary.overdue > 0 && (
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-3 py-1 text-xs font-medium text-stone-700">
           <AlertTriangle className="h-3 w-3" />
           {summary.overdue} overdue
         </div>
@@ -243,7 +243,7 @@ function TaskSummaryBar({ summary }: { summary: TaskSummary | null }) {
       <div className="flex-1">
         <div className="h-2 w-full max-w-xs overflow-hidden rounded-full bg-stone-100">
           <div
-            className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+            className="h-full rounded-full bg-stone-1000 transition-all duration-300"
             style={{ width: `${summary.completionRate}%` }}
           />
         </div>
@@ -334,7 +334,7 @@ export function ProjectTaskBoard({ projectId, projectType, compact }: ProjectTas
                 <li key={task.id} className="flex items-center gap-2 py-2">
                   <span className={cn('h-2 w-2 flex-shrink-0 rounded-full', colCfg?.dot || 'bg-stone-400')} />
                   <span className="flex-1 min-w-0 truncate text-sm text-stone-900">{task.name}</span>
-                  {overdue && <Clock className="h-3 w-3 text-red-500 flex-shrink-0" />}
+                  {overdue && <Clock className="h-3 w-3 text-stone-1000 flex-shrink-0" />}
                   <span className={cn('text-[10px] font-medium rounded px-1.5 py-0.5', priorityCfg.bg, priorityCfg.color)}>
                     {priorityCfg.label}
                   </span>

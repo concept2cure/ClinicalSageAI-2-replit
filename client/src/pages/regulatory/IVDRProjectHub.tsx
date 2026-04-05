@@ -151,26 +151,26 @@ const IVDR_STAGES: IVDRWorkplanStage[] = [
 function stageStatusIcon(status: string) {
   switch (status) {
     case 'completed':
-      return <CheckCircle2 className="h-4 w-4 text-green-600" />;
+      return <CheckCircle2 className="h-4 w-4 text-stone-700" />;
     case 'in_progress':
-      return <Clock className="h-4 w-4 text-blue-600" />;
+      return <Clock className="h-4 w-4 text-stone-600" />;
     case 'blocked':
-      return <AlertTriangle className="h-4 w-4 text-red-600" />;
+      return <AlertTriangle className="h-4 w-4 text-stone-700" />;
     default:
-      return <div className="h-4 w-4 rounded-full border-2 border-gray-300" />;
+      return <div className="h-4 w-4 rounded-full border-2 border-stone-300" />;
   }
 }
 
 function stageStatusColor(status: string) {
   switch (status) {
     case 'completed':
-      return 'bg-green-100 text-green-700 border-green-200';
+      return 'bg-stone-100 text-stone-800 border-stone-200';
     case 'in_progress':
-      return 'bg-blue-100 text-blue-700 border-blue-200';
+      return 'bg-stone-100 text-stone-700 border-stone-200';
     case 'blocked':
-      return 'bg-red-100 text-red-700 border-red-200';
+      return 'bg-stone-100 text-stone-800 border-stone-200';
     default:
-      return 'bg-gray-100 text-gray-500 border-gray-200';
+      return 'bg-stone-100 text-stone-500 border-stone-200';
   }
 }
 
@@ -300,7 +300,7 @@ export default function IVDRProjectHub() {
             <ChevronLeft className="w-4 h-4" />
             Hub
           </button>
-          <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+          <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-stone-1000 to-stone-600 flex items-center justify-center">
             <Microscope className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -312,7 +312,7 @@ export default function IVDRProjectHub() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-medium">
+          <Badge variant="outline" className="bg-stone-100 text-stone-700 border-stone-200 font-medium">
             EU IVDR 2017/746
           </Badge>
           {projectData?.project && (
@@ -326,14 +326,14 @@ export default function IVDRProjectHub() {
       {/* ── Readiness Score + Stage Progress ──────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {/* Readiness Card */}
-        <Card className="bg-gradient-to-br from-indigo-50 to-blue-50 border-indigo-200">
+        <Card className="bg-gradient-to-br from-stone-100 to-stone-100 border-stone-200">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-indigo-700">Overall Readiness</CardTitle>
+            <CardTitle className="text-sm font-medium text-stone-700">Overall Readiness</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-indigo-700">{readinessScore}%</div>
+            <div className="text-3xl font-bold text-stone-700">{readinessScore}%</div>
             <Progress value={readinessScore} className="mt-2 h-2" />
-            <p className="text-xs text-indigo-600 mt-1">
+            <p className="text-xs text-stone-600 mt-1">
               {stages.filter((s: IVDRWorkplanStage) => s.status === 'completed').length} of{' '}
               {stages.length} stages complete
             </p>
@@ -359,7 +359,7 @@ export default function IVDRProjectHub() {
                     <span className="hidden sm:inline">{stage.shortLabel}</span>
                   </div>
                   {i < stages.length - 1 && (
-                    <ArrowRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                    <ArrowRight className="h-3 w-3 text-stone-400 flex-shrink-0" />
                   )}
                 </React.Fragment>
               ))}
@@ -447,7 +447,7 @@ export default function IVDRProjectHub() {
                   className="w-full justify-start"
                   onClick={() => setActiveTab('classifier')}
                 >
-                  <Shield className="h-4 w-4 mr-2 text-blue-600" />
+                  <Shield className="h-4 w-4 mr-2 text-stone-600" />
                   Run Annex VIII Classification
                 </Button>
                 <Button
@@ -455,7 +455,7 @@ export default function IVDRProjectHub() {
                   className="w-full justify-start"
                   onClick={() => setActiveTab('analytical')}
                 >
-                  <FlaskConical className="h-4 w-4 mr-2 text-purple-600" />
+                  <FlaskConical className="h-4 w-4 mr-2 text-stone-600" />
                   Record Validation Parameters
                 </Button>
                 <Button
@@ -463,7 +463,7 @@ export default function IVDRProjectHub() {
                   className="w-full justify-start"
                   onClick={() => setActiveTab('clinical')}
                 >
-                  <BarChart3 className="h-4 w-4 mr-2 text-green-600" />
+                  <BarChart3 className="h-4 w-4 mr-2 text-stone-700" />
                   Add Clinical Evidence
                 </Button>
                 <Button
@@ -471,7 +471,7 @@ export default function IVDRProjectHub() {
                   className="w-full justify-start"
                   onClick={() => setActiveTab('cdx')}
                 >
-                  <GitBranch className="h-4 w-4 mr-2 text-orange-600" />
+                  <GitBranch className="h-4 w-4 mr-2 text-stone-600" />
                   Start CDx Workflow
                 </Button>
               </CardContent>
@@ -535,18 +535,18 @@ export default function IVDRProjectHub() {
                   {auditEvents.map((evt: IVDRAuditEvent) => (
                     <div
                       key={evt.id}
-                      className="flex items-start gap-3 text-sm border-b border-gray-100 pb-2 last:border-0"
+                      className="flex items-start gap-3 text-sm border-b border-stone-100 pb-2 last:border-0"
                     >
-                      <div className="h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <FileCheck className="h-3 w-3 text-gray-500" />
+                      <div className="h-6 w-6 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <FileCheck className="h-3 w-3 text-stone-500" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-gray-900">{evt.action}</div>
+                        <div className="font-medium text-stone-900">{evt.action}</div>
                         <div className="text-xs text-muted-foreground">
                           {evt.entity} • {evt.user} • {new Date(evt.timestamp).toLocaleString()}
                         </div>
                         {evt.details && (
-                          <div className="text-xs text-gray-500 mt-0.5 truncate">{evt.details}</div>
+                          <div className="text-xs text-stone-500 mt-0.5 truncate">{evt.details}</div>
                         )}
                       </div>
                     </div>

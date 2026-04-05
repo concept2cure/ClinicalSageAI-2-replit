@@ -620,7 +620,7 @@ export default function AnalyticalValidationTracker() {
                     <span className="font-medium text-sm">{v.device_name}</span>
                     <Badge
                       variant={v.status === 'completed' ? 'default' : 'outline'}
-                      className={v.status === 'completed' ? 'bg-green-600' : ''}
+                      className={v.status === 'completed' ? 'bg-stone-700' : ''}
                     >
                       {v.status}
                     </Badge>
@@ -711,13 +711,13 @@ export default function AnalyticalValidationTracker() {
                                   size="sm"
                                 />
                                 {status === 'pass' && (
-                                  <Badge className="bg-green-100 text-green-800">
+                                  <Badge className="bg-stone-100 text-stone-800">
                                     <CheckCircle2 className="h-3 w-3 mr-1" />
                                     Recorded
                                   </Badge>
                                 )}
                                 {status === 'fail' && (
-                                  <Badge className="bg-red-100 text-red-800">
+                                  <Badge className="bg-stone-100 text-stone-800">
                                     <XCircle className="h-3 w-3 mr-1" />
                                     Fail
                                   </Badge>

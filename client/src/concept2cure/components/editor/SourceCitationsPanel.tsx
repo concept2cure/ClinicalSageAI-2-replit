@@ -45,16 +45,16 @@ interface SourceCitationsPanelProps {
 }
 
 const SOURCE_TYPE_META: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
-  trial_data: { label: 'Clinical Trial', icon: <Microscope className="w-3 h-3" />, color: 'text-blue-600 bg-blue-50' },
-  literature: { label: 'Literature', icon: <BookOpen className="w-3 h-3" />, color: 'text-emerald-600 bg-emerald-50' },
+  trial_data: { label: 'Clinical Trial', icon: <Microscope className="w-3 h-3" />, color: 'text-stone-600 bg-stone-100' },
+  literature: { label: 'Literature', icon: <BookOpen className="w-3 h-3" />, color: 'text-stone-700 bg-stone-100' },
   regulatory_guidance: { label: 'Regulatory', icon: <Building2 className="w-3 h-3" />, color: 'text-stone-600 bg-stone-100' },
-  internal_data: { label: 'Internal Data', icon: <Database className="w-3 h-3" />, color: 'text-amber-600 bg-amber-50' },
+  internal_data: { label: 'Internal Data', icon: <Database className="w-3 h-3" />, color: 'text-stone-600 bg-stone-100' },
 };
 
 function confidenceLabel(confidence: number): { text: string; color: string } {
-  if (confidence >= 0.8) return { text: 'High', color: 'text-emerald-600' };
-  if (confidence >= 0.6) return { text: 'Medium', color: 'text-amber-600' };
-  return { text: 'Low', color: 'text-red-500' };
+  if (confidence >= 0.8) return { text: 'High', color: 'text-stone-700' };
+  if (confidence >= 0.6) return { text: 'Medium', color: 'text-stone-600' };
+  return { text: 'Low', color: 'text-stone-1000' };
 }
 
 // ── Component ───────────────────────────────────────────────────────────────
@@ -121,8 +121,8 @@ const SourceCitationsPanel: React.FC<SourceCitationsPanelProps> = ({ artifactId,
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
-            <Shield className="w-4 h-4 text-blue-600" />
+          <div className="w-7 h-7 rounded-lg bg-stone-100 flex items-center justify-center">
+            <Shield className="w-4 h-4 text-stone-600" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-stone-800">Source Traceability</h3>
@@ -133,7 +133,7 @@ const SourceCitationsPanel: React.FC<SourceCitationsPanelProps> = ({ artifactId,
           <button
             onClick={handleAnalyze}
             disabled={analyzing || !artifactId}
-            className="px-2.5 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 disabled:opacity-50 transition-colors flex items-center gap-1"
+            className="px-2.5 py-1.5 text-xs font-medium text-stone-600 bg-stone-100 rounded-lg hover:bg-stone-100 disabled:opacity-50 transition-colors flex items-center gap-1"
           >
             {analyzing ? (
               <Loader2 className="w-3 h-3 animate-spin" />
@@ -155,16 +155,16 @@ const SourceCitationsPanel: React.FC<SourceCitationsPanelProps> = ({ artifactId,
       {total > 0 && (
         <div className="flex items-center gap-3 px-4 py-2.5 border-b border-stone-100 bg-stone-50/50">
           <div className="flex items-center gap-1.5">
-            <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+            <CheckCircle className="w-3.5 h-3.5 text-stone-1000" />
             <span className="text-xs text-stone-600">{supportedCount} supported</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+            <AlertTriangle className="w-3.5 h-3.5 text-stone-1000" />
             <span className="text-xs text-stone-600">{weakCount} weak</span>
           </div>
           {unsupportedCount > 0 && (
             <div className="flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
+              <AlertTriangle className="w-3.5 h-3.5 text-stone-400" />
               <span className="text-xs text-stone-600">{unsupportedCount} unsupported</span>
             </div>
           )}
@@ -183,7 +183,7 @@ const SourceCitationsPanel: React.FC<SourceCitationsPanelProps> = ({ artifactId,
                 <div className="h-3 bg-stone-100 rounded animate-pulse w-full" />
                 <div className="h-3 bg-stone-50 rounded animate-pulse w-4/5" />
                 <div className="flex gap-2 mt-2">
-                  <div className="h-5 w-16 bg-blue-50 rounded animate-pulse" />
+                  <div className="h-5 w-16 bg-stone-100 rounded animate-pulse" />
                   <div className="h-5 bg-stone-50 rounded animate-pulse flex-1" />
                   <div className="h-5 w-8 bg-stone-50 rounded animate-pulse" />
                 </div>
@@ -211,7 +211,7 @@ const SourceCitationsPanel: React.FC<SourceCitationsPanelProps> = ({ artifactId,
               .map(([sentenceIndex, links]) => (
                 <div
                   key={sentenceIndex}
-                  className="rounded-lg border border-stone-150 p-3 hover:border-blue-200 transition-colors"
+                  className="rounded-lg border border-stone-150 p-3 hover:border-stone-200 transition-colors"
                 >
                   {/* Sentence text */}
                   <p className="text-[13px] text-stone-700 leading-relaxed mb-2">
@@ -248,7 +248,7 @@ const SourceCitationsPanel: React.FC<SourceCitationsPanelProps> = ({ artifactId,
                               href={link.sourceUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-stone-400 hover:text-blue-500"
+                              className="text-stone-400 hover:text-stone-1000"
                             >
                               <ExternalLink className="w-3 h-3" />
                             </a>

@@ -310,7 +310,7 @@ export default function EditorCanvas({
             className={cn(editor.isActive('highlight') && 'bg-accent')}
             data-testid="format-highlight"
           >
-            <span className="bg-yellow-200 px-1 rounded text-xs">H</span>
+            <span className="bg-stone-200 px-1 rounded text-xs">H</span>
           </Button>
         </div>
       </BubbleMenu>

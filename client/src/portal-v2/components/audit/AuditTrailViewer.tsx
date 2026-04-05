@@ -293,7 +293,7 @@ export function AuditTrailViewer() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-stone-600" />
         <span className="ml-2 text-muted-foreground">Loading audit records...</span>
       </div>
     );
@@ -304,18 +304,18 @@ export function AuditTrailViewer() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-stone-900 flex items-center gap-2">
             <History className="h-7 w-7" />
             Audit Trail
           </h1>
-          <p className="text-gray-500 mt-1">21 CFR Part 11.10(e) compliant audit records</p>
+          <p className="text-stone-500 mt-1">21 CFR Part 11.10(e) compliant audit records</p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
-              showFilters ? 'bg-primary-50 border-primary-300 text-primary-700' : 'hover:bg-gray-50'
+              showFilters ? 'bg-primary-50 border-primary-300 text-primary-700' : 'hover:bg-stone-50'
             }`}
           >
             <Filter className="h-5 w-5" />
@@ -340,18 +340,18 @@ export function AuditTrailViewer() {
       </div>
 
       {/* Compliance Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
-        <ShieldCheck className="h-6 w-6 text-blue-600" />
+      <div className="bg-stone-100 border border-stone-200 rounded-lg p-4 flex items-center gap-3">
+        <ShieldCheck className="h-6 w-6 text-stone-600" />
         <div>
-          <p className="font-medium text-blue-900">Immutable Audit Trail Active</p>
-          <p className="text-sm text-blue-700">
+          <p className="font-medium text-stone-900">Immutable Audit Trail Active</p>
+          <p className="text-sm text-stone-700">
             All records are cryptographically linked and stored in WORM-compliant storage. Hash
             chain integrity: Verified
           </p>
         </div>
         <button
           onClick={() => verifyHashChain(filteredLogs[0]?.id || '')}
-          className="ml-auto px-3 py-1 text-sm text-blue-700 border border-blue-300 rounded hover:bg-blue-100"
+          className="ml-auto px-3 py-1 text-sm text-stone-700 border border-stone-300 rounded hover:bg-stone-100"
         >
           Verify Chain
         </button>
@@ -388,9 +388,9 @@ export function AuditTrailViewer() {
           <div className="grid md:grid-cols-4 gap-4">
             {/* Search */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Search</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
                 <input
                   type="text"
                   value={filters.searchQuery}
@@ -403,7 +403,7 @@ export function AuditTrailViewer() {
 
             {/* Date Range */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Date Range</label>
               <select
                 value={filters.dateRange}
                 onChange={e => setFilters(f => ({ ...f, dateRange: e.target.value as DateFilter }))}
@@ -420,7 +420,7 @@ export function AuditTrailViewer() {
 
             {/* Event Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Event Type</label>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Event Type</label>
               <select
                 multiple
                 value={filters.eventTypes}
@@ -444,7 +444,7 @@ export function AuditTrailViewer() {
 
             {/* User */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">User</label>
+              <label className="block text-sm font-medium text-stone-700 mb-1">User</label>
               <select
                 multiple
                 value={filters.users}
@@ -475,7 +475,7 @@ export function AuditTrailViewer() {
                   searchQuery: '',
                 })
               }
-              className="text-sm text-gray-600 hover:text-gray-900"
+              className="text-sm text-stone-600 hover:text-stone-900"
             >
               Clear Filters
             </button>
@@ -486,15 +486,15 @@ export function AuditTrailViewer() {
       {/* Audit Log List */}
       <div className="bg-white border rounded-lg overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-stone-50 border-b">
             <tr>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 w-10"></th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Timestamp</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Event</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">User</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Resource</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Details</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 w-20">Hash</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-stone-600 w-10"></th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-stone-600">Timestamp</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-stone-600">Event</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-stone-600">User</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-stone-600">Resource</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-stone-600">Details</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-stone-600 w-20">Hash</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -512,7 +512,7 @@ export function AuditTrailViewer() {
         </table>
 
         {filteredLogs.length === 0 && (
-          <div className="p-8 text-center text-gray-500">
+          <div className="p-8 text-center text-stone-500">
             No audit records found matching your criteria.
           </div>
         )}
@@ -552,12 +552,12 @@ interface StatCardProps {
 
 function StatCard({ label, value, icon, alert }: StatCardProps) {
   return (
-    <div className={`bg-white border rounded-lg p-4 ${alert ? 'border-red-200' : ''}`}>
-      <div className={`flex items-center gap-2 ${alert ? 'text-red-600' : 'text-gray-600'}`}>
+    <div className={`bg-white border rounded-lg p-4 ${alert ? 'border-stone-200' : ''}`}>
+      <div className={`flex items-center gap-2 ${alert ? 'text-stone-700' : 'text-stone-600'}`}>
         {icon}
         <span className="text-2xl font-bold">{value}</span>
       </div>
-      <p className="text-sm text-gray-500 mt-1">{label}</p>
+      <p className="text-sm text-stone-500 mt-1">{label}</p>
     </div>
   );
 }
@@ -585,15 +585,15 @@ function AuditLogRow({ log, expanded, onToggle, verifying, onVerify }: AuditLogR
 
   return (
     <>
-      <tr className="hover:bg-gray-50">
+      <tr className="hover:bg-stone-50">
         <td className="px-4 py-3">
-          <button onClick={onToggle} className="p-1 text-gray-400 hover:text-gray-600">
+          <button onClick={onToggle} className="p-1 text-stone-400 hover:text-stone-600">
             {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </button>
         </td>
         <td className="px-4 py-3 text-sm">
-          <div className="font-medium text-gray-900">{timestamp.toLocaleDateString()}</div>
-          <div className="text-gray-500">{timestamp.toLocaleTimeString()}</div>
+          <div className="font-medium text-stone-900">{timestamp.toLocaleDateString()}</div>
+          <div className="text-stone-500">{timestamp.toLocaleTimeString()}</div>
         </td>
         <td className="px-4 py-3">
           <span
@@ -604,17 +604,17 @@ function AuditLogRow({ log, expanded, onToggle, verifying, onVerify }: AuditLogR
           </span>
         </td>
         <td className="px-4 py-3 text-sm">
-          <div className="font-medium text-gray-900">{log.userName}</div>
-          <div className="text-gray-500 text-xs">{log.userEmail}</div>
+          <div className="font-medium text-stone-900">{log.userName}</div>
+          <div className="text-stone-500 text-xs">{log.userEmail}</div>
         </td>
         <td className="px-4 py-3 text-sm">
-          <div className="font-medium text-gray-900">{log.resourceName || log.resourceId}</div>
-          <div className="text-gray-500 text-xs capitalize">{log.resourceType}</div>
+          <div className="font-medium text-stone-900">{log.resourceName || log.resourceId}</div>
+          <div className="text-stone-500 text-xs capitalize">{log.resourceType}</div>
         </td>
-        <td className="px-4 py-3 text-sm text-gray-600">
+        <td className="px-4 py-3 text-sm text-stone-600">
           <div className="flex items-center gap-2">
             {log.signatureId && (
-              <span className="text-green-600" title="Electronically signed">
+              <span className="text-stone-700" title="Electronically signed">
                 <FileText className="h-4 w-4" />
               </span>
             )}
@@ -625,7 +625,7 @@ function AuditLogRow({ log, expanded, onToggle, verifying, onVerify }: AuditLogR
           <button
             onClick={onVerify}
             disabled={verifying}
-            className="text-xs font-mono text-gray-400 hover:text-primary-600 flex items-center gap-1"
+            className="text-xs font-mono text-stone-400 hover:text-primary-600 flex items-center gap-1"
             title="Verify hash chain"
           >
             {verifying ? (
@@ -640,7 +640,7 @@ function AuditLogRow({ log, expanded, onToggle, verifying, onVerify }: AuditLogR
 
       {/* Expanded Details */}
       {expanded && (
-        <tr className="bg-gray-50">
+        <tr className="bg-stone-50">
           <td colSpan={7} className="px-4 py-4">
             <AuditLogDetails log={log} />
           </td>
@@ -659,7 +659,7 @@ function AuditLogDetails({ log }: { log: AuditLogEntry }) {
     <div className="grid md:grid-cols-3 gap-6">
       {/* Event Info */}
       <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+        <h4 className="text-sm font-medium text-stone-700 mb-3 flex items-center gap-2">
           <Info className="h-4 w-4" />
           Event Details
         </h4>
@@ -675,7 +675,7 @@ function AuditLogDetails({ log }: { log: AuditLogEntry }) {
 
       {/* Connection Info */}
       <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+        <h4 className="text-sm font-medium text-stone-700 mb-3 flex items-center gap-2">
           <Globe className="h-4 w-4" />
           Connection Details
         </h4>
@@ -708,7 +708,7 @@ function AuditLogDetails({ log }: { log: AuditLogEntry }) {
 
       {/* Hash Chain */}
       <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+        <h4 className="text-sm font-medium text-stone-700 mb-3 flex items-center gap-2">
           <Hash className="h-4 w-4" />
           Hash Chain
         </h4>
@@ -716,7 +716,7 @@ function AuditLogDetails({ log }: { log: AuditLogEntry }) {
           <DetailRow label="Current Hash" value={log.hashValue || 'N/A'} mono truncate />
           <DetailRow label="Previous Hash" value={log.previousHash || 'Genesis'} mono truncate />
         </div>
-        <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700 flex items-center gap-1">
+        <div className="mt-3 p-2 bg-stone-100 border border-stone-200 rounded text-xs text-stone-800 flex items-center gap-1">
           <CheckCircle className="h-3 w-3" />
           Chain integrity verified
         </div>
@@ -725,22 +725,22 @@ function AuditLogDetails({ log }: { log: AuditLogEntry }) {
       {/* Field Changes */}
       {log.fieldChanges && log.fieldChanges.length > 0 && (
         <div className="md:col-span-3 pt-4 border-t">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Field Changes</h4>
+          <h4 className="text-sm font-medium text-stone-700 mb-3">Field Changes</h4>
           <div className="bg-white border rounded overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50">
+              <thead className="bg-stone-50">
                 <tr>
-                  <th className="px-3 py-2 text-left text-gray-600">Field</th>
-                  <th className="px-3 py-2 text-left text-gray-600">Previous Value</th>
-                  <th className="px-3 py-2 text-left text-gray-600">New Value</th>
+                  <th className="px-3 py-2 text-left text-stone-600">Field</th>
+                  <th className="px-3 py-2 text-left text-stone-600">Previous Value</th>
+                  <th className="px-3 py-2 text-left text-stone-600">New Value</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {log.fieldChanges.map((change: any, idx: any) => (
                   <tr key={idx}>
                     <td className="px-3 py-2 font-medium">{change.field}</td>
-                    <td className="px-3 py-2 text-red-600">{String(change.oldValue || '—')}</td>
-                    <td className="px-3 py-2 text-green-600">{String(change.newValue || '—')}</td>
+                    <td className="px-3 py-2 text-stone-700">{String(change.oldValue || '—')}</td>
+                    <td className="px-3 py-2 text-stone-700">{String(change.newValue || '—')}</td>
                   </tr>
                 ))}
               </tbody>
@@ -752,8 +752,8 @@ function AuditLogDetails({ log }: { log: AuditLogEntry }) {
       {/* Reason */}
       {log.reason && (
         <div className="md:col-span-3 pt-4 border-t">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Reason for Change</h4>
-          <p className="text-sm text-gray-600 bg-white p-3 border rounded">{log.reason}</p>
+          <h4 className="text-sm font-medium text-stone-700 mb-2">Reason for Change</h4>
+          <p className="text-sm text-stone-600 bg-white p-3 border rounded">{log.reason}</p>
         </div>
       )}
     </div>
@@ -777,9 +777,9 @@ function DetailRow({
 }) {
   return (
     <div className="flex justify-between items-center">
-      <span className="text-gray-500">{label}</span>
+      <span className="text-stone-500">{label}</span>
       <span
-        className={`text-gray-900 ${mono ? 'font-mono text-xs' : ''} ${
+        className={`text-stone-900 ${mono ? 'font-mono text-xs' : ''} ${
           truncate ? 'max-w-[150px] truncate' : ''
         }`}
         title={truncate ? value : undefined}

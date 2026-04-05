@@ -226,19 +226,19 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
           {/* Type Icon */}
           <div className={cn(
             'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
-            artifact.type === 'document' && 'bg-blue-100',
+            artifact.type === 'document' && 'bg-stone-100',
             artifact.type === 'code' && 'bg-stone-200',
-            artifact.type === 'table' && 'bg-emerald-100',
-            artifact.type === 'markdown' && 'bg-amber-100',
+            artifact.type === 'table' && 'bg-stone-100',
+            artifact.type === 'markdown' && 'bg-stone-100',
           )}>
             <TypeIcon
               type={artifact.type}
               className={cn(
                 'w-5 h-5',
-                artifact.type === 'document' && 'text-blue-600',
+                artifact.type === 'document' && 'text-stone-600',
                 artifact.type === 'code' && 'text-stone-600',
-                artifact.type === 'table' && 'text-emerald-600',
-                artifact.type === 'markdown' && 'text-amber-600',
+                artifact.type === 'table' && 'text-stone-700',
+                artifact.type === 'markdown' && 'text-stone-600',
               )}
             />
           </div>
@@ -264,7 +264,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
           
           {/* Lock indicator */}
           {artifact.isLocked && (
-            <div className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+            <div className="flex items-center gap-1 text-xs text-stone-600 bg-stone-100 px-2 py-1 rounded-full">
               <Lock className="w-3 h-3" />
               <span>Locked by {artifact.lockedBy}</span>
             </div>
@@ -281,7 +281,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
                   key={collab.id}
                   className={cn(
                     'w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-xs font-medium',
-                    collab.status === 'editing' ? 'bg-emerald-500 text-white' : 'bg-stone-200 text-stone-600'
+                    collab.status === 'editing' ? 'bg-stone-1000 text-white' : 'bg-stone-200 text-stone-600'
                   )}
                   title={`${collab.name} (${collab.status})`}
                 >
@@ -302,7 +302,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
               onClick={() => setShowVersions(!showVersions)}
               className={cn(
                 'p-2 rounded-lg transition-colors duration-150',
-                showVersions ? 'bg-blue-100 text-stone-700' : 'hover:bg-stone-100 text-stone-500'
+                showVersions ? 'bg-stone-100 text-stone-700' : 'hover:bg-stone-100 text-stone-500'
               )}
               title="Version history"
             >
@@ -316,7 +316,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
             className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 transition-colors duration-150"
             title="Copy to clipboard"
           >
-            {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+            {copied ? <Check className="w-4 h-4 text-stone-700" /> : <Copy className="w-4 h-4" />}
           </button>
           
           {/* Export */}
@@ -335,14 +335,14 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
                   onClick={() => { onExport?.(artifact, 'docx'); setShowExportMenu(false); }}
                   className="w-full px-3 py-2 text-left text-sm hover:bg-stone-50 flex items-center gap-2"
                 >
-                  <FileText className="w-4 h-4 text-blue-600" />
+                  <FileText className="w-4 h-4 text-stone-600" />
                   Export as DOCX
                 </button>
                 <button
                   onClick={() => { onExport?.(artifact, 'pdf'); setShowExportMenu(false); }}
                   className="w-full px-3 py-2 text-left text-sm hover:bg-stone-50 flex items-center gap-2"
                 >
-                  <FileText className="w-4 h-4 text-red-600" />
+                  <FileText className="w-4 h-4 text-stone-700" />
                   Export as PDF
                 </button>
                 <button
@@ -373,7 +373,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
               onClick={() => setIsEditing(!isEditing)}
               className={cn(
                 'p-2 rounded-lg transition-colors duration-150',
-                isEditing ? 'bg-blue-100 text-stone-700' : 'hover:bg-stone-100 text-stone-500'
+                isEditing ? 'bg-stone-100 text-stone-700' : 'hover:bg-stone-100 text-stone-500'
               )}
               title={isEditing ? 'View mode' : 'Edit'}
             >
@@ -520,8 +520,8 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
       
       {/* Footer - View Mode with Sign — capability-gated, status for eligibility only */}
       {!isEditing && (modeCaps ? modeCaps.canSign : true) && artifact.status === 'review' && onSign && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-stone-200 bg-amber-50">
-          <div className="flex items-center gap-2 text-amber-700">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-stone-200 bg-stone-100">
+          <div className="flex items-center gap-2 text-stone-700">
             <AlertCircle className="w-4 h-4" />
             <span className="text-sm">This document requires your approval</span>
           </div>
@@ -530,7 +530,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
             onClick={() => onSign(artifact)}
             className={cn(
               'px-4 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150',
-              'bg-emerald-600 text-white hover:bg-emerald-700',
+              'bg-stone-700 text-white hover:bg-stone-800',
               'flex items-center gap-2'
             )}
           >

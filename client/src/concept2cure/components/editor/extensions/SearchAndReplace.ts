@@ -239,8 +239,8 @@ export const SearchAndReplace = Extension.create<SearchAndReplaceOptions, Search
                   Decoration.inline(from, to, {
                     class:
                       i === currentIndex
-                        ? 'search-result-active bg-amber-300 ring-2 ring-amber-500'
-                        : 'search-result bg-yellow-200',
+                        ? 'search-result-active bg-stone-300 ring-2 ring-stone-1000'
+                        : 'search-result bg-stone-200',
                   })
                 );
               }

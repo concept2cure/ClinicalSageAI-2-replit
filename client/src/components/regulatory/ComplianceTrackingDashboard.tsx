@@ -326,7 +326,7 @@ export default function ComplianceTrackingDashboard() {
               <Skeleton className="h-8 w-20" data-testid="loading-overdue-items" />
             ) : (
               <>
-                <div className="text-2xl font-bold text-red-600" data-testid="value-overdue-items">
+                <div className="text-2xl font-bold text-stone-700" data-testid="value-overdue-items">
                   {complianceMetrics.overdueItems}
                 </div>
                 <p className="text-xs text-muted-foreground">Requires attention</p>
@@ -366,9 +366,9 @@ export default function ComplianceTrackingDashboard() {
             </div>
           ) : filteredObligations.length === 0 ? (
             <div className="text-center py-12" data-testid="empty-obligations">
-              <FileText className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-              <p className="text-gray-500 font-medium">No obligations found</p>
-              <p className="text-sm text-gray-400">
+              <FileText className="h-12 w-12 mx-auto text-stone-300 mb-3" />
+              <p className="text-stone-500 font-medium">No obligations found</p>
+              <p className="text-sm text-stone-400">
                 {statusFilter !== 'all' 
                   ? 'Try changing the filter to see more obligations' 
                   : 'Create your first regulatory obligation to get started'}
@@ -396,11 +396,11 @@ export default function ComplianceTrackingDashboard() {
                       <TableCell>
                         {obligation.due_date ? (
                           <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-gray-400" />
+                            <Clock className="h-4 w-4 text-stone-400" />
                             {new Date(obligation.due_date).toLocaleDateString()}
                           </div>
                         ) : (
-                          <span className="text-gray-400">No date set</span>
+                          <span className="text-stone-400">No date set</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -430,7 +430,7 @@ export default function ComplianceTrackingDashboard() {
                           {obligation.severity}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-mono text-sm text-gray-600">
+                      <TableCell className="font-mono text-sm text-stone-600">
                         {obligation.sub_id.substring(0, 8)}...
                       </TableCell>
                       <TableCell className="text-right">
@@ -467,9 +467,9 @@ export default function ComplianceTrackingDashboard() {
             </div>
           ) : submissions.length === 0 ? (
             <div className="text-center py-12" data-testid="empty-deadlines">
-              <Calendar className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-              <p className="text-gray-500 font-medium">No submission deadlines</p>
-              <p className="text-sm text-gray-400">Submission deadlines will appear here</p>
+              <Calendar className="h-12 w-12 mx-auto text-stone-300 mb-3" />
+              <p className="text-stone-500 font-medium">No submission deadlines</p>
+              <p className="text-sm text-stone-400">Submission deadlines will appear here</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -488,23 +488,23 @@ export default function ComplianceTrackingDashboard() {
                       key={submission.sub_id}
                       className={`p-4 border-l-4 rounded-lg ${
                         color === 'red'
-                          ? 'border-red-500 bg-red-50'
+                          ? 'border-stone-1000 bg-stone-100'
                           : color === 'yellow'
-                            ? 'border-yellow-500 bg-yellow-50'
-                            : 'border-green-500 bg-green-50'
+                            ? 'border-stone-1000 bg-stone-100'
+                            : 'border-stone-1000 bg-stone-100'
                       }`}
                       data-testid={`deadline-${submission.sub_id}`}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            {color === 'red' && <AlertTriangle className="h-4 w-4 text-red-600" />}
-                            {color === 'yellow' && <Clock className="h-4 w-4 text-yellow-600" />}
-                            {color === 'green' && <CheckCircle className="h-4 w-4 text-green-600" />}
+                            {color === 'red' && <AlertTriangle className="h-4 w-4 text-stone-700" />}
+                            {color === 'yellow' && <Clock className="h-4 w-4 text-stone-600" />}
+                            {color === 'green' && <CheckCircle className="h-4 w-4 text-stone-700" />}
                             <h4 className="font-medium">{submission.title}</h4>
                           </div>
-                          <p className="text-sm text-gray-600 mt-1">{submission.description}</p>
-                          <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                          <p className="text-sm text-stone-600 mt-1">{submission.description}</p>
+                          <div className="flex items-center gap-4 mt-2 text-xs text-stone-500">
                             <span>Region: {submission.region}</span>
                             <span>Type: {submission.sub_type}</span>
                             <span>Product: {submission.product_id}</span>
@@ -517,10 +517,10 @@ export default function ComplianceTrackingDashboard() {
                           <div
                             className={`text-xs mt-1 ${
                               color === 'red'
-                                ? 'text-red-600'
+                                ? 'text-stone-700'
                                 : color === 'yellow'
-                                  ? 'text-yellow-600'
-                                  : 'text-green-600'
+                                  ? 'text-stone-600'
+                                  : 'text-stone-700'
                             }`}
                           >
                             {daysUntil < 0

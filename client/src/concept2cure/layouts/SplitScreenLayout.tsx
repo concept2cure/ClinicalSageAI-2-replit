@@ -191,7 +191,7 @@ export const SplitScreenLayout: React.FC = () => {
           onMouseDown={handleMouseDown}
           className={cn(
             'relative flex w-1 cursor-col-resize items-center justify-center',
-            'bg-stone-200 hover:bg-blue-400 transition-colors duration-150',
+            'bg-stone-200 hover:bg-stone-400 transition-colors duration-150',
             isDragging && 'bg-stone-600'
           )}
         >
@@ -200,7 +200,7 @@ export const SplitScreenLayout: React.FC = () => {
               'absolute z-10 flex h-12 w-5 items-center justify-center rounded',
               'bg-stone-100 border border-stone-300 shadow-sm',
               'hover:bg-stone-200 transition-colors duration-150',
-              isDragging && 'bg-blue-100 border-blue-400'
+              isDragging && 'bg-stone-100 border-stone-400'
             )}
           >
             <GripVertical className="h-4 w-4 text-stone-400" />
@@ -242,7 +242,7 @@ export const SplitScreenLayout: React.FC = () => {
                     key={agent.id}
                     className="flex items-start gap-2 rounded-lg bg-white px-3 py-2 text-sm"
                   >
-                    <div className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
+                    <div className="mt-1 h-2 w-2 rounded-full bg-stone-1000" />
                     <div className="min-w-0">
                       <p className="font-medium text-stone-900 truncate">{agent.name}</p>
                       <p className="text-xs text-stone-500 truncate">

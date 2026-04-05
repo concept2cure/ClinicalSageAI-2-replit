@@ -129,7 +129,7 @@ function TemplateNodeRow({
         {isParent ? (
           <Layers className="w-3.5 h-3.5 text-stone-500 shrink-0" />
         ) : (
-          <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <Sparkles className="w-3.5 h-3.5 text-stone-400 shrink-0" />
         )}
 
         {/* CTD section badge */}
@@ -146,8 +146,8 @@ function TemplateNodeRow({
             className={cn(
               'text-xs px-1 rounded shrink-0 font-medium',
               node.templateType === 'subsection'
-                ? 'bg-blue-50 text-blue-600'
-                : 'bg-amber-50 text-amber-600'
+                ? 'bg-stone-100 text-stone-600'
+                : 'bg-stone-100 text-stone-600'
             )}
           >
             {node.templateType}
@@ -167,11 +167,11 @@ function TemplateNodeRow({
         {onOpenTransformCanvas && (
           <button
             onClick={() => onOpenTransformCanvas(node.ctdSection, node.templateKey)}
-            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-amber-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
             title={`Open Transform Canvas for "${node.label}"`}
             aria-label={`Open Transform Canvas for ${node.label}`}
           >
-            <Wand2 className="w-3 h-3 text-amber-600" />
+            <Wand2 className="w-3 h-3 text-stone-600" />
           </button>
         )}
       </div>
@@ -269,7 +269,7 @@ export const TemplateTree: React.FC<TemplateTreeProps> = ({
           aria-label={`Recommended templates for ${submissionType}`}
         >
           <div className="flex items-center gap-1.5 px-3 py-1">
-            <Star className="w-3 h-3 text-amber-500" />
+            <Star className="w-3 h-3 text-stone-1000" />
             <span className="text-[11px] font-medium text-stone-500 uppercase tracking-wider">
               Best for {submissionType}
             </span>
@@ -284,7 +284,7 @@ export const TemplateTree: React.FC<TemplateTreeProps> = ({
               style={{ paddingLeft: '12px' }}
               data-testid={`recommended-template-${node.templateKey}`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <Sparkles className="w-3.5 h-3.5 text-stone-400 shrink-0" />
               <span className="text-xs text-stone-400 font-mono shrink-0 min-w-[28px]">
                 {node.ctdSection}
               </span>
@@ -303,11 +303,11 @@ export const TemplateTree: React.FC<TemplateTreeProps> = ({
               {onOpenTransformCanvas && (
                 <button
                   onClick={() => onOpenTransformCanvas(node.ctdSection, node.templateKey)}
-                  className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-amber-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+                  className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
                   title={`Open Transform Canvas for "${node.label}"`}
                   aria-label={`Open Transform Canvas for ${node.label}`}
                 >
-                  <Wand2 className="w-3 h-3 text-amber-600" />
+                  <Wand2 className="w-3 h-3 text-stone-600" />
                 </button>
               )}
             </div>

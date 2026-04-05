@@ -47,17 +47,17 @@ interface CalendarEvent {
 }
 
 const SUBMISSION_TYPE_COLORS = {
-  IND: 'bg-blue-100 text-blue-700 border-blue-200',
-  NDA: 'bg-green-100 text-green-700 border-green-200',
-  BLA: 'bg-purple-100 text-purple-700 border-purple-200',
-  MAA: 'bg-orange-100 text-orange-700 border-orange-200',
+  IND: 'bg-stone-100 text-stone-700 border-stone-200',
+  NDA: 'bg-stone-100 text-stone-800 border-stone-200',
+  BLA: 'bg-stone-100 text-stone-700 border-stone-200',
+  MAA: 'bg-stone-100 text-stone-700 border-stone-200',
 };
 
 const SUBMISSION_TYPE_DOT_COLORS = {
-  IND: 'bg-blue-500',
-  NDA: 'bg-green-500',
-  BLA: 'bg-purple-500',
-  MAA: 'bg-orange-500',
+  IND: 'bg-stone-1000',
+  NDA: 'bg-stone-1000',
+  BLA: 'bg-stone-1000',
+  MAA: 'bg-stone-1000',
 };
 
 export default function SubmissionCalendar() {
@@ -188,8 +188,8 @@ export default function SubmissionCalendar() {
   if (submissionsLoading) {
     return (
       <div className="flex items-center justify-center py-12" data-testid="loading-calendar">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400 mr-3" />
-        <span className="text-gray-600">Loading submission calendar...</span>
+        <Loader2 className="w-8 h-8 animate-spin text-stone-400 mr-3" />
+        <span className="text-stone-600">Loading submission calendar...</span>
       </div>
     );
   }
@@ -203,11 +203,11 @@ export default function SubmissionCalendar() {
             <CalendarIcon className="w-6 h-6 mr-2" />
             Submission Calendar
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-stone-600 mt-1">
             Track submission timelines, milestones, and upcoming deadlines
           </p>
         </div>
-        <Badge variant="secondary" className="bg-blue-50 text-blue-700" data-testid="badge-event-count">
+        <Badge variant="secondary" className="bg-stone-100 text-stone-700" data-testid="badge-event-count">
           {filteredEvents.length} Events
         </Badge>
       </div>
@@ -302,9 +302,9 @@ export default function SubmissionCalendar() {
           <CardContent>
             {filteredEvents.length === 0 ? (
               <div className="text-center py-12" data-testid="empty-calendar">
-                <CalendarIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="font-medium text-gray-500">No events to display</p>
-                <p className="text-sm text-gray-400 mt-1">
+                <CalendarIcon className="w-12 h-12 mx-auto mb-3 text-stone-300" />
+                <p className="font-medium text-stone-500">No events to display</p>
+                <p className="text-sm text-stone-400 mt-1">
                   {submissions.length === 0
                     ? 'No submissions available'
                     : 'Try adjusting your filters'}
@@ -352,7 +352,7 @@ export default function SubmissionCalendar() {
                 {/* Events for selected date */}
                 {selectedDate && eventsForSelectedDate.length > 0 && (
                   <div className="mt-4 space-y-2" data-testid="selected-date-events">
-                    <h4 className="font-medium text-sm text-gray-700">
+                    <h4 className="font-medium text-sm text-stone-700">
                       Events on {format(selectedDate, 'MMM d, yyyy')}:
                     </h4>
                     {eventsForSelectedDate.map((event) => (
@@ -390,9 +390,9 @@ export default function SubmissionCalendar() {
           <CardContent>
             {upcomingMilestones.length === 0 ? (
               <div className="text-center py-12" data-testid="empty-milestones">
-                <AlertCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="font-medium text-gray-500">No upcoming milestones</p>
-                <p className="text-sm text-gray-400 mt-1">
+                <AlertCircle className="w-12 h-12 mx-auto mb-3 text-stone-300" />
+                <p className="font-medium text-stone-500">No upcoming milestones</p>
+                <p className="text-sm text-stone-400 mt-1">
                   All milestones are in the past or filtered out
                 </p>
               </div>
@@ -415,7 +415,7 @@ export default function SubmissionCalendar() {
                       return (
                         <TableRow
                           key={milestone.id}
-                          className="cursor-pointer hover:bg-gray-50"
+                          className="cursor-pointer hover:bg-stone-50"
                           onClick={() => setSelectedDate(parseISO(milestone.date))}
                           data-testid={`milestone-row-${milestone.id}`}
                         >
@@ -425,7 +425,7 @@ export default function SubmissionCalendar() {
                           <TableCell data-testid={`title-${milestone.id}`}>
                             <div className="text-sm">
                               <div className="font-medium">{milestone.milestone_type}</div>
-                              <div className="text-gray-500 text-xs truncate max-w-xs">
+                              <div className="text-stone-500 text-xs truncate max-w-xs">
                                 {milestone.title}
                               </div>
                             </div>
@@ -457,22 +457,22 @@ export default function SubmissionCalendar() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-4 border rounded-lg" data-testid="stat-total-submissions">
-              <div className="text-2xl font-bold text-blue-600">{submissions.length}</div>
-              <div className="text-sm text-gray-600 mt-1">Total Submissions</div>
+              <div className="text-2xl font-bold text-stone-600">{submissions.length}</div>
+              <div className="text-sm text-stone-600 mt-1">Total Submissions</div>
             </div>
             <div className="text-center p-4 border rounded-lg" data-testid="stat-total-events">
-              <div className="text-2xl font-bold text-purple-600">{filteredEvents.length}</div>
-              <div className="text-sm text-gray-600 mt-1">Total Events</div>
+              <div className="text-2xl font-bold text-stone-600">{filteredEvents.length}</div>
+              <div className="text-sm text-stone-600 mt-1">Total Events</div>
             </div>
             <div className="text-center p-4 border rounded-lg" data-testid="stat-upcoming-milestones">
-              <div className="text-2xl font-bold text-green-600">{upcomingMilestones.length}</div>
-              <div className="text-sm text-gray-600 mt-1">Upcoming Milestones</div>
+              <div className="text-2xl font-bold text-stone-700">{upcomingMilestones.length}</div>
+              <div className="text-sm text-stone-600 mt-1">Upcoming Milestones</div>
             </div>
             <div className="text-center p-4 border rounded-lg" data-testid="stat-urgent-deadlines">
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-2xl font-bold text-stone-700">
                 {upcomingMilestones.filter((m) => calculateDaysUntil(m.date) <= 7).length}
               </div>
-              <div className="text-sm text-gray-600 mt-1">Urgent (≤7 days)</div>
+              <div className="text-sm text-stone-600 mt-1">Urgent (≤7 days)</div>
             </div>
           </div>
         </CardContent>

@@ -102,28 +102,28 @@ interface SuggestionCardProps {
 // Severity colors and icons
 const SEVERITY_CONFIG = {
   critical: {
-    color: 'text-red-600 border-red-600 bg-red-50',
+    color: 'text-stone-700 border-stone-700 bg-stone-100',
     icon: AlertCircle,
-    badge: 'bg-red-100 text-red-800',
-    underline: 'decoration-red-500 decoration-wavy underline-offset-4',
+    badge: 'bg-stone-100 text-stone-800',
+    underline: 'decoration-stone-1000 decoration-wavy underline-offset-4',
   },
   important: {
-    color: 'text-yellow-600 border-yellow-600 bg-yellow-50',
+    color: 'text-stone-600 border-stone-600 bg-stone-100',
     icon: AlertTriangle,
-    badge: 'bg-yellow-100 text-yellow-800',
-    underline: 'decoration-yellow-500 decoration-wavy underline-offset-4',
+    badge: 'bg-stone-100 text-stone-800',
+    underline: 'decoration-stone-1000 decoration-wavy underline-offset-4',
   },
   enhancement: {
-    color: 'text-blue-600 border-blue-600 bg-blue-50',
+    color: 'text-stone-600 border-stone-600 bg-stone-100',
     icon: Lightbulb,
-    badge: 'bg-blue-100 text-blue-800',
-    underline: 'decoration-blue-500 decoration-dotted underline-offset-4',
+    badge: 'bg-stone-100 text-stone-800',
+    underline: 'decoration-stone-1000 decoration-dotted underline-offset-4',
   },
   style: {
-    color: 'text-gray-600 border-gray-600 bg-gray-50',
+    color: 'text-stone-600 border-stone-600 bg-stone-50',
     icon: PenTool,
-    badge: 'bg-gray-100 text-gray-800',
-    underline: 'decoration-gray-400 decoration-dotted underline-offset-2',
+    badge: 'bg-stone-100 text-stone-800',
+    underline: 'decoration-stone-400 decoration-dotted underline-offset-2',
   },
 };
 
@@ -188,19 +188,19 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
         <CardContent className="space-y-3">
           {/* Text Comparison */}
           <div className="space-y-2">
-            <div className="p-2 bg-red-50 rounded-md border border-red-200">
-              <p className="text-sm line-through text-red-700">{suggestion.original}</p>
+            <div className="p-2 bg-stone-100 rounded-md border border-stone-200">
+              <p className="text-sm line-through text-stone-800">{suggestion.original}</p>
             </div>
-            <div className="p-2 bg-green-50 rounded-md border border-green-200">
-              <p className="text-sm text-green-700 font-medium">{suggestion.suggested}</p>
+            <div className="p-2 bg-stone-100 rounded-md border border-stone-200">
+              <p className="text-sm text-stone-800 font-medium">{suggestion.suggested}</p>
             </div>
           </div>
 
           {/* Explanation */}
           <div className="space-y-1">
-            <p className="text-sm text-gray-600">{suggestion.explanation}</p>
+            <p className="text-sm text-stone-600">{suggestion.explanation}</p>
             {suggestion.regulatoryRef && (
-              <div className="flex items-center gap-1 text-xs text-gray-500">
+              <div className="flex items-center gap-1 text-xs text-stone-500">
                 <BookOpen className="h-3 w-3" />
                 <span>Reference: {suggestion.regulatoryRef}</span>
               </div>
@@ -316,10 +316,10 @@ export const AIAssistantPanel: React.FC<{
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="px-4 py-3 border-b bg-gradient-to-r from-blue-50 to-purple-50">
+      <div className="px-4 py-3 border-b bg-gradient-to-r from-stone-100 to-stone-100">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-blue-600" />
+            <Brain className="h-5 w-5 text-stone-600" />
             <h3 className="font-semibold">AI Regulatory Assistant</h3>
           </div>
           <Button
@@ -356,13 +356,13 @@ export const AIAssistantPanel: React.FC<{
           {Object.entries(scores).map(([key, value]) => (
             <div key={key} className="space-y-1">
               <div className="flex items-center justify-between text-sm">
-                <span className="capitalize text-gray-600">{key}</span>
+                <span className="capitalize text-stone-600">{key}</span>
                 <span className={cn(
                   "font-medium",
-                  value >= 90 ? "text-green-600" :
-                  value >= 75 ? "text-yellow-600" :
-                  value >= 60 ? "text-orange-600" :
-                  "text-red-600"
+                  value >= 90 ? "text-stone-700" :
+                  value >= 75 ? "text-stone-600" :
+                  value >= 60 ? "text-stone-600" :
+                  "text-stone-700"
                 )}>
                   {value}%
                 </span>
@@ -371,10 +371,10 @@ export const AIAssistantPanel: React.FC<{
                 value={value} 
                 className={cn(
                   "h-2",
-                  value >= 90 ? "[&>div]:bg-green-600" :
-                  value >= 75 ? "[&>div]:bg-yellow-600" :
-                  value >= 60 ? "[&>div]:bg-orange-600" :
-                  "[&>div]:bg-red-600"
+                  value >= 90 ? "[&>div]:bg-stone-700" :
+                  value >= 75 ? "[&>div]:bg-stone-600" :
+                  value >= 60 ? "[&>div]:bg-stone-600" :
+                  "[&>div]:bg-stone-700"
                 )}
               />
             </div>
@@ -383,7 +383,7 @@ export const AIAssistantPanel: React.FC<{
       </div>
 
       {/* Suggestion Stats */}
-      <div className="px-4 py-3 border-b bg-gray-50">
+      <div className="px-4 py-3 border-b bg-stone-50">
         <h4 className="text-sm font-medium mb-2">Suggestions Overview</h4>
         <div className="grid grid-cols-2 gap-2">
           {Object.entries(severityCounts).map(([severity, count]) => {
@@ -396,8 +396,8 @@ export const AIAssistantPanel: React.FC<{
                 className={cn(
                   "flex items-center gap-2 p-2 rounded-md border transition-colors",
                   selectedSeverity === severity 
-                    ? "border-blue-500 bg-blue-50" 
-                    : "border-gray-200 hover:bg-gray-50"
+                    ? "border-stone-1000 bg-stone-100" 
+                    : "border-stone-200 hover:bg-stone-50"
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -429,8 +429,8 @@ export const AIAssistantPanel: React.FC<{
       <ScrollArea className="flex-1">
         <div className="px-4 py-2 space-y-2">
           {filteredSuggestions.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <CheckCircle className="h-12 w-12 mx-auto mb-2 text-green-500" />
+            <div className="text-center py-8 text-stone-500">
+              <CheckCircle className="h-12 w-12 mx-auto mb-2 text-stone-1000" />
               <p className="text-sm">No suggestions in this category</p>
             </div>
           ) : (
@@ -448,8 +448,8 @@ export const AIAssistantPanel: React.FC<{
                   className={cn(
                     "p-3 rounded-md border cursor-pointer transition-all",
                     isSelected 
-                      ? "border-blue-500 bg-blue-50" 
-                      : "border-gray-200 hover:bg-gray-50"
+                      ? "border-stone-1000 bg-stone-100" 
+                      : "border-stone-200 hover:bg-stone-50"
                   )}
                   onClick={() => toggleSelection(suggestion.id)}
                 >
@@ -472,13 +472,13 @@ export const AIAssistantPanel: React.FC<{
                           {suggestion.type}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-700 line-through">
+                      <p className="text-sm text-stone-700 line-through">
                         {suggestion.original}
                       </p>
-                      <p className="text-sm text-green-700 font-medium">
+                      <p className="text-sm text-stone-800 font-medium">
                         {suggestion.suggested}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-stone-500">
                         {suggestion.explanation}
                       </p>
                     </div>
@@ -491,7 +491,7 @@ export const AIAssistantPanel: React.FC<{
       </ScrollArea>
 
       {/* Actions Footer */}
-      <div className="px-4 py-3 border-t bg-gray-50">
+      <div className="px-4 py-3 border-t bg-stone-50">
         <div className="flex gap-2">
           <Button
             size="sm"
@@ -585,7 +585,7 @@ export const TextWithSuggestions: React.FC<{
                     className={cn(
                       "cursor-pointer underline transition-all",
                       config.underline,
-                      "hover:bg-yellow-100"
+                      "hover:bg-stone-100"
                     )}
                     onClick={(e) => handleTextClick(e, segment.suggestion!)}
                   >
@@ -940,15 +940,15 @@ export default function AISuggestionEngine({
       >
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">
-            <Shield className="h-4 w-4 text-blue-600" />
+            <Shield className="h-4 w-4 text-stone-600" />
             <span className="text-sm font-medium">Compliance</span>
           </div>
           <div className={cn(
             "text-lg font-bold",
-            scores.overall >= 90 ? "text-green-600" :
-            scores.overall >= 75 ? "text-yellow-600" :
-            scores.overall >= 60 ? "text-orange-600" :
-            "text-red-600"
+            scores.overall >= 90 ? "text-stone-700" :
+            scores.overall >= 75 ? "text-stone-600" :
+            scores.overall >= 60 ? "text-stone-600" :
+            "text-stone-700"
           )}>
             {Math.round(scores.overall)}%
           </div>

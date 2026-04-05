@@ -223,7 +223,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
           <button
             onClick={() => onOpenFullEditor(artifactId)}
             aria-label="Open in Full Editor"
-            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-blue-600 hover:text-stone-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-none"
+            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-stone-600 hover:text-stone-700 bg-stone-100 hover:bg-stone-100 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           >
             <PenLine className="w-3.5 h-3.5" />
             Open in Editor
@@ -233,7 +233,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
           {isEditing ? (
             <button
               onClick={handleSaveEdit}
-              className="flex items-center gap-1 px-2 py-1 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+              className="flex items-center gap-1 px-2 py-1 text-xs text-stone-700 hover:text-stone-800 hover:bg-stone-100 rounded transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
             >
               <Save className="w-3.5 h-3.5" />
               Save
@@ -356,7 +356,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
                   <p className="text-xs text-stone-400 mt-1.5 mb-3">Generate content with AnA, or start drafting in the editor</p>
                   <button
                     onClick={() => onOpenFullEditor(artifactId)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone-600 bg-stone-100 hover:bg-stone-100 rounded-md transition-colors"
                   >
                     <PenLine className="w-3.5 h-3.5" />
                     Open in Editor

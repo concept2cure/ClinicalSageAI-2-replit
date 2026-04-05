@@ -40,22 +40,22 @@ type TabId = 'plans' | 'bundles' | 'supersessions';
 
 function StateBadge({ state }: { state: string }) {
   const colorMap: Record<string, string> = {
-    unresolved: 'bg-amber-100 text-amber-800',
-    proposed_resolution: 'bg-blue-100 text-blue-800',
+    unresolved: 'bg-stone-100 text-stone-800',
+    proposed_resolution: 'bg-stone-100 text-stone-800',
     in_resolution: 'bg-stone-100 text-stone-800',
     resolved_pending_review: 'bg-stone-200 text-stone-800',
-    resolved_approved: 'bg-emerald-100 text-emerald-800',
+    resolved_approved: 'bg-stone-100 text-stone-800',
     superseded: 'bg-stone-100 text-stone-500',
     cancelled: 'bg-stone-100 text-stone-400',
     draft: 'bg-stone-100 text-stone-600',
-    proposed: 'bg-blue-100 text-blue-800',
+    proposed: 'bg-stone-100 text-stone-800',
     in_progress: 'bg-stone-100 text-stone-800',
     pending_review: 'bg-stone-200 text-stone-800',
-    approved: 'bg-emerald-100 text-emerald-800',
-    applied: 'bg-emerald-100 text-emerald-800',
-    rejected: 'bg-red-100 text-red-800',
-    confirmed: 'bg-emerald-100 text-emerald-800',
-    reverted: 'bg-amber-100 text-amber-800',
+    approved: 'bg-stone-100 text-stone-800',
+    applied: 'bg-stone-100 text-stone-800',
+    rejected: 'bg-stone-100 text-stone-800',
+    confirmed: 'bg-stone-100 text-stone-800',
+    reverted: 'bg-stone-100 text-stone-800',
   };
 
   const label = state.replace(/_/g, ' ');
@@ -74,10 +74,10 @@ function StateBadge({ state }: { state: string }) {
 
 function ConfidenceIndicator({ confidence }: { confidence: string }) {
   const indicators: Record<string, { dots: number; color: string }> = {
-    strong: { dots: 4, color: 'bg-emerald-500' },
+    strong: { dots: 4, color: 'bg-stone-1000' },
     moderate: { dots: 3, color: 'bg-stone-600' },
-    provisional: { dots: 2, color: 'bg-amber-500' },
-    uncertain: { dots: 1, color: 'bg-red-500' },
+    provisional: { dots: 2, color: 'bg-stone-1000' },
+    uncertain: { dots: 1, color: 'bg-stone-1000' },
   };
 
   const { dots, color } = indicators[confidence] || { dots: 0, color: 'bg-stone-300' };
@@ -126,8 +126,8 @@ function ResolutionPlanCard({ plan, onCreateBundle }: {
       <div className="flex items-center gap-4 text-xs text-stone-500">
         <span>{affectedCount} affected object{affectedCount !== 1 ? 's' : ''}</span>
         <span>Path: {plan.recommendedPath?.replace(/_/g, ' ')}</span>
-        {plan.requiresReview && <span className="text-amber-600">Review required</span>}
-        {plan.requiresReapproval && <span className="text-red-600">Reapproval required</span>}
+        {plan.requiresReview && <span className="text-stone-600">Review required</span>}
+        {plan.requiresReapproval && <span className="text-stone-700">Reapproval required</span>}
       </div>
 
       {plan.rationale && (
@@ -139,7 +139,7 @@ function ResolutionPlanCard({ plan, onCreateBundle }: {
         {plan.state === 'unresolved' && (
           <>
             <button
-              className="text-xs px-3 py-1 bg-blue-50 text-stone-700 rounded hover:bg-blue-100 transition-colors"
+              className="text-xs px-3 py-1 bg-stone-100 text-stone-700 rounded hover:bg-stone-100 transition-colors"
               onClick={() => transitionState.mutate({ planId: plan.id, targetState: 'proposed_resolution' })}
             >
               Propose Resolution
@@ -172,7 +172,7 @@ function ResolutionPlanCard({ plan, onCreateBundle }: {
         )}
         {plan.state === 'resolved_pending_review' && (
           <button
-            className="text-xs px-3 py-1 bg-emerald-50 text-emerald-700 rounded hover:bg-emerald-100 transition-colors"
+            className="text-xs px-3 py-1 bg-stone-100 text-stone-800 rounded hover:bg-stone-100 transition-colors"
             onClick={() => transitionState.mutate({ planId: plan.id, targetState: 'resolved_approved' })}
           >
             Approve
@@ -207,14 +207,14 @@ function ResolutionBundleCard({ bundle }: { bundle: any }) {
       )}
 
       <div className="flex items-center gap-4 text-xs text-stone-500">
-        {bundle.requiresReview && <span className="text-amber-600">Review required</span>}
-        {bundle.requiresReapproval && <span className="text-red-600">Reapproval required</span>}
+        {bundle.requiresReview && <span className="text-stone-600">Review required</span>}
+        {bundle.requiresReapproval && <span className="text-stone-700">Reapproval required</span>}
       </div>
 
       <div className="flex gap-2 pt-1">
         {bundle.state === 'draft' && (
           <button
-            className="text-xs px-3 py-1 bg-blue-50 text-stone-700 rounded hover:bg-blue-100 transition-colors"
+            className="text-xs px-3 py-1 bg-stone-100 text-stone-700 rounded hover:bg-stone-100 transition-colors"
             onClick={() => transitionState.mutate({ bundleId: bundle.id, targetState: 'proposed' })}
           >
             Propose
@@ -238,7 +238,7 @@ function ResolutionBundleCard({ bundle }: { bundle: any }) {
         )}
         {bundle.state === 'pending_review' && (
           <button
-            className="text-xs px-3 py-1 bg-emerald-50 text-emerald-700 rounded hover:bg-emerald-100 transition-colors"
+            className="text-xs px-3 py-1 bg-stone-100 text-stone-800 rounded hover:bg-stone-100 transition-colors"
             onClick={() => transitionState.mutate({ bundleId: bundle.id, targetState: 'approved' })}
           >
             Approve
@@ -325,14 +325,14 @@ export default function ResolutionPanel({ projectId, className = '' }: Resolutio
             onClick={() => setActiveTab(tab.id)}
             className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
               activeTab === tab.id
-                ? 'border-stone-600 text-blue-600'
+                ? 'border-stone-600 text-stone-600'
                 : 'border-transparent text-stone-500 hover:text-stone-700'
             }`}
           >
             {tab.label}
             {tab.count > 0 && (
               <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${
-                activeTab === tab.id ? 'bg-blue-100 text-stone-700' : 'bg-stone-100 text-stone-500'
+                activeTab === tab.id ? 'bg-stone-100 text-stone-700' : 'bg-stone-100 text-stone-500'
               }`}>
                 {tab.count}
               </span>

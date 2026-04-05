@@ -145,12 +145,12 @@ const STATUS_CONFIG: Record<
   running: {
     variant: 'outline',
     icon: <Loader2 className="h-3 w-3 mr-1 animate-spin" />,
-    className: 'animate-pulse border-blue-400 text-blue-600',
+    className: 'animate-pulse border-stone-400 text-stone-600',
   },
   completed: {
     variant: 'default',
     icon: <CheckCircle2 className="h-3 w-3 mr-1" />,
-    className: 'bg-green-600 hover:bg-green-700',
+    className: 'bg-stone-700 hover:bg-stone-800',
   },
   failed: {
     variant: 'destructive',
@@ -322,16 +322,16 @@ function HashVerificationPanel({ state }: { state: HashVerifyState }) {
 
   // phase === 'done'
   return (
-    <Card className={`mt-2 ${state.match ? 'border-green-500' : 'border-destructive'}`}>
+    <Card className={`mt-2 ${state.match ? 'border-stone-1000' : 'border-destructive'}`}>
       <CardContent className="py-3 px-4">
         <div className="flex items-center gap-2 mb-2">
           {state.match ? (
-            <ShieldCheck className="h-4 w-4 text-green-600" />
+            <ShieldCheck className="h-4 w-4 text-stone-700" />
           ) : (
             <ShieldAlert className="h-4 w-4 text-destructive" />
           )}
           <span
-            className={`text-sm font-semibold ${state.match ? 'text-green-600' : 'text-destructive'}`}
+            className={`text-sm font-semibold ${state.match ? 'text-stone-700' : 'text-destructive'}`}
           >
             {state.match ? 'INTEGRITY MATCH' : 'INTEGRITY MISMATCH'}
           </span>
@@ -774,9 +774,9 @@ function TemplatesTab({ programId }: { programId: string }) {
     <div className="space-y-4">
       {/* Seed success banner */}
       {seedTemplates.isSuccess && (
-        <Card className="border-green-500 bg-green-50 dark:bg-green-950/30">
+        <Card className="border-stone-1000 bg-stone-100 dark:bg-stone-950/30">
           <CardContent className="py-3 px-4">
-            <p className="text-sm text-green-700 dark:text-green-400 flex items-center gap-2">
+            <p className="text-sm text-stone-800 dark:text-stone-400 flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4" />
               Starter templates installed — {(seedTemplates.data as any).templates_created ??
                 0}{' '}

@@ -130,10 +130,10 @@ export default function DoseEscalationModule({ organizationId }: { organizationI
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-2xl font-bold flex items-center gap-2">
-            <Calculator className="h-6 w-6 text-blue-600" />
+            <Calculator className="h-6 w-6 text-stone-600" />
             Dose Escalation Optimizer
           </h3>
-          <p className="text-gray-600 mt-1">
+          <p className="text-stone-600 mt-1">
             AI-powered dose optimization using Bayesian methods and real-world evidence
           </p>
         </div>
@@ -239,7 +239,7 @@ export default function DoseEscalationModule({ organizationId }: { organizationI
 
       {/* AI Recommendations */}
       {optimizeMutation.data && (
-        <Alert className="border-blue-200 bg-blue-50">
+        <Alert className="border-stone-200 bg-stone-100">
           <Brain className="h-4 w-4" />
           <AlertTitle>AI Dose Recommendation</AlertTitle>
           <AlertDescription className="space-y-2 mt-2">
@@ -291,14 +291,14 @@ export default function DoseEscalationModule({ organizationId }: { organizationI
                   <Line 
                     type="monotone" 
                     dataKey="dltRate" 
-                    stroke="#ef4444" 
+                    stroke="#57534e" 
                     strokeWidth={2}
                     name="Observed DLT Rate"
                   />
                   <Line 
                     type="monotone" 
                     dataKey={() => 0.25} 
-                    stroke="#6a9bcc" 
+                    stroke="#78716c" 
                     strokeDasharray="5 5"
                     name="Target DLT Rate (25%)"
                   />
@@ -321,8 +321,8 @@ export default function DoseEscalationModule({ organizationId }: { organizationI
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="patientsEnrolled" fill="#6a9bcc" name="Patients Enrolled" />
-                  <Bar dataKey="dltsObserved" fill="#ef4444" name="DLTs Observed" />
+                  <Bar dataKey="patientsEnrolled" fill="#78716c" name="Patients Enrolled" />
+                  <Bar dataKey="dltsObserved" fill="#57534e" name="DLTs Observed" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -336,11 +336,11 @@ export default function DoseEscalationModule({ organizationId }: { organizationI
                 <CardContent className="flex items-center justify-between p-4">
                   <div className="flex items-center gap-4">
                     <div className="text-center">
-                      <div className="text-sm text-gray-500">Cohort</div>
+                      <div className="text-sm text-stone-500">Cohort</div>
                       <div className="text-2xl font-bold">{cohort.cohort}</div>
                     </div>
                     <div>
-                      <div className="text-sm text-gray-500">Dose Level</div>
+                      <div className="text-sm text-stone-500">Dose Level</div>
                       <div className="text-lg font-semibold">{cohort.dose} mg</div>
                     </div>
                   </div>
@@ -348,15 +348,15 @@ export default function DoseEscalationModule({ organizationId }: { organizationI
                   <div className="flex items-center gap-6">
                     <div>
                       <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-gray-400" />
+                        <Users className="h-4 w-4 text-stone-400" />
                         <span className="text-sm">
                           {cohort.patientsEnrolled} patients
                         </span>
                       </div>
                       {cohort.dltsObserved > 0 && (
                         <div className="flex items-center gap-2 mt-1">
-                          <AlertTriangle className="h-4 w-4 text-orange-400" />
-                          <span className="text-sm text-orange-600">
+                          <AlertTriangle className="h-4 w-4 text-stone-400" />
+                          <span className="text-sm text-stone-600">
                             {cohort.dltsObserved} DLT{cohort.dltsObserved > 1 ? 's' : ''}
                           </span>
                         </div>
@@ -409,21 +409,21 @@ export default function DoseEscalationModule({ organizationId }: { organizationI
               <div className="grid grid-cols-3 gap-4">
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-sm text-gray-500">Total DLTs</div>
+                    <div className="text-sm text-stone-500">Total DLTs</div>
                     <div className="text-2xl font-bold">3</div>
                     <Progress value={30} className="mt-2" />
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-sm text-gray-500">Grade 3+ Events</div>
+                    <div className="text-sm text-stone-500">Grade 3+ Events</div>
                     <div className="text-2xl font-bold">2</div>
                     <Progress value={20} className="mt-2" />
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-sm text-gray-500">SAEs</div>
+                    <div className="text-sm text-stone-500">SAEs</div>
                     <div className="text-2xl font-bold">0</div>
                     <Progress value={0} className="mt-2" />
                   </CardContent>

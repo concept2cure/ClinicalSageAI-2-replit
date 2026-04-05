@@ -179,7 +179,7 @@ export default function BillingDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-stone-1000" />
       </div>
     );
   }
@@ -192,8 +192,8 @@ export default function BillingDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Billing & Subscription</h1>
-          <p className="text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-stone-900">Billing & Subscription</h1>
+          <p className="text-stone-500 mt-1">
             Manage your Concept2Cure.RI subscription and billing
           </p>
         </div>
@@ -234,11 +234,11 @@ export default function BillingDashboard() {
 
       {/* Current Plan Card */}
       {subscription && (
-        <div className="rounded-xl border bg-gradient-to-r from-blue-50 to-indigo-50 p-6">
+        <div className="rounded-xl border bg-gradient-to-r from-stone-100 to-stone-100 p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <CreditCard className="h-6 w-6 text-blue-600" />
+              <div className="p-3 bg-stone-100 rounded-lg">
+                <CreditCard className="h-6 w-6 text-stone-600" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -247,7 +247,7 @@ export default function BillingDashboard() {
                   </h2>
                   <PaymentStatusBadge status={subscription.paymentStatus} />
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-stone-600">
                   {subscription.billingCycle === 'annual' ? 'Annual' : 'Monthly'} billing
                   {subscription.currentPeriodEnd && (
                     <> — renews {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</>
@@ -263,13 +263,13 @@ export default function BillingDashboard() {
           </div>
 
           {subscription.cancelAtPeriodEnd && (
-            <Alert className="mt-4 bg-amber-50 border-amber-200">
-              <AlertTriangle className="h-4 w-4 text-amber-600" />
-              <AlertDescription className="text-amber-800">
+            <Alert className="mt-4 bg-stone-100 border-stone-200">
+              <AlertTriangle className="h-4 w-4 text-stone-600" />
+              <AlertDescription className="text-stone-800">
                 Your subscription will cancel at the end of the current billing period.
                 <Button
                   variant="link"
-                  className="text-amber-800 underline pl-1"
+                  className="text-stone-800 underline pl-1"
                   onClick={handleManageBilling}
                 >
                   Reactivate
@@ -285,8 +285,8 @@ export default function BillingDashboard() {
         <button
           className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
             billingCycle === 'monthly'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              ? 'bg-stone-600 text-white'
+              : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
           }`}
           onClick={() => setBillingCycle('monthly')}
         >
@@ -295,13 +295,13 @@ export default function BillingDashboard() {
         <button
           className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 ${
             billingCycle === 'annual'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              ? 'bg-stone-600 text-white'
+              : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
           }`}
           onClick={() => setBillingCycle('annual')}
         >
           Annual
-          <Badge className="bg-green-100 text-green-700 text-xs">Save up to 20%</Badge>
+          <Badge className="bg-stone-100 text-stone-800 text-xs">Save up to 20%</Badge>
         </button>
       </div>
 
@@ -322,15 +322,15 @@ export default function BillingDashboard() {
               key={tier.tier}
               className={`relative rounded-xl border-2 p-6 transition ${
                 isRecommended
-                  ? 'border-blue-500 shadow-lg'
+                  ? 'border-stone-1000 shadow-lg'
                   : isCurrent
-                  ? 'border-green-500 bg-green-50/30'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-stone-1000 bg-stone-100/30'
+                  : 'border-stone-200 hover:border-stone-300'
               }`}
             >
               {isRecommended && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-blue-600 text-white px-3">Recommended</Badge>
+                  <Badge className="bg-stone-600 text-white px-3">Recommended</Badge>
                 </div>
               )}
 
@@ -340,41 +340,41 @@ export default function BillingDashboard() {
                   <span className="text-3xl font-bold">
                     ${Math.round(displayPrice).toLocaleString()}
                   </span>
-                  <span className="text-gray-500">/mo</span>
+                  <span className="text-stone-500">/mo</span>
                 </div>
                 {billingCycle === 'annual' && (
-                  <p className="text-sm text-green-600 mt-1">
+                  <p className="text-sm text-stone-700 mt-1">
                     Save {tier.annualDiscountPct}% with annual billing
                   </p>
                 )}
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-stone-500 mt-1">
                   + ${tier.perSeatMonthly}/seat/mo
                 </p>
               </div>
 
               <ul className="space-y-2 mb-6 text-sm">
                 <li className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-gray-400" />
+                  <Users className="h-4 w-4 text-stone-400" />
                   Up to {tier.maxUsers} users
                 </li>
                 <li className="flex items-center gap-2">
-                  <FolderOpen className="h-4 w-4 text-gray-400" />
+                  <FolderOpen className="h-4 w-4 text-stone-400" />
                   {tier.maxProjects === 'Unlimited' ? 'Unlimited' : `${tier.maxProjects}`} projects
                 </li>
                 <li className="flex items-center gap-2">
-                  <HardDrive className="h-4 w-4 text-gray-400" />
+                  <HardDrive className="h-4 w-4 text-stone-400" />
                   {tier.maxStorageGB} GB storage
                 </li>
               </ul>
 
               {isCurrent ? (
                 <Button variant="outline" className="w-full" disabled>
-                  <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                  <CheckCircle className="h-4 w-4 mr-2 text-stone-1000" />
                   Current Plan
                 </Button>
               ) : isUpgrade ? (
                 <Button
-                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  className="w-full bg-stone-600 hover:bg-stone-700"
                   onClick={() => handleUpgrade(tier.tier)}
                   disabled={checkoutLoading !== null}
                 >
@@ -410,25 +410,25 @@ export default function BillingDashboard() {
 function PaymentStatusBadge({ status }: { status: string }) {
   switch (status) {
     case 'active':
-      return <Badge className="bg-green-100 text-green-700">Active</Badge>;
+      return <Badge className="bg-stone-100 text-stone-800">Active</Badge>;
     case 'trialing':
-      return <Badge className="bg-blue-100 text-blue-700">Trial</Badge>;
+      return <Badge className="bg-stone-100 text-stone-700">Trial</Badge>;
     case 'past_due':
-      return <Badge className="bg-red-100 text-red-700">Past Due</Badge>;
+      return <Badge className="bg-stone-100 text-stone-800">Past Due</Badge>;
     case 'canceled':
-      return <Badge className="bg-gray-100 text-gray-700">Canceled</Badge>;
+      return <Badge className="bg-stone-100 text-stone-700">Canceled</Badge>;
     case 'incomplete':
-      return <Badge className="bg-amber-100 text-amber-700">Incomplete</Badge>;
+      return <Badge className="bg-stone-100 text-stone-700">Incomplete</Badge>;
     default:
-      return <Badge className="bg-gray-100 text-gray-600">{status}</Badge>;
+      return <Badge className="bg-stone-100 text-stone-600">{status}</Badge>;
   }
 }
 
 function UsageStat({ icon: Icon, label, value }: { icon: any; label: string; value: number }) {
   return (
     <div className="flex items-center gap-2 text-sm">
-      <Icon className="h-4 w-4 text-gray-400" />
-      <span className="text-gray-600">{label}:</span>
+      <Icon className="h-4 w-4 text-stone-400" />
+      <span className="text-stone-600">{label}:</span>
       <span className="font-medium">{value}</span>
     </div>
   );

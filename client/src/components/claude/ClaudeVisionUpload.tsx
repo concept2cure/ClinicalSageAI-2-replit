@@ -131,16 +131,16 @@ export function ClaudeVisionUpload({
           onDragOver={e => e.preventDefault()}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-colors"
+          className="border-2 border-dashed border-stone-300 rounded-xl p-8 text-center cursor-pointer hover:border-stone-400 hover:bg-stone-100/50 transition-colors"
         >
-          <Upload className="w-10 h-10 mx-auto text-gray-400 mb-3" />
-          <p className="text-sm font-medium text-gray-600">
+          <Upload className="w-10 h-10 mx-auto text-stone-400 mb-3" />
+          <p className="text-sm font-medium text-stone-600">
             Drop an image here or click to upload
           </p>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-stone-400 mt-1">
             JPEG, PNG, GIF, WebP up to 20MB
           </p>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-stone-400">
             Scanned documents, lab reports, device images, regulatory forms
           </p>
         </div>
@@ -155,7 +155,7 @@ export function ClaudeVisionUpload({
           <img
             src={imagePreview}
             alt="Upload preview"
-            className="w-full max-h-64 object-contain bg-gray-100"
+            className="w-full max-h-64 object-contain bg-stone-100"
           />
         </div>
       )}
@@ -172,7 +172,7 @@ export function ClaudeVisionUpload({
         <>
           <div className="flex gap-3 items-end">
             <div className="flex-1">
-              <label className="text-xs font-medium text-gray-500 block mb-1">
+              <label className="text-xs font-medium text-stone-500 block mb-1">
                 Analysis Instructions
               </label>
               <textarea
@@ -184,7 +184,7 @@ export function ClaudeVisionUpload({
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1">
+              <label className="text-xs font-medium text-stone-500 block mb-1">
                 Framework
               </label>
               <select
@@ -204,7 +204,7 @@ export function ClaudeVisionUpload({
           <button
             onClick={handleAnalyze}
             disabled={claude.isLoading || !instructions}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 flex items-center justify-center gap-2 text-sm"
+            className="px-4 py-2 bg-stone-600 text-white rounded-lg hover:bg-stone-700 disabled:opacity-60 flex items-center justify-center gap-2 text-sm"
           >
             {claude.isLoading ? (
               <>
@@ -221,7 +221,7 @@ export function ClaudeVisionUpload({
 
       {/* Error */}
       {claude.error && (
-        <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+        <div className="px-4 py-3 bg-stone-100 border border-stone-200 rounded-lg text-stone-800 text-sm">
           {claude.error}
         </div>
       )}
@@ -229,14 +229,14 @@ export function ClaudeVisionUpload({
       {/* Result */}
       {result && (
         <div className="border rounded-lg bg-white">
-          <div className="flex items-center justify-between px-4 py-2 border-b bg-gray-50">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center justify-between px-4 py-2 border-b bg-stone-50">
+            <div className="flex items-center gap-2 text-sm text-stone-600">
               <FileText className="w-4 h-4" />
               Analysis Result
             </div>
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
+              className="flex items-center gap-1 text-xs text-stone-500 hover:text-stone-700"
             >
               {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
               {copied ? 'Copied' : 'Copy'}

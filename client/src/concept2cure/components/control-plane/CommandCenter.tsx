@@ -301,14 +301,14 @@ function OverviewTab() {
             <div key={s.service} className="flex items-center justify-between py-1">
               <span className="text-sm text-stone-700">{s.service}</span>
               <span className={`flex items-center gap-1.5 text-xs ${
-                s.status === 'operational' ? 'text-emerald-600' :
+                s.status === 'operational' ? 'text-stone-700' :
                 s.status === 'checking' ? 'text-stone-400' :
-                s.status === 'degraded' ? 'text-yellow-600' : 'text-red-600'
+                s.status === 'degraded' ? 'text-stone-600' : 'text-stone-700'
               }`}>
                 <span className={`w-2 h-2 rounded-full ${
-                  s.status === 'operational' ? 'bg-emerald-500' :
+                  s.status === 'operational' ? 'bg-stone-1000' :
                   s.status === 'checking' ? 'bg-stone-300 animate-pulse' :
-                  s.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
+                  s.status === 'degraded' ? 'bg-stone-1000' : 'bg-stone-1000'
                 }`} />
                 {s.status === 'checking' ? 'Checking...' : s.status.charAt(0).toUpperCase() + s.status.slice(1)}
               </span>
@@ -367,22 +367,22 @@ function ApiKeysTab(props: {
 
       {/* Created Key Banner */}
       {props.createdKey && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+        <div className="bg-stone-100 border border-stone-200 rounded-xl p-4 mb-4">
           <div className="flex items-start gap-2">
-            <AlertTriangle size={16} className="text-amber-600 mt-0.5" />
+            <AlertTriangle size={16} className="text-stone-600 mt-0.5" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-amber-800 mb-1">
+              <p className="text-sm font-medium text-stone-800 mb-1">
                 Store this key securely — it will not be shown again.
               </p>
-              <div className="flex items-center gap-2 bg-white border border-amber-300 rounded-lg px-3 py-2">
+              <div className="flex items-center gap-2 bg-white border border-stone-300 rounded-lg px-3 py-2">
                 <code className="text-xs text-stone-800 flex-1 font-mono break-all">{props.createdKey}</code>
                 <button onClick={props.onCopy} className="text-stone-500 hover:text-stone-700">
-                  {props.copied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                  {props.copied ? <Check size={14} className="text-stone-700" /> : <Copy size={14} />}
                 </button>
               </div>
               <button
                 onClick={() => props.setCreatedKey(null)}
-                className="text-xs text-amber-600 mt-2 hover:underline"
+                className="text-xs text-stone-600 mt-2 hover:underline"
               >
                 Dismiss
               </button>
@@ -469,8 +469,8 @@ function ApiKeysTab(props: {
                   <span
                     className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
                       key.status === 'active'
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : 'bg-red-50 text-red-700'
+                        ? 'bg-stone-100 text-stone-800'
+                        : 'bg-stone-100 text-stone-800'
                     }`}
                   >
                     {key.status === 'active' ? <Unlock size={10} /> : <Lock size={10} />}
@@ -486,7 +486,7 @@ function ApiKeysTab(props: {
                   {key.status === 'active' && (
                     <button
                       onClick={() => props.onRevoke(key.id)}
-                      className="text-red-500 hover:text-red-700 p-1"
+                      className="text-stone-1000 hover:text-stone-800 p-1"
                       title="Revoke"
                     >
                       <Trash2 size={14} />
@@ -536,14 +536,14 @@ function UsageTab({ usage }: { usage: UsageSummary[] }) {
   const features = [
     { id: 'deep_research', label: 'Deep Research', color: 'bg-stone-600' },
     { id: 'csr_builder', label: 'CSR Builder', color: 'bg-stone-600' },
-    { id: 'ctd_builder', label: 'CTD Builder', color: 'bg-emerald-500' },
+    { id: 'ctd_builder', label: 'CTD Builder', color: 'bg-stone-1000' },
     { id: 'api_csr_search', label: 'API: CSR Search', color: 'bg-stone-500' },
     { id: 'api_regulatory_pathways', label: 'API: Regulatory Pathways', color: 'bg-stone-500' },
     { id: 'api_endpoint_recommend', label: 'API: Endpoint Recommender', color: 'bg-fuchsia-500' },
     { id: 'api_precedent_search', label: 'API: Precedent Search', color: 'bg-stone-500' },
     { id: 'api_trial_design', label: 'API: Trial Design', color: 'bg-rose-500' },
-    { id: 'ctd_onboarding', label: 'CTD Onboarding', color: 'bg-emerald-500' },
-    { id: 'biologics_intelligence', label: 'Biologics Intelligence', color: 'bg-blue-500' },
+    { id: 'ctd_onboarding', label: 'CTD Onboarding', color: 'bg-stone-1000' },
+    { id: 'biologics_intelligence', label: 'Biologics Intelligence', color: 'bg-stone-1000' },
   ];
 
   return (
@@ -658,7 +658,7 @@ function ModulesTab() {
                     <div className="text-sm font-medium text-stone-900">{m.name}</div>
                     <div className="text-xs text-stone-400 capitalize">{m.tier}+</div>
                   </div>
-                  <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">
+                  <span className="text-xs bg-stone-100 text-stone-800 px-2 py-0.5 rounded-full">
                     Active
                   </span>
                 </div>

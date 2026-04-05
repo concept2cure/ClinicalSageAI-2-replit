@@ -125,9 +125,9 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
   const offset = circumference - (score / 100) * circumference;
 
   const getScoreColor = (s: number) => {
-    if (s >= 90) return '#92a87a'; // green-500
-    if (s >= 70) return '#eab308'; // yellow-500
-    return '#ef4444'; // red-500
+    if (s >= 90) return '#92a87a'; // stone-1000
+    if (s >= 70) return '#eab308'; // stone-1000
+    return '#ef4444'; // stone-1000
   };
 
   return (
@@ -184,9 +184,9 @@ interface CategoryScoreBarProps {
 
 const CategoryScoreBar: React.FC<CategoryScoreBarProps> = ({ label, score, icon }) => {
   const getScoreColor = (s: number) => {
-    if (s >= 90) return 'bg-green-500';
-    if (s >= 70) return 'bg-yellow-500';
-    return 'bg-red-500';
+    if (s >= 90) return 'bg-stone-1000';
+    if (s >= 70) return 'bg-stone-1000';
+    return 'bg-stone-1000';
   };
 
   return (
@@ -230,21 +230,21 @@ const ViolationCard: React.FC<ViolationCardProps> = ({
   const severityConfig = {
     error: {
       icon: AlertTriangle,
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-200',
-      iconColor: 'text-red-500',
+      bgColor: 'bg-stone-100',
+      borderColor: 'border-stone-200',
+      iconColor: 'text-stone-1000',
     },
     warning: {
       icon: AlertTriangle,
-      bgColor: 'bg-yellow-50',
-      borderColor: 'border-yellow-200',
-      iconColor: 'text-yellow-500',
+      bgColor: 'bg-stone-100',
+      borderColor: 'border-stone-200',
+      iconColor: 'text-stone-1000',
     },
     info: {
       icon: Info,
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      iconColor: 'text-blue-500',
+      bgColor: 'bg-stone-100',
+      borderColor: 'border-stone-200',
+      iconColor: 'text-stone-1000',
     },
   };
 
@@ -301,7 +301,7 @@ const ViolationCard: React.FC<ViolationCardProps> = ({
               variant="ghost"
               size="sm"
               onClick={onClick}
-              className="h-auto px-1 py-0.5 text-xs text-blue-600 hover:text-stone-700"
+              className="h-auto px-1 py-0.5 text-xs text-stone-600 hover:text-stone-700"
             >
               <ExternalLink className="w-3 h-3" />
               Go to location
@@ -330,7 +330,7 @@ const TrendIndicator: React.FC<TrendIndicatorProps> = ({ history }) => {
 
   if (diff > 0) {
     return (
-      <span className="flex items-center gap-1 text-green-500 text-sm">
+      <span className="flex items-center gap-1 text-stone-1000 text-sm">
         <TrendingUp className="w-4 h-4" />
         +{diff}%
       </span>
@@ -338,7 +338,7 @@ const TrendIndicator: React.FC<TrendIndicatorProps> = ({ history }) => {
   }
   if (diff < 0) {
     return (
-      <span className="flex items-center gap-1 text-red-500 text-sm">
+      <span className="flex items-center gap-1 text-stone-1000 text-sm">
         <TrendingDown className="w-4 h-4" />
         {diff}%
       </span>
@@ -420,8 +420,8 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
       <div className="px-5 py-4 border-b border-stone-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-              <Shield size={18} strokeWidth={2} className="text-blue-600" />
+            <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0">
+              <Shield size={18} strokeWidth={2} className="text-stone-600" />
             </div>
             <div>
               <h2 className="font-semibold text-stone-900">Compliance Dashboard</h2>
@@ -463,22 +463,22 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
           <div className="flex-1">
             <div className="flex items-center gap-4 mb-3">
               {submissionType && (
-                <span className="px-3 py-1 bg-blue-100 text-blue-600 text-sm font-medium rounded-full">
+                <span className="px-3 py-1 bg-stone-100 text-stone-600 text-sm font-medium rounded-full">
                   {submissionType}
                 </span>
               )}
               <TrendIndicator history={history} />
             </div>
             <div className="flex items-center gap-4 text-sm">
-              <span className="flex items-center gap-1 text-red-500">
+              <span className="flex items-center gap-1 text-stone-1000">
                 <AlertTriangle className="w-4 h-4" />
                 {errorCount} errors
               </span>
-              <span className="flex items-center gap-1 text-yellow-500">
+              <span className="flex items-center gap-1 text-stone-1000">
                 <AlertTriangle className="w-4 h-4" />
                 {warningCount} warnings
               </span>
-              <span className="flex items-center gap-1 text-blue-500">
+              <span className="flex items-center gap-1 text-stone-1000">
                 <Info className="w-4 h-4" />
                 {infoCount} info
               </span>
@@ -551,7 +551,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
           {filteredViolations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-stone-500">
-              <CheckCircle className="w-12 h-12 mb-3 text-green-500" />
+              <CheckCircle className="w-12 h-12 mb-3 text-stone-1000" />
               <p className="font-medium">No Issues Found</p>
               <p className="text-sm">
                 {severityFilter === 'all' && categoryFilter === 'all'

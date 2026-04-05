@@ -81,13 +81,13 @@ export const MobileNav: React.FC<MobileNavProps> = ({ onMenuClick }) => {
               onClick={() => setLocation(item.route)}
               className={cn(
                 'flex flex-1 flex-col items-center gap-1 rounded-lg px-2 py-2 transition-colors',
-                active ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+                active ? 'text-stone-600' : 'text-stone-500 hover:text-stone-700'
               )}
             >
               <div
                 className={cn(
                   'flex h-8 w-8 items-center justify-center rounded-full transition-colors',
-                  active && 'bg-blue-50'
+                  active && 'bg-stone-100'
                 )}
               >
                 <Icon className="h-5 w-5" />
@@ -100,7 +100,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ onMenuClick }) => {
         {/* More menu button */}
         <button
           onClick={onMenuClick}
-          className="flex flex-1 flex-col items-center gap-1 rounded-lg px-2 py-2 text-gray-500 transition-colors hover:text-gray-700"
+          className="flex flex-1 flex-col items-center gap-1 rounded-lg px-2 py-2 text-stone-500 transition-colors hover:text-stone-700"
         >
           <div className="flex h-8 w-8 items-center justify-center rounded-full">
             <Menu className="h-5 w-5" />

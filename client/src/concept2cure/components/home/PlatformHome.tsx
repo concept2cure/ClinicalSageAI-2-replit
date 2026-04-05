@@ -64,8 +64,8 @@ const QUICK_ACTIONS = [
     label: 'New Project',
     subtitle: 'Start a submission',
     icon: Plus,
-    color: 'text-blue-600',
-    bg: 'bg-blue-50',
+    color: 'text-stone-600',
+    bg: 'bg-stone-100',
     action: 'new-project',
   },
   {
@@ -82,8 +82,8 @@ const QUICK_ACTIONS = [
     label: 'Collaboration',
     subtitle: 'Team workspace',
     icon: Users,
-    color: 'text-amber-600',
-    bg: 'bg-amber-50',
+    color: 'text-stone-600',
+    bg: 'bg-stone-100',
     action: 'collaboration-hub',
   },
   {
@@ -91,8 +91,8 @@ const QUICK_ACTIONS = [
     label: 'Biostatistics',
     subtitle: 'Statistical analysis',
     icon: FlaskConical,
-    color: 'text-emerald-600',
-    bg: 'bg-emerald-50',
+    color: 'text-stone-700',
+    bg: 'bg-stone-100',
     action: 'biostatistics',
   },
 ];
@@ -103,7 +103,7 @@ const MODULE_CATALOG = [
     label: 'Regulatory Workspace',
     subtitle: 'Full submission environment',
     icon: FileText,
-    color: 'text-blue-600',
+    color: 'text-stone-600',
   },
   {
     id: 'ectd-coauthor',
@@ -117,14 +117,14 @@ const MODULE_CATALOG = [
     label: 'Intelligence Hub',
     subtitle: 'Evidence & insights',
     icon: Search,
-    color: 'text-blue-600',
+    color: 'text-stone-600',
   },
   {
     id: 'review-readiness',
     label: 'Review Readiness',
     subtitle: 'Submission QC',
     icon: ShieldCheck,
-    color: 'text-emerald-600',
+    color: 'text-stone-700',
   },
   {
     id: 'command-center',
@@ -145,14 +145,14 @@ const MODULE_CATALOG = [
     label: 'Biostatistics',
     subtitle: 'Statistical platform',
     icon: FlaskConical,
-    color: 'text-emerald-600',
+    color: 'text-stone-700',
   },
   {
     id: 'training-center',
     label: 'Training Center',
     subtitle: 'Courses & certs',
     icon: GraduationCap,
-    color: 'text-amber-600',
+    color: 'text-stone-600',
   },
   {
     id: 'snowglobe',
@@ -166,7 +166,7 @@ const MODULE_CATALOG = [
     label: 'Collaboration Hub',
     subtitle: 'Team threads',
     icon: Users,
-    color: 'text-amber-600',
+    color: 'text-stone-600',
   },
   {
     id: 'knowledge-base',
@@ -180,23 +180,23 @@ const MODULE_CATALOG = [
     label: 'Project Knowledge',
     subtitle: 'Project context',
     icon: FileStack,
-    color: 'text-blue-600',
+    color: 'text-stone-600',
   },
   {
     id: 'client-onboarding',
     label: 'Client Onboarding',
     subtitle: 'Setup wizard',
     icon: Rocket,
-    color: 'text-emerald-600',
+    color: 'text-stone-700',
   },
 ];
 
 const TYPE_COLORS: Record<string, string> = {
   '510K': 'bg-stone-600',
   IND: 'bg-stone-500',
-  NDA: 'bg-emerald-500',
-  BLA: 'bg-emerald-500',
-  PMA: 'bg-amber-500',
+  NDA: 'bg-stone-1000',
+  BLA: 'bg-stone-1000',
+  PMA: 'bg-stone-1000',
   CER: 'bg-stone-500',
   MAA: 'bg-stone-600',
 };
@@ -325,7 +325,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
                       <td className="px-4 py-2.5">
                         <span className="font-medium text-stone-900">{project.name}</span>
                         {project.starred && (
-                          <Star className="w-3 h-3 text-amber-400 fill-amber-400 inline ml-1.5 -mt-0.5" />
+                          <Star className="w-3 h-3 text-stone-400 fill-stone-400 inline ml-1.5 -mt-0.5" />
                         )}
                         {project.description && (
                           <span className="block text-xs text-stone-400 truncate max-w-md">

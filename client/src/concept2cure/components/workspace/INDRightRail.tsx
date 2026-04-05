@@ -121,7 +121,7 @@ export const INDRightRail: React.FC<INDRightRailProps> = ({
                         </span>
                         <div className="flex items-center gap-2 mt-0.5">
                           {csr.phase && (
-                            <span className="text-xs px-1 py-0.5 rounded bg-blue-50 text-blue-600 font-medium">
+                            <span className="text-xs px-1 py-0.5 rounded bg-stone-100 text-stone-600 font-medium">
                               {csr.phase}
                             </span>
                           )}
@@ -130,8 +130,8 @@ export const INDRightRail: React.FC<INDRightRailProps> = ({
                               className={cn(
                                 'text-xs px-1 py-0.5 rounded font-medium',
                                 csr.outcome === 'positive'
-                                  ? 'bg-emerald-50 text-emerald-600'
-                                  : 'bg-red-50 text-red-600'
+                                  ? 'bg-stone-100 text-stone-700'
+                                  : 'bg-stone-100 text-stone-700'
                               )}
                             >
                               {csr.outcome}
@@ -256,10 +256,10 @@ const BasisItem: React.FC<{ label: string; value: string }> = ({ label, value })
 const InputItem: React.FC<{ label: string; required?: boolean }> = ({ label, required }) => (
   <div className="flex items-center gap-2 py-1">
     <div
-      className={cn('w-2 h-2 rounded-full flex-shrink-0', required ? 'bg-red-400' : 'bg-stone-300')}
+      className={cn('w-2 h-2 rounded-full flex-shrink-0', required ? 'bg-stone-400' : 'bg-stone-300')}
     />
     <span className="text-xs text-stone-700">{label}</span>
-    {required && <span className="text-xs text-red-500 font-medium ml-auto">Required</span>}
+    {required && <span className="text-xs text-stone-1000 font-medium ml-auto">Required</span>}
   </div>
 );
 
@@ -298,7 +298,7 @@ const PlacementItem: React.FC<{ module: string; label: string; sections: string[
         aria-expanded={open}
         className="w-full flex items-center gap-2 px-2.5 py-2 text-left focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded"
       >
-        <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-stone-700 font-semibold leading-none flex-shrink-0">
+        <span className="text-xs px-1.5 py-0.5 rounded bg-stone-100 text-stone-700 font-semibold leading-none flex-shrink-0">
           M{module}
         </span>
         <span className="text-xs font-medium text-stone-700 flex-1">{label}</span>

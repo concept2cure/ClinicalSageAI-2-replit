@@ -11,22 +11,22 @@ interface BlockerListProps {
 
 const SEVERITY_STYLES: Record<string, { bg: string; border: string; icon: string; text: string }> = {
   critical: {
-    bg: 'bg-red-50 dark:bg-red-950/30',
-    border: 'border-red-200 dark:border-red-800',
-    icon: 'text-red-600',
-    text: 'text-red-800 dark:text-red-300',
+    bg: 'bg-stone-100 dark:bg-stone-950/30',
+    border: 'border-stone-200 dark:border-stone-800',
+    icon: 'text-stone-700',
+    text: 'text-stone-800 dark:text-stone-300',
   },
   major: {
-    bg: 'bg-amber-50 dark:bg-amber-950/30',
-    border: 'border-amber-200 dark:border-amber-800',
-    icon: 'text-amber-600',
-    text: 'text-amber-800 dark:text-amber-300',
+    bg: 'bg-stone-100 dark:bg-stone-950/30',
+    border: 'border-stone-200 dark:border-stone-800',
+    icon: 'text-stone-600',
+    text: 'text-stone-800 dark:text-stone-300',
   },
   minor: {
-    bg: 'bg-blue-50 dark:bg-blue-950/30',
-    border: 'border-blue-200 dark:border-blue-800',
-    icon: 'text-blue-600',
-    text: 'text-blue-800 dark:text-blue-300',
+    bg: 'bg-stone-100 dark:bg-stone-950/30',
+    border: 'border-stone-200 dark:border-stone-800',
+    icon: 'text-stone-600',
+    text: 'text-stone-800 dark:text-stone-300',
   },
 };
 

@@ -67,8 +67,8 @@ const PRIORITY_CONFIG: Record<string, {
   label: string;
   timeColor: string;
 }> = {
-  CRITICAL: { pillVariant: 'danger', label: 'Critical', timeColor: 'text-red-600' },
-  HIGH: { pillVariant: 'warning', label: 'High', timeColor: 'text-amber-600' },
+  CRITICAL: { pillVariant: 'danger', label: 'Critical', timeColor: 'text-stone-700' },
+  HIGH: { pillVariant: 'warning', label: 'High', timeColor: 'text-stone-600' },
   MEDIUM: { pillVariant: 'info', label: 'Medium', timeColor: 'text-stone-600' },
   LOW: { pillVariant: 'default', label: 'Low', timeColor: 'text-stone-500' },
 };
@@ -76,8 +76,8 @@ const PRIORITY_CONFIG: Record<string, {
 // Status → IconBox color
 const STATUS_ICON_CLASS: Record<string, string> = {
   READY: 'bg-stone-100 text-stone-600',
-  IN_PROGRESS: 'bg-emerald-100 text-emerald-600',
-  AWAITING_APPROVAL: 'bg-amber-100 text-amber-600',
+  IN_PROGRESS: 'bg-stone-100 text-stone-700',
+  AWAITING_APPROVAL: 'bg-stone-100 text-stone-600',
   AWAITING_SIGNATURE: 'bg-stone-200 text-stone-700',
 };
 
@@ -146,7 +146,7 @@ const ActionItem: React.FC<{
       className={cn(
         'group relative p-4 rounded-xl border bg-white transition-colors duration-150 hover:bg-stone-50 cursor-pointer',
         'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
-        priority === 'CRITICAL' ? 'border-red-200' : 'border-stone-200',
+        priority === 'CRITICAL' ? 'border-stone-200' : 'border-stone-200',
       )}
       onClick={onClick}
       role="button"

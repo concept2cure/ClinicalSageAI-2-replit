@@ -156,7 +156,7 @@ const STATUS_CONFIG: Record<
   locked: { icon: <Lock className="w-3 h-3" />, color: LIFECYCLE.published.text, label: 'Locked' },
   missing_evidence: {
     icon: <AlertCircle className="w-3 h-3" />,
-    color: 'text-amber-500',
+    color: 'text-stone-1000',
     label: 'Missing Evidence',
   },
   ready: { icon: <ShieldCheck className="w-3 h-3" />, color: LIFECYCLE.approved.text, label: 'Ready' },
@@ -174,7 +174,7 @@ function StatusIndicator({ status }: { status: DossierNodeStatus }) {
 // ── Node icon by type ────────────────────────────────────────────────────────
 
 function NodeIcon({ nodeType, isExpanded }: { nodeType: string; isExpanded: boolean }) {
-  if (nodeType === 'module') return <Package className="w-3.5 h-3.5 text-blue-500 shrink-0" />;
+  if (nodeType === 'module') return <Package className="w-3.5 h-3.5 text-stone-1000 shrink-0" />;
   if (nodeType === 'section') {
     return isExpanded ? (
       <FolderOpen className="w-3.5 h-3.5 text-stone-400 shrink-0" />
@@ -274,7 +274,7 @@ function DossierNodeRow({
         className={cn(
           'w-full flex items-center gap-1 py-[4px] pr-2 text-left transition-all duration-150 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-400 focus-visible:outline-none',
           isSelected
-            ? 'bg-blue-50 text-stone-700'
+            ? 'bg-stone-100 text-stone-700'
             : 'text-stone-600 hover:bg-stone-50 hover:translate-x-px'
         )}
         style={{ paddingLeft: `${8 + depth * 14}px` }}
@@ -308,7 +308,7 @@ function DossierNodeRow({
 
         {/* Required badge for empty required sections */}
         {showRequiredBadge && (
-          <span className="text-[10px] text-amber-500 font-medium shrink-0" aria-label="Required section">
+          <span className="text-[10px] text-stone-1000 font-medium shrink-0" aria-label="Required section">
             Required
           </span>
         )}
@@ -327,22 +327,22 @@ function DossierNodeRow({
             title={`${metrics[node.ctdSection].draftCount ?? 0}D / ${metrics[node.ctdSection].reviewCount ?? 0}R / ${metrics[node.ctdSection].approvedCount ?? 0}A / ${metrics[node.ctdSection].lockedCount ?? 0}L`}
           >
             {(metrics[node.ctdSection].draftCount ?? 0) > 0 && (
-              <span className="text-xs tabular-nums text-amber-600 bg-amber-50 rounded px-0.5">
+              <span className="text-xs tabular-nums text-stone-600 bg-stone-100 rounded px-0.5">
                 {metrics[node.ctdSection].draftCount}D
               </span>
             )}
             {(metrics[node.ctdSection].reviewCount ?? 0) > 0 && (
-              <span className="text-xs tabular-nums text-blue-600 bg-blue-50 rounded px-0.5">
+              <span className="text-xs tabular-nums text-stone-600 bg-stone-100 rounded px-0.5">
                 {metrics[node.ctdSection].reviewCount}R
               </span>
             )}
             {(metrics[node.ctdSection].approvedCount ?? 0) > 0 && (
-              <span className="text-xs tabular-nums text-emerald-600 bg-emerald-50 rounded px-0.5">
+              <span className="text-xs tabular-nums text-stone-700 bg-stone-100 rounded px-0.5">
                 {metrics[node.ctdSection].approvedCount}A
               </span>
             )}
             {(metrics[node.ctdSection].lockedCount ?? 0) > 0 && (
-              <span className="text-xs tabular-nums text-red-600 bg-red-50 rounded px-0.5">
+              <span className="text-xs tabular-nums text-stone-700 bg-stone-100 rounded px-0.5">
                 {metrics[node.ctdSection].lockedCount}L
               </span>
             )}
@@ -360,16 +360,16 @@ function DossierNodeRow({
           const total = m.artifactCount;
           // Color: green if all approved, amber if in progress, red if none started
           const barColor = approved === total && total > 0
-            ? 'bg-emerald-500'
+            ? 'bg-stone-1000'
             : (m.reviewCount ?? 0) > 0 || (m.draftCount ?? 0) > 0
-              ? 'bg-amber-400'
-              : 'bg-red-400';
+              ? 'bg-stone-400'
+              : 'bg-stone-400';
           // Status dot
           const dotColor = approved === total && total > 0
-            ? 'bg-emerald-500'
+            ? 'bg-stone-1000'
             : (m.draftCount ?? 0) > 0 || (m.reviewCount ?? 0) > 0
-              ? 'bg-amber-400'
-              : 'bg-red-400';
+              ? 'bg-stone-400'
+              : 'bg-stone-400';
           return (
             <span className="flex items-center gap-1 shrink-0" title={`${pct}% complete — ${approved}/${total} approved`}>
               <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', dotColor)} />
@@ -386,7 +386,7 @@ function DossierNodeRow({
         {/* Evidence/precedent chips */}
         {metrics?.[node.ctdSection] && metrics[node.ctdSection].evidenceCount > 0 && (
           <span
-            className="text-xs text-emerald-600 bg-emerald-50 rounded px-0.5 shrink-0"
+            className="text-xs text-stone-700 bg-stone-100 rounded px-0.5 shrink-0"
             title="Evidence linked"
           >
             E{metrics[node.ctdSection].evidenceCount}
@@ -407,14 +407,14 @@ function DossierNodeRow({
           metrics[node.ctdSection].evidenceCount === 0 &&
           metrics[node.ctdSection].precedentCount === 0 && (
             <span title="No evidence or precedents linked">
-              <AlertCircle className="w-3 h-3 text-amber-400 shrink-0" />
+              <AlertCircle className="w-3 h-3 text-stone-400 shrink-0" />
             </span>
           )}
         {docCount === 0 &&
           metrics?.[node.ctdSection] &&
           metrics[node.ctdSection].templateCoverageAvailable && (
             <span
-              className="text-xs text-blue-500 bg-blue-50 rounded px-0.5 shrink-0"
+              className="text-xs text-stone-1000 bg-stone-100 rounded px-0.5 shrink-0"
               title="Template available, no document created"
             >
               T
@@ -424,7 +424,7 @@ function DossierNodeRow({
         {/* Required children missing indicator */}
         {missingRequired.length > 0 && docCount > 0 && (
           <span
-            className="text-xs text-red-500 bg-red-50 rounded px-0.5 shrink-0"
+            className="text-xs text-stone-1000 bg-stone-100 rounded px-0.5 shrink-0"
             title={`${missingRequired.length} required section${missingRequired.length > 1 ? 's' : ''} missing: ${missingRequired.join(', ')}`}
           >
             !{missingRequired.length}
@@ -646,7 +646,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onPlaceArtifact(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-blue-50 hover:text-stone-700 transition-colors flex items-center gap-2 focus-visible:bg-blue-50 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-stone-100 hover:text-stone-700 transition-colors flex items-center gap-2 focus-visible:bg-stone-100 focus-visible:outline-none"
               role="menuitem"
             >
               <MapPin className="w-3 h-3" />
@@ -659,7 +659,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onPasteHere(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-2 focus-visible:bg-amber-50 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-stone-100 transition-colors flex items-center gap-2 focus-visible:bg-stone-100 focus-visible:outline-none"
               role="menuitem"
             >
               <ClipboardPaste className="w-3 h-3" />
@@ -696,7 +696,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onOpenTransformCanvas(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-blue-50 transition-colors flex items-center gap-2 focus-visible:bg-stone-100 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-stone-100 transition-colors flex items-center gap-2 focus-visible:bg-stone-100 focus-visible:outline-none"
               role="menuitem"
             >
               <Sparkles className="w-3 h-3" />
@@ -709,7 +709,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onOpenSubmissionApps(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-2 focus-visible:bg-amber-50 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-stone-100 transition-colors flex items-center gap-2 focus-visible:bg-stone-100 focus-visible:outline-none"
               role="menuitem"
             >
               <AppWindow className="w-3 h-3" />
@@ -722,7 +722,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onOpenProgramTwin();
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-blue-50 transition-colors flex items-center gap-2 focus-visible:bg-blue-50 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-stone-100 transition-colors flex items-center gap-2 focus-visible:bg-stone-100 focus-visible:outline-none"
               role="menuitem"
             >
               <Target className="w-3 h-3" />

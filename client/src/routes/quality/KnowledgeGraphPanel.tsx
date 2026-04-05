@@ -56,7 +56,7 @@ export default function KnowledgeGraphPanel() {
         {data.error ? (
           <div className="flex items-center justify-center p-8">
             <div className="text-center">
-              <div className="text-amber-600 font-medium mb-2">⚠️ Feature Not Available</div>
+              <div className="text-stone-600 font-medium mb-2">⚠️ Feature Not Available</div>
               <div className="text-slate-600 text-sm">{data.error}</div>
               <div className="text-xs text-slate-500 mt-2">
                 Contact your administrator to enable advanced quality features
@@ -74,10 +74,10 @@ export default function KnowledgeGraphPanel() {
                       <span
                         className={
                           n.type === 'BATCH'
-                            ? 'text-blue-600'
+                            ? 'text-stone-600'
                             : n.type === 'ALERT'
-                              ? 'text-red-600'
-                              : 'text-green-600'
+                              ? 'text-stone-700'
+                              : 'text-stone-700'
                         }
                       >
                         {n.type}

@@ -78,8 +78,8 @@ export function ProjectReadinessDashboard({
 
   if (readinessError) {
     return (
-      <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
-        <p className="text-sm text-red-700 dark:text-red-300">
+      <div className="p-4 rounded-lg bg-stone-100 dark:bg-stone-950/30 border border-stone-200 dark:border-stone-800">
+        <p className="text-sm text-stone-800 dark:text-stone-300">
           Failed to load readiness: {readinessError instanceof Error ? readinessError.message : 'Unknown error'}
         </p>
       </div>
@@ -114,7 +114,7 @@ export function ProjectReadinessDashboard({
           >
             {tab.label}
             {tab.id === 'blockers' && readiness && readiness.blockers.length > 0 && (
-              <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 text-xs font-bold">
+              <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-stone-100 dark:bg-stone-900/40 text-stone-800 dark:text-stone-300 text-xs font-bold">
                 {readiness.blockers.length}
               </span>
             )}
@@ -192,9 +192,9 @@ const JUDGMENT_MODEL_LABELS: Record<JudgmentModel, string> = {
 const VERDICT_STYLES: Record<JudgmentVerdict, { label: string; className: string }> = {
   pass: { label: 'Pass', className: 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300' },
   acceptable: { label: 'Acceptable', className: 'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400' },
-  needs_attention: { label: 'Needs Attention', className: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400' },
-  at_risk: { label: 'At Risk', className: 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400' },
-  fail: { label: 'Fail', className: 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300' },
+  needs_attention: { label: 'Needs Attention', className: 'bg-stone-100 text-stone-700 dark:bg-stone-950/40 dark:text-stone-400' },
+  at_risk: { label: 'At Risk', className: 'bg-stone-100 text-stone-800 dark:bg-stone-950/40 dark:text-stone-400' },
+  fail: { label: 'Fail', className: 'bg-stone-100 text-stone-800 dark:bg-stone-950/60 dark:text-stone-300' },
 };
 
 function JudgmentScoreCard({ score }: { score: JudgmentScore }) {
@@ -224,8 +224,8 @@ function JudgmentScoreCard({ score }: { score: JudgmentScore }) {
               score.score >= 70
                 ? 'bg-stone-500 dark:bg-stone-400'
                 : score.score >= 50
-                  ? 'bg-amber-500 dark:bg-amber-400'
-                  : 'bg-red-500 dark:bg-red-400'
+                  ? 'bg-stone-1000 dark:bg-stone-400'
+                  : 'bg-stone-1000 dark:bg-stone-400'
             }`}
             style={{ width: `${score.score}%` }}
           />
@@ -338,7 +338,7 @@ function OverviewTab({
             </div>
             <div>
               <span className="text-stone-500">Blockers:</span>{' '}
-              <span className={`font-medium ${readiness.blockers.length > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+              <span className={`font-medium ${readiness.blockers.length > 0 ? 'text-stone-700' : 'text-stone-700'}`}>
                 {readiness.blockers.length}
               </span>
             </div>
@@ -365,10 +365,10 @@ function OverviewTab({
                 <div
                   className={`h-full rounded-full transition-all duration-200 ${
                     item.value >= 70
-                      ? 'bg-emerald-500'
+                      ? 'bg-stone-1000'
                       : item.value >= 40
-                        ? 'bg-amber-500'
-                        : 'bg-red-500'
+                        ? 'bg-stone-1000'
+                        : 'bg-stone-1000'
                   }`}
                   style={{ width: `${item.value}%` }}
                 />
@@ -387,7 +387,7 @@ function OverviewTab({
       {/* Quick blockers */}
       {readiness.blockers.length > 0 && (
         <div>
-          <h3 className="text-sm font-medium text-red-700 dark:text-red-400 mb-2">
+          <h3 className="text-sm font-medium text-stone-800 dark:text-stone-400 mb-2">
             Top Blockers
           </h3>
           <BlockerList blockers={readiness.blockers.slice(0, 3)} />

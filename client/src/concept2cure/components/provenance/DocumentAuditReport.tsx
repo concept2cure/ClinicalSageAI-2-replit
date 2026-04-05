@@ -316,7 +316,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
         </div>
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
-            <AlertTriangle className="w-5 h-5 text-amber-400 mx-auto mb-2" />
+            <AlertTriangle className="w-5 h-5 text-stone-400 mx-auto mb-2" />
             <p className="text-xs text-stone-500">
               {error ||
                 'No audit data available yet. The audit trail begins when the document is created, edited, signed, or exported.'}
@@ -332,7 +332,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
       {/* Header — hidden on print */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-stone-200 bg-stone-50 shrink-0 print:hidden">
         <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-emerald-600" />
+          <Shield className="w-4 h-4 text-stone-700" />
           <span className="text-xs font-semibold text-stone-900">
             {reportPurpose === 'inspection' ? 'Inspection Report' : 'QA Report'}
           </span>
@@ -343,8 +343,8 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             onClick={() => setReportPurpose(reportPurpose === 'qa' ? 'inspection' : 'qa')}
             className={`px-2 py-0.5 text-xs rounded ${
               reportPurpose === 'inspection'
-                ? 'bg-red-100 text-red-700'
-                : 'bg-blue-100 text-stone-700'
+                ? 'bg-stone-100 text-stone-800'
+                : 'bg-stone-100 text-stone-700'
             }`}
           >
             {reportPurpose === 'inspection' ? '🔍 Inspection' : '✓ Internal QA'}
@@ -359,7 +359,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             <button
               onClick={onExportAsArtifact}
               disabled={exportingAudit}
-              className="px-2 py-0.5 text-xs rounded bg-blue-100 text-stone-700 hover:bg-blue-200 disabled:opacity-60"
+              className="px-2 py-0.5 text-xs rounded bg-stone-100 text-stone-700 hover:bg-stone-200 disabled:opacity-60"
               title="Save as inspection-ready artifact"
             >
               {exportingAudit ? (
@@ -405,8 +405,8 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
           <span
             className={`text-xs px-2 py-0.5 rounded-full font-medium ${
               reportPurpose === 'inspection'
-                ? 'bg-red-100 text-red-700'
-                : 'bg-emerald-100 text-emerald-700'
+                ? 'bg-stone-100 text-stone-800'
+                : 'bg-stone-100 text-stone-800'
             }`}
           >
             {reportPurpose === 'inspection' ? 'Inspection-Ready Report' : report.reportType}
@@ -416,7 +416,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
 
         {/* Inspection mode banner */}
         {reportPurpose === 'inspection' && (
-          <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700 print:hidden">
+          <div className="mb-3 p-2 bg-stone-100 border border-stone-200 rounded text-xs text-stone-800 print:hidden">
             <strong>Inspection Mode:</strong> This view shows all data an inspector would require.
             Hash chain integrity, full event timeline, and signature verification are prioritized.
           </div>
@@ -451,11 +451,11 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             label="Chain Intact"
             value={
               report.integrityVerification.chainIntact ? (
-                <span className="text-emerald-600 flex items-center gap-1">
+                <span className="text-stone-700 flex items-center gap-1">
                   <CheckCircle className="w-3 h-3" /> Verified
                 </span>
               ) : (
-                <span className="text-red-600 flex items-center gap-1">
+                <span className="text-stone-700 flex items-center gap-1">
                   <XCircle className="w-3 h-3" /> Chain broken
                 </span>
               )
@@ -467,7 +467,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             <button
               onClick={handleVerifyIntegrity}
               disabled={verifyingIntegrity}
-              className="flex items-center gap-1 px-2 py-1 text-xs rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-60 font-medium print:hidden"
+              className="flex items-center gap-1 px-2 py-1 text-xs rounded bg-stone-100 text-stone-800 hover:bg-stone-100 disabled:opacity-60 font-medium print:hidden"
             >
               {verifyingIntegrity ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
@@ -478,15 +478,15 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             </button>
             {liveIntegrity && (
               <div
-                className={`mt-1.5 p-2 rounded text-xs print:block ${liveIntegrity.verified ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}
+                className={`mt-1.5 p-2 rounded text-xs print:block ${liveIntegrity.verified ? 'bg-stone-100 border border-stone-200' : 'bg-stone-100 border border-stone-200'}`}
               >
                 <div className="flex items-center gap-1.5 font-semibold">
                   {liveIntegrity.verified ? (
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                    <CheckCircle className="w-3.5 h-3.5 text-stone-700" />
                   ) : (
-                    <XCircle className="w-3.5 h-3.5 text-red-600" />
+                    <XCircle className="w-3.5 h-3.5 text-stone-700" />
                   )}
-                  <span className={liveIntegrity.verified ? 'text-emerald-800' : 'text-red-800'}>
+                  <span className={liveIntegrity.verified ? 'text-stone-800' : 'text-stone-800'}>
                     {liveIntegrity.verified
                       ? 'Live Verification: PASSED'
                       : 'Live Verification: FAILED'}
@@ -498,7 +498,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
                     Current hash verified: {liveIntegrity.currentHashVerified ? '✓ Yes' : '✗ No'}
                   </div>
                   {liveIntegrity.failureReason && (
-                    <div className="text-red-600">Reason: {liveIntegrity.failureReason}</div>
+                    <div className="text-stone-700">Reason: {liveIntegrity.failureReason}</div>
                   )}
                 </div>
               </div>
@@ -571,7 +571,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
                 key={i}
                 className="flex items-start gap-2 py-1 text-xs border-b border-stone-50 last:border-0"
               >
-                <Activity className="w-3 h-3 text-blue-400 mt-0.5 shrink-0" />
+                <Activity className="w-3 h-3 text-stone-400 mt-0.5 shrink-0" />
                 <div>
                   <span className="font-medium text-stone-700">{actionLabel(s.action)}</span>
                   {s.description && <span className="text-stone-500"> — {s.description}</span>}
@@ -712,11 +712,11 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
                     <td className="py-0.5">v{c.version}</td>
                     <td className="py-0.5">
                       {c.status === 'resolved' ? (
-                        <span className="text-emerald-600 flex items-center gap-0.5">
+                        <span className="text-stone-700 flex items-center gap-0.5">
                           <CheckCircle className="w-3 h-3" /> Resolved
                         </span>
                       ) : (
-                        <span className="text-amber-600">Open</span>
+                        <span className="text-stone-600">Open</span>
                       )}
                     </td>
                     <td className="py-0.5 text-stone-400">{formatDate(c.createdAt)}</td>

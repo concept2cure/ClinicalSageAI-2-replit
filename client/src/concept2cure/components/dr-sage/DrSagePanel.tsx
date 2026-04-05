@@ -318,7 +318,7 @@ function DoItContent() {
           Follow along at your own pace. I will walk you through each step in
           real time.
         </p>
-        <button className="text-sm text-blue-600 hover:underline mt-2">
+        <button className="text-sm text-stone-600 hover:underline mt-2">
           Begin walk-through
         </button>
       </div>
@@ -385,7 +385,7 @@ function AnaContent() {
           <button
             key={prompt}
             onClick={() => setQuery(prompt)}
-            className="block text-sm text-blue-600 hover:underline"
+            className="block text-sm text-stone-600 hover:underline"
           >
             {prompt}
           </button>
@@ -489,7 +489,7 @@ function FixContent() {
                   <button
                     onClick={() => handleFix(issue, idx)}
                     disabled={isLoading}
-                    className="text-sm text-blue-600 hover:underline mt-2 disabled:opacity-50 flex items-center gap-1.5"
+                    className="text-sm text-stone-600 hover:underline mt-2 disabled:opacity-50 flex items-center gap-1.5"
                   >
                     {fixingIndex === idx ? (
                       <>
@@ -502,7 +502,7 @@ function FixContent() {
                   </button>
                 )}
                 {fixResults[idx] && !fixResults[idx]?.success && (
-                  <p className="text-xs text-amber-600 mt-1">
+                  <p className="text-xs text-stone-600 mt-1">
                     Could not auto-fix — {fixResults[idx]?.errors?.[0]?.message || 'review manually'}
                   </p>
                 )}

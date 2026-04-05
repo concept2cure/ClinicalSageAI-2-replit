@@ -107,26 +107,26 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'connected':
-        return 'text-green-600';
+        return 'text-stone-700';
       case 'error':
-        return 'text-red-600';
+        return 'text-stone-700';
       case 'warning':
-        return 'text-yellow-600';
+        return 'text-stone-600';
       default:
-        return 'text-gray-600';
+        return 'text-stone-600';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'connected':
-        return <CheckCircle2 className="w-4 h-4 text-green-600" />;
+        return <CheckCircle2 className="w-4 h-4 text-stone-700" />;
       case 'error':
-        return <AlertTriangle className="w-4 h-4 text-red-600" />;
+        return <AlertTriangle className="w-4 h-4 text-stone-700" />;
       case 'warning':
-        return <AlertTriangle className="w-4 h-4 text-yellow-600" />;
+        return <AlertTriangle className="w-4 h-4 text-stone-600" />;
       default:
-        return <Settings className="w-4 h-4 text-gray-600" />;
+        return <Settings className="w-4 h-4 text-stone-600" />;
     }
   };
 
@@ -136,7 +136,7 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Globe className="w-5 h-5 text-blue-600" />
+            <Globe className="w-5 h-5 text-stone-600" />
             Integration Status Dashboard
           </CardTitle>
         </CardHeader>
@@ -144,7 +144,7 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center justify-between p-3 border rounded-lg">
               <div className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-blue-600" />
+                <Mail className="w-5 h-5 text-stone-600" />
                 <div>
                   <p className="font-medium">Gmail Ingestion</p>
                   <p className="text-xs text-muted-foreground">Auto-extract IR emails</p>
@@ -160,7 +160,7 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
 
             <div className="flex items-center justify-between p-3 border rounded-lg">
               <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-green-600" />
+                <Calendar className="w-5 h-5 text-stone-700" />
                 <div>
                   <p className="font-medium">Google Calendar</p>
                   <p className="text-xs text-muted-foreground">Deadline sync</p>
@@ -176,15 +176,15 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-3 border rounded-lg bg-blue-50">
+            <div className="flex items-center justify-between p-3 border rounded-lg bg-stone-100">
               <div className="flex items-center gap-3">
-                <Activity className="w-5 h-5 text-indigo-600" />
+                <Activity className="w-5 h-5 text-stone-600" />
                 <div>
                   <p className="font-medium">Last Sync</p>
                   <p className="text-xs text-muted-foreground">{lastSync || 'Never'}</p>
                 </div>
               </div>
-              <Badge variant="outline" className="text-indigo-600">
+              <Badge variant="outline" className="text-stone-600">
                 Active
               </Badge>
             </div>
@@ -197,7 +197,7 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Mail className="w-5 h-5 text-blue-600" />
+              <Mail className="w-5 h-5 text-stone-600" />
               <CardTitle>Gmail Email Ingestion</CardTitle>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Info className="w-3 h-3" />
@@ -223,15 +223,15 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
         <CardContent>
           <div className="space-y-4">
             {/* Configuration Info */}
-            <div className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+            <div className="p-3 bg-stone-100 rounded-lg border-l-4 border-stone-1000">
               <div className="flex items-start gap-2">
-                <Settings className="w-4 h-4 text-blue-600 mt-0.5" />
+                <Settings className="w-4 h-4 text-stone-600 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-medium text-blue-800">Configuration Required:</p>
-                  <p className="text-blue-700 mt-1">
-                    Set <code className="bg-blue-100 px-1 rounded">GMAIL_OAUTH_JSON</code>,
-                    <code className="bg-blue-100 px-1 rounded ml-1">GMAIL_USER_EMAIL</code>, and
-                    <code className="bg-blue-100 px-1 rounded ml-1">GMAIL_QUERY</code> in
+                  <p className="font-medium text-stone-800">Configuration Required:</p>
+                  <p className="text-stone-700 mt-1">
+                    Set <code className="bg-stone-100 px-1 rounded">GMAIL_OAUTH_JSON</code>,
+                    <code className="bg-stone-100 px-1 rounded ml-1">GMAIL_USER_EMAIL</code>, and
+                    <code className="bg-stone-100 px-1 rounded ml-1">GMAIL_QUERY</code> in
                     environment variables.
                   </p>
                 </div>
@@ -250,7 +250,7 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
 
               <div className="border rounded-lg overflow-hidden">
                 <table className="min-w-full text-sm">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-stone-50">
                     <tr>
                       <th className="p-3 text-left font-medium">Date</th>
                       <th className="p-3 text-left font-medium">From</th>
@@ -261,7 +261,7 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
                   <tbody>
                     {gmailRows.length > 0 ? (
                       gmailRows.map((row: any) => (
-                        <tr key={row.msg_id} className="border-t hover:bg-gray-50">
+                        <tr key={row.msg_id} className="border-t hover:bg-stone-50">
                           <td className="p-3">{new Date(row.created_at).toLocaleDateString()}</td>
                           <td className="p-3 text-xs">{row.from_addr}</td>
                           <td className="p-3">
@@ -305,7 +305,7 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-green-600" />
+              <Calendar className="w-5 h-5 text-stone-700" />
               <CardTitle>Google Calendar Integration</CardTitle>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Info className="w-3 h-3" />
@@ -330,15 +330,15 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
         <CardContent>
           <div className="space-y-4">
             {/* Configuration Info */}
-            <div className="p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+            <div className="p-3 bg-stone-100 rounded-lg border-l-4 border-stone-1000">
               <div className="flex items-start gap-2">
-                <Settings className="w-4 h-4 text-green-600 mt-0.5" />
+                <Settings className="w-4 h-4 text-stone-700 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-medium text-green-800">Configuration Required:</p>
-                  <p className="text-green-700 mt-1">
-                    Set <code className="bg-green-100 px-1 rounded">GCAL_JSON</code> (service
+                  <p className="font-medium text-stone-800">Configuration Required:</p>
+                  <p className="text-stone-800 mt-1">
+                    Set <code className="bg-stone-100 px-1 rounded">GCAL_JSON</code> (service
                     account) and
-                    <code className="bg-green-100 px-1 rounded ml-1">GOOGLE_CALENDAR_ID</code> in
+                    <code className="bg-stone-100 px-1 rounded ml-1">GOOGLE_CALENDAR_ID</code> in
                     environment variables.
                   </p>
                 </div>
@@ -348,29 +348,29 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
             {/* Calendar Features */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-3 border rounded-lg text-center">
-                <Clock className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+                <Clock className="w-6 h-6 mx-auto mb-2 text-stone-600" />
                 <p className="font-medium text-sm">IR Deadlines</p>
                 <p className="text-xs text-muted-foreground">30-day response tracking</p>
               </div>
               <div className="p-3 border rounded-lg text-center">
-                <Database className="w-6 h-6 mx-auto mb-2 text-purple-600" />
+                <Database className="w-6 h-6 mx-auto mb-2 text-stone-600" />
                 <p className="font-medium text-sm">Tasks & Obligations</p>
                 <p className="text-xs text-muted-foreground">Project milestone sync</p>
               </div>
               <div className="p-3 border rounded-lg text-center">
-                <Zap className="w-6 h-6 mx-auto mb-2 text-orange-600" />
+                <Zap className="w-6 h-6 mx-auto mb-2 text-stone-600" />
                 <p className="font-medium text-sm">Real-time Updates</p>
                 <p className="text-xs text-muted-foreground">Automatic event management</p>
               </div>
             </div>
 
             {/* Fallback Option */}
-            <div className="p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+            <div className="p-3 bg-stone-100 rounded-lg border-l-4 border-stone-1000">
               <div className="flex items-start gap-2">
-                <ExternalLink className="w-4 h-4 text-yellow-600 mt-0.5" />
+                <ExternalLink className="w-4 h-4 text-stone-600 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-medium text-yellow-800">Alternative Option:</p>
-                  <p className="text-yellow-700 mt-1">
+                  <p className="font-medium text-stone-800">Alternative Option:</p>
+                  <p className="text-stone-700 mt-1">
                     If Google Calendar credentials aren't configured, use the{' '}
                     <strong>RPI Dashboard</strong> to download an ICS file for manual import.
                   </p>
@@ -385,7 +385,7 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-indigo-600" />
+            <Shield className="w-5 h-5 text-stone-600" />
             Integration Management
           </CardTitle>
         </CardHeader>

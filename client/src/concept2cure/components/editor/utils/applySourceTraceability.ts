@@ -186,7 +186,7 @@ function processTextWithSources(
       const sourceHash = seg.sourceRef.hash || seg.sourceRef.contentHash || '';
       const linkId = `src-${sourceId}-${Date.now()}`;
 
-      return `<span data-traceability="true" data-source-id="${escapeAttr(sourceId)}" data-source-hash="${escapeAttr(sourceHash)}" data-link-id="${escapeAttr(linkId)}" class="traceability-link bg-blue-100 border-b-2 border-stone-600 cursor-pointer hover:bg-blue-200" title="Source: ${escapeAttr(seg.sourceRef.name || seg.sourceRef.title || sourceId)}">${seg.text}</span>`;
+      return `<span data-traceability="true" data-source-id="${escapeAttr(sourceId)}" data-source-hash="${escapeAttr(sourceHash)}" data-link-id="${escapeAttr(linkId)}" class="traceability-link bg-stone-100 border-b-2 border-stone-600 cursor-pointer hover:bg-stone-200" title="Source: ${escapeAttr(seg.sourceRef.name || seg.sourceRef.title || sourceId)}">${seg.text}</span>`;
     })
     .join('');
 }

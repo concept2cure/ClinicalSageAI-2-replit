@@ -250,19 +250,19 @@ interface MetricCardProps {
 
 // Static Tailwind color maps to prevent CSS purge issues
 const COLOR_BG_100: Record<string, string> = {
-  blue: 'bg-blue-100', indigo: 'bg-blue-100', green: 'bg-emerald-100', purple: 'bg-stone-200',
-  violet: 'bg-stone-200', amber: 'bg-amber-100', teal: 'bg-emerald-100', cyan: 'bg-blue-100',
-  rose: 'bg-stone-200', slate: 'bg-stone-100', sky: 'bg-blue-100', orange: 'bg-amber-100',
+  blue: 'bg-stone-100', indigo: 'bg-stone-100', green: 'bg-stone-100', purple: 'bg-stone-200',
+  violet: 'bg-stone-200', amber: 'bg-stone-100', teal: 'bg-stone-100', cyan: 'bg-stone-100',
+  rose: 'bg-stone-200', slate: 'bg-stone-100', sky: 'bg-stone-100', orange: 'bg-stone-100',
 };
 const COLOR_TEXT_600: Record<string, string> = {
-  blue: 'text-blue-600', indigo: 'text-blue-600', green: 'text-emerald-600', purple: 'text-stone-600',
-  violet: 'text-stone-600', amber: 'text-amber-600', teal: 'text-emerald-600', cyan: 'text-blue-600',
-  rose: 'text-stone-600', slate: 'text-stone-600', sky: 'text-blue-600', orange: 'text-amber-600',
+  blue: 'text-stone-600', indigo: 'text-stone-600', green: 'text-stone-700', purple: 'text-stone-600',
+  violet: 'text-stone-600', amber: 'text-stone-600', teal: 'text-stone-700', cyan: 'text-stone-600',
+  rose: 'text-stone-600', slate: 'text-stone-600', sky: 'text-stone-600', orange: 'text-stone-600',
 };
 const COLOR_TEXT_700: Record<string, string> = {
-  blue: 'text-stone-700', indigo: 'text-stone-700', green: 'text-emerald-700', purple: 'text-stone-700',
-  violet: 'text-stone-700', amber: 'text-amber-700', teal: 'text-emerald-700', cyan: 'text-stone-700',
-  rose: 'text-stone-700', slate: 'text-stone-700', sky: 'text-stone-700', orange: 'text-amber-700',
+  blue: 'text-stone-700', indigo: 'text-stone-700', green: 'text-stone-800', purple: 'text-stone-700',
+  violet: 'text-stone-700', amber: 'text-stone-700', teal: 'text-stone-800', cyan: 'text-stone-700',
+  rose: 'text-stone-700', slate: 'text-stone-700', sky: 'text-stone-700', orange: 'text-stone-700',
 };
 
 const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
@@ -288,8 +288,8 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
             <div
               className={cn(
                 'flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full',
-                metric.trend === 'up' && 'bg-emerald-100 text-emerald-700',
-                metric.trend === 'down' && 'bg-red-100 text-red-700',
+                metric.trend === 'up' && 'bg-stone-100 text-stone-800',
+                metric.trend === 'down' && 'bg-stone-100 text-stone-800',
                 metric.trend === 'stable' && 'bg-stone-100 text-stone-700'
               )}
             >
@@ -329,9 +329,9 @@ interface TaskListProps {
 
 const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
   const priorityColors = {
-    critical: 'bg-red-100 text-red-700 border-red-200',
-    high: 'bg-amber-100 text-amber-700 border-amber-200',
-    medium: 'bg-amber-100 text-amber-700 border-amber-200',
+    critical: 'bg-stone-100 text-stone-800 border-stone-200',
+    high: 'bg-stone-100 text-stone-700 border-stone-200',
+    medium: 'bg-stone-100 text-stone-700 border-stone-200',
     low: 'bg-stone-100 text-stone-700 border-stone-200',
   };
 
@@ -339,7 +339,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
     pending: `${LIFECYCLE.not_started.bg} ${LIFECYCLE.not_started.border}`,
     in_progress: `${LIFECYCLE.draft.bg} ${LIFECYCLE.draft.border}`,
     review: `${LIFECYCLE.in_review.bg} ${LIFECYCLE.in_review.border}`,
-    blocked: 'bg-red-50 border-red-200',
+    blocked: 'bg-stone-100 border-stone-200',
   };
 
   const formatDueDate = (date: Date) => {
@@ -383,10 +383,10 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
               <span
                 className={cn(
                   'text-xs font-medium',
-                  task.dueDate.getTime() < Date.now() && 'text-red-600',
+                  task.dueDate.getTime() < Date.now() && 'text-stone-700',
                   task.dueDate.getTime() > Date.now() &&
                     task.dueDate.getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000 &&
-                    'text-amber-600'
+                    'text-stone-600'
                 )}
               >
                 {formatDueDate(task.dueDate)}
@@ -475,10 +475,10 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskAnA }) =
   };
 
   return (
-    <div className="border border-blue-200 rounded-md bg-blue-50">
+    <div className="border border-stone-200 rounded-md bg-stone-100">
       <div className="px-4 py-3 pb-2">
         <h3 className="text-base font-semibold flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-blue-600" />
+          <Sparkles className="h-4 w-4 text-stone-600" />
           AnA Co-pilot
         </h3>
         <p className="text-xs text-stone-500">
@@ -491,7 +491,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskAnA }) =
             <button
               key={idx}
               onClick={() => onAskAnA(suggestion)}
-              className="w-full text-left p-2 text-xs text-stone-600 bg-white rounded-lg border border-stone-200 hover:border-blue-300 hover:bg-blue-50 transition-colors duration-150"
+              className="w-full text-left p-2 text-xs text-stone-600 bg-white rounded-lg border border-stone-200 hover:border-stone-300 hover:bg-stone-100 transition-colors duration-150"
             >
               {suggestion}
             </button>
@@ -682,14 +682,14 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
               {readinessData && (
                 <div className="bg-white border border-stone-200 rounded-xl p-4 shadow-sm">
                   <div className="flex items-center gap-2 mb-1">
-                    <Target className="w-3.5 h-3.5 text-blue-500" />
+                    <Target className="w-3.5 h-3.5 text-stone-1000" />
                     <p className="text-xs text-stone-500 font-medium">Readiness</p>
                   </div>
                   <p className={cn(
                     'text-base font-semibold',
-                    readinessData.overallScore >= 75 ? 'text-emerald-600'
-                      : readinessData.overallScore >= 50 ? 'text-amber-600'
-                      : 'text-red-600'
+                    readinessData.overallScore >= 75 ? 'text-stone-700'
+                      : readinessData.overallScore >= 50 ? 'text-stone-600'
+                      : 'text-stone-700'
                   )}>
                     {readinessData.overallScore}%
                   </p>

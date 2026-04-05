@@ -73,13 +73,13 @@ export default function M3Builder({ subId }: { subId: string }) {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'READY':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
+        return <CheckCircle className="w-4 h-4 text-stone-700" />;
       case 'DRAFT':
-        return <Clock className="w-4 h-4 text-yellow-600" />;
+        return <Clock className="w-4 h-4 text-stone-600" />;
       case 'MISSING':
-        return <AlertTriangle className="w-4 h-4 text-red-600" />;
+        return <AlertTriangle className="w-4 h-4 text-stone-700" />;
       default:
-        return <Clock className="w-4 h-4 text-gray-400" />;
+        return <Clock className="w-4 h-4 text-stone-400" />;
     }
   };
 
@@ -98,7 +98,7 @@ export default function M3Builder({ subId }: { subId: string }) {
 
   if (!subId) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-stone-500">
         <p>Please select a submission to view M3 sections</p>
       </div>
     );
@@ -114,7 +114,7 @@ export default function M3Builder({ subId }: { subId: string }) {
       ) : (
         <>
           {data.sections.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-stone-500">
               <p>No M3 sections found. Create a submission first.</p>
             </div>
           ) : (
@@ -127,7 +127,7 @@ export default function M3Builder({ subId }: { subId: string }) {
                       <CardTitle className="text-lg">
                         {s.code} — {s.title}
                       </CardTitle>
-                      <p className="text-sm text-gray-600 mt-1">{s.guidance || '—'}</p>
+                      <p className="text-sm text-stone-600 mt-1">{s.guidance || '—'}</p>
                     </div>
                   </div>
                   <Badge variant={getStatusVariant(s.status)}>{s.status}</Badge>
@@ -182,12 +182,12 @@ export default function M3Builder({ subId }: { subId: string }) {
 
                   {/* Show leaves if any */}
                   {data.leaves.filter((l: any) => l.sec_id === s.sec_id).length > 0 && (
-                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                    <div className="mt-4 p-3 bg-stone-50 rounded-lg">
                       <h4 className="text-sm font-medium mb-2">Content:</h4>
                       {data.leaves
                         .filter((l: any) => l.sec_id === s.sec_id)
                         .map((leaf: any) => (
-                          <div key={leaf.leaf_id} className="text-sm text-gray-700 mb-1">
+                          <div key={leaf.leaf_id} className="text-sm text-stone-700 mb-1">
                             • {leaf.title} ({leaf.status})
                           </div>
                         ))}

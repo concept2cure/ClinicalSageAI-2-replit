@@ -211,12 +211,12 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
             key={dt.type}
             onClick={() => { setSelectedType(dt.type); setStep('agencies'); }}
             className={`p-5 rounded-xl border text-left transition-all hover:shadow-md ${
-              selectedType === dt.type ? 'border-stone-600 bg-blue-50/50' : 'border-stone-200 hover:border-stone-300'
+              selectedType === dt.type ? 'border-stone-600 bg-stone-100/50' : 'border-stone-200 hover:border-stone-300'
             }`}
           >
             <div className="font-semibold text-stone-900">{dt.name}</div>
             <div className="text-sm text-stone-500 mt-1">{dt.description}</div>
-            <div className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+            <div className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-stone-600 bg-stone-100 px-2 py-0.5 rounded">
               {dt.tier === 'standard' ? 'Starter+' : 'Growth+'}
             </div>
           </button>
@@ -238,7 +238,7 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
             onClick={() => toggleAgency(a.id)}
             className={`p-4 rounded-xl border flex items-center gap-3 transition-all ${
               selectedAgencies.includes(a.id)
-                ? 'border-stone-600 bg-blue-50/50'
+                ? 'border-stone-600 bg-stone-100/50'
                 : 'border-stone-200 hover:border-stone-300'
             }`}
           >
@@ -248,7 +248,7 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
               <div className="text-xs text-stone-500">{a.country}</div>
             </div>
             {selectedAgencies.includes(a.id) && (
-              <svg className="w-5 h-5 text-blue-500 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-5 h-5 text-stone-1000 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             )}
@@ -380,7 +380,7 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
                 <span className="text-xs font-mono text-stone-400 w-10">{section.number}</span>
                 <span className="text-sm text-stone-900 flex-1">{section.title}</span>
                 {section.agency && (
-                  <span className="text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">{section.agency}</span>
+                  <span className="text-xs text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded">{section.agency}</span>
                 )}
                 <span className="text-xs text-stone-400">{section.wordCount} words</span>
               </div>
@@ -397,7 +397,7 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
             <div className="max-h-48 overflow-y-auto divide-y divide-stone-100">
               {buildResult.validationResults.filter(v => v.status !== 'pass').map((v, i) => (
                 <div key={i} className="px-4 py-2 flex items-center gap-3">
-                  <span className={`w-2 h-2 rounded-full ${v.status === 'fail' ? 'bg-red-500' : 'bg-yellow-500'}`} />
+                  <span className={`w-2 h-2 rounded-full ${v.status === 'fail' ? 'bg-stone-1000' : 'bg-stone-1000'}`} />
                   <span className="text-xs font-medium text-stone-500">{v.agency}</span>
                   <span className="text-sm text-stone-700 flex-1">{v.message}</span>
                 </div>
@@ -438,12 +438,12 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
               <React.Fragment key={s}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
                   step === s ? 'bg-stone-800 text-white' :
-                  (['type', 'agencies', 'study_info', 'review'].indexOf(step) > i) ? 'bg-blue-100 text-blue-600' :
+                  (['type', 'agencies', 'study_info', 'review'].indexOf(step) > i) ? 'bg-stone-100 text-stone-600' :
                   'bg-stone-100 text-stone-400'
                 }`}>
                   {i + 1}
                 </div>
-                {i < 3 && <div className={`flex-1 h-0.5 ${(['type', 'agencies', 'study_info', 'review'].indexOf(step) > i) ? 'bg-blue-200' : 'bg-stone-100'}`} />}
+                {i < 3 && <div className={`flex-1 h-0.5 ${(['type', 'agencies', 'study_info', 'review'].indexOf(step) > i) ? 'bg-stone-200' : 'bg-stone-100'}`} />}
               </React.Fragment>
             ))}
           </div>

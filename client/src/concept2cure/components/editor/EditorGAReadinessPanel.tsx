@@ -49,9 +49,9 @@ export interface EditorGAReadinessPanelProps {
 }
 
 const statusStyles: Record<ReadinessCheck['status'], string> = {
-  ready: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  partial: 'bg-amber-50 text-amber-700 border-amber-200',
-  missing: 'bg-red-50 text-red-700 border-red-200',
+  ready: 'bg-stone-100 text-stone-800 border-stone-200',
+  partial: 'bg-stone-100 text-stone-700 border-stone-200',
+  missing: 'bg-stone-100 text-stone-800 border-stone-200',
 };
 
 function statusIcon(status: ReadinessCheck['status']) {
@@ -61,9 +61,9 @@ function statusIcon(status: ReadinessCheck['status']) {
 }
 
 function competitorBadge(status: 'yes' | 'partial' | 'unknown' | 'missing') {
-  if (status === 'yes') return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">Yes</Badge>;
+  if (status === 'yes') return <Badge className="bg-stone-100 text-stone-800 border-stone-200">Yes</Badge>;
   if (status === 'partial') {
-    return <Badge className="bg-amber-100 text-amber-800 border-amber-200">Partial</Badge>;
+    return <Badge className="bg-stone-100 text-stone-800 border-stone-200">Partial</Badge>;
   }
   if (status === 'missing') return <Badge variant="destructive">Missing</Badge>;
   return <Badge variant="secondary">Unknown</Badge>;
@@ -175,7 +175,7 @@ export function EditorGAReadinessPanel({
         </h4>
         {remediationQueue.length === 0 ? (
           <Card>
-            <CardContent className="pt-4 text-xs text-emerald-700">
+            <CardContent className="pt-4 text-xs text-stone-800">
               All modeled readiness checks are satisfied for this session.
             </CardContent>
           </Card>

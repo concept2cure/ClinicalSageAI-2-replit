@@ -372,7 +372,7 @@ export function ReviewThreadsPanel({
               variant="ghost"
               size="sm"
               onClick={() => setShowNewThread(!showNewThread)}
-              className="w-full flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 mb-2"
+              className="w-full flex items-center gap-1.5 text-xs font-medium text-stone-600 hover:bg-stone-100 mb-2"
             >
               <Plus className="w-3 h-3" />
               New Thread
@@ -684,7 +684,7 @@ function ThreadCard({
                 className={cn(
                   'text-[7px] px-1 rounded font-medium',
                   thread.priority === 'high'
-                    ? 'bg-red-100 text-red-700'
+                    ? 'bg-stone-100 text-stone-800'
                     : 'bg-stone-100 text-stone-500'
                 )}
               >
@@ -701,9 +701,9 @@ function ThreadCard({
                 className={cn(
                   'text-xs flex items-center gap-0.5',
                   isDueOverdue
-                    ? 'text-red-600 font-medium'
+                    ? 'text-stone-700 font-medium'
                     : isDueSoon
-                      ? 'text-amber-600'
+                      ? 'text-stone-600'
                       : 'text-stone-400'
                 )}
               >
@@ -717,9 +717,9 @@ function ThreadCard({
           </div>
         </div>
         {isOpen && thread.priority === 'high' && (
-          <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+          <AlertTriangle className="w-3 h-3 text-stone-1000 shrink-0" />
         )}
-        {!isOpen && <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />}
+        {!isOpen && <CheckCircle2 className="w-3 h-3 text-stone-1000 shrink-0" />}
       </Button>
 
       {/* Expanded content */}
@@ -741,7 +741,7 @@ function ThreadCard({
                       c.kind === 'system'
                         ? 'bg-stone-50 border border-stone-200'
                         : c.kind === 'request_changes'
-                          ? 'bg-amber-50 border border-amber-100'
+                          ? 'bg-stone-100 border border-stone-100'
                           : 'bg-white border border-stone-200'
                     )}
                   >
@@ -749,7 +749,7 @@ function ThreadCard({
                       <User className="w-2.5 h-2.5 text-stone-400" />
                       <span className="text-xs font-medium text-stone-700">{c.authorName}</span>
                       {c.kind === 'request_changes' && (
-                        <span className="text-[7px] bg-amber-200 text-amber-800 px-1 rounded font-medium">
+                        <span className="text-[7px] bg-stone-200 text-stone-800 px-1 rounded font-medium">
                           CHANGES REQUESTED
                         </span>
                       )}
@@ -810,7 +810,7 @@ function ThreadCard({
                   ) : (
                     <Button
                       onClick={() => onSetReplyTarget(thread.threadId)}
-                      className="flex items-center gap-1 text-xs text-blue-600 hover:text-stone-700"
+                      className="flex items-center gap-1 text-xs text-stone-600 hover:text-stone-700"
                     >
                       <CornerDownRight className="w-3 h-3" />
                       Reply
@@ -824,7 +824,7 @@ function ThreadCard({
                 {isOpen && onResolve && (
                   <Button
                     onClick={onResolve}
-                    className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700"
+                    className="flex items-center gap-1 text-xs text-stone-700 hover:text-stone-800"
                   >
                     <CheckCircle2 className="w-3 h-3" />
                     Resolve
@@ -833,7 +833,7 @@ function ThreadCard({
                 {!isOpen && onReopen && (
                   <Button
                     onClick={onReopen}
-                    className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700"
+                    className="flex items-center gap-1 text-xs text-stone-600 hover:text-stone-700"
                   >
                     <RotateCcw className="w-3 h-3" />
                     Reopen
@@ -844,7 +844,7 @@ function ThreadCard({
                     onClick={() =>
                       onShowNewTask(showNewTask === thread.threadId ? null : thread.threadId)
                     }
-                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-stone-700"
+                    className="flex items-center gap-1 text-xs text-stone-600 hover:text-stone-700"
                   >
                     <ListTodo className="w-3 h-3" />
                     Create Task
@@ -853,7 +853,7 @@ function ThreadCard({
                 {isOpen && onRequestChanges && (
                   <Button
                     onClick={() => setShowRequestChanges(!showRequestChanges)}
-                    className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700"
+                    className="flex items-center gap-1 text-xs text-stone-600 hover:text-stone-700"
                   >
                     <AlertTriangle className="w-3 h-3" />
                     Request Changes
@@ -863,19 +863,19 @@ function ThreadCard({
 
               {/* Create Task from Thread form */}
               {showNewTask === thread.threadId && onCreateTask && (
-                <div className="mt-2 p-1.5 bg-blue-50 rounded border border-blue-100 space-y-1.5">
+                <div className="mt-2 p-1.5 bg-stone-100 rounded border border-stone-100 space-y-1.5">
                   <p className="text-xs font-medium text-stone-700">Create linked task</p>
                   <Input
                     type="text"
                     value={newTaskTitle || ''}
                     onChange={e => onSetNewTaskTitle?.(e.target.value)}
                     placeholder="Task title..."
-                    className="w-full px-1.5 py-0.5 text-xs bg-white border border-blue-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
+                    className="w-full px-1.5 py-0.5 text-xs bg-white border border-stone-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
                     maxLength={500}
                   />
                   <div className="flex gap-1">
                     <Select value={newTaskType || 'follow_up'} onValueChange={(v) => onSetNewTaskType?.(v)}>
-                      <SelectTrigger className="flex-1 h-6 text-xs border-blue-200">
+                      <SelectTrigger className="flex-1 h-6 text-xs border-stone-200">
                         <SelectValue placeholder="Task type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -896,7 +896,7 @@ function ThreadCard({
                       type="date"
                       value={newTaskDueAt || ''}
                       onChange={e => onSetNewTaskDueAt?.(e.target.value)}
-                      className="flex-1 px-1.5 py-0.5 text-xs bg-white border border-blue-200 rounded"
+                      className="flex-1 px-1.5 py-0.5 text-xs bg-white border border-stone-200 rounded"
                       title="Task due date"
                     />
                   </div>
@@ -921,13 +921,13 @@ function ThreadCard({
 
               {/* Request Changes form */}
               {showRequestChanges && onRequestChanges && (
-                <div className="mt-2 p-1.5 bg-amber-50 rounded border border-amber-100 space-y-1.5">
-                  <p className="text-xs font-medium text-amber-700">Request Changes</p>
+                <div className="mt-2 p-1.5 bg-stone-100 rounded border border-stone-100 space-y-1.5">
+                  <p className="text-xs font-medium text-stone-700">Request Changes</p>
                   <textarea
                     value={requestChangesBody}
                     onChange={e => setRequestChangesBody(e.target.value)}
                     placeholder="Describe the required changes..."
-                    className="w-full px-1.5 py-0.5 text-xs bg-white border border-amber-200 rounded focus-visible:ring-2 outline-none focus:ring-amber-400 resize-none"
+                    className="w-full px-1.5 py-0.5 text-xs bg-white border border-stone-200 rounded focus-visible:ring-2 outline-none focus:ring-stone-400 resize-none"
                     rows={2}
                     maxLength={10000}
                   />
@@ -948,7 +948,7 @@ function ThreadCard({
                         setShowRequestChanges(false);
                       }}
                       disabled={!requestChangesBody.trim()}
-                      className="px-1.5 py-0.5 text-xs bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-60"
+                      className="px-1.5 py-0.5 text-xs bg-stone-600 text-white rounded hover:bg-stone-700 disabled:opacity-60"
                     >
                       Submit
                     </Button>
@@ -990,14 +990,14 @@ function TaskCard({ task, onResolve, onReopen, taskTypeOptions }: TaskCardProps)
         'mb-2 rounded-lg border p-2',
         isActive
           ? isOverdue
-            ? 'border-red-200 bg-red-50/30'
+            ? 'border-stone-200 bg-stone-100/30'
             : 'border-stone-200 bg-white'
           : 'border-stone-200 bg-stone-50/50'
       )}
     >
       <div className="flex items-start gap-1.5">
         <ListTodo
-          className={cn('w-3 h-3 mt-0.5 shrink-0', isActive ? 'text-blue-500' : 'text-emerald-500')}
+          className={cn('w-3 h-3 mt-0.5 shrink-0', isActive ? 'text-stone-1000' : 'text-stone-1000')}
         />
         <div className="flex-1 min-w-0">
           <p
@@ -1017,7 +1017,7 @@ function TaskCard({ task, onResolve, onReopen, taskTypeOptions }: TaskCardProps)
               <span
                 className={cn(
                   'text-xs flex items-center gap-0.5',
-                  isOverdue ? 'text-red-600 font-medium' : 'text-stone-400'
+                  isOverdue ? 'text-stone-700 font-medium' : 'text-stone-400'
                 )}
               >
                 <Clock className="w-2.5 h-2.5" />
@@ -1032,7 +1032,7 @@ function TaskCard({ task, onResolve, onReopen, taskTypeOptions }: TaskCardProps)
         {isActive && onResolve && (
           <Button
             onClick={onResolve}
-            className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700"
+            className="flex items-center gap-1 text-xs text-stone-700 hover:text-stone-800"
           >
             <CheckCircle2 className="w-3 h-3" />
             Resolve
@@ -1041,7 +1041,7 @@ function TaskCard({ task, onResolve, onReopen, taskTypeOptions }: TaskCardProps)
         {!isActive && onReopen && (
           <Button
             onClick={onReopen}
-            className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700"
+            className="flex items-center gap-1 text-xs text-stone-600 hover:text-stone-700"
           >
             <RotateCcw className="w-3 h-3" />
             Reopen

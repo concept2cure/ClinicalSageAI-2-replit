@@ -272,7 +272,7 @@ export default function BiologicsDashboard() {
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full ${
                       p.eligible
-                        ? 'bg-emerald-50 text-emerald-700'
+                        ? 'bg-stone-100 text-stone-800'
                         : 'bg-stone-100 text-stone-500'
                     }`}
                   >
@@ -292,7 +292,7 @@ export default function BiologicsDashboard() {
                     <div className="text-xs font-medium text-stone-600 mb-1">Benefits</div>
                     <ul className="space-y-0.5">
                       {p.benefits.map((b, j) => (
-                        <li key={j} className="text-xs text-emerald-600">+ {b}</li>
+                        <li key={j} className="text-xs text-stone-700">+ {b}</li>
                       ))}
                     </ul>
                   </div>
@@ -326,7 +326,7 @@ export default function BiologicsDashboard() {
                 <ul className="space-y-1">
                   {section.items.map((item, i) => (
                     <li key={i} className="text-xs text-stone-500 flex items-center gap-1">
-                      <CheckCircle size={10} className="text-emerald-500" />
+                      <CheckCircle size={10} className="text-stone-1000" />
                       {item}
                     </li>
                   ))}

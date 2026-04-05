@@ -60,11 +60,11 @@ export default function QualityTab() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Quality Control Management</h2>
-          <p className="text-gray-600">
+          <p className="text-stone-600">
             Advanced quality systems with template enforcement and automation
           </p>
         </div>
-        <Badge variant="secondary" className="bg-blue-50 text-blue-700">
+        <Badge variant="secondary" className="bg-stone-100 text-stone-700">
           Production Ready
         </Badge>
       </div>
@@ -80,12 +80,12 @@ export default function QualityTab() {
         <CardContent>
           {batchesLoading ? (
             <div className="flex items-center justify-center py-8" data-testid="loading-batches">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-400 mr-2" />
-              <span className="text-gray-600">Loading batches...</span>
+              <Loader2 className="w-6 h-6 animate-spin text-stone-400 mr-2" />
+              <span className="text-stone-600">Loading batches...</span>
             </div>
           ) : batches.length === 0 ? (
-            <div className="text-center py-8 text-gray-500" data-testid="empty-batches">
-              <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <div className="text-center py-8 text-stone-500" data-testid="empty-batches">
+              <Package className="w-12 h-12 mx-auto mb-3 text-stone-300" />
               <p className="font-medium">No batches yet</p>
               <p className="text-sm">Create your first batch to get started.</p>
             </div>
@@ -94,7 +94,7 @@ export default function QualityTab() {
               {batches.map((batch: any) => (
                 <Card
                   key={batch.batch_id}
-                  className={`cursor-pointer transition-all ${selectedBatch === batch.batch_id ? 'ring-2 ring-blue-500' : ''}`}
+                  className={`cursor-pointer transition-all ${selectedBatch === batch.batch_id ? 'ring-2 ring-stone-1000' : ''}`}
                   onClick={() => setSelectedBatch(batch.batch_id)}
                   data-testid={`batch-card-${batch.batch_id}`}
                 >
@@ -153,8 +153,8 @@ export default function QualityTab() {
         <TabsContent value="sst" className="space-y-4">
           {!selectedTest ? (
             <Card>
-              <CardContent className="py-8 text-center text-gray-500">
-                <TestTube className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <CardContent className="py-8 text-center text-stone-500">
+                <TestTube className="w-12 h-12 mx-auto mb-3 text-stone-300" />
                 <p className="font-medium">No tests available</p>
                 <p className="text-sm">Select a batch with tests to view SST data.</p>
               </CardContent>
@@ -167,8 +167,8 @@ export default function QualityTab() {
         <TabsContent value="dissolution" className="space-y-4">
           {!selectedTest ? (
             <Card>
-              <CardContent className="py-8 text-center text-gray-500">
-                <FlaskConical className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <CardContent className="py-8 text-center text-stone-500">
+                <FlaskConical className="w-12 h-12 mx-auto mb-3 text-stone-300" />
                 <p className="font-medium">No tests available</p>
                 <p className="text-sm">Select a batch with tests to view dissolution data.</p>
               </CardContent>
@@ -241,7 +241,7 @@ export default function QualityTab() {
                 Evaluate Micro Limits
               </Button>
               {!selectedTest && (
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-stone-500 mt-2">
                   Select a batch with tests to enable evaluation.
                 </p>
               )}
@@ -261,28 +261,28 @@ export default function QualityTab() {
             <CardContent>
               {dashboardLoading ? (
                 <div className="flex items-center justify-center py-8" data-testid="loading-dashboard">
-                  <Loader2 className="w-6 h-6 animate-spin text-gray-400 mr-2" />
-                  <span className="text-gray-600">Loading analytics...</span>
+                  <Loader2 className="w-6 h-6 animate-spin text-stone-400 mr-2" />
+                  <span className="text-stone-600">Loading analytics...</span>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="text-center p-4 border rounded-lg" data-testid="metric-release-rate">
-                    <div className="text-2xl font-bold text-green-600">
+                    <div className="text-2xl font-bold text-stone-700">
                       {dashboard?.release_rate !== undefined ? `${dashboard.release_rate}%` : 'N/A'}
                     </div>
-                    <div className="text-sm text-gray-600">Release Rate (30d)</div>
+                    <div className="text-sm text-stone-600">Release Rate (30d)</div>
                   </div>
                   <div className="text-center p-4 border rounded-lg" data-testid="metric-batches-released">
-                    <div className="text-2xl font-bold text-blue-600">
+                    <div className="text-2xl font-bold text-stone-600">
                       {dashboard?.batches?.released ?? 0}
                     </div>
-                    <div className="text-sm text-gray-600">Batches Released</div>
+                    <div className="text-sm text-stone-600">Batches Released</div>
                   </div>
                   <div className="text-center p-4 border rounded-lg" data-testid="metric-batches-total">
-                    <div className="text-2xl font-bold text-purple-600">
+                    <div className="text-2xl font-bold text-stone-600">
                       {dashboard?.batches?.total ?? 0}
                     </div>
-                    <div className="text-sm text-gray-600">Total Batches (30d)</div>
+                    <div className="text-sm text-stone-600">Total Batches (30d)</div>
                   </div>
                 </div>
               )}

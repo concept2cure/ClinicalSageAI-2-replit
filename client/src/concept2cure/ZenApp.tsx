@@ -1958,7 +1958,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
       {/* Connection Status - only show if confirmed offline after health check loaded */}
       {cortexHealth && !isConnected && (
-        <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 py-1.5 bg-amber-50 border-b border-amber-200 text-amber-700 text-sm">
+        <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 py-1.5 bg-stone-100 border-b border-stone-200 text-stone-700 text-sm">
           <WifiOff className="w-4 h-4" />
           <span>RI running in offline mode — chat still available</span>
         </div>
@@ -2394,7 +2394,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   <span>Home</span>
                 </button>
                 <span className="text-stone-200">&middot;</span>
-                <FlaskConical className="w-3.5 h-3.5 text-emerald-500" />
+                <FlaskConical className="w-3.5 h-3.5 text-stone-1000" />
                 <span className="text-xs font-medium text-stone-800">Biostatistics</span>
                 {activeProject && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-medium">
@@ -2488,7 +2488,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     <span>Home</span>
                   </button>
                   <span className="text-stone-200">·</span>
-                  <Brain className="w-3.5 h-3.5 text-blue-500" />
+                  <Brain className="w-3.5 h-3.5 text-stone-1000" />
                   <span className="text-xs font-medium text-stone-800">Intelligence</span>
                   {activeProject && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-medium">
@@ -2502,7 +2502,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         onClick={() => setRiViewMode('intelligence')}
                         className={cn(
                           'px-2 py-0.5 text-[11px] font-medium transition-colors',
-                          'bg-blue-100 text-stone-700'
+                          'bg-stone-100 text-stone-700'
                         )}
                       >
                         Intelligence
@@ -2797,7 +2797,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     </button>
                   ))}
                 </div>
-                <div className="border-b border-amber-200 bg-amber-50/60 px-4 py-2 text-xs text-amber-800">
+                <div className="border-b border-stone-200 bg-stone-100/60 px-4 py-2 text-xs text-stone-800">
                   Beta note: package generation currently exports a submission manifest JSON for
                   internal review and handoff.
                 </div>
@@ -3405,14 +3405,14 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               string,
               { label: string; color: string; bg: string }
             > = {
-              '510K': { label: '510(k)', color: 'text-stone-700', bg: 'bg-blue-50' },
-              IND: { label: 'IND', color: 'text-purple-700', bg: 'bg-purple-50' },
-              NDA: { label: 'NDA', color: 'text-green-700', bg: 'bg-green-50' },
-              BLA: { label: 'BLA', color: 'text-orange-700', bg: 'bg-orange-50' },
-              PMA: { label: 'PMA', color: 'text-red-700', bg: 'bg-red-50' },
-              MAA: { label: 'MAA', color: 'text-pink-700', bg: 'bg-pink-50' },
-              DE_NOVO: { label: 'De Novo', color: 'text-amber-700', bg: 'bg-amber-50' },
-              EUA: { label: 'EUA', color: 'text-cyan-700', bg: 'bg-cyan-50' },
+              '510K': { label: '510(k)', color: 'text-stone-700', bg: 'bg-stone-100' },
+              IND: { label: 'IND', color: 'text-stone-700', bg: 'bg-stone-100' },
+              NDA: { label: 'NDA', color: 'text-stone-800', bg: 'bg-stone-100' },
+              BLA: { label: 'BLA', color: 'text-stone-700', bg: 'bg-stone-100' },
+              PMA: { label: 'PMA', color: 'text-stone-800', bg: 'bg-stone-100' },
+              MAA: { label: 'MAA', color: 'text-stone-700', bg: 'bg-stone-100' },
+              DE_NOVO: { label: 'De Novo', color: 'text-stone-700', bg: 'bg-stone-100' },
+              EUA: { label: 'EUA', color: 'text-stone-700', bg: 'bg-stone-100' },
             };
             const fallbackBadge = { label: 'Project', color: 'text-stone-600', bg: 'bg-stone-50' };
             const isPinned = (project: (typeof filteredProjects)[number]) =>
@@ -3520,7 +3520,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                                 {project.name}
                               </h3>
                               {project.starred && (
-                                <Star className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />
+                                <Star className="w-3 h-3 text-stone-400 fill-stone-400 flex-shrink-0" />
                               )}
                             </div>
                             {metadata && (
@@ -3658,7 +3658,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                               );
                             })()}
                             {continueProject.starred && (
-                              <Star className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />
+                              <Star className="w-3 h-3 text-stone-400 fill-stone-400 flex-shrink-0" />
                             )}
                           </div>
                           {continueProject.description && (
@@ -3910,7 +3910,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             External testing: {externalTestingMode ? 'ON' : 'OFF'}
           </button>
           {externalTestingMode && (
-            <div className="rounded-lg border border-amber-300 bg-amber-50/95 px-3 py-2 text-xs text-amber-900 shadow">
+            <div className="rounded-lg border border-stone-300 bg-stone-100/95 px-3 py-2 text-xs text-stone-900 shadow">
               <div className="font-semibold">External Testing Route Panel</div>
               <div>Route: {approvedRouteDecision.normalizedPath}</div>
               <div>Status: {approvedRouteDecision.disposition}</div>
@@ -3918,7 +3918,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               <div>Rule: {approvedRouteDecision.ruleId ?? 'n/a'}</div>
               <div className="mt-2 flex items-center gap-2">
                 <button
-                  className="rounded border border-amber-300 bg-white px-2 py-1 text-[11px] font-medium"
+                  className="rounded border border-stone-300 bg-white px-2 py-1 text-[11px] font-medium"
                   onClick={async () => {
                     const report = JSON.stringify(
                       {
@@ -3942,7 +3942,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   Capture issue
                 </button>
                 <button
-                  className="rounded border border-amber-300 bg-white px-2 py-1 text-[11px] font-medium"
+                  className="rounded border border-stone-300 bg-white px-2 py-1 text-[11px] font-medium"
                   onClick={() => {
                     try {
                       sessionStorage.removeItem(`runlog:${activeProjectId}`);

@@ -98,12 +98,12 @@ const STATUS_CONFIG: Record<string, {
   PENDING: { pillVariant: 'default', pillLabel: 'Pending', iconBoxClass: 'bg-stone-100 text-stone-400', borderClass: 'border-stone-200' },
   READY: { pillVariant: 'info', pillLabel: 'Ready', iconBoxClass: 'bg-stone-100 text-stone-600', borderClass: 'border-stone-200' },
   IN_PROGRESS: { pillVariant: 'active', pillLabel: 'In Progress', iconBoxClass: 'bg-stone-200 text-stone-700', borderClass: 'border-stone-300' },
-  AWAITING_APPROVAL: { pillVariant: 'warning', pillLabel: 'Awaiting Approval', iconBoxClass: 'bg-amber-100 text-amber-600', borderClass: 'border-amber-300' },
+  AWAITING_APPROVAL: { pillVariant: 'warning', pillLabel: 'Awaiting Approval', iconBoxClass: 'bg-stone-100 text-stone-600', borderClass: 'border-stone-300' },
   AWAITING_SIGNATURE: { pillVariant: 'default', pillLabel: 'Awaiting Signature', iconBoxClass: 'bg-stone-200 text-stone-700', borderClass: 'border-stone-300' },
-  COMPLETED: { pillVariant: 'success', pillLabel: 'Completed', iconBoxClass: 'bg-emerald-100 text-emerald-600', borderClass: 'border-emerald-300' },
+  COMPLETED: { pillVariant: 'success', pillLabel: 'Completed', iconBoxClass: 'bg-stone-100 text-stone-700', borderClass: 'border-stone-300' },
   SKIPPED: { pillVariant: 'default', pillLabel: 'Skipped', iconBoxClass: 'bg-stone-100 text-stone-400', borderClass: 'border-stone-200' },
-  BLOCKED: { pillVariant: 'danger', pillLabel: 'Blocked', iconBoxClass: 'bg-red-100 text-red-600', borderClass: 'border-red-300' },
-  FAILED: { pillVariant: 'danger', pillLabel: 'Failed', iconBoxClass: 'bg-red-100 text-red-600', borderClass: 'border-red-300' },
+  BLOCKED: { pillVariant: 'danger', pillLabel: 'Blocked', iconBoxClass: 'bg-stone-100 text-stone-700', borderClass: 'border-stone-300' },
+  FAILED: { pillVariant: 'danger', pillLabel: 'Failed', iconBoxClass: 'bg-stone-100 text-stone-700', borderClass: 'border-stone-300' },
 };
 
 // SLA indicator
@@ -119,7 +119,7 @@ const SLAIndicator: React.FC<{
 
   if (slaBreached || hoursRemaining < 0) {
     return (
-      <div className="flex items-center gap-1.5 text-red-600 text-xs font-medium">
+      <div className="flex items-center gap-1.5 text-stone-700 text-xs font-medium">
         <AlertTriangle size={14} />
         <span>SLA Breached</span>
       </div>
@@ -128,7 +128,7 @@ const SLAIndicator: React.FC<{
 
   if (hoursRemaining < 8) {
     return (
-      <div className="flex items-center gap-1.5 text-amber-600 text-xs">
+      <div className="flex items-center gap-1.5 text-stone-600 text-xs">
         <Clock size={14} />
         <span>Due in {Math.round(hoursRemaining)}h</span>
       </div>
@@ -178,7 +178,7 @@ export const StepCard: React.FC<StepCardProps> = ({
       className={cn(
         'border',
         config.borderClass,
-        step.status === 'IN_PROGRESS' && 'ring-2 ring-blue-100',
+        step.status === 'IN_PROGRESS' && 'ring-2 ring-stone-100',
         className,
       )}
     >
@@ -197,7 +197,7 @@ export const StepCard: React.FC<StepCardProps> = ({
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-semibold text-stone-900">{step.name}</h3>
-                {step.isRequired && <span className="text-xs text-red-500">*</span>}
+                {step.isRequired && <span className="text-xs text-stone-1000">*</span>}
               </div>
               {step.description && (
                 <p className="text-sm text-stone-500 mt-1 line-clamp-2">{step.description}</p>
@@ -282,7 +282,7 @@ export const StepCard: React.FC<StepCardProps> = ({
           {/* Error Message */}
           {step.lastError && (
             <CardSection tint="danger">
-              <div className="flex items-start gap-2 text-red-700">
+              <div className="flex items-start gap-2 text-stone-800">
                 <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
                 <div>
                   <span className="text-sm font-medium">Error</span>

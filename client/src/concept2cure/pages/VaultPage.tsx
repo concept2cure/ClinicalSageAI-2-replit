@@ -75,9 +75,9 @@ const FOLDER_LABELS: Record<string, string> = {
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   draft: { label: 'Draft', color: 'text-stone-400' },
-  review: { label: 'In Review', color: 'text-amber-600' },
-  approved: { label: 'Approved', color: 'text-emerald-600' },
-  locked: { label: 'Ready', color: 'text-blue-600' },
+  review: { label: 'In Review', color: 'text-stone-600' },
+  approved: { label: 'Approved', color: 'text-stone-700' },
+  locked: { label: 'Ready', color: 'text-stone-600' },
 };
 
 interface VaultPageProps {

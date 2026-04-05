@@ -222,8 +222,8 @@ function SegmentSpan({ segment }: { segment: DiffSegment }) {
     <span
       className={cn(
         'whitespace-pre-wrap',
-        segment.type === 'add' && 'bg-green-100 text-green-900 dark:bg-green-900/30 dark:text-green-200',
-        segment.type === 'remove' && 'bg-red-100 text-red-900 line-through dark:bg-red-900/30 dark:text-red-200',
+        segment.type === 'add' && 'bg-stone-100 text-stone-900 dark:bg-stone-900/30 dark:text-stone-200',
+        segment.type === 'remove' && 'bg-stone-100 text-stone-900 line-through dark:bg-stone-900/30 dark:text-stone-200',
       )}
     >
       {segment.text}
@@ -251,7 +251,7 @@ function ChangeToolbar({
         <button
           type="button"
           onClick={() => onAccept(changeIndex)}
-          className="rounded p-0.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30"
+          className="rounded p-0.5 text-stone-700 hover:bg-stone-100 dark:hover:bg-stone-900/30"
           title="Accept change"
         >
           <Check className="h-3.5 w-3.5" />
@@ -261,7 +261,7 @@ function ChangeToolbar({
         <button
           type="button"
           onClick={() => onReject(changeIndex)}
-          className="rounded p-0.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
+          className="rounded p-0.5 text-stone-700 hover:bg-stone-100 dark:hover:bg-stone-900/30"
           title="Reject change"
         >
           <X className="h-3.5 w-3.5" />
@@ -370,10 +370,10 @@ export function DocumentDiff({
   const bgForType = (type: DiffBlock['type'], isActive: boolean) =>
     cn(
       'relative group rounded px-2 py-1 my-0.5 transition-colors duration-150',
-      type === 'addition' && 'bg-green-50 dark:bg-green-900/20',
-      type === 'deletion' && 'bg-red-50 dark:bg-red-900/20',
-      type === 'modification' && 'bg-amber-50 dark:bg-amber-900/20',
-      isActive && 'ring-2 ring-blue-400',
+      type === 'addition' && 'bg-stone-100 dark:bg-stone-900/20',
+      type === 'deletion' && 'bg-stone-100 dark:bg-stone-900/20',
+      type === 'modification' && 'bg-stone-100 dark:bg-stone-900/20',
+      isActive && 'ring-2 ring-stone-400',
     );
 
   // ---------------------------------------------------------------------------
@@ -429,15 +429,15 @@ export function DocumentDiff({
 
       {/* Stats bar */}
       <div className="flex items-center gap-4 border-b border-slate-200 bg-slate-50/60 px-4 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-800/60">
-        <span className="flex items-center gap-1 text-green-700 dark:text-green-400">
+        <span className="flex items-center gap-1 text-stone-800 dark:text-stone-400">
           <Plus className="h-3 w-3" />
           {stats.additions} addition{stats.additions !== 1 ? 's' : ''}
         </span>
-        <span className="flex items-center gap-1 text-red-700 dark:text-red-400">
+        <span className="flex items-center gap-1 text-stone-800 dark:text-stone-400">
           <Minus className="h-3 w-3" />
           {stats.deletions} deletion{stats.deletions !== 1 ? 's' : ''}
         </span>
-        <span className="flex items-center gap-1 text-amber-700 dark:text-amber-400">
+        <span className="flex items-center gap-1 text-stone-700 dark:text-stone-400">
           <Eye className="h-3 w-3" />
           {stats.modifications} modification{stats.modifications !== 1 ? 's' : ''}
         </span>
@@ -451,8 +451,8 @@ export function DocumentDiff({
       <div className="flex flex-1 min-h-0">
         {/* Left panel */}
         <div className="flex flex-1 flex-col border-r border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-2 border-b border-slate-100 bg-red-50/40 px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-red-900/10 dark:text-slate-300">
-            <Minus className="h-3 w-3 text-red-500" />
+          <div className="flex items-center gap-2 border-b border-slate-100 bg-stone-100/40 px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-stone-900/10 dark:text-slate-300">
+            <Minus className="h-3 w-3 text-stone-1000" />
             {leftLabel}
           </div>
           <div
@@ -486,8 +486,8 @@ export function DocumentDiff({
                       if (el) changeRefs.current.set(block.index, el);
                     }}
                     className={cn(
-                      'relative my-0.5 rounded border border-dashed border-green-300 bg-green-50/30 px-2 py-1 text-xs text-green-400 italic dark:border-green-800 dark:bg-green-900/10',
-                      isActive && 'ring-2 ring-blue-400',
+                      'relative my-0.5 rounded border border-dashed border-stone-300 bg-stone-100/30 px-2 py-1 text-xs text-stone-400 italic dark:border-stone-800 dark:bg-stone-900/10',
+                      isActive && 'ring-2 ring-stone-400',
                     )}
                   >
                     (added in {rightLabel})
@@ -520,8 +520,8 @@ export function DocumentDiff({
 
         {/* Right panel */}
         <div className="flex flex-1 flex-col">
-          <div className="flex items-center gap-2 border-b border-slate-100 bg-green-50/40 px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-green-900/10 dark:text-slate-300">
-            <Plus className="h-3 w-3 text-green-500" />
+          <div className="flex items-center gap-2 border-b border-slate-100 bg-stone-100/40 px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-stone-900/10 dark:text-slate-300">
+            <Plus className="h-3 w-3 text-stone-1000" />
             {rightLabel}
           </div>
           <div
@@ -550,8 +550,8 @@ export function DocumentDiff({
                   <div
                     key={`blk-r-${block.index}`}
                     className={cn(
-                      'relative my-0.5 rounded border border-dashed border-red-300 bg-red-50/30 px-2 py-1 text-xs text-red-400 italic dark:border-red-800 dark:bg-red-900/10',
-                      isActive && 'ring-2 ring-blue-400',
+                      'relative my-0.5 rounded border border-dashed border-stone-300 bg-stone-100/30 px-2 py-1 text-xs text-stone-400 italic dark:border-stone-800 dark:bg-stone-900/10',
+                      isActive && 'ring-2 ring-stone-400',
                     )}
                   >
                     (removed from {leftLabel})

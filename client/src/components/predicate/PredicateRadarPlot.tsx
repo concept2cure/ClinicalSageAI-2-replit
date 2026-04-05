@@ -32,10 +32,10 @@ const SWEET_SPOT = {
 };
 
 const TOXICITY_COLORS = {
-  safe: '#92a87a', // green-500
-  caution: '#eab308', // yellow-500
-  danger: '#ef4444', // red-500
-  recommended: '#6a9bcc', // blue-500
+  safe: '#92a87a', // stone-1000
+  caution: '#eab308', // stone-1000
+  danger: '#ef4444', // stone-1000
+  recommended: '#6a9bcc', // stone-1000
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -115,7 +115,7 @@ export function PredicateRadarPlot({
           Click a dot to select a predicate. The
           <Badge
             variant="outline"
-            className="mx-1 text-[11px] bg-green-50 text-green-700 border-green-200"
+            className="mx-1 text-[11px] bg-stone-100 text-stone-800 border-stone-200"
           >
             sweet spot
           </Badge>
@@ -305,16 +305,16 @@ export function PredicateRadarPlot({
         {/* Legend */}
         <div className="flex flex-wrap gap-4 mt-3 justify-center text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full bg-green-500" /> Safe (≤0.15)
+            <span className="inline-block h-3 w-3 rounded-full bg-stone-1000" /> Safe (≤0.15)
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full bg-yellow-500" /> Caution (0.15–0.35)
+            <span className="inline-block h-3 w-3 rounded-full bg-stone-1000" /> Caution (0.15–0.35)
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full bg-red-500" /> Danger (&gt;0.35)
+            <span className="inline-block h-3 w-3 rounded-full bg-stone-1000" /> Danger (&gt;0.35)
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full bg-blue-500" /> Recommended
+            <span className="inline-block h-3 w-3 rounded-full bg-stone-1000" /> Recommended
           </span>
         </div>
       </CardContent>

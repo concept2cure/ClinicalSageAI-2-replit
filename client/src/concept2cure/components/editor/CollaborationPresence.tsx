@@ -44,7 +44,7 @@ export function CollaborationPresence({
   if (others.length === 0 && isConnected) {
     return (
       <div className="flex items-center gap-1.5 text-xs text-stone-400">
-        <Wifi className="w-3 h-3 text-emerald-500" />
+        <Wifi className="w-3 h-3 text-stone-1000" />
         <span>Live</span>
       </div>
     );
@@ -66,7 +66,7 @@ export function CollaborationPresence({
   return (
     <div className="flex items-center gap-2">
       {/* Connection indicator */}
-      <Wifi className="w-3 h-3 text-emerald-500 shrink-0" />
+      <Wifi className="w-3 h-3 text-stone-1000 shrink-0" />
 
       {/* Avatar stack */}
       <div className="flex items-center -space-x-1.5">
@@ -84,7 +84,7 @@ export function CollaborationPresence({
               <div
                 className={cn(
                   'w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-semibold ring-2 ring-white transition-all duration-150',
-                  isTyping && 'ring-amber-400 animate-pulse',
+                  isTyping && 'ring-stone-400 animate-pulse',
                 )}
                 style={{ backgroundColor: collab.color }}
               >
@@ -96,14 +96,14 @@ export function CollaborationPresence({
                 className={cn(
                   'absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ring-1 ring-white',
                   collab.status === 'editing' ? 'bg-stone-600' :
-                  collab.status === 'idle' ? 'bg-amber-400' :
-                  'bg-emerald-500',
+                  collab.status === 'idle' ? 'bg-stone-400' :
+                  'bg-stone-1000',
                 )}
               />
 
               {/* Typing indicator */}
               {isTyping && (
-                <span className="absolute -top-1 -right-1 flex items-center justify-center w-3 h-3 bg-amber-500 rounded-full">
+                <span className="absolute -top-1 -right-1 flex items-center justify-center w-3 h-3 bg-stone-1000 rounded-full">
                   <PenLine className="w-1.5 h-1.5 text-white" />
                 </span>
               )}

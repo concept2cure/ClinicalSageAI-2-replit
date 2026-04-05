@@ -159,9 +159,9 @@ const VersionItem: React.FC<VersionItemProps> = ({
         className={cn(
           'absolute left-0 w-6 h-6 rounded-full flex items-center justify-center',
           isCurrent
-            ? 'bg-blue-100 text-blue-600 ring-2 ring-blue-500 ring-offset-2'
+            ? 'bg-stone-100 text-stone-600 ring-2 ring-stone-1000 ring-offset-2'
             : 'bg-stone-100 text-stone-500',
-          isSelected && 'ring-2 ring-amber-400 ring-offset-1'
+          isSelected && 'ring-2 ring-stone-400 ring-offset-1'
         )}
       >
         {isCurrent ? <Check className="h-3.5 w-3.5" /> : <ChangeIcon className="h-3.5 w-3.5" />}
@@ -171,7 +171,7 @@ const VersionItem: React.FC<VersionItemProps> = ({
       <div
         className={cn(
           'group ml-4 p-3 rounded-lg transition-colors cursor-pointer',
-          isSelected ? 'bg-amber-50 ring-1 ring-amber-200' : 'hover:bg-stone-50'
+          isSelected ? 'bg-stone-100 ring-1 ring-stone-200' : 'hover:bg-stone-50'
         )}
         onClick={onSelect}
       >
@@ -186,7 +186,7 @@ const VersionItem: React.FC<VersionItemProps> = ({
               {isCurrent && (
                 <Badge
                   variant="secondary"
-                  className="text-xs px-1.5 py-0 bg-blue-100 text-stone-700"
+                  className="text-xs px-1.5 py-0 bg-stone-100 text-stone-700"
                 >
                   Current
                 </Badge>
@@ -225,7 +225,7 @@ const VersionItem: React.FC<VersionItemProps> = ({
                         e.stopPropagation();
                         onRestore();
                       }}
-                      className="p-1.5 rounded-md text-stone-400 hover:text-blue-600 hover:bg-blue-50"
+                      className="p-1.5 rounded-md text-stone-400 hover:text-stone-600 hover:bg-stone-100"
                     >
                       <RotateCcw className="h-4 w-4" />
                     </button>
@@ -278,11 +278,11 @@ const DiffView: React.FC<DiffViewProps> = ({ versionA, versionB }) => {
     <div className="space-y-4">
       <div className="flex items-center gap-4 text-sm">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-red-100 border border-red-300" />
+          <div className="w-3 h-3 rounded bg-stone-100 border border-stone-300" />
           <span className="text-stone-600">Version {versionA.versionNumber} (older)</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-green-100 border border-green-300" />
+          <div className="w-3 h-3 rounded bg-stone-100 border border-stone-300" />
           <span className="text-stone-600">Version {versionB.versionNumber} (newer)</span>
         </div>
       </div>
@@ -300,9 +300,9 @@ const DiffView: React.FC<DiffViewProps> = ({ versionA, versionB }) => {
                 key={idx}
                 className={cn(
                   'px-2 py-0.5',
-                  isNew && 'bg-green-50 text-green-800',
-                  isChanged && 'bg-amber-50 text-amber-800',
-                  isRemoved && 'bg-red-50 text-red-800 line-through'
+                  isNew && 'bg-stone-100 text-stone-800',
+                  isChanged && 'bg-stone-100 text-stone-800',
+                  isRemoved && 'bg-stone-100 text-stone-800 line-through'
                 )}
               >
                 <span className="inline-block w-8 text-stone-400 select-none">{idx + 1}</span>

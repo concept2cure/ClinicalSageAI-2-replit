@@ -216,7 +216,7 @@ export default function SmartFormsManager({ projectId }: SmartFormsManagerProps)
     switch (status.status) {
       case 'generated':
         return (
-          <Badge className="bg-green-500">
+          <Badge className="bg-stone-1000">
             <CheckCircle className="w-3 h-3 mr-1" />
             Generated
           </Badge>
@@ -311,19 +311,19 @@ export default function SmartFormsManager({ projectId }: SmartFormsManagerProps)
                 <div className="text-xs text-muted-foreground">Total Forms</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-500">
+                <div className="text-2xl font-bold text-stone-1000">
                   {formsStatus?.forms?.filter((f: any) => f.status === 'generated').length || 0}
                 </div>
                 <div className="text-xs text-muted-foreground">Generated</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-500">
+                <div className="text-2xl font-bold text-stone-1000">
                   {formsStatus?.forms?.filter((f: any) => f.status === 'pending').length || 0}
                 </div>
                 <div className="text-xs text-muted-foreground">Pending</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-red-500">
+                <div className="text-2xl font-bold text-stone-1000">
                   {formsStatus?.forms?.filter((f: any) => f.status === 'error').length || 0}
                 </div>
                 <div className="text-xs text-muted-foreground">Errors</div>

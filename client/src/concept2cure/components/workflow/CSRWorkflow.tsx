@@ -143,9 +143,9 @@ interface CSRWorkflowProps {
 
 const STATUS_CONFIG: Record<SectionStatus, { label: string; color: string; icon: React.ElementType; dot: string }> = {
   not_started: { label: 'Not Started', color: 'text-stone-400', icon: Circle, dot: 'bg-stone-300' },
-  drafting: { label: 'Drafting', color: 'text-amber-600', icon: Clock, dot: 'bg-amber-500' },
-  review: { label: 'In Review', color: 'text-blue-600', icon: AlertCircle, dot: 'bg-stone-600' },
-  approved: { label: 'Approved', color: 'text-emerald-600', icon: CheckCircle2, dot: 'bg-emerald-500' },
+  drafting: { label: 'Drafting', color: 'text-stone-600', icon: Clock, dot: 'bg-stone-1000' },
+  review: { label: 'In Review', color: 'text-stone-600', icon: AlertCircle, dot: 'bg-stone-600' },
+  approved: { label: 'Approved', color: 'text-stone-700', icon: CheckCircle2, dot: 'bg-stone-1000' },
 };
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -246,7 +246,7 @@ export function CSRWorkflow({ projectId, projectName, onSectionClick, onAIDraft,
         <div className="flex items-center gap-4">
           <div className="flex-1 h-2 rounded-full bg-stone-100 overflow-hidden">
             <div
-              className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+              className="h-full rounded-full bg-stone-1000 transition-all duration-300"
               style={{ width: `${stats.pct}%` }}
             />
           </div>
@@ -258,9 +258,9 @@ export function CSRWorkflow({ projectId, projectName, onSectionClick, onAIDraft,
         {/* Quick stats */}
         <div className="flex gap-4 mt-2">
           {[
-            { label: 'Drafting', value: stats.drafting, color: 'text-amber-600' },
-            { label: 'In Review', value: stats.review, color: 'text-blue-600' },
-            { label: 'Approved', value: stats.approved, color: 'text-emerald-600' },
+            { label: 'Drafting', value: stats.drafting, color: 'text-stone-600' },
+            { label: 'In Review', value: stats.review, color: 'text-stone-600' },
+            { label: 'Approved', value: stats.approved, color: 'text-stone-700' },
             { label: 'Not Started', value: stats.total - stats.started, color: 'text-stone-400' },
           ].map(s => (
             <span key={s.label} className={cn('text-xs', s.color)}>
@@ -315,9 +315,9 @@ export function CSRWorkflow({ projectId, projectName, onSectionClick, onAIDraft,
                     {/* Status badge */}
                     <span className={cn(
                       'flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
-                      state?.status === 'approved' ? 'bg-emerald-50 text-emerald-700' :
-                      state?.status === 'review' ? 'bg-blue-50 text-stone-700' :
-                      state?.status === 'drafting' ? 'bg-amber-50 text-amber-700' :
+                      state?.status === 'approved' ? 'bg-stone-100 text-stone-800' :
+                      state?.status === 'review' ? 'bg-stone-100 text-stone-700' :
+                      state?.status === 'drafting' ? 'bg-stone-100 text-stone-700' :
                       'bg-stone-50 text-stone-400'
                     )}>
                       {statusCfg.label}
@@ -360,9 +360,9 @@ export function CSRWorkflow({ projectId, projectName, onSectionClick, onAIDraft,
                             </button>
                             <span className={cn(
                               'flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
-                              childState?.status === 'approved' ? 'bg-emerald-50 text-emerald-700' :
-                              childState?.status === 'review' ? 'bg-blue-50 text-stone-700' :
-                              childState?.status === 'drafting' ? 'bg-amber-50 text-amber-700' :
+                              childState?.status === 'approved' ? 'bg-stone-100 text-stone-800' :
+                              childState?.status === 'review' ? 'bg-stone-100 text-stone-700' :
+                              childState?.status === 'drafting' ? 'bg-stone-100 text-stone-700' :
                               'bg-stone-50 text-stone-400'
                             )}>
                               {childStatusCfg.label}

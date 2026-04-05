@@ -68,12 +68,12 @@ const SEVERITY_BADGE: Record<string, 'destructive' | 'default' | 'secondary'> = 
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  CREATED: 'bg-gray-100 text-gray-700',
-  IN_PROGRESS: 'bg-blue-100 text-blue-700',
-  READY: 'bg-green-100 text-green-700',
-  BLOCKED: 'bg-red-100 text-red-700',
-  STALE: 'bg-orange-100 text-orange-700',
-  FAILED: 'bg-red-200 text-red-900',
+  CREATED: 'bg-stone-100 text-stone-700',
+  IN_PROGRESS: 'bg-stone-100 text-stone-700',
+  READY: 'bg-stone-100 text-stone-800',
+  BLOCKED: 'bg-stone-100 text-stone-800',
+  STALE: 'bg-stone-100 text-stone-700',
+  FAILED: 'bg-stone-200 text-stone-900',
 };
 
 const OPS_STATUS_ICON: Record<string, typeof Shield> = {
@@ -103,8 +103,8 @@ const CATEGORY_LABELS: Record<string, string> = {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function ReadinessGauge({ score, size = 'lg' }: { score: number; size?: 'sm' | 'lg' }) {
-  const color = score >= 80 ? 'text-green-600' : score >= 50 ? 'text-yellow-600' : 'text-red-600';
-  const bgColor = score >= 80 ? 'bg-green-500' : score >= 50 ? 'bg-yellow-500' : 'bg-red-500';
+  const color = score >= 80 ? 'text-stone-700' : score >= 50 ? 'text-stone-600' : 'text-stone-700';
+  const bgColor = score >= 80 ? 'bg-stone-1000' : score >= 50 ? 'bg-stone-1000' : 'bg-stone-1000';
   const dim = size === 'lg' ? 'h-32 w-32' : 'h-20 w-20';
   const textSize = size === 'lg' ? 'text-3xl' : 'text-xl';
 
@@ -128,7 +128,7 @@ function ReadinessGauge({ score, size = 'lg' }: { score: number; size?: 'sm' | '
           <span className={`${textSize} font-bold ${color}`}>{Math.round(score)}</span>
         </div>
       </div>
-      <div className={`h-1.5 ${size === 'lg' ? 'w-40' : 'w-24'} rounded-full bg-gray-200`}>
+      <div className={`h-1.5 ${size === 'lg' ? 'w-40' : 'w-24'} rounded-full bg-stone-200`}>
         <div
           className={`h-full rounded-full ${bgColor} transition-all`}
           style={{ width: `${score}%` }}
@@ -156,7 +156,7 @@ function ManifestBadge({ hash, label }: { hash: string; label: string }) {
             }}
           >
             <Hash className="h-3 w-3" />
-            {label}: {short}…{copied && <CheckCircle className="h-3 w-3 text-green-500" />}
+            {label}: {short}…{copied && <CheckCircle className="h-3 w-3 text-stone-1000" />}
           </button>
         </TooltipTrigger>
         <TooltipContent className="max-w-[400px] break-all font-mono text-xs">
@@ -171,7 +171,7 @@ function TamperSafeBadge({ verified }: { verified: boolean }) {
   return (
     <Badge
       variant={verified ? 'default' : 'destructive'}
-      className={`text-xs ${verified ? 'bg-green-100 text-green-800 border-green-200' : ''}`}
+      className={`text-xs ${verified ? 'bg-stone-100 text-stone-800 border-stone-200' : ''}`}
     >
       {verified ? <Lock className="h-3 w-3 mr-1" /> : <Unlock className="h-3 w-3 mr-1" />}
       {verified ? 'Tamper-Safe' : 'Unverified'}
@@ -195,7 +195,7 @@ function TopRiskCard({ code }: { code: string }) {
         >
           {severity}
         </Badge>
-        <span className="font-mono text-xs text-blue-600">{code}</span>
+        <span className="font-mono text-xs text-stone-600">{code}</span>
       </div>
       <p className="text-sm font-medium">{label}</p>
       {objection && (
@@ -205,7 +205,7 @@ function TopRiskCard({ code }: { code: string }) {
         </p>
       )}
       {objection?.ectd_location && (
-        <p className="text-xs text-blue-600/70 mt-0.5">eCTD: {objection.ectd_location}</p>
+        <p className="text-xs text-stone-600/70 mt-0.5">eCTD: {objection.ectd_location}</p>
       )}
     </div>
   );
@@ -253,7 +253,7 @@ function EvidenceTaskRow({
               {task.category}
             </Badge>
             {task.completion?.state === 'DONE' && (
-              <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+              <CheckCircle className="h-3.5 w-3.5 text-stone-1000" />
             )}
             {task.completion?.state === 'WAIVED' && (
               <Badge variant="secondary" className="text-[11px]">
@@ -307,19 +307,19 @@ function EvidenceTaskRow({
 
           {/* Why FDA will ask this — Regulatory Objection Library */}
           {objection && (
-            <div className="p-2.5 rounded-md bg-amber-50 border border-amber-200">
+            <div className="p-2.5 rounded-md bg-stone-100 border border-stone-200">
               <div className="flex items-start gap-2">
-                <HelpCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                <HelpCircle className="h-4 w-4 text-stone-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold text-amber-800 mb-0.5">
+                  <p className="text-xs font-semibold text-stone-800 mb-0.5">
                     Why FDA Will Ask This
                   </p>
-                  <p className="text-xs text-amber-700 italic">"{objection.question}"</p>
+                  <p className="text-xs text-stone-700 italic">"{objection.question}"</p>
                   <div className="flex items-center gap-2 mt-1.5">
-                    <Badge variant="outline" className="text-[11px] border-amber-300 text-amber-700">
+                    <Badge variant="outline" className="text-[11px] border-stone-300 text-stone-700">
                       {objection.severity}
                     </Badge>
-                    <span className="text-[11px] text-amber-600">
+                    <span className="text-[11px] text-stone-600">
                       eCTD: {objection.ectd_location}
                     </span>
                   </div>
@@ -412,14 +412,14 @@ function EvidenceTaskRow({
 function SubmissionGateCard({ gate }: { gate: SubmissionGateResult }) {
   return (
     <Card
-      className={gate.allowed ? 'border-green-200 bg-green-50/50' : 'border-red-200 bg-red-50/50'}
+      className={gate.allowed ? 'border-stone-200 bg-stone-100/50' : 'border-stone-200 bg-stone-100/50'}
     >
       <CardContent className="pt-6">
         <div className="flex items-center gap-3">
           {gate.allowed ? (
-            <ShieldCheck className="h-8 w-8 text-green-600" />
+            <ShieldCheck className="h-8 w-8 text-stone-700" />
           ) : (
-            <ShieldAlert className="h-8 w-8 text-red-600" />
+            <ShieldAlert className="h-8 w-8 text-stone-700" />
           )}
           <div>
             <p className="font-semibold text-lg">
@@ -650,9 +650,9 @@ export function DefensePacketPanel({
 
       {/* Error */}
       {buildMut.isError && (
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-stone-200 bg-stone-100">
           <CardContent className="pt-4">
-            <p className="text-sm text-red-800">
+            <p className="text-sm text-stone-800">
               <AlertTriangle className="h-4 w-4 inline mr-1" />
               {(buildMut.error as Error)?.message || 'Build failed'}
             </p>
@@ -678,7 +678,7 @@ export function DefensePacketPanel({
             </Card>
             <Card>
               <CardContent className="pt-6 text-center">
-                <p className="text-3xl font-bold text-red-600">
+                <p className="text-3xl font-bold text-stone-700">
                   {packet.tasks.filter((t: any) => t.severity === 'High').length}
                 </p>
                 <p className="text-xs text-muted-foreground">High Severity</p>
@@ -686,7 +686,7 @@ export function DefensePacketPanel({
             </Card>
             <Card>
               <CardContent className="pt-6 text-center">
-                <p className="text-3xl font-bold text-blue-600">{packet.top_risks.length}</p>
+                <p className="text-3xl font-bold text-stone-600">{packet.top_risks.length}</p>
                 <p className="text-xs text-muted-foreground">Top Risks</p>
               </CardContent>
             </Card>
@@ -725,7 +725,7 @@ export function DefensePacketPanel({
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                  <AlertTriangle className="h-4 w-4 text-stone-1000" />
                   Top Risks ({packet.top_risks.length})
                 </CardTitle>
                 <CardDescription>

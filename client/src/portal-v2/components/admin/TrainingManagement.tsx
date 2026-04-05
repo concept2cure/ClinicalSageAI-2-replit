@@ -192,42 +192,42 @@ const TYPE_CONFIG: Record<
 > = {
   onboarding: {
     label: 'Onboarding',
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-100',
+    color: 'text-stone-700',
+    bgColor: 'bg-stone-100',
     icon: Star,
   },
   compliance: {
     label: 'Compliance',
-    color: 'text-purple-700',
-    bgColor: 'bg-purple-100',
+    color: 'text-stone-700',
+    bgColor: 'bg-stone-100',
     icon: ClipboardCheck,
   },
   system: {
     label: 'System',
-    color: 'text-green-700',
-    bgColor: 'bg-green-100',
+    color: 'text-stone-800',
+    bgColor: 'bg-stone-100',
     icon: Settings,
   },
   role_specific: {
     label: 'Role-Specific',
-    color: 'text-orange-700',
-    bgColor: 'bg-orange-100',
+    color: 'text-stone-700',
+    bgColor: 'bg-stone-100',
     icon: Target,
   },
   advanced: {
     label: 'Advanced',
-    color: 'text-red-700',
-    bgColor: 'bg-red-100',
+    color: 'text-stone-800',
+    bgColor: 'bg-stone-100',
     icon: Award,
   },
 };
 
 const STATUS_CONFIG: Record<TrainingStatus, { label: string; color: string; bgColor: string }> = {
-  not_started: { label: 'Not Started', color: 'text-gray-600', bgColor: 'bg-gray-100' },
-  in_progress: { label: 'In Progress', color: 'text-blue-600', bgColor: 'bg-blue-100' },
-  completed: { label: 'Completed', color: 'text-green-600', bgColor: 'bg-green-100' },
-  expired: { label: 'Expired', color: 'text-amber-600', bgColor: 'bg-amber-100' },
-  overdue: { label: 'Overdue', color: 'text-red-600', bgColor: 'bg-red-100' },
+  not_started: { label: 'Not Started', color: 'text-stone-600', bgColor: 'bg-stone-100' },
+  in_progress: { label: 'In Progress', color: 'text-stone-600', bgColor: 'bg-stone-100' },
+  completed: { label: 'Completed', color: 'text-stone-700', bgColor: 'bg-stone-100' },
+  expired: { label: 'Expired', color: 'text-stone-600', bgColor: 'bg-stone-100' },
+  overdue: { label: 'Overdue', color: 'text-stone-700', bgColor: 'bg-stone-100' },
 };
 
 const CONTENT_TYPE_ICONS: Record<ContentType, React.ComponentType<{ className?: string }>> = {
@@ -687,11 +687,11 @@ const UserProgressTable: React.FC<{
                 </td>
                 <td className="px-4 py-3">
                   {p.dueDate ? (
-                    <p className={`text-sm ${p.status === 'overdue' ? 'text-red-600' : ''}`}>
+                    <p className={`text-sm ${p.status === 'overdue' ? 'text-stone-700' : ''}`}>
                       {p.dueDate.toLocaleDateString()}
                     </p>
                   ) : p.expiresAt ? (
-                    <p className={`text-sm ${p.status === 'expired' ? 'text-amber-600' : ''}`}>
+                    <p className={`text-sm ${p.status === 'expired' ? 'text-stone-600' : ''}`}>
                       Expires: {p.expiresAt.toLocaleDateString()}
                     </p>
                   ) : (
@@ -761,42 +761,42 @@ const StatsOverview: React.FC<{ stats: TrainingStats }> = ({ stats }) => (
   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
     <Card>
       <CardContent className="p-4 text-center">
-        <BookOpen className="h-8 w-8 mx-auto text-blue-600 mb-2" />
+        <BookOpen className="h-8 w-8 mx-auto text-stone-600 mb-2" />
         <p className="text-2xl font-bold">{stats.totalModules}</p>
         <p className="text-sm text-muted-foreground">Modules</p>
       </CardContent>
     </Card>
     <Card>
       <CardContent className="p-4 text-center">
-        <Users className="h-8 w-8 mx-auto text-purple-600 mb-2" />
+        <Users className="h-8 w-8 mx-auto text-stone-600 mb-2" />
         <p className="text-2xl font-bold">{stats.totalAssignments}</p>
         <p className="text-sm text-muted-foreground">Assignments</p>
       </CardContent>
     </Card>
     <Card>
       <CardContent className="p-4 text-center">
-        <TrendingUp className="h-8 w-8 mx-auto text-green-600 mb-2" />
+        <TrendingUp className="h-8 w-8 mx-auto text-stone-700 mb-2" />
         <p className="text-2xl font-bold">{stats.completionRate}%</p>
         <p className="text-sm text-muted-foreground">Completion</p>
       </CardContent>
     </Card>
     <Card>
       <CardContent className="p-4 text-center">
-        <AlertTriangle className="h-8 w-8 mx-auto text-red-600 mb-2" />
+        <AlertTriangle className="h-8 w-8 mx-auto text-stone-700 mb-2" />
         <p className="text-2xl font-bold">{stats.overdueCount}</p>
         <p className="text-sm text-muted-foreground">Overdue</p>
       </CardContent>
     </Card>
     <Card>
       <CardContent className="p-4 text-center">
-        <Target className="h-8 w-8 mx-auto text-amber-600 mb-2" />
+        <Target className="h-8 w-8 mx-auto text-stone-600 mb-2" />
         <p className="text-2xl font-bold">{stats.averageScore}%</p>
         <p className="text-sm text-muted-foreground">Avg Score</p>
       </CardContent>
     </Card>
     <Card>
       <CardContent className="p-4 text-center">
-        <Clock className="h-8 w-8 mx-auto text-cyan-600 mb-2" />
+        <Clock className="h-8 w-8 mx-auto text-stone-600 mb-2" />
         <p className="text-2xl font-bold">{stats.totalTrainingHours}</p>
         <p className="text-sm text-muted-foreground">Hours</p>
       </CardContent>

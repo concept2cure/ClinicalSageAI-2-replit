@@ -166,12 +166,12 @@ const SOURCE_LABELS: Record<CAPASource, string> = {
 const STATUS_CONFIG: Record<CAPAStatus, { label: string; color: string; icon: React.ReactNode }> = {
   open: {
     label: 'Open',
-    color: 'bg-blue-100 text-blue-800',
+    color: 'bg-stone-100 text-stone-800',
     icon: <FileWarning className="w-4 h-4" />,
   },
   investigation: {
     label: 'Investigation',
-    color: 'bg-yellow-100 text-yellow-800',
+    color: 'bg-stone-100 text-stone-800',
     icon: <Search className="w-4 h-4" />,
   },
   root_cause_identified: {
@@ -181,41 +181,41 @@ const STATUS_CONFIG: Record<CAPAStatus, { label: string; color: string; icon: Re
   },
   action_planning: {
     label: 'Action Planning',
-    color: 'bg-blue-100 text-blue-800',
+    color: 'bg-stone-100 text-stone-800',
     icon: <ClipboardList className="w-4 h-4" />,
   },
   implementation: {
     label: 'Implementation',
-    color: 'bg-amber-100 text-amber-800',
+    color: 'bg-stone-100 text-stone-800',
     icon: <ArrowRight className="w-4 h-4" />,
   },
   verification: {
     label: 'Verification',
-    color: 'bg-blue-100 text-blue-800',
+    color: 'bg-stone-100 text-stone-800',
     icon: <CheckCircle2 className="w-4 h-4" />,
   },
   effectiveness_check: {
     label: 'Effectiveness Check',
-    color: 'bg-emerald-100 text-emerald-800',
+    color: 'bg-stone-100 text-stone-800',
     icon: <TrendingUp className="w-4 h-4" />,
   },
   closed: {
     label: 'Closed',
-    color: 'bg-emerald-100 text-emerald-800',
+    color: 'bg-stone-100 text-stone-800',
     icon: <CheckCircle2 className="w-4 h-4" />,
   },
   closed_ineffective: {
     label: 'Closed - Ineffective',
-    color: 'bg-red-100 text-red-800',
+    color: 'bg-stone-100 text-stone-800',
     icon: <XCircle className="w-4 h-4" />,
   },
 };
 
 const PRIORITY_CONFIG: Record<CAPAPriority, { label: string; color: string; daysToClose: number }> =
   {
-    critical: { label: 'Critical', color: 'bg-red-500 text-white', daysToClose: 30 },
-    major: { label: 'Major', color: 'bg-amber-500 text-white', daysToClose: 60 },
-    minor: { label: 'Minor', color: 'bg-yellow-500 text-white', daysToClose: 90 },
+    critical: { label: 'Critical', color: 'bg-stone-1000 text-white', daysToClose: 30 },
+    major: { label: 'Major', color: 'bg-stone-1000 text-white', daysToClose: 60 },
+    minor: { label: 'Minor', color: 'bg-stone-1000 text-white', daysToClose: 90 },
   };
 
 // Mock data
@@ -388,7 +388,7 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
               <p className="text-sm text-muted-foreground">Open CAPAs</p>
               <p className="text-base font-semibold">{metrics.open}</p>
             </div>
-            <FileWarning className="w-8 h-8 text-blue-500" />
+            <FileWarning className="w-8 h-8 text-stone-1000" />
           </div>
         </div>
       </div>
@@ -398,9 +398,9 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Overdue</p>
-              <p className="text-base font-semibold text-red-600">{metrics.overdue}</p>
+              <p className="text-base font-semibold text-stone-700">{metrics.overdue}</p>
             </div>
-            <Clock className="w-8 h-8 text-red-500" />
+            <Clock className="w-8 h-8 text-stone-1000" />
           </div>
         </div>
       </div>
@@ -410,9 +410,9 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Critical</p>
-              <p className="text-base font-semibold text-amber-600">{metrics.critical}</p>
+              <p className="text-base font-semibold text-stone-600">{metrics.critical}</p>
             </div>
-            <AlertTriangle className="w-8 h-8 text-amber-500" />
+            <AlertTriangle className="w-8 h-8 text-stone-1000" />
           </div>
         </div>
       </div>
@@ -771,7 +771,7 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
             <p className="text-sm text-muted-foreground">
               {isOverdue ? 'Days Overdue' : 'Days Remaining'}
             </p>
-            <p className={`text-base font-semibold ${isOverdue ? 'text-red-600' : ''}`}>
+            <p className={`text-base font-semibold ${isOverdue ? 'text-stone-700' : ''}`}>
               {Math.abs(daysRemaining)}
             </p>
           </div>
@@ -793,10 +793,10 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
             <p
               className={`text-base font-semibold ${
                 (capa.riskScore || 0) >= 80
-                  ? 'text-red-600'
+                  ? 'text-stone-700'
                   : (capa.riskScore || 0) >= 50
-                    ? 'text-amber-600'
-                    : 'text-emerald-600'
+                    ? 'text-stone-600'
+                    : 'text-stone-700'
               }`}
             >
               {capa.riskScore || 'N/A'}
@@ -845,12 +845,12 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
           </div>
           <div className="flex gap-4 mt-4">
             {capa.regulatoryImpact && (
-              <Badge variant="outline" className="border-red-500 text-red-600">
+              <Badge variant="outline" className="border-stone-1000 text-stone-700">
                 Regulatory Impact
               </Badge>
             )}
             {capa.customerImpact && (
-              <Badge variant="outline" className="border-amber-500 text-amber-600">
+              <Badge variant="outline" className="border-stone-1000 text-stone-600">
                 Customer Impact
               </Badge>
             )}
@@ -886,7 +886,7 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Root Cause</Label>
-                  <p className="mt-1 p-3 bg-red-50 rounded-lg text-red-800">
+                  <p className="mt-1 p-3 bg-stone-100 rounded-lg text-stone-800">
                     {capa.rootCauseAnalysis.rootCause}
                   </p>
                 </div>
@@ -1188,7 +1188,7 @@ export function CAPAManagement() {
                 return (
                   <TableRow
                     key={capa.id}
-                    className={`cursor-pointer hover:bg-muted/50 ${isOverdue ? 'bg-red-50' : ''}`}
+                    className={`cursor-pointer hover:bg-muted/50 ${isOverdue ? 'bg-stone-100' : ''}`}
                     onClick={() => setSelectedCAPA(capa)}
                   >
                     <TableCell className="font-mono font-medium">{capa.id}</TableCell>
@@ -1211,7 +1211,7 @@ export function CAPAManagement() {
                     </TableCell>
                     <TableCell>{capa.owner}</TableCell>
                     <TableCell>
-                      <span className={isOverdue ? 'text-red-600 font-medium' : ''}>
+                      <span className={isOverdue ? 'text-stone-700 font-medium' : ''}>
                         {capa.targetCloseDate}
                         {isOverdue && ' (Overdue)'}
                       </span>

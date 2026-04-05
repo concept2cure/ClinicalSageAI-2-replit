@@ -274,10 +274,10 @@ export default function RegulatoryIntelligence() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Brain className="w-6 h-6 text-purple-600" />
+            <Brain className="w-6 h-6 text-stone-600" />
             Regulatory Intelligence
           </h2>
-          <p className="text-gray-600">AI-powered insights, trends, and predictive analytics</p>
+          <p className="text-stone-600">AI-powered insights, trends, and predictive analytics</p>
         </div>
         <Badge 
           variant={metrics.riskScore < 30 ? 'default' : metrics.riskScore < 60 ? 'secondary' : 'destructive'}
@@ -292,7 +292,7 @@ export default function RegulatoryIntelligence() {
       <Card data-testid="card-insights-dashboard">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-blue-600" />
+            <BarChart3 className="w-5 h-5 text-stone-600" />
             Key Performance Metrics
           </CardTitle>
         </CardHeader>
@@ -301,10 +301,10 @@ export default function RegulatoryIntelligence() {
             {/* Success Rate */}
             <div className="p-4 border rounded-lg" data-testid="metric-success-rate">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-600">Success Rate</span>
-                <CheckCircle className="w-4 h-4 text-green-500" />
+                <span className="text-sm font-medium text-stone-600">Success Rate</span>
+                <CheckCircle className="w-4 h-4 text-stone-1000" />
               </div>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-stone-700">
                 {metrics.submissionSuccessRate.toFixed(1)}%
               </div>
               <Progress 
@@ -312,7 +312,7 @@ export default function RegulatoryIntelligence() {
                 className="mt-2 h-2"
                 data-testid="progress-success-rate"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-stone-500 mt-1">
                 {metrics.approvedSubmissions} of {metrics.totalSubmissions} submissions approved
               </p>
             </div>
@@ -320,10 +320,10 @@ export default function RegulatoryIntelligence() {
             {/* Avg Approval Time */}
             <div className="p-4 border rounded-lg" data-testid="metric-approval-time">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-600">Avg Approval Time</span>
-                <Clock className="w-4 h-4 text-blue-500" />
+                <span className="text-sm font-medium text-stone-600">Avg Approval Time</span>
+                <Clock className="w-4 h-4 text-stone-1000" />
               </div>
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-stone-600">
                 {metrics.avgApprovalTimeDays} days
               </div>
               <Progress 
@@ -331,7 +331,7 @@ export default function RegulatoryIntelligence() {
                 className="mt-2 h-2"
                 data-testid="progress-approval-time"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-stone-500 mt-1">
                 Based on {metrics.approvedSubmissions} approved submissions
               </p>
             </div>
@@ -339,10 +339,10 @@ export default function RegulatoryIntelligence() {
             {/* Question Volume */}
             <div className="p-4 border rounded-lg" data-testid="metric-question-volume">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-600">Total Questions</span>
-                <FileText className="w-4 h-4 text-purple-500" />
+                <span className="text-sm font-medium text-stone-600">Total Questions</span>
+                <FileText className="w-4 h-4 text-stone-1000" />
               </div>
-              <div className="text-2xl font-bold text-purple-600">
+              <div className="text-2xl font-bold text-stone-600">
                 {questions.length}
               </div>
               <Progress 
@@ -350,7 +350,7 @@ export default function RegulatoryIntelligence() {
                 className="mt-2 h-2"
                 data-testid="progress-question-volume"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-stone-500 mt-1">
                 Across all submissions
               </p>
             </div>
@@ -358,17 +358,17 @@ export default function RegulatoryIntelligence() {
             {/* Risk Score */}
             <div className="p-4 border rounded-lg" data-testid="metric-risk-score">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-600">Risk Score</span>
+                <span className="text-sm font-medium text-stone-600">Risk Score</span>
                 <AlertTriangle className={`w-4 h-4 ${
-                  metrics.riskScore < 30 ? 'text-green-500' : 
-                  metrics.riskScore < 60 ? 'text-yellow-500' : 
-                  'text-red-500'
+                  metrics.riskScore < 30 ? 'text-stone-1000' : 
+                  metrics.riskScore < 60 ? 'text-stone-1000' : 
+                  'text-stone-1000'
                 }`} />
               </div>
               <div className={`text-2xl font-bold ${
-                metrics.riskScore < 30 ? 'text-green-600' : 
-                metrics.riskScore < 60 ? 'text-yellow-600' : 
-                'text-red-600'
+                metrics.riskScore < 30 ? 'text-stone-700' : 
+                metrics.riskScore < 60 ? 'text-stone-600' : 
+                'text-stone-700'
               }`}>
                 {metrics.riskScore.toFixed(0)}/100
               </div>
@@ -377,7 +377,7 @@ export default function RegulatoryIntelligence() {
                 className="mt-2 h-2"
                 data-testid="progress-risk-score"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-stone-500 mt-1">
                 {metrics.riskScore < 30 ? 'Low risk' : metrics.riskScore < 60 ? 'Medium risk' : 'High risk'}
               </p>
             </div>
@@ -390,7 +390,7 @@ export default function RegulatoryIntelligence() {
         <Card data-testid="card-predictive-analytics">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Target className="w-5 h-5 text-orange-600" />
+              <Target className="w-5 h-5 text-stone-600" />
               Likely Questions Prediction
             </CardTitle>
           </CardHeader>
@@ -401,15 +401,15 @@ export default function RegulatoryIntelligence() {
                   <div key={idx} className="space-y-1" data-testid={`prediction-question-${idx}`}>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">{q.category}</span>
-                      <span className="text-sm text-gray-600">{q.probability.toFixed(0)}% likely</span>
+                      <span className="text-sm text-stone-600">{q.probability.toFixed(0)}% likely</span>
                     </div>
                     <Progress value={q.probability} className="h-2" />
-                    <p className="text-xs text-gray-500">{q.count} historical questions</p>
+                    <p className="text-xs text-stone-500">{q.count} historical questions</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-sm" data-testid="text-no-predictions">
+              <p className="text-stone-500 text-sm" data-testid="text-no-predictions">
                 Insufficient data for predictions. Submit more data to enable predictive analytics.
               </p>
             )}
@@ -419,7 +419,7 @@ export default function RegulatoryIntelligence() {
         <Card data-testid="card-timeline-estimates">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-teal-600" />
+              <Calendar className="w-5 h-5 text-stone-600" />
               Timeline Estimates by Region
             </CardTitle>
           </CardHeader>
@@ -436,14 +436,14 @@ export default function RegulatoryIntelligence() {
                       value={Math.min(100, (est.estimatedDays / 180) * 100)} 
                       className="h-2"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-stone-500 mt-1">
                       Based on {est.submissions} submission(s)
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-sm" data-testid="text-no-timeline">
+              <p className="text-stone-500 text-sm" data-testid="text-no-timeline">
                 No regional data available yet.
               </p>
             )}
@@ -455,7 +455,7 @@ export default function RegulatoryIntelligence() {
       <Card data-testid="card-regulatory-trends">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-indigo-600" />
+            <TrendingUp className="w-5 h-5 text-stone-600" />
             Regulatory Trends
           </CardTitle>
         </CardHeader>
@@ -471,13 +471,13 @@ export default function RegulatoryIntelligence() {
                     .slice(0, 5)
                     .map(([type, count], idx) => (
                       <div key={idx} className="flex items-center justify-between" data-testid={`question-category-${idx}`}>
-                        <span className="text-sm text-gray-700">{type}</span>
+                        <span className="text-sm text-stone-700">{type}</span>
                         <Badge variant="secondary">{count}</Badge>
                       </div>
                     ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">No question data yet</p>
+                <p className="text-sm text-stone-500">No question data yet</p>
               )}
             </div>
 
@@ -488,13 +488,13 @@ export default function RegulatoryIntelligence() {
                 <div className="space-y-2">
                   {changes.slice(0, 5).map((change, idx) => (
                     <div key={idx} className="flex items-center justify-between" data-testid={`change-type-${idx}`}>
-                      <span className="text-sm text-gray-700">{change.category || change.title}</span>
+                      <span className="text-sm text-stone-700">{change.category || change.title}</span>
                       <Badge variant="outline">{change.pathway || change.impact}</Badge>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">No change data yet</p>
+                <p className="text-sm text-stone-500">No change data yet</p>
               )}
             </div>
 
@@ -506,8 +506,8 @@ export default function RegulatoryIntelligence() {
                   {Object.entries(metrics.submissionsByRegion).map(([region, count], idx) => (
                     <div key={idx} className="space-y-1" data-testid={`agency-pattern-${idx}`}>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">{region}</span>
-                        <span className="text-xs text-gray-500">{count} submissions</span>
+                        <span className="text-sm text-stone-700">{region}</span>
+                        <span className="text-xs text-stone-500">{count} submissions</span>
                       </div>
                       <Progress 
                         value={(count / metrics.totalSubmissions) * 100} 
@@ -517,7 +517,7 @@ export default function RegulatoryIntelligence() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">No agency data yet</p>
+                <p className="text-sm text-stone-500">No agency data yet</p>
               )}
             </div>
           </div>
@@ -528,7 +528,7 @@ export default function RegulatoryIntelligence() {
       <Card data-testid="card-ai-recommendations">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Lightbulb className="w-5 h-5 text-yellow-600" />
+            <Lightbulb className="w-5 h-5 text-stone-600" />
             AI Recommendations
           </CardTitle>
         </CardHeader>
@@ -540,10 +540,10 @@ export default function RegulatoryIntelligence() {
                   key={idx}
                   className={`p-4 border-l-4 rounded ${
                     rec.priority === 'high' 
-                      ? 'border-red-500 bg-red-50' 
+                      ? 'border-stone-1000 bg-stone-100' 
                       : rec.priority === 'medium'
-                      ? 'border-yellow-500 bg-yellow-50'
-                      : 'border-blue-500 bg-blue-50'
+                      ? 'border-stone-1000 bg-stone-100'
+                      : 'border-stone-1000 bg-stone-100'
                   }`}
                   data-testid={`recommendation-${idx}`}
                 >
@@ -558,16 +558,16 @@ export default function RegulatoryIntelligence() {
                           {rec.priority}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-700 mb-2">{rec.description}</p>
-                      <span className="text-xs text-gray-600 italic">→ {rec.action}</span>
+                      <p className="text-sm text-stone-700 mb-2">{rec.description}</p>
+                      <span className="text-xs text-stone-600 italic">→ {rec.action}</span>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500" data-testid="text-no-recommendations">
-              <Lightbulb className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <div className="text-center py-8 text-stone-500" data-testid="text-no-recommendations">
+              <Lightbulb className="w-12 h-12 mx-auto mb-3 text-stone-300" />
               <p className="font-medium">All systems optimal</p>
               <p className="text-sm">No immediate recommendations at this time.</p>
             </div>

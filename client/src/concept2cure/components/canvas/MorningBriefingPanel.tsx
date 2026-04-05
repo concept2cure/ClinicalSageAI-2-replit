@@ -61,23 +61,23 @@ const AlertCard: React.FC<AlertCardProps> = ({
 }) => {
   const priorityConfig = {
     CRITICAL: {
-      bg: 'bg-red-50 border-red-200',
-      icon: 'bg-red-100 text-red-600',
-      badge: 'bg-red-600 text-white',
+      bg: 'bg-stone-100 border-stone-200',
+      icon: 'bg-stone-100 text-stone-700',
+      badge: 'bg-stone-700 text-white',
     },
     HIGH: {
-      bg: 'bg-amber-50 border-amber-200',
-      icon: 'bg-amber-100 text-amber-600',
-      badge: 'bg-amber-600 text-white',
+      bg: 'bg-stone-100 border-stone-200',
+      icon: 'bg-stone-100 text-stone-600',
+      badge: 'bg-stone-600 text-white',
     },
     MEDIUM: {
-      bg: 'bg-amber-50 border-amber-200',
-      icon: 'bg-amber-100 text-amber-600',
-      badge: 'bg-amber-600 text-white',
+      bg: 'bg-stone-100 border-stone-200',
+      icon: 'bg-stone-100 text-stone-600',
+      badge: 'bg-stone-600 text-white',
     },
     LOW: {
-      bg: 'bg-blue-50 border-blue-200',
-      icon: 'bg-blue-100 text-blue-600',
+      bg: 'bg-stone-100 border-stone-200',
+      icon: 'bg-stone-100 text-stone-600',
       badge: 'bg-stone-800 text-white',
     },
     INFO: {
@@ -109,7 +109,7 @@ const AlertCard: React.FC<AlertCardProps> = ({
             {actionLabel && (
               <button
                 onClick={onAction}
-                className="text-xs font-medium text-blue-600 hover:text-stone-700 flex items-center gap-1"
+                className="text-xs font-medium text-stone-600 hover:text-stone-700 flex items-center gap-1"
               >
                 {actionLabel}
                 <ArrowRight className="w-3 h-3" />
@@ -142,8 +142,8 @@ const PriorityItem: React.FC<PriorityItemProps> = ({
   onClick,
 }) => {
   const urgencyConfig = {
-    now: { label: 'Now', color: 'bg-red-500' },
-    today: { label: 'Today', color: 'bg-amber-500' },
+    now: { label: 'Now', color: 'bg-stone-1000' },
+    today: { label: 'Today', color: 'bg-stone-1000' },
     this_week: { label: 'This Week', color: 'bg-stone-600' },
   };
 
@@ -197,10 +197,10 @@ const StatWidget: React.FC<StatWidgetProps> = ({
   color,
 }) => {
   const colorConfig = {
-    emerald: 'bg-emerald-50 text-emerald-600',
-    amber: 'bg-amber-50 text-amber-600',
-    blue: 'bg-blue-50 text-blue-600',
-    red: 'bg-red-50 text-red-600',
+    emerald: 'bg-stone-100 text-stone-700',
+    amber: 'bg-stone-100 text-stone-600',
+    blue: 'bg-stone-100 text-stone-600',
+    red: 'bg-stone-100 text-stone-700',
     purple: 'bg-stone-100 text-stone-600',
   };
 
@@ -215,7 +215,7 @@ const StatWidget: React.FC<StatWidgetProps> = ({
         {change && (
           <span className={cn(
             "text-xs font-medium",
-            change.direction === 'up' ? 'text-emerald-600' : 'text-red-600'
+            change.direction === 'up' ? 'text-stone-700' : 'text-stone-700'
           )}>
             {change.direction === 'up' ? '↑' : '↓'} {change.value}%
           </span>
@@ -256,7 +256,7 @@ export const MorningBriefingPanel: React.FC<MorningBriefingPanelProps> = ({
 
   if (error) {
     return (
-      <div className={cn("flex items-center justify-center h-64 text-red-500", className)}>
+      <div className={cn("flex items-center justify-center h-64 text-stone-1000", className)}>
         Failed to load briefing
       </div>
     );
@@ -282,7 +282,7 @@ export const MorningBriefingPanel: React.FC<MorningBriefingPanelProps> = ({
         <div className="flex items-center gap-2">
           <span className={cn(
             "w-2 h-2 rounded-full",
-            connectionStatus === 'connected' ? 'bg-emerald-500' : 'bg-red-500'
+            connectionStatus === 'connected' ? 'bg-stone-1000' : 'bg-stone-1000'
           )} />
           <span className="text-xs text-stone-500">
             {connectionStatus === 'connected' ? 'Live' : 'Offline'}
@@ -344,7 +344,7 @@ export const MorningBriefingPanel: React.FC<MorningBriefingPanelProps> = ({
               ))
             ) : (
               <div className="text-center py-8 text-stone-500">
-                <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-emerald-500" />
+                <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-stone-1000" />
                 <p className="font-medium">All Clear</p>
                 <p className="text-sm">No overnight alerts</p>
               </div>
@@ -372,7 +372,7 @@ export const MorningBriefingPanel: React.FC<MorningBriefingPanelProps> = ({
               ))
             ) : (
               <div className="text-center py-8 text-stone-500">
-                <Sparkles className="w-10 h-10 mx-auto mb-2 text-amber-500" />
+                <Sparkles className="w-10 h-10 mx-auto mb-2 text-stone-1000" />
                 <p className="font-medium">You're Ahead</p>
                 <p className="text-sm">No urgent priorities</p>
               </div>

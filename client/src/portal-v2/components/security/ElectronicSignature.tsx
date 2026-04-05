@@ -360,13 +360,13 @@ export function ElectronicSignatureGate({
   // Render failed state
   if (status.step === 'failed') {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-        <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-red-900 mb-2">Signature Failed</h3>
-        <p className="text-red-700 mb-4">
+      <div className="bg-stone-100 border border-stone-200 rounded-lg p-6 text-center">
+        <XCircle className="h-16 w-16 text-stone-1000 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-stone-900 mb-2">Signature Failed</h3>
+        <p className="text-stone-800 mb-4">
           Too many failed attempts. Your account has been temporarily locked for security.
         </p>
-        <p className="text-sm text-red-600">
+        <p className="text-sm text-stone-700">
           Please contact your system administrator or try again later.
         </p>
       </div>
@@ -376,10 +376,10 @@ export function ElectronicSignatureGate({
   // Render complete state
   if (status.step === 'complete') {
     return (
-      <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-        <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-green-900 mb-2">Signature Complete</h3>
-        <p className="text-green-700">Your electronic signature has been applied successfully.</p>
+      <div className="bg-stone-100 border border-stone-200 rounded-lg p-6 text-center">
+        <CheckCircle className="h-16 w-16 text-stone-1000 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-stone-900 mb-2">Signature Complete</h3>
+        <p className="text-stone-800">Your electronic signature has been applied successfully.</p>
       </div>
     );
   }
@@ -407,7 +407,7 @@ export function ElectronicSignatureGate({
         </div>
 
         {/* Progress indicator */}
-        <div className="px-6 py-3 bg-gray-50 border-b">
+        <div className="px-6 py-3 bg-stone-50 border-b">
           <div className="flex items-center justify-between">
             <StepIndicator
               step={1}
@@ -415,7 +415,7 @@ export function ElectronicSignatureGate({
               active={status.step === 'meaning'}
               complete={status.step !== 'meaning'}
             />
-            <div className="flex-1 h-0.5 bg-gray-200 mx-2" />
+            <div className="flex-1 h-0.5 bg-stone-200 mx-2" />
             <StepIndicator
               step={2}
               label="Password"
@@ -424,7 +424,7 @@ export function ElectronicSignatureGate({
             />
             {requireMFA && (
               <>
-                <div className="flex-1 h-0.5 bg-gray-200 mx-2" />
+                <div className="flex-1 h-0.5 bg-stone-200 mx-2" />
                 <StepIndicator
                   step={3}
                   label="MFA"
@@ -435,7 +435,7 @@ export function ElectronicSignatureGate({
             )}
             {requireBiometric && (
               <>
-                <div className="flex-1 h-0.5 bg-gray-200 mx-2" />
+                <div className="flex-1 h-0.5 bg-stone-200 mx-2" />
                 <StepIndicator
                   step={requireMFA ? 4 : 3}
                   label="Biometric"
@@ -451,7 +451,7 @@ export function ElectronicSignatureGate({
         <div className="p-6">
           {/* Context banner */}
           {context && (
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+            <div className="mb-4 p-3 bg-stone-100 border border-stone-200 rounded-lg text-sm text-stone-800">
               {context}
             </div>
           )}
@@ -459,29 +459,29 @@ export function ElectronicSignatureGate({
           {/* Meaning declaration step */}
           {status.step === 'meaning' && (
             <div className="space-y-4">
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <h3 className="font-medium text-amber-900 mb-2 flex items-center gap-2">
+              <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg">
+                <h3 className="font-medium text-stone-900 mb-2 flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5" />
                   {meaningDeclaration.title}
                 </h3>
-                <p className="text-amber-800 text-sm">{meaningDeclaration.description}</p>
+                <p className="text-stone-800 text-sm">{meaningDeclaration.description}</p>
               </div>
 
-              <div className="p-4 bg-gray-50 border rounded-lg">
+              <div className="p-4 bg-stone-50 border rounded-lg">
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-stone-600">
                     <User className="h-4 w-4" />
                     <span>{user?.displayName || user?.email}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-stone-600">
                     <Calendar className="h-4 w-4" />
                     <span>{new Date().toLocaleDateString()}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-stone-600">
                     <Clock className="h-4 w-4" />
                     <span>{new Date().toLocaleTimeString()}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-stone-600">
                     <Hash className="h-4 w-4" />
                     <span className="font-mono text-xs">{recordId.slice(0, 12)}...</span>
                   </div>
@@ -489,7 +489,7 @@ export function ElectronicSignatureGate({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-stone-700 mb-1">
                   Reason for signing (optional)
                 </label>
                 <textarea
@@ -506,9 +506,9 @@ export function ElectronicSignatureGate({
                   type="checkbox"
                   checked={meaningAcknowledged}
                   onChange={e => setMeaningAcknowledged(e.target.checked)}
-                  className="mt-1 h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  className="mt-1 h-4 w-4 text-primary-600 border-stone-300 rounded focus:ring-primary-500"
                 />
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-stone-700">
                   I acknowledge that my electronic signature has the same legal effect as a
                   handwritten signature and I am responsible for this action.
                 </span>
@@ -520,8 +520,8 @@ export function ElectronicSignatureGate({
           {status.step === 'password' && (
             <div className="space-y-4">
               <div className="flex items-center gap-3 mb-2">
-                <Lock className="h-5 w-5 text-gray-500" />
-                <h3 className="font-medium text-gray-900">Enter your password to sign</h3>
+                <Lock className="h-5 w-5 text-stone-500" />
+                <h3 className="font-medium text-stone-900">Enter your password to sign</h3>
               </div>
 
               <div className="relative">
@@ -537,13 +537,13 @@ export function ElectronicSignatureGate({
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
 
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-stone-500">
                 Your password authenticates this signature. It will not be stored with the
                 signature.
               </p>
@@ -554,11 +554,11 @@ export function ElectronicSignatureGate({
           {status.step === 'mfa' && (
             <div className="space-y-4">
               <div className="flex items-center gap-3 mb-2">
-                <Key className="h-5 w-5 text-gray-500" />
-                <h3 className="font-medium text-gray-900">Enter verification code</h3>
+                <Key className="h-5 w-5 text-stone-500" />
+                <h3 className="font-medium text-stone-900">Enter verification code</h3>
               </div>
 
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-stone-600">
                 Enter the 6-digit code from your authenticator app.
               </p>
 
@@ -573,7 +573,7 @@ export function ElectronicSignatureGate({
                 inputMode="numeric"
               />
 
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-stone-500">
                 Two-factor authentication provides additional security per 21 CFR 11.200.
               </p>
             </div>
@@ -583,8 +583,8 @@ export function ElectronicSignatureGate({
           {status.step === 'biometric' && (
             <div className="space-y-4 text-center">
               <Fingerprint className="h-16 w-16 text-primary-500 mx-auto" />
-              <h3 className="font-medium text-gray-900">Biometric Verification</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="font-medium text-stone-900">Biometric Verification</h3>
+              <p className="text-sm text-stone-600">
                 Use your device's biometric authentication to complete the signature.
               </p>
 
@@ -602,7 +602,7 @@ export function ElectronicSignatureGate({
 
           {/* Error message */}
           {status.error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-center gap-2">
+            <div className="mt-4 p-3 bg-stone-100 border border-stone-200 rounded-lg text-sm text-stone-800 flex items-center gap-2">
               <XCircle className="h-5 w-5 flex-shrink-0" />
               {status.error}
             </div>
@@ -610,8 +610,8 @@ export function ElectronicSignatureGate({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-gray-50 border-t flex justify-between">
-          <button onClick={handleCancel} className="px-4 py-2 text-gray-700 hover:text-gray-900">
+        <div className="px-6 py-4 bg-stone-50 border-t flex justify-between">
+          <button onClick={handleCancel} className="px-4 py-2 text-stone-700 hover:text-stone-900">
             Cancel
           </button>
 
@@ -652,15 +652,15 @@ function StepIndicator({ step, label, active, complete }: StepIndicatorProps) {
       <div
         className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
           complete
-            ? 'bg-green-500 text-white'
+            ? 'bg-stone-1000 text-white'
             : active
               ? 'bg-primary-600 text-white'
-              : 'bg-gray-200 text-gray-500'
+              : 'bg-stone-200 text-stone-500'
         }`}
       >
         {complete ? <CheckCircle className="h-5 w-5" /> : step}
       </div>
-      <span className={`text-xs mt-1 ${active ? 'text-primary-600 font-medium' : 'text-gray-500'}`}>
+      <span className={`text-xs mt-1 ${active ? 'text-primary-600 font-medium' : 'text-stone-500'}`}>
         {label}
       </span>
     </div>
@@ -687,23 +687,23 @@ export function SignatureDisplay({
   if (compact) {
     return (
       <div className="flex items-center gap-2 text-sm">
-        <ShieldCheck className="h-4 w-4 text-green-500" />
-        <span className="text-gray-600">Signed by</span>
+        <ShieldCheck className="h-4 w-4 text-stone-1000" />
+        <span className="text-stone-600">Signed by</span>
         <span className="font-medium">{signature.userId}</span>
-        <span className="text-gray-400">•</span>
-        <span className="text-gray-500">{new Date(signature.timestamp).toLocaleDateString()}</span>
+        <span className="text-stone-400">•</span>
+        <span className="text-stone-500">{new Date(signature.timestamp).toLocaleDateString()}</span>
       </div>
     );
   }
 
   return (
-    <div className="border border-green-200 rounded-lg overflow-hidden">
-      <div className="bg-green-50 px-4 py-3 flex items-center justify-between border-b border-green-200">
+    <div className="border border-stone-200 rounded-lg overflow-hidden">
+      <div className="bg-stone-100 px-4 py-3 flex items-center justify-between border-b border-stone-200">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="h-5 w-5 text-green-600" />
-          <span className="font-medium text-green-900">Electronic Signature</span>
+          <ShieldCheck className="h-5 w-5 text-stone-700" />
+          <span className="font-medium text-stone-900">Electronic Signature</span>
         </div>
-        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+        <span className="text-xs bg-stone-100 text-stone-800 px-2 py-1 rounded">
           21 CFR Part 11
         </span>
       </div>
@@ -711,32 +711,32 @@ export function SignatureDisplay({
       <div className="p-4 space-y-3">
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="text-gray-500">Signed by:</span>
+            <span className="text-stone-500">Signed by:</span>
             <p className="font-medium">{signature.userId}</p>
           </div>
           <div>
-            <span className="text-gray-500">Date & Time:</span>
+            <span className="text-stone-500">Date & Time:</span>
             <p className="font-medium">{new Date(signature.timestamp).toLocaleString()}</p>
           </div>
           <div>
-            <span className="text-gray-500">Meaning:</span>
+            <span className="text-stone-500">Meaning:</span>
             <p className="font-medium capitalize">{signature.meaning}</p>
           </div>
           <div>
-            <span className="text-gray-500">Record:</span>
+            <span className="text-stone-500">Record:</span>
             <p className="font-medium font-mono text-xs">{signature.recordId.slice(0, 16)}...</p>
           </div>
         </div>
 
         {signature.reason && (
           <div className="text-sm">
-            <span className="text-gray-500">Reason:</span>
+            <span className="text-stone-500">Reason:</span>
             <p className="mt-1">{signature.reason}</p>
           </div>
         )}
 
         {showDetails && (
-          <div className="pt-3 border-t text-xs text-gray-500 space-y-1">
+          <div className="pt-3 border-t text-xs text-stone-500 space-y-1">
             <p>
               <span className="font-medium">Signature Hash:</span>{' '}
               {signature.signatureHash.slice(0, 32)}...
@@ -790,9 +790,9 @@ export function SignatureVerification({ signature, onVerified }: SignatureVerifi
   }, [signature, onVerified]);
 
   return (
-    <div className="p-4 bg-gray-50 border rounded-lg">
+    <div className="p-4 bg-stone-50 border rounded-lg">
       <div className="flex items-center justify-between mb-4">
-        <h4 className="font-medium text-gray-900">Signature Verification</h4>
+        <h4 className="font-medium text-stone-900">Signature Verification</h4>
         {status === 'idle' && (
           <button onClick={verify} className="text-sm text-primary-600 hover:text-primary-700">
             Verify Now
@@ -801,21 +801,21 @@ export function SignatureVerification({ signature, onVerified }: SignatureVerifi
       </div>
 
       {status === 'verifying' && (
-        <div className="flex items-center gap-2 text-gray-600">
+        <div className="flex items-center gap-2 text-stone-600">
           <div className="animate-spin h-4 w-4 border-2 border-primary-600 border-t-transparent rounded-full" />
           <span>Verifying signature integrity...</span>
         </div>
       )}
 
       {status === 'valid' && (
-        <div className="flex items-center gap-2 text-green-600">
+        <div className="flex items-center gap-2 text-stone-700">
           <CheckCircle className="h-5 w-5" />
           <span>Signature verified - Hash chain intact</span>
         </div>
       )}
 
       {status === 'invalid' && (
-        <div className="flex items-center gap-2 text-red-600">
+        <div className="flex items-center gap-2 text-stone-700">
           <XCircle className="h-5 w-5" />
           <span>Signature verification failed - Contact administrator</span>
         </div>

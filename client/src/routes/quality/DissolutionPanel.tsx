@@ -62,7 +62,7 @@ export default function DissolutionPanel({ testId, Q = 80 }: { testId: string; Q
           </Button>
         </div>
         {result && (
-          <div className={`p-2 rounded ${result.pass ? 'bg-green-100' : 'bg-red-100'}`}>
+          <div className={`p-2 rounded ${result.pass ? 'bg-stone-100' : 'bg-stone-100'}`}>
             <strong>{result.stage}:</strong> {result.pass ? 'PASS' : 'FAIL'} - {result.reason}
           </div>
         )}

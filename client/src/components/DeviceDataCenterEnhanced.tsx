@@ -260,11 +260,11 @@ export default function DeviceDataCenterEnhanced({
   // Get requirement status color
   const getRequirementStatus = (reqId: string) => {
     const files = getFilesForRequirement(reqId);
-    if (files.length === 0) return 'bg-red-100 text-red-700';
+    if (files.length === 0) return 'bg-stone-100 text-stone-800';
     const approved = files.filter(f => f.regulatory_status === 'approved').length;
-    if (approved === files.length) return 'bg-green-100 text-green-700';
-    if (approved > 0) return 'bg-yellow-100 text-yellow-700';
-    return 'bg-gray-100 text-gray-700';
+    if (approved === files.length) return 'bg-stone-100 text-stone-800';
+    if (approved > 0) return 'bg-stone-100 text-stone-700';
+    return 'bg-stone-100 text-stone-700';
   };
 
   // Handle file upload with requirement linking
@@ -336,9 +336,9 @@ export default function DeviceDataCenterEnhanced({
                 >
                   <div className="flex items-center gap-2">
                     {fileCount > 0 ? (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <CheckCircle className="h-4 w-4 text-stone-1000" />
                     ) : (
-                      <AlertCircle className="h-4 w-4 text-red-500" />
+                      <AlertCircle className="h-4 w-4 text-stone-1000" />
                     )}
                     <span>{name}</span>
                     {req.required && <Badge variant="destructive" className="text-xs">Required</Badge>}
@@ -403,7 +403,7 @@ export default function DeviceDataCenterEnhanced({
                         </div>
                         <div className="flex items-center gap-2">
                           {sectionFiles.length > 0 ? (
-                            <Badge variant="default" className="bg-green-500">
+                            <Badge variant="default" className="bg-stone-1000">
                               <CheckCircle className="h-3 w-3 mr-1" />
                               {sectionFiles.length} files
                             </Badge>
@@ -439,11 +439,11 @@ export default function DeviceDataCenterEnhanced({
                           {sectionFiles.map((file: EvidenceFile) => (
                             <div
                               key={file.id}
-                              className="flex items-center justify-between p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+                              className="flex items-center justify-between p-2 bg-stone-50 rounded hover:bg-stone-100 transition-colors cursor-pointer"
                               onClick={() => onFileSelect?.(file)}
                             >
                               <div className="flex items-center gap-2">
-                                <FileText className="h-4 w-4 text-gray-500" />
+                                <FileText className="h-4 w-4 text-stone-500" />
                                 <span className="text-sm">{file.file_name}</span>
                               </div>
                               <div className="flex items-center gap-2">
@@ -451,7 +451,7 @@ export default function DeviceDataCenterEnhanced({
                                   file.regulatory_status === 'approved' ? 'default' :
                                   file.regulatory_status === 'under_review' ? 'outline' :
                                   'secondary'
-                                } className={file.regulatory_status === 'approved' ? 'bg-green-500' : ''}>
+                                } className={file.regulatory_status === 'approved' ? 'bg-stone-1000' : ''}>
                                   {file.regulatory_status}
                                 </Badge>
                                 <Button size="sm" variant="ghost">
@@ -470,7 +470,7 @@ export default function DeviceDataCenterEnhanced({
               {/* Upload Zone */}
               <div
                 className={`mt-6 border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                  isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+                  isDragging ? 'border-stone-1000 bg-stone-100' : 'border-stone-300'
                 }`}
                 onDragOver={(e) => {
                   e.preventDefault();
@@ -483,8 +483,8 @@ export default function DeviceDataCenterEnhanced({
                   handleFileUpload(e.dataTransfer.files, selectedRequirement);
                 }}
               >
-                <UploadCloud className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                <p className="text-sm text-gray-600">
+                <UploadCloud className="h-8 w-8 mx-auto mb-2 text-stone-400" />
+                <p className="text-sm text-stone-600">
                   Drop files here or click to browse
                 </p>
               </div>
@@ -494,9 +494,9 @@ export default function DeviceDataCenterEnhanced({
           <Card>
             <CardContent className="py-12">
               <div className="text-center">
-                <Database className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                <Database className="h-12 w-12 mx-auto mb-3 text-stone-400" />
                 <h3 className="text-lg font-semibold mb-2">Select a Requirement</h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-stone-600">
                   Choose an FDA requirement category to view and manage evidence files
                 </p>
               </div>
@@ -525,7 +525,7 @@ export default function DeviceDataCenterEnhanced({
           <CardTitle className="text-sm">Approved Evidence</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-2xl font-bold text-green-600">
+          <p className="text-2xl font-bold text-stone-700">
             {analytics?.approvedFiles || 0}
           </p>
           <Progress value={75} className="h-1 mt-2" />
@@ -537,7 +537,7 @@ export default function DeviceDataCenterEnhanced({
           <CardTitle className="text-sm">Under Review</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-2xl font-bold text-yellow-600">
+          <p className="text-2xl font-bold text-stone-600">
             {analytics?.underReview || 0}
           </p>
           <p className="text-xs text-muted-foreground">Awaiting approval</p>
@@ -549,7 +549,7 @@ export default function DeviceDataCenterEnhanced({
           <CardTitle className="text-sm">Missing Evidence</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-2xl font-bold text-red-600">
+          <p className="text-2xl font-bold text-stone-700">
             {analytics?.gaps || 0}
           </p>
           <p className="text-xs text-muted-foreground">Critical gaps</p>
@@ -579,7 +579,7 @@ export default function DeviceDataCenterEnhanced({
                 <Card key={file.id} className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5 text-gray-500" />
+                      <FileText className="h-5 w-5 text-stone-500" />
                       <div>
                         <p className="font-medium">{file.file_name}</p>
                         <div className="flex gap-2 text-sm text-muted-foreground">
@@ -591,11 +591,11 @@ export default function DeviceDataCenterEnhanced({
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="text-green-600">
+                      <Button size="sm" variant="outline" className="text-stone-700">
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Approve
                       </Button>
-                      <Button size="sm" variant="outline" className="text-red-600">
+                      <Button size="sm" variant="outline" className="text-stone-700">
                         <XCircle className="mr-2 h-4 w-4" />
                         Reject
                       </Button>
@@ -618,9 +618,9 @@ export default function DeviceDataCenterEnhanced({
                 f.regulatory_status === 'approved'
               ).slice(0, 3).map((file: EvidenceFile) => (
                 <div key={file.id} className="flex items-center gap-3 p-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <CheckCircle className="h-4 w-4 text-stone-1000" />
                   <span className="text-sm">{file.file_name}</span>
-                  <Badge variant="outline" className="text-green-600">Approved</Badge>
+                  <Badge variant="outline" className="text-stone-700">Approved</Badge>
                 </div>
               )) || <p className="text-muted-foreground text-sm">No recently approved files</p>}
             </div>
@@ -631,7 +631,7 @@ export default function DeviceDataCenterEnhanced({
             <Card>
               <CardContent className="pt-6">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-2xl font-bold text-stone-700">
                     {filesData?.files?.filter((f: EvidenceFile) => f.regulatory_status === 'approved').length || 0}
                   </p>
                   <p className="text-sm text-muted-foreground">Approved</p>
@@ -641,7 +641,7 @@ export default function DeviceDataCenterEnhanced({
             <Card>
               <CardContent className="pt-6">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-yellow-600">
+                  <p className="text-2xl font-bold text-stone-600">
                     {filesData?.files?.filter((f: EvidenceFile) => f.regulatory_status === 'under_review').length || 0}
                   </p>
                   <p className="text-sm text-muted-foreground">Under Review</p>
@@ -651,7 +651,7 @@ export default function DeviceDataCenterEnhanced({
             <Card>
               <CardContent className="pt-6">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-gray-600">
+                  <p className="text-2xl font-bold text-stone-600">
                     {filesData?.files?.filter((f: EvidenceFile) => f.regulatory_status === 'draft').length || 0}
                   </p>
                   <p className="text-sm text-muted-foreground">Pending</p>

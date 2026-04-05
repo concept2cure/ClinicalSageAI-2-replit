@@ -269,13 +269,13 @@ export const ZenSignup: React.FC = () => {
         placeholder={placeholder}
         autoFocus={autoFocus}
         className={`h-[44px] rounded-[10px] border-stone-200 bg-white px-3.5 text-[14px] placeholder:text-stone-300 focus-visible:ring-1 focus-visible:ring-stone-300 focus-visible:border-stone-300 transition-shadow ${
-          errors[field] ? 'border-red-300 bg-red-50/30' : ''
+          errors[field] ? 'border-stone-300 bg-stone-100/30' : ''
         }`}
         aria-invalid={!!errors[field]}
         aria-describedby={errors[field] ? `${field}-error` : undefined}
       />
       {errors[field] && (
-        <p id={`${field}-error`} className="text-[11px] text-red-600" role="alert">
+        <p id={`${field}-error`} className="text-[11px] text-stone-700" role="alert">
           {errors[field]}
         </p>
       )}
@@ -315,7 +315,7 @@ export const ZenSignup: React.FC = () => {
         />
       </div>
       {(errors.password || errors.confirmPassword) && (
-        <p className="text-[11px] text-red-600" role="alert">
+        <p className="text-[11px] text-stone-700" role="alert">
           {errors.password || errors.confirmPassword}
         </p>
       )}
@@ -341,7 +341,7 @@ export const ZenSignup: React.FC = () => {
           >
             <SelectTrigger
               className={`h-[44px] rounded-[10px] border-stone-200 bg-white text-[14px] focus:ring-1 focus:ring-stone-300 ${
-                errors.organizationType ? 'border-red-300' : ''
+                errors.organizationType ? 'border-stone-300' : ''
               }`}
             >
               <SelectValue placeholder="Select..." />
@@ -355,7 +355,7 @@ export const ZenSignup: React.FC = () => {
             </SelectContent>
           </Select>
           {errors.organizationType && (
-            <p className="text-[11px] text-red-600" role="alert">{errors.organizationType}</p>
+            <p className="text-[11px] text-stone-700" role="alert">{errors.organizationType}</p>
           )}
         </div>
 
@@ -380,8 +380,8 @@ export const ZenSignup: React.FC = () => {
       </div>
 
       {errors.general && (
-        <div role="alert" className="flex items-start gap-2.5 rounded-[10px] border border-red-100 bg-red-50/60 px-3.5 py-3">
-          <p className="text-[13px] leading-snug text-red-600">{errors.general}</p>
+        <div role="alert" className="flex items-start gap-2.5 rounded-[10px] border border-stone-100 bg-stone-100/60 px-3.5 py-3">
+          <p className="text-[13px] leading-snug text-stone-700">{errors.general}</p>
         </div>
       )}
 
@@ -435,14 +435,14 @@ export const ZenSignup: React.FC = () => {
         </span>
       </label>
       {errors.acceptedTerms && (
-        <p id="terms-error" className="text-[11px] text-red-600 ml-7" role="alert">
+        <p id="terms-error" className="text-[11px] text-stone-700 ml-7" role="alert">
           {errors.acceptedTerms}
         </p>
       )}
 
       {errors.submit && (
-        <div role="alert" className="flex items-start gap-2.5 rounded-[10px] border border-red-100 bg-red-50/60 px-3.5 py-3">
-          <p className="text-[13px] leading-snug text-red-600">{errors.submit}</p>
+        <div role="alert" className="flex items-start gap-2.5 rounded-[10px] border border-stone-100 bg-stone-100/60 px-3.5 py-3">
+          <p className="text-[13px] leading-snug text-stone-700">{errors.submit}</p>
         </div>
       )}
 
@@ -472,8 +472,8 @@ export const ZenSignup: React.FC = () => {
 
   const renderSubmittedStep = () => (
     <div className="flex flex-col items-center pt-6">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 mb-4">
-        <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-stone-100 mb-4">
+        <CheckCircle2 className="h-6 w-6 text-stone-1000" />
       </div>
       <h2 className="text-[22px] font-semibold tracking-[-0.01em] text-stone-900">
         Welcome to Concept2Cure
@@ -533,7 +533,7 @@ export const ZenSignup: React.FC = () => {
                       <div
                         className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium transition-colors ${
                           isDone
-                            ? 'bg-emerald-500 text-white'
+                            ? 'bg-stone-1000 text-white'
                             : isActive
                               ? 'bg-white text-stone-900'
                               : 'bg-stone-800 text-stone-500'
@@ -601,7 +601,7 @@ export const ZenSignup: React.FC = () => {
                         <div
                           className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium transition-colors ${
                             isDone
-                              ? 'bg-emerald-500 text-white'
+                              ? 'bg-stone-1000 text-white'
                               : isActive
                                 ? 'bg-stone-900 text-white'
                                 : 'bg-stone-200 text-stone-400'

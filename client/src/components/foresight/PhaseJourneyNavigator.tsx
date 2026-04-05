@@ -93,9 +93,9 @@ const PhaseJourneyNavigator: React.FC = () => {
   };
 
   const getSuccessColor = (score: number) => {
-    if (score >= 0.7) return 'text-green-600';
-    if (score >= 0.5) return 'text-yellow-600';
-    return 'text-red-600';
+    if (score >= 0.7) return 'text-stone-700';
+    if (score >= 0.5) return 'text-stone-600';
+    return 'text-stone-700';
   };
 
   const getSuccessLabel = (score: number) => {
@@ -146,11 +146,11 @@ const PhaseJourneyNavigator: React.FC = () => {
                   </p>
                 </div>
                 {prediction.successScore >= 0.7 ? (
-                  <CheckCircle className="h-8 w-8 text-green-600" />
+                  <CheckCircle className="h-8 w-8 text-stone-700" />
                 ) : prediction.successScore >= 0.5 ? (
-                  <Activity className="h-8 w-8 text-yellow-600" />
+                  <Activity className="h-8 w-8 text-stone-600" />
                 ) : (
-                  <AlertTriangle className="h-8 w-8 text-red-600" />
+                  <AlertTriangle className="h-8 w-8 text-stone-700" />
                 )}
               </div>
               <Badge variant="outline" className="mt-2">
@@ -182,8 +182,8 @@ const PhaseJourneyNavigator: React.FC = () => {
                       isActive 
                         ? 'bg-primary text-primary-foreground' 
                         : isCompleted 
-                        ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                        : 'bg-gray-100 hover:bg-gray-200'
+                        ? 'bg-stone-100 text-stone-800 hover:bg-stone-200'
+                        : 'bg-stone-100 hover:bg-stone-200'
                     }`}
                   >
                     <Icon className="h-6 w-6 mb-1" />
@@ -192,7 +192,7 @@ const PhaseJourneyNavigator: React.FC = () => {
                   </button>
                   {index < phases.length - 1 && (
                     <ArrowRight className={`mx-2 h-5 w-5 ${
-                      isCompleted ? 'text-green-500' : 'text-gray-300'
+                      isCompleted ? 'text-stone-1000' : 'text-stone-300'
                     }`} />
                   )}
                 </div>

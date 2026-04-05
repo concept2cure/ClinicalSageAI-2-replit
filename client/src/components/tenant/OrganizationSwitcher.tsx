@@ -50,22 +50,22 @@ export function OrganizationSwitcher() {
       <Button
         variant="outline"
         onClick={() => navigate('/tenant-management')}
-        className="flex items-center justify-between w-[240px] px-3 py-2 h-10 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+        className="flex items-center justify-between w-[240px] px-3 py-2 h-10 border-stone-200 hover:border-stone-300 hover:bg-stone-50 transition-colors"
       >
         <div className="flex items-center gap-3 truncate">
-          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-400">
+          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-stone-100 text-stone-400">
             <Building className="h-3 w-3" />
           </div>
-          <span className="truncate font-medium text-gray-500">No Organizations Available</span>
+          <span className="truncate font-medium text-stone-500">No Organizations Available</span>
         </div>
-        <Settings className="ml-2 h-4 w-4 shrink-0 text-gray-400" />
+        <Settings className="ml-2 h-4 w-4 shrink-0 text-stone-400" />
       </Button>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-between w-[240px] px-3 py-2 h-10 border border-gray-200 rounded-md bg-gray-50">
+      <div className="flex items-center justify-between w-[240px] px-3 py-2 h-10 border border-stone-200 rounded-md bg-stone-50">
         <div className="flex items-center gap-3">
           <Skeleton className="h-6 w-6 rounded-full" />
           <Skeleton className="h-4 w-24" />
@@ -114,10 +114,10 @@ export function OrganizationSwitcher() {
           role="combobox"
           aria-expanded={open}
           aria-label="Select an organization"
-          className="flex items-center justify-between w-[240px] px-3 py-2 h-10 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+          className="flex items-center justify-between w-[240px] px-3 py-2 h-10 border-stone-200 hover:border-stone-300 hover:bg-stone-50 transition-colors"
         >
           <div className="flex items-center gap-3 truncate">
-            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600">
+            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-stone-100 text-stone-700">
               {currentOrganization?.logo ? (
                 <img
                   src={currentOrganization.logo}
@@ -128,15 +128,15 @@ export function OrganizationSwitcher() {
                 <Building className="h-3 w-3" />
               )}
             </div>
-            <span className="truncate font-medium text-gray-700">
+            <span className="truncate font-medium text-stone-700">
               {currentOrganization?.name || 'Select Organization'}
             </span>
           </div>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-gray-400" />
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-stone-400" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[260px] p-0 z-50 shadow-xl border border-gray-200 bg-white rounded-lg"
+        className="w-[260px] p-0 z-50 shadow-xl border border-stone-200 bg-white rounded-lg"
         align="start"
         sideOffset={8}
         side="bottom"
@@ -144,28 +144,28 @@ export function OrganizationSwitcher() {
         collisionPadding={10}
       >
         <Command className="rounded-lg">
-          <div className="px-3 py-2 border-b border-gray-100">
+          <div className="px-3 py-2 border-b border-stone-100">
             <CommandInput
               placeholder="Search organization..."
-              className="border-0 p-0 text-sm focus:ring-0 placeholder:text-gray-400"
+              className="border-0 p-0 text-sm focus:ring-0 placeholder:text-stone-400"
             />
           </div>
           <CommandList className="max-h-[320px] overflow-auto">
-            <CommandEmpty className="py-6 text-center text-sm text-gray-500">
+            <CommandEmpty className="py-6 text-center text-sm text-stone-500">
               No organization found.
             </CommandEmpty>
             <CommandGroup>
-              <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <div className="px-3 py-2 text-xs font-semibold text-stone-500 uppercase tracking-wide">
                 Organizations
               </div>
               {organizations.map(org => (
                 <CommandItem
                   key={org.id}
                   onSelect={() => handleSelect({ ...org, id: String(org.id) })}
-                  className="mx-2 mb-1 rounded-md px-3 py-2.5 text-sm cursor-pointer hover:bg-gray-50 data-[selected]:bg-green-50 data-[selected]:text-green-900"
+                  className="mx-2 mb-1 rounded-md px-3 py-2.5 text-sm cursor-pointer hover:bg-stone-50 data-[selected]:bg-stone-100 data-[selected]:text-stone-900"
                 >
                   <div className="flex items-center gap-3 truncate flex-1">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 text-green-600">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-stone-100 to-stone-100 text-stone-700">
                       {org.logo ? (
                         <img
                           src={org.logo}
@@ -177,30 +177,30 @@ export function OrganizationSwitcher() {
                       )}
                     </div>
                     <div className="flex flex-col truncate">
-                      <span className="truncate font-medium text-gray-900">{org.name}</span>
-                      <span className="text-xs text-gray-500">Organization</span>
+                      <span className="truncate font-medium text-stone-900">{org.name}</span>
+                      <span className="text-xs text-stone-500">Organization</span>
                     </div>
                   </div>
                   <Check
                     className={cn(
-                      'ml-auto h-4 w-4 text-green-600',
+                      'ml-auto h-4 w-4 text-stone-700',
                       currentOrganization?.id === org.id ? 'opacity-100' : 'opacity-0'
                     )}
                   />
                 </CommandItem>
               ))}
             </CommandGroup>
-            <div className="border-t border-gray-100 mt-2">
+            <div className="border-t border-stone-100 mt-2">
               <CommandGroup>
                 <CommandItem
                   onSelect={handleManageOrganizations}
-                  className="mx-2 my-2 rounded-md px-3 py-2.5 text-sm cursor-pointer hover:bg-gray-50 data-[selected]:bg-gray-100"
+                  className="mx-2 my-2 rounded-md px-3 py-2.5 text-sm cursor-pointer hover:bg-stone-50 data-[selected]:bg-stone-100"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-600">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-stone-100 text-stone-600">
                       <Settings className="h-4 w-4" />
                     </div>
-                    <span className="font-medium text-gray-700">Manage Organizations</span>
+                    <span className="font-medium text-stone-700">Manage Organizations</span>
                   </div>
                 </CommandItem>
               </CommandGroup>

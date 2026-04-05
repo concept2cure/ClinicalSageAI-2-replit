@@ -550,9 +550,9 @@ export function SessionMonitor({ onExpiring, onExpired, warningMinutes = 5 }: Se
   if (!showWarning) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 bg-amber-50 border border-amber-200 rounded-lg p-4 shadow-lg z-50">
-      <h4 className="font-medium text-amber-900">Session Expiring Soon</h4>
-      <p className="text-sm text-amber-700 mt-1">
+    <div className="fixed bottom-4 right-4 bg-stone-100 border border-stone-200 rounded-lg p-4 shadow-lg z-50">
+      <h4 className="font-medium text-stone-900">Session Expiring Soon</h4>
+      <p className="text-sm text-stone-700 mt-1">
         Your session will expire in {sessionTimeRemaining()} minutes.
       </p>
       <button
@@ -560,7 +560,7 @@ export function SessionMonitor({ onExpiring, onExpired, warningMinutes = 5 }: Se
           refreshSession();
           setShowWarning(false);
         }}
-        className="mt-2 px-3 py-1 bg-amber-600 text-white text-sm rounded hover:bg-amber-700"
+        className="mt-2 px-3 py-1 bg-stone-600 text-white text-sm rounded hover:bg-stone-700"
       >
         Extend Session
       </button>

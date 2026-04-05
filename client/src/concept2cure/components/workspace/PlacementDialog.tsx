@@ -88,7 +88,7 @@ function SectionPicker({ selected, onSelect }: SectionPickerProps) {
           }}
           className={cn(
             'w-full flex items-center gap-1 py-[3px] pr-2 text-left transition-colors duration-150',
-            isSelected ? 'bg-blue-100 text-stone-700 font-medium' : 'text-stone-600 hover:bg-stone-50'
+            isSelected ? 'bg-stone-100 text-stone-700 font-medium' : 'text-stone-600 hover:bg-stone-50'
           )}
           style={{ paddingLeft: `${4 + depth * 12}px` }}
         >
@@ -139,7 +139,7 @@ function SectionPicker({ selected, onSelect }: SectionPickerProps) {
                 className={cn(
                   'w-full flex items-center gap-1.5 px-3 py-1.5 text-left transition-colors duration-150',
                   selected === n.ctdSection
-                    ? 'bg-blue-100 text-stone-700'
+                    ? 'bg-stone-100 text-stone-700'
                     : 'text-stone-600 hover:bg-stone-50'
                 )}
               >
@@ -257,15 +257,15 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
           className={cn(
             'flex items-center justify-between px-5 py-3 border-b',
             config.severity === 'warning'
-              ? 'bg-amber-50 border-amber-100'
-              : 'bg-blue-50 border-blue-100'
+              ? 'bg-stone-100 border-stone-100'
+              : 'bg-stone-100 border-stone-100'
           )}
         >
           <div className="flex items-center gap-2">
             {config.severity === 'warning' ? (
-              <AlertTriangle className="w-4 h-4 text-amber-600" />
+              <AlertTriangle className="w-4 h-4 text-stone-600" />
             ) : (
-              <ShieldCheck className="w-4 h-4 text-blue-600" />
+              <ShieldCheck className="w-4 h-4 text-stone-600" />
             )}
             <h3 id="placement-dialog-title" className="text-[14px] font-semibold text-stone-900">
               {config.label}
@@ -308,14 +308,14 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
               className={cn(
                 'flex items-start gap-2 px-3 py-2 rounded-lg text-xs',
                 relocateBlocked
-                  ? 'bg-red-50/60 border border-red-200 text-red-800'
-                  : 'bg-amber-50/60 border border-amber-100 text-amber-800'
+                  ? 'bg-stone-100/60 border border-stone-200 text-stone-800'
+                  : 'bg-stone-100/60 border border-stone-100 text-stone-800'
               )}
             >
               <AlertTriangle
                 className={cn(
                   'w-3.5 h-3.5 shrink-0 mt-0.5',
-                  relocateBlocked ? 'text-red-600' : 'text-amber-600'
+                  relocateBlocked ? 'text-stone-700' : 'text-stone-600'
                 )}
               />
               <div>
@@ -324,7 +324,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
                     ? 'Relocation Blocked — Not Available in Current Mode'
                     : 'Regulatory Placement Impact'}
                 </p>
-                <p className={cn('mt-0.5', relocateBlocked ? 'text-red-700' : 'text-amber-700')}>
+                <p className={cn('mt-0.5', relocateBlocked ? 'text-stone-800' : 'text-stone-700')}>
                   {relocateBlocked
                     ? 'This document cannot be relocated in the current mode. Switch to an editable stage to relocate.'
                     : 'Relocating this document changes its position in the CTD submission structure.'}
@@ -337,8 +337,8 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
 
           {/* Impact note — initial placement */}
           {operation === 'place' && (
-            <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-blue-50/60 border border-blue-100 text-xs text-blue-800">
-              <ShieldCheck className="w-3.5 h-3.5 shrink-0 mt-0.5 text-blue-600" />
+            <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-stone-100/60 border border-stone-100 text-xs text-stone-800">
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0 mt-0.5 text-stone-600" />
               <div>
                 <p className="font-medium">Placement creates a governed record</p>
                 <p className="text-stone-700 mt-0.5">
@@ -359,8 +359,8 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
               className={cn(
                 'flex items-center gap-2 px-3 py-2 rounded-lg border',
                 operation === 'relocate'
-                  ? 'bg-amber-50 border-amber-100'
-                  : 'bg-blue-50 border-blue-100'
+                  ? 'bg-stone-100 border-stone-100'
+                  : 'bg-stone-100 border-stone-100'
               )}
             >
               {currentSection && (
@@ -383,7 +383,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
               <ArrowRight
                 className={cn(
                   'w-4 h-4 shrink-0',
-                  operation === 'relocate' ? 'text-amber-600' : 'text-blue-600'
+                  operation === 'relocate' ? 'text-stone-600' : 'text-stone-600'
                 )}
               />
               <div className="flex-1 text-center">
@@ -408,7 +408,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
           <div>
             <label className="text-xs font-medium text-stone-600 mb-1.5 block">
               Reason for {operation === 'relocate' ? 'relocation' : 'placement'}
-              <span className="text-red-500"> *</span>
+              <span className="text-stone-1000"> *</span>
             </label>
             <textarea
               value={reason}
@@ -420,7 +420,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
               <span
                 className={cn(
                   'text-xs tabular-nums',
-                  reason.trim().length < 5 ? 'text-stone-400' : 'text-emerald-500'
+                  reason.trim().length < 5 ? 'text-stone-400' : 'text-stone-1000'
                 )}
               >
                 {reason.trim().length}/5 min

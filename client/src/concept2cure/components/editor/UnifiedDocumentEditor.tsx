@@ -382,7 +382,7 @@ const TraceabilityMark = Mark.create({
       mergeAttributes(HTMLAttributes, {
         'data-traceability': 'true',
         class:
-          'traceability-link bg-blue-100 border-b-2 border-stone-600 cursor-pointer hover:bg-blue-200',
+          'traceability-link bg-stone-100 border-b-2 border-stone-600 cursor-pointer hover:bg-stone-200',
       }),
       0,
     ];
@@ -511,7 +511,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
       disabled={disabled}
       title={title}
       className={`p-1.5 rounded hover:bg-stone-200 transition-colors
-        ${isActive ? 'bg-stone-200 text-blue-600' : 'text-stone-600'}
+        ${isActive ? 'bg-stone-200 text-stone-600' : 'text-stone-600'}
         ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       {children}
@@ -633,7 +633,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         isActive={editor.isActive('highlight')}
         title="Highlight"
       >
-        <span className="w-4 h-4 bg-amber-300 rounded text-xs flex items-center justify-center font-semibold">
+        <span className="w-4 h-4 bg-stone-300 rounded text-xs flex items-center justify-center font-semibold">
           H
         </span>
       </ToolButton>
@@ -831,7 +831,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             onClick={() => editor.chain().focus().deleteTable().run()}
             title="Delete Table"
           >
-            <Trash2 className="w-3.5 h-3.5 text-red-400" />
+            <Trash2 className="w-3.5 h-3.5 text-stone-400" />
           </ToolButton>
         </>
       )}
@@ -946,7 +946,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         onClick={() => (editor as any).commands.toggleSuggestionMode()}
         className={`flex items-center gap-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
           (editor as any).extensionManager?.extensions?.find((e: any) => e.name === 'trackChanges')?.options?.enabled
-            ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
+            ? 'bg-stone-100 text-stone-800 border border-stone-300'
             : 'text-stone-500 hover:bg-stone-100'
         }`}
         title="Toggle Suggestion Mode — edits become tracked changes"
@@ -1048,9 +1048,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
       {/* Lock / Save */}
       <ToolButton onClick={onToggleLock} title={isLocked ? 'Unlock Document' : 'Lock Document'}>
         {isLocked ? (
-          <Lock className="w-4 h-4 text-red-500" />
+          <Lock className="w-4 h-4 text-stone-1000" />
         ) : (
-          <Unlock className="w-4 h-4 text-emerald-500" />
+          <Unlock className="w-4 h-4 text-stone-1000" />
         )}
       </ToolButton>
       <button
@@ -1135,7 +1135,7 @@ const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, onClose }) => {
   const currentIndex = (editor?.storage as any)?.searchAndReplace?.currentIndex ?? -1;
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 border-b border-stone-200 bg-amber-50/50">
+    <div className="flex items-center gap-2 px-3 py-2 border-b border-stone-200 bg-stone-100/50">
       <Search className="w-4 h-4 text-stone-400 flex-shrink-0" />
       <input
         ref={findInputRef}
@@ -1219,12 +1219,12 @@ const SourceTracerPopover: React.FC<SourceTracerPopoverProps> = ({
   if (!source || !position) return null;
   return (
     <div
-      className="fixed z-50 bg-white border border-blue-200 rounded-lg shadow p-3 w-72"
+      className="fixed z-50 bg-white border border-stone-200 rounded-lg shadow p-3 w-72"
       style={{ top: position.y + 8, left: position.x }}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
-          <FileText className="w-4 h-4 text-blue-500" />
+          <FileText className="w-4 h-4 text-stone-1000" />
           <span className="text-xs font-semibold text-stone-900">{source.title}</span>
         </div>
         <button
@@ -1240,7 +1240,7 @@ const SourceTracerPopover: React.FC<SourceTracerPopoverProps> = ({
         <span className="px-1.5 py-0.5 bg-stone-100 rounded">{source.documentType}</span>
         <span>v{source.version}</span>
         <span className="flex items-center gap-1">
-          <CheckCircle className="w-3 h-3 text-emerald-500" />
+          <CheckCircle className="w-3 h-3 text-stone-1000" />
           Hash verified
         </span>
       </div>
@@ -1252,7 +1252,7 @@ const SourceTracerPopover: React.FC<SourceTracerPopoverProps> = ({
       <div className="flex items-center gap-2">
         <button
           onClick={() => onOpenSource?.(source.id)}
-          className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded"
+          className="flex items-center gap-1 px-2 py-1 text-xs text-stone-600 hover:bg-stone-100 rounded"
         >
           <ExternalLink className="w-3 h-3" />
           Open full source
@@ -1305,10 +1305,10 @@ const StatusBar: React.FC<StatusBarProps> = ({ editor, complianceScore, collabor
         <span
           className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full ${
             complianceScore >= 90
-              ? 'bg-emerald-100 text-emerald-700'
+              ? 'bg-stone-100 text-stone-800'
               : complianceScore >= 70
-                ? 'bg-amber-100 text-amber-700'
-                : 'bg-red-100 text-red-700'
+                ? 'bg-stone-100 text-stone-700'
+                : 'bg-stone-100 text-stone-800'
           }`}
         >
           <FileCheck className="w-3 h-3" />
@@ -1355,9 +1355,9 @@ interface CompliancePanelProps {
 
 const CompliancePanel: React.FC<CompliancePanelProps> = ({ score, issues, onIssueClick }) => {
   const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-emerald-500';
-    if (score >= 70) return 'text-amber-500';
-    return 'text-red-500';
+    if (score >= 90) return 'text-stone-1000';
+    if (score >= 70) return 'text-stone-1000';
+    return 'text-stone-1000';
   };
 
   const errorCount = issues.filter(i => i.type === 'error').length;
@@ -1375,19 +1375,19 @@ const CompliancePanel: React.FC<CompliancePanelProps> = ({ score, issues, onIssu
         <div className="w-full bg-stone-200 rounded-full h-2">
           <div
             className={`h-2 rounded-full transition-all ${
-              score >= 90 ? 'bg-emerald-500' : score >= 70 ? 'bg-amber-500' : 'bg-red-500'
+              score >= 90 ? 'bg-stone-1000' : score >= 70 ? 'bg-stone-1000' : 'bg-stone-1000'
             }`}
             style={{ width: `${score}%` }}
           />
         </div>
         <div className="flex items-center gap-4 mt-3 text-xs">
-          <span className="flex items-center gap-1 text-red-500">
+          <span className="flex items-center gap-1 text-stone-1000">
             <AlertTriangle className="w-3 h-3" /> {errorCount} errors
           </span>
-          <span className="flex items-center gap-1 text-amber-500">
+          <span className="flex items-center gap-1 text-stone-1000">
             <AlertTriangle className="w-3 h-3" /> {warningCount} warnings
           </span>
-          <span className="flex items-center gap-1 text-blue-500">
+          <span className="flex items-center gap-1 text-stone-1000">
             <FileText className="w-3 h-3" /> {infoCount} info
           </span>
         </div>
@@ -1397,7 +1397,7 @@ const CompliancePanel: React.FC<CompliancePanelProps> = ({ score, issues, onIssu
       <div className="flex-1 overflow-y-auto">
         {issues.length === 0 ? (
           <div className="p-4 text-center text-stone-500">
-            <CheckCircle className="w-8 h-8 mx-auto mb-2 text-emerald-500" />
+            <CheckCircle className="w-8 h-8 mx-auto mb-2 text-stone-1000" />
             <p className="text-sm">No compliance issues found!</p>
           </div>
         ) : (
@@ -1408,19 +1408,19 @@ const CompliancePanel: React.FC<CompliancePanelProps> = ({ score, issues, onIssu
                 onClick={() => onIssueClick?.(issue)}
                 className={`w-full p-3 rounded-lg text-left transition-colors ${
                   issue.type === 'error'
-                    ? 'bg-red-50 border border-red-200 hover:bg-red-100'
+                    ? 'bg-stone-100 border border-stone-200 hover:bg-stone-100'
                     : issue.type === 'warning'
-                      ? 'bg-amber-50 border border-amber-200 hover:bg-amber-100'
-                      : 'bg-blue-50 border border-blue-200 hover:bg-blue-100'
+                      ? 'bg-stone-100 border border-stone-200 hover:bg-stone-100'
+                      : 'bg-stone-100 border border-stone-200 hover:bg-stone-100'
                 }`}
               >
                 <div className="flex items-start gap-2">
                   {issue.type === 'error' ? (
-                    <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                    <AlertTriangle className="w-4 h-4 text-stone-1000 flex-shrink-0 mt-0.5" />
                   ) : issue.type === 'warning' ? (
-                    <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <AlertTriangle className="w-4 h-4 text-stone-1000 flex-shrink-0 mt-0.5" />
                   ) : (
-                    <FileText className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <FileText className="w-4 h-4 text-stone-1000 flex-shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-stone-500">{issue.rule}</p>
@@ -1465,7 +1465,7 @@ const TraceabilityPanel: React.FC<TraceabilityPanelProps> = ({
       {/* Header */}
       <div className="p-4 border-b border-stone-200">
         <div className="flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-blue-500" />
+          <BookOpen className="w-5 h-5 text-stone-1000" />
           <span className="font-medium text-stone-700">Traceability Links</span>
         </div>
         <p className="text-xs text-stone-500 mt-1">{links.length} source links in document</p>
@@ -1488,7 +1488,7 @@ const TraceabilityPanel: React.FC<TraceabilityPanelProps> = ({
                   <div className="flex items-start justify-between gap-2">
                     <button
                       onClick={() => onLinkClick?.(link)}
-                      className="flex-1 text-left hover:text-blue-600 transition-colors duration-150"
+                      className="flex-1 text-left hover:text-stone-600 transition-colors duration-150"
                     >
                       <p className="text-sm font-medium text-stone-700 line-clamp-2">
                         "{link.linkedText}"
@@ -1496,7 +1496,7 @@ const TraceabilityPanel: React.FC<TraceabilityPanelProps> = ({
                     </button>
                     <button
                       onClick={() => onRemoveLink?.(link.id)}
-                      className="p-1 hover:bg-red-100 rounded text-stone-400 hover:text-red-500"
+                      className="p-1 hover:bg-stone-100 rounded text-stone-400 hover:text-stone-1000"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -1593,10 +1593,10 @@ const LinkSourceModal: React.FC<LinkSourceModalProps> = ({
                 <button
                   key={source.id}
                   onClick={() => onLink(source)}
-                  className="w-full p-3 text-left bg-stone-50 hover:bg-blue-50 rounded-lg border border-stone-200 transition-colors duration-150"
+                  className="w-full p-3 text-left bg-stone-50 hover:bg-stone-100 rounded-lg border border-stone-200 transition-colors duration-150"
                 >
                   <div className="flex items-start gap-3">
-                    <FileText className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <FileText className="w-5 h-5 text-stone-1000 flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-stone-900">{source.title}</p>
                       <div className="flex items-center gap-2 mt-1 text-xs text-stone-500">
@@ -1757,7 +1757,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
       LinkExtension.configure({
         openOnClick: false,
         autolink: true,
-        HTMLAttributes: { class: 'text-blue-600 underline cursor-pointer' },
+        HTMLAttributes: { class: 'text-stone-600 underline cursor-pointer' },
       }),
       FontFamily,
       FontSize,
@@ -2128,7 +2128,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
             {caps.editable === false && resolvedMode === 'locked' ? 'Document locked' : 'Read-only mode'}
           </span>
           {resolvedMode === 'review' && (
-            <span className="text-amber-600 font-medium ml-1">— Review in progress</span>
+            <span className="text-stone-600 font-medium ml-1">— Review in progress</span>
           )}
         </div>
       )}
@@ -2136,13 +2136,13 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
       {!embedded && (
         <div className="flex items-center justify-between px-4 py-2 border-b border-stone-200 bg-stone-50">
           <div className="flex items-center gap-3">
-            <FileText className="w-5 h-5 text-blue-500" />
+            <FileText className="w-5 h-5 text-stone-1000" />
             <div>
               <h1 className="font-semibold text-stone-900">{documentTitle}</h1>
               <div className="flex items-center gap-2 text-xs text-stone-500">
                 <span className="px-2 py-0.5 bg-stone-200 rounded">{documentType}</span>
                 {submissionType && (
-                  <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded">
+                  <span className="px-2 py-0.5 bg-stone-100 text-stone-600 rounded">
                     {submissionType}
                   </span>
                 )}
@@ -2205,7 +2205,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 }
                 className={`p-2 rounded transition-colors ${
                   activePanel === 'traceability'
-                    ? 'bg-blue-100 text-blue-600'
+                    ? 'bg-stone-100 text-stone-600'
                     : 'hover:bg-stone-100 text-stone-600'
                 }`}
                 title="Traceability Links"
@@ -2218,7 +2218,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 onClick={() => setActivePanel(activePanel === 'compliance' ? null : 'compliance')}
                 className={`p-2 rounded transition-colors ${
                   activePanel === 'compliance'
-                    ? 'bg-blue-100 text-blue-600'
+                    ? 'bg-stone-100 text-stone-600'
                     : 'hover:bg-stone-100 text-stone-600'
                 }`}
                 title="Compliance Score"
@@ -2285,44 +2285,44 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
               {/* Formatting — selected-text actions only */}
               <button
                 onClick={() => editor.chain().focus().toggleBold().run()}
-                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('bold') ? 'text-blue-400' : 'text-white'}`}
+                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('bold') ? 'text-stone-400' : 'text-white'}`}
                 title="Bold"
               >
                 <Bold className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => editor.chain().focus().toggleItalic().run()}
-                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('italic') ? 'text-blue-400' : 'text-white'}`}
+                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('italic') ? 'text-stone-400' : 'text-white'}`}
                 title="Italic"
               >
                 <Italic className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => editor.chain().focus().toggleUnderline().run()}
-                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('underline') ? 'text-blue-400' : 'text-white'}`}
+                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('underline') ? 'text-stone-400' : 'text-white'}`}
                 title="Underline"
               >
                 <Underline className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => editor.chain().focus().toggleHighlight().run()}
-                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('highlight') ? 'text-blue-400' : 'text-white'}`}
+                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('highlight') ? 'text-stone-400' : 'text-white'}`}
                 title="Highlight"
               >
-                <span className="w-3.5 h-3.5 bg-amber-400 rounded text-xs flex items-center justify-center font-semibold text-black">
+                <span className="w-3.5 h-3.5 bg-stone-400 rounded text-xs flex items-center justify-center font-semibold text-black">
                   H
                 </span>
               </button>
               <button
                 onClick={() => editor.chain().focus().toggleSuperscript().run()}
-                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('superscript') ? 'text-blue-400' : 'text-white'}`}
+                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('superscript') ? 'text-stone-400' : 'text-white'}`}
                 title="Superscript"
               >
                 <SuperscriptIcon className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => editor.chain().focus().toggleSubscript().run()}
-                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('subscript') ? 'text-blue-400' : 'text-white'}`}
+                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('subscript') ? 'text-stone-400' : 'text-white'}`}
                 title="Subscript"
               >
                 <SubscriptIcon className="w-3.5 h-3.5" />
@@ -2352,7 +2352,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
               {/* Comment */}
               <button
                 onClick={handleAddComment}
-                className="p-1.5 rounded hover:bg-stone-700 text-amber-300 flex items-center gap-1"
+                className="p-1.5 rounded hover:bg-stone-700 text-stone-300 flex items-center gap-1"
                 title="Add Comment"
               >
                 <MessageSquare className="w-3.5 h-3.5" />
@@ -2373,7 +2373,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
             <div className="absolute inset-0 bg-white/95 z-10 overflow-y-auto p-6">
               <div className="max-w-3xl mx-auto">
                 <div className="flex items-center gap-2 mb-4">
-                  <Layers className="w-5 h-5 text-blue-500" />
+                  <Layers className="w-5 h-5 text-stone-1000" />
                   <h2 className="font-semibold text-stone-900">Template Structure</h2>
                   <span className="text-xs text-stone-500 ml-auto">
                     {
@@ -2394,8 +2394,8 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                         key={section.key}
                         className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
                           isFilled
-                            ? 'bg-emerald-50 border-emerald-200'
-                            : 'bg-stone-50 border-stone-200 hover:border-blue-300'
+                            ? 'bg-stone-100 border-stone-200'
+                            : 'bg-stone-50 border-stone-200 hover:border-stone-300'
                         }`}
                         onClick={() => {
                           setViewMode('content');
@@ -2407,14 +2407,14 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                         }}
                       >
                         {isFilled ? (
-                          <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                          <CheckCircle className="w-4 h-4 text-stone-1000 flex-shrink-0" />
                         ) : (
                           <div className="w-4 h-4 rounded-full border-2 border-stone-300 flex-shrink-0" />
                         )}
                         <div className="flex-1">
                           <span className="text-sm font-medium text-stone-900">{section.label}</span>
                           {section.required && (
-                            <span className="ml-2 text-xs text-red-500 font-medium">Required</span>
+                            <span className="ml-2 text-xs text-stone-1000 font-medium">Required</span>
                           )}
                         </div>
                         {!isFilled && (

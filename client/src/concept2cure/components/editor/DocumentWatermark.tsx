@@ -48,21 +48,21 @@ export interface WatermarkSettingsProps {
 const WATERMARK_CONFIGS: Record<WatermarkStatus, WatermarkConfig | null> = {
   draft: {
     text: 'DRAFT',
-    color: '#6b7280', // gray-500
+    color: '#6b7280', // stone-500
     opacity: 0.08,
     fontSize: '6rem',
     mode: 'diagonal',
   },
   review: {
     text: 'UNDER REVIEW',
-    color: '#d97706', // amber-600
+    color: '#d97706', // stone-600
     opacity: 0.08,
     fontSize: '5rem',
     mode: 'diagonal',
   },
   confidential: {
     text: 'CONFIDENTIAL',
-    color: '#dc2626', // red-600
+    color: '#dc2626', // stone-700
     opacity: 0.12,
     fontSize: '5rem',
     mode: 'diagonal',
@@ -70,7 +70,7 @@ const WATERMARK_CONFIGS: Record<WatermarkStatus, WatermarkConfig | null> = {
   approved: null, // clean document, no watermark
   locked: {
     text: 'CONTROLLED COPY',
-    color: '#16a34a', // green-600
+    color: '#16a34a', // stone-700
     opacity: 0.35,
     fontSize: '0.875rem',
     mode: 'top-banner',

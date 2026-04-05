@@ -204,13 +204,13 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
   const getEffortColor = (effort: string) => {
     switch (effort) {
       case 'S':
-        return 'bg-green-100 text-green-800';
+        return 'bg-stone-100 text-stone-800';
       case 'M':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-stone-100 text-stone-800';
       case 'L':
-        return 'bg-red-100 text-red-800';
+        return 'bg-stone-100 text-stone-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-stone-100 text-stone-800';
     }
   };
 
@@ -230,15 +230,15 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'OPEN':
-        return 'border-blue-200 bg-blue-50';
+        return 'border-stone-200 bg-stone-100';
       case 'ACCEPTED':
-        return 'border-green-200 bg-green-50';
+        return 'border-stone-200 bg-stone-100';
       case 'REJECTED':
-        return 'border-red-200 bg-red-50';
+        return 'border-stone-200 bg-stone-100';
       case 'SNOOZED':
-        return 'border-yellow-200 bg-yellow-50';
+        return 'border-stone-200 bg-stone-100';
       default:
-        return 'border-gray-200 bg-gray-50';
+        return 'border-stone-200 bg-stone-50';
     }
   };
 
@@ -247,8 +247,8 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
 
   if (!subId) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        <Target className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+      <div className="text-center py-8 text-stone-500">
+        <Target className="w-12 h-12 mx-auto mb-4 text-stone-400" />
         <p>Select a submission to view executive playbook recommendations</p>
       </div>
     );
@@ -262,8 +262,8 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <Target className="w-6 h-6 text-purple-600" />
-                <Sparkles className="w-3 h-3 text-yellow-500 absolute -top-1 -right-1" />
+                <Target className="w-6 h-6 text-stone-600" />
+                <Sparkles className="w-3 h-3 text-stone-1000 absolute -top-1 -right-1" />
               </div>
               <div>
                 <CardTitle>Executive Playbook: Top 5 Moves This Week</CardTitle>
@@ -280,7 +280,7 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
               <Button
                 onClick={generatePlaybook}
                 disabled={generating}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-stone-600 hover:bg-stone-700"
               >
                 {generating ? (
                   <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -296,29 +296,29 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
 
       {/* RPI Simulation Dashboard */}
       {simulation && (
-        <Card className="border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
+        <Card className="border-2 border-stone-200 bg-gradient-to-r from-stone-100 to-stone-100">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-purple-600" />
+              <BarChart3 className="w-5 h-5 text-stone-600" />
               RPI Impact Simulation
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-700">{simulation.current}</div>
+                <div className="text-2xl font-bold text-stone-700">{simulation.current}</div>
                 <div className="text-sm text-muted-foreground">Current RPI</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">{simulation.projected}</div>
+                <div className="text-2xl font-bold text-stone-600">{simulation.projected}</div>
                 <div className="text-sm text-muted-foreground">Projected RPI</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">+{simulation.gain}</div>
+                <div className="text-2xl font-bold text-stone-700">+{simulation.gain}</div>
                 <div className="text-sm text-muted-foreground">Expected Gain</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{simulation.cards}</div>
+                <div className="text-2xl font-bold text-stone-600">{simulation.cards}</div>
                 <div className="text-sm text-muted-foreground">Selected Cards</div>
               </div>
             </div>
@@ -332,7 +332,7 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
         {cards.length === 0 && !loading ? (
           <Card>
             <CardContent className="text-center py-8">
-              <Lightbulb className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+              <Lightbulb className="w-12 h-12 mx-auto mb-4 text-stone-400" />
               <p className="text-muted-foreground">No playbook recommendations yet</p>
               <p className="text-sm text-muted-foreground mt-2">
                 Click "AI Generate" to create AI-powered action recommendations
@@ -364,25 +364,25 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <CardTitle className="text-lg">{card.title}</CardTitle>
-                        {card.pinned && <Pin className="w-4 h-4 text-yellow-600" />}
+                        {card.pinned && <Pin className="w-4 h-4 text-stone-600" />}
                       </div>
                       <p className="text-sm text-muted-foreground mb-3">{card.rationale}</p>
 
                       <div className="flex items-center gap-4 text-xs">
                         <div className="flex items-center gap-1">
-                          <TrendingUp className="w-3 h-3 text-green-600" />
+                          <TrendingUp className="w-3 h-3 text-stone-700" />
                           <span>+{card.expected_rpi_gain} RPI</span>
                         </div>
                         <Badge variant="outline" className={getEffortColor(card.effort)}>
                           {getEffortLabel(card.effort)} effort
                         </Badge>
                         <div className="flex items-center gap-1">
-                          <Star className="w-3 h-3 text-blue-600" />
+                          <Star className="w-3 h-3 text-stone-600" />
                           <span>Priority {card.priority}</span>
                         </div>
                         {card.due_date && (
                           <div className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3 text-orange-600" />
+                            <Calendar className="w-3 h-3 text-stone-600" />
                             <span>{new Date(card.due_date).toLocaleDateString()}</span>
                           </div>
                         )}
@@ -396,7 +396,7 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
                         <Button
                           size="sm"
                           onClick={() => acceptCard(card.card_id)}
-                          className="bg-green-600 hover:bg-green-700"
+                          className="bg-stone-700 hover:bg-stone-800"
                         >
                           <ThumbsUp className="w-3 h-3 mr-1" />
                           Accept
@@ -420,7 +420,7 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
                       </>
                     )}
                     {card.status === 'ACCEPTED' && (
-                      <Badge className="bg-green-600">
+                      <Badge className="bg-stone-700">
                         <CheckCircle2 className="w-3 h-3 mr-1" />
                         Accepted
                       </Badge>
@@ -432,7 +432,7 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
                       </Badge>
                     )}
                     {card.status === 'SNOOZED' && (
-                      <Badge className="bg-yellow-600">
+                      <Badge className="bg-stone-600">
                         <Pause className="w-3 h-3 mr-1" />
                         Snoozed
                       </Badge>
@@ -457,15 +457,15 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center">
-                <div className="text-xl font-bold text-blue-600">{openCards.length}</div>
+                <div className="text-xl font-bold text-stone-600">{openCards.length}</div>
                 <div className="text-sm text-muted-foreground">Open Recommendations</div>
               </div>
               <div className="text-center">
-                <div className="text-xl font-bold text-green-600">+{totalRPIGain}</div>
+                <div className="text-xl font-bold text-stone-700">+{totalRPIGain}</div>
                 <div className="text-sm text-muted-foreground">Total RPI Potential</div>
               </div>
               <div className="text-center">
-                <div className="text-xl font-bold text-purple-600">{selectedCards.length}</div>
+                <div className="text-xl font-bold text-stone-600">{selectedCards.length}</div>
                 <div className="text-sm text-muted-foreground">Selected for Simulation</div>
               </div>
             </div>

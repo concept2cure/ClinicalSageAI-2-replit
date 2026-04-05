@@ -81,7 +81,7 @@ export default function UseCaseLibrary() {
   return (
     <div className="px-6 py-8 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col space-y-2 mb-8">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-stone-600 to-stone-600 text-transparent bg-clip-text">
           Strategic Intelligence Launcher
         </h2>
         <p className="text-muted-foreground text-lg">
@@ -102,16 +102,16 @@ export default function UseCaseLibrary() {
             {filteredUseCases.map((useCase: UseCase) => (
               <Card 
                 key={useCase.id} 
-                className="overflow-hidden border-l-4 border-l-blue-500 shadow-md hover:shadow-lg transition-shadow"
+                className="overflow-hidden border-l-4 border-l-stone-1000 shadow-md hover:shadow-lg transition-shadow"
               >
                 <CardContent className="p-6">
                   <div className="space-y-4">
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="text-xl font-semibold">{useCase.title}</h3>
-                        <p className="text-sm text-gray-600">🎯 {useCase.audience}</p>
+                        <p className="text-sm text-stone-600">🎯 {useCase.audience}</p>
                       </div>
-                      <Badge variant="outline" className="bg-blue-50">
+                      <Badge variant="outline" className="bg-stone-100">
                         {useCase.trialSageSolution.inputs.phase}
                       </Badge>
                     </div>
@@ -122,31 +122,31 @@ export default function UseCaseLibrary() {
                     
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p className="text-gray-500">Traditional Cost</p>
+                        <p className="text-stone-500">Traditional Cost</p>
                         <p className="font-medium">{useCase.traditionalApproach.cost}</p>
                       </div>
                       <div>
-                        <p className="text-gray-500">Timeline</p>
+                        <p className="text-stone-500">Timeline</p>
                         <p className="font-medium">{useCase.traditionalApproach.timeline}</p>
                       </div>
                       <div>
-                        <p className="text-gray-500">Cost Savings</p>
-                        <p className="font-medium text-green-600">{useCase.trialSageSolution.outcomes.costAvoided}</p>
+                        <p className="text-stone-500">Cost Savings</p>
+                        <p className="font-medium text-stone-700">{useCase.trialSageSolution.outcomes.costAvoided}</p>
                       </div>
                       <div>
-                        <p className="text-gray-500">Time Saved</p>
-                        <p className="font-medium text-green-600">{useCase.trialSageSolution.outcomes.timeSaved}</p>
+                        <p className="text-stone-500">Time Saved</p>
+                        <p className="font-medium text-stone-700">{useCase.trialSageSolution.outcomes.timeSaved}</p>
                       </div>
                     </div>
                     
                     <div className="flex flex-wrap gap-1 mb-2">
                       {useCase.trialSageSolution.modules.slice(0, 3).map((module: string, idx: number) => (
-                        <Badge key={idx} variant="secondary" className="bg-blue-50">
+                        <Badge key={idx} variant="secondary" className="bg-stone-100">
                           {module}
                         </Badge>
                       ))}
                       {useCase.trialSageSolution.modules.length > 3 && (
-                        <Badge variant="secondary" className="bg-blue-50">
+                        <Badge variant="secondary" className="bg-stone-100">
                           +{useCase.trialSageSolution.modules.length - 3} more
                         </Badge>
                       )}
@@ -204,34 +204,34 @@ export default function UseCaseLibrary() {
         )}
       </Tabs>
       
-      <div className="mt-10 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 shadow-sm">
+      <div className="mt-10 bg-gradient-to-r from-stone-100 to-stone-100 rounded-lg p-6 shadow-sm">
         <h3 className="text-xl font-semibold mb-4">Why Use the Strategic Intelligence Launcher?</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex space-x-3">
             <div className="flex-shrink-0">
-              <BarChart4 className="h-6 w-6 text-blue-600" />
+              <BarChart4 className="h-6 w-6 text-stone-600" />
             </div>
             <div>
               <h4 className="font-medium">Data-Driven Decisions</h4>
-              <p className="text-sm text-gray-600">Leverage real-world CSR data to inform protocol design</p>
+              <p className="text-sm text-stone-600">Leverage real-world CSR data to inform protocol design</p>
             </div>
           </div>
           <div className="flex space-x-3">
             <div className="flex-shrink-0">
-              <Play className="h-6 w-6 text-blue-600" />
+              <Play className="h-6 w-6 text-stone-600" />
             </div>
             <div>
               <h4 className="font-medium">Pre-Configured Workflows</h4>
-              <p className="text-sm text-gray-600">Start with optimized templates and inputs</p>
+              <p className="text-sm text-stone-600">Start with optimized templates and inputs</p>
             </div>
           </div>
           <div className="flex space-x-3">
             <div className="flex-shrink-0">
-              <BadgeCheck className="h-6 w-6 text-blue-600" />
+              <BadgeCheck className="h-6 w-6 text-stone-600" />
             </div>
             <div>
               <h4 className="font-medium">Regulatory Alignment</h4>
-              <p className="text-sm text-gray-600">Ensure your protocols match successful precedents</p>
+              <p className="text-sm text-stone-600">Ensure your protocols match successful precedents</p>
             </div>
           </div>
         </div>

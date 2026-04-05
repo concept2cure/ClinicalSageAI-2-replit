@@ -223,13 +223,13 @@ const DEFAULT_ROLES = [
 ];
 
 const COLOR_MAP: Record<string, string> = {
-  purple: 'bg-purple-100 text-purple-800 border-purple-200',
-  blue: 'bg-blue-100 text-blue-800 border-blue-200',
-  orange: 'bg-orange-100 text-orange-800 border-orange-200',
-  cyan: 'bg-cyan-100 text-cyan-800 border-cyan-200',
-  gray: 'bg-gray-100 text-gray-800 border-gray-200',
-  green: 'bg-green-100 text-green-800 border-green-200',
-  red: 'bg-red-100 text-red-800 border-red-200',
+  purple: 'bg-stone-100 text-stone-800 border-stone-200',
+  blue: 'bg-stone-100 text-stone-800 border-stone-200',
+  orange: 'bg-stone-100 text-stone-800 border-stone-200',
+  cyan: 'bg-stone-100 text-stone-800 border-stone-200',
+  gray: 'bg-stone-100 text-stone-800 border-stone-200',
+  green: 'bg-stone-100 text-stone-800 border-stone-200',
+  red: 'bg-stone-100 text-stone-800 border-stone-200',
 };
 
 export default function RoleManagementPage() {
@@ -309,12 +309,12 @@ export default function RoleManagementPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-stone-1000 to-stone-600 flex items-center justify-center">
             <Shield className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Role Management</h1>
-            <p className="text-sm text-gray-500">
+            <h1 className="text-2xl font-bold text-stone-900">Role Management</h1>
+            <p className="text-sm text-stone-500">
               Configure roles and permissions for {currentOrganization?.name || 'your organization'}
             </p>
           </div>
@@ -322,7 +322,7 @@ export default function RoleManagementPage() {
 
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-amber-500 to-orange-600">
+            <Button className="bg-gradient-to-r from-stone-1000 to-stone-600">
               <Plus className="w-4 h-4 mr-2" />
               Create Role
             </Button>
@@ -350,7 +350,7 @@ export default function RoleManagementPage() {
                         key={color}
                         onClick={() => setFormData({ ...formData, color })}
                         className={`w-8 h-8 rounded-full border-2 ${
-                          formData.color === color ? 'ring-2 ring-offset-2 ring-gray-400' : ''
+                          formData.color === color ? 'ring-2 ring-offset-2 ring-stone-400' : ''
                         } ${COLOR_MAP[color]}`}
                       />
                     ))}
@@ -397,7 +397,7 @@ export default function RoleManagementPage() {
                                 >
                                   {permission.name}
                                 </label>
-                                <p className="text-xs text-gray-500">{permission.description}</p>
+                                <p className="text-xs text-stone-500">{permission.description}</p>
                               </div>
                             </div>
                           ))}
@@ -421,13 +421,13 @@ export default function RoleManagementPage() {
       </div>
 
       {/* Info Banner */}
-      <Card className="bg-amber-50 border-amber-200">
+      <Card className="bg-stone-100 border-stone-200">
         <CardContent className="pt-4 pb-4">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 text-stone-600 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-amber-800">21 CFR Part 11 Compliance</p>
-              <p className="text-xs text-amber-700">
+              <p className="text-sm font-medium text-stone-800">21 CFR Part 11 Compliance</p>
+              <p className="text-xs text-stone-700">
                 All role and permission changes are audit logged. System roles cannot be deleted but
                 can be modified.
               </p>
@@ -463,11 +463,11 @@ export default function RoleManagementPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">Users with this role</span>
+                <span className="text-stone-500">Users with this role</span>
                 <Badge variant="secondary">{role.userCount}</Badge>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">Permissions</span>
+                <span className="text-stone-500">Permissions</span>
                 <Badge variant="secondary">{role.permissions.length}</Badge>
               </div>
 
@@ -501,7 +501,7 @@ export default function RoleManagementPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-red-600 hover:bg-red-50"
+                        className="text-stone-700 hover:bg-stone-100"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -517,7 +517,7 @@ export default function RoleManagementPage() {
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => handleDeleteRole(role.id)}
-                          className="bg-red-600 hover:bg-red-700"
+                          className="bg-stone-700 hover:bg-stone-800"
                         >
                           Delete role
                         </AlertDialogAction>
@@ -588,7 +588,7 @@ export default function RoleManagementPage() {
                               >
                                 {permission.name}
                               </label>
-                              <p className="text-xs text-gray-500">{permission.description}</p>
+                              <p className="text-xs text-stone-500">{permission.description}</p>
                             </div>
                           </div>
                         ))}

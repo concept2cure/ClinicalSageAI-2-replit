@@ -159,7 +159,7 @@ export function DocumentStatusTimeline({
               {idx > 0 && (
                 <div className={cn(
                   'w-4 h-px',
-                  isCompleted ? 'bg-emerald-400' : 'bg-stone-200',
+                  isCompleted ? 'bg-stone-400' : 'bg-stone-200',
                 )} />
               )}
               <div
@@ -199,7 +199,7 @@ export function DocumentStatusTimeline({
               {idx > 0 && (
                 <div className={cn(
                   'w-6 h-px',
-                  isCompleted ? 'bg-emerald-400' : 'bg-stone-200',
+                  isCompleted ? 'bg-stone-400' : 'bg-stone-200',
                 )} />
               )}
               <div
@@ -263,20 +263,20 @@ export function DocumentStatusTimeline({
                     <div className={cn(
                       'h-6 w-6 rounded-full flex items-center justify-center border-2',
                       isActive && 'border-current ' + stage.activeColor + ' bg-white',
-                      isCompleted && 'border-emerald-400 bg-emerald-50',
+                      isCompleted && 'border-stone-400 bg-stone-100',
                       isFuture && 'border-stone-200 bg-white',
                     )}>
                       <Icon className={cn(
                         'h-3 w-3',
                         isActive && stage.activeColor,
-                        isCompleted && 'text-emerald-500',
+                        isCompleted && 'text-stone-1000',
                         isFuture && 'text-stone-300',
                       )} />
                     </div>
                     {idx < STAGES.length - 1 && (
                       <div className={cn(
                         'w-px h-6',
-                        isCompleted ? 'bg-emerald-300' : 'bg-stone-200',
+                        isCompleted ? 'bg-stone-300' : 'bg-stone-200',
                       )} />
                     )}
                   </div>

@@ -48,9 +48,9 @@ const getSourceIcon = (type: string): string => {
 };
 
 const getConfidenceColor = (confidence: number): string => {
-  if (confidence >= 90) return 'text-green-600 bg-green-100';
-  if (confidence >= 70) return 'text-blue-600 bg-blue-100';
-  if (confidence >= 50) return 'text-amber-600 bg-amber-100';
+  if (confidence >= 90) return 'text-stone-700 bg-stone-100';
+  if (confidence >= 70) return 'text-stone-600 bg-stone-100';
+  if (confidence >= 50) return 'text-stone-600 bg-stone-100';
   return 'text-stone-600 bg-stone-100';
 };
 
@@ -62,7 +62,7 @@ const SourceCard: React.FC<SourceCardProps> = ({ suggestion, onLink, isLinking }
   const [isExpanded, setIsExpanded] = useState(false);
   
   return (
-    <div className="border border-stone-200 rounded-lg overflow-hidden hover:border-blue-400 transition-colors duration-150">
+    <div className="border border-stone-200 rounded-lg overflow-hidden hover:border-stone-400 transition-colors duration-150">
       <div className="p-3">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
@@ -83,7 +83,7 @@ const SourceCard: React.FC<SourceCardProps> = ({ suggestion, onLink, isLinking }
         <div className="flex items-center justify-between">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="text-xs text-blue-600 hover:underline"
+            className="text-xs text-stone-600 hover:underline"
             data-testid={`button-toggle-source-${suggestion.sourceId}`}
           >
             {isExpanded ? 'Show less' : 'Show more'}
@@ -255,11 +255,11 @@ export const SourceSuggestionPanel: React.FC<SourceSuggestionPanelProps> = ({
         </div>
         
         {/* Selected claim */}
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
-          <p className="text-sm text-amber-800 line-clamp-2">
+        <div className="p-3 bg-stone-100 border border-stone-200 rounded-xl">
+          <p className="text-sm text-stone-800 line-clamp-2">
             "{claim.text}"
           </p>
-          <span className="text-xs text-amber-600 capitalize">
+          <span className="text-xs text-stone-600 capitalize">
             {claim.claimType} claim
           </span>
         </div>
@@ -325,7 +325,7 @@ export const SourceSuggestionPanel: React.FC<SourceSuggestionPanelProps> = ({
             {connectedBridges.slice(0, 4).map(bridge => (
               <span
                 key={bridge.moduleType}
-                className="w-2 h-2 rounded-full bg-green-500"
+                className="w-2 h-2 rounded-full bg-stone-1000"
                 title={bridge.moduleType}
               />
             ))}
@@ -384,7 +384,7 @@ export const InlineSuggestionTooltip: React.FC<{
     
     <button
       onClick={onLink}
-      className="w-full px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors duration-150"
+      className="w-full px-3 py-2 bg-stone-700 text-white text-sm font-medium rounded-lg hover:bg-stone-800 transition-colors duration-150"
       data-testid={`button-link-inline-source-${suggestion.sourceId}`}
     >
       Link This Source

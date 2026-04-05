@@ -42,10 +42,10 @@ export default function GenealogyGraph({ batchId }: { batchId: string }) {
         <CardTitle>Genealogy Graph</CardTitle>
       </CardHeader>
       <CardContent style={{ height: 420 }}>
-        <div className="flex items-center justify-center h-full border-2 border-dashed border-gray-300 rounded-lg">
+        <div className="flex items-center justify-center h-full border-2 border-dashed border-stone-300 rounded-lg">
           <div className="text-center">
             <div className="text-lg font-medium">Genealogy Visualization</div>
-            <div className="text-sm text-gray-500 mt-2">
+            <div className="text-sm text-stone-500 mt-2">
               Batch relationships and material flow visualization
             </div>
             <div className="mt-4 grid grid-cols-2 gap-4 text-xs">

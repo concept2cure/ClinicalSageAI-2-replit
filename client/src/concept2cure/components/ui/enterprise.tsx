@@ -125,10 +125,10 @@ interface CardSectionProps {
 const tintMap = {
   none: '',
   muted: 'bg-stone-50',
-  accent: 'bg-blue-50',
-  success: 'bg-emerald-50',
-  warning: 'bg-amber-50',
-  danger: 'bg-red-50',
+  accent: 'bg-stone-100',
+  success: 'bg-stone-100',
+  warning: 'bg-stone-100',
+  danger: 'bg-stone-100',
 };
 
 export function CardSection({ children, className, tint = 'none', border = true }: CardSectionProps) {
@@ -196,7 +196,7 @@ export function SectionHeader({
 
 interface IconBoxProps {
   readonly icon: LucideIcon;
-  /** Tailwind bg/text classes for theming. Default: bg-blue-100 text-blue-600 */
+  /** Tailwind bg/text classes for theming. Default: bg-stone-100 text-stone-600 */
   readonly className?: string;
   readonly size?: 'sm' | 'md' | 'lg';
 }
@@ -213,7 +213,7 @@ export function IconBox({ icon: Icon, className, size = 'md' }: IconBoxProps) {
     <div className={cn(
       s.container,
       'flex items-center justify-center flex-shrink-0',
-      className || 'bg-blue-100 text-blue-600',
+      className || 'bg-stone-100 text-stone-600',
     )}>
       <Icon size={s.icon} strokeWidth={2} />
     </div>
@@ -236,12 +236,12 @@ interface StatusPillProps {
 
 const statusVariants: Record<StatusVariant, string> = {
   default: 'bg-stone-100 text-stone-600',
-  info: 'bg-blue-100 text-stone-700',
-  success: 'bg-emerald-100 text-emerald-700',
-  warning: 'bg-amber-100 text-amber-700',
-  danger: 'bg-red-100 text-red-700',
+  info: 'bg-stone-100 text-stone-700',
+  success: 'bg-stone-100 text-stone-800',
+  warning: 'bg-stone-100 text-stone-700',
+  danger: 'bg-stone-100 text-stone-800',
   muted: 'bg-stone-200 text-stone-700',
-  active: 'bg-blue-100 text-stone-700',
+  active: 'bg-stone-100 text-stone-700',
 };
 
 export function StatusPill({ label, variant = 'default', className, dot }: StatusPillProps) {
@@ -254,9 +254,9 @@ export function StatusPill({ label, variant = 'default', className, dot }: Statu
       {dot && (
         <span className={cn(
           'w-1.5 h-1.5 rounded-full',
-          variant === 'success' && 'bg-emerald-500',
-          variant === 'danger' && 'bg-red-500',
-          variant === 'warning' && 'bg-amber-500',
+          variant === 'success' && 'bg-stone-1000',
+          variant === 'danger' && 'bg-stone-1000',
+          variant === 'warning' && 'bg-stone-1000',
           variant === 'info' && 'bg-stone-600',
           variant === 'active' && 'bg-stone-600 animate-pulse',
           variant === 'default' && 'bg-stone-400',
@@ -288,9 +288,9 @@ const buttonVariantStyles: Record<ButtonVariant, string> = {
   primary: 'bg-stone-800 text-white hover:bg-stone-900 shadow-sm',
   secondary: 'bg-white text-stone-700 border border-stone-200 hover:bg-stone-50 hover:border-stone-300',
   ghost: 'text-stone-600 hover:text-stone-900 hover:bg-stone-100',
-  danger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm',
-  success: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm',
-  warning: 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm',
+  danger: 'bg-stone-700 text-white hover:bg-stone-800 shadow-sm',
+  success: 'bg-stone-700 text-white hover:bg-stone-800 shadow-sm',
+  warning: 'bg-stone-1000 text-white hover:bg-stone-600 shadow-sm',
   muted: 'bg-stone-600 text-white hover:bg-stone-700 shadow-sm',
 };
 
@@ -365,7 +365,7 @@ export function MetricCard({ label, value, icon: Icon, iconClassName, change, cl
         {change && (
           <p className={cn(
             'text-xs font-medium mt-1',
-            change.positive ? 'text-emerald-600' : 'text-red-600',
+            change.positive ? 'text-stone-700' : 'text-stone-700',
           )}>
             {change.value}
           </p>
@@ -533,9 +533,9 @@ interface ProgressBarProps {
 
 const progressVariants = {
   default: 'bg-stone-800',
-  success: 'bg-emerald-600',
-  warning: 'bg-amber-500',
-  danger: 'bg-red-600',
+  success: 'bg-stone-700',
+  warning: 'bg-stone-1000',
+  danger: 'bg-stone-700',
 };
 
 export function ProgressBar({
@@ -656,12 +656,12 @@ export function Input({ icon: Icon, error, className, id: providedId, ...props }
           'transition-colors duration-150',
           'disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-stone-50',
           Icon && 'pl-10',
-          error ? 'border-red-300 focus-visible:ring-red-500' : 'border-stone-200',
+          error ? 'border-stone-300 focus-visible:ring-stone-1000' : 'border-stone-200',
           className,
         )}
         {...props}
       />
-      {error && <p id={errorId} role="alert" className="text-xs text-red-600 mt-1">{error}</p>}
+      {error && <p id={errorId} role="alert" className="text-xs text-stone-700 mt-1">{error}</p>}
     </div>
   );
 }
@@ -887,7 +887,7 @@ export function TabBar({ tabs, activeTab, onTabChange, className }: TabBarProps)
               'inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium -mb-px border-b-2 transition-colors duration-150',
               'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
               active
-                ? 'border-stone-800 text-blue-600'
+                ? 'border-stone-800 text-stone-600'
                 : 'border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300',
             )}
           >
@@ -896,7 +896,7 @@ export function TabBar({ tabs, activeTab, onTabChange, className }: TabBarProps)
             {tab.count != null && (
               <span className={cn(
                 'text-xs rounded-full px-1.5 py-0.5 font-medium',
-                active ? 'bg-blue-100 text-stone-700' : 'bg-stone-100 text-stone-500',
+                active ? 'bg-stone-100 text-stone-700' : 'bg-stone-100 text-stone-500',
               )}>
                 {tab.count}
               </span>
@@ -953,37 +953,37 @@ export const LIFECYCLE: Record<ArtifactLifecycleStage, LifecycleStageConfig> = {
   draft: {
     label: 'Draft',
     variant: 'warning',
-    bg: 'bg-amber-50',
-    text: 'text-amber-700',
-    dot: 'bg-amber-500',
-    border: 'border-amber-200',
+    bg: 'bg-stone-100',
+    text: 'text-stone-700',
+    dot: 'bg-stone-1000',
+    border: 'border-stone-200',
     order: 1,
   },
   in_review: {
     label: 'In Review',
     variant: 'info',
-    bg: 'bg-blue-50',
+    bg: 'bg-stone-100',
     text: 'text-stone-700',
     dot: 'bg-stone-600',
-    border: 'border-blue-200',
+    border: 'border-stone-200',
     order: 2,
   },
   approved: {
     label: 'Approved',
     variant: 'success',
-    bg: 'bg-emerald-50',
-    text: 'text-emerald-700',
-    dot: 'bg-emerald-500',
-    border: 'border-emerald-200',
+    bg: 'bg-stone-100',
+    text: 'text-stone-800',
+    dot: 'bg-stone-1000',
+    border: 'border-stone-200',
     order: 3,
   },
   published: {
     label: 'Published',
     variant: 'success',
-    bg: 'bg-emerald-50',
-    text: 'text-emerald-800',
-    dot: 'bg-emerald-600',
-    border: 'border-emerald-300',
+    bg: 'bg-stone-100',
+    text: 'text-stone-800',
+    dot: 'bg-stone-700',
+    border: 'border-stone-300',
     order: 4,
   },
   superseded: {
@@ -1167,10 +1167,10 @@ interface SeverityConfig {
 }
 
 export const SEVERITY: Record<SeverityLevel, SeverityConfig> = {
-  critical: { label: 'Critical', variant: 'danger',  bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500',    border: 'border-red-200',    order: 0 },
-  high:     { label: 'High',     variant: 'warning', bg: 'bg-amber-50',  text: 'text-amber-700',  dot: 'bg-amber-500',  border: 'border-amber-200',  order: 1 },
-  medium:   { label: 'Medium',   variant: 'warning', bg: 'bg-amber-50',  text: 'text-amber-700',  dot: 'bg-amber-500',  border: 'border-amber-200',  order: 2 },
-  low:      { label: 'Low',      variant: 'info',    bg: 'bg-blue-50',   text: 'text-stone-700',   dot: 'bg-stone-600',   border: 'border-blue-200',   order: 3 },
+  critical: { label: 'Critical', variant: 'danger',  bg: 'bg-stone-100',    text: 'text-stone-800',    dot: 'bg-stone-1000',    border: 'border-stone-200',    order: 0 },
+  high:     { label: 'High',     variant: 'warning', bg: 'bg-stone-100',  text: 'text-stone-700',  dot: 'bg-stone-1000',  border: 'border-stone-200',  order: 1 },
+  medium:   { label: 'Medium',   variant: 'warning', bg: 'bg-stone-100',  text: 'text-stone-700',  dot: 'bg-stone-1000',  border: 'border-stone-200',  order: 2 },
+  low:      { label: 'Low',      variant: 'info',    bg: 'bg-stone-100',   text: 'text-stone-700',   dot: 'bg-stone-600',   border: 'border-stone-200',   order: 3 },
 };
 
 /** Normalise any severity/priority/impact string to a canonical level */

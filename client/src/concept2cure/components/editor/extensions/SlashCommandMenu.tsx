@@ -96,7 +96,7 @@ export function getSlashCommands(
       id: 'table',
       label: 'Table',
       description: 'Insert a 3x3 table',
-      icon: <TableIcon className="w-4 h-4 text-blue-500" />,
+      icon: <TableIcon className="w-4 h-4 text-stone-1000" />,
       category: 'insert',
       action: (editor) => {
         editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
@@ -106,7 +106,7 @@ export function getSlashCommands(
       id: 'checklist',
       label: 'Checklist',
       description: 'Insert a task list',
-      icon: <ListChecks className="w-4 h-4 text-blue-500" />,
+      icon: <ListChecks className="w-4 h-4 text-stone-1000" />,
       category: 'insert',
       action: (editor) => {
         editor.chain().focus().toggleTaskList().run();
@@ -116,7 +116,7 @@ export function getSlashCommands(
       id: 'source-link',
       label: 'Link to Source',
       description: 'Link selected text to a source document',
-      icon: <Link className="w-4 h-4 text-blue-500" />,
+      icon: <Link className="w-4 h-4 text-stone-1000" />,
       category: 'insert',
       action: () => {
         // Trigger the source linking modal via the parent
@@ -238,7 +238,7 @@ export const SlashCommandList = React.forwardRef<
                 onClick={() => selectItem(idx)}
                 className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
                   idx === selectedIndex
-                    ? 'bg-blue-50 text-stone-700'
+                    ? 'bg-stone-100 text-stone-700'
                     : 'hover:bg-stone-50 text-stone-700'
                 }`}
               >

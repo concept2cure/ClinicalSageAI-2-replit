@@ -43,10 +43,10 @@ const MetricCardDisplay: React.FC<MetricCardProps> = ({ metric }) => {
     metric.trend === 'up' ? TrendingUp : metric.trend === 'down' ? TrendingDown : null;
   const trendColor =
     metric.trend === 'up'
-      ? 'text-green-600'
+      ? 'text-stone-700'
       : metric.trend === 'down'
-        ? 'text-red-600'
-        : 'text-gray-500';
+        ? 'text-stone-700'
+        : 'text-stone-500';
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -57,8 +57,8 @@ const MetricCardDisplay: React.FC<MetricCardProps> = ({ metric }) => {
             <p className="text-3xl font-bold tracking-tight">{metric.value}</p>
           </div>
           {metric.icon && (
-            <div className="rounded-lg bg-blue-50 p-2.5">
-              <Target className="h-5 w-5 text-blue-600" />
+            <div className="rounded-lg bg-stone-100 p-2.5">
+              <Target className="h-5 w-5 text-stone-600" />
             </div>
           )}
         </div>
@@ -100,7 +100,7 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({ projects }) => {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Briefcase className="h-5 w-5 text-blue-600" />
+              <Briefcase className="h-5 w-5 text-stone-600" />
               Portfolio Overview
             </CardTitle>
             <CardDescription>Active programs and submissions</CardDescription>
@@ -115,7 +115,7 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({ projects }) => {
           {projects.slice(0, 5).map(project => (
             <div
               key={project.id}
-              className="flex items-center justify-between rounded-lg border p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+              className="flex items-center justify-between rounded-lg border p-4 hover:bg-stone-50 transition-colors cursor-pointer"
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
@@ -134,7 +134,7 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({ projects }) => {
                   <Progress value={project.progress} className="w-20 h-2" />
                 </div>
                 {project.milestones.some(m => m.status === 'at_risk') && (
-                  <AlertTriangle className="h-5 w-5 text-amber-500" />
+                  <AlertTriangle className="h-5 w-5 text-stone-1000" />
                 )}
                 <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
               </div>
@@ -142,8 +142,8 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({ projects }) => {
           ))}
         </div>
         {atRiskProjects.length > 0 && (
-          <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3">
-            <div className="flex items-center gap-2 text-amber-800">
+          <div className="mt-4 rounded-lg bg-stone-100 border border-stone-200 p-3">
+            <div className="flex items-center gap-2 text-stone-800">
               <AlertTriangle className="h-4 w-4" />
               <span className="text-sm font-medium">
                 {atRiskProjects.length} project{atRiskProjects.length !== 1 ? 's' : ''} with at-risk
@@ -176,13 +176,13 @@ const SubmissionTimeline: React.FC<SubmissionTimelineProps> = ({ submissions }) 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'on_track':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-stone-100 text-stone-800 border-stone-200';
       case 'at_risk':
-        return 'bg-amber-100 text-amber-800 border-amber-200';
+        return 'bg-stone-100 text-stone-800 border-stone-200';
       case 'delayed':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-stone-100 text-stone-800 border-stone-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-stone-100 text-stone-800';
     }
   };
 
@@ -200,7 +200,7 @@ const SubmissionTimeline: React.FC<SubmissionTimelineProps> = ({ submissions }) 
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-blue-600" />
+              <Calendar className="h-5 w-5 text-stone-600" />
               Upcoming Submissions
             </CardTitle>
             <CardDescription>Next 6 months regulatory submissions</CardDescription>
@@ -215,8 +215,8 @@ const SubmissionTimeline: React.FC<SubmissionTimelineProps> = ({ submissions }) 
               className="flex items-center justify-between rounded-lg border p-3"
             >
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-blue-50 p-2">
-                  <FileText className="h-4 w-4 text-blue-600" />
+                <div className="rounded-lg bg-stone-100 p-2">
+                  <FileText className="h-4 w-4 text-stone-600" />
                 </div>
                 <div>
                   <div className="font-medium text-sm">{submission.name}</div>
@@ -271,7 +271,7 @@ const TeamActivity: React.FC<TeamActivityProps> = ({ activities }) => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-blue-600" />
+          <Users className="h-5 w-5 text-stone-600" />
           Team Activity
         </CardTitle>
         <CardDescription>Recent platform activity</CardDescription>
@@ -280,8 +280,8 @@ const TeamActivity: React.FC<TeamActivityProps> = ({ activities }) => {
         <div className="space-y-4">
           {activities.map(activity => (
             <div key={activity.id} className="flex items-start gap-3">
-              <div className="rounded-full bg-gray-100 p-2">
-                <Users className="h-3 w-3 text-gray-600" />
+              <div className="rounded-full bg-stone-100 p-2">
+                <Users className="h-3 w-3 text-stone-600" />
               </div>
               <div className="flex-1 space-y-1">
                 <p className="text-sm">
@@ -407,7 +407,7 @@ export const ExecutiveDashboard: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-stone-600" />
         <span className="ml-2 text-muted-foreground">Loading dashboard data...</span>
       </div>
     );
@@ -415,10 +415,10 @@ export const ExecutiveDashboard: React.FC = () => {
 
   if (hasError) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
-        <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-        <p className="text-red-700 font-medium">Failed to load dashboard data</p>
-        <p className="text-red-600 text-sm mt-1">Please try refreshing the page.</p>
+      <div className="rounded-lg border border-stone-200 bg-stone-100 p-6 text-center">
+        <AlertTriangle className="h-8 w-8 text-stone-1000 mx-auto mb-2" />
+        <p className="text-stone-800 font-medium">Failed to load dashboard data</p>
+        <p className="text-stone-700 text-sm mt-1">Please try refreshing the page.</p>
       </div>
     );
   }

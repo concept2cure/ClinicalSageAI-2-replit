@@ -26,7 +26,7 @@ export default function DecisionsPanel({ batchId }: { batchId: string }) {
           <div className="text-slate-600">No decisions logged yet</div>
         ) : (
           logs.map((log: any, i: number) => (
-            <div key={i} className="p-2 bg-slate-50 rounded border-l-4 border-blue-500">
+            <div key={i} className="p-2 bg-slate-50 rounded border-l-4 border-stone-1000">
               <div className="flex justify-between items-center mb-1">
                 <span className="font-medium">{log.kind}</span>
                 <span className="text-xs text-slate-500">
@@ -35,7 +35,7 @@ export default function DecisionsPanel({ batchId }: { batchId: string }) {
               </div>
               {log.explain && <div className="text-xs text-slate-600 mb-1">{log.explain}</div>}
               <details className="text-xs">
-                <summary className="cursor-pointer text-blue-600">View details</summary>
+                <summary className="cursor-pointer text-stone-600">View details</summary>
                 <pre className="mt-1 p-1 bg-slate-100 rounded text-xs overflow-x-auto">
                   Input: {JSON.stringify(log.input_json, null, 1)}
                   {'\n'}

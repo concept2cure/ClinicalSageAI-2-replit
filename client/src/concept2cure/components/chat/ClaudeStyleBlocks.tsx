@@ -46,7 +46,7 @@ export const ToolExecutionBlock: React.FC<ToolExecutionBlockProps> = ({
           status === 'running'
             ? 'text-stone-500'
             : status === 'error'
-              ? 'text-red-600 bg-red-50'
+              ? 'text-stone-700 bg-stone-100'
               : 'text-stone-600 hover:bg-stone-50',
           hasContent && 'cursor-pointer',
           !hasContent && 'cursor-default'
@@ -57,7 +57,7 @@ export const ToolExecutionBlock: React.FC<ToolExecutionBlockProps> = ({
         {status === 'running' ? (
           <Loader2 className="w-3.5 h-3.5 animate-spin text-stone-400 flex-shrink-0" />
         ) : status === 'error' ? (
-          <span className="w-3.5 h-3.5 flex items-center justify-center text-red-500 flex-shrink-0">!</span>
+          <span className="w-3.5 h-3.5 flex items-center justify-center text-stone-1000 flex-shrink-0">!</span>
         ) : (
           <Check className="w-3.5 h-3.5 text-stone-400 flex-shrink-0" />
         )}
@@ -185,7 +185,7 @@ export const StepProgress: React.FC<StepProgressProps> = ({ steps }) => {
           ) : step.status === 'completed' ? (
             <Check className="w-3.5 h-3.5 text-stone-400" />
           ) : step.status === 'error' ? (
-            <span className="w-3.5 h-3.5 text-red-500 text-center">!</span>
+            <span className="w-3.5 h-3.5 text-stone-1000 text-center">!</span>
           ) : (
             <div className="w-3.5 h-3.5 rounded-full border border-stone-200" />
           )}

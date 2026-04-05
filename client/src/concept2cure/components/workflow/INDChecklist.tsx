@@ -45,20 +45,20 @@ interface INDModuleConfig {
 
 const IND_MODULES: INDModuleConfig[] = [
   { number: 1, name: 'Administrative Information', icon: FileText, color: 'text-stone-700', bg: 'bg-stone-50', description: 'Forms FDA 1571/1572/3674, cover letter, debarment certification' },
-  { number: 2, name: 'CTD Summaries', icon: Activity, color: 'text-stone-700', bg: 'bg-blue-50', description: 'Quality, nonclinical, and clinical overviews and summaries' },
+  { number: 2, name: 'CTD Summaries', icon: Activity, color: 'text-stone-700', bg: 'bg-stone-100', description: 'Quality, nonclinical, and clinical overviews and summaries' },
   { number: 3, name: 'Quality (CMC)', icon: Beaker, color: 'text-stone-700', bg: 'bg-stone-100', description: 'Drug substance, drug product, manufacturing, stability' },
-  { number: 4, name: 'Nonclinical Study Reports', icon: FlaskConical, color: 'text-amber-700', bg: 'bg-amber-50', description: 'Pharmacology, pharmacokinetics, toxicology reports' },
-  { number: 5, name: 'Clinical Study Reports', icon: Shield, color: 'text-emerald-700', bg: 'bg-emerald-50', description: 'Clinical protocols, study reports, case report forms' },
+  { number: 4, name: 'Nonclinical Study Reports', icon: FlaskConical, color: 'text-stone-700', bg: 'bg-stone-100', description: 'Pharmacology, pharmacokinetics, toxicology reports' },
+  { number: 5, name: 'Clinical Study Reports', icon: Shield, color: 'text-stone-800', bg: 'bg-stone-100', description: 'Clinical protocols, study reports, case report forms' },
 ];
 
 type SectionStatus = 'not_started' | 'draft' | 'review' | 'approved' | 'locked';
 
 const STATUS_CONFIG: Record<SectionStatus, { label: string; color: string; dot: string }> = {
   not_started: { label: 'Not Started', color: 'text-stone-400', dot: 'bg-stone-300' },
-  draft: { label: 'Draft', color: 'text-amber-600', dot: 'bg-amber-500' },
-  review: { label: 'In Review', color: 'text-blue-600', dot: 'bg-stone-600' },
-  approved: { label: 'Approved', color: 'text-emerald-600', dot: 'bg-emerald-500' },
-  locked: { label: 'Locked', color: 'text-emerald-700', dot: 'bg-emerald-600' },
+  draft: { label: 'Draft', color: 'text-stone-600', dot: 'bg-stone-1000' },
+  review: { label: 'In Review', color: 'text-stone-600', dot: 'bg-stone-600' },
+  approved: { label: 'Approved', color: 'text-stone-700', dot: 'bg-stone-1000' },
+  locked: { label: 'Locked', color: 'text-stone-800', dot: 'bg-stone-700' },
 };
 
 // ── Props ────────────────────────────────────────────────────────────────────
@@ -159,7 +159,7 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
         <div className="flex items-center gap-4">
           <div className="flex-1 h-2 rounded-full bg-stone-100 overflow-hidden">
             <div
-              className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+              className="h-full rounded-full bg-stone-1000 transition-all duration-300"
               style={{ width: `${overallStats.pct}%` }}
             />
           </div>
@@ -182,7 +182,7 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
             </Button>
           )}
           <div className="flex gap-3 ml-auto">
-            <span className="text-xs text-emerald-600">{overallStats.completed} complete</span>
+            <span className="text-xs text-stone-700">{overallStats.completed} complete</span>
             <span className="text-xs text-stone-400">{overallStats.total - overallStats.completed} remaining</span>
           </div>
         </div>
@@ -234,10 +234,10 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
                     {/* Module progress */}
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {hasGaps && (
-                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                        <AlertTriangle className="h-3.5 w-3.5 text-stone-1000" />
                       )}
                       {allComplete ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                        <CheckCircle2 className="h-4 w-4 text-stone-1000" />
                       ) : (
                         <span className="text-xs font-medium text-stone-500 tabular-nums">
                           {group.stats.completed}/{group.stats.total}
@@ -247,7 +247,7 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
                         <div
                           className={cn(
                             'h-full rounded-full transition-all',
-                            allComplete ? 'bg-emerald-500' : 'bg-stone-600',
+                            allComplete ? 'bg-stone-1000' : 'bg-stone-600',
                           )}
                           style={{ width: `${modulePct}%` }}
                         />
@@ -270,7 +270,7 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
                           >
                             {/* Status icon */}
                             {isComplete ? (
-                              <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                              <CheckCircle2 className="h-4 w-4 text-stone-1000 flex-shrink-0" />
                             ) : (
                               <Circle className={cn('h-4 w-4 flex-shrink-0', statusCfg.color)} />
                             )}
@@ -302,9 +302,9 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
                               variant="outline"
                               className={cn(
                                 'flex-shrink-0 text-[10px] font-medium border-0',
-                                isComplete ? 'bg-emerald-50 text-emerald-700' :
-                                section.status === 'review' ? 'bg-blue-50 text-stone-700' :
-                                section.status === 'draft' ? 'bg-amber-50 text-amber-700' :
+                                isComplete ? 'bg-stone-100 text-stone-800' :
+                                section.status === 'review' ? 'bg-stone-100 text-stone-700' :
+                                section.status === 'draft' ? 'bg-stone-100 text-stone-700' :
                                 'bg-stone-50 text-stone-400',
                               )}
                             >

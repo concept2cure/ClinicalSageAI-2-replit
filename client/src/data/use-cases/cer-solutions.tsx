@@ -87,7 +87,7 @@ export const cerSolutionsUseCase = {
         <h2 className="text-2xl font-bold mb-4">Key Features</h2>
         <div className="space-y-4">
           <div className="flex items-start">
-            <CheckCircle2 className="h-5 w-5 mr-2 text-green-500 flex-shrink-0 mt-1" />
+            <CheckCircle2 className="h-5 w-5 mr-2 text-stone-1000 flex-shrink-0 mt-1" />
             <div>
               <h3 className="font-medium">FDA FAERS Data Integration</h3>
               <p className="text-slate-600 dark:text-slate-400 text-sm">
@@ -97,7 +97,7 @@ export const cerSolutionsUseCase = {
             </div>
           </div>
           <div className="flex items-start">
-            <CheckCircle2 className="h-5 w-5 mr-2 text-green-500 flex-shrink-0 mt-1" />
+            <CheckCircle2 className="h-5 w-5 mr-2 text-stone-1000 flex-shrink-0 mt-1" />
             <div>
               <h3 className="font-medium">AI-Powered Narrative Generation</h3>
               <p className="text-slate-600 dark:text-slate-400 text-sm">
@@ -107,7 +107,7 @@ export const cerSolutionsUseCase = {
             </div>
           </div>
           <div className="flex items-start">
-            <CheckCircle2 className="h-5 w-5 mr-2 text-green-500 flex-shrink-0 mt-1" />
+            <CheckCircle2 className="h-5 w-5 mr-2 text-stone-1000 flex-shrink-0 mt-1" />
             <div>
               <h3 className="font-medium">Enhanced PDF Reports</h3>
               <p className="text-slate-600 dark:text-slate-400 text-sm">
@@ -117,7 +117,7 @@ export const cerSolutionsUseCase = {
             </div>
           </div>
           <div className="flex items-start">
-            <CheckCircle2 className="h-5 w-5 mr-2 text-green-500 flex-shrink-0 mt-1" />
+            <CheckCircle2 className="h-5 w-5 mr-2 text-stone-1000 flex-shrink-0 mt-1" />
             <div>
               <h3 className="font-medium">Background Task Management</h3>
               <p className="text-slate-600 dark:text-slate-400 text-sm">
@@ -127,7 +127,7 @@ export const cerSolutionsUseCase = {
             </div>
           </div>
           <div className="flex items-start">
-            <CheckCircle2 className="h-5 w-5 mr-2 text-green-500 flex-shrink-0 mt-1" />
+            <CheckCircle2 className="h-5 w-5 mr-2 text-stone-1000 flex-shrink-0 mt-1" />
             <div>
               <h3 className="font-medium">Real-time Safety Signal Detection</h3>
               <p className="text-slate-600 dark:text-slate-400 text-sm">
@@ -147,20 +147,20 @@ export const cerSolutionsUseCase = {
               <h3 className="font-semibold text-lg mb-2">Regulatory Affairs Directors</h3>
               <ul className="space-y-2">
                 <li className="flex items-start">
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500 flex-shrink-0 mt-1" />
+                  <CheckCircle2 className="h-4 w-4 mr-2 text-stone-1000 flex-shrink-0 mt-1" />
                   <span className="text-sm">
                     Need to maintain regulatory compliance with post-market surveillance
                     requirements
                   </span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500 flex-shrink-0 mt-1" />
+                  <CheckCircle2 className="h-4 w-4 mr-2 text-stone-1000 flex-shrink-0 mt-1" />
                   <span className="text-sm">
                     Want to streamline CER creation and updates to reduce manual effort
                   </span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500 flex-shrink-0 mt-1" />
+                  <CheckCircle2 className="h-4 w-4 mr-2 text-stone-1000 flex-shrink-0 mt-1" />
                   <span className="text-sm">
                     Require consistent, audit-ready documentation for regulatory submissions
                   </span>
@@ -171,19 +171,19 @@ export const cerSolutionsUseCase = {
               <h3 className="font-semibold text-lg mb-2">Pharmacovigilance Leaders</h3>
               <ul className="space-y-2">
                 <li className="flex items-start">
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500 flex-shrink-0 mt-1" />
+                  <CheckCircle2 className="h-4 w-4 mr-2 text-stone-1000 flex-shrink-0 mt-1" />
                   <span className="text-sm">
                     Focus on active safety monitoring and signal detection
                   </span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500 flex-shrink-0 mt-1" />
+                  <CheckCircle2 className="h-4 w-4 mr-2 text-stone-1000 flex-shrink-0 mt-1" />
                   <span className="text-sm">
                     Need to analyze adverse event trends across multiple products
                   </span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500 flex-shrink-0 mt-1" />
+                  <CheckCircle2 className="h-4 w-4 mr-2 text-stone-1000 flex-shrink-0 mt-1" />
                   <span className="text-sm">
                     Want predictive insights to anticipate potential safety concerns
                   </span>
@@ -196,19 +196,19 @@ export const cerSolutionsUseCase = {
               <h3 className="font-semibold text-lg mb-2">Medical Affairs Teams</h3>
               <ul className="space-y-2">
                 <li className="flex items-start">
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500 flex-shrink-0 mt-1" />
+                  <CheckCircle2 className="h-4 w-4 mr-2 text-stone-1000 flex-shrink-0 mt-1" />
                   <span className="text-sm">
                     Need to communicate safety findings to healthcare professionals
                   </span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500 flex-shrink-0 mt-1" />
+                  <CheckCircle2 className="h-4 w-4 mr-2 text-stone-1000 flex-shrink-0 mt-1" />
                   <span className="text-sm">
                     Require evidence-based narratives for risk-benefit assessments
                   </span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500 flex-shrink-0 mt-1" />
+                  <CheckCircle2 className="h-4 w-4 mr-2 text-stone-1000 flex-shrink-0 mt-1" />
                   <span className="text-sm">
                     Want to integrate real-world evidence into product lifecycle management
                   </span>
@@ -219,19 +219,19 @@ export const cerSolutionsUseCase = {
               <h3 className="font-semibold text-lg mb-2">Clinical Development Leaders</h3>
               <ul className="space-y-2">
                 <li className="flex items-start">
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500 flex-shrink-0 mt-1" />
+                  <CheckCircle2 className="h-4 w-4 mr-2 text-stone-1000 flex-shrink-0 mt-1" />
                   <span className="text-sm">
                     Focus on translating post-market findings into pre-market protocol design
                   </span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500 flex-shrink-0 mt-1" />
+                  <CheckCircle2 className="h-4 w-4 mr-2 text-stone-1000 flex-shrink-0 mt-1" />
                   <span className="text-sm">
                     Need integrated views of both CSR and CER data for comprehensive insights
                   </span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500 flex-shrink-0 mt-1" />
+                  <CheckCircle2 className="h-4 w-4 mr-2 text-stone-1000 flex-shrink-0 mt-1" />
                   <span className="text-sm">
                     Want to identify potential development opportunities from real-world evidence
                   </span>
@@ -252,7 +252,7 @@ export const cerSolutionsUseCase = {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="overflow-hidden">
-            <div className="h-40 bg-gradient-to-r from-sky-500 to-indigo-600 flex items-center justify-center">
+            <div className="h-40 bg-gradient-to-r from-sky-500 to-stone-600 flex items-center justify-center">
               <FileBarChart2 className="h-16 w-16 text-white" />
             </div>
             <CardHeader>
@@ -285,7 +285,7 @@ export const cerSolutionsUseCase = {
           </Card>
 
           <Card className="overflow-hidden">
-            <div className="h-40 bg-gradient-to-r from-emerald-500 to-teal-600 flex items-center justify-center">
+            <div className="h-40 bg-gradient-to-r from-stone-1000 to-stone-600 flex items-center justify-center">
               <FileBarChart2 className="h-16 w-16 text-white" />
             </div>
             <CardHeader>
@@ -328,7 +328,7 @@ export const cerSolutionsUseCase = {
         </div>
       </section>
 
-      <section className="bg-gradient-to-r from-indigo-600 to-blue-700 text-white p-6 rounded-lg">
+      <section className="bg-gradient-to-r from-stone-600 to-stone-700 text-white p-6 rounded-lg">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           <div>
             <h2 className="text-2xl font-bold mb-4">Start Using CER Solutions Today</h2>
@@ -338,12 +338,12 @@ export const cerSolutionsUseCase = {
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/cer-generator">
-                <Button className="bg-white text-indigo-700 hover:bg-slate-100">
+                <Button className="bg-white text-stone-700 hover:bg-slate-100">
                   Try CER Generator
                 </Button>
               </Link>
               <Link href="/enhanced-cer-dashboard">
-                <Button variant="outline" className="border-white text-white hover:bg-indigo-700">
+                <Button variant="outline" className="border-white text-white hover:bg-stone-700">
                   View Dashboard
                 </Button>
               </Link>
@@ -354,21 +354,21 @@ export const cerSolutionsUseCase = {
               <h3 className="font-semibold text-lg mb-4">Key Benefits</h3>
               <ul className="space-y-3">
                 <li className="flex items-start">
-                  <CheckCircle2 className="h-5 w-5 mr-2 text-green-300 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-5 w-5 mr-2 text-stone-300 flex-shrink-0 mt-0.5" />
                   <span>80% reduction in CER preparation time</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle2 className="h-5 w-5 mr-2 text-green-300 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-5 w-5 mr-2 text-stone-300 flex-shrink-0 mt-0.5" />
                   <span>Early detection of safety signals before regulatory flags</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle2 className="h-5 w-5 mr-2 text-green-300 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-5 w-5 mr-2 text-stone-300 flex-shrink-0 mt-0.5" />
                   <span>
                     Consistently formatted reports that meet global regulatory requirements
                   </span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle2 className="h-5 w-5 mr-2 text-green-300 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-5 w-5 mr-2 text-stone-300 flex-shrink-0 mt-0.5" />
                   <span>Seamless integration with existing CSR workflows</span>
                 </li>
               </ul>

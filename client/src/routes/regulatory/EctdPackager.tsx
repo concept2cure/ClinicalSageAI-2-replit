@@ -175,10 +175,10 @@ const EctdPackager: React.FC<EctdPackagerProps> = ({ subId }) => {
     <div className="space-y-6" data-testid="ectd-packager">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Package className="h-6 w-6 text-blue-600" />
+        <Package className="h-6 w-6 text-stone-600" />
         <div>
           <h3 className="text-lg font-semibold">eCTD Packager (Module 3)</h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-stone-600">
             Create regulatory submission packages with preflight QC and sequence management
           </p>
         </div>
@@ -265,7 +265,7 @@ const EctdPackager: React.FC<EctdPackagerProps> = ({ subId }) => {
               {loadingSequences ? (
                 <div className="text-center py-4">Loading sequences...</div>
               ) : sequences.length === 0 ? (
-                <div className="text-center py-4 text-gray-500">No sequences created yet</div>
+                <div className="text-center py-4 text-stone-500">No sequences created yet</div>
               ) : (
                 <div className="space-y-2">
                   {sequences.map((seq: Sequence) => (
@@ -274,8 +274,8 @@ const EctdPackager: React.FC<EctdPackagerProps> = ({ subId }) => {
                       data-testid={`sequence-item-${seq.seq_id}`}
                       className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                         selectedSeq === seq.seq_id
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-stone-1000 bg-stone-100'
+                          : 'border-stone-200 hover:border-stone-300'
                       }`}
                       onClick={() => setSelectedSeq(seq.seq_id)}
                     >
@@ -288,11 +288,11 @@ const EctdPackager: React.FC<EctdPackagerProps> = ({ subId }) => {
                           <Badge variant="secondary">{seq.app_type}</Badge>
                         </div>
                         <div className="flex items-center gap-2">
-                          {seq.package_path && <CheckCircle className="h-4 w-4 text-green-600" />}
-                          <span className="text-sm text-gray-500">{seq.file_count} files</span>
+                          {seq.package_path && <CheckCircle className="h-4 w-4 text-stone-700" />}
+                          <span className="text-sm text-stone-500">{seq.file_count} files</span>
                         </div>
                       </div>
-                      {seq.note && <p className="text-sm text-gray-600 mt-1">{seq.note}</p>}
+                      {seq.note && <p className="text-sm text-stone-600 mt-1">{seq.note}</p>}
                     </div>
                   ))}
                 </div>
@@ -332,7 +332,7 @@ const EctdPackager: React.FC<EctdPackagerProps> = ({ subId }) => {
                     <div className="space-y-2">
                       <Label>Package Status</Label>
                       <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <CheckCircle className="h-4 w-4 text-stone-700" />
                         <span className="text-sm">
                           Built {new Date(selectedSequence.built_at!).toLocaleString()}
                         </span>
@@ -378,9 +378,9 @@ const EctdPackager: React.FC<EctdPackagerProps> = ({ subId }) => {
                       <Separator />
                       <div className="flex items-center gap-2">
                         {preflightResults.ok ? (
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <CheckCircle className="h-4 w-4 text-stone-700" />
                         ) : (
-                          <AlertTriangle className="h-4 w-4 text-red-600" />
+                          <AlertTriangle className="h-4 w-4 text-stone-700" />
                         )}
                         <span className="font-medium">
                           {preflightResults.ok
@@ -402,7 +402,7 @@ const EctdPackager: React.FC<EctdPackagerProps> = ({ subId }) => {
                               </Badge>
                               <div className="flex-1">
                                 <p className="text-sm font-medium">{issue.code}</p>
-                                <p className="text-sm text-gray-600">{issue.message}</p>
+                                <p className="text-sm text-stone-600">{issue.message}</p>
                               </div>
                             </div>
                           ))}
@@ -436,7 +436,7 @@ const EctdPackager: React.FC<EctdPackagerProps> = ({ subId }) => {
                     {packageMutation.isPending ? 'Creating Package...' : 'Create eCTD Package'}
                   </Button>
                   {preflightResults && !preflightResults.ok && (
-                    <p className="text-sm text-red-600 mt-2">
+                    <p className="text-sm text-stone-700 mt-2">
                       Fix critical issues before packaging
                     </p>
                   )}
@@ -460,7 +460,7 @@ const EctdPackager: React.FC<EctdPackagerProps> = ({ subId }) => {
                         >
                           <div>
                             <p className="font-medium">{file.title}</p>
-                            <p className="text-gray-500">{file.path}</p>
+                            <p className="text-stone-500">{file.path}</p>
                           </div>
                           <Badge variant="outline">{file.sec_code}</Badge>
                         </div>
@@ -473,7 +473,7 @@ const EctdPackager: React.FC<EctdPackagerProps> = ({ subId }) => {
           ) : (
             <Card>
               <CardContent className="py-8">
-                <div className="text-center text-gray-500">
+                <div className="text-center text-stone-500">
                   <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>Select a sequence to view details and actions</p>
                 </div>

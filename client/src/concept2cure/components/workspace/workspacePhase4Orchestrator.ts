@@ -184,11 +184,11 @@ export function useGovernanceNormalizer() {
       const artifactStatus = String(proposal.artifactStatus || '').toLowerCase();
       if (artifactStatus === 'locked')
         return { label: 'Locked / Finalized', tone: 'text-slate-700' };
-      if (artifactStatus === 'review') return { label: 'Review in flight', tone: 'text-blue-700' };
+      if (artifactStatus === 'review') return { label: 'Review in flight', tone: 'text-stone-700' };
       if (proposal.governanceState === 'ACCEPTED_GOVERNED')
-        return { label: 'Accepted and governed', tone: 'text-emerald-700' };
+        return { label: 'Accepted and governed', tone: 'text-stone-800' };
       if (proposal.governanceState === 'ACCEPTED_PERSISTED_NO_GOVERNANCE')
-        return { label: 'Generated (not governed)', tone: 'text-amber-700' };
+        return { label: 'Generated (not governed)', tone: 'text-stone-700' };
       return { label: 'Generated', tone: 'text-stone-700' };
     },
     []

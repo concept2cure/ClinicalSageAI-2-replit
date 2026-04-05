@@ -244,7 +244,7 @@ function CreateProjectScreen({
       </p>
 
       {createError && (
-        <div className="max-w-sm w-full mb-4 px-4 py-3 rounded-lg bg-red-50 text-red-700 text-sm">
+        <div className="max-w-sm w-full mb-4 px-4 py-3 rounded-lg bg-stone-100 text-stone-800 text-sm">
           Project creation failed. Check your connection and try again.
         </div>
       )}

@@ -12,8 +12,8 @@ interface ContinuityBriefingProps {
 }
 
 const TRAJECTORY_STYLES: Record<string, { label: string; color: string; arrow: string }> = {
-  improving: { label: 'Improving', color: 'text-emerald-600 dark:text-emerald-400', arrow: '\u2191' },
-  declining: { label: 'Declining', color: 'text-red-600 dark:text-red-400', arrow: '\u2193' },
+  improving: { label: 'Improving', color: 'text-stone-700 dark:text-stone-400', arrow: '\u2191' },
+  declining: { label: 'Declining', color: 'text-stone-700 dark:text-stone-400', arrow: '\u2193' },
   stable: { label: 'Stable', color: 'text-stone-600 dark:text-stone-400', arrow: '\u2192' },
 };
 
@@ -90,13 +90,13 @@ export function ContinuityBriefing({ snapshot, onRefresh, isRefreshing }: Contin
       {/* Newly ready */}
       {snapshot.newlyReady.length > 0 && (
         <div>
-          <h4 className="text-xs font-medium uppercase text-emerald-600 dark:text-emerald-400 mb-2">
+          <h4 className="text-xs font-medium uppercase text-stone-700 dark:text-stone-400 mb-2">
             Newly Ready
           </h4>
           <div className="space-y-1">
             {snapshot.newlyReady.map((item) => (
-              <div key={`${item.type}-${item.id}`} className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-300">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+              <div key={`${item.type}-${item.id}`} className="flex items-center gap-2 text-sm text-stone-800 dark:text-stone-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-stone-1000 shrink-0" />
                 {item.title}
               </div>
             ))}
@@ -107,7 +107,7 @@ export function ContinuityBriefing({ snapshot, onRefresh, isRefreshing }: Contin
       {/* Needs attention */}
       {snapshot.needsAttention.length > 0 && (
         <div>
-          <h4 className="text-xs font-medium uppercase text-amber-600 dark:text-amber-400 mb-2">
+          <h4 className="text-xs font-medium uppercase text-stone-600 dark:text-stone-400 mb-2">
             Needs Attention
           </h4>
           <div className="space-y-1">

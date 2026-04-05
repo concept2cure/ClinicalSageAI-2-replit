@@ -106,7 +106,7 @@ export function RegulatoryStatusCard({
       {/* Header */}
       <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-          <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0" />
+          <ShieldCheck className="w-4 h-4 text-stone-600 shrink-0" />
           <span className="text-xs sm:text-sm font-semibold text-stone-900 truncate">
             Regulatory Status
           </span>
@@ -114,7 +114,7 @@ export function RegulatoryStatusCard({
         {onOpenIntelligence && (
           <button
             onClick={onOpenIntelligence}
-            className="flex items-center gap-0.5 text-xs text-blue-600 hover:text-stone-700 font-medium"
+            className="flex items-center gap-0.5 text-xs text-stone-600 hover:text-stone-700 font-medium"
           >
             Details
             <ChevronRight className="w-3 h-3" />
@@ -152,7 +152,7 @@ export function RegulatoryStatusCard({
             {/* Precedents Found */}
             <div className="p-3">
               <div className="flex items-center gap-1.5 mb-1.5">
-                <FileSearch className="w-3.5 h-3.5 text-blue-500" />
+                <FileSearch className="w-3.5 h-3.5 text-stone-1000" />
                 <span className="text-xs text-stone-500 font-medium">Precedents</span>
               </div>
               <div className="text-base font-semibold text-stone-900">{statusData.precedentsFound}</div>
@@ -162,17 +162,17 @@ export function RegulatoryStatusCard({
             {/* Risk Score */}
             <div className="p-3">
               <div className="flex items-center gap-1.5 mb-1.5">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                <AlertTriangle className="w-3.5 h-3.5 text-stone-1000" />
                 <span className="text-xs text-stone-500 font-medium">Risk Score</span>
               </div>
               <div className="text-base font-semibold text-stone-900">{statusData.riskScore}</div>
               <span
                 className={`text-xs font-medium ${
                   statusData.riskScore < 30
-                    ? 'text-emerald-600'
+                    ? 'text-stone-700'
                     : statusData.riskScore < 60
-                      ? 'text-amber-600'
-                      : 'text-red-600'
+                      ? 'text-stone-600'
+                      : 'text-stone-700'
                 }`}
               >
                 {statusData.riskScore < 30 ? 'Low' : statusData.riskScore < 60 ? 'Moderate' : 'High'}
@@ -182,13 +182,13 @@ export function RegulatoryStatusCard({
             {/* Approval Probability */}
             <div className="p-3">
               <div className="flex items-center gap-1.5 mb-1.5">
-                <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                <TrendingUp className="w-3.5 h-3.5 text-stone-1000" />
                 <span className="text-xs text-stone-500 font-medium">Approval Prob.</span>
               </div>
               <div className="text-base font-semibold text-stone-900">{statusData.approvalProbability}%</div>
               <div className="h-1.5 bg-stone-100 rounded-full mt-1.5 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-emerald-500 transition-all duration-150"
+                  className="h-full rounded-full bg-stone-1000 transition-all duration-150"
                   style={{ width: `${statusData.approvalProbability}%` }}
                 />
               </div>

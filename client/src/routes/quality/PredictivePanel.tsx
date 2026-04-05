@@ -54,10 +54,10 @@ export default function PredictivePanel({ batchId }: { batchId: string }) {
                 <div
                   className={
                     pred.risk_level === 'HIGH'
-                      ? 'text-red-600'
+                      ? 'text-stone-700'
                       : pred.risk_level === 'MEDIUM'
-                        ? 'text-orange-600'
-                        : 'text-green-600'
+                        ? 'text-stone-600'
+                        : 'text-stone-700'
                   }
                 >
                   {pred.risk_level} RISK

@@ -459,7 +459,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
               {/* Project Name */}
               <div>
                 <label className="block text-sm font-medium text-[#4D4B45] mb-1.5">
-                  Project Name <span className="text-red-500">*</span>
+                  Project Name <span className="text-stone-1000">*</span>
                 </label>
                 <Input
                   value={name}
@@ -597,7 +597,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                   {customInstructions.trim().length > 0 && (
                     <Badge
                       variant="secondary"
-                      className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs font-medium"
+                      className="bg-stone-100 text-stone-800 border-stone-200 text-xs font-medium"
                     >
                       Active — injected into every conversation
                     </Badge>
@@ -662,7 +662,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                       </SelectContent>
                     </Select>
                     {teamMembersError && (
-                      <p className="text-xs text-red-600">
+                      <p className="text-xs text-stone-700">
                         Failed to load team members: {teamMembersError.message}
                       </p>
                     )}
@@ -739,7 +739,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="text-[#4D4B45]/60 hover:text-red-600"
+                              className="text-[#4D4B45]/60 hover:text-stone-700"
                               onClick={() => handleRemoveCollaborator(member.userId)}
                             >
                               Remove
@@ -817,7 +817,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                 </p>
               </div>
               {!canManageModules && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                <div className="rounded-lg border border-stone-200 bg-stone-100 px-3 py-2 text-xs text-stone-700">
                   Module links require a numeric project ID.
                 </div>
               )}
@@ -910,7 +910,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="text-[#4D4B45]/60 hover:text-red-600"
+                            className="text-[#4D4B45]/60 hover:text-stone-700"
                             onClick={() => handleUnlinkModule(item.moduleType, item.moduleInstanceId)}
                             disabled={unlinkModuleMutation.isPending}
                           >
@@ -946,7 +946,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
           <div className="px-6 py-4 border-t border-[#E8E6DC] bg-white flex items-center justify-between">
             <div className="text-xs text-[#4D4B45]/40">
               {saved && (
-                <span className="text-emerald-600 font-medium">Changes saved</span>
+                <span className="text-stone-700 font-medium">Changes saved</span>
               )}
             </div>
             <div className="flex items-center gap-2">

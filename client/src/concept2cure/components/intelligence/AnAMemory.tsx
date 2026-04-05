@@ -74,12 +74,12 @@ export interface AnAMemoryProps {
 
 const CATEGORY_CONFIG: Record<MemoryCategory, { label: string; icon: React.ElementType; color: string }> = {
   decision: { label: 'Decisions', icon: Target, color: 'text-stone-600 bg-stone-100' },
-  preference: { label: 'Preferences', icon: Lightbulb, color: 'text-amber-600 bg-amber-50' },
-  context: { label: 'Context', icon: Database, color: 'text-blue-600 bg-blue-50' },
-  strategy: { label: 'Strategy', icon: Target, color: 'text-blue-600 bg-blue-50' },
-  feedback: { label: 'Feedback', icon: FileText, color: 'text-emerald-600 bg-emerald-50' },
-  regulatory: { label: 'Regulatory', icon: Shield, color: 'text-red-600 bg-red-50' },
-  clinical: { label: 'Clinical', icon: Brain, color: 'text-blue-600 bg-blue-50' },
+  preference: { label: 'Preferences', icon: Lightbulb, color: 'text-stone-600 bg-stone-100' },
+  context: { label: 'Context', icon: Database, color: 'text-stone-600 bg-stone-100' },
+  strategy: { label: 'Strategy', icon: Target, color: 'text-stone-600 bg-stone-100' },
+  feedback: { label: 'Feedback', icon: FileText, color: 'text-stone-700 bg-stone-100' },
+  regulatory: { label: 'Regulatory', icon: Shield, color: 'text-stone-700 bg-stone-100' },
+  clinical: { label: 'Clinical', icon: Brain, color: 'text-stone-600 bg-stone-100' },
   technical: { label: 'Technical', icon: Database, color: 'text-stone-600 bg-stone-50' },
 };
 
@@ -390,7 +390,7 @@ export function AnAMemory({
 
       {/* Add form */}
       {showAddForm && (
-        <div className="px-4 py-3 border-b border-blue-200 bg-stone-100/50">
+        <div className="px-4 py-3 border-b border-stone-200 bg-stone-100/50">
           <div className="space-y-2">
             <select
               value={newCategory}
@@ -500,7 +500,7 @@ export function AnAMemory({
                               </button>
                               <button
                                 onClick={handleSaveEdit}
-                                className="p-1 text-emerald-600 hover:text-emerald-700"
+                                className="p-1 text-stone-700 hover:text-stone-800"
                               >
                                 <Check className="w-3 h-3" />
                               </button>
@@ -540,7 +540,7 @@ export function AnAMemory({
                                 </button>
                                 <button
                                   onClick={() => handleDelete(entry.id)}
-                                  className="p-1 text-stone-400 hover:text-red-600"
+                                  className="p-1 text-stone-400 hover:text-stone-700"
                                   title="Delete"
                                 >
                                   <Trash2 className="w-3 h-3" />

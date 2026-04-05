@@ -68,11 +68,11 @@ interface DataRoomPanelProps {
 function getFileIcon(type: string) {
   const t = type?.toLowerCase() || '';
   if (t.includes('pdf') || t.includes('document'))
-    return <FileText className="w-4 h-4 text-red-500" />;
+    return <FileText className="w-4 h-4 text-stone-1000" />;
   if (t.includes('spreadsheet') || t.includes('excel') || t.includes('csv'))
-    return <FileSpreadsheet className="w-4 h-4 text-emerald-500" />;
+    return <FileSpreadsheet className="w-4 h-4 text-stone-1000" />;
   if (t.includes('image') || t.includes('jpeg') || t.includes('png'))
-    return <FileImage className="w-4 h-4 text-blue-500" />;
+    return <FileImage className="w-4 h-4 text-stone-1000" />;
   return <File className="w-4 h-4 text-stone-500" />;
 }
 
@@ -252,7 +252,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
       {/* Header */}
       <div className="p-3 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center gap-2 mb-2">
-          <Database className="w-4 h-4 text-emerald-600" />
+          <Database className="w-4 h-4 text-stone-700" />
           <span className="font-semibold text-sm text-stone-900">Data Room</span>
           <span className="ml-auto text-xs text-stone-500">
             {sources.length} file{sources.length !== 1 ? 's' : ''}
@@ -268,7 +268,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search sources..."
-            className="w-full pl-8 pr-8 py-1.5 text-xs bg-white border border-stone-200 rounded-lg focus-visible:ring-2 outline-none focus:ring-emerald-500"
+            className="w-full pl-8 pr-8 py-1.5 text-xs bg-white border border-stone-200 rounded-lg focus-visible:ring-2 outline-none focus:ring-stone-1000"
           />
           {search && (
             <button
@@ -286,7 +286,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
             className={cn(
               'flex items-center gap-1 px-2 py-1 text-xs rounded border transition-colors duration-150',
               showFilters
-                ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                ? 'bg-stone-100 border-stone-200 text-stone-800'
                 : 'border-stone-200 text-stone-600 hover:bg-stone-50'
             )}
           >
@@ -340,7 +340,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                 className={cn(
                   'px-2 py-0.5 text-xs rounded-full border transition-colors',
                   filterType === key
-                    ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
+                    ? 'bg-stone-100 border-stone-300 text-stone-800'
                     : 'border-stone-200 text-stone-500 hover:bg-stone-50'
                 )}
               >
@@ -356,7 +356,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                   className={cn(
                     'px-2 py-0.5 text-xs rounded-full border transition-colors',
                     filterType === t
-                      ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
+                      ? 'bg-stone-100 border-stone-300 text-stone-800'
                       : 'border-stone-200 text-stone-500 hover:bg-stone-50'
                   )}
                 >
@@ -390,7 +390,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
               {sources.length === 0 ? 'No files in this project yet' : 'No files match your search'}
             </p>
             {sources.length === 0 && (
-              <button onClick={onUpload} className="mt-2 text-xs text-emerald-600 hover:underline">
+              <button onClick={onUpload} className="mt-2 text-xs text-stone-700 hover:underline">
                 Upload your first source
               </button>
             )}
@@ -402,7 +402,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
               return (
                 <div
                   key={source.id}
-                  className="border border-stone-200 rounded-lg bg-white hover:border-emerald-300 transition-colors duration-150"
+                  className="border border-stone-200 rounded-lg bg-white hover:border-stone-300 transition-colors duration-150"
                   draggable
                   onDragStart={() => onSourceDrag?.(source)}
                 >
@@ -420,7 +420,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                       <p className="text-xs font-medium text-stone-900 truncate">{source.title}</p>
                       <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                         {source.ctdSection && (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 rounded text-blue-600 font-medium">
+                          <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 rounded text-stone-600 font-medium">
                             {source.ctdSection}
                           </span>
                         )}
@@ -428,7 +428,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                           className={cn(
                             'text-xs px-1.5 py-0.5 rounded',
                             source.category === 'source' || source.type === 'source_document'
-                              ? 'bg-emerald-50 text-emerald-600'
+                              ? 'bg-stone-100 text-stone-700'
                               : 'bg-stone-100 text-stone-500'
                           )}
                         >
@@ -451,13 +451,13 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                     </div>
                     <div className="flex items-center gap-1">
                       {source.status === 'processing' && (
-                        <Loader2 className="w-3 h-3 animate-spin text-amber-500" />
+                        <Loader2 className="w-3 h-3 animate-spin text-stone-1000" />
                       )}
                       {source.status === 'error' && (
-                        <AlertCircle className="w-3 h-3 text-red-500" />
+                        <AlertCircle className="w-3 h-3 text-stone-1000" />
                       )}
                       {source.status === 'ready' && (
-                        <CheckCircle className="w-3 h-3 text-emerald-500" />
+                        <CheckCircle className="w-3 h-3 text-stone-1000" />
                       )}
                       {isExpanded ? (
                         <ChevronDown className="w-3 h-3 text-stone-400" />
@@ -491,7 +491,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                                 {source.metadata.endpoints.map((ep, i) => (
                                   <span
                                     key={i}
-                                    className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded"
+                                    className="text-xs px-1.5 py-0.5 bg-stone-100 text-stone-600 rounded"
                                   >
                                     {ep}
                                   </span>
@@ -542,7 +542,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                             e.stopPropagation();
                             onSourceSelect?.(source);
                           }}
-                          className="text-xs text-stone-600 hover:text-blue-600 flex items-center gap-1"
+                          className="text-xs text-stone-600 hover:text-stone-600 flex items-center gap-1"
                         >
                           <ExternalLink className="w-3 h-3" />
                           Open

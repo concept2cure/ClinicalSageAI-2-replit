@@ -57,9 +57,9 @@ const statusLabels: Record<ReviewAssignment['status'], string> = {
 
 const statusColors: Record<ReviewAssignment['status'], string> = {
   pending: 'text-stone-600 bg-stone-100',
-  'in-progress': 'text-amber-700 bg-amber-50',
-  completed: 'text-emerald-700 bg-emerald-50',
-  'changes-requested': 'text-red-700 bg-red-50',
+  'in-progress': 'text-stone-700 bg-stone-100',
+  completed: 'text-stone-800 bg-stone-100',
+  'changes-requested': 'text-stone-800 bg-stone-100',
 };
 
 function formatTimestamp(ts: string): string {
@@ -138,23 +138,23 @@ export function ReviewModePanel({
   const changeTypeConfig = {
     addition: {
       label: 'Added',
-      accent: 'border-l-emerald-400',
-      bg: 'bg-emerald-50/60',
-      badge: 'bg-emerald-100 text-emerald-700',
-      diffBg: 'bg-emerald-50 text-emerald-800',
+      accent: 'border-l-stone-400',
+      bg: 'bg-stone-100/60',
+      badge: 'bg-stone-100 text-stone-800',
+      diffBg: 'bg-stone-100 text-stone-800',
     },
     deletion: {
       label: 'Removed',
-      accent: 'border-l-red-400',
-      bg: 'bg-red-50/60',
-      badge: 'bg-red-100 text-red-700',
-      diffBg: 'bg-red-50 text-red-800 line-through',
+      accent: 'border-l-stone-400',
+      bg: 'bg-stone-100/60',
+      badge: 'bg-stone-100 text-stone-800',
+      diffBg: 'bg-stone-100 text-stone-800 line-through',
     },
     modification: {
       label: 'Modified',
-      accent: 'border-l-amber-400',
-      bg: 'bg-amber-50/60',
-      badge: 'bg-amber-100 text-amber-700',
+      accent: 'border-l-stone-400',
+      bg: 'bg-stone-100/60',
+      badge: 'bg-stone-100 text-stone-700',
       diffBg: '',
     },
   };
@@ -240,13 +240,13 @@ export function ReviewModePanel({
         </span>
         <div className="flex items-center gap-2 ml-auto">
           {stats.additions > 0 && (
-            <span className="text-[10px] font-medium text-emerald-600">+{stats.additions}</span>
+            <span className="text-[10px] font-medium text-stone-700">+{stats.additions}</span>
           )}
           {stats.deletions > 0 && (
-            <span className="text-[10px] font-medium text-red-600">-{stats.deletions}</span>
+            <span className="text-[10px] font-medium text-stone-700">-{stats.deletions}</span>
           )}
           {stats.modifications > 0 && (
-            <span className="text-[10px] font-medium text-amber-600">~{stats.modifications}</span>
+            <span className="text-[10px] font-medium text-stone-600">~{stats.modifications}</span>
           )}
           {stats.resolved > 0 && (
             <span className="text-[10px] text-stone-400">{stats.resolved} resolved</span>
@@ -259,7 +259,7 @@ export function ReviewModePanel({
         <div className="flex gap-1.5 px-4 py-2 border-b border-stone-100">
           <button
             onClick={onAcceptAll}
-            className="flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors duration-200"
+            className="flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-medium text-stone-800 bg-stone-100 hover:bg-stone-100 transition-colors duration-200"
             aria-label={`Accept all ${pendingChanges.length} changes`}
           >
             <CheckCircle className="w-3 h-3" />
@@ -267,7 +267,7 @@ export function ReviewModePanel({
           </button>
           <button
             onClick={onRejectAll}
-            className="flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-medium text-red-700 bg-red-50 hover:bg-red-100 transition-colors duration-200"
+            className="flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-medium text-stone-800 bg-stone-100 hover:bg-stone-100 transition-colors duration-200"
             aria-label={`Reject all ${pendingChanges.length} changes`}
           >
             <XCircle className="w-3 h-3" />
@@ -325,13 +325,13 @@ export function ReviewModePanel({
                       {config.label}
                     </span>
                     {change.accepted && (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-600">
+                      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-stone-700">
                         <CheckCircle className="w-2.5 h-2.5" />
                         Accepted
                       </span>
                     )}
                     {change.rejected && (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-red-600">
+                      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-stone-700">
                         <XCircle className="w-2.5 h-2.5" />
                         Rejected
                       </span>
@@ -353,7 +353,7 @@ export function ReviewModePanel({
                   {/* Text Diff */}
                   <div className="space-y-1 text-[12px] leading-relaxed mb-2">
                     {(change.type === 'deletion' || change.type === 'modification') && (
-                      <div className="rounded px-2 py-1 bg-red-50 text-red-800 line-through">
+                      <div className="rounded px-2 py-1 bg-stone-100 text-stone-800 line-through">
                         {change.originalText}
                       </div>
                     )}
@@ -362,7 +362,7 @@ export function ReviewModePanel({
                         {change.type === 'modification' && (
                           <ArrowRight className="mt-1 w-3 h-3 flex-shrink-0 text-stone-300" />
                         )}
-                        <div className="rounded px-2 py-1 bg-emerald-50 text-emerald-800">
+                        <div className="rounded px-2 py-1 bg-stone-100 text-stone-800">
                           {change.newText}
                         </div>
                       </div>
@@ -380,7 +380,7 @@ export function ReviewModePanel({
                     >
                       <button
                         onClick={() => onAcceptChange(change.id)}
-                        className="flex flex-1 items-center justify-center gap-1 rounded-md bg-emerald-600 px-2 py-1 text-[10px] font-medium text-white hover:bg-emerald-700 transition-colors duration-200"
+                        className="flex flex-1 items-center justify-center gap-1 rounded-md bg-stone-700 px-2 py-1 text-[10px] font-medium text-white hover:bg-stone-800 transition-colors duration-200"
                         aria-label={`Accept change: ${config.label}`}
                       >
                         <Check className="w-2.5 h-2.5" />
@@ -449,7 +449,7 @@ export function ReviewModePanel({
             <button
               onClick={() => handleCompleteReview('approved')}
               disabled={isSubmitting}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-emerald-600 px-3 py-2 text-[11px] font-medium text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors duration-200"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-stone-700 px-3 py-2 text-[11px] font-medium text-white hover:bg-stone-800 disabled:opacity-50 transition-colors duration-200"
               aria-label="Approve document"
             >
               {isSubmitting ? (

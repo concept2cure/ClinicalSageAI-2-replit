@@ -25,7 +25,7 @@ export function StatsCard({ title, value, icon, iconBgColor, iconColor, trend }:
             <dd className="flex items-baseline">
               <div className="text-2xl font-semibold text-slate-900">{value}</div>
               {trend && (
-                <div className="ml-2 flex items-baseline text-sm font-semibold text-green-600">
+                <div className="ml-2 flex items-baseline text-sm font-semibold text-stone-700">
                   {trend.up ? (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"

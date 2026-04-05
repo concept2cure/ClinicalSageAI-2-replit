@@ -14,14 +14,14 @@ const STEPS = [
     title: 'Connect Your Data',
     description:
       'Import from ClinicalTrials.gov, PubMed, or upload directly. The platform indexes everything in minutes.',
-    color: 'bg-blue-600',
+    color: 'bg-stone-600',
   },
   {
     step: '2',
     title: 'AI Drafts Your Documents',
     description:
       'Specialized AI agents research, draft, cross-reference, and quality-check regulatory documents in parallel.',
-    color: 'bg-violet-600',
+    color: 'bg-stone-600',
   },
   {
     step: '3',
@@ -35,7 +35,7 @@ const STEPS = [
     title: 'Submit with Confidence',
     description:
       'Export validated eCTD v4 packages with automated gateway QC. Submit to any agency from one workspace.',
-    color: 'bg-green-600',
+    color: 'bg-stone-700',
   },
 ];
 
@@ -71,7 +71,7 @@ export function HowItWorksSection() {
         <motion.div variants={fadeUp} className="text-center mt-12">
           <button
             onClick={() => setLocation('/concept2cure/demo')}
-            className="group inline-flex items-center gap-2 px-7 py-3 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-md"
+            className="group inline-flex items-center gap-2 px-7 py-3 text-sm font-medium text-white bg-stone-600 hover:bg-stone-700 rounded-xl transition-all shadow-md"
           >
             See It In Action
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />

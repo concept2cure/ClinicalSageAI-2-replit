@@ -84,25 +84,25 @@ export const Logo = () => (
       r="18"
       stroke="currentColor"
       strokeWidth="2"
-      className="text-blue-600"
+      className="text-stone-600"
     />
     <path
       d="M12 14C16 14 18 18 20 20C22 22 24 26 28 26"
       stroke="currentColor"
       strokeWidth="2"
       strokeLinecap="round"
-      className="text-blue-600"
+      className="text-stone-600"
     />
     <path
       d="M28 14C24 14 22 18 20 20C18 22 16 26 12 26"
       stroke="currentColor"
       strokeWidth="2"
       strokeLinecap="round"
-      className="text-violet-500"
+      className="text-stone-1000"
     />
-    <circle cx="14" cy="14" r="2" fill="currentColor" className="text-blue-600" />
-    <circle cx="26" cy="14" r="2" fill="currentColor" className="text-violet-500" />
-    <circle cx="14" cy="26" r="2" fill="currentColor" className="text-violet-500" />
-    <circle cx="26" cy="26" r="2" fill="currentColor" className="text-blue-600" />
+    <circle cx="14" cy="14" r="2" fill="currentColor" className="text-stone-600" />
+    <circle cx="26" cy="14" r="2" fill="currentColor" className="text-stone-1000" />
+    <circle cx="14" cy="26" r="2" fill="currentColor" className="text-stone-1000" />
+    <circle cx="26" cy="26" r="2" fill="currentColor" className="text-stone-600" />
   </svg>
 );

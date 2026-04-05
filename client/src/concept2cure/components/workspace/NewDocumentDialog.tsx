@@ -325,7 +325,7 @@ export function NewDocumentDialog({
                 onClick={() => { setMode('blank'); setSelectedTemplate(null); setStep(2); }}
                 className={cn(
                   'flex flex-col items-center gap-2 p-4 rounded-lg border transition-all text-center',
-                  'border-stone-200 hover:border-blue-300 hover:bg-blue-50/50',
+                  'border-stone-200 hover:border-stone-300 hover:bg-stone-100/50',
                 )}
               >
                 <div className="h-10 w-10 rounded-lg bg-stone-100 flex items-center justify-center">
@@ -340,12 +340,12 @@ export function NewDocumentDialog({
                 className={cn(
                   'flex flex-col items-center gap-2 p-4 rounded-lg border transition-all text-center',
                   mode === 'template'
-                    ? 'border-blue-400 bg-blue-50'
-                    : 'border-stone-200 hover:border-blue-300 hover:bg-blue-50/50',
+                    ? 'border-stone-400 bg-stone-100'
+                    : 'border-stone-200 hover:border-stone-300 hover:bg-stone-100/50',
                 )}
               >
-                <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <BookOpen className="h-5 w-5 text-blue-500" />
+                <div className="h-10 w-10 rounded-lg bg-stone-100 flex items-center justify-center">
+                  <BookOpen className="h-5 w-5 text-stone-1000" />
                 </div>
                 <span className="text-sm font-semibold text-stone-900">From Template</span>
                 <span className="text-[11px] text-stone-500">Pre-structured sections</span>
@@ -357,7 +357,7 @@ export function NewDocumentDialog({
                   'flex flex-col items-center gap-2 p-4 rounded-lg border transition-all text-center',
                   mode === 'ai-generate'
                     ? 'border-stone-400 bg-stone-100'
-                    : 'border-stone-200 hover:border-blue-200 hover:bg-blue-50/50',
+                    : 'border-stone-200 hover:border-stone-200 hover:bg-stone-100/50',
                 )}
               >
                 <div className="h-10 w-10 rounded-lg bg-stone-200 flex items-center justify-center">
@@ -382,17 +382,17 @@ export function NewDocumentDialog({
                       className={cn(
                         'flex items-start gap-3 p-3 rounded-lg border text-left transition-all duration-150',
                         selectedTemplate?.id === t.id
-                          ? 'border-blue-300 bg-blue-50'
+                          ? 'border-stone-300 bg-stone-100'
                           : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50',
                       )}
                     >
-                      <FileCheck className="h-4 w-4 text-blue-400 mt-0.5 shrink-0" />
+                      <FileCheck className="h-4 w-4 text-stone-400 mt-0.5 shrink-0" />
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-stone-900 leading-tight">{t.name}</p>
                         <p className="text-[11px] text-stone-500 mt-0.5 line-clamp-2">{t.description}</p>
                         <div className="flex items-center gap-2 mt-1.5">
                           {t.ctdSection && (
-                            <span className="text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-medium">
+                            <span className="text-[10px] text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded font-medium">
                               {t.ctdSection}
                             </span>
                           )}
@@ -417,11 +417,11 @@ export function NewDocumentDialog({
           <div className="p-6 space-y-4">
             {/* Selected template indicator */}
             {selectedTemplate && (
-              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-blue-50 border border-blue-200">
-                <FileCheck className="h-4 w-4 text-blue-500 shrink-0" />
+              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-stone-100 border border-stone-200">
+                <FileCheck className="h-4 w-4 text-stone-1000 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-stone-700">{selectedTemplate.name}</p>
-                  <p className="text-[10px] text-blue-500">{selectedTemplate.sections.length} sections · {selectedTemplate.complexity}</p>
+                  <p className="text-[10px] text-stone-1000">{selectedTemplate.sections.length} sections · {selectedTemplate.complexity}</p>
                 </div>
                 {mode === 'ai-generate' && (
                   <span className="text-[10px] font-medium text-stone-600 bg-stone-200 px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -431,7 +431,7 @@ export function NewDocumentDialog({
                 )}
                 <button
                   onClick={() => { setSelectedTemplate(null); setStep(1); }}
-                  className="text-blue-400 hover:text-blue-600 p-0.5"
+                  className="text-stone-400 hover:text-stone-600 p-0.5"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -448,7 +448,7 @@ export function NewDocumentDialog({
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder={selectedTemplate?.name || 'Enter document title...'}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 focus-visible:ring-2 outline-none focus:ring-stone-300 focus:border-blue-400"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 focus-visible:ring-2 outline-none focus:ring-stone-300 focus:border-stone-400"
                 autoFocus
                 onKeyDown={e => {
                   if (e.key === 'Enter' && !isCreating) handleCreate();
@@ -466,7 +466,7 @@ export function NewDocumentDialog({
               <select
                 value={ctdSection}
                 onChange={e => setCtdSection(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 focus-visible:ring-2 outline-none focus:ring-stone-300 focus:border-blue-400 bg-white"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 focus-visible:ring-2 outline-none focus:ring-stone-300 focus:border-stone-400 bg-white"
               >
                 {CTD_SECTIONS.map(s => (
                   <option key={s.value} value={s.value}>{s.label}</option>
@@ -485,7 +485,7 @@ export function NewDocumentDialog({
                     <div key={i} className="flex items-center gap-2 py-0.5">
                       <span className="text-[10px] text-stone-400 w-4 text-right">{i + 1}.</span>
                       <span className="text-xs text-stone-700">{s.title}</span>
-                      {s.required && <span className="text-[9px] text-red-400">*</span>}
+                      {s.required && <span className="text-[9px] text-stone-400">*</span>}
                     </div>
                   ))}
                 </div>

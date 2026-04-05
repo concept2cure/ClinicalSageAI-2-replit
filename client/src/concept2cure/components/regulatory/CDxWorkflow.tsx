@@ -462,7 +462,7 @@ export default function CDxWorkflow() {
                       <Badge key={idx} variant="secondary" className="flex items-center gap-1">
                         Study #{eid}
                         <button
-                          className="ml-1 hover:text-red-500"
+                          className="ml-1 hover:text-stone-1000"
                           onClick={() =>
                             setEvidenceIds(prev => prev.filter((_, i) => i !== idx))
                           }
@@ -586,7 +586,7 @@ export default function CDxWorkflow() {
                           isCurrent
                             ? 'border-primary bg-primary/5 shadow-sm'
                             : isCompleted
-                              ? 'border-green-200 bg-green-50/50'
+                              ? 'border-stone-200 bg-stone-100/50'
                               : 'border-muted/50 bg-muted/10 opacity-60'
                         }`}
                       >
@@ -596,7 +596,7 @@ export default function CDxWorkflow() {
                               isCurrent
                                 ? 'bg-primary text-primary-foreground'
                                 : isCompleted
-                                  ? 'bg-green-600 text-white'
+                                  ? 'bg-stone-700 text-white'
                                   : 'bg-muted text-muted-foreground'
                             }`}
                           >
@@ -620,7 +620,7 @@ export default function CDxWorkflow() {
                                 </Badge>
                               )}
                               {isCompleted && (
-                                <Badge className="bg-green-600 text-white text-xs">COMPLETED</Badge>
+                                <Badge className="bg-stone-700 text-white text-xs">COMPLETED</Badge>
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground mt-1">
@@ -685,11 +685,11 @@ export default function CDxWorkflow() {
 
                 {/* Intended Use Statement */}
                 {selected.intended_use_statement && (
-                  <div className="p-4 rounded-lg border bg-blue-50/50 border-blue-200 space-y-1">
-                    <p className="text-xs font-semibold text-blue-800 uppercase tracking-wide">
+                  <div className="p-4 rounded-lg border bg-stone-100/50 border-stone-200 space-y-1">
+                    <p className="text-xs font-semibold text-stone-800 uppercase tracking-wide">
                       Intended Use Statement
                     </p>
-                    <p className="text-sm text-blue-900">{selected.intended_use_statement}</p>
+                    <p className="text-sm text-stone-900">{selected.intended_use_statement}</p>
                   </div>
                 )}
 
@@ -752,12 +752,12 @@ export default function CDxWorkflow() {
                 </div>
 
                 {/* CDx-specific regulatory note */}
-                <div className="p-4 rounded-lg border bg-amber-50 border-amber-200">
+                <div className="p-4 rounded-lg border bg-stone-100 border-stone-200">
                   <div className="flex items-start gap-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                    <AlertTriangle className="h-4 w-4 text-stone-600 mt-0.5 shrink-0" />
                     <div className="text-sm">
-                      <p className="font-semibold text-amber-800">CDx Regulatory Note</p>
-                      <p className="text-amber-700 mt-1">
+                      <p className="font-semibold text-stone-800">CDx Regulatory Note</p>
+                      <p className="text-stone-700 mt-1">
                         Under IVDR Article 2(7), companion diagnostics are classified as{' '}
                         <strong>Class C minimum</strong> (Rule 3a). The Notified Body must consult
                         the competent authority or EMA regarding the therapeutic product before

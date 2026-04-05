@@ -67,10 +67,10 @@ const CATEGORY_ICONS: Record<Exclude<MemoryCategory, 'All'>, React.ElementType> 
 };
 
 const CATEGORY_COLORS: Record<Exclude<MemoryCategory, 'All'>, { bg: string; text: string; border: string }> = {
-  Preferences: { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-100' },
-  Facts: { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100' },
-  Decisions: { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100' },
-  Context: { bg: 'bg-violet-50', text: 'text-violet-600', border: 'border-violet-100' },
+  Preferences: { bg: 'bg-stone-100', text: 'text-stone-600', border: 'border-stone-100' },
+  Facts: { bg: 'bg-stone-100', text: 'text-stone-700', border: 'border-stone-100' },
+  Decisions: { bg: 'bg-stone-100', text: 'text-stone-600', border: 'border-stone-100' },
+  Context: { bg: 'bg-stone-100', text: 'text-stone-600', border: 'border-stone-100' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -247,15 +247,15 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 border border-violet-100">
-              <Brain className="h-5 w-5 text-violet-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-stone-100 border border-stone-100">
+              <Brain className="h-5 w-5 text-stone-600" />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3">
                 <h1 className="text-base font-semibold text-stone-900 tracking-tight">
                   AnA Memory
                 </h1>
-                <span className="inline-flex items-center rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-stone-700 border border-blue-200">
+                <span className="inline-flex items-center rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-700 border border-stone-200">
                   AnA v1.0
                 </span>
               </div>
@@ -268,15 +268,15 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
 
         {/* Error */}
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4 mb-6">
-            <p className="text-sm text-red-700">{error}</p>
+          <div className="rounded-xl border border-stone-200 bg-stone-100 p-4 mb-6">
+            <p className="text-sm text-stone-800">{error}</p>
           </div>
         )}
 
         {/* Loading */}
         {loading && (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-6 w-6 animate-spin text-violet-500" />
+            <Loader2 className="h-6 w-6 animate-spin text-stone-1000" />
             <span className="ml-3 text-sm text-stone-500">
               Loading memories...
             </span>
@@ -313,11 +313,11 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                             if (e.key === 'Escape') cancelEdit();
                           }}
                           autoFocus
-                          className="flex-1 rounded border border-stone-300 bg-white px-2 py-1 text-sm text-stone-900 focus:border-blue-400 focus-visible:ring-2 outline-none focus:ring-blue-100"
+                          className="flex-1 rounded border border-stone-300 bg-white px-2 py-1 text-sm text-stone-900 focus:border-stone-400 focus-visible:ring-2 outline-none focus:ring-stone-100"
                         />
                         <button
                           onClick={saveEdit}
-                          className="rounded p-1 text-emerald-600 hover:bg-emerald-50 transition-colors duration-150"
+                          className="rounded p-1 text-stone-700 hover:bg-stone-100 transition-colors duration-150"
                         >
                           <Check className="h-3.5 w-3.5" />
                         </button>
@@ -415,7 +415,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                       className={cn(
                         'group rounded-xl border bg-white p-4 transition-all duration-150',
                         isDeleting
-                          ? 'border-red-200 bg-red-50/30 opacity-60'
+                          ? 'border-stone-200 bg-stone-100/30 opacity-60'
                           : 'border-stone-200 hover:border-stone-300'
                       )}
                     >
@@ -460,7 +460,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                             }
                           }}
                           disabled={isDeleting}
-                          className="opacity-0 group-hover:opacity-100 rounded-lg p-1.5 text-stone-400 hover:text-red-500 hover:bg-red-50 transition-all disabled:opacity-60"
+                          className="opacity-0 group-hover:opacity-100 rounded-lg p-1.5 text-stone-400 hover:text-stone-1000 hover:bg-stone-100 transition-all disabled:opacity-60"
                           title="Remove memory"
                           aria-label="Delete memory entry"
                         >
@@ -494,7 +494,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                       e.target.value as Exclude<MemoryCategory, 'All'>
                     )
                   }
-                  className="rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-700 focus:border-blue-400 focus-visible:ring-2 outline-none focus:ring-blue-100 sm:w-36"
+                  className="rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-700 focus:border-stone-400 focus-visible:ring-2 outline-none focus:ring-stone-100 sm:w-36"
                 >
                   <option value="Preferences">Preferences</option>
                   <option value="Facts">Facts</option>
@@ -514,7 +514,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                     }
                   }}
                   placeholder="e.g., Prefers Module 2.5 summaries under 15 pages..."
-                  className="flex-1 rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:border-blue-400 focus-visible:ring-2 outline-none focus:ring-blue-100"
+                  className="flex-1 rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus-visible:ring-2 outline-none focus:ring-stone-100"
                 />
 
                 {/* Add button */}

@@ -48,7 +48,7 @@ export const ZenLoader: React.FC<ZenLoaderProps> = ({
       />
       {/* Spinning arc */}
       <motion.div
-        className="absolute inset-0 border-2 border-transparent border-t-blue-600 rounded-full"
+        className="absolute inset-0 border-2 border-transparent border-t-stone-600 rounded-full"
         animate={{ rotate: 360 }}
         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
       />
@@ -433,9 +433,9 @@ export const ZenProgress: React.FC<ZenProgressProps> = ({
 
   const colors = {
     blue: 'bg-stone-800',
-    green: 'bg-green-600',
-    amber: 'bg-amber-500',
-    red: 'bg-red-600',
+    green: 'bg-stone-700',
+    amber: 'bg-stone-1000',
+    red: 'bg-stone-700',
   };
 
   return (

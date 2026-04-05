@@ -202,9 +202,9 @@ function timeAgo(dateStr: string): string {
 
 function PriorityBadge({ priority }: { priority: AlertPriority }) {
   const config = {
-    critical: { bg: 'bg-red-100 text-red-700', icon: AlertCircle },
-    high: { bg: 'bg-amber-100 text-amber-700', icon: AlertTriangle },
-    medium: { bg: 'bg-blue-100 text-stone-700', icon: Info },
+    critical: { bg: 'bg-stone-100 text-stone-800', icon: AlertCircle },
+    high: { bg: 'bg-stone-100 text-stone-700', icon: AlertTriangle },
+    medium: { bg: 'bg-stone-100 text-stone-700', icon: Info },
     low: { bg: 'bg-stone-100 text-stone-600', icon: Info },
   }[priority];
 
@@ -220,11 +220,11 @@ function PriorityBadge({ priority }: { priority: AlertPriority }) {
 
 function SourceBadge({ source }: { source: AlertSource }) {
   const colors: Record<AlertSource, string> = {
-    FDA: 'bg-blue-50 text-stone-700 border-blue-200',
-    EMA: 'bg-blue-50 text-stone-700 border-blue-200',
-    'Health Canada': 'bg-red-50 text-red-700 border-red-200',
-    ICH: 'bg-stone-100 text-stone-700 border-blue-200',
-    WHO: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    FDA: 'bg-stone-100 text-stone-700 border-stone-200',
+    EMA: 'bg-stone-100 text-stone-700 border-stone-200',
+    'Health Canada': 'bg-stone-100 text-stone-800 border-stone-200',
+    ICH: 'bg-stone-100 text-stone-700 border-stone-200',
+    WHO: 'bg-stone-100 text-stone-800 border-stone-200',
     Internal: 'bg-stone-50 text-stone-600 border-stone-200',
   };
 
@@ -307,10 +307,10 @@ export function AlertFeed({
   return (
     <div className={cn('flex flex-col h-full bg-white', compact && 'text-xs')}>
       {/* Header */}
-      <div className="px-4 py-3 border-b border-stone-200 bg-amber-50">
+      <div className="px-4 py-3 border-b border-stone-200 bg-stone-100">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <BellRing className="w-5 h-5 text-amber-600" />
+            <BellRing className="w-5 h-5 text-stone-600" />
             <div>
               <h2 className="text-sm font-semibold text-stone-900">Regulatory Alerts</h2>
               <p className="text-[10px] text-stone-500">
@@ -337,12 +337,12 @@ export function AlertFeed({
         {/* Quick stats */}
         <div className="flex items-center gap-3 text-[10px]">
           {stats.critical > 0 && (
-            <span className="flex items-center gap-1 text-red-600 font-medium">
+            <span className="flex items-center gap-1 text-stone-700 font-medium">
               <AlertCircle className="w-3 h-3" /> {stats.critical} Critical
             </span>
           )}
           {stats.high > 0 && (
-            <span className="flex items-center gap-1 text-amber-600 font-medium">
+            <span className="flex items-center gap-1 text-stone-600 font-medium">
               <AlertTriangle className="w-3 h-3" /> {stats.high} High
             </span>
           )}
@@ -380,7 +380,7 @@ export function AlertFeed({
               type="checkbox"
               checked={showAcknowledged}
               onChange={e => setShowAcknowledged(e.target.checked)}
-              className="rounded border-stone-300 text-amber-600 w-3 h-3"
+              className="rounded border-stone-300 text-stone-600 w-3 h-3"
             />
             Show read
           </label>
@@ -404,7 +404,7 @@ export function AlertFeed({
                   key={alert.id}
                   className={cn(
                     'px-4 py-3 transition-colors duration-150',
-                    !alert.acknowledged && 'bg-amber-50/30',
+                    !alert.acknowledged && 'bg-stone-100/30',
                     isExpanded && 'bg-stone-50',
                   )}
                 >
@@ -423,7 +423,7 @@ export function AlertFeed({
                         <PriorityBadge priority={alert.priority} />
                         <SourceBadge source={alert.source} />
                         {!alert.acknowledged && (
-                          <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                          <span className="w-2 h-2 rounded-full bg-stone-1000 shrink-0" />
                         )}
                       </div>
                       <h3 className="text-xs font-medium text-stone-900 leading-snug">
@@ -443,12 +443,12 @@ export function AlertFeed({
 
                       {/* Impact analysis */}
                       {alert.impactAnalysis && (
-                        <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
-                          <div className="flex items-center gap-1.5 text-amber-700 font-medium mb-1">
+                        <div className="p-2.5 bg-stone-100 border border-stone-200 rounded-lg">
+                          <div className="flex items-center gap-1.5 text-stone-700 font-medium mb-1">
                             <AlertTriangle className="w-3 h-3" />
                             Impact Analysis
                           </div>
-                          <p className="text-amber-700/80 text-[11px] leading-relaxed">
+                          <p className="text-stone-700/80 text-[11px] leading-relaxed">
                             {alert.impactAnalysis}
                           </p>
                         </div>
@@ -462,7 +462,7 @@ export function AlertFeed({
                             {alert.affectedSections.map(section => (
                               <span
                                 key={section}
-                                className="px-1.5 py-0.5 bg-blue-50 text-stone-700 rounded text-[10px] font-mono"
+                                className="px-1.5 py-0.5 bg-stone-100 text-stone-700 rounded text-[10px] font-mono"
                               >
                                 §{section}
                               </span>
@@ -473,7 +473,7 @@ export function AlertFeed({
 
                       {/* Action required */}
                       {alert.actionRequired && (
-                        <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="p-2.5 bg-stone-100 border border-stone-200 rounded-lg">
                           <div className="flex items-center gap-1.5 text-stone-700 font-medium mb-1">
                             <Shield className="w-3 h-3" />
                             Action Required
@@ -489,7 +489,7 @@ export function AlertFeed({
                         {!alert.acknowledged && (
                           <button
                             onClick={() => handleAcknowledge(alert.id)}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md hover:bg-emerald-100 transition-colors duration-150"
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-medium text-stone-800 bg-stone-100 border border-stone-200 rounded-md hover:bg-stone-100 transition-colors duration-150"
                           >
                             <CheckCircle className="w-3 h-3" />
                             Acknowledge
@@ -510,7 +510,7 @@ export function AlertFeed({
                           <button
                             key={docId}
                             onClick={() => onNavigateToDocument?.(docId)}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors duration-150"
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-medium text-stone-600 bg-stone-100 border border-stone-200 rounded-md hover:bg-stone-100 transition-colors duration-150"
                           >
                             <FileText className="w-3 h-3" />
                             Open Document

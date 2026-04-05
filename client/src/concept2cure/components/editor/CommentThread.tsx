@@ -81,11 +81,11 @@ function formatRelativeTime(dateString: string): string {
 
 const AUTHOR_COLORS = [
   "bg-stone-600",
-  "bg-emerald-500",
+  "bg-stone-1000",
   "bg-stone-500",
-  "bg-amber-500",
+  "bg-stone-1000",
   "bg-rose-500",
-  "bg-blue-500",
+  "bg-stone-1000",
   "bg-fuchsia-500",
   "bg-lime-500",
 ];
@@ -236,7 +236,7 @@ function AIRewritePreview({
         <Button
           variant="ghost"
           onClick={onApply}
-          className="px-3 py-1 text-[11px] font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700 transition-colors duration-150 flex items-center gap-1"
+          className="px-3 py-1 text-[11px] font-medium text-white bg-stone-700 rounded-md hover:bg-stone-800 transition-colors duration-150 flex items-center gap-1"
           aria-label="Apply AI rewrite"
         >
           <Check className="h-3 w-3" />
@@ -322,7 +322,7 @@ function CommentCard({
           <div
             className={cn(
               "h-2 w-2 rounded-full shrink-0 mt-0.5",
-              comment.resolved ? "bg-emerald-400" : "bg-amber-400"
+              comment.resolved ? "bg-stone-400" : "bg-stone-400"
             )}
           />
           <AuthorAvatar
@@ -375,7 +375,7 @@ function CommentCard({
                   onResolve(comment.id);
                 }}
                 title="Resolve"
-                className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-emerald-500 transition-colors duration-150"
+                className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-stone-1000 transition-colors duration-150"
               >
                 <CheckCircle className="h-3.5 w-3.5" />
               </button>
@@ -416,7 +416,7 @@ function CommentCard({
 
       {/* Resolved badge */}
       {comment.resolved && (
-        <div className="mt-2 ml-8 flex items-center gap-1 text-[10px] text-emerald-500 font-medium">
+        <div className="mt-2 ml-8 flex items-center gap-1 text-[10px] text-stone-1000 font-medium">
           <Check className="h-3 w-3" />
           Resolved
         </div>

@@ -38,7 +38,7 @@ export function AppAlarm({
       {...props}
     >
       <div className="max-w-md w-full bg-white dark:bg-slate-950 shadow-lg rounded-lg overflow-hidden animate-pulse">
-        <div className="bg-red-600 dark:bg-red-800 p-4 flex items-center space-x-3">
+        <div className="bg-stone-700 dark:bg-stone-800 p-4 flex items-center space-x-3">
           <AlertTriangle className="h-6 w-6 text-white" />
           <h2 className="text-lg font-bold text-white">{title}</h2>
         </div>

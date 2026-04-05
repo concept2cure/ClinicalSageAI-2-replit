@@ -159,10 +159,10 @@ export default function CrossSpeciesPKPDModule({ organizationId }: { organizatio
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-2xl font-bold flex items-center gap-2">
-            <Activity className="h-6 w-6 text-purple-600" />
+            <Activity className="h-6 w-6 text-stone-600" />
             Cross-Species PK/PD Analyzer
           </h3>
-          <p className="text-gray-600 mt-1">
+          <p className="text-stone-600 mt-1">
             Advanced allometric scaling for first-in-human dose prediction
           </p>
         </div>
@@ -217,7 +217,7 @@ export default function CrossSpeciesPKPDModule({ organizationId }: { organizatio
         <CardContent className="space-y-4">
           {/* Existing Species Data */}
           {speciesDataList.map((species, index) => (
-            <Card key={index} className="bg-gray-50">
+            <Card key={index} className="bg-stone-50">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-semibold capitalize">{species.species}</h4>
@@ -232,31 +232,31 @@ export default function CrossSpeciesPKPDModule({ organizationId }: { organizatio
                 </div>
                 <div className="grid grid-cols-4 gap-3 text-sm">
                   <div>
-                    <span className="text-gray-500">Dose:</span>{' '}
+                    <span className="text-stone-500">Dose:</span>{' '}
                     <span className="font-medium">{species.dose} {species.doseUnit}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">Cmax:</span>{' '}
+                    <span className="text-stone-500">Cmax:</span>{' '}
                     <span className="font-medium">{species.cmax} μg/mL</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">AUC:</span>{' '}
+                    <span className="text-stone-500">AUC:</span>{' '}
                     <span className="font-medium">{species.auc} μg·h/mL</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">T½:</span>{' '}
+                    <span className="text-stone-500">T½:</span>{' '}
                     <span className="font-medium">{species.halfLife} h</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">CL:</span>{' '}
+                    <span className="text-stone-500">CL:</span>{' '}
                     <span className="font-medium">{species.clearance} L/h/kg</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">Vd:</span>{' '}
+                    <span className="text-stone-500">Vd:</span>{' '}
                     <span className="font-medium">{species.volume} L/kg</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">BW:</span>{' '}
+                    <span className="text-stone-500">BW:</span>{' '}
                     <span className="font-medium">{species.bodyWeight} kg</span>
                   </div>
                 </div>
@@ -377,7 +377,7 @@ export default function CrossSpeciesPKPDModule({ organizationId }: { organizatio
       {/* Analysis Results */}
       {analysisMutation.data && (
         <>
-          <Alert className="border-green-200 bg-green-50">
+          <Alert className="border-stone-200 bg-stone-100">
             <Calculator className="h-4 w-4" />
             <AlertTitle>Human Dose Prediction Complete</AlertTitle>
             <AlertDescription className="space-y-2 mt-2">
@@ -396,7 +396,7 @@ export default function CrossSpeciesPKPDModule({ organizationId }: { organizatio
                 </div>
                 <div>
                   <strong>Recommended Starting Dose:</strong>{' '}
-                  <span className="text-green-600 font-bold">
+                  <span className="text-stone-700 font-bold">
                     {analysisMutation.data.analysis?.recommended_starting_dose?.toFixed(3) || 'N/A'} mg
                   </span>
                 </div>
@@ -417,11 +417,11 @@ export default function CrossSpeciesPKPDModule({ organizationId }: { organizatio
               <CardContent>
                 <div className="space-y-3">
                   {analysisMutation.data.recommendations.map((rec: any, idx: number) => (
-                    <div key={idx} className="flex items-start gap-3 p-3 bg-blue-50 rounded">
-                      <Info className="h-4 w-4 text-blue-600 mt-0.5" />
+                    <div key={idx} className="flex items-start gap-3 p-3 bg-stone-100 rounded">
+                      <Info className="h-4 w-4 text-stone-600 mt-0.5" />
                       <div>
                         <div className="font-medium">{rec.type}</div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-stone-600">
                           {rec.value} mg - {rec.rationale}
                         </div>
                       </div>
@@ -481,7 +481,7 @@ export default function CrossSpeciesPKPDModule({ organizationId }: { organizatio
                   <Scatter 
                     name="Clearance" 
                     data={allometricData} 
-                    fill="#6a9bcc"
+                    fill="#78716c"
                   />
                 </ScatterChart>
               </ResponsiveContainer>
@@ -502,8 +502,8 @@ export default function CrossSpeciesPKPDModule({ organizationId }: { organizatio
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="cmax" fill="#6a9bcc" name="Cmax (μg/mL)" />
-                  <Bar dataKey="auc" fill="#6a9bcc" name="AUC (μg·h/mL)" />
+                  <Bar dataKey="cmax" fill="#78716c" name="Cmax (μg/mL)" />
+                  <Bar dataKey="auc" fill="#78716c" name="AUC (μg·h/mL)" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -532,23 +532,23 @@ export default function CrossSpeciesPKPDModule({ organizationId }: { organizatio
               <div className="grid grid-cols-3 gap-4">
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-sm text-gray-500">NOAEL</div>
+                    <div className="text-sm text-stone-500">NOAEL</div>
                     <div className="text-xl font-bold">5.0 mg/kg</div>
-                    <div className="text-xs text-gray-400 mt-1">Most sensitive species</div>
+                    <div className="text-xs text-stone-400 mt-1">Most sensitive species</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-sm text-gray-500">HED</div>
+                    <div className="text-sm text-stone-500">HED</div>
                     <div className="text-xl font-bold">0.81 mg/kg</div>
-                    <div className="text-xs text-gray-400 mt-1">Human equivalent dose</div>
+                    <div className="text-xs text-stone-400 mt-1">Human equivalent dose</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-sm text-gray-500">MRSD</div>
-                    <div className="text-xl font-bold text-green-600">0.008 mg/kg</div>
-                    <div className="text-xs text-gray-400 mt-1">Maximum recommended starting dose</div>
+                    <div className="text-sm text-stone-500">MRSD</div>
+                    <div className="text-xl font-bold text-stone-700">0.008 mg/kg</div>
+                    <div className="text-xs text-stone-400 mt-1">Maximum recommended starting dose</div>
                   </CardContent>
                 </Card>
               </div>
@@ -569,31 +569,31 @@ export default function CrossSpeciesPKPDModule({ organizationId }: { organizatio
                 <h4 className="font-semibold">Report Sections</h4>
                 <ul className="space-y-1 text-sm">
                   <li className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-gray-400" />
+                    <FileText className="h-4 w-4 text-stone-400" />
                     Executive Summary
                   </li>
                   <li className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-gray-400" />
+                    <FileText className="h-4 w-4 text-stone-400" />
                     Allometric Scaling Methodology
                   </li>
                   <li className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-gray-400" />
+                    <FileText className="h-4 w-4 text-stone-400" />
                     Species Comparison Data
                   </li>
                   <li className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-gray-400" />
+                    <FileText className="h-4 w-4 text-stone-400" />
                     Human Dose Prediction
                   </li>
                   <li className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-gray-400" />
+                    <FileText className="h-4 w-4 text-stone-400" />
                     Safety Margin Calculations
                   </li>
                   <li className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-gray-400" />
+                    <FileText className="h-4 w-4 text-stone-400" />
                     Uncertainty Analysis
                   </li>
                   <li className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-gray-400" />
+                    <FileText className="h-4 w-4 text-stone-400" />
                     Recommended Starting Dose Justification
                   </li>
                 </ul>

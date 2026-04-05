@@ -94,10 +94,10 @@ export default function RegulatoryPanel({ batchId }: { batchId: string }) {
             </div>
 
             {compliance.warnings?.length > 0 && (
-              <div className="p-2 bg-orange-50 border border-orange-200 rounded">
-                <div className="font-medium text-orange-800 mb-1">Warnings:</div>
+              <div className="p-2 bg-stone-100 border border-stone-200 rounded">
+                <div className="font-medium text-stone-800 mb-1">Warnings:</div>
                 {compliance.warnings.map((w: string, i: number) => (
-                  <div key={i} className="text-xs text-orange-700">
+                  <div key={i} className="text-xs text-stone-700">
                     • {w}
                   </div>
                 ))}

@@ -61,10 +61,10 @@ export default function GatekeeperPanel({ batchId }: { batchId: string }) {
             <div
               className={
                 out.status === 'PASS'
-                  ? 'text-emerald-700'
+                  ? 'text-stone-800'
                   : out.status === 'REJECT'
-                    ? 'text-red-700'
-                    : 'text-amber-700'
+                    ? 'text-stone-800'
+                    : 'text-stone-700'
               }
             >
               Status: {out.status}
@@ -76,10 +76,10 @@ export default function GatekeeperPanel({ batchId }: { batchId: string }) {
                 {out.blockers.map((b: any, i: number) => (
                   <li
                     key={i}
-                    className={/CRITICAL/.test(b.severity) ? 'text-red-700' : 'text-amber-700'}
+                    className={/CRITICAL/.test(b.severity) ? 'text-stone-800' : 'text-stone-700'}
                   >
                     [{b.severity}] {b.msg}{' '}
-                    {b.fixable && <span className="text-blue-600">(fixable)</span>}
+                    {b.fixable && <span className="text-stone-600">(fixable)</span>}
                   </li>
                 ))}
               </ul>

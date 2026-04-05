@@ -467,17 +467,17 @@ const STATUS_CONFIG: Record<
   draft: { label: 'Draft', color: 'bg-stone-100 text-stone-700', icon: <File className="w-4 h-4" /> },
   in_review: {
     label: 'In Review',
-    color: 'bg-yellow-100 text-yellow-700',
+    color: 'bg-stone-100 text-stone-700',
     icon: <Clock className="w-4 h-4" />,
   },
   approved: {
     label: 'Approved',
-    color: 'bg-emerald-100 text-emerald-700',
+    color: 'bg-stone-100 text-stone-800',
     icon: <CheckCircle2 className="w-4 h-4" />,
   },
   pending: {
     label: 'Pending',
-    color: 'bg-blue-100 text-stone-700',
+    color: 'bg-stone-100 text-stone-700',
     icon: <Clock className="w-4 h-4" />,
   },
   not_applicable: {
@@ -487,7 +487,7 @@ const STATUS_CONFIG: Record<
   },
   not_started: {
     label: 'Not Started',
-    color: 'bg-red-50 text-red-600',
+    color: 'bg-stone-100 text-stone-700',
     icon: <AlertCircle className="w-4 h-4" />,
   },
 };
@@ -564,16 +564,16 @@ function SectionNode({
 
           {hasChildren || hasDocuments ? (
             isOpen ? (
-              <FolderOpen className="h-4 w-4 text-blue-500" />
+              <FolderOpen className="h-4 w-4 text-stone-1000" />
             ) : (
-              <Folder className="h-4 w-4 text-blue-500" />
+              <Folder className="h-4 w-4 text-stone-1000" />
             )
           ) : (
             <File className="h-4 w-4 text-stone-400" />
           )}
 
           <span
-            className="flex-1 text-sm cursor-pointer hover:text-blue-600"
+            className="flex-1 text-sm cursor-pointer hover:text-stone-600"
             onClick={() => onSelect(section)}
           >
             {section.title}
@@ -582,12 +582,12 @@ function SectionNode({
           {counts.total > 0 && (
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               {counts.approved > 0 && (
-                <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700">
+                <Badge variant="outline" className="text-xs bg-stone-100 text-stone-800">
                   {counts.approved} ✓
                 </Badge>
               )}
               {counts.inReview > 0 && (
-                <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700">
+                <Badge variant="outline" className="text-xs bg-stone-100 text-stone-700">
                   {counts.inReview} 👁
                 </Badge>
               )}
@@ -626,7 +626,7 @@ function SectionDetail({ section }: { section: eCTDSection }) {
     <div className="border border-border/40 rounded-sm bg-background">
       <div className="px-3 py-2 border-b border-border/30">
         <h3 className="text-sm font-semibold flex items-center gap-2">
-          <Folder className="w-5 h-5 text-blue-500" />
+          <Folder className="w-5 h-5 text-stone-1000" />
           {section.title}
         </h3>
         {section.description && <p className="text-xs text-muted-foreground mt-0.5">{section.description}</p>}
@@ -651,7 +651,7 @@ function SectionDetail({ section }: { section: eCTDSection }) {
                   <TableRow key={doc.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-blue-500" />
+                        <FileText className="w-4 h-4 text-stone-1000" />
                         <span className="font-medium">{doc.title}</span>
                       </div>
                     </TableCell>
@@ -719,17 +719,17 @@ function SubmissionSequences({ sequences }: { sequences: SubmissionSequence[] })
             key={seq.id}
             className={`border border-border/40 rounded-sm bg-background ${
               seq.status === 'submitted'
-                ? 'border-emerald-200'
+                ? 'border-stone-200'
                 : seq.status === 'ready'
-                  ? 'border-blue-200'
+                  ? 'border-stone-200'
                   : ''
             }`}
           >
             <div className="px-3 py-2 p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Package className="w-5 h-5 text-blue-600" />
+                  <div className="p-2 bg-stone-100 rounded-lg">
+                    <Package className="w-5 h-5 text-stone-600" />
                   </div>
                   <div>
                     <h4 className="font-semibold flex items-center gap-2">
@@ -941,14 +941,14 @@ export function ECTDNavigator() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-base font-semibold flex items-center gap-3">
-            <Package className="w-8 h-8 text-blue-600" />
+            <Package className="w-8 h-8 text-stone-600" />
             eCTD Navigator
           </h1>
           <p className="text-muted-foreground">
             Electronic Common Technical Document structure and management
           </p>
           {activeProject && (
-            <p className="text-xs text-emerald-600 flex items-center gap-1 mt-1">
+            <p className="text-xs text-stone-700 flex items-center gap-1 mt-1">
               <CheckCircle2 className="w-3 h-3" />
               Live data from: {activeProject.name}
             </p>
@@ -984,7 +984,7 @@ export function ECTDNavigator() {
                 <p className="text-sm text-muted-foreground">Total Documents</p>
                 <p className="text-base font-semibold">{overallStats.total}</p>
               </div>
-              <FileText className="w-8 h-8 text-blue-500" />
+              <FileText className="w-8 h-8 text-stone-1000" />
             </div>
           </div>
         </div>
@@ -993,9 +993,9 @@ export function ECTDNavigator() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Approved</p>
-                <p className="text-base font-semibold text-emerald-600">{overallStats.approved}</p>
+                <p className="text-base font-semibold text-stone-700">{overallStats.approved}</p>
               </div>
-              <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+              <CheckCircle2 className="w-8 h-8 text-stone-1000" />
             </div>
           </div>
         </div>
@@ -1004,9 +1004,9 @@ export function ECTDNavigator() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">In Review</p>
-                <p className="text-base font-semibold text-yellow-600">{overallStats.inReview}</p>
+                <p className="text-base font-semibold text-stone-600">{overallStats.inReview}</p>
               </div>
-              <Clock className="w-8 h-8 text-yellow-500" />
+              <Clock className="w-8 h-8 text-stone-1000" />
             </div>
           </div>
         </div>

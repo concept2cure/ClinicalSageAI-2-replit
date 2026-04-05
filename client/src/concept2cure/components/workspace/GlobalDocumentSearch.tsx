@@ -200,7 +200,7 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
             size="icon"
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
-              showFilters ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' : ''
+              showFilters ? 'bg-stone-100 text-stone-600 hover:bg-stone-200' : ''
             )}
           >
             <Filter className="w-4 h-4" />

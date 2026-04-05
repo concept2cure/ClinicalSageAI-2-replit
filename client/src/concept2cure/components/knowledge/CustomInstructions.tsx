@@ -226,7 +226,7 @@ Example:
 - "Target submission date is March 15, 2026"`}
                 className={cn(
                   'min-h-[150px] text-sm resize-none',
-                  isOverLimit && 'border-red-300 focus:ring-red-500'
+                  isOverLimit && 'border-stone-300 focus:ring-stone-1000'
                 )}
                 disabled={disabled}
               />
@@ -235,8 +235,8 @@ Example:
               <div
                 className={cn(
                   'absolute bottom-2 right-2 text-xs',
-                  isOverLimit && 'text-red-600',
-                  isNearLimit && !isOverLimit && 'text-amber-600',
+                  isOverLimit && 'text-stone-700',
+                  isNearLimit && !isOverLimit && 'text-stone-600',
                   !isNearLimit && 'text-stone-400'
                 )}
               >
@@ -265,7 +265,7 @@ Example:
                 size="sm"
                 onClick={handleSave}
                 disabled={disabled || !hasChanges || isOverLimit || isSaving}
-                className={cn(saveSuccess && 'bg-emerald-600 hover:bg-emerald-600')}
+                className={cn(saveSuccess && 'bg-stone-700 hover:bg-stone-700')}
               >
                 {isSaving ? (
                   <>

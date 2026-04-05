@@ -140,10 +140,10 @@ export default function INDNarrativeModule({ organizationId }: { organizationId:
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-2xl font-bold flex items-center gap-2">
-            <FileText className="h-6 w-6 text-green-600" />
+            <FileText className="h-6 w-6 text-stone-700" />
             IND Narrative Generator
           </h3>
-          <p className="text-gray-600 mt-1">
+          <p className="text-stone-600 mt-1">
             AI-powered clinical protocol and IND document generation
           </p>
         </div>
@@ -285,7 +285,7 @@ export default function INDNarrativeModule({ organizationId }: { organizationId:
       {/* Generation Results */}
       {generateProtocolMutation.data && (
         <>
-          <Alert className="border-green-200 bg-green-50">
+          <Alert className="border-stone-200 bg-stone-100">
             <CheckCircle className="h-4 w-4" />
             <AlertTitle>Protocol Generated Successfully</AlertTitle>
             <AlertDescription>
@@ -312,12 +312,12 @@ export default function INDNarrativeModule({ organizationId }: { organizationId:
 
                 <TabsContent value="sections" className="space-y-4">
                   {sections.map((section: any) => (
-                    <Card key={section.id} className="bg-gray-50">
+                    <Card key={section.id} className="bg-stone-50">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
-                              <span className="text-sm text-gray-500">
+                              <span className="text-sm text-stone-500">
                                 Section {section.section_number}
                               </span>
                               <h4 className="font-semibold">{section.section_title}</h4>
@@ -332,7 +332,7 @@ export default function INDNarrativeModule({ organizationId }: { organizationId:
                                 {section.review_status}
                               </Badge>
                             </div>
-                            <p className="text-sm text-gray-600 line-clamp-3">
+                            <p className="text-sm text-stone-600 line-clamp-3">
                               {section.content}
                             </p>
                           </div>
@@ -356,7 +356,7 @@ export default function INDNarrativeModule({ organizationId }: { organizationId:
                         </div>
                         
                         {section.compliance_checks?.needsReview && (
-                          <Alert className="mt-3 border-yellow-200 bg-yellow-50">
+                          <Alert className="mt-3 border-stone-200 bg-stone-100">
                             <AlertTriangle className="h-3 w-3" />
                             <AlertDescription className="text-xs">
                               Regulatory review recommended for this section
@@ -370,26 +370,26 @@ export default function INDNarrativeModule({ organizationId }: { organizationId:
 
                 <TabsContent value="compliance">
                   <div className="space-y-4">
-                    <Alert className="border-blue-200 bg-blue-50">
+                    <Alert className="border-stone-200 bg-stone-100">
                       <Shield className="h-4 w-4" />
                       <AlertTitle>FDA Compliance Analysis</AlertTitle>
                       <AlertDescription className="mt-2">
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
                             <span>21 CFR 312.23 Requirements</span>
-                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <CheckCircle className="h-4 w-4 text-stone-700" />
                           </div>
                           <div className="flex items-center justify-between">
                             <span>ICH E6 GCP Guidelines</span>
-                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <CheckCircle className="h-4 w-4 text-stone-700" />
                           </div>
                           <div className="flex items-center justify-between">
                             <span>FDA Form 1571 Compatibility</span>
-                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <CheckCircle className="h-4 w-4 text-stone-700" />
                           </div>
                           <div className="flex items-center justify-between">
                             <span>Statistical Analysis Plan</span>
-                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <CheckCircle className="h-4 w-4 text-stone-700" />
                           </div>
                         </div>
                       </AlertDescription>
@@ -429,12 +429,12 @@ export default function INDNarrativeModule({ organizationId }: { organizationId:
                   <Card>
                     <CardContent className="p-4">
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                        <div className="flex items-center justify-between p-3 bg-stone-50 rounded">
                           <div>
                             <div className="font-medium">Version 1.0</div>
-                            <div className="text-sm text-gray-500">Initial generation</div>
+                            <div className="text-sm text-stone-500">Initial generation</div>
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-stone-500">
                             {new Date().toLocaleDateString()}
                           </div>
                         </div>
@@ -477,13 +477,13 @@ export default function INDNarrativeModule({ organizationId }: { organizationId:
               {narratives.map((narrative: any) => (
                 <div 
                   key={narrative.id}
-                  className="flex items-center justify-between p-3 border rounded hover:bg-gray-50 cursor-pointer"
+                  className="flex items-center justify-between p-3 border rounded hover:bg-stone-50 cursor-pointer"
                   onClick={() => setSelectedNarrative(narrative.id)}
                   data-testid={`narrative-${narrative.id}`}
                 >
                   <div>
                     <div className="font-medium">{narrative.title}</div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-stone-500">
                       {narrative.narrative_type} • {new Date(narrative.created_at).toLocaleDateString()}
                     </div>
                   </div>

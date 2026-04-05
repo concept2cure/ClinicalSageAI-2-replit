@@ -86,8 +86,8 @@ const submissionTypes: SubmissionTypeOption[] = [
     fullName: 'New Drug Application',
     description: 'Full approval application for new pharmaceutical drugs',
     icon: Pill,
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200',
+    color: 'text-stone-700',
+    bgColor: 'bg-stone-100 hover:bg-stone-100 border-stone-200',
     category: 'biotech',
   },
   {
@@ -96,8 +96,8 @@ const submissionTypes: SubmissionTypeOption[] = [
     fullName: 'Biologics License Application',
     description: 'Approval for biological products like vaccines and blood products',
     icon: Syringe,
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50 hover:bg-amber-100 border-amber-200',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-100 hover:bg-stone-100 border-stone-200',
     category: 'biotech',
   },
   // ── Medical Device ──
@@ -107,8 +107,8 @@ const submissionTypes: SubmissionTypeOption[] = [
     fullName: 'Premarket Notification',
     description: 'Medical device clearance demonstrating substantial equivalence',
     icon: FileText,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-100 hover:bg-stone-100 border-stone-200',
     category: 'device',
   },
   {
@@ -128,8 +128,8 @@ const submissionTypes: SubmissionTypeOption[] = [
     fullName: 'Premarket Approval',
     description: 'FDA approval for Class III high-risk medical devices',
     icon: Shield,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-100 hover:bg-stone-100 border-stone-200',
     category: 'device',
   },
   {
@@ -138,8 +138,8 @@ const submissionTypes: SubmissionTypeOption[] = [
     fullName: 'De Novo Classification',
     description: 'Novel low-to-moderate risk devices without predicates',
     icon: Sparkles,
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50 hover:bg-amber-100 border-amber-200',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-100 hover:bg-stone-100 border-stone-200',
     category: 'device',
   },
   {
@@ -148,8 +148,8 @@ const submissionTypes: SubmissionTypeOption[] = [
     fullName: 'Emergency Use Authorization',
     description: 'Emergency authorization for unapproved medical products',
     icon: Shield,
-    color: 'text-red-600',
-    bgColor: 'bg-red-50 hover:bg-red-100 border-red-200',
+    color: 'text-stone-700',
+    bgColor: 'bg-stone-100 hover:bg-stone-100 border-stone-200',
     category: 'device',
     earlyAccess: true,
   },
@@ -160,8 +160,8 @@ const submissionTypes: SubmissionTypeOption[] = [
     description:
       'EU IVDR 2017/746 — Classification, performance evaluation & technical documentation for IVDs',
     icon: Microscope,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-100 hover:bg-stone-100 border-stone-200',
     category: 'international',
   },
 ];
@@ -409,7 +409,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 <Icon className={cn('h-3.5 w-3.5 shrink-0', option.color)} />
                 <span className="font-semibold text-[13px] text-stone-900">{option.name}</span>
                 {option.earlyAccess && (
-                  <span className="text-[8px] font-medium px-1 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200 ml-auto">
+                  <span className="text-[8px] font-medium px-1 py-0.5 rounded bg-stone-100 text-stone-700 border border-stone-200 ml-auto">
                     Early
                   </span>
                 )}
@@ -430,7 +430,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             {step === 'success' ? (
-              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+              <CheckCircle2 className="h-5 w-5 text-stone-700" />
             ) : (
               <Sparkles className="h-5 w-5 text-stone-600" />
             )}
@@ -718,8 +718,8 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
         {step === 'success' && selectedTypeOption && (
           <div className="space-y-4 py-3">
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50 mb-3">
-                <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-stone-100 mb-3">
+                <CheckCircle2 className="h-6 w-6 text-stone-700" />
               </div>
               <h3 className="text-base font-semibold text-stone-900">
                 {projectName} is ready
@@ -780,7 +780,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
               {createError && (
                 <div
                   role="alert"
-                  className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
+                  className="text-sm text-stone-700 bg-stone-100 border border-stone-200 rounded-lg px-3 py-2"
                 >
                   {createError}
                 </div>

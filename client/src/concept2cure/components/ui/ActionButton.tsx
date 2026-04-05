@@ -1,7 +1,7 @@
 /**
  * ActionButton — Universal deliverable-producing button
  *
- * Claude design system: stone-900 primary, blue-600 accent for generation,
+ * Claude design system: stone-900 primary, stone-600 accent for generation,
  * minimal border, fade animation, no gradients.
  *
  * Every ActionButton in the platform produces a tangible deliverable:

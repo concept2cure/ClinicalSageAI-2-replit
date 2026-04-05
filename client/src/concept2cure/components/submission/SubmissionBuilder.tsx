@@ -214,9 +214,9 @@ function buildEctdTree(
 function statusIcon(status: SectionStatus) {
   switch (status) {
     case 'complete':
-      return <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />;
+      return <CheckCircle className="h-4 w-4 text-stone-1000 shrink-0" />;
     case 'partial':
-      return <Clock className="h-4 w-4 text-amber-500 shrink-0" />;
+      return <Clock className="h-4 w-4 text-stone-1000 shrink-0" />;
     case 'not_required':
       return <Circle className="h-4 w-4 text-slate-300 shrink-0" />;
     default:
@@ -264,7 +264,7 @@ function TreeNodeRow({
       <div
         className={cn(
           'flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-colors group',
-          isSelected ? 'bg-blue-50 border border-blue-200' : 'hover:bg-slate-50',
+          isSelected ? 'bg-stone-100 border border-stone-200' : 'hover:bg-slate-50',
           !node.required && node.status === 'empty' && 'opacity-60',
         )}
         style={{ paddingLeft: `${depth * 20 + 8}px` }}
@@ -287,7 +287,7 @@ function TreeNodeRow({
         )}
 
         {hasChildren
-          ? (isExpanded ? <FolderOpen className="h-4 w-4 text-blue-400 shrink-0" /> : <Folder className="h-4 w-4 text-slate-400 shrink-0" />)
+          ? (isExpanded ? <FolderOpen className="h-4 w-4 text-stone-400 shrink-0" /> : <Folder className="h-4 w-4 text-slate-400 shrink-0" />)
           : <FileText className="h-4 w-4 text-slate-400 shrink-0" />}
 
         <span className="text-sm font-medium text-slate-700 truncate flex-1">
@@ -296,13 +296,13 @@ function TreeNodeRow({
         </span>
 
         {node.required && (
-          <span className="text-[10px] font-semibold text-red-500 bg-red-50 px-1.5 py-0.5 rounded shrink-0">
+          <span className="text-[10px] font-semibold text-stone-1000 bg-stone-100 px-1.5 py-0.5 rounded shrink-0">
             REQ
           </span>
         )}
 
         {artifactCount > 0 && (
-          <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded shrink-0">
+          <span className="text-[10px] font-medium text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded shrink-0">
             {artifactCount} {artifactCount === 1 ? 'doc' : 'docs'}
           </span>
         )}
@@ -319,15 +319,15 @@ function TreeNodeRow({
               className="flex items-center gap-2 py-1 px-2 text-xs text-slate-600 hover:bg-slate-50 rounded cursor-pointer"
               onClick={() => onOpenArtifact?.(a.id)}
             >
-              <FileText className="h-3 w-3 text-blue-400" />
+              <FileText className="h-3 w-3 text-stone-400" />
               <span className="truncate flex-1">{a.title}</span>
               <span className="text-slate-400">v{a.version}</span>
               <span className={cn(
                 'text-[10px] px-1.5 py-0.5 rounded',
                 a.status === 'approved' || a.status === 'published'
-                  ? 'text-emerald-600 bg-emerald-50'
+                  ? 'text-stone-700 bg-stone-100'
                   : a.status === 'in_review'
-                    ? 'text-blue-600 bg-blue-50'
+                    ? 'text-stone-600 bg-stone-100'
                     : 'text-slate-500 bg-slate-100'
               )}>
                 {a.status}
@@ -439,7 +439,7 @@ export function SubmissionBuilder({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
         <div className="flex items-center gap-3">
-          <Package className="h-5 w-5 text-blue-500" />
+          <Package className="h-5 w-5 text-stone-1000" />
           <div>
             <h2 className="text-base font-semibold text-slate-800">
               Submission Builder
@@ -459,7 +459,7 @@ export function SubmissionBuilder({
           </button>
           <button
             onClick={onValidate}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 rounded-md hover:bg-amber-100 transition-colors duration-150"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone-700 bg-stone-100 rounded-md hover:bg-stone-100 transition-colors duration-150"
           >
             <AlertTriangle className="h-3.5 w-3.5" />
             Validate
@@ -494,28 +494,28 @@ export function SubmissionBuilder({
       <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-slate-600">Submission Readiness</span>
-          <span className="text-sm font-semibold text-blue-600">{stats.readiness}%</span>
+          <span className="text-sm font-semibold text-stone-600">{stats.readiness}%</span>
         </div>
         <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
           <div
             className={cn(
               'h-full rounded-full transition-all duration-150',
-              stats.readiness >= 80 ? 'bg-emerald-500' : stats.readiness >= 50 ? 'bg-amber-500' : 'bg-red-500',
+              stats.readiness >= 80 ? 'bg-stone-1000' : stats.readiness >= 50 ? 'bg-stone-1000' : 'bg-stone-1000',
             )}
             style={{ width: `${stats.readiness}%` }}
           />
         </div>
         <div className="flex items-center gap-4 mt-2 text-[11px] text-slate-500">
           <span className="flex items-center gap-1">
-            <CheckCircle className="h-3 w-3 text-emerald-500" />
+            <CheckCircle className="h-3 w-3 text-stone-1000" />
             {stats.complete} complete
           </span>
           <span className="flex items-center gap-1">
-            <Clock className="h-3 w-3 text-amber-500" />
+            <Clock className="h-3 w-3 text-stone-1000" />
             {stats.partial} in progress
           </span>
           <span className="flex items-center gap-1">
-            <XCircle className="h-3 w-3 text-red-400" />
+            <XCircle className="h-3 w-3 text-stone-400" />
             {stats.requiredMissing} missing
           </span>
           <span className="text-slate-400">
@@ -630,7 +630,7 @@ function SectionDetail({
           {statusIcon(node.status)}
           <span className="text-xs font-medium text-slate-500">{statusLabel(node.status)}</span>
           {node.required && (
-            <span className="text-[10px] font-semibold text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] font-semibold text-stone-1000 bg-stone-100 px-1.5 py-0.5 rounded">
               Required
             </span>
           )}
@@ -650,10 +650,10 @@ function SectionDetail({
                 key={a.id}
                 className="flex items-center gap-2 p-2 rounded-md border border-slate-200 bg-white group"
               >
-                <FileText className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                <FileText className="h-3.5 w-3.5 text-stone-400 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p
-                    className="text-xs font-medium text-slate-700 truncate cursor-pointer hover:text-blue-600"
+                    className="text-xs font-medium text-slate-700 truncate cursor-pointer hover:text-stone-600"
                     onClick={() => onOpenArtifact?.(a.id)}
                   >
                     {a.title}
@@ -665,7 +665,7 @@ function SectionDetail({
                 </div>
                 <button
                   onClick={() => onUnassign(a.id)}
-                  className="p-1 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="p-1 text-slate-300 hover:text-stone-1000 opacity-0 group-hover:opacity-100 transition-opacity"
                   title="Unassign"
                 >
                   <X className="h-3 w-3" />
@@ -682,14 +682,14 @@ function SectionDetail({
       <div className="flex items-center gap-2 mb-4">
         <button
           onClick={onTogglePicker}
-          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors duration-150"
+          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-stone-600 bg-stone-100 rounded-md hover:bg-stone-100 transition-colors duration-150"
         >
           <Link2 className="h-3 w-3" />
           Assign Existing
         </button>
         <button
           onClick={onCreateArtifact}
-          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 rounded-md hover:bg-emerald-100 transition-colors duration-150"
+          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-stone-700 bg-stone-100 rounded-md hover:bg-stone-100 transition-colors duration-150"
         >
           <Plus className="h-3 w-3" />
           Create New
@@ -706,7 +706,7 @@ function SectionDetail({
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search artifacts..."
-              className="w-full pl-7 pr-2 py-1.5 text-xs rounded border border-slate-200 focus-visible:ring-2 outline-none focus:ring-blue-300"
+              className="w-full pl-7 pr-2 py-1.5 text-xs rounded border border-slate-200 focus-visible:ring-2 outline-none focus:ring-stone-300"
             />
           </div>
           <div className="max-h-40 overflow-y-auto space-y-1">

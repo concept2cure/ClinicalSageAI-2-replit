@@ -373,7 +373,7 @@ export default function PostApprovalCommitments() {
             <ClipboardList className="h-6 w-6" />
             Post-Approval Commitments
           </h2>
-          <p className="text-gray-600">
+          <p className="text-stone-600">
             Manage regulatory obligations and post-approval commitments
           </p>
         </div>
@@ -573,7 +573,7 @@ export default function PostApprovalCommitments() {
               <Skeleton className="h-8 w-20" data-testid="loading-pending" />
             ) : (
               <>
-                <div className="text-2xl font-bold text-blue-600" data-testid="value-pending">
+                <div className="text-2xl font-bold text-stone-600" data-testid="value-pending">
                   {dashboardMetrics.pending}
                 </div>
                 <p className="text-xs text-muted-foreground">Open & in progress</p>
@@ -592,7 +592,7 @@ export default function PostApprovalCommitments() {
               <Skeleton className="h-8 w-20" data-testid="loading-completed" />
             ) : (
               <>
-                <div className="text-2xl font-bold text-green-600" data-testid="value-completed">
+                <div className="text-2xl font-bold text-stone-700" data-testid="value-completed">
                   {dashboardMetrics.completed}
                 </div>
                 <p className="text-xs text-muted-foreground">Successfully fulfilled</p>
@@ -611,7 +611,7 @@ export default function PostApprovalCommitments() {
               <Skeleton className="h-8 w-20" data-testid="loading-overdue" />
             ) : (
               <>
-                <div className="text-2xl font-bold text-red-600" data-testid="value-overdue">
+                <div className="text-2xl font-bold text-stone-700" data-testid="value-overdue">
                   {dashboardMetrics.overdue}
                 </div>
                 <p className="text-xs text-muted-foreground">Requires attention</p>
@@ -651,9 +651,9 @@ export default function PostApprovalCommitments() {
             </div>
           ) : filteredObligations.length === 0 ? (
             <div className="text-center py-12" data-testid="empty-commitments">
-              <ClipboardList className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-              <p className="text-gray-500 font-medium">No commitments found</p>
-              <p className="text-sm text-gray-400">
+              <ClipboardList className="h-12 w-12 mx-auto text-stone-300 mb-3" />
+              <p className="text-stone-500 font-medium">No commitments found</p>
+              <p className="text-sm text-stone-400">
                 {statusFilter !== 'all' 
                   ? 'Try changing the filter to see more commitments' 
                   : 'Add your first post-approval commitment to get started'}
@@ -682,7 +682,7 @@ export default function PostApprovalCommitments() {
                       <TableRow 
                         key={obligation.obl_id} 
                         data-testid={`row-commitment-${obligation.obl_id}`}
-                        className="cursor-pointer hover:bg-gray-50"
+                        className="cursor-pointer hover:bg-stone-50"
                         onClick={() => handleEditCommitment(obligation)}
                       >
                         <TableCell className="font-mono text-sm" data-testid={`id-${obligation.obl_id}`}>
@@ -697,27 +697,27 @@ export default function PostApprovalCommitments() {
                           <div className="text-sm">
                             {submission?.title || obligation.sub_id.slice(0, 8)}
                           </div>
-                          <div className="text-xs text-gray-500">{obligation.region}</div>
+                          <div className="text-xs text-stone-500">{obligation.region}</div>
                         </TableCell>
                         <TableCell data-testid={`due-date-${obligation.obl_id}`}>
                           {obligation.due_date ? (
                             <div className="flex items-center gap-2">
                               <Calendar className={`h-4 w-4 ${
-                                deadlineColor === 'red' ? 'text-red-500' :
-                                deadlineColor === 'yellow' ? 'text-yellow-500' :
-                                deadlineColor === 'green' ? 'text-green-500' :
-                                'text-gray-400'
+                                deadlineColor === 'red' ? 'text-stone-1000' :
+                                deadlineColor === 'yellow' ? 'text-stone-1000' :
+                                deadlineColor === 'green' ? 'text-stone-1000' :
+                                'text-stone-400'
                               }`} />
                               <span className={
-                                deadlineColor === 'red' ? 'text-red-600 font-medium' :
-                                deadlineColor === 'yellow' ? 'text-yellow-600 font-medium' :
+                                deadlineColor === 'red' ? 'text-stone-700 font-medium' :
+                                deadlineColor === 'yellow' ? 'text-stone-600 font-medium' :
                                 ''
                               }>
                                 {format(new Date(obligation.due_date), 'MMM d, yyyy')}
                               </span>
                             </div>
                           ) : (
-                            <span className="text-gray-400">No date set</span>
+                            <span className="text-stone-400">No date set</span>
                           )}
                         </TableCell>
                         <TableCell data-testid={`status-${obligation.obl_id}`}>
@@ -763,9 +763,9 @@ export default function PostApprovalCommitments() {
             </DialogDescription>
           </DialogHeader>
           {selectedObligation && (
-            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+            <div className="mb-4 p-4 bg-stone-50 rounded-lg">
               <h4 className="font-medium mb-2">{selectedObligation.title}</h4>
-              <div className="text-sm text-gray-600 space-y-1">
+              <div className="text-sm text-stone-600 space-y-1">
                 <p>ID: {selectedObligation.obl_id}</p>
                 <p>Region: {selectedObligation.region}</p>
                 <p>Severity: {selectedObligation.severity}</p>

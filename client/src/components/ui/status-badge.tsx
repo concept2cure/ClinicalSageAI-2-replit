@@ -8,9 +8,9 @@ interface StatusBadgeProps {
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
   const statusStyles = {
-    Processed: 'bg-green-100 text-green-800',
-    Processing: 'bg-amber-100 text-amber-800',
-    Failed: 'bg-red-100 text-red-800',
+    Processed: 'bg-stone-100 text-stone-800',
+    Processing: 'bg-stone-100 text-stone-800',
+    Failed: 'bg-stone-100 text-stone-800',
   };
 
   return (

@@ -11,10 +11,10 @@ interface RecommendationListProps {
 }
 
 const SEVERITY_COLORS: Record<string, string> = {
-  critical: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
-  high: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-  medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
-  low: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
+  critical: 'bg-stone-100 text-stone-800 dark:bg-stone-900/40 dark:text-stone-300',
+  high: 'bg-stone-100 text-stone-800 dark:bg-stone-900/40 dark:text-stone-300',
+  medium: 'bg-stone-100 text-stone-800 dark:bg-stone-900/40 dark:text-stone-300',
+  low: 'bg-stone-100 text-stone-800 dark:bg-stone-900/40 dark:text-stone-300',
   info: 'bg-stone-100 text-stone-800 dark:bg-stone-800/40 dark:text-stone-300',
 };
 

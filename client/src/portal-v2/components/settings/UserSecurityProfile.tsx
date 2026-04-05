@@ -245,33 +245,33 @@ const UserSecurityProfile: React.FC = () => {
     <div className="mx-auto max-w-6xl space-y-6 p-6">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Client Profile & Security</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-stone-900">Client Profile & Security</h1>
+          <p className="mt-1 text-sm text-stone-500">
             Manage account identity, authentication, and active sessions using secure defaults.
           </p>
         </div>
-        <div className="rounded-lg border bg-white px-3 py-2 text-xs text-gray-600">
+        <div className="rounded-lg border bg-white px-3 py-2 text-xs text-stone-600">
           <div className="flex items-center gap-2 font-medium">
-            <Shield className="h-4 w-4 text-emerald-600" /> Security posture
+            <Shield className="h-4 w-4 text-stone-700" /> Security posture
           </div>
           <div className="mt-1">{isMfaEnabled ? 'Strong (MFA enabled)' : 'Moderate (enable MFA)'}</div>
         </div>
       </header>
 
       {statusMessage && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+        <div className="rounded-lg border border-stone-200 bg-stone-100 px-4 py-3 text-sm text-stone-800">
           {statusMessage}
         </div>
       )}
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div className="rounded-lg border border-stone-200 bg-stone-100 px-4 py-3 text-sm text-stone-800">
           {errorMessage}
         </div>
       )}
 
       <section className="grid gap-4 md:grid-cols-2">
         <div className="rounded-xl border bg-white p-5">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-stone-900">
             <User className="h-5 w-5" /> Identity
           </h2>
           <div className="space-y-3">
@@ -296,7 +296,7 @@ const UserSecurityProfile: React.FC = () => {
             <button
               onClick={() => updateProfile.mutate()}
               disabled={updateProfile.isPending}
-              className="inline-flex items-center rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="inline-flex items-center rounded-md bg-stone-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               {updateProfile.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save profile
@@ -305,7 +305,7 @@ const UserSecurityProfile: React.FC = () => {
         </div>
 
         <div className="rounded-xl border bg-white p-5">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-stone-900">
             <Lock className="h-5 w-5" /> Password hardening
           </h2>
           <div className="space-y-3">
@@ -335,17 +335,17 @@ const UserSecurityProfile: React.FC = () => {
               placeholder="Confirm new password"
               autoComplete="new-password"
             />
-            <ul className="rounded-md border bg-gray-50 p-2 text-xs text-gray-600">
-              <li className={passwordPolicyChecks.length ? 'text-emerald-700' : ''}>• 12+ characters</li>
-              <li className={passwordPolicyChecks.upper ? 'text-emerald-700' : ''}>• One uppercase letter</li>
-              <li className={passwordPolicyChecks.lower ? 'text-emerald-700' : ''}>• One lowercase letter</li>
-              <li className={passwordPolicyChecks.number ? 'text-emerald-700' : ''}>• One number</li>
-              <li className={passwordPolicyChecks.symbol ? 'text-emerald-700' : ''}>• One special symbol</li>
+            <ul className="rounded-md border bg-stone-50 p-2 text-xs text-stone-600">
+              <li className={passwordPolicyChecks.length ? 'text-stone-800' : ''}>• 12+ characters</li>
+              <li className={passwordPolicyChecks.upper ? 'text-stone-800' : ''}>• One uppercase letter</li>
+              <li className={passwordPolicyChecks.lower ? 'text-stone-800' : ''}>• One lowercase letter</li>
+              <li className={passwordPolicyChecks.number ? 'text-stone-800' : ''}>• One number</li>
+              <li className={passwordPolicyChecks.symbol ? 'text-stone-800' : ''}>• One special symbol</li>
             </ul>
             <button
               onClick={() => changePassword.mutate()}
               disabled={changePassword.isPending}
-              className="inline-flex items-center rounded-md bg-indigo-700 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="inline-flex items-center rounded-md bg-stone-700 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               <KeyRound className="mr-2 h-4 w-4" /> Rotate password & revoke sessions
             </button>
@@ -355,18 +355,18 @@ const UserSecurityProfile: React.FC = () => {
 
       <section className="grid gap-4 md:grid-cols-2">
         <div className="rounded-xl border bg-white p-5">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-stone-900">
             <Smartphone className="h-5 w-5" /> Multi-factor authentication
           </h2>
           {mfaLoading ? (
-            <div className="flex items-center gap-2 text-sm text-gray-500">
+            <div className="flex items-center gap-2 text-sm text-stone-500">
               <Loader2 className="h-4 w-4 animate-spin" /> Loading MFA methods...
             </div>
           ) : (
             <>
               <ul className="mb-3 space-y-2 text-sm">
                 {mfaMethods.length === 0 && (
-                  <li className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
+                  <li className="rounded-md border border-stone-200 bg-stone-100 px-3 py-2 text-stone-800">
                     <AlertTriangle className="mr-2 inline h-4 w-4" /> No MFA methods are enrolled.
                   </li>
                 )}
@@ -378,12 +378,12 @@ const UserSecurityProfile: React.FC = () => {
                     {method.isEnabled ? (
                       <button
                         onClick={() => disableMfa.mutate(method.type)}
-                        className="text-xs font-medium text-red-600"
+                        className="text-xs font-medium text-stone-700"
                       >
                         Disable
                       </button>
                     ) : (
-                      <span className="text-xs text-gray-500">Disabled</span>
+                      <span className="text-xs text-stone-500">Disabled</span>
                     )}
                   </li>
                 ))}
@@ -391,13 +391,13 @@ const UserSecurityProfile: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => bootstrapTotp.mutate()}
-                  className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700"
+                  className="rounded-md border border-stone-200 bg-stone-100 px-3 py-2 text-sm font-medium text-stone-800"
                 >
                   Start TOTP setup
                 </button>
               </div>
               {totpBootstrap && (
-                <div className="rounded-md border bg-gray-50 p-3 text-xs text-gray-700">
+                <div className="rounded-md border bg-stone-50 p-3 text-xs text-stone-700">
                   <div className="mb-2 flex items-center justify-between">
                     <span className="font-medium">TOTP Secret</span>
                     <button
@@ -409,7 +409,7 @@ const UserSecurityProfile: React.FC = () => {
                           setErrorMessage('Unable to copy automatically. Please copy the secret manually.');
                         }
                       }}
-                      className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900"
+                      className="inline-flex items-center gap-1 text-xs text-stone-600 hover:text-stone-900"
                     >
                       <Copy className="h-3 w-3" /> Copy
                     </button>
@@ -419,7 +419,7 @@ const UserSecurityProfile: React.FC = () => {
                     href={totpBootstrap.qrCode}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="inline-flex items-center gap-1 text-indigo-700 hover:underline"
+                    className="inline-flex items-center gap-1 text-stone-700 hover:underline"
                   >
                     Open QR code <ExternalLink className="h-3 w-3" />
                   </a>
@@ -434,7 +434,7 @@ const UserSecurityProfile: React.FC = () => {
                 />
                 <button
                   onClick={() => enableTotp.mutate()}
-                  className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-medium text-white"
+                  className="rounded-md bg-stone-800 px-3 py-2 text-sm font-medium text-white"
                 >
                   Verify
                 </button>
@@ -444,7 +444,7 @@ const UserSecurityProfile: React.FC = () => {
         </div>
 
         <div className="rounded-xl border bg-white p-5">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-stone-900">
             <Clock className="h-5 w-5" /> Security preferences
           </h2>
           <div className="space-y-3 text-sm">
@@ -490,7 +490,7 @@ const UserSecurityProfile: React.FC = () => {
             </label>
             <button
               onClick={persistPreferences}
-              className="rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white"
+              className="rounded-md bg-stone-900 px-3 py-2 text-sm font-medium text-white"
             >
               Save preferences
             </button>
@@ -500,21 +500,21 @@ const UserSecurityProfile: React.FC = () => {
 
       <section className="rounded-xl border bg-white p-5">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-stone-900">
             <LogOut className="h-5 w-5" /> Active sessions
           </h2>
           <button
             onClick={() => revokeOtherSessions.mutate()}
-            className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700"
+            className="rounded-md border border-stone-200 bg-stone-100 px-3 py-2 text-sm font-medium text-stone-800"
           >
             Revoke all other sessions
           </button>
         </div>
 
         {sessionsLoading ? (
-          <div className="text-sm text-gray-500">Loading sessions...</div>
+          <div className="text-sm text-stone-500">Loading sessions...</div>
         ) : sessions.length === 0 ? (
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <div className="rounded-md border border-stone-200 bg-stone-100 px-3 py-2 text-sm text-stone-800">
             No active sessions were returned.
           </div>
         ) : (
@@ -525,20 +525,20 @@ const UserSecurityProfile: React.FC = () => {
                 className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
               >
                 <div>
-                  <div className="font-medium text-gray-900">
+                  <div className="font-medium text-stone-900">
                     {session.deviceInfo.name} • {session.deviceInfo.browser} on {session.deviceInfo.os}
                   </div>
-                  <div className="text-gray-500">{session.ipAddress}</div>
+                  <div className="text-stone-500">{session.ipAddress}</div>
                 </div>
                 {session.isCurrent ? (
-                  <span className="inline-flex items-center gap-1 text-emerald-700">
+                  <span className="inline-flex items-center gap-1 text-stone-800">
                     <CheckCircle2 className="h-4 w-4" /> Current
                   </span>
                 ) : (
                   <button
                     onClick={() => revokeSession.mutate(session.id)}
                     disabled={revokeSession.isPending}
-                    className="text-red-600 hover:underline"
+                    className="text-stone-700 hover:underline"
                   >
                     Revoke
                   </button>

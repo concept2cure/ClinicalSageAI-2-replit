@@ -42,7 +42,7 @@ export default function CategoryMultiSelect({
 
     return (
       <div key={n.id} className="cat-node">
-        <label className="cat-row flex items-center gap-2 p-2 hover:bg-gray-100 rounded cursor-pointer">
+        <label className="cat-row flex items-center gap-2 p-2 hover:bg-stone-100 rounded cursor-pointer">
           <input
             type="checkbox"
             checked={allSelected}
@@ -53,7 +53,7 @@ export default function CategoryMultiSelect({
           />
           <span className={n.children?.length ? 'font-semibold' : ''}>{n.name}</span>
           {n.aliases && n.aliases.length > 0 && (
-            <span className="text-xs text-gray-400">({n.aliases.join(', ')})</span>
+            <span className="text-xs text-stone-400">({n.aliases.join(', ')})</span>
           )}
         </label>
         {n.children?.length ? (
@@ -71,7 +71,7 @@ export default function CategoryMultiSelect({
   );
 
   return (
-    <div className="cat-multiselect border rounded-lg p-3 bg-gray-50">
+    <div className="cat-multiselect border rounded-lg p-3 bg-stone-50">
       {searchable && (
         <input
           placeholder="Search categories…"
@@ -86,12 +86,12 @@ export default function CategoryMultiSelect({
       </div>
       {value.length > 0 && (
         <div className="mt-3 pt-3 border-t">
-          <p className="text-xs text-gray-500 mb-2">Selected ({value.length}):</p>
+          <p className="text-xs text-stone-500 mb-2">Selected ({value.length}):</p>
           <div className="flex flex-wrap gap-1">
             {value.map(id => {
               const cat = findCategoryById(tree, id);
               return cat ? (
-                <span key={id} className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                <span key={id} className="inline-flex items-center gap-1 px-2 py-1 bg-stone-100 text-stone-800 text-xs rounded">
                   {cat.name}
                 </span>
               ) : null;

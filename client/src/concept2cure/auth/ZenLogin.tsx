@@ -510,11 +510,11 @@ export const ZenLogin: React.FC = () => {
             {/* ── Error Display ─────────────────────────────────────────── */}
             {error && (
               <div
-                className="mb-6 flex items-start gap-2.5 rounded-[10px] border border-red-100 bg-red-50/60 px-3.5 py-3"
+                className="mb-6 flex items-start gap-2.5 rounded-[10px] border border-stone-100 bg-stone-100/60 px-3.5 py-3"
                 role="alert"
               >
-                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
-                <p className="text-[13px] leading-snug text-red-600">{error.message}</p>
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-stone-400" />
+                <p className="text-[13px] leading-snug text-stone-700">{error.message}</p>
               </div>
             )}
 
@@ -792,8 +792,8 @@ export const ZenLogin: React.FC = () => {
                ══════════════════════════════════════════════════════════════ */}
             {view === 'success' && (
               <div className="flex flex-col items-center pt-6">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 mb-4">
-                  <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-stone-100 mb-4">
+                  <CheckCircle2 className="h-6 w-6 text-stone-1000" />
                 </div>
                 <div className="flex items-center gap-2 text-[13px] text-stone-400">
                   <Spinner size="sm" />

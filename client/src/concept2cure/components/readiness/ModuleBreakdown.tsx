@@ -10,19 +10,19 @@ interface ModuleBreakdownProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  ready: 'bg-emerald-500',
+  ready: 'bg-stone-1000',
   on_track: 'bg-stone-600',
-  needs_attention: 'bg-amber-500',
-  at_risk: 'bg-red-500',
+  needs_attention: 'bg-stone-1000',
+  at_risk: 'bg-stone-1000',
   in_progress: 'bg-stone-500',
   not_started: 'bg-stone-400',
 };
 
 const STATUS_TEXT_COLORS: Record<string, string> = {
-  ready: 'text-emerald-700 dark:text-emerald-400',
-  on_track: 'text-stone-700 dark:text-blue-400',
-  needs_attention: 'text-amber-700 dark:text-amber-400',
-  at_risk: 'text-red-700 dark:text-red-400',
+  ready: 'text-stone-800 dark:text-stone-400',
+  on_track: 'text-stone-700 dark:text-stone-400',
+  needs_attention: 'text-stone-700 dark:text-stone-400',
+  at_risk: 'text-stone-800 dark:text-stone-400',
   in_progress: 'text-stone-700 dark:text-stone-400',
   not_started: 'text-stone-500 dark:text-stone-400',
 };
@@ -78,7 +78,7 @@ export function ModuleBreakdown({ modules, onModuleClick }: ModuleBreakdownProps
               <span>{mod.validatedCount} validated</span>
               <span>{mod.routedCount} routed</span>
               {mod.blockerCount > 0 && (
-                <span className="text-red-600 dark:text-red-400 font-medium">
+                <span className="text-stone-700 dark:text-stone-400 font-medium">
                   {mod.blockerCount} blocker{mod.blockerCount > 1 ? 's' : ''}
                 </span>
               )}
@@ -89,7 +89,7 @@ export function ModuleBreakdown({ modules, onModuleClick }: ModuleBreakdownProps
               <div className="mt-2 text-xs text-stone-500 dark:text-stone-400">
                 {mod.missingItems.slice(0, 2).map((item, i) => (
                   <div key={i} className="flex items-center gap-1">
-                    <span className="text-amber-500">!</span>
+                    <span className="text-stone-1000">!</span>
                     <span>{item}</span>
                   </div>
                 ))}

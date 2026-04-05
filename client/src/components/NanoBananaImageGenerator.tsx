@@ -167,7 +167,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
         <button
           onClick={handleGenerate}
           disabled={isGenerating || !prompt.trim()}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-100 border border-stone-200 transition-colors disabled:opacity-60"
         >
           {isGenerating ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -192,10 +192,10 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
   return (
     <div className={cn('rounded-xl border border-stone-200 bg-white overflow-hidden', className)}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 bg-gradient-to-r from-amber-50 to-orange-50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 bg-gradient-to-r from-stone-100 to-stone-100">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center">
-            <ImageIcon className="w-4 h-4 text-amber-600" />
+          <div className="w-7 h-7 rounded-lg bg-stone-100 flex items-center justify-center">
+            <ImageIcon className="w-4 h-4 text-stone-600" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-stone-900">AnA Visual</h3>
@@ -211,7 +211,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
               className={cn(
                 'px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors',
                 activeMode === m
-                  ? 'bg-amber-100 text-amber-700'
+                  ? 'bg-stone-100 text-stone-700'
                   : 'text-stone-500 hover:text-stone-700'
               )}
             >
@@ -232,7 +232,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
               : 'Describe the image you want to generate...'
           }
           rows={2}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 focus:border-amber-300 focus:ring-2 focus:ring-amber-100 outline-none resize-none bg-stone-50"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 focus:border-stone-300 focus:ring-2 focus:ring-stone-100 outline-none resize-none bg-stone-50"
         />
 
         {/* Style selector (for image/infographic only) */}
@@ -245,7 +245,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
                 className={cn(
                   'px-2.5 py-1 text-[11px] font-medium rounded-full border transition-colors',
                   style === opt.value
-                    ? 'bg-amber-100 border-amber-300 text-amber-700'
+                    ? 'bg-stone-100 border-stone-300 text-stone-700'
                     : 'bg-white border-stone-200 text-stone-500 hover:border-stone-300'
                 )}
                 title={opt.desc}
@@ -260,7 +260,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
         <button
           onClick={handleGenerate}
           disabled={isGenerating || !prompt.trim()}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-stone-1000 text-white hover:bg-stone-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isGenerating ? (
             <>
@@ -280,7 +280,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
         </button>
 
         {error && (
-          <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+          <p className="text-xs text-stone-700 bg-stone-100 rounded-lg px-3 py-2">{error}</p>
         )}
       </div>
 
@@ -313,7 +313,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
                   {onImageGenerated && (
                     <button
                       onClick={() => onImageGenerated(img)}
-                      className="p-1.5 rounded-md bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+                      className="p-1.5 rounded-md bg-stone-1000 text-white hover:bg-stone-600 transition-colors"
                       title="Insert into document"
                     >
                       <FileDown className="w-3.5 h-3.5" />

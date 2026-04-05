@@ -233,9 +233,9 @@ const NavItem: React.FC<{
 }> = React.memo(
   ({ icon, label, active, accentColor, badge, subtitle, onClick }) => {
     const accentMap = {
-      blue: { bg: 'bg-blue-100', text: 'text-blue-600', iconColor: 'text-blue-500' },
+      blue: { bg: 'bg-stone-100', text: 'text-stone-600', iconColor: 'text-stone-1000' },
       violet: { bg: 'bg-stone-200', text: 'text-stone-600', iconColor: 'text-stone-1000' },
-      emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', iconColor: 'text-emerald-500' },
+      emerald: { bg: 'bg-stone-100', text: 'text-stone-800', iconColor: 'text-stone-1000' },
     };
     const accent = accentColor && accentMap[accentColor];
 
@@ -255,8 +255,8 @@ const NavItem: React.FC<{
             : accent
             ? cn(
                 'text-stone-600',
-                accent.bg === 'bg-blue-100' && 'hover:bg-blue-100 hover:text-blue-600',
-                accent.bg === 'bg-emerald-50' && 'hover:bg-emerald-50 hover:text-emerald-700'
+                accent.bg === 'bg-stone-100' && 'hover:bg-stone-100 hover:text-stone-600',
+                accent.bg === 'bg-stone-100' && 'hover:bg-stone-100 hover:text-stone-800'
               )
             : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
         )}
@@ -278,7 +278,7 @@ const NavItem: React.FC<{
           )}
         </div>
         {badge && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium leading-none flex-shrink-0">
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-stone-100 text-stone-700 font-medium leading-none flex-shrink-0">
             {badge}
           </span>
         )}
@@ -383,7 +383,7 @@ const ConvoRow: React.FC<{
               e.stopPropagation();
               onDelete();
             }}
-            className="text-red-600 focus:text-red-600"
+            className="text-stone-700 focus:text-stone-700"
           >
             <Trash2 className="w-3.5 h-3.5 mr-2" />
             Delete
@@ -499,7 +499,7 @@ const ProjectRow: React.FC<{
         )}
 
         {/* Starred indicator */}
-        {isPinned && <Star className="w-3 h-3 flex-shrink-0 fill-current text-amber-400" />}
+        {isPinned && <Star className="w-3 h-3 flex-shrink-0 fill-current text-stone-400" />}
 
         {/* Three-dot menu — visible on hover */}
         <DropdownMenu>
@@ -565,7 +565,7 @@ const ProjectRow: React.FC<{
                 e.stopPropagation();
                 onDeleteProject?.(project.id);
               }}
-              className="text-red-600 focus:text-red-600"
+              className="text-stone-700 focus:text-stone-700"
             >
               <Trash2 className="w-3.5 h-3.5 mr-2" />
               Delete
@@ -631,8 +631,8 @@ const IconBtn: React.FC<{
   ({
     label,
     active,
-    accentBg = 'bg-blue-100',
-    accentText = 'text-blue-500',
+    accentBg = 'bg-stone-100',
+    accentText = 'text-stone-1000',
     onClick,
     children,
   }) => (
@@ -955,7 +955,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <ChevronRight className="w-4 h-4" />
           </Button>
           <div className="w-7 h-7 rounded-full bg-stone-200 flex items-center justify-center">
-            <span className="text-[10px] font-bold text-blue-600 leading-none">
+            <span className="text-[10px] font-bold text-stone-600 leading-none">
               {avatarInitial}
             </span>
           </div>
@@ -1268,7 +1268,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             className="h-auto w-full justify-start gap-2 px-2 py-1.5 rounded-lg text-stone-500 hover:bg-stone-100 hover:text-stone-800 text-xs transition-colors"
           >
             <div className="w-6 h-6 rounded-full bg-stone-200 flex items-center justify-center flex-shrink-0">
-              <span className="text-[10px] font-bold text-blue-600 leading-none">
+              <span className="text-[10px] font-bold text-stone-600 leading-none">
                 {avatarInitial}
               </span>
             </div>

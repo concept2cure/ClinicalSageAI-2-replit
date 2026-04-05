@@ -134,7 +134,7 @@ function CapabilityItem({
                     e.stopPropagation();
                     onExplore(node.id);
                   }}
-                  className="text-xs text-blue-600 hover:underline"
+                  className="text-xs text-stone-600 hover:underline"
                 >
                   Explore &rarr;
                 </button>

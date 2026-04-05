@@ -464,10 +464,10 @@ export function INDAutoDraftWizard({
                   {uploadedFiles.map((file, i) => (
                     <div
                       key={`${file.name}-${i}`}
-                      className="flex items-center justify-between px-3 py-2 bg-emerald-50/50 rounded-md"
+                      className="flex items-center justify-between px-3 py-2 bg-stone-100/50 rounded-md"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <CheckCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                        <CheckCircle className="w-3.5 h-3.5 text-stone-1000 flex-shrink-0" />
                         <span className="text-[12px] text-stone-700 truncate">{file.name}</span>
                         <span className="text-[10px] text-stone-400 flex-shrink-0">
                           {formatFileSize(file.size)}
@@ -483,11 +483,11 @@ export function INDAutoDraftWizard({
 
               {uploadError && (
                 <div
-                  className="flex items-center gap-2 px-3 py-2 bg-red-50 rounded-md"
+                  className="flex items-center gap-2 px-3 py-2 bg-stone-100 rounded-md"
                   role="alert"
                 >
-                  <AlertCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
-                  <span className="text-[12px] text-red-700">{uploadError}</span>
+                  <AlertCircle className="w-3.5 h-3.5 text-stone-1000 flex-shrink-0" />
+                  <span className="text-[12px] text-stone-800">{uploadError}</span>
                 </div>
               )}
             </div>
@@ -638,11 +638,11 @@ export function INDAutoDraftWizard({
 
               {generateError && (
                 <div
-                  className="flex items-center gap-2 px-3 py-2 bg-red-50 rounded-md mx-4"
+                  className="flex items-center gap-2 px-3 py-2 bg-stone-100 rounded-md mx-4"
                   role="alert"
                 >
-                  <AlertCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
-                  <span className="text-[12px] text-red-700">{generateError}</span>
+                  <AlertCircle className="w-3.5 h-3.5 text-stone-1000 flex-shrink-0" />
+                  <span className="text-[12px] text-stone-800">{generateError}</span>
                 </div>
               )}
 

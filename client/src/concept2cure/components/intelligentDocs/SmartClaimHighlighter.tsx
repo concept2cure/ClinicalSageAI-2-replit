@@ -41,9 +41,9 @@ export const ClaimHighlightMark = Mark.create({
     const { sourceStatus } = HTMLAttributes;
     
     const statusClasses = {
-      supported: 'bg-green-100 border-b-2 border-green-500',
-      'needs-source': 'bg-amber-100 border-b-2 border-amber-500 border-dashed',
-      unsupported: 'bg-red-100 border-b-2 border-red-500',
+      supported: 'bg-stone-100 border-b-2 border-stone-1000',
+      'needs-source': 'bg-stone-100 border-b-2 border-stone-1000 border-dashed',
+      unsupported: 'bg-stone-100 border-b-2 border-stone-1000',
     };
     
     return [
@@ -70,17 +70,17 @@ export const ClaimIndicator: React.FC<{
 }> = ({ claim, onClick, compact = true }) => {
   const statusConfig = {
     supported: { 
-      color: 'bg-green-500', 
+      color: 'bg-stone-1000', 
       label: '✓', 
       tooltip: 'Claim supported by source'
     },
     'needs-source': { 
-      color: 'bg-amber-500 animate-pulse', 
+      color: 'bg-stone-1000 animate-pulse', 
       label: '!', 
       tooltip: 'Needs source reference'
     },
     unsupported: { 
-      color: 'bg-red-500', 
+      color: 'bg-stone-1000', 
       label: '✗', 
       tooltip: 'No matching source found'
     },
@@ -135,8 +135,8 @@ export const ClaimSummaryStrip: React.FC<{
         </span>
         
         {supported > 0 && (
-          <span className="flex items-center gap-1 text-green-600">
-            <span className="w-2 h-2 rounded-full bg-green-500" />
+          <span className="flex items-center gap-1 text-stone-700">
+            <span className="w-2 h-2 rounded-full bg-stone-1000" />
             {supported} sourced
           </span>
         )}
@@ -147,17 +147,17 @@ export const ClaimSummaryStrip: React.FC<{
               const firstNeedsSource = claims.find(c => c.sourceStatus === 'needs-source');
               if (firstNeedsSource) onClaimClick(firstNeedsSource);
             }}
-            className="flex items-center gap-1 text-amber-600 hover:underline"
+            className="flex items-center gap-1 text-stone-600 hover:underline"
             data-testid="button-claim-needs-source"
           >
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-stone-1000 animate-pulse" />
             {needsSource} need sources
           </button>
         )}
         
         {unsupported > 0 && (
-          <span className="flex items-center gap-1 text-red-600">
-            <span className="w-2 h-2 rounded-full bg-red-500" />
+          <span className="flex items-center gap-1 text-stone-700">
+            <span className="w-2 h-2 rounded-full bg-stone-1000" />
             {unsupported} unsupported
           </span>
         )}
@@ -219,8 +219,8 @@ export const ClaimTooltip: React.FC<{
       </p>
       
       {claim.sourceStatus === 'supported' ? (
-        <div className="flex items-center gap-2 text-green-600 text-sm">
-          <span className="w-2 h-2 rounded-full bg-green-500" />
+        <div className="flex items-center gap-2 text-stone-700 text-sm">
+          <span className="w-2 h-2 rounded-full bg-stone-1000" />
           {claim.linkedSources.length} source{claim.linkedSources.length > 1 ? 's' : ''} linked
         </div>
       ) : (

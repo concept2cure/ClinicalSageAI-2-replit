@@ -392,7 +392,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                           className={cn(
                             'w-full flex items-center gap-2 px-3 py-2 rounded-lg',
                             'bg-white border border-stone-200 text-sm text-stone-700',
-                            'hover:border-blue-200 hover:bg-blue-50 transition-colors duration-150'
+                            'hover:border-stone-200 hover:bg-stone-100 transition-colors duration-150'
                           )}
                         >
                           <Icon className="w-4 h-4 text-stone-600" />
@@ -440,7 +440,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl',
                     'bg-stone-50 border border-stone-200',
-                    'hover:bg-blue-50 hover:border-blue-200 transition-colors duration-150',
+                    'hover:bg-stone-100 hover:border-stone-200 transition-colors duration-150',
                     'text-left group'
                   )}
                 >

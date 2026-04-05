@@ -36,7 +36,7 @@ export function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqs
     <div className="w-[200px] 2xl:w-[240px] border-l border-stone-200 shrink-0 flex flex-col bg-white overflow-y-auto">
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-stone-200 bg-stone-50/60">
         <div className="flex items-center gap-1.5">
-          <Info className="w-3 h-3 text-blue-600" />
+          <Info className="w-3 h-3 text-stone-600" />
           <span className="text-xs font-semibold text-stone-700">Section Requirements</span>
         </div>
         <button
@@ -77,13 +77,13 @@ export function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqs
         <div className="flex items-center gap-1 px-2 py-1 rounded bg-stone-50">
           {reqs.optional ? (
             <>
-              <Info className="w-3 h-3 text-blue-500" />
+              <Info className="w-3 h-3 text-stone-1000" />
               <span className="text-xs text-stone-700 font-medium">Optional section</span>
             </>
           ) : (
             <>
-              <AlertTriangle className="w-3 h-3 text-amber-500" />
-              <span className="text-xs text-amber-700 font-medium">Required section</span>
+              <AlertTriangle className="w-3 h-3 text-stone-1000" />
+              <span className="text-xs text-stone-700 font-medium">Required section</span>
             </>
           )}
         </div>
@@ -162,10 +162,10 @@ export function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqs
                   className={cn(
                     'h-1.5 rounded-full transition-all duration-150',
                     metrics.completionPercent >= 75
-                      ? 'bg-emerald-500'
+                      ? 'bg-stone-1000'
                       : metrics.completionPercent >= 25
-                        ? 'bg-amber-500'
-                        : 'bg-red-400'
+                        ? 'bg-stone-1000'
+                        : 'bg-stone-400'
                   )}
                   style={{ width: `${Math.min(100, metrics.completionPercent)}%` }}
                 />
@@ -179,17 +179,17 @@ export function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqs
                 <span className="font-medium text-stone-700">{metrics.precedentCount}</span>
               </div>
               {metrics.artifactCount > 0 && metrics.evidenceCount === 0 && (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-xs">
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-stone-100 text-stone-700 text-xs">
                   <AlertTriangle className="w-2.5 h-2.5" /> No evidence linked
                 </div>
               )}
               {metrics.artifactCount > 0 && metrics.precedentCount === 0 && (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 text-xs">
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 text-xs">
                   <AlertTriangle className="w-2.5 h-2.5" /> No precedents
                 </div>
               )}
               {metrics.artifactCount === 0 && reqs.hasTemplates && (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-xs">
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 text-xs">
                   <Info className="w-2.5 h-2.5" /> Template available, no doc created
                 </div>
               )}

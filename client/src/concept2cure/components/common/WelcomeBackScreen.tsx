@@ -257,17 +257,17 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                   <div
                     className={cn(
                       'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
-                      lastProject.type === '510K' && 'bg-blue-100',
+                      lastProject.type === '510K' && 'bg-stone-100',
                       lastProject.type === 'IND' && 'bg-stone-200',
-                      lastProject.type === 'NDA' && 'bg-emerald-100'
+                      lastProject.type === 'NDA' && 'bg-stone-100'
                     )}
                   >
                     <Folder
                       className={cn(
                         'w-5 h-5',
-                        lastProject.type === '510K' && 'text-blue-600',
+                        lastProject.type === '510K' && 'text-stone-600',
                         lastProject.type === 'IND' && 'text-stone-600',
-                        lastProject.type === 'NDA' && 'text-emerald-600'
+                        lastProject.type === 'NDA' && 'text-stone-700'
                       )}
                     />
                   </div>
@@ -278,9 +278,9 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                       <span
                         className={cn(
                           'text-xs font-medium px-2 py-0.5 rounded-full',
-                          lastProject.type === '510K' && 'bg-blue-100 text-stone-700',
+                          lastProject.type === '510K' && 'bg-stone-100 text-stone-700',
                           lastProject.type === 'IND' && 'bg-stone-200 text-stone-700',
-                          lastProject.type === 'NDA' && 'bg-emerald-100 text-emerald-700'
+                          lastProject.type === 'NDA' && 'bg-stone-100 text-stone-800'
                         )}
                       >
                         {lastProject.type}
@@ -300,7 +300,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                   </div>
 
                   {/* Action */}
-                  <div className="flex items-center gap-2 text-blue-600 group-hover:gap-3 transition-all duration-150">
+                  <div className="flex items-center gap-2 text-stone-600 group-hover:gap-3 transition-all duration-150">
                     <span className="text-sm font-medium">Continue</span>
                     <ArrowRight className="w-4 h-4" />
                   </div>
@@ -327,22 +327,22 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                       'hover:shadow-sm shadow-sm',
                       'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
                       action.color === 'blue' &&
-                        'border-blue-200 bg-blue-50/50 hover:border-blue-300',
+                        'border-stone-200 bg-stone-100/50 hover:border-stone-300',
                       action.color === 'purple' &&
                         'border-stone-200 bg-stone-100/50 hover:border-stone-300',
                       action.color === 'emerald' &&
-                        'border-emerald-200 bg-emerald-50/50 hover:border-emerald-300',
+                        'border-stone-200 bg-stone-100/50 hover:border-stone-300',
                       action.color === 'amber' &&
-                        'border-amber-200 bg-amber-50/50 hover:border-amber-300'
+                        'border-stone-200 bg-stone-100/50 hover:border-stone-300'
                     )}
                   >
                     <Icon
                       className={cn(
                         'w-5 h-5 mb-3',
-                        action.color === 'blue' && 'text-blue-600',
+                        action.color === 'blue' && 'text-stone-600',
                         action.color === 'purple' && 'text-stone-600',
-                        action.color === 'emerald' && 'text-emerald-600',
-                        action.color === 'amber' && 'text-amber-600'
+                        action.color === 'emerald' && 'text-stone-700',
+                        action.color === 'amber' && 'text-stone-600'
                       )}
                     />
                     <h4 className="font-semibold text-stone-900 mb-0.5">{action.label}</h4>
@@ -367,24 +367,24 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                     className={cn(
                       'p-4 rounded-xl border bg-white',
                       'flex items-center gap-4',
-                      item.priority === 'high' && 'border-amber-200',
-                      item.priority === 'critical' && 'border-red-200',
+                      item.priority === 'high' && 'border-stone-200',
+                      item.priority === 'critical' && 'border-stone-200',
                       !item.priority && 'border-stone-200'
                     )}
                   >
                     <div
                       className={cn(
                         'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
-                        item.type === 'task' && 'bg-blue-100',
-                        item.type === 'review' && 'bg-amber-100',
-                        item.type === 'milestone' && 'bg-emerald-100',
+                        item.type === 'task' && 'bg-stone-100',
+                        item.type === 'review' && 'bg-stone-100',
+                        item.type === 'milestone' && 'bg-stone-100',
                         item.type === 'notification' && 'bg-stone-200'
                       )}
                     >
-                      {item.type === 'task' && <CheckCircle className="w-5 h-5 text-blue-600" />}
-                      {item.type === 'review' && <AlertCircle className="w-5 h-5 text-amber-600" />}
+                      {item.type === 'task' && <CheckCircle className="w-5 h-5 text-stone-600" />}
+                      {item.type === 'review' && <AlertCircle className="w-5 h-5 text-stone-600" />}
                       {item.type === 'milestone' && (
-                        <Calendar className="w-5 h-5 text-emerald-600" />
+                        <Calendar className="w-5 h-5 text-stone-700" />
                       )}
                       {item.type === 'notification' && <Bell className="w-5 h-5 text-stone-600" />}
                     </div>
@@ -404,12 +404,12 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                     )}
 
                     {item.priority === 'high' && (
-                      <span className="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-medium text-stone-700 bg-stone-100 px-2 py-0.5 rounded-full">
                         High Priority
                       </span>
                     )}
                     {item.priority === 'critical' && (
-                      <span className="text-xs font-medium text-red-700 bg-red-100 px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-medium text-stone-800 bg-stone-100 px-2 py-0.5 rounded-full">
                         Critical
                       </span>
                     )}

@@ -143,7 +143,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 href={citation.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs text-blue-600 hover:text-stone-700 hover:underline"
+                className="flex items-center gap-2 text-xs text-stone-600 hover:text-stone-700 hover:underline"
               >
                 <FileText className="w-3 h-3" />
                 <span>{citation.title}</span>
@@ -164,14 +164,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             </button>
             <button
               onClick={() => onFeedback?.(message.id, 'up')}
-              className="p-1.5 rounded-lg text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-150"
+              className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors duration-150"
               title="Good response"
             >
               <ThumbsUp className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => onFeedback?.(message.id, 'down')}
-              className="p-1.5 rounded-lg text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors duration-150"
+              className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors duration-150"
               title="Poor response"
             >
               <ThumbsDown className="w-3.5 h-3.5" />
@@ -480,7 +480,7 @@ export const CouncilThreadPanel: React.FC<CouncilThreadPanelProps> = ({
         </div>
         <button
           onClick={onNewThread}
-          className="text-sm text-blue-600 hover:text-stone-700 font-medium"
+          className="text-sm text-stone-600 hover:text-stone-700 font-medium"
         >
           New Thread
         </button>

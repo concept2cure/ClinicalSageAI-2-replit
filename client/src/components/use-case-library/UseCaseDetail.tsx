@@ -20,7 +20,7 @@ export default function UseCaseDetail({ useCase, onLaunch, onDownload }: UseCase
           <h2 className="text-2xl font-bold">{useCase.title}</h2>
           <p className="text-muted-foreground">{useCase.audience}</p>
         </div>
-        <Badge variant="outline" className="bg-blue-50 text-blue-700">
+        <Badge variant="outline" className="bg-stone-100 text-stone-700">
           {useCase.trialSageSolution.inputs.phase}
         </Badge>
       </div>
@@ -30,14 +30,14 @@ export default function UseCaseDetail({ useCase, onLaunch, onDownload }: UseCase
       {/* The Strategic Challenge */}
       <div>
         <h3 className="text-lg font-semibold flex items-center mb-3">
-          <span className="bg-red-100 text-red-700 rounded-full p-1 mr-2">🧭</span>
+          <span className="bg-stone-100 text-stone-800 rounded-full p-1 mr-2">🧭</span>
           The Strategic Challenge
         </h3>
         <Card>
           <CardContent className="p-4">
-            <p className="text-gray-800">{useCase.challenge}</p>
+            <p className="text-stone-800">{useCase.challenge}</p>
             {useCase.background && (
-              <p className="text-sm text-gray-600 mt-2">{useCase.background}</p>
+              <p className="text-sm text-stone-600 mt-2">{useCase.background}</p>
             )}
           </CardContent>
         </Card>
@@ -46,25 +46,25 @@ export default function UseCaseDetail({ useCase, onLaunch, onDownload }: UseCase
       {/* Traditional Approach */}
       <div>
         <h3 className="text-lg font-semibold flex items-center mb-3">
-          <span className="bg-orange-100 text-orange-700 rounded-full p-1 mr-2">⏱️</span>
+          <span className="bg-stone-100 text-stone-700 rounded-full p-1 mr-2">⏱️</span>
           Traditional Approach
         </h3>
         <div className="grid grid-cols-3 gap-4">
           <Card>
             <CardContent className="p-4">
-              <h4 className="text-sm text-gray-500">Cost</h4>
+              <h4 className="text-sm text-stone-500">Cost</h4>
               <p className="text-xl font-semibold">{useCase.traditionalApproach.cost}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <h4 className="text-sm text-gray-500">Timeline</h4>
+              <h4 className="text-sm text-stone-500">Timeline</h4>
               <p className="text-xl font-semibold">{useCase.traditionalApproach.timeline}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <h4 className="text-sm text-gray-500">Challenges</h4>
+              <h4 className="text-sm text-stone-500">Challenges</h4>
               <p className="text-sm">{useCase.traditionalApproach.challenges}</p>
             </CardContent>
           </Card>
@@ -74,7 +74,7 @@ export default function UseCaseDetail({ useCase, onLaunch, onDownload }: UseCase
       {/* Concept2Cure Intelligence Solution */}
       <div>
         <h3 className="text-lg font-semibold flex items-center mb-3">
-          <span className="bg-blue-100 text-blue-700 rounded-full p-1 mr-2">🧠</span>
+          <span className="bg-stone-100 text-stone-700 rounded-full p-1 mr-2">🧠</span>
           Concept2Cure Intelligence Solution
         </h3>
 
@@ -85,8 +85,8 @@ export default function UseCaseDetail({ useCase, onLaunch, onDownload }: UseCase
               <h4 className="text-sm font-medium mb-2">Activated Modules</h4>
               <div className="flex flex-wrap gap-2">
                 {useCase.trialSageSolution.modules.map((module, idx) => (
-                  <Badge key={idx} variant="outline" className="bg-blue-50">
-                    <CheckCircle className="h-3 w-3 mr-1 text-green-600" /> {module}
+                  <Badge key={idx} variant="outline" className="bg-stone-100">
+                    <CheckCircle className="h-3 w-3 mr-1 text-stone-700" /> {module}
                   </Badge>
                 ))}
               </div>
@@ -100,7 +100,7 @@ export default function UseCaseDetail({ useCase, onLaunch, onDownload }: UseCase
               <div className="grid grid-cols-2 gap-y-2 text-sm">
                 {Object.entries(useCase.trialSageSolution.inputs).map(([key, value], idx) => (
                   <div key={idx} className="flex items-start">
-                    <span className="text-gray-500 mr-2">
+                    <span className="text-stone-500 mr-2">
                       {key.charAt(0).toUpperCase() + key.slice(1)}:
                     </span>
                     <span className="font-medium">{value}</span>
@@ -115,7 +115,7 @@ export default function UseCaseDetail({ useCase, onLaunch, onDownload }: UseCase
       {/* Outcomes & ROI */}
       <div>
         <h3 className="text-lg font-semibold flex items-center mb-3">
-          <span className="bg-green-100 text-green-700 rounded-full p-1 mr-2">📊</span>
+          <span className="bg-stone-100 text-stone-800 rounded-full p-1 mr-2">📊</span>
           Outcomes & ROI
         </h3>
 
@@ -123,19 +123,19 @@ export default function UseCaseDetail({ useCase, onLaunch, onDownload }: UseCase
           <Card>
             <CardContent className="p-4">
               <div className="flex items-start mb-3">
-                <Clock className="h-5 w-5 text-green-600 mr-2 mt-0.5" />
+                <Clock className="h-5 w-5 text-stone-700 mr-2 mt-0.5" />
                 <div>
                   <h4 className="font-medium">Time Saved</h4>
-                  <p className="text-xl font-bold text-green-600">
+                  <p className="text-xl font-bold text-stone-700">
                     {useCase.trialSageSolution.outcomes.timeSaved}
                   </p>
                 </div>
               </div>
               <div className="flex items-start">
-                <PieChart className="h-5 w-5 text-green-600 mr-2 mt-0.5" />
+                <PieChart className="h-5 w-5 text-stone-700 mr-2 mt-0.5" />
                 <div>
                   <h4 className="font-medium">Cost Avoided</h4>
-                  <p className="text-xl font-bold text-green-600">
+                  <p className="text-xl font-bold text-stone-700">
                     {useCase.trialSageSolution.outcomes.costAvoided}
                   </p>
                 </div>
@@ -148,11 +148,11 @@ export default function UseCaseDetail({ useCase, onLaunch, onDownload }: UseCase
               <h4 className="text-sm font-medium mb-2">Strategic Benefits</h4>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-start">
-                  <CheckCircle className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                  <CheckCircle className="h-4 w-4 text-stone-700 mr-2 mt-0.5 flex-shrink-0" />
                   <span>{useCase.trialSageSolution.outcomes.regulatoryAlignment}</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                  <CheckCircle className="h-4 w-4 text-stone-700 mr-2 mt-0.5 flex-shrink-0" />
                   <span>{useCase.trialSageSolution.outcomes.riskMitigation}</span>
                 </li>
               </ul>
@@ -164,7 +164,7 @@ export default function UseCaseDetail({ useCase, onLaunch, onDownload }: UseCase
       {/* Deliverables */}
       <div>
         <h3 className="text-lg font-semibold flex items-center mb-3">
-          <span className="bg-purple-100 text-purple-700 rounded-full p-1 mr-2">📥</span>
+          <span className="bg-stone-100 text-stone-700 rounded-full p-1 mr-2">📥</span>
           Included Deliverables
         </h3>
 
@@ -173,7 +173,7 @@ export default function UseCaseDetail({ useCase, onLaunch, onDownload }: UseCase
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {useCase.deliverables.map((deliverable, idx) => (
                 <div key={idx} className="flex items-start">
-                  <FileText className="h-4 w-4 text-purple-600 mr-2 mt-0.5" />
+                  <FileText className="h-4 w-4 text-stone-600 mr-2 mt-0.5" />
                   <span>{deliverable}</span>
                 </div>
               ))}
@@ -186,14 +186,14 @@ export default function UseCaseDetail({ useCase, onLaunch, onDownload }: UseCase
       {useCase.interactiveDemo && (
         <div>
           <h3 className="text-lg font-semibold flex items-center mb-3">
-            <span className="bg-yellow-100 text-yellow-700 rounded-full p-1 mr-2">📊</span>
+            <span className="bg-stone-100 text-stone-700 rounded-full p-1 mr-2">📊</span>
             Interactive Preview
           </h3>
 
           <Card>
             <CardContent className="p-4">
               {useCase.interactiveDemo.sampleProtocolSection && (
-                <div className="p-3 bg-gray-50 rounded border text-sm font-mono mb-3 max-h-48 overflow-y-auto">
+                <div className="p-3 bg-stone-50 rounded border text-sm font-mono mb-3 max-h-48 overflow-y-auto">
                   <pre className="whitespace-pre-wrap">
                     {useCase.interactiveDemo.sampleProtocolSection}
                   </pre>
@@ -201,7 +201,7 @@ export default function UseCaseDetail({ useCase, onLaunch, onDownload }: UseCase
               )}
 
               {useCase.interactiveDemo.sampleChartData && (
-                <div className="h-64 bg-gray-100 rounded flex items-center justify-center text-gray-500">
+                <div className="h-64 bg-stone-100 rounded flex items-center justify-center text-stone-500">
                   [Interactive Chart Visualization]
                 </div>
               )}

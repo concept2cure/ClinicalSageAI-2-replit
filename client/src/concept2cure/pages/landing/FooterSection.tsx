@@ -13,7 +13,7 @@ export function CtaSection() {
   const [, setLocation] = useLocation();
 
   return (
-    <Section className="py-24 px-6 bg-gradient-to-br from-blue-600 to-violet-600 text-white relative overflow-hidden">
+    <Section className="py-24 px-6 bg-gradient-to-br from-stone-600 to-stone-600 text-white relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none opacity-10" aria-hidden="true">
         <div className="absolute top-10 left-10 w-64 h-64 rounded-full bg-white/20 blur-3xl" />
         <div className="absolute bottom-10 right-10 w-80 h-80 rounded-full bg-white/10 blur-3xl" />
@@ -32,7 +32,7 @@ export function CtaSection() {
         <motion.div variants={fadeUp} className="flex items-center justify-center gap-4 flex-wrap">
           <button
             onClick={() => setLocation('/concept2cure/demo')}
-            className="group px-8 py-3.5 text-base font-medium text-blue-600 bg-white hover:bg-blue-50 rounded-xl transition-all shadow-sm flex items-center gap-2"
+            className="group px-8 py-3.5 text-base font-medium text-stone-600 bg-white hover:bg-stone-100 rounded-xl transition-all shadow-sm flex items-center gap-2"
           >
             Try the Demo
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />

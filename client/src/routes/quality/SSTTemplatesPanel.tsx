@@ -55,7 +55,7 @@ export default function SSTTemplatesPanel() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Settings className="w-5 h-5 text-blue-600" />
+            <Settings className="w-5 h-5 text-stone-600" />
             SST Templates & Auto-Enforcement
           </CardTitle>
         </CardHeader>
@@ -74,7 +74,7 @@ export default function SSTTemplatesPanel() {
             <Button
               onClick={save}
               disabled={loading || !test.trim()}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-stone-600 hover:bg-stone-700"
             >
               {loading ? 'Saving...' : 'Save Template'}
             </Button>
@@ -89,7 +89,7 @@ export default function SSTTemplatesPanel() {
               rows={3}
               className="font-mono text-xs"
             />
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-stone-600 mt-1">
               Define min/max limits for SST parameters. System will auto-evaluate against these
               thresholds.
             </p>
@@ -98,7 +98,7 @@ export default function SSTTemplatesPanel() {
           <div className="border-t pt-4">
             <h4 className="font-medium mb-3">Current Templates</h4>
             {rows.length === 0 ? (
-              <div className="text-center py-6 text-gray-500">
+              <div className="text-center py-6 text-stone-500">
                 <TestTube className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p>No SST templates configured</p>
               </div>
@@ -110,7 +110,7 @@ export default function SSTTemplatesPanel() {
                       <h5 className="font-medium">{row.test_name}</h5>
                       <Badge variant="outline">{row.valid_hours}h validity</Badge>
                     </div>
-                    <div className="text-xs text-gray-600">
+                    <div className="text-xs text-stone-600">
                       <strong>Thresholds:</strong> {JSON.stringify(row.thresholds_json)}
                     </div>
                   </div>
@@ -119,12 +119,12 @@ export default function SSTTemplatesPanel() {
             )}
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="bg-stone-100 border border-stone-200 rounded-lg p-4">
             <div className="flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5" />
+              <AlertCircle className="w-4 h-4 text-stone-600 mt-0.5" />
               <div className="text-xs">
-                <p className="font-medium text-amber-800 mb-1">Auto-Enforcement Active</p>
-                <p className="text-amber-700">
+                <p className="font-medium text-stone-800 mb-1">Auto-Enforcement Active</p>
+                <p className="text-stone-700">
                   When SST data is recorded, the system automatically evaluates against these
                   templates. Failed SST triggers quality alerts and blocks result entry until
                   resolved.

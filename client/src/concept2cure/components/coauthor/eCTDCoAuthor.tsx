@@ -165,9 +165,9 @@ const MODULE_CONFIG: Record<
   }
 > = {
   m1: { label: 'M1', fullName: 'Administrative', color: 'text-stone-600', bgColor: 'bg-stone-100' },
-  m2: { label: 'M2', fullName: 'Summaries', color: 'text-blue-600', bgColor: 'bg-blue-100' },
-  m3: { label: 'M3', fullName: 'Quality (CMC)', color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
-  m4: { label: 'M4', fullName: 'Nonclinical', color: 'text-amber-600', bgColor: 'bg-amber-100' },
+  m2: { label: 'M2', fullName: 'Summaries', color: 'text-stone-600', bgColor: 'bg-stone-100' },
+  m3: { label: 'M3', fullName: 'Quality (CMC)', color: 'text-stone-700', bgColor: 'bg-stone-100' },
+  m4: { label: 'M4', fullName: 'Nonclinical', color: 'text-stone-600', bgColor: 'bg-stone-100' },
   m5: { label: 'M5', fullName: 'Clinical', color: 'text-stone-600', bgColor: 'bg-stone-200' },
 };
 
@@ -282,7 +282,7 @@ const OutlineTree: React.FC<{
               className={cn(
                 'w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors duration-150',
                 'hover:bg-stone-100',
-                isSelected && 'bg-blue-50 ring-1 ring-stone-300'
+                isSelected && 'bg-stone-100 ring-1 ring-stone-300'
               )}
               style={{ paddingLeft: `${depth * 16 + 8}px` }}
             >
@@ -323,7 +323,7 @@ const OutlineTree: React.FC<{
 
               {/* Alerts Badge */}
               {section.redlineAlerts && section.redlineAlerts.length > 0 && (
-                <span className="px-1.5 py-0.5 text-xs font-semibold bg-red-100 text-red-700 rounded">
+                <span className="px-1.5 py-0.5 text-xs font-semibold bg-stone-100 text-stone-800 rounded">
                   {section.redlineAlerts.length}
                 </span>
               )}
@@ -355,11 +355,11 @@ const SmartTagBadge: React.FC<{
 }> = ({ tag, onVerify }) => {
   const config: Record<SmartTagType, { color: string; icon: React.ReactNode }> = {
     data: {
-      color: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+      color: 'bg-stone-100 text-stone-800 border-stone-200',
       icon: <Target className="w-3 h-3" />,
     },
     citation: {
-      color: 'bg-blue-100 text-stone-700 border-blue-200',
+      color: 'bg-stone-100 text-stone-700 border-stone-200',
       icon: <BookOpen className="w-3 h-3" />,
     },
     cross_ref: {
@@ -367,11 +367,11 @@ const SmartTagBadge: React.FC<{
       icon: <Link className="w-3 h-3" />,
     },
     guideline: {
-      color: 'bg-amber-100 text-amber-700 border-amber-200',
+      color: 'bg-stone-100 text-stone-700 border-stone-200',
       icon: <Shield className="w-3 h-3" />,
     },
     warning: {
-      color: 'bg-red-100 text-red-700 border-red-200',
+      color: 'bg-stone-100 text-stone-800 border-stone-200',
       icon: <AlertTriangle className="w-3 h-3" />,
     },
   };
@@ -392,7 +392,7 @@ const SmartTagBadge: React.FC<{
       {c.icon}
       {tag.text}
       {tag.pageRef && <span className="text-xs opacity-75">p.{tag.pageRef}</span>}
-      {!tag.isVerified && <AlertTriangle className="w-3 h-3 text-amber-500 ml-1" />}
+      {!tag.isVerified && <AlertTriangle className="w-3 h-3 text-stone-1000 ml-1" />}
     </span>
   );
 };
@@ -408,23 +408,23 @@ const RedlineAlertPanel: React.FC<{
   if (alerts.length === 0) return null;
 
   return (
-    <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+    <div className="bg-stone-100 border-l-4 border-stone-1000 p-4 rounded-r-lg">
       <div className="flex items-center gap-2 mb-3">
-        <AlertTriangle className="w-4 h-4 text-red-600" />
-        <h4 className="text-sm font-semibold text-red-800">Safety Line Alerts</h4>
-        <span className="px-2 py-0.5 text-xs font-semibold bg-red-200 text-red-800 rounded-full">
+        <AlertTriangle className="w-4 h-4 text-stone-700" />
+        <h4 className="text-sm font-semibold text-stone-800">Safety Line Alerts</h4>
+        <span className="px-2 py-0.5 text-xs font-semibold bg-stone-200 text-stone-800 rounded-full">
           {alerts.length}
         </span>
       </div>
       <div className="space-y-3">
         {alerts.map(alert => (
-          <div key={alert.id} className="bg-white rounded-lg p-3 border border-red-200">
+          <div key={alert.id} className="bg-white rounded-lg p-3 border border-stone-200">
             <div className="flex items-start justify-between mb-2">
               <span
                 className={cn(
                   'px-2 py-0.5 text-xs font-semibold rounded uppercase',
-                  alert.severity === 'critical' && 'bg-red-600 text-white',
-                  alert.severity === 'warning' && 'bg-amber-500 text-white',
+                  alert.severity === 'critical' && 'bg-stone-700 text-white',
+                  alert.severity === 'warning' && 'bg-stone-1000 text-white',
                   alert.severity === 'info' && 'bg-stone-600 text-white'
                 )}
               >
@@ -432,15 +432,15 @@ const RedlineAlertPanel: React.FC<{
               </span>
               <button
                 onClick={() => onResolve?.(alert)}
-                className="text-xs text-blue-600 hover:underline"
+                className="text-xs text-stone-600 hover:underline"
               >
                 Resolve
               </button>
             </div>
-            <p className="text-sm text-red-800 font-medium mb-1">"{alert.claimText}"</p>
-            <p className="text-xs text-red-600">{alert.message}</p>
+            <p className="text-sm text-stone-800 font-medium mb-1">"{alert.claimText}"</p>
+            <p className="text-xs text-stone-700">{alert.message}</p>
             {alert.suggestion && (
-              <p className="text-xs text-emerald-700 mt-2 flex items-center gap-1">
+              <p className="text-xs text-stone-800 mt-2 flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
                 Suggestion: {alert.suggestion}
               </p>
@@ -516,7 +516,7 @@ const SectionEditor: React.FC<{
         {onOpenInEditor && (
           <button
             onClick={onOpenInEditor}
-            className="px-3 py-1.5 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center gap-2 ml-1"
+            className="px-3 py-1.5 text-sm font-medium bg-stone-700 text-white rounded-lg hover:bg-stone-800 flex items-center gap-2 ml-1"
             title="Open in Document Editor for rich editing, DOCX export, and compliance checking"
           >
             <FileText className="w-4 h-4" />
@@ -528,7 +528,7 @@ const SectionEditor: React.FC<{
         {onSubmitForReview && ['editing', 'ai_draft'].includes(section.status) && (
           <button
             onClick={onSubmitForReview}
-            className="px-3 py-1.5 text-sm font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700 flex items-center gap-2 ml-1"
+            className="px-3 py-1.5 text-sm font-medium bg-stone-600 text-white rounded-lg hover:bg-stone-700 flex items-center gap-2 ml-1"
             title="Submit section for review"
           >
             <Eye className="w-4 h-4" />
@@ -540,7 +540,7 @@ const SectionEditor: React.FC<{
         {onApprove && (modeCaps ? modeCaps.canApprove : true) && section.status === 'in_review' && (
           <button
             onClick={onApprove}
-            className="px-3 py-1.5 text-sm font-medium bg-emerald-700 text-white rounded-lg hover:bg-emerald-800 flex items-center gap-2 ml-1"
+            className="px-3 py-1.5 text-sm font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-800 flex items-center gap-2 ml-1"
             title="Approve with 21 CFR Part 11 electronic signature"
           >
             <FileSignature className="w-4 h-4" />
@@ -587,7 +587,7 @@ const SectionEditor: React.FC<{
             {onOpenInEditor && (
               <button
                 onClick={onOpenInEditor}
-                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-medium mt-2 flex items-center gap-2 mx-auto"
+                className="px-4 py-2 bg-stone-700 text-white rounded-lg hover:bg-stone-800 text-sm font-medium mt-2 flex items-center gap-2 mx-auto"
               >
                 <FileText className="w-4 h-4" />
                 Open in Document Editor
@@ -596,8 +596,8 @@ const SectionEditor: React.FC<{
           </div>
         ) : section.status === 'ai_drafting' ? (
           <div className="text-center py-12">
-            <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-blue-100 flex items-center justify-center animate-pulse">
-              <Sparkles className="w-8 h-8 text-blue-600" />
+            <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-stone-100 flex items-center justify-center animate-pulse">
+              <Sparkles className="w-8 h-8 text-stone-600" />
             </div>
             <h3 className="text-lg font-medium text-stone-700 mb-2">RI is Drafting...</h3>
             <p className="text-sm text-stone-500">
@@ -631,11 +631,11 @@ const SectionEditor: React.FC<{
 
             {/* Electronic Signatures Display (21 CFR Part 11) */}
             {section.signatures && section.signatures.length > 0 && (
-              <div className="mt-6 pt-4 border-t border-emerald-200">
-                <h4 className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <div className="mt-6 pt-4 border-t border-stone-200">
+                <h4 className="text-xs font-bold text-stone-800 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <ShieldCheck className="w-3.5 h-3.5" />
                   Electronic Signatures ({section.signatures.length})
-                  <span className="text-[10px] font-normal normal-case bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded">
+                  <span className="text-[10px] font-normal normal-case bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded">
                     21 CFR Part 11
                   </span>
                 </h4>
@@ -643,18 +643,18 @@ const SectionEditor: React.FC<{
                   {section.signatures.map(sig => (
                     <div
                       key={sig.id}
-                      className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-lg"
+                      className="flex items-center justify-between p-3 bg-stone-100 border border-stone-200 rounded-lg"
                     >
                       <div className="flex items-center gap-3">
-                        <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                        <ShieldCheck className="w-4 h-4 text-stone-700" />
                         <div>
-                          <span className="text-sm font-medium text-emerald-900">{sig.signerName}</span>
-                          <span className="text-xs text-emerald-600 ml-2 capitalize">{sig.meaning}</span>
+                          <span className="text-sm font-medium text-stone-900">{sig.signerName}</span>
+                          <span className="text-xs text-stone-700 ml-2 capitalize">{sig.meaning}</span>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-emerald-700">{new Date(sig.timestamp).toLocaleString()}</p>
-                        <p className="text-[10px] font-mono text-emerald-500">{sig.signatureHash.slice(0, 16)}...</p>
+                        <p className="text-xs text-stone-800">{new Date(sig.timestamp).toLocaleString()}</p>
+                        <p className="text-[10px] font-mono text-stone-1000">{sig.signatureHash.slice(0, 16)}...</p>
                       </div>
                     </div>
                   ))}
@@ -804,13 +804,13 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
           {(document.unverifiedClaims > 0 || document.redlineAlerts > 0) && (
             <div className="flex gap-2 mt-3">
               {document.unverifiedClaims > 0 && (
-                <span className="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded flex items-center gap-1">
+                <span className="px-2 py-1 text-xs font-medium bg-stone-100 text-stone-700 rounded flex items-center gap-1">
                   <Target className="w-3 h-3" />
                   {document.unverifiedClaims} unverified
                 </span>
               )}
               {document.redlineAlerts > 0 && (
-                <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded flex items-center gap-1">
+                <span className="px-2 py-1 text-xs font-medium bg-stone-100 text-stone-800 rounded flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" />
                   {document.redlineAlerts} alerts
                 </span>
@@ -830,7 +830,7 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
 
         {/* Add Section */}
         <div className="p-3 border-t border-stone-200">
-          <button className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-150">
+          <button className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 rounded-lg transition-colors duration-150">
             <Plus className="w-4 h-4" />
             Add Section
           </button>
@@ -1083,24 +1083,24 @@ export const ECTDCoAuthorStandalone: React.FC<{
       {signingSection && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-sm max-w-lg w-full mx-4 overflow-hidden">
-            <div className="bg-emerald-700 px-6 py-4">
+            <div className="bg-stone-800 px-6 py-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-white/20 rounded-lg">
                   <ShieldCheck className="h-6 w-6 text-white" />
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-white">Electronic Signature Required</h2>
-                  <p className="text-emerald-100 text-sm">21 CFR Part 11 Compliant</p>
+                  <p className="text-stone-100 text-sm">21 CFR Part 11 Compliant</p>
                 </div>
               </div>
             </div>
             <div className="p-6">
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg mb-4">
-                <h3 className="font-medium text-amber-900 mb-1 flex items-center gap-2">
+              <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg mb-4">
+                <h3 className="font-medium text-stone-900 mb-1 flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4" />
                   Approval Declaration
                 </h3>
-                <p className="text-amber-800 text-sm">
+                <p className="text-stone-800 text-sm">
                   I approve section <strong>{signingSection.number}: {signingSection.title}</strong> and
                   authorize it to proceed. My electronic signature has the same legal effect as a handwritten signature.
                 </p>
@@ -1127,7 +1127,7 @@ export const ECTDCoAuthorStandalone: React.FC<{
               </button>
               <button
                 onClick={() => handleSignatureComplete(signingSection)}
-                className="px-6 py-2 bg-emerald-700 text-white rounded-lg hover:bg-emerald-800 flex items-center gap-2"
+                className="px-6 py-2 bg-stone-800 text-white rounded-lg hover:bg-stone-800 flex items-center gap-2"
               >
                 <FileSignature className="h-4 w-4" />
                 Sign &amp; Approve

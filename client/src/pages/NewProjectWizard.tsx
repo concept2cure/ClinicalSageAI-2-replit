@@ -196,7 +196,7 @@ export default function NewProjectWizard() {
                   className={`cursor-pointer transition-all ${
                     projectData.templateId === template.id.toString()
                       ? 'border-primary ring-2 ring-primary'
-                      : 'hover:border-gray-400'
+                      : 'hover:border-stone-400'
                   }`}
                   onClick={() => handleTemplateSelect(template.id.toString())}
                 >
@@ -297,7 +297,7 @@ export default function NewProjectWizard() {
                       onChange={(e) =>
                         setProjectData({ ...projectData, [feature.key]: e.target.checked })
                       }
-                      className="rounded border-gray-300"
+                      className="rounded border-stone-300"
                     />
                     <span className="text-sm">{feature.label}</span>
                   </label>
@@ -362,7 +362,7 @@ export default function NewProjectWizard() {
         // Step 5: Review & Create
         return (
           <div className="space-y-4">
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 space-y-3">
+            <div className="bg-stone-50 dark:bg-stone-900 rounded-lg p-4 space-y-3">
               <h3 className="font-semibold text-lg">Project Summary</h3>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
@@ -396,9 +396,9 @@ export default function NewProjectWizard() {
               </div>
             </div>
             
-            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 rounded-lg p-4">
-              <h4 className="font-medium text-blue-900 dark:text-blue-100">Ready to Create Project?</h4>
-              <p className="text-sm text-blue-800 dark:text-blue-200 mt-1">
+            <div className="bg-stone-100 dark:bg-stone-950 border border-stone-200 dark:border-stone-900 rounded-lg p-4">
+              <h4 className="font-medium text-stone-900 dark:text-stone-100">Ready to Create Project?</h4>
+              <p className="text-sm text-stone-800 dark:text-stone-200 mt-1">
                 Once created, your project will be initialized with the selected template and team assignments.
                 You can start working on your 510(k) submission immediately.
               </p>
@@ -429,7 +429,7 @@ export default function NewProjectWizard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-8">
+    <div className="min-h-screen bg-stone-50 dark:bg-stone-950 py-8">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
@@ -450,7 +450,7 @@ export default function NewProjectWizard() {
                 {index < steps.length - 1 && (
                   <div
                     className={`absolute top-5 left-[50%] w-full h-0.5 ${
-                      index < currentStep ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-800'
+                      index < currentStep ? 'bg-primary' : 'bg-stone-200 dark:bg-stone-800'
                     }`}
                   />
                 )}
@@ -463,7 +463,7 @@ export default function NewProjectWizard() {
                     className={`w-10 h-10 rounded-full flex items-center justify-center ${
                       index <= currentStep
                         ? 'bg-primary text-white'
-                        : 'bg-gray-200 dark:bg-gray-800 text-gray-500'
+                        : 'bg-stone-200 dark:bg-stone-800 text-stone-500'
                     }`}
                   >
                     {index < currentStep ? (
@@ -474,7 +474,7 @@ export default function NewProjectWizard() {
                   </div>
                   <div className="mt-2 text-center">
                     <p className={`text-sm font-medium ${
-                      index <= currentStep ? 'text-primary' : 'text-gray-500'
+                      index <= currentStep ? 'text-primary' : 'text-stone-500'
                     }`}>
                       {step.title}
                     </p>

@@ -182,16 +182,16 @@ function computeKeyFieldProgress(profile: ProjectProfile): { filled: number; tot
 }
 
 const RISK_COLORS: Record<string, string> = {
-  low: 'bg-emerald-100 text-emerald-800',
-  medium: 'bg-amber-100 text-amber-800',
-  high: 'bg-red-100 text-red-800',
+  low: 'bg-stone-100 text-stone-800',
+  medium: 'bg-stone-100 text-stone-800',
+  high: 'bg-stone-100 text-stone-800',
 };
 
 const STATUS_COLORS: Record<string, string> = {
   missing: 'bg-slate-100 text-slate-600',
-  uploaded: 'bg-blue-100 text-stone-700',
-  processing: 'bg-amber-100 text-amber-700',
-  ready: 'bg-emerald-100 text-emerald-800',
+  uploaded: 'bg-stone-100 text-stone-700',
+  processing: 'bg-stone-100 text-stone-700',
+  ready: 'bg-stone-100 text-stone-800',
 };
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
@@ -268,7 +268,7 @@ function Section({
                 <X className="h-3.5 w-3.5" />
               </Button>
               <Button variant="ghost" size="sm" onClick={onSave} disabled={saving}>
-                <Check className="h-3.5 w-3.5 text-emerald-600" />
+                <Check className="h-3.5 w-3.5 text-stone-700" />
               </Button>
             </>
           ) : !readOnly ? (
@@ -972,7 +972,7 @@ export function ProjectContextEditor({
                         >
                           <div
                             className={`h-2 w-2 rounded-full ${
-                              cap.enabled ? 'bg-emerald-500' : 'bg-slate-300'
+                              cap.enabled ? 'bg-stone-1000' : 'bg-slate-300'
                             }`}
                           />
                           <span
@@ -1029,7 +1029,7 @@ function DecisionsEditor({
             />
           </div>
           <Button variant="ghost" size="sm" onClick={() => remove(i)}>
-            <Trash2 className="h-3.5 w-3.5 text-red-400" />
+            <Trash2 className="h-3.5 w-3.5 text-stone-400" />
           </Button>
         </div>
       ))}
@@ -1110,7 +1110,7 @@ function RisksEditor({
             />
           </div>
           <Button variant="ghost" size="sm" onClick={() => remove(i)}>
-            <Trash2 className="h-3.5 w-3.5 text-red-400" />
+            <Trash2 className="h-3.5 w-3.5 text-stone-400" />
           </Button>
         </div>
       ))}
@@ -1169,7 +1169,7 @@ function QuestionsEditor({
             />
           </div>
           <Button variant="ghost" size="sm" onClick={() => remove(i)}>
-            <Trash2 className="h-3.5 w-3.5 text-red-400" />
+            <Trash2 className="h-3.5 w-3.5 text-stone-400" />
           </Button>
         </div>
       ))}

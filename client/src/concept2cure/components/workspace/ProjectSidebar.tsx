@@ -288,10 +288,10 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                 {/* Remove button on hover */}
                 <button
                   onClick={() => removeDocument(doc.id || doc.name)}
-                  className="absolute top-1 right-1 p-0.5 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                  className="absolute top-1 right-1 p-0.5 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-stone-100"
                   title="Remove"
                 >
-                  <X className="w-3 h-3 text-stone-500 hover:text-red-500" />
+                  <X className="w-3 h-3 text-stone-500 hover:text-stone-1000" />
                 </button>
               </div>
             ))}

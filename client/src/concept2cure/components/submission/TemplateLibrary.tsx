@@ -344,9 +344,9 @@ const TEMPLATES: DocumentTemplate[] = [
 
 function complexityBadge(c: TemplateComplexity) {
   const styles: Record<TemplateComplexity, string> = {
-    simple: 'text-emerald-700 bg-emerald-50',
-    moderate: 'text-amber-700 bg-amber-50',
-    complex: 'text-red-700 bg-red-50',
+    simple: 'text-stone-800 bg-stone-100',
+    moderate: 'text-stone-700 bg-stone-100',
+    complex: 'text-stone-800 bg-stone-100',
   };
   return (
     <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded', styles[c])}>
@@ -395,7 +395,7 @@ export function TemplateLibrary({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
         <div className="flex items-center gap-3">
-          <BookOpen className="h-5 w-5 text-blue-500" />
+          <BookOpen className="h-5 w-5 text-stone-1000" />
           <div>
             <h2 className="text-base font-semibold text-slate-800">Template Library</h2>
             <p className="text-xs text-slate-500">{TEMPLATES.length} regulatory document templates</p>
@@ -417,7 +417,7 @@ export function TemplateLibrary({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search templates..."
-            className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-slate-200 focus-visible:ring-2 outline-none focus:ring-stone-300 focus:border-blue-400"
+            className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-slate-200 focus-visible:ring-2 outline-none focus:ring-stone-300 focus:border-stone-400"
           />
         </div>
         <div className="flex gap-1.5 flex-wrap">
@@ -491,7 +491,7 @@ export function TemplateLibrary({
                 className={cn(
                   'p-3 rounded-lg border cursor-pointer transition-all duration-150',
                   selectedTemplate?.id === t.id
-                    ? 'border-blue-300 bg-blue-50 shadow-sm'
+                    ? 'border-stone-300 bg-stone-100 shadow-sm'
                     : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50',
                 )}
               >
@@ -534,7 +534,7 @@ export function TemplateLibrary({
               <div className="flex gap-2 mb-4">
                 <button
                   onClick={() => onSelectTemplate?.(selectedTemplate)}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors flex-1"
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-stone-600 bg-stone-100 rounded-md hover:bg-stone-100 transition-colors flex-1"
                 >
                   <Plus className="h-3 w-3" />
                   Use Template
@@ -569,7 +569,7 @@ export function TemplateLibrary({
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-slate-700">
                         {s.title}
-                        {s.required && <span className="text-red-400 ml-0.5">*</span>}
+                        {s.required && <span className="text-stone-400 ml-0.5">*</span>}
                       </p>
                       {s.guidance && (
                         <p className="text-[10px] text-slate-400 mt-0.5">{s.guidance}</p>

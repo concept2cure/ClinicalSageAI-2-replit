@@ -167,10 +167,10 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
         className={cn(
           'relative border border-dashed rounded-lg p-6 transition-all cursor-pointer',
           'flex flex-col items-center justify-center gap-3',
-          isDragging && 'border-stone-600 bg-blue-50',
-          isUploading && 'border-blue-300 bg-blue-50 cursor-wait',
-          uploadSuccess && 'border-green-500 bg-green-50',
-          error && 'border-red-300 bg-red-50',
+          isDragging && 'border-stone-600 bg-stone-100',
+          isUploading && 'border-stone-300 bg-stone-100 cursor-wait',
+          uploadSuccess && 'border-stone-1000 bg-stone-100',
+          error && 'border-stone-300 bg-stone-100',
           disabled && 'opacity-50 cursor-not-allowed',
           !isDragging && !isUploading && !uploadSuccess && !error && 
             'border-stone-200 hover:border-stone-300 hover:bg-stone-50'
@@ -190,10 +190,10 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
         <div
           className={cn(
             'w-12 h-12 rounded-full flex items-center justify-center transition-colors duration-150',
-            isDragging && 'bg-blue-100 text-blue-600',
-            isUploading && 'bg-blue-100 text-blue-600',
-            uploadSuccess && 'bg-green-100 text-green-600',
-            error && 'bg-red-100 text-red-600',
+            isDragging && 'bg-stone-100 text-stone-600',
+            isUploading && 'bg-stone-100 text-stone-600',
+            uploadSuccess && 'bg-stone-100 text-stone-700',
+            error && 'bg-stone-100 text-stone-700',
             !isDragging && !isUploading && !uploadSuccess && !error && 'bg-stone-100 text-stone-500'
           )}
         >
@@ -245,7 +245,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
 
         {/* Success Message */}
         {uploadSuccess && (
-          <p className="text-sm text-green-600 font-medium">
+          <p className="text-sm text-stone-700 font-medium">
             Document added to project knowledge
           </p>
         )}
@@ -253,7 +253,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
 
       {/* Error Message */}
       {error && (
-        <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+        <div className="flex items-center gap-2 text-sm text-stone-700 bg-stone-100 px-3 py-2 rounded-lg">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           <span>{error}</span>
         </div>

@@ -34,12 +34,12 @@ import {
 
 // App icon map
 const APP_ICONS: Record<string, React.ReactNode> = {
-  'evidence-memo': <FileText className="w-5 h-5 text-blue-500" />,
+  'evidence-memo': <FileText className="w-5 h-5 text-stone-1000" />,
   'protocol-rationale': <FlaskConical className="w-5 h-5 text-stone-500" />,
-  'clinical-overview': <BookOpen className="w-5 h-5 text-emerald-500" />,
-  'module3-builder': <Layers className="w-5 h-5 text-blue-500" />,
-  'risk-benefit': <ShieldCheck className="w-5 h-5 text-amber-500" />,
-  'audit-report': <ClipboardList className="w-5 h-5 text-red-500" />,
+  'clinical-overview': <BookOpen className="w-5 h-5 text-stone-1000" />,
+  'module3-builder': <Layers className="w-5 h-5 text-stone-1000" />,
+  'risk-benefit': <ShieldCheck className="w-5 h-5 text-stone-1000" />,
+  'audit-report': <ClipboardList className="w-5 h-5 text-stone-1000" />,
 };
 
 interface SubmissionAppsPanelProps {
@@ -104,7 +104,7 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
     <div className="flex-1 flex flex-col bg-white min-h-0 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 h-10 border-b border-stone-200 shrink-0">
-        <Sparkles className="w-4 h-4 text-blue-500" />
+        <Sparkles className="w-4 h-4 text-stone-1000" />
         <h2 className="text-sm font-semibold text-stone-900">Submission Apps</h2>
         {projectName && (
           <>
@@ -129,12 +129,12 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
               <button
                 key={app.appId}
                 onClick={() => setSelectedApp(app)}
-                className="flex flex-col items-start gap-2 p-3 rounded-lg border border-stone-200 hover:border-blue-200 hover:bg-blue-50/30 hover:shadow-sm hover:-translate-y-px transition-all duration-150 text-left focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none group"
+                className="flex flex-col items-start gap-2 p-3 rounded-lg border border-stone-200 hover:border-stone-200 hover:bg-stone-100/30 hover:shadow-sm hover:-translate-y-px transition-all duration-150 text-left focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none group"
               >
                 <div className="flex items-center gap-2 w-full">
                   {APP_ICONS[app.appId] || <FileText className="w-5 h-5 text-stone-400" />}
                   <span className="text-xs font-semibold text-stone-900 flex-1">{app.label}</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-blue-400 transition-colors duration-150" />
+                  <ChevronRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-400 transition-colors duration-150" />
                 </div>
                 <p className="text-xs text-stone-500 leading-snug">{app.description}</p>
                 <div className="flex items-center gap-2 mt-auto">
@@ -153,7 +153,7 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
           <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-200">
             <button
               onClick={() => setSelectedApp(null)}
-              className="text-xs text-blue-600 hover:text-stone-700 font-medium focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded group/back"
+              className="text-xs text-stone-600 hover:text-stone-700 font-medium focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded group/back"
             >
               <span className="inline-block transition-transform duration-150 group-hover/back:-translate-x-0.5">
                 ←
@@ -202,17 +202,17 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
 
             {/* Transform & output path */}
             <div className="flex items-center gap-2 text-xs text-stone-500">
-              <span className="px-2 py-1 rounded bg-blue-50 text-blue-600 font-medium">Input</span>
+              <span className="px-2 py-1 rounded bg-stone-100 text-stone-600 font-medium">Input</span>
               <ArrowRight className="w-3 h-3" />
               <span className="px-2 py-1 rounded bg-stone-100 text-stone-600 font-medium">
                 Transform
               </span>
               <ArrowRight className="w-3 h-3" />
-              <span className="px-2 py-1 rounded bg-emerald-50 text-emerald-600 font-medium">
+              <span className="px-2 py-1 rounded bg-stone-100 text-stone-700 font-medium">
                 Governed Draft
               </span>
               <ArrowRight className="w-3 h-3" />
-              <span className="px-2 py-1 rounded bg-amber-50 text-amber-600 font-medium">
+              <span className="px-2 py-1 rounded bg-stone-100 text-stone-600 font-medium">
                 Editor
               </span>
             </div>

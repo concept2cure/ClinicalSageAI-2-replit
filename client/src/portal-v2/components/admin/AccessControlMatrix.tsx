@@ -157,11 +157,11 @@ const PERMISSION_LEVELS: Record<
     icon: React.ComponentType<{ className?: string }>;
   }
 > = {
-  none: { label: 'None', color: 'text-gray-400', bgColor: 'bg-gray-100', icon: X },
-  read: { label: 'Read', color: 'text-blue-600', bgColor: 'bg-blue-100', icon: Eye },
-  write: { label: 'Write', color: 'text-green-600', bgColor: 'bg-green-100', icon: Edit },
-  admin: { label: 'Admin', color: 'text-purple-600', bgColor: 'bg-purple-100', icon: Settings },
-  full: { label: 'Full', color: 'text-amber-600', bgColor: 'bg-amber-100', icon: ShieldCheck },
+  none: { label: 'None', color: 'text-stone-400', bgColor: 'bg-stone-100', icon: X },
+  read: { label: 'Read', color: 'text-stone-600', bgColor: 'bg-stone-100', icon: Eye },
+  write: { label: 'Write', color: 'text-stone-700', bgColor: 'bg-stone-100', icon: Edit },
+  admin: { label: 'Admin', color: 'text-stone-600', bgColor: 'bg-stone-100', icon: Settings },
+  full: { label: 'Full', color: 'text-stone-600', bgColor: 'bg-stone-100', icon: ShieldCheck },
 };
 
 const CATEGORY_CONFIG: Record<
@@ -417,7 +417,7 @@ const PermissionCell: React.FC<{
           >
             <Icon className={`h-4 w-4 ${config.color}`} />
             {permission?.inherited && (
-              <span className="absolute -top-1 -right-1 h-2 w-2 bg-blue-500 rounded-full" />
+              <span className="absolute -top-1 -right-1 h-2 w-2 bg-stone-1000 rounded-full" />
             )}
           </Button>
         </TooltipTrigger>
@@ -515,7 +515,7 @@ const PermissionMatrix: React.FC<{
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger>
-                                <ShieldAlert className="h-4 w-4 text-amber-500" />
+                                <ShieldAlert className="h-4 w-4 text-stone-1000" />
                               </TooltipTrigger>
                               <TooltipContent>Sensitive Resource</TooltipContent>
                             </Tooltip>
@@ -560,20 +560,20 @@ const AccessGapAnalysis: React.FC<{ gaps: AccessGap[] }> = ({ gaps }) => {
   > = {
     missing: {
       label: 'Missing Access',
-      color: 'text-amber-700',
-      bgColor: 'bg-amber-100',
+      color: 'text-stone-700',
+      bgColor: 'bg-stone-100',
       icon: AlertCircle,
     },
     excessive: {
       label: 'Excessive Access',
-      color: 'text-red-700',
-      bgColor: 'bg-red-100',
+      color: 'text-stone-800',
+      bgColor: 'bg-stone-100',
       icon: AlertTriangle,
     },
     conflict: {
       label: 'Conflict',
-      color: 'text-purple-700',
-      bgColor: 'bg-purple-100',
+      color: 'text-stone-700',
+      bgColor: 'bg-stone-100',
       icon: ShieldAlert,
     },
   };
@@ -582,7 +582,7 @@ const AccessGapAnalysis: React.FC<{ gaps: AccessGap[] }> = ({ gaps }) => {
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <ShieldCheck className="h-12 w-12 mx-auto text-green-600 mb-4" />
+          <ShieldCheck className="h-12 w-12 mx-auto text-stone-700 mb-4" />
           <h3 className="font-semibold mb-2">No Access Gaps Detected</h3>
           <p className="text-muted-foreground">
             Your access control configuration appears to be well-defined
@@ -763,10 +763,10 @@ const PermissionLegend: React.FC = () => (
         })}
         <div className="flex items-center gap-2 border-l pl-4">
           <div className="relative">
-            <div className="p-1 rounded bg-gray-100">
-              <Check className="h-4 w-4 text-gray-400" />
+            <div className="p-1 rounded bg-stone-100">
+              <Check className="h-4 w-4 text-stone-400" />
             </div>
-            <span className="absolute -top-1 -right-1 h-2 w-2 bg-blue-500 rounded-full" />
+            <span className="absolute -top-1 -right-1 h-2 w-2 bg-stone-1000 rounded-full" />
           </div>
           <span className="text-sm">Inherited</span>
         </div>
@@ -857,28 +857,28 @@ export const AccessControlMatrix: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
-            <Users className="h-8 w-8 mx-auto text-blue-600 mb-2" />
+            <Users className="h-8 w-8 mx-auto text-stone-600 mb-2" />
             <p className="text-2xl font-bold">{roles.length}</p>
             <p className="text-sm text-muted-foreground">Roles</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <Database className="h-8 w-8 mx-auto text-purple-600 mb-2" />
+            <Database className="h-8 w-8 mx-auto text-stone-600 mb-2" />
             <p className="text-2xl font-bold">{resources.length}</p>
             <p className="text-sm text-muted-foreground">Resources</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <Key className="h-8 w-8 mx-auto text-green-600 mb-2" />
+            <Key className="h-8 w-8 mx-auto text-stone-700 mb-2" />
             <p className="text-2xl font-bold">{permissions.length}</p>
             <p className="text-sm text-muted-foreground">Permissions</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <AlertTriangle className="h-8 w-8 mx-auto text-amber-600 mb-2" />
+            <AlertTriangle className="h-8 w-8 mx-auto text-stone-600 mb-2" />
             <p className="text-2xl font-bold">{gaps.length}</p>
             <p className="text-sm text-muted-foreground">Access Gaps</p>
           </CardContent>

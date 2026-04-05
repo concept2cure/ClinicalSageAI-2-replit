@@ -76,20 +76,20 @@ interface User {
 }
 
 const ROLES = [
-  { id: 'admin', label: 'Administrator', color: 'bg-purple-100 text-purple-800' },
-  { id: 'regulatory_lead', label: 'Regulatory Lead', color: 'bg-blue-100 text-blue-800' },
-  { id: 'clinical_ops', label: 'Clinical Operations', color: 'bg-green-100 text-green-800' },
-  { id: 'medical_writer', label: 'Medical Writer', color: 'bg-orange-100 text-orange-800' },
-  { id: 'biostatistician', label: 'Biostatistician', color: 'bg-red-100 text-red-800' },
-  { id: 'quality_assurance', label: 'Quality Assurance', color: 'bg-cyan-100 text-cyan-800' },
-  { id: 'viewer', label: 'Viewer', color: 'bg-gray-100 text-gray-800' },
+  { id: 'admin', label: 'Administrator', color: 'bg-stone-100 text-stone-800' },
+  { id: 'regulatory_lead', label: 'Regulatory Lead', color: 'bg-stone-100 text-stone-800' },
+  { id: 'clinical_ops', label: 'Clinical Operations', color: 'bg-stone-100 text-stone-800' },
+  { id: 'medical_writer', label: 'Medical Writer', color: 'bg-stone-100 text-stone-800' },
+  { id: 'biostatistician', label: 'Biostatistician', color: 'bg-stone-100 text-stone-800' },
+  { id: 'quality_assurance', label: 'Quality Assurance', color: 'bg-stone-100 text-stone-800' },
+  { id: 'viewer', label: 'Viewer', color: 'bg-stone-100 text-stone-800' },
 ];
 
 const STATUS_CONFIG = {
-  active: { label: 'Active', color: 'bg-green-100 text-green-800', icon: CheckCircle },
-  inactive: { label: 'Inactive', color: 'bg-gray-100 text-gray-800', icon: XCircle },
-  pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
-  suspended: { label: 'Suspended', color: 'bg-red-100 text-red-800', icon: XCircle },
+  active: { label: 'Active', color: 'bg-stone-100 text-stone-800', icon: CheckCircle },
+  inactive: { label: 'Inactive', color: 'bg-stone-100 text-stone-800', icon: XCircle },
+  pending: { label: 'Pending', color: 'bg-stone-100 text-stone-800', icon: Clock },
+  suspended: { label: 'Suspended', color: 'bg-stone-100 text-stone-800', icon: XCircle },
 };
 
 export default function UserManagementPage() {
@@ -211,12 +211,12 @@ export default function UserManagementPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-stone-1000 to-stone-600 flex items-center justify-center">
             <Users className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-            <p className="text-sm text-gray-500">
+            <h1 className="text-2xl font-bold text-stone-900">User Management</h1>
+            <p className="text-sm text-stone-500">
               Manage users, roles, and access across{' '}
               {currentOrganization?.name || 'your organization'}
             </p>
@@ -234,7 +234,7 @@ export default function UserManagementPage() {
           </Button>
           <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-indigo-500 to-purple-600">
+              <Button className="bg-gradient-to-r from-stone-1000 to-stone-600">
                 <UserPlus className="w-4 h-4 mr-2" />
                 Invite User
               </Button>
@@ -305,10 +305,10 @@ export default function UserManagementPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Total Users</p>
+                <p className="text-sm text-stone-500">Total Users</p>
                 <p className="text-2xl font-bold">{users.length}</p>
               </div>
-              <Users className="w-8 h-8 text-indigo-500" />
+              <Users className="w-8 h-8 text-stone-1000" />
             </div>
           </CardContent>
         </Card>
@@ -316,12 +316,12 @@ export default function UserManagementPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Active Users</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-sm text-stone-500">Active Users</p>
+                <p className="text-2xl font-bold text-stone-700">
                   {users.filter(u => u.status === 'active').length}
                 </p>
               </div>
-              <CheckCircle className="w-8 h-8 text-green-500" />
+              <CheckCircle className="w-8 h-8 text-stone-1000" />
             </div>
           </CardContent>
         </Card>
@@ -329,12 +329,12 @@ export default function UserManagementPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Pending Invites</p>
-                <p className="text-2xl font-bold text-yellow-600">
+                <p className="text-sm text-stone-500">Pending Invites</p>
+                <p className="text-2xl font-bold text-stone-600">
                   {users.filter(u => u.status === 'pending').length}
                 </p>
               </div>
-              <Clock className="w-8 h-8 text-yellow-500" />
+              <Clock className="w-8 h-8 text-stone-1000" />
             </div>
           </CardContent>
         </Card>
@@ -342,12 +342,12 @@ export default function UserManagementPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">MFA Enabled</p>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-sm text-stone-500">MFA Enabled</p>
+                <p className="text-2xl font-bold text-stone-600">
                   {users.filter(u => u.mfaEnabled).length}
                 </p>
               </div>
-              <Shield className="w-8 h-8 text-blue-500" />
+              <Shield className="w-8 h-8 text-stone-1000" />
             </div>
           </CardContent>
         </Card>
@@ -358,7 +358,7 @@ export default function UserManagementPage() {
         <CardContent className="pt-6">
           <div className="flex items-center gap-4">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
               <Input
                 placeholder="Search users by name or email..."
                 className="pl-10"
@@ -406,12 +406,12 @@ export default function UserManagementPage() {
         <CardContent>
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
+              <RefreshCw className="w-6 h-6 animate-spin text-stone-400" />
             </div>
           ) : filteredUsers.length === 0 ? (
             <div className="text-center py-12">
-              <Users className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-500">No users found</p>
+              <Users className="w-12 h-12 mx-auto text-stone-300 mb-4" />
+              <p className="text-stone-500">No users found</p>
               <Button variant="link" onClick={() => setShowInviteDialog(true)} className="mt-2">
                 Invite your first user
               </Button>
@@ -434,12 +434,12 @@ export default function UserManagementPage() {
                   <TableRow key={user.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-medium">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-stone-400 to-stone-1000 flex items-center justify-center text-white font-medium">
                           {user.name?.charAt(0) || user.email?.charAt(0) || '?'}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{user.name || 'Unnamed'}</p>
-                          <p className="text-sm text-gray-500">{user.email}</p>
+                          <p className="font-medium text-stone-900">{user.name || 'Unnamed'}</p>
+                          <p className="text-sm text-stone-500">{user.email}</p>
                         </div>
                       </div>
                     </TableCell>
@@ -447,16 +447,16 @@ export default function UserManagementPage() {
                     <TableCell>{getStatusBadge(user.status || 'active')}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-gray-400" />
+                        <Building2 className="w-4 h-4 text-stone-400" />
                         <span className="text-sm">{user.organizationName || 'Default'}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-500">
+                    <TableCell className="text-sm text-stone-500">
                       {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
                     </TableCell>
                     <TableCell>
                       {user.mfaEnabled ? (
-                        <Badge className="bg-green-100 text-green-800">Enabled</Badge>
+                        <Badge className="bg-stone-100 text-stone-800">Enabled</Badge>
                       ) : (
                         <Badge variant="outline">Disabled</Badge>
                       )}

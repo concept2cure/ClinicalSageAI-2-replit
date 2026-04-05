@@ -71,11 +71,11 @@ export function FeaturesSection() {
             <motion.div
               key={f.title}
               variants={fadeUp}
-              className="group p-6 rounded-2xl bg-stone-50 border border-stone-100 hover:bg-white hover:border-blue-200 hover:shadow-sm hover:shadow-blue-600/5 transition-all duration-200"
+              className="group p-6 rounded-2xl bg-stone-50 border border-stone-100 hover:bg-white hover:border-stone-200 hover:shadow-sm hover:shadow-stone-600/5 transition-all duration-200"
             >
-              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mb-4 group-hover:bg-blue-600 transition-colors">
+              <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center mb-4 group-hover:bg-stone-600 transition-colors">
                 <svg
-                  className="w-5 h-5 text-blue-600 group-hover:text-white transition-colors"
+                  className="w-5 h-5 text-stone-600 group-hover:text-white transition-colors"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

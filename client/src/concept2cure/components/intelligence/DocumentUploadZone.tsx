@@ -238,15 +238,15 @@ export function DocumentUploadZone({
   if (uploadState.status === 'success') {
     return (
       <Card
-        className={`relative flex items-center gap-3 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950 ${compact ? 'p-3' : 'p-4'}`}
+        className={`relative flex items-center gap-3 border-stone-200 bg-stone-100 dark:border-stone-800 dark:bg-stone-950 ${compact ? 'p-3' : 'p-4'}`}
         data-testid="upload-zone-success"
       >
-        <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600 dark:text-green-400" />
+        <CheckCircle2 className="h-5 w-5 shrink-0 text-stone-700 dark:text-stone-400" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-green-800 dark:text-green-200">
+          <p className="truncate text-sm font-medium text-stone-800 dark:text-stone-200">
             {uploadState.fileName}
           </p>
-          <p className="text-xs text-green-600 dark:text-green-400">
+          <p className="text-xs text-stone-700 dark:text-stone-400">
             {uploadState.memoryEntriesGenerated} knowledge atom
             {uploadState.memoryEntriesGenerated !== 1 ? 's' : ''} extracted
           </p>
@@ -255,7 +255,7 @@ export function DocumentUploadZone({
           variant="ghost"
           size="sm"
           onClick={resetState}
-          className="h-7 w-7 p-0 text-green-600 hover:text-green-800"
+          className="h-7 w-7 p-0 text-stone-700 hover:text-stone-800"
           aria-label="Dismiss success message"
         >
           <X className="h-4 w-4" />
@@ -268,21 +268,21 @@ export function DocumentUploadZone({
   if (uploadState.status === 'error') {
     return (
       <Card
-        className={`relative flex items-center gap-3 border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950 ${compact ? 'p-3' : 'p-4'}`}
+        className={`relative flex items-center gap-3 border-stone-200 bg-stone-100 dark:border-stone-800 dark:bg-stone-950 ${compact ? 'p-3' : 'p-4'}`}
         data-testid="upload-zone-error"
       >
-        <AlertCircle className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
+        <AlertCircle className="h-5 w-5 shrink-0 text-stone-700 dark:text-stone-400" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-red-800 dark:text-red-200">
+          <p className="truncate text-sm font-medium text-stone-800 dark:text-stone-200">
             {uploadState.fileName ?? 'Upload failed'}
           </p>
-          <p className="text-xs text-red-600 dark:text-red-400">{uploadState.errorMessage}</p>
+          <p className="text-xs text-stone-700 dark:text-stone-400">{uploadState.errorMessage}</p>
         </div>
         <Button
           variant="ghost"
           size="sm"
           onClick={resetState}
-          className="h-7 w-7 p-0 text-red-600 hover:text-red-800"
+          className="h-7 w-7 p-0 text-stone-700 hover:text-stone-800"
           aria-label="Dismiss error and retry"
         >
           <X className="h-4 w-4" />
@@ -318,7 +318,7 @@ export function DocumentUploadZone({
         }}
         className={`
           flex flex-col items-center justify-center border-2 border-dashed transition-colors
-          ${dragOver ? 'border-stone-600 bg-blue-50 dark:border-blue-400 dark:bg-blue-950' : 'border-muted-foreground/25 hover:border-muted-foreground/50'}
+          ${dragOver ? 'border-stone-600 bg-stone-100 dark:border-stone-400 dark:bg-stone-950' : 'border-muted-foreground/25 hover:border-muted-foreground/50'}
           ${isUploading ? 'pointer-events-none opacity-70' : 'cursor-pointer'}
           ${compact ? 'gap-2 p-4' : 'gap-3 p-8'}
         `}
@@ -350,7 +350,7 @@ export function DocumentUploadZone({
         ) : (
           <>
             <Upload
-              className={`text-muted-foreground ${compact ? 'h-5 w-5' : 'h-8 w-8'} ${dragOver ? 'text-blue-500' : ''}`}
+              className={`text-muted-foreground ${compact ? 'h-5 w-5' : 'h-8 w-8'} ${dragOver ? 'text-stone-1000' : ''}`}
             />
             {!compact && (
               <div className="text-center">

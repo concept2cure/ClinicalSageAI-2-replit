@@ -253,7 +253,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
             {!artifactsLoading && summary.docCount > 0 && (
               <span className="text-[10px] text-stone-500 flex-shrink-0">
                 {summary.docCount} doc{summary.docCount !== 1 ? 's' : ''}
-                {summary.review > 0 && <> · <span className="text-amber-500">{summary.review} in review</span></>}
+                {summary.review > 0 && <> · <span className="text-stone-1000">{summary.review} in review</span></>}
               </span>
             )}
           </div>

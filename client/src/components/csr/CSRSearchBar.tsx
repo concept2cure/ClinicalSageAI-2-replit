@@ -72,7 +72,7 @@ export default function CSRSearchBar() {
         <form onSubmit={handleSearch} className="space-y-4">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <Search className="h-4 w-4 text-gray-400" />
+              <Search className="h-4 w-4 text-stone-400" />
             </div>
             <Input
               type="text"
@@ -83,7 +83,7 @@ export default function CSRSearchBar() {
             />
             {query.length > 0 && (
               <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                <Button type="submit" variant="ghost" size="sm" className="h-8 px-2 text-blue-600">
+                <Button type="submit" variant="ghost" size="sm" className="h-8 px-2 text-stone-600">
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -91,13 +91,13 @@ export default function CSRSearchBar() {
           </div>
 
           <div>
-            <div className="text-sm text-gray-500 mb-2">Suggested searches:</div>
+            <div className="text-sm text-stone-500 mb-2">Suggested searches:</div>
             <div className="flex flex-wrap gap-2">
               {PRESET_QUERIES.map((presetQuery, i) => (
                 <Badge
                   key={i}
                   variant="outline"
-                  className="cursor-pointer hover:bg-blue-50 transition-colors"
+                  className="cursor-pointer hover:bg-stone-100 transition-colors"
                   onClick={() => handlePresetQuery(presetQuery)}
                 >
                   {presetQuery}
@@ -119,13 +119,13 @@ export default function CSRSearchBar() {
 
           {searchHistory.length > 0 && (
             <div className="pt-3 border-t">
-              <div className="text-sm text-gray-500 mb-2">Recent searches:</div>
+              <div className="text-sm text-stone-500 mb-2">Recent searches:</div>
               <div className="flex flex-wrap gap-2">
                 {searchHistory.map((item, i) => (
                   <Badge
                     key={i}
                     variant="secondary"
-                    className="cursor-pointer hover:bg-gray-100 transition-colors"
+                    className="cursor-pointer hover:bg-stone-100 transition-colors"
                     onClick={() => handleHistoryClick(item)}
                   >
                     {item}

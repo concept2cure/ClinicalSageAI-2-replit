@@ -107,19 +107,19 @@ export default function SampleChainPanel({ sampleId, sampleCode }: SampleChainPa
   const getActionColor = (action: string) => {
     switch (action) {
       case 'CREATED':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-stone-100 text-stone-800';
       case 'COLLECTED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-stone-100 text-stone-800';
       case 'RECEIVED':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-stone-100 text-stone-800';
       case 'OPENED':
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-stone-100 text-stone-800';
       case 'SEALED':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-stone-100 text-stone-800';
       case 'TRANSFERRED':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-stone-100 text-stone-800';
       case 'DISPOSED':
-        return 'bg-red-100 text-red-800';
+        return 'bg-stone-100 text-stone-800';
       default:
         return 'bg-slate-100 text-slate-800';
     }
@@ -132,7 +132,7 @@ export default function SampleChainPanel({ sampleId, sampleCode }: SampleChainPa
           <CardTitle className="flex items-center gap-2">
             Chain of Custody
             {sampleCode && (
-              <span className="text-sm font-normal text-gray-600">({sampleCode})</span>
+              <span className="text-sm font-normal text-stone-600">({sampleCode})</span>
             )}
             <InfoTip aria-label="Chain of Custody help">
               <div className="space-y-1">
@@ -209,14 +209,14 @@ export default function SampleChainPanel({ sampleId, sampleCode }: SampleChainPa
         {/* Chain Entries */}
         <div className="space-y-2">
           {chain.length === 0 ? (
-            <div className="text-center py-4 text-gray-500">No chain of custody entries yet</div>
+            <div className="text-center py-4 text-stone-500">No chain of custody entries yet</div>
           ) : (
             chain.map(entry => (
               <div key={entry.chain_id} className="border rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Badge className={getActionColor(entry.action)}>{entry.action}</Badge>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-stone-600">
                       by {entry.actor} • {new Date(entry.ts).toLocaleString()}
                     </span>
                   </div>
@@ -232,7 +232,7 @@ export default function SampleChainPanel({ sampleId, sampleCode }: SampleChainPa
                   )}
                 </div>
                 {entry.notes && (
-                  <div className="text-sm text-gray-700 bg-gray-50 p-2 rounded">{entry.notes}</div>
+                  <div className="text-sm text-stone-700 bg-stone-50 p-2 rounded">{entry.notes}</div>
                 )}
               </div>
             ))

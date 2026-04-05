@@ -106,7 +106,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200">
           <div className="flex items-center gap-2">
-            <History className="w-4 h-4 text-blue-500" />
+            <History className="w-4 h-4 text-stone-1000" />
             <span className="text-sm font-semibold text-stone-900">Version History</span>
           </div>
           <button onClick={onClose} className="p-1 hover:bg-stone-100 rounded">
@@ -129,7 +129,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 shrink-0">
         <div className="flex items-center gap-2">
-          <History className="w-4 h-4 text-blue-500" />
+          <History className="w-4 h-4 text-stone-1000" />
           <span className="text-sm font-semibold text-stone-900">Version History</span>
           <span className="text-xs text-stone-400">{sortedVersions.length} versions</span>
         </div>
@@ -140,20 +140,20 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
 
       {/* Restore confirmation banner */}
       {confirmRestore && (
-        <div className="px-4 py-3 bg-amber-50 border-b border-amber-200 shrink-0">
+        <div className="px-4 py-3 bg-stone-100 border-b border-stone-200 shrink-0">
           <div className="flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+            <AlertTriangle className="w-4 h-4 text-stone-600 mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-amber-800">
+              <p className="text-xs font-semibold text-stone-800">
                 Restore to version {confirmRestore.version}?
               </p>
-              <p className="text-xs text-amber-600 mt-0.5">
+              <p className="text-xs text-stone-600 mt-0.5">
                 This will replace the current content. A new version will be saved automatically.
               </p>
               <div className="flex items-center gap-2 mt-2">
                 <button
                   onClick={confirmRestoreAction}
-                  className="px-3 py-1 text-xs font-medium text-white bg-amber-600 rounded-md hover:bg-amber-700"
+                  className="px-3 py-1 text-xs font-medium text-white bg-stone-600 rounded-md hover:bg-stone-700"
                 >
                   Restore
                 </button>
@@ -206,7 +206,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                     iSelected
                       ? 'border-stone-300 bg-stone-100 shadow-sm'
                       : isLatest
-                        ? 'border-blue-200 bg-blue-50/50'
+                        ? 'border-stone-200 bg-stone-100/50'
                         : 'border-stone-200 bg-white hover:border-stone-300 hover:shadow-sm'
                   )}
                   onClick={() => setPreviewVersion(iSelected ? null : version)}
@@ -218,7 +218,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                         v{version.version}
                       </span>
                       {isLatest && (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-stone-700 font-medium">
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-stone-100 text-stone-700 font-medium">
                           Current
                         </span>
                       )}
@@ -246,10 +246,10 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                   {diff.modified && (
                     <div className="flex items-center gap-2 text-xs">
                       {diff.added > 0 && (
-                        <span className="text-emerald-600">+{diff.added} words</span>
+                        <span className="text-stone-700">+{diff.added} words</span>
                       )}
                       {diff.removed > 0 && (
-                        <span className="text-red-600">-{diff.removed} words</span>
+                        <span className="text-stone-700">-{diff.removed} words</span>
                       )}
                     </div>
                   )}
@@ -262,7 +262,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                           e.stopPropagation();
                           handleRestore(version);
                         }}
-                        className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-700 bg-amber-100 rounded hover:bg-amber-200 transition-colors duration-150"
+                        className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-stone-700 bg-stone-100 rounded hover:bg-stone-200 transition-colors duration-150"
                       >
                         <RotateCcw className="w-3 h-3" />
                         Restore
@@ -272,7 +272,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                           e.stopPropagation();
                           setShowDiff(!showDiff);
                         }}
-                        className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-stone-700 bg-blue-100 rounded hover:bg-blue-200 transition-colors duration-150"
+                        className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-stone-700 bg-stone-100 rounded hover:bg-stone-200 transition-colors duration-150"
                       >
                         <GitCompare className="w-3 h-3" />
                         {showDiff ? 'Hide Diff' : 'Compare'}

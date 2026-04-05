@@ -133,7 +133,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                   ref={textareaRef}
                   value={editContent}
                   onChange={e => setEditContent(e.target.value)}
-                  className="w-full p-3 text-sm border border-blue-300 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none resize-none"
+                  className="w-full p-3 text-sm border border-stone-300 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none resize-none"
                   rows={4}
                 />
                 <div className="flex items-center gap-2">
@@ -170,7 +170,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
             {/* Artifact indicator */}
             {message.artifactId && (
-              <div className="mt-2 flex items-center gap-2 text-xs text-blue-600">
+              <div className="mt-2 flex items-center gap-2 text-xs text-stone-600">
                 <FileText className="h-3 w-3" />
                 <span>Created artifact →</span>
               </div>
@@ -350,7 +350,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         )}
 
         {/* Input area */}
-        <div className="flex items-end gap-3 bg-stone-50 rounded-xl border border-stone-200 p-2 focus-within:border-blue-300 focus-within:ring-2 focus-within:ring-blue-100">
+        <div className="flex items-end gap-3 bg-stone-50 rounded-xl border border-stone-200 p-2 focus-within:border-stone-300 focus-within:ring-2 focus-within:ring-stone-100">
           {/* Attachment button */}
           <TooltipProvider>
             <Tooltip>
@@ -600,7 +600,7 @@ export const ChatPanel: React.FC = () => {
             </p>
           </div>
           {activeConversation?.parentConversationId && (
-            <div className="flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-700 rounded text-xs">
+            <div className="flex items-center gap-1 px-2 py-1 bg-stone-100 text-stone-700 rounded text-xs">
               <GitBranch className="h-3 w-3" />
               Forked conversation
             </div>

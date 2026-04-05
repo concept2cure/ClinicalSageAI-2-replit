@@ -95,17 +95,17 @@ const ComplianceStatusBadge: React.FC<{
     ready: { 
       icon: CheckCircle, 
       label: 'Ready', 
-      color: 'bg-emerald-100 text-emerald-700 border-emerald-200'
+      color: 'bg-stone-100 text-stone-800 border-stone-200'
     },
     'needs-attention': { 
       icon: AlertTriangle, 
       label: 'Needs Attention', 
-      color: 'bg-amber-100 text-amber-700 border-amber-200'
+      color: 'bg-stone-100 text-stone-700 border-stone-200'
     },
     blocked: { 
       icon: XCircle, 
       label: 'Blocked', 
-      color: 'bg-red-100 text-red-700 border-red-200'
+      color: 'bg-stone-100 text-stone-800 border-stone-200'
     },
   };
   
@@ -132,10 +132,10 @@ const SourceSuggestionCard: React.FC<{
   const getSourceIcon = (type: SourceSuggestion['sourceType']) => {
     switch (type) {
       case 'clinical_study': return <Activity className="w-4 h-4 text-stone-500" />;
-      case 'predicate_device': return <Target className="w-4 h-4 text-blue-500" />;
-      case 'literature': return <BookOpen className="w-4 h-4 text-emerald-500" />;
-      case 'test_report': return <FileText className="w-4 h-4 text-amber-500" />;
-      case 'regulatory_document': return <Shield className="w-4 h-4 text-blue-500" />;
+      case 'predicate_device': return <Target className="w-4 h-4 text-stone-1000" />;
+      case 'literature': return <BookOpen className="w-4 h-4 text-stone-1000" />;
+      case 'test_report': return <FileText className="w-4 h-4 text-stone-1000" />;
+      case 'regulatory_document': return <Shield className="w-4 h-4 text-stone-1000" />;
       default: return <Database className="w-4 h-4 text-stone-500" />;
     }
   };
@@ -155,7 +155,7 @@ const SourceSuggestionCard: React.FC<{
   };
   
   return (
-    <div className="p-3 bg-white rounded-lg border border-stone-200 hover:border-blue-300 transition-colors duration-150">
+    <div className="p-3 bg-white rounded-lg border border-stone-200 hover:border-stone-300 transition-colors duration-150">
       <div className="flex items-start gap-3">
         <div className="p-2 bg-stone-100 rounded-lg">
           {getSourceIcon(source.sourceType)}
@@ -165,7 +165,7 @@ const SourceSuggestionCard: React.FC<{
             <h4 className="font-medium text-stone-900 truncate">
               {source.title}
             </h4>
-            <span className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-stone-700 rounded-full text-xs">
+            <span className="flex items-center gap-1 px-2 py-0.5 bg-stone-100 text-stone-700 rounded-full text-xs">
               {source.relevanceScore}% match
             </span>
           </div>
@@ -240,20 +240,20 @@ const CommandCenterPanel: React.FC<{
   const statusMap = {
     ready: {
       label: 'Submission Ready',
-      color: 'text-emerald-600',
-      bg: 'bg-emerald-50',
+      color: 'text-stone-700',
+      bg: 'bg-stone-100',
       icon: CheckCircle,
     },
     'needs-attention': {
       label: 'Needs Attention',
-      color: 'text-amber-600',
-      bg: 'bg-amber-50',
+      color: 'text-stone-600',
+      bg: 'bg-stone-100',
       icon: AlertTriangle,
     },
     blocked: {
       label: 'Blocked',
-      color: 'text-red-600',
-      bg: 'bg-red-50',
+      color: 'text-stone-700',
+      bg: 'bg-stone-100',
       icon: XCircle,
     },
   } as const;
@@ -310,11 +310,11 @@ const CommandCenterPanel: React.FC<{
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={onOpenSources}
-          className="p-3 rounded-xl border border-stone-200 bg-white hover:border-blue-300 transition-colors text-left shadow-sm hover:shadow"
+          className="p-3 rounded-xl border border-stone-200 bg-white hover:border-stone-300 transition-colors text-left shadow-sm hover:shadow"
           data-testid="button-command-link-sources"
         >
           <div className="flex items-center gap-2">
-            <Link2 className="w-4 h-4 text-blue-500" />
+            <Link2 className="w-4 h-4 text-stone-1000" />
             <span className="text-sm font-medium text-stone-900">Link Sources</span>
           </div>
           <p className="text-xs text-stone-500 mt-1">
@@ -323,11 +323,11 @@ const CommandCenterPanel: React.FC<{
         </button>
         <button
           onClick={onOpenCompliance}
-          className="p-3 rounded-xl border border-stone-200 bg-white hover:border-amber-300 transition-colors text-left shadow-sm hover:shadow"
+          className="p-3 rounded-xl border border-stone-200 bg-white hover:border-stone-300 transition-colors text-left shadow-sm hover:shadow"
           data-testid="button-command-resolve-issues"
         >
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-amber-500" />
+            <ShieldCheck className="w-4 h-4 text-stone-1000" />
             <span className="text-sm font-medium text-stone-900">Resolve Issues</span>
           </div>
           <p className="text-xs text-stone-500 mt-1">
@@ -336,11 +336,11 @@ const CommandCenterPanel: React.FC<{
         </button>
         <button
           onClick={onOpenBridges}
-          className="p-3 rounded-xl border border-stone-200 bg-white hover:border-blue-300 transition-colors text-left shadow-sm hover:shadow"
+          className="p-3 rounded-xl border border-stone-200 bg-white hover:border-stone-300 transition-colors text-left shadow-sm hover:shadow"
           data-testid="button-command-sync-data"
         >
           <div className="flex items-center gap-2">
-            <Database className="w-4 h-4 text-blue-500" />
+            <Database className="w-4 h-4 text-stone-1000" />
             <span className="text-sm font-medium text-stone-900">Sync Data</span>
           </div>
           <p className="text-xs text-stone-500 mt-1">
@@ -372,7 +372,7 @@ const CommandCenterPanel: React.FC<{
                     </div>
                     <button
                       onClick={onOpenCompliance}
-                      className="text-xs font-medium text-red-600 hover:underline"
+                      className="text-xs font-medium text-stone-700 hover:underline"
                       data-testid={`button-resolve-blocker-${blocker.id}`}
                     >
                       Resolve
@@ -395,7 +395,7 @@ const CommandCenterPanel: React.FC<{
                     </div>
                     <button
                       onClick={() => handleGuidanceAction(item)}
-                      className="text-xs font-medium text-blue-600 hover:underline"
+                      className="text-xs font-medium text-stone-600 hover:underline"
                       data-testid={`button-guidance-action-${item.id}`}
                     >
                       Do
@@ -412,7 +412,7 @@ const CommandCenterPanel: React.FC<{
         {onRequestReview && complianceScore >= 90 && (
           <button
             onClick={onRequestReview}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm hover:shadow"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-stone-700 text-white text-sm font-medium rounded-lg hover:bg-stone-800 transition-colors shadow-sm hover:shadow"
             data-testid="button-request-review"
           >
             <Users className="w-4 h-4" />
@@ -454,18 +454,18 @@ const ComplianceGuardCard: React.FC<{
   const severityConfig = {
     error: { 
       icon: XCircle, 
-      color: 'border-red-200 bg-red-50',
-      iconColor: 'text-red-500'
+      color: 'border-stone-200 bg-stone-100',
+      iconColor: 'text-stone-1000'
     },
     warning: { 
       icon: AlertTriangle, 
-      color: 'border-amber-200 bg-amber-50',
-      iconColor: 'text-amber-500'
+      color: 'border-stone-200 bg-stone-100',
+      iconColor: 'text-stone-1000'
     },
     suggestion: { 
       icon: Lightbulb, 
-      color: 'border-blue-200 bg-blue-50',
-      iconColor: 'text-blue-500'
+      color: 'border-stone-200 bg-stone-100',
+      iconColor: 'text-stone-1000'
     },
   };
   
@@ -505,9 +505,9 @@ const ComplianceGuardCard: React.FC<{
           onClick={onAction}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors
             ${guard.severity === 'error' 
-              ? 'bg-red-600 text-white hover:bg-red-700' 
+              ? 'bg-stone-700 text-white hover:bg-stone-800' 
               : guard.severity === 'warning'
-              ? 'bg-amber-600 text-white hover:bg-amber-700'
+              ? 'bg-stone-600 text-white hover:bg-stone-700'
               : 'bg-stone-800 text-white hover:bg-stone-900'
             }`}
           data-testid={`button-guard-action-${guard.id}`}
@@ -552,11 +552,11 @@ const SherpaGuidanceCard: React.FC<{
   const { color, badge } = priorityConfig[guidance.priority];
   
   return (
-    <div className={`p-4 rounded-lg border ${color} ${isNextBest ? 'bg-blue-50' : 'bg-white'}`}>
+    <div className={`p-4 rounded-lg border ${color} ${isNextBest ? 'bg-stone-100' : 'bg-white'}`}>
       {isNextBest && (
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-4 h-4 text-blue-500" />
-          <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
+          <Sparkles className="w-4 h-4 text-stone-1000" />
+          <span className="text-xs font-semibold text-stone-600 uppercase tracking-wide">
             Recommended Next Step
           </span>
         </div>
@@ -579,7 +579,7 @@ const SherpaGuidanceCard: React.FC<{
               {guidance.estimatedTime}
             </span>
             <span className="flex items-center gap-1">
-              <CheckCircle className="w-3 h-3 text-emerald-500" />
+              <CheckCircle className="w-3 h-3 text-stone-1000" />
               {guidance.expectedOutcome}
             </span>
           </div>
@@ -608,9 +608,9 @@ const DataBridgeCard: React.FC<{
   onView: () => void;
 }> = ({ bridge, onSync, onView }) => {
   const statusConfig = {
-    connected: { icon: CheckCircle, color: 'text-emerald-500', label: 'Connected' },
-    available: { icon: Database, color: 'text-blue-500', label: 'Available' },
-    'needs-update': { icon: RefreshCw, color: 'text-amber-500', label: 'Needs Update' },
+    connected: { icon: CheckCircle, color: 'text-stone-1000', label: 'Connected' },
+    available: { icon: Database, color: 'text-stone-1000', label: 'Available' },
+    'needs-update': { icon: RefreshCw, color: 'text-stone-1000', label: 'Needs Update' },
     missing: { icon: XCircle, color: 'text-stone-400', label: 'No Data' },
   };
   
@@ -652,7 +652,7 @@ const DataBridgeCard: React.FC<{
           {bridge.status === 'needs-update' && (
             <button
               onClick={onSync}
-              className="flex items-center gap-1 text-amber-600 hover:text-amber-700"
+              className="flex items-center gap-1 text-stone-600 hover:text-stone-700"
               data-testid={`button-bridge-sync-${bridge.id}`}
             >
               <RefreshCw className="w-3 h-3" />
@@ -661,7 +661,7 @@ const DataBridgeCard: React.FC<{
           )}
           <button
             onClick={onView}
-            className="flex items-center gap-1 text-blue-600 hover:text-stone-700"
+            className="flex items-center gap-1 text-stone-600 hover:text-stone-700"
             data-testid={`button-bridge-view-${bridge.id}`}
           >
             <ExternalLink className="w-3 h-3" />
@@ -1151,13 +1151,13 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
         <div className="flex items-center justify-between px-6 py-4 bg-white/90 backdrop-blur border-b border-stone-200">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-500" />
+              <FileText className="w-5 h-5 text-stone-1000" />
               <h1 className="text-lg font-semibold text-stone-900">
                 {state.document?.title || 'New Document'}
               </h1>
             </div>
             {submissionType && (
-              <span className="px-2 py-1 bg-blue-100 text-stone-700 text-xs font-medium rounded">
+              <span className="px-2 py-1 bg-stone-100 text-stone-700 text-xs font-medium rounded">
                 {submissionType}
               </span>
             )}
@@ -1168,12 +1168,12 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
             
             <div className="flex items-center gap-2">
               {state.hasUnsavedChanges ? (
-                <span className="text-xs text-amber-600 flex items-center gap-1">
+                <span className="text-xs text-stone-600 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   Unsaved changes
                 </span>
               ) : state.lastSavedAt ? (
-                <span className="text-xs text-emerald-600 flex items-center gap-1">
+                <span className="text-xs text-stone-700 flex items-center gap-1">
                   <CheckCircle className="w-3 h-3" />
                   Saved
                 </span>
@@ -1211,20 +1211,20 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
           <div className="px-6 py-3 bg-white/90 backdrop-blur border-t border-stone-200">
             <div className="flex items-center gap-6 text-sm">
               <span className="text-stone-600">
-                <Sparkles className="w-4 h-4 inline mr-1.5 text-blue-500" />
+                <Sparkles className="w-4 h-4 inline mr-1.5 text-stone-1000" />
                 {state.detectedClaims.length} claims detected
               </span>
-              <span className="flex items-center gap-1.5 text-emerald-600">
+              <span className="flex items-center gap-1.5 text-stone-700">
                 <CheckCircle className="w-4 h-4" />
                 {state.detectedClaims.filter(c => c.sourceStatus === 'supported').length} supported
               </span>
-              <span className="flex items-center gap-1.5 text-amber-600">
+              <span className="flex items-center gap-1.5 text-stone-600">
                 <AlertTriangle className="w-4 h-4" />
                 {state.detectedClaims.filter(c => c.sourceStatus === 'needs-source').length} need sources
               </span>
               <button
                 onClick={() => setState(prev => ({ ...prev, activePanel: 'sources' }))}
-                className="ml-auto text-xs font-medium text-blue-600 hover:underline"
+                className="ml-auto text-xs font-medium text-stone-600 hover:underline"
                 data-testid="button-review-sources"
               >
                 Review sources →
@@ -1280,7 +1280,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                 {tab.count > 0 && (
                   <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs
                     ${state.activePanel === tab.id
-                      ? 'bg-blue-100 text-blue-600'
+                      ? 'bg-stone-100 text-stone-600'
                       : 'bg-stone-100 text-stone-600'
                     }`}
                   >
@@ -1397,8 +1397,8 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                   </h3>
                   <span className={`text-xs px-2 py-0.5 rounded-full
                     ${state.complianceGuards.length === 0
-                      ? 'bg-green-100 text-emerald-600'
-                      : 'bg-amber-100 text-amber-600'
+                      ? 'bg-stone-100 text-stone-700'
+                      : 'bg-stone-100 text-stone-600'
                     }`}
                   >
                     {state.complianceGuards.length === 0 ? 'All Clear' : `${state.complianceGuards.length} issues`}
@@ -1407,9 +1407,9 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                 
                 {state.complianceGuards.length === 0 ? (
                   <div className="text-center py-8 text-stone-500">
-                    <ShieldCheck className="w-8 h-8 mx-auto mb-3 text-emerald-500" />
+                    <ShieldCheck className="w-8 h-8 mx-auto mb-3 text-stone-1000" />
                     <p className="text-sm">No compliance issues found!</p>
-                    <p className="text-xs mt-1 text-emerald-600">Document is ready for review</p>
+                    <p className="text-xs mt-1 text-stone-700">Document is ready for review</p>
                   </div>
                 ) : (
                   state.complianceGuards.map(guard => (

@@ -113,12 +113,12 @@ const MODE_CONFIG: Record<IndustryMode, {
   color: string;
   bgColor: string;
 }> = {
-  biotech: { label: 'Biotech', icon: Beaker, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
-  pharma: { label: 'Pharma', icon: Building2, color: 'text-blue-600', bgColor: 'bg-blue-50' },
+  biotech: { label: 'Biotech', icon: Beaker, color: 'text-stone-700', bgColor: 'bg-stone-100' },
+  pharma: { label: 'Pharma', icon: Building2, color: 'text-stone-600', bgColor: 'bg-stone-100' },
   cro: { label: 'CRO', icon: Briefcase, color: 'text-stone-600', bgColor: 'bg-stone-100' },
   medtech: { label: 'MedTech', icon: Microscope, color: 'text-sky-600', bgColor: 'bg-sky-50' },
-  academic: { label: 'Academic', icon: GraduationCap, color: 'text-amber-600', bgColor: 'bg-amber-50' },
-  regulatory: { label: 'Regulatory', icon: FileCheck, color: 'text-blue-600', bgColor: 'bg-blue-50' },
+  academic: { label: 'Academic', icon: GraduationCap, color: 'text-stone-600', bgColor: 'bg-stone-100' },
+  regulatory: { label: 'Regulatory', icon: FileCheck, color: 'text-stone-600', bgColor: 'bg-stone-100' },
   medical_writing: { label: 'Medical Writing', icon: PenTool, color: 'text-rose-600', bgColor: 'bg-rose-50' },
 };
 
@@ -418,7 +418,7 @@ const Header: React.FC<{
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
-              <span className="absolute top-0 right-0 w-4 h-4 text-xs font-semibold text-white bg-red-500 rounded-full flex items-center justify-center">
+              <span className="absolute top-0 right-0 w-4 h-4 text-xs font-semibold text-white bg-stone-1000 rounded-full flex items-center justify-center">
                 {unreadCount}
               </span>
             )}
@@ -436,7 +436,7 @@ const Header: React.FC<{
                     onClick={() => onNotificationClick?.(notification)}
                     className={cn(
                       'w-full p-3 text-left hover:bg-stone-50 border-b border-stone-200 last:border-b-0',
-                      !notification.read && 'bg-blue-50'
+                      !notification.read && 'bg-stone-100'
                     )}
                   >
                     <p className="text-sm font-medium text-stone-900">{notification.title}</p>

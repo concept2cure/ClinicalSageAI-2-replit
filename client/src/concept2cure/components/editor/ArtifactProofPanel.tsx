@@ -177,9 +177,9 @@ const ArtifactProofPanel: React.FC<ArtifactProofPanelProps> = ({ projectId, arti
 
   const StatusIcon: React.FC<{ status: ProofItem['status'] }> = ({ status }) => {
     switch (status) {
-      case 'pass': return <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />;
-      case 'fail': return <XCircle className="w-3.5 h-3.5 text-red-500" />;
-      case 'warn': return <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />;
+      case 'pass': return <CheckCircle className="w-3.5 h-3.5 text-stone-1000" />;
+      case 'fail': return <XCircle className="w-3.5 h-3.5 text-stone-1000" />;
+      case 'warn': return <AlertTriangle className="w-3.5 h-3.5 text-stone-1000" />;
       default: return <Hash className="w-3.5 h-3.5 text-stone-400" />;
     }
   };
@@ -189,14 +189,14 @@ const ArtifactProofPanel: React.FC<ArtifactProofPanelProps> = ({ projectId, arti
       {/* Header */}
       <div className="px-4 py-3 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-blue-600" />
+          <Shield className="w-4 h-4 text-stone-600" />
           <h3 className="text-sm font-semibold text-stone-900">Document Loop Proof</h3>
         </div>
         <p className="text-xs text-stone-500 mt-0.5">Internal QA — artifact truth inspector</p>
         <div className="flex items-center gap-3 mt-2">
-          <span className="text-xs font-medium text-emerald-600">{passCount} pass</span>
-          {failCount > 0 && <span className="text-xs font-medium text-red-600">{failCount} fail</span>}
-          {warnCount > 0 && <span className="text-xs font-medium text-amber-600">{warnCount} warn</span>}
+          <span className="text-xs font-medium text-stone-700">{passCount} pass</span>
+          {failCount > 0 && <span className="text-xs font-medium text-stone-700">{failCount} fail</span>}
+          {warnCount > 0 && <span className="text-xs font-medium text-stone-600">{warnCount} warn</span>}
         </div>
       </div>
 
@@ -208,8 +208,8 @@ const ArtifactProofPanel: React.FC<ArtifactProofPanelProps> = ({ projectId, arti
         </div>
         {artifact.status === 'locked' ? (
           <div className="flex items-center gap-1 mt-1">
-            <Lock className="w-3 h-3 text-red-500" />
-            <span className="text-xs text-red-600 font-medium">Locked</span>
+            <Lock className="w-3 h-3 text-stone-1000" />
+            <span className="text-xs text-stone-700 font-medium">Locked</span>
           </div>
         ) : (
           <div className="flex items-center gap-1 mt-1">
@@ -230,9 +230,9 @@ const ArtifactProofPanel: React.FC<ArtifactProofPanelProps> = ({ projectId, arti
               </div>
               <span className={cn(
                 'text-xs font-mono truncate max-w-[180px]',
-                item.status === 'pass' ? 'text-emerald-700' :
-                item.status === 'fail' ? 'text-red-700' :
-                item.status === 'warn' ? 'text-amber-700' :
+                item.status === 'pass' ? 'text-stone-800' :
+                item.status === 'fail' ? 'text-stone-800' :
+                item.status === 'warn' ? 'text-stone-700' :
                 'text-stone-500'
               )}>
                 {item.value}

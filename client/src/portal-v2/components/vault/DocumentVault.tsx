@@ -100,32 +100,32 @@ const STATUS_CONFIG: Record<
   DocumentStatus,
   { label: string; color: string; icon: React.ElementType }
 > = {
-  draft: { label: 'Draft', color: 'bg-gray-100 text-gray-700', icon: FileText },
-  in_review: { label: 'In Review', color: 'bg-blue-100 text-blue-700', icon: Clock },
+  draft: { label: 'Draft', color: 'bg-stone-100 text-stone-700', icon: FileText },
+  in_review: { label: 'In Review', color: 'bg-stone-100 text-stone-700', icon: Clock },
   pending_approval: {
     label: 'Pending Approval',
-    color: 'bg-amber-100 text-amber-700',
+    color: 'bg-stone-100 text-stone-700',
     icon: Clock,
   },
-  approved: { label: 'Approved', color: 'bg-green-100 text-green-700', icon: CheckCircle2 },
-  rejected: { label: 'Rejected', color: 'bg-red-100 text-red-700', icon: AlertTriangle },
-  superseded: { label: 'Superseded', color: 'bg-gray-100 text-gray-500', icon: History },
-  archived: { label: 'Archived', color: 'bg-gray-100 text-gray-500', icon: FileText },
-  effective: { label: 'Effective', color: 'bg-emerald-100 text-emerald-700', icon: CheckCircle2 },
+  approved: { label: 'Approved', color: 'bg-stone-100 text-stone-800', icon: CheckCircle2 },
+  rejected: { label: 'Rejected', color: 'bg-stone-100 text-stone-800', icon: AlertTriangle },
+  superseded: { label: 'Superseded', color: 'bg-stone-100 text-stone-500', icon: History },
+  archived: { label: 'Archived', color: 'bg-stone-100 text-stone-500', icon: FileText },
+  effective: { label: 'Effective', color: 'bg-stone-100 text-stone-800', icon: CheckCircle2 },
 };
 
 const CATEGORY_CONFIG: Record<DocumentCategory, { label: string; color: string }> = {
-  protocol: { label: 'Protocol', color: 'bg-blue-50 text-blue-700' },
-  investigator_brochure: { label: 'IB', color: 'bg-purple-50 text-purple-700' },
-  csr: { label: 'CSR', color: 'bg-green-50 text-green-700' },
-  cmc: { label: 'CMC', color: 'bg-amber-50 text-amber-700' },
-  nonclinical: { label: 'Nonclinical', color: 'bg-red-50 text-red-700' },
-  clinical: { label: 'Clinical', color: 'bg-teal-50 text-teal-700' },
-  regulatory: { label: 'Regulatory', color: 'bg-indigo-50 text-indigo-700' },
-  quality: { label: 'Quality', color: 'bg-pink-50 text-pink-700' },
-  safety: { label: 'Safety', color: 'bg-orange-50 text-orange-700' },
-  administrative: { label: 'Admin', color: 'bg-gray-50 text-gray-700' },
-  labeling: { label: 'Labeling', color: 'bg-cyan-50 text-cyan-700' },
+  protocol: { label: 'Protocol', color: 'bg-stone-100 text-stone-700' },
+  investigator_brochure: { label: 'IB', color: 'bg-stone-100 text-stone-700' },
+  csr: { label: 'CSR', color: 'bg-stone-100 text-stone-800' },
+  cmc: { label: 'CMC', color: 'bg-stone-100 text-stone-700' },
+  nonclinical: { label: 'Nonclinical', color: 'bg-stone-100 text-stone-800' },
+  clinical: { label: 'Clinical', color: 'bg-stone-100 text-stone-700' },
+  regulatory: { label: 'Regulatory', color: 'bg-stone-100 text-stone-700' },
+  quality: { label: 'Quality', color: 'bg-stone-100 text-stone-700' },
+  safety: { label: 'Safety', color: 'bg-stone-100 text-stone-700' },
+  administrative: { label: 'Admin', color: 'bg-stone-50 text-stone-700' },
+  labeling: { label: 'Labeling', color: 'bg-stone-100 text-stone-700' },
   correspondence: { label: 'Correspondence', color: 'bg-slate-50 text-slate-700' },
 };
 
@@ -136,19 +136,19 @@ const CATEGORY_CONFIG: Record<DocumentCategory, { label: string; color: string }
 const getFileIcon = (fileType: string) => {
   switch (fileType.toLowerCase()) {
     case 'pdf':
-      return <FileText className="h-5 w-5 text-red-500" />;
+      return <FileText className="h-5 w-5 text-stone-1000" />;
     case 'docx':
     case 'doc':
-      return <FileText className="h-5 w-5 text-blue-500" />;
+      return <FileText className="h-5 w-5 text-stone-1000" />;
     case 'xlsx':
     case 'xls':
-      return <FileSpreadsheet className="h-5 w-5 text-green-500" />;
+      return <FileSpreadsheet className="h-5 w-5 text-stone-1000" />;
     case 'png':
     case 'jpg':
     case 'jpeg':
-      return <FileImage className="h-5 w-5 text-purple-500" />;
+      return <FileImage className="h-5 w-5 text-stone-1000" />;
     default:
-      return <File className="h-5 w-5 text-gray-500" />;
+      return <File className="h-5 w-5 text-stone-500" />;
   }
 };
 
@@ -186,7 +186,7 @@ const FolderTree: React.FC<FolderTreeProps> = ({
             }
           }}
           className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${
-            isSelected ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50'
+            isSelected ? 'bg-stone-100 text-stone-700 font-medium' : 'text-stone-700 hover:bg-stone-50'
           }`}
           style={{ paddingLeft: `${12 + depth * 16}px` }}
         >
@@ -196,7 +196,7 @@ const FolderTree: React.FC<FolderTreeProps> = ({
                 e.stopPropagation();
                 onToggleExpand(folder.id);
               }}
-              className="p-0.5 hover:bg-gray-200 rounded"
+              className="p-0.5 hover:bg-stone-200 rounded"
             >
               {folder.isExpanded ? (
                 <ChevronDown className="h-3.5 w-3.5" />
@@ -208,12 +208,12 @@ const FolderTree: React.FC<FolderTreeProps> = ({
             <span className="w-4" />
           )}
           {folder.isExpanded ? (
-            <FolderOpen className="h-4 w-4 text-amber-500" />
+            <FolderOpen className="h-4 w-4 text-stone-1000" />
           ) : (
-            <Folder className="h-4 w-4 text-amber-500" />
+            <Folder className="h-4 w-4 text-stone-1000" />
           )}
           <span className="flex-1 text-left truncate">{folder.name}</span>
-          {folder.isLocked && <Lock className="h-3 w-3 text-gray-400" />}
+          {folder.isLocked && <Lock className="h-3 w-3 text-stone-400" />}
           <Badge variant="secondary" className="text-xs px-1.5">
             {folder.documentCount}
           </Badge>
@@ -231,11 +231,11 @@ const FolderTree: React.FC<FolderTreeProps> = ({
         onClick={() => onSelectFolder(null)}
         className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${
           selectedFolderId === null
-            ? 'bg-blue-50 text-blue-700 font-medium'
-            : 'text-gray-700 hover:bg-gray-50'
+            ? 'bg-stone-100 text-stone-700 font-medium'
+            : 'text-stone-700 hover:bg-stone-50'
         }`}
       >
-        <FolderLock className="h-4 w-4 text-blue-600" />
+        <FolderLock className="h-4 w-4 text-stone-600" />
         <span className="flex-1 text-left">All Documents</span>
       </button>
       {folders.map(folder => renderFolder(folder))}
@@ -323,7 +323,7 @@ const DocumentListItem: React.FC<DocumentListItemProps> = ({
                 </DropdownMenuItem>
               )}
               {canDelete && !document.isTemplate && (
-                <DropdownMenuItem className="text-red-600" onClick={() => onDelete(document)}>
+                <DropdownMenuItem className="text-stone-700" onClick={() => onDelete(document)}>
                   <Trash2 className="h-4 w-4 mr-2" /> Delete
                 </DropdownMenuItem>
               )}
@@ -345,8 +345,8 @@ const DocumentListItem: React.FC<DocumentListItemProps> = ({
 
         <div className="space-y-2">
           <div className="flex items-center gap-1">
-            {document.isFavorite && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
-            {document.isLocked && <Lock className="h-3 w-3 text-gray-400" />}
+            {document.isFavorite && <Star className="h-3 w-3 text-stone-1000 fill-stone-1000" />}
+            {document.isLocked && <Lock className="h-3 w-3 text-stone-400" />}
             <h3 className="font-medium text-sm truncate flex-1" title={document.name}>
               {document.name}
             </h3>
@@ -367,14 +367,14 @@ const DocumentListItem: React.FC<DocumentListItemProps> = ({
   // List view
   return (
     <div
-      className="group flex items-center gap-4 rounded-lg border p-3 hover:bg-gray-50 transition-colors cursor-pointer"
+      className="group flex items-center gap-4 rounded-lg border p-3 hover:bg-stone-50 transition-colors cursor-pointer"
       onClick={() => onView(document)}
     >
       <div className="flex-shrink-0">{getFileIcon(document.fileType)}</div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          {document.isFavorite && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
-          {document.isLocked && <Lock className="h-3 w-3 text-gray-400" />}
+          {document.isFavorite && <Star className="h-3 w-3 text-stone-1000 fill-stone-1000" />}
+          {document.isLocked && <Lock className="h-3 w-3 text-stone-400" />}
           <span className="font-medium text-sm truncate">{document.name}</span>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
@@ -424,7 +424,7 @@ const DocumentListItem: React.FC<DocumentListItemProps> = ({
               <History className="h-4 w-4 mr-2" /> Version History
             </DropdownMenuItem>
             {canDelete && !document.isTemplate && (
-              <DropdownMenuItem className="text-red-600" onClick={() => onDelete(document)}>
+              <DropdownMenuItem className="text-stone-700" onClick={() => onDelete(document)}>
                 <Trash2 className="h-4 w-4 mr-2" /> Delete
               </DropdownMenuItem>
             )}
@@ -994,7 +994,7 @@ export const DocumentVault: React.FC = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <FolderLock className="h-6 w-6 text-blue-600" />
+            <FolderLock className="h-6 w-6 text-stone-600" />
             Document Vault
           </h1>
           <p className="text-muted-foreground">Secure document repository with version control</p>
@@ -1073,7 +1073,7 @@ export const DocumentVault: React.FC = () => {
         </Card>
         <div
           className={`rounded-lg border-2 border-dashed p-3 text-sm transition-colors ${
-            dragActive ? 'border-blue-500 bg-blue-50' : 'border-slate-300 bg-white'
+            dragActive ? 'border-stone-1000 bg-stone-100' : 'border-slate-300 bg-white'
           }`}
           onDragOver={e => {
             e.preventDefault();
@@ -1088,12 +1088,12 @@ export const DocumentVault: React.FC = () => {
       </div>
 
       {uiNotice && (
-        <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        <div className="mb-4 rounded-md border border-stone-200 bg-stone-100 px-3 py-2 text-sm text-stone-800">
           {uiNotice}
         </div>
       )}
       {uiError && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+        <div className="mb-4 rounded-md border border-stone-200 bg-stone-100 px-3 py-2 text-sm text-stone-800">
           {uiError}
         </div>
       )}
@@ -1222,12 +1222,12 @@ export const DocumentVault: React.FC = () => {
           <div className="flex-1 overflow-auto">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-                <div className="h-8 w-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4" />
+                <div className="h-8 w-8 border-4 border-stone-200 border-t-stone-600 rounded-full animate-spin mb-4" />
                 <p className="text-sm">Loading documents...</p>
               </div>
             ) : error ? (
               <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-                <AlertTriangle className="h-12 w-12 mb-4 text-red-400" />
+                <AlertTriangle className="h-12 w-12 mb-4 text-stone-400" />
                 <p className="text-lg font-medium">Failed to load documents</p>
                 <p className="text-sm mb-4">{(error as Error).message}</p>
                 <Button variant="outline" size="sm" onClick={() => refetch()}>

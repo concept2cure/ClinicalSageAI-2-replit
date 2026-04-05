@@ -240,17 +240,17 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                 className={cn(
                   'font-medium',
                   readinessScore >= 70
-                    ? 'text-emerald-600'
+                    ? 'text-stone-700'
                     : readinessScore >= 40
-                      ? 'text-amber-600'
-                      : 'text-red-600'
+                      ? 'text-stone-600'
+                      : 'text-stone-700'
                 )}
               >
                 Readiness: {readinessScore}%
               </SecondaryInfoItem>
             )}
             {isBlocked && (
-              <SecondaryInfoItem className="font-medium text-red-600">
+              <SecondaryInfoItem className="font-medium text-stone-700">
                 Promotion Blocked
               </SecondaryInfoItem>
             )}
@@ -351,7 +351,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                   {readinessScore != null && (
                     <span className={cn(
                       'font-semibold',
-                      readinessScore >= 70 ? 'text-emerald-600' : readinessScore >= 40 ? 'text-amber-600' : 'text-red-600'
+                      readinessScore >= 70 ? 'text-stone-700' : readinessScore >= 40 ? 'text-stone-600' : 'text-stone-700'
                     )}>
                       Readiness: {readinessScore}%
                     </span>
@@ -362,7 +362,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                     </span>
                   )}
                   {isBlocked && (
-                    <span className="font-semibold text-red-600">Promotion blocked</span>
+                    <span className="font-semibold text-stone-700">Promotion blocked</span>
                   )}
                 </div>
               </div>
@@ -391,9 +391,9 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                 className={cn(
                   'border rounded-lg p-3',
                   issue.severity === 'critical'
-                    ? 'border-red-200 bg-red-50'
+                    ? 'border-stone-200 bg-stone-100'
                     : issue.severity === 'warning'
-                      ? 'border-amber-200 bg-amber-50'
+                      ? 'border-stone-200 bg-stone-100'
                       : 'border-stone-200 bg-stone-50'
                 )}
               >
@@ -402,9 +402,9 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                     className={cn(
                       'text-[10px] font-bold uppercase px-1.5 py-0.5 rounded',
                       issue.severity === 'critical'
-                        ? 'bg-red-200 text-red-800'
+                        ? 'bg-stone-200 text-stone-800'
                         : issue.severity === 'warning'
-                          ? 'bg-amber-200 text-amber-800'
+                          ? 'bg-stone-200 text-stone-800'
                           : 'bg-stone-200 text-stone-700'
                     )}
                   >
@@ -426,7 +426,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                     <XCircle
                       className={cn(
                         'w-3.5 h-3.5 mt-0.5 flex-shrink-0',
-                        b.severity === 'critical' ? 'text-red-500' : 'text-amber-500'
+                        b.severity === 'critical' ? 'text-stone-1000' : 'text-stone-1000'
                       )}
                     />
                     <div>

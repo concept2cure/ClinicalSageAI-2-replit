@@ -92,7 +92,7 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
             <h3 className="font-semibold text-stone-900">Predicate Pathfinder</h3>
             <p className="text-sm text-stone-500">Search FDA 510(k) database for predicates</p>
           </div>
-          <button className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1">
+          <button className="text-sm text-stone-600 hover:text-stone-700 font-medium flex items-center gap-1">
             <Filter className="w-4 h-4" />
             Filters
           </button>
@@ -129,17 +129,17 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-blue-600">{predicate.kNumber}</span>
+                      <span className="font-medium text-stone-600">{predicate.kNumber}</span>
                       <span className={cn(
                         "px-1.5 py-0.5 rounded text-xs font-medium",
                         predicate.decisionType === 'SE' 
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-red-100 text-red-700"
+                          ? "bg-stone-100 text-stone-800"
+                          : "bg-stone-100 text-stone-800"
                       )}>
                         {predicate.decisionType}
                       </span>
                       {predicate.similarityScore && (
-                        <span className="px-1.5 py-0.5 rounded bg-blue-100 text-stone-700 text-xs font-medium">
+                        <span className="px-1.5 py-0.5 rounded bg-stone-100 text-stone-700 text-xs font-medium">
                           {Math.round(predicate.similarityScore * 100)}% match
                         </span>
                       )}
@@ -202,18 +202,18 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
 
   const getRiskColor = (level: string) => {
     switch (level) {
-      case 'CRITICAL': return 'bg-red-100 text-red-700 border-red-200';
-      case 'HIGH': return 'bg-amber-100 text-amber-700 border-amber-200';
-      case 'MEDIUM': return 'bg-amber-100 text-amber-700 border-amber-200';
-      case 'LOW': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      case 'CRITICAL': return 'bg-stone-100 text-stone-800 border-stone-200';
+      case 'HIGH': return 'bg-stone-100 text-stone-700 border-stone-200';
+      case 'MEDIUM': return 'bg-stone-100 text-stone-700 border-stone-200';
+      case 'LOW': return 'bg-stone-100 text-stone-800 border-stone-200';
       default: return 'bg-stone-100 text-stone-700 border-stone-200';
     }
   };
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
-      case 'UP': return <TrendingUp className="w-4 h-4 text-red-500" />;
-      case 'DOWN': return <TrendingDown className="w-4 h-4 text-emerald-500" />;
+      case 'UP': return <TrendingUp className="w-4 h-4 text-stone-1000" />;
+      case 'DOWN': return <TrendingDown className="w-4 h-4 text-stone-1000" />;
       default: return <Activity className="w-4 h-4 text-stone-400" />;
     }
   };
@@ -245,19 +245,19 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
           <div className="text-xs text-stone-500">Total Reports</div>
         </div>
         <div className="text-center">
-          <div className="text-base font-semibold text-amber-600">
+          <div className="text-base font-semibold text-stone-600">
             {hazardAnalysis.summary.malfunctions}
           </div>
           <div className="text-xs text-stone-500">Malfunctions</div>
         </div>
         <div className="text-center">
-          <div className="text-base font-semibold text-amber-600">
+          <div className="text-base font-semibold text-stone-600">
             {hazardAnalysis.summary.injuries}
           </div>
           <div className="text-xs text-stone-500">Injuries</div>
         </div>
         <div className="text-center">
-          <div className="text-base font-semibold text-red-600">
+          <div className="text-base font-semibold text-stone-700">
             {hazardAnalysis.summary.deaths}
           </div>
           <div className="text-xs text-stone-500">Deaths</div>
@@ -290,12 +290,12 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
 
       {/* Recommendations */}
       {hazardAnalysis.recommendations.length > 0 && (
-        <div className="p-4 border-t border-stone-200 bg-amber-50">
-          <h4 className="text-sm font-medium text-amber-900 mb-2">Recommendations</h4>
+        <div className="p-4 border-t border-stone-200 bg-stone-100">
+          <h4 className="text-sm font-medium text-stone-900 mb-2">Recommendations</h4>
           <ul className="space-y-1">
             {hazardAnalysis.recommendations.map((rec, index) => (
-              <li key={index} className="text-sm text-amber-700 flex items-start gap-2">
-                <span className="text-amber-500">•</span>
+              <li key={index} className="text-sm text-stone-700 flex items-start gap-2">
+                <span className="text-stone-1000">•</span>
                 {rec}
               </li>
             ))}
@@ -317,13 +317,13 @@ const SubmissionTracker: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'DRAFT': return 'bg-stone-100 text-stone-600';
-      case 'INTERNAL_REVIEW': return 'bg-blue-100 text-blue-600';
-      case 'READY_FOR_SUBMISSION': return 'bg-emerald-100 text-emerald-600';
+      case 'INTERNAL_REVIEW': return 'bg-stone-100 text-stone-600';
+      case 'READY_FOR_SUBMISSION': return 'bg-stone-100 text-stone-700';
       case 'SUBMITTED': return 'bg-stone-200 text-stone-600';
-      case 'RTA_HOLD': return 'bg-amber-100 text-amber-600';
-      case 'SUBSTANTIVE_REVIEW': return 'bg-blue-100 text-blue-600';
-      case 'AI_REQUEST': return 'bg-amber-100 text-amber-600';
-      case 'SE_DETERMINATION': return 'bg-emerald-100 text-emerald-600';
+      case 'RTA_HOLD': return 'bg-stone-100 text-stone-600';
+      case 'SUBSTANTIVE_REVIEW': return 'bg-stone-100 text-stone-600';
+      case 'AI_REQUEST': return 'bg-stone-100 text-stone-600';
+      case 'SE_DETERMINATION': return 'bg-stone-100 text-stone-700';
       default: return 'bg-stone-100 text-stone-600';
     }
   };

@@ -383,7 +383,7 @@ function PMSMetrics({
               <p className="text-sm text-muted-foreground">Active Signals</p>
               <p className="text-base font-semibold">{activeSignals}</p>
             </div>
-            <Activity className="w-8 h-8 text-blue-500" />
+            <Activity className="w-8 h-8 text-stone-1000" />
           </div>
         </div>
       </div>
@@ -393,9 +393,9 @@ function PMSMetrics({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">High Priority</p>
-              <p className="text-base font-semibold text-red-600">{highPrioritySignals}</p>
+              <p className="text-base font-semibold text-stone-700">{highPrioritySignals}</p>
             </div>
-            <AlertTriangle className="w-8 h-8 text-red-500" />
+            <AlertTriangle className="w-8 h-8 text-stone-1000" />
           </div>
         </div>
       </div>
@@ -407,7 +407,7 @@ function PMSMetrics({
               <p className="text-sm text-muted-foreground">Pending Reports</p>
               <p className="text-base font-semibold">{pendingReports}</p>
             </div>
-            <FileText className="w-8 h-8 text-blue-500" />
+            <FileText className="w-8 h-8 text-stone-1000" />
           </div>
         </div>
       </div>
@@ -417,9 +417,9 @@ function PMSMetrics({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Overdue</p>
-              <p className="text-base font-semibold text-amber-600">{overdueReports}</p>
+              <p className="text-base font-semibold text-stone-600">{overdueReports}</p>
             </div>
-            <Clock className="w-8 h-8 text-amber-500" />
+            <Clock className="w-8 h-8 text-stone-1000" />
           </div>
         </div>
       </div>
@@ -441,9 +441,9 @@ function PMSMetrics({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Urgent Cases</p>
-              <p className="text-base font-semibold text-red-600">{urgentVigilance}</p>
+              <p className="text-base font-semibold text-stone-700">{urgentVigilance}</p>
             </div>
-            <AlertCircle className="w-8 h-8 text-red-500" />
+            <AlertCircle className="w-8 h-8 text-stone-1000" />
           </div>
         </div>
       </div>
@@ -509,10 +509,10 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
                   <p
                     className={`text-base font-semibold ${
                       selectedSignal.riskScore >= 70
-                        ? 'text-red-600'
+                        ? 'text-stone-700'
                         : selectedSignal.riskScore >= 50
-                          ? 'text-amber-600'
-                          : 'text-emerald-600'
+                          ? 'text-stone-600'
+                          : 'text-stone-700'
                     }`}
                   >
                     {selectedSignal.riskScore}
@@ -634,7 +634,7 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
               <TableCell>
                 <span
                   className={
-                    signal.caseCount > signal.expectedCount * 2 ? 'text-red-600 font-medium' : ''
+                    signal.caseCount > signal.expectedCount * 2 ? 'text-stone-700 font-medium' : ''
                   }
                 >
                   {signal.caseCount}
@@ -645,10 +645,10 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
                 <span
                   className={`font-medium ${
                     signal.riskScore >= 70
-                      ? 'text-red-600'
+                      ? 'text-stone-700'
                       : signal.riskScore >= 50
-                        ? 'text-amber-600'
-                        : 'text-emerald-600'
+                        ? 'text-stone-600'
+                        : 'text-stone-700'
                   }`}
                 >
                   {signal.riskScore}
@@ -713,11 +713,11 @@ function PeriodicReports({ reports }: { reports: PeriodicReport[] }) {
           const isOverdue = daysRemaining < 0;
 
           return (
-            <div key={report.id} className={`border border-border/40 rounded-sm bg-background ${isOverdue ? 'border-red-300' : ''}`}>
+            <div key={report.id} className={`border border-border/40 rounded-sm bg-background ${isOverdue ? 'border-stone-300' : ''}`}>
               <div className="px-3 py-2 p-4">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
+                    <div className="p-2 bg-stone-100 rounded-lg">
                       {REPORT_TYPE_LABELS[report.type].icon}
                     </div>
                     <div>
@@ -750,7 +750,7 @@ function PeriodicReports({ reports }: { reports: PeriodicReport[] }) {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Due Date</p>
-                    <p className={`text-sm ${isOverdue ? 'text-red-600 font-medium' : ''}`}>
+                    <p className={`text-sm ${isOverdue ? 'text-stone-700 font-medium' : ''}`}>
                       {report.dueDate}
                       {isOverdue && ' (Overdue)'}
                     </p>
@@ -875,7 +875,7 @@ function VigilanceReporting({ cases }: { cases: VigilanceCase[] }) {
             const isUrgent = daysToDeadline <= 7;
 
             return (
-              <TableRow key={c.id} className={isUrgent ? 'bg-red-50' : ''}>
+              <TableRow key={c.id} className={isUrgent ? 'bg-stone-100' : ''}>
                 <TableCell className="font-mono">{c.id}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{VIGILANCE_TIMELINES[c.type].label}</Badge>
@@ -913,7 +913,7 @@ function VigilanceReporting({ cases }: { cases: VigilanceCase[] }) {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <span className={isUrgent ? 'text-red-600 font-medium' : ''}>
+                  <span className={isUrgent ? 'text-stone-700 font-medium' : ''}>
                     {c.reportingDeadline}
                     {isUrgent && daysToDeadline > 0 && ` (${daysToDeadline}d)`}
                     {daysToDeadline <= 0 && ' (Overdue!)'}
@@ -961,33 +961,33 @@ function RiskBenefitTab() {
           <div className="grid md:grid-cols-2 gap-6">
             {/* Benefits */}
             <div>
-              <h4 className="font-semibold text-emerald-700 flex items-center gap-2 mb-3">
+              <h4 className="font-semibold text-stone-800 flex items-center gap-2 mb-3">
                 <TrendingUp className="w-5 h-5" />
                 Benefits
               </h4>
               <div className="space-y-3">
-                <div className="p-3 bg-emerald-50 rounded-lg">
+                <div className="p-3 bg-stone-100 rounded-lg">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium">Cardiovascular Event Reduction</span>
-                    <span className="text-sm text-emerald-700">Weight: 40%</span>
+                    <span className="text-sm text-stone-800">Weight: 40%</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     32% reduction in major cardiovascular events vs placebo
                   </p>
                 </div>
-                <div className="p-3 bg-emerald-50 rounded-lg">
+                <div className="p-3 bg-stone-100 rounded-lg">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium">Mortality Benefit</span>
-                    <span className="text-sm text-emerald-700">Weight: 35%</span>
+                    <span className="text-sm text-stone-800">Weight: 35%</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     18% reduction in all-cause mortality
                   </p>
                 </div>
-                <div className="p-3 bg-emerald-50 rounded-lg">
+                <div className="p-3 bg-stone-100 rounded-lg">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium">Quality of Life</span>
-                    <span className="text-sm text-emerald-700">Weight: 25%</span>
+                    <span className="text-sm text-stone-800">Weight: 25%</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     Significant improvement in functional capacity
@@ -998,42 +998,42 @@ function RiskBenefitTab() {
 
             {/* Risks */}
             <div>
-              <h4 className="font-semibold text-red-700 flex items-center gap-2 mb-3">
+              <h4 className="font-semibold text-stone-800 flex items-center gap-2 mb-3">
                 <TrendingDown className="w-5 h-5" />
                 Risks
               </h4>
               <div className="space-y-3">
-                <div className="p-3 bg-red-50 rounded-lg">
+                <div className="p-3 bg-stone-100 rounded-lg">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium">Hepatotoxicity Risk</span>
-                    <span className="text-sm text-red-700">Weight: 30%</span>
+                    <span className="text-sm text-stone-800">Weight: 30%</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     0.5% incidence of elevated liver enzymes &gt; 3x ULN
                   </p>
-                  <p className="text-xs text-blue-600 mt-1">
+                  <p className="text-xs text-stone-600 mt-1">
                     Mitigation: Liver function monitoring
                   </p>
                 </div>
-                <div className="p-3 bg-red-50 rounded-lg">
+                <div className="p-3 bg-stone-100 rounded-lg">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium">Hypotension</span>
-                    <span className="text-sm text-red-700">Weight: 25%</span>
+                    <span className="text-sm text-stone-800">Weight: 25%</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     5% incidence of symptomatic hypotension
                   </p>
-                  <p className="text-xs text-blue-600 mt-1">Mitigation: Gradual dose titration</p>
+                  <p className="text-xs text-stone-600 mt-1">Mitigation: Gradual dose titration</p>
                 </div>
-                <div className="p-3 bg-amber-50 rounded-lg">
+                <div className="p-3 bg-stone-100 rounded-lg">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium">Drug Interactions</span>
-                    <span className="text-sm text-amber-700">Weight: 20%</span>
+                    <span className="text-sm text-stone-700">Weight: 20%</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     CYP3A4 inhibitor interactions require monitoring
                   </p>
-                  <p className="text-xs text-blue-600 mt-1">
+                  <p className="text-xs text-stone-600 mt-1">
                     Mitigation: Contraindication labeling
                   </p>
                 </div>
@@ -1042,10 +1042,10 @@ function RiskBenefitTab() {
           </div>
 
           {/* Conclusion */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <h4 className="font-semibold text-blue-800 mb-2">Overall Conclusion</h4>
+          <div className="mt-6 p-4 bg-stone-100 rounded-lg">
+            <h4 className="font-semibold text-stone-800 mb-2">Overall Conclusion</h4>
             <div className="flex items-center gap-3">
-              <Badge className="bg-emerald-600">Favorable</Badge>
+              <Badge className="bg-stone-700">Favorable</Badge>
               <p className="text-sm text-stone-700">
                 The benefit-risk balance remains favorable for the approved indication when used in
                 accordance with the prescribing information.

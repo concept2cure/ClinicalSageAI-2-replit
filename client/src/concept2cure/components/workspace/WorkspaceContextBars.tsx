@@ -133,7 +133,7 @@ export default function WorkspaceContextBars(props: WorkspaceContextBarsProps) {
                   className={cn(
                     'text-[11px] px-1.5 py-0.5 rounded-md border whitespace-nowrap',
                     idx + 1 <= workflowStep
-                      ? 'border-blue-200 bg-blue-50 text-blue-700'
+                      ? 'border-stone-200 bg-stone-100 text-stone-700'
                       : 'border-stone-200 bg-white text-stone-500'
                   )}
                 >
@@ -170,7 +170,7 @@ export default function WorkspaceContextBars(props: WorkspaceContextBarsProps) {
                     isCurrent
                       ? 'border-stone-300 bg-white text-stone-800 font-semibold'
                       : isDone
-                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                      ? 'border-stone-200 bg-stone-100 text-stone-800'
                       : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-100'
                   )}
                   title={step.hint}
@@ -201,7 +201,7 @@ export default function WorkspaceContextBars(props: WorkspaceContextBarsProps) {
               className={cn(
                 'text-[10px] px-2 py-0.5 rounded border',
                 guidedControlMode === 'client'
-                  ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                  ? 'border-stone-300 bg-stone-100 text-stone-800'
                   : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
               )}
             >
@@ -260,7 +260,7 @@ export default function WorkspaceContextBars(props: WorkspaceContextBarsProps) {
                       'inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors',
                       selected
                         ? 'bg-stone-800 text-white'
-                        : 'bg-white text-stone-600 border border-stone-200 hover:bg-blue-50'
+                        : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-100'
                     )}
                     title={workbench.description}
                   >
@@ -281,7 +281,7 @@ export default function WorkspaceContextBars(props: WorkspaceContextBarsProps) {
           {reviewInFlight > 0 && (
             <>
               <span className="text-stone-200">·</span>
-              <span className="text-[11px] text-amber-600">{reviewInFlight} in review</span>
+              <span className="text-[11px] text-stone-600">{reviewInFlight} in review</span>
             </>
           )}
           <div className="ml-auto flex items-center gap-1">
@@ -293,13 +293,13 @@ export default function WorkspaceContextBars(props: WorkspaceContextBarsProps) {
             </button>
             <button
               onClick={onOpenReports}
-              className="text-[11px] px-2 py-0.5 rounded border border-blue-200 text-stone-700 hover:bg-blue-50"
+              className="text-[11px] px-2 py-0.5 rounded border border-stone-200 text-stone-700 hover:bg-stone-100"
             >
               Reports
             </button>
             <button
               onClick={onOpenSubmissionBuilder}
-              className="text-[11px] px-2 py-0.5 rounded border border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+              className="text-[11px] px-2 py-0.5 rounded border border-stone-200 text-stone-800 hover:bg-stone-100"
             >
               Submission Builder
             </button>
@@ -308,8 +308,8 @@ export default function WorkspaceContextBars(props: WorkspaceContextBarsProps) {
 
         {/* Dossier modules */}
         {!isINDWorkspace && (
-          <div className="flex items-center gap-2 px-4 h-9 border-b border-zinc-200 bg-emerald-50/40 shrink-0 overflow-x-auto">
-            <span className="text-[10px] font-medium text-emerald-600 uppercase tracking-wide whitespace-nowrap">
+          <div className="flex items-center gap-2 px-4 h-9 border-b border-zinc-200 bg-stone-100/40 shrink-0 overflow-x-auto">
+            <span className="text-[10px] font-medium text-stone-700 uppercase tracking-wide whitespace-nowrap">
               Dossier modules
             </span>
             {[
@@ -320,12 +320,12 @@ export default function WorkspaceContextBars(props: WorkspaceContextBarsProps) {
             ].map(step => (
               <span
                 key={step.module}
-                className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-white px-2 py-0.5 text-[11px] text-emerald-800 whitespace-nowrap"
+                className="inline-flex items-center gap-1.5 rounded-md border border-stone-200 bg-white px-2 py-0.5 text-[11px] text-stone-800 whitespace-nowrap"
                 title={step.focus}
               >
-                <MapPin className="w-3 h-3 text-emerald-600" />
+                <MapPin className="w-3 h-3 text-stone-700" />
                 <span className="font-medium">{step.module}</span>
-                <span className="text-emerald-600">{step.focus}</span>
+                <span className="text-stone-700">{step.focus}</span>
               </span>
             ))}
           </div>
@@ -354,12 +354,12 @@ export default function WorkspaceContextBars(props: WorkspaceContextBarsProps) {
 
       {/* IND workspace bar */}
       {isINDWorkspace && (
-        <div className="border-b border-blue-200 bg-blue-50/50 px-4 py-2.5 shrink-0">
-          <div className="flex items-center gap-2 text-xs text-blue-900">
+        <div className="border-b border-stone-200 bg-stone-100/50 px-4 py-2.5 shrink-0">
+          <div className="flex items-center gap-2 text-xs text-stone-900">
             <span className="font-semibold">IND / eCTD Workspace</span>
-            <span className="text-blue-300">•</span>
+            <span className="text-stone-300">•</span>
             <span>Readiness {readinessPercent}%</span>
-            <span className="text-blue-300">•</span>
+            <span className="text-stone-300">•</span>
             <span>
               Next step:{' '}
               {nextRecommendedSection
@@ -371,25 +371,25 @@ export default function WorkspaceContextBars(props: WorkspaceContextBarsProps) {
             <div className="ml-auto flex items-center gap-2">
               <button
                 onClick={onOpenSectionTree}
-                className="inline-flex items-center gap-1 rounded border border-blue-200 bg-white px-2 py-1 text-[11px] font-medium text-stone-700 hover:bg-blue-100"
+                className="inline-flex items-center gap-1 rounded border border-stone-200 bg-white px-2 py-1 text-[11px] font-medium text-stone-700 hover:bg-stone-100"
               >
                 Section tree
               </button>
               <button
                 onClick={onStartNextWithRI}
-                className="inline-flex items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100"
+                className="inline-flex items-center gap-1 rounded border border-stone-300 bg-stone-100 px-2 py-1 text-[11px] font-medium text-stone-800 hover:bg-stone-100"
               >
                 Start next with RI
               </button>
               <button
                 onClick={onHAQPath}
-                className="inline-flex items-center gap-1 rounded border border-blue-200 bg-white px-2 py-1 text-[11px] font-medium text-stone-700 hover:bg-blue-100"
+                className="inline-flex items-center gap-1 rounded border border-stone-200 bg-white px-2 py-1 text-[11px] font-medium text-stone-700 hover:bg-stone-100"
               >
                 HAQ path
               </button>
               <button
                 onClick={onAssembleExport}
-                className="inline-flex items-center gap-1 rounded border border-blue-200 bg-white px-2 py-1 text-[11px] font-medium text-stone-700 hover:bg-blue-100"
+                className="inline-flex items-center gap-1 rounded border border-stone-200 bg-white px-2 py-1 text-[11px] font-medium text-stone-700 hover:bg-stone-100"
               >
                 Assemble/export
               </button>

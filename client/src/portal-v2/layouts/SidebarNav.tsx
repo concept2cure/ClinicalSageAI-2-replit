@@ -276,8 +276,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                 className={cn(
                   'flex h-10 w-10 items-center justify-center rounded-md transition-colors',
                   isActive
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-stone-100 text-stone-700'
+                    : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
                 )}
               >
                 <Icon className="h-5 w-5" />
@@ -303,8 +303,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
         className={cn(
           'flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors',
           isActive
-            ? 'bg-blue-50 font-medium text-blue-700'
-            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+            ? 'bg-stone-100 font-medium text-stone-700'
+            : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
         )}
       >
         <Icon className="h-4 w-4 shrink-0" />
@@ -341,7 +341,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       <div key={category} className="py-2">
         <button
           onClick={() => toggleSection(category)}
-          className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 hover:text-gray-700"
+          className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-stone-500 hover:text-stone-700"
         >
           {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           <CategoryIcon className="h-3.5 w-3.5" />
@@ -389,7 +389,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
               <span className="text-[9px] font-bold text-white">C2C</span>
             </div>
             <div>
-              <div className="text-sm font-bold text-gray-900">Concept2Cure</div>
+              <div className="text-sm font-bold text-stone-900">Concept2Cure</div>
               <div className="text-xs text-muted-foreground">Client Portal</div>
             </div>
           </div>
@@ -456,7 +456,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
               </button>
             </div>
             {commandFeedback && (
-              <div className="mt-1.5 text-[11px] text-blue-600 animate-pulse">
+              <div className="mt-1.5 text-[11px] text-stone-600 animate-pulse">
                 {commandFeedback}
               </div>
             )}
@@ -485,8 +485,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                   className={cn(
                     'flex h-10 w-10 items-center justify-center rounded-md transition-colors',
                     currentActiveModule === 'settings'
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      ? 'bg-stone-100 text-stone-700'
+                      : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
                   )}
                 >
                   <Settings className="h-5 w-5" />
@@ -501,8 +501,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
             className={cn(
               'flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors',
               currentActiveModule === 'settings'
-                ? 'bg-blue-50 font-medium text-blue-700'
-                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-stone-100 font-medium text-stone-700'
+                : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
             )}
           >
             <Settings className="h-4 w-4" />

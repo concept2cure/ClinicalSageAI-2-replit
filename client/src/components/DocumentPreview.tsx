@@ -118,19 +118,19 @@ export default function DocumentPreview({
         className="max-w-4xl w-[90vw] h-[85vh] flex flex-col p-0 gap-0"
         style={{ maxHeight: '85vh' }}
       >
-        <DialogHeader className="px-6 py-4 border-b border-gray-200 shrink-0">
+        <DialogHeader className="px-6 py-4 border-b border-stone-200 shrink-0">
           <DialogTitle className="text-base font-semibold truncate">
             {title || `Document #${documentId}`}
           </DialogTitle>
-          <DialogDescription className="text-xs text-gray-500">Read-only preview</DialogDescription>
+          <DialogDescription className="text-xs text-stone-500">Read-only preview</DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 min-h-0 overflow-hidden">
           {/* Loading */}
           {state.status === 'loading' && (
             <div className="flex items-center justify-center h-full">
-              <div className="text-center text-gray-500">
-                <div className="inline-block w-8 h-8 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mb-3" />
+              <div className="text-center text-stone-500">
+                <div className="inline-block w-8 h-8 border-2 border-stone-300 border-t-stone-600 rounded-full animate-spin mb-3" />
                 <p className="text-sm">Loading preview...</p>
               </div>
             </div>
@@ -140,12 +140,12 @@ export default function DocumentPreview({
           {state.status === 'error' && (
             <div className="flex items-center justify-center h-full px-8">
               <div className="text-center max-w-md">
-                <div className="text-red-500 text-3xl mb-3">!</div>
-                <p className="text-sm font-medium text-gray-900 mb-1">Preview unavailable</p>
-                <p className="text-xs text-gray-500 mb-4">{state.message}</p>
+                <div className="text-stone-1000 text-3xl mb-3">!</div>
+                <p className="text-sm font-medium text-stone-900 mb-1">Preview unavailable</p>
+                <p className="text-xs text-stone-500 mb-4">{state.message}</p>
                 <button
                   onClick={fetchPreview}
-                  className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded text-gray-700 transition-colors"
+                  className="text-xs px-3 py-1.5 bg-stone-100 hover:bg-stone-200 rounded text-stone-700 transition-colors"
                 >
                   Retry
                 </button>
@@ -170,7 +170,7 @@ export default function DocumentPreview({
 
           {/* Idle / no document */}
           {state.status === 'idle' && (
-            <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+            <div className="flex items-center justify-center h-full text-stone-400 text-sm">
               No document selected
             </div>
           )}

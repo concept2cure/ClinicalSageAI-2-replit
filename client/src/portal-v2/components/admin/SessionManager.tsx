@@ -149,10 +149,10 @@ const DEVICE_ICONS: Record<DeviceType, React.ComponentType<{ className?: string 
 };
 
 const STATUS_CONFIG: Record<SessionStatus, { label: string; color: string; bgColor: string }> = {
-  active: { label: 'Active', color: 'text-green-600', bgColor: 'bg-green-100' },
-  idle: { label: 'Idle', color: 'text-amber-600', bgColor: 'bg-amber-100' },
-  expired: { label: 'Expired', color: 'text-gray-600', bgColor: 'bg-gray-100' },
-  terminated: { label: 'Terminated', color: 'text-red-600', bgColor: 'bg-red-100' },
+  active: { label: 'Active', color: 'text-stone-700', bgColor: 'bg-stone-100' },
+  idle: { label: 'Idle', color: 'text-stone-600', bgColor: 'bg-stone-100' },
+  expired: { label: 'Expired', color: 'text-stone-600', bgColor: 'bg-stone-100' },
+  terminated: { label: 'Terminated', color: 'text-stone-700', bgColor: 'bg-stone-100' },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -383,12 +383,12 @@ const SessionCard: React.FC<{
                 <p className="flex items-center gap-1">
                   {session.mfaVerified ? (
                     <>
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <CheckCircle className="h-4 w-4 text-stone-700" />
                       Verified
                     </>
                   ) : (
                     <>
-                      <XCircle className="h-4 w-4 text-red-600" />
+                      <XCircle className="h-4 w-4 text-stone-700" />
                       Not Verified
                     </>
                   )}
@@ -721,7 +721,7 @@ const SessionActivityDialog: React.FC<{
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-2 h-2 rounded-full ${activity.success ? 'bg-green-500' : 'bg-red-500'}`}
+                    className={`w-2 h-2 rounded-full ${activity.success ? 'bg-stone-1000' : 'bg-stone-1000'}`}
                   />
                   <div>
                     <p className="font-medium capitalize">{activity.action}</p>

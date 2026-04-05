@@ -98,11 +98,11 @@ const TOXICITY_THRESHOLDS = {
 } as const;
 
 const EQUIVALENCE_COLORS: Record<EquivalenceStatus, string> = {
-  EQUIVALENT: 'bg-green-100 text-green-800 border-green-200',
-  DISCUSSION_REQUIRED: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  NOT_EQUIVALENT: 'bg-red-100 text-red-800 border-red-200',
-  TOXIC: 'bg-red-200 text-red-900 border-red-400',
-  PENDING: 'bg-gray-100 text-gray-600 border-gray-200',
+  EQUIVALENT: 'bg-stone-100 text-stone-800 border-stone-200',
+  DISCUSSION_REQUIRED: 'bg-stone-100 text-stone-800 border-stone-200',
+  NOT_EQUIVALENT: 'bg-stone-100 text-stone-800 border-stone-200',
+  TOXIC: 'bg-stone-200 text-stone-900 border-stone-400',
+  PENDING: 'bg-stone-100 text-stone-600 border-stone-200',
 };
 
 const EQUIVALENCE_ICONS: Record<EquivalenceStatus, typeof CheckCircle> = {
@@ -118,10 +118,10 @@ const EQUIVALENCE_ICONS: Record<EquivalenceStatus, typeof CheckCircle> = {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const STRATEGY_COLORS: Record<StrategyRecommendation, string> = {
-  CONSERVATIVE: 'bg-blue-100 text-blue-800 border-blue-200',
-  AGGRESSIVE: 'bg-purple-100 text-purple-800 border-purple-200',
-  BALANCED: 'bg-green-100 text-green-800 border-green-200',
-  AVOID: 'bg-red-100 text-red-900 border-red-300',
+  CONSERVATIVE: 'bg-stone-100 text-stone-800 border-stone-200',
+  AGGRESSIVE: 'bg-stone-100 text-stone-800 border-stone-200',
+  BALANCED: 'bg-stone-100 text-stone-800 border-stone-200',
+  AVOID: 'bg-stone-100 text-stone-900 border-stone-300',
 };
 
 const STRATEGY_ICONS: Record<StrategyRecommendation, typeof CheckCircle> = {
@@ -132,11 +132,11 @@ const STRATEGY_ICONS: Record<StrategyRecommendation, typeof CheckCircle> = {
 };
 
 const SEVERITY_COLORS: Record<string, string> = {
-  none: 'text-green-600',
-  low: 'text-yellow-600',
-  medium: 'text-orange-600',
-  high: 'text-red-600',
-  critical: 'text-red-900 font-bold',
+  none: 'text-stone-700',
+  low: 'text-stone-600',
+  medium: 'text-stone-600',
+  high: 'text-stone-700',
+  critical: 'text-stone-900 font-bold',
 };
 
 function StrategyBadge({ recommendation }: { recommendation: StrategyRecommendation }) {
@@ -163,7 +163,7 @@ function ToxicityBadge({ score, badge }: { score: number; badge?: ToxicityBadgeT
     return (
       <Badge
         variant="outline"
-        className="bg-orange-50 text-orange-700 border-orange-300"
+        className="bg-stone-100 text-stone-700 border-stone-300"
         data-testid="toxicity-badge-risky-family"
       >
         <ShieldAlert className="h-3 w-3 mr-1" />
@@ -175,7 +175,7 @@ function ToxicityBadge({ score, badge }: { score: number; badge?: ToxicityBadgeT
     return (
       <Badge
         variant="outline"
-        className="bg-green-50 text-green-700 border-green-300"
+        className="bg-stone-100 text-stone-800 border-stone-300"
         data-testid="toxicity-badge-clean"
       >
         <ShieldCheck className="h-3 w-3 mr-1" />
@@ -187,7 +187,7 @@ function ToxicityBadge({ score, badge }: { score: number; badge?: ToxicityBadgeT
   // Fallback: score-based thresholds (pre-F.1 compat)
   if (score <= TOXICITY_THRESHOLDS.safe) {
     return (
-      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
+      <Badge variant="outline" className="bg-stone-100 text-stone-800 border-stone-300">
         <ShieldCheck className="h-3 w-3 mr-1" />
         Safe ({(score * 100).toFixed(0)}%)
       </Badge>
@@ -195,7 +195,7 @@ function ToxicityBadge({ score, badge }: { score: number; badge?: ToxicityBadgeT
   }
   if (score <= TOXICITY_THRESHOLDS.caution) {
     return (
-      <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">
+      <Badge variant="outline" className="bg-stone-100 text-stone-700 border-stone-300">
         <Shield className="h-3 w-3 mr-1" />
         Caution ({(score * 100).toFixed(0)}%)
       </Badge>
@@ -203,7 +203,7 @@ function ToxicityBadge({ score, badge }: { score: number; badge?: ToxicityBadgeT
   }
   if (score <= TOXICITY_THRESHOLDS.danger) {
     return (
-      <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-300">
+      <Badge variant="outline" className="bg-stone-100 text-stone-700 border-stone-300">
         <ShieldAlert className="h-3 w-3 mr-1" />
         Elevated ({(score * 100).toFixed(0)}%)
       </Badge>
@@ -219,7 +219,7 @@ function ToxicityBadge({ score, badge }: { score: number; badge?: ToxicityBadgeT
 
 function SimilarityBar({ score }: { score: number }) {
   const pct = Math.round(score * 100);
-  const color = pct >= 80 ? 'bg-green-500' : pct >= 60 ? 'bg-yellow-500' : 'bg-red-500';
+  const color = pct >= 80 ? 'bg-stone-1000' : pct >= 60 ? 'bg-stone-1000' : 'bg-stone-1000';
   return (
     <div className="flex items-center gap-2">
       <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
@@ -232,9 +232,9 @@ function SimilarityBar({ score }: { score: number }) {
 
 function ReadinessMeter({ score, size = 'lg' }: { score: number; size?: 'sm' | 'lg' }) {
   const pct = Math.round(score * 100);
-  const color = pct >= 80 ? 'text-green-600' : pct >= 60 ? 'text-yellow-600' : 'text-red-600';
+  const color = pct >= 80 ? 'text-stone-700' : pct >= 60 ? 'text-stone-600' : 'text-stone-700';
   const bgColor =
-    pct >= 80 ? 'stroke-green-500' : pct >= 60 ? 'stroke-yellow-500' : 'stroke-red-500';
+    pct >= 80 ? 'stroke-stone-1000' : pct >= 60 ? 'stroke-stone-1000' : 'stroke-stone-1000';
   const sz = size === 'lg' ? 120 : 48;
   const strokeWidth = size === 'lg' ? 8 : 4;
   const radius = (sz - strokeWidth) / 2;
@@ -545,7 +545,7 @@ function PredicateRadarTab({
                     type="checkbox"
                     checked={softwarePresent}
                     onChange={e => setSoftwarePresent(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300"
+                    className="h-4 w-4 rounded border-stone-300"
                   />
                   <span className="text-sm font-medium">Software Present</span>
                 </label>
@@ -560,7 +560,7 @@ function PredicateRadarTab({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-purple-600" /> Predicate Intelligence — Shadow Reviewer
+              <Zap className="h-5 w-5 text-stone-600" /> Predicate Intelligence — Shadow Reviewer
             </CardTitle>
             <CardDescription>
               {suggestMut.data.total_candidates_scanned} candidates scanned — showing top{' '}
@@ -579,12 +579,12 @@ function PredicateRadarTab({
                   key={s.k_number}
                   className={`p-4 rounded-lg border ${
                     s.strategy_recommendation === 'AVOID'
-                      ? 'border-red-300 bg-red-50/50'
+                      ? 'border-stone-300 bg-stone-100/50'
                       : s.strategy_recommendation === 'CONSERVATIVE'
-                        ? 'border-blue-200 bg-blue-50/30'
+                        ? 'border-stone-200 bg-stone-100/30'
                         : s.strategy_recommendation === 'AGGRESSIVE'
-                          ? 'border-purple-200 bg-purple-50/30'
-                          : 'border-green-200 bg-green-50/30'
+                          ? 'border-stone-200 bg-stone-100/30'
+                          : 'border-stone-200 bg-stone-100/30'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -600,10 +600,10 @@ function PredicateRadarTab({
                           const sev = typeof f === 'string' ? 'MEDIUM' : f.severity;
                           const sevColor =
                             sev === 'HIGH'
-                              ? 'text-red-700 border-red-300'
+                              ? 'text-stone-800 border-stone-300'
                               : sev === 'MEDIUM'
-                                ? 'text-orange-700 border-orange-300'
-                                : 'text-yellow-700 border-yellow-300';
+                                ? 'text-stone-700 border-stone-300'
+                                : 'text-stone-700 border-stone-300';
                           return (
                             <Badge
                               key={`${code}-${idx}`}
@@ -632,7 +632,7 @@ function PredicateRadarTab({
                             (snip: { text: string; source: string }, i: number) => (
                               <div
                                 key={i}
-                                className="text-xs bg-muted/40 rounded px-2 py-1 border-l-2 border-purple-300"
+                                className="text-xs bg-muted/40 rounded px-2 py-1 border-l-2 border-stone-300"
                               >
                                 &ldquo;{snip.text}&rdquo;
                               </div>
@@ -650,17 +650,17 @@ function PredicateRadarTab({
                           {s.anticipated_objections.slice(0, 3).map((obj: any, i: number) => (
                             <div
                               key={i}
-                              className="text-xs rounded px-2 py-1 border bg-orange-50/50 border-orange-200"
+                              className="text-xs rounded px-2 py-1 border bg-stone-100/50 border-stone-200"
                             >
                               <div className="flex items-center gap-2">
                                 <Badge
                                   variant="outline"
                                   className={`text-[11px] ${
                                     obj.severity === 'High'
-                                      ? 'text-red-700 border-red-300'
+                                      ? 'text-stone-800 border-stone-300'
                                       : obj.severity === 'Med'
-                                        ? 'text-orange-700 border-orange-300'
-                                        : 'text-yellow-700 border-yellow-300'
+                                        ? 'text-stone-700 border-stone-300'
+                                        : 'text-stone-700 border-stone-300'
                                   }`}
                                 >
                                   {obj.severity}
@@ -692,10 +692,10 @@ function PredicateRadarTab({
                         <div
                           className={`text-lg font-bold ${
                             s.defense_readiness_score >= 70
-                              ? 'text-green-600'
+                              ? 'text-stone-700'
                               : s.defense_readiness_score >= 50
-                                ? 'text-yellow-600'
-                                : 'text-red-600'
+                                ? 'text-stone-600'
+                                : 'text-stone-700'
                           }`}
                         >
                           {s.defense_readiness_score.toFixed(0)}/100
@@ -798,9 +798,9 @@ function PredicateRadarTab({
                     key={c.id}
                     className={
                       c.toxicity_score > TOXICITY_THRESHOLDS.danger
-                        ? 'bg-red-50/50'
+                        ? 'bg-stone-100/50'
                         : c.recommended
-                          ? 'bg-green-50/30'
+                          ? 'bg-stone-100/30'
                           : ''
                     }
                   >
@@ -809,7 +809,7 @@ function PredicateRadarTab({
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger>
-                              <Award className="h-4 w-4 text-green-600" />
+                              <Award className="h-4 w-4 text-stone-700" />
                             </TooltipTrigger>
                             <TooltipContent>Recommended predicate</TooltipContent>
                           </Tooltip>
@@ -936,7 +936,7 @@ function SEMatrixTab({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-purple-600" /> Auto-Generate SE Matrix
+            <Zap className="h-5 w-5 text-stone-600" /> Auto-Generate SE Matrix
           </CardTitle>
           <CardDescription>
             Enter your subject device characteristics to auto-populate the SE comparison matrix with
@@ -986,12 +986,12 @@ function SEMatrixTab({
 
       {/* Generated SE Matrix readiness banner */}
       {generateMut.data && (
-        <Card className="border-purple-200 bg-purple-50/30">
+        <Card className="border-stone-200 bg-stone-100/30">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-semibold text-purple-800">Auto-Generated SE Matrix</p>
-                <p className="text-sm text-purple-600 mt-1">
+                <p className="font-semibold text-stone-800">Auto-Generated SE Matrix</p>
+                <p className="text-sm text-stone-600 mt-1">
                   {generateMut.data.row_count} comparison rows •{' '}
                   {generateMut.data.discussion_required_count} require discussion
                 </p>
@@ -1139,7 +1139,7 @@ function SEMatrixTab({
 
 function ConfidenceDot({ confidence }: { confidence: number }) {
   const color =
-    confidence >= 0.8 ? 'bg-green-500' : confidence >= 0.5 ? 'bg-yellow-500' : 'bg-red-500';
+    confidence >= 0.8 ? 'bg-stone-1000' : confidence >= 0.5 ? 'bg-stone-1000' : 'bg-stone-1000';
   return (
     <TooltipProvider>
       <Tooltip>
@@ -1251,10 +1251,10 @@ function DefenseMeterTab({
                   key={i}
                   className={`p-4 rounded-lg border ${
                     q.severity === 'high'
-                      ? 'border-red-200 bg-red-50/50'
+                      ? 'border-stone-200 bg-stone-100/50'
                       : q.severity === 'medium'
-                        ? 'border-yellow-200 bg-yellow-50/50'
-                        : 'border-gray-200 bg-gray-50/50'
+                        ? 'border-stone-200 bg-stone-100/50'
+                        : 'border-stone-200 bg-stone-50/50'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -1297,7 +1297,7 @@ function DefenseMeterTab({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-500" /> Evidence Gaps
+              <AlertTriangle className="h-5 w-5 text-stone-1000" /> Evidence Gaps
             </CardTitle>
             <CardDescription>Missing evidence that needs to be addressed</CardDescription>
           </CardHeader>
@@ -1363,7 +1363,7 @@ function ToxicDetailDialog({
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-red-600" />
+            <AlertTriangle className="h-5 w-5 text-stone-700" />
             Safety Signal Details — <span className="font-mono">{kNumber}</span>
           </DialogTitle>
           <DialogDescription>
@@ -1450,10 +1450,10 @@ function ToxicDetailDialog({
                           <span
                             className={`text-sm font-medium ${
                               sig.severity_score >= 0.7
-                                ? 'text-red-600'
+                                ? 'text-stone-700'
                                 : sig.severity_score >= 0.4
-                                  ? 'text-orange-600'
-                                  : 'text-yellow-600'
+                                  ? 'text-stone-600'
+                                  : 'text-stone-600'
                             }`}
                           >
                             {(sig.severity_score * 100).toFixed(0)}%
@@ -1704,7 +1704,7 @@ function StrategyTab({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-purple-600" /> Regulatory Strategy Engine
+            <Zap className="h-5 w-5 text-stone-600" /> Regulatory Strategy Engine
           </CardTitle>
           <CardDescription>
             Enter your subject device details to find the safest, most defensible predicate. The
@@ -1824,7 +1824,7 @@ function StrategyTab({
                   type="checkbox"
                   checked={softwarePresent}
                   onChange={e => setSoftwarePresent(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300"
+                  className="h-4 w-4 rounded border-stone-300"
                 />
                 <span className="text-sm font-medium">Software Present</span>
               </label>
@@ -1839,7 +1839,7 @@ function StrategyTab({
               !technology.trim() ||
               suggestMut.isPending
             }
-            className="bg-purple-600 hover:bg-purple-700"
+            className="bg-stone-600 hover:bg-stone-700"
           >
             {suggestMut.isPending ? (
               <>
@@ -1867,7 +1867,7 @@ function StrategyTab({
             </Card>
             <Card>
               <CardContent className="pt-6 text-center">
-                <p className="text-3xl font-bold text-green-600">
+                <p className="text-3xl font-bold text-stone-700">
                   {
                     suggestMut.data.suggestions.filter(
                       (s: any) =>
@@ -1881,7 +1881,7 @@ function StrategyTab({
             </Card>
             <Card>
               <CardContent className="pt-6 text-center">
-                <p className="text-3xl font-bold text-red-600">
+                <p className="text-3xl font-bold text-stone-700">
                   {
                     suggestMut.data.suggestions.filter((s: any) => s.strategy_recommendation === 'AVOID')
                       .length
@@ -1892,7 +1892,7 @@ function StrategyTab({
             </Card>
             <Card>
               <CardContent className="pt-6 text-center">
-                <p className="text-3xl font-bold text-purple-600">
+                <p className="text-3xl font-bold text-stone-600">
                   {suggestMut.data.suggestions.length}
                 </p>
                 <p className="text-sm text-muted-foreground">Suggestions</p>
@@ -1925,9 +1925,9 @@ function StrategyTab({
                       key={s.k_number}
                       className={
                         s.strategy_recommendation === 'AVOID'
-                          ? 'bg-red-50/50'
+                          ? 'bg-stone-100/50'
                           : idx === 0
-                            ? 'bg-green-50/30'
+                            ? 'bg-stone-100/30'
                             : ''
                       }
                     >
@@ -1957,10 +1957,10 @@ function StrategyTab({
                         <span
                           className={`font-mono text-sm ${
                             s.defense_readiness_score >= 70
-                              ? 'text-green-700'
+                              ? 'text-stone-800'
                               : s.defense_readiness_score >= 40
-                                ? 'text-amber-600'
-                                : 'text-red-600'
+                                ? 'text-stone-600'
+                                : 'text-stone-700'
                           }`}
                         >
                           {s.defense_readiness_score?.toFixed(0) ?? '—'}
@@ -1981,7 +1981,7 @@ function StrategyTab({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-blue-600" /> Defense Packet Seed
+                  <Shield className="h-5 w-5 text-stone-600" /> Defense Packet Seed
                   <Badge variant="outline" className="text-[11px] ml-2">
                     Readiness: {suggestMut.data.defense_packet_seed.readiness_score}/100
                   </Badge>
@@ -2018,7 +2018,7 @@ function StrategyTab({
                         >
                           {task.severity}
                         </Badge>
-                        <span className="font-mono text-xs text-blue-600 shrink-0">
+                        <span className="font-mono text-xs text-stone-600 shrink-0">
                           [{task.category}]
                         </span>
                         <span className="text-xs text-muted-foreground font-mono">
@@ -2114,13 +2114,13 @@ function SummaryCards({
       </Card>
       <Card>
         <CardContent className="pt-6 text-center">
-          <p className="text-3xl font-bold text-green-600">{safe}</p>
+          <p className="text-3xl font-bold text-stone-700">{safe}</p>
           <p className="text-sm text-muted-foreground">Safe Predicates</p>
         </CardContent>
       </Card>
       <Card>
         <CardContent className="pt-6 text-center">
-          <p className="text-3xl font-bold text-red-600">{toxic}</p>
+          <p className="text-3xl font-bold text-stone-700">{toxic}</p>
           <p className="text-sm text-muted-foreground">Toxic Predicates</p>
         </CardContent>
       </Card>
@@ -2129,7 +2129,7 @@ function SummaryCards({
           {selectedCandidate ? (
             <ReadinessMeter score={0} size="sm" />
           ) : (
-            <p className="text-3xl font-bold text-blue-600">{recommended}</p>
+            <p className="text-3xl font-bold text-stone-600">{recommended}</p>
           )}
           <p className="text-sm text-muted-foreground">
             {selectedCandidate ? 'Defense Ready' : 'Recommended'}

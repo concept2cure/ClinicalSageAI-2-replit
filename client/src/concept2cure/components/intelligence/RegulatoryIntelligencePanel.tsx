@@ -101,10 +101,10 @@ function ScoreBar({ value, label, color }: { value: number; label: string; color
 // ── Helper: Risk Badge ───────────────────────────────────────────────────────
 function RiskBadge({ level }: { level: string }) {
   const colors: Record<string, string> = {
-    low: 'bg-emerald-100 text-emerald-700',
-    medium: 'bg-amber-100 text-amber-700',
-    high: 'bg-amber-100 text-amber-700',
-    critical: 'bg-red-100 text-red-700',
+    low: 'bg-stone-100 text-stone-800',
+    medium: 'bg-stone-100 text-stone-700',
+    high: 'bg-stone-100 text-stone-700',
+    critical: 'bg-stone-100 text-stone-800',
   };
   return (
     <span
@@ -239,7 +239,7 @@ export function RegulatoryIntelligencePanel({
       {/* Header */}
       <div className="flex items-center justify-between px-2 sm:px-3 py-2 border-b border-stone-200 bg-stone-50 shrink-0">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-          <Brain className="w-4 h-4 text-blue-600 shrink-0" />
+          <Brain className="w-4 h-4 text-stone-600 shrink-0" />
           <span className="text-xs sm:text-sm font-semibold text-stone-900 truncate">
             Regulatory Intelligence
           </span>
@@ -261,7 +261,7 @@ export function RegulatoryIntelligencePanel({
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 flex items-center justify-center gap-1 px-1 sm:px-2 py-2 text-xs font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-stone-600 text-stone-700 bg-blue-50/50'
+                  ? 'border-stone-600 text-stone-700 bg-stone-100/50'
                   : 'border-transparent text-stone-500 hover:text-stone-700 hover:bg-stone-50'
               }`}
             >
@@ -301,10 +301,10 @@ export function RegulatoryIntelligencePanel({
             {/* RI Analysis Results */}
             {analysisResult && (
               <div className="space-y-2">
-                <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-lg">
+                <div className="p-2.5 bg-stone-100 border border-stone-100 rounded-lg">
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <Brain className="w-3.5 h-3.5 text-blue-600" />
-                    <span className="text-xs font-semibold text-blue-800">
+                    <Brain className="w-3.5 h-3.5 text-stone-600" />
+                    <span className="text-xs font-semibold text-stone-800">
                       {analysisResult.regulatory_framework || 'Regulatory Analysis'}
                     </span>
                   </div>
@@ -342,7 +342,7 @@ export function RegulatoryIntelligencePanel({
             {/* CSR Learnings */}
             <div>
               <div className="flex items-center gap-1.5 mb-2">
-                <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
+                <BookOpen className="w-3.5 h-3.5 text-stone-700" />
                 <span className="text-xs font-semibold text-stone-700">CSR Learnings</span>
                 {csrSearch.isLoading && <Spinner size="sm" />}
               </div>
@@ -357,13 +357,13 @@ export function RegulatoryIntelligencePanel({
                   {csrSearch.data.map((csr, i) => (
                     <div
                       key={csr.id || i}
-                      className="p-2 bg-emerald-50/60 border border-emerald-100 rounded-lg"
+                      className="p-2 bg-stone-100/60 border border-stone-100 rounded-lg"
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-medium text-stone-900 truncate">
                           {csr.title}
                         </span>
-                        <span className="text-xs px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded-full">
+                        <span className="text-xs px-1.5 py-0.5 bg-stone-100 text-stone-800 rounded-full">
                           {csr.phase}
                         </span>
                       </div>
@@ -411,7 +411,7 @@ export function RegulatoryIntelligencePanel({
                     key={p.id || i}
                     className={`p-2.5 border rounded-lg cursor-pointer transition-colors ${
                       selectedPrecedent?.id === p.id
-                        ? 'border-blue-300 bg-blue-50/50'
+                        ? 'border-stone-300 bg-stone-100/50'
                         : 'border-stone-200 hover:border-stone-300 bg-white'
                     }`}
                     onClick={() => handleComparePrecedent(p)}
@@ -420,7 +420,7 @@ export function RegulatoryIntelligencePanel({
                       <span className="text-xs font-medium text-stone-900">
                         {p.deviceName || p.applicant || 'Unknown Device'}
                       </span>
-                      <span className="text-xs font-mono text-blue-600">
+                      <span className="text-xs font-mono text-stone-600">
                         {p.clearanceNumber}
                       </span>
                     </div>
@@ -428,8 +428,8 @@ export function RegulatoryIntelligencePanel({
                       <span
                         className={`px-1.5 py-0.5 rounded-full font-medium ${
                           p.decisionOutcome === 'CLEARED' || p.decisionOutcome === 'APPROVED'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-red-100 text-red-700'
+                            ? 'bg-stone-100 text-stone-800'
+                            : 'bg-stone-100 text-stone-800'
                         }`}
                       >
                         {p.decisionOutcome}
@@ -444,7 +444,7 @@ export function RegulatoryIntelligencePanel({
                     {p.indication && (
                       <p className="text-xs text-stone-500 mt-1 truncate">{p.indication}</p>
                     )}
-                    <div className="flex items-center gap-1 mt-1.5 text-xs text-blue-600">
+                    <div className="flex items-center gap-1 mt-1.5 text-xs text-stone-600">
                       <ArrowRight className="w-3 h-3" />
                       Compare to my submission
                     </div>
@@ -471,7 +471,7 @@ export function RegulatoryIntelligencePanel({
               />
             )}
             {compareResult && (
-              <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-lg space-y-2">
+              <div className="p-2.5 bg-stone-100 border border-stone-100 rounded-lg space-y-2">
                 <span className="text-xs font-semibold text-stone-700 uppercase tracking-wider">
                   Comparison Results
                 </span>
@@ -490,11 +490,11 @@ export function RegulatoryIntelligencePanel({
                 )}
                 {compareResult.similarities?.length > 0 && (
                   <div>
-                    <span className="text-xs font-medium text-emerald-700">Similarities</span>
+                    <span className="text-xs font-medium text-stone-800">Similarities</span>
                     <ul className="mt-1 space-y-0.5">
                       {compareResult.similarities.map((s, i) => (
                         <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
-                          <CheckCircle className="w-3 h-3 flex-shrink-0 mt-0.5 text-emerald-500" />
+                          <CheckCircle className="w-3 h-3 flex-shrink-0 mt-0.5 text-stone-1000" />
                           {typeof s === 'string' ? s : (s as any).description || (s as any).area || s.dimension}
                         </li>
                       ))}
@@ -503,11 +503,11 @@ export function RegulatoryIntelligencePanel({
                 )}
                 {compareResult.differences?.length > 0 && (
                   <div>
-                    <span className="text-xs font-medium text-amber-700">Differences</span>
+                    <span className="text-xs font-medium text-stone-700">Differences</span>
                     <ul className="mt-1 space-y-0.5">
                       {compareResult.differences.map((d, i) => (
                         <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
-                          <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5 text-amber-500" />
+                          <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5 text-stone-1000" />
                           {typeof d === 'string' ? d : (d as any).description || (d as any).area || d.dimension}
                         </li>
                       ))}
@@ -539,7 +539,7 @@ export function RegulatoryIntelligencePanel({
             <button
               onClick={handleRunPrediction}
               disabled={foresightPrediction.isPending}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-stone-600 text-white text-xs font-medium rounded-lg hover:bg-stone-700 disabled:opacity-60"
             >
               {foresightPrediction.isPending ? (
                 <Spinner size="sm" />
@@ -553,7 +553,7 @@ export function RegulatoryIntelligencePanel({
             <button
               onClick={handleRunRiskAnalysis}
               disabled={clinicalRisk.isPending}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-stone-600 text-white text-xs font-medium rounded-lg hover:bg-stone-700 disabled:opacity-60"
             >
               {clinicalRisk.isPending ? (
                 <Spinner size="sm" />
@@ -579,17 +579,17 @@ export function RegulatoryIntelligencePanel({
 
             {/* Prediction results */}
             {predictionResult && (
-              <div className="p-2.5 bg-amber-50 border border-amber-100 rounded-lg space-y-2">
+              <div className="p-2.5 bg-stone-100 border border-stone-100 rounded-lg space-y-2">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <TrendingUp className="w-3.5 h-3.5 text-amber-600" />
-                  <span className="text-xs font-semibold text-amber-800 uppercase tracking-wider">
+                  <TrendingUp className="w-3.5 h-3.5 text-stone-600" />
+                  <span className="text-xs font-semibold text-stone-800 uppercase tracking-wider">
                     AnA Predictions
                   </span>
                 </div>
                 <ScoreBar
                   value={(predictionResult.successScore || 0) / 100}
                   label="Trial Success Probability"
-                  color="bg-amber-500"
+                  color="bg-stone-1000"
                 />
                 {predictionResult.confidenceInterval && (
                   <p className="text-xs text-stone-500">
@@ -601,13 +601,13 @@ export function RegulatoryIntelligencePanel({
                 {/* Risk factors */}
                 {predictionResult.riskFactors?.length > 0 && (
                   <div>
-                    <span className="text-xs font-medium text-red-700">
+                    <span className="text-xs font-medium text-stone-800">
                       Primary Risk Factors
                     </span>
                     <ul className="mt-1 space-y-0.5">
                       {predictionResult.riskFactors.map((rf, i) => (
                         <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
-                          <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5 text-red-400" />
+                          <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5 text-stone-400" />
                           <span>
                             <strong>{rf.factor}</strong>
                             {rf.impact && ` — ${rf.impact}`}
@@ -634,8 +634,8 @@ export function RegulatoryIntelligencePanel({
                             <span
                               className={`px-1 py-0.5 rounded-full text-xs font-medium ${
                                 t.outcome === 'success'
-                                  ? 'bg-emerald-100 text-emerald-700'
-                                  : 'bg-red-100 text-red-700'
+                                  ? 'bg-stone-100 text-stone-800'
+                                  : 'bg-stone-100 text-stone-800'
                               }`}
                             >
                               {t.outcome}
@@ -651,10 +651,10 @@ export function RegulatoryIntelligencePanel({
 
             {/* Clinical risk results */}
             {riskResult && (
-              <div className="p-2.5 bg-amber-50 border border-amber-100 rounded-lg space-y-2">
+              <div className="p-2.5 bg-stone-100 border border-stone-100 rounded-lg space-y-2">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <ShieldAlert className="w-3.5 h-3.5 text-amber-600" />
-                  <span className="text-xs font-semibold text-amber-800 uppercase tracking-wider">
+                  <ShieldAlert className="w-3.5 h-3.5 text-stone-600" />
+                  <span className="text-xs font-semibold text-stone-800 uppercase tracking-wider">
                     Clinical Risk Assessment
                   </span>
                 </div>
@@ -664,12 +664,12 @@ export function RegulatoryIntelligencePanel({
                     <ScoreBar
                       value={(riskResult.mitigationPlan.overallRiskScore || 0) / 100}
                       label="Overall Risk Score"
-                      color="bg-amber-500"
+                      color="bg-stone-1000"
                     />
 
                     {riskResult.mitigationPlan.goNoGoRecommendation && (
-                      <div className="p-2 bg-white rounded border border-amber-200">
-                        <span className="text-xs font-semibold text-amber-700">Go/No-Go:</span>
+                      <div className="p-2 bg-white rounded border border-stone-200">
+                        <span className="text-xs font-semibold text-stone-700">Go/No-Go:</span>
                         <p className="text-xs text-stone-700 mt-0.5">
                           {riskResult.mitigationPlan.goNoGoRecommendation}
                         </p>
@@ -678,13 +678,13 @@ export function RegulatoryIntelligencePanel({
 
                     {riskResult.mitigationPlan.highRisks?.length > 0 && (
                       <div>
-                        <span className="text-xs font-medium text-red-700">
+                        <span className="text-xs font-medium text-stone-800">
                           High Risks ({riskResult.mitigationPlan.highRisks.length})
                         </span>
                         <ul className="mt-1 space-y-1">
                           {riskResult.mitigationPlan.highRisks.map((r, i) => (
                             <li key={i} className="text-xs text-stone-600 pl-3 relative">
-                              <span className="absolute left-0 text-red-400">●</span>
+                              <span className="absolute left-0 text-stone-400">●</span>
                               <strong>{r.risk}</strong>
                               {r.mitigation && (
                                 <span className="text-stone-500"> → {r.mitigation}</span>
@@ -728,7 +728,7 @@ export function RegulatoryIntelligencePanel({
                   {precedentStrategy.data.recommendedStrategy && (() => {
                     const rs = precedentStrategy.data.recommendedStrategy as any;
                     return (
-                    <div className="p-2 bg-white rounded border border-blue-200 mb-2">
+                    <div className="p-2 bg-white rounded border border-stone-200 mb-2">
                       <span className="text-xs font-medium text-stone-900">
                         {typeof rs === 'string' ? rs : (rs.pathway || rs.name || 'Recommended Pathway')}
                       </span>
@@ -753,14 +753,14 @@ export function RegulatoryIntelligencePanel({
 
                 {/* Testing requirements */}
                 {precedentStrategy.data.testingRequirements?.length > 0 && (
-                  <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-lg">
+                  <div className="p-2.5 bg-stone-100 border border-stone-100 rounded-lg">
                     <span className="text-xs font-semibold text-stone-700 uppercase tracking-wider">
                       Required Testing
                     </span>
                     <ul className="mt-1.5 space-y-0.5">
                       {precedentStrategy.data.testingRequirements.map((t: any, i: number) => (
                         <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
-                          <CheckCircle className="w-3 h-3 flex-shrink-0 mt-0.5 text-blue-500" />
+                          <CheckCircle className="w-3 h-3 flex-shrink-0 mt-0.5 text-stone-1000" />
                           {typeof t === 'string' ? t : t.requirement || t.name}
                         </li>
                       ))}
@@ -770,15 +770,15 @@ export function RegulatoryIntelligencePanel({
 
                 {/* Supporting precedents */}
                 {precedentStrategy.data.supportingPrecedents?.length > 0 && (
-                  <div className="p-2.5 bg-emerald-50 border border-emerald-100 rounded-lg">
-                    <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">
+                  <div className="p-2.5 bg-stone-100 border border-stone-100 rounded-lg">
+                    <span className="text-xs font-semibold text-stone-800 uppercase tracking-wider">
                       Supporting Precedents ({precedentStrategy.data.supportingPrecedents.length})
                     </span>
                     <div className="mt-1.5 flex flex-wrap gap-1">
                       {precedentStrategy.data.supportingPrecedents.map((p, i) => (
                         <span
                           key={i}
-                          className="inline-flex items-center px-1.5 py-0.5 bg-white border border-emerald-200 rounded text-xs text-emerald-700"
+                          className="inline-flex items-center px-1.5 py-0.5 bg-white border border-stone-200 rounded text-xs text-stone-800"
                         >
                           {typeof p === 'string'
                             ? p
@@ -791,14 +791,14 @@ export function RegulatoryIntelligencePanel({
 
                 {/* Key risks */}
                 {precedentStrategy.data.keyRisks?.length > 0 && (
-                  <div className="p-2.5 bg-red-50 border border-red-100 rounded-lg">
-                    <span className="text-xs font-semibold text-red-700 uppercase tracking-wider">
+                  <div className="p-2.5 bg-stone-100 border border-stone-100 rounded-lg">
+                    <span className="text-xs font-semibold text-stone-800 uppercase tracking-wider">
                       Key Risks
                     </span>
                     <ul className="mt-1.5 space-y-0.5">
                       {precedentStrategy.data.keyRisks.map((r: any, i: number) => (
                         <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
-                          <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5 text-red-400" />
+                          <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5 text-stone-400" />
                           {typeof r === 'string' ? r : r.description || r.risk}
                         </li>
                       ))}
@@ -923,26 +923,26 @@ export function RegulatoryIntelligencePanel({
               const coverageRatio = Math.min(1, available / Math.max(1, required.length));
               const coverageColor =
                 coverageRatio >= 0.7
-                  ? 'bg-emerald-500'
+                  ? 'bg-stone-1000'
                   : coverageRatio >= 0.4
-                    ? 'bg-amber-500'
-                    : 'bg-red-500';
+                    ? 'bg-stone-1000'
+                    : 'bg-stone-1000';
               const coverageLabel =
                 coverageRatio >= 0.7 ? 'Good' : coverageRatio >= 0.4 ? 'Partial' : 'Gaps Found';
               return (
-                <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-lg">
+                <div className="p-2.5 bg-stone-100 border border-stone-100 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-semibold text-stone-900 flex items-center gap-1">
-                      <FileCheck className="w-3.5 h-3.5 text-blue-600" />
+                      <FileCheck className="w-3.5 h-3.5 text-stone-600" />
                       Evidence Coverage ({submissionType || 'General'})
                     </span>
                     <span
                       className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
                         coverageRatio >= 0.7
-                          ? 'bg-emerald-100 text-emerald-700'
+                          ? 'bg-stone-100 text-stone-800'
                           : coverageRatio >= 0.4
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-red-100 text-red-700'
+                            ? 'bg-stone-100 text-stone-700'
+                            : 'bg-stone-100 text-stone-800'
                       }`}
                     >
                       {coverageLabel}
@@ -964,12 +964,12 @@ export function RegulatoryIntelligencePanel({
                       return (
                         <div key={i} className="flex items-center gap-1 text-xs">
                           {matched ? (
-                            <CheckCircle className="w-3 h-3 text-emerald-500 shrink-0" />
+                            <CheckCircle className="w-3 h-3 text-stone-1000 shrink-0" />
                           ) : (
-                            <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+                            <AlertTriangle className="w-3 h-3 text-stone-1000 shrink-0" />
                           )}
                           <span
-                            className={matched ? 'text-stone-600' : 'text-amber-700 font-medium'}
+                            className={matched ? 'text-stone-600' : 'text-stone-700 font-medium'}
                           >
                             {req}
                           </span>
@@ -1009,7 +1009,7 @@ export function RegulatoryIntelligencePanel({
                           {csr.title}
                         </span>
                         {csr.relevance_score != null && (
-                          <span className="text-xs text-blue-600 font-medium shrink-0">
+                          <span className="text-xs text-stone-600 font-medium shrink-0">
                             {Math.round(csr.relevance_score * 100)}%
                           </span>
                         )}
@@ -1022,8 +1022,8 @@ export function RegulatoryIntelligencePanel({
                             className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${
                               csr.outcome.toLowerCase().includes('positive') ||
                               csr.outcome.toLowerCase().includes('success')
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-amber-100 text-amber-700'
+                                ? 'bg-stone-100 text-stone-800'
+                                : 'bg-stone-100 text-stone-700'
                             }`}
                           >
                             {csr.outcome}
@@ -1070,7 +1070,7 @@ export function RegulatoryIntelligencePanel({
                               {csr.title}
                             </span>
                             {csr.relevance_score != null && (
-                              <span className="text-xs text-blue-600 font-medium shrink-0">
+                              <span className="text-xs text-stone-600 font-medium shrink-0">
                                 {Math.round(csr.relevance_score * 100)}%
                               </span>
                             )}
@@ -1083,8 +1083,8 @@ export function RegulatoryIntelligencePanel({
                                 className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${
                                   csr.outcome.toLowerCase().includes('positive') ||
                                   csr.outcome.toLowerCase().includes('success')
-                                    ? 'bg-emerald-100 text-emerald-700'
-                                    : 'bg-amber-100 text-amber-700'
+                                    ? 'bg-stone-100 text-stone-800'
+                                    : 'bg-stone-100 text-stone-700'
                                 }`}
                               >
                                 {csr.outcome}

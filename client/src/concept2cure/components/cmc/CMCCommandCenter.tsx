@@ -147,9 +147,9 @@ export default function CMCCommandCenter({ projectId }: CommandCenterProps) {
       </div>
 
       <div aria-live="polite" role="alert">
-        {error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">{error}</div>}
+        {error && <div className="rounded-lg border border-stone-200 bg-stone-100 p-3 text-xs text-stone-800">{error}</div>}
       </div>
-      {finalGateMessage && <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-700" role="status" aria-live="polite">{finalGateMessage}</div>}
+      {finalGateMessage && <div className="rounded-lg border border-stone-200 bg-stone-100 p-3 text-xs text-stone-700" role="status" aria-live="polite">{finalGateMessage}</div>}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <Metric label="Sections" value={readiness?.totalSections ?? sections.length} />
@@ -163,8 +163,8 @@ export default function CMCCommandCenter({ projectId }: CommandCenterProps) {
           role="status"
           className={`rounded-lg border p-3 text-xs ${
             readiness.exportReady
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-              : 'border-amber-200 bg-amber-50 text-amber-800'
+              ? 'border-stone-200 bg-stone-100 text-stone-800'
+              : 'border-stone-200 bg-stone-100 text-stone-800'
           }`}
         >
           QA / Release Center: {readiness.exportReady ? 'Export ready (all sections approved, no stale or critical blockers).' : 'Not export ready — resolve stale sections/critical contradictions and complete approvals.'}

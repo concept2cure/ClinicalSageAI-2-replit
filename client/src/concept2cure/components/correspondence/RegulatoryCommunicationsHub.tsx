@@ -172,12 +172,12 @@ export default function RegulatoryCommunicationsHub({ projectId }: Props) {
             <option value="closed">Closed</option>
           </select>
         </div>
-        <div className="px-3 py-2 text-[11px] text-amber-700 bg-amber-50 border-b border-amber-100 flex items-center gap-1.5">
+        <div className="px-3 py-2 text-[11px] text-stone-700 bg-stone-100 border-b border-stone-100 flex items-center gap-1.5">
           <Clock3 className="w-3 h-3" /> {overdueCount} overdue responses
         </div>
         <div className="overflow-auto">
           {filteredRows.map(row => (
-            <button key={row.id} onClick={() => setSelected(row)} className={`w-full text-left px-3 py-2 border-b border-stone-50 hover:bg-stone-50 ${selected?.id === row.id ? 'bg-blue-50' : ''}`}>
+            <button key={row.id} onClick={() => setSelected(row)} className={`w-full text-left px-3 py-2 border-b border-stone-50 hover:bg-stone-50 ${selected?.id === row.id ? 'bg-stone-100' : ''}`}>
               <p className="text-xs font-medium text-stone-800 truncate">{row.subject}</p>
               <p className="text-[10px] text-stone-400">{row.communicationType} · {row.urgency}</p>
             </button>
@@ -269,9 +269,9 @@ export default function RegulatoryCommunicationsHub({ projectId }: Props) {
           <div className="rounded-md bg-stone-50 border border-stone-200 p-2">
             <p className="text-[11px] font-medium text-stone-700 flex items-center gap-1"><Link2 className="w-3 h-3" /> Security & audit controls</p>
             <ul className="mt-1 space-y-1 text-[10px] text-stone-500">
-              <li className="flex gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> parser version + extraction version tracked</li>
-              <li className="flex gap-1"><AlertTriangle className="w-3 h-3 text-amber-500" /> human confirmation required for issue closure</li>
-              <li className="flex gap-1"><Shield className="w-3 h-3 text-blue-500" /> attachment checksum tracked; malware verdict workflow pending</li>
+              <li className="flex gap-1"><CheckCircle2 className="w-3 h-3 text-stone-1000" /> parser version + extraction version tracked</li>
+              <li className="flex gap-1"><AlertTriangle className="w-3 h-3 text-stone-1000" /> human confirmation required for issue closure</li>
+              <li className="flex gap-1"><Shield className="w-3 h-3 text-stone-1000" /> attachment checksum tracked; malware verdict workflow pending</li>
             </ul>
           </div>
           <div className="rounded-md bg-white border border-stone-200 p-2">

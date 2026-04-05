@@ -102,7 +102,7 @@ function Hero() {
           animate="visible"
           variants={fadeUp}
           custom={0}
-          className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-indigo-200/60 bg-indigo-50/60 px-4 py-1.5 text-sm font-medium text-indigo-700 backdrop-blur-sm"
+          className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-stone-200/60 bg-stone-100/60 px-4 py-1.5 text-sm font-medium text-stone-700 backdrop-blur-sm"
         >
           <Zap className="h-3.5 w-3.5" />
           Now Generally Available
@@ -116,7 +116,7 @@ function Hero() {
           className="mx-auto max-w-4xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl xl:text-7xl"
         >
           AI-Powered{' '}
-          <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-stone-600 via-stone-600 to-stone-600 bg-clip-text text-transparent">
             Regulatory Intelligence
           </span>
         </motion.h1>
@@ -142,7 +142,7 @@ function Hero() {
           className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
         >
           <Link href="/concept2cure/signup">
-            <span className="group inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-600/30">
+            <span className="group inline-flex items-center gap-2 rounded-xl bg-stone-600 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-stone-600/20 transition-all hover:bg-stone-700 hover:shadow-xl hover:shadow-stone-600/30">
               Start Free Trial
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </span>
@@ -243,7 +243,7 @@ function Features() {
     <Section className="py-20 sm:py-28">
       <motion.div ref={ref} initial="hidden" animate={inView ? 'visible' : 'hidden'}>
         <motion.div variants={fadeUp} custom={0} className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-indigo-600">
+          <p className="text-sm font-semibold uppercase tracking-widest text-stone-600">
             Platform
           </p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
@@ -261,9 +261,9 @@ function Features() {
               key={f.title}
               variants={fadeUp}
               custom={i + 1}
-              className="group relative rounded-2xl border border-slate-200/80 bg-white p-8 shadow-sm transition-all hover:border-indigo-200 hover:shadow-md"
+              className="group relative rounded-2xl border border-slate-200/80 bg-white p-8 shadow-sm transition-all hover:border-stone-200 hover:shadow-md"
             >
-              <div className="mb-5 inline-flex rounded-xl bg-indigo-50 p-3 text-indigo-600 transition-colors group-hover:bg-indigo-100">
+              <div className="mb-5 inline-flex rounded-xl bg-stone-100 p-3 text-stone-600 transition-colors group-hover:bg-stone-100">
                 <f.icon className="h-6 w-6" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900">{f.title}</h3>
@@ -306,7 +306,7 @@ function HowItWorks() {
     <Section className="py-20 sm:py-28 bg-slate-50/60">
       <motion.div ref={ref} initial="hidden" animate={inView ? 'visible' : 'hidden'}>
         <motion.div variants={fadeUp} custom={0} className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-indigo-600">
+          <p className="text-sm font-semibold uppercase tracking-widest text-stone-600">
             How It Works
           </p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
@@ -318,7 +318,7 @@ function HowItWorks() {
           {/* connecting line (desktop only) */}
           <div
             aria-hidden
-            className="pointer-events-none absolute top-14 left-[16.5%] right-[16.5%] hidden h-px bg-gradient-to-r from-indigo-200 via-indigo-300 to-indigo-200 lg:block"
+            className="pointer-events-none absolute top-14 left-[16.5%] right-[16.5%] hidden h-px bg-gradient-to-r from-stone-200 via-stone-300 to-stone-200 lg:block"
           />
 
           {steps.map((s, i) => (
@@ -328,7 +328,7 @@ function HowItWorks() {
               custom={i + 1}
               className="relative text-center"
             >
-              <div className="relative z-10 mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-lg font-bold text-white shadow-lg shadow-indigo-600/20">
+              <div className="relative z-10 mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-stone-600 text-lg font-bold text-white shadow-lg shadow-stone-600/20">
                 {s.num}
               </div>
               <h3 className="mt-6 text-xl font-semibold text-slate-900">{s.title}</h3>
@@ -404,7 +404,7 @@ function Pricing() {
     <Section id="pricing" className="py-20 sm:py-28">
       <motion.div ref={ref} initial="hidden" animate={inView ? 'visible' : 'hidden'}>
         <motion.div variants={fadeUp} custom={0} className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-indigo-600">Pricing</p>
+          <p className="text-sm font-semibold uppercase tracking-widest text-stone-600">Pricing</p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
             Plans that scale with your pipeline
           </h2>
@@ -423,11 +423,11 @@ function Pricing() {
                 variants={fadeUp}
                 custom={i + 1}
                 className={`relative flex flex-col rounded-2xl border p-8 shadow-sm transition-shadow hover:shadow-md ${
-                  isPopular ? 'border-indigo-600 ring-1 ring-indigo-600' : 'border-slate-200'
+                  isPopular ? 'border-stone-600 ring-1 ring-stone-600' : 'border-slate-200'
                 }`}
               >
                 {isPopular && (
-                  <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 rounded-full bg-indigo-600 px-4 py-1 text-xs font-semibold text-white">
+                  <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 rounded-full bg-stone-600 px-4 py-1 text-xs font-semibold text-white">
                     <Star className="h-3 w-3" /> Most Popular
                   </span>
                 )}
@@ -447,7 +447,7 @@ function Pricing() {
                 <ul className="mt-8 flex-1 space-y-3">
                   {plan.features.map(f => (
                     <li key={f} className="flex items-start gap-3 text-sm text-slate-600">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-stone-600" />
                       {f}
                     </li>
                   ))}
@@ -465,7 +465,7 @@ function Pricing() {
                       <span
                         className={`block w-full rounded-xl py-3 text-center text-sm font-semibold transition-all ${
                           isPopular
-                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700'
+                            ? 'bg-stone-600 text-white shadow-lg shadow-stone-600/20 hover:bg-stone-700'
                             : 'bg-slate-900 text-white hover:bg-slate-800'
                         }`}
                       >
@@ -516,7 +516,7 @@ function Testimonials() {
     <Section className="py-20 sm:py-28 bg-slate-50/60">
       <motion.div ref={ref} initial="hidden" animate={inView ? 'visible' : 'hidden'}>
         <motion.div variants={fadeUp} custom={0} className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-indigo-600">
+          <p className="text-sm font-semibold uppercase tracking-widest text-stone-600">
             Testimonials
           </p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
@@ -532,7 +532,7 @@ function Testimonials() {
               custom={i + 1}
               className="flex flex-col rounded-2xl border border-slate-200/80 bg-white p-8 shadow-sm"
             >
-              <div className="flex gap-1 text-amber-400">
+              <div className="flex gap-1 text-stone-400">
                 {Array.from({ length: 5 }).map((_, j) => (
                   <Star key={j} className="h-4 w-4 fill-current" />
                 ))}
@@ -541,7 +541,7 @@ function Testimonials() {
                 &ldquo;{t.quote}&rdquo;
               </blockquote>
               <figcaption className="mt-6 flex items-center gap-4 border-t border-slate-100 pt-6">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-600">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-100 text-sm font-bold text-stone-600">
                   {t.name
                     .split(' ')
                     .map(w => w[0])
@@ -574,7 +574,7 @@ function FinalCTA() {
         initial="hidden"
         animate={inView ? 'visible' : 'hidden'}
         variants={fadeUp}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 px-8 py-16 text-center shadow-2xl sm:px-16 sm:py-20"
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-stone-600 via-stone-600 to-stone-700 px-8 py-16 text-center shadow-2xl sm:px-16 sm:py-20"
       >
         {/* decorative shapes */}
         <div
@@ -589,13 +589,13 @@ function FinalCTA() {
         <h2 className="relative text-3xl font-bold tracking-tight text-white sm:text-4xl">
           Ready to accelerate your submissions?
         </h2>
-        <p className="relative mx-auto mt-4 max-w-xl text-lg text-indigo-100">
+        <p className="relative mx-auto mt-4 max-w-xl text-lg text-stone-100">
           Join hundreds of regulatory teams who have cut their submission timelines in half. Start
           your 14-day free trial today.
         </p>
         <div className="relative mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link href="/concept2cure/signup">
-            <span className="group inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-indigo-700 shadow-lg transition-all hover:bg-indigo-50">
+            <span className="group inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-stone-700 shadow-lg transition-all hover:bg-stone-100">
               Start Free Trial
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </span>
@@ -733,7 +733,7 @@ function NavBar() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <Link href="/">
           <span className="text-xl font-bold tracking-tight text-slate-900">
-            Concept<span className="text-indigo-600">2Cure</span>
+            Concept<span className="text-stone-600">2Cure</span>
           </span>
         </Link>
 
@@ -769,7 +769,7 @@ function NavBar() {
             </span>
           </Link>
           <Link href="/concept2cure/signup">
-            <span className="hidden rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-indigo-700 sm:inline-flex">
+            <span className="hidden rounded-lg bg-stone-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-stone-700 sm:inline-flex">
               Get Started
             </span>
           </Link>

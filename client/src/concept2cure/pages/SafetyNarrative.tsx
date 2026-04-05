@@ -83,7 +83,7 @@ const NARRATIVE_TYPES: NarrativeConfig[] = [
     type: 'sae',
     label: 'SAE Case Narrative',
     description: 'Individual Serious Adverse Event narrative for CIOMS/MedWatch',
-    icon: <AlertTriangle className="w-4 h-4 text-red-500" aria-hidden="true" />,
+    icon: <AlertTriangle className="w-4 h-4 text-stone-1000" aria-hidden="true" />,
     accentColor: 'red',
     endpoint: '/api/safety-narratives/sae',
     fields: [
@@ -98,7 +98,7 @@ const NARRATIVE_TYPES: NarrativeConfig[] = [
     type: 'benefit-risk',
     label: 'Benefit-Risk Summary',
     description: 'FDA/EMA framework — structured benefit-risk assessment',
-    icon: <TrendingDown className="w-4 h-4 text-amber-500" aria-hidden="true" />,
+    icon: <TrendingDown className="w-4 h-4 text-stone-1000" aria-hidden="true" />,
     accentColor: 'amber',
     endpoint: '/api/safety-narratives/benefit-risk',
     fields: [
@@ -113,7 +113,7 @@ const NARRATIVE_TYPES: NarrativeConfig[] = [
     type: 'signal-summary',
     label: 'Safety Signal Summary',
     description: 'CIOMS/ICH E2E — safety signal assessment narrative',
-    icon: <Activity className="w-4 h-4 text-orange-500" aria-hidden="true" />,
+    icon: <Activity className="w-4 h-4 text-stone-1000" aria-hidden="true" />,
     accentColor: 'orange',
     endpoint: '/api/safety-narratives/signal-summary',
     fields: [
@@ -127,7 +127,7 @@ const NARRATIVE_TYPES: NarrativeConfig[] = [
     type: 'cross-study',
     label: 'Cross-Study Safety Summary',
     description: 'Integrated safety across multiple studies for ISS/ISE',
-    icon: <Shield className="w-4 h-4 text-violet-500" aria-hidden="true" />,
+    icon: <Shield className="w-4 h-4 text-stone-1000" aria-hidden="true" />,
     accentColor: 'violet',
     endpoint: '/api/safety-narratives/cross-study',
     fields: [
@@ -246,9 +246,9 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                 transition={{ delay: i * 0.04, duration: 0.15 }}
                 onClick={() => handleSelectType(nt.type)}
                 aria-current={selectedType === nt.type ? 'page' : undefined}
-                className={`w-full text-left p-3 rounded-lg border transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-violet-300 focus:ring-offset-1 ${
+                className={`w-full text-left p-3 rounded-lg border transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-stone-300 focus:ring-offset-1 ${
                   selectedType === nt.type
-                    ? 'border-violet-300 bg-violet-50 shadow-sm'
+                    ? 'border-stone-300 bg-stone-100 shadow-sm'
                     : 'border-stone-100 hover:border-stone-200 hover:bg-stone-50/50'
                 }`}
               >
@@ -293,7 +293,7 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                         className="block text-xs font-medium text-stone-600 mb-1"
                       >
                         {field.label}
-                        {field.required && <span className="text-red-400 ml-0.5" aria-label="required">*</span>}
+                        {field.required && <span className="text-stone-400 ml-0.5" aria-label="required">*</span>}
                       </label>
                       {field.type === 'textarea' ? (
                         <textarea
@@ -303,7 +303,7 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                           placeholder={field.placeholder}
                           aria-required={field.required}
                           rows={4}
-                          className="w-full px-3 py-2 text-sm border border-stone-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400 placeholder:text-stone-300"
+                          className="w-full px-3 py-2 text-sm border border-stone-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400 placeholder:text-stone-300"
                         />
                       ) : field.type === 'select' ? (
                         <select
@@ -311,7 +311,7 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                           value={formData[field.key] || ''}
                           onChange={e => setFormData(prev => ({ ...prev, [field.key]: e.target.value }))}
                           aria-required={field.required}
-                          className="w-full px-3 py-2 text-sm border border-stone-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                          className="w-full px-3 py-2 text-sm border border-stone-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400"
                         >
                           <option value="">Select...</option>
                           {field.options?.map(opt => (
@@ -326,7 +326,7 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                           onChange={e => setFormData(prev => ({ ...prev, [field.key]: e.target.value }))}
                           placeholder={field.placeholder}
                           aria-required={field.required}
-                          className="w-full px-3 py-2 text-sm border border-stone-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400 placeholder:text-stone-300"
+                          className="w-full px-3 py-2 text-sm border border-stone-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400 placeholder:text-stone-300"
                         />
                       )}
                     </div>
@@ -343,7 +343,7 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                     size="md"
                   />
                   {result && (
-                    <span className="text-xs text-emerald-600 flex items-center gap-1">
+                    <span className="text-xs text-stone-700 flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
                       Generated successfully
                     </span>
@@ -358,17 +358,17 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
-                    className="bg-red-50 border border-red-200 rounded-lg p-4"
+                    className="bg-stone-100 border border-stone-200 rounded-lg p-4"
                     role="alert"
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-sm text-red-700">
+                      <div className="flex items-center gap-2 text-sm text-stone-800">
                         <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
                         {error}
                       </div>
                       <button
                         onClick={handleGenerate}
-                        className="text-xs font-medium text-red-600 hover:text-red-700 underline focus:outline-none focus:ring-2 focus:ring-red-300 rounded ml-4"
+                        className="text-xs font-medium text-stone-700 hover:text-stone-800 underline focus:outline-none focus:ring-2 focus:ring-stone-300 rounded ml-4"
                       >
                         Retry
                       </button>
@@ -390,18 +390,18 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                   >
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-sm font-semibold text-stone-800 flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500" aria-hidden="true" />
+                        <CheckCircle2 className="w-4 h-4 text-stone-1000" aria-hidden="true" />
                         Generated Narrative
                       </h3>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={handleCopy}
                           aria-label={copied ? 'Copied to clipboard' : 'Copy narrative to clipboard'}
-                          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-stone-600 bg-stone-50 rounded-md hover:bg-stone-100 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-300"
+                          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-stone-600 bg-stone-50 rounded-md hover:bg-stone-100 transition-colors focus:outline-none focus:ring-2 focus:ring-stone-300"
                         >
                           {copied ? (
                             <>
-                              <CheckCircle2 className="w-3 h-3 text-emerald-500" aria-hidden="true" />
+                              <CheckCircle2 className="w-3 h-3 text-stone-1000" aria-hidden="true" />
                               Copied
                             </>
                           ) : (

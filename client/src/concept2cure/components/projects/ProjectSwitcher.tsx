@@ -99,8 +99,8 @@ const SUBMISSION_TYPES: Record<
   NDA: {
     label: 'NDA',
     icon: Pill,
-    color: 'text-green-600',
-    bgColor: 'bg-green-50',
+    color: 'text-stone-700',
+    bgColor: 'bg-stone-100',
   },
   BLA: {
     label: 'BLA',
@@ -111,8 +111,8 @@ const SUBMISSION_TYPES: Record<
   PMA: {
     label: 'PMA',
     icon: Heart,
-    color: 'text-red-600',
-    bgColor: 'bg-red-50',
+    color: 'text-stone-700',
+    bgColor: 'bg-stone-100',
   },
   MAA: {
     label: 'MAA',
@@ -234,8 +234,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         className={cn(
           'absolute top-3 left-3 h-6 w-6',
           project.starred
-            ? 'text-amber-500'
-            : 'text-stone-400 opacity-0 group-hover:opacity-100 hover:text-amber-500'
+            ? 'text-stone-1000'
+            : 'text-stone-400 opacity-0 group-hover:opacity-100 hover:text-stone-1000'
         )}
       >
         <Star className={cn('w-4 h-4', project.starred && 'fill-current')} />
@@ -285,7 +285,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                   onDelete();
                   setShowMenu(false);
                 }}
-                className="w-full flex items-center justify-start gap-2 px-3 py-2 h-auto text-sm text-red-600 hover:bg-red-50"
+                className="w-full flex items-center justify-start gap-2 px-3 py-2 h-auto text-sm text-stone-700 hover:bg-stone-100"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete

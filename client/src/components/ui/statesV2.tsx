@@ -55,12 +55,12 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
     >
       {/* Spinner with accessible hidden text */}
       <div
-        className={`animate-spin rounded-full border-2 border-gray-200 border-t-blue-600 ${sizeClasses[size]}`}
+        className={`animate-spin rounded-full border-2 border-stone-200 border-t-stone-600 ${sizeClasses[size]}`}
         aria-hidden="true"
       />
       {/* Visible message */}
       {message && (
-        <p className="text-sm text-gray-500" id={`${testId}-message`}>
+        <p className="text-sm text-stone-500" id={`${testId}-message`}>
           {message}
         </p>
       )}
@@ -128,9 +128,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   const descId = useId();
 
   const actionVariantClasses = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-stone-400',
-    secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500',
-    destructive: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
+    primary: 'bg-stone-600 text-white hover:bg-stone-700 focus:ring-stone-400',
+    secondary: 'bg-stone-100 text-stone-700 hover:bg-stone-200 focus:ring-stone-500',
+    destructive: 'bg-stone-700 text-white hover:bg-stone-800 focus:ring-stone-1000',
   };
 
   return (
@@ -142,15 +142,15 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       data-testid={testId}
     >
       {icon && (
-        <div className="mb-4 text-gray-300" aria-hidden="true">
+        <div className="mb-4 text-stone-300" aria-hidden="true">
           {icon}
         </div>
       )}
-      <h3 id={titleId} className="text-lg font-medium text-gray-900 mb-1">
+      <h3 id={titleId} className="text-lg font-medium text-stone-900 mb-1">
         {title}
       </h3>
       {description && (
-        <p id={descId} className="text-sm text-gray-500 max-w-sm mb-4">
+        <p id={descId} className="text-sm text-stone-500 max-w-sm mb-4">
           {description}
         </p>
       )}
@@ -171,7 +171,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           {secondaryAction && (
             <button
               onClick={secondaryAction.onClick}
-              className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 rounded-md transition-colors"
+              className="px-4 py-2 text-sm font-medium text-stone-700 hover:text-stone-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-500 rounded-md transition-colors"
               type="button"
               data-testid={`${testId}-secondary-action`}
             >
@@ -253,9 +253,9 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
       data-testid={testId}
     >
       {/* Error icon */}
-      <div className="mb-4 p-3 bg-red-100 rounded-full" aria-hidden="true">
+      <div className="mb-4 p-3 bg-stone-100 rounded-full" aria-hidden="true">
         <svg
-          className="h-8 w-8 text-red-600"
+          className="h-8 w-8 text-stone-700"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -271,18 +271,18 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
       </div>
 
       {/* Error title */}
-      <h3 id={titleId} className="text-lg font-medium text-gray-900 mb-1">
+      <h3 id={titleId} className="text-lg font-medium text-stone-900 mb-1">
         {title}
       </h3>
 
       {/* Error message */}
-      <p id={descId} className="text-sm text-gray-600 max-w-md mb-2">
+      <p id={descId} className="text-sm text-stone-600 max-w-md mb-2">
         {message}
       </p>
 
       {/* Error code */}
       {errorCode && (
-        <p className="text-xs text-gray-400 mb-2">
+        <p className="text-xs text-stone-400 mb-2">
           Error code: <code className="font-mono">{errorCode}</code>
         </p>
       )}
@@ -291,14 +291,14 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
       {details && (
         <details
           ref={detailsRef}
-          className="text-xs text-gray-400 mb-4 max-w-md"
+          className="text-xs text-stone-400 mb-4 max-w-md"
           data-testid={`${testId}-details`}
         >
-          <summary className="cursor-pointer hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2 rounded">
+          <summary className="cursor-pointer hover:text-stone-600 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2 rounded">
             Technical details
           </summary>
           <pre
-            className="mt-2 p-2 bg-gray-100 rounded text-left overflow-auto max-h-40"
+            className="mt-2 p-2 bg-stone-100 rounded text-left overflow-auto max-h-40"
             role="region"
             aria-label="Technical error details"
           >
@@ -313,7 +313,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
           <button
             onClick={retry}
             onKeyDown={handleKeyDown}
-            className="px-4 py-2 bg-gray-800 text-white text-sm font-medium rounded-md hover:bg-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            className="px-4 py-2 bg-stone-800 text-white text-sm font-medium rounded-md hover:bg-stone-900 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-500"
             type="button"
             data-testid={`${testId}-retry`}
           >
@@ -323,7 +323,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         {supportLink && (
           <a
             href={supportLink}
-            className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 rounded-md transition-colors"
+            className="px-4 py-2 text-sm font-medium text-stone-600 hover:text-stone-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-500 rounded-md transition-colors"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -374,7 +374,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 }) => {
   return (
     <div
-      className={`animate-pulse bg-gray-200 rounded ${className}`}
+      className={`animate-pulse bg-stone-200 rounded ${className}`}
       role="status"
       aria-label={label}
       aria-busy="true"
@@ -413,7 +413,7 @@ export const SkeletonText: React.FC<SkeletonTextProps> = ({
       {Array.from({ length: lines }).map((_, i) => (
         <div
           key={i}
-          className={`animate-pulse bg-gray-200 rounded h-4 ${i === lines - 1 ? 'w-3/4' : 'w-full'}`}
+          className={`animate-pulse bg-stone-200 rounded h-4 ${i === lines - 1 ? 'w-3/4' : 'w-full'}`}
           aria-hidden="true"
         />
       ))}
@@ -438,22 +438,22 @@ export const SkeletonCard: React.FC<SkeletonCardProps> = ({
 }) => {
   return (
     <div
-      className="border border-gray-200 rounded-lg p-4 space-y-4"
+      className="border border-stone-200 rounded-lg p-4 space-y-4"
       role="status"
       aria-label={label}
       aria-busy="true"
       data-testid={testId}
     >
       <div className="flex items-center gap-3">
-        <div className="animate-pulse bg-gray-200 h-10 w-10 rounded-full" aria-hidden="true" />
+        <div className="animate-pulse bg-stone-200 h-10 w-10 rounded-full" aria-hidden="true" />
         <div className="flex-1 space-y-2">
-          <div className="animate-pulse bg-gray-200 rounded h-4 w-1/3" aria-hidden="true" />
-          <div className="animate-pulse bg-gray-200 rounded h-3 w-1/4" aria-hidden="true" />
+          <div className="animate-pulse bg-stone-200 rounded h-4 w-1/3" aria-hidden="true" />
+          <div className="animate-pulse bg-stone-200 rounded h-3 w-1/4" aria-hidden="true" />
         </div>
       </div>
       <div className="space-y-2" aria-hidden="true">
-        <div className="animate-pulse bg-gray-200 rounded h-4 w-full" />
-        <div className="animate-pulse bg-gray-200 rounded h-4 w-3/4" />
+        <div className="animate-pulse bg-stone-200 rounded h-4 w-full" />
+        <div className="animate-pulse bg-stone-200 rounded h-4 w-3/4" />
       </div>
       <span className="sr-only">{label}</span>
     </div>
@@ -482,23 +482,23 @@ export const SkeletonTable: React.FC<SkeletonTableProps> = ({
 }) => {
   return (
     <div
-      className="border border-gray-200 rounded-lg overflow-hidden"
+      className="border border-stone-200 rounded-lg overflow-hidden"
       role="status"
       aria-label={label}
       aria-busy="true"
       data-testid={testId}
     >
       {/* Header */}
-      <div className="flex gap-4 p-4 bg-gray-50 border-b" aria-hidden="true">
+      <div className="flex gap-4 p-4 bg-stone-50 border-b" aria-hidden="true">
         {Array.from({ length: columns }).map((_, i) => (
-          <div key={i} className="animate-pulse bg-gray-200 rounded h-4 flex-1" />
+          <div key={i} className="animate-pulse bg-stone-200 rounded h-4 flex-1" />
         ))}
       </div>
       {/* Rows */}
       {Array.from({ length: rows }).map((_, rowIndex) => (
         <div key={rowIndex} className="flex gap-4 p-4 border-b last:border-0" aria-hidden="true">
           {Array.from({ length: columns }).map((_, colIndex) => (
-            <div key={colIndex} className="animate-pulse bg-gray-200 rounded h-4 flex-1" />
+            <div key={colIndex} className="animate-pulse bg-stone-200 rounded h-4 flex-1" />
           ))}
         </div>
       ))}
@@ -685,10 +685,10 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
   const labelId = useId();
 
   const variantClasses = {
-    default: 'bg-blue-600',
-    success: 'bg-green-600',
-    warning: 'bg-yellow-500',
-    error: 'bg-red-600',
+    default: 'bg-stone-600',
+    success: 'bg-stone-700',
+    warning: 'bg-stone-1000',
+    error: 'bg-stone-700',
   };
 
   const sizeClasses = {
@@ -702,19 +702,19 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
       {(label || showPercentage) && (
         <div className="flex justify-between mb-1 text-sm">
           {label && (
-            <span id={labelId} className="text-gray-700">
+            <span id={labelId} className="text-stone-700">
               {label}
             </span>
           )}
           {showPercentage && (
-            <span className="text-gray-500" aria-hidden="true">
+            <span className="text-stone-500" aria-hidden="true">
               {Math.round(percentage)}%
             </span>
           )}
         </div>
       )}
       <div
-        className={`w-full bg-gray-200 rounded-full overflow-hidden ${sizeClasses[size]}`}
+        className={`w-full bg-stone-200 rounded-full overflow-hidden ${sizeClasses[size]}`}
         role="progressbar"
         aria-valuenow={value}
         aria-valuemin={0}
@@ -755,7 +755,7 @@ export const InlineErrorState: React.FC<InlineErrorStateProps> = ({
 }) => {
   return (
     <div
-      className="flex items-center gap-2 text-sm text-red-600 py-1.5"
+      className="flex items-center gap-2 text-sm text-stone-700 py-1.5"
       role="alert"
       aria-live="assertive"
       data-testid={testId}
@@ -778,7 +778,7 @@ export const InlineErrorState: React.FC<InlineErrorStateProps> = ({
       {retry && (
         <button
           onClick={retry}
-          className="text-xs font-medium text-red-700 hover:text-red-900 underline underline-offset-2 transition-colors"
+          className="text-xs font-medium text-stone-800 hover:text-stone-900 underline underline-offset-2 transition-colors"
           type="button"
           data-testid={`${testId}-retry`}
         >
@@ -822,9 +822,9 @@ export const NoResultsState: React.FC<NoResultsStateProps> = ({
       aria-labelledby={titleId}
       data-testid={testId}
     >
-      <div className="mb-3 p-3 bg-gray-100 rounded-full" aria-hidden="true">
+      <div className="mb-3 p-3 bg-stone-100 rounded-full" aria-hidden="true">
         <svg
-          className="h-6 w-6 text-gray-400"
+          className="h-6 w-6 text-stone-400"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -837,14 +837,14 @@ export const NoResultsState: React.FC<NoResultsStateProps> = ({
           />
         </svg>
       </div>
-      <h3 id={titleId} className="text-sm font-medium text-gray-900 mb-1">
+      <h3 id={titleId} className="text-sm font-medium text-stone-900 mb-1">
         {query ? `No results for "${query}"` : 'No results found'}
       </h3>
-      <p className="text-xs text-gray-500 max-w-sm mb-3">{suggestion}</p>
+      <p className="text-xs text-stone-500 max-w-sm mb-3">{suggestion}</p>
       {onClear && (
         <button
           onClick={onClear}
-          className="text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+          className="text-xs font-medium text-stone-600 hover:text-stone-800 transition-colors"
           type="button"
           data-testid={`${testId}-clear`}
         >
@@ -893,9 +893,9 @@ export const BlockedState: React.FC<BlockedStateProps> = ({
       aria-describedby={descId}
       data-testid={testId}
     >
-      <div className="mb-4 p-3 bg-amber-50 rounded-full" aria-hidden="true">
+      <div className="mb-4 p-3 bg-stone-100 rounded-full" aria-hidden="true">
         <svg
-          className="h-7 w-7 text-amber-500"
+          className="h-7 w-7 text-stone-1000"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -908,16 +908,16 @@ export const BlockedState: React.FC<BlockedStateProps> = ({
           />
         </svg>
       </div>
-      <h3 id={titleId} className="text-sm font-medium text-gray-900 mb-1">
+      <h3 id={titleId} className="text-sm font-medium text-stone-900 mb-1">
         {title}
       </h3>
-      <p id={descId} className="text-xs text-gray-500 max-w-sm mb-3">
+      <p id={descId} className="text-xs text-stone-500 max-w-sm mb-3">
         {message}
       </p>
       {action && (
         <button
           onClick={action.onClick}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          className="px-4 py-2 text-sm font-medium text-stone-700 bg-stone-100 hover:bg-stone-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-500"
           type="button"
           data-testid={`${testId}-action`}
         >
@@ -966,9 +966,9 @@ export const MissingConfigurationState: React.FC<MissingConfigurationStateProps>
       aria-describedby={descId}
       data-testid={testId}
     >
-      <div className="mb-4 p-3 bg-blue-50 rounded-full" aria-hidden="true">
+      <div className="mb-4 p-3 bg-stone-100 rounded-full" aria-hidden="true">
         <svg
-          className="h-7 w-7 text-blue-500"
+          className="h-7 w-7 text-stone-1000"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -987,16 +987,16 @@ export const MissingConfigurationState: React.FC<MissingConfigurationStateProps>
           />
         </svg>
       </div>
-      <h3 id={titleId} className="text-sm font-medium text-gray-900 mb-1">
+      <h3 id={titleId} className="text-sm font-medium text-stone-900 mb-1">
         {title}
       </h3>
-      <p id={descId} className="text-xs text-gray-500 max-w-sm mb-3">
+      <p id={descId} className="text-xs text-stone-500 max-w-sm mb-3">
         {message}
       </p>
       {action && (
         <button
           onClick={action.onClick}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-400"
+          className="px-4 py-2 text-sm font-medium text-white bg-stone-600 hover:bg-stone-700 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-400"
           type="button"
           data-testid={`${testId}-action`}
         >

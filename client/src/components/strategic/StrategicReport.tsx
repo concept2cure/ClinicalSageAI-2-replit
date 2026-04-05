@@ -48,12 +48,12 @@ const StrategicReport: React.FC<StrategicReportProps> = ({ report, onExportPdf }
   // Helper to get an icon based on section title
   const getSectionIcon = (title: string) => {
     const titleLower = title.toLowerCase();
-    if (titleLower.includes('benchmark')) return <TrendingUp className="h-5 w-5 text-blue-600" />;
-    if (titleLower.includes('risk')) return <AlertCircle className="h-5 w-5 text-amber-600" />;
-    if (titleLower.includes('regulatory')) return <FileText className="h-5 w-5 text-green-600" />;
-    if (titleLower.includes('strategic')) return <Target className="h-5 w-5 text-purple-600" />;
+    if (titleLower.includes('benchmark')) return <TrendingUp className="h-5 w-5 text-stone-600" />;
+    if (titleLower.includes('risk')) return <AlertCircle className="h-5 w-5 text-stone-600" />;
+    if (titleLower.includes('regulatory')) return <FileText className="h-5 w-5 text-stone-700" />;
+    if (titleLower.includes('strategic')) return <Target className="h-5 w-5 text-stone-600" />;
     if (titleLower.includes('recommendation'))
-      return <CheckCircle className="h-5 w-5 text-teal-600" />;
+      return <CheckCircle className="h-5 w-5 text-stone-600" />;
     return <Info className="h-5 w-5 text-slate-600" />;
   };
 
@@ -97,7 +97,7 @@ const StrategicReport: React.FC<StrategicReportProps> = ({ report, onExportPdf }
               {/* Table content */}
               {section.table && section.table.length > 0 && (
                 <div className="border rounded-md overflow-hidden mt-2">
-                  <table className="min-w-full divide-y divide-gray-200">
+                  <table className="min-w-full divide-y divide-stone-200">
                     <thead className="bg-slate-50">
                       <tr>
                         {Object.keys(section.table[0]).map(key => (
@@ -110,7 +110,7 @@ const StrategicReport: React.FC<StrategicReportProps> = ({ report, onExportPdf }
                         ))}
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-white divide-y divide-stone-200">
                       {section.table.map((row, rowIndex) => (
                         <tr key={rowIndex}>
                           {Object.entries(row).map(([key, value], cellIndex) => (

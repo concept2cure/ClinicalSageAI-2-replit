@@ -67,9 +67,9 @@ import {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const DIFF_FLAG_STYLES: Record<DiffFlagV2, string> = {
-  EQUIVALENT: 'bg-green-100 text-green-800 border-green-200',
-  DISCUSSION_REQUIRED: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  SIGNIFICANT: 'bg-red-100 text-red-800 border-red-200',
+  EQUIVALENT: 'bg-stone-100 text-stone-800 border-stone-200',
+  DISCUSSION_REQUIRED: 'bg-stone-100 text-stone-800 border-stone-200',
+  SIGNIFICANT: 'bg-stone-100 text-stone-800 border-stone-200',
 };
 
 const DIFF_FLAG_ICONS: Record<DiffFlagV2, typeof CheckCircle> = {
@@ -79,9 +79,9 @@ const DIFF_FLAG_ICONS: Record<DiffFlagV2, typeof CheckCircle> = {
 };
 
 const SEVERITY_STYLES: Record<string, string> = {
-  HIGH: 'bg-red-100 text-red-800',
-  MEDIUM: 'bg-yellow-100 text-yellow-800',
-  LOW: 'bg-blue-100 text-blue-800',
+  HIGH: 'bg-stone-100 text-stone-800',
+  MEDIUM: 'bg-stone-100 text-stone-800',
+  LOW: 'bg-stone-100 text-stone-800',
 };
 
 const SE_FIELDS = [
@@ -101,8 +101,8 @@ const SE_FIELDS = [
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function ReadinessGauge({ score }: { score: number }) {
-  const color = score >= 80 ? 'text-green-600' : score >= 50 ? 'text-yellow-600' : 'text-red-600';
-  const bgColor = score >= 80 ? 'bg-green-500' : score >= 50 ? 'bg-yellow-500' : 'bg-red-500';
+  const color = score >= 80 ? 'text-stone-700' : score >= 50 ? 'text-stone-600' : 'text-stone-700';
+  const bgColor = score >= 80 ? 'bg-stone-1000' : score >= 50 ? 'bg-stone-1000' : 'bg-stone-1000';
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -128,7 +128,7 @@ function ReadinessGauge({ score }: { score: number }) {
         <Shield className="h-4 w-4" />
         <span className="font-medium">Defense Readiness</span>
       </div>
-      <div className={`h-1.5 w-32 rounded-full bg-gray-200`}>
+      <div className={`h-1.5 w-32 rounded-full bg-stone-200`}>
         <div className={`h-full rounded-full ${bgColor}`} style={{ width: `${score}%` }} />
       </div>
     </div>
@@ -423,8 +423,8 @@ export function SEMatrixV2Panel({
                 data-testid="replay-result-badge"
                 className={
                   replayResult.deterministic
-                    ? 'bg-green-100 text-green-800 border-green-300'
-                    : 'bg-red-100 text-red-800 border-red-300 animate-pulse'
+                    ? 'bg-stone-100 text-stone-800 border-stone-300'
+                    : 'bg-stone-100 text-stone-800 border-stone-300 animate-pulse'
                 }
               >
                 {replayResult.deterministic ? (
@@ -440,7 +440,7 @@ export function SEMatrixV2Panel({
             )}
 
             {replayMutation.isError && (
-              <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">
+              <Badge variant="outline" className="bg-stone-100 text-stone-800 border-stone-300">
                 Replay failed: {replayMutation.error?.message?.slice(0, 60) || 'unknown error'}
               </Badge>
             )}
@@ -448,17 +448,17 @@ export function SEMatrixV2Panel({
 
           {/* G: "Why blocked?" panel for drift/contract mismatch */}
           {isDownloadBlocked && replayResult && (
-            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md text-sm space-y-1">
-              <div className="flex items-center gap-2 font-semibold text-red-800">
+            <div className="mt-3 p-3 bg-stone-100 border border-stone-200 rounded-md text-sm space-y-1">
+              <div className="flex items-center gap-2 font-semibold text-stone-800">
                 <ShieldAlert className="h-4 w-4" />
                 Download Blocked — Drift Severity: {replayResult.drift_severity || 'HIGH'}
               </div>
               {replayResult.drift_reason_codes?.length > 0 && (
-                <div className="text-red-700">
+                <div className="text-stone-800">
                   Reason codes: {replayResult.drift_reason_codes.join(', ')}
                 </div>
               )}
-              <div className="text-red-600 text-xs">
+              <div className="text-stone-700 text-xs">
                 Re-generate the SE Matrix to create a new proof pack with the current contract.
               </div>
             </div>
@@ -466,15 +466,15 @@ export function SEMatrixV2Panel({
 
           {/* G: Download error details (409 BLOCKED / CONTRACT_MISMATCH) */}
           {downloadError && (
-            <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm space-y-1">
-              <div className="font-semibold text-amber-800">
+            <div className="mt-3 p-3 bg-stone-100 border border-stone-200 rounded-md text-sm space-y-1">
+              <div className="font-semibold text-stone-800">
                 {String(downloadError.error_code ?? 'Download Error')}
               </div>
-              <div className="text-amber-700 text-xs">
+              <div className="text-stone-700 text-xs">
                 {String(downloadError.message ?? JSON.stringify(downloadError))}
               </div>
               {Array.isArray(downloadError.mismatches) && (
-                <ul className="text-xs text-amber-600 list-disc ml-4">
+                <ul className="text-xs text-stone-600 list-disc ml-4">
                   {(
                     downloadError.mismatches as Array<{
                       field: string;
@@ -502,9 +502,9 @@ export function SEMatrixV2Panel({
 
       {/* Error states */}
       {generateMutation.isError && (
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-stone-200 bg-stone-100">
           <CardContent className="pt-4">
-            <p className="text-sm text-red-800">
+            <p className="text-sm text-stone-800">
               <AlertTriangle className="h-4 w-4 inline mr-1" />
               {(generateMutation.error as Error)?.message || 'Generation failed'}
             </p>
@@ -530,7 +530,7 @@ export function SEMatrixV2Panel({
             </Card>
             <Card>
               <CardContent className="pt-6 text-center">
-                <p className="text-3xl font-bold text-yellow-600">
+                <p className="text-3xl font-bold text-stone-600">
                   {result.discussion_required_count}
                 </p>
                 <p className="text-xs text-muted-foreground">Discussion Required</p>
@@ -538,13 +538,13 @@ export function SEMatrixV2Panel({
             </Card>
             <Card>
               <CardContent className="pt-6 text-center">
-                <p className="text-3xl font-bold text-red-600">{result.significant_count}</p>
+                <p className="text-3xl font-bold text-stone-700">{result.significant_count}</p>
                 <p className="text-xs text-muted-foreground">Significant Diff</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6 text-center">
-                <p className="text-3xl font-bold text-blue-600">{result.evidence_task_count}</p>
+                <p className="text-3xl font-bold text-stone-600">{result.evidence_task_count}</p>
                 <p className="text-xs text-muted-foreground">Evidence Tasks</p>
               </CardContent>
             </Card>
@@ -577,9 +577,9 @@ export function SEMatrixV2Panel({
                         key={idx}
                         className={
                           row.diff_flag === 'SIGNIFICANT'
-                            ? 'bg-red-50'
+                            ? 'bg-stone-100'
                             : row.diff_flag === 'DISCUSSION_REQUIRED'
-                              ? 'bg-yellow-50'
+                              ? 'bg-stone-100'
                               : ''
                         }
                       >
@@ -631,7 +631,7 @@ export function SEMatrixV2Panel({
                       className="flex items-start gap-3 rounded-md border p-3"
                     >
                       <Badge
-                        className={`${SEVERITY_STYLES[task.severity] || 'bg-gray-100'} text-xs shrink-0`}
+                        className={`${SEVERITY_STYLES[task.severity] || 'bg-stone-100'} text-xs shrink-0`}
                       >
                         {task.severity}
                       </Badge>
@@ -667,9 +667,9 @@ export function SEMatrixV2Panel({
 
           {/* "Why Blocked?" drift panel (E.3) */}
           {replayResult && !replayResult.deterministic && (
-            <Card className="border-red-300 bg-red-50" data-testid="drift-panel">
+            <Card className="border-stone-300 bg-stone-100" data-testid="drift-panel">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-red-800 flex items-center gap-2">
+                <CardTitle className="text-sm text-stone-800 flex items-center gap-2">
                   <ShieldAlert className="h-4 w-4" />
                   Why is download blocked?
                 </CardTitle>
@@ -682,7 +682,7 @@ export function SEMatrixV2Panel({
                       <Badge
                         key={code}
                         variant="outline"
-                        className="text-xs bg-red-100 text-red-800 border-red-300 font-mono"
+                        className="text-xs bg-stone-100 text-stone-800 border-stone-300 font-mono"
                       >
                         {code}
                       </Badge>
@@ -693,16 +693,16 @@ export function SEMatrixV2Panel({
                 {/* Structured diff summary table */}
                 {replayResult.diff_summary && replayResult.diff_summary.length > 0 && (
                   <div
-                    className="rounded border border-red-200 overflow-hidden"
+                    className="rounded border border-stone-200 overflow-hidden"
                     data-testid="diff-summary-table"
                   >
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-red-100">
-                          <TableHead className="text-xs text-red-800 w-[150px]">Field</TableHead>
-                          <TableHead className="text-xs text-red-800 w-[80px]">Severity</TableHead>
-                          <TableHead className="text-xs text-red-800">Before</TableHead>
-                          <TableHead className="text-xs text-red-800">After</TableHead>
+                        <TableRow className="bg-stone-100">
+                          <TableHead className="text-xs text-stone-800 w-[150px]">Field</TableHead>
+                          <TableHead className="text-xs text-stone-800 w-[80px]">Severity</TableHead>
+                          <TableHead className="text-xs text-stone-800">Before</TableHead>
+                          <TableHead className="text-xs text-stone-800">After</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -714,10 +714,10 @@ export function SEMatrixV2Panel({
                                 variant="outline"
                                 className={`text-xs ${
                                   entry.severity === 'HIGH'
-                                    ? 'bg-red-100 text-red-800 border-red-300'
+                                    ? 'bg-stone-100 text-stone-800 border-stone-300'
                                     : entry.severity === 'MEDIUM'
-                                      ? 'bg-yellow-100 text-yellow-800 border-yellow-300'
-                                      : 'bg-blue-100 text-blue-800 border-blue-300'
+                                      ? 'bg-stone-100 text-stone-800 border-stone-300'
+                                      : 'bg-stone-100 text-stone-800 border-stone-300'
                                 }`}
                               >
                                 {entry.severity}
@@ -738,7 +738,7 @@ export function SEMatrixV2Panel({
 
                 {/* Raw drift details */}
                 {replayResult.drift_details.length > 0 && (
-                  <div className="text-xs text-red-800 space-y-1" data-testid="drift-details">
+                  <div className="text-xs text-stone-800 space-y-1" data-testid="drift-details">
                     {replayResult.drift_details.map((d: any, i: any) => (
                       <p key={i} className="font-mono text-[11px]">
                         • {d}
@@ -747,7 +747,7 @@ export function SEMatrixV2Panel({
                   </div>
                 )}
 
-                <p className="text-xs text-red-600 font-medium">
+                <p className="text-xs text-stone-700 font-medium">
                   Regenerate the defense packet to resolve drift, then re-run replay verification.
                 </p>
               </CardContent>

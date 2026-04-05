@@ -230,7 +230,7 @@ export const WorkspaceLeftRail: React.FC<WorkspaceLeftRailProps> = ({
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
           {activeArtifact.ctdSection && (
-            <span className="text-xs px-1.5 py-0.5 rounded-md bg-blue-50 text-stone-700 font-medium">
+            <span className="text-xs px-1.5 py-0.5 rounded-md bg-stone-100 text-stone-700 font-medium">
               {activeArtifact.ctdSection}
             </span>
           )}
@@ -243,11 +243,11 @@ export const WorkspaceLeftRail: React.FC<WorkspaceLeftRailProps> = ({
             className={cn(
               'text-xs px-1.5 py-0.5 rounded-md font-medium',
               activeArtifact.status === 'locked'
-                ? 'bg-red-50 text-red-700'
+                ? 'bg-stone-100 text-stone-800'
                 : activeArtifact.status === 'approved'
-                ? 'bg-emerald-50 text-emerald-700'
+                ? 'bg-stone-100 text-stone-800'
                 : activeArtifact.status === 'review'
-                ? 'bg-yellow-50 text-yellow-700'
+                ? 'bg-stone-100 text-stone-700'
                 : 'bg-stone-100 text-stone-500'
             )}
           >

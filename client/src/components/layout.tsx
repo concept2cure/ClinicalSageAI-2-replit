@@ -25,7 +25,7 @@ export function PageContainer({ children, className }: LayoutProps) {
  */
 export function HeaderSection({ children, className }: LayoutProps) {
   return (
-    <header className={cn('w-full bg-white shadow-sm dark:bg-gray-900', className)}>
+    <header className={cn('w-full bg-white shadow-sm dark:bg-stone-900', className)}>
       {children}
     </header>
   );
@@ -56,7 +56,7 @@ export function Footer({ children, className }: LayoutProps) {
   return (
     <footer
       className={cn(
-        'w-full bg-white shadow-sm dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800',
+        'w-full bg-white shadow-sm dark:bg-stone-900 border-t border-stone-200 dark:border-stone-800',
         className
       )}
     >

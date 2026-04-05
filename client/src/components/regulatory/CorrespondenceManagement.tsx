@@ -233,10 +233,10 @@ export default function CorrespondenceManagement() {
 
   const getPriorityBadge = (priority: string) => {
     const colors = {
-      low: 'bg-blue-100 text-blue-800',
-      medium: 'bg-yellow-100 text-yellow-800',
-      high: 'bg-orange-100 text-orange-800',
-      critical: 'bg-red-100 text-red-800',
+      low: 'bg-stone-100 text-stone-800',
+      medium: 'bg-stone-100 text-stone-800',
+      high: 'bg-stone-100 text-stone-800',
+      critical: 'bg-stone-100 text-stone-800',
     };
     return (
       <Badge className={colors[priority as keyof typeof colors]} data-testid={`badge-priority-${priority}`}>

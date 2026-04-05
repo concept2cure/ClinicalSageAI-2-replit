@@ -155,7 +155,7 @@ const SUBSCRIPTION_TIERS: Record<
   starter: {
     name: 'Starter',
     description: 'For small teams getting started',
-    color: 'text-gray-600 bg-gray-100',
+    color: 'text-stone-600 bg-stone-100',
     icon: Package,
     limits: { maxUsers: 10, maxStorage: 50, maxApiCalls: 10000 },
     price: 499,
@@ -163,7 +163,7 @@ const SUBSCRIPTION_TIERS: Record<
   professional: {
     name: 'Professional',
     description: 'For growing regulatory teams',
-    color: 'text-blue-600 bg-blue-100',
+    color: 'text-stone-600 bg-stone-100',
     icon: Star,
     limits: { maxUsers: 50, maxStorage: 500, maxApiCalls: 100000 },
     price: 1499,
@@ -171,7 +171,7 @@ const SUBSCRIPTION_TIERS: Record<
   enterprise: {
     name: 'Enterprise',
     description: 'For large organizations',
-    color: 'text-purple-600 bg-purple-100',
+    color: 'text-stone-600 bg-stone-100',
     icon: Crown,
     limits: { maxUsers: 500, maxStorage: 5000, maxApiCalls: 1000000 },
     price: 4999,
@@ -179,7 +179,7 @@ const SUBSCRIPTION_TIERS: Record<
   enterprise_plus: {
     name: 'Enterprise Plus',
     description: 'Custom solutions for global pharma',
-    color: 'text-amber-600 bg-amber-100',
+    color: 'text-stone-600 bg-stone-100',
     icon: Zap,
     limits: { maxUsers: -1, maxStorage: -1, maxApiCalls: -1 },
     price: 0, // Custom pricing

@@ -134,9 +134,9 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-stone-100 text-stone-700 ring-stone-200',
-  review: 'bg-amber-50 text-amber-700 ring-amber-200',
-  approved: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-  locked: 'bg-blue-50 text-stone-700 ring-stone-300',
+  review: 'bg-stone-100 text-stone-700 ring-stone-200',
+  approved: 'bg-stone-100 text-stone-800 ring-stone-200',
+  locked: 'bg-stone-100 text-stone-700 ring-stone-300',
 };
 
 const TRANSITION_LABELS: Record<string, string> = {
@@ -161,19 +161,19 @@ function isRegression(from: string, to: string): boolean {
 function EventIcon({ type }: { type: string }) {
   switch (type) {
     case 'status_change':
-      return <Shield className="w-3 h-3 text-blue-500" />;
+      return <Shield className="w-3 h-3 text-stone-1000" />;
     case 'placement':
       return <MapPin className="w-3 h-3 text-stone-1000" />;
     case 'edit':
-      return <PenTool className="w-3 h-3 text-amber-500" />;
+      return <PenTool className="w-3 h-3 text-stone-1000" />;
     case 'generation':
       return <Sparkles className="w-3 h-3 text-stone-1000" />;
     case 'rollback':
-      return <RotateCcw className="w-3 h-3 text-amber-500" />;
+      return <RotateCcw className="w-3 h-3 text-stone-1000" />;
     case 'export':
-      return <FileText className="w-3 h-3 text-emerald-500" />;
+      return <FileText className="w-3 h-3 text-stone-1000" />;
     case 'approval':
-      return <CheckCircle className="w-3 h-3 text-emerald-500" />;
+      return <CheckCircle className="w-3 h-3 text-stone-1000" />;
     default:
       return <Clock className="w-3 h-3 text-stone-400" />;
   }
@@ -425,7 +425,7 @@ export function GovernedDocumentPanel({
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-stone-200 bg-stone-50/60">
         <div className="flex items-center gap-1.5">
-          <Shield className="w-3 h-3 text-blue-600" />
+          <Shield className="w-3 h-3 text-stone-600" />
           <span className="text-xs font-semibold text-stone-700">{tailoring.panelTitle}</span>
         </div>
         <button
@@ -447,7 +447,7 @@ export function GovernedDocumentPanel({
             className={cn(
               'flex-1 py-1.5 text-xs font-medium capitalize transition-colors duration-150',
               activeTab === tab
-                ? 'text-blue-600 border-b-2 border-stone-800 bg-blue-50/30'
+                ? 'text-stone-600 border-b-2 border-stone-800 bg-stone-100/30'
                 : 'text-stone-400 hover:text-stone-600'
             )}
           >
@@ -513,7 +513,7 @@ export function GovernedDocumentPanel({
         <div className="absolute inset-0 bg-black/20 z-50 flex items-center justify-center">
           <div className="bg-white rounded-lg shadow p-4 mx-3 w-full max-w-[280px]">
             <div className="flex items-center gap-2 mb-3">
-              <AlertCircle className="w-4 h-4 text-amber-500" />
+              <AlertCircle className="w-4 h-4 text-stone-1000" />
               <span className="text-sm font-semibold text-stone-900">Reason Required</span>
             </div>
             <p className="text-xs text-stone-500 mb-2">
@@ -563,7 +563,7 @@ export function GovernedDocumentPanel({
         <div className="absolute inset-0 bg-black/20 z-50 flex items-center justify-center">
           <div className="bg-white rounded-lg shadow p-4 mx-3 w-full max-w-[280px]">
             <div className="flex items-center gap-2 mb-3">
-              <CheckCircle className="w-4 h-4 text-emerald-500" />
+              <CheckCircle className="w-4 h-4 text-stone-1000" />
               <span className="text-sm font-semibold text-stone-900">
                 {attestationTarget === 'approved'
                   ? tailoring.statusLabels.approved
@@ -635,7 +635,7 @@ export function GovernedDocumentPanel({
                   })
                 }
                 disabled={attestationText.trim().length < 10 || changingStatus}
-                className="px-3 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1"
+                className="px-3 py-1 text-xs bg-stone-700 text-white rounded hover:bg-stone-800 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1"
               >
                 {changingStatus && <Loader2 className="w-3 h-3 animate-spin" />}
                 {attestationTarget === 'approved'
@@ -721,17 +721,17 @@ function StatusTab({
           </div>
           <div className="space-y-1">
             {artifact.approvedVersionId && (
-              <div className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-2 py-1 rounded ring-1 ring-emerald-200/60">
+              <div className="flex items-center gap-1.5 text-xs text-stone-800 bg-stone-100 px-2 py-1 rounded ring-1 ring-stone-200/60">
                 <CheckCircle className="w-3 h-3" />
                 <span>Approved at v{artifact.approvedVersionId}</span>
               </div>
             )}
             {artifact.publishedVersionId && (
-              <div className="flex items-center gap-1.5 text-xs text-stone-700 bg-blue-50 px-2 py-1 rounded ring-1 ring-stone-300/60">
+              <div className="flex items-center gap-1.5 text-xs text-stone-700 bg-stone-100 px-2 py-1 rounded ring-1 ring-stone-300/60">
                 <Lock className="w-3 h-3" />
                 <span>Published at v{artifact.publishedVersionId}</span>
                 {artifact.publishedAt && (
-                  <span className="text-xs text-blue-500 ml-auto">
+                  <span className="text-xs text-stone-1000 ml-auto">
                     {formatTime(artifact.publishedAt)}
                   </span>
                 )}
@@ -765,8 +765,8 @@ function StatusTab({
                 className={cn(
                   'w-full text-left px-2 py-1.5 rounded text-xs font-medium flex items-center gap-1.5 transition-colors disabled:opacity-60',
                   regression
-                    ? 'text-amber-700 bg-amber-50 hover:bg-amber-100 ring-1 ring-amber-200/60'
-                    : 'text-stone-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-stone-300/60'
+                    ? 'text-stone-700 bg-stone-100 hover:bg-stone-100 ring-1 ring-stone-200/60'
+                    : 'text-stone-700 bg-stone-100 hover:bg-stone-100 ring-1 ring-stone-300/60'
                 )}
               >
                 {changingStatus ? (
@@ -778,7 +778,7 @@ function StatusTab({
                 )}
                 {label}
                 {regression && (
-                  <span className="text-xs text-amber-500 ml-auto">requires reason</span>
+                  <span className="text-xs text-stone-1000 ml-auto">requires reason</span>
                 )}
               </button>
             );
@@ -828,14 +828,14 @@ function StatusTab({
           <div className="space-y-1">
             {statusEvents.map(e => (
               <div key={e.eventId} className="flex items-start gap-1.5 text-xs">
-                <Shield className="w-3 h-3 text-blue-400 mt-0.5 shrink-0" />
+                <Shield className="w-3 h-3 text-stone-400 mt-0.5 shrink-0" />
                 <div>
                   <div className="text-stone-700">{e.sourceDescription}</div>
                   <div className="text-stone-400">
                     {e.actorName} · {formatTime(e.createdAt)}
                   </div>
                   {e.details?.reason && (
-                    <div className="text-amber-600 text-xs mt-0.5 italic">
+                    <div className="text-stone-600 text-xs mt-0.5 italic">
                       Reason: {e.details.reason}
                     </div>
                   )}
@@ -851,7 +851,7 @@ function StatusTab({
         <div>
           <button
             onClick={onOpenDiff}
-            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-stone-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-stone-300/60 transition-colors duration-150"
+            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-stone-700 bg-stone-100 hover:bg-stone-100 ring-1 ring-stone-300/60 transition-colors duration-150"
           >
             <GitBranch className="w-3 h-3" />
             Compare Versions
@@ -945,9 +945,9 @@ function GovernanceTrailTab({ projectId, artifactId }: { projectId: string | num
 
   const boundaryColor: Record<string, string> = {
     advisory: 'bg-stone-100 text-stone-600',
-    governed_draft: 'bg-blue-100 text-stone-700',
-    approved: 'bg-emerald-100 text-emerald-700',
-    locked: 'bg-amber-100 text-amber-700',
+    governed_draft: 'bg-stone-100 text-stone-700',
+    approved: 'bg-stone-100 text-stone-800',
+    locked: 'bg-stone-100 text-stone-700',
     submission_ready: 'bg-stone-200 text-stone-700',
   };
 
@@ -965,9 +965,9 @@ function GovernanceTrailTab({ projectId, artifactId }: { projectId: string | num
             <div key={t.id} className="flex items-start gap-2 relative">
               <div className="relative z-10 mt-1 bg-white">
                 {t.transitionAllowed ? (
-                  <CheckCircle className="w-3 h-3 text-emerald-500" />
+                  <CheckCircle className="w-3 h-3 text-stone-1000" />
                 ) : (
-                  <AlertCircle className="w-3 h-3 text-red-400" />
+                  <AlertCircle className="w-3 h-3 text-stone-400" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
@@ -979,14 +979,14 @@ function GovernanceTrailTab({ projectId, artifactId }: { projectId: string | num
                   <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium', boundaryColor[t.toBoundary] || 'bg-stone-100 text-stone-600')}>
                     {boundaryLabel[t.toBoundary] || t.toBoundary}
                   </span>
-                  <span className={cn('ml-1 text-[10px]', t.transitionAllowed ? 'text-emerald-600' : 'text-red-500')}>
+                  <span className={cn('ml-1 text-[10px]', t.transitionAllowed ? 'text-stone-700' : 'text-stone-1000')}>
                     {t.transitionAllowed ? 'allowed' : 'blocked'}
                   </span>
                 </div>
                 {!t.transitionAllowed && t.blockedReasons?.length > 0 && (
                   <div className="mt-1 space-y-0.5">
                     {t.blockedReasons.map((reason, i) => (
-                      <div key={i} className="text-[10px] text-red-500 leading-snug pl-1 border-l border-red-200">
+                      <div key={i} className="text-[10px] text-stone-1000 leading-snug pl-1 border-l border-stone-200">
                         {reason}
                       </div>
                     ))}
@@ -1049,7 +1049,7 @@ function AuditTab({ events }: { events: ProvenanceEvent[] }) {
                   <span>{formatTime(e.createdAt)}</span>
                 </div>
                 {e.details?.reason && (
-                  <div className="text-xs text-amber-600 mt-0.5 italic">
+                  <div className="text-xs text-stone-600 mt-0.5 italic">
                     Reason: {e.details.reason}
                   </div>
                 )}
@@ -1075,14 +1075,14 @@ function AuditTab({ events }: { events: ProvenanceEvent[] }) {
                   </div>
                 )}
                 {e.details?.attestation && (
-                  <div className="mt-1 px-1.5 py-1 bg-emerald-50 rounded text-xs text-emerald-800 border-l-2 border-emerald-400">
+                  <div className="mt-1 px-1.5 py-1 bg-stone-100 rounded text-xs text-stone-800 border-l-2 border-stone-400">
                     <div className="flex items-center gap-1">
                       <PenTool className="w-2.5 h-2.5" />
                       <span className="font-medium">
                         {e.details.attestation.meaning || 'Attested'}
                       </span>
                       {e.details.signatureId && (
-                        <span className="text-xs text-emerald-500 font-mono">
+                        <span className="text-xs text-stone-1000 font-mono">
                           sig:{e.details.signatureId}
                         </span>
                       )}
@@ -1111,10 +1111,10 @@ function SnapshotsTab({ snapshots }: { snapshots: SnapshotEntry[] }) {
   }
 
   const actionIcons: Record<string, React.ReactNode> = {
-    publish: <Lock className="w-3 h-3 text-blue-500" />,
-    'export-docx': <FileText className="w-3 h-3 text-blue-500" />,
-    'export-pdf': <FileText className="w-3 h-3 text-red-500" />,
-    'submission-snapshot': <Shield className="w-3 h-3 text-emerald-500" />,
+    publish: <Lock className="w-3 h-3 text-stone-1000" />,
+    'export-docx': <FileText className="w-3 h-3 text-stone-1000" />,
+    'export-pdf': <FileText className="w-3 h-3 text-stone-1000" />,
+    'submission-snapshot': <Shield className="w-3 h-3 text-stone-1000" />,
   };
 
   const actionLabels: Record<string, string> = {
@@ -1148,7 +1148,7 @@ function SnapshotsTab({ snapshots }: { snapshots: SnapshotEntry[] }) {
             </div>
 
             {s.attestationText && (
-              <div className="mt-1 px-1.5 py-1 bg-emerald-50 rounded text-xs text-emerald-800 border-l-2 border-emerald-400">
+              <div className="mt-1 px-1.5 py-1 bg-stone-100 rounded text-xs text-stone-800 border-l-2 border-stone-400">
                 <div className="flex items-center gap-1 mb-0.5">
                   <PenTool className="w-2.5 h-2.5" />
                   <span className="font-medium">{s.signatureMeaning || 'Attested'}</span>
@@ -1238,7 +1238,7 @@ function VersionsTab({
             className={cn(
               'px-2 py-1.5 rounded text-xs ring-1',
               v.version === currentVersion
-                ? 'bg-blue-50 ring-stone-300'
+                ? 'bg-stone-100 ring-stone-300'
                 : 'bg-stone-50 ring-stone-200/60'
             )}
           >
@@ -1252,7 +1252,7 @@ function VersionsTab({
                   </span>
                 )}
                 {v.version === approvedVersionId && (
-                  <span className="text-xs px-1 py-px bg-emerald-600 text-white rounded">
+                  <span className="text-xs px-1 py-px bg-stone-700 text-white rounded">
                     approved
                   </span>
                 )}
@@ -1266,7 +1266,7 @@ function VersionsTab({
                 <button
                   onClick={() => onRollback(v.version)}
                   disabled={rollingBack}
-                  className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-0.5 disabled:opacity-60"
+                  className="text-xs text-stone-600 hover:text-stone-800 flex items-center gap-0.5 disabled:opacity-60"
                   title={`Restore version ${v.version}`}
                 >
                   <RotateCcw className="w-2.5 h-2.5" />
@@ -1286,14 +1286,14 @@ function VersionsTab({
       </div>
 
       {isLocked && (
-        <div className="mt-2 px-2 py-1 bg-amber-50 rounded text-xs text-amber-700 flex items-center gap-1">
+        <div className="mt-2 px-2 py-1 bg-stone-100 rounded text-xs text-stone-700 flex items-center gap-1">
           <Lock className="w-3 h-3" />
           Rollback disabled while locked
         </div>
       )}
 
       {!isLocked && canRollback === false && (
-        <div className="mt-2 px-2 py-1 bg-amber-50 rounded text-xs text-amber-700 flex items-center gap-1">
+        <div className="mt-2 px-2 py-1 bg-stone-100 rounded text-xs text-stone-700 flex items-center gap-1">
           <Shield className="w-3 h-3" />
           Rollback not permitted for your role
         </div>
@@ -1303,7 +1303,7 @@ function VersionsTab({
         <div className="mt-2">
           <button
             onClick={onOpenDiff}
-            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-stone-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-stone-300/60 transition-colors duration-150"
+            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-stone-700 bg-stone-100 hover:bg-stone-100 ring-1 ring-stone-300/60 transition-colors duration-150"
           >
             <GitBranch className="w-3 h-3" />
             Compare Versions

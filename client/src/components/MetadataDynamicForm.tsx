@@ -49,7 +49,7 @@ export default function MetadataDynamicForm({
 
   if (fields.length === 0) {
     return (
-      <div className="text-sm text-gray-400 p-4 text-center">
+      <div className="text-sm text-stone-400 p-4 text-center">
         Select categories in the Tags tab to see metadata fields
       </div>
     );
@@ -57,13 +57,13 @@ export default function MetadataDynamicForm({
 
   return (
     <div className="md-form space-y-4">
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-stone-500">
         Category-specific structured metadata fields ({fields.length} fields)
       </p>
       {fields.map(f => (
         <div key={f.key} className="md-field">
           <Label className="text-sm font-medium mb-1 block">
-            {f.label} {("required" in f && f.required) ? <span className="text-red-500">*</span> : null}
+            {f.label} {("required" in f && f.required) ? <span className="text-stone-1000">*</span> : null}
           </Label>
           {renderInput(f, value[f.key], (v: any) => set(f.key, v))}
         </div>
@@ -131,7 +131,7 @@ function renderInput(field: Field, val: any, onChange: (v: any) => void) {
           type="file" 
           multiple 
           onChange={e => onChange([...e.target.files || []])}
-          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          className="block w-full text-sm text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-stone-100 file:text-stone-700 hover:file:bg-stone-100"
           data-testid={`file-metadata-${field.key}`}
         />
       );

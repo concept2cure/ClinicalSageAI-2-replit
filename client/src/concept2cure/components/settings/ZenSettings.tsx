@@ -300,10 +300,10 @@ const ProfileSection: React.FC = () => {
           {saving ? 'Saving...' : 'Save Changes'}
         </button>
         {saveStatus === 'saved' && (
-          <span className="text-sm text-emerald-600 font-medium">Saved</span>
+          <span className="text-sm text-stone-700 font-medium">Saved</span>
         )}
         {saveStatus === 'error' && (
-          <span className="text-sm text-red-600 font-medium">Failed to save</span>
+          <span className="text-sm text-stone-700 font-medium">Failed to save</span>
         )}
       </div>
     </div>
@@ -346,8 +346,8 @@ const OrganizationSection: React.FC = () => {
       <div className="bg-white rounded-xl border border-stone-200 divide-y divide-stone-100">
         <div className="p-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-              <Building2 className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center">
+              <Building2 className="w-6 h-6 text-stone-600" />
             </div>
             <div>
               <h3 className="text-base font-semibold text-stone-900">{orgData.name}</h3>
@@ -359,7 +359,7 @@ const OrganizationSection: React.FC = () => {
         <SettingRow label="Team Members" description={`${orgData.members} active members`}>
           <a
             href="/concept2cure/billing"
-            className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1"
+            className="text-sm text-stone-600 hover:text-stone-700 font-medium flex items-center gap-1"
           >
             Manage
             <ChevronRight className="w-4 h-4" />
@@ -369,7 +369,7 @@ const OrganizationSection: React.FC = () => {
         <SettingRow label="Billing" description={`Next billing: ${orgData.nextBilling}`}>
           <a
             href="/concept2cure/billing"
-            className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1"
+            className="text-sm text-stone-600 hover:text-stone-700 font-medium flex items-center gap-1"
           >
             View
             <ChevronRight className="w-4 h-4" />
@@ -379,7 +379,7 @@ const OrganizationSection: React.FC = () => {
         <SettingRow label="Usage" description="View token usage in billing dashboard">
           <a
             href="/concept2cure/billing"
-            className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1"
+            className="text-sm text-stone-600 hover:text-stone-700 font-medium flex items-center gap-1"
           >
             Dashboard
             <ChevronRight className="w-4 h-4" />
@@ -498,11 +498,11 @@ const SecuritySection: React.FC = () => {
         </SettingRow>
 
         <SettingRow label="Password" description="Last changed 30 days ago">
-          <button className="text-sm text-blue-600 hover:text-stone-700 font-medium">Change</button>
+          <button className="text-sm text-stone-600 hover:text-stone-700 font-medium">Change</button>
         </SettingRow>
 
         <SettingRow label="Active Sessions" description="3 devices currently signed in">
-          <button className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1">
+          <button className="text-sm text-stone-600 hover:text-stone-700 font-medium flex items-center gap-1">
             View
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -510,16 +510,16 @@ const SecuritySection: React.FC = () => {
       </div>
 
       {/* Danger zone */}
-      <div className="bg-red-50 rounded-xl border border-red-200 p-4">
-        <h3 className="text-sm font-semibold text-red-800 mb-1">Danger Zone</h3>
-        <p className="text-xs text-red-600 mb-4">
+      <div className="bg-stone-100 rounded-xl border border-stone-200 p-4">
+        <h3 className="text-sm font-semibold text-stone-800 mb-1">Danger Zone</h3>
+        <p className="text-xs text-stone-700 mb-4">
           These actions are irreversible. Please proceed with caution.
         </p>
         <div className="flex gap-3">
-          <button className="px-3 py-1.5 text-xs font-medium text-red-700 border border-red-300 rounded-lg hover:bg-red-100 transition-colors duration-150">
+          <button className="px-3 py-1.5 text-xs font-medium text-stone-800 border border-stone-300 rounded-lg hover:bg-stone-100 transition-colors duration-150">
             Export All Data
           </button>
-          <button className="px-3 py-1.5 text-xs font-medium text-red-700 border border-red-300 rounded-lg hover:bg-red-100 transition-colors duration-150">
+          <button className="px-3 py-1.5 text-xs font-medium text-stone-800 border border-stone-300 rounded-lg hover:bg-stone-100 transition-colors duration-150">
             Delete Account
           </button>
         </div>
@@ -558,15 +558,15 @@ const AppearanceSection: React.FC = () => {
               className={cn(
                 'flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-150',
                 theme === id
-                  ? 'border-stone-600 bg-blue-50'
+                  ? 'border-stone-600 bg-stone-100'
                   : 'border-stone-200 hover:border-stone-300'
               )}
             >
-              <Icon className={cn('w-6 h-6', theme === id ? 'text-blue-600' : 'text-stone-400')} />
+              <Icon className={cn('w-6 h-6', theme === id ? 'text-stone-600' : 'text-stone-400')} />
               <span
                 className={cn(
                   'text-sm font-medium',
-                  theme === id ? 'text-blue-600' : 'text-stone-600'
+                  theme === id ? 'text-stone-600' : 'text-stone-600'
                 )}
               >
                 {label}
@@ -1018,7 +1018,7 @@ const IntegrationsSection: React.FC = () => {
               key={integration.id}
               className={cn(
                 'rounded-xl border transition-all duration-200',
-                isConnected ? 'border-emerald-200 bg-emerald-50/50' : 'border-stone-200 bg-white',
+                isConnected ? 'border-stone-200 bg-stone-100/50' : 'border-stone-200 bg-white',
                 isConfiguring && 'ring-2 ring-stone-300'
               )}
             >
@@ -1028,7 +1028,7 @@ const IntegrationsSection: React.FC = () => {
                   <div
                     className={cn(
                       'w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold',
-                      isConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-100 text-stone-600'
+                      isConnected ? 'bg-stone-100 text-stone-800' : 'bg-stone-100 text-stone-600'
                     )}
                   >
                     {integration.icon}
@@ -1040,7 +1040,7 @@ const IntegrationsSection: React.FC = () => {
                         {AUTH_TYPE_LABELS[integration.authType]}
                       </span>
                       {isConnected && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-stone-100 text-stone-800 font-medium">
                           Connected
                         </span>
                       )}
@@ -1066,7 +1066,7 @@ const IntegrationsSection: React.FC = () => {
                     className={cn(
                       'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
                       isConnected
-                        ? 'text-red-600 bg-red-50 hover:bg-red-100'
+                        ? 'text-stone-700 bg-stone-100 hover:bg-stone-100'
                         : isConfiguring
                           ? 'text-stone-600 bg-stone-100 hover:bg-stone-200'
                           : 'text-white bg-stone-800 hover:bg-stone-900'
@@ -1093,7 +1093,7 @@ const IntegrationsSection: React.FC = () => {
                           onChange={e =>
                             handleConfigChange(integration.id, field.key, e.target.value)
                           }
-                          className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg bg-stone-50 focus:outline-none focus:ring-2 focus:ring-stone-300 focus:border-blue-400 transition-all"
+                          className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg bg-stone-50 focus:outline-none focus:ring-2 focus:ring-stone-300 focus:border-stone-400 transition-all"
                         />
                       </div>
                     ))}
@@ -1115,12 +1115,12 @@ const IntegrationsSection: React.FC = () => {
                       Save & Connect
                     </button>
                     {testResult === 'success' && (
-                      <span className="text-xs text-emerald-600 font-medium">
+                      <span className="text-xs text-stone-700 font-medium">
                         Connection successful
                       </span>
                     )}
                     {testResult === 'error' && (
-                      <span className="text-xs text-red-600 font-medium">
+                      <span className="text-xs text-stone-700 font-medium">
                         Connection failed — check credentials
                       </span>
                     )}
@@ -1435,7 +1435,7 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({
 
               {/* Sign out */}
               <div className="p-2 border-t border-stone-200">
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors duration-150">
+                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-100 transition-colors duration-150">
                   <LogOut className="w-4 h-4" />
                   Sign Out
                 </button>

@@ -607,8 +607,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         data-testid="no-project-selected"
       >
         <div className="max-w-sm text-center">
-          <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-blue-50 flex items-center justify-center">
-            <FolderOpen className="w-7 h-7 text-blue-600" />
+          <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-stone-100 flex items-center justify-center">
+            <FolderOpen className="w-7 h-7 text-stone-600" />
           </div>
           <h2 className="text-lg font-semibold text-stone-900 mb-2">Select a Project</h2>
           <p className="text-sm text-stone-500 mb-5">
@@ -755,36 +755,36 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
         {/* ── Pending move banner ───────────────────────────────────────────── */}
         {pendingMove && (
-          <div className="flex items-center gap-2.5 px-4 h-10 border-b border-amber-200 bg-amber-50 shrink-0">
-            <Scissors className="w-4 h-4 text-amber-600" />
-            <span className="text-xs text-amber-900 font-medium truncate">
+          <div className="flex items-center gap-2.5 px-4 h-10 border-b border-stone-200 bg-stone-100 shrink-0">
+            <Scissors className="w-4 h-4 text-stone-600" />
+            <span className="text-xs text-stone-900 font-medium truncate">
               Moving: {pendingMove.artifact.title}
             </span>
             {pendingMove.fromSection && (
-              <span className="text-xs text-amber-700">from {pendingMove.fromSection}</span>
+              <span className="text-xs text-stone-700">from {pendingMove.fromSection}</span>
             )}
             {pendingMove.targetSection ? (
               <>
-                <span className="text-xs text-amber-500">→</span>
-                <span className="text-xs text-amber-800 font-semibold">
+                <span className="text-xs text-stone-1000">→</span>
+                <span className="text-xs text-stone-800 font-semibold">
                   {pendingMove.targetSection}
                 </span>
               </>
             ) : (
-              <span className="text-xs text-amber-600 ml-1">Select a dossier section to paste</span>
+              <span className="text-xs text-stone-600 ml-1">Select a dossier section to paste</span>
             )}
             {pendingMove.artifact.status === 'approved' && (
-              <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-medium">
+              <span className="text-xs px-1.5 py-0.5 rounded bg-stone-100 text-stone-800 font-medium">
                 ⚠ Approved
               </span>
             )}
             <button
               onClick={handleCancelMove}
-              className="ml-auto text-xs text-amber-800 hover:text-red-600 font-medium flex items-center gap-1"
+              className="ml-auto text-xs text-stone-800 hover:text-stone-700 font-medium flex items-center gap-1"
             >
               <X className="w-3.5 h-3.5" />
               Cancel
-              <kbd className="ml-1 text-xs px-1.5 py-0.5 rounded bg-amber-200/60 text-amber-800 font-mono">
+              <kbd className="ml-1 text-xs px-1.5 py-0.5 rounded bg-stone-200/60 text-stone-800 font-mono">
                 Esc
               </kbd>
             </button>
@@ -793,24 +793,24 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
         {/* ── Cut/move blocked feedback ───────────────────────────────────── */}
         {cutBlockedMessage && (
-          <div className="flex items-center gap-2.5 px-4 h-9 border-b border-red-200 bg-red-50 shrink-0 animate-in fade-in duration-200">
-            <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
-            <span className="text-xs text-red-800 font-medium">{cutBlockedMessage}</span>
+          <div className="flex items-center gap-2.5 px-4 h-9 border-b border-stone-200 bg-stone-100 shrink-0 animate-in fade-in duration-200">
+            <AlertTriangle className="w-3.5 h-3.5 text-stone-1000" />
+            <span className="text-xs text-stone-800 font-medium">{cutBlockedMessage}</span>
             <button onClick={() => setCutBlockedMessage(null)} className="ml-auto">
-              <X className="w-3.5 h-3.5 text-red-400 hover:text-red-600" />
+              <X className="w-3.5 h-3.5 text-stone-400 hover:text-stone-700" />
             </button>
           </div>
         )}
 
         {/* ── Persistent context band (browse mode — selected doc reminder) */}
         {mode === 'browse' && activeArtifact && (
-          <div className="flex items-center gap-2.5 px-4 h-9 border-b border-blue-100 bg-blue-50/40 shrink-0">
-            <FileText className="w-3.5 h-3.5 text-blue-500" />
-            <span className="text-xs text-blue-800 font-medium truncate">
+          <div className="flex items-center gap-2.5 px-4 h-9 border-b border-stone-100 bg-stone-100/40 shrink-0">
+            <FileText className="w-3.5 h-3.5 text-stone-1000" />
+            <span className="text-xs text-stone-800 font-medium truncate">
               {activeArtifact.title}
             </span>
             {activeArtifact.ctdSection && (
-              <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100/60 text-blue-600 font-medium">
+              <span className="text-xs px-1.5 py-0.5 rounded bg-stone-100/60 text-stone-600 font-medium">
                 {activeArtifact.ctdSection}
               </span>
             )}
@@ -818,9 +818,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               className={cn(
                 'text-xs px-1.5 py-0.5 rounded font-medium',
                 activeArtifact.status === 'locked'
-                  ? 'bg-red-100/60 text-red-600'
+                  ? 'bg-stone-100/60 text-stone-700'
                   : activeArtifact.status === 'approved'
-                  ? 'bg-emerald-100/60 text-emerald-600'
+                  ? 'bg-stone-100/60 text-stone-700'
                   : 'bg-stone-100 text-stone-500'
               )}
             >
@@ -831,7 +831,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 if (tryOpenForEdit(activeArtifact.status))
                   applyWorkflowTransition('edit_document', { hasDoc: true });
               }}
-              className="ml-auto text-xs text-blue-600 hover:text-blue-800 font-medium"
+              className="ml-auto text-xs text-stone-600 hover:text-stone-800 font-medium"
             >
               Open →
             </button>
@@ -846,7 +846,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               {activeArtifact.title}
             </span>
             {activeArtifact.ctdSection && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-medium shrink-0">
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 font-medium shrink-0">
                 {activeArtifact.ctdSection}
               </span>
             )}
@@ -854,11 +854,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               className={cn(
                 'text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0',
                 activeArtifact.status === 'locked'
-                  ? 'bg-red-50 text-red-600'
+                  ? 'bg-stone-100 text-stone-700'
                   : activeArtifact.status === 'approved'
-                  ? 'bg-emerald-50 text-emerald-600'
+                  ? 'bg-stone-100 text-stone-700'
                   : activeArtifact.status === 'review'
-                  ? 'bg-amber-50 text-amber-600'
+                  ? 'bg-stone-100 text-stone-600'
                   : 'bg-stone-50 text-stone-400'
               )}
             >
@@ -873,7 +873,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             <div className="ml-auto flex items-center gap-0.5">
               <button
                 onClick={() => openVerification(activeArtifact.id)}
-                className="p-1 text-stone-300 hover:text-emerald-600 rounded hover:bg-emerald-50 transition-colors"
+                className="p-1 text-stone-300 hover:text-stone-700 rounded hover:bg-stone-100 transition-colors"
                 title="Verify document"
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
@@ -887,14 +887,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     activeArtifact.title
                   )
                 }
-                className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-blue-50"
+                className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100"
                 title="Transform Canvas"
               >
                 <Sparkles className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={openProgramTwin}
-                className="p-1.5 text-stone-400 hover:text-blue-600 rounded-md hover:bg-blue-50"
+                className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100"
                 title="Program Twin"
               >
                 <Target className="w-3.5 h-3.5" />
@@ -903,7 +903,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 onClick={() =>
                   openSubmissionApps(activeArtifact.ctdSection, activeArtifact.templateId)
                 }
-                className="p-1.5 text-stone-400 hover:text-amber-600 rounded-md hover:bg-amber-50"
+                className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100"
                 title="AI Assistants"
               >
                 <AppWindow className="w-3.5 h-3.5" />
@@ -1191,8 +1191,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 key={t.id}
                 className={cn(
                   'pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-lg shadow-sm text-xs font-medium',
-                  t.type === 'success' && 'bg-emerald-600 text-white',
-                  t.type === 'error' && 'bg-red-600 text-white',
+                  t.type === 'success' && 'bg-stone-700 text-white',
+                  t.type === 'error' && 'bg-stone-700 text-white',
                   t.type === 'info' && 'bg-stone-700 text-white'
                 )}
               >

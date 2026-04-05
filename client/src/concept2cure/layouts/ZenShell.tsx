@@ -195,7 +195,7 @@ const ContextHeader: React.FC<ContextHeaderProps> = ({ projectName, projectType 
       </p>
     </div>
     <div className="hidden md:flex items-center gap-2 text-xs text-stone-500">
-      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-stone-100 px-2 py-1 text-stone-800">
         <Activity className="w-3 h-3" /> Live Sync
       </span>
       <span className="inline-flex items-center gap-1 rounded-full bg-stone-100 px-2 py-1 text-stone-700">

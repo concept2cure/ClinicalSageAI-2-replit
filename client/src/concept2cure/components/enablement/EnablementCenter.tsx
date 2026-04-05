@@ -113,7 +113,7 @@ function HeroSection() {
         Together, they help you produce better, faster, more defensible outcomes
         across the entire regulatory lifecycle.
       </p>
-      <button className="text-blue-600 font-medium hover:underline text-sm mb-8 inline-block">
+      <button className="text-stone-600 font-medium hover:underline text-sm mb-8 inline-block">
         Start my path &rarr;
       </button>
       <p className="text-sm text-stone-400">
@@ -156,7 +156,7 @@ function LearningPathsView() {
               <p className="text-xs text-stone-400 mb-2">
                 {moduleCount} modules &middot; ~{path.estimatedTime}
               </p>
-              <button className="text-sm text-blue-600 hover:underline">
+              <button className="text-sm text-stone-600 hover:underline">
                 Start path &rarr;
               </button>
               {path.aiHighlight && (
@@ -303,7 +303,7 @@ function AllModulesView() {
                           )
                         )}
                         <button
-                          className="text-sm text-blue-600 hover:underline mt-3 inline-block"
+                          className="text-sm text-stone-600 hover:underline mt-3 inline-block"
                           onClick={(e) => e.stopPropagation()}
                         >
                           Start &rarr;
@@ -315,7 +315,7 @@ function AllModulesView() {
 
                 {!isExpanded && (
                   <button
-                    className="text-sm text-blue-600 hover:underline mt-3 inline-block"
+                    className="text-sm text-stone-600 hover:underline mt-3 inline-block"
                     onClick={(e) => {
                       e.stopPropagation();
                       setExpandedModule(mod.id || String(idx));

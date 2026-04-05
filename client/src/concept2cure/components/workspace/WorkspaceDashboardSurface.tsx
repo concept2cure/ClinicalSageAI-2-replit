@@ -117,34 +117,34 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
           />
           {projectNav === 'submission_builder' && <SubmissionCommandCenter projectId={projectId} />}
           {projectNav === 'haq' && (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-4 space-y-3">
+            <div className="rounded-lg border border-stone-200 bg-stone-100/40 p-4 space-y-3">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-700" />
-                <span className="text-sm font-semibold text-emerald-900">
+                <ShieldCheck className="w-4 h-4 text-stone-800" />
+                <span className="text-sm font-semibold text-stone-900">
                   HAQ Manager — Governed Artifact Queue
                 </span>
                 <Badge
                   variant="outline"
-                  className="text-[10px] ml-auto border-emerald-200 text-emerald-700"
+                  className="text-[10px] ml-auto border-stone-200 text-stone-800"
                 >
                   {artifacts.filter(a => a.status === 'review' || a.status === 'draft').length} open
                 </Badge>
               </div>
-              <p className="text-xs text-emerald-800">
+              <p className="text-xs text-stone-800">
                 Triage governed artifacts, review pulse signals, and proposal accept/reject actions
                 in one quality queue.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <div className="rounded border border-emerald-200 bg-white px-3 py-2 text-xs text-emerald-800">
+                <div className="rounded border border-stone-200 bg-white px-3 py-2 text-xs text-stone-800">
                   Draft artifacts:{' '}
                   <span className="font-semibold">
                     {artifacts.filter(a => a.status === 'draft').length}
                   </span>
                 </div>
-                <div className="rounded border border-emerald-200 bg-white px-3 py-2 text-xs text-emerald-800">
+                <div className="rounded border border-stone-200 bg-white px-3 py-2 text-xs text-stone-800">
                   Reviews in flight: <span className="font-semibold">{reviewInFlight}</span>
                 </div>
-                <div className="rounded border border-emerald-200 bg-white px-3 py-2 text-xs text-emerald-800">
+                <div className="rounded border border-stone-200 bg-white px-3 py-2 text-xs text-stone-800">
                   Pending proposals:{' '}
                   <span className="font-semibold">
                     {proposals.filter(p => p.status === 'pending').length}
@@ -157,7 +157,7 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
           {/* Document Consequence Ledger */}
           <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <ShieldCheck className="w-4 h-4 text-stone-700" />
               <span className="text-sm font-semibold text-slate-900">
                 Document Consequence Ledger
               </span>
@@ -182,9 +182,9 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
                         variant="outline"
                         className={cn(
                           'text-[10px]',
-                          row.status === 'draft' && 'text-amber-700 border-amber-200',
-                          row.status === 'approved' && 'text-emerald-700 border-emerald-200',
-                          row.status === 'review' && 'text-stone-700 border-blue-200',
+                          row.status === 'draft' && 'text-stone-700 border-stone-200',
+                          row.status === 'approved' && 'text-stone-800 border-stone-200',
+                          row.status === 'review' && 'text-stone-700 border-stone-200',
                           row.status === 'locked' && 'text-slate-700 border-slate-200'
                         )}
                       >
@@ -220,7 +220,7 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 px-2 text-[11px] text-blue-600"
+                        className="h-6 px-2 text-[11px] text-stone-600"
                         disabled={!row.openable}
                         onClick={() => onOpenComputeArtifact(row.artifactId)}
                       >
@@ -240,7 +240,7 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 px-2 text-[11px] text-emerald-600"
+                          className="h-6 px-2 text-[11px] text-stone-700"
                           onClick={() => onOpenComputeArtifact(row.artifactId, 'audit')}
                         >
                           Audit
@@ -257,7 +257,7 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
           {proposals.length > 0 && (
             <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
               <div className="flex items-center gap-2">
-                <Target className="w-4 h-4 text-blue-600" />
+                <Target className="w-4 h-4 text-stone-600" />
                 <span className="text-sm font-semibold text-slate-900">Document Proposals</span>
                 <Badge variant="outline" className="text-[10px] ml-auto">
                   {proposals.length}
@@ -271,8 +271,8 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
                       variant="outline"
                       className={cn(
                         'text-[10px]',
-                        p.status === 'pending' && 'text-amber-700 border-amber-200',
-                        p.status === 'accepted' && 'text-emerald-700 border-emerald-200',
+                        p.status === 'pending' && 'text-stone-700 border-stone-200',
+                        p.status === 'accepted' && 'text-stone-800 border-stone-200',
                         p.status === 'rejected' && 'text-rose-700 border-rose-200'
                       )}
                     >
@@ -310,7 +310,7 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-5 px-1.5 text-[10px] text-blue-600"
+                            className="h-5 px-1.5 text-[10px] text-stone-600"
                             onClick={() => onOpenComputeArtifact(p.artifactId!)}
                           >
                             Open in editor
@@ -329,7 +329,7 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-5 px-1.5 text-[10px] text-emerald-600"
+                              className="h-5 px-1.5 text-[10px] text-stone-700"
                               onClick={() => onOpenComputeArtifact(p.artifactId!, 'audit')}
                             >
                               Audit
@@ -338,7 +338,7 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-5 px-1.5 text-[10px] text-blue-600"
+                            className="h-5 px-1.5 text-[10px] text-stone-600"
                             onClick={() => captureReviewPackage(p)}
                           >
                             Review package
@@ -354,7 +354,7 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-6 px-2.5 text-[11px] text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+                        className="h-6 px-2.5 text-[11px] text-stone-800 border-stone-200 hover:bg-stone-100"
                         onClick={() => onActOnProposal(p.id, 'accept')}
                       >
                         Accept

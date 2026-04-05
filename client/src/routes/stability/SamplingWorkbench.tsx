@@ -47,7 +47,7 @@ export default function SamplingWorkbench({ studyId }: { studyId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-end">
-        <button className="text-xs text-blue-600 underline" onClick={() => setHelpOpen(true)}>
+        <button className="text-xs text-stone-600 underline" onClick={() => setHelpOpen(true)}>
           Help
         </button>
       </div>

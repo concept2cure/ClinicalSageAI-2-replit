@@ -138,8 +138,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       <div
         className={cn(
           'border-2 border-dashed rounded-lg p-4 transition-colors',
-          isDragging ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-primary/50',
-          disabled ? 'bg-gray-100 opacity-60 cursor-not-allowed' : 'cursor-pointer',
+          isDragging ? 'border-primary bg-primary/5' : 'border-stone-200 hover:border-primary/50',
+          disabled ? 'bg-stone-100 opacity-60 cursor-not-allowed' : 'cursor-pointer',
           className
         )}
         onDragOver={handleDragOver}
@@ -175,9 +175,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             </div>
           ) : (
             <>
-              <Upload className="h-10 w-10 text-gray-400" />
-              <div className="text-sm text-gray-600 text-center">{placeholder}</div>
-              <div className="text-xs text-gray-400">
+              <Upload className="h-10 w-10 text-stone-400" />
+              <div className="text-sm text-stone-600 text-center">{placeholder}</div>
+              <div className="text-xs text-stone-400">
                 Maximum file size: {Math.round(maxSize / 1024 / 1024)}MB
               </div>
             </>
@@ -185,7 +185,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         </div>
       </div>
 
-      {error && <div className="text-sm text-red-500 mt-1">{error}</div>}
+      {error && <div className="text-sm text-stone-1000 mt-1">{error}</div>}
     </div>
   );
 };

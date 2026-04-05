@@ -192,8 +192,8 @@ Component Stack: ${errorInfo?.componentStack}
         <div className="flex-1 flex items-center justify-center bg-stone-50 p-4 min-h-[200px]">
           <div className="max-w-lg w-full border border-stone-200 rounded-xl bg-white shadow-sm">
             <div className="text-center px-6 pt-6 pb-3">
-              <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                <AlertTriangle className="h-8 w-8 text-red-600" />
+              <div className="mx-auto w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mb-4">
+                <AlertTriangle className="h-8 w-8 text-stone-700" />
               </div>
               <h3 className="text-base font-medium text-stone-900">Something went wrong</h3>
               <p className="text-sm text-stone-600 mt-1">
@@ -209,7 +209,7 @@ Component Stack: ${errorInfo?.componentStack}
               {/* Technical details (dev mode only) */}
               {showDetails && error && (
                 <div className="bg-stone-100 rounded-lg p-4 max-h-48 overflow-auto">
-                  <p className="font-mono text-xs text-red-600 whitespace-pre-wrap">
+                  <p className="font-mono text-xs text-stone-700 whitespace-pre-wrap">
                     {error.message}
                   </p>
                   {errorInfo?.componentStack && (

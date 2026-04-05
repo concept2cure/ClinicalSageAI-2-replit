@@ -66,8 +66,8 @@ const ACTIVITY_CONFIG: Record<ActivityType, {
 }> = {
   created: {
     icon: FileText,
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-50',
+    color: 'text-stone-1000',
+    bgColor: 'bg-stone-100',
     verb: 'created',
   },
   edited: {
@@ -78,14 +78,14 @@ const ACTIVITY_CONFIG: Record<ActivityType, {
   },
   status_change: {
     icon: ArrowRight,
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-50',
+    color: 'text-stone-1000',
+    bgColor: 'bg-stone-100',
     verb: 'changed status of',
   },
   commented: {
     icon: MessageSquare,
-    color: 'text-amber-500',
-    bgColor: 'bg-amber-50',
+    color: 'text-stone-1000',
+    bgColor: 'bg-stone-100',
     verb: 'commented on',
   },
   review_requested: {
@@ -96,8 +96,8 @@ const ACTIVITY_CONFIG: Record<ActivityType, {
   },
   review_completed: {
     icon: CheckCircle,
-    color: 'text-emerald-500',
-    bgColor: 'bg-emerald-50',
+    color: 'text-stone-1000',
+    bgColor: 'bg-stone-100',
     verb: 'completed review of',
   },
   ai_action: {
@@ -108,14 +108,14 @@ const ACTIVITY_CONFIG: Record<ActivityType, {
   },
   exported: {
     icon: Upload,
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-50',
+    color: 'text-stone-1000',
+    bgColor: 'bg-stone-100',
     verb: 'exported',
   },
   locked: {
     icon: Lock,
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-50',
+    color: 'text-stone-700',
+    bgColor: 'bg-stone-100',
     verb: 'locked',
   },
 };
@@ -219,7 +219,7 @@ export function ActivityFeed({
                       {config.verb}{' '}
                       <button
                         onClick={() => item.documentId && onOpenDocument?.(item.documentId)}
-                        className="font-medium text-blue-600 hover:text-stone-700 hover:underline"
+                        className="font-medium text-stone-600 hover:text-stone-700 hover:underline"
                       >
                         {item.documentTitle}
                       </button>

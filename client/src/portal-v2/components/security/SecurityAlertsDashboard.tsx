@@ -177,41 +177,41 @@ const SEVERITY_CONFIG: Record<
 > = {
   critical: {
     label: 'Critical',
-    color: 'text-red-700',
-    bgColor: 'bg-red-100',
+    color: 'text-stone-800',
+    bgColor: 'bg-stone-100',
     icon: AlertOctagon,
   },
   high: {
     label: 'High',
-    color: 'text-orange-700',
-    bgColor: 'bg-orange-100',
+    color: 'text-stone-700',
+    bgColor: 'bg-stone-100',
     icon: AlertTriangle,
   },
   medium: {
     label: 'Medium',
-    color: 'text-amber-700',
-    bgColor: 'bg-amber-100',
+    color: 'text-stone-700',
+    bgColor: 'bg-stone-100',
     icon: AlertCircle,
   },
   low: {
     label: 'Low',
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-100',
+    color: 'text-stone-700',
+    bgColor: 'bg-stone-100',
     icon: Info,
   },
   info: {
     label: 'Info',
-    color: 'text-gray-700',
-    bgColor: 'bg-gray-100',
+    color: 'text-stone-700',
+    bgColor: 'bg-stone-100',
     icon: Info,
   },
 };
 
 const STATUS_CONFIG: Record<AlertStatus, { label: string; color: string; bgColor: string }> = {
-  new: { label: 'New', color: 'text-red-600', bgColor: 'bg-red-100' },
-  investigating: { label: 'Investigating', color: 'text-amber-600', bgColor: 'bg-amber-100' },
-  resolved: { label: 'Resolved', color: 'text-green-600', bgColor: 'bg-green-100' },
-  dismissed: { label: 'Dismissed', color: 'text-gray-600', bgColor: 'bg-gray-100' },
+  new: { label: 'New', color: 'text-stone-700', bgColor: 'bg-stone-100' },
+  investigating: { label: 'Investigating', color: 'text-stone-600', bgColor: 'bg-stone-100' },
+  resolved: { label: 'Resolved', color: 'text-stone-700', bgColor: 'bg-stone-100' },
+  dismissed: { label: 'Dismissed', color: 'text-stone-600', bgColor: 'bg-stone-100' },
 };
 
 const CATEGORY_CONFIG: Record<
@@ -415,8 +415,8 @@ const AlertCard: React.FC<{
   return (
     <Card
       className={`transition-all ${
-        alert.status === 'new' ? 'border-l-4 border-l-red-500' : ''
-      } ${alert.severity === 'critical' ? 'ring-1 ring-red-200' : ''}`}
+        alert.status === 'new' ? 'border-l-4 border-l-stone-1000' : ''
+      } ${alert.severity === 'critical' ? 'ring-1 ring-stone-200' : ''}`}
     >
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
@@ -510,47 +510,47 @@ const AlertCard: React.FC<{
 
 const StatsCards: React.FC<{ stats: AlertStats }> = ({ stats }) => (
   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-    <Card className="border-l-4 border-l-red-500">
+    <Card className="border-l-4 border-l-stone-1000">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Critical</p>
-            <p className="text-2xl font-bold text-red-600">{stats.critical}</p>
+            <p className="text-2xl font-bold text-stone-700">{stats.critical}</p>
           </div>
-          <AlertOctagon className="h-8 w-8 text-red-200" />
+          <AlertOctagon className="h-8 w-8 text-stone-200" />
         </div>
       </CardContent>
     </Card>
-    <Card className="border-l-4 border-l-orange-500">
+    <Card className="border-l-4 border-l-stone-1000">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">High</p>
-            <p className="text-2xl font-bold text-orange-600">{stats.high}</p>
+            <p className="text-2xl font-bold text-stone-600">{stats.high}</p>
           </div>
-          <AlertTriangle className="h-8 w-8 text-orange-200" />
+          <AlertTriangle className="h-8 w-8 text-stone-200" />
         </div>
       </CardContent>
     </Card>
-    <Card className="border-l-4 border-l-blue-500">
+    <Card className="border-l-4 border-l-stone-1000">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">New Alerts</p>
-            <p className="text-2xl font-bold text-blue-600">{stats.new}</p>
+            <p className="text-2xl font-bold text-stone-600">{stats.new}</p>
           </div>
-          <BellRing className="h-8 w-8 text-blue-200" />
+          <BellRing className="h-8 w-8 text-stone-200" />
         </div>
       </CardContent>
     </Card>
-    <Card className="border-l-4 border-l-green-500">
+    <Card className="border-l-4 border-l-stone-1000">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Resolved Today</p>
-            <p className="text-2xl font-bold text-green-600">{stats.resolved}</p>
+            <p className="text-2xl font-bold text-stone-700">{stats.resolved}</p>
           </div>
-          <ShieldCheck className="h-8 w-8 text-green-200" />
+          <ShieldCheck className="h-8 w-8 text-stone-200" />
         </div>
       </CardContent>
     </Card>
@@ -680,7 +680,7 @@ const AlertDetailsDialog: React.FC<{
               <ul className="space-y-2">
                 {alert.mitigationSteps.map((step, index) => (
                   <li key={index} className="flex items-start gap-2 text-sm">
-                    <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-stone-700 mt-0.5 shrink-0" />
                     {step}
                   </li>
                 ))}

@@ -60,7 +60,7 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={!projectId || isUploading}
-          className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors duration-150"
+          className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium text-stone-600 hover:bg-stone-100 disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors duration-150"
         >
           {isUploading ? (
             <Loader2 className="w-3 h-3 animate-spin" />
@@ -93,7 +93,7 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={!projectId || isUploading}
-              className="mt-2 text-xs text-blue-600 hover:underline disabled:opacity-40"
+              className="mt-2 text-xs text-stone-600 hover:underline disabled:opacity-40"
             >
               Upload your first file
             </button>
@@ -116,7 +116,7 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
                   onClick={() => removeDocument(doc.id)}
                   className={cn(
                     'flex-shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity',
-                    'p-1 rounded text-stone-400 hover:text-red-500 hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none focus-visible:opacity-100'
+                    'p-1 rounded text-stone-400 hover:text-stone-1000 hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none focus-visible:opacity-100'
                   )}
                   title="Remove file"
                   aria-label={`Remove ${doc.name}`}

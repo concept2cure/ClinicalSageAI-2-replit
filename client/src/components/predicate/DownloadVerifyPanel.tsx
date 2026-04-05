@@ -110,7 +110,7 @@ function HashVerifier({ manifestHash }: { manifestHash: string }) {
               <TooltipTrigger asChild>
                 <Button variant="outline" size="sm" onClick={handleCopy}>
                   {copied ? (
-                    <ClipboardCheck className="h-4 w-4 text-green-600" />
+                    <ClipboardCheck className="h-4 w-4 text-stone-700" />
                   ) : (
                     <ClipboardCopy className="h-4 w-4" />
                   )}
@@ -139,22 +139,22 @@ function HashVerifier({ manifestHash }: { manifestHash: string }) {
 
         {/* Status badge */}
         {status === 'match' && (
-          <div className="flex items-center gap-2 p-3 rounded-md bg-green-50 border border-green-200">
-            <CheckCircle className="h-5 w-5 text-green-600" />
+          <div className="flex items-center gap-2 p-3 rounded-md bg-stone-100 border border-stone-200">
+            <CheckCircle className="h-5 w-5 text-stone-700" />
             <div>
-              <p className="text-sm font-semibold text-green-800">Tamper-Safe — Verified</p>
-              <p className="text-xs text-green-600">
+              <p className="text-sm font-semibold text-stone-800">Tamper-Safe — Verified</p>
+              <p className="text-xs text-stone-700">
                 Hash matches the build manifest. Packet integrity confirmed.
               </p>
             </div>
           </div>
         )}
         {status === 'mismatch' && (
-          <div className="flex items-center gap-2 p-3 rounded-md bg-red-50 border border-red-200">
-            <XCircle className="h-5 w-5 text-red-600" />
+          <div className="flex items-center gap-2 p-3 rounded-md bg-stone-100 border border-stone-200">
+            <XCircle className="h-5 w-5 text-stone-700" />
             <div>
-              <p className="text-sm font-semibold text-red-800">Integrity Failure</p>
-              <p className="text-xs text-red-600">
+              <p className="text-sm font-semibold text-stone-800">Integrity Failure</p>
+              <p className="text-xs text-stone-700">
                 Hash does NOT match. The packet may have been tampered with or a different build was
                 referenced.
               </p>
@@ -203,9 +203,9 @@ function LockVersionBadge({ lockHash }: { lockHash?: string }) {
                 Packet: <code className="text-[11px]">{lockHash.slice(0, 12)}…</code>
               </p>
             )}
-            {matches && <p className="text-green-600">Risk codes are in sync.</p>}
+            {matches && <p className="text-stone-700">Risk codes are in sync.</p>}
             {lockHash && !matches && (
-              <p className="text-red-600">
+              <p className="text-stone-700">
                 The packet was built with a different risk code version. Rebuild recommended.
               </p>
             )}
@@ -368,7 +368,7 @@ export function DownloadVerifyPanel({
               {pdfMut.isPending ? (
                 <Loader2 className="h-6 w-6 animate-spin" />
               ) : (
-                <FileText className="h-6 w-6 text-red-600" />
+                <FileText className="h-6 w-6 text-stone-700" />
               )}
               <span className="text-sm font-medium">Generate PDF</span>
               <span className="text-[11px] text-muted-foreground">Branded defense report</span>
@@ -380,7 +380,7 @@ export function DownloadVerifyPanel({
               onClick={handleJSON}
               disabled={!jsonQuery.data}
             >
-              <FileJson className="h-6 w-6 text-blue-600" />
+              <FileJson className="h-6 w-6 text-stone-600" />
               <span className="text-sm font-medium">Export JSON</span>
               <span className="text-[11px] text-muted-foreground">Full packet + metadata</span>
             </Button>
@@ -394,7 +394,7 @@ export function DownloadVerifyPanel({
               {csvMut.isPending ? (
                 <Loader2 className="h-6 w-6 animate-spin" />
               ) : (
-                <FileSpreadsheet className="h-6 w-6 text-green-600" />
+                <FileSpreadsheet className="h-6 w-6 text-stone-700" />
               )}
               <span className="text-sm font-medium">Export CSV</span>
               <span className="text-[11px] text-muted-foreground">Evidence tasks spreadsheet</span>
@@ -409,7 +409,7 @@ export function DownloadVerifyPanel({
               {zipDownloading ? (
                 <Loader2 className="h-6 w-6 animate-spin" />
               ) : (
-                <FolderArchive className="h-6 w-6 text-purple-600" />
+                <FolderArchive className="h-6 w-6 text-stone-600" />
               )}
               <span className="text-sm font-medium">Download ZIP</span>
               <span className="text-[11px] text-muted-foreground">Complete submission bundle</span>

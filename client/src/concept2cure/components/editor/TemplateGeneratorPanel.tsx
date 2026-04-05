@@ -298,7 +298,7 @@ const TemplateGeneratorPanel: React.FC<TemplateGeneratorPanelProps> = ({
                   {metrics.wordsPerMinute} words/min
                 </span>
                 {metrics.sourcesRetrieved > 0 && (
-                  <span className="flex items-center gap-1 text-emerald-600">
+                  <span className="flex items-center gap-1 text-stone-700">
                     <Database className="w-3 h-3" />
                     {metrics.sourcesRetrieved} source{metrics.sourcesRetrieved !== 1 ? 's' : ''} cited
                   </span>
@@ -322,7 +322,7 @@ const TemplateGeneratorPanel: React.FC<TemplateGeneratorPanelProps> = ({
                 onClick={() => {
                   onGenerated(result, selectedTemplate.name);
                 }}
-                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm flex items-center justify-center gap-1.5"
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-stone-700 rounded-lg hover:bg-stone-800 transition-colors shadow-sm flex items-center justify-center gap-1.5"
               >
                 <Check className="w-3.5 h-3.5" />
                 Insert into Editor
@@ -358,7 +358,7 @@ const TemplateGeneratorPanel: React.FC<TemplateGeneratorPanelProps> = ({
                 <div key={v.name}>
                   <label className="block text-xs font-medium text-stone-600 mb-1">
                     {v.label}
-                    {v.required && <span className="text-red-400 ml-0.5">*</span>}
+                    {v.required && <span className="text-stone-400 ml-0.5">*</span>}
                   </label>
                   {v.type === 'select' ? (
                     <select

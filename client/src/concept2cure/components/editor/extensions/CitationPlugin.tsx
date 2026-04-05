@@ -80,10 +80,10 @@ function sourceTypeLabel(type: CitationResult['sourceType']): string {
 
 function sourceTypeBadgeClass(type: CitationResult['sourceType']): string {
   const classes: Record<CitationResult['sourceType'], string> = {
-    csr: 'bg-blue-100 text-stone-700',
-    artifact: 'bg-blue-100 text-stone-700',
+    csr: 'bg-stone-100 text-stone-700',
+    artifact: 'bg-stone-100 text-stone-700',
     literature: 'bg-stone-100 text-stone-700',
-    regulatory: 'bg-amber-100 text-amber-700',
+    regulatory: 'bg-stone-100 text-stone-700',
   };
   return classes[type] ?? 'bg-stone-100 text-stone-600';
 }
@@ -122,8 +122,8 @@ export const CitationMark = Mark.create({
         'data-citation-source-id': HTMLAttributes.sourceId,
         class:
           'citation-mark inline-flex items-center px-1 py-0.5 rounded ' +
-          'bg-blue-50 text-stone-700 border border-blue-200 ' +
-          'hover:bg-blue-100 cursor-pointer text-sm font-medium ' +
+          'bg-stone-100 text-stone-700 border border-stone-200 ' +
+          'hover:bg-stone-100 cursor-pointer text-sm font-medium ' +
           'transition-colors duration-150',
       }),
       0,
@@ -193,7 +193,7 @@ function createCitationTriggerPlugin(onTrigger: (state: CitationPluginState) => 
 
         // Highlight the trigger text while searching
         const deco = Decoration.inline(pluginState.from, pluginState.to, {
-          class: 'bg-blue-50 rounded px-0.5',
+          class: 'bg-stone-100 rounded px-0.5',
         });
 
         return DecorationSet.create(state.doc, [deco]);
@@ -432,7 +432,7 @@ export function CitationSearchPanel({
           autoComplete="off"
         />
         {loading && (
-          <Loader2 className="absolute right-7 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500 animate-spin" />
+          <Loader2 className="absolute right-7 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-1000 animate-spin" />
         )}
       </div>
 
@@ -440,12 +440,12 @@ export function CitationSearchPanel({
       <div ref={listRef} className="flex-1 overflow-y-auto">
         {error && (
           <div className="px-4 py-6 text-center">
-            <p className="text-sm text-red-500">{error}</p>
+            <p className="text-sm text-stone-1000">{error}</p>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => doSearch(query)}
-              className="mt-2 text-xs text-blue-600 hover:underline"
+              className="mt-2 text-xs text-stone-600 hover:underline"
             >
               Retry search
             </Button>
@@ -485,7 +485,7 @@ export function CitationSearchPanel({
               'w-full text-left px-4 py-3 h-auto rounded-none border-b border-stone-50 transition-colors duration-150',
               'outline-none',
               index === selectedIndex
-                ? 'bg-blue-50/80 border-l-2 border-l-blue-500'
+                ? 'bg-stone-100/80 border-l-2 border-l-stone-1000'
                 : 'hover:bg-stone-50 border-l-2 border-l-transparent'
             )}
           >
@@ -532,7 +532,7 @@ export function CitationSearchPanel({
 
               {/* Preview of what will be inserted */}
               <div className="flex-shrink-0 mt-0.5">
-                <span className="inline-flex items-center px-2 py-1 rounded bg-blue-50 text-stone-700 text-[11px] font-medium border border-blue-200">
+                <span className="inline-flex items-center px-2 py-1 rounded bg-stone-100 text-stone-700 text-[11px] font-medium border border-stone-200">
                   {formatCitationLabel(result)}
                 </span>
               </div>

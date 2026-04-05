@@ -56,19 +56,19 @@ function statusBadge(status?: string) {
   switch (status) {
     case 'approved':
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-stone-100 text-stone-800 ring-1 ring-stone-200">
           <CheckCircle className="w-3 h-3" /> Approved
         </span>
       );
     case 'locked':
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-red-50 text-red-700 ring-1 ring-red-200">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-stone-100 text-stone-800 ring-1 ring-stone-200">
           <Lock className="w-3 h-3" /> Locked
         </span>
       );
     case 'review':
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 ring-1 ring-amber-200">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-stone-100 text-stone-700 ring-1 ring-stone-200">
           <AlertTriangle className="w-3 h-3" /> Review
         </span>
       );
@@ -131,7 +131,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
         {onCreateNew && (
           <button
             onClick={onCreateNew}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-blue-600 hover:bg-blue-50 rounded-lg font-medium transition-colors duration-150"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-stone-600 hover:bg-stone-100 rounded-lg font-medium transition-colors duration-150"
           >
             <Plus className="w-3.5 h-3.5" /> New
           </button>
@@ -148,7 +148,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search documents..."
-              className="w-full pl-8 pr-7 py-1.5 text-xs border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none/30 focus:border-blue-300"
+              className="w-full pl-8 pr-7 py-1.5 text-xs border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none/30 focus:border-stone-300"
             />
             {searchQuery && (
               <button
@@ -253,8 +253,8 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
           {filteredDocs.length > 0 && (() => {
             const latestDraft = filteredDocs.find(d => d.status !== 'approved' && d.status !== 'locked') || filteredDocs[0];
             return (
-              <div className="px-4 py-3 border-b border-stone-100 bg-blue-50/30 flex items-center gap-3">
-                <FileText className="w-4 h-4 text-blue-500 shrink-0" />
+              <div className="px-4 py-3 border-b border-stone-100 bg-stone-100/30 flex items-center gap-3">
+                <FileText className="w-4 h-4 text-stone-1000 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-stone-800 truncate">{latestDraft.title}</p>
                   <p className="text-[10px] text-stone-400">
@@ -263,7 +263,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                 </div>
                 <button
                   onClick={() => onSelect(latestDraft)}
-                  className="shrink-0 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+                  className="shrink-0 px-3 py-1.5 text-xs font-medium text-stone-600 bg-stone-100 hover:bg-stone-100 rounded-md transition-colors"
                 >
                   Open in editor →
                 </button>
@@ -300,7 +300,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                       onClick={() => onSelect(doc)}
                       className={cn(
                         'group cursor-pointer transition-colors duration-150',
-                        doc.id === selectedId ? 'bg-blue-50/60' : 'hover:bg-stone-50'
+                        doc.id === selectedId ? 'bg-stone-100/60' : 'hover:bg-stone-50'
                       )}
                       data-testid="document-list-row"
                     >

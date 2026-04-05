@@ -299,30 +299,30 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'critical':
-        return 'bg-red-500';
+        return 'bg-stone-1000';
       case 'high':
-        return 'bg-orange-500';
+        return 'bg-stone-1000';
       case 'medium':
-        return 'bg-yellow-500';
+        return 'bg-stone-1000';
       case 'low':
-        return 'bg-green-500';
+        return 'bg-stone-1000';
       default:
-        return 'bg-gray-500';
+        return 'bg-stone-500';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-stone-100 text-stone-800';
       case 'in_progress':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-stone-100 text-stone-800';
       case 'overdue':
-        return 'bg-red-100 text-red-800';
+        return 'bg-stone-100 text-stone-800';
       case 'cancelled':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-stone-100 text-stone-800';
       default:
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-stone-100 text-stone-800';
     }
   };
 
@@ -345,10 +345,10 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Obligations</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.total}</p>
+                <p className="text-sm text-stone-600">Total Obligations</p>
+                <p className="text-2xl font-bold text-stone-600">{stats.total}</p>
               </div>
-              <Target className="h-8 w-8 text-blue-600" />
+              <Target className="h-8 w-8 text-stone-600" />
             </div>
           </CardContent>
         </Card>
@@ -357,10 +357,10 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Overdue</p>
-                <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
+                <p className="text-sm text-stone-600">Overdue</p>
+                <p className="text-2xl font-bold text-stone-700">{stats.overdue}</p>
               </div>
-              <AlertTriangle className="h-8 w-8 text-red-600" />
+              <AlertTriangle className="h-8 w-8 text-stone-700" />
             </div>
           </CardContent>
         </Card>
@@ -369,10 +369,10 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Critical Priority</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.critical}</p>
+                <p className="text-sm text-stone-600">Critical Priority</p>
+                <p className="text-2xl font-bold text-stone-600">{stats.critical}</p>
               </div>
-              <Flag className="h-8 w-8 text-orange-600" />
+              <Flag className="h-8 w-8 text-stone-600" />
             </div>
           </CardContent>
         </Card>
@@ -381,10 +381,10 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Due This Week</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.dueThisWeek}</p>
+                <p className="text-sm text-stone-600">Due This Week</p>
+                <p className="text-2xl font-bold text-stone-600">{stats.dueThisWeek}</p>
               </div>
-              <Clock className="h-8 w-8 text-yellow-600" />
+              <Clock className="h-8 w-8 text-stone-600" />
             </div>
           </CardContent>
         </Card>
@@ -400,22 +400,22 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-gray-600">Total Estimated Cost</p>
-              <p className="text-xl font-semibold text-blue-600">
+            <div className="p-4 bg-stone-100 rounded-lg">
+              <p className="text-sm text-stone-600">Total Estimated Cost</p>
+              <p className="text-xl font-semibold text-stone-600">
                 ${stats.totalEstimatedCost.toLocaleString()}
               </p>
             </div>
-            <div className="p-4 bg-green-50 rounded-lg">
-              <p className="text-sm text-gray-600">Total Actual Cost</p>
-              <p className="text-xl font-semibold text-green-600">
+            <div className="p-4 bg-stone-100 rounded-lg">
+              <p className="text-sm text-stone-600">Total Actual Cost</p>
+              <p className="text-xl font-semibold text-stone-700">
                 ${stats.totalActualCost.toLocaleString()}
               </p>
             </div>
-            <div className="p-4 bg-purple-50 rounded-lg">
-              <p className="text-sm text-gray-600">Budget Variance</p>
+            <div className="p-4 bg-stone-100 rounded-lg">
+              <p className="text-sm text-stone-600">Budget Variance</p>
               <p
-                className={`text-xl font-semibold ${stats.totalActualCost > stats.totalEstimatedCost ? 'text-red-600' : 'text-green-600'}`}
+                className={`text-xl font-semibold ${stats.totalActualCost > stats.totalEstimatedCost ? 'text-stone-700' : 'text-stone-700'}`}
               >
                 ${(stats.totalActualCost - stats.totalEstimatedCost).toLocaleString()}
               </p>
@@ -463,7 +463,7 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
         <CardContent className="p-4">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-gray-500" />
+              <Search className="h-4 w-4 text-stone-500" />
               <Input
                 data-testid="search-input"
                 placeholder="Search obligations..."
@@ -522,14 +522,14 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
       <div className="space-y-4">
         {loading ? (
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="text-gray-600 mt-2">Loading obligations...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-600 mx-auto"></div>
+            <p className="text-stone-600 mt-2">Loading obligations...</p>
           </div>
         ) : filteredObligations.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
-              <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">No obligations found matching your filters.</p>
+              <Target className="h-12 w-12 text-stone-400 mx-auto mb-4" />
+              <p className="text-stone-600">No obligations found matching your filters.</p>
             </CardContent>
           </Card>
         ) : (
@@ -544,14 +544,14 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-xl">{getAgencyLogo(obligation.agency)}</span>
-                      <h3 className="text-lg font-semibold text-gray-900">{obligation.title}</h3>
+                      <h3 className="text-lg font-semibold text-stone-900">{obligation.title}</h3>
                       <div
                         className={`w-3 h-3 rounded-full ${getPriorityColor(obligation.priority)}`}
                         title={`${obligation.priority} priority`}
                       ></div>
                     </div>
-                    <p className="text-gray-600 mb-3">{obligation.description}</p>
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                    <p className="text-stone-600 mb-3">{obligation.description}</p>
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-stone-500">
                       <span className="flex items-center gap-1">
                         <Building className="h-3 w-3" />
                         {obligation.agency}
@@ -576,7 +576,7 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
                     >
                       {obligation.status.replace('_', ' ').toUpperCase()}
                     </Badge>
-                    <div className="text-right text-xs text-gray-500">
+                    <div className="text-right text-xs text-stone-500">
                       <div>
                         Impact: <span className="font-medium">{obligation.businessImpact}</span>
                       </div>
@@ -595,8 +595,8 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
                 {/* Progress Bar */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-700">Progress</span>
-                    <span className="text-sm text-gray-500">{obligation.progressPercentage}%</span>
+                    <span className="text-sm font-medium text-stone-700">Progress</span>
+                    <span className="text-sm text-stone-500">{obligation.progressPercentage}%</span>
                   </div>
                   <Progress value={obligation.progressPercentage} className="h-2" />
                 </div>
@@ -604,14 +604,14 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
                 {/* Milestones */}
                 {obligation.milestones && obligation.milestones.length > 0 && (
                   <div className="mb-4">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Milestones</p>
+                    <p className="text-sm font-medium text-stone-700 mb-2">Milestones</p>
                     <div className="flex flex-wrap gap-2">
                       {obligation.milestones.map((milestone: any, index: number) => (
                         <Badge
                           key={index}
                           variant={milestone.status === 'completed' ? 'default' : 'secondary'}
                           className={
-                            milestone.status === 'completed' ? 'bg-green-100 text-green-800' : ''
+                            milestone.status === 'completed' ? 'bg-stone-100 text-stone-800' : ''
                           }
                         >
                           {milestone.status === 'completed' && (
@@ -649,7 +649,7 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
                       Edit
                     </Button>
                   </div>
-                  <div className="text-xs text-gray-400">
+                  <div className="text-xs text-stone-400">
                     Updated {new Date(obligation.updatedAt).toLocaleDateString()}
                   </div>
                 </div>
@@ -664,8 +664,8 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
   return (
     <div className="max-w-7xl mx-auto p-6" data-testid="obligations-ledger">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Obligations & Commitments Ledger</h1>
-        <p className="text-gray-600">
+        <h1 className="text-3xl font-bold text-stone-900 mb-2">Obligations & Commitments Ledger</h1>
+        <p className="text-stone-600">
           Comprehensive agency commitment management system for tracking regulatory obligations,
           commitments, and compliance requirements across multiple agencies
         </p>
@@ -716,8 +716,8 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
             </CardHeader>
             <CardContent>
               {obligations.filter(o => o.dueDate).length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <div className="text-center py-8 text-stone-500">
+                  <Calendar className="h-12 w-12 mx-auto mb-4 text-stone-400" />
                   <p>No obligations with deadlines found.</p>
                   <p className="text-sm">Add due dates to obligations to see them here.</p>
                 </div>
@@ -734,27 +734,27 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
                         <div
                           key={obligation.id}
                           className={`flex items-center justify-between p-3 rounded-lg border ${
-                            isOverdue ? 'border-red-200 bg-red-50' :
-                            isThisWeek ? 'border-yellow-200 bg-yellow-50' :
-                            'border-gray-200'
+                            isOverdue ? 'border-stone-200 bg-stone-100' :
+                            isThisWeek ? 'border-stone-200 bg-stone-100' :
+                            'border-stone-200'
                           }`}
                         >
                           <div className="flex items-center gap-3">
                             <div className={`w-2 h-2 rounded-full ${
-                              obligation.status === 'completed' ? 'bg-green-500' :
-                              isOverdue ? 'bg-red-500' :
-                              isThisWeek ? 'bg-yellow-500' : 'bg-blue-500'
+                              obligation.status === 'completed' ? 'bg-stone-1000' :
+                              isOverdue ? 'bg-stone-1000' :
+                              isThisWeek ? 'bg-stone-1000' : 'bg-stone-1000'
                             }`} />
                             <div>
                               <p className="font-medium text-sm">{obligation.title}</p>
-                              <p className="text-xs text-gray-500">{obligation.agency}</p>
+                              <p className="text-xs text-stone-500">{obligation.agency}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
                             <Badge className={getStatusColor(obligation.status)}>
                               {obligation.status.replace('_', ' ').toUpperCase()}
                             </Badge>
-                            <span className={`text-sm font-medium ${isOverdue ? 'text-red-600' : 'text-gray-600'}`}>
+                            <span className={`text-sm font-medium ${isOverdue ? 'text-stone-700' : 'text-stone-600'}`}>
                               {dueDate.toLocaleDateString()}
                             </span>
                           </div>
@@ -782,14 +782,14 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
             </CardHeader>
             <CardContent>
               {obligations.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <div className="text-center py-8 text-stone-500">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-4 text-stone-400" />
                   <p>No obligations to track communications for.</p>
                   <p className="text-sm">Create obligations first to log related correspondence.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="text-sm text-gray-600 mb-4">
+                  <div className="text-sm text-stone-600 mb-4">
                     Showing communication history linked to active obligations.
                   </div>
                   {obligations
@@ -807,8 +807,8 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
                               {obligation.status.replace('_', ' ')}
                             </Badge>
                           </div>
-                          <p className="text-xs text-gray-500 truncate">{obligation.description}</p>
-                          <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                          <p className="text-xs text-stone-500 truncate">{obligation.description}</p>
+                          <div className="flex items-center gap-3 mt-2 text-xs text-stone-400">
                             <span>{obligation.agency}</span>
                             <span>Updated {new Date(obligation.updatedAt).toLocaleDateString()}</span>
                           </div>
@@ -843,10 +843,10 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
                       const pct = stats.total > 0 ? Math.round((count / stats.total) * 100) : 0;
                       return (
                         <div key={status} className="p-3 rounded-lg border">
-                          <p className="text-xs text-gray-500 capitalize">{status.replace('_', ' ')}</p>
+                          <p className="text-xs text-stone-500 capitalize">{status.replace('_', ' ')}</p>
                           <p className="text-xl font-bold">{count}</p>
                           <Progress value={pct} className="h-1 mt-1" />
-                          <p className="text-xs text-gray-400 mt-1">{pct}%</p>
+                          <p className="text-xs text-stone-400 mt-1">{pct}%</p>
                         </div>
                       );
                     })}
@@ -860,10 +860,10 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
                     {(['critical', 'high', 'medium', 'low'] as const).map(priority => {
                       const count = obligations.filter(o => o.priority === priority).length;
                       const colorMap: Record<string, string> = {
-                        critical: 'text-red-600 bg-red-50',
-                        high: 'text-orange-600 bg-orange-50',
-                        medium: 'text-yellow-600 bg-yellow-50',
-                        low: 'text-green-600 bg-green-50',
+                        critical: 'text-stone-700 bg-stone-100',
+                        high: 'text-stone-600 bg-stone-100',
+                        medium: 'text-stone-600 bg-stone-100',
+                        low: 'text-stone-700 bg-stone-100',
                       };
                       return (
                         <div key={priority} className={`p-3 rounded-lg ${colorMap[priority]}`}>
@@ -887,7 +887,7 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
                       {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%
                     </span>
                   </div>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-stone-500 mt-1">
                     {stats.completed} of {stats.total} obligations completed
                   </p>
                 </div>

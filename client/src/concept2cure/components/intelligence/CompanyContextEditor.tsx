@@ -289,7 +289,7 @@ function PipelineEditor({
             variant="ghost"
             size="sm"
             onClick={() => removeAsset(i)}
-            className="text-slate-400 hover:text-red-500"
+            className="text-slate-400 hover:text-stone-1000"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -443,7 +443,7 @@ function SectionRow({
       className={cn(
         'group rounded-lg border transition-colors',
         isEditing
-          ? 'border-blue-200 bg-blue-50/30 p-4'
+          ? 'border-stone-200 bg-stone-100/30 p-4'
           : 'border-transparent hover:border-slate-200 p-4',
       )}
     >
@@ -474,7 +474,7 @@ function SectionRow({
             variant="ghost"
             size="sm"
             onClick={() => onStartEdit(section.key)}
-            className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-blue-600"
+            className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-stone-600"
             aria-label={`Edit ${section.label}`}
           >
             <Pencil className="h-3.5 w-3.5" />
@@ -615,8 +615,8 @@ export function CompanyContextEditor({ onClose }: CompanyContextEditorProps) {
             <div className="space-y-1">
               {/* First-time prompt */}
               {isEmpty && (
-                <div className="rounded-lg border border-dashed border-blue-200 bg-blue-50/50 p-5 text-center mb-4">
-                  <Building2 className="mx-auto h-8 w-8 text-blue-400 mb-2" />
+                <div className="rounded-lg border border-dashed border-stone-200 bg-stone-100/50 p-5 text-center mb-4">
+                  <Building2 className="mx-auto h-8 w-8 text-stone-400 mb-2" />
                   <p className="text-sm font-medium text-slate-700">
                     Tell AnA about your company
                   </p>

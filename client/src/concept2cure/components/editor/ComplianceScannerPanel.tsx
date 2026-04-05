@@ -44,26 +44,26 @@ const SEVERITY_CONFIG = {
   error: {
     label: 'Errors',
     icon: AlertCircle,
-    color: 'text-red-600',
-    bg: 'bg-red-50',
-    border: 'border-red-200',
-    badge: 'bg-red-100 text-red-700',
+    color: 'text-stone-700',
+    bg: 'bg-stone-100',
+    border: 'border-stone-200',
+    badge: 'bg-stone-100 text-stone-800',
   },
   warning: {
     label: 'Warnings',
     icon: AlertTriangle,
-    color: 'text-amber-600',
-    bg: 'bg-amber-50',
-    border: 'border-amber-200',
-    badge: 'bg-amber-100 text-amber-700',
+    color: 'text-stone-600',
+    bg: 'bg-stone-100',
+    border: 'border-stone-200',
+    badge: 'bg-stone-100 text-stone-700',
   },
   info: {
     label: 'Suggestions',
     icon: Info,
-    color: 'text-blue-600',
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
-    badge: 'bg-blue-100 text-stone-700',
+    color: 'text-stone-600',
+    bg: 'bg-stone-100',
+    border: 'border-stone-200',
+    badge: 'bg-stone-100 text-stone-700',
   },
 } as const;
 
@@ -167,8 +167,8 @@ export function ComplianceScannerPanel({
     return Math.max(0, Math.min(100, 100 - deductions));
   }, [activeIssues, stats]);
 
-  const scoreColor = score >= 80 ? 'text-emerald-600' : score >= 50 ? 'text-amber-600' : 'text-red-600';
-  const scoreBg = score >= 80 ? 'bg-emerald-500' : score >= 50 ? 'bg-amber-500' : 'bg-red-500';
+  const scoreColor = score >= 80 ? 'text-stone-700' : score >= 50 ? 'text-stone-600' : 'text-stone-700';
+  const scoreBg = score >= 80 ? 'bg-stone-1000' : score >= 50 ? 'bg-stone-1000' : 'bg-stone-1000';
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -216,17 +216,17 @@ export function ComplianceScannerPanel({
           </div>
           <div className="flex items-center gap-2 text-[10px] ml-auto">
             {stats.errors > 0 && (
-              <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-medium">
+              <span className="px-1.5 py-0.5 rounded bg-stone-100 text-stone-800 font-medium">
                 {stats.errors} errors
               </span>
             )}
             {stats.warnings > 0 && (
-              <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">
+              <span className="px-1.5 py-0.5 rounded bg-stone-100 text-stone-700 font-medium">
                 {stats.warnings} warnings
               </span>
             )}
             {stats.info > 0 && (
-              <span className="px-1.5 py-0.5 rounded bg-blue-100 text-stone-700 font-medium">
+              <span className="px-1.5 py-0.5 rounded bg-stone-100 text-stone-700 font-medium">
                 {stats.info} info
               </span>
             )}
@@ -278,7 +278,7 @@ export function ComplianceScannerPanel({
 
         {!isScanning && activeIssues.length === 0 && (
           <div className="text-center py-12">
-            <CheckCircle className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
+            <CheckCircle className="w-10 h-10 text-stone-400 mx-auto mb-3" />
             <h3 className="text-sm font-semibold text-stone-700 mb-1">All Clear</h3>
             <p className="text-xs text-stone-400">No compliance issues detected in this document.</p>
           </div>

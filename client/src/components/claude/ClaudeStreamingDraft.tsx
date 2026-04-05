@@ -105,7 +105,7 @@ export function ClaudeStreamingDraft({
       {/* Controls */}
       <div className="flex flex-wrap gap-3 items-end">
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-500">Framework</label>
+          <label className="text-xs font-medium text-stone-500">Framework</label>
           <select
             value={framework}
             onChange={e => setFramework(e.target.value)}
@@ -121,7 +121,7 @@ export function ClaudeStreamingDraft({
         </div>
 
         <div className="flex flex-col gap-1 flex-1 min-w-[200px]">
-          <label className="text-xs font-medium text-gray-500">Section Type</label>
+          <label className="text-xs font-medium text-stone-500">Section Type</label>
           <input
             type="text"
             value={sectionType}
@@ -168,7 +168,7 @@ export function ClaudeStreamingDraft({
           {isStreaming ? (
             <button
               onClick={abort}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center gap-2 text-sm"
+              className="px-4 py-2 bg-stone-1000 text-white rounded-lg hover:bg-stone-700 flex items-center gap-2 text-sm"
             >
               <Square className="w-4 h-4" /> Stop
             </button>
@@ -176,7 +176,7 @@ export function ClaudeStreamingDraft({
             <button
               onClick={handleStart}
               disabled={!sectionType || !instructions}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 flex items-center gap-2 text-sm"
+              className="px-4 py-2 bg-stone-600 text-white rounded-lg hover:bg-stone-700 disabled:opacity-60 flex items-center gap-2 text-sm"
             >
               <Send className="w-4 h-4" /> Draft
             </button>
@@ -184,7 +184,7 @@ export function ClaudeStreamingDraft({
           {streamingContent && (
             <button
               onClick={reset}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm"
+              className="px-4 py-2 border rounded-lg hover:bg-stone-50 text-sm"
             >
               Clear
             </button>
@@ -194,17 +194,17 @@ export function ClaudeStreamingDraft({
 
       {/* Error display */}
       {error && (
-        <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+        <div className="px-4 py-3 bg-stone-100 border border-stone-200 rounded-lg text-stone-800 text-sm">
           {error}
         </div>
       )}
 
       {/* Thinking panel */}
       {thinking && (
-        <div className="border border-purple-200 rounded-lg bg-purple-50">
+        <div className="border border-stone-200 rounded-lg bg-stone-100">
           <button
             onClick={() => setShowThinking(!showThinking)}
-            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-purple-700 font-medium"
+            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-stone-700 font-medium"
           >
             {showThinking ? (
               <ChevronDown className="w-4 h-4" />
@@ -216,7 +216,7 @@ export function ClaudeStreamingDraft({
             {isStreaming && <Loader2 className="w-3 h-3 animate-spin ml-auto" />}
           </button>
           {showThinking && (
-            <div className="px-4 pb-3 text-sm text-purple-800 whitespace-pre-wrap max-h-48 overflow-y-auto">
+            <div className="px-4 pb-3 text-sm text-stone-800 whitespace-pre-wrap max-h-48 overflow-y-auto">
               {thinking}
             </div>
           )}
@@ -226,18 +226,18 @@ export function ClaudeStreamingDraft({
       {/* Streaming content */}
       {(streamingContent || isStreaming) && (
         <div className="border rounded-lg bg-white">
-          <div className="flex items-center justify-between px-4 py-2 border-b bg-gray-50">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center justify-between px-4 py-2 border-b bg-stone-50">
+            <div className="flex items-center gap-2 text-sm text-stone-600">
               <FileText className="w-4 h-4" />
               <span>Generated Content</span>
               {isStreaming && (
-                <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                <Loader2 className="w-4 h-4 animate-spin text-stone-1000" />
               )}
             </div>
             {streamingContent && (
               <button
                 onClick={handleCopy}
-                className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
+                className="flex items-center gap-1 text-xs text-stone-500 hover:text-stone-700"
               >
                 {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                 {copied ? 'Copied' : 'Copy'}
@@ -246,10 +246,10 @@ export function ClaudeStreamingDraft({
           </div>
           <div className="p-4 text-sm whitespace-pre-wrap max-h-[600px] overflow-y-auto prose prose-sm max-w-none">
             {streamingContent || (
-              <span className="text-gray-400">Generating...</span>
+              <span className="text-stone-400">Generating...</span>
             )}
             {isStreaming && (
-              <span className="inline-block w-1 h-4 bg-blue-500 animate-pulse ml-0.5" />
+              <span className="inline-block w-1 h-4 bg-stone-1000 animate-pulse ml-0.5" />
             )}
           </div>
         </div>
@@ -257,7 +257,7 @@ export function ClaudeStreamingDraft({
 
       {/* Metadata */}
       {metadata && !isStreaming && (
-        <div className="flex flex-wrap gap-4 text-xs text-gray-500 px-1">
+        <div className="flex flex-wrap gap-4 text-xs text-stone-500 px-1">
           <span>Model: {metadata.model}</span>
           {metadata.usage && (
             <span>
@@ -266,7 +266,7 @@ export function ClaudeStreamingDraft({
             </span>
           )}
           {metadata.latencyMs && <span>{(metadata.latencyMs / 1000).toFixed(1)}s</span>}
-          {metadata.cacheHit && <span className="text-green-600">Cache hit</span>}
+          {metadata.cacheHit && <span className="text-stone-700">Cache hit</span>}
           {metadata.toolsUsed && metadata.toolsUsed.length > 0 && (
             <span>
               Tools: {metadata.toolsUsed.join(', ')}

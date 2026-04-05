@@ -172,7 +172,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
           <StatCard
             label="Total"
             value={data.dossier.totalArtifacts}
-            icon={<FileText className="w-3.5 h-3.5 text-blue-500" />}
+            icon={<FileText className="w-3.5 h-3.5 text-stone-1000" />}
           />
           <StatCard
             label="Draft"
@@ -182,17 +182,17 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
           <StatCard
             label="Review"
             value={data.dossier.reviewCount}
-            icon={<AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
+            icon={<AlertTriangle className="w-3.5 h-3.5 text-stone-1000" />}
           />
           <StatCard
             label="Approved"
             value={data.dossier.approvedCount}
-            icon={<CheckCircle className="w-3.5 h-3.5 text-emerald-500" />}
+            icon={<CheckCircle className="w-3.5 h-3.5 text-stone-1000" />}
           />
           <StatCard
             label="Locked"
             value={data.dossier.lockedCount}
-            icon={<Lock className="w-3.5 h-3.5 text-red-500" />}
+            icon={<Lock className="w-3.5 h-3.5 text-stone-1000" />}
           />
         </div>
 
@@ -200,7 +200,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
         <TwinSection
           title="Readiness"
           subtitle={`confidence: ${data.readiness.confidence}`}
-          icon={<Target className="w-3.5 h-3.5 text-blue-500" />}
+          icon={<Target className="w-3.5 h-3.5 text-stone-1000" />}
           expanded={expanded.has('readiness')}
           onToggle={() => toggle('readiness')}
         >
@@ -213,18 +213,18 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
         {data.problems.length > 0 && (
           <TwinSection
             title={`Problems (${data.problems.length})`}
-            icon={<AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
+            icon={<AlertTriangle className="w-3.5 h-3.5 text-stone-1000" />}
             expanded={expanded.has('problems')}
             onToggle={() => toggle('problems')}
           >
             {data.problems.map((p, i) => (
               <div key={i} className="flex items-start gap-1.5 py-0.5">
                 {p.severity === 'error' ? (
-                  <XCircle className="w-3 h-3 text-red-500 shrink-0 mt-0.5" />
+                  <XCircle className="w-3 h-3 text-stone-1000 shrink-0 mt-0.5" />
                 ) : p.severity === 'warning' ? (
-                  <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
+                  <AlertTriangle className="w-3 h-3 text-stone-1000 shrink-0 mt-0.5" />
                 ) : (
-                  <Info className="w-3 h-3 text-blue-400 shrink-0 mt-0.5" />
+                  <Info className="w-3 h-3 text-stone-400 shrink-0 mt-0.5" />
                 )}
                 <span className="text-xs text-stone-600">{p.message}</span>
               </div>
@@ -255,7 +255,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
                       const section = mod.replace('Module ', '');
                       if (section !== '_unplaced' && onSelectSection) onSelectSection(section);
                     }}
-                    className="text-blue-600 hover:underline font-medium truncate focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded"
+                    className="text-stone-600 hover:underline font-medium truncate focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded"
                   >
                     {mod}
                   </button>
@@ -273,7 +273,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
         <TwinSection
           title="Evidence State"
           subtitle={`confidence: ${data.evidence.confidence}`}
-          icon={<Database className="w-3.5 h-3.5 text-emerald-500" />}
+          icon={<Database className="w-3.5 h-3.5 text-stone-1000" />}
           expanded={expanded.has('evidence')}
           onToggle={() => toggle('evidence')}
         >
@@ -286,7 +286,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
             <div
               className={cn(
                 'font-medium',
-                data.evidence.noEvidenceCount > 0 ? 'text-amber-600' : 'text-stone-700'
+                data.evidence.noEvidenceCount > 0 ? 'text-stone-600' : 'text-stone-700'
               )}
             >
               {data.evidence.noEvidenceCount}
@@ -300,7 +300,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
               <ul className="mt-1 space-y-0.5">
                 {data.evidence.noEvidenceArtifacts.slice(0, 5).map(a => (
                   <li key={a.id} className="flex items-center gap-1 text-xs text-stone-600">
-                    <AlertTriangle className="w-3 h-3 text-amber-400 shrink-0" />
+                    <AlertTriangle className="w-3 h-3 text-stone-400 shrink-0" />
                     <span className="truncate">{a.title}</span>
                     {a.ctdSection && (
                       <span className="text-xs text-stone-400 ml-auto">{a.ctdSection}</span>
@@ -308,7 +308,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
                     {onOpenVerification && (
                       <button
                         onClick={() => onOpenVerification(a.id)}
-                        className="text-xs text-blue-500 hover:underline ml-1 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded"
+                        className="text-xs text-stone-1000 hover:underline ml-1 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded"
                       >
                         Verify
                       </button>
@@ -324,7 +324,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
         <TwinSection
           title="Template State"
           subtitle={`confidence: ${data.template.confidence}`}
-          icon={<FileText className="w-3.5 h-3.5 text-blue-500" />}
+          icon={<FileText className="w-3.5 h-3.5 text-stone-1000" />}
           expanded={expanded.has('template')}
           onToggle={() => toggle('template')}
         >
@@ -335,7 +335,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
             <div
               className={cn(
                 'font-medium',
-                data.template.withoutTemplateCount > 0 ? 'text-amber-600' : 'text-stone-700'
+                data.template.withoutTemplateCount > 0 ? 'text-stone-600' : 'text-stone-700'
               )}
             >
               {data.template.withoutTemplateCount}
@@ -347,7 +347,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
         <TwinSection
           title="Governance State"
           subtitle={`confidence: ${data.governance.confidence}`}
-          icon={<ShieldCheck className="w-3.5 h-3.5 text-amber-500" />}
+          icon={<ShieldCheck className="w-3.5 h-3.5 text-stone-1000" />}
           expanded={expanded.has('governance')}
           onToggle={() => toggle('governance')}
         >
@@ -360,7 +360,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
             <div
               className={cn(
                 'font-medium',
-                data.governance.unresolvedCommentCount > 0 ? 'text-red-600' : 'text-stone-700'
+                data.governance.unresolvedCommentCount > 0 ? 'text-stone-700' : 'text-stone-700'
               )}
             >
               {data.governance.unresolvedCommentCount}
@@ -458,7 +458,7 @@ function TwinSection({
 }
 
 function ReadinessBar({ label, value }: { label: string; value: number }) {
-  const color = value >= 80 ? 'bg-emerald-500' : value >= 50 ? 'bg-amber-400' : 'bg-red-400';
+  const color = value >= 80 ? 'bg-stone-1000' : value >= 50 ? 'bg-stone-400' : 'bg-stone-400';
   return (
     <div className="mb-1.5">
       <div className="flex items-center justify-between mb-0.5">

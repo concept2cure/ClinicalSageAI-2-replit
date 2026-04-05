@@ -519,11 +519,11 @@ export const WorkspaceStatusStrip: React.FC<WorkspaceStatusStripProps> = ({
 }) => {
   const progressColor =
     variant === 'success' || (progress != null && progress >= 80)
-      ? 'bg-emerald-500'
+      ? 'bg-stone-1000'
       : variant === 'warning' || (progress != null && progress >= 50)
-        ? 'bg-amber-500'
+        ? 'bg-stone-1000'
         : variant === 'danger' || (progress != null && progress < 50)
-          ? 'bg-red-400'
+          ? 'bg-stone-400'
           : 'bg-stone-300';
 
   return (
@@ -565,14 +565,14 @@ export const SecondaryInfoItem: React.FC<SecondaryInfoItemProps> = ({ children, 
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const STATUS_ICON_MAP: Record<string, { icon: LucideIcon; color: string }> = {
-  approved: { icon: CheckCircle2, color: 'text-emerald-500' },
-  'in-review': { icon: Clock, color: 'text-amber-500' },
-  drafting: { icon: FileText, color: 'text-blue-500' },
+  approved: { icon: CheckCircle2, color: 'text-stone-1000' },
+  'in-review': { icon: Clock, color: 'text-stone-1000' },
+  drafting: { icon: FileText, color: 'text-stone-1000' },
   'not-started': { icon: Clock, color: 'text-stone-300' },
-  blocked: { icon: AlertTriangle, color: 'text-red-500' },
+  blocked: { icon: AlertTriangle, color: 'text-stone-1000' },
   locked: { icon: Lock, color: 'text-stone-400' },
-  ready: { icon: CheckCircle2, color: 'text-emerald-500' },
-  'needs-work': { icon: AlertTriangle, color: 'text-amber-500' },
+  ready: { icon: CheckCircle2, color: 'text-stone-1000' },
+  'needs-work': { icon: AlertTriangle, color: 'text-stone-1000' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -627,7 +627,7 @@ export interface InspectorRibbonItem {
   id: string;
   label: string;
   icon: React.ReactNode;
-  /** Override active color (default: bg-blue-600 text-white) */
+  /** Override active color (default: bg-stone-600 text-white) */
   activeColor?: string;
   /** Badge count (e.g., unresolved comments) */
   badge?: number;
@@ -703,7 +703,7 @@ export const InspectorRibbon: React.FC<InspectorRibbonProps> = ({
                         className={cn(
                           'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
                           isActive
-                            ? (item.activeColor || 'bg-blue-600 text-white font-medium shadow-sm')
+                            ? (item.activeColor || 'bg-stone-600 text-white font-medium shadow-sm')
                             : 'text-stone-600 hover:bg-white hover:shadow-sm'
                         )}
                       >
@@ -713,7 +713,7 @@ export const InspectorRibbon: React.FC<InspectorRibbonProps> = ({
                           <span
                             className={cn(
                               'ml-1 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full text-[10px] font-semibold',
-                              isActive ? 'bg-white text-blue-600' : 'bg-amber-500 text-white'
+                              isActive ? 'bg-white text-stone-600' : 'bg-stone-1000 text-white'
                             )}
                           >
                             {item.badge}
@@ -723,7 +723,7 @@ export const InspectorRibbon: React.FC<InspectorRibbonProps> = ({
                           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                         )}
                         {item.suggested && !isActive && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-stone-400 shrink-0" />
                         )}
                       </button>
                     );
@@ -740,7 +740,7 @@ export const InspectorRibbon: React.FC<InspectorRibbonProps> = ({
                 className={cn(
                   'px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider rounded-md transition-all whitespace-nowrap',
                   hasActiveItem
-                    ? 'bg-blue-50 text-blue-700'
+                    ? 'bg-stone-100 text-stone-700'
                     : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'
                 )}
                 aria-label={`Open ${group.label} panels`}
@@ -748,7 +748,7 @@ export const InspectorRibbon: React.FC<InspectorRibbonProps> = ({
               >
                 {group.label}
                 {group.items.some(i => (i.badge ?? 0) > 0) && (
-                  <span className="ml-1 w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
+                  <span className="ml-1 w-1.5 h-1.5 rounded-full bg-stone-1000 inline-block" />
                 )}
               </button>
             )}

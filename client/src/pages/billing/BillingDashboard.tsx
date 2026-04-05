@@ -214,15 +214,15 @@ function formatDate(dateStr: string): string {
 
 function StatusBadge({ status }: { status: string }) {
   const variants: Record<string, { label: string; className: string }> = {
-    active: { label: 'Active', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-    trialing: { label: 'Trial', className: 'bg-blue-100 text-blue-700 border-blue-200' },
-    past_due: { label: 'Past Due', className: 'bg-amber-100 text-amber-700 border-amber-200' },
-    canceled: { label: 'Canceled', className: 'bg-red-100 text-red-700 border-red-200' },
-    paid: { label: 'Paid', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-    pending: { label: 'Pending', className: 'bg-amber-100 text-amber-700 border-amber-200' },
-    failed: { label: 'Failed', className: 'bg-red-100 text-red-700 border-red-200' },
+    active: { label: 'Active', className: 'bg-stone-100 text-stone-800 border-stone-200' },
+    trialing: { label: 'Trial', className: 'bg-stone-100 text-stone-700 border-stone-200' },
+    past_due: { label: 'Past Due', className: 'bg-stone-100 text-stone-700 border-stone-200' },
+    canceled: { label: 'Canceled', className: 'bg-stone-100 text-stone-800 border-stone-200' },
+    paid: { label: 'Paid', className: 'bg-stone-100 text-stone-800 border-stone-200' },
+    pending: { label: 'Pending', className: 'bg-stone-100 text-stone-700 border-stone-200' },
+    failed: { label: 'Failed', className: 'bg-stone-100 text-stone-800 border-stone-200' },
   };
-  const v = variants[status] ?? { label: status, className: 'bg-gray-100 text-gray-700 border-gray-200' };
+  const v = variants[status] ?? { label: status, className: 'bg-stone-100 text-stone-700 border-stone-200' };
   return (
     <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${v.className}`}>
       {v.label}
@@ -781,10 +781,10 @@ function BudgetAlertsTab() {
                     className="h-3"
                     indicatorClassName={
                       spendPercent >= 90
-                        ? 'bg-red-500'
+                        ? 'bg-stone-1000'
                         : spendPercent >= 75
-                          ? 'bg-amber-500'
-                          : 'bg-emerald-500'
+                          ? 'bg-stone-1000'
+                          : 'bg-stone-1000'
                     }
                   />
                   <p className="text-xs text-muted-foreground mt-1">
@@ -929,11 +929,11 @@ function BudgetAlertsTab() {
                         <TableCell className="text-sm">{formatDate(alert.timestamp)}</TableCell>
                         <TableCell>
                           {alert.resolved ? (
-                            <span className="flex items-center gap-1 text-emerald-600 text-xs font-medium">
+                            <span className="flex items-center gap-1 text-stone-700 text-xs font-medium">
                               <CheckCircle className="h-3.5 w-3.5" /> Resolved
                             </span>
                           ) : (
-                            <span className="flex items-center gap-1 text-amber-600 text-xs font-medium">
+                            <span className="flex items-center gap-1 text-stone-600 text-xs font-medium">
                               <AlertTriangle className="h-3.5 w-3.5" /> Active
                             </span>
                           )}
@@ -1053,7 +1053,7 @@ function PlanRateLimitsTab() {
                   <TableCell className="font-medium">{f.feature}</TableCell>
                   <TableCell className="text-center">
                     {f.included ? (
-                      <CheckCircle className="mx-auto h-4 w-4 text-emerald-500" />
+                      <CheckCircle className="mx-auto h-4 w-4 text-stone-1000" />
                     ) : (
                       <XCircle className="mx-auto h-4 w-4 text-muted-foreground" />
                     )}
@@ -1089,7 +1089,7 @@ function PlanRateLimitsTab() {
                   <ul className="mt-3 space-y-1.5">
                     {plan.highlights.map((h) => (
                       <li key={h} className="flex items-start gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                        <CheckCircle className="h-4 w-4 text-stone-1000 shrink-0 mt-0.5" />
                         {h}
                       </li>
                     ))}

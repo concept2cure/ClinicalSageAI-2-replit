@@ -256,13 +256,13 @@ export default function ChangeControlManagement() {
   const getChangeTypeBadge = (change: Change) => {
     const scope = change.change_json?.scope || 'Unknown';
     const colors = {
-      Process: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
-      Spec: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
-      Method: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-      Stability: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
+      Process: 'bg-stone-100 text-stone-800 dark:bg-stone-900 dark:text-stone-300',
+      Spec: 'bg-stone-100 text-stone-700 dark:bg-stone-900 dark:text-stone-300',
+      Method: 'bg-stone-100 text-stone-700 dark:bg-stone-900 dark:text-stone-300',
+      Stability: 'bg-stone-100 text-stone-700 dark:bg-stone-900 dark:text-stone-300',
     };
     return (
-      <Badge className={colors[scope as keyof typeof colors] || 'bg-gray-100 text-gray-700'} data-testid={`badge-type-${change.change_id}`}>
+      <Badge className={colors[scope as keyof typeof colors] || 'bg-stone-100 text-stone-700'} data-testid={`badge-type-${change.change_id}`}>
         {scope}
       </Badge>
     );
@@ -272,24 +272,24 @@ export default function ChangeControlManagement() {
     if (!riskScore) return <Badge variant="secondary" data-testid="badge-risk-unknown">Unknown</Badge>;
     
     if (riskScore >= 60) {
-      return <Badge className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300" data-testid="badge-risk-high">High</Badge>;
+      return <Badge className="bg-stone-100 text-stone-800 dark:bg-stone-900 dark:text-stone-300" data-testid="badge-risk-high">High</Badge>;
     } else if (riskScore >= 30) {
-      return <Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300" data-testid="badge-risk-medium">Medium</Badge>;
+      return <Badge className="bg-stone-100 text-stone-700 dark:bg-stone-900 dark:text-stone-300" data-testid="badge-risk-medium">Medium</Badge>;
     } else {
-      return <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" data-testid="badge-risk-low">Low</Badge>;
+      return <Badge className="bg-stone-100 text-stone-800 dark:bg-stone-900 dark:text-stone-300" data-testid="badge-risk-low">Low</Badge>;
     }
   };
 
   const getStatusBadge = (status: string) => {
     const colors = {
-      DRAFT: 'bg-gray-100 text-gray-700',
-      CLASSIFIED: 'bg-blue-100 text-blue-700',
-      ASSESSED: 'bg-purple-100 text-purple-700',
-      APPROVED: 'bg-green-100 text-green-700',
-      IMPLEMENTED: 'bg-emerald-100 text-emerald-700',
+      DRAFT: 'bg-stone-100 text-stone-700',
+      CLASSIFIED: 'bg-stone-100 text-stone-700',
+      ASSESSED: 'bg-stone-100 text-stone-700',
+      APPROVED: 'bg-stone-100 text-stone-800',
+      IMPLEMENTED: 'bg-stone-100 text-stone-800',
     };
     return (
-      <Badge className={colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-700'} data-testid={`badge-status-${status.toLowerCase()}`}>
+      <Badge className={colors[status as keyof typeof colors] || 'bg-stone-100 text-stone-700'} data-testid={`badge-status-${status.toLowerCase()}`}>
         {status}
       </Badge>
     );
@@ -298,15 +298,15 @@ export default function ChangeControlManagement() {
   const getEventIcon = (event: string) => {
     switch (event) {
       case 'CREATED':
-        return <Plus className="w-4 h-4 text-blue-500" />;
+        return <Plus className="w-4 h-4 text-stone-1000" />;
       case 'CLASSIFIED':
-        return <GitBranch className="w-4 h-4 text-purple-500" />;
+        return <GitBranch className="w-4 h-4 text-stone-1000" />;
       case 'IMPACTED':
-        return <TrendingUp className="w-4 h-4 text-orange-500" />;
+        return <TrendingUp className="w-4 h-4 text-stone-1000" />;
       case 'TASKS_OPENED':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="w-4 h-4 text-stone-1000" />;
       default:
-        return <Clock className="w-4 h-4 text-gray-500" />;
+        return <Clock className="w-4 h-4 text-stone-500" />;
     }
   };
 
@@ -325,7 +325,7 @@ export default function ChangeControlManagement() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold" data-testid="heading-title">Change Control Management</h2>
-          <p className="text-gray-600 dark:text-gray-400" data-testid="text-description">
+          <p className="text-stone-600 dark:text-stone-400" data-testid="text-description">
             Manage regulatory change control with AI classification and impact assessment
           </p>
         </div>
@@ -407,12 +407,12 @@ export default function ChangeControlManagement() {
         <CardContent>
           {changesLoading ? (
             <div className="flex items-center justify-center py-8" data-testid="loading-changes">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-400 mr-2" />
-              <span className="text-gray-600">Loading changes...</span>
+              <Loader2 className="w-6 h-6 animate-spin text-stone-400 mr-2" />
+              <span className="text-stone-600">Loading changes...</span>
             </div>
           ) : filteredChanges.length === 0 ? (
-            <div className="text-center py-8 text-gray-500" data-testid="empty-changes">
-              <GitBranch className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <div className="text-center py-8 text-stone-500" data-testid="empty-changes">
+              <GitBranch className="w-12 h-12 mx-auto mb-3 text-stone-300" />
               <p className="font-medium">No changes found</p>
               <p className="text-sm">Create your first change to get started.</p>
             </div>
@@ -437,7 +437,7 @@ export default function ChangeControlManagement() {
                     <TableCell data-testid={`cell-description-${change.change_id}`}>
                       <div className="max-w-xs truncate">{change.title}</div>
                       {change.change_json?.reason && (
-                        <div className="text-sm text-gray-500 max-w-xs truncate">
+                        <div className="text-sm text-stone-500 max-w-xs truncate">
                           {change.change_json.reason}
                         </div>
                       )}
@@ -628,16 +628,16 @@ export default function ChangeControlManagement() {
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-sm text-gray-500" data-testid="label-type">Type</Label>
+                      <Label className="text-sm text-stone-500" data-testid="label-type">Type</Label>
                       <div data-testid="text-type">{getChangeTypeBadge(selectedChange)}</div>
                     </div>
                     <div>
-                      <Label className="text-sm text-gray-500" data-testid="label-risk-level">Risk Level</Label>
+                      <Label className="text-sm text-stone-500" data-testid="label-risk-level">Risk Level</Label>
                       <div data-testid="text-risk-level">{getRiskBadge(selectedChange.risk_score)}</div>
                     </div>
                     {selectedChange.regions_json?.regions && (
                       <div className="col-span-2">
-                        <Label className="text-sm text-gray-500" data-testid="label-regions">Affected Regions</Label>
+                        <Label className="text-sm text-stone-500" data-testid="label-regions">Affected Regions</Label>
                         <div className="flex gap-2 mt-1" data-testid="text-regions">
                           {selectedChange.regions_json.regions.map((region: string) => (
                             <Badge key={region} variant="outline">{region}</Badge>
@@ -647,7 +647,7 @@ export default function ChangeControlManagement() {
                     )}
                     {selectedChange.eta_weeks && (
                       <div>
-                        <Label className="text-sm text-gray-500" data-testid="label-eta">Estimated Timeline</Label>
+                        <Label className="text-sm text-stone-500" data-testid="label-eta">Estimated Timeline</Label>
                         <div className="font-medium" data-testid="text-eta-value">{selectedChange.eta_weeks} weeks</div>
                       </div>
                     )}
@@ -666,11 +666,11 @@ export default function ChangeControlManagement() {
                 <CardContent>
                   {impactsLoading ? (
                     <div className="flex items-center justify-center py-4" data-testid="loading-impacts">
-                      <Loader2 className="w-6 h-6 animate-spin text-gray-400 mr-2" />
-                      <span className="text-gray-600">Loading impacts...</span>
+                      <Loader2 className="w-6 h-6 animate-spin text-stone-400 mr-2" />
+                      <span className="text-stone-600">Loading impacts...</span>
                     </div>
                   ) : impacts.length === 0 ? (
-                    <div className="text-center py-4 text-gray-500" data-testid="empty-impacts">
+                    <div className="text-center py-4 text-stone-500" data-testid="empty-impacts">
                       <p className="text-sm">No impact assessment available.</p>
                       <Button
                         variant="outline"
@@ -698,7 +698,7 @@ export default function ChangeControlManagement() {
                                 {impact.entity} {impact.code && `- ${impact.code}`}
                               </div>
                               {impact.meta_json?.reason && (
-                                <div className="text-sm text-gray-600 mt-1" data-testid={`impact-reason-${impact.impact_id}`}>
+                                <div className="text-sm text-stone-600 mt-1" data-testid={`impact-reason-${impact.impact_id}`}>
                                   {impact.meta_json.reason}
                                 </div>
                               )}
@@ -725,11 +725,11 @@ export default function ChangeControlManagement() {
                 <CardContent>
                   {eventsLoading ? (
                     <div className="flex items-center justify-center py-4" data-testid="loading-events">
-                      <Loader2 className="w-6 h-6 animate-spin text-gray-400 mr-2" />
-                      <span className="text-gray-600">Loading timeline...</span>
+                      <Loader2 className="w-6 h-6 animate-spin text-stone-400 mr-2" />
+                      <span className="text-stone-600">Loading timeline...</span>
                     </div>
                   ) : events.length === 0 ? (
-                    <div className="text-center py-4 text-gray-500" data-testid="empty-events">
+                    <div className="text-center py-4 text-stone-500" data-testid="empty-events">
                       <p className="text-sm">No timeline events available.</p>
                     </div>
                   ) : (
@@ -737,7 +737,7 @@ export default function ChangeControlManagement() {
                       {events.map((event) => (
                         <div
                           key={event.event_id}
-                          className="flex items-start gap-3 border-l-2 border-gray-200 pl-3"
+                          className="flex items-start gap-3 border-l-2 border-stone-200 pl-3"
                           data-testid={`event-${event.event_id}`}
                         >
                           <div className="mt-1">{getEventIcon(event.event)}</div>
@@ -745,10 +745,10 @@ export default function ChangeControlManagement() {
                             <div className="font-medium" data-testid={`event-type-${event.event_id}`}>
                               {event.event.replace('_', ' ')}
                             </div>
-                            <div className="text-sm text-gray-600" data-testid={`event-user-${event.event_id}`}>
+                            <div className="text-sm text-stone-600" data-testid={`event-user-${event.event_id}`}>
                               by {event.by_user}
                             </div>
-                            <div className="text-xs text-gray-500" data-testid={`event-time-${event.event_id}`}>
+                            <div className="text-xs text-stone-500" data-testid={`event-time-${event.event_id}`}>
                               {new Date(event.created_at).toLocaleString()}
                             </div>
                           </div>
@@ -778,11 +778,11 @@ export default function ChangeControlManagement() {
                         >
                           <div>
                             <div className="font-medium" data-testid={`checklist-title-${index}`}>{item.title}</div>
-                            <div className="text-sm text-gray-600" data-testid={`checklist-owner-${index}`}>
+                            <div className="text-sm text-stone-600" data-testid={`checklist-owner-${index}`}>
                               Owner: {item.owner}
                             </div>
                           </div>
-                          <div className="text-sm text-gray-500" data-testid={`checklist-due-${index}`}>
+                          <div className="text-sm text-stone-500" data-testid={`checklist-due-${index}`}>
                             Due: {item.dueOffsetDays} days
                           </div>
                         </div>

@@ -699,8 +699,8 @@ const categoryIcons: Record<ArtifactCategory, React.ElementType> = {
 
 const typeColors: Record<ArtifactCategory, string> = {
   document: 'bg-stone-100 text-stone-700',
-  interactive: 'bg-blue-50 text-stone-700',
-  visualization: 'bg-emerald-50 text-emerald-700',
+  interactive: 'bg-stone-100 text-stone-700',
+  visualization: 'bg-stone-100 text-stone-800',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -748,7 +748,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse, onPreview 
           </Badge>
         ))}
         {template.ctdSection && (
-          <Badge variant="outline" className="text-xs px-1.5 py-0 border-blue-200 text-blue-600">
+          <Badge variant="outline" className="text-xs px-1.5 py-0 border-stone-200 text-stone-600">
             {template.ctdSection}
           </Badge>
         )}
@@ -762,7 +762,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse, onPreview 
         </span>
         {template.rating && (
           <span className="flex items-center gap-1">
-            <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+            <Star className="h-3 w-3 text-stone-400 fill-stone-400" />
             {template.rating}
           </span>
         )}
@@ -845,7 +845,7 @@ const TemplatePreview: React.FC<TemplatePreviewProps> = ({
             </span>
             {template.rating && (
               <span className="flex items-center gap-1">
-                <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
+                <Star className="h-4 w-4 text-stone-400 fill-stone-400" />
                 {template.rating} rating
               </span>
             )}

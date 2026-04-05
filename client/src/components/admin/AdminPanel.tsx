@@ -157,10 +157,10 @@ export default function AdminPanel() {
                   </p>
                   
                   {exportMutation.isSuccess && (
-                    <Alert className="mb-4 bg-green-50 border-green-200">
-                      <CheckCircle2 className="h-5 w-5 text-green-600" />
-                      <AlertTitle className="text-green-800">Export Complete</AlertTitle>
-                      <AlertDescription className="text-green-700">
+                    <Alert className="mb-4 bg-stone-100 border-stone-200">
+                      <CheckCircle2 className="h-5 w-5 text-stone-700" />
+                      <AlertTitle className="text-stone-800">Export Complete</AlertTitle>
+                      <AlertDescription className="text-stone-800">
                         <div className="mt-2">
                           <p><strong>Total CSRs in database:</strong> {results?.total}</p>
                           <p><strong>Newly exported:</strong> {results?.exported}</p>
@@ -168,7 +168,7 @@ export default function AdminPanel() {
                           <p><strong>Errors:</strong> {results?.errors}</p>
                           <p className="mt-2"><strong>Total JSON files available:</strong> {results?.filesInDir}</p>
                           {results?.totalExportedSinceLastRequest !== undefined && (
-                            <div className="mt-2 p-2 bg-green-100 rounded border border-green-300">
+                            <div className="mt-2 p-2 bg-stone-100 rounded border border-stone-300">
                               <p><strong>Total CSRs exported since last request:</strong> {results.totalExportedSinceLastRequest}</p>
                               {results.lastExportDate && (
                                 <p><strong>Last export date:</strong> {new Date(results.lastExportDate).toLocaleString()}</p>
@@ -197,10 +197,10 @@ export default function AdminPanel() {
                   )}
                   
                   {exportMutation.isError && (
-                    <Alert className="mb-4 bg-red-50 border-red-200">
-                      <AlertCircle className="h-5 w-5 text-red-600" />
-                      <AlertTitle className="text-red-800">Export Failed</AlertTitle>
-                      <AlertDescription className="text-red-700">
+                    <Alert className="mb-4 bg-stone-100 border-stone-200">
+                      <AlertCircle className="h-5 w-5 text-stone-700" />
+                      <AlertTitle className="text-stone-800">Export Failed</AlertTitle>
+                      <AlertDescription className="text-stone-800">
                         {exportMutation.error instanceof Error ? exportMutation.error.message : 'Unknown error occurred'}
                       </AlertDescription>
                     </Alert>
@@ -251,10 +251,10 @@ export default function AdminPanel() {
                   </p>
                   
                   {importCsrMutation.isSuccess && (
-                    <Alert className="mb-4 bg-green-50 border-green-200">
-                      <CheckCircle2 className="h-5 w-5 text-green-600" />
-                      <AlertTitle className="text-green-800">Import Process Started</AlertTitle>
-                      <AlertDescription className="text-green-700">
+                    <Alert className="mb-4 bg-stone-100 border-stone-200">
+                      <CheckCircle2 className="h-5 w-5 text-stone-700" />
+                      <AlertTitle className="text-stone-800">Import Process Started</AlertTitle>
+                      <AlertDescription className="text-stone-800">
                         <div className="mt-2">
                           <p>A new batch of CSRs is now being imported in the background. This process typically takes 
                           5-10 minutes to complete. Once finished, the new records will be available in the database.</p>
@@ -266,10 +266,10 @@ export default function AdminPanel() {
                   )}
                   
                   {importCsrMutation.isError && (
-                    <Alert className="mb-4 bg-red-50 border-red-200">
-                      <AlertCircle className="h-5 w-5 text-red-600" />
-                      <AlertTitle className="text-red-800">Import Failed</AlertTitle>
-                      <AlertDescription className="text-red-700">
+                    <Alert className="mb-4 bg-stone-100 border-stone-200">
+                      <AlertCircle className="h-5 w-5 text-stone-700" />
+                      <AlertTitle className="text-stone-800">Import Failed</AlertTitle>
+                      <AlertDescription className="text-stone-800">
                         {importCsrMutation.error instanceof Error ? importCsrMutation.error.message : 'Unknown error occurred'}
                       </AlertDescription>
                     </Alert>
