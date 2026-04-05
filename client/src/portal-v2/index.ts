@@ -16,9 +16,6 @@
  * Treat it as non-canonical until `/client-portal/*` ownership is explicitly
  * resolved in the root app shell.
  */
-// Main application component
-export { ClientPortalV2, default } from './ClientPortalV2';
-
 // Core types and utilities
 export type {
   UserRole,

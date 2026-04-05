@@ -23,18 +23,7 @@ export * from './workflows';
 // ADMIN PORTAL
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Layout & Routing
-export {
-  AdminPortalLayout,
-  AuthRoutes,
-  ADMIN_NAV_ITEMS,
-  AdminSidebar,
-  AdminHeader,
-  Breadcrumb,
-  LoadingFallback,
-  QuickAccessCards,
-  AdminHomePage,
-} from './AdminPortalIndex';
+// AdminPortalIndex — removed (deleted in dead code purge)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────────────────
@@ -83,14 +72,4 @@ export { default as ActivityMonitor } from './monitoring/ActivityMonitor';
 
 export { default as OnboardingWizard } from './onboarding/OnboardingWizard';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CORTEX AI COMPONENTS
-// ─────────────────────────────────────────────────────────────────────────────
-
-export {
-  CortexSearchPanel,
-  CortexChatWidget,
-  CortexKnowledgeGraph,
-  CortexInsightCard,
-  CortexHealthIndicator,
-} from './cortex';
+// Cortex AI components — removed (deleted in dead code purge)
