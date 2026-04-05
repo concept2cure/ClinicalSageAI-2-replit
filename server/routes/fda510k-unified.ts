@@ -6,12 +6,12 @@
  *
  * Consolidated from:
  * - 510kRoutes.ts (device profiles, predicate finder)
- * - 510k-api-routes.ts (requirements, device classes)
- * - 510k-compliance-routes.ts (compliance checks)
+ * - [removed] 510k-api-routes.ts (was deprecated mock data)
+ * - [removed] 510k-compliance-routes.ts (was deprecated, returned 503)
  * - 510k-literature-routes.ts (literature search)
  * - 510k-project.routes.ts (project wizard)
  * - fda510k-routes.ts (production FDA API)
- * - 510kEstarRoutes.ts (eSTAR integration)
+ * - [removed] 510kEstarRoutes.ts (was deprecated simulation; use 510k-estar-routes.ts)
  *
  * @version 2.0.0
  * @module server/routes/fda510k-unified
@@ -282,23 +282,9 @@ async function mountSubRouters() {
     logger.error('Failed to mount device routes:', error);
   }
 
-  // Requirements by Device Class (from 510k-api-routes.ts)
-  try {
-    const requirementsModule = (await import('./510k-api-routes')) as any;
-    router.use('/api', requirementsModule.router || requirementsModule.default);
-    logger.info('Mounted: /api (requirements, device classes)');
-  } catch (error) {
-    logger.error('Failed to mount api routes:', error);
-  }
+  // Requirements by Device Class — removed (510k-api-routes was deprecated mock data)
 
-  // Compliance Checks (from 510k-compliance-routes.ts)
-  try {
-    const complianceModule = await import('./510k-compliance-routes');
-    router.use('/compliance', complianceModule.default);
-    logger.info('Mounted: /compliance (compliance checks)');
-  } catch (error) {
-    logger.error('Failed to mount compliance routes:', error);
-  }
+  // Compliance Checks — removed (510k-compliance-routes returned 503 on all endpoints)
 
   // Literature Search (from 510k-literature-routes.ts)
   try {
@@ -327,14 +313,8 @@ async function mountSubRouters() {
     logger.error('Failed to mount FDA API routes:', error);
   }
 
-  // eSTAR Integration (from 510kEstarRoutes.ts)
-  try {
-    const estarModule = (await import('./510kEstarRoutes')) as any;
-    router.use('/estar', estarModule.router || estarModule.default);
-    logger.info('Mounted: /estar (eSTAR integration)');
-  } catch (error) {
-    logger.error('Failed to mount eSTAR routes:', error);
-  }
+  // eSTAR Integration — removed deprecated 510kEstarRoutes (simulated);
+  // active eSTAR endpoint is at /api/510k/estar via 510k-estar-routes.ts
 }
 
 // Mount sub-routers on import
