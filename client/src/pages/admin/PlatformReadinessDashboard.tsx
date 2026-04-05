@@ -42,7 +42,7 @@ const pageStyle: React.CSSProperties = {
   height: '100vh',
   display: 'flex',
   flexDirection: 'column',
-  fontFamily: "'Poppins', Arial, sans-serif",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
   background: '#faf9f5',
 };
 
@@ -359,7 +359,7 @@ const SummaryPanel: React.FC<{ visible: boolean; onClose: () => void }> = ({
         zIndex: 20,
         overflowY: 'auto',
         padding: 20,
-        fontFamily: "'Poppins', Arial, sans-serif",
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

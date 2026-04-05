@@ -31,7 +31,7 @@ const ErrorLayout: React.FC<{
       <p
         className="text-7xl font-bold mb-4"
         style={{
-          fontFamily: "'Poppins', Arial, sans-serif",
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
           background: 'linear-gradient(135deg, #44403c, #292524)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
@@ -44,7 +44,7 @@ const ErrorLayout: React.FC<{
     {/* Title */}
     <h1
       className="text-base font-semibold text-stone-900 mb-3 text-center"
-      style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
+      style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}
     >
       {title}
     </h1>
@@ -64,7 +64,7 @@ const ErrorLayout: React.FC<{
         className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white rounded-xl transition-all hover:shadow-sm"
         style={{
           background: 'linear-gradient(135deg, #44403c, #292524)',
-          fontFamily: "'Poppins', Arial, sans-serif",
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
         }}
       >
         {action.label}
@@ -73,7 +73,7 @@ const ErrorLayout: React.FC<{
 
     {/* Footer */}
     <div className="mt-16 text-center">
-      <p className="text-xs text-stone-400" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
+      <p className="text-xs text-stone-400" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}>
         © {new Date().getFullYear()} Concept2Cure, Inc. — AI-Powered Regulatory Intelligence
       </p>
       <div className="flex gap-4 justify-center mt-2">
@@ -141,13 +141,13 @@ export const MaintenancePage: React.FC = () => (
     >
       <p
         className="text-xs font-medium text-stone-700"
-        style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
+        style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}
       >
         Expected completion
       </p>
       <p
         className="text-lg font-semibold text-stone-900 mt-1"
-        style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
+        style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}
       >
         Within 4 hours
       </p>

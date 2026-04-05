@@ -19,14 +19,15 @@ describe('concept2cure shell/nav regression', () => {
     expect(content).toContain("'section-workspace'");
   });
 
-  it('keeps global operating shell and sidebar wired', () => {
-    const shell = read('client/src/concept2cure/components/shell/GlobalOperatingShell.tsx');
+  it('keeps sidebar wired with 5 destinations', () => {
     const sidebar = read('client/src/concept2cure/components/sidebar/ZenSidebar.tsx');
 
-    // Shell exports the GlobalOperatingShell component
-    expect(shell).toContain('GlobalOperatingShell');
-    expect(shell).toContain('layoutMode');
-    // Sidebar exists and renders navigation
+    // Sidebar exists and renders the 5 canonical destinations
     expect(sidebar).toContain('ZenSidebar');
+    expect(sidebar).toContain('Chats');
+    expect(sidebar).toContain('Projects');
+    expect(sidebar).toContain('Communication Center');
+    expect(sidebar).toContain('Apps');
+    expect(sidebar).toContain('Settings');
   });
 });

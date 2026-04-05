@@ -24,7 +24,7 @@ import type {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const baseNodeStyle: React.CSSProperties = {
-  fontFamily: "'Poppins', Arial, sans-serif",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
   fontSize: 12,
   borderRadius: 8,
   boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06)',

@@ -15,7 +15,7 @@
   --toastify-toast-background: #ffffff;
   --toastify-toast-min-height: 64px;
   --toastify-toast-max-height: 800px;
-  --toastify-font-family: 'Poppins', Arial, sans-serif;
+  --toastify-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --toastify-z-index: 9999;
   --toastify-text-color-light: #6b6963;
   --toastify-text-color-dark: #faf9f5;

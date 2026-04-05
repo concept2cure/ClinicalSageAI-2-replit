@@ -149,9 +149,9 @@ export const colors = {
 export const typography = {
   // Font families
   fontFamily: {
-    sans: 'Inter, -apple-system, BlinkMacSystemFont, "Poppins", Roboto, sans-serif',
+    sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     mono: '"JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace',
-    display: 'Inter, -apple-system, BlinkMacSystemFont, "Poppins", Roboto, sans-serif',
+    display: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   },
 
   // Font sizes with line heights

@@ -461,7 +461,7 @@ export function DocumentPreview({ component, isOpen, onClose, onUpdate }) {
       <SheetContent 
         side="right" 
         className="w-full sm:max-w-[900px] p-0 flex flex-col bg-white dark:bg-slate-900"
-        style={{ fontFamily: 'Poppins, Arial, sans-serif' }}
+        style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
