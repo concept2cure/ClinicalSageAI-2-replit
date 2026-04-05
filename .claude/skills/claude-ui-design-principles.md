@@ -75,7 +75,7 @@ The default instinct when building is **dashboard-first, not conversation-first.
 
 ### 5. Animation: Purposeful and Brief
 
-- All transitions: `duration-200 ease-out` (200ms)
+- All transitions: `duration-150 ease-out` (150ms) — snappy and professional
 - Slide-in panels: `translate-x-4 → translate-x-0` with `opacity-0 → opacity-100`
 - No bounce, no spring, no overshoot — Claude doesn't fidget
 - Hover transitions: `transition-colors` only (no scale, no shadow changes)

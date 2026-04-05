@@ -617,6 +617,19 @@ const SLASH_COMMANDS: SlashCommand[] = [
   { command: '/export', description: 'Download conversation as markdown', category: 'Navigation' },
 ];
 
+const APP_MENTIONS: Array<{ id: string; label: string; description: string }> = [
+  { id: 'deep-research', label: 'Deep Research', description: 'Search ClinicalTrials.gov, PubMed, FDA, EMA' },
+  { id: 'precedent', label: 'Precedent Intelligence', description: 'Regulatory precedent analysis' },
+  { id: '510k', label: '510(k) Workspace', description: 'Medical device 510(k) submission' },
+  { id: 'pma', label: 'PMA Workspace', description: 'Premarket approval submission' },
+  { id: 'cer', label: 'CER Generator', description: 'Clinical evaluation report (EU MDR/IVDR)' },
+  { id: 'safety', label: 'Safety Narrative', description: 'Safety analysis and narrative generation' },
+  { id: 'biostats', label: 'Biostatistics', description: 'Statistical analysis, power calculations, SAP' },
+  { id: 'vault', label: 'Document Vault', description: 'Search and manage project documents' },
+  { id: 'ectd', label: 'eCTD Navigator', description: 'Electronic submission structure' },
+  { id: 'protocol', label: 'Protocol Designer', description: 'Clinical study protocol builder' },
+];
+
 const SLASH_CATEGORY_COLORS: Record<string, string> = {
   Intelligence: 'text-stone-600',
   Analysis: 'text-stone-600',
@@ -790,6 +803,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [slashMenuOpen, setSlashMenuOpen] = useState(false);
   const [slashMenuIndex, setSlashMenuIndex] = useState(0);
   const slashMenuRef = useRef<HTMLDivElement>(null);
+  // @app mention autocomplete
+  const [appMenuOpen, setAppMenuOpen] = useState(false);
+  const [appMenuIndex, setAppMenuIndex] = useState(0);
+  const appMenuRef = useRef<HTMLDivElement>(null);
   const initialMessageSentRef = useRef(false);
   // Thread persistence — reuse thread_id across messages for continuous conversation
   const threadIdRef = useRef<string | null>(null);
@@ -932,6 +949,17 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     if (!trimmed.startsWith('/') || trimmed.includes(' ')) {
       setSlashMenuOpen(false);
     }
+  }, [input]);
+
+  // ── @app mention autocomplete filtering ──────────────────────────────────
+  const filteredApps = useMemo(() => {
+    const trimmed = input.trim();
+    if (!trimmed.startsWith('@') || trimmed.includes(' ')) return [];
+    const query = trimmed.slice(1).toLowerCase();
+    if (!query) return APP_MENTIONS;
+    return APP_MENTIONS.filter(
+      app => app.id.includes(query) || app.label.toLowerCase().includes(query)
+    ).slice(0, 8);
   }, [input]);
 
   // ── Authoring-aware suggested actions (Wave 1) ─────────────────────────────
@@ -2153,6 +2181,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       setSlashMenuOpen(true);
       setSlashMenuIndex(0);
     }
+    // @app menu detection
+    setAppMenuOpen(trimmed.startsWith('@') && !trimmed.includes(' '));
+    setAppMenuIndex(0);
   };
 
   const handleDecisionsSlash = useCallback(() => {
@@ -2298,7 +2329,37 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     inputRef.current?.focus();
   };
 
+  const selectApp = useCallback((app: typeof APP_MENTIONS[0]) => {
+    setInput(`@${app.id} `);
+    setAppMenuOpen(false);
+    setAppMenuIndex(0);
+    inputRef.current?.focus();
+  }, []);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // @app mention navigation
+    if (appMenuOpen && filteredApps.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setAppMenuIndex(i => (i + 1) % filteredApps.length);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setAppMenuIndex(i => (i - 1 + filteredApps.length) % filteredApps.length);
+        return;
+      }
+      if (e.key === 'Tab' || (e.key === 'Enter' && !e.shiftKey)) {
+        e.preventDefault();
+        selectApp(filteredApps[appMenuIndex]);
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setAppMenuOpen(false);
+        return;
+      }
+    }
     // Slash command navigation
     if (slashMenuOpen && filteredSlashCommands.length > 0) {
       if (e.key === 'ArrowDown') {
@@ -4179,6 +4240,39 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 ))}
               </div>
             )}
+            {/* @app mention autocomplete dropdown */}
+            {appMenuOpen && filteredApps.length > 0 && (
+              <div
+                ref={appMenuRef}
+                className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-stone-100 shadow-sm max-h-[280px] overflow-y-auto z-50"
+                role="listbox"
+                aria-label="App mentions"
+              >
+                <div className="px-3 py-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-wide">
+                  Apps
+                </div>
+                {filteredApps.map((app, idx) => (
+                  <button
+                    key={app.id}
+                    type="button"
+                    role="option"
+                    aria-selected={idx === appMenuIndex}
+                    onMouseDown={e => {
+                      e.preventDefault();
+                      selectApp(app);
+                    }}
+                    onMouseEnter={() => setAppMenuIndex(idx)}
+                    className={cn(
+                      'w-full text-left px-3 py-2 flex items-center gap-3 text-[13px] transition-colors',
+                      idx === appMenuIndex ? 'bg-stone-50 text-stone-900' : 'text-stone-600 hover:bg-stone-50'
+                    )}
+                  >
+                    <span className="font-medium text-stone-800">@{app.id}</span>
+                    <span className="text-stone-400 text-[11px] truncate">{app.description}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             <div
               className={cn(
                 'flex items-end gap-2 px-4 py-3 bg-stone-50/80 border rounded-2xl transition-all duration-200',
@@ -5198,6 +5292,39 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     {cmd.category}
                   </span>
                 </Button>
+              ))}
+            </div>
+          )}
+          {/* @app mention autocomplete dropdown (full mode) */}
+          {appMenuOpen && filteredApps.length > 0 && (
+            <div
+              ref={appMenuRef}
+              className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-stone-100 shadow-sm max-h-[280px] overflow-y-auto z-50"
+              role="listbox"
+              aria-label="App mentions"
+            >
+              <div className="px-3 py-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-wide">
+                Apps
+              </div>
+              {filteredApps.map((app, idx) => (
+                <button
+                  key={app.id}
+                  type="button"
+                  role="option"
+                  aria-selected={idx === appMenuIndex}
+                  onMouseDown={e => {
+                    e.preventDefault();
+                    selectApp(app);
+                  }}
+                  onMouseEnter={() => setAppMenuIndex(idx)}
+                  className={cn(
+                    'w-full text-left px-3 py-2 flex items-center gap-3 text-[13px] transition-colors',
+                    idx === appMenuIndex ? 'bg-stone-50 text-stone-900' : 'text-stone-600 hover:bg-stone-50'
+                  )}
+                >
+                  <span className="font-medium text-stone-800">@{app.id}</span>
+                  <span className="text-stone-400 text-[11px] truncate">{app.description}</span>
+                </button>
               ))}
             </div>
           )}

@@ -396,6 +396,7 @@ interface ToolPanelWrapperProps {
   onClose: () => void;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
+  projectId?: string;
 }
 
 const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
@@ -403,10 +404,15 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
   onClose,
   isFullscreen,
   onToggleFullscreen,
+  projectId,
 }) => {
+  const [activeTab, setActiveTab] = useState<'tool' | 'context'>('tool');
   const config = TOOL_PANELS[panel];
   const Icon = config.icon;
   const PanelComponent = PANEL_COMPONENTS[panel];
+
+  // Reset to tool tab when the panel changes
+  useEffect(() => { setActiveTab('tool'); }, [panel]);
 
   if (!PanelComponent) {
     return (
@@ -484,20 +490,54 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto zen-scroll">
-        <ErrorBoundary>
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center h-full">
-                <LoadingState size="sm" message="" />
-              </div>
-            }
-          >
-            <PanelComponent />
-          </Suspense>
-        </ErrorBoundary>
+      {/* Tab row */}
+      <div className="flex border-b border-stone-100 px-2">
+        <button
+          className={cn(
+            'px-3 py-1.5 text-[12px] font-medium border-b-2 transition-colors',
+            activeTab === 'tool'
+              ? 'border-stone-800 text-stone-800'
+              : 'border-transparent text-stone-400 hover:text-stone-600'
+          )}
+          onClick={() => setActiveTab('tool')}
+        >
+          {config?.title || 'Tool'}
+        </button>
+        <button
+          className={cn(
+            'px-3 py-1.5 text-[12px] font-medium border-b-2 transition-colors',
+            activeTab === 'context'
+              ? 'border-stone-800 text-stone-800'
+              : 'border-transparent text-stone-400 hover:text-stone-600'
+          )}
+          onClick={() => setActiveTab('context')}
+        >
+          Context
+        </button>
       </div>
+
+      {/* Content */}
+      {activeTab === 'tool' ? (
+        <div className="flex-1 overflow-y-auto zen-scroll">
+          <ErrorBoundary>
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center h-full">
+                  <LoadingState size="sm" message="" />
+                </div>
+              }
+            >
+              <PanelComponent />
+            </Suspense>
+          </ErrorBoundary>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto zen-scroll">
+          <Suspense fallback={<div className="flex items-center justify-center py-12"><Loader2 className="w-5 h-5 animate-spin text-stone-400" /></div>}>
+            <ProjectKnowledgePanel projectId={projectId ?? null} className="w-full" />
+          </Suspense>
+        </div>
+      )}
     </div>
   );
 };
@@ -3720,6 +3760,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             }}
             isFullscreen={toolPanelFullscreen}
             onToggleFullscreen={() => setToolPanelFullscreen(prev => !prev)}
+            projectId={activeProjectId}
           />
         </div>
       )}
