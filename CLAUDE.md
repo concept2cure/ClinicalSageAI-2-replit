@@ -196,6 +196,119 @@ Set `FIGMA_ACCESS_TOKEN` environment variable before use.
 
 ---
 
+## UI Convergence and Legacy Surface Deletion (NON-NEGOTIABLE)
+
+Concept2Cure has accumulated multiple competing shells, sidebars, workspace homes, dashboards, and document-entry surfaces over time. From this point forward, Claude must not add or promote a new UI authority without also resolving the old one.
+
+### Hard Rule
+
+When a shell-level UI surface becomes canonical, Claude must identify and remove, demote, redirect, or block every superseded competing surface in the same workstream.
+
+This applies to:
+- app shells
+- sidebars / left rails
+- project homes
+- workspace homes
+- dashboards
+- editor entry paths
+- communication/tasking centers
+- settings shells
+
+### Replace-or-Delete Law
+
+Claude must do all of the following before claiming a UI convergence task is complete:
+
+1. identify the canonical surface
+2. identify all competing surfaces
+3. migrate imports, routes, nav targets, and callers
+4. update the UI surface registry
+5. block, redirect, or delete superseded surfaces
+6. write a proof report
+
+No "clean up later" language counts as completion.
+
+### Required Governance Files
+
+Claude must create or maintain:
+
+- `config/ui-surface-registry.json`
+- `scripts/audit-ui-authority.ts`
+- `docs/reports/ui-authority-audit-YYYY-MM-DD.md`
+- `docs/reports/ui-convergence-proof-YYYY-MM-DD.md`
+
+### Required UI Surface States
+
+Every shell-level UI surface must be classified as one of:
+
+- `active`
+- `demoted`
+- `redirected`
+- `blocked`
+- `deleted`
+
+No undefined legacy state is permitted.
+
+### Forbidden Actions
+
+Claude must not:
+
+- create a new shell beside an old shell
+- create a second sidebar authority
+- create a second project home
+- leave deprecated layout modes active
+- leave deprecated routes mounted
+- keep hidden but callable legacy surfaces
+- preserve duplicate UI worlds because deletion feels risky
+- wrap an old surface in a new one and call it convergence
+
+### Temporary Legacy File Rule
+
+If a superseded file must remain temporarily, Claude must:
+
+- remove it from nav
+- remove it from routes
+- remove it from export barrels where possible
+- mark it as deprecated in the file header
+- record it in the registry as `demoted`, `redirected`, or `blocked`
+
+### Deletion Rule
+
+Claude must delete a superseded UI surface once it has:
+- no remaining imports
+- no remaining routed entry point
+- no remaining visible navigation path
+- no remaining canonical authority
+
+### No Capability Loss Rule
+
+Convergence does not allow capability loss.
+
+Before deleting a surface, Claude must verify that the important user outcomes it enabled are still reachable through:
+- chat
+- the canonical project shell
+- the canonical editor
+- the communication center
+- an on-demand panel or inline action
+
+A cleaner UI that does less is a regression.
+
+### Completion Gate
+
+Claude may not mark a UI convergence task complete unless:
+
+- one canonical authority remains for the affected category
+- registry is updated
+- authority audit passes
+- routes are cleaned
+- imports are cleaned
+- nav is cleaned
+- superseded surfaces are blocked, redirected, or deleted
+- proof report is written to `docs/reports/`
+
+If duplicate authority remains, Claude must say so explicitly and keep the task open.
+
+---
+
 ## Code Standards
 
 - TypeScript strict mode — no `any` unless unavoidable

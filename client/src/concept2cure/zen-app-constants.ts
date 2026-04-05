@@ -25,9 +25,10 @@ export type ToolPanel =
   | null;
 
 export type LayoutMode =
-  // ── Global destinations ──
+  // ── Global destinations (5 allowed top-level) ──
   | 'projects'
   | 'apps'
+  | 'communication-center'
   | 'artifacts-center'
   | 'setup'
   // ── Project tabs ──
@@ -122,7 +123,8 @@ export type LayoutMode =
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const PRIMARY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
-  projects: 'ri-copilot',
+  projects: 'projects',
+  'communication-center': 'communication-center',
   'project-home': 'ri-copilot',
   'dossier-map': 'clinical-module5',
   documents: 'work',
@@ -141,6 +143,7 @@ export const PRIMARY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
 export const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
   apps: 'apps',
   'artifacts-center': 'artifacts-center',
+  'communication-center': 'communication-center',
   setup: 'setup',
   projects: 'projects',
   home: 'projects',

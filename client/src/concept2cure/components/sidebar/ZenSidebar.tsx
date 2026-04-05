@@ -2,14 +2,10 @@
  * @fileoverview Zen Sidebar — Human-first OS navigation
  * @module concept2cure/components/sidebar/ZenSidebar
  *
- * Global shell (6 items):
- *   New → Search → Projects → Apps → Artifacts → Setup
- *
- * Project shell (5 tabs, shown when project is active):
- *   Overview → Tools → Vault → Review → Submit
- *
- * Below: Pinned + Recent project list with nested conversations.
- * Account/profile at bottom.
+ * Zone A (Utility): New Chat → Search
+ * Zone B (5 Destinations): Chats → Projects → Communication Center → Apps → Settings
+ * Zone C (Context): Active project indicator, pinned/recent project list
+ * Zone D (Footer): Account/profile
  */
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
@@ -867,8 +863,9 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
     return {
       projects: h('projects'),
       apps: h('apps'),
-      'artifacts-center': h('artifacts-center'),
       setup: h('setup'),
+      'communication-center': h('communication-center'),
+      // Project-scoped (kept for internal use but not top-level nav)
       'project-home': h('project-home'),
       'submission-builder': h('submission-builder'),
       overview: h('overview'),
@@ -898,48 +895,35 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <span className="text-[10px] font-bold text-white">C2C</span>
         </div>
 
-        {/* ── Global nav (6 items) ── */}
-        <IconBtn label="New" onClick={onNewChat}>
+        {/* ── Zone A: Utility ── */}
+        <IconBtn label="New Chat" onClick={onNewChat}>
           <Plus className="w-4 h-4" />
         </IconBtn>
         <IconBtn label="Search" active={activeNavId === 'search'} onClick={onOpenSearch}>
           <Search className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="Projects" active={activeNavId === 'projects'} onClick={onOpenProjects}>
+
+        <div className="w-8 border-t border-stone-200 my-1" />
+
+        {/* ── Zone B: 5 Primary Destinations ── */}
+        <IconBtn label="Chats" active={activeNavId === 'projects' || activeNavId === 'ri-copilot'} onClick={onOpenProjects}>
+          <MessageSquare className="w-4 h-4" />
+        </IconBtn>
+        <IconBtn label="Projects" active={activeNavId === 'project-home'} onClick={nav.projects}>
           <FolderOpen className="w-4 h-4" />
         </IconBtn>
         <IconBtn
-          label="Workspace Home"
-          active={activeNavId === 'project-home'}
-          onClick={nav['project-home']}
+          label="Communication Center"
+          active={activeNavId === 'communication-center'}
+          onClick={nav['communication-center']}
         >
+          <Activity className="w-4 h-4" />
+        </IconBtn>
+        <IconBtn label="Apps" active={activeNavId === 'apps'} onClick={nav.apps}>
           <Sparkles className="w-4 h-4" />
         </IconBtn>
-        <IconBtn
-          label="Documents"
-          active={activeNavId === 'submission-builder'}
-          onClick={nav['submission-builder']}
-        >
-          <FileStack className="w-4 h-4" />
-        </IconBtn>
-        <IconBtn
-          label="Intelligence"
-          active={activeNavId === 'ri-copilot'}
-          onClick={nav['ri-copilot']}
-        >
+        <IconBtn label="Settings" active={activeNavId === 'setup'} onClick={nav.setup}>
           <Settings className="w-4 h-4" />
-        </IconBtn>
-
-        {/* Workflow shortcut — just one icon for the editor workspace */}
-        <div className="w-8 border-t border-stone-200 my-1" />
-        <IconBtn
-          label="Editor"
-          active={['submission-builder', 'ri-copilot', 'verify', 'review', 'publish'].includes(
-            activeNavId || ''
-          )}
-          onClick={nav['submission-builder']}
-        >
-          <PenLine className="w-4 h-4" />
         </IconBtn>
 
         {/* Bottom: expand + account */}
@@ -996,9 +980,8 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           </Button>
         </div>
 
-        {/* ── Global Navigation (6 items) ──────────────────────────────── */}
+        {/* ── Zone A: Utility Actions ──────────────────────────────── */}
         <div className="px-1 pb-1 flex-shrink-0 space-y-0.5">
-          {/* New — dropdown with 3 options */}
           <NewDropdown
             onNewChat={onNewChat}
             onNewProject={onOpenProjects}
@@ -1011,41 +994,50 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             active={activeNavId === 'search'}
             onClick={onOpenSearch}
           />
+        </div>
+
+        <div className="mx-2 border-t border-stone-100 flex-shrink-0" />
+
+        {/* ── Zone B: 5 Primary Destinations ──────────────────────── */}
+        <div className="px-1 py-1 flex-shrink-0 space-y-0.5">
           <NavItem
-            icon={<FolderOpen className="w-3.5 h-3.5" />}
-            label="Projects"
-            active={activeNavId === 'projects'}
-            accentColor="blue"
+            icon={<MessageSquare className="w-3.5 h-3.5" />}
+            label="Chats"
+            active={activeNavId === 'projects' || activeNavId === 'ri-copilot'}
             onClick={onOpenProjects}
           />
           <NavItem
-            icon={<Sparkles className="w-3.5 h-3.5" />}
-            label="Workspace Home"
+            icon={<FolderOpen className="w-3.5 h-3.5" />}
+            label="Projects"
             active={activeNavId === 'project-home'}
-            accentColor="violet"
-            onClick={nav['project-home']}
+            onClick={nav.projects}
           />
           <NavItem
-            icon={<FileStack className="w-3.5 h-3.5" />}
-            label="Documents"
-            active={activeNavId === 'submission-builder'}
-            onClick={nav['submission-builder']}
+            icon={<Activity className="w-3.5 h-3.5" />}
+            label="Communication Center"
+            active={activeNavId === 'communication-center'}
+            onClick={nav['communication-center']}
+          />
+          <NavItem
+            icon={<Sparkles className="w-3.5 h-3.5" />}
+            label="Apps"
+            active={activeNavId === 'apps'}
+            onClick={nav.apps}
           />
           <NavItem
             icon={<Settings className="w-3.5 h-3.5" />}
-            label="Intelligence"
-            active={activeNavId === 'ri-copilot'}
-            onClick={nav['ri-copilot']}
+            label="Settings"
+            active={activeNavId === 'setup'}
+            onClick={nav.setup}
           />
         </div>
 
-        {/* ── Current Project Block (only when project active) ──────── */}
+        {/* ── Active Project Context (only when project active) ──── */}
         {activeProject && (
           <>
-            <div className="mx-2 border-t border-stone-200 flex-shrink-0" />
+            <div className="mx-2 border-t border-stone-100 flex-shrink-0" />
             <div className="px-2 py-2 flex-shrink-0">
-              {/* Project identity */}
-              <div className="flex items-center gap-2 px-2 mb-1.5">
+              <div className="flex items-center gap-2 px-2 mb-0.5">
                 {activeBadge && (
                   <span
                     className={cn(
@@ -1060,36 +1052,6 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
                 <span className="text-[12px] font-semibold text-stone-800 truncate flex-1">
                   {activeProject.name}
                 </span>
-              </div>
-
-              {/* Project tabs */}
-              <div className="space-y-0.5">
-                <NavItem
-                  icon={<Home className="w-3.5 h-3.5" />}
-                  label="Overview"
-                  active={activeNavId === 'overview'}
-                  onClick={nav.overview}
-                />
-                <NavItem
-                  icon={<ListChecks className="w-3.5 h-3.5" />}
-                  label="Tasks"
-                  active={activeNavId === 'task-board'}
-                  onClick={nav['task-board']}
-                />
-                <NavItem
-                  icon={<Wrench className="w-3.5 h-3.5" />}
-                  label="Tools"
-                  active={activeNavId === 'work'}
-                  accentColor="blue"
-                  onClick={nav.tools}
-                />
-                <NavItem
-                  icon={<Send className="w-3.5 h-3.5" />}
-                  label="Submit"
-                  active={activeNavId === 'submit'}
-                  accentColor="blue"
-                  onClick={nav.submit}
-                />
               </div>
             </div>
           </>

@@ -328,6 +328,7 @@ const AnaBiostatsPanel = lazy(() => import('@/concept2cure/components/biostats/A
 
 // ─── New global destination pages (Phase 1 OS restructure) ──────────────────
 const AppsPage = lazy(() => import('./pages/AppsPage'));
+const CommunicationCenter = lazy(() => import('./components/workspace/CommunicationCenter'));
 const ArtifactsPage = lazy(() => import('./pages/ArtifactsPage'));
 const VaultPage = lazy(() => import('./pages/VaultPage'));
 const SetupPage = lazy(() => import('./pages/SetupPage'));
@@ -1996,6 +1997,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             'home',
             'apps',
             'artifacts-center',
+            'communication-center',
             'setup',
           ]);
           switch (id) {
@@ -2004,6 +2006,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             case 'home':
             case 'apps':
             case 'artifacts-center':
+            case 'communication-center':
             case 'setup':
             case 'overview':
             case 'work':
@@ -2259,6 +2262,25 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       setOpenArtifactId(artifactId);
                       setRiViewMode('editor');
                     }}
+                  />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Global destination: Communication Center ── */}
+          {!embeddedModule && layoutMode === 'communication-center' && (
+            <div
+              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
+              data-testid="workspace-communication-center"
+            >
+              <ErrorBoundary>
+                <Suspense fallback={<ModuleLoadingFallback />}>
+                  <CommunicationCenter
+                    projectId={activeProjectId}
+                    projectName={activeProject?.name}
+                    submissionType={activeProject?.type as 'IND' | 'NDA' | 'BLA' | '510k' | 'PMA' | 'MAA' | 'ANDA' | undefined}
+                    artifacts={[]}
                   />
                 </Suspense>
               </ErrorBoundary>
