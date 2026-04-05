@@ -133,7 +133,7 @@ export function PricingSection() {
               className={`relative p-6 rounded-2xl border transition-all ${
                 tier.highlighted
                   ? 'border-stone-600 bg-stone-100/30 shadow shadow-stone-600/10'
-                  : 'border-stone-200 bg-white hover:border-stone-300 hover:shadow-md'
+                  : 'border-stone-200 bg-white hover:border-stone-300 hover:shadow-sm'
               }`}
             >
               {tier.highlighted && (
@@ -155,7 +155,7 @@ export function PricingSection() {
               <ul className="space-y-2.5 mb-8">
                 {tier.features.map(f => (
                   <li key={f} className="flex items-start gap-2 text-sm text-stone-700">
-                    <CheckIcon className="w-4 h-4 text-stone-1000 mt-0.5 flex-shrink-0" />
+                    <CheckIcon className="w-4 h-4 text-stone-900 mt-0.5 flex-shrink-0" />
                     {f}
                   </li>
                 ))}
@@ -172,7 +172,7 @@ export function PricingSection() {
                 }}
                 className={`w-full py-2.5 px-4 text-sm font-medium rounded-xl transition-all ${
                   tier.highlighted
-                    ? 'bg-stone-600 text-white hover:bg-stone-700 shadow-md'
+                    ? 'bg-stone-600 text-white hover:bg-stone-700 shadow-sm'
                     : 'bg-stone-100 text-stone-800 hover:bg-stone-200'
                 }`}
               >

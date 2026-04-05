@@ -233,9 +233,9 @@ const NavItem: React.FC<{
 }> = React.memo(
   ({ icon, label, active, accentColor, badge, subtitle, onClick }) => {
     const accentMap = {
-      blue: { bg: 'bg-stone-100', text: 'text-stone-600', iconColor: 'text-stone-1000' },
-      violet: { bg: 'bg-stone-200', text: 'text-stone-600', iconColor: 'text-stone-1000' },
-      emerald: { bg: 'bg-stone-100', text: 'text-stone-800', iconColor: 'text-stone-1000' },
+      blue: { bg: 'bg-stone-100', text: 'text-stone-600', iconColor: 'text-stone-900' },
+      violet: { bg: 'bg-stone-200', text: 'text-stone-600', iconColor: 'text-stone-900' },
+      emerald: { bg: 'bg-stone-100', text: 'text-stone-800', iconColor: 'text-stone-900' },
     };
     const accent = accentColor && accentMap[accentColor];
 
@@ -632,7 +632,7 @@ const IconBtn: React.FC<{
     label,
     active,
     accentBg = 'bg-stone-100',
-    accentText = 'text-stone-1000',
+    accentText = 'text-stone-900',
     onClick,
     children,
   }) => (

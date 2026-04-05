@@ -325,8 +325,8 @@ const DeliverablesDuePanel: React.FC<{
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-150',
-                item.deliverable.completionPct >= 80 && 'bg-stone-1000',
-                item.deliverable.completionPct >= 50 && item.deliverable.completionPct < 80 && 'bg-stone-1000',
+                item.deliverable.completionPct >= 80 && 'bg-stone-900',
+                item.deliverable.completionPct >= 50 && item.deliverable.completionPct < 80 && 'bg-stone-900',
                 item.deliverable.completionPct < 50 && 'bg-stone-600'
               )}
               style={{ width: `${item.deliverable.completionPct}%` }}
@@ -463,9 +463,9 @@ const ResourceUtilizationPanel: React.FC<{
                       <div
                         className={cn(
                           'h-full rounded-full transition-all duration-150',
-                          resource.currentUtilization > 90 && 'bg-stone-1000',
-                          resource.currentUtilization > 75 && resource.currentUtilization <= 90 && 'bg-stone-1000',
-                          resource.currentUtilization >= 60 && resource.currentUtilization <= 75 && 'bg-stone-1000',
+                          resource.currentUtilization > 90 && 'bg-stone-900',
+                          resource.currentUtilization > 75 && resource.currentUtilization <= 90 && 'bg-stone-900',
+                          resource.currentUtilization >= 60 && resource.currentUtilization <= 75 && 'bg-stone-900',
                           resource.currentUtilization < 60 && 'bg-stone-400'
                         )}
                         style={{ width: `${Math.min(resource.currentUtilization, 100)}%` }}
@@ -722,9 +722,9 @@ const ClientCard: React.FC<{
                           <div
                             className={cn(
                               'h-full rounded-full',
-                              hoursUsed <= 80 && 'bg-stone-1000',
-                              hoursUsed > 80 && hoursUsed <= 100 && 'bg-stone-1000',
-                              hoursUsed > 100 && 'bg-stone-1000'
+                              hoursUsed <= 80 && 'bg-stone-900',
+                              hoursUsed > 80 && hoursUsed <= 100 && 'bg-stone-900',
+                              hoursUsed > 100 && 'bg-stone-900'
                             )}
                             style={{ width: `${Math.min(hoursUsed, 120)}%` }}
                           />

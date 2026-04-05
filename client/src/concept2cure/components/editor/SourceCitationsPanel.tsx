@@ -54,7 +54,7 @@ const SOURCE_TYPE_META: Record<string, { label: string; icon: React.ReactNode; c
 function confidenceLabel(confidence: number): { text: string; color: string } {
   if (confidence >= 0.8) return { text: 'High', color: 'text-stone-700' };
   if (confidence >= 0.6) return { text: 'Medium', color: 'text-stone-600' };
-  return { text: 'Low', color: 'text-stone-1000' };
+  return { text: 'Low', color: 'text-stone-900' };
 }
 
 // ── Component ───────────────────────────────────────────────────────────────
@@ -155,11 +155,11 @@ const SourceCitationsPanel: React.FC<SourceCitationsPanelProps> = ({ artifactId,
       {total > 0 && (
         <div className="flex items-center gap-3 px-4 py-2.5 border-b border-stone-100 bg-stone-50/50">
           <div className="flex items-center gap-1.5">
-            <CheckCircle className="w-3.5 h-3.5 text-stone-1000" />
+            <CheckCircle className="w-3.5 h-3.5 text-stone-900" />
             <span className="text-xs text-stone-600">{supportedCount} supported</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <AlertTriangle className="w-3.5 h-3.5 text-stone-1000" />
+            <AlertTriangle className="w-3.5 h-3.5 text-stone-900" />
             <span className="text-xs text-stone-600">{weakCount} weak</span>
           </div>
           {unsupportedCount > 0 && (
@@ -248,7 +248,7 @@ const SourceCitationsPanel: React.FC<SourceCitationsPanelProps> = ({ artifactId,
                               href={link.sourceUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-stone-400 hover:text-stone-1000"
+                              className="text-stone-400 hover:text-stone-900"
                             >
                               <ExternalLink className="w-3 h-3" />
                             </a>

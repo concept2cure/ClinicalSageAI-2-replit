@@ -496,7 +496,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
               <div
                 className={cn(
                   'h-full rounded-full transition-all duration-200',
-                  allDone ? 'bg-stone-1000' : isPaused ? 'bg-stone-1000' : 'bg-stone-500',
+                  allDone ? 'bg-stone-900' : isPaused ? 'bg-stone-900' : 'bg-stone-500',
                 )}
                 style={{ width: `${progressPct}%` }}
               />
@@ -628,7 +628,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
           <div className="space-y-2">
             <button
               onClick={handleApplyAll}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-stone-700 hover:bg-stone-1000 text-white transition-colors duration-150"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-stone-700 hover:bg-stone-900 text-white transition-colors duration-150"
             >
               <Check className="w-4 h-4" />
               Apply All Changes
@@ -655,8 +655,8 @@ function StatusBadge({ status }: { status: SectionStatus }) {
   const map: Record<SectionStatus, { label: string; className: string }> = {
     pending: { label: 'Pending', className: 'text-stone-500 bg-stone-700/40' },
     processing: { label: 'Running', className: 'text-stone-300 bg-stone-500/20' },
-    done: { label: 'Done', className: 'text-stone-300 bg-stone-1000/20' },
-    error: { label: 'Error', className: 'text-stone-300 bg-stone-1000/20' },
+    done: { label: 'Done', className: 'text-stone-300 bg-stone-900/20' },
+    error: { label: 'Error', className: 'text-stone-300 bg-stone-900/20' },
   };
   const info = map[status];
   return (

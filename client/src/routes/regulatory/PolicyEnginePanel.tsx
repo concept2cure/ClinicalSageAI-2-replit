@@ -427,7 +427,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
       case 'CRITICAL':
         return <Badge variant="destructive">Critical</Badge>;
       case 'WARN':
-        return <Badge className="bg-stone-1000">Warning</Badge>;
+        return <Badge className="bg-stone-900">Warning</Badge>;
       case 'INFO':
         return <Badge variant="outline">Info</Badge>;
       default:
@@ -526,7 +526,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
             {aiRecommendations.map((recommendation: AIRecommendation) => (
               <div
                 key={recommendation.id}
-                className="border rounded-lg p-4 bg-gradient-to-r from-stone-100 to-stone-100"
+                className="border rounded-lg p-4 bg-stone-100"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -610,10 +610,10 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                   <div
                     className={`w-3 h-3 rounded-full ${
                       system.status === 'healthy'
-                        ? 'bg-stone-1000'
+                        ? 'bg-stone-900'
                         : system.status === 'warning'
-                          ? 'bg-stone-1000'
-                          : 'bg-stone-1000'
+                          ? 'bg-stone-900'
+                          : 'bg-stone-900'
                     }`}
                   />
                   <div className="flex-1">
@@ -713,7 +713,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
 
           {/* AI Response */}
           {aiResponse && (
-            <Card className="bg-gradient-to-r from-stone-100 to-stone-100 border-stone-200">
+            <Card className="bg-stone-100 border-stone-200">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <Brain className="w-6 h-6 text-stone-600 mt-1 flex-shrink-0" />
@@ -1015,7 +1015,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                         <div className="flex items-center gap-3">
                           <div
                             className={`w-3 h-3 rounded-full ${
-                              version.is_active ? 'bg-stone-1000' : 'bg-stone-400'
+                              version.is_active ? 'bg-stone-900' : 'bg-stone-400'
                             }`}
                           />
                           <div>
@@ -1057,7 +1057,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
 
             {/* Edit Mode Modal */}
             {editMode && (
-              <Card className="border-2 border-stone-1000">
+              <Card className="border-2 border-stone-900">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
@@ -1198,7 +1198,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                   </Card>
 
                   {/* AI Recommendations */}
-                  <Card className="border-dashed bg-gradient-to-br from-stone-100 to-stone-100">
+                  <Card className="border-dashed bg-stone-100">
                     <CardContent className="p-4 space-y-4">
                       <h4 className="font-semibold flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-stone-600" />
@@ -1226,7 +1226,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                       </div>
                       <Button
                         size="sm"
-                        className="w-full bg-gradient-to-r from-stone-600 to-stone-600"
+                        className="w-full bg-stone-600"
                       >
                         <Wand2 className="w-3 h-3 mr-1" />
                         Apply AI Recommendations
@@ -1374,10 +1374,10 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                             <div
                               className={`w-3 h-3 rounded-full ${
                                 system.status === 'healthy'
-                                  ? 'bg-stone-1000'
+                                  ? 'bg-stone-900'
                                   : system.status === 'warning'
-                                    ? 'bg-stone-1000'
-                                    : 'bg-stone-1000'
+                                    ? 'bg-stone-900'
+                                    : 'bg-stone-900'
                               }`}
                             />
                             <h3 className="font-semibold text-sm">{system.system}</h3>
@@ -1616,7 +1616,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                     </div>
 
                     {/* Simulated chart area */}
-                    <div className="h-48 bg-gradient-to-br from-stone-100 to-stone-100 rounded-lg p-4 flex items-center justify-center border-dashed border-2 border-stone-200">
+                    <div className="h-48 bg-stone-100 rounded-lg p-4 flex items-center justify-center border-dashed border-2 border-stone-200">
                       <div className="text-center">
                         <BarChart3 className="w-12 h-12 mx-auto mb-2 text-stone-400" />
                         <p className="text-sm text-muted-foreground">
@@ -1807,7 +1807,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="p-3 bg-gradient-to-r from-stone-100 to-stone-100 rounded-lg">
+                  <div className="p-3 bg-stone-100 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <Lightbulb className="w-4 h-4 text-stone-600" />
                       <p className="font-semibold text-sm">Key Insight</p>
@@ -1822,7 +1822,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                     </Button>
                   </div>
 
-                  <div className="p-3 bg-gradient-to-r from-stone-100 to-stone-100 rounded-lg">
+                  <div className="p-3 bg-stone-100 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <Target className="w-4 h-4 text-stone-700" />
                       <p className="font-semibold text-sm">Prediction</p>
@@ -1836,7 +1836,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                     </Button>
                   </div>
 
-                  <div className="p-3 bg-gradient-to-r from-stone-100 to-stone-100 rounded-lg">
+                  <div className="p-3 bg-stone-100 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <AlertTriangle className="w-4 h-4 text-stone-600" />
                       <p className="font-semibold text-sm">Risk Alert</p>

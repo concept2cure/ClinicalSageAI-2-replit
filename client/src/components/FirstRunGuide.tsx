@@ -33,11 +33,11 @@ export default function FirstRunGuide({
   return (
     <div className="fixed inset-0 z-[70] flex">
       <div className="flex-1 bg-black/30" onClick={onClose} />
-      <div className="w-[520px] max-w-[95vw] bg-white h-full shadow-xl border-l animate-in slide-in-from-right">
+      <div className="w-[520px] max-w-[95vw] bg-white h-full shadow-sm border-l animate-in slide-in-from-right">
         <div className="flex items-center justify-between p-4 border-b">
           <div className="font-semibold">{title}</div>
           <button
-            className="text-slate-500 hover:text-slate-700"
+            className="text-stone-500 hover:text-stone-700"
             onClick={onClose}
             aria-label="Close"
           >
@@ -47,10 +47,10 @@ export default function FirstRunGuide({
 
         <div className="p-4 space-y-3 overflow-auto h-full">
           <div className="text-lg font-medium">{step.title}</div>
-          <div className="text-sm text-slate-700">{step.body}</div>
+          <div className="text-sm text-stone-700">{step.body}</div>
 
           <div className="flex items-center justify-between pt-2">
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-stone-500">
               Step {i + 1} of {steps.length}
             </div>
             <div className="flex items-center gap-2">

@@ -116,7 +116,7 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
                   onClick={() => removeDocument(doc.id)}
                   className={cn(
                     'flex-shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity',
-                    'p-1 rounded text-stone-400 hover:text-stone-1000 hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none focus-visible:opacity-100'
+                    'p-1 rounded text-stone-400 hover:text-stone-900 hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none focus-visible:opacity-100'
                   )}
                   title="Remove file"
                   aria-label={`Remove ${doc.name}`}

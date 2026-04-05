@@ -337,9 +337,9 @@ const ScoreCard: React.FC<ScoreCardProps> = ({ result }) => {
         value={result.overallScore}
         className={cn(
           'h-2',
-          result.overallScore >= 90 && '[&>div]:bg-stone-1000',
-          result.overallScore >= 70 && result.overallScore < 90 && '[&>div]:bg-stone-1000',
-          result.overallScore < 70 && '[&>div]:bg-stone-1000'
+          result.overallScore >= 90 && '[&>div]:bg-stone-900',
+          result.overallScore >= 70 && result.overallScore < 90 && '[&>div]:bg-stone-900',
+          result.overallScore < 70 && '[&>div]:bg-stone-900'
         )}
       />
 
@@ -500,7 +500,7 @@ export const IFUConsistencyChecker: React.FC<IFUConsistencyCheckerProps> = ({
 
                 {result.totalIssues === 0 && (
                   <div className="text-center py-8">
-                    <CheckCircle2 className="h-12 w-12 mx-auto text-stone-1000 mb-4" />
+                    <CheckCircle2 className="h-12 w-12 mx-auto text-stone-900 mb-4" />
                     <p className="text-lg font-medium text-stone-800">All Clear!</p>
                     <p className="text-sm text-stone-600 mt-1">
                       No consistency issues found between documents.

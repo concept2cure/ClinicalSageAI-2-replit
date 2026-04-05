@@ -223,7 +223,7 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
         <CardContent>
           <div className="space-y-4">
             {/* Configuration Info */}
-            <div className="p-3 bg-stone-100 rounded-lg border-l-4 border-stone-1000">
+            <div className="p-3 bg-stone-100 rounded-lg border-l-4 border-stone-900">
               <div className="flex items-start gap-2">
                 <Settings className="w-4 h-4 text-stone-600 mt-0.5" />
                 <div className="text-sm">
@@ -330,7 +330,7 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
         <CardContent>
           <div className="space-y-4">
             {/* Configuration Info */}
-            <div className="p-3 bg-stone-100 rounded-lg border-l-4 border-stone-1000">
+            <div className="p-3 bg-stone-100 rounded-lg border-l-4 border-stone-900">
               <div className="flex items-start gap-2">
                 <Settings className="w-4 h-4 text-stone-700 mt-0.5" />
                 <div className="text-sm">
@@ -365,7 +365,7 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
             </div>
 
             {/* Fallback Option */}
-            <div className="p-3 bg-stone-100 rounded-lg border-l-4 border-stone-1000">
+            <div className="p-3 bg-stone-100 rounded-lg border-l-4 border-stone-900">
               <div className="flex items-start gap-2">
                 <ExternalLink className="w-4 h-4 text-stone-600 mt-0.5" />
                 <div className="text-sm">

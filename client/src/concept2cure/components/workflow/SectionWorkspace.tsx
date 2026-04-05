@@ -426,7 +426,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                     <XCircle
                       className={cn(
                         'w-3.5 h-3.5 mt-0.5 flex-shrink-0',
-                        b.severity === 'critical' ? 'text-stone-1000' : 'text-stone-1000'
+                        b.severity === 'critical' ? 'text-stone-900' : 'text-stone-900'
                       )}
                     />
                     <div>

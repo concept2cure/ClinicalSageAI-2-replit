@@ -81,13 +81,13 @@ function formatRelativeTime(dateString: string): string {
 
 const AUTHOR_COLORS = [
   "bg-stone-600",
-  "bg-stone-1000",
+  "bg-stone-900",
   "bg-stone-500",
-  "bg-stone-1000",
-  "bg-rose-500",
-  "bg-stone-1000",
-  "bg-fuchsia-500",
-  "bg-lime-500",
+  "bg-stone-900",
+  "bg-stone-900",
+  "bg-stone-900",
+  "bg-stone-900",
+  "bg-stone-900",
 ];
 
 function getAuthorColor(authorId: string): string {
@@ -375,7 +375,7 @@ function CommentCard({
                   onResolve(comment.id);
                 }}
                 title="Resolve"
-                className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-stone-1000 transition-colors duration-150"
+                className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-stone-900 transition-colors duration-150"
               >
                 <CheckCircle className="h-3.5 w-3.5" />
               </button>
@@ -416,7 +416,7 @@ function CommentCard({
 
       {/* Resolved badge */}
       {comment.resolved && (
-        <div className="mt-2 ml-8 flex items-center gap-1 text-[10px] text-stone-1000 font-medium">
+        <div className="mt-2 ml-8 flex items-center gap-1 text-[10px] text-stone-900 font-medium">
           <Check className="h-3 w-3" />
           Resolved
         </div>
@@ -547,7 +547,7 @@ export function CommentThreadPanel({
                   className="fixed inset-0 z-10"
                   onClick={() => setShowFilterMenu(false)}
                 />
-                <div className="absolute right-0 top-full mt-1 z-20 w-32 rounded-md border border-border bg-popover shadow-md py-1">
+                <div className="absolute right-0 top-full mt-1 z-20 w-32 rounded-md border border-border bg-popover shadow-sm py-1">
                   {(Object.keys(filterLabels) as FilterMode[]).map((mode) => (
                     <button
                       key={mode}

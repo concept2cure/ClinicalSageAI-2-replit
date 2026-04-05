@@ -423,7 +423,7 @@ export function AlertFeed({
                         <PriorityBadge priority={alert.priority} />
                         <SourceBadge source={alert.source} />
                         {!alert.acknowledged && (
-                          <span className="w-2 h-2 rounded-full bg-stone-1000 shrink-0" />
+                          <span className="w-2 h-2 rounded-full bg-stone-900 shrink-0" />
                         )}
                       </div>
                       <h3 className="text-xs font-medium text-stone-900 leading-snug">

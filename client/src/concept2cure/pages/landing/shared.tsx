@@ -98,11 +98,11 @@ export const Logo = () => (
       stroke="currentColor"
       strokeWidth="2"
       strokeLinecap="round"
-      className="text-stone-1000"
+      className="text-stone-900"
     />
     <circle cx="14" cy="14" r="2" fill="currentColor" className="text-stone-600" />
-    <circle cx="26" cy="14" r="2" fill="currentColor" className="text-stone-1000" />
-    <circle cx="14" cy="26" r="2" fill="currentColor" className="text-stone-1000" />
+    <circle cx="26" cy="14" r="2" fill="currentColor" className="text-stone-900" />
+    <circle cx="14" cy="26" r="2" fill="currentColor" className="text-stone-900" />
     <circle cx="26" cy="26" r="2" fill="currentColor" className="text-stone-600" />
   </svg>
 );

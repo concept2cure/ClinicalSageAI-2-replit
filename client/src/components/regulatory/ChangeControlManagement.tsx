@@ -298,13 +298,13 @@ export default function ChangeControlManagement() {
   const getEventIcon = (event: string) => {
     switch (event) {
       case 'CREATED':
-        return <Plus className="w-4 h-4 text-stone-1000" />;
+        return <Plus className="w-4 h-4 text-stone-900" />;
       case 'CLASSIFIED':
-        return <GitBranch className="w-4 h-4 text-stone-1000" />;
+        return <GitBranch className="w-4 h-4 text-stone-900" />;
       case 'IMPACTED':
-        return <TrendingUp className="w-4 h-4 text-stone-1000" />;
+        return <TrendingUp className="w-4 h-4 text-stone-900" />;
       case 'TASKS_OPENED':
-        return <CheckCircle className="w-4 h-4 text-stone-1000" />;
+        return <CheckCircle className="w-4 h-4 text-stone-900" />;
       default:
         return <Clock className="w-4 h-4 text-stone-500" />;
     }

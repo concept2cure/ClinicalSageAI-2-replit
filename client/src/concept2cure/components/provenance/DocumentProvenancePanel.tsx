@@ -442,7 +442,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-stone-200 bg-stone-50 shrink-0">
         <div className="flex items-center gap-2">
-          <Fingerprint className="w-4 h-4 text-stone-1000" />
+          <Fingerprint className="w-4 h-4 text-stone-900" />
           <span className="text-xs font-semibold text-stone-900">Document Provenance</span>
         </div>
         <button onClick={onClose} className="text-stone-400 hover:text-stone-600">
@@ -524,7 +524,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
               {sourceInputs.map(si => (
                 <div key={si.eventId} className="bg-stone-50 rounded-md p-2">
                   <div className="flex items-center gap-1.5 mb-1">
-                    <Database className="w-3 h-3 text-stone-1000" />
+                    <Database className="w-3 h-3 text-stone-900" />
                     <span className="text-xs font-medium text-stone-700">
                       {actionLabel(si.action)}
                     </span>
@@ -535,7 +535,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                   {si.description && <p className="text-xs text-stone-500">{si.description}</p>}
                   {si.details && Object.keys(si.details).length > 0 && (
                     <details className="mt-1">
-                      <summary className="text-xs text-stone-1000 cursor-pointer">
+                      <summary className="text-xs text-stone-900 cursor-pointer">
                         View data fields
                       </summary>
                       <div className="mt-1 text-xs font-mono text-stone-500 bg-white rounded p-1.5 max-h-24 overflow-y-auto">
@@ -570,7 +570,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                     {ge.action === 'ai_generate' ? (
                       <Sparkles className="w-3 h-3 text-stone-500" />
                     ) : (
-                      <PenTool className="w-3 h-3 text-stone-1000" />
+                      <PenTool className="w-3 h-3 text-stone-900" />
                     )}
                     <span className="text-xs font-medium text-stone-700">
                       {actionLabel(ge.action)}
@@ -607,7 +607,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
               {generationLineage.transformations.map(t => (
                 <div key={t.eventId} className="bg-stone-100/50 rounded-md p-2">
                   <div className="flex items-center gap-1.5">
-                    <Activity className="w-3 h-3 text-stone-1000" />
+                    <Activity className="w-3 h-3 text-stone-900" />
                     <span className="text-xs font-medium text-stone-700">
                       {actionLabel(t.action)}
                     </span>
@@ -649,7 +649,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                     v{v.version}
                   </span>
                   {v.version === editHistory.currentVersion && (
-                    <span className="text-xs text-stone-1000">current</span>
+                    <span className="text-xs text-stone-900">current</span>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -771,7 +771,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                 {compliance.signatures.map(sig => (
                   <div key={sig.signatureId} className="bg-stone-100/50 rounded-md p-2">
                     <div className="flex items-center gap-1.5">
-                      <CheckCircle className="w-3 h-3 text-stone-1000" />
+                      <CheckCircle className="w-3 h-3 text-stone-900" />
                       <span className="text-xs font-medium text-stone-700">
                         {sig.signerName}
                       </span>
@@ -827,7 +827,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
               value={
                 placement.ctdSection ? (
                   <span className="flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-stone-1000" />
+                    <MapPin className="w-3 h-3 text-stone-900" />
                     {placement.ctdSection}
                   </span>
                 ) : (

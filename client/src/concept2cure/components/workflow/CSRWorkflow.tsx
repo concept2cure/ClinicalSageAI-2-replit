@@ -143,9 +143,9 @@ interface CSRWorkflowProps {
 
 const STATUS_CONFIG: Record<SectionStatus, { label: string; color: string; icon: React.ElementType; dot: string }> = {
   not_started: { label: 'Not Started', color: 'text-stone-400', icon: Circle, dot: 'bg-stone-300' },
-  drafting: { label: 'Drafting', color: 'text-stone-600', icon: Clock, dot: 'bg-stone-1000' },
+  drafting: { label: 'Drafting', color: 'text-stone-600', icon: Clock, dot: 'bg-stone-900' },
   review: { label: 'In Review', color: 'text-stone-600', icon: AlertCircle, dot: 'bg-stone-600' },
-  approved: { label: 'Approved', color: 'text-stone-700', icon: CheckCircle2, dot: 'bg-stone-1000' },
+  approved: { label: 'Approved', color: 'text-stone-700', icon: CheckCircle2, dot: 'bg-stone-900' },
 };
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -246,7 +246,7 @@ export function CSRWorkflow({ projectId, projectName, onSectionClick, onAIDraft,
         <div className="flex items-center gap-4">
           <div className="flex-1 h-2 rounded-full bg-stone-100 overflow-hidden">
             <div
-              className="h-full rounded-full bg-stone-1000 transition-all duration-300"
+              className="h-full rounded-full bg-stone-900 transition-all duration-300"
               style={{ width: `${stats.pct}%` }}
             />
           </div>

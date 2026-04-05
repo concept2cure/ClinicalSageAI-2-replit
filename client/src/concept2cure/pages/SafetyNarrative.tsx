@@ -83,7 +83,7 @@ const NARRATIVE_TYPES: NarrativeConfig[] = [
     type: 'sae',
     label: 'SAE Case Narrative',
     description: 'Individual Serious Adverse Event narrative for CIOMS/MedWatch',
-    icon: <AlertTriangle className="w-4 h-4 text-stone-1000" aria-hidden="true" />,
+    icon: <AlertTriangle className="w-4 h-4 text-stone-900" aria-hidden="true" />,
     accentColor: 'red',
     endpoint: '/api/safety-narratives/sae',
     fields: [
@@ -98,7 +98,7 @@ const NARRATIVE_TYPES: NarrativeConfig[] = [
     type: 'benefit-risk',
     label: 'Benefit-Risk Summary',
     description: 'FDA/EMA framework — structured benefit-risk assessment',
-    icon: <TrendingDown className="w-4 h-4 text-stone-1000" aria-hidden="true" />,
+    icon: <TrendingDown className="w-4 h-4 text-stone-900" aria-hidden="true" />,
     accentColor: 'amber',
     endpoint: '/api/safety-narratives/benefit-risk',
     fields: [
@@ -113,7 +113,7 @@ const NARRATIVE_TYPES: NarrativeConfig[] = [
     type: 'signal-summary',
     label: 'Safety Signal Summary',
     description: 'CIOMS/ICH E2E — safety signal assessment narrative',
-    icon: <Activity className="w-4 h-4 text-stone-1000" aria-hidden="true" />,
+    icon: <Activity className="w-4 h-4 text-stone-900" aria-hidden="true" />,
     accentColor: 'orange',
     endpoint: '/api/safety-narratives/signal-summary',
     fields: [
@@ -127,7 +127,7 @@ const NARRATIVE_TYPES: NarrativeConfig[] = [
     type: 'cross-study',
     label: 'Cross-Study Safety Summary',
     description: 'Integrated safety across multiple studies for ISS/ISE',
-    icon: <Shield className="w-4 h-4 text-stone-1000" aria-hidden="true" />,
+    icon: <Shield className="w-4 h-4 text-stone-900" aria-hidden="true" />,
     accentColor: 'violet',
     endpoint: '/api/safety-narratives/cross-study',
     fields: [
@@ -223,8 +223,8 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
       {/* Header */}
       <div className="shrink-0 border-b border-stone-100 bg-white px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-rose-100 rounded-lg flex items-center justify-center">
-            <Shield className="w-4 h-4 text-rose-600" aria-hidden="true" />
+          <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center">
+            <Shield className="w-4 h-4 text-stone-700" aria-hidden="true" />
           </div>
           <div>
             <h1 className="text-lg font-semibold text-stone-900">Safety Narrative Generator</h1>
@@ -390,7 +390,7 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                   >
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-sm font-semibold text-stone-800 flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-stone-1000" aria-hidden="true" />
+                        <CheckCircle2 className="w-4 h-4 text-stone-900" aria-hidden="true" />
                         Generated Narrative
                       </h3>
                       <div className="flex items-center gap-2">
@@ -401,7 +401,7 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                         >
                           {copied ? (
                             <>
-                              <CheckCircle2 className="w-3 h-3 text-stone-1000" aria-hidden="true" />
+                              <CheckCircle2 className="w-3 h-3 text-stone-900" aria-hidden="true" />
                               Copied
                             </>
                           ) : (

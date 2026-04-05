@@ -168,7 +168,7 @@ export function ClaudeStreamingDraft({
           {isStreaming ? (
             <button
               onClick={abort}
-              className="px-4 py-2 bg-stone-1000 text-white rounded-lg hover:bg-stone-700 flex items-center gap-2 text-sm"
+              className="px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-700 flex items-center gap-2 text-sm"
             >
               <Square className="w-4 h-4" /> Stop
             </button>
@@ -231,7 +231,7 @@ export function ClaudeStreamingDraft({
               <FileText className="w-4 h-4" />
               <span>Generated Content</span>
               {isStreaming && (
-                <Loader2 className="w-4 h-4 animate-spin text-stone-1000" />
+                <Loader2 className="w-4 h-4 animate-spin text-stone-900" />
               )}
             </div>
             {streamingContent && (
@@ -249,7 +249,7 @@ export function ClaudeStreamingDraft({
               <span className="text-stone-400">Generating...</span>
             )}
             {isStreaming && (
-              <span className="inline-block w-1 h-4 bg-stone-1000 animate-pulse ml-0.5" />
+              <span className="inline-block w-1 h-4 bg-stone-900 animate-pulse ml-0.5" />
             )}
           </div>
         </div>

@@ -548,9 +548,9 @@ const MAUDEHazardMonitor: React.FC<{
             onClick={() => onAlertClick?.(alert)}
             className={cn(
               'w-full p-3 text-left border-b border-stone-200 hover:bg-stone-50 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
-              alert.eventType === 'death' && 'border-l-4 border-l-stone-1000',
-              alert.eventType === 'injury' && 'border-l-4 border-l-stone-1000',
-              alert.eventType === 'malfunction' && 'border-l-4 border-l-stone-1000'
+              alert.eventType === 'death' && 'border-l-4 border-l-stone-900',
+              alert.eventType === 'injury' && 'border-l-4 border-l-stone-900',
+              alert.eventType === 'malfunction' && 'border-l-4 border-l-stone-900'
             )}
           >
             <div className="flex items-start justify-between mb-1">
@@ -641,8 +641,8 @@ const ESTARProgressTracker: React.FC<{
             )}
           >
             <div className="flex items-center gap-2">
-              {section.status === 'complete' && <CheckCircle className="w-4 h-4 text-stone-1000" />}
-              {section.status === 'in_progress' && <Clock className="w-4 h-4 text-stone-1000" />}
+              {section.status === 'complete' && <CheckCircle className="w-4 h-4 text-stone-900" />}
+              {section.status === 'in_progress' && <Clock className="w-4 h-4 text-stone-900" />}
               {section.status === 'not_started' && (
                 <div className="w-4 h-4 rounded-full border-2 border-stone-300" />
               )}
@@ -927,7 +927,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
           <div
             className={cn(
               'p-3 rounded-xl',
-              metrics.needsAction > 0 ? 'bg-stone-1000/30' : 'bg-white/10'
+              metrics.needsAction > 0 ? 'bg-stone-900/30' : 'bg-white/10'
             )}
           >
             <p className="text-xs text-stone-200">Needs Action</p>
@@ -936,7 +936,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
           <div
             className={cn(
               'p-3 rounded-xl',
-              metrics.criticalAlerts > 0 ? 'bg-stone-1000/30' : 'bg-white/10'
+              metrics.criticalAlerts > 0 ? 'bg-stone-900/30' : 'bg-white/10'
             )}
           >
             <p className="text-xs text-stone-200">MAUDE Alerts</p>

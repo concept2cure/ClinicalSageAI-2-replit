@@ -399,7 +399,7 @@ export const zenClasses = {
   buttonGhost: 'text-stone-600 hover:text-stone-900 hover:bg-stone-100 px-3 py-2 text-sm',
   buttonDanger: 'bg-stone-700 text-white hover:bg-stone-800 shadow-sm px-4 py-2 text-sm',
   buttonSuccess: 'bg-stone-700 text-white hover:bg-stone-800 shadow-sm px-4 py-2 text-sm',
-  buttonWarning: 'bg-stone-1000 text-white hover:bg-stone-600 shadow-sm px-4 py-2 text-sm',
+  buttonWarning: 'bg-stone-900 text-white hover:bg-stone-600 shadow-sm px-4 py-2 text-sm',
   buttonIcon: 'p-2 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded-lg',
   // Size modifiers (combine with variant)
   buttonSm: 'px-3 py-1.5 text-xs gap-1.5',
@@ -408,7 +408,7 @@ export const zenClasses = {
   // ─── Cards ───────────────────────────────────────────────────────────────────
   // RULE: rounded-xl, border-stone-200, shadow-sm. Never rounded-2xl or border-2.
   card: 'bg-white rounded-xl border border-stone-200 shadow-sm',
-  cardHover: 'bg-white rounded-xl border border-stone-200 shadow-sm hover:shadow-md hover:border-stone-300 transition-all duration-150 cursor-pointer',
+  cardHover: 'bg-white rounded-xl border border-stone-200 shadow-sm hover:shadow-sm hover:border-stone-300 transition-all duration-150 cursor-pointer',
   cardPadding: 'p-5',
   cardSection: 'px-5 py-4 border-t border-stone-100',
   cardSectionMuted: 'px-5 py-4 border-t border-stone-100 bg-stone-50',

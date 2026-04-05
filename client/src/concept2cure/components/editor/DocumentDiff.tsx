@@ -243,8 +243,8 @@ function ChangeToolbar({
   onReject?: (idx: number) => void;
 }) {
   return (
-    <div className="absolute -top-3 right-2 z-10 flex items-center gap-1 rounded border border-slate-200 bg-white px-1 py-0.5 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity dark:border-slate-700 dark:bg-slate-800">
-      <span className="text-[10px] font-medium text-slate-500 mr-1 capitalize">
+    <div className="absolute -top-3 right-2 z-10 flex items-center gap-1 rounded border border-stone-200 bg-white px-1 py-0.5 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity dark:border-stone-700 dark:bg-stone-800">
+      <span className="text-[10px] font-medium text-stone-500 mr-1 capitalize">
         {blockType}
       </span>
       {onAccept && (
@@ -378,25 +378,25 @@ export function DocumentDiff({
 
   // ---------------------------------------------------------------------------
   return (
-    <div className="flex flex-col h-full border border-slate-200 rounded-lg overflow-hidden bg-white dark:border-slate-700 dark:bg-slate-900">
+    <div className="flex flex-col h-full border border-stone-200 rounded-lg overflow-hidden bg-white dark:border-stone-700 dark:bg-stone-900">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2 dark:border-slate-700 dark:bg-slate-800">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+      <div className="flex items-center justify-between border-b border-stone-200 bg-stone-50 px-4 py-2 dark:border-stone-700 dark:bg-stone-800">
+        <div className="flex items-center gap-2 text-sm font-semibold text-stone-700 dark:text-stone-200">
           <GitCompare className="h-4 w-4" />
           <span>Document Comparison</span>
-          <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
-          <span className="font-normal text-slate-500 dark:text-slate-400">
+          <ArrowRight className="h-3.5 w-3.5 text-stone-400" />
+          <span className="font-normal text-stone-500 dark:text-stone-400">
             {leftLabel} vs {rightLabel}
           </span>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Navigation */}
-          <div className="flex items-center gap-1 text-xs text-slate-500">
+          <div className="flex items-center gap-1 text-xs text-stone-500">
             <button
               type="button"
               onClick={() => navigateChange('prev')}
-              className="rounded p-1 hover:bg-slate-200 dark:hover:bg-slate-700"
+              className="rounded p-1 hover:bg-stone-200 dark:hover:bg-stone-700"
               title="Previous change (Alt+Up)"
             >
               <ChevronUp className="h-4 w-4" />
@@ -407,7 +407,7 @@ export function DocumentDiff({
             <button
               type="button"
               onClick={() => navigateChange('next')}
-              className="rounded p-1 hover:bg-slate-200 dark:hover:bg-slate-700"
+              className="rounded p-1 hover:bg-stone-200 dark:hover:bg-stone-700"
               title="Next change (Alt+Down)"
             >
               <ChevronDown className="h-4 w-4" />
@@ -418,7 +418,7 @@ export function DocumentDiff({
             <button
               type="button"
               onClick={onClose}
-              className="rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
+              className="rounded p-1 text-stone-400 hover:bg-stone-200 hover:text-stone-600 dark:hover:bg-stone-700 dark:hover:text-stone-300"
               title="Close diff view"
             >
               <X className="h-4 w-4" />
@@ -428,7 +428,7 @@ export function DocumentDiff({
       </div>
 
       {/* Stats bar */}
-      <div className="flex items-center gap-4 border-b border-slate-200 bg-slate-50/60 px-4 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-800/60">
+      <div className="flex items-center gap-4 border-b border-stone-200 bg-stone-50/60 px-4 py-1.5 text-xs dark:border-stone-700 dark:bg-stone-800/60">
         <span className="flex items-center gap-1 text-stone-800 dark:text-stone-400">
           <Plus className="h-3 w-3" />
           {stats.additions} addition{stats.additions !== 1 ? 's' : ''}
@@ -441,7 +441,7 @@ export function DocumentDiff({
           <Eye className="h-3 w-3" />
           {stats.modifications} modification{stats.modifications !== 1 ? 's' : ''}
         </span>
-        <span className="ml-auto flex items-center gap-1 text-slate-400">
+        <span className="ml-auto flex items-center gap-1 text-stone-400">
           <Copy className="h-3 w-3" />
           {changeBlocks.length} total change{changeBlocks.length !== 1 ? 's' : ''}
         </span>
@@ -450,15 +450,15 @@ export function DocumentDiff({
       {/* Diff panels */}
       <div className="flex flex-1 min-h-0">
         {/* Left panel */}
-        <div className="flex flex-1 flex-col border-r border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-2 border-b border-slate-100 bg-stone-100/40 px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-stone-900/10 dark:text-slate-300">
-            <Minus className="h-3 w-3 text-stone-1000" />
+        <div className="flex flex-1 flex-col border-r border-stone-200 dark:border-stone-700">
+          <div className="flex items-center gap-2 border-b border-stone-100 bg-stone-100/40 px-3 py-1.5 text-xs font-medium text-stone-600 dark:border-stone-700 dark:bg-stone-900/10 dark:text-stone-300">
+            <Minus className="h-3 w-3 text-stone-900" />
             {leftLabel}
           </div>
           <div
             ref={leftPanelRef}
             onScroll={() => handleScroll('left')}
-            className="flex-1 overflow-auto p-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300"
+            className="flex-1 overflow-auto p-4 text-sm leading-relaxed text-stone-700 dark:text-stone-300"
           >
             {blocks.map((block, i) => {
               const isChange = block.index >= 0;
@@ -520,14 +520,14 @@ export function DocumentDiff({
 
         {/* Right panel */}
         <div className="flex flex-1 flex-col">
-          <div className="flex items-center gap-2 border-b border-slate-100 bg-stone-100/40 px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-stone-900/10 dark:text-slate-300">
-            <Plus className="h-3 w-3 text-stone-1000" />
+          <div className="flex items-center gap-2 border-b border-stone-100 bg-stone-100/40 px-3 py-1.5 text-xs font-medium text-stone-600 dark:border-stone-700 dark:bg-stone-900/10 dark:text-stone-300">
+            <Plus className="h-3 w-3 text-stone-900" />
             {rightLabel}
           </div>
           <div
             ref={rightPanelRef}
             onScroll={() => handleScroll('right')}
-            className="flex-1 overflow-auto p-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300"
+            className="flex-1 overflow-auto p-4 text-sm leading-relaxed text-stone-700 dark:text-stone-300"
           >
             {blocks.map((block, i) => {
               const isChange = block.index >= 0;

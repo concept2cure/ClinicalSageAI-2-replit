@@ -138,11 +138,11 @@ function getStatusColor(status: ReferenceStatus): string {
 function getStatusIcon(status: ReferenceStatus): React.ReactNode {
   switch (status) {
     case 'valid':
-      return <CheckCircle className="w-3.5 h-3.5 text-stone-1000" />;
+      return <CheckCircle className="w-3.5 h-3.5 text-stone-900" />;
     case 'broken':
-      return <XCircle className="w-3.5 h-3.5 text-stone-1000" />;
+      return <XCircle className="w-3.5 h-3.5 text-stone-900" />;
     case 'unlinked':
-      return <AlertTriangle className="w-3.5 h-3.5 text-stone-1000" />;
+      return <AlertTriangle className="w-3.5 h-3.5 text-stone-900" />;
   }
 }
 
@@ -722,7 +722,7 @@ export function CrossReferencePanel({
               size="sm"
               onClick={scanDocument}
               disabled={isScanning}
-              className="h-auto p-0 text-stone-1000 hover:text-stone-700 hover:bg-transparent"
+              className="h-auto p-0 text-stone-900 hover:text-stone-700 hover:bg-transparent"
             >
               <RefreshCw
                 className={cn('w-3 h-3', isScanning && 'animate-spin')}

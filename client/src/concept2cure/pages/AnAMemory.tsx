@@ -276,7 +276,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
         {/* Loading */}
         {loading && (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-6 w-6 animate-spin text-stone-1000" />
+            <Loader2 className="h-6 w-6 animate-spin text-stone-900" />
             <span className="ml-3 text-sm text-stone-500">
               Loading memories...
             </span>
@@ -460,7 +460,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                             }
                           }}
                           disabled={isDeleting}
-                          className="opacity-0 group-hover:opacity-100 rounded-lg p-1.5 text-stone-400 hover:text-stone-1000 hover:bg-stone-100 transition-all disabled:opacity-60"
+                          className="opacity-0 group-hover:opacity-100 rounded-lg p-1.5 text-stone-400 hover:text-stone-900 hover:bg-stone-100 transition-all disabled:opacity-60"
                           title="Remove memory"
                           aria-label="Delete memory entry"
                         >

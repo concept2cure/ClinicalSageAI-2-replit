@@ -564,9 +564,9 @@ function SectionNode({
 
           {hasChildren || hasDocuments ? (
             isOpen ? (
-              <FolderOpen className="h-4 w-4 text-stone-1000" />
+              <FolderOpen className="h-4 w-4 text-stone-900" />
             ) : (
-              <Folder className="h-4 w-4 text-stone-1000" />
+              <Folder className="h-4 w-4 text-stone-900" />
             )
           ) : (
             <File className="h-4 w-4 text-stone-400" />
@@ -626,7 +626,7 @@ function SectionDetail({ section }: { section: eCTDSection }) {
     <div className="border border-border/40 rounded-sm bg-background">
       <div className="px-3 py-2 border-b border-border/30">
         <h3 className="text-sm font-semibold flex items-center gap-2">
-          <Folder className="w-5 h-5 text-stone-1000" />
+          <Folder className="w-5 h-5 text-stone-900" />
           {section.title}
         </h3>
         {section.description && <p className="text-xs text-muted-foreground mt-0.5">{section.description}</p>}
@@ -651,7 +651,7 @@ function SectionDetail({ section }: { section: eCTDSection }) {
                   <TableRow key={doc.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-stone-1000" />
+                        <FileText className="w-4 h-4 text-stone-900" />
                         <span className="font-medium">{doc.title}</span>
                       </div>
                     </TableCell>
@@ -984,7 +984,7 @@ export function ECTDNavigator() {
                 <p className="text-sm text-muted-foreground">Total Documents</p>
                 <p className="text-base font-semibold">{overallStats.total}</p>
               </div>
-              <FileText className="w-8 h-8 text-stone-1000" />
+              <FileText className="w-8 h-8 text-stone-900" />
             </div>
           </div>
         </div>
@@ -995,7 +995,7 @@ export function ECTDNavigator() {
                 <p className="text-sm text-muted-foreground">Approved</p>
                 <p className="text-base font-semibold text-stone-700">{overallStats.approved}</p>
               </div>
-              <CheckCircle2 className="w-8 h-8 text-stone-1000" />
+              <CheckCircle2 className="w-8 h-8 text-stone-900" />
             </div>
           </div>
         </div>
@@ -1006,7 +1006,7 @@ export function ECTDNavigator() {
                 <p className="text-sm text-muted-foreground">In Review</p>
                 <p className="text-base font-semibold text-stone-600">{overallStats.inReview}</p>
               </div>
-              <Clock className="w-8 h-8 text-stone-1000" />
+              <Clock className="w-8 h-8 text-stone-900" />
             </div>
           </div>
         </div>

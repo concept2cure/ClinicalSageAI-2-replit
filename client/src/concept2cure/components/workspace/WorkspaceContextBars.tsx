@@ -287,7 +287,7 @@ export default function WorkspaceContextBars(props: WorkspaceContextBarsProps) {
           <div className="ml-auto flex items-center gap-1">
             <button
               onClick={onOpenReviews}
-              className="text-[11px] px-2 py-0.5 rounded border border-rose-200 text-rose-700 hover:bg-rose-50"
+              className="text-[11px] px-2 py-0.5 rounded border border-stone-200 text-stone-800 hover:bg-stone-100"
             >
               Reviews
             </button>

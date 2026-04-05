@@ -519,9 +519,9 @@ export const WorkspaceStatusStrip: React.FC<WorkspaceStatusStripProps> = ({
 }) => {
   const progressColor =
     variant === 'success' || (progress != null && progress >= 80)
-      ? 'bg-stone-1000'
+      ? 'bg-stone-900'
       : variant === 'warning' || (progress != null && progress >= 50)
-        ? 'bg-stone-1000'
+        ? 'bg-stone-900'
         : variant === 'danger' || (progress != null && progress < 50)
           ? 'bg-stone-400'
           : 'bg-stone-300';
@@ -565,14 +565,14 @@ export const SecondaryInfoItem: React.FC<SecondaryInfoItemProps> = ({ children, 
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const STATUS_ICON_MAP: Record<string, { icon: LucideIcon; color: string }> = {
-  approved: { icon: CheckCircle2, color: 'text-stone-1000' },
-  'in-review': { icon: Clock, color: 'text-stone-1000' },
-  drafting: { icon: FileText, color: 'text-stone-1000' },
+  approved: { icon: CheckCircle2, color: 'text-stone-900' },
+  'in-review': { icon: Clock, color: 'text-stone-900' },
+  drafting: { icon: FileText, color: 'text-stone-900' },
   'not-started': { icon: Clock, color: 'text-stone-300' },
-  blocked: { icon: AlertTriangle, color: 'text-stone-1000' },
+  blocked: { icon: AlertTriangle, color: 'text-stone-900' },
   locked: { icon: Lock, color: 'text-stone-400' },
-  ready: { icon: CheckCircle2, color: 'text-stone-1000' },
-  'needs-work': { icon: AlertTriangle, color: 'text-stone-1000' },
+  ready: { icon: CheckCircle2, color: 'text-stone-900' },
+  'needs-work': { icon: AlertTriangle, color: 'text-stone-900' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -713,7 +713,7 @@ export const InspectorRibbon: React.FC<InspectorRibbonProps> = ({
                           <span
                             className={cn(
                               'ml-1 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full text-[10px] font-semibold',
-                              isActive ? 'bg-white text-stone-600' : 'bg-stone-1000 text-white'
+                              isActive ? 'bg-white text-stone-600' : 'bg-stone-900 text-white'
                             )}
                           >
                             {item.badge}
@@ -748,7 +748,7 @@ export const InspectorRibbon: React.FC<InspectorRibbonProps> = ({
               >
                 {group.label}
                 {group.items.some(i => (i.badge ?? 0) > 0) && (
-                  <span className="ml-1 w-1.5 h-1.5 rounded-full bg-stone-1000 inline-block" />
+                  <span className="ml-1 w-1.5 h-1.5 rounded-full bg-stone-900 inline-block" />
                 )}
               </button>
             )}

@@ -408,7 +408,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
           <div>
             <label className="text-xs font-medium text-stone-600 mb-1.5 block">
               Reason for {operation === 'relocate' ? 'relocation' : 'placement'}
-              <span className="text-stone-1000"> *</span>
+              <span className="text-stone-900"> *</span>
             </label>
             <textarea
               value={reason}
@@ -420,7 +420,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
               <span
                 className={cn(
                   'text-xs tabular-nums',
-                  reason.trim().length < 5 ? 'text-stone-400' : 'text-stone-1000'
+                  reason.trim().length < 5 ? 'text-stone-400' : 'text-stone-900'
                 )}
               >
                 {reason.trim().length}/5 min

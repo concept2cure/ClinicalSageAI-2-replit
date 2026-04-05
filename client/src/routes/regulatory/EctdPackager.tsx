@@ -274,7 +274,7 @@ const EctdPackager: React.FC<EctdPackagerProps> = ({ subId }) => {
                       data-testid={`sequence-item-${seq.seq_id}`}
                       className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                         selectedSeq === seq.seq_id
-                          ? 'border-stone-1000 bg-stone-100'
+                          ? 'border-stone-900 bg-stone-100'
                           : 'border-stone-200 hover:border-stone-300'
                       }`}
                       onClick={() => setSelectedSeq(seq.seq_id)}

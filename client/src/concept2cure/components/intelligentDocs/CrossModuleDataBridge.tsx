@@ -174,17 +174,17 @@ const ConnectionStatusBadge: React.FC<{
     connected: {
       icon: CheckCircle,
       label: 'Connected',
-      color: 'text-stone-1000 bg-stone-100',
+      color: 'text-stone-900 bg-stone-100',
     },
     available: {
       icon: Download,
       label: 'Available',
-      color: 'text-stone-1000 bg-stone-100',
+      color: 'text-stone-900 bg-stone-100',
     },
     'needs-update': {
       icon: RefreshCw,
       label: 'Update',
-      color: 'text-stone-1000 bg-stone-100',
+      color: 'text-stone-900 bg-stone-100',
     },
     missing: {
       icon: Unplug,
@@ -230,12 +230,12 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
 }) => {
   const colorClasses = {
     blue: 'bg-stone-600',
-    green: 'bg-stone-1000',
-    orange: 'bg-stone-1000',
+    green: 'bg-stone-900',
+    orange: 'bg-stone-900',
     purple: 'bg-stone-500',
     slate: 'bg-stone-500',
-    red: 'bg-stone-1000',
-    amber: 'bg-stone-1000',
+    red: 'bg-stone-900',
+    amber: 'bg-stone-900',
     indigo: 'bg-stone-600',
   };
 
@@ -415,7 +415,7 @@ const DataFlowDiagram: React.FC<{
           {Array.from({ length: Math.min(connectedCount, 4) }).map((_, i) => (
             <ArrowRight
               key={i}
-              className="w-6 h-6 text-stone-1000 animate-pulse"
+              className="w-6 h-6 text-stone-900 animate-pulse"
               style={{ animationDelay: `${i * 0.2}s` }}
             />
           ))}
@@ -423,7 +423,7 @@ const DataFlowDiagram: React.FC<{
 
         {/* Document */}
         <div className="p-4 bg-white rounded-xl border border-stone-300 shadow-sm">
-          <FileText className="w-8 h-8 text-stone-1000 mx-auto mb-2" />
+          <FileText className="w-8 h-8 text-stone-900 mx-auto mb-2" />
           <p className="text-sm font-medium text-stone-700 text-center">
             {submissionType}
           </p>

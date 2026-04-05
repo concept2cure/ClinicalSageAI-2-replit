@@ -41,9 +41,9 @@ interface ProjectTaskBoardProps {
 const COLUMNS: { key: TaskStatus; label: string; icon: React.ElementType; color: string; bg: string; dot: string }[] = [
   { key: 'todo',        label: 'To Do',       icon: Circle,         color: 'text-stone-600', bg: 'bg-stone-50',  dot: 'bg-stone-400' },
   { key: 'in-progress', label: 'In Progress', icon: Loader2,        color: 'text-stone-600',  bg: 'bg-stone-100',   dot: 'bg-stone-600' },
-  { key: 'review',      label: 'Review',      icon: ArrowUpRight,   color: 'text-stone-600', bg: 'bg-stone-100',  dot: 'bg-stone-1000' },
-  { key: 'done',        label: 'Done',        icon: CheckCircle2,   color: 'text-stone-700', bg: 'bg-stone-100', dot: 'bg-stone-1000' },
-  { key: 'blocked',     label: 'Blocked',     icon: AlertTriangle,  color: 'text-stone-700',   bg: 'bg-stone-100',    dot: 'bg-stone-1000' },
+  { key: 'review',      label: 'Review',      icon: ArrowUpRight,   color: 'text-stone-600', bg: 'bg-stone-100',  dot: 'bg-stone-900' },
+  { key: 'done',        label: 'Done',        icon: CheckCircle2,   color: 'text-stone-700', bg: 'bg-stone-100', dot: 'bg-stone-900' },
+  { key: 'blocked',     label: 'Blocked',     icon: AlertTriangle,  color: 'text-stone-700',   bg: 'bg-stone-100',    dot: 'bg-stone-900' },
 ];
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
@@ -161,7 +161,7 @@ function TaskCard({
           onClick={() => onStatusChange(task.id, nextStatus[task.status as TaskStatus] || 'in-progress')}
           className={cn(
             'mt-0.5 flex-shrink-0 rounded-full p-0.5 transition-colors',
-            task.status === 'done' ? 'text-stone-1000' : 'text-stone-300 hover:text-stone-500',
+            task.status === 'done' ? 'text-stone-900' : 'text-stone-300 hover:text-stone-500',
           )}
           title={task.status === 'done' ? 'Completed' : 'Advance status'}
         >
@@ -243,7 +243,7 @@ function TaskSummaryBar({ summary }: { summary: TaskSummary | null }) {
       <div className="flex-1">
         <div className="h-2 w-full max-w-xs overflow-hidden rounded-full bg-stone-100">
           <div
-            className="h-full rounded-full bg-stone-1000 transition-all duration-300"
+            className="h-full rounded-full bg-stone-900 transition-all duration-300"
             style={{ width: `${summary.completionRate}%` }}
           />
         </div>
@@ -334,7 +334,7 @@ export function ProjectTaskBoard({ projectId, projectType, compact }: ProjectTas
                 <li key={task.id} className="flex items-center gap-2 py-2">
                   <span className={cn('h-2 w-2 flex-shrink-0 rounded-full', colCfg?.dot || 'bg-stone-400')} />
                   <span className="flex-1 min-w-0 truncate text-sm text-stone-900">{task.name}</span>
-                  {overdue && <Clock className="h-3 w-3 text-stone-1000 flex-shrink-0" />}
+                  {overdue && <Clock className="h-3 w-3 text-stone-900 flex-shrink-0" />}
                   <span className={cn('text-[10px] font-medium rounded px-1.5 py-0.5', priorityCfg.bg, priorityCfg.color)}>
                     {priorityCfg.label}
                   </span>

@@ -13,7 +13,7 @@ export function CtaSection() {
   const [, setLocation] = useLocation();
 
   return (
-    <Section className="py-24 px-6 bg-gradient-to-br from-stone-600 to-stone-600 text-white relative overflow-hidden">
+    <Section className="py-24 px-6 bg-stone-600 text-white relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none opacity-10" aria-hidden="true">
         <div className="absolute top-10 left-10 w-64 h-64 rounded-full bg-white/20 blur-3xl" />
         <div className="absolute bottom-10 right-10 w-80 h-80 rounded-full bg-white/10 blur-3xl" />

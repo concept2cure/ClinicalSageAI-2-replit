@@ -721,7 +721,7 @@ const SessionActivityDialog: React.FC<{
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-2 h-2 rounded-full ${activity.success ? 'bg-stone-1000' : 'bg-stone-1000'}`}
+                    className={`w-2 h-2 rounded-full ${activity.success ? 'bg-stone-900' : 'bg-stone-900'}`}
                   />
                   <div>
                     <p className="font-medium capitalize">{activity.action}</p>

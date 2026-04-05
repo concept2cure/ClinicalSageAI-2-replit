@@ -80,7 +80,7 @@ export default function DissolutionPanel({ testId, Q = 80 }: { testId: string; Q
             Final: <b>{out.stage}</b> — {out.pass ? 'PASS' : 'FAIL'} • {out.reason}
           </div>
         )}
-        <div className="text-xs text-slate-600">
+        <div className="text-xs text-stone-600">
           Q={Q}. Enforcement: COA/Release will block if Dissolution fails.
         </div>
       </CardContent>

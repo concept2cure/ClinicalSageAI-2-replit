@@ -135,10 +135,10 @@ const getStatusColors = (status: PhaseStatus) => {
   switch (status) {
     case 'completed':
       return {
-        bg: 'bg-stone-1000',
-        border: 'border-stone-1000',
+        bg: 'bg-stone-900',
+        border: 'border-stone-900',
         text: 'text-stone-800',
-        line: 'bg-stone-1000',
+        line: 'bg-stone-900',
       };
     case 'current':
       return {
@@ -149,8 +149,8 @@ const getStatusColors = (status: PhaseStatus) => {
       };
     case 'blocked':
       return {
-        bg: 'bg-stone-1000',
-        border: 'border-stone-1000',
+        bg: 'bg-stone-900',
+        border: 'border-stone-900',
         text: 'text-stone-800',
         line: 'bg-stone-200',
       };
@@ -441,7 +441,7 @@ const FullTimeline: React.FC<{
                     )}
                     {phase.completedDate && (
                       <span className="flex items-center gap-1">
-                        <Check className="w-3 h-3 text-stone-1000" />
+                        <Check className="w-3 h-3 text-stone-900" />
                         Completed {new Date(phase.completedDate).toLocaleDateString()}
                       </span>
                     )}

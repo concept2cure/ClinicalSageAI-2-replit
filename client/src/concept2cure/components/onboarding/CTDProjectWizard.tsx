@@ -218,7 +218,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                   step > i + 1
-                    ? 'bg-stone-1000 text-white'
+                    ? 'bg-stone-900 text-white'
                     : step === i + 1
                     ? 'bg-stone-700 text-white'
                     : 'bg-stone-200 text-stone-500'
@@ -472,10 +472,10 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
                       size={14}
                       className={
                         gap.severity === 'critical'
-                          ? 'text-stone-1000'
+                          ? 'text-stone-900'
                           : gap.severity === 'major'
-                          ? 'text-stone-1000'
-                          : 'text-stone-1000'
+                          ? 'text-stone-900'
+                          : 'text-stone-900'
                       }
                     />
                     <div>
@@ -506,7 +506,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
       {/* Step 5: Confirmation */}
       {step === 5 && (
         <div className="bg-white border border-stone-200 rounded-xl p-6 text-center">
-          <CheckCircle size={48} className="mx-auto mb-4 text-stone-1000" />
+          <CheckCircle size={48} className="mx-auto mb-4 text-stone-900" />
           <h2 className="text-lg font-semibold text-stone-900 mb-2">CTD Project Ready</h2>
           <p className="text-sm text-stone-500 mb-6">
             {project.name} — {project.regulatoryRegion} {project.submissionType}
@@ -540,7 +540,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
       {/* Error message */}
       {createError && (
         <div className="mt-4 flex items-start gap-2 p-3 bg-stone-100 border border-stone-200 rounded-lg">
-          <AlertTriangle size={16} className="text-stone-1000 flex-shrink-0 mt-0.5" />
+          <AlertTriangle size={16} className="text-stone-900 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-stone-800">Project creation failed</p>
             <p className="text-xs text-stone-700 mt-0.5">{createError}</p>

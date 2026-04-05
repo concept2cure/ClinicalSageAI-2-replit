@@ -105,19 +105,19 @@ const SEVERITY_CONFIG = {
     color: 'text-stone-700 border-stone-700 bg-stone-100',
     icon: AlertCircle,
     badge: 'bg-stone-100 text-stone-800',
-    underline: 'decoration-stone-1000 decoration-wavy underline-offset-4',
+    underline: 'decoration-stone-900 decoration-wavy underline-offset-4',
   },
   important: {
     color: 'text-stone-600 border-stone-600 bg-stone-100',
     icon: AlertTriangle,
     badge: 'bg-stone-100 text-stone-800',
-    underline: 'decoration-stone-1000 decoration-wavy underline-offset-4',
+    underline: 'decoration-stone-900 decoration-wavy underline-offset-4',
   },
   enhancement: {
     color: 'text-stone-600 border-stone-600 bg-stone-100',
     icon: Lightbulb,
     badge: 'bg-stone-100 text-stone-800',
-    underline: 'decoration-stone-1000 decoration-dotted underline-offset-4',
+    underline: 'decoration-stone-900 decoration-dotted underline-offset-4',
   },
   style: {
     color: 'text-stone-600 border-stone-600 bg-stone-50',
@@ -159,7 +159,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
       className="absolute z-50"
       style={{ left: position.x, top: position.y }}
     >
-      <Card className={cn('w-96 shadow-xl border-2', config.color)}>
+      <Card className={cn('w-96 shadow-sm border-2', config.color)}>
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
@@ -316,7 +316,7 @@ export const AIAssistantPanel: React.FC<{
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="px-4 py-3 border-b bg-gradient-to-r from-stone-100 to-stone-100">
+      <div className="px-4 py-3 border-b bg-stone-100">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-stone-600" />
@@ -396,7 +396,7 @@ export const AIAssistantPanel: React.FC<{
                 className={cn(
                   "flex items-center gap-2 p-2 rounded-md border transition-colors",
                   selectedSeverity === severity 
-                    ? "border-stone-1000 bg-stone-100" 
+                    ? "border-stone-900 bg-stone-100" 
                     : "border-stone-200 hover:bg-stone-50"
                 )}
               >
@@ -430,7 +430,7 @@ export const AIAssistantPanel: React.FC<{
         <div className="px-4 py-2 space-y-2">
           {filteredSuggestions.length === 0 ? (
             <div className="text-center py-8 text-stone-500">
-              <CheckCircle className="h-12 w-12 mx-auto mb-2 text-stone-1000" />
+              <CheckCircle className="h-12 w-12 mx-auto mb-2 text-stone-900" />
               <p className="text-sm">No suggestions in this category</p>
             </div>
           ) : (
@@ -448,7 +448,7 @@ export const AIAssistantPanel: React.FC<{
                   className={cn(
                     "p-3 rounded-md border cursor-pointer transition-all",
                     isSelected 
-                      ? "border-stone-1000 bg-stone-100" 
+                      ? "border-stone-900 bg-stone-100" 
                       : "border-stone-200 hover:bg-stone-50"
                   )}
                   onClick={() => toggleSelection(suggestion.id)}
@@ -936,7 +936,7 @@ export default function AISuggestionEngine({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-3 border"
+        className="fixed bottom-4 right-4 bg-white rounded-lg shadow-sm p-3 border"
       >
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">

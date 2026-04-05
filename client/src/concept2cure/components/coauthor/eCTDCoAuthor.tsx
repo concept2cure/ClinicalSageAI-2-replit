@@ -392,7 +392,7 @@ const SmartTagBadge: React.FC<{
       {c.icon}
       {tag.text}
       {tag.pageRef && <span className="text-xs opacity-75">p.{tag.pageRef}</span>}
-      {!tag.isVerified && <AlertTriangle className="w-3 h-3 text-stone-1000 ml-1" />}
+      {!tag.isVerified && <AlertTriangle className="w-3 h-3 text-stone-900 ml-1" />}
     </span>
   );
 };
@@ -408,7 +408,7 @@ const RedlineAlertPanel: React.FC<{
   if (alerts.length === 0) return null;
 
   return (
-    <div className="bg-stone-100 border-l-4 border-stone-1000 p-4 rounded-r-lg">
+    <div className="bg-stone-100 border-l-4 border-stone-900 p-4 rounded-r-lg">
       <div className="flex items-center gap-2 mb-3">
         <AlertTriangle className="w-4 h-4 text-stone-700" />
         <h4 className="text-sm font-semibold text-stone-800">Safety Line Alerts</h4>
@@ -424,7 +424,7 @@ const RedlineAlertPanel: React.FC<{
                 className={cn(
                   'px-2 py-0.5 text-xs font-semibold rounded uppercase',
                   alert.severity === 'critical' && 'bg-stone-700 text-white',
-                  alert.severity === 'warning' && 'bg-stone-1000 text-white',
+                  alert.severity === 'warning' && 'bg-stone-900 text-white',
                   alert.severity === 'info' && 'bg-stone-600 text-white'
                 )}
               >
@@ -654,7 +654,7 @@ const SectionEditor: React.FC<{
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-stone-800">{new Date(sig.timestamp).toLocaleString()}</p>
-                        <p className="text-[10px] font-mono text-stone-1000">{sig.signatureHash.slice(0, 16)}...</p>
+                        <p className="text-[10px] font-mono text-stone-900">{sig.signatureHash.slice(0, 16)}...</p>
                       </div>
                     </div>
                   ))}

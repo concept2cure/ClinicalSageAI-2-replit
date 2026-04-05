@@ -211,7 +211,7 @@ export default function UserManagementPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-stone-1000 to-stone-600 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-stone-900 to-stone-600 flex items-center justify-center">
             <Users className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -234,7 +234,7 @@ export default function UserManagementPage() {
           </Button>
           <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-stone-1000 to-stone-600">
+              <Button className="bg-gradient-to-r from-stone-900 to-stone-600">
                 <UserPlus className="w-4 h-4 mr-2" />
                 Invite User
               </Button>
@@ -308,7 +308,7 @@ export default function UserManagementPage() {
                 <p className="text-sm text-stone-500">Total Users</p>
                 <p className="text-2xl font-bold">{users.length}</p>
               </div>
-              <Users className="w-8 h-8 text-stone-1000" />
+              <Users className="w-8 h-8 text-stone-900" />
             </div>
           </CardContent>
         </Card>
@@ -321,7 +321,7 @@ export default function UserManagementPage() {
                   {users.filter(u => u.status === 'active').length}
                 </p>
               </div>
-              <CheckCircle className="w-8 h-8 text-stone-1000" />
+              <CheckCircle className="w-8 h-8 text-stone-900" />
             </div>
           </CardContent>
         </Card>
@@ -334,7 +334,7 @@ export default function UserManagementPage() {
                   {users.filter(u => u.status === 'pending').length}
                 </p>
               </div>
-              <Clock className="w-8 h-8 text-stone-1000" />
+              <Clock className="w-8 h-8 text-stone-900" />
             </div>
           </CardContent>
         </Card>
@@ -347,7 +347,7 @@ export default function UserManagementPage() {
                   {users.filter(u => u.mfaEnabled).length}
                 </p>
               </div>
-              <Shield className="w-8 h-8 text-stone-1000" />
+              <Shield className="w-8 h-8 text-stone-900" />
             </div>
           </CardContent>
         </Card>
@@ -434,7 +434,7 @@ export default function UserManagementPage() {
                   <TableRow key={user.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-stone-400 to-stone-1000 flex items-center justify-center text-white font-medium">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-stone-400 to-stone-900 flex items-center justify-center text-white font-medium">
                           {user.name?.charAt(0) || user.email?.charAt(0) || '?'}
                         </div>
                         <div>

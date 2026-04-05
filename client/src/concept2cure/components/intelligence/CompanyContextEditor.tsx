@@ -289,7 +289,7 @@ function PipelineEditor({
             variant="ghost"
             size="sm"
             onClick={() => removeAsset(i)}
-            className="text-slate-400 hover:text-stone-1000"
+            className="text-stone-400 hover:text-stone-900"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -444,24 +444,24 @@ function SectionRow({
         'group rounded-lg border transition-colors',
         isEditing
           ? 'border-stone-200 bg-stone-100/30 p-4'
-          : 'border-transparent hover:border-slate-200 p-4',
+          : 'border-transparent hover:border-stone-200 p-4',
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0 flex-1">
-          <div className="mt-0.5 flex-shrink-0 rounded-md bg-slate-100 p-1.5 text-slate-500">
+          <div className="mt-0.5 flex-shrink-0 rounded-md bg-stone-100 p-1.5 text-stone-500">
             <Icon className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-semibold text-slate-800">{section.label}</h3>
+            <h3 className="text-sm font-semibold text-stone-800">{section.label}</h3>
             {!isEditing && (
               <div className="mt-1">
                 {content ? (
-                  <p className="text-sm text-slate-600 whitespace-pre-line leading-relaxed">
+                  <p className="text-sm text-stone-600 whitespace-pre-line leading-relaxed">
                     {content}
                   </p>
                 ) : (
-                  <p className="text-sm text-slate-400 italic">
+                  <p className="text-sm text-stone-400 italic">
                     Not set — click the pencil to add
                   </p>
                 )}
@@ -474,7 +474,7 @@ function SectionRow({
             variant="ghost"
             size="sm"
             onClick={() => onStartEdit(section.key)}
-            className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-stone-600"
+            className="opacity-0 group-hover:opacity-100 transition-opacity text-stone-400 hover:text-stone-600"
             aria-label={`Edit ${section.label}`}
           >
             <Pencil className="h-3.5 w-3.5" />
@@ -577,15 +577,15 @@ export function CompanyContextEditor({ onClose }: CompanyContextEditorProps) {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <Card className="mx-auto max-w-2xl border-slate-200 shadow-sm" data-testid="company-context-editor">
+    <Card className="mx-auto max-w-2xl border-stone-200 shadow-sm" data-testid="company-context-editor">
       <div className="p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-lg font-semibold text-stone-900">
               What AnA Knows About Your Company
             </h2>
-            <p className="text-sm text-slate-500 mt-0.5">
+            <p className="text-sm text-stone-500 mt-0.5">
               This context helps AnA provide more relevant regulatory intelligence.
             </p>
           </div>
@@ -617,10 +617,10 @@ export function CompanyContextEditor({ onClose }: CompanyContextEditorProps) {
               {isEmpty && (
                 <div className="rounded-lg border border-dashed border-stone-200 bg-stone-100/50 p-5 text-center mb-4">
                   <Building2 className="mx-auto h-8 w-8 text-stone-400 mb-2" />
-                  <p className="text-sm font-medium text-slate-700">
+                  <p className="text-sm font-medium text-stone-700">
                     Tell AnA about your company
                   </p>
-                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                  <p className="text-xs text-stone-500 mt-1 max-w-sm mx-auto">
                     Click any section below to get started. The more AnA knows,
                     the better it can tailor regulatory guidance to your needs.
                   </p>
@@ -647,7 +647,7 @@ export function CompanyContextEditor({ onClose }: CompanyContextEditorProps) {
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowExpandable((prev) => !prev)}
-                  className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors"
+                  className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-700 transition-colors"
                 >
                   {showExpandable ? (
                     <ChevronDown className="h-4 w-4" />

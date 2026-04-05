@@ -703,9 +703,9 @@ export default function PostApprovalCommitments() {
                           {obligation.due_date ? (
                             <div className="flex items-center gap-2">
                               <Calendar className={`h-4 w-4 ${
-                                deadlineColor === 'red' ? 'text-stone-1000' :
-                                deadlineColor === 'yellow' ? 'text-stone-1000' :
-                                deadlineColor === 'green' ? 'text-stone-1000' :
+                                deadlineColor === 'red' ? 'text-stone-900' :
+                                deadlineColor === 'yellow' ? 'text-stone-900' :
+                                deadlineColor === 'green' ? 'text-stone-900' :
                                 'text-stone-400'
                               }`} />
                               <span className={

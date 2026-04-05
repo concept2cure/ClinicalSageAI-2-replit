@@ -349,8 +349,8 @@ export const WorkspaceLeftRail: React.FC<WorkspaceLeftRailProps> = ({
         className={cn(
           'w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs font-medium transition-colors duration-150',
           phase4Panel === 'pulse'
-            ? 'text-rose-700 bg-rose-50'
-            : 'text-stone-500 hover:text-rose-600 hover:bg-rose-50'
+            ? 'text-stone-800 bg-stone-100'
+            : 'text-stone-500 hover:text-stone-700 hover:bg-stone-100'
         )}
         title="Review Pulse — project-wide review status"
       >

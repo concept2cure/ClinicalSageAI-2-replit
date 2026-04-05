@@ -19,8 +19,8 @@ interface WorkflowRunnerProps {
 const STEP_STATUS_STYLES: Record<string, { bg: string; icon: string }> = {
   pending: { bg: 'bg-stone-200 dark:bg-stone-700', icon: '○' },
   running: { bg: 'bg-stone-600', icon: '◉' },
-  completed: { bg: 'bg-stone-1000', icon: '✓' },
-  failed: { bg: 'bg-stone-1000', icon: '✗' },
+  completed: { bg: 'bg-stone-900', icon: '✓' },
+  failed: { bg: 'bg-stone-900', icon: '✗' },
   skipped: { bg: 'bg-stone-400', icon: '–' },
 };
 
@@ -123,7 +123,7 @@ export function WorkflowRunner({ projectId, module, onComplete }: WorkflowRunner
           <div className="h-2 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-300 ${
-                execution.status === 'failed' ? 'bg-stone-1000' : 'bg-stone-600'
+                execution.status === 'failed' ? 'bg-stone-900' : 'bg-stone-600'
               }`}
               style={{ width: `${execution.progressPercent}%` }}
             />
@@ -154,7 +154,7 @@ export function WorkflowRunner({ projectId, module, onComplete }: WorkflowRunner
                     </span>
                   )}
                   {step.errors && step.errors.length > 0 && (
-                    <span className="text-xs text-stone-1000 ml-auto">
+                    <span className="text-xs text-stone-900 ml-auto">
                       {step.errors[0].message}
                     </span>
                   )}

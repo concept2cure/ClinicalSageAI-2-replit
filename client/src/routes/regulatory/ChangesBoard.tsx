@@ -58,7 +58,7 @@ export default function ChangesBoard({ productId }: { productId: string }) {
 
   const getRiskBadge = (score: number) => {
     if (score >= 70) return <Badge variant="destructive">High Risk</Badge>;
-    if (score >= 40) return <Badge className="bg-stone-1000">Medium Risk</Badge>;
+    if (score >= 40) return <Badge className="bg-stone-900">Medium Risk</Badge>;
     return <Badge className="bg-stone-700">Low Risk</Badge>;
   };
 
@@ -67,13 +67,13 @@ export default function ChangesBoard({ productId }: { productId: string }) {
       case 'DRAFT':
         return <Clock className="w-4 h-4 text-stone-500" />;
       case 'CLASSIFIED':
-        return <Brain className="w-4 h-4 text-stone-1000" />;
+        return <Brain className="w-4 h-4 text-stone-900" />;
       case 'IMPACTED':
-        return <Target className="w-4 h-4 text-stone-1000" />;
+        return <Target className="w-4 h-4 text-stone-900" />;
       case 'SUBMITTED':
-        return <CheckCircle className="w-4 h-4 text-stone-1000" />;
+        return <CheckCircle className="w-4 h-4 text-stone-900" />;
       default:
-        return <AlertTriangle className="w-4 h-4 text-stone-1000" />;
+        return <AlertTriangle className="w-4 h-4 text-stone-900" />;
     }
   };
 

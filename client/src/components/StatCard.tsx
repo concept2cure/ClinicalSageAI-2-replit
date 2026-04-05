@@ -34,11 +34,11 @@ const StatCard: React.FC<StatCardProps> = ({
 
   const iconColors = {
     default: 'text-stone-500 dark:text-stone-400',
-    blue: 'text-stone-1000 dark:text-stone-400',
-    green: 'text-stone-1000 dark:text-stone-400',
-    purple: 'text-stone-1000 dark:text-stone-400',
-    orange: 'text-stone-1000 dark:text-stone-400',
-    red: 'text-stone-1000 dark:text-stone-400',
+    blue: 'text-stone-900 dark:text-stone-400',
+    green: 'text-stone-900 dark:text-stone-400',
+    purple: 'text-stone-900 dark:text-stone-400',
+    orange: 'text-stone-900 dark:text-stone-400',
+    red: 'text-stone-900 dark:text-stone-400',
   };
 
   const handleClick = () => {

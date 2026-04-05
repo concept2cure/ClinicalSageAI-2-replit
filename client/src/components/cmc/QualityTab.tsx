@@ -94,7 +94,7 @@ export default function QualityTab() {
               {batches.map((batch: any) => (
                 <Card
                   key={batch.batch_id}
-                  className={`cursor-pointer transition-all ${selectedBatch === batch.batch_id ? 'ring-2 ring-stone-1000' : ''}`}
+                  className={`cursor-pointer transition-all ${selectedBatch === batch.batch_id ? 'ring-2 ring-stone-900' : ''}`}
                   onClick={() => setSelectedBatch(batch.batch_id)}
                   data-testid={`batch-card-${batch.batch_id}`}
                 >

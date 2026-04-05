@@ -54,12 +54,12 @@ import type { Notification } from '../core/portalTypes';
 
 // Notification icon mapping
 const notificationIcons: Record<Notification['type'], React.ReactNode> = {
-  info: <Info className="h-4 w-4 text-stone-1000" />,
-  success: <CheckCircle className="h-4 w-4 text-stone-1000" />,
-  warning: <AlertTriangle className="h-4 w-4 text-stone-1000" />,
-  error: <AlertTriangle className="h-4 w-4 text-stone-1000" />,
-  task: <Clock className="h-4 w-4 text-stone-1000" />,
-  document: <FileText className="h-4 w-4 text-stone-1000" />,
+  info: <Info className="h-4 w-4 text-stone-900" />,
+  success: <CheckCircle className="h-4 w-4 text-stone-900" />,
+  warning: <AlertTriangle className="h-4 w-4 text-stone-900" />,
+  error: <AlertTriangle className="h-4 w-4 text-stone-900" />,
+  task: <Clock className="h-4 w-4 text-stone-900" />,
+  document: <FileText className="h-4 w-4 text-stone-900" />,
   system: <Zap className="h-4 w-4 text-stone-500" />,
 };
 
@@ -172,7 +172,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuToggle, showMenuButton = f
 
         {/* Organization badge */}
         <div className="flex items-center gap-3">
-          <div className="hidden rounded-md bg-gradient-to-br from-stone-1000 to-stone-600 p-2 text-white sm:block">
+          <div className="hidden rounded-md bg-gradient-to-br from-stone-900 to-stone-600 p-2 text-white sm:block">
             <Building className="h-5 w-5" />
           </div>
           <div className="hidden md:block">
@@ -193,7 +193,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuToggle, showMenuButton = f
             <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="cursor-pointer">
-              <CheckCircle className="mr-2 h-4 w-4 text-stone-1000" />
+              <CheckCircle className="mr-2 h-4 w-4 text-stone-900" />
               {clientName}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -284,7 +284,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuToggle, showMenuButton = f
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-stone-1000 text-xs font-medium text-white">
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-stone-900 text-xs font-medium text-white">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
@@ -332,7 +332,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuToggle, showMenuButton = f
                       </p>
                     </div>
                     {!notification.read && (
-                      <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-stone-1000" />
+                      <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-stone-900" />
                     )}
                   </button>
                 ))
@@ -377,7 +377,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuToggle, showMenuButton = f
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="gap-2 pl-2 pr-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-stone-1000 to-stone-600 text-sm font-medium text-white">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-stone-900 to-stone-600 text-sm font-medium text-white">
                 {user?.name?.charAt(0) || 'U'}
               </div>
               <div className="hidden text-left md:block">

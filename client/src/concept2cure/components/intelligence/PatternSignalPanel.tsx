@@ -59,7 +59,7 @@ function TrendIcon({ direction }: { direction: 'improving' | 'stable' | 'declini
   if (direction === 'improving')
     return <TrendingUp className="w-3.5 h-3.5 text-stone-700" aria-label="Improving" />;
   if (direction === 'declining')
-    return <TrendingDown className="w-3.5 h-3.5 text-stone-1000" aria-label="Declining" />;
+    return <TrendingDown className="w-3.5 h-3.5 text-stone-900" aria-label="Declining" />;
   return <Minus className="w-3.5 h-3.5 text-stone-400" aria-label="Stable" />;
 }
 
@@ -96,7 +96,7 @@ function RiskBreakdown({ byRiskLevel }: { byRiskLevel: Partial<Record<string, nu
             <span
               className={`inline-block w-2 h-2 rounded-full ${
                 level === 'critical'
-                  ? 'bg-stone-1000'
+                  ? 'bg-stone-900'
                   : level === 'high'
                     ? 'bg-stone-400'
                     : level === 'medium'

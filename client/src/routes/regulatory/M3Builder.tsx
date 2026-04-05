@@ -109,7 +109,7 @@ export default function M3Builder({ subId }: { subId: string }) {
       {loading ? (
         <div className="text-center py-8">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-          <div className="text-sm text-slate-600">Loading M3 sections...</div>
+          <div className="text-sm text-stone-600">Loading M3 sections...</div>
         </div>
       ) : (
         <>

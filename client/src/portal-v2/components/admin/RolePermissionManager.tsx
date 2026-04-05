@@ -592,7 +592,7 @@ const SoDConflictViewer: React.FC<{
   if (conflicts.length === 0) {
     return (
       <div className="text-center py-8">
-        <ShieldCheck className="h-12 w-12 mx-auto mb-3 text-stone-1000" />
+        <ShieldCheck className="h-12 w-12 mx-auto mb-3 text-stone-900" />
         <p className="font-medium text-stone-800">No Segregation of Duties Conflicts</p>
         <p className="text-sm text-muted-foreground mt-1">
           The current role configuration meets SoD requirements

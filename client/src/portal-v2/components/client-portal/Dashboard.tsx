@@ -76,7 +76,7 @@ export const Dashboard = () => {
             variant="default"
             size="sm"
             onClick={() => setLocation('/ana')}
-            className="bg-gradient-to-r from-stone-1000 to-stone-600"
+            className="bg-gradient-to-r from-stone-900 to-stone-600"
           >
             <MessageSquare className="w-4 h-4 mr-2" />
             Open AnA
@@ -89,25 +89,25 @@ export const Dashboard = () => {
         <div className="space-y-6">
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="bg-gradient-to-br from-stone-100 to-stone-100 border-stone-200">
+            <Card className="bg-stone-100 border-stone-200">
               <CardContent className="pt-6">
                 <div className="text-2xl font-bold text-stone-700">12</div>
                 <div className="text-sm text-stone-600">Active Projects</div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-stone-100 to-stone-100 border-stone-200">
+            <Card className="bg-stone-100 border-stone-200">
               <CardContent className="pt-6">
                 <div className="text-2xl font-bold text-stone-800">3</div>
                 <div className="text-sm text-stone-700">Pending Reviews</div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-stone-100 to-stone-100 border-stone-200">
+            <Card className="bg-stone-100 border-stone-200">
               <CardContent className="pt-6">
                 <div className="text-2xl font-bold text-stone-700">7</div>
                 <div className="text-sm text-stone-600">Documents</div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-stone-100 to-stone-100 border-stone-200">
+            <Card className="bg-stone-100 border-stone-200">
               <CardContent className="pt-6">
                 <div className="text-2xl font-bold text-stone-700">98%</div>
                 <div className="text-sm text-stone-600">Compliance</div>

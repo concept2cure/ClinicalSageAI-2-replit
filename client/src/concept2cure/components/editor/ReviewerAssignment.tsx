@@ -100,8 +100,8 @@ function getInitials(name: string): string {
 }
 
 const AVATAR_COLORS = [
-  'bg-stone-600', 'bg-stone-1000', 'bg-stone-500', 'bg-stone-1000',
-  'bg-rose-500', 'bg-stone-1000', 'bg-stone-600', 'bg-stone-1000',
+  'bg-stone-600', 'bg-stone-900', 'bg-stone-500', 'bg-stone-900',
+  'bg-stone-900', 'bg-stone-900', 'bg-stone-600', 'bg-stone-900',
 ];
 
 function avatarColor(name: string): string {
@@ -156,7 +156,7 @@ export function ReviewerAssignment({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100">
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-stone-1000" />
+          <Users className="h-4 w-4 text-stone-900" />
           <h3 className="text-sm font-semibold text-stone-900">Review Team</h3>
           {reviewers.length > 0 && (
             <span className="text-[10px] font-medium text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded">
@@ -187,7 +187,7 @@ export function ReviewerAssignment({
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-150',
-                progress.allApproved ? 'bg-stone-1000' : 'bg-stone-600',
+                progress.allApproved ? 'bg-stone-900' : 'bg-stone-600',
               )}
               style={{ width: `${progress.total > 0 ? (progress.completed / progress.total) * 100 : 0}%` }}
             />
@@ -264,7 +264,7 @@ export function ReviewerAssignment({
                       variant="ghost"
                       size="icon"
                       onClick={() => onRemoveReviewer(reviewer.id)}
-                      className="h-5 w-5 text-stone-400 hover:text-stone-1000"
+                      className="h-5 w-5 text-stone-400 hover:text-stone-900"
                       title="Remove reviewer"
                     >
                       <X className="h-3 w-3" />

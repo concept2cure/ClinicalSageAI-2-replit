@@ -161,19 +161,19 @@ function isRegression(from: string, to: string): boolean {
 function EventIcon({ type }: { type: string }) {
   switch (type) {
     case 'status_change':
-      return <Shield className="w-3 h-3 text-stone-1000" />;
+      return <Shield className="w-3 h-3 text-stone-900" />;
     case 'placement':
-      return <MapPin className="w-3 h-3 text-stone-1000" />;
+      return <MapPin className="w-3 h-3 text-stone-900" />;
     case 'edit':
-      return <PenTool className="w-3 h-3 text-stone-1000" />;
+      return <PenTool className="w-3 h-3 text-stone-900" />;
     case 'generation':
-      return <Sparkles className="w-3 h-3 text-stone-1000" />;
+      return <Sparkles className="w-3 h-3 text-stone-900" />;
     case 'rollback':
-      return <RotateCcw className="w-3 h-3 text-stone-1000" />;
+      return <RotateCcw className="w-3 h-3 text-stone-900" />;
     case 'export':
-      return <FileText className="w-3 h-3 text-stone-1000" />;
+      return <FileText className="w-3 h-3 text-stone-900" />;
     case 'approval':
-      return <CheckCircle className="w-3 h-3 text-stone-1000" />;
+      return <CheckCircle className="w-3 h-3 text-stone-900" />;
     default:
       return <Clock className="w-3 h-3 text-stone-400" />;
   }
@@ -513,7 +513,7 @@ export function GovernedDocumentPanel({
         <div className="absolute inset-0 bg-black/20 z-50 flex items-center justify-center">
           <div className="bg-white rounded-lg shadow p-4 mx-3 w-full max-w-[280px]">
             <div className="flex items-center gap-2 mb-3">
-              <AlertCircle className="w-4 h-4 text-stone-1000" />
+              <AlertCircle className="w-4 h-4 text-stone-900" />
               <span className="text-sm font-semibold text-stone-900">Reason Required</span>
             </div>
             <p className="text-xs text-stone-500 mb-2">
@@ -563,7 +563,7 @@ export function GovernedDocumentPanel({
         <div className="absolute inset-0 bg-black/20 z-50 flex items-center justify-center">
           <div className="bg-white rounded-lg shadow p-4 mx-3 w-full max-w-[280px]">
             <div className="flex items-center gap-2 mb-3">
-              <CheckCircle className="w-4 h-4 text-stone-1000" />
+              <CheckCircle className="w-4 h-4 text-stone-900" />
               <span className="text-sm font-semibold text-stone-900">
                 {attestationTarget === 'approved'
                   ? tailoring.statusLabels.approved
@@ -731,7 +731,7 @@ function StatusTab({
                 <Lock className="w-3 h-3" />
                 <span>Published at v{artifact.publishedVersionId}</span>
                 {artifact.publishedAt && (
-                  <span className="text-xs text-stone-1000 ml-auto">
+                  <span className="text-xs text-stone-900 ml-auto">
                     {formatTime(artifact.publishedAt)}
                   </span>
                 )}
@@ -778,7 +778,7 @@ function StatusTab({
                 )}
                 {label}
                 {regression && (
-                  <span className="text-xs text-stone-1000 ml-auto">requires reason</span>
+                  <span className="text-xs text-stone-900 ml-auto">requires reason</span>
                 )}
               </button>
             );
@@ -965,7 +965,7 @@ function GovernanceTrailTab({ projectId, artifactId }: { projectId: string | num
             <div key={t.id} className="flex items-start gap-2 relative">
               <div className="relative z-10 mt-1 bg-white">
                 {t.transitionAllowed ? (
-                  <CheckCircle className="w-3 h-3 text-stone-1000" />
+                  <CheckCircle className="w-3 h-3 text-stone-900" />
                 ) : (
                   <AlertCircle className="w-3 h-3 text-stone-400" />
                 )}
@@ -979,14 +979,14 @@ function GovernanceTrailTab({ projectId, artifactId }: { projectId: string | num
                   <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium', boundaryColor[t.toBoundary] || 'bg-stone-100 text-stone-600')}>
                     {boundaryLabel[t.toBoundary] || t.toBoundary}
                   </span>
-                  <span className={cn('ml-1 text-[10px]', t.transitionAllowed ? 'text-stone-700' : 'text-stone-1000')}>
+                  <span className={cn('ml-1 text-[10px]', t.transitionAllowed ? 'text-stone-700' : 'text-stone-900')}>
                     {t.transitionAllowed ? 'allowed' : 'blocked'}
                   </span>
                 </div>
                 {!t.transitionAllowed && t.blockedReasons?.length > 0 && (
                   <div className="mt-1 space-y-0.5">
                     {t.blockedReasons.map((reason, i) => (
-                      <div key={i} className="text-[10px] text-stone-1000 leading-snug pl-1 border-l border-stone-200">
+                      <div key={i} className="text-[10px] text-stone-900 leading-snug pl-1 border-l border-stone-200">
                         {reason}
                       </div>
                     ))}
@@ -1082,7 +1082,7 @@ function AuditTab({ events }: { events: ProvenanceEvent[] }) {
                         {e.details.attestation.meaning || 'Attested'}
                       </span>
                       {e.details.signatureId && (
-                        <span className="text-xs text-stone-1000 font-mono">
+                        <span className="text-xs text-stone-900 font-mono">
                           sig:{e.details.signatureId}
                         </span>
                       )}
@@ -1111,10 +1111,10 @@ function SnapshotsTab({ snapshots }: { snapshots: SnapshotEntry[] }) {
   }
 
   const actionIcons: Record<string, React.ReactNode> = {
-    publish: <Lock className="w-3 h-3 text-stone-1000" />,
-    'export-docx': <FileText className="w-3 h-3 text-stone-1000" />,
-    'export-pdf': <FileText className="w-3 h-3 text-stone-1000" />,
-    'submission-snapshot': <Shield className="w-3 h-3 text-stone-1000" />,
+    publish: <Lock className="w-3 h-3 text-stone-900" />,
+    'export-docx': <FileText className="w-3 h-3 text-stone-900" />,
+    'export-pdf': <FileText className="w-3 h-3 text-stone-900" />,
+    'submission-snapshot': <Shield className="w-3 h-3 text-stone-900" />,
   };
 
   const actionLabels: Record<string, string> = {

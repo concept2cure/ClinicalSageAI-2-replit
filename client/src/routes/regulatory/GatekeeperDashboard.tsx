@@ -133,7 +133,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
       case 'CRITICAL':
         return <Badge variant="destructive">Critical</Badge>;
       case 'WARN':
-        return <Badge className="bg-stone-1000">Warning</Badge>;
+        return <Badge className="bg-stone-900">Warning</Badge>;
       default:
         return <Badge variant="outline">{severity}</Badge>;
     }
@@ -271,7 +271,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
                 <Alert
                   key={idx}
                   className={
-                    blocker.severity === 'CRITICAL' ? 'border-stone-1000' : 'border-stone-1000'
+                    blocker.severity === 'CRITICAL' ? 'border-stone-900' : 'border-stone-900'
                   }
                 >
                   <AlertTriangle className="h-4 w-4" />

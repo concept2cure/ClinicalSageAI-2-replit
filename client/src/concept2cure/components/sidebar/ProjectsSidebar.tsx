@@ -139,7 +139,7 @@ const StatusDot: React.FC<{ status?: string }> = ({ status }) => (
   <span
     className={cn(
       'inline-block w-1.5 h-1.5 rounded-full flex-shrink-0',
-      statusDotColor[status || 'active'] ?? 'bg-stone-1000'
+      statusDotColor[status || 'active'] ?? 'bg-stone-900'
     )}
     title={status || 'active'}
   />

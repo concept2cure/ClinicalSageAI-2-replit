@@ -151,7 +151,7 @@ const InteractiveDemoPage: React.FC = () => {
         </button>
 
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-stone-1000" />
+          <Sparkles className="w-4 h-4 text-stone-900" />
           <span className="text-sm font-semibold text-stone-900">Interactive Demo</span>
         </div>
 

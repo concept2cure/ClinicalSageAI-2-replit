@@ -293,12 +293,12 @@ const ComplianceScoreRing: React.FC<{
   const offset = circumference - (score / 100) * circumference;
   
   const getColor = (s: number) => {
-    if (s >= 90) return { stroke: '#22c55e', text: 'text-stone-1000', bg: 'bg-stone-100' };
-    if (s >= 70) return { stroke: '#eab308', text: 'text-stone-1000', bg: 'bg-stone-100' };
-    return { stroke: '#ef4444', text: 'text-stone-1000', bg: 'bg-stone-100' };
-    if (s >= 90) return { stroke: '#92a87a', text: 'text-stone-1000', bg: 'bg-stone-100 dark:bg-stone-900/20' };
-    if (s >= 70) return { stroke: '#eab308', text: 'text-stone-1000', bg: 'bg-stone-100 dark:bg-stone-900/20' };
-    return { stroke: '#ef4444', text: 'text-stone-1000', bg: 'bg-stone-100 dark:bg-stone-900/20' };
+    if (s >= 90) return { stroke: '#22c55e', text: 'text-stone-900', bg: 'bg-stone-100' };
+    if (s >= 70) return { stroke: '#eab308', text: 'text-stone-900', bg: 'bg-stone-100' };
+    return { stroke: '#ef4444', text: 'text-stone-900', bg: 'bg-stone-100' };
+    if (s >= 90) return { stroke: '#92a87a', text: 'text-stone-900', bg: 'bg-stone-100 dark:bg-stone-900/20' };
+    if (s >= 70) return { stroke: '#eab308', text: 'text-stone-900', bg: 'bg-stone-100 dark:bg-stone-900/20' };
+    return { stroke: '#ef4444', text: 'text-stone-900', bg: 'bg-stone-100 dark:bg-stone-900/20' };
   };
   
   const colors = getColor(score);
@@ -352,21 +352,21 @@ const IssueCard: React.FC<IssueCardProps> = ({ guard, onAction, onAutoFix }) => 
       icon: XCircle,
       label: 'Error',
       color: 'border-stone-200 bg-stone-100',
-      iconColor: 'text-stone-1000',
+      iconColor: 'text-stone-900',
       buttonColor: 'bg-stone-700 hover:bg-stone-800',
     },
     warning: {
       icon: AlertTriangle,
       label: 'Warning',
       color: 'border-stone-200 bg-stone-100',
-      iconColor: 'text-stone-1000',
+      iconColor: 'text-stone-900',
       buttonColor: 'bg-stone-600 hover:bg-stone-700',
     },
     suggestion: {
       icon: Lightbulb,
       label: 'Suggestion',
       color: 'border-stone-200 bg-stone-100',
-      iconColor: 'text-stone-1000',
+      iconColor: 'text-stone-900',
       buttonColor: 'bg-stone-800 hover:bg-stone-900',
     },
   };
@@ -565,9 +565,9 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
   
   // Get status
   const getStatus = () => {
-    if (errorCount > 0) return { label: 'Blocked', icon: ShieldX, color: 'text-stone-1000' };
-    if (warningCount > 0) return { label: 'Needs Attention', icon: ShieldAlert, color: 'text-stone-1000' };
-    return { label: 'Ready', icon: ShieldCheck, color: 'text-stone-1000' };
+    if (errorCount > 0) return { label: 'Blocked', icon: ShieldX, color: 'text-stone-900' };
+    if (warningCount > 0) return { label: 'Needs Attention', icon: ShieldAlert, color: 'text-stone-900' };
+    return { label: 'Ready', icon: ShieldCheck, color: 'text-stone-900' };
   };
   
   const status = getStatus();
@@ -714,7 +714,7 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
       {/* Issues List */}
       {filteredIssues.length === 0 ? (
         <div className="text-center py-8">
-          <ShieldCheck className="w-12 h-12 mx-auto mb-3 text-stone-1000" />
+          <ShieldCheck className="w-12 h-12 mx-auto mb-3 text-stone-900" />
           <h4 className="font-semibold text-stone-900">All Clear!</h4>
           <p className="text-sm text-stone-600 mt-1">
             {selectedCategory === 'all' 

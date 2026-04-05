@@ -87,7 +87,7 @@ const artifactTypeConfig: Record<
     label: 'Compliance Dashboard',
     color: 'text-stone-700',
   },
-  submission_progress: { icon: BarChart3, label: 'Submission Progress', color: 'text-sky-600' },
+  submission_progress: { icon: BarChart3, label: 'Submission Progress', color: 'text-stone-600' },
   document: { icon: FileText, label: 'Document', color: 'text-stone-600' },
   code: { icon: FileText, label: 'Code', color: 'text-stone-600' },
   table: { icon: Table2, label: 'Table', color: 'text-stone-600' },
@@ -151,10 +151,10 @@ const InteractiveArtifact: React.FC<InteractiveArtifactProps> = ({ type, content
                 className={cn(
                   'w-3 h-3 rounded-full',
                   risk.severity > 0.7
-                    ? 'bg-stone-1000'
+                    ? 'bg-stone-900'
                     : risk.severity > 0.4
-                      ? 'bg-stone-1000'
-                      : 'bg-stone-1000'
+                      ? 'bg-stone-900'
+                      : 'bg-stone-900'
                 )}
               />
               <div className="flex-1">
@@ -369,7 +369,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
                     className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg"
                   >
                     {copied ? (
-                      <Check className="h-4 w-4 text-stone-1000" />
+                      <Check className="h-4 w-4 text-stone-900" />
                     ) : (
                       <Copy className="h-4 w-4" />
                     )}

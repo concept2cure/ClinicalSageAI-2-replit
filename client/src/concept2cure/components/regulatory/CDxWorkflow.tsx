@@ -462,7 +462,7 @@ export default function CDxWorkflow() {
                       <Badge key={idx} variant="secondary" className="flex items-center gap-1">
                         Study #{eid}
                         <button
-                          className="ml-1 hover:text-stone-1000"
+                          className="ml-1 hover:text-stone-900"
                           onClick={() =>
                             setEvidenceIds(prev => prev.filter((_, i) => i !== idx))
                           }

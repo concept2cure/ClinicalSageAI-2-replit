@@ -345,7 +345,7 @@ export function NewDocumentDialog({
                 )}
               >
                 <div className="h-10 w-10 rounded-lg bg-stone-100 flex items-center justify-center">
-                  <BookOpen className="h-5 w-5 text-stone-1000" />
+                  <BookOpen className="h-5 w-5 text-stone-900" />
                 </div>
                 <span className="text-sm font-semibold text-stone-900">From Template</span>
                 <span className="text-[11px] text-stone-500">Pre-structured sections</span>
@@ -361,7 +361,7 @@ export function NewDocumentDialog({
                 )}
               >
                 <div className="h-10 w-10 rounded-lg bg-stone-200 flex items-center justify-center">
-                  <Sparkles className="h-5 w-5 text-stone-1000" />
+                  <Sparkles className="h-5 w-5 text-stone-900" />
                 </div>
                 <span className="text-sm font-semibold text-stone-900">AI Generate</span>
                 <span className="text-[11px] text-stone-500">AI-drafted content</span>
@@ -418,10 +418,10 @@ export function NewDocumentDialog({
             {/* Selected template indicator */}
             {selectedTemplate && (
               <div className="flex items-center gap-2 p-2.5 rounded-lg bg-stone-100 border border-stone-200">
-                <FileCheck className="h-4 w-4 text-stone-1000 shrink-0" />
+                <FileCheck className="h-4 w-4 text-stone-900 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-stone-700">{selectedTemplate.name}</p>
-                  <p className="text-[10px] text-stone-1000">{selectedTemplate.sections.length} sections · {selectedTemplate.complexity}</p>
+                  <p className="text-[10px] text-stone-900">{selectedTemplate.sections.length} sections · {selectedTemplate.complexity}</p>
                 </div>
                 {mode === 'ai-generate' && (
                   <span className="text-[10px] font-medium text-stone-600 bg-stone-200 px-2 py-0.5 rounded-full flex items-center gap-1">

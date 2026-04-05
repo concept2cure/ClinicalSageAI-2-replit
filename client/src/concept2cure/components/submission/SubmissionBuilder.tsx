@@ -214,13 +214,13 @@ function buildEctdTree(
 function statusIcon(status: SectionStatus) {
   switch (status) {
     case 'complete':
-      return <CheckCircle className="h-4 w-4 text-stone-1000 shrink-0" />;
+      return <CheckCircle className="h-4 w-4 text-stone-900 shrink-0" />;
     case 'partial':
-      return <Clock className="h-4 w-4 text-stone-1000 shrink-0" />;
+      return <Clock className="h-4 w-4 text-stone-900 shrink-0" />;
     case 'not_required':
-      return <Circle className="h-4 w-4 text-slate-300 shrink-0" />;
+      return <Circle className="h-4 w-4 text-stone-300 shrink-0" />;
     default:
-      return <XCircle className="h-4 w-4 text-slate-300 shrink-0" />;
+      return <XCircle className="h-4 w-4 text-stone-300 shrink-0" />;
   }
 }
 
@@ -264,7 +264,7 @@ function TreeNodeRow({
       <div
         className={cn(
           'flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-colors group',
-          isSelected ? 'bg-stone-100 border border-stone-200' : 'hover:bg-slate-50',
+          isSelected ? 'bg-stone-100 border border-stone-200' : 'hover:bg-stone-50',
           !node.required && node.status === 'empty' && 'opacity-60',
         )}
         style={{ paddingLeft: `${depth * 20 + 8}px` }}
@@ -275,28 +275,28 @@ function TreeNodeRow({
       >
         {hasChildren ? (
           <button
-            className="p-1 hover:bg-slate-100 rounded shrink-0"
+            className="p-1 hover:bg-stone-100 rounded shrink-0"
             onClick={(e) => { e.stopPropagation(); onToggle(node.id); }}
           >
             {isExpanded
-              ? <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-              : <ChevronRight className="h-3.5 w-3.5 text-slate-400" />}
+              ? <ChevronDown className="h-3.5 w-3.5 text-stone-400" />
+              : <ChevronRight className="h-3.5 w-3.5 text-stone-400" />}
           </button>
         ) : (
           <span className="w-5" />
         )}
 
         {hasChildren
-          ? (isExpanded ? <FolderOpen className="h-4 w-4 text-stone-400 shrink-0" /> : <Folder className="h-4 w-4 text-slate-400 shrink-0" />)
-          : <FileText className="h-4 w-4 text-slate-400 shrink-0" />}
+          ? (isExpanded ? <FolderOpen className="h-4 w-4 text-stone-400 shrink-0" /> : <Folder className="h-4 w-4 text-stone-400 shrink-0" />)
+          : <FileText className="h-4 w-4 text-stone-400 shrink-0" />}
 
-        <span className="text-sm font-medium text-slate-700 truncate flex-1">
-          <span className="text-slate-400 mr-1.5">{node.id}</span>
+        <span className="text-sm font-medium text-stone-700 truncate flex-1">
+          <span className="text-stone-400 mr-1.5">{node.id}</span>
           {node.label}
         </span>
 
         {node.required && (
-          <span className="text-[10px] font-semibold text-stone-1000 bg-stone-100 px-1.5 py-0.5 rounded shrink-0">
+          <span className="text-[10px] font-semibold text-stone-900 bg-stone-100 px-1.5 py-0.5 rounded shrink-0">
             REQ
           </span>
         )}
@@ -316,19 +316,19 @@ function TreeNodeRow({
           {node.assignedArtifacts!.map(a => (
             <div
               key={a.id}
-              className="flex items-center gap-2 py-1 px-2 text-xs text-slate-600 hover:bg-slate-50 rounded cursor-pointer"
+              className="flex items-center gap-2 py-1 px-2 text-xs text-stone-600 hover:bg-stone-50 rounded cursor-pointer"
               onClick={() => onOpenArtifact?.(a.id)}
             >
               <FileText className="h-3 w-3 text-stone-400" />
               <span className="truncate flex-1">{a.title}</span>
-              <span className="text-slate-400">v{a.version}</span>
+              <span className="text-stone-400">v{a.version}</span>
               <span className={cn(
                 'text-[10px] px-1.5 py-0.5 rounded',
                 a.status === 'approved' || a.status === 'published'
                   ? 'text-stone-700 bg-stone-100'
                   : a.status === 'in_review'
                     ? 'text-stone-600 bg-stone-100'
-                    : 'text-slate-500 bg-slate-100'
+                    : 'text-stone-500 bg-stone-100'
               )}>
                 {a.status}
               </span>
@@ -437,14 +437,14 @@ export function SubmissionBuilder({
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200">
         <div className="flex items-center gap-3">
-          <Package className="h-5 w-5 text-stone-1000" />
+          <Package className="h-5 w-5 text-stone-900" />
           <div>
-            <h2 className="text-base font-semibold text-slate-800">
+            <h2 className="text-base font-semibold text-stone-800">
               Submission Builder
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-stone-500">
               {submissionType} · {region} · {projectName || `Project ${projectId}`}
             </p>
           </div>
@@ -452,7 +452,7 @@ export function SubmissionBuilder({
         <div className="flex items-center gap-2">
           <button
             onClick={onOpenChecklist}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors duration-150"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone-600 bg-stone-100 rounded-md hover:bg-stone-200 transition-colors duration-150"
           >
             <ClipboardCheck className="h-3.5 w-3.5" />
             Checklist
@@ -483,7 +483,7 @@ export function SubmissionBuilder({
             Generate Manifest
           </button>
           {onClose && (
-            <button onClick={onClose} aria-label="Close submission builder" title="Close" className="p-1.5 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none">
+            <button onClick={onClose} aria-label="Close submission builder" title="Close" className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none">
               <X className="h-4 w-4" />
             </button>
           )}
@@ -491,38 +491,38 @@ export function SubmissionBuilder({
       </div>
 
       {/* Readiness bar */}
-      <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
+      <div className="px-4 py-3 border-b border-stone-100 bg-stone-50">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-slate-600">Submission Readiness</span>
+          <span className="text-xs font-medium text-stone-600">Submission Readiness</span>
           <span className="text-sm font-semibold text-stone-600">{stats.readiness}%</span>
         </div>
-        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+        <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
           <div
             className={cn(
               'h-full rounded-full transition-all duration-150',
-              stats.readiness >= 80 ? 'bg-stone-1000' : stats.readiness >= 50 ? 'bg-stone-1000' : 'bg-stone-1000',
+              stats.readiness >= 80 ? 'bg-stone-900' : stats.readiness >= 50 ? 'bg-stone-900' : 'bg-stone-900',
             )}
             style={{ width: `${stats.readiness}%` }}
           />
         </div>
-        <div className="flex items-center gap-4 mt-2 text-[11px] text-slate-500">
+        <div className="flex items-center gap-4 mt-2 text-[11px] text-stone-500">
           <span className="flex items-center gap-1">
-            <CheckCircle className="h-3 w-3 text-stone-1000" />
+            <CheckCircle className="h-3 w-3 text-stone-900" />
             {stats.complete} complete
           </span>
           <span className="flex items-center gap-1">
-            <Clock className="h-3 w-3 text-stone-1000" />
+            <Clock className="h-3 w-3 text-stone-900" />
             {stats.partial} in progress
           </span>
           <span className="flex items-center gap-1">
             <XCircle className="h-3 w-3 text-stone-400" />
             {stats.requiredMissing} missing
           </span>
-          <span className="text-slate-400">
+          <span className="text-stone-400">
             {stats.total} required sections
           </span>
         </div>
-        <div className="mt-2 text-[11px] text-slate-500">
+        <div className="mt-2 text-[11px] text-stone-500">
           Current beta output is a package manifest for review and downstream handoff — not direct agency submission.
         </div>
       </div>
@@ -530,7 +530,7 @@ export function SubmissionBuilder({
       {/* Main content: tree + detail */}
       <div className="flex flex-1 min-h-0">
         {/* eCTD tree */}
-        <div className="flex-1 overflow-y-auto py-2 px-2 border-r border-slate-100">
+        <div className="flex-1 overflow-y-auto py-2 px-2 border-r border-stone-100">
           {tree.map(node => (
             <TreeNodeRow
               key={node.id}
@@ -546,7 +546,7 @@ export function SubmissionBuilder({
         </div>
 
         {/* Right detail panel */}
-        <div className="w-80 flex-shrink-0 overflow-y-auto border-l border-slate-100">
+        <div className="w-80 flex-shrink-0 overflow-y-auto border-l border-stone-100">
           {selectedSection ? (
             <SectionDetail
               sectionId={selectedSection}
@@ -568,8 +568,8 @@ export function SubmissionBuilder({
               onOpenArtifact={onOpenArtifact}
             />
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center p-6 text-slate-400">
-              <Layers className="h-10 w-10 mb-3 text-slate-300" />
+            <div className="flex flex-col items-center justify-center h-full text-center p-6 text-stone-400">
+              <Layers className="h-10 w-10 mb-3 text-stone-300" />
               <p className="text-sm font-medium">Select a section</p>
               <p className="text-xs mt-1">Click on a module or section in the tree to see details and assign documents</p>
             </div>
@@ -628,44 +628,44 @@ function SectionDetail({
       <div className="mb-4">
         <div className="flex items-center gap-2 mb-1">
           {statusIcon(node.status)}
-          <span className="text-xs font-medium text-slate-500">{statusLabel(node.status)}</span>
+          <span className="text-xs font-medium text-stone-500">{statusLabel(node.status)}</span>
           {node.required && (
-            <span className="text-[10px] font-semibold text-stone-1000 bg-stone-100 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] font-semibold text-stone-900 bg-stone-100 px-1.5 py-0.5 rounded">
               Required
             </span>
           )}
         </div>
-        <h3 className="text-sm font-semibold text-slate-800">
+        <h3 className="text-sm font-semibold text-stone-800">
           {node.id} — {node.label}
         </h3>
       </div>
 
       {/* Assigned artifacts */}
       <div className="mb-4">
-        <h4 className="text-xs font-medium text-slate-500 mb-2">Assigned Documents</h4>
+        <h4 className="text-xs font-medium text-stone-500 mb-2">Assigned Documents</h4>
         {node.assignedArtifacts && node.assignedArtifacts.length > 0 ? (
           <div className="space-y-1.5">
             {node.assignedArtifacts.map(a => (
               <div
                 key={a.id}
-                className="flex items-center gap-2 p-2 rounded-md border border-slate-200 bg-white group"
+                className="flex items-center gap-2 p-2 rounded-md border border-stone-200 bg-white group"
               >
                 <FileText className="h-3.5 w-3.5 text-stone-400 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p
-                    className="text-xs font-medium text-slate-700 truncate cursor-pointer hover:text-stone-600"
+                    className="text-xs font-medium text-stone-700 truncate cursor-pointer hover:text-stone-600"
                     onClick={() => onOpenArtifact?.(a.id)}
                   >
                     {a.title}
                   </p>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-stone-400">
                     v{a.version} · {a.status}
                     {a.wordCount ? ` · ${a.wordCount.toLocaleString()} words` : ''}
                   </p>
                 </div>
                 <button
                   onClick={() => onUnassign(a.id)}
-                  className="p-1 text-slate-300 hover:text-stone-1000 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="p-1 text-stone-300 hover:text-stone-900 opacity-0 group-hover:opacity-100 transition-opacity"
                   title="Unassign"
                 >
                   <X className="h-3 w-3" />
@@ -674,7 +674,7 @@ function SectionDetail({
             ))}
           </div>
         ) : (
-          <p className="text-xs text-slate-400 italic">No documents assigned</p>
+          <p className="text-xs text-stone-400 italic">No documents assigned</p>
         )}
       </div>
 
@@ -698,20 +698,20 @@ function SectionDetail({
 
       {/* Artifact picker */}
       {showPicker && (
-        <div className="border border-slate-200 rounded-md p-2 bg-slate-50">
+        <div className="border border-stone-200 rounded-md p-2 bg-stone-50">
           <div className="relative mb-2">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-stone-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search artifacts..."
-              className="w-full pl-7 pr-2 py-1.5 text-xs rounded border border-slate-200 focus-visible:ring-2 outline-none focus:ring-stone-300"
+              className="w-full pl-7 pr-2 py-1.5 text-xs rounded border border-stone-200 focus-visible:ring-2 outline-none focus:ring-stone-300"
             />
           </div>
           <div className="max-h-40 overflow-y-auto space-y-1">
             {unassignedArtifacts.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-2">No unassigned artifacts</p>
+              <p className="text-xs text-stone-400 text-center py-2">No unassigned artifacts</p>
             ) : (
               unassignedArtifacts.map(a => (
                 <button
@@ -719,9 +719,9 @@ function SectionDetail({
                   onClick={() => onAssign(a.id)}
                   className="w-full flex items-center gap-2 p-1.5 text-left rounded hover:bg-white transition-colors duration-150"
                 >
-                  <FileText className="h-3 w-3 text-slate-400 shrink-0" />
-                  <span className="text-xs text-slate-700 truncate flex-1">{a.title}</span>
-                  <ArrowRight className="h-3 w-3 text-slate-300" />
+                  <FileText className="h-3 w-3 text-stone-400 shrink-0" />
+                  <span className="text-xs text-stone-700 truncate flex-1">{a.title}</span>
+                  <ArrowRight className="h-3 w-3 text-stone-300" />
                 </button>
               ))
             )}

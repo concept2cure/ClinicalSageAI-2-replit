@@ -765,7 +765,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             )}
             {pendingMove.targetSection ? (
               <>
-                <span className="text-xs text-stone-1000">→</span>
+                <span className="text-xs text-stone-900">→</span>
                 <span className="text-xs text-stone-800 font-semibold">
                   {pendingMove.targetSection}
                 </span>
@@ -794,7 +794,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         {/* ── Cut/move blocked feedback ───────────────────────────────────── */}
         {cutBlockedMessage && (
           <div className="flex items-center gap-2.5 px-4 h-9 border-b border-stone-200 bg-stone-100 shrink-0 animate-in fade-in duration-200">
-            <AlertTriangle className="w-3.5 h-3.5 text-stone-1000" />
+            <AlertTriangle className="w-3.5 h-3.5 text-stone-900" />
             <span className="text-xs text-stone-800 font-medium">{cutBlockedMessage}</span>
             <button onClick={() => setCutBlockedMessage(null)} className="ml-auto">
               <X className="w-3.5 h-3.5 text-stone-400 hover:text-stone-700" />
@@ -805,7 +805,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         {/* ── Persistent context band (browse mode — selected doc reminder) */}
         {mode === 'browse' && activeArtifact && (
           <div className="flex items-center gap-2.5 px-4 h-9 border-b border-stone-100 bg-stone-100/40 shrink-0">
-            <FileText className="w-3.5 h-3.5 text-stone-1000" />
+            <FileText className="w-3.5 h-3.5 text-stone-900" />
             <span className="text-xs text-stone-800 font-medium truncate">
               {activeArtifact.title}
             </span>
@@ -913,8 +913,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 className={cn(
                   'p-1 rounded transition-colors',
                   phase4Panel === 'pulse'
-                    ? 'text-rose-600 bg-rose-50'
-                    : 'text-stone-300 hover:text-rose-600 hover:bg-rose-50'
+                    ? 'text-stone-700 bg-stone-100'
+                    : 'text-stone-300 hover:text-stone-700 hover:bg-stone-100'
                 )}
                 title="Review Pulse"
               >

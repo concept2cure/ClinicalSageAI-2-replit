@@ -144,7 +144,7 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-8 text-stone-400">
             <AlertTriangle className="w-6 h-6 mb-1 text-stone-400" />
-            <p className="text-[10px] text-stone-1000">{error}</p>
+            <p className="text-[10px] text-stone-900">{error}</p>
             <button onClick={fetchQueue} className="text-[10px] text-stone-600 hover:underline mt-1">Retry</button>
           </div>
         ) : totalItems === 0 ? (
@@ -199,7 +199,7 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span className="text-[8px] text-stone-400 truncate">{t.artifactTitle}</span>
                       {t.priority === 'high' && (
-                        <AlertTriangle className="w-2.5 h-2.5 text-stone-1000 shrink-0" />
+                        <AlertTriangle className="w-2.5 h-2.5 text-stone-900 shrink-0" />
                       )}
                       <span className="text-[8px] text-stone-400 ml-auto shrink-0">
                         {formatTime(t.updatedAt)}

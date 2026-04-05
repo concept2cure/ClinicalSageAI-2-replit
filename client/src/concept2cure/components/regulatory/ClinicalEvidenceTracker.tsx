@@ -506,7 +506,7 @@ export default function ClinicalEvidenceTracker() {
                         <Link2 className="h-3 w-3" />
                         <span className="max-w-[200px] truncate">{doc}</span>
                         <button
-                          className="ml-1 hover:text-stone-1000"
+                          className="ml-1 hover:text-stone-900"
                           onClick={() => setNewSourceDocs(prev => prev.filter((_, i) => i !== idx))}
                         >
                           <X className="h-3 w-3" />
@@ -820,7 +820,7 @@ export default function ClinicalEvidenceTracker() {
 
                   {metrics.total === 0 ? (
                     <div className="p-4 border rounded-lg bg-muted/20 text-center text-sm text-muted-foreground">
-                      <AlertTriangle className="h-5 w-5 mx-auto mb-2 text-stone-1000" />
+                      <AlertTriangle className="h-5 w-5 mx-auto mb-2 text-stone-900" />
                       Enter 2×2 contingency table data to calculate performance metrics.
                     </div>
                   ) : (
@@ -1054,7 +1054,7 @@ export default function ClinicalEvidenceTracker() {
                             <Link2 className="h-3 w-3" />
                             <span className="max-w-[250px] truncate">{doc}</span>
                             <button
-                              className="ml-1 hover:text-stone-1000"
+                              className="ml-1 hover:text-stone-900"
                               onClick={() =>
                                 setSourceDocUrls(prev => prev.filter((_, i) => i !== idx))
                               }

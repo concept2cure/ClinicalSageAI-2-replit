@@ -66,7 +66,7 @@ const ACTIVITY_CONFIG: Record<ActivityType, {
 }> = {
   created: {
     icon: FileText,
-    color: 'text-stone-1000',
+    color: 'text-stone-900',
     bgColor: 'bg-stone-100',
     verb: 'created',
   },
@@ -78,37 +78,37 @@ const ACTIVITY_CONFIG: Record<ActivityType, {
   },
   status_change: {
     icon: ArrowRight,
-    color: 'text-stone-1000',
+    color: 'text-stone-900',
     bgColor: 'bg-stone-100',
     verb: 'changed status of',
   },
   commented: {
     icon: MessageSquare,
-    color: 'text-stone-1000',
+    color: 'text-stone-900',
     bgColor: 'bg-stone-100',
     verb: 'commented on',
   },
   review_requested: {
     icon: Eye,
-    color: 'text-stone-1000',
+    color: 'text-stone-900',
     bgColor: 'bg-stone-100',
     verb: 'requested review for',
   },
   review_completed: {
     icon: CheckCircle,
-    color: 'text-stone-1000',
+    color: 'text-stone-900',
     bgColor: 'bg-stone-100',
     verb: 'completed review of',
   },
   ai_action: {
     icon: Sparkles,
-    color: 'text-stone-1000',
+    color: 'text-stone-900',
     bgColor: 'bg-stone-100',
     verb: 'used AI on',
   },
   exported: {
     icon: Upload,
-    color: 'text-stone-1000',
+    color: 'text-stone-900',
     bgColor: 'bg-stone-100',
     verb: 'exported',
   },

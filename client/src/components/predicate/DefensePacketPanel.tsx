@@ -104,7 +104,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 function ReadinessGauge({ score, size = 'lg' }: { score: number; size?: 'sm' | 'lg' }) {
   const color = score >= 80 ? 'text-stone-700' : score >= 50 ? 'text-stone-600' : 'text-stone-700';
-  const bgColor = score >= 80 ? 'bg-stone-1000' : score >= 50 ? 'bg-stone-1000' : 'bg-stone-1000';
+  const bgColor = score >= 80 ? 'bg-stone-900' : score >= 50 ? 'bg-stone-900' : 'bg-stone-900';
   const dim = size === 'lg' ? 'h-32 w-32' : 'h-20 w-20';
   const textSize = size === 'lg' ? 'text-3xl' : 'text-xl';
 
@@ -156,7 +156,7 @@ function ManifestBadge({ hash, label }: { hash: string; label: string }) {
             }}
           >
             <Hash className="h-3 w-3" />
-            {label}: {short}…{copied && <CheckCircle className="h-3 w-3 text-stone-1000" />}
+            {label}: {short}…{copied && <CheckCircle className="h-3 w-3 text-stone-900" />}
           </button>
         </TooltipTrigger>
         <TooltipContent className="max-w-[400px] break-all font-mono text-xs">
@@ -253,7 +253,7 @@ function EvidenceTaskRow({
               {task.category}
             </Badge>
             {task.completion?.state === 'DONE' && (
-              <CheckCircle className="h-3.5 w-3.5 text-stone-1000" />
+              <CheckCircle className="h-3.5 w-3.5 text-stone-900" />
             )}
             {task.completion?.state === 'WAIVED' && (
               <Badge variant="secondary" className="text-[11px]">
@@ -725,7 +725,7 @@ export function DefensePacketPanel({
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-stone-1000" />
+                  <AlertTriangle className="h-4 w-4 text-stone-900" />
                   Top Risks ({packet.top_risks.length})
                 </CardTitle>
                 <CardDescription>

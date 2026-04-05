@@ -81,7 +81,7 @@ export default function UseCaseLibrary() {
   return (
     <div className="px-6 py-8 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col space-y-2 mb-8">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-stone-600 to-stone-600 text-transparent bg-clip-text">
+        <h2 className="text-3xl font-bold bg-stone-600 text-transparent bg-clip-text">
           Strategic Intelligence Launcher
         </h2>
         <p className="text-muted-foreground text-lg">
@@ -102,7 +102,7 @@ export default function UseCaseLibrary() {
             {filteredUseCases.map((useCase: UseCase) => (
               <Card 
                 key={useCase.id} 
-                className="overflow-hidden border-l-4 border-l-stone-1000 shadow-md hover:shadow-lg transition-shadow"
+                className="overflow-hidden border-l-4 border-l-stone-900 shadow-sm hover:shadow-sm transition-shadow"
               >
                 <CardContent className="p-6">
                   <div className="space-y-4">
@@ -204,7 +204,7 @@ export default function UseCaseLibrary() {
         )}
       </Tabs>
       
-      <div className="mt-10 bg-gradient-to-r from-stone-100 to-stone-100 rounded-lg p-6 shadow-sm">
+      <div className="mt-10 bg-stone-100 rounded-lg p-6 shadow-sm">
         <h3 className="text-xl font-semibold mb-4">Why Use the Strategic Intelligence Launcher?</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex space-x-3">

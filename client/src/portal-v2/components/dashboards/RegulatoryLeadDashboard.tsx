@@ -670,7 +670,7 @@ export const RegulatoryLeadDashboard: React.FC = () => {
                 <p className="text-sm text-muted-foreground">Active Submissions</p>
                 <p className="text-2xl font-bold">{submissions.length}</p>
               </div>
-              <FileStack className="h-8 w-8 text-stone-1000 opacity-50" />
+              <FileStack className="h-8 w-8 text-stone-900 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -683,7 +683,7 @@ export const RegulatoryLeadDashboard: React.FC = () => {
                   {documents.filter(d => d.status === 'in_review').length}
                 </p>
               </div>
-              <FileText className="h-8 w-8 text-stone-1000 opacity-50" />
+              <FileText className="h-8 w-8 text-stone-900 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -703,7 +703,7 @@ export const RegulatoryLeadDashboard: React.FC = () => {
                   }
                 </p>
               </div>
-              <Clock className="h-8 w-8 text-stone-1000 opacity-50" />
+              <Clock className="h-8 w-8 text-stone-900 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -716,7 +716,7 @@ export const RegulatoryLeadDashboard: React.FC = () => {
                   {insights.filter(i => i.type === 'alert').length}
                 </p>
               </div>
-              <AlertTriangle className="h-8 w-8 text-stone-1000 opacity-50" />
+              <AlertTriangle className="h-8 w-8 text-stone-900 opacity-50" />
             </div>
           </CardContent>
         </Card>

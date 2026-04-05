@@ -192,7 +192,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
   return (
     <div className={cn('rounded-xl border border-stone-200 bg-white overflow-hidden', className)}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 bg-gradient-to-r from-stone-100 to-stone-100">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 bg-stone-100">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-stone-100 flex items-center justify-center">
             <ImageIcon className="w-4 h-4 text-stone-600" />
@@ -260,7 +260,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
         <button
           onClick={handleGenerate}
           disabled={isGenerating || !prompt.trim()}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-stone-1000 text-white hover:bg-stone-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-stone-900 text-white hover:bg-stone-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isGenerating ? (
             <>
@@ -313,7 +313,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
                   {onImageGenerated && (
                     <button
                       onClick={() => onImageGenerated(img)}
-                      className="p-1.5 rounded-md bg-stone-1000 text-white hover:bg-stone-600 transition-colors"
+                      className="p-1.5 rounded-md bg-stone-900 text-white hover:bg-stone-600 transition-colors"
                       title="Insert into document"
                     >
                       <FileDown className="w-3.5 h-3.5" />
@@ -351,7 +351,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
           <img
             src={`data:${generatedImages[expandedImage].mimeType};base64,${generatedImages[expandedImage].base64}`}
             alt="Full size"
-            className="max-w-full max-h-full rounded-xl shadow-2xl"
+            className="max-w-full max-h-full rounded-xl shadow-sm"
             onClick={e => e.stopPropagation()}
           />
         </div>

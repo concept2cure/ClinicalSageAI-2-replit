@@ -77,12 +77,12 @@ export function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqs
         <div className="flex items-center gap-1 px-2 py-1 rounded bg-stone-50">
           {reqs.optional ? (
             <>
-              <Info className="w-3 h-3 text-stone-1000" />
+              <Info className="w-3 h-3 text-stone-900" />
               <span className="text-xs text-stone-700 font-medium">Optional section</span>
             </>
           ) : (
             <>
-              <AlertTriangle className="w-3 h-3 text-stone-1000" />
+              <AlertTriangle className="w-3 h-3 text-stone-900" />
               <span className="text-xs text-stone-700 font-medium">Required section</span>
             </>
           )}
@@ -95,7 +95,7 @@ export function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqs
             </div>
             {reqs.starterTemplatesAvailable.map((t, i) => (
               <div key={i} className="text-stone-600 flex items-center gap-1 py-0.5">
-                <Layers className="w-2.5 h-2.5 text-stone-1000" />
+                <Layers className="w-2.5 h-2.5 text-stone-900" />
                 {t}
               </div>
             ))}
@@ -162,9 +162,9 @@ export function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqs
                   className={cn(
                     'h-1.5 rounded-full transition-all duration-150',
                     metrics.completionPercent >= 75
-                      ? 'bg-stone-1000'
+                      ? 'bg-stone-900'
                       : metrics.completionPercent >= 25
-                        ? 'bg-stone-1000'
+                        ? 'bg-stone-900'
                         : 'bg-stone-400'
                   )}
                   style={{ width: `${Math.min(100, metrics.completionPercent)}%` }}

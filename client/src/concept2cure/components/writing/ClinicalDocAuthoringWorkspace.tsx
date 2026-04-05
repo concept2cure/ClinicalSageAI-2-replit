@@ -206,9 +206,9 @@ const DOC_TYPE_CONFIG: Record<DocumentType, { label: string; shortLabel: string;
   protocol_amendment: { label: 'Protocol Amendment', shortLabel: 'Amendment', color: 'bg-stone-100 text-stone-700' },
   informed_consent: { label: 'Informed Consent', shortLabel: 'ICF', color: 'bg-stone-200 text-stone-700' },
   regulatory_response: { label: 'Regulatory Response', shortLabel: 'Response', color: 'bg-stone-100 text-stone-800' },
-  briefing_document: { label: 'Briefing Document', shortLabel: 'Briefing', color: 'bg-rose-100 text-rose-700' },
+  briefing_document: { label: 'Briefing Document', shortLabel: 'Briefing', color: 'bg-stone-100 text-stone-800' },
   dsur: { label: 'DSUR', shortLabel: 'DSUR', color: 'bg-stone-100 text-stone-700' },
-  psur: { label: 'PSUR', shortLabel: 'PSUR', color: 'bg-fuchsia-100 text-fuchsia-700' },
+  psur: { label: 'PSUR', shortLabel: 'PSUR', color: 'bg-stone-100 text-stone-800' },
 };
 
 const STATUS_CONFIG: Record<AuthoringStatus, { label: string; color: string; bgColor: string; step: number }> = {

@@ -1010,9 +1010,9 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
 
 function VerdictBadge({ verdict }: { verdict: string }) {
   const colorMap: Record<string, string> = {
-    adequate: 'bg-stone-1000/20 text-stone-300 border-stone-1000/30',
-    marginal: 'bg-stone-1000/20 text-stone-300 border-stone-1000/30',
-    inadequate: 'bg-stone-1000/20 text-stone-300 border-stone-1000/30',
+    adequate: 'bg-stone-900/20 text-stone-300 border-stone-900/30',
+    marginal: 'bg-stone-900/20 text-stone-300 border-stone-900/30',
+    inadequate: 'bg-stone-900/20 text-stone-300 border-stone-900/30',
     insufficient_information: 'bg-stone-500/20 text-stone-300 border-stone-500/30',
   };
   return <Badge variant="outline" className={`text-[10px] ${colorMap[verdict] ?? ''}`}>{verdict}</Badge>;

@@ -234,8 +234,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         className={cn(
           'absolute top-3 left-3 h-6 w-6',
           project.starred
-            ? 'text-stone-1000'
-            : 'text-stone-400 opacity-0 group-hover:opacity-100 hover:text-stone-1000'
+            ? 'text-stone-900'
+            : 'text-stone-400 opacity-0 group-hover:opacity-100 hover:text-stone-900'
         )}
       >
         <Star className={cn('w-4 h-4', project.starred && 'fill-current')} />

@@ -112,11 +112,11 @@ function classifyArtifact(a: TreeArtifact): string {
 function StatusIcon({ status }: { status?: string }) {
   switch (status) {
     case 'approved':
-      return <CheckCircle className="w-3 h-3 text-stone-1000 shrink-0" />;
+      return <CheckCircle className="w-3 h-3 text-stone-900 shrink-0" />;
     case 'locked':
-      return <Lock className="w-3 h-3 text-stone-1000 shrink-0" />;
+      return <Lock className="w-3 h-3 text-stone-900 shrink-0" />;
     case 'review':
-      return <AlertTriangle className="w-3 h-3 text-stone-1000 shrink-0" />;
+      return <AlertTriangle className="w-3 h-3 text-stone-900 shrink-0" />;
     case 'draft':
     default:
       return <Clock className="w-3 h-3 text-stone-400 shrink-0" />;

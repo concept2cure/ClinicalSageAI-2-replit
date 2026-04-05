@@ -269,7 +269,7 @@ export function DocumentStatusTimeline({
                       <Icon className={cn(
                         'h-3 w-3',
                         isActive && stage.activeColor,
-                        isCompleted && 'text-stone-1000',
+                        isCompleted && 'text-stone-900',
                         isFuture && 'text-stone-300',
                       )} />
                     </div>

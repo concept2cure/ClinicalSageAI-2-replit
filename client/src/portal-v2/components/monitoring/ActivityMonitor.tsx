@@ -370,13 +370,13 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ events, isLive }) => {
   const getStatusIcon = (status: ActivityEvent['status']) => {
     switch (status) {
       case 'success':
-        return <CheckCircle className="h-4 w-4 text-stone-1000" />;
+        return <CheckCircle className="h-4 w-4 text-stone-900" />;
       case 'failure':
-        return <XCircle className="h-4 w-4 text-stone-1000" />;
+        return <XCircle className="h-4 w-4 text-stone-900" />;
       case 'warning':
-        return <AlertTriangle className="h-4 w-4 text-stone-1000" />;
+        return <AlertTriangle className="h-4 w-4 text-stone-900" />;
       case 'pending':
-        return <Clock className="h-4 w-4 text-stone-1000" />;
+        return <Clock className="h-4 w-4 text-stone-900" />;
     }
   };
 
@@ -393,7 +393,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ events, isLive }) => {
                 Activity Feed
                 {isLive && (
                   <span className="flex items-center gap-1 text-xs text-stone-700 font-normal">
-                    <Circle className="h-2 w-2 fill-stone-1000 animate-pulse" />
+                    <Circle className="h-2 w-2 fill-stone-900 animate-pulse" />
                     Live
                   </span>
                 )}
@@ -502,11 +502,11 @@ const ActiveSessions: React.FC<ActiveSessionsProps> = ({ sessions, onTerminate }
   const getStatusColor = (status: ActiveSession['status']) => {
     switch (status) {
       case 'active':
-        return 'text-stone-1000';
+        return 'text-stone-900';
       case 'idle':
-        return 'text-stone-1000';
+        return 'text-stone-900';
       case 'locked':
-        return 'text-stone-1000';
+        return 'text-stone-900';
     }
   };
 
@@ -579,7 +579,7 @@ const ActiveSessions: React.FC<ActiveSessionsProps> = ({ sessions, onTerminate }
                     <Circle className={`h-2 w-2 fill-current ${getStatusColor(session.status)}`} />
                     <span className="text-sm capitalize">{session.status}</span>
                     {session.mfaVerified && (
-                      <Shield className="h-3 w-3 text-stone-1000" title="MFA Verified" />
+                      <Shield className="h-3 w-3 text-stone-900" title="MFA Verified" />
                     )}
                   </div>
                 </TableCell>
@@ -671,7 +671,7 @@ const SecurityAlerts: React.FC<SecurityAlertsProps> = ({ events }) => {
     return (
       <Card>
         <CardContent className="py-12 text-center">
-          <ShieldAlert className="h-12 w-12 mx-auto mb-4 text-stone-1000" />
+          <ShieldAlert className="h-12 w-12 mx-auto mb-4 text-stone-900" />
           <p className="font-medium text-stone-800">No Security Alerts</p>
           <p className="text-sm text-stone-500">All systems operating normally</p>
         </CardContent>

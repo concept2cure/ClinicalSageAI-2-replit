@@ -57,8 +57,8 @@ export default function KnowledgeGraphPanel() {
           <div className="flex items-center justify-center p-8">
             <div className="text-center">
               <div className="text-stone-600 font-medium mb-2">⚠️ Feature Not Available</div>
-              <div className="text-slate-600 text-sm">{data.error}</div>
-              <div className="text-xs text-slate-500 mt-2">
+              <div className="text-stone-600 text-sm">{data.error}</div>
+              <div className="text-xs text-stone-500 mt-2">
                 Contact your administrator to enable advanced quality features
               </div>
             </div>
@@ -70,7 +70,7 @@ export default function KnowledgeGraphPanel() {
                 <div className="font-medium mb-2">Nodes ({data.nodes?.length || 0})</div>
                 <div className="space-y-1 max-h-40 overflow-y-auto">
                   {(data.nodes || []).map((n: any, i: number) => (
-                    <div key={i} className="p-1 bg-slate-50 rounded text-xs">
+                    <div key={i} className="p-1 bg-stone-50 rounded text-xs">
                       <span
                         className={
                           n.type === 'BATCH'
@@ -91,14 +91,14 @@ export default function KnowledgeGraphPanel() {
                 <div className="font-medium mb-2">Edges ({data.edges?.length || 0})</div>
                 <div className="space-y-1 max-h-40 overflow-y-auto">
                   {(data.edges || []).map((e: any, i: number) => (
-                    <div key={i} className="p-1 bg-slate-50 rounded text-xs">
+                    <div key={i} className="p-1 bg-stone-50 rounded text-xs">
                       {e.source} → {e.target}
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-            <div className="text-xs text-slate-600 pt-2 border-t">
+            <div className="text-xs text-stone-600 pt-2 border-t">
               Knowledge graph shows relationships between batches, quality alerts, and stability
               studies.
             </div>

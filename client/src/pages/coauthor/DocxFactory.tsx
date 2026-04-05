@@ -322,7 +322,7 @@ function HashVerificationPanel({ state }: { state: HashVerifyState }) {
 
   // phase === 'done'
   return (
-    <Card className={`mt-2 ${state.match ? 'border-stone-1000' : 'border-destructive'}`}>
+    <Card className={`mt-2 ${state.match ? 'border-stone-900' : 'border-destructive'}`}>
       <CardContent className="py-3 px-4">
         <div className="flex items-center gap-2 mb-2">
           {state.match ? (
@@ -774,7 +774,7 @@ function TemplatesTab({ programId }: { programId: string }) {
     <div className="space-y-4">
       {/* Seed success banner */}
       {seedTemplates.isSuccess && (
-        <Card className="border-stone-1000 bg-stone-100 dark:bg-stone-950/30">
+        <Card className="border-stone-900 bg-stone-100 dark:bg-stone-950/30">
           <CardContent className="py-3 px-4">
             <p className="text-sm text-stone-800 dark:text-stone-400 flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4" />
@@ -786,7 +786,7 @@ function TemplatesTab({ programId }: { programId: string }) {
         </Card>
       )}
 
-      <Card className="border-slate-200">
+      <Card className="border-stone-200">
         <CardContent className="py-4 px-4">
           <div className="flex flex-col gap-4">
             <div className="flex items-start justify-between gap-3">

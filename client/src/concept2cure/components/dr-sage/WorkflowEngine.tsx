@@ -101,7 +101,7 @@ const STATUS_CONFIG = {
     bg: 'bg-stone-100',
     border: 'border-stone-400',
     icon: AlertCircle,
-    iconColor: 'text-stone-1000',
+    iconColor: 'text-stone-900',
     label: 'Blocked',
   },
   'action-needed': {
@@ -342,7 +342,7 @@ export function WorkflowEngine({
               variant={allComplete ? 'default' : 'secondary'}
               className={cn(
                 'text-xs',
-                allComplete && 'bg-stone-1000 hover:bg-stone-700',
+                allComplete && 'bg-stone-900 hover:bg-stone-700',
                 isRunning && !allComplete && 'bg-stone-600 hover:bg-stone-800 text-white',
               )}
             >
@@ -361,7 +361,7 @@ export function WorkflowEngine({
             className={cn(
               'h-full rounded-full',
               allComplete
-                ? 'bg-stone-1000'
+                ? 'bg-stone-900'
                 : 'bg-stone-600',
             )}
             initial={{ width: 0 }}
@@ -408,7 +408,7 @@ export function WorkflowEngine({
                       delay: 0.4,
                     }}
                   >
-                    <CheckCircle2 className="h-5 w-5 text-stone-1000" />
+                    <CheckCircle2 className="h-5 w-5 text-stone-900" />
                   </motion.div>
                   <span className="font-semibold text-sm text-stone-800">
                     Workflow Complete
@@ -569,7 +569,7 @@ export function WorkflowDemo({
           className="flex w-full items-center justify-between text-left"
         >
           <span className="flex items-center gap-2 text-sm font-medium">
-            <Sparkles className="h-4 w-4 text-stone-1000" />
+            <Sparkles className="h-4 w-4 text-stone-900" />
             Why this is better
           </span>
           {whyExpanded ? (

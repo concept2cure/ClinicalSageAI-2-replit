@@ -84,7 +84,7 @@ export default function RegulatoryPanel({ batchId }: { batchId: string }) {
             <div className="space-y-2">
               <div className="font-medium">Requirements ({compliance.checks?.length || 0}):</div>
               {(compliance.checks || []).map((check: any, i: number) => (
-                <div key={i} className="flex justify-between items-center p-2 bg-slate-50 rounded">
+                <div key={i} className="flex justify-between items-center p-2 bg-stone-50 rounded">
                   <span>{check.requirement}</span>
                   <Badge variant={check.status === 'PASS' ? 'default' : 'destructive'}>
                     {check.status}
@@ -110,7 +110,7 @@ export default function RegulatoryPanel({ batchId }: { batchId: string }) {
           Generate Compliance Report
         </Button>
 
-        <div className="text-xs text-slate-600">
+        <div className="text-xs text-stone-600">
           Real-time compliance monitoring across global regulatory requirements.
         </div>
       </CardContent>

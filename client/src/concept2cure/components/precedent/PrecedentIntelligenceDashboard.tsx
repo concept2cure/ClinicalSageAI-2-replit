@@ -112,7 +112,7 @@ function RiskBadge({ level }: { level: string }) {
 
 function ScoreBar({ value, max = 1, label }: { value: number; max?: number; label?: string }) {
   const pct = Math.round((value / max) * 100);
-  const color = pct >= 70 ? 'bg-stone-1000' : pct >= 40 ? 'bg-stone-1000' : 'bg-stone-1000';
+  const color = pct >= 70 ? 'bg-stone-900' : pct >= 40 ? 'bg-stone-900' : 'bg-stone-900';
   return (
     <div className="flex items-center gap-2">
       {label && <span className="text-xs text-stone-500 w-28 flex-shrink-0">{label}</span>}
@@ -305,7 +305,7 @@ export function PrecedentIntelligenceDashboard({
             </TabsTrigger>
             <TabsTrigger
               value="ema"
-              className="gap-1.5 data-[state=active]:bg-sky-50 data-[state=active]:text-sky-700"
+              className="gap-1.5 data-[state=active]:bg-stone-100 data-[state=active]:text-stone-700"
             >
               <Globe className="w-3.5 h-3.5" /> EMA
             </TabsTrigger>
@@ -648,7 +648,7 @@ export function PrecedentIntelligenceDashboard({
                               key={i}
                               className="flex items-center gap-2 text-xs p-2 rounded bg-stone-100/50"
                             >
-                              <CheckCircle className="w-3 h-3 text-stone-1000 flex-shrink-0" />
+                              <CheckCircle className="w-3 h-3 text-stone-900 flex-shrink-0" />
                               <span className="font-medium text-stone-700 w-32 flex-shrink-0">
                                 {d.dimension}
                               </span>
@@ -676,7 +676,7 @@ export function PrecedentIntelligenceDashboard({
                               className="text-xs p-2 rounded bg-stone-100/50 border border-stone-100"
                             >
                               <div className="flex items-center gap-2 mb-1">
-                                <AlertTriangle className="w-3 h-3 text-stone-1000 flex-shrink-0" />
+                                <AlertTriangle className="w-3 h-3 text-stone-900 flex-shrink-0" />
                                 <span className="font-medium text-stone-700">{d.dimension}</span>
                                 <Badge
                                   variant="outline"
@@ -765,9 +765,9 @@ export function PrecedentIntelligenceDashboard({
               <div
                 className={cn(
                   'border border-border/40 rounded-sm bg-background border-l-4',
-                  riskResult.overallRisk === 'low' && 'border-l-stone-1000',
-                  riskResult.overallRisk === 'medium' && 'border-l-stone-1000',
-                  riskResult.overallRisk === 'high' && 'border-l-stone-1000',
+                  riskResult.overallRisk === 'low' && 'border-l-stone-900',
+                  riskResult.overallRisk === 'medium' && 'border-l-stone-900',
+                  riskResult.overallRisk === 'high' && 'border-l-stone-900',
                   riskResult.overallRisk === 'critical' && 'border-l-stone-800'
                 )}
               >
@@ -801,7 +801,7 @@ export function PrecedentIntelligenceDashboard({
                           key={i}
                           className="flex items-start gap-2 p-2 rounded bg-stone-100/50 text-xs"
                         >
-                          <AlertTriangle className="w-3.5 h-3.5 text-stone-1000 flex-shrink-0 mt-0.5" />
+                          <AlertTriangle className="w-3.5 h-3.5 text-stone-900 flex-shrink-0 mt-0.5" />
                           <div className="flex-1 min-w-0">
                             <span className="font-medium text-stone-900">{f.category || f.factor}</span>
                             <p className="text-stone-500 mt-0.5">{f.description || f.detail}</p>
@@ -830,7 +830,7 @@ export function PrecedentIntelligenceDashboard({
                 <div className="border border-border/40 rounded-sm bg-background">
                   <div className="px-3 py-2 border-b border-border/30 pb-2">
                     <h3 className="text-sm font-semibold text-sm flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-stone-1000" /> Safety Signals
+                      <Zap className="w-4 h-4 text-stone-900" /> Safety Signals
                     </h3>
                   </div>
                   <div className="px-3 py-2">
@@ -872,7 +872,7 @@ export function PrecedentIntelligenceDashboard({
                           key={i}
                           className="flex items-start gap-2 text-xs text-stone-600 p-2 bg-stone-100/50 rounded"
                         >
-                          <CheckCircle className="w-3 h-3 text-stone-1000 flex-shrink-0 mt-0.5" />
+                          <CheckCircle className="w-3 h-3 text-stone-900 flex-shrink-0 mt-0.5" />
                           {s}
                         </li>
                       ))}
@@ -930,7 +930,7 @@ export function PrecedentIntelligenceDashboard({
           {strategyResult && (
             <>
               {/* Primary strategy */}
-              <div className="border border-border/40 rounded-sm bg-background border-l-4 border-l-stone-1000">
+              <div className="border border-border/40 rounded-sm bg-background border-l-4 border-l-stone-900">
                 <div className="px-3 py-2 pt-4">
                   <div className="flex items-start justify-between mb-3">
                     <div>
@@ -1058,7 +1058,7 @@ export function PrecedentIntelligenceDashboard({
                     <ul className="space-y-1">
                       {strategyResult.keyRisks.map((r, i) => (
                         <li key={i} className="flex items-start gap-2 text-xs text-stone-600 p-1.5">
-                          <AlertTriangle className="w-3 h-3 text-stone-1000 flex-shrink-0 mt-0.5" />
+                          <AlertTriangle className="w-3 h-3 text-stone-900 flex-shrink-0 mt-0.5" />
                           {r}
                         </li>
                       ))}
@@ -1115,9 +1115,9 @@ export function PrecedentIntelligenceDashboard({
             <>
               <div className={cn(
                 'border border-border/40 rounded-sm bg-background border-l-4',
-                crlResult.overallCRLRisk === 'low' && 'border-l-stone-1000',
-                crlResult.overallCRLRisk === 'medium' && 'border-l-stone-1000',
-                crlResult.overallCRLRisk === 'high' && 'border-l-stone-1000',
+                crlResult.overallCRLRisk === 'low' && 'border-l-stone-900',
+                crlResult.overallCRLRisk === 'medium' && 'border-l-stone-900',
+                crlResult.overallCRLRisk === 'high' && 'border-l-stone-900',
               )}>
                 <div className="px-3 py-3">
                   <div className="flex items-center justify-between mb-2">
@@ -1212,7 +1212,7 @@ export function PrecedentIntelligenceDashboard({
                         <div className={cn('w-5 h-5 rounded border flex items-center justify-center flex-shrink-0',
                           c.required ? 'border-stone-300 bg-stone-100' : 'border-stone-200'
                         )}>
-                          {c.required && <AlertTriangle className="w-3 h-3 text-stone-1000" />}
+                          {c.required && <AlertTriangle className="w-3 h-3 text-stone-900" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
@@ -1241,7 +1241,7 @@ export function PrecedentIntelligenceDashboard({
                 <div className="px-3 py-2 space-y-2">
                   {rtfResult.triggers.map((t: any, i: number) => (
                     <div key={i} className="flex items-start gap-2 p-2 rounded bg-stone-100/30 text-xs">
-                      <Ban className="w-3.5 h-3.5 text-stone-1000 flex-shrink-0 mt-0.5" />
+                      <Ban className="w-3.5 h-3.5 text-stone-900 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-medium text-stone-900">{t.trigger}</span>
@@ -1265,7 +1265,7 @@ export function PrecedentIntelligenceDashboard({
           <div className="border border-border/40 rounded-sm bg-background">
             <div className="px-3 py-2 border-b border-border/30 pb-3">
               <h3 className="text-sm font-semibold flex items-center gap-2">
-                <Globe className="w-4 h-4 text-sky-600" />
+                <Globe className="w-4 h-4 text-stone-600" />
                 EMA Day 120 / Day 180 Question Patterns
               </h3>
             </div>
@@ -1276,7 +1276,7 @@ export function PrecedentIntelligenceDashboard({
               <Button
                 onClick={() => setEmaActive(true)}
                 disabled={emaLoading || !searchSubmissionType}
-                className="bg-sky-600 hover:bg-sky-700 text-white"
+                className="bg-stone-600 hover:bg-stone-700 text-white"
                 size="sm"
               >
                 {emaLoading ? <Spinner size="sm" className="mr-1" /> : <Globe className="w-4 h-4 mr-1" />}
@@ -1287,7 +1287,7 @@ export function PrecedentIntelligenceDashboard({
 
           {emaResult && (
             <>
-              <div className="border border-border/40 rounded-sm bg-background border-l-4 border-l-sky-500">
+              <div className="border border-border/40 rounded-sm bg-background border-l-4 border-l-stone-900">
                 <div className="px-3 py-3">
                   <div className="flex items-center justify-between">
                     <div>
@@ -1305,7 +1305,7 @@ export function PrecedentIntelligenceDashboard({
               {emaResult.day120Questions.length > 0 && (
                 <div className="border border-border/40 rounded-sm bg-background">
                   <div className="px-3 py-2 border-b border-border/30 pb-2">
-                    <h3 className="text-sm font-semibold text-sky-700">Day 120 — List of Questions</h3>
+                    <h3 className="text-sm font-semibold text-stone-700">Day 120 — List of Questions</h3>
                   </div>
                   <div className="px-3 py-2 space-y-2">
                     {emaResult.day120Questions.map((q: any, i: number) => (
@@ -1336,7 +1336,7 @@ export function PrecedentIntelligenceDashboard({
               {emaResult.day180Questions.length > 0 && (
                 <div className="border border-border/40 rounded-sm bg-background">
                   <div className="px-3 py-2 border-b border-border/30 pb-2">
-                    <h3 className="text-sm font-semibold text-sky-700">Day 180 — Outstanding Issues</h3>
+                    <h3 className="text-sm font-semibold text-stone-700">Day 180 — Outstanding Issues</h3>
                   </div>
                   <div className="px-3 py-2 space-y-2">
                     {emaResult.day180Questions.map((q: any, i: number) => (
@@ -1390,8 +1390,8 @@ export function PrecedentIntelligenceDashboard({
             <>
               <div className={cn(
                 'border border-border/40 rounded-sm bg-background border-l-4',
-                adcomResult.overallAdcomRisk === 'low' && 'border-l-stone-1000',
-                adcomResult.overallAdcomRisk === 'medium' && 'border-l-stone-1000',
+                adcomResult.overallAdcomRisk === 'low' && 'border-l-stone-900',
+                adcomResult.overallAdcomRisk === 'medium' && 'border-l-stone-900',
                 adcomResult.overallAdcomRisk === 'high' && 'border-l-stone-500',
               )}>
                 <div className="px-3 py-3">

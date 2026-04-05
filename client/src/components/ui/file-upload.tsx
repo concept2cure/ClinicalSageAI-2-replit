@@ -185,7 +185,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         </div>
       </div>
 
-      {error && <div className="text-sm text-stone-1000 mt-1">{error}</div>}
+      {error && <div className="text-sm text-stone-900 mt-1">{error}</div>}
     </div>
   );
 };

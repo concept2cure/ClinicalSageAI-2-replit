@@ -350,7 +350,7 @@ export function DocumentUploadZone({
         ) : (
           <>
             <Upload
-              className={`text-muted-foreground ${compact ? 'h-5 w-5' : 'h-8 w-8'} ${dragOver ? 'text-stone-1000' : ''}`}
+              className={`text-muted-foreground ${compact ? 'h-5 w-5' : 'h-8 w-8'} ${dragOver ? 'text-stone-900' : ''}`}
             />
             {!compact && (
               <div className="text-center">

@@ -157,7 +157,7 @@ function BlockersSection({ projectId }: { projectId: number }) {
         if (active.length === 0) {
           return (
             <div className="flex items-center gap-2 py-2 text-[12px] text-stone-400">
-              <CheckCircle className="w-3.5 h-3.5 text-stone-1000" />
+              <CheckCircle className="w-3.5 h-3.5 text-stone-900" />
               No active blockers
             </div>
           );
@@ -240,11 +240,11 @@ function MilestonesSection({ packageId }: { packageId?: string }) {
                   className={cn(
                     'w-2 h-2 rounded-full',
                     ms.status === 'completed'
-                      ? 'bg-stone-1000'
+                      ? 'bg-stone-900'
                       : ms.status === 'overdue'
-                        ? 'bg-stone-1000'
+                        ? 'bg-stone-900'
                         : ms.status === 'in_progress'
-                          ? 'bg-stone-1000'
+                          ? 'bg-stone-900'
                           : 'bg-stone-300'
                   )}
                 />
@@ -287,7 +287,7 @@ function ApprovalBottlenecksSection({ projectId }: { projectId: number }) {
         if (items.length === 0) {
           return (
             <div className="flex items-center gap-2 py-2 text-[12px] text-stone-400">
-              <CheckCircle className="w-3.5 h-3.5 text-stone-1000" />
+              <CheckCircle className="w-3.5 h-3.5 text-stone-900" />
               No pending approvals
             </div>
           );
@@ -356,7 +356,7 @@ function WorkloadSection({ projectId }: { projectId: number }) {
                     <div
                       className={cn(
                         'h-full rounded-full transition-all duration-200',
-                        pct > 80 ? 'bg-stone-1000' : 'bg-stone-400'
+                        pct > 80 ? 'bg-stone-900' : 'bg-stone-400'
                       )}
                       style={{ width: `${pct}%` }}
                     />
@@ -391,7 +391,7 @@ function DueSoonSection({ projectId }: { projectId: number }) {
         if (items.length === 0) {
           return (
             <div className="flex items-center gap-2 py-2 text-[12px] text-stone-400">
-              <CheckCircle className="w-3.5 h-3.5 text-stone-1000" />
+              <CheckCircle className="w-3.5 h-3.5 text-stone-900" />
               No upcoming deadlines
             </div>
           );
@@ -410,7 +410,7 @@ function DueSoonSection({ projectId }: { projectId: number }) {
                   <CalendarDays
                     className={cn(
                       'w-3.5 h-3.5 shrink-0',
-                      isUrgent ? 'text-stone-1000' : 'text-stone-400'
+                      isUrgent ? 'text-stone-900' : 'text-stone-400'
                     )}
                   />
                   <div className="flex-1 min-w-0">

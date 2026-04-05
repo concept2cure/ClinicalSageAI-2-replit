@@ -113,9 +113,9 @@ const DocumentTypeBadge: React.FC<{ type: SourceDocument['documentType'] }> = ({
 
 const VerificationBadge: React.FC<{ status: TraceabilityLink['verificationStatus'] }> = ({ status }) => {
   const config = {
-    valid: { icon: CheckCircle, label: 'Valid', color: 'text-stone-1000' },
-    outdated: { icon: RefreshCw, label: 'Outdated', color: 'text-stone-1000' },
-    broken: { icon: AlertTriangle, label: 'Broken', color: 'text-stone-1000' },
+    valid: { icon: CheckCircle, label: 'Valid', color: 'text-stone-900' },
+    outdated: { icon: RefreshCw, label: 'Outdated', color: 'text-stone-900' },
+    broken: { icon: AlertTriangle, label: 'Broken', color: 'text-stone-900' },
     pending: { icon: RefreshCw, label: 'Pending', color: 'text-stone-400 animate-spin' },
   };
 
@@ -161,13 +161,13 @@ const SourceDocumentCard: React.FC<SourceDocumentCardProps> = ({
         className="w-full p-3 text-left"
       >
         <div className="flex items-start gap-3">
-          <FileText className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isSelected ? 'text-stone-1000' : 'text-stone-400'}`} />
+          <FileText className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isSelected ? 'text-stone-900' : 'text-stone-400'}`} />
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <h4 className="font-medium text-stone-900 line-clamp-1">
                 {source.title}
               </h4>
-              {isSelected && <CheckCircle className="w-4 h-4 text-stone-1000 flex-shrink-0" />}
+              {isSelected && <CheckCircle className="w-4 h-4 text-stone-900 flex-shrink-0" />}
             </div>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <DocumentTypeBadge type={source.documentType} />
@@ -290,14 +290,14 @@ const LinkCard: React.FC<LinkCardProps> = ({ link, source, onVerify, onRemove, o
         <div className="flex items-center gap-1">
           <button
             onClick={onVerify}
-            className="p-1 text-stone-400 hover:text-stone-1000 rounded"
+            className="p-1 text-stone-400 hover:text-stone-900 rounded"
             title="Verify link"
           >
             <RefreshCw className="w-3 h-3" />
           </button>
           <button
             onClick={onRemove}
-            className="p-1 text-stone-400 hover:text-stone-1000 rounded"
+            className="p-1 text-stone-400 hover:text-stone-900 rounded"
             title="Remove link"
           >
             <Trash2 className="w-3 h-3" />
@@ -427,7 +427,7 @@ export const TraceabilityLinking: React.FC<TraceabilityLinkingProps> = ({
       {/* Header */}
       <div className="p-4 border-b border-stone-200 bg-white">
         <div className="flex items-center gap-2 mb-3">
-          <Link className="w-5 h-5 text-stone-1000" />
+          <Link className="w-5 h-5 text-stone-900" />
           <h2 className="font-semibold text-stone-900">Traceability Linking</h2>
         </div>
 

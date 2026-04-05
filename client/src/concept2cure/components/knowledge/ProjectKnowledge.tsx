@@ -234,8 +234,8 @@ const ContextMeter: React.FC<ContextMeterProps> = ({ used, max }) => {
         value={percentage}
         className={cn(
           'h-2',
-          isAtLimit && '[&>div]:bg-stone-1000',
-          isNearLimit && !isAtLimit && '[&>div]:bg-stone-1000'
+          isAtLimit && '[&>div]:bg-stone-900',
+          isNearLimit && !isAtLimit && '[&>div]:bg-stone-900'
         )}
       />
       {isNearLimit && (

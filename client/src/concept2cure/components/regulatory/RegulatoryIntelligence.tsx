@@ -309,7 +309,7 @@ function IntelligenceMetrics() {
               <p className="text-base font-semibold">12</p>
               <p className="text-xs text-stone-700">+3 this week</p>
             </div>
-            <FileText className="w-8 h-8 text-stone-1000" />
+            <FileText className="w-8 h-8 text-stone-900" />
           </div>
         </div>
       </div>
@@ -322,7 +322,7 @@ function IntelligenceMetrics() {
               <p className="text-base font-semibold text-stone-600">5</p>
               <p className="text-xs text-stone-700">2 high priority</p>
             </div>
-            <Bell className="w-8 h-8 text-stone-1000" />
+            <Bell className="w-8 h-8 text-stone-900" />
           </div>
         </div>
       </div>
@@ -335,7 +335,7 @@ function IntelligenceMetrics() {
               <p className="text-base font-semibold">24</p>
               <p className="text-xs text-muted-foreground">Last 30 days</p>
             </div>
-            <CheckCircle2 className="w-8 h-8 text-stone-1000" />
+            <CheckCircle2 className="w-8 h-8 text-stone-900" />
           </div>
         </div>
       </div>
@@ -361,7 +361,7 @@ function IntelligenceMetrics() {
               <p className="text-base font-semibold">8</p>
               <p className="text-xs text-muted-foreground">Saved items</p>
             </div>
-            <Bookmark className="w-8 h-8 text-stone-1000" />
+            <Bookmark className="w-8 h-8 text-stone-900" />
           </div>
         </div>
       </div>
@@ -437,7 +437,7 @@ function GuidanceDocuments({ documents }: { documents: RegulatoryDocument[] }) {
         {filteredDocs.map(doc => {
           const agencyConfig = AGENCY_CONFIG[doc.agency];
           return (
-            <div key={doc.id} className="border border-border/40 rounded-sm bg-background hover:shadow-md transition-shadow">
+            <div key={doc.id} className="border border-border/40 rounded-sm bg-background hover:shadow-sm transition-shadow">
               <div className="px-3 py-2 p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -508,9 +508,9 @@ function GuidanceDocuments({ documents }: { documents: RegulatoryDocument[] }) {
  */
 function RegulatoryAlerts({ alerts }: { alerts: RegulatoryAlert[] }) {
   const priorityConfig: Record<AlertPriority, { color: string; icon: React.ReactNode }> = {
-    critical: { color: 'bg-stone-1000 text-white', icon: <AlertCircle className="w-4 h-4" /> },
-    high: { color: 'bg-stone-1000 text-white', icon: <AlertCircle className="w-4 h-4" /> },
-    medium: { color: 'bg-stone-1000 text-white', icon: <Bell className="w-4 h-4" /> },
+    critical: { color: 'bg-stone-900 text-white', icon: <AlertCircle className="w-4 h-4" /> },
+    high: { color: 'bg-stone-900 text-white', icon: <AlertCircle className="w-4 h-4" /> },
+    medium: { color: 'bg-stone-900 text-white', icon: <Bell className="w-4 h-4" /> },
     low: { color: 'bg-stone-100 text-stone-800', icon: <Bell className="w-4 h-4" /> },
   };
 
@@ -534,7 +534,7 @@ function RegulatoryAlerts({ alerts }: { alerts: RegulatoryAlert[] }) {
           return (
             <div
               key={alert.id}
-              className={`border border-border/40 rounded-sm bg-background ${!alert.acknowledged ? 'border-l-4 border-l-stone-1000' : ''}`}
+              className={`border border-border/40 rounded-sm bg-background ${!alert.acknowledged ? 'border-l-4 border-l-stone-900' : ''}`}
             >
               <div className="px-3 py-2 p-4">
                 <div className="flex items-start justify-between">

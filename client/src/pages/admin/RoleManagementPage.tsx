@@ -309,7 +309,7 @@ export default function RoleManagementPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-stone-1000 to-stone-600 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-stone-900 to-stone-600 flex items-center justify-center">
             <Shield className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -322,7 +322,7 @@ export default function RoleManagementPage() {
 
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-stone-1000 to-stone-600">
+            <Button className="bg-gradient-to-r from-stone-900 to-stone-600">
               <Plus className="w-4 h-4 mr-2" />
               Create Role
             </Button>

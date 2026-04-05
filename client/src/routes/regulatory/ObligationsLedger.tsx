@@ -299,13 +299,13 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'critical':
-        return 'bg-stone-1000';
+        return 'bg-stone-900';
       case 'high':
-        return 'bg-stone-1000';
+        return 'bg-stone-900';
       case 'medium':
-        return 'bg-stone-1000';
+        return 'bg-stone-900';
       case 'low':
-        return 'bg-stone-1000';
+        return 'bg-stone-900';
       default:
         return 'bg-stone-500';
     }
@@ -537,7 +537,7 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
             <Card
               key={obligation.id}
               data-testid={`obligation-card-${obligation.id}`}
-              className="hover:shadow-md transition-shadow"
+              className="hover:shadow-sm transition-shadow"
             >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
@@ -741,9 +741,9 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
                         >
                           <div className="flex items-center gap-3">
                             <div className={`w-2 h-2 rounded-full ${
-                              obligation.status === 'completed' ? 'bg-stone-1000' :
-                              isOverdue ? 'bg-stone-1000' :
-                              isThisWeek ? 'bg-stone-1000' : 'bg-stone-1000'
+                              obligation.status === 'completed' ? 'bg-stone-900' :
+                              isOverdue ? 'bg-stone-900' :
+                              isThisWeek ? 'bg-stone-900' : 'bg-stone-900'
                             }`} />
                             <div>
                               <p className="font-medium text-sm">{obligation.title}</p>

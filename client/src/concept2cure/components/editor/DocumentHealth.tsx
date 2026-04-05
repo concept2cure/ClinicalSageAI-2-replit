@@ -245,9 +245,9 @@ export const DocumentHealth: React.FC<DocumentHealthProps> = ({
   };
 
   const getBarColor = (score: number) => {
-    if (score >= 90) return 'bg-stone-1000';
-    if (score >= 70) return 'bg-stone-1000';
-    return 'bg-stone-1000';
+    if (score >= 90) return 'bg-stone-900';
+    if (score >= 70) return 'bg-stone-900';
+    return 'bg-stone-900';
   };
 
   return (
@@ -306,7 +306,7 @@ export const DocumentHealth: React.FC<DocumentHealthProps> = ({
                 <div className="px-5 pb-3 space-y-1.5">
                   {dim.issues.map((issue, i) => (
                     <div key={i} className="flex items-start gap-2 text-xs">
-                      <AlertTriangle className="w-3 h-3 text-stone-1000 mt-0.5 shrink-0" />
+                      <AlertTriangle className="w-3 h-3 text-stone-900 mt-0.5 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <span className="text-stone-600">{issue}</span>
                         {dim.suggestions[i] && (

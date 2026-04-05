@@ -222,9 +222,9 @@ const EnrollmentTracker: React.FC<EnrollmentTrackerProps> = ({ data, currentRate
                     {month.screenFailure} SF
                   </div>
                   {month.actual >= month.target ? (
-                    <CheckCircle2 className="h-4 w-4 text-stone-1000" />
+                    <CheckCircle2 className="h-4 w-4 text-stone-900" />
                   ) : (
-                    <AlertTriangle className="h-4 w-4 text-stone-1000" />
+                    <AlertTriangle className="h-4 w-4 text-stone-900" />
                   )}
                 </div>
               </div>
@@ -626,7 +626,7 @@ export const ClinicalOpsDashboard: React.FC = () => {
                   <TrendingUp className="h-3 w-3" /> +12% vs target
                 </p>
               </div>
-              <Users className="h-8 w-8 text-stone-1000 opacity-50" />
+              <Users className="h-8 w-8 text-stone-900 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -638,7 +638,7 @@ export const ClinicalOpsDashboard: React.FC = () => {
                 <p className="text-2xl font-bold">108</p>
                 <p className="text-xs text-muted-foreground mt-1">across 3 studies</p>
               </div>
-              <Building2 className="h-8 w-8 text-stone-1000 opacity-50" />
+              <Building2 className="h-8 w-8 text-stone-900 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -652,7 +652,7 @@ export const ClinicalOpsDashboard: React.FC = () => {
                   <TrendingDown className="h-3 w-3" /> -3% vs last month
                 </p>
               </div>
-              <AlertTriangle className="h-8 w-8 text-stone-1000 opacity-50" />
+              <AlertTriangle className="h-8 w-8 text-stone-900 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -664,7 +664,7 @@ export const ClinicalOpsDashboard: React.FC = () => {
                 <p className="text-2xl font-bold">142</p>
                 <p className="text-xs text-muted-foreground mt-1">for MX-201-301</p>
               </div>
-              <Calendar className="h-8 w-8 text-stone-1000 opacity-50" />
+              <Calendar className="h-8 w-8 text-stone-900 opacity-50" />
             </div>
           </CardContent>
         </Card>

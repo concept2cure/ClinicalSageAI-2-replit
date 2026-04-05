@@ -56,7 +56,7 @@ export function HowItWorksSection() {
           {STEPS.map(step => (
             <motion.div key={step.step} variants={fadeUp} className="flex items-start gap-5">
               <div
-                className={`${step.color} w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-md`}
+                className={`${step.color} w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm`}
               >
                 {step.step}
               </div>
@@ -71,7 +71,7 @@ export function HowItWorksSection() {
         <motion.div variants={fadeUp} className="text-center mt-12">
           <button
             onClick={() => setLocation('/concept2cure/demo')}
-            className="group inline-flex items-center gap-2 px-7 py-3 text-sm font-medium text-white bg-stone-600 hover:bg-stone-700 rounded-xl transition-all shadow-md"
+            className="group inline-flex items-center gap-2 px-7 py-3 text-sm font-medium text-white bg-stone-600 hover:bg-stone-700 rounded-xl transition-all shadow-sm"
           >
             See It In Action
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />

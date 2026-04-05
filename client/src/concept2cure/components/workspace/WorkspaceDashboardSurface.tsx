@@ -155,10 +155,10 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
           )}
 
           {/* Document Consequence Ledger */}
-          <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+          <div className="rounded-lg border border-stone-200 bg-white p-4 space-y-3">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-stone-700" />
-              <span className="text-sm font-semibold text-slate-900">
+              <span className="text-sm font-semibold text-stone-900">
                 Document Consequence Ledger
               </span>
               <Badge variant="outline" className="text-[10px] ml-auto">
@@ -166,7 +166,7 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
               </Badge>
             </div>
             {documentConsequenceRows.length === 0 ? (
-              <div className="text-xs text-slate-500">
+              <div className="text-xs text-stone-500">
                 No generated or accepted document consequences yet.
               </div>
             ) : (
@@ -174,10 +174,10 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
                 {documentConsequenceRows.map(row => (
                   <div
                     key={row.rowKey}
-                    className="rounded border border-slate-100 px-3 py-2 space-y-1.5"
+                    className="rounded border border-stone-100 px-3 py-2 space-y-1.5"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-xs font-medium text-slate-800 truncate">{row.title}</div>
+                      <div className="text-xs font-medium text-stone-800 truncate">{row.title}</div>
                       <Badge
                         variant="outline"
                         className={cn(
@@ -185,17 +185,17 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
                           row.status === 'draft' && 'text-stone-700 border-stone-200',
                           row.status === 'approved' && 'text-stone-800 border-stone-200',
                           row.status === 'review' && 'text-stone-700 border-stone-200',
-                          row.status === 'locked' && 'text-slate-700 border-slate-200'
+                          row.status === 'locked' && 'text-stone-700 border-stone-200'
                         )}
                       >
                         {row.status}
                       </Badge>
                     </div>
-                    <div className="text-[11px] text-slate-500 flex items-center gap-2 flex-wrap">
+                    <div className="text-[11px] text-stone-500 flex items-center gap-2 flex-wrap">
                       <span>v{row.version}</span>
-                      <span className="text-slate-300">·</span>
+                      <span className="text-stone-300">·</span>
                       <span>{row.placement}</span>
-                      <span className="text-slate-300">·</span>
+                      <span className="text-stone-300">·</span>
                       <span>
                         {row.sourceType === 'compute'
                           ? 'Compute'
@@ -205,14 +205,14 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
                       </span>
                       {row.provenancePresent && (
                         <>
-                          <span className="text-slate-300">·</span>
+                          <span className="text-stone-300">·</span>
                           <span className="text-stone-600">Prov ✓</span>
                         </>
                       )}
                       {row.auditPresent && (
                         <>
-                          <span className="text-slate-300">·</span>
-                          <span className="text-sky-600">Audit ✓</span>
+                          <span className="text-stone-300">·</span>
+                          <span className="text-stone-600">Audit ✓</span>
                         </>
                       )}
                     </div>
@@ -255,25 +255,25 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
 
           {/* Conversation proposals with governed consequence visibility */}
           {proposals.length > 0 && (
-            <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+            <div className="rounded-lg border border-stone-200 bg-white p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <Target className="w-4 h-4 text-stone-600" />
-                <span className="text-sm font-semibold text-slate-900">Document Proposals</span>
+                <span className="text-sm font-semibold text-stone-900">Document Proposals</span>
                 <Badge variant="outline" className="text-[10px] ml-auto">
                   {proposals.length}
                 </Badge>
               </div>
               {proposals.map(p => (
-                <div key={p.id} className="rounded border border-slate-100 px-3 py-2 space-y-1.5">
+                <div key={p.id} className="rounded border border-stone-100 px-3 py-2 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-slate-800">{p.id.slice(0, 12)}</span>
+                    <span className="text-xs font-medium text-stone-800">{p.id.slice(0, 12)}</span>
                     <Badge
                       variant="outline"
                       className={cn(
                         'text-[10px]',
                         p.status === 'pending' && 'text-stone-700 border-stone-200',
                         p.status === 'accepted' && 'text-stone-800 border-stone-200',
-                        p.status === 'rejected' && 'text-rose-700 border-rose-200'
+                        p.status === 'rejected' && 'text-stone-800 border-stone-200'
                       )}
                     >
                       {p.status}
@@ -282,7 +282,7 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
 
                   {/* Governance consequence (visible after accept) */}
                   {p.status === 'accepted' && p.governanceState && (
-                    <div className="rounded bg-slate-50 border border-slate-100 px-2.5 py-1.5 text-[11px] space-y-1">
+                    <div className="rounded bg-stone-50 border border-stone-100 px-2.5 py-1.5 text-[11px] space-y-1">
                       <div className="flex items-center gap-1.5">
                         <ShieldCheck className={cn('w-3 h-3', normalizeGovernanceState(p).tone)} />
                         <span className={cn('font-medium', normalizeGovernanceState(p).tone)}>
@@ -290,10 +290,10 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
                         </span>
                       </div>
                       {p.artifactId && (
-                        <div className="text-slate-600 space-y-0.5">
+                        <div className="text-stone-600 space-y-0.5">
                           <div>
                             Artifact:{' '}
-                            <span className="font-medium text-slate-800">
+                            <span className="font-medium text-stone-800">
                               {p.artifactId.slice(0, 20)}
                             </span>{' '}
                             · v{p.artifactVersion ?? 1} · {p.artifactStatus || 'draft'}
@@ -362,7 +362,7 @@ export const WorkspaceDashboardSurface: React.FC<WorkspaceDashboardSurfaceProps>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-6 px-2.5 text-[11px] text-rose-700 border-rose-200 hover:bg-rose-50"
+                        className="h-6 px-2.5 text-[11px] text-stone-800 border-stone-200 hover:bg-stone-100"
                         onClick={() => onActOnProposal(p.id, 'reject')}
                       >
                         Reject

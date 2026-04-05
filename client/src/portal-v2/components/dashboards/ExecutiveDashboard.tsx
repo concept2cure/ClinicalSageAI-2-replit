@@ -49,7 +49,7 @@ const MetricCardDisplay: React.FC<MetricCardProps> = ({ metric }) => {
         : 'text-stone-500';
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-sm transition-shadow">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -134,7 +134,7 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({ projects }) => {
                   <Progress value={project.progress} className="w-20 h-2" />
                 </div>
                 {project.milestones.some(m => m.status === 'at_risk') && (
-                  <AlertTriangle className="h-5 w-5 text-stone-1000" />
+                  <AlertTriangle className="h-5 w-5 text-stone-900" />
                 )}
                 <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
               </div>
@@ -416,7 +416,7 @@ export const ExecutiveDashboard: React.FC = () => {
   if (hasError) {
     return (
       <div className="rounded-lg border border-stone-200 bg-stone-100 p-6 text-center">
-        <AlertTriangle className="h-8 w-8 text-stone-1000 mx-auto mb-2" />
+        <AlertTriangle className="h-8 w-8 text-stone-900 mx-auto mb-2" />
         <p className="text-stone-800 font-medium">Failed to load dashboard data</p>
         <p className="text-stone-700 text-sm mt-1">Please try refreshing the page.</p>
       </div>

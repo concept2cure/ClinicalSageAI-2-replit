@@ -55,9 +55,9 @@ type SectionStatus = 'not_started' | 'draft' | 'review' | 'approved' | 'locked';
 
 const STATUS_CONFIG: Record<SectionStatus, { label: string; color: string; dot: string }> = {
   not_started: { label: 'Not Started', color: 'text-stone-400', dot: 'bg-stone-300' },
-  draft: { label: 'Draft', color: 'text-stone-600', dot: 'bg-stone-1000' },
+  draft: { label: 'Draft', color: 'text-stone-600', dot: 'bg-stone-900' },
   review: { label: 'In Review', color: 'text-stone-600', dot: 'bg-stone-600' },
-  approved: { label: 'Approved', color: 'text-stone-700', dot: 'bg-stone-1000' },
+  approved: { label: 'Approved', color: 'text-stone-700', dot: 'bg-stone-900' },
   locked: { label: 'Locked', color: 'text-stone-800', dot: 'bg-stone-700' },
 };
 
@@ -159,7 +159,7 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
         <div className="flex items-center gap-4">
           <div className="flex-1 h-2 rounded-full bg-stone-100 overflow-hidden">
             <div
-              className="h-full rounded-full bg-stone-1000 transition-all duration-300"
+              className="h-full rounded-full bg-stone-900 transition-all duration-300"
               style={{ width: `${overallStats.pct}%` }}
             />
           </div>
@@ -234,10 +234,10 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
                     {/* Module progress */}
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {hasGaps && (
-                        <AlertTriangle className="h-3.5 w-3.5 text-stone-1000" />
+                        <AlertTriangle className="h-3.5 w-3.5 text-stone-900" />
                       )}
                       {allComplete ? (
-                        <CheckCircle2 className="h-4 w-4 text-stone-1000" />
+                        <CheckCircle2 className="h-4 w-4 text-stone-900" />
                       ) : (
                         <span className="text-xs font-medium text-stone-500 tabular-nums">
                           {group.stats.completed}/{group.stats.total}
@@ -247,7 +247,7 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
                         <div
                           className={cn(
                             'h-full rounded-full transition-all',
-                            allComplete ? 'bg-stone-1000' : 'bg-stone-600',
+                            allComplete ? 'bg-stone-900' : 'bg-stone-600',
                           )}
                           style={{ width: `${modulePct}%` }}
                         />
@@ -270,7 +270,7 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
                           >
                             {/* Status icon */}
                             {isComplete ? (
-                              <CheckCircle2 className="h-4 w-4 text-stone-1000 flex-shrink-0" />
+                              <CheckCircle2 className="h-4 w-4 text-stone-900 flex-shrink-0" />
                             ) : (
                               <Circle className={cn('h-4 w-4 flex-shrink-0', statusCfg.color)} />
                             )}

@@ -219,7 +219,7 @@ function ToxicityBadge({ score, badge }: { score: number; badge?: ToxicityBadgeT
 
 function SimilarityBar({ score }: { score: number }) {
   const pct = Math.round(score * 100);
-  const color = pct >= 80 ? 'bg-stone-1000' : pct >= 60 ? 'bg-stone-1000' : 'bg-stone-1000';
+  const color = pct >= 80 ? 'bg-stone-900' : pct >= 60 ? 'bg-stone-900' : 'bg-stone-900';
   return (
     <div className="flex items-center gap-2">
       <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
@@ -234,7 +234,7 @@ function ReadinessMeter({ score, size = 'lg' }: { score: number; size?: 'sm' | '
   const pct = Math.round(score * 100);
   const color = pct >= 80 ? 'text-stone-700' : pct >= 60 ? 'text-stone-600' : 'text-stone-700';
   const bgColor =
-    pct >= 80 ? 'stroke-stone-1000' : pct >= 60 ? 'stroke-stone-1000' : 'stroke-stone-1000';
+    pct >= 80 ? 'stroke-stone-900' : pct >= 60 ? 'stroke-stone-900' : 'stroke-stone-900';
   const sz = size === 'lg' ? 120 : 48;
   const strokeWidth = size === 'lg' ? 8 : 4;
   const radius = (sz - strokeWidth) / 2;
@@ -1139,7 +1139,7 @@ function SEMatrixTab({
 
 function ConfidenceDot({ confidence }: { confidence: number }) {
   const color =
-    confidence >= 0.8 ? 'bg-stone-1000' : confidence >= 0.5 ? 'bg-stone-1000' : 'bg-stone-1000';
+    confidence >= 0.8 ? 'bg-stone-900' : confidence >= 0.5 ? 'bg-stone-900' : 'bg-stone-900';
   return (
     <TooltipProvider>
       <Tooltip>
@@ -1297,7 +1297,7 @@ function DefenseMeterTab({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-stone-1000" /> Evidence Gaps
+              <AlertTriangle className="h-5 w-5 text-stone-900" /> Evidence Gaps
             </CardTitle>
             <CardDescription>Missing evidence that needs to be addressed</CardDescription>
           </CardHeader>

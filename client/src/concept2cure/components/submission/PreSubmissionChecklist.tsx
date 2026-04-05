@@ -290,17 +290,17 @@ function buildChecklist(
 function statusIcon(status: CheckStatus, size = 'h-4 w-4') {
   switch (status) {
     case 'pass':
-      return <CheckCircle className={cn(size, 'text-stone-1000')} />;
+      return <CheckCircle className={cn(size, 'text-stone-900')} />;
     case 'fail':
-      return <XCircle className={cn(size, 'text-stone-1000')} />;
+      return <XCircle className={cn(size, 'text-stone-900')} />;
     case 'warning':
-      return <AlertTriangle className={cn(size, 'text-stone-1000')} />;
+      return <AlertTriangle className={cn(size, 'text-stone-900')} />;
     case 'manual':
-      return <Circle className={cn(size, 'text-slate-300')} />;
+      return <Circle className={cn(size, 'text-stone-300')} />;
     case 'running':
-      return <Loader2 className={cn(size, 'text-stone-1000 animate-spin')} />;
+      return <Loader2 className={cn(size, 'text-stone-900 animate-spin')} />;
     default:
-      return <Clock className={cn(size, 'text-slate-300')} />;
+      return <Clock className={cn(size, 'text-stone-300')} />;
   }
 }
 
@@ -364,12 +364,12 @@ export function PreSubmissionChecklist({
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200">
         <div className="flex items-center gap-3">
-          <ClipboardCheck className="h-5 w-5 text-stone-1000" />
+          <ClipboardCheck className="h-5 w-5 text-stone-900" />
           <div>
-            <h2 className="text-base font-semibold text-slate-800">Pre-Submission Checklist</h2>
-            <p className="text-xs text-slate-500">{submissionType} · {region}</p>
+            <h2 className="text-base font-semibold text-stone-800">Pre-Submission Checklist</h2>
+            <p className="text-xs text-stone-500">{submissionType} · {region}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -383,13 +383,13 @@ export function PreSubmissionChecklist({
           </button>
           <button
             onClick={onGenerateReport}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors duration-150"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone-600 bg-stone-100 rounded-md hover:bg-stone-200 transition-colors duration-150"
           >
             <Download className="h-3.5 w-3.5" />
             Report
           </button>
           {onClose && (
-            <button onClick={onClose} aria-label="Close checklist" title="Close" className="p-1.5 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none">
+            <button onClick={onClose} aria-label="Close checklist" title="Close" className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none">
               <X className="h-4 w-4" />
             </button>
           )}
@@ -397,9 +397,9 @@ export function PreSubmissionChecklist({
       </div>
 
       {/* Overall score */}
-      <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
+      <div className="px-4 py-3 border-b border-stone-100 bg-stone-50">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-slate-600">Overall Readiness</span>
+          <span className="text-xs font-medium text-stone-600">Overall Readiness</span>
           <span className={cn(
             'text-sm font-semibold',
             overallScore.pct >= 80 ? 'text-stone-700' : overallScore.pct >= 50 ? 'text-stone-600' : 'text-stone-700',
@@ -407,11 +407,11 @@ export function PreSubmissionChecklist({
             {overallScore.passed}/{overallScore.total} checks passed ({overallScore.pct}%)
           </span>
         </div>
-        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+        <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
           <div
             className={cn(
               'h-full rounded-full transition-all duration-150',
-              overallScore.pct >= 80 ? 'bg-stone-1000' : overallScore.pct >= 50 ? 'bg-stone-1000' : 'bg-stone-1000',
+              overallScore.pct >= 80 ? 'bg-stone-900' : overallScore.pct >= 50 ? 'bg-stone-900' : 'bg-stone-900',
             )}
             style={{ width: `${overallScore.pct}%` }}
           />
@@ -425,22 +425,22 @@ export function PreSubmissionChecklist({
           const isExpanded = expandedCategories.has(cat.id);
 
           return (
-            <div key={cat.id} className="border border-slate-200 rounded-lg overflow-hidden">
+            <div key={cat.id} className="border border-stone-200 rounded-lg overflow-hidden">
               <button
                 onClick={() => toggleCategory(cat.id)}
-                className="w-full flex items-center gap-3 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors duration-150"
+                className="w-full flex items-center gap-3 px-4 py-3 bg-stone-50 hover:bg-stone-100 transition-colors duration-150"
               >
                 {isExpanded
-                  ? <ChevronDown className="h-4 w-4 text-slate-400" />
-                  : <ChevronRight className="h-4 w-4 text-slate-400" />}
-                <cat.icon className="h-4 w-4 text-slate-500" />
-                <span className="text-sm font-medium text-slate-700 flex-1 text-left">{cat.label}</span>
+                  ? <ChevronDown className="h-4 w-4 text-stone-400" />
+                  : <ChevronRight className="h-4 w-4 text-stone-400" />}
+                <cat.icon className="h-4 w-4 text-stone-500" />
+                <span className="text-sm font-medium text-stone-700 flex-1 text-left">{cat.label}</span>
                 <span className={cn(
                   'text-xs font-medium px-2 py-0.5 rounded',
                   score.status === 'pass' ? 'text-stone-800 bg-stone-100'
                     : score.status === 'fail' ? 'text-stone-800 bg-stone-100'
                       : score.status === 'warning' ? 'text-stone-700 bg-stone-100'
-                        : 'text-slate-500 bg-slate-100',
+                        : 'text-stone-500 bg-stone-100',
                 )}>
                   {score.passed}/{score.total}
                 </span>
@@ -448,11 +448,11 @@ export function PreSubmissionChecklist({
               </button>
 
               {isExpanded && (
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-stone-100">
                   {cat.items.map(item => (
                     <div
                       key={item.id}
-                      className="flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 transition-colors duration-150"
+                      className="flex items-start gap-3 px-4 py-2.5 hover:bg-stone-50 transition-colors duration-150"
                     >
                       {item.autoCheck ? (
                         statusIcon(item.status)
@@ -462,21 +462,21 @@ export function PreSubmissionChecklist({
                           className="shrink-0 mt-0.5"
                         >
                           {item.status === 'pass' ? (
-                            <div className="h-4 w-4 rounded border-2 border-stone-1000 bg-stone-1000 flex items-center justify-center">
+                            <div className="h-4 w-4 rounded border-2 border-stone-900 bg-stone-900 flex items-center justify-center">
                               <Check className="h-2.5 w-2.5 text-white" />
                             </div>
                           ) : (
-                            <div className="h-4 w-4 rounded border-2 border-slate-300 hover:border-stone-400 transition-colors duration-150" />
+                            <div className="h-4 w-4 rounded border-2 border-stone-300 hover:border-stone-400 transition-colors duration-150" />
                           )}
                         </button>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-slate-700">{item.label}</p>
+                        <p className="text-xs font-medium text-stone-700">{item.label}</p>
                         {item.description && (
-                          <p className="text-[11px] text-slate-400 mt-0.5">{item.description}</p>
+                          <p className="text-[11px] text-stone-400 mt-0.5">{item.description}</p>
                         )}
                         {item.details && (
-                          <p className="text-[11px] text-stone-1000 mt-0.5">{item.details}</p>
+                          <p className="text-[11px] text-stone-900 mt-0.5">{item.details}</p>
                         )}
                       </div>
                       {item.status === 'fail' && item.fixAction && onFixIssue && (
@@ -488,7 +488,7 @@ export function PreSubmissionChecklist({
                         </button>
                       )}
                       {!item.autoCheck && (
-                        <span className="text-[10px] text-slate-300 italic whitespace-nowrap">manual</span>
+                        <span className="text-[10px] text-stone-300 italic whitespace-nowrap">manual</span>
                       )}
                     </div>
                   ))}

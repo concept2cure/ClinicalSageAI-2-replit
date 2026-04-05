@@ -494,7 +494,7 @@ export function RegulatoryIntelligencePanel({
                     <ul className="mt-1 space-y-0.5">
                       {compareResult.similarities.map((s, i) => (
                         <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
-                          <CheckCircle className="w-3 h-3 flex-shrink-0 mt-0.5 text-stone-1000" />
+                          <CheckCircle className="w-3 h-3 flex-shrink-0 mt-0.5 text-stone-900" />
                           {typeof s === 'string' ? s : (s as any).description || (s as any).area || s.dimension}
                         </li>
                       ))}
@@ -507,7 +507,7 @@ export function RegulatoryIntelligencePanel({
                     <ul className="mt-1 space-y-0.5">
                       {compareResult.differences.map((d, i) => (
                         <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
-                          <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5 text-stone-1000" />
+                          <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5 text-stone-900" />
                           {typeof d === 'string' ? d : (d as any).description || (d as any).area || d.dimension}
                         </li>
                       ))}
@@ -589,7 +589,7 @@ export function RegulatoryIntelligencePanel({
                 <ScoreBar
                   value={(predictionResult.successScore || 0) / 100}
                   label="Trial Success Probability"
-                  color="bg-stone-1000"
+                  color="bg-stone-900"
                 />
                 {predictionResult.confidenceInterval && (
                   <p className="text-xs text-stone-500">
@@ -664,7 +664,7 @@ export function RegulatoryIntelligencePanel({
                     <ScoreBar
                       value={(riskResult.mitigationPlan.overallRiskScore || 0) / 100}
                       label="Overall Risk Score"
-                      color="bg-stone-1000"
+                      color="bg-stone-900"
                     />
 
                     {riskResult.mitigationPlan.goNoGoRecommendation && (
@@ -760,7 +760,7 @@ export function RegulatoryIntelligencePanel({
                     <ul className="mt-1.5 space-y-0.5">
                       {precedentStrategy.data.testingRequirements.map((t: any, i: number) => (
                         <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
-                          <CheckCircle className="w-3 h-3 flex-shrink-0 mt-0.5 text-stone-1000" />
+                          <CheckCircle className="w-3 h-3 flex-shrink-0 mt-0.5 text-stone-900" />
                           {typeof t === 'string' ? t : t.requirement || t.name}
                         </li>
                       ))}
@@ -923,10 +923,10 @@ export function RegulatoryIntelligencePanel({
               const coverageRatio = Math.min(1, available / Math.max(1, required.length));
               const coverageColor =
                 coverageRatio >= 0.7
-                  ? 'bg-stone-1000'
+                  ? 'bg-stone-900'
                   : coverageRatio >= 0.4
-                    ? 'bg-stone-1000'
-                    : 'bg-stone-1000';
+                    ? 'bg-stone-900'
+                    : 'bg-stone-900';
               const coverageLabel =
                 coverageRatio >= 0.7 ? 'Good' : coverageRatio >= 0.4 ? 'Partial' : 'Gaps Found';
               return (
@@ -964,9 +964,9 @@ export function RegulatoryIntelligencePanel({
                       return (
                         <div key={i} className="flex items-center gap-1 text-xs">
                           {matched ? (
-                            <CheckCircle className="w-3 h-3 text-stone-1000 shrink-0" />
+                            <CheckCircle className="w-3 h-3 text-stone-900 shrink-0" />
                           ) : (
-                            <AlertTriangle className="w-3 h-3 text-stone-1000 shrink-0" />
+                            <AlertTriangle className="w-3 h-3 text-stone-900 shrink-0" />
                           )}
                           <span
                             className={matched ? 'text-stone-600' : 'text-stone-700 font-medium'}

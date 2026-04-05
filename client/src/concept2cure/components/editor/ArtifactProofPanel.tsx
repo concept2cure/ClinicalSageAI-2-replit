@@ -177,9 +177,9 @@ const ArtifactProofPanel: React.FC<ArtifactProofPanelProps> = ({ projectId, arti
 
   const StatusIcon: React.FC<{ status: ProofItem['status'] }> = ({ status }) => {
     switch (status) {
-      case 'pass': return <CheckCircle className="w-3.5 h-3.5 text-stone-1000" />;
-      case 'fail': return <XCircle className="w-3.5 h-3.5 text-stone-1000" />;
-      case 'warn': return <AlertTriangle className="w-3.5 h-3.5 text-stone-1000" />;
+      case 'pass': return <CheckCircle className="w-3.5 h-3.5 text-stone-900" />;
+      case 'fail': return <XCircle className="w-3.5 h-3.5 text-stone-900" />;
+      case 'warn': return <AlertTriangle className="w-3.5 h-3.5 text-stone-900" />;
       default: return <Hash className="w-3.5 h-3.5 text-stone-400" />;
     }
   };
@@ -208,7 +208,7 @@ const ArtifactProofPanel: React.FC<ArtifactProofPanelProps> = ({ projectId, arti
         </div>
         {artifact.status === 'locked' ? (
           <div className="flex items-center gap-1 mt-1">
-            <Lock className="w-3 h-3 text-stone-1000" />
+            <Lock className="w-3 h-3 text-stone-900" />
             <span className="text-xs text-stone-700 font-medium">Locked</span>
           </div>
         ) : (

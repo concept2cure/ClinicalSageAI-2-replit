@@ -140,7 +140,7 @@ export default function DocumentPreview({
           {state.status === 'error' && (
             <div className="flex items-center justify-center h-full px-8">
               <div className="text-center max-w-md">
-                <div className="text-stone-1000 text-3xl mb-3">!</div>
+                <div className="text-stone-900 text-3xl mb-3">!</div>
                 <p className="text-sm font-medium text-stone-900 mb-1">Preview unavailable</p>
                 <p className="text-xs text-stone-500 mb-4">{state.message}</p>
                 <button

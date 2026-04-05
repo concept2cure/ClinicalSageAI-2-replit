@@ -102,7 +102,7 @@ const SE_FIELDS = [
 
 function ReadinessGauge({ score }: { score: number }) {
   const color = score >= 80 ? 'text-stone-700' : score >= 50 ? 'text-stone-600' : 'text-stone-700';
-  const bgColor = score >= 80 ? 'bg-stone-1000' : score >= 50 ? 'bg-stone-1000' : 'bg-stone-1000';
+  const bgColor = score >= 80 ? 'bg-stone-900' : score >= 50 ? 'bg-stone-900' : 'bg-stone-900';
 
   return (
     <div className="flex flex-col items-center gap-2">

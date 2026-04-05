@@ -222,7 +222,7 @@ const TOPIC_CONFIG: Record<QuestionTopic, { label: string; color: string }> = {
   efficacy: { label: 'Efficacy', color: 'bg-stone-100 text-stone-700' },
   labeling: { label: 'Labeling', color: 'bg-stone-200 text-stone-700' },
   pediatric: { label: 'Pediatric', color: 'bg-stone-100 text-stone-700' },
-  risk_management: { label: 'Risk Mgmt', color: 'bg-rose-100 text-rose-700' },
+  risk_management: { label: 'Risk Mgmt', color: 'bg-stone-100 text-stone-800' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════

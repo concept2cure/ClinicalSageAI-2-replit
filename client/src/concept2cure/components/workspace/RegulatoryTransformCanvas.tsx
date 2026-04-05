@@ -156,7 +156,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
     <div className="flex-1 flex flex-col bg-white min-h-0 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 h-10 border-b border-stone-200 shrink-0">
-        <Sparkles className="w-4 h-4 text-stone-1000" />
+        <Sparkles className="w-4 h-4 text-stone-900" />
         <h2 className="text-sm font-semibold text-stone-900">Regulatory Transform Canvas</h2>
         {projectName && (
           <>
@@ -179,7 +179,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
           {/* ── Lane 1: Inputs ── */}
           <div className="bg-white p-3 flex flex-col gap-3">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-700 pb-1 border-b border-stone-200">
-              <Database className="w-3.5 h-3.5 text-stone-1000" />
+              <Database className="w-3.5 h-3.5 text-stone-900" />
               Inputs
             </div>
             {context ? (
@@ -219,7 +219,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
           {/* ── Lane 2: Structured Transform ── */}
           <div className="bg-white p-3 flex flex-col gap-3">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-700 pb-1 border-b border-stone-200">
-              <Layers className="w-3.5 h-3.5 text-stone-1000" />
+              <Layers className="w-3.5 h-3.5 text-stone-900" />
               Structured Transform
             </div>
             {selectedCtd ? (
@@ -244,7 +244,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
                           className="flex items-center gap-1 text-xs text-stone-600"
                         >
                           {s.required ? (
-                            <CheckCircle className="w-3 h-3 text-stone-1000 shrink-0" />
+                            <CheckCircle className="w-3 h-3 text-stone-900 shrink-0" />
                           ) : (
                             <span className="w-3 h-3 rounded-full border border-stone-300 shrink-0" />
                           )}
@@ -299,7 +299,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
           {/* ── Lane 3: Draft Output ── */}
           <div className="bg-white p-3 flex flex-col gap-3">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-700 pb-1 border-b border-stone-200">
-              <FileText className="w-3.5 h-3.5 text-stone-1000" />
+              <FileText className="w-3.5 h-3.5 text-stone-900" />
               Draft Output
             </div>
             <div>
@@ -344,7 +344,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
           {/* ── Lane 4: Governance ── */}
           <div className="bg-white p-3 flex flex-col gap-3">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-700 pb-1 border-b border-stone-200">
-              <ShieldCheck className="w-3.5 h-3.5 text-stone-1000" />
+              <ShieldCheck className="w-3.5 h-3.5 text-stone-900" />
               Governance
             </div>
             <LaneStat label="Provenance" value="always on" sublabel="Every action recorded" />
@@ -359,7 +359,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
           {/* ── Lane 5: Downstream Actions ── */}
           <div className="bg-white p-3 flex flex-col gap-2">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-700 pb-1 border-b border-stone-200">
-              <ArrowRight className="w-3.5 h-3.5 text-stone-1000" />
+              <ArrowRight className="w-3.5 h-3.5 text-stone-900" />
               Downstream Actions
             </div>
             <ActionButton

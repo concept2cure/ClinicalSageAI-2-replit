@@ -622,7 +622,7 @@ const SLASH_CATEGORY_COLORS: Record<string, string> = {
   Analysis: 'text-stone-600',
   Biostatistics: 'text-stone-700',
   Subspecialties: 'text-stone-600',
-  Authoring: 'text-rose-600',
+  Authoring: 'text-stone-700',
   Lifecycle: 'text-stone-700',
   Navigation: 'text-zinc-500',
 };
@@ -4624,7 +4624,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                   {action.executed && !action.error ? (
                                     <Check className="w-3.5 h-3.5 flex-shrink-0" />
                                   ) : action.error ? (
-                                    <span className="w-3.5 h-3.5 flex-shrink-0 text-stone-1000">
+                                    <span className="w-3.5 h-3.5 flex-shrink-0 text-stone-900">
                                       !
                                     </span>
                                   ) : (

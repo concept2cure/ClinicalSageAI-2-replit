@@ -193,13 +193,13 @@ function OutlineIcon({ type }: { type: OutlineNodeType }) {
     case 'h3':
       return <Heading3 className="w-3.5 h-3.5 text-stone-400 shrink-0" />;
     case 'table':
-      return <Table2 className="w-3.5 h-3.5 text-stone-1000 shrink-0" />;
+      return <Table2 className="w-3.5 h-3.5 text-stone-900 shrink-0" />;
     case 'evidence':
-      return <BookOpen className="w-3.5 h-3.5 text-stone-1000 shrink-0" />;
+      return <BookOpen className="w-3.5 h-3.5 text-stone-900 shrink-0" />;
     case 'citation':
       return <Link2 className="w-3.5 h-3.5 text-stone-500 shrink-0" />;
     case 'comment':
-      return <MessageSquare className="w-3.5 h-3.5 text-stone-1000 shrink-0" />;
+      return <MessageSquare className="w-3.5 h-3.5 text-stone-900 shrink-0" />;
   }
 }
 
@@ -318,9 +318,9 @@ function TemplateStructureView({
             )}
           >
             {present ? (
-              <CheckCircle2 className="w-3 h-3 text-stone-1000 shrink-0" />
+              <CheckCircle2 className="w-3 h-3 text-stone-900 shrink-0" />
             ) : item.required ? (
-              <AlertCircle className="w-3 h-3 text-stone-1000 shrink-0" />
+              <AlertCircle className="w-3 h-3 text-stone-900 shrink-0" />
             ) : (
               <Circle className="w-3 h-3 text-stone-400 shrink-0" />
             )}

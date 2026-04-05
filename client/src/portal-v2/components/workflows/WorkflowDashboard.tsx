@@ -146,7 +146,7 @@ const WorkflowCard: React.FC<WorkflowCardProps> = ({ workflow, onView }) => {
 
   return (
     <Card
-      className="hover:shadow-md transition-shadow cursor-pointer"
+      className="hover:shadow-sm transition-shadow cursor-pointer"
       onClick={() => onView(workflow)}
     >
       <CardContent className="p-4">
@@ -469,7 +469,7 @@ const WorkflowTemplates: React.FC<WorkflowTemplatesProps> = ({ templates, onCrea
       {templates.map(template => (
         <Card
           key={template.id}
-          className="hover:shadow-md transition-shadow cursor-pointer"
+          className="hover:shadow-sm transition-shadow cursor-pointer"
           onClick={() => onCreateWorkflow(template)}
         >
           <CardContent className="p-4">
@@ -694,7 +694,7 @@ export const WorkflowDashboard: React.FC = () => {
   if (projectsError) {
     return (
       <div className="rounded-lg border border-stone-200 bg-stone-100 p-6 text-center">
-        <AlertTriangleIcon className="h-8 w-8 text-stone-1000 mx-auto mb-2" />
+        <AlertTriangleIcon className="h-8 w-8 text-stone-900 mx-auto mb-2" />
         <p className="text-stone-800 font-medium">Failed to load workflow data</p>
         <p className="text-stone-700 text-sm mt-1">Please try refreshing the page.</p>
       </div>
@@ -729,7 +729,7 @@ export const WorkflowDashboard: React.FC = () => {
                 <p className="text-sm text-muted-foreground">Active</p>
                 <p className="text-2xl font-bold">{stats.active}</p>
               </div>
-              <Play className="h-8 w-8 text-stone-1000 opacity-50" />
+              <Play className="h-8 w-8 text-stone-900 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -740,7 +740,7 @@ export const WorkflowDashboard: React.FC = () => {
                 <p className="text-sm text-muted-foreground">On Hold</p>
                 <p className="text-2xl font-bold">{stats.onHold}</p>
               </div>
-              <Pause className="h-8 w-8 text-stone-1000 opacity-50" />
+              <Pause className="h-8 w-8 text-stone-900 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -751,7 +751,7 @@ export const WorkflowDashboard: React.FC = () => {
                 <p className="text-sm text-muted-foreground">My Pending Actions</p>
                 <p className="text-2xl font-bold">{stats.myPending}</p>
               </div>
-              <Clock className="h-8 w-8 text-stone-1000 opacity-50" />
+              <Clock className="h-8 w-8 text-stone-900 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -762,7 +762,7 @@ export const WorkflowDashboard: React.FC = () => {
                 <p className="text-sm text-muted-foreground">Completed This Month</p>
                 <p className="text-2xl font-bold">{stats.completed}</p>
               </div>
-              <CheckCircle2 className="h-8 w-8 text-stone-1000 opacity-50" />
+              <CheckCircle2 className="h-8 w-8 text-stone-900 opacity-50" />
             </div>
           </CardContent>
         </Card>

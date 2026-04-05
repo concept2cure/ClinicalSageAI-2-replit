@@ -121,7 +121,7 @@ export default function SampleChainPanel({ sampleId, sampleCode }: SampleChainPa
       case 'DISPOSED':
         return 'bg-stone-100 text-stone-800';
       default:
-        return 'bg-slate-100 text-slate-800';
+        return 'bg-stone-100 text-stone-800';
     }
   };
 
@@ -156,7 +156,7 @@ export default function SampleChainPanel({ sampleId, sampleCode }: SampleChainPa
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Add New Entry */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-2 p-3 bg-slate-50 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-2 p-3 bg-stone-50 rounded-lg">
           <Select value={newAction} onValueChange={setNewAction}>
             <SelectTrigger>
               <SelectValue placeholder="Select action..." />

@@ -34,12 +34,12 @@ import {
 
 // App icon map
 const APP_ICONS: Record<string, React.ReactNode> = {
-  'evidence-memo': <FileText className="w-5 h-5 text-stone-1000" />,
+  'evidence-memo': <FileText className="w-5 h-5 text-stone-900" />,
   'protocol-rationale': <FlaskConical className="w-5 h-5 text-stone-500" />,
-  'clinical-overview': <BookOpen className="w-5 h-5 text-stone-1000" />,
-  'module3-builder': <Layers className="w-5 h-5 text-stone-1000" />,
-  'risk-benefit': <ShieldCheck className="w-5 h-5 text-stone-1000" />,
-  'audit-report': <ClipboardList className="w-5 h-5 text-stone-1000" />,
+  'clinical-overview': <BookOpen className="w-5 h-5 text-stone-900" />,
+  'module3-builder': <Layers className="w-5 h-5 text-stone-900" />,
+  'risk-benefit': <ShieldCheck className="w-5 h-5 text-stone-900" />,
+  'audit-report': <ClipboardList className="w-5 h-5 text-stone-900" />,
 };
 
 interface SubmissionAppsPanelProps {
@@ -104,7 +104,7 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
     <div className="flex-1 flex flex-col bg-white min-h-0 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 h-10 border-b border-stone-200 shrink-0">
-        <Sparkles className="w-4 h-4 text-stone-1000" />
+        <Sparkles className="w-4 h-4 text-stone-900" />
         <h2 className="text-sm font-semibold text-stone-900">Submission Apps</h2>
         {projectName && (
           <>

@@ -54,7 +54,7 @@ const StrategicReport: React.FC<StrategicReportProps> = ({ report, onExportPdf }
     if (titleLower.includes('strategic')) return <Target className="h-5 w-5 text-stone-600" />;
     if (titleLower.includes('recommendation'))
       return <CheckCircle className="h-5 w-5 text-stone-600" />;
-    return <Info className="h-5 w-5 text-slate-600" />;
+    return <Info className="h-5 w-5 text-stone-600" />;
   };
 
   return (
@@ -84,7 +84,7 @@ const StrategicReport: React.FC<StrategicReportProps> = ({ report, onExportPdf }
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {report.sections.map((section, index) => (
           <Card key={index} className="overflow-hidden">
-            <CardHeader className="bg-slate-50">
+            <CardHeader className="bg-stone-50">
               <div className="flex items-center">
                 {getSectionIcon(section.title)}
                 <CardTitle className="ml-2">{section.title}</CardTitle>
@@ -92,18 +92,18 @@ const StrategicReport: React.FC<StrategicReportProps> = ({ report, onExportPdf }
             </CardHeader>
             <CardContent className="pt-4">
               {/* Text content */}
-              {section.content && <p className="text-slate-700 mb-4">{section.content}</p>}
+              {section.content && <p className="text-stone-700 mb-4">{section.content}</p>}
 
               {/* Table content */}
               {section.table && section.table.length > 0 && (
                 <div className="border rounded-md overflow-hidden mt-2">
                   <table className="min-w-full divide-y divide-stone-200">
-                    <thead className="bg-slate-50">
+                    <thead className="bg-stone-50">
                       <tr>
                         {Object.keys(section.table[0]).map(key => (
                           <th
                             key={key}
-                            className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                            className="px-4 py-2 text-left text-xs font-medium text-stone-500 uppercase tracking-wider"
                           >
                             {key.replace(/_/g, ' ')}
                           </th>
@@ -116,7 +116,7 @@ const StrategicReport: React.FC<StrategicReportProps> = ({ report, onExportPdf }
                           {Object.entries(row).map(([key, value], cellIndex) => (
                             <td
                               key={`${rowIndex}-${cellIndex}`}
-                              className="px-4 py-2 text-sm text-slate-700 font-medium"
+                              className="px-4 py-2 text-sm text-stone-700 font-medium"
                             >
                               {typeof value === 'string' && value.includes('%') ? (
                                 <Badge variant={parseFloat(value) > 50 ? 'default' : 'secondary'}>
@@ -138,7 +138,7 @@ const StrategicReport: React.FC<StrategicReportProps> = ({ report, onExportPdf }
               {section.bullets && section.bullets.length > 0 && (
                 <ul className="list-disc pl-5 space-y-1 mt-2">
                   {section.bullets.map((bullet, bulletIndex) => (
-                    <li key={bulletIndex} className="text-slate-700">
+                    <li key={bulletIndex} className="text-stone-700">
                       {bullet}
                     </li>
                   ))}

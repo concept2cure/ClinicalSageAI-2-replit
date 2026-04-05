@@ -58,20 +58,20 @@ function formatTimeAgo(dateStr: string): string {
 function getNotifIcon(type: string) {
   switch (type) {
     case 'assignment':
-      return <ListTodo className="w-3 h-3 text-stone-1000" />;
+      return <ListTodo className="w-3 h-3 text-stone-900" />;
     case 'due_soon':
-      return <Clock className="w-3 h-3 text-stone-1000" />;
+      return <Clock className="w-3 h-3 text-stone-900" />;
     case 'overdue':
-      return <AlertTriangle className="w-3 h-3 text-stone-1000" />;
+      return <AlertTriangle className="w-3 h-3 text-stone-900" />;
     case 'approval_needed':
-      return <CheckCircle2 className="w-3 h-3 text-stone-1000" />;
+      return <CheckCircle2 className="w-3 h-3 text-stone-900" />;
     case 'changes_requested':
       return <AlertTriangle className="w-3 h-3 text-stone-600" />;
     case 'thread_reply':
-      return <MessageSquare className="w-3 h-3 text-stone-1000" />;
+      return <MessageSquare className="w-3 h-3 text-stone-900" />;
     case 'thread_resolved':
     case 'task_resolved':
-      return <CheckCircle2 className="w-3 h-3 text-stone-1000" />;
+      return <CheckCircle2 className="w-3 h-3 text-stone-900" />;
     case 'escalation':
       return <AlertTriangle className="w-3 h-3 text-stone-700" />;
     default:
@@ -194,7 +194,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
       >
         <Bell className="w-3 h-3" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[12px] h-3 px-0.5 bg-stone-1000 text-white text-[7px] font-semibold rounded-full flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 min-w-[12px] h-3 px-0.5 bg-stone-900 text-white text-[7px] font-semibold rounded-full flex items-center justify-center">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -296,7 +296,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                         e.stopPropagation();
                         dismiss(n.notificationId);
                       }}
-                      className="p-1.5 text-stone-400 hover:text-stone-1000 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
+                      className="p-1.5 text-stone-400 hover:text-stone-900 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
                       title="Dismiss"
                       aria-label="Dismiss notification"
                     >

@@ -112,7 +112,7 @@ function BlockerItem({ blocker }: { blocker: PromotionBlocker }) {
       <AlertTriangle
         className={cn(
           'w-3 h-3 mt-0.5 shrink-0',
-          blocker.severity === 'critical' ? 'text-stone-1000' : 'text-stone-1000'
+          blocker.severity === 'critical' ? 'text-stone-900' : 'text-stone-900'
         )}
       />
       <div className="flex-1 min-w-0">
@@ -138,11 +138,11 @@ function BlockerItem({ blocker }: { blocker: PromotionBlocker }) {
 function DecisionItem({ decision }: { decision: GovernanceDecision }) {
   const statusIcon =
     decision.status === 'confirmed' ? (
-      <CheckCircle className="w-3 h-3 text-stone-1000" />
+      <CheckCircle className="w-3 h-3 text-stone-900" />
     ) : decision.status === 'rejected' ? (
-      <ShieldX className="w-3 h-3 text-stone-1000" />
+      <ShieldX className="w-3 h-3 text-stone-900" />
     ) : (
-      <Clock className="w-3 h-3 text-stone-1000" />
+      <Clock className="w-3 h-3 text-stone-900" />
     );
 
   return (
@@ -273,7 +273,7 @@ export function GovernanceStatusBar({
               </h4>
               {blockers.length === 0 ? (
                 <div className="flex items-center gap-1.5 py-1.5">
-                  <CheckCircle className="w-3 h-3 text-stone-1000" />
+                  <CheckCircle className="w-3 h-3 text-stone-900" />
                   <span className="text-[12px] text-stone-500">
                     No blockers found
                   </span>

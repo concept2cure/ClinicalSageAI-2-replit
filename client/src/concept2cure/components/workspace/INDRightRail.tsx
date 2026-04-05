@@ -90,7 +90,7 @@ export const INDRightRail: React.FC<INDRightRailProps> = ({
             </h3>
             {csrLoading || precedentLoading ? (
               <div className="flex items-center gap-2 py-4 justify-center">
-                <Loader2 className="w-4 h-4 animate-spin text-stone-1000" />
+                <Loader2 className="w-4 h-4 animate-spin text-stone-900" />
                 <span className="text-xs text-stone-500">Loading evidence…</span>
               </div>
             ) : (
@@ -259,7 +259,7 @@ const InputItem: React.FC<{ label: string; required?: boolean }> = ({ label, req
       className={cn('w-2 h-2 rounded-full flex-shrink-0', required ? 'bg-stone-400' : 'bg-stone-300')}
     />
     <span className="text-xs text-stone-700">{label}</span>
-    {required && <span className="text-xs text-stone-1000 font-medium ml-auto">Required</span>}
+    {required && <span className="text-xs text-stone-900 font-medium ml-auto">Required</span>}
   </div>
 );
 

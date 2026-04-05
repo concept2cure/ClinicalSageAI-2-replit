@@ -159,7 +159,7 @@ const VersionItem: React.FC<VersionItemProps> = ({
         className={cn(
           'absolute left-0 w-6 h-6 rounded-full flex items-center justify-center',
           isCurrent
-            ? 'bg-stone-100 text-stone-600 ring-2 ring-stone-1000 ring-offset-2'
+            ? 'bg-stone-100 text-stone-600 ring-2 ring-stone-900 ring-offset-2'
             : 'bg-stone-100 text-stone-500',
           isSelected && 'ring-2 ring-stone-400 ring-offset-1'
         )}

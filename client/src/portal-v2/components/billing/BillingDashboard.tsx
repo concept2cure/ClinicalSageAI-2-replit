@@ -179,7 +179,7 @@ export default function BillingDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-stone-1000" />
+        <Loader2 className="h-8 w-8 animate-spin text-stone-900" />
       </div>
     );
   }
@@ -234,7 +234,7 @@ export default function BillingDashboard() {
 
       {/* Current Plan Card */}
       {subscription && (
-        <div className="rounded-xl border bg-gradient-to-r from-stone-100 to-stone-100 p-6">
+        <div className="rounded-xl border bg-stone-100 p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-stone-100 rounded-lg">
@@ -322,9 +322,9 @@ export default function BillingDashboard() {
               key={tier.tier}
               className={`relative rounded-xl border-2 p-6 transition ${
                 isRecommended
-                  ? 'border-stone-1000 shadow-lg'
+                  ? 'border-stone-900 shadow-sm'
                   : isCurrent
-                  ? 'border-stone-1000 bg-stone-100/30'
+                  ? 'border-stone-900 bg-stone-100/30'
                   : 'border-stone-200 hover:border-stone-300'
               }`}
             >
@@ -369,7 +369,7 @@ export default function BillingDashboard() {
 
               {isCurrent ? (
                 <Button variant="outline" className="w-full" disabled>
-                  <CheckCircle className="h-4 w-4 mr-2 text-stone-1000" />
+                  <CheckCircle className="h-4 w-4 mr-2 text-stone-900" />
                   Current Plan
                 </Button>
               ) : isUpgrade ? (

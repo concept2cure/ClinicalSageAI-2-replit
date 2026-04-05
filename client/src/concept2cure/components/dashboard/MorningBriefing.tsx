@@ -120,11 +120,11 @@ const PRIORITY_CONFIG: Record<AlertPriority, {
   border: string;
   icon?: React.ReactNode;
 }> = {
-  CRITICAL: { indicator: 'bg-stone-1000', border: 'border-l-stone-1000', icon: <AlertTriangle className="w-3 h-3 text-stone-1000" /> },
-  HIGH: { indicator: 'bg-stone-1000', border: 'border-l-stone-1000', icon: <Zap className="w-3 h-3 text-stone-1000" /> },
-  MEDIUM: { indicator: 'bg-stone-1000', border: 'border-l-stone-1000' },
-  LOW: { indicator: 'bg-stone-600', border: 'border-l-stone-1000' },
-  INFO: { indicator: 'bg-stone-400', border: 'border-l-slate-400' },
+  CRITICAL: { indicator: 'bg-stone-900', border: 'border-l-stone-900', icon: <AlertTriangle className="w-3 h-3 text-stone-900" /> },
+  HIGH: { indicator: 'bg-stone-900', border: 'border-l-stone-900', icon: <Zap className="w-3 h-3 text-stone-900" /> },
+  MEDIUM: { indicator: 'bg-stone-900', border: 'border-l-stone-900' },
+  LOW: { indicator: 'bg-stone-600', border: 'border-l-stone-900' },
+  INFO: { indicator: 'bg-stone-400', border: 'border-l-stone-400' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -188,7 +188,7 @@ const AlertCard: React.FC<{
       </div>
       
       {/* Arrow */}
-      <div className="flex items-center text-stone-400 group-hover:text-stone-1000 transition-transform group-hover:translate-x-1">
+      <div className="flex items-center text-stone-400 group-hover:text-stone-900 transition-transform group-hover:translate-x-1">
         <ArrowRight size={18} />
       </div>
     </button>
@@ -204,8 +204,8 @@ const PriorityItem: React.FC<{ priority: TodaysPriority }> = ({ priority }) => (
   )}>
     <div className={cn(
       'w-2 h-2 rounded-full flex-shrink-0',
-      priority.urgency === 'now' && 'bg-stone-1000 animate-pulse',
-      priority.urgency === 'today' && 'bg-stone-1000',
+      priority.urgency === 'now' && 'bg-stone-900 animate-pulse',
+      priority.urgency === 'today' && 'bg-stone-900',
       priority.urgency === 'this_week' && 'bg-stone-400'
     )} />
     <div className="flex-1 min-w-0">
@@ -322,7 +322,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
             {criticalAlerts.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <AlertTriangle className="w-4 h-4 text-stone-1000" />
+                  <AlertTriangle className="w-4 h-4 text-stone-900" />
                   <Overline>Critical Updates</Overline>
                   <span className="px-2 py-0.5 text-xs font-semibold bg-stone-100 text-stone-800 rounded-full">
                     {criticalAlerts.length}
@@ -347,7 +347,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
             {priorities.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <Clock className="w-4 h-4 text-stone-1000" />
+                  <Clock className="w-4 h-4 text-stone-900" />
                   <Overline>Today's Priorities</Overline>
                 </div>
                 <div className="space-y-2">

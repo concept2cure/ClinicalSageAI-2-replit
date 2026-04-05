@@ -146,7 +146,7 @@ export default function SSTPanel({ testId }: { testId: string }) {
           </div>
         </div>
 
-        <div className="text-slate-600">
+        <div className="text-stone-600">
           Latest SST: {latest ? new Date(latest.created_at).toLocaleString() : '—'}{' '}
           {validity ? `• age ~ ${validity.ageH}h` : ''}
         </div>
@@ -168,7 +168,7 @@ export default function SSTPanel({ testId }: { testId: string }) {
             Record SST (fail)
           </Button>
         </div>
-        <div className="text-xs text-slate-500">
+        <div className="text-xs text-stone-500">
           Results entry is blocked unless SST is current and meets template rules. Choose a template
           to enable rule enforcement (e.g., plates, tailing, r², %RSD, temperature window).
         </div>

@@ -763,9 +763,9 @@ function UserRow({
           ) : (
             <div className="flex items-center gap-1">
               {issues.some(i => i.severity === 'critical') ? (
-                <ShieldX className="h-4 w-4 text-stone-1000" />
+                <ShieldX className="h-4 w-4 text-stone-900" />
               ) : (
-                <ShieldAlert className="h-4 w-4 text-stone-1000" />
+                <ShieldAlert className="h-4 w-4 text-stone-900" />
               )}
               <span className="text-sm text-stone-600">
                 {issues.length} issue{issues.length !== 1 ? 's' : ''}
@@ -970,7 +970,7 @@ function InviteUserModal({ onClose }: InviteUserModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-sm max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b">
           <h2 className="text-xl font-semibold text-stone-900 flex items-center gap-2">
             <UserPlus className="h-6 w-6" />
@@ -1126,7 +1126,7 @@ function RoleManagementModal({ user, onClose }: RoleManagementModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4">
+      <div className="bg-white rounded-xl shadow-sm max-w-lg w-full mx-4">
         <div className="p-6 border-b">
           <h2 className="text-xl font-semibold text-stone-900 flex items-center gap-2">
             <UserCog className="h-6 w-6" />

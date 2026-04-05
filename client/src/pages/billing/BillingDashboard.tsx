@@ -781,10 +781,10 @@ function BudgetAlertsTab() {
                     className="h-3"
                     indicatorClassName={
                       spendPercent >= 90
-                        ? 'bg-stone-1000'
+                        ? 'bg-stone-900'
                         : spendPercent >= 75
-                          ? 'bg-stone-1000'
-                          : 'bg-stone-1000'
+                          ? 'bg-stone-900'
+                          : 'bg-stone-900'
                     }
                   />
                   <p className="text-xs text-muted-foreground mt-1">
@@ -1053,7 +1053,7 @@ function PlanRateLimitsTab() {
                   <TableCell className="font-medium">{f.feature}</TableCell>
                   <TableCell className="text-center">
                     {f.included ? (
-                      <CheckCircle className="mx-auto h-4 w-4 text-stone-1000" />
+                      <CheckCircle className="mx-auto h-4 w-4 text-stone-900" />
                     ) : (
                       <XCircle className="mx-auto h-4 w-4 text-muted-foreground" />
                     )}
@@ -1089,7 +1089,7 @@ function PlanRateLimitsTab() {
                   <ul className="mt-3 space-y-1.5">
                     {plan.highlights.map((h) => (
                       <li key={h} className="flex items-start gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-stone-1000 shrink-0 mt-0.5" />
+                        <CheckCircle className="h-4 w-4 text-stone-900 shrink-0 mt-0.5" />
                         {h}
                       </li>
                     ))}

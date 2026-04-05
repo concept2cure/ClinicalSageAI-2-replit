@@ -254,9 +254,9 @@ export function StatusPill({ label, variant = 'default', className, dot }: Statu
       {dot && (
         <span className={cn(
           'w-1.5 h-1.5 rounded-full',
-          variant === 'success' && 'bg-stone-1000',
-          variant === 'danger' && 'bg-stone-1000',
-          variant === 'warning' && 'bg-stone-1000',
+          variant === 'success' && 'bg-stone-900',
+          variant === 'danger' && 'bg-stone-900',
+          variant === 'warning' && 'bg-stone-900',
           variant === 'info' && 'bg-stone-600',
           variant === 'active' && 'bg-stone-600 animate-pulse',
           variant === 'default' && 'bg-stone-400',
@@ -290,7 +290,7 @@ const buttonVariantStyles: Record<ButtonVariant, string> = {
   ghost: 'text-stone-600 hover:text-stone-900 hover:bg-stone-100',
   danger: 'bg-stone-700 text-white hover:bg-stone-800 shadow-sm',
   success: 'bg-stone-700 text-white hover:bg-stone-800 shadow-sm',
-  warning: 'bg-stone-1000 text-white hover:bg-stone-600 shadow-sm',
+  warning: 'bg-stone-900 text-white hover:bg-stone-600 shadow-sm',
   muted: 'bg-stone-600 text-white hover:bg-stone-700 shadow-sm',
 };
 
@@ -534,7 +534,7 @@ interface ProgressBarProps {
 const progressVariants = {
   default: 'bg-stone-800',
   success: 'bg-stone-700',
-  warning: 'bg-stone-1000',
+  warning: 'bg-stone-900',
   danger: 'bg-stone-700',
 };
 
@@ -656,7 +656,7 @@ export function Input({ icon: Icon, error, className, id: providedId, ...props }
           'transition-colors duration-150',
           'disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-stone-50',
           Icon && 'pl-10',
-          error ? 'border-stone-300 focus-visible:ring-stone-1000' : 'border-stone-200',
+          error ? 'border-stone-300 focus-visible:ring-stone-900' : 'border-stone-200',
           className,
         )}
         {...props}
@@ -955,7 +955,7 @@ export const LIFECYCLE: Record<ArtifactLifecycleStage, LifecycleStageConfig> = {
     variant: 'warning',
     bg: 'bg-stone-100',
     text: 'text-stone-700',
-    dot: 'bg-stone-1000',
+    dot: 'bg-stone-900',
     border: 'border-stone-200',
     order: 1,
   },
@@ -973,7 +973,7 @@ export const LIFECYCLE: Record<ArtifactLifecycleStage, LifecycleStageConfig> = {
     variant: 'success',
     bg: 'bg-stone-100',
     text: 'text-stone-800',
-    dot: 'bg-stone-1000',
+    dot: 'bg-stone-900',
     border: 'border-stone-200',
     order: 3,
   },
@@ -1167,9 +1167,9 @@ interface SeverityConfig {
 }
 
 export const SEVERITY: Record<SeverityLevel, SeverityConfig> = {
-  critical: { label: 'Critical', variant: 'danger',  bg: 'bg-stone-100',    text: 'text-stone-800',    dot: 'bg-stone-1000',    border: 'border-stone-200',    order: 0 },
-  high:     { label: 'High',     variant: 'warning', bg: 'bg-stone-100',  text: 'text-stone-700',  dot: 'bg-stone-1000',  border: 'border-stone-200',  order: 1 },
-  medium:   { label: 'Medium',   variant: 'warning', bg: 'bg-stone-100',  text: 'text-stone-700',  dot: 'bg-stone-1000',  border: 'border-stone-200',  order: 2 },
+  critical: { label: 'Critical', variant: 'danger',  bg: 'bg-stone-100',    text: 'text-stone-800',    dot: 'bg-stone-900',    border: 'border-stone-200',    order: 0 },
+  high:     { label: 'High',     variant: 'warning', bg: 'bg-stone-100',  text: 'text-stone-700',  dot: 'bg-stone-900',  border: 'border-stone-200',  order: 1 },
+  medium:   { label: 'Medium',   variant: 'warning', bg: 'bg-stone-100',  text: 'text-stone-700',  dot: 'bg-stone-900',  border: 'border-stone-200',  order: 2 },
   low:      { label: 'Low',      variant: 'info',    bg: 'bg-stone-100',   text: 'text-stone-700',   dot: 'bg-stone-600',   border: 'border-stone-200',   order: 3 },
 };
 

@@ -278,7 +278,7 @@ export default function EditorCanvas({
       <BubbleMenu
         editor={editor}
         tippyOptions={{ duration: 100 }}
-        className="bg-background border rounded-lg shadow-lg p-1"
+        className="bg-background border rounded-lg shadow-sm p-1"
       >
         <div className="flex items-center space-x-1">
           <Button
@@ -319,7 +319,7 @@ export default function EditorCanvas({
       <FloatingMenu
         editor={editor}
         tippyOptions={{ duration: 100 }}
-        className="bg-background border rounded-lg shadow-lg p-1"
+        className="bg-background border rounded-lg shadow-sm p-1"
       >
         <div className="flex items-center space-x-1">
           <Button

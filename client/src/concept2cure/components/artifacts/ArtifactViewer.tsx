@@ -281,7 +281,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
                   key={collab.id}
                   className={cn(
                     'w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-xs font-medium',
-                    collab.status === 'editing' ? 'bg-stone-1000 text-white' : 'bg-stone-200 text-stone-600'
+                    collab.status === 'editing' ? 'bg-stone-900 text-white' : 'bg-stone-200 text-stone-600'
                   )}
                   title={`${collab.name} (${collab.status})`}
                 >

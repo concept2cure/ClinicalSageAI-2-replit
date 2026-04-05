@@ -213,7 +213,7 @@ export default function ResearchCompanion({
   if (!isVisible) return null;
 
   return (
-    <Card className="fixed bottom-6 right-6 w-[450px] h-[600px] shadow-xl flex flex-col z-50 overflow-hidden">
+    <Card className="fixed bottom-6 right-6 w-[450px] h-[600px] shadow-sm flex flex-col z-50 overflow-hidden">
       <CardHeader className="px-4 py-3 flex flex-row items-center justify-between space-y-0 border-b">
         <div className="flex items-center space-x-2">
           <Bot className="h-5 w-5 text-primary" />

@@ -263,7 +263,7 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
             <div className="flex items-center gap-3">
               <div className="relative">
                 <Target className="w-6 h-6 text-stone-600" />
-                <Sparkles className="w-3 h-3 text-stone-1000 absolute -top-1 -right-1" />
+                <Sparkles className="w-3 h-3 text-stone-900 absolute -top-1 -right-1" />
               </div>
               <div>
                 <CardTitle>Executive Playbook: Top 5 Moves This Week</CardTitle>
@@ -296,7 +296,7 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
 
       {/* RPI Simulation Dashboard */}
       {simulation && (
-        <Card className="border-2 border-stone-200 bg-gradient-to-r from-stone-100 to-stone-100">
+        <Card className="border-2 border-stone-200 bg-stone-100">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-stone-600" />
@@ -343,7 +343,7 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
           cards.map(card => (
             <Card
               key={card.card_id}
-              className={`${getStatusColor(card.status)} transition-all hover:shadow-md`}
+              className={`${getStatusColor(card.status)} transition-all hover:shadow-sm`}
             >
               <CardHeader>
                 <div className="flex items-start justify-between">

@@ -156,7 +156,7 @@ const STATUS_CONFIG: Record<
   locked: { icon: <Lock className="w-3 h-3" />, color: LIFECYCLE.published.text, label: 'Locked' },
   missing_evidence: {
     icon: <AlertCircle className="w-3 h-3" />,
-    color: 'text-stone-1000',
+    color: 'text-stone-900',
     label: 'Missing Evidence',
   },
   ready: { icon: <ShieldCheck className="w-3 h-3" />, color: LIFECYCLE.approved.text, label: 'Ready' },
@@ -174,7 +174,7 @@ function StatusIndicator({ status }: { status: DossierNodeStatus }) {
 // ── Node icon by type ────────────────────────────────────────────────────────
 
 function NodeIcon({ nodeType, isExpanded }: { nodeType: string; isExpanded: boolean }) {
-  if (nodeType === 'module') return <Package className="w-3.5 h-3.5 text-stone-1000 shrink-0" />;
+  if (nodeType === 'module') return <Package className="w-3.5 h-3.5 text-stone-900 shrink-0" />;
   if (nodeType === 'section') {
     return isExpanded ? (
       <FolderOpen className="w-3.5 h-3.5 text-stone-400 shrink-0" />
@@ -308,7 +308,7 @@ function DossierNodeRow({
 
         {/* Required badge for empty required sections */}
         {showRequiredBadge && (
-          <span className="text-[10px] text-stone-1000 font-medium shrink-0" aria-label="Required section">
+          <span className="text-[10px] text-stone-900 font-medium shrink-0" aria-label="Required section">
             Required
           </span>
         )}
@@ -360,13 +360,13 @@ function DossierNodeRow({
           const total = m.artifactCount;
           // Color: green if all approved, amber if in progress, red if none started
           const barColor = approved === total && total > 0
-            ? 'bg-stone-1000'
+            ? 'bg-stone-900'
             : (m.reviewCount ?? 0) > 0 || (m.draftCount ?? 0) > 0
               ? 'bg-stone-400'
               : 'bg-stone-400';
           // Status dot
           const dotColor = approved === total && total > 0
-            ? 'bg-stone-1000'
+            ? 'bg-stone-900'
             : (m.draftCount ?? 0) > 0 || (m.reviewCount ?? 0) > 0
               ? 'bg-stone-400'
               : 'bg-stone-400';
@@ -414,7 +414,7 @@ function DossierNodeRow({
           metrics?.[node.ctdSection] &&
           metrics[node.ctdSection].templateCoverageAvailable && (
             <span
-              className="text-xs text-stone-1000 bg-stone-100 rounded px-0.5 shrink-0"
+              className="text-xs text-stone-900 bg-stone-100 rounded px-0.5 shrink-0"
               title="Template available, no document created"
             >
               T
@@ -424,7 +424,7 @@ function DossierNodeRow({
         {/* Required children missing indicator */}
         {missingRequired.length > 0 && docCount > 0 && (
           <span
-            className="text-xs text-stone-1000 bg-stone-100 rounded px-0.5 shrink-0"
+            className="text-xs text-stone-900 bg-stone-100 rounded px-0.5 shrink-0"
             title={`${missingRequired.length} required section${missingRequired.length > 1 ? 's' : ''} missing: ${missingRequired.join(', ')}`}
           >
             !{missingRequired.length}

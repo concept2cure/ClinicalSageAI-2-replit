@@ -159,7 +159,7 @@ const FormField: React.FC<{
   <div>
     <label className="block text-sm font-medium text-stone-700 mb-1">
       {label}
-      {required && <span className="text-stone-1000 ml-0.5">*</span>}
+      {required && <span className="text-stone-900 ml-0.5">*</span>}
     </label>
     {multiline ? (
       <textarea
@@ -277,9 +277,9 @@ const GuardrailStatusCard: React.FC<{
 }> = ({ guideline, title, status, message }) => (
   <div className={cn(
     'p-3 rounded-lg border-l-3 bg-white border',
-    status === 'pass' && 'border-l-stone-1000',
-    status === 'warn' && 'border-l-stone-1000',
-    status === 'fail' && 'border-l-stone-1000',
+    status === 'pass' && 'border-l-stone-900',
+    status === 'warn' && 'border-l-stone-900',
+    status === 'fail' && 'border-l-stone-900',
     status === 'pending' && 'border-l-stone-300',
   )}>
     <div className="flex items-center justify-between mb-1">
@@ -567,17 +567,17 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                 </div>
                 <div className="bg-white rounded-xl border p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Pill className="w-4 h-4 text-stone-1000" />
+                    <Pill className="w-4 h-4 text-stone-900" />
                     <span className="text-xs font-medium text-stone-500">Drug Product (3.2.P)</span>
                   </div>
                   <div className="text-base font-semibold text-stone-900">{dpCompletion}%</div>
                   <div className="mt-2 h-1.5 bg-stone-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-stone-1000 rounded-full transition-all duration-150" style={{ width: `${dpCompletion}%` }} />
+                    <div className="h-full bg-stone-900 rounded-full transition-all duration-150" style={{ width: `${dpCompletion}%` }} />
                   </div>
                 </div>
                 <div className="bg-white rounded-xl border p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Shield className="w-4 h-4 text-stone-1000" />
+                    <Shield className="w-4 h-4 text-stone-900" />
                     <span className="text-xs font-medium text-stone-500">ICH Compliance</span>
                   </div>
                   <div className="text-base font-semibold text-stone-900">
@@ -628,7 +628,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                     onClick={() => setActiveTab('drug-product')}
                     className="flex items-center gap-3 p-4 bg-white rounded-xl border hover:border-stone-200 hover:bg-stone-100/30 transition-colors text-left"
                   >
-                    <Pill className="w-5 h-5 text-stone-1000" />
+                    <Pill className="w-5 h-5 text-stone-900" />
                     <div>
                       <p className="text-sm font-medium text-stone-900">Enter Drug Product Data</p>
                       <p className="text-xs text-stone-500">CTD Section 3.2.P</p>
@@ -639,7 +639,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                     onClick={() => setActiveTab('generate')}
                     className="flex items-center gap-3 p-4 bg-white rounded-xl border hover:border-stone-200 hover:bg-stone-100/30 transition-colors text-left"
                   >
-                    <Sparkles className="w-5 h-5 text-stone-1000" />
+                    <Sparkles className="w-5 h-5 text-stone-900" />
                     <div>
                       <p className="text-sm font-medium text-stone-900">Generate Module 3 Documents</p>
                       <p className="text-xs text-stone-500">AI-powered eCTD drafting</p>
@@ -650,7 +650,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                     onClick={() => setActiveTab('stability')}
                     className="flex items-center gap-3 p-4 bg-white rounded-xl border hover:border-stone-200 hover:bg-stone-100/30 transition-colors text-left"
                   >
-                    <ThermometerSun className="w-5 h-5 text-stone-1000" />
+                    <ThermometerSun className="w-5 h-5 text-stone-900" />
                     <div>
                       <p className="text-sm font-medium text-stone-900">Stability Studies</p>
                       <p className="text-xs text-stone-500">ICH Q1A compliance</p>
@@ -744,7 +744,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                 </div>
                 <div className="flex items-center gap-2 text-xs text-stone-500">
                   <div className="w-20 h-1.5 bg-stone-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-stone-1000 rounded-full" style={{ width: `${dpCompletion}%` }} />
+                    <div className="h-full bg-stone-900 rounded-full" style={{ width: `${dpCompletion}%` }} />
                   </div>
                   {dpCompletion}% complete
                 </div>
@@ -847,17 +847,17 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                   <div className="p-3 bg-stone-100 rounded-lg">
                     <p className="font-medium text-stone-700 mb-1">Long-term</p>
                     <p className="text-stone-600">25°C ± 2°C / 60% RH ± 5% RH</p>
-                    <p className="text-stone-1000 mt-1">12 months minimum</p>
+                    <p className="text-stone-900 mt-1">12 months minimum</p>
                   </div>
                   <div className="p-3 bg-stone-100 rounded-lg">
                     <p className="font-medium text-stone-700 mb-1">Intermediate</p>
                     <p className="text-stone-600">30°C ± 2°C / 65% RH ± 5% RH</p>
-                    <p className="text-stone-1000 mt-1">6 months minimum</p>
+                    <p className="text-stone-900 mt-1">6 months minimum</p>
                   </div>
                   <div className="p-3 bg-stone-100 rounded-lg">
                     <p className="font-medium text-stone-800 mb-1">Accelerated</p>
                     <p className="text-stone-700">40°C ± 2°C / 75% RH ± 5% RH</p>
-                    <p className="text-stone-1000 mt-1">6 months minimum</p>
+                    <p className="text-stone-900 mt-1">6 months minimum</p>
                   </div>
                 </div>
               </div>
@@ -1016,7 +1016,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
               {/* Drug Product sections */}
               <div>
                 <h3 className="text-sm font-semibold text-stone-900 mb-3 flex items-center gap-2">
-                  <Pill className="w-4 h-4 text-stone-1000" />
+                  <Pill className="w-4 h-4 text-stone-900" />
                   Drug Product Sections (3.2.P)
                 </h3>
                 <div className="space-y-2">
@@ -1025,7 +1025,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                     const isGenerating = generatingSection === section.code;
                     return (
                       <div key={section.code} className="flex items-center gap-3 p-3 bg-white rounded-lg border hover:border-stone-200 transition-colors duration-150">
-                        <Icon className="w-4 h-4 text-stone-1000 flex-shrink-0" />
+                        <Icon className="w-4 h-4 text-stone-900 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-stone-900">{section.code} — {section.title}</p>
                         </div>

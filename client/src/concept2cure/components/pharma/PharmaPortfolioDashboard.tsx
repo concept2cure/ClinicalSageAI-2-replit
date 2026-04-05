@@ -276,10 +276,10 @@ const PDUFACalendar: React.FC<{
                     className={cn(
                       'w-full p-3 rounded-lg border-l-4 text-left transition-colors duration-150',
                       pdufa.status === 'at_risk'
-                        ? 'border-l-stone-1000 bg-stone-100 hover:bg-stone-100'
+                        ? 'border-l-stone-900 bg-stone-100 hover:bg-stone-100'
                         : isUrgent
-                          ? 'border-l-stone-1000 bg-stone-100 hover:bg-stone-100'
-                          : 'border-l-stone-1000 bg-stone-50 hover:bg-stone-100'
+                          ? 'border-l-stone-900 bg-stone-100 hover:bg-stone-100'
+                          : 'border-l-stone-900 bg-stone-50 hover:bg-stone-100'
                     )}
                   >
                     <div className="flex items-center justify-between">
@@ -558,10 +558,10 @@ const TherapeuticAreaCard: React.FC<{
                 </div>
                 <div className="flex items-center gap-2">
                   {product.hasRems && (
-                    <Shield className="w-4 h-4 text-stone-1000" title="Has REMS" />
+                    <Shield className="w-4 h-4 text-stone-900" title="Has REMS" />
                   )}
                   {product.isKeyProduct && (
-                    <Target className="w-4 h-4 text-stone-1000" title="Key Product" />
+                    <Target className="w-4 h-4 text-stone-900" title="Key Product" />
                   )}
                   <span className={cn(
                     'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold',

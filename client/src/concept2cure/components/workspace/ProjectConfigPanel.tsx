@@ -459,7 +459,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
               {/* Project Name */}
               <div>
                 <label className="block text-sm font-medium text-[#4D4B45] mb-1.5">
-                  Project Name <span className="text-stone-1000">*</span>
+                  Project Name <span className="text-stone-900">*</span>
                 </label>
                 <Input
                   value={name}

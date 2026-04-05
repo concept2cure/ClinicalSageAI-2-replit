@@ -14,7 +14,7 @@ interface LayoutProps {
  */
 export function PageContainer({ children, className }: LayoutProps) {
   return (
-    <div className={cn('flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950', className)}>
+    <div className={cn('flex min-h-screen flex-col bg-stone-50 dark:bg-stone-950', className)}>
       {children}
     </div>
   );

@@ -113,7 +113,7 @@ function Hero() {
           animate="visible"
           variants={fadeUp}
           custom={1}
-          className="mx-auto max-w-4xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl xl:text-7xl"
+          className="mx-auto max-w-4xl text-4xl font-bold tracking-tight text-stone-900 sm:text-5xl lg:text-6xl xl:text-7xl"
         >
           AI-Powered{' '}
           <span className="bg-gradient-to-r from-stone-600 via-stone-600 to-stone-600 bg-clip-text text-transparent">
@@ -126,10 +126,10 @@ function Hero() {
           animate="visible"
           variants={fadeUp}
           custom={2}
-          className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-600 sm:text-xl"
+          className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-stone-600 sm:text-xl"
         >
           Collapse your regulatory submission timeline from{' '}
-          <span className="font-semibold text-slate-800">14 months to 6</span>. Concept2Cure
+          <span className="font-semibold text-stone-800">14 months to 6</span>. Concept2Cure
           automates 510(k)&nbsp;eSTAR, eCTD authoring, CMC documentation, and clinical evaluation —
           so your team can focus on science, not paperwork.
         </motion.p>
@@ -142,14 +142,14 @@ function Hero() {
           className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
         >
           <Link href="/concept2cure/signup">
-            <span className="group inline-flex items-center gap-2 rounded-xl bg-stone-600 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-stone-600/20 transition-all hover:bg-stone-700 hover:shadow-xl hover:shadow-stone-600/30">
+            <span className="group inline-flex items-center gap-2 rounded-xl bg-stone-600 px-7 py-3.5 text-base font-semibold text-white shadow-sm shadow-stone-600/20 transition-all hover:bg-stone-700 hover:shadow-sm hover:shadow-stone-600/30">
               Start Free Trial
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </span>
           </Link>
           <button
             onClick={() => scrollTo('pricing')}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-7 py-3.5 text-base font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-stone-300 bg-white px-7 py-3.5 text-base font-semibold text-stone-700 shadow-sm transition-all hover:border-stone-400 hover:bg-stone-50"
           >
             View Pricing
             <ChevronRight className="h-4 w-4" />
@@ -175,7 +175,7 @@ function SocialProof() {
         variants={fadeIn}
         className="text-center"
       >
-        <p className="text-sm font-medium uppercase tracking-widest text-slate-400">
+        <p className="text-sm font-medium uppercase tracking-widest text-stone-400">
           Trusted by leading life sciences companies
         </p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-x-12 gap-y-6 sm:gap-x-16">
@@ -184,7 +184,7 @@ function SocialProof() {
               key={name}
               variants={fadeIn}
               custom={i}
-              className="text-xl font-bold tracking-tight text-slate-300 transition-colors hover:text-slate-400 sm:text-2xl"
+              className="text-xl font-bold tracking-tight text-stone-300 transition-colors hover:text-stone-400 sm:text-2xl"
             >
               {name}
             </motion.span>
@@ -246,10 +246,10 @@ function Features() {
           <p className="text-sm font-semibold uppercase tracking-widest text-stone-600">
             Platform
           </p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">
             Everything you need to file faster
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-500">
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-stone-500">
             One platform replaces dozens of disconnected tools, consultants, and spreadsheets across
             your regulatory operations.
           </p>
@@ -261,13 +261,13 @@ function Features() {
               key={f.title}
               variants={fadeUp}
               custom={i + 1}
-              className="group relative rounded-2xl border border-slate-200/80 bg-white p-8 shadow-sm transition-all hover:border-stone-200 hover:shadow-md"
+              className="group relative rounded-2xl border border-stone-200/80 bg-white p-8 shadow-sm transition-all hover:border-stone-200 hover:shadow-sm"
             >
               <div className="mb-5 inline-flex rounded-xl bg-stone-100 p-3 text-stone-600 transition-colors group-hover:bg-stone-100">
                 <f.icon className="h-6 w-6" />
               </div>
-              <h3 className="text-lg font-semibold text-slate-900">{f.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-500">{f.description}</p>
+              <h3 className="text-lg font-semibold text-stone-900">{f.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-stone-500">{f.description}</p>
             </motion.div>
           ))}
         </div>
@@ -303,13 +303,13 @@ function HowItWorks() {
   const { ref, inView } = useAnimateIn();
 
   return (
-    <Section className="py-20 sm:py-28 bg-slate-50/60">
+    <Section className="py-20 sm:py-28 bg-stone-50/60">
       <motion.div ref={ref} initial="hidden" animate={inView ? 'visible' : 'hidden'}>
         <motion.div variants={fadeUp} custom={0} className="text-center">
           <p className="text-sm font-semibold uppercase tracking-widest text-stone-600">
             How It Works
           </p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">
             Three steps to your next submission
           </h2>
         </motion.div>
@@ -328,11 +328,11 @@ function HowItWorks() {
               custom={i + 1}
               className="relative text-center"
             >
-              <div className="relative z-10 mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-stone-600 text-lg font-bold text-white shadow-lg shadow-stone-600/20">
+              <div className="relative z-10 mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-stone-600 text-lg font-bold text-white shadow-sm shadow-stone-600/20">
                 {s.num}
               </div>
-              <h3 className="mt-6 text-xl font-semibold text-slate-900">{s.title}</h3>
-              <p className="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-slate-500">
+              <h3 className="mt-6 text-xl font-semibold text-stone-900">{s.title}</h3>
+              <p className="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-stone-500">
                 {s.description}
               </p>
             </motion.div>
@@ -405,10 +405,10 @@ function Pricing() {
       <motion.div ref={ref} initial="hidden" animate={inView ? 'visible' : 'hidden'}>
         <motion.div variants={fadeUp} custom={0} className="text-center">
           <p className="text-sm font-semibold uppercase tracking-widest text-stone-600">Pricing</p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">
             Plans that scale with your pipeline
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-slate-500">
+          <p className="mx-auto mt-4 max-w-xl text-lg text-stone-500">
             Start small. Scale as you grow. Every plan includes a 14-day free trial with no credit
             card required.
           </p>
@@ -422,8 +422,8 @@ function Pricing() {
                 key={plan.name}
                 variants={fadeUp}
                 custom={i + 1}
-                className={`relative flex flex-col rounded-2xl border p-8 shadow-sm transition-shadow hover:shadow-md ${
-                  isPopular ? 'border-stone-600 ring-1 ring-stone-600' : 'border-slate-200'
+                className={`relative flex flex-col rounded-2xl border p-8 shadow-sm transition-shadow hover:shadow-sm ${
+                  isPopular ? 'border-stone-600 ring-1 ring-stone-600' : 'border-stone-200'
                 }`}
               >
                 {isPopular && (
@@ -433,20 +433,20 @@ function Pricing() {
                 )}
 
                 <div>
-                  <h3 className="text-xl font-semibold text-slate-900">{plan.name}</h3>
-                  <p className="mt-1 text-sm text-slate-500">{plan.audience}</p>
+                  <h3 className="text-xl font-semibold text-stone-900">{plan.name}</h3>
+                  <p className="mt-1 text-sm text-stone-500">{plan.audience}</p>
                 </div>
 
                 <div className="mt-6 flex items-baseline gap-1">
-                  <span className="text-4xl font-bold tracking-tight text-slate-900">
+                  <span className="text-4xl font-bold tracking-tight text-stone-900">
                     {plan.price}
                   </span>
-                  {plan.period && <span className="text-base text-slate-500">{plan.period}</span>}
+                  {plan.period && <span className="text-base text-stone-500">{plan.period}</span>}
                 </div>
 
                 <ul className="mt-8 flex-1 space-y-3">
                   {plan.features.map(f => (
-                    <li key={f} className="flex items-start gap-3 text-sm text-slate-600">
+                    <li key={f} className="flex items-start gap-3 text-sm text-stone-600">
                       <Check className="mt-0.5 h-4 w-4 shrink-0 text-stone-600" />
                       {f}
                     </li>
@@ -456,7 +456,7 @@ function Pricing() {
                 <div className="mt-8">
                   {plan.name === 'Enterprise' ? (
                     <Link href="/concept2cure/signup">
-                      <span className="block w-full rounded-xl border border-slate-300 bg-white py-3 text-center text-sm font-semibold text-slate-700 transition-all hover:border-slate-400 hover:bg-slate-50">
+                      <span className="block w-full rounded-xl border border-stone-300 bg-white py-3 text-center text-sm font-semibold text-stone-700 transition-all hover:border-stone-400 hover:bg-stone-50">
                         Contact Sales
                       </span>
                     </Link>
@@ -465,8 +465,8 @@ function Pricing() {
                       <span
                         className={`block w-full rounded-xl py-3 text-center text-sm font-semibold transition-all ${
                           isPopular
-                            ? 'bg-stone-600 text-white shadow-lg shadow-stone-600/20 hover:bg-stone-700'
-                            : 'bg-slate-900 text-white hover:bg-slate-800'
+                            ? 'bg-stone-600 text-white shadow-sm shadow-stone-600/20 hover:bg-stone-700'
+                            : 'bg-stone-900 text-white hover:bg-stone-800'
                         }`}
                       >
                         Start Free Trial
@@ -513,13 +513,13 @@ function Testimonials() {
   const { ref, inView } = useAnimateIn();
 
   return (
-    <Section className="py-20 sm:py-28 bg-slate-50/60">
+    <Section className="py-20 sm:py-28 bg-stone-50/60">
       <motion.div ref={ref} initial="hidden" animate={inView ? 'visible' : 'hidden'}>
         <motion.div variants={fadeUp} custom={0} className="text-center">
           <p className="text-sm font-semibold uppercase tracking-widest text-stone-600">
             Testimonials
           </p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">
             Loved by regulatory teams
           </h2>
         </motion.div>
@@ -530,17 +530,17 @@ function Testimonials() {
               key={t.name}
               variants={fadeUp}
               custom={i + 1}
-              className="flex flex-col rounded-2xl border border-slate-200/80 bg-white p-8 shadow-sm"
+              className="flex flex-col rounded-2xl border border-stone-200/80 bg-white p-8 shadow-sm"
             >
               <div className="flex gap-1 text-stone-400">
                 {Array.from({ length: 5 }).map((_, j) => (
                   <Star key={j} className="h-4 w-4 fill-current" />
                 ))}
               </div>
-              <blockquote className="mt-4 flex-1 text-sm leading-relaxed text-slate-600">
+              <blockquote className="mt-4 flex-1 text-sm leading-relaxed text-stone-600">
                 &ldquo;{t.quote}&rdquo;
               </blockquote>
-              <figcaption className="mt-6 flex items-center gap-4 border-t border-slate-100 pt-6">
+              <figcaption className="mt-6 flex items-center gap-4 border-t border-stone-100 pt-6">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-100 text-sm font-bold text-stone-600">
                   {t.name
                     .split(' ')
@@ -548,8 +548,8 @@ function Testimonials() {
                     .join('')}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">{t.name}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-sm font-semibold text-stone-900">{t.name}</p>
+                  <p className="text-xs text-stone-500">
                     {t.title}, {t.company}
                   </p>
                 </div>
@@ -574,7 +574,7 @@ function FinalCTA() {
         initial="hidden"
         animate={inView ? 'visible' : 'hidden'}
         variants={fadeUp}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-stone-600 via-stone-600 to-stone-700 px-8 py-16 text-center shadow-2xl sm:px-16 sm:py-20"
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-stone-600 via-stone-600 to-stone-700 px-8 py-16 text-center shadow-sm sm:px-16 sm:py-20"
       >
         {/* decorative shapes */}
         <div
@@ -595,7 +595,7 @@ function FinalCTA() {
         </p>
         <div className="relative mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link href="/concept2cure/signup">
-            <span className="group inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-stone-700 shadow-lg transition-all hover:bg-stone-100">
+            <span className="group inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-stone-700 shadow-sm transition-all hover:bg-stone-100">
               Start Free Trial
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </span>
@@ -615,17 +615,17 @@ function FinalCTA() {
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━ FOOTER ━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 function Footer() {
-  const linkClass = 'text-sm text-slate-500 transition-colors hover:text-slate-700';
-  const headingClass = 'text-xs font-semibold uppercase tracking-widest text-slate-400';
+  const linkClass = 'text-sm text-stone-500 transition-colors hover:text-stone-700';
+  const headingClass = 'text-xs font-semibold uppercase tracking-widest text-stone-400';
 
   return (
-    <footer className="border-t border-slate-200/60 bg-white">
+    <footer className="border-t border-stone-200/60 bg-white">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
           {/* brand */}
           <div className="lg:col-span-1">
-            <span className="text-xl font-bold tracking-tight text-slate-900">Concept2Cure</span>
-            <p className="mt-3 text-sm leading-relaxed text-slate-500">
+            <span className="text-xl font-bold tracking-tight text-stone-900">Concept2Cure</span>
+            <p className="mt-3 text-sm leading-relaxed text-stone-500">
               AI-powered regulatory intelligence for life sciences. A Concept2Cure product by
               ClinicalSageAI.
             </p>
@@ -637,7 +637,7 @@ function Footer() {
               ].map(b => (
                 <span
                   key={b.label}
-                  className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500"
+                  className="inline-flex items-center gap-1 rounded-md border border-stone-200 bg-stone-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-stone-500"
                 >
                   <b.icon className="h-3 w-3" />
                   {b.label}
@@ -707,11 +707,11 @@ function Footer() {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-slate-200/60 pt-8 sm:flex-row">
-          <p className="text-sm text-slate-400">
+        <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-stone-200/60 pt-8 sm:flex-row">
+          <p className="text-sm text-stone-400">
             &copy; {new Date().getFullYear()} ClinicalSageAI, Inc. All rights reserved.
           </p>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-stone-400">
             Concept2Cure&trade; is a registered trademark of ClinicalSageAI, Inc.
           </p>
         </div>
@@ -728,11 +728,11 @@ function NavBar() {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="fixed top-0 z-50 w-full border-b border-slate-200/60 bg-white/80 backdrop-blur-lg"
+      className="fixed top-0 z-50 w-full border-b border-stone-200/60 bg-white/80 backdrop-blur-lg"
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <Link href="/">
-          <span className="text-xl font-bold tracking-tight text-slate-900">
+          <span className="text-xl font-bold tracking-tight text-stone-900">
             Concept<span className="text-stone-600">2Cure</span>
           </span>
         </Link>
@@ -754,7 +754,7 @@ function NavBar() {
                       : id;
                   scrollTo(sectionId);
                 }}
-                className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+                className="text-sm font-medium text-stone-600 transition-colors hover:text-stone-900"
               >
                 {label}
               </button>
@@ -764,7 +764,7 @@ function NavBar() {
 
         <div className="flex items-center gap-3">
           <Link href="/concept2cure/login">
-            <span className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900">
+            <span className="text-sm font-medium text-stone-600 transition-colors hover:text-stone-900">
               Sign In
             </span>
           </Link>
@@ -783,7 +783,7 @@ function NavBar() {
 
 export default function SalesLandingPage() {
   return (
-    <div className="min-h-screen bg-white text-slate-900 antialiased">
+    <div className="min-h-screen bg-white text-stone-900 antialiased">
       <NavBar />
       <main>
         <Hero />

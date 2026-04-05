@@ -269,7 +269,7 @@ export const TemplateTree: React.FC<TemplateTreeProps> = ({
           aria-label={`Recommended templates for ${submissionType}`}
         >
           <div className="flex items-center gap-1.5 px-3 py-1">
-            <Star className="w-3 h-3 text-stone-1000" />
+            <Star className="w-3 h-3 text-stone-900" />
             <span className="text-[11px] font-medium text-stone-500 uppercase tracking-wider">
               Best for {submissionType}
             </span>

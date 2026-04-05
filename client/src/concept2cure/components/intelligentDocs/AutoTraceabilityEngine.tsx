@@ -302,7 +302,7 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
     orange: 'bg-stone-100 border-stone-200',
     cyan: 'bg-stone-100 border-stone-200',
     amber: 'bg-stone-100 border-stone-200',
-    rose: 'bg-rose-100 border-rose-200',
+    rose: 'bg-stone-100 border-stone-200',
   };
 
   const iconColorClasses = {
@@ -313,7 +313,7 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
     orange: 'text-stone-600',
     cyan: 'text-stone-600',
     amber: 'text-stone-600',
-    rose: 'text-rose-600',
+    rose: 'text-stone-700',
   };
 
   const topSuggestion = suggestedSources[0];
@@ -669,7 +669,7 @@ export const AutoTraceabilityEngine: React.FC<AutoTraceabilityEngineProps> = ({
       <div className="flex items-center justify-between p-4 rounded-xl border border-stone-200/70 bg-white shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-stone-1000" />
+            <Sparkles className="w-5 h-5 text-stone-900" />
             <h3 className="font-semibold text-stone-900">Auto-Traceability</h3>
           </div>
           <p className="text-xs text-stone-500 mt-1">
@@ -704,7 +704,7 @@ export const AutoTraceabilityEngine: React.FC<AutoTraceabilityEngineProps> = ({
       {/* Claims List */}
       {visibleClaims.length === 0 ? (
         <div className="text-center py-10 text-stone-500 bg-white rounded-xl border border-stone-200/70 shadow-sm">
-          <CheckCircle className="w-12 h-12 mx-auto mb-3 text-stone-1000" />
+          <CheckCircle className="w-12 h-12 mx-auto mb-3 text-stone-900" />
           <p className="font-medium text-stone-700">All claims sourced!</p>
           <p className="text-sm mt-1">Your document is fully traceable.</p>
         </div>

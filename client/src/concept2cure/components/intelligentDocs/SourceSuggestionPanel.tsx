@@ -325,7 +325,7 @@ export const SourceSuggestionPanel: React.FC<SourceSuggestionPanelProps> = ({
             {connectedBridges.slice(0, 4).map(bridge => (
               <span
                 key={bridge.moduleType}
-                className="w-2 h-2 rounded-full bg-stone-1000"
+                className="w-2 h-2 rounded-full bg-stone-900"
                 title={bridge.moduleType}
               />
             ))}

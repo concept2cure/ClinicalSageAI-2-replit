@@ -143,9 +143,9 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
   }
 
   const statusIcon = {
-    pass: <CheckCircle className="w-5 h-5 text-stone-1000" />,
-    caution: <AlertTriangle className="w-5 h-5 text-stone-1000" />,
-    fail: <XCircle className="w-5 h-5 text-stone-1000" />,
+    pass: <CheckCircle className="w-5 h-5 text-stone-900" />,
+    caution: <AlertTriangle className="w-5 h-5 text-stone-900" />,
+    fail: <XCircle className="w-5 h-5 text-stone-900" />,
   };
 
   const statusLabel = { pass: 'Pass', caution: 'Caution', fail: 'Fail' };
@@ -199,11 +199,11 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
           const hasFail = findings.some(f => f.status === 'fail');
           const hasCaution = findings.some(f => f.status === 'caution');
           const sectionIcon = hasFail ? (
-            <XCircle className="w-3.5 h-3.5 text-stone-1000" />
+            <XCircle className="w-3.5 h-3.5 text-stone-900" />
           ) : hasCaution ? (
-            <AlertTriangle className="w-3.5 h-3.5 text-stone-1000" />
+            <AlertTriangle className="w-3.5 h-3.5 text-stone-900" />
           ) : (
-            <CheckCircle className="w-3.5 h-3.5 text-stone-1000" />
+            <CheckCircle className="w-3.5 h-3.5 text-stone-900" />
           );
 
           return (
@@ -308,7 +308,7 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
 function PanelHeader({ onClose, title }: { onClose: () => void; title: string }) {
   return (
     <div className="flex items-center gap-2 px-4 h-10 border-b border-stone-200 shrink-0">
-      <ShieldCheck className="w-4 h-4 text-stone-1000" />
+      <ShieldCheck className="w-4 h-4 text-stone-900" />
       <h2 className="text-sm font-semibold text-stone-900">{title}</h2>
       <button
         onClick={onClose}
@@ -323,9 +323,9 @@ function PanelHeader({ onClose, title }: { onClose: () => void; title: string })
 
 function FindingRow({ finding }: { finding: Finding }) {
   const icon = {
-    pass: <CheckCircle className="w-3 h-3 text-stone-1000 shrink-0" />,
-    caution: <AlertTriangle className="w-3 h-3 text-stone-1000 shrink-0" />,
-    fail: <XCircle className="w-3 h-3 text-stone-1000 shrink-0" />,
+    pass: <CheckCircle className="w-3 h-3 text-stone-900 shrink-0" />,
+    caution: <AlertTriangle className="w-3 h-3 text-stone-900 shrink-0" />,
+    fail: <XCircle className="w-3 h-3 text-stone-900 shrink-0" />,
   };
 
   return (

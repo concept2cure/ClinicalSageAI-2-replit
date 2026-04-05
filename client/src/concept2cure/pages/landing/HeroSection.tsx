@@ -61,7 +61,7 @@ export function HeroSection() {
         >
           <button
             onClick={() => setLocation('/concept2cure/demo')}
-            className="group px-8 py-3.5 text-base font-medium text-white bg-stone-600 hover:bg-stone-700 rounded-xl transition-all shadow-md flex items-center gap-2"
+            className="group px-8 py-3.5 text-base font-medium text-white bg-stone-600 hover:bg-stone-700 rounded-xl transition-all shadow-sm flex items-center gap-2"
           >
             Try the Live Demo
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />

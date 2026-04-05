@@ -213,9 +213,9 @@ const STATUS_CONFIG: Record<CAPAStatus, { label: string; color: string; icon: Re
 
 const PRIORITY_CONFIG: Record<CAPAPriority, { label: string; color: string; daysToClose: number }> =
   {
-    critical: { label: 'Critical', color: 'bg-stone-1000 text-white', daysToClose: 30 },
-    major: { label: 'Major', color: 'bg-stone-1000 text-white', daysToClose: 60 },
-    minor: { label: 'Minor', color: 'bg-stone-1000 text-white', daysToClose: 90 },
+    critical: { label: 'Critical', color: 'bg-stone-900 text-white', daysToClose: 30 },
+    major: { label: 'Major', color: 'bg-stone-900 text-white', daysToClose: 60 },
+    minor: { label: 'Minor', color: 'bg-stone-900 text-white', daysToClose: 90 },
   };
 
 // Mock data
@@ -388,7 +388,7 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
               <p className="text-sm text-muted-foreground">Open CAPAs</p>
               <p className="text-base font-semibold">{metrics.open}</p>
             </div>
-            <FileWarning className="w-8 h-8 text-stone-1000" />
+            <FileWarning className="w-8 h-8 text-stone-900" />
           </div>
         </div>
       </div>
@@ -400,7 +400,7 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
               <p className="text-sm text-muted-foreground">Overdue</p>
               <p className="text-base font-semibold text-stone-700">{metrics.overdue}</p>
             </div>
-            <Clock className="w-8 h-8 text-stone-1000" />
+            <Clock className="w-8 h-8 text-stone-900" />
           </div>
         </div>
       </div>
@@ -412,7 +412,7 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
               <p className="text-sm text-muted-foreground">Critical</p>
               <p className="text-base font-semibold text-stone-600">{metrics.critical}</p>
             </div>
-            <AlertTriangle className="w-8 h-8 text-stone-1000" />
+            <AlertTriangle className="w-8 h-8 text-stone-900" />
           </div>
         </div>
       </div>
@@ -845,12 +845,12 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
           </div>
           <div className="flex gap-4 mt-4">
             {capa.regulatoryImpact && (
-              <Badge variant="outline" className="border-stone-1000 text-stone-700">
+              <Badge variant="outline" className="border-stone-900 text-stone-700">
                 Regulatory Impact
               </Badge>
             )}
             {capa.customerImpact && (
-              <Badge variant="outline" className="border-stone-1000 text-stone-600">
+              <Badge variant="outline" className="border-stone-900 text-stone-600">
                 Customer Impact
               </Badge>
             )}

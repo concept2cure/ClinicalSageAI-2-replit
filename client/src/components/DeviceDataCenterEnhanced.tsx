@@ -336,9 +336,9 @@ export default function DeviceDataCenterEnhanced({
                 >
                   <div className="flex items-center gap-2">
                     {fileCount > 0 ? (
-                      <CheckCircle className="h-4 w-4 text-stone-1000" />
+                      <CheckCircle className="h-4 w-4 text-stone-900" />
                     ) : (
-                      <AlertCircle className="h-4 w-4 text-stone-1000" />
+                      <AlertCircle className="h-4 w-4 text-stone-900" />
                     )}
                     <span>{name}</span>
                     {req.required && <Badge variant="destructive" className="text-xs">Required</Badge>}
@@ -403,7 +403,7 @@ export default function DeviceDataCenterEnhanced({
                         </div>
                         <div className="flex items-center gap-2">
                           {sectionFiles.length > 0 ? (
-                            <Badge variant="default" className="bg-stone-1000">
+                            <Badge variant="default" className="bg-stone-900">
                               <CheckCircle className="h-3 w-3 mr-1" />
                               {sectionFiles.length} files
                             </Badge>
@@ -451,7 +451,7 @@ export default function DeviceDataCenterEnhanced({
                                   file.regulatory_status === 'approved' ? 'default' :
                                   file.regulatory_status === 'under_review' ? 'outline' :
                                   'secondary'
-                                } className={file.regulatory_status === 'approved' ? 'bg-stone-1000' : ''}>
+                                } className={file.regulatory_status === 'approved' ? 'bg-stone-900' : ''}>
                                   {file.regulatory_status}
                                 </Badge>
                                 <Button size="sm" variant="ghost">
@@ -470,7 +470,7 @@ export default function DeviceDataCenterEnhanced({
               {/* Upload Zone */}
               <div
                 className={`mt-6 border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                  isDragging ? 'border-stone-1000 bg-stone-100' : 'border-stone-300'
+                  isDragging ? 'border-stone-900 bg-stone-100' : 'border-stone-300'
                 }`}
                 onDragOver={(e) => {
                   e.preventDefault();
@@ -618,7 +618,7 @@ export default function DeviceDataCenterEnhanced({
                 f.regulatory_status === 'approved'
               ).slice(0, 3).map((file: EvidenceFile) => (
                 <div key={file.id} className="flex items-center gap-3 p-2">
-                  <CheckCircle className="h-4 w-4 text-stone-1000" />
+                  <CheckCircle className="h-4 w-4 text-stone-900" />
                   <span className="text-sm">{file.file_name}</span>
                   <Badge variant="outline" className="text-stone-700">Approved</Badge>
                 </div>

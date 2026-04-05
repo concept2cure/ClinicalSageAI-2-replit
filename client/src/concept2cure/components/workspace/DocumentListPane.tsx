@@ -254,7 +254,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
             const latestDraft = filteredDocs.find(d => d.status !== 'approved' && d.status !== 'locked') || filteredDocs[0];
             return (
               <div className="px-4 py-3 border-b border-stone-100 bg-stone-100/30 flex items-center gap-3">
-                <FileText className="w-4 h-4 text-stone-1000 shrink-0" />
+                <FileText className="w-4 h-4 text-stone-900 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-stone-800 truncate">{latestDraft.title}</p>
                   <p className="text-[10px] text-stone-400">
@@ -331,7 +331,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                             </p>
                             <div className="flex items-center gap-2 text-[11px]">
                               {doc.ctdSection && (
-                                <span className="text-stone-1000 font-medium">CTD {doc.ctdSection}</span>
+                                <span className="text-stone-900 font-medium">CTD {doc.ctdSection}</span>
                               )}
                               <span className="text-stone-400">
                                 {doc.status === 'locked'

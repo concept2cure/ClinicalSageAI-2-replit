@@ -136,9 +136,9 @@ const STATUS_CONFIG: Record<TeamMember['status'], {
   bgColor: string;
   label: string;
 }> = {
-  online: { color: 'bg-stone-1000', bgColor: 'bg-stone-100', label: 'Online' },
-  away: { color: 'bg-stone-1000', bgColor: 'bg-stone-100', label: 'Away' },
-  busy: { color: 'bg-stone-1000', bgColor: 'bg-stone-100', label: 'Busy' },
+  online: { color: 'bg-stone-900', bgColor: 'bg-stone-100', label: 'Online' },
+  away: { color: 'bg-stone-900', bgColor: 'bg-stone-100', label: 'Away' },
+  busy: { color: 'bg-stone-900', bgColor: 'bg-stone-100', label: 'Busy' },
   offline: { color: 'bg-stone-400', bgColor: 'bg-stone-100', label: 'Offline' },
 };
 

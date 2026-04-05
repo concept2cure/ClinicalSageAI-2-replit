@@ -53,13 +53,13 @@ function NavItem({ href, icon, children, end = false }: NavItemProps) {
           'group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-150',
           isActive
             ? 'bg-primary/10 text-primary'
-            : 'text-slate-700 hover:bg-slate-100 hover:text-primary'
+            : 'text-stone-700 hover:bg-stone-100 hover:text-primary'
         )}
       >
         <div
           className={cn(
             'mr-3 h-5 w-5 flex-shrink-0',
-            isActive ? 'text-primary' : 'text-slate-500 group-hover:text-primary'
+            isActive ? 'text-primary' : 'text-stone-500 group-hover:text-primary'
           )}
         >
           {icon}
@@ -76,7 +76,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
       {/* Mobile sidebar backdrop */}
       <div
         className={cn(
-          'fixed inset-0 z-40 bg-slate-600 bg-opacity-75 transition-opacity ease-linear duration-300',
+          'fixed inset-0 z-40 bg-stone-600 bg-opacity-75 transition-opacity ease-linear duration-300',
           sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         )}
         onClick={() => setSidebarOpen(false)}
@@ -86,11 +86,11 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
       {/* Mobile sidebar */}
       <div
         className={cn(
-          'fixed inset-y-0 left-0 z-40 w-72 flex flex-col bg-white transform transition ease-in-out duration-300 shadow-lg',
+          'fixed inset-y-0 left-0 z-40 w-72 flex flex-col bg-white transform transition ease-in-out duration-300 shadow-sm',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200 bg-slate-50">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-stone-200 bg-stone-50">
           <div className="flex items-center">
             <Database className="h-7 w-7 text-primary" />
             <span className="ml-2 text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
@@ -99,7 +99,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
           </div>
           <button
             type="button"
-            className="h-10 w-10 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-500 focus:outline-none"
+            className="h-10 w-10 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-500 focus:outline-none"
             onClick={() => setSidebarOpen(false)}
           >
             <XCircle className="h-6 w-6" />
@@ -130,8 +130,8 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
               Real-World Fail Map
             </NavItem>
 
-            <div className="pt-5 mt-5 border-t border-slate-200">
-              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="pt-5 mt-5 border-t border-stone-200">
+              <h3 className="px-3 mb-2 text-xs font-semibold text-stone-500 uppercase tracking-wider">
                 AI Tools
               </h3>
               <div className="space-y-1">
@@ -150,8 +150,8 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
               </div>
             </div>
 
-            <div className="pt-5 mt-5 border-t border-slate-200">
-              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="pt-5 mt-5 border-t border-stone-200">
+              <h3 className="px-3 mb-2 text-xs font-semibold text-stone-500 uppercase tracking-wider">
                 Strategic Services
               </h3>
               <div className="space-y-1">
@@ -164,8 +164,8 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
               </div>
             </div>
 
-            <div className="pt-5 mt-5 border-t border-slate-200">
-              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="pt-5 mt-5 border-t border-stone-200">
+              <h3 className="px-3 mb-2 text-xs font-semibold text-stone-500 uppercase tracking-wider">
                 Settings
               </h3>
               <div className="space-y-1">
@@ -174,8 +174,8 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
                 </NavItem>
               </div>
             </div>
-            <div className="pt-5 mt-5 border-t border-slate-200">
-              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="pt-5 mt-5 border-t border-stone-200">
+              <h3 className="px-3 mb-2 text-xs font-semibold text-stone-500 uppercase tracking-wider">
                 Concept2Cure
               </h3>
               <div className="space-y-1">
@@ -189,8 +189,8 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
       </div>
 
       {/* Desktop sidebar */}
-      <div className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-64 lg:border-r lg:border-slate-200 lg:bg-white lg:shadow-sm">
-        <div className="h-16 flex items-center justify-center px-6 border-b border-slate-200 bg-slate-50">
+      <div className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-64 lg:border-r lg:border-stone-200 lg:bg-white lg:shadow-sm">
+        <div className="h-16 flex items-center justify-center px-6 border-b border-stone-200 bg-stone-50">
           <Database className="h-8 w-8 text-primary" />
           <span className="ml-2 text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
             Concept2Cure
@@ -221,8 +221,8 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
               Real-World Fail Map
             </NavItem>
 
-            <div className="pt-5 mt-5 border-t border-slate-200">
-              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="pt-5 mt-5 border-t border-stone-200">
+              <h3 className="px-3 mb-2 text-xs font-semibold text-stone-500 uppercase tracking-wider">
                 AI Tools
               </h3>
               <div className="space-y-1">
@@ -241,8 +241,8 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
               </div>
             </div>
 
-            <div className="pt-5 mt-5 border-t border-slate-200">
-              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="pt-5 mt-5 border-t border-stone-200">
+              <h3 className="px-3 mb-2 text-xs font-semibold text-stone-500 uppercase tracking-wider">
                 Strategic Services
               </h3>
               <div className="space-y-1">
@@ -255,8 +255,8 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
               </div>
             </div>
 
-            <div className="pt-5 mt-5 border-t border-slate-200">
-              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="pt-5 mt-5 border-t border-stone-200">
+              <h3 className="px-3 mb-2 text-xs font-semibold text-stone-500 uppercase tracking-wider">
                 Settings
               </h3>
               <div className="space-y-1">
@@ -265,8 +265,8 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
                 </NavItem>
               </div>
             </div>
-            <div className="pt-5 mt-5 border-t border-slate-200">
-              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="pt-5 mt-5 border-t border-stone-200">
+              <h3 className="px-3 mb-2 text-xs font-semibold text-stone-500 uppercase tracking-wider">
                 Concept2Cure
               </h3>
               <div className="space-y-1">

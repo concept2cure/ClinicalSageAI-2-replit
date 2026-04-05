@@ -132,10 +132,10 @@ const SourceSuggestionCard: React.FC<{
   const getSourceIcon = (type: SourceSuggestion['sourceType']) => {
     switch (type) {
       case 'clinical_study': return <Activity className="w-4 h-4 text-stone-500" />;
-      case 'predicate_device': return <Target className="w-4 h-4 text-stone-1000" />;
-      case 'literature': return <BookOpen className="w-4 h-4 text-stone-1000" />;
-      case 'test_report': return <FileText className="w-4 h-4 text-stone-1000" />;
-      case 'regulatory_document': return <Shield className="w-4 h-4 text-stone-1000" />;
+      case 'predicate_device': return <Target className="w-4 h-4 text-stone-900" />;
+      case 'literature': return <BookOpen className="w-4 h-4 text-stone-900" />;
+      case 'test_report': return <FileText className="w-4 h-4 text-stone-900" />;
+      case 'regulatory_document': return <Shield className="w-4 h-4 text-stone-900" />;
       default: return <Database className="w-4 h-4 text-stone-500" />;
     }
   };
@@ -314,7 +314,7 @@ const CommandCenterPanel: React.FC<{
           data-testid="button-command-link-sources"
         >
           <div className="flex items-center gap-2">
-            <Link2 className="w-4 h-4 text-stone-1000" />
+            <Link2 className="w-4 h-4 text-stone-900" />
             <span className="text-sm font-medium text-stone-900">Link Sources</span>
           </div>
           <p className="text-xs text-stone-500 mt-1">
@@ -327,7 +327,7 @@ const CommandCenterPanel: React.FC<{
           data-testid="button-command-resolve-issues"
         >
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-stone-1000" />
+            <ShieldCheck className="w-4 h-4 text-stone-900" />
             <span className="text-sm font-medium text-stone-900">Resolve Issues</span>
           </div>
           <p className="text-xs text-stone-500 mt-1">
@@ -340,7 +340,7 @@ const CommandCenterPanel: React.FC<{
           data-testid="button-command-sync-data"
         >
           <div className="flex items-center gap-2">
-            <Database className="w-4 h-4 text-stone-1000" />
+            <Database className="w-4 h-4 text-stone-900" />
             <span className="text-sm font-medium text-stone-900">Sync Data</span>
           </div>
           <p className="text-xs text-stone-500 mt-1">
@@ -455,17 +455,17 @@ const ComplianceGuardCard: React.FC<{
     error: { 
       icon: XCircle, 
       color: 'border-stone-200 bg-stone-100',
-      iconColor: 'text-stone-1000'
+      iconColor: 'text-stone-900'
     },
     warning: { 
       icon: AlertTriangle, 
       color: 'border-stone-200 bg-stone-100',
-      iconColor: 'text-stone-1000'
+      iconColor: 'text-stone-900'
     },
     suggestion: { 
       icon: Lightbulb, 
       color: 'border-stone-200 bg-stone-100',
-      iconColor: 'text-stone-1000'
+      iconColor: 'text-stone-900'
     },
   };
   
@@ -555,7 +555,7 @@ const SherpaGuidanceCard: React.FC<{
     <div className={`p-4 rounded-lg border ${color} ${isNextBest ? 'bg-stone-100' : 'bg-white'}`}>
       {isNextBest && (
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-4 h-4 text-stone-1000" />
+          <Sparkles className="w-4 h-4 text-stone-900" />
           <span className="text-xs font-semibold text-stone-600 uppercase tracking-wide">
             Recommended Next Step
           </span>
@@ -579,7 +579,7 @@ const SherpaGuidanceCard: React.FC<{
               {guidance.estimatedTime}
             </span>
             <span className="flex items-center gap-1">
-              <CheckCircle className="w-3 h-3 text-stone-1000" />
+              <CheckCircle className="w-3 h-3 text-stone-900" />
               {guidance.expectedOutcome}
             </span>
           </div>
@@ -608,9 +608,9 @@ const DataBridgeCard: React.FC<{
   onView: () => void;
 }> = ({ bridge, onSync, onView }) => {
   const statusConfig = {
-    connected: { icon: CheckCircle, color: 'text-stone-1000', label: 'Connected' },
-    available: { icon: Database, color: 'text-stone-1000', label: 'Available' },
-    'needs-update': { icon: RefreshCw, color: 'text-stone-1000', label: 'Needs Update' },
+    connected: { icon: CheckCircle, color: 'text-stone-900', label: 'Connected' },
+    available: { icon: Database, color: 'text-stone-900', label: 'Available' },
+    'needs-update': { icon: RefreshCw, color: 'text-stone-900', label: 'Needs Update' },
     missing: { icon: XCircle, color: 'text-stone-400', label: 'No Data' },
   };
   
@@ -1151,7 +1151,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
         <div className="flex items-center justify-between px-6 py-4 bg-white/90 backdrop-blur border-b border-stone-200">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-stone-1000" />
+              <FileText className="w-5 h-5 text-stone-900" />
               <h1 className="text-lg font-semibold text-stone-900">
                 {state.document?.title || 'New Document'}
               </h1>
@@ -1211,7 +1211,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
           <div className="px-6 py-3 bg-white/90 backdrop-blur border-t border-stone-200">
             <div className="flex items-center gap-6 text-sm">
               <span className="text-stone-600">
-                <Sparkles className="w-4 h-4 inline mr-1.5 text-stone-1000" />
+                <Sparkles className="w-4 h-4 inline mr-1.5 text-stone-900" />
                 {state.detectedClaims.length} claims detected
               </span>
               <span className="flex items-center gap-1.5 text-stone-700">
@@ -1407,7 +1407,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                 
                 {state.complianceGuards.length === 0 ? (
                   <div className="text-center py-8 text-stone-500">
-                    <ShieldCheck className="w-8 h-8 mx-auto mb-3 text-stone-1000" />
+                    <ShieldCheck className="w-8 h-8 mx-auto mb-3 text-stone-900" />
                     <p className="text-sm">No compliance issues found!</p>
                     <p className="text-xs mt-1 text-stone-700">Document is ready for review</p>
                   </div>

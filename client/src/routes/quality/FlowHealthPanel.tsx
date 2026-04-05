@@ -50,7 +50,7 @@ export default function FlowHealthPanel({ batchId }: { batchId: string }) {
           </Button>
         </div>
         {!data ? (
-          <div className="text-slate-600">Loading…</div>
+          <div className="text-stone-600">Loading…</div>
         ) : (
           <ul className="list-disc ml-6">
             {!data.issues?.length && <li className="text-stone-800">All checks OK</li>}

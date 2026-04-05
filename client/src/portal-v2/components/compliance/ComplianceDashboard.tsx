@@ -835,7 +835,7 @@ const FindingsOverview: React.FC<{ frameworks: ComplianceFramework[] }> = ({ fra
       <CardContent>
         {openFindings.length === 0 ? (
           <div className="text-center py-8 text-stone-500">
-            <CheckCircle className="h-12 w-12 mx-auto mb-4 text-stone-1000" />
+            <CheckCircle className="h-12 w-12 mx-auto mb-4 text-stone-900" />
             <p className="font-medium">No Open Findings</p>
             <p className="text-sm">All compliance findings have been resolved</p>
           </div>

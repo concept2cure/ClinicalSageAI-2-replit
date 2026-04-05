@@ -20,10 +20,10 @@ export default function HelpDrawer({
       <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={onClose} />
 
       {/* Drawer */}
-      <div className="fixed top-0 right-0 h-full w-96 bg-white shadow-xl z-50 flex flex-col">
-        <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+      <div className="fixed top-0 right-0 h-full w-96 bg-white shadow-sm z-50 flex flex-col">
+        <div className="p-4 border-b border-stone-200 flex items-center justify-between">
           <h3 className="text-lg font-semibold">{title}</h3>
-          <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded">
+          <button onClick={onClose} className="p-1 hover:bg-stone-100 rounded">
             <X className="w-4 h-4" />
           </button>
         </div>

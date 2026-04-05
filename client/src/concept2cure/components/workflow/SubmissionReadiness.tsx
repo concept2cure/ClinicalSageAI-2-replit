@@ -230,7 +230,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-stone-50/50">
       <WorkspaceHeader
         title="Submission Readiness"
-        titleIcon={<Send className="w-3.5 h-3.5 text-stone-1000" />}
+        titleIcon={<Send className="w-3.5 h-3.5 text-stone-900" />}
         onBack={onBack}
         typeBadge={projectType}
         testId="submission-readiness-header"

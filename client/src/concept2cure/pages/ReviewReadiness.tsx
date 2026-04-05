@@ -307,7 +307,7 @@ function complianceColor(status: ComplianceStatus): string {
 function strengthColor(s: EvidenceStrength): string {
   if (s === 'strong') return 'text-stone-800';
   if (s === 'adequate') return 'text-stone-600';
-  if (s === 'weak') return 'text-stone-1000';
+  if (s === 'weak') return 'text-stone-900';
   return 'text-stone-400';
 }
 
@@ -721,7 +721,7 @@ function _removed() { // eslint-disable-line
           <span className={cn(
             'text-base font-semibold',
             ANA_PREDICTION.successProbability >= 0.7 ? 'text-stone-700' :
-            ANA_PREDICTION.successProbability >= 0.5 ? 'text-stone-1000' : 'text-stone-1000',
+            ANA_PREDICTION.successProbability >= 0.5 ? 'text-stone-900' : 'text-stone-900',
           )}>
             {(ANA_PREDICTION.successProbability * 100).toFixed(0)}%
           </span>
@@ -740,7 +740,7 @@ function _removed() { // eslint-disable-line
                 <span className="text-xs text-stone-600">{rf.factor}</span>
                 <span className={cn(
                   'text-xs font-medium uppercase ml-auto shrink-0',
-                  rf.impact === 'high' ? 'text-stone-1000' : rf.impact === 'medium' ? 'text-stone-1000' : 'text-stone-400',
+                  rf.impact === 'high' ? 'text-stone-900' : rf.impact === 'medium' ? 'text-stone-900' : 'text-stone-400',
                 )}>{rf.impact}</span>
               </div>
             ))}
@@ -807,7 +807,7 @@ function _removed() { // eslint-disable-line
         <ul className="space-y-2">
           {ANA_PREDICTION.protocolFindings.map((finding: any, i: any) => (
             <li key={i} className="text-xs text-stone-600 flex items-start gap-2">
-              <span className="text-stone-1000 mt-0.5 shrink-0">{'\u2192'}</span>
+              <span className="text-stone-900 mt-0.5 shrink-0">{'\u2192'}</span>
               {finding}
             </li>
           ))}
@@ -926,8 +926,8 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
                   <p className={cn(
                     'text-base font-semibold mt-1',
                     dimensions[dim] >= 75 ? 'text-stone-700'
-                      : dimensions[dim] >= 50 ? 'text-stone-1000'
-                      : 'text-stone-1000'
+                      : dimensions[dim] >= 50 ? 'text-stone-900'
+                      : 'text-stone-900'
                   )}>
                     {dimensions[dim]}%
                   </p>
@@ -935,7 +935,7 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
                     <div
                       className={cn(
                         'h-full rounded-full',
-                        dimensions[dim] >= 75 ? 'bg-stone-1000'
+                        dimensions[dim] >= 75 ? 'bg-stone-900'
                           : dimensions[dim] >= 50 ? 'bg-stone-400'
                           : 'bg-stone-400'
                       )}
@@ -958,8 +958,8 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
                   <div key={gap.id} className="px-5 py-3 flex items-start gap-3">
                     <span className={cn(
                       'w-2 h-2 rounded-full mt-1.5 flex-shrink-0',
-                      gap.severity === 'critical' ? 'bg-stone-1000'
-                        : gap.severity === 'high' ? 'bg-stone-1000'
+                      gap.severity === 'critical' ? 'bg-stone-900'
+                        : gap.severity === 'high' ? 'bg-stone-900'
                         : 'bg-stone-600'
                     )} />
                     <div className="flex-1 min-w-0">
@@ -1005,7 +1005,7 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
                           <div
                             className={cn(
                               'h-full rounded-full',
-                              mod.completeness >= 85 ? 'bg-stone-1000' : mod.completeness >= 65 ? 'bg-stone-400' : 'bg-stone-400'
+                              mod.completeness >= 85 ? 'bg-stone-900' : mod.completeness >= 65 ? 'bg-stone-400' : 'bg-stone-400'
                             )}
                             style={{ width: `${mod.completeness}%` }}
                           />
@@ -1138,7 +1138,7 @@ function EvidenceConfidenceView({ evidenceSections }: { evidenceSections: Eviden
                   <td className="px-5 py-3 text-center">
                     <span className={cn(
                       'font-medium',
-                      section.confidence >= 80 ? 'text-stone-800' : section.confidence >= 60 ? 'text-stone-600' : 'text-stone-1000'
+                      section.confidence >= 80 ? 'text-stone-800' : section.confidence >= 60 ? 'text-stone-600' : 'text-stone-900'
                     )}>
                       {section.confidence}%
                     </span>
@@ -1428,7 +1428,7 @@ function TraceabilityView({ traceability }: { traceability: TraceabilityClaim[] 
                       {claim.traced ? (
                         <span className="text-stone-800 text-xs font-medium">Yes</span>
                       ) : (
-                        <span className="text-stone-1000 text-xs font-medium">No</span>
+                        <span className="text-stone-900 text-xs font-medium">No</span>
                       )}
                     </td>
                   </tr>

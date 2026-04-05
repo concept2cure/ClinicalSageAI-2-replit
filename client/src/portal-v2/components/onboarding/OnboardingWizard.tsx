@@ -516,8 +516,8 @@ export function OnboardingWizard({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-stone-900 via-primary-900 to-stone-900 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-sm max-w-4xl w-full overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-8 py-6">
           <div className="flex items-center gap-4">
@@ -687,8 +687,8 @@ function ActivationCompleteView({ organizationName }: { organizationName: string
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-8">
+    <div className="min-h-screen bg-gradient-to-br from-stone-900 via-primary-900 to-stone-900 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-sm max-w-3xl w-full p-8">
         <div className="flex items-center gap-3 mb-4">
           <CheckCircle className="h-7 w-7 text-stone-700" />
           <h2 className="text-2xl font-semibold text-stone-900">Organization Setup Complete</h2>
@@ -921,7 +921,7 @@ function SubscriptionStep({ data, updateData }: StepProps) {
             <ul className="mt-4 space-y-2">
               {tier.features.map((feature, idx) => (
                 <li key={idx} className="flex items-center gap-2 text-sm text-stone-600">
-                  <Check className="h-4 w-4 text-stone-1000" />
+                  <Check className="h-4 w-4 text-stone-900" />
                   {feature}
                 </li>
               ))}
@@ -1383,7 +1383,7 @@ function UsersStep({ data, updateData }: StepProps) {
                 </div>
                 <button
                   onClick={() => removeUser(idx)}
-                  className="p-1 text-stone-400 hover:text-stone-1000"
+                  className="p-1 text-stone-400 hover:text-stone-900"
                 >
                   <X className="h-5 w-5" />
                 </button>

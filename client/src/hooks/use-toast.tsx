@@ -46,11 +46,11 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         {toasts.map(toast => (
           <div
             key={toast.id}
-            className={`toast p-4 rounded-md shadow-md flex items-start max-w-md 
-            ${toast.type === 'success' ? 'bg-stone-100 border-l-4 border-stone-1000' : ''}
-            ${toast.type === 'error' ? 'bg-stone-100 border-l-4 border-stone-1000' : ''}
-            ${toast.type === 'warning' ? 'bg-stone-100 border-l-4 border-stone-1000' : ''}
-            ${toast.type === 'info' ? 'bg-stone-100 border-l-4 border-stone-1000' : ''}
+            className={`toast p-4 rounded-md shadow-sm flex items-start max-w-md 
+            ${toast.type === 'success' ? 'bg-stone-100 border-l-4 border-stone-900' : ''}
+            ${toast.type === 'error' ? 'bg-stone-100 border-l-4 border-stone-900' : ''}
+            ${toast.type === 'warning' ? 'bg-stone-100 border-l-4 border-stone-900' : ''}
+            ${toast.type === 'info' ? 'bg-stone-100 border-l-4 border-stone-900' : ''}
             ${toast.type === 'default' ? 'bg-white border-l-4 border-stone-300' : ''}
             `}
           >

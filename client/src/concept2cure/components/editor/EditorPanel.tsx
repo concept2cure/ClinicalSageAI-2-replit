@@ -378,7 +378,7 @@ const PrecedentSearchInspector: React.FC<{
                       ].filter(Boolean);
                       onInsertCitation(parts.join(' — '));
                     }}
-                    className="mt-1.5 text-[10px] text-stone-1000 hover:text-stone-700 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
+                    className="mt-1.5 text-[10px] text-stone-900 hover:text-stone-700 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
                   >
                     <Plus className="w-2.5 h-2.5" />
                     Insert as citation
@@ -2509,7 +2509,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     return (
       <div className="flex items-center justify-center h-full bg-white">
         <div className="text-center max-w-md px-6">
-          <AlertTriangle className="w-10 h-10 text-stone-1000 mx-auto mb-4" />
+          <AlertTriangle className="w-10 h-10 text-stone-900 mx-auto mb-4" />
           <p className="text-sm font-semibold text-stone-700 mb-2">
             Saved document was created, but the editor could not load that artifact automatically.
           </p>
@@ -2911,7 +2911,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
         {isDirty && saveStatus !== 'error' && (
           <span className="flex items-center gap-1 text-xs text-stone-600 font-medium shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-stone-1000" />
+            <span className="w-1.5 h-1.5 rounded-full bg-stone-900" />
             Unsaved
           </span>
         )}
@@ -3112,7 +3112,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 disabled={claimCheckMutation.isPending || !activeArtifact?.content}
                 className="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-xs text-stone-700 disabled:opacity-60"
               >
-                <ShieldCheck className="w-3 h-3 inline mr-1.5 text-stone-1000" />
+                <ShieldCheck className="w-3 h-3 inline mr-1.5 text-stone-900" />
                 Check Claims
               </Button>
               <Button
@@ -3252,7 +3252,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   label: 'Review',
                   icon: <Eye className="w-3.5 h-3.5" />,
                   activeColor: isReviewMode
-                    ? 'bg-stone-1000 text-white font-medium shadow-sm'
+                    ? 'bg-stone-900 text-white font-medium shadow-sm'
                     : undefined,
                   pulse: isReviewMode,
                   suggested: suggestedPanels.has('review'),
@@ -3457,10 +3457,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 className={cn(
                   'h-3.5 w-3.5',
                   claimValidation.result.hallucinationRisk === 'low'
-                    ? 'text-stone-1000'
+                    ? 'text-stone-900'
                     : claimValidation.result.hallucinationRisk === 'medium'
-                      ? 'text-stone-1000'
-                      : 'text-stone-1000'
+                      ? 'text-stone-900'
+                      : 'text-stone-900'
                 )}
               />
               <span className="text-[13px] text-stone-600">
@@ -3591,7 +3591,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             activeArtifact?.status === 'locked' && (
               <div className="absolute inset-0 z-10 bg-stone-100/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
                 <div className="bg-white/90 border border-stone-200 rounded-lg px-6 py-4 shadow text-center pointer-events-auto max-w-xs">
-                  <Lock className="w-6 h-6 text-stone-1000 mx-auto mb-2" />
+                  <Lock className="w-6 h-6 text-stone-900 mx-auto mb-2" />
                   <p className="text-sm font-semibold text-stone-800">Document Locked</p>
                   <p className="text-xs text-stone-700 mt-1 mb-3">
                     This document is locked and read-only. Provide a reason to unlock.
@@ -3601,7 +3601,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     value={unlockReason}
                     onChange={e => setUnlockReason(e.target.value)}
                     placeholder="Reason for unlocking (min 5 chars)"
-                    className="w-full px-2 py-1.5 text-xs border border-stone-200 rounded-lg mb-2 focus-visible:ring-2 focus-visible:ring-stone-1000 focus-visible:ring-offset-1 outline-none"
+                    className="w-full px-2 py-1.5 text-xs border border-stone-200 rounded-lg mb-2 focus-visible:ring-2 focus-visible:ring-stone-900 focus-visible:ring-offset-1 outline-none"
                   />
                   <Button
                     variant="ghost"
@@ -4368,7 +4368,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-xl shadow w-full max-w-md p-5">
             <div className="flex items-center gap-2 mb-3">
-              <AlertTriangle className="w-5 h-5 text-stone-1000" />
+              <AlertTriangle className="w-5 h-5 text-stone-900" />
               <h3 className="text-sm font-semibold text-stone-900">
                 Quality Check — Review Before Proceeding
               </h3>
@@ -4418,7 +4418,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-xl shadow w-full max-w-sm p-4">
             <div className="flex items-center gap-2 mb-3">
-              <MessageSquare className="w-4 h-4 text-stone-1000" />
+              <MessageSquare className="w-4 h-4 text-stone-900" />
               <h3 className="text-sm font-semibold text-stone-900">Add Comment</h3>
             </div>
             {pendingCommentHighlight && (

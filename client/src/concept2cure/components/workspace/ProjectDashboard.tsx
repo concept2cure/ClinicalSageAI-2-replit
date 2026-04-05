@@ -388,7 +388,7 @@ export function ProjectDashboard({
             )}
             {stats.counts.approved > 0 && (
               <div
-                className="bg-stone-1000 transition-all duration-150"
+                className="bg-stone-900 transition-all duration-150"
                 style={{ width: `${(stats.counts.approved / barTotal) * 100}%` }}
                 title={`${stats.counts.approved} Approved`}
               />
@@ -425,9 +425,9 @@ export function ProjectDashboard({
             'bg-stone-100 border-stone-200',
           )}>
             <Shield size={18} className={cn(
-              stats.riskLevel === 'high' ? 'text-stone-1000' :
-              stats.riskLevel === 'medium' ? 'text-stone-1000' :
-              'text-stone-1000',
+              stats.riskLevel === 'high' ? 'text-stone-900' :
+              stats.riskLevel === 'medium' ? 'text-stone-900' :
+              'text-stone-900',
             )} />
             <span className={cn(
               'text-base font-semibold tabular-nums mt-1',
@@ -449,21 +449,21 @@ export function ProjectDashboard({
 
           {/* CTD Coverage */}
           <div className="flex flex-col items-center justify-center rounded-xl border border-stone-200 bg-white p-5 hover:shadow-sm transition-shadow">
-            <Layers size={18} className="text-stone-1000" />
+            <Layers size={18} className="text-stone-900" />
             <span className="text-base font-semibold tabular-nums text-stone-900 mt-1">{stats.ctdCoverage}%</span>
             <span className="text-xs font-medium text-stone-500 mt-0.5">CTD Coverage</span>
           </div>
 
           {/* Approval Rate */}
           <div className="flex flex-col items-center justify-center rounded-xl border border-stone-200 bg-white p-5 hover:shadow-sm transition-shadow">
-            <TrendingUp size={18} className="text-stone-1000" />
+            <TrendingUp size={18} className="text-stone-900" />
             <span className="text-base font-semibold tabular-nums text-stone-900 mt-1">{stats.approvalRate}%</span>
             <span className="text-xs font-medium text-stone-500 mt-0.5">Approval Rate</span>
           </div>
 
           {/* In Review */}
           <div className="flex flex-col items-center justify-center rounded-xl border border-stone-200 bg-white p-5 hover:shadow-sm transition-shadow">
-            <AlertTriangle size={18} className={stats.reviewCycle > 30 ? 'text-stone-1000' : 'text-stone-1000'} />
+            <AlertTriangle size={18} className={stats.reviewCycle > 30 ? 'text-stone-900' : 'text-stone-900'} />
             <span className="text-base font-semibold tabular-nums text-stone-900 mt-1">{stats.counts.review}</span>
             <span className="text-xs font-medium text-stone-500 mt-0.5">Awaiting Review</span>
           </div>

@@ -330,12 +330,12 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
       <div onClick={onSelect} className="flex-1 flex items-center gap-2 min-w-0">
         {node.type === 'module' || node.type === 'section' ? (
           isExpanded ? (
-            <FolderOpen className="w-4 h-4 text-stone-1000 flex-shrink-0" />
+            <FolderOpen className="w-4 h-4 text-stone-900 flex-shrink-0" />
           ) : (
-            <Folder className="w-4 h-4 text-stone-1000 flex-shrink-0" />
+            <Folder className="w-4 h-4 text-stone-900 flex-shrink-0" />
           )
         ) : (
-          <FileText className="w-4 h-4 text-stone-1000 flex-shrink-0" />
+          <FileText className="w-4 h-4 text-stone-900 flex-shrink-0" />
         )}
 
         {/* Name */}
@@ -372,7 +372,7 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
             className="p-1 hover:bg-stone-100 rounded"
             title="Create draft with AI"
           >
-            <Plus className="w-3.5 h-3.5 text-stone-1000" />
+            <Plus className="w-3.5 h-3.5 text-stone-900" />
           </button>
         )}
         {node.type === 'subsection' && onUpload && (
@@ -450,9 +450,9 @@ const ModuleHeader: React.FC<{
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-150',
-                progressPercent === 100 && 'bg-stone-1000',
+                progressPercent === 100 && 'bg-stone-900',
                 progressPercent >= 50 && progressPercent < 100 && 'bg-stone-600',
-                progressPercent < 50 && 'bg-stone-1000'
+                progressPercent < 50 && 'bg-stone-900'
               )}
               style={{ width: `${progressPercent}%` }}
             />

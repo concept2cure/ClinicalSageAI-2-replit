@@ -221,7 +221,7 @@ const EventBadge: React.FC<{
         'w-full text-left p-2 rounded-lg border transition-all duration-150',
         config.bgColor,
         config.borderColor,
-        'hover:shadow-md'
+        'hover:shadow-sm'
       )}
     >
       <div className="flex items-start gap-2">
@@ -240,7 +240,7 @@ const EventBadge: React.FC<{
           )}
         </div>
         {event.priority === 'critical' && (
-          <span className="w-2 h-2 rounded-full bg-stone-1000 flex-shrink-0" />
+          <span className="w-2 h-2 rounded-full bg-stone-900 flex-shrink-0" />
         )}
       </div>
     </button>
@@ -528,7 +528,7 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
                       {date.getDate()}
                     </span>
                     {hasCritical && (
-                      <span className="w-2 h-2 rounded-full bg-stone-1000" />
+                      <span className="w-2 h-2 rounded-full bg-stone-900" />
                     )}
                   </div>
                   

@@ -59,7 +59,7 @@ export default function QuestionsHub({ subId }: { subId: string }) {
       case 'CRITICAL':
         return <Badge variant="destructive">Critical</Badge>;
       case 'MAJOR':
-        return <Badge className="bg-stone-1000">Major</Badge>;
+        return <Badge className="bg-stone-900">Major</Badge>;
       case 'MINOR':
         return <Badge variant="secondary">Minor</Badge>;
       default:

@@ -183,7 +183,7 @@ export function useGovernanceNormalizer() {
     (proposal: { artifactStatus?: string; governanceState?: string }) => {
       const artifactStatus = String(proposal.artifactStatus || '').toLowerCase();
       if (artifactStatus === 'locked')
-        return { label: 'Locked / Finalized', tone: 'text-slate-700' };
+        return { label: 'Locked / Finalized', tone: 'text-stone-700' };
       if (artifactStatus === 'review') return { label: 'Review in flight', tone: 'text-stone-700' };
       if (proposal.governanceState === 'ACCEPTED_GOVERNED')
         return { label: 'Accepted and governed', tone: 'text-stone-800' };

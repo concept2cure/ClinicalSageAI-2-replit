@@ -113,16 +113,16 @@ export const PlatformHeaderNode: React.FC<NodeProps<PlatformHeaderData>> = memo(
         <ReadinessRing value={data.readiness} size={64} />
         <div style={{ textAlign: 'left', fontSize: 11, lineHeight: 1.6 }}>
           <div>
-            <span style={{ color: '#fca5a5' }}>●</span> {data.critical} Critical
+            <span style={{ color: '#a8a29e' }}>●</span> {data.critical} Critical
           </div>
           <div>
-            <span style={{ color: '#fdba74' }}>●</span> {data.high} High
+            <span style={{ color: '#78716c' }}>●</span> {data.high} High
           </div>
           <div>
-            <span style={{ color: '#fde047' }}>●</span> {data.medium} Medium
+            <span style={{ color: '#57534e' }}>●</span> {data.medium} Medium
           </div>
           <div>
-            <span style={{ color: '#c4d6b3' }}>●</span> {data.low} Low
+            <span style={{ color: '#d6d3d1' }}>●</span> {data.low} Low
           </div>
         </div>
       </div>
@@ -668,9 +668,9 @@ export const ArchComponentNode: React.FC<NodeProps<ArchComponentData>> = memo(({
               style={{
                 color:
                   comp.status === 'connected'
-                    ? '#c4d6b3'
+                    ? '#d6d3d1'
                     : comp.status === 'broken'
-                      ? '#fca5a5'
+                      ? '#a8a29e'
                       : '#e8e6dc',
                 fontWeight: 600,
               }}

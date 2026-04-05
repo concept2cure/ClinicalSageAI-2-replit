@@ -54,10 +54,10 @@ const SUBMISSION_TYPE_COLORS = {
 };
 
 const SUBMISSION_TYPE_DOT_COLORS = {
-  IND: 'bg-stone-1000',
-  NDA: 'bg-stone-1000',
-  BLA: 'bg-stone-1000',
-  MAA: 'bg-stone-1000',
+  IND: 'bg-stone-900',
+  NDA: 'bg-stone-900',
+  BLA: 'bg-stone-900',
+  MAA: 'bg-stone-900',
 };
 
 export default function SubmissionCalendar() {

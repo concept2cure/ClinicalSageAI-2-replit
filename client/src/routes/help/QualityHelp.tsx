@@ -28,7 +28,7 @@ export default function QualityHelp() {
             <button
               key={s.key}
               onClick={() => setActive(s.key)}
-              className={`w-full text-left px-2 py-1 rounded ${active === s.key ? 'bg-sky-50 border border-sky-300' : 'hover:bg-slate-50 border border-transparent'}`}
+              className={`w-full text-left px-2 py-1 rounded ${active === s.key ? 'bg-stone-100 border border-stone-300' : 'hover:bg-stone-50 border border-transparent'}`}
             >
               {s.title}
             </button>

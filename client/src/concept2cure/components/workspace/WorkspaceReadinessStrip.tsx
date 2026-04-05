@@ -34,11 +34,11 @@ interface StatPillProps {
 
 const ICON_COLOR_MAP: Record<string, string> = {
   stone: 'text-stone-500',
-  blue: 'text-stone-1000',
-  violet: 'text-stone-1000',
-  amber: 'text-stone-1000',
-  emerald: 'text-stone-1000',
-  red: 'text-stone-1000',
+  blue: 'text-stone-900',
+  violet: 'text-stone-900',
+  amber: 'text-stone-900',
+  emerald: 'text-stone-900',
+  red: 'text-stone-900',
 };
 
 const StatPill: React.FC<StatPillProps> = ({ icon: Icon, label, value, color = 'stone', pulse }) => (

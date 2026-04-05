@@ -63,7 +63,7 @@ export default function MetadataDynamicForm({
       {fields.map(f => (
         <div key={f.key} className="md-field">
           <Label className="text-sm font-medium mb-1 block">
-            {f.label} {("required" in f && f.required) ? <span className="text-stone-1000">*</span> : null}
+            {f.label} {("required" in f && f.required) ? <span className="text-stone-900">*</span> : null}
           </Label>
           {renderInput(f, value[f.key], (v: any) => set(f.key, v))}
         </div>

@@ -136,7 +136,7 @@ export function OrganizationSwitcher() {
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[260px] p-0 z-50 shadow-xl border border-stone-200 bg-white rounded-lg"
+        className="w-[260px] p-0 z-50 shadow-sm border border-stone-200 bg-white rounded-lg"
         align="start"
         sideOffset={8}
         side="bottom"
@@ -165,7 +165,7 @@ export function OrganizationSwitcher() {
                   className="mx-2 mb-1 rounded-md px-3 py-2.5 text-sm cursor-pointer hover:bg-stone-50 data-[selected]:bg-stone-100 data-[selected]:text-stone-900"
                 >
                   <div className="flex items-center gap-3 truncate flex-1">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-stone-100 to-stone-100 text-stone-700">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-stone-100 text-stone-700">
                       {org.logo ? (
                         <img
                           src={org.logo}

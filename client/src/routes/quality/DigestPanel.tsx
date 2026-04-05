@@ -27,15 +27,15 @@ export default function DigestPanel() {
           Trigger Daily Digest
         </Button>
         {result && (
-          <div className="mt-4 p-3 bg-slate-50 rounded">
+          <div className="mt-4 p-3 bg-stone-50 rounded">
             <div className="font-bold">Digest Generated:</div>
             <div>Batches processed: {result.lines}</div>
-            <div className="text-xs text-slate-600 mt-2">
+            <div className="text-xs text-stone-600 mt-2">
               Notifications sent to configured Slack/Email channels
             </div>
           </div>
         )}
-        <div className="text-xs text-slate-600">
+        <div className="text-xs text-stone-600">
           Sends QC summary with OOS alerts, pending reviews, and recent releases.
         </div>
       </CardContent>

@@ -432,7 +432,7 @@ export function CitationSearchPanel({
           autoComplete="off"
         />
         {loading && (
-          <Loader2 className="absolute right-7 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-1000 animate-spin" />
+          <Loader2 className="absolute right-7 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-900 animate-spin" />
         )}
       </div>
 
@@ -440,7 +440,7 @@ export function CitationSearchPanel({
       <div ref={listRef} className="flex-1 overflow-y-auto">
         {error && (
           <div className="px-4 py-6 text-center">
-            <p className="text-sm text-stone-1000">{error}</p>
+            <p className="text-sm text-stone-900">{error}</p>
             <Button
               variant="ghost"
               size="sm"
@@ -485,7 +485,7 @@ export function CitationSearchPanel({
               'w-full text-left px-4 py-3 h-auto rounded-none border-b border-stone-50 transition-colors duration-150',
               'outline-none',
               index === selectedIndex
-                ? 'bg-stone-100/80 border-l-2 border-l-stone-1000'
+                ? 'bg-stone-100/80 border-l-2 border-l-stone-900'
                 : 'hover:bg-stone-50 border-l-2 border-l-transparent'
             )}
           >

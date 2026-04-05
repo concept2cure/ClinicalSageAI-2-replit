@@ -550,7 +550,7 @@ export function SessionMonitor({ onExpiring, onExpired, warningMinutes = 5 }: Se
   if (!showWarning) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 bg-stone-100 border border-stone-200 rounded-lg p-4 shadow-lg z-50">
+    <div className="fixed bottom-4 right-4 bg-stone-100 border border-stone-200 rounded-lg p-4 shadow-sm z-50">
       <h4 className="font-medium text-stone-900">Session Expiring Soon</h4>
       <p className="text-sm text-stone-700 mt-1">
         Your session will expire in {sessionTimeRemaining()} minutes.

@@ -181,8 +181,8 @@ const MetricCard: React.FC<{
         {metric.trend && (
           <TrendIcon className={cn(
             'w-4 h-4',
-            metric.trend === 'up' && metric.status !== 'critical' && 'text-stone-1000',
-            metric.trend === 'down' && metric.status !== 'good' && 'text-stone-1000',
+            metric.trend === 'up' && metric.status !== 'critical' && 'text-stone-900',
+            metric.trend === 'down' && metric.status !== 'good' && 'text-stone-900',
             metric.trend === 'stable' && 'text-stone-400'
           )} />
         )}
@@ -431,7 +431,7 @@ const CROProjectManagerView: React.FC<{
         {/* Internal QC */}
         <div className="bg-stone-50 rounded-xl p-4">
           <h3 className="text-sm font-semibold text-stone-700 mb-3 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-stone-1000" />
+            <div className="w-2 h-2 rounded-full bg-stone-900" />
             Internal QC ({grouped.internal_qc.length})
           </h3>
           <div className="space-y-2">
@@ -454,7 +454,7 @@ const CROProjectManagerView: React.FC<{
         {/* Client Review */}
         <div className="bg-stone-50 rounded-xl p-4">
           <h3 className="text-sm font-semibold text-stone-700 mb-3 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-stone-1000" />
+            <div className="w-2 h-2 rounded-full bg-stone-900" />
             Client Review ({grouped.client_review.length})
           </h3>
           <div className="space-y-2">
@@ -564,7 +564,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
           {/* PDUFA Dates */}
           <div className="col-span-1">
             <h2 className="text-lg font-semibold text-stone-900 mb-4 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-stone-1000" />
+              <Calendar className="w-5 h-5 text-stone-900" />
               PDUFA Dates
             </h2>
             <div className="space-y-3">
@@ -580,7 +580,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
           {/* Action Items */}
           <div className="col-span-1">
             <h2 className="text-lg font-semibold text-stone-900 mb-4 flex items-center gap-2">
-              <Flag className="w-5 h-5 text-stone-1000" />
+              <Flag className="w-5 h-5 text-stone-900" />
               Action Items
             </h2>
             <div className="space-y-3">
@@ -600,7 +600,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
           {/* Commitments */}
           <div className="col-span-1">
             <h2 className="text-lg font-semibold text-stone-900 mb-4 flex items-center gap-2">
-              <ClipboardCheck className="w-5 h-5 text-stone-1000" />
+              <ClipboardCheck className="w-5 h-5 text-stone-900" />
               Regulatory Commitments
             </h2>
             <div className="space-y-3">
@@ -637,7 +637,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
         {/* Action Items */}
         <div>
           <h2 className="text-lg font-semibold text-stone-900 mb-4 flex items-center gap-2">
-            <Flag className="w-5 h-5 text-stone-1000" />
+            <Flag className="w-5 h-5 text-stone-900" />
             Your Action Items
           </h2>
           <div className="space-y-3">
@@ -654,7 +654,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
         {/* Watchlist */}
         <div>
           <h2 className="text-lg font-semibold text-stone-900 mb-4 flex items-center gap-2">
-            <Bell className="w-5 h-5 text-stone-1000" />
+            <Bell className="w-5 h-5 text-stone-900" />
             Watchlist
           </h2>
           <div className="space-y-2">

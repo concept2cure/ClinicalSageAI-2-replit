@@ -159,7 +159,7 @@ const MODULE_CATALOG = [
     label: 'SnowGlobe',
     subtitle: 'Cross-platform intel',
     icon: Snowflake,
-    color: 'text-sky-600',
+    color: 'text-stone-600',
   },
   {
     id: 'collaboration-hub',
@@ -194,9 +194,9 @@ const MODULE_CATALOG = [
 const TYPE_COLORS: Record<string, string> = {
   '510K': 'bg-stone-600',
   IND: 'bg-stone-500',
-  NDA: 'bg-stone-1000',
-  BLA: 'bg-stone-1000',
-  PMA: 'bg-stone-1000',
+  NDA: 'bg-stone-900',
+  BLA: 'bg-stone-900',
+  PMA: 'bg-stone-900',
   CER: 'bg-stone-500',
   MAA: 'bg-stone-600',
 };

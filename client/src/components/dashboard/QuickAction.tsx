@@ -18,9 +18,9 @@ export function QuickAction({
   buttonClassName = 'bg-primary hover:bg-primary-dark focus:ring-primary',
 }: QuickActionProps) {
   return (
-    <div className="bg-white rounded-lg shadow border border-slate-200 p-6">
-      <h3 className="text-lg font-medium text-slate-800 mb-4">{title}</h3>
-      <p className="text-sm text-slate-600 mb-4">{description}</p>
+    <div className="bg-white rounded-lg shadow border border-stone-200 p-6">
+      <h3 className="text-lg font-medium text-stone-800 mb-4">{title}</h3>
+      <p className="text-sm text-stone-600 mb-4">{description}</p>
       <button
         onClick={onClick}
         className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${buttonClassName} focus:outline-none focus:ring-2 focus:ring-offset-2`}

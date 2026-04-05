@@ -98,7 +98,7 @@ const ACTION_ICONS: Record<string, React.ReactNode> = {
   approved: <CheckCircle2 className="w-3.5 h-3.5 text-stone-700" />,
   rejected: <XCircle className="w-3.5 h-3.5 text-stone-700" />,
   pending: <Clock className="w-3.5 h-3.5 text-stone-600" />,
-  awaiting_decision: <Clock className="w-3.5 h-3.5 text-stone-1000" />,
+  awaiting_decision: <Clock className="w-3.5 h-3.5 text-stone-900" />,
   delegated: <ArrowRight className="w-3.5 h-3.5 text-stone-600" />,
 };
 
@@ -168,7 +168,7 @@ const DecisionLineageMap: React.FC<DecisionLineageMapProps> = ({
       {/* Header */}
       <div className="border-b px-5 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <GitBranch className="w-5 h-5 text-stone-1000" />
+          <GitBranch className="w-5 h-5 text-stone-900" />
           <h2 className="text-sm font-semibold text-stone-900">Decision Lineage</h2>
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">
             {graphData.nodes.length} records
@@ -222,7 +222,7 @@ const DecisionLineageMap: React.FC<DecisionLineageMapProps> = ({
       {/* Compliance summary bar */}
       <div className="border-b bg-stone-50/50 px-5 py-2 flex items-center gap-4 text-[10px]">
         <div className="flex items-center gap-1.5">
-          <Shield className="w-3 h-3 text-stone-1000" />
+          <Shield className="w-3 h-3 text-stone-900" />
           <span className="font-medium text-stone-600">Compliance:</span>
           {graphData.metadata.complianceFrameworks.slice(0, 3).map(f => (
             <span key={f} className="px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 font-medium">

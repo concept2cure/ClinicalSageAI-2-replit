@@ -68,11 +68,11 @@ interface DataRoomPanelProps {
 function getFileIcon(type: string) {
   const t = type?.toLowerCase() || '';
   if (t.includes('pdf') || t.includes('document'))
-    return <FileText className="w-4 h-4 text-stone-1000" />;
+    return <FileText className="w-4 h-4 text-stone-900" />;
   if (t.includes('spreadsheet') || t.includes('excel') || t.includes('csv'))
-    return <FileSpreadsheet className="w-4 h-4 text-stone-1000" />;
+    return <FileSpreadsheet className="w-4 h-4 text-stone-900" />;
   if (t.includes('image') || t.includes('jpeg') || t.includes('png'))
-    return <FileImage className="w-4 h-4 text-stone-1000" />;
+    return <FileImage className="w-4 h-4 text-stone-900" />;
   return <File className="w-4 h-4 text-stone-500" />;
 }
 
@@ -268,7 +268,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search sources..."
-            className="w-full pl-8 pr-8 py-1.5 text-xs bg-white border border-stone-200 rounded-lg focus-visible:ring-2 outline-none focus:ring-stone-1000"
+            className="w-full pl-8 pr-8 py-1.5 text-xs bg-white border border-stone-200 rounded-lg focus-visible:ring-2 outline-none focus:ring-stone-900"
           />
           {search && (
             <button
@@ -451,13 +451,13 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                     </div>
                     <div className="flex items-center gap-1">
                       {source.status === 'processing' && (
-                        <Loader2 className="w-3 h-3 animate-spin text-stone-1000" />
+                        <Loader2 className="w-3 h-3 animate-spin text-stone-900" />
                       )}
                       {source.status === 'error' && (
-                        <AlertCircle className="w-3 h-3 text-stone-1000" />
+                        <AlertCircle className="w-3 h-3 text-stone-900" />
                       )}
                       {source.status === 'ready' && (
-                        <CheckCircle className="w-3 h-3 text-stone-1000" />
+                        <CheckCircle className="w-3 h-3 text-stone-900" />
                       )}
                       {isExpanded ? (
                         <ChevronDown className="w-3 h-3 text-stone-400" />

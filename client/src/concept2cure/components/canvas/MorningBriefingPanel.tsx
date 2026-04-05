@@ -142,8 +142,8 @@ const PriorityItem: React.FC<PriorityItemProps> = ({
   onClick,
 }) => {
   const urgencyConfig = {
-    now: { label: 'Now', color: 'bg-stone-1000' },
-    today: { label: 'Today', color: 'bg-stone-1000' },
+    now: { label: 'Now', color: 'bg-stone-900' },
+    today: { label: 'Today', color: 'bg-stone-900' },
     this_week: { label: 'This Week', color: 'bg-stone-600' },
   };
 
@@ -256,7 +256,7 @@ export const MorningBriefingPanel: React.FC<MorningBriefingPanelProps> = ({
 
   if (error) {
     return (
-      <div className={cn("flex items-center justify-center h-64 text-stone-1000", className)}>
+      <div className={cn("flex items-center justify-center h-64 text-stone-900", className)}>
         Failed to load briefing
       </div>
     );
@@ -282,7 +282,7 @@ export const MorningBriefingPanel: React.FC<MorningBriefingPanelProps> = ({
         <div className="flex items-center gap-2">
           <span className={cn(
             "w-2 h-2 rounded-full",
-            connectionStatus === 'connected' ? 'bg-stone-1000' : 'bg-stone-1000'
+            connectionStatus === 'connected' ? 'bg-stone-900' : 'bg-stone-900'
           )} />
           <span className="text-xs text-stone-500">
             {connectionStatus === 'connected' ? 'Live' : 'Offline'}
@@ -344,7 +344,7 @@ export const MorningBriefingPanel: React.FC<MorningBriefingPanelProps> = ({
               ))
             ) : (
               <div className="text-center py-8 text-stone-500">
-                <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-stone-1000" />
+                <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-stone-900" />
                 <p className="font-medium">All Clear</p>
                 <p className="text-sm">No overnight alerts</p>
               </div>
@@ -372,7 +372,7 @@ export const MorningBriefingPanel: React.FC<MorningBriefingPanelProps> = ({
               ))
             ) : (
               <div className="text-center py-8 text-stone-500">
-                <Sparkles className="w-10 h-10 mx-auto mb-2 text-stone-1000" />
+                <Sparkles className="w-10 h-10 mx-auto mb-2 text-stone-900" />
                 <p className="font-medium">You're Ahead</p>
                 <p className="text-sm">No urgent priorities</p>
               </div>

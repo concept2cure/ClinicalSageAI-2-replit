@@ -212,8 +212,8 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
-      case 'UP': return <TrendingUp className="w-4 h-4 text-stone-1000" />;
-      case 'DOWN': return <TrendingDown className="w-4 h-4 text-stone-1000" />;
+      case 'UP': return <TrendingUp className="w-4 h-4 text-stone-900" />;
+      case 'DOWN': return <TrendingDown className="w-4 h-4 text-stone-900" />;
       default: return <Activity className="w-4 h-4 text-stone-400" />;
     }
   };
@@ -295,7 +295,7 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
           <ul className="space-y-1">
             {hazardAnalysis.recommendations.map((rec, index) => (
               <li key={index} className="text-sm text-stone-700 flex items-start gap-2">
-                <span className="text-stone-1000">•</span>
+                <span className="text-stone-900">•</span>
                 {rec}
               </li>
             ))}

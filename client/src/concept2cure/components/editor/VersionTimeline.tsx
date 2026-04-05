@@ -106,7 +106,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200">
           <div className="flex items-center gap-2">
-            <History className="w-4 h-4 text-stone-1000" />
+            <History className="w-4 h-4 text-stone-900" />
             <span className="text-sm font-semibold text-stone-900">Version History</span>
           </div>
           <button onClick={onClose} className="p-1 hover:bg-stone-100 rounded">
@@ -129,7 +129,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 shrink-0">
         <div className="flex items-center gap-2">
-          <History className="w-4 h-4 text-stone-1000" />
+          <History className="w-4 h-4 text-stone-900" />
           <span className="text-sm font-semibold text-stone-900">Version History</span>
           <span className="text-xs text-stone-400">{sortedVersions.length} versions</span>
         </div>
@@ -190,7 +190,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                       isLatest
                         ? 'bg-stone-600 border-stone-600'
                         : iSelected
-                          ? 'bg-stone-1000 border-stone-1000'
+                          ? 'bg-stone-900 border-stone-900'
                           : 'bg-white border-stone-300'
                     )}
                   />

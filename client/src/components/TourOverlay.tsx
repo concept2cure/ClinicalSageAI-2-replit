@@ -109,7 +109,7 @@ export default function TourOverlay({ open, onClose, steps, startIndex = 0, onSt
             width: rect.width,
             height: rect.height,
             borderRadius: 8,
-            boxShadow: '0 0 0 9999px rgba(0,0,0,0.35), 0 0 0 3px #8bb4d9',
+            boxShadow: '0 0 0 9999px rgba(0,0,0,0.35), 0 0 0 3px #a8a29e',
             pointerEvents: 'none',
             transition: 'top .15s, left .15s, width .15s, height .15s',
             zIndex: 10001,
@@ -180,8 +180,8 @@ export default function TourOverlay({ open, onClose, steps, startIndex = 0, onSt
                 onClick={() => setI(Math.min(steps.length - 1, i + 1))}
                 disabled={i === steps.length - 1}
                 style={{
-                  border: '1px solid #6a9bcc',
-                  color: '#6a9bcc',
+                  border: '1px solid #78716c',
+                  color: '#78716c',
                   background: '#fff',
                   padding: '4px 8px',
                   borderRadius: 6,

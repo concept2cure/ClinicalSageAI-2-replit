@@ -192,7 +192,7 @@ const PhaseJourneyNavigator: React.FC = () => {
                   </button>
                   {index < phases.length - 1 && (
                     <ArrowRight className={`mx-2 h-5 w-5 ${
-                      isCompleted ? 'text-stone-1000' : 'text-stone-300'
+                      isCompleted ? 'text-stone-900' : 'text-stone-300'
                     }`} />
                   )}
                 </div>
@@ -210,7 +210,7 @@ const PhaseJourneyNavigator: React.FC = () => {
           return (
             <Card 
               key={module.id} 
-              className={`transition-all hover:shadow-lg ${
+              className={`transition-all hover:shadow-sm ${
                 module.status === 'locked' ? 'opacity-60' : ''
               }`}
             >

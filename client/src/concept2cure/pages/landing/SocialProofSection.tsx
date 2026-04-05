@@ -91,7 +91,7 @@ export function SocialProofSection() {
                 <ul className="space-y-3">
                   {a.points.map(point => (
                     <li key={point} className="flex items-start gap-2.5 text-sm text-stone-700">
-                      <CheckIcon className="w-4 h-4 text-stone-1000 mt-0.5 flex-shrink-0" />
+                      <CheckIcon className="w-4 h-4 text-stone-900 mt-0.5 flex-shrink-0" />
                       <span>{point}</span>
                     </li>
                   ))}

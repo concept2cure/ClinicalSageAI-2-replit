@@ -37,7 +37,7 @@ export function AppAlarm({
       )}
       {...props}
     >
-      <div className="max-w-md w-full bg-white dark:bg-slate-950 shadow-lg rounded-lg overflow-hidden animate-pulse">
+      <div className="max-w-md w-full bg-white dark:bg-stone-950 shadow-sm rounded-lg overflow-hidden animate-pulse">
         <div className="bg-stone-700 dark:bg-stone-800 p-4 flex items-center space-x-3">
           <AlertTriangle className="h-6 w-6 text-white" />
           <h2 className="text-lg font-bold text-white">{title}</h2>
@@ -48,8 +48,8 @@ export function AppAlarm({
           <AlertDescription className="text-base">{message}</AlertDescription>
         </Alert>
 
-        <div className="p-4 bg-slate-50 dark:bg-slate-900 flex flex-col space-y-3">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+        <div className="p-4 bg-stone-50 dark:bg-stone-900 flex flex-col space-y-3">
+          <p className="text-sm text-stone-600 dark:text-stone-400">
             This alarm indicates that the application has become unstable or unresponsive. All
             development should stop immediately to address this critical issue.
           </p>

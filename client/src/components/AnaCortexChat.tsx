@@ -323,9 +323,9 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
   return (
     <div className={cn('flex flex-col h-full bg-white rounded-xl border shadow-sm', className)}>
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-stone-100 to-stone-100">
+      <div className="flex items-center justify-between px-6 py-4 border-b bg-stone-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-stone-1000 to-stone-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-stone-900 to-stone-600 flex items-center justify-center">
             <Brain className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -351,7 +351,7 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
                 <ChevronDown className="w-3 h-3" />
               </button>
               {showModelSelector && (
-                <div className="absolute top-full left-0 mt-1 w-56 bg-white border rounded-lg shadow-lg z-50 py-1">
+                <div className="absolute top-full left-0 mt-1 w-56 bg-white border rounded-lg shadow-sm z-50 py-1">
                   <button
                     onClick={() => {
                       setActiveModel('base');
@@ -380,7 +380,7 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
                         )}
                       >
                         <span className="font-medium flex items-center gap-1">
-                          {model.name} <Zap className="w-3 h-3 text-stone-1000" />
+                          {model.name} <Zap className="w-3 h-3 text-stone-900" />
                         </span>
                         <span className="block text-xs text-stone-400">
                           {model.domain || model.type}
@@ -403,7 +403,7 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
         {messages.length === 0 ? (
           // Welcome state
           <div className="h-full flex flex-col items-center justify-center text-center px-8">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-stone-100 to-stone-100 flex items-center justify-center mb-6">
+            <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mb-6">
               <Sparkles className="w-10 h-10 text-stone-600" />
             </div>
             <h3 className="text-xl font-semibold text-stone-900 mb-2">Meet AnA v1.0 — Your RI Co-pilot</h3>
@@ -439,8 +439,8 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
                   className={cn(
                     'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
                     message.role === 'user'
-                      ? 'bg-stone-1000'
-                      : 'bg-gradient-to-br from-stone-1000 to-stone-600'
+                      ? 'bg-stone-900'
+                      : 'bg-gradient-to-br from-stone-900 to-stone-600'
                   )}
                 >
                   {message.role === 'user' ? (
@@ -454,7 +454,7 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
                 <div
                   className={cn(
                     'flex-1 max-w-[85%] rounded-2xl px-4 py-3',
-                    message.role === 'user' ? 'bg-stone-1000 text-white' : 'bg-stone-100 text-stone-800'
+                    message.role === 'user' ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-800'
                   )}
                 >
                   {message.role === 'user' ? (
@@ -537,7 +537,7 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
                       <div className="flex gap-3">
                         {message.intelligence.approvalProbability != null && (
                           <div className="flex items-center gap-1 text-[11px]">
-                            <TrendingUp className="w-3 h-3 text-stone-1000" />
+                            <TrendingUp className="w-3 h-3 text-stone-900" />
                             <span className="text-stone-600">Approval:</span>
                             <span className="font-semibold text-stone-800">
                               {message.intelligence.approvalProbability}%
@@ -546,7 +546,7 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
                         )}
                         {message.intelligence.riskScore != null && (
                           <div className="flex items-center gap-1 text-[11px]">
-                            <Target className="w-3 h-3 text-stone-1000" />
+                            <Target className="w-3 h-3 text-stone-900" />
                             <span className="text-stone-600">Risk:</span>
                             <span
                               className={`font-semibold ${
@@ -575,7 +575,7 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
             {/* Loading indicator */}
             {isLoading && (
               <div className="flex gap-4">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-stone-1000 to-stone-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-stone-900 to-stone-600 flex items-center justify-center">
                   <Brain className="w-4 h-4 text-white" />
                 </div>
                 <div className="flex-1 max-w-[85%] bg-stone-100 rounded-2xl px-4 py-3">
@@ -609,7 +609,7 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
           <Button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="h-11 px-4 bg-gradient-to-r from-stone-1000 to-stone-600 hover:from-stone-600 hover:to-stone-700"
+            className="h-11 px-4 bg-gradient-to-r from-stone-900 to-stone-600 hover:from-stone-600 hover:to-stone-700"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />

@@ -194,7 +194,7 @@ export const ProofCertificatePage: React.FC = () => {
                       key={agent.id}
                       className="flex items-start gap-2 rounded-lg bg-white px-3 py-2 text-sm"
                     >
-                      <div className="mt-1 h-2 w-2 rounded-full bg-stone-1000" />
+                      <div className="mt-1 h-2 w-2 rounded-full bg-stone-900" />
                       <div className="min-w-0">
                         <p className="font-medium text-stone-900 truncate">{agent.name}</p>
                         <p className="text-xs text-stone-500 truncate">

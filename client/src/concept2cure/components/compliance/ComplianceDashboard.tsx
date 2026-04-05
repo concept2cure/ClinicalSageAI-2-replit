@@ -125,9 +125,9 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
   const offset = circumference - (score / 100) * circumference;
 
   const getScoreColor = (s: number) => {
-    if (s >= 90) return '#92a87a'; // stone-1000
-    if (s >= 70) return '#eab308'; // stone-1000
-    return '#ef4444'; // stone-1000
+    if (s >= 90) return '#92a87a'; // stone-900
+    if (s >= 70) return '#eab308'; // stone-900
+    return '#ef4444'; // stone-900
   };
 
   return (
@@ -184,9 +184,9 @@ interface CategoryScoreBarProps {
 
 const CategoryScoreBar: React.FC<CategoryScoreBarProps> = ({ label, score, icon }) => {
   const getScoreColor = (s: number) => {
-    if (s >= 90) return 'bg-stone-1000';
-    if (s >= 70) return 'bg-stone-1000';
-    return 'bg-stone-1000';
+    if (s >= 90) return 'bg-stone-900';
+    if (s >= 70) return 'bg-stone-900';
+    return 'bg-stone-900';
   };
 
   return (
@@ -232,19 +232,19 @@ const ViolationCard: React.FC<ViolationCardProps> = ({
       icon: AlertTriangle,
       bgColor: 'bg-stone-100',
       borderColor: 'border-stone-200',
-      iconColor: 'text-stone-1000',
+      iconColor: 'text-stone-900',
     },
     warning: {
       icon: AlertTriangle,
       bgColor: 'bg-stone-100',
       borderColor: 'border-stone-200',
-      iconColor: 'text-stone-1000',
+      iconColor: 'text-stone-900',
     },
     info: {
       icon: Info,
       bgColor: 'bg-stone-100',
       borderColor: 'border-stone-200',
-      iconColor: 'text-stone-1000',
+      iconColor: 'text-stone-900',
     },
   };
 
@@ -330,7 +330,7 @@ const TrendIndicator: React.FC<TrendIndicatorProps> = ({ history }) => {
 
   if (diff > 0) {
     return (
-      <span className="flex items-center gap-1 text-stone-1000 text-sm">
+      <span className="flex items-center gap-1 text-stone-900 text-sm">
         <TrendingUp className="w-4 h-4" />
         +{diff}%
       </span>
@@ -338,7 +338,7 @@ const TrendIndicator: React.FC<TrendIndicatorProps> = ({ history }) => {
   }
   if (diff < 0) {
     return (
-      <span className="flex items-center gap-1 text-stone-1000 text-sm">
+      <span className="flex items-center gap-1 text-stone-900 text-sm">
         <TrendingDown className="w-4 h-4" />
         {diff}%
       </span>
@@ -470,15 +470,15 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
               <TrendIndicator history={history} />
             </div>
             <div className="flex items-center gap-4 text-sm">
-              <span className="flex items-center gap-1 text-stone-1000">
+              <span className="flex items-center gap-1 text-stone-900">
                 <AlertTriangle className="w-4 h-4" />
                 {errorCount} errors
               </span>
-              <span className="flex items-center gap-1 text-stone-1000">
+              <span className="flex items-center gap-1 text-stone-900">
                 <AlertTriangle className="w-4 h-4" />
                 {warningCount} warnings
               </span>
-              <span className="flex items-center gap-1 text-stone-1000">
+              <span className="flex items-center gap-1 text-stone-900">
                 <Info className="w-4 h-4" />
                 {infoCount} info
               </span>
@@ -551,7 +551,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
           {filteredViolations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-stone-500">
-              <CheckCircle className="w-12 h-12 mb-3 text-stone-1000" />
+              <CheckCircle className="w-12 h-12 mb-3 text-stone-900" />
               <p className="font-medium">No Issues Found</p>
               <p className="text-sm">
                 {severityFilter === 'all' && categoryFilter === 'all'

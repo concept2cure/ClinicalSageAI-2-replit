@@ -10,10 +10,10 @@ interface ModuleBreakdownProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  ready: 'bg-stone-1000',
+  ready: 'bg-stone-900',
   on_track: 'bg-stone-600',
-  needs_attention: 'bg-stone-1000',
-  at_risk: 'bg-stone-1000',
+  needs_attention: 'bg-stone-900',
+  at_risk: 'bg-stone-900',
   in_progress: 'bg-stone-500',
   not_started: 'bg-stone-400',
 };
@@ -89,7 +89,7 @@ export function ModuleBreakdown({ modules, onModuleClick }: ModuleBreakdownProps
               <div className="mt-2 text-xs text-stone-500 dark:text-stone-400">
                 {mod.missingItems.slice(0, 2).map((item, i) => (
                   <div key={i} className="flex items-center gap-1">
-                    <span className="text-stone-1000">!</span>
+                    <span className="text-stone-900">!</span>
                     <span>{item}</span>
                   </div>
                 ))}

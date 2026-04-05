@@ -243,7 +243,7 @@ const ClientCard: React.FC<{
               <div
                 className={cn(
                   'h-full rounded-full',
-                  revenueProgress > 90 ? 'bg-stone-1000' : revenueProgress > 70 ? 'bg-stone-1000' : 'bg-stone-600'
+                  revenueProgress > 90 ? 'bg-stone-900' : revenueProgress > 70 ? 'bg-stone-900' : 'bg-stone-600'
                 )}
                 style={{ width: `${Math.min(revenueProgress, 100)}%` }}
               />
@@ -358,9 +358,9 @@ const UtilizationChart: React.FC<{
                     onClick={() => onResourceClick?.(resource)}
                     className={cn(
                       'h-full transition-opacity hover:opacity-80',
-                      resource.utilizationRate > 100 && 'bg-stone-1000',
-                      resource.utilizationRate > 85 && resource.utilizationRate <= 100 && 'bg-stone-1000',
-                      resource.utilizationRate >= 70 && resource.utilizationRate <= 85 && 'bg-stone-1000',
+                      resource.utilizationRate > 100 && 'bg-stone-900',
+                      resource.utilizationRate > 85 && resource.utilizationRate <= 100 && 'bg-stone-900',
+                      resource.utilizationRate >= 70 && resource.utilizationRate <= 85 && 'bg-stone-900',
                       resource.utilizationRate < 70 && 'bg-stone-300'
                     )}
                     style={{ width: `${100 / deptResources.length}%` }}
@@ -386,15 +386,15 @@ const UtilizationChart: React.FC<{
       {/* Legend */}
       <div className="flex items-center gap-4 mt-4 pt-4 border-t border-stone-200">
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded bg-stone-1000" />
+          <span className="w-3 h-3 rounded bg-stone-900" />
           <span className="text-xs text-stone-500">&gt;100%</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded bg-stone-1000" />
+          <span className="w-3 h-3 rounded bg-stone-900" />
           <span className="text-xs text-stone-500">85-100%</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded bg-stone-1000" />
+          <span className="w-3 h-3 rounded bg-stone-900" />
           <span className="text-xs text-stone-500">70-85%</span>
         </div>
         <div className="flex items-center gap-1.5">

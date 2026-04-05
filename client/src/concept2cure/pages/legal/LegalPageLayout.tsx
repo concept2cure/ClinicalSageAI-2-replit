@@ -46,7 +46,7 @@ const LegalPageLayout: React.FC<LegalPageLayoutProps> = ({ title, lastUpdated, c
           <div className="flex items-center gap-2 mb-4">
             <div
               className="w-1 h-8 rounded-full"
-              style={{ background: 'linear-gradient(180deg, #d97757, #c15f3c)' }}
+              style={{ background: 'linear-gradient(180deg, #44403c, #292524)' }}
             />
             <h1
               className="text-base font-semibold text-stone-900"

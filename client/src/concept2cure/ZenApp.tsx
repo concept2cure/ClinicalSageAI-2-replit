@@ -2394,7 +2394,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   <span>Home</span>
                 </button>
                 <span className="text-stone-200">&middot;</span>
-                <FlaskConical className="w-3.5 h-3.5 text-stone-1000" />
+                <FlaskConical className="w-3.5 h-3.5 text-stone-900" />
                 <span className="text-xs font-medium text-stone-800">Biostatistics</span>
                 {activeProject && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-medium">
@@ -2488,7 +2488,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     <span>Home</span>
                   </button>
                   <span className="text-stone-200">·</span>
-                  <Brain className="w-3.5 h-3.5 text-stone-1000" />
+                  <Brain className="w-3.5 h-3.5 text-stone-900" />
                   <span className="text-xs font-medium text-stone-800">Intelligence</span>
                   {activeProject && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-medium">

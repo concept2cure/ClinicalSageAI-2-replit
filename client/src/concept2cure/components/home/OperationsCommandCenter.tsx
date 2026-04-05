@@ -130,7 +130,7 @@ export function OperationsCommandCenter({
       { label: 'Active', value: projects.filter((p) => p.status?.toLowerCase() === 'active').length, icon: Briefcase, iconClassName: 'text-stone-700', valueClassName: 'text-stone-700' },
       { label: 'In Review', value: projects.filter((p) => p.status?.toLowerCase().includes('review')).length, icon: FileSearch, iconClassName: 'text-stone-600', valueClassName: 'text-stone-600' },
       { label: 'Completed', value: projects.filter((p) => p.status?.toLowerCase() === 'completed').length, icon: CheckCircle2, iconClassName: 'text-stone-400' },
-      { label: 'This Month', value: projects.filter((p) => { if (!p.createdAt) return false; const d = new Date(p.createdAt); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; }).length, icon: CalendarDays, iconClassName: 'text-sky-600', valueClassName: 'text-sky-600' },
+      { label: 'This Month', value: projects.filter((p) => { if (!p.createdAt) return false; const d = new Date(p.createdAt); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; }).length, icon: CalendarDays, iconClassName: 'text-stone-600', valueClassName: 'text-stone-600' },
     ];
   }, [projects]);
 

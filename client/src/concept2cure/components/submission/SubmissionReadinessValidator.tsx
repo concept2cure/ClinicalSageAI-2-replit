@@ -289,11 +289,11 @@ function runValidation(artifacts: Artifact[], submissionType?: string): ModuleVa
 function StatusIcon({ status }: { status: CheckStatus }) {
   switch (status) {
     case 'pass':
-      return <CheckCircle className="w-4 h-4 text-stone-1000 shrink-0" />;
+      return <CheckCircle className="w-4 h-4 text-stone-900 shrink-0" />;
     case 'fail':
-      return <XCircle className="w-4 h-4 text-stone-1000 shrink-0" />;
+      return <XCircle className="w-4 h-4 text-stone-900 shrink-0" />;
     case 'warning':
-      return <AlertTriangle className="w-4 h-4 text-stone-1000 shrink-0" />;
+      return <AlertTriangle className="w-4 h-4 text-stone-900 shrink-0" />;
     case 'not-applicable':
       return <div className="w-4 h-4 rounded-full bg-stone-200 shrink-0" />;
     default:
@@ -403,9 +403,9 @@ export function SubmissionReadinessValidator({
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-200',
-                readinessScore >= 80 ? 'bg-stone-1000' :
-                readinessScore >= 50 ? 'bg-stone-1000' :
-                'bg-stone-1000',
+                readinessScore >= 80 ? 'bg-stone-900' :
+                readinessScore >= 50 ? 'bg-stone-900' :
+                'bg-stone-900',
               )}
               style={{ width: `${readinessScore}%` }}
             />

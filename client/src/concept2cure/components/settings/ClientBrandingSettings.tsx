@@ -184,7 +184,7 @@ const ClientBrandingSettings: React.FC = () => {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2.5 mb-1">
-          <Building2 className="w-5 h-5 text-stone-1000" />
+          <Building2 className="w-5 h-5 text-stone-900" />
           <h1 className="text-base font-semibold text-stone-900">Brand & Template Settings</h1>
         </div>
         <p className="text-xs text-stone-500">
@@ -222,7 +222,7 @@ const ClientBrandingSettings: React.FC = () => {
           {/* Logo upload */}
           <div className="bg-white rounded-xl border p-5">
             <h3 className="text-sm font-semibold text-stone-800 mb-3 flex items-center gap-2">
-              <Image className="w-4 h-4 text-stone-1000" />
+              <Image className="w-4 h-4 text-stone-900" />
               Company Logo
             </h3>
             <div className="flex items-center gap-4">
@@ -256,7 +256,7 @@ const ClientBrandingSettings: React.FC = () => {
           {/* Colors */}
           <div className="bg-white rounded-xl border p-5">
             <h3 className="text-sm font-semibold text-stone-800 mb-3 flex items-center gap-2">
-              <Paintbrush className="w-4 h-4 text-stone-1000" />
+              <Paintbrush className="w-4 h-4 text-stone-900" />
               Brand Colors
             </h3>
             <div className="grid grid-cols-3 gap-4">
@@ -289,7 +289,7 @@ const ClientBrandingSettings: React.FC = () => {
           {/* Typography */}
           <div className="bg-white rounded-xl border p-5">
             <h3 className="text-sm font-semibold text-stone-800 mb-3 flex items-center gap-2">
-              <Type className="w-4 h-4 text-stone-1000" />
+              <Type className="w-4 h-4 text-stone-900" />
               Typography
             </h3>
             <div>
@@ -376,7 +376,7 @@ const ClientBrandingSettings: React.FC = () => {
                   </button>
                   <button
                     onClick={() => deleteTemplate.mutate(tmpl.id)}
-                    className="p-1.5 text-stone-400 hover:text-stone-1000 rounded hover:bg-stone-100"
+                    className="p-1.5 text-stone-400 hover:text-stone-900 rounded hover:bg-stone-100"
                     title="Delete"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -410,7 +410,7 @@ const ClientBrandingSettings: React.FC = () => {
         <div className="space-y-6">
           <div className="bg-white rounded-xl border p-5">
             <h3 className="text-sm font-semibold text-stone-800 mb-3 flex items-center gap-2">
-              <Layout className="w-4 h-4 text-stone-1000" />
+              <Layout className="w-4 h-4 text-stone-900" />
               Document Header
             </h3>
             <p className="text-xs text-stone-500 mb-3">

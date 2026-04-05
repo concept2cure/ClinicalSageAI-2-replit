@@ -383,7 +383,7 @@ function PMSMetrics({
               <p className="text-sm text-muted-foreground">Active Signals</p>
               <p className="text-base font-semibold">{activeSignals}</p>
             </div>
-            <Activity className="w-8 h-8 text-stone-1000" />
+            <Activity className="w-8 h-8 text-stone-900" />
           </div>
         </div>
       </div>
@@ -395,7 +395,7 @@ function PMSMetrics({
               <p className="text-sm text-muted-foreground">High Priority</p>
               <p className="text-base font-semibold text-stone-700">{highPrioritySignals}</p>
             </div>
-            <AlertTriangle className="w-8 h-8 text-stone-1000" />
+            <AlertTriangle className="w-8 h-8 text-stone-900" />
           </div>
         </div>
       </div>
@@ -407,7 +407,7 @@ function PMSMetrics({
               <p className="text-sm text-muted-foreground">Pending Reports</p>
               <p className="text-base font-semibold">{pendingReports}</p>
             </div>
-            <FileText className="w-8 h-8 text-stone-1000" />
+            <FileText className="w-8 h-8 text-stone-900" />
           </div>
         </div>
       </div>
@@ -419,7 +419,7 @@ function PMSMetrics({
               <p className="text-sm text-muted-foreground">Overdue</p>
               <p className="text-base font-semibold text-stone-600">{overdueReports}</p>
             </div>
-            <Clock className="w-8 h-8 text-stone-1000" />
+            <Clock className="w-8 h-8 text-stone-900" />
           </div>
         </div>
       </div>
@@ -443,7 +443,7 @@ function PMSMetrics({
               <p className="text-sm text-muted-foreground">Urgent Cases</p>
               <p className="text-base font-semibold text-stone-700">{urgentVigilance}</p>
             </div>
-            <AlertCircle className="w-8 h-8 text-stone-1000" />
+            <AlertCircle className="w-8 h-8 text-stone-900" />
           </div>
         </div>
       </div>

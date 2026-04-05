@@ -300,7 +300,7 @@ export default function IVDRProjectHub() {
             <ChevronLeft className="w-4 h-4" />
             Hub
           </button>
-          <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-stone-1000 to-stone-600 flex items-center justify-center">
+          <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-stone-900 to-stone-600 flex items-center justify-center">
             <Microscope className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -326,7 +326,7 @@ export default function IVDRProjectHub() {
       {/* ── Readiness Score + Stage Progress ──────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {/* Readiness Card */}
-        <Card className="bg-gradient-to-br from-stone-100 to-stone-100 border-stone-200">
+        <Card className="bg-stone-100 border-stone-200">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-stone-700">Overall Readiness</CardTitle>
           </CardHeader>

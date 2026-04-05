@@ -302,7 +302,7 @@ export default function RegulatoryIntelligence() {
             <div className="p-4 border rounded-lg" data-testid="metric-success-rate">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-stone-600">Success Rate</span>
-                <CheckCircle className="w-4 h-4 text-stone-1000" />
+                <CheckCircle className="w-4 h-4 text-stone-900" />
               </div>
               <div className="text-2xl font-bold text-stone-700">
                 {metrics.submissionSuccessRate.toFixed(1)}%
@@ -321,7 +321,7 @@ export default function RegulatoryIntelligence() {
             <div className="p-4 border rounded-lg" data-testid="metric-approval-time">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-stone-600">Avg Approval Time</span>
-                <Clock className="w-4 h-4 text-stone-1000" />
+                <Clock className="w-4 h-4 text-stone-900" />
               </div>
               <div className="text-2xl font-bold text-stone-600">
                 {metrics.avgApprovalTimeDays} days
@@ -340,7 +340,7 @@ export default function RegulatoryIntelligence() {
             <div className="p-4 border rounded-lg" data-testid="metric-question-volume">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-stone-600">Total Questions</span>
-                <FileText className="w-4 h-4 text-stone-1000" />
+                <FileText className="w-4 h-4 text-stone-900" />
               </div>
               <div className="text-2xl font-bold text-stone-600">
                 {questions.length}
@@ -360,9 +360,9 @@ export default function RegulatoryIntelligence() {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-stone-600">Risk Score</span>
                 <AlertTriangle className={`w-4 h-4 ${
-                  metrics.riskScore < 30 ? 'text-stone-1000' : 
-                  metrics.riskScore < 60 ? 'text-stone-1000' : 
-                  'text-stone-1000'
+                  metrics.riskScore < 30 ? 'text-stone-900' : 
+                  metrics.riskScore < 60 ? 'text-stone-900' : 
+                  'text-stone-900'
                 }`} />
               </div>
               <div className={`text-2xl font-bold ${
@@ -540,10 +540,10 @@ export default function RegulatoryIntelligence() {
                   key={idx}
                   className={`p-4 border-l-4 rounded ${
                     rec.priority === 'high' 
-                      ? 'border-stone-1000 bg-stone-100' 
+                      ? 'border-stone-900 bg-stone-100' 
                       : rec.priority === 'medium'
-                      ? 'border-stone-1000 bg-stone-100'
-                      : 'border-stone-1000 bg-stone-100'
+                      ? 'border-stone-900 bg-stone-100'
+                      : 'border-stone-900 bg-stone-100'
                   }`}
                   data-testid={`recommendation-${idx}`}
                 >

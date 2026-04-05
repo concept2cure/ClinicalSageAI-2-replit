@@ -71,7 +71,7 @@ const AdminMetricCard: React.FC<{ metric: AdminMetric }> = ({ metric }) => {
         : 'text-stone-500';
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-sm transition-shadow">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -113,15 +113,15 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ activities }) => {
     switch (eventType) {
       case 'LOGIN':
       case 'LOGOUT':
-        return <Key className="h-4 w-4 text-stone-1000" />;
+        return <Key className="h-4 w-4 text-stone-900" />;
       case 'LOGIN_FAILED':
-        return <AlertTriangle className="h-4 w-4 text-stone-1000" />;
+        return <AlertTriangle className="h-4 w-4 text-stone-900" />;
       case 'USER_CREATED':
-        return <UserPlus className="h-4 w-4 text-stone-1000" />;
+        return <UserPlus className="h-4 w-4 text-stone-900" />;
       case 'DOCUMENT_APPROVED':
-        return <CheckCircle2 className="h-4 w-4 text-stone-1000" />;
+        return <CheckCircle2 className="h-4 w-4 text-stone-900" />;
       case 'SETTINGS_CHANGED':
-        return <Settings className="h-4 w-4 text-stone-1000" />;
+        return <Settings className="h-4 w-4 text-stone-900" />;
       default:
         return <Activity className="h-4 w-4 text-stone-500" />;
     }
@@ -246,7 +246,7 @@ const SecurityAlerts: React.FC<SecurityAlertsProps> = ({ alerts, onResolve }) =>
         <div className="space-y-3">
           {unresolvedAlerts.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-stone-1000" />
+              <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-stone-900" />
               <p className="font-medium text-stone-800">All Clear</p>
               <p className="text-sm">No active security alerts</p>
             </div>
@@ -306,9 +306,9 @@ const ResourceUsage: React.FC<ResourceUsageProps> = ({ limits, current }) => {
   };
 
   const getUsageColor = (percent: number) => {
-    if (percent >= 90) return 'bg-stone-1000';
-    if (percent >= 75) return 'bg-stone-1000';
-    return 'bg-stone-1000';
+    if (percent >= 90) return 'bg-stone-900';
+    if (percent >= 75) return 'bg-stone-900';
+    return 'bg-stone-900';
   };
 
   const resources = [
@@ -392,9 +392,9 @@ const UserStatusOverview: React.FC<UserStatusOverviewProps> = ({ users }) => {
   const mfaEnabled = users.filter(u => u.mfaEnabled).length;
 
   const stats = [
-    { label: 'Active', value: activeUsers, color: 'bg-stone-1000' },
-    { label: 'Pending', value: pendingUsers, color: 'bg-stone-1000' },
-    { label: 'Locked', value: lockedUsers, color: 'bg-stone-1000' },
+    { label: 'Active', value: activeUsers, color: 'bg-stone-900' },
+    { label: 'Pending', value: pendingUsers, color: 'bg-stone-900' },
+    { label: 'Locked', value: lockedUsers, color: 'bg-stone-900' },
   ];
 
   return (

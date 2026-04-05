@@ -415,7 +415,7 @@ const AlertCard: React.FC<{
   return (
     <Card
       className={`transition-all ${
-        alert.status === 'new' ? 'border-l-4 border-l-stone-1000' : ''
+        alert.status === 'new' ? 'border-l-4 border-l-stone-900' : ''
       } ${alert.severity === 'critical' ? 'ring-1 ring-stone-200' : ''}`}
     >
       <CardContent className="p-4">
@@ -510,7 +510,7 @@ const AlertCard: React.FC<{
 
 const StatsCards: React.FC<{ stats: AlertStats }> = ({ stats }) => (
   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-    <Card className="border-l-4 border-l-stone-1000">
+    <Card className="border-l-4 border-l-stone-900">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div>
@@ -521,7 +521,7 @@ const StatsCards: React.FC<{ stats: AlertStats }> = ({ stats }) => (
         </div>
       </CardContent>
     </Card>
-    <Card className="border-l-4 border-l-stone-1000">
+    <Card className="border-l-4 border-l-stone-900">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div>
@@ -532,7 +532,7 @@ const StatsCards: React.FC<{ stats: AlertStats }> = ({ stats }) => (
         </div>
       </CardContent>
     </Card>
-    <Card className="border-l-4 border-l-stone-1000">
+    <Card className="border-l-4 border-l-stone-900">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div>
@@ -543,7 +543,7 @@ const StatsCards: React.FC<{ stats: AlertStats }> = ({ stats }) => (
         </div>
       </CardContent>
     </Card>
-    <Card className="border-l-4 border-l-stone-1000">
+    <Card className="border-l-4 border-l-stone-900">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div>

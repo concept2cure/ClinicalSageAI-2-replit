@@ -387,7 +387,7 @@ const DesignSelector: React.FC<DesignSelectorProps> = ({ selectedDesign, onSelec
             key={design.id}
             className={cn(
               'border border-border/40 rounded-sm bg-background cursor-pointer transition-all duration-150',
-              isSelected && 'ring-2 ring-stone-1000 bg-stone-100'
+              isSelected && 'ring-2 ring-stone-900 bg-stone-100'
             )}
             onClick={() => onSelect(design.type)}
           >
@@ -609,7 +609,7 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
               <ul className="text-xs text-stone-500 space-y-1">
                 {result.assumptions.map((assumption, idx) => (
                   <li key={idx} className="flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3 text-stone-1000" />
+                    <CheckCircle2 className="h-3 w-3 text-stone-900" />
                     {assumption}
                   </li>
                 ))}

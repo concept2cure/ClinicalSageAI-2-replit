@@ -33,9 +33,9 @@ export function SecuritySection() {
           {BADGES.map(b => (
             <div
               key={b.label}
-              className="p-5 rounded-xl bg-white/5 border border-white/10 hover:border-stone-1000/30 transition-colors"
+              className="p-5 rounded-xl bg-white/5 border border-white/10 hover:border-stone-900/30 transition-colors"
             >
-              <div className="w-9 h-9 rounded-lg bg-stone-1000/20 flex items-center justify-center mb-3">
+              <div className="w-9 h-9 rounded-lg bg-stone-900/20 flex items-center justify-center mb-3">
                 <CheckIcon className="w-4 h-4 text-stone-400" />
               </div>
               <div className="text-sm font-semibold text-white mb-1">{b.label}</div>

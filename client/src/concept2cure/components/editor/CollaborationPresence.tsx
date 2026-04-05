@@ -44,7 +44,7 @@ export function CollaborationPresence({
   if (others.length === 0 && isConnected) {
     return (
       <div className="flex items-center gap-1.5 text-xs text-stone-400">
-        <Wifi className="w-3 h-3 text-stone-1000" />
+        <Wifi className="w-3 h-3 text-stone-900" />
         <span>Live</span>
       </div>
     );
@@ -66,7 +66,7 @@ export function CollaborationPresence({
   return (
     <div className="flex items-center gap-2">
       {/* Connection indicator */}
-      <Wifi className="w-3 h-3 text-stone-1000 shrink-0" />
+      <Wifi className="w-3 h-3 text-stone-900 shrink-0" />
 
       {/* Avatar stack */}
       <div className="flex items-center -space-x-1.5">
@@ -97,13 +97,13 @@ export function CollaborationPresence({
                   'absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ring-1 ring-white',
                   collab.status === 'editing' ? 'bg-stone-600' :
                   collab.status === 'idle' ? 'bg-stone-400' :
-                  'bg-stone-1000',
+                  'bg-stone-900',
                 )}
               />
 
               {/* Typing indicator */}
               {isTyping && (
-                <span className="absolute -top-1 -right-1 flex items-center justify-center w-3 h-3 bg-stone-1000 rounded-full">
+                <span className="absolute -top-1 -right-1 flex items-center justify-center w-3 h-3 bg-stone-900 rounded-full">
                   <PenLine className="w-1.5 h-1.5 text-white" />
                 </span>
               )}

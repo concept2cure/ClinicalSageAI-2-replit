@@ -447,7 +447,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
       {/* Header */}
       <CardHeader className="flex-row items-center justify-between space-y-0 pb-3 border-b">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-stone-1000 to-stone-1000 flex items-center justify-center">
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-stone-900 to-stone-900 flex items-center justify-center">
             <Sparkles className="h-5 w-5 text-white" />
           </div>
           <div>

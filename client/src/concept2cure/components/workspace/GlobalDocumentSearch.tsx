@@ -294,7 +294,7 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
                           {doc.projectName}
                         </span>
                         {doc.ctdSection && (
-                          <span className="text-[10px] text-stone-1000 font-medium">
+                          <span className="text-[10px] text-stone-900 font-medium">
                             CTD {doc.ctdSection}
                           </span>
                         )}

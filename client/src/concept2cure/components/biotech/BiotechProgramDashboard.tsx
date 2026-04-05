@@ -162,16 +162,16 @@ const STAGE_CONFIG: Record<DevelopmentStage, {
   pre_ind_meeting: { label: 'Pre-IND Meeting', shortLabel: 'Pre-IND', color: 'bg-stone-400', phase: 'regulatory' },
   ind_prep: { label: 'IND Preparation', shortLabel: 'IND Prep', color: 'bg-stone-600', phase: 'regulatory' },
   ind_filed: { label: 'IND Filed', shortLabel: 'IND Filed', color: 'bg-stone-800', phase: 'regulatory' },
-  ind_active: { label: 'IND Active', shortLabel: 'IND Active', color: 'bg-stone-1000', phase: 'clinical' },
-  phase_1: { label: 'Phase 1', shortLabel: 'Ph1', color: 'bg-stone-1000', phase: 'clinical' },
+  ind_active: { label: 'IND Active', shortLabel: 'IND Active', color: 'bg-stone-900', phase: 'clinical' },
+  phase_1: { label: 'Phase 1', shortLabel: 'Ph1', color: 'bg-stone-900', phase: 'clinical' },
   phase_1b: { label: 'Phase 1b', shortLabel: 'Ph1b', color: 'bg-stone-700', phase: 'clinical' },
-  phase_2: { label: 'Phase 2', shortLabel: 'Ph2', color: 'bg-stone-1000', phase: 'clinical' },
+  phase_2: { label: 'Phase 2', shortLabel: 'Ph2', color: 'bg-stone-900', phase: 'clinical' },
   phase_2b: { label: 'Phase 2b', shortLabel: 'Ph2b', color: 'bg-stone-600', phase: 'clinical' },
-  eop2_meeting: { label: 'EOP2 Meeting', shortLabel: 'EOP2', color: 'bg-stone-1000', phase: 'regulatory' },
-  phase_3: { label: 'Phase 3', shortLabel: 'Ph3', color: 'bg-stone-1000', phase: 'clinical' },
+  eop2_meeting: { label: 'EOP2 Meeting', shortLabel: 'EOP2', color: 'bg-stone-900', phase: 'regulatory' },
+  phase_3: { label: 'Phase 3', shortLabel: 'Ph3', color: 'bg-stone-900', phase: 'clinical' },
   pre_nda_meeting: { label: 'Pre-NDA Meeting', shortLabel: 'Pre-NDA', color: 'bg-stone-500', phase: 'regulatory' },
-  nda_prep: { label: 'NDA Preparation', shortLabel: 'NDA Prep', color: 'bg-rose-500', phase: 'regulatory' },
-  nda_filed: { label: 'NDA Filed', shortLabel: 'NDA Filed', color: 'bg-rose-600', phase: 'regulatory' },
+  nda_prep: { label: 'NDA Preparation', shortLabel: 'NDA Prep', color: 'bg-stone-900', phase: 'regulatory' },
+  nda_filed: { label: 'NDA Filed', shortLabel: 'NDA Filed', color: 'bg-stone-700', phase: 'regulatory' },
   fda_review: { label: 'FDA Review', shortLabel: 'Review', color: 'bg-stone-700', phase: 'regulatory' },
   advisory_committee: { label: 'Advisory Committee', shortLabel: 'AdCom', color: 'bg-stone-800', phase: 'regulatory' },
   approved: { label: 'Approved', shortLabel: 'Approved', color: 'bg-stone-700', phase: 'regulatory' },
@@ -244,7 +244,7 @@ const DevelopmentPipeline: React.FC<{
             <div className="flex flex-col items-center">
               <div className={cn(
                 'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-150',
-                isCompleted && 'bg-stone-1000 text-white',
+                isCompleted && 'bg-stone-900 text-white',
                 isCurrent && cn(config.color, 'text-white ring-4 ring-offset-2'),
                 !isCompleted && !isCurrent && 'bg-stone-200 text-stone-400'
               )}>
@@ -260,7 +260,7 @@ const DevelopmentPipeline: React.FC<{
             {i < stages.length - 1 && (
               <div className={cn(
                 'flex-1 h-0.5 min-w-[20px]',
-                isCompleted ? 'bg-stone-1000' : 'bg-stone-200'
+                isCompleted ? 'bg-stone-900' : 'bg-stone-200'
               )} />
             )}
           </React.Fragment>
@@ -391,8 +391,8 @@ const FDAInteractionTimeline: React.FC<{
             key={interaction.id}
             className={cn(
               'p-3 rounded-lg border-l-4',
-              interaction.status === 'scheduled' && 'border-l-stone-1000 bg-stone-100',
-              interaction.status === 'submitted' && 'border-l-stone-1000 bg-stone-100',
+              interaction.status === 'scheduled' && 'border-l-stone-900 bg-stone-100',
+              interaction.status === 'submitted' && 'border-l-stone-900 bg-stone-100',
               interaction.status === 'planning' && 'border-l-stone-400 bg-stone-50'
             )}
           >
@@ -421,7 +421,7 @@ const FDAInteractionTimeline: React.FC<{
             <p className="text-xs text-stone-500 mb-2">Completed ({completed.length})</p>
             {completed.slice(0, 2).map(interaction => (
               <div key={interaction.id} className="flex items-center gap-2 text-xs text-stone-500 py-1">
-                <CheckCircle className="w-3 h-3 text-stone-1000" />
+                <CheckCircle className="w-3 h-3 text-stone-900" />
                 <span>{typeLabels[interaction.type]}</span>
                 {interaction.outcome && (
                   <span className={cn(

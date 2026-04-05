@@ -33,7 +33,7 @@ export default function MarkdownView({ src }: { src: string }) {
       } catch (e: any) {
         // Even error messages are sanitized for safety
         const safeError = DOMPurify.sanitize(e?.message || String(e));
-        setHtml(`<div style="color:#b91c1c">Failed to load: ${DOMPurify.sanitize(src)}<br/>${safeError}</div>`);
+        setHtml(`<div style="color:#44403c">Failed to load: ${DOMPurify.sanitize(src)}<br/>${safeError}</div>`);
       }
     })();
     return () => {

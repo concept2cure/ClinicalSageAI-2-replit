@@ -23,7 +23,7 @@ export default function LineagePanel({ batchId }: { batchId: string }) {
       </CardHeader>
       <CardContent className="text-xs space-y-1">
         {!rows.length ? (
-          <div className="text-slate-600">No lineage yet.</div>
+          <div className="text-stone-600">No lineage yet.</div>
         ) : (
           rows.map((l: any) => (
             <div key={l.lin_id} className="rounded border p-2">

@@ -96,7 +96,7 @@ export function ContinuityBriefing({ snapshot, onRefresh, isRefreshing }: Contin
           <div className="space-y-1">
             {snapshot.newlyReady.map((item) => (
               <div key={`${item.type}-${item.id}`} className="flex items-center gap-2 text-sm text-stone-800 dark:text-stone-300">
-                <span className="w-1.5 h-1.5 rounded-full bg-stone-1000 shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-stone-900 shrink-0" />
                 {item.title}
               </div>
             ))}

@@ -189,9 +189,9 @@ const SEVERITY_CONFIG: Record<
   FindingSeverity,
   { label: string; color: string; responseTime: string }
 > = {
-  critical: { label: 'Critical', color: 'bg-stone-1000 text-white', responseTime: '5 business days' },
-  major: { label: 'Major', color: 'bg-stone-1000 text-white', responseTime: '15 business days' },
-  minor: { label: 'Minor', color: 'bg-stone-1000 text-white', responseTime: '30 business days' },
+  critical: { label: 'Critical', color: 'bg-stone-900 text-white', responseTime: '5 business days' },
+  major: { label: 'Major', color: 'bg-stone-900 text-white', responseTime: '15 business days' },
+  minor: { label: 'Minor', color: 'bg-stone-900 text-white', responseTime: '30 business days' },
   observation: {
     label: 'Observation',
     color: 'bg-stone-100 text-stone-800',
@@ -479,7 +479,7 @@ function InspectionMetrics({
               <p className="text-sm text-muted-foreground">Upcoming</p>
               <p className="text-base font-semibold">{upcoming}</p>
             </div>
-            <Calendar className="w-8 h-8 text-stone-1000" />
+            <Calendar className="w-8 h-8 text-stone-900" />
           </div>
         </div>
       </div>
@@ -491,7 +491,7 @@ function InspectionMetrics({
               <p className="text-sm text-muted-foreground">Open Findings</p>
               <p className="text-base font-semibold text-stone-600">{openFindings}</p>
             </div>
-            <AlertTriangle className="w-8 h-8 text-stone-1000" />
+            <AlertTriangle className="w-8 h-8 text-stone-900" />
           </div>
         </div>
       </div>
@@ -513,7 +513,7 @@ function InspectionMetrics({
                 {avgReadiness}%
               </p>
             </div>
-            <TrendingUp className="w-8 h-8 text-stone-1000" />
+            <TrendingUp className="w-8 h-8 text-stone-900" />
           </div>
         </div>
       </div>
@@ -527,7 +527,7 @@ function InspectionMetrics({
                 {readyItems}/{totalItems}
               </p>
             </div>
-            <CheckCircle2 className="w-8 h-8 text-stone-1000" />
+            <CheckCircle2 className="w-8 h-8 text-stone-900" />
           </div>
         </div>
       </div>
@@ -873,7 +873,7 @@ function FindingsTracker({ inspections }: { inspections: InspectionEvent[] }) {
       {openFindings.length === 0 ? (
         <div className="border border-border/40 rounded-sm bg-background">
           <div className="px-3 py-2 p-8 text-center">
-            <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-stone-1000 opacity-50" />
+            <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-stone-900 opacity-50" />
             <p className="text-muted-foreground">No open findings</p>
           </div>
         </div>

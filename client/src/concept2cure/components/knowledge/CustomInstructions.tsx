@@ -226,7 +226,7 @@ Example:
 - "Target submission date is March 15, 2026"`}
                 className={cn(
                   'min-h-[150px] text-sm resize-none',
-                  isOverLimit && 'border-stone-300 focus:ring-stone-1000'
+                  isOverLimit && 'border-stone-300 focus:ring-stone-900'
                 )}
                 disabled={disabled}
               />

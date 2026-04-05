@@ -169,7 +169,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
           'flex flex-col items-center justify-center gap-3',
           isDragging && 'border-stone-600 bg-stone-100',
           isUploading && 'border-stone-300 bg-stone-100 cursor-wait',
-          uploadSuccess && 'border-stone-1000 bg-stone-100',
+          uploadSuccess && 'border-stone-900 bg-stone-100',
           error && 'border-stone-300 bg-stone-100',
           disabled && 'opacity-50 cursor-not-allowed',
           !isDragging && !isUploading && !uploadSuccess && !error && 

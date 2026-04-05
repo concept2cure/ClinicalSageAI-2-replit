@@ -194,7 +194,7 @@ const CitationBadge: React.FC<{ citation: Citation }> = ({ citation }) => (
   >
     <FileText className="w-3 h-3" />
     {citation.label}
-    {citation.page && <span className="text-stone-1000">p.{citation.page}</span>}
+    {citation.page && <span className="text-stone-900">p.{citation.page}</span>}
   </button>
 );
 
@@ -284,10 +284,10 @@ const MessageBubble: React.FC<{
                       <div
                         className={cn(
                           'h-full rounded-full transition-all duration-150',
-                          message.confidence >= 90 && 'bg-stone-1000',
+                          message.confidence >= 90 && 'bg-stone-900',
                           message.confidence >= 70 && message.confidence < 90 && 'bg-stone-600',
-                          message.confidence >= 50 && message.confidence < 70 && 'bg-stone-1000',
-                          message.confidence < 50 && 'bg-stone-1000'
+                          message.confidence >= 50 && message.confidence < 70 && 'bg-stone-900',
+                          message.confidence < 50 && 'bg-stone-900'
                         )}
                         style={{ width: `${message.confidence}%` }}
                       />

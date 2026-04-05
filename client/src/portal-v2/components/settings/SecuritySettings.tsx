@@ -323,7 +323,7 @@ function ComplianceOverview({ health }: { health: ComplianceHealth }) {
           return (
             <div
               key={metric.key}
-              className="p-4 bg-white border rounded-xl hover:shadow-md transition-shadow"
+              className="p-4 bg-white border rounded-xl hover:shadow-sm transition-shadow"
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2 text-stone-600">
@@ -491,7 +491,7 @@ function AuthenticationSettings({ config, canEdit }: SettingsPanelProps) {
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-stone-900">{method.label}</span>
                     {enabled ? (
-                      <CheckCircle className="h-5 w-5 text-stone-1000" />
+                      <CheckCircle className="h-5 w-5 text-stone-900" />
                     ) : (
                       <XCircle className="h-5 w-5 text-stone-300" />
                     )}
@@ -959,7 +959,7 @@ function TrainingSettings({ config, canEdit }: SettingsPanelProps) {
               <div className="space-y-2">
                 {training.requiredCourses.map(course => (
                   <div key={course} className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg">
-                    <CheckCircle className="h-5 w-5 text-stone-1000" />
+                    <CheckCircle className="h-5 w-5 text-stone-900" />
                     <span className="font-medium text-stone-900">{course.replace(/_/g, ' ')}</span>
                   </div>
                 ))}

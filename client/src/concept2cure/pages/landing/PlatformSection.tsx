@@ -109,19 +109,19 @@ function PlatformMockup() {
                   name: 'IND-2024-0847',
                   status: 'Module 2.7 Review',
                   progress: 78,
-                  color: 'bg-stone-1000',
+                  color: 'bg-stone-900',
                 },
                 {
                   name: 'NDA-2024-1203',
                   status: 'CSR Drafting',
                   progress: 45,
-                  color: 'bg-stone-1000',
+                  color: 'bg-stone-900',
                 },
                 {
                   name: '510(k)-K241567',
                   status: 'Predicate Analysis',
                   progress: 92,
-                  color: 'bg-stone-1000',
+                  color: 'bg-stone-900',
                 },
               ].map(s => (
                 <div

@@ -793,7 +793,7 @@ export const ZenLogin: React.FC = () => {
             {view === 'success' && (
               <div className="flex flex-col items-center pt-6">
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-stone-100 mb-4">
-                  <CheckCircle2 className="h-6 w-6 text-stone-1000" />
+                  <CheckCircle2 className="h-6 w-6 text-stone-900" />
                 </div>
                 <div className="flex items-center gap-2 text-[13px] text-stone-400">
                   <Spinner size="sm" />

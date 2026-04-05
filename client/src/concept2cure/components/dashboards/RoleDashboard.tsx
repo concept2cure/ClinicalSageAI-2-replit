@@ -682,7 +682,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
               {readinessData && (
                 <div className="bg-white border border-stone-200 rounded-xl p-4 shadow-sm">
                   <div className="flex items-center gap-2 mb-1">
-                    <Target className="w-3.5 h-3.5 text-stone-1000" />
+                    <Target className="w-3.5 h-3.5 text-stone-900" />
                     <p className="text-xs text-stone-500 font-medium">Readiness</p>
                   </div>
                   <p className={cn(

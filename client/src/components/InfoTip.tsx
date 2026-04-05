@@ -12,7 +12,7 @@ export default function InfoTip({
   return (
     <div className="relative inline-block">
       <button
-        className="w-4 h-4 rounded-full bg-slate-300 text-xs flex items-center justify-center hover:bg-slate-400 transition-colors"
+        className="w-4 h-4 rounded-full bg-stone-300 text-xs flex items-center justify-center hover:bg-stone-400 transition-colors"
         onMouseEnter={() => setShowTip(true)}
         onMouseLeave={() => setShowTip(false)}
         onFocus={() => setShowTip(true)}
@@ -23,7 +23,7 @@ export default function InfoTip({
       </button>
 
       {showTip && (
-        <div className="absolute z-50 left-0 top-6 w-64 p-3 bg-white border border-slate-200 rounded-lg shadow-lg text-sm">
+        <div className="absolute z-50 left-0 top-6 w-64 p-3 bg-white border border-stone-200 rounded-lg shadow-sm text-sm">
           {children}
         </div>
       )}

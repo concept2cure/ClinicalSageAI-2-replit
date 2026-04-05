@@ -417,7 +417,7 @@ const PermissionCell: React.FC<{
           >
             <Icon className={`h-4 w-4 ${config.color}`} />
             {permission?.inherited && (
-              <span className="absolute -top-1 -right-1 h-2 w-2 bg-stone-1000 rounded-full" />
+              <span className="absolute -top-1 -right-1 h-2 w-2 bg-stone-900 rounded-full" />
             )}
           </Button>
         </TooltipTrigger>
@@ -515,7 +515,7 @@ const PermissionMatrix: React.FC<{
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger>
-                                <ShieldAlert className="h-4 w-4 text-stone-1000" />
+                                <ShieldAlert className="h-4 w-4 text-stone-900" />
                               </TooltipTrigger>
                               <TooltipContent>Sensitive Resource</TooltipContent>
                             </Tooltip>
@@ -766,7 +766,7 @@ const PermissionLegend: React.FC = () => (
             <div className="p-1 rounded bg-stone-100">
               <Check className="h-4 w-4 text-stone-400" />
             </div>
-            <span className="absolute -top-1 -right-1 h-2 w-2 bg-stone-1000 rounded-full" />
+            <span className="absolute -top-1 -right-1 h-2 w-2 bg-stone-900 rounded-full" />
           </div>
           <span className="text-sm">Inherited</span>
         </div>

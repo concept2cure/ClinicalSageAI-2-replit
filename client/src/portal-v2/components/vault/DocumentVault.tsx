@@ -126,7 +126,7 @@ const CATEGORY_CONFIG: Record<DocumentCategory, { label: string; color: string }
   safety: { label: 'Safety', color: 'bg-stone-100 text-stone-700' },
   administrative: { label: 'Admin', color: 'bg-stone-50 text-stone-700' },
   labeling: { label: 'Labeling', color: 'bg-stone-100 text-stone-700' },
-  correspondence: { label: 'Correspondence', color: 'bg-slate-50 text-slate-700' },
+  correspondence: { label: 'Correspondence', color: 'bg-stone-50 text-stone-700' },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -136,17 +136,17 @@ const CATEGORY_CONFIG: Record<DocumentCategory, { label: string; color: string }
 const getFileIcon = (fileType: string) => {
   switch (fileType.toLowerCase()) {
     case 'pdf':
-      return <FileText className="h-5 w-5 text-stone-1000" />;
+      return <FileText className="h-5 w-5 text-stone-900" />;
     case 'docx':
     case 'doc':
-      return <FileText className="h-5 w-5 text-stone-1000" />;
+      return <FileText className="h-5 w-5 text-stone-900" />;
     case 'xlsx':
     case 'xls':
-      return <FileSpreadsheet className="h-5 w-5 text-stone-1000" />;
+      return <FileSpreadsheet className="h-5 w-5 text-stone-900" />;
     case 'png':
     case 'jpg':
     case 'jpeg':
-      return <FileImage className="h-5 w-5 text-stone-1000" />;
+      return <FileImage className="h-5 w-5 text-stone-900" />;
     default:
       return <File className="h-5 w-5 text-stone-500" />;
   }
@@ -208,9 +208,9 @@ const FolderTree: React.FC<FolderTreeProps> = ({
             <span className="w-4" />
           )}
           {folder.isExpanded ? (
-            <FolderOpen className="h-4 w-4 text-stone-1000" />
+            <FolderOpen className="h-4 w-4 text-stone-900" />
           ) : (
-            <Folder className="h-4 w-4 text-stone-1000" />
+            <Folder className="h-4 w-4 text-stone-900" />
           )}
           <span className="flex-1 text-left truncate">{folder.name}</span>
           {folder.isLocked && <Lock className="h-3 w-3 text-stone-400" />}
@@ -290,7 +290,7 @@ const DocumentListItem: React.FC<DocumentListItemProps> = ({
   if (viewMode === 'grid') {
     return (
       <div
-        className="group rounded-lg border p-4 hover:shadow-md transition-all cursor-pointer bg-white"
+        className="group rounded-lg border p-4 hover:shadow-sm transition-all cursor-pointer bg-white"
         onClick={() => onView(document)}
       >
         <div className="flex items-start justify-between mb-3">
@@ -345,7 +345,7 @@ const DocumentListItem: React.FC<DocumentListItemProps> = ({
 
         <div className="space-y-2">
           <div className="flex items-center gap-1">
-            {document.isFavorite && <Star className="h-3 w-3 text-stone-1000 fill-stone-1000" />}
+            {document.isFavorite && <Star className="h-3 w-3 text-stone-900 fill-stone-900" />}
             {document.isLocked && <Lock className="h-3 w-3 text-stone-400" />}
             <h3 className="font-medium text-sm truncate flex-1" title={document.name}>
               {document.name}
@@ -373,7 +373,7 @@ const DocumentListItem: React.FC<DocumentListItemProps> = ({
       <div className="flex-shrink-0">{getFileIcon(document.fileType)}</div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          {document.isFavorite && <Star className="h-3 w-3 text-stone-1000 fill-stone-1000" />}
+          {document.isFavorite && <Star className="h-3 w-3 text-stone-900 fill-stone-900" />}
           {document.isLocked && <Lock className="h-3 w-3 text-stone-400" />}
           <span className="font-medium text-sm truncate">{document.name}</span>
         </div>
@@ -1073,7 +1073,7 @@ export const DocumentVault: React.FC = () => {
         </Card>
         <div
           className={`rounded-lg border-2 border-dashed p-3 text-sm transition-colors ${
-            dragActive ? 'border-stone-1000 bg-stone-100' : 'border-slate-300 bg-white'
+            dragActive ? 'border-stone-900 bg-stone-100' : 'border-stone-300 bg-white'
           }`}
           onDragOver={e => {
             e.preventDefault();
@@ -1127,7 +1127,7 @@ export const DocumentVault: React.FC = () => {
                   recentActivityDocs.map(doc => (
                     <button
                       key={`recent-${doc.id}`}
-                      className="w-full text-left rounded-md px-2 py-1.5 hover:bg-slate-50"
+                      className="w-full text-left rounded-md px-2 py-1.5 hover:bg-stone-50"
                       onClick={() => setViewingDoc(doc)}
                     >
                       <p className="text-xs font-medium truncate">{doc.name}</p>
@@ -1364,7 +1364,7 @@ export const DocumentVault: React.FC = () => {
       </div>
       {previewDoc && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-6">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl h-[80vh] flex flex-col">
+          <div className="bg-white rounded-lg shadow-sm w-full max-w-5xl h-[80vh] flex flex-col">
             <div className="p-3 border-b flex items-center justify-between">
               <h4 className="text-sm font-semibold truncate">{previewDoc.name}</h4>
               <Button variant="ghost" size="sm" onClick={() => setPreviewDoc(null)}>Close</Button>

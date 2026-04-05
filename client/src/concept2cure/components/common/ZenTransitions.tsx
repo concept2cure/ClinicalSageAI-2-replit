@@ -434,7 +434,7 @@ export const ZenProgress: React.FC<ZenProgressProps> = ({
   const colors = {
     blue: 'bg-stone-800',
     green: 'bg-stone-700',
-    amber: 'bg-stone-1000',
+    amber: 'bg-stone-900',
     red: 'bg-stone-700',
   };
 

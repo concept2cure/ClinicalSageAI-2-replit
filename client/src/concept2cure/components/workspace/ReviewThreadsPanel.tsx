@@ -692,7 +692,7 @@ function ThreadCard({
               </span>
             )}
             {thread.anchorLabel && (
-              <span className="text-xs text-stone-1000 bg-stone-100 px-1 rounded">
+              <span className="text-xs text-stone-900 bg-stone-100 px-1 rounded">
                 {thread.anchorLabel}
               </span>
             )}
@@ -717,9 +717,9 @@ function ThreadCard({
           </div>
         </div>
         {isOpen && thread.priority === 'high' && (
-          <AlertTriangle className="w-3 h-3 text-stone-1000 shrink-0" />
+          <AlertTriangle className="w-3 h-3 text-stone-900 shrink-0" />
         )}
-        {!isOpen && <CheckCircle2 className="w-3 h-3 text-stone-1000 shrink-0" />}
+        {!isOpen && <CheckCircle2 className="w-3 h-3 text-stone-900 shrink-0" />}
       </Button>
 
       {/* Expanded content */}
@@ -997,7 +997,7 @@ function TaskCard({ task, onResolve, onReopen, taskTypeOptions }: TaskCardProps)
     >
       <div className="flex items-start gap-1.5">
         <ListTodo
-          className={cn('w-3 h-3 mt-0.5 shrink-0', isActive ? 'text-stone-1000' : 'text-stone-1000')}
+          className={cn('w-3 h-3 mt-0.5 shrink-0', isActive ? 'text-stone-900' : 'text-stone-900')}
         />
         <div className="flex-1 min-w-0">
           <p

@@ -132,14 +132,14 @@ const DOCUMENT_TYPE_CONFIG: Record<DocumentType, {
 }> = {
   csr: { label: 'Clinical Study Report', shortLabel: 'CSR', color: 'bg-stone-600', avgDays: 45 },
   ib: { label: 'Investigator Brochure', shortLabel: 'IB', color: 'bg-stone-500', avgDays: 21 },
-  protocol: { label: 'Protocol', shortLabel: 'Protocol', color: 'bg-stone-1000', avgDays: 14 },
-  protocol_amend: { label: 'Protocol Amendment', shortLabel: 'Amendment', color: 'bg-stone-1000', avgDays: 7 },
-  icf: { label: 'Informed Consent Form', shortLabel: 'ICF', color: 'bg-stone-1000', avgDays: 10 },
-  ctd_2_5: { label: 'Clinical Overview (2.5)', shortLabel: 'CTD 2.5', color: 'bg-stone-1000', avgDays: 30 },
+  protocol: { label: 'Protocol', shortLabel: 'Protocol', color: 'bg-stone-900', avgDays: 14 },
+  protocol_amend: { label: 'Protocol Amendment', shortLabel: 'Amendment', color: 'bg-stone-900', avgDays: 7 },
+  icf: { label: 'Informed Consent Form', shortLabel: 'ICF', color: 'bg-stone-900', avgDays: 10 },
+  ctd_2_5: { label: 'Clinical Overview (2.5)', shortLabel: 'CTD 2.5', color: 'bg-stone-900', avgDays: 30 },
   ctd_2_7: { label: 'Clinical Summary (2.7)', shortLabel: 'CTD 2.7', color: 'bg-stone-500', avgDays: 35 },
-  response: { label: 'Regulatory Response', shortLabel: 'Response', color: 'bg-stone-1000', avgDays: 14 },
-  briefing: { label: 'Briefing Document', shortLabel: 'Briefing', color: 'bg-stone-1000', avgDays: 21 },
-  nonclinical_summary: { label: 'Nonclinical Summary', shortLabel: 'CTD 2.4', color: 'bg-lime-500', avgDays: 21 },
+  response: { label: 'Regulatory Response', shortLabel: 'Response', color: 'bg-stone-900', avgDays: 14 },
+  briefing: { label: 'Briefing Document', shortLabel: 'Briefing', color: 'bg-stone-900', avgDays: 21 },
+  nonclinical_summary: { label: 'Nonclinical Summary', shortLabel: 'CTD 2.4', color: 'bg-stone-900', avgDays: 21 },
   quality_summary: { label: 'Quality Summary', shortLabel: 'CTD 2.3', color: 'bg-stone-600', avgDays: 14 },
 };
 
@@ -204,7 +204,7 @@ const TaskCard: React.FC<{
       <div
         onClick={onClick}
         className={cn(
-          'flex items-center gap-4 p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md',
+          'flex items-center gap-4 p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm',
           task.isOverdue && 'border-stone-300 bg-stone-100',
           task.isBlocked && 'border-stone-300 bg-stone-100',
           !task.isOverdue && !task.isBlocked && 'border-stone-200 hover:border-stone-300'
@@ -239,7 +239,7 @@ const TaskCard: React.FC<{
             <div
               className={cn(
                 'h-full rounded-full transition-all',
-                task.progress >= 100 ? 'bg-stone-1000' : 'bg-stone-600'
+                task.progress >= 100 ? 'bg-stone-900' : 'bg-stone-600'
               )}
               style={{ width: `${task.progress}%` }}
             />
@@ -284,7 +284,7 @@ const TaskCard: React.FC<{
     <div
       onClick={onClick}
       className={cn(
-        'p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md',
+        'p-4 rounded-lg border cursor-pointer transition-all hover:shadow-sm',
         task.isOverdue && 'border-stone-300 bg-stone-100',
         task.isBlocked && 'border-stone-300 bg-stone-100',
         !task.isOverdue && !task.isBlocked && 'border-stone-200 hover:border-stone-300'
@@ -333,7 +333,7 @@ const TaskCard: React.FC<{
           <div
             className={cn(
               'h-full rounded-full transition-all',
-              task.progress >= 100 ? 'bg-stone-1000' : 'bg-stone-600'
+              task.progress >= 100 ? 'bg-stone-900' : 'bg-stone-600'
             )}
             style={{ width: `${task.progress}%` }}
           />
@@ -361,8 +361,8 @@ const TaskCard: React.FC<{
         <div className="flex items-center gap-1.5">
           <Calendar className={cn(
             'w-3.5 h-3.5',
-            task.isOverdue && 'text-stone-1000',
-            isUrgent && !task.isOverdue && 'text-stone-1000',
+            task.isOverdue && 'text-stone-900',
+            isUrgent && !task.isOverdue && 'text-stone-900',
             !isUrgent && !task.isOverdue && 'text-stone-400'
           )} />
           <span className={cn(

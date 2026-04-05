@@ -224,7 +224,7 @@ const IndustryStep: React.FC<{
               'p-5 rounded-xl border text-left transition-all duration-150',
               selected === industry.id
                 ? `${industry.bgColor} border-current ${industry.color} ring-2 ring-offset-2`
-                : 'bg-white border-stone-200 hover:border-stone-300 hover:shadow-md'
+                : 'bg-white border-stone-200 hover:border-stone-300 hover:shadow-sm'
             )}
           >
             <div className={cn('mb-4', industry.color)}>{industry.icon}</div>
@@ -234,7 +234,7 @@ const IndustryStep: React.FC<{
             <ul className="mt-4 space-y-1">
               {industry.features.map(feature => (
                 <li key={feature} className="text-xs text-stone-500 flex items-center gap-2">
-                  <CheckCircle className="w-3 h-3 text-stone-1000" />
+                  <CheckCircle className="w-3 h-3 text-stone-900" />
                   {feature}
                 </li>
               ))}

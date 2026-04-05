@@ -473,7 +473,7 @@ export const ZenSignup: React.FC = () => {
   const renderSubmittedStep = () => (
     <div className="flex flex-col items-center pt-6">
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-stone-100 mb-4">
-        <CheckCircle2 className="h-6 w-6 text-stone-1000" />
+        <CheckCircle2 className="h-6 w-6 text-stone-900" />
       </div>
       <h2 className="text-[22px] font-semibold tracking-[-0.01em] text-stone-900">
         Welcome to Concept2Cure
@@ -533,7 +533,7 @@ export const ZenSignup: React.FC = () => {
                       <div
                         className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium transition-colors ${
                           isDone
-                            ? 'bg-stone-1000 text-white'
+                            ? 'bg-stone-900 text-white'
                             : isActive
                               ? 'bg-white text-stone-900'
                               : 'bg-stone-800 text-stone-500'
@@ -601,7 +601,7 @@ export const ZenSignup: React.FC = () => {
                         <div
                           className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium transition-colors ${
                             isDone
-                              ? 'bg-stone-1000 text-white'
+                              ? 'bg-stone-900 text-white'
                               : isActive
                                 ? 'bg-stone-900 text-white'
                                 : 'bg-stone-200 text-stone-400'

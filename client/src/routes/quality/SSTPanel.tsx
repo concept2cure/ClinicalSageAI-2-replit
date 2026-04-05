@@ -42,14 +42,14 @@ export default function SSTPanel({ testId }: { testId: string }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
-        <div className="text-slate-600">
+        <div className="text-stone-600">
           Latest: {latest ? new Date(latest.created_at).toLocaleString() : '—'}
         </div>
         <Textarea value={json} onChange={e => setJson(e.target.value)} />
         <Button variant="outline" onClick={save}>
           Record SST (pass)
         </Button>
-        <div className="text-xs text-slate-500">
+        <div className="text-xs text-stone-500">
           Results entry is blocked if SST is not current.
         </div>
       </CardContent>

@@ -136,7 +136,7 @@ const HazardAlert: React.FC<{
   return (
     <div className="p-4 bg-stone-100/60 rounded-xl border border-stone-200">
       <div className="flex items-center gap-2 mb-3">
-        <AlertOctagon className="w-5 h-5 text-stone-1000" />
+        <AlertOctagon className="w-5 h-5 text-stone-900" />
         <span className="font-semibold text-stone-800">
           Hazard Ahead: {blockers.length} Blocker{blockers.length > 1 ? 's' : ''}
         </span>
@@ -269,7 +269,7 @@ const StatusDashboard: React.FC<{
       }`}>
         <div className="flex items-center gap-2 mb-1">
           <Shield className={`w-4 h-4 ${
-            complianceScore >= 90 ? 'text-stone-1000' : complianceScore >= 70 ? 'text-stone-1000' : 'text-stone-1000'
+            complianceScore >= 90 ? 'text-stone-900' : complianceScore >= 70 ? 'text-stone-900' : 'text-stone-900'
           }`} />
           <span className="text-xs font-medium text-stone-600">Compliance</span>
         </div>
@@ -289,7 +289,7 @@ const StatusDashboard: React.FC<{
           : 'bg-stone-100 border-stone-200'
       }`}>
         <div className="flex items-center gap-2 mb-1">
-          <Link2 className={`w-4 h-4 ${claimPercent >= 90 ? 'text-stone-1000' : 'text-stone-1000'}`} />
+          <Link2 className={`w-4 h-4 ${claimPercent >= 90 ? 'text-stone-900' : 'text-stone-900'}`} />
           <span className="text-xs font-medium text-stone-600">Claims Sourced</span>
         </div>
         <p className={`text-base font-semibold ${
@@ -302,7 +302,7 @@ const StatusDashboard: React.FC<{
       {/* Data Connections */}
       <div className="p-3 rounded-xl border bg-stone-100 border-stone-200 shadow-sm">
         <div className="flex items-center gap-2 mb-1">
-          <Compass className="w-4 h-4 text-stone-1000" />
+          <Compass className="w-4 h-4 text-stone-900" />
           <span className="text-xs font-medium text-stone-600">Data Sources</span>
         </div>
         <p className="text-base font-semibold text-stone-600">
@@ -318,7 +318,7 @@ const StatusDashboard: React.FC<{
             : 'bg-stone-100 border-stone-200'
         }`}>
           <div className="flex items-center gap-2 mb-1">
-            <Users className={`w-4 h-4 ${pendingReviews === 0 ? 'text-stone-1000' : 'text-stone-1000'}`} />
+            <Users className={`w-4 h-4 ${pendingReviews === 0 ? 'text-stone-900' : 'text-stone-900'}`} />
             <span className="text-xs font-medium text-stone-600">Reviews</span>
           </div>
           <p className={`text-base font-semibold ${
@@ -553,7 +553,7 @@ export const DocumentSherpa: React.FC<DocumentSherpaProps> = ({
       {/* All Clear State */}
       {blockers.length === 0 && guidance.length === 0 && (
         <div className="text-center py-8">
-          <CheckCircle className="w-12 h-12 mx-auto mb-3 text-stone-1000" />
+          <CheckCircle className="w-12 h-12 mx-auto mb-3 text-stone-900" />
           <h3 className="font-semibold text-stone-900">All Clear!</h3>
           <p className="text-sm text-stone-600 mt-1">
             Your document is on track. Keep up the great work!

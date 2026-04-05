@@ -62,11 +62,11 @@ function getSeverityColor(severity: string) {
 function getSeverityIcon(severity: string) {
   switch (severity) {
     case 'high':
-      return <AlertTriangle className="w-3.5 h-3.5 text-stone-1000" />;
+      return <AlertTriangle className="w-3.5 h-3.5 text-stone-900" />;
     case 'medium':
-      return <AlertTriangle className="w-3.5 h-3.5 text-stone-1000" />;
+      return <AlertTriangle className="w-3.5 h-3.5 text-stone-900" />;
     case 'low':
-      return <Link2 className="w-3.5 h-3.5 text-stone-1000" />;
+      return <Link2 className="w-3.5 h-3.5 text-stone-900" />;
     default:
       return <Link2 className="w-3.5 h-3.5 text-stone-500" />;
   }
@@ -168,7 +168,7 @@ const InconsistencyPanel: React.FC<InconsistencyPanelProps> = ({
       {/* Header */}
       <div className="p-3 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center gap-2 mb-1">
-          <Sparkles className="w-4 h-4 text-stone-1000" />
+          <Sparkles className="w-4 h-4 text-stone-900" />
           <span className="font-semibold text-sm text-stone-900">
             Inconsistency Intelligence
           </span>
@@ -215,7 +215,7 @@ const InconsistencyPanel: React.FC<InconsistencyPanelProps> = ({
       <div className="flex-1 overflow-y-auto">
         {loading && visibleAffected.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-stone-500">
-            <Loader2 className="w-6 h-6 animate-spin text-stone-1000 mb-2" />
+            <Loader2 className="w-6 h-6 animate-spin text-stone-900 mb-2" />
             <p className="text-xs">Analyzing cross-section impacts...</p>
             <p className="text-xs text-stone-400 mt-1">
               Comparing with other project documents

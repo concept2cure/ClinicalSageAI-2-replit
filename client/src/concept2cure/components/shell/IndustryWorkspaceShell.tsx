@@ -116,10 +116,10 @@ const MODE_CONFIG: Record<IndustryMode, {
   biotech: { label: 'Biotech', icon: Beaker, color: 'text-stone-700', bgColor: 'bg-stone-100' },
   pharma: { label: 'Pharma', icon: Building2, color: 'text-stone-600', bgColor: 'bg-stone-100' },
   cro: { label: 'CRO', icon: Briefcase, color: 'text-stone-600', bgColor: 'bg-stone-100' },
-  medtech: { label: 'MedTech', icon: Microscope, color: 'text-sky-600', bgColor: 'bg-sky-50' },
+  medtech: { label: 'MedTech', icon: Microscope, color: 'text-stone-600', bgColor: 'bg-stone-100' },
   academic: { label: 'Academic', icon: GraduationCap, color: 'text-stone-600', bgColor: 'bg-stone-100' },
   regulatory: { label: 'Regulatory', icon: FileCheck, color: 'text-stone-600', bgColor: 'bg-stone-100' },
-  medical_writing: { label: 'Medical Writing', icon: PenTool, color: 'text-rose-600', bgColor: 'bg-rose-50' },
+  medical_writing: { label: 'Medical Writing', icon: PenTool, color: 'text-stone-700', bgColor: 'bg-stone-100' },
 };
 
 const NAVIGATION_ITEMS: Record<IndustryMode, { view: WorkspaceView; label: string; icon: React.ComponentType<{ className?: string }> }[]> = {
@@ -418,7 +418,7 @@ const Header: React.FC<{
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
-              <span className="absolute top-0 right-0 w-4 h-4 text-xs font-semibold text-white bg-stone-1000 rounded-full flex items-center justify-center">
+              <span className="absolute top-0 right-0 w-4 h-4 text-xs font-semibold text-white bg-stone-900 rounded-full flex items-center justify-center">
                 {unreadCount}
               </span>
             )}

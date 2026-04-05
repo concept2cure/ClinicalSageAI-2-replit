@@ -525,7 +525,7 @@ Submission type context: ${projectName || 'regulatory submission'}`,
             </p>
             {questions.map(q => {
               const PriorityIcon = q.priority === 'critical' ? AlertTriangle : q.priority === 'major' ? Circle : CheckCircle;
-              const priorityColor = q.priority === 'critical' ? 'text-stone-1000' : q.priority === 'major' ? 'text-stone-1000' : 'text-stone-400';
+              const priorityColor = q.priority === 'critical' ? 'text-stone-900' : q.priority === 'major' ? 'text-stone-900' : 'text-stone-400';
               return (
                 <Button
                   key={q.id}

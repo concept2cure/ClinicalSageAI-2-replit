@@ -185,7 +185,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b bg-stone-50/50">
         <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-stone-1000" />
+          <Shield className="w-4 h-4 text-stone-900" />
           <span className="text-xs font-semibold text-stone-800">Inline Annotation</span>
         </div>
         <div className="flex items-center gap-1">

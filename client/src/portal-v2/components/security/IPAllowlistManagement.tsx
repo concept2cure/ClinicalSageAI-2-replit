@@ -929,7 +929,7 @@ const BlocklistTable: React.FC<BlocklistTableProps> = ({ blocked, onUnblock }) =
 
         {blocked.length === 0 && (
           <div className="text-center py-8 text-stone-500">
-            <ShieldCheck className="h-12 w-12 mx-auto mb-4 text-stone-1000" />
+            <ShieldCheck className="h-12 w-12 mx-auto mb-4 text-stone-900" />
             <p>No blocked IP addresses</p>
           </div>
         )}
@@ -1017,11 +1017,11 @@ const AccessLogs: React.FC<AccessLogsProps> = ({ logs }) => {
   const getActionIcon = (action: AccessLog['action']) => {
     switch (action) {
       case 'allowed':
-        return <CheckCircle className="h-4 w-4 text-stone-1000" />;
+        return <CheckCircle className="h-4 w-4 text-stone-900" />;
       case 'blocked':
-        return <XCircle className="h-4 w-4 text-stone-1000" />;
+        return <XCircle className="h-4 w-4 text-stone-900" />;
       case 'challenged':
-        return <AlertTriangle className="h-4 w-4 text-stone-1000" />;
+        return <AlertTriangle className="h-4 w-4 text-stone-900" />;
     }
   };
 

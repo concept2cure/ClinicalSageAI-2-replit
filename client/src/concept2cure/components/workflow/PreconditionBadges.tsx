@@ -107,8 +107,8 @@ const PreconditionBadge: React.FC<{
       <div
         className={cn(
           "w-2 h-2 rounded-full cursor-pointer transition-transform hover:scale-150",
-          isPassed && "bg-stone-1000",
-          isFailed && "bg-stone-1000",
+          isPassed && "bg-stone-900",
+          isFailed && "bg-stone-900",
           isPending && "bg-stone-300"
         )}
         onClick={onClick}
@@ -129,8 +129,8 @@ const PreconditionBadge: React.FC<{
       onClick={onClick}
     >
       {/* Status icon */}
-      {isPassed && <CheckCircle2 size={14} className="text-stone-1000" />}
-      {isFailed && <XCircle size={14} className="text-stone-1000" />}
+      {isPassed && <CheckCircle2 size={14} className="text-stone-900" />}
+      {isFailed && <XCircle size={14} className="text-stone-900" />}
       {isPending && <Circle size={14} className="text-stone-400" />}
       
       {/* Type icon */}

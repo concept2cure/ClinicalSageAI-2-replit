@@ -74,10 +74,10 @@ function StateBadge({ state }: { state: string }) {
 
 function ConfidenceIndicator({ confidence }: { confidence: string }) {
   const indicators: Record<string, { dots: number; color: string }> = {
-    strong: { dots: 4, color: 'bg-stone-1000' },
+    strong: { dots: 4, color: 'bg-stone-900' },
     moderate: { dots: 3, color: 'bg-stone-600' },
-    provisional: { dots: 2, color: 'bg-stone-1000' },
-    uncertain: { dots: 1, color: 'bg-stone-1000' },
+    provisional: { dots: 2, color: 'bg-stone-900' },
+    uncertain: { dots: 1, color: 'bg-stone-900' },
   };
 
   const { dots, color } = indicators[confidence] || { dots: 0, color: 'bg-stone-300' };

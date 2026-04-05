@@ -361,7 +361,7 @@ export function ElectronicSignatureGate({
   if (status.step === 'failed') {
     return (
       <div className="bg-stone-100 border border-stone-200 rounded-lg p-6 text-center">
-        <XCircle className="h-16 w-16 text-stone-1000 mx-auto mb-4" />
+        <XCircle className="h-16 w-16 text-stone-900 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-stone-900 mb-2">Signature Failed</h3>
         <p className="text-stone-800 mb-4">
           Too many failed attempts. Your account has been temporarily locked for security.
@@ -377,7 +377,7 @@ export function ElectronicSignatureGate({
   if (status.step === 'complete') {
     return (
       <div className="bg-stone-100 border border-stone-200 rounded-lg p-6 text-center">
-        <CheckCircle className="h-16 w-16 text-stone-1000 mx-auto mb-4" />
+        <CheckCircle className="h-16 w-16 text-stone-900 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-stone-900 mb-2">Signature Complete</h3>
         <p className="text-stone-800">Your electronic signature has been applied successfully.</p>
       </div>
@@ -390,7 +390,7 @@ export function ElectronicSignatureGate({
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       onKeyDown={handleKeyDown}
     >
-      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm max-w-lg w-full mx-4 overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
           <div className="flex items-center gap-3">
@@ -652,7 +652,7 @@ function StepIndicator({ step, label, active, complete }: StepIndicatorProps) {
       <div
         className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
           complete
-            ? 'bg-stone-1000 text-white'
+            ? 'bg-stone-900 text-white'
             : active
               ? 'bg-primary-600 text-white'
               : 'bg-stone-200 text-stone-500'
@@ -687,7 +687,7 @@ export function SignatureDisplay({
   if (compact) {
     return (
       <div className="flex items-center gap-2 text-sm">
-        <ShieldCheck className="h-4 w-4 text-stone-1000" />
+        <ShieldCheck className="h-4 w-4 text-stone-900" />
         <span className="text-stone-600">Signed by</span>
         <span className="font-medium">{signature.userId}</span>
         <span className="text-stone-400">•</span>

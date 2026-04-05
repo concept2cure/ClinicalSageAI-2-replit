@@ -531,7 +531,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                     </div>
                   )}
                   {strategyData.confidence != null && (
-                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-stone-1000 mt-1">
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-stone-900 mt-1">
                       <span>{Math.round(strategyData.confidence * 100)}% confidence</span>
                       {csrResults.length > 0 && <span>{csrResults.length} CSRs</span>}
                       {precedents.length > 0 && <span>{precedents.length} precedents</span>}
@@ -713,7 +713,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
               {riskData && (
                 <div className="rounded-lg border border-stone-200 bg-white p-3">
                   <h3 className="text-[13px] font-semibold text-stone-900 flex items-center gap-1.5 mb-2">
-                    <AlertTriangle className="w-3.5 h-3.5 text-stone-1000" />
+                    <AlertTriangle className="w-3.5 h-3.5 text-stone-900" />
                     Risk Assessment
                     <span
                       className={cn(
@@ -759,7 +759,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                       </span>
                       {riskData.mitigationStrategies.slice(0, 3).map((m: string, i: number) => (
                         <p key={i} className="text-xs text-stone-600 flex items-start gap-1.5">
-                          <CheckCircle className="w-3 h-3 text-stone-1000 mt-0.5 shrink-0" />
+                          <CheckCircle className="w-3 h-3 text-stone-900 mt-0.5 shrink-0" />
                           {m}
                         </p>
                       ))}
@@ -849,7 +849,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
           {precedents.length > 0 && (
             <div className="mb-3">
               <h2 className="text-[13px] font-semibold text-stone-900 flex items-center gap-1.5 mb-1.5">
-                <Microscope className="w-3.5 h-3.5 text-stone-1000" />
+                <Microscope className="w-3.5 h-3.5 text-stone-900" />
                 Regulatory Precedents
                 <span className="text-xs text-stone-400 ml-1 font-normal">
                   {precedents.length} found
@@ -894,7 +894,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
           {/* ── 6. Document Outcome Block ──────────────────────────── */}
           <div className="rounded-lg border border-stone-200 bg-white p-3 mb-3">
             <h3 className="text-[13px] font-semibold text-stone-900 flex items-center gap-1.5 mb-2">
-              <FileCheck className="w-3.5 h-3.5 text-stone-1000" />
+              <FileCheck className="w-3.5 h-3.5 text-stone-900" />
               Document Actions
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -920,7 +920,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                       </span>
                       <span className="text-[11px] text-stone-400">CTD {doc.ctdSection}</span>
                     </div>
-                    <ArrowRight className="w-3 h-3 text-stone-400 group-hover:text-stone-1000 transition-colors duration-150" />
+                    <ArrowRight className="w-3 h-3 text-stone-400 group-hover:text-stone-900 transition-colors duration-150" />
                   </button>
                 );
               })}
@@ -956,19 +956,19 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                 active={csrResults.length > 0}
               />
               <LineageItem
-                icon={<Microscope className="w-3 h-3 text-stone-1000" />}
+                icon={<Microscope className="w-3 h-3 text-stone-900" />}
                 label="Precedent Engine"
                 detail={`${precedents.length} precedents`}
                 active={precedents.length > 0}
               />
               <LineageItem
-                icon={<AlertTriangle className="w-3 h-3 text-stone-1000" />}
+                icon={<AlertTriangle className="w-3 h-3 text-stone-900" />}
                 label="Risk Analysis"
                 detail={riskData ? `${riskData.overallRisk} risk` : 'Computing…'}
                 active={!!riskData}
               />
               <LineageItem
-                icon={<Target className="w-3 h-3 text-stone-1000" />}
+                icon={<Target className="w-3 h-3 text-stone-900" />}
                 label="Strategy Engine"
                 detail={
                   strategyData
@@ -1012,27 +1012,27 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
             <div className="space-y-1.5 text-xs">
               <div className="flex items-center justify-between text-stone-600">
                 <div className="flex items-center gap-1.5">
-                  <FileText className="w-3 h-3 text-stone-1000" />
+                  <FileText className="w-3 h-3 text-stone-900" />
                   <span>Governed Artifacts</span>
                 </div>
                 <span className="font-mono font-semibold text-stone-900">{artifactCount}</span>
               </div>
               <div className="flex items-center justify-between text-stone-600">
                 <div className="flex items-center gap-1.5">
-                  <PenLine className="w-3 h-3 text-stone-1000" />
+                  <PenLine className="w-3 h-3 text-stone-900" />
                   <span>Drafts</span>
                 </div>
                 <span className="font-mono font-semibold text-stone-600">{artifactDrafts}</span>
               </div>
               <div className="flex items-center justify-between text-stone-600">
                 <div className="flex items-center gap-1.5">
-                  <CheckCircle className="w-3 h-3 text-stone-1000" />
+                  <CheckCircle className="w-3 h-3 text-stone-900" />
                   <span>Approved</span>
                 </div>
                 <span className="font-mono font-semibold text-stone-700">{artifactApproved}</span>
               </div>
               <div className="flex items-center gap-1.5 text-stone-600 pt-1 border-t border-stone-200">
-                <Fingerprint className="w-3 h-3 text-stone-1000" />
+                <Fingerprint className="w-3 h-3 text-stone-900" />
                 <span>Part 11 audit trail active</span>
               </div>
               <div className="flex items-center gap-1.5 text-stone-600">
@@ -1378,7 +1378,7 @@ const LineageItem: React.FC<{
       <span className="text-stone-700 block">{label}</span>
       <span className="text-xs text-stone-400">{detail}</span>
     </div>
-    {active && <CheckCircle className="w-3 h-3 text-stone-1000 shrink-0" />}
+    {active && <CheckCircle className="w-3 h-3 text-stone-900 shrink-0" />}
   </div>
 );
 

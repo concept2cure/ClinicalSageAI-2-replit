@@ -384,7 +384,7 @@ const Header: React.FC<{
       <button className="relative p-2 rounded-lg hover:bg-stone-100 text-stone-600 transition-colors duration-150">
         <Bell className="w-5 h-5" />
         {notificationCount > 0 && (
-          <span className="absolute top-1 right-1 w-4 h-4 text-xs font-semibold bg-stone-1000 text-white rounded-full flex items-center justify-center">
+          <span className="absolute top-1 right-1 w-4 h-4 text-xs font-semibold bg-stone-900 text-white rounded-full flex items-center justify-center">
             {notificationCount}
           </span>
         )}

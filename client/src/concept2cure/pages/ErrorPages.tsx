@@ -32,7 +32,7 @@ const ErrorLayout: React.FC<{
         className="text-7xl font-bold mb-4"
         style={{
           fontFamily: "'Poppins', Arial, sans-serif",
-          background: 'linear-gradient(135deg, #d97757, #c15f3c)',
+          background: 'linear-gradient(135deg, #44403c, #292524)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
         }}
@@ -63,7 +63,7 @@ const ErrorLayout: React.FC<{
         href={action.href}
         className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white rounded-xl transition-all hover:shadow-sm"
         style={{
-          background: 'linear-gradient(135deg, #d97757, #c15f3c)',
+          background: 'linear-gradient(135deg, #44403c, #292524)',
           fontFamily: "'Poppins', Arial, sans-serif",
         }}
       >

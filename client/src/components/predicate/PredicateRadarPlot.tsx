@@ -32,10 +32,10 @@ const SWEET_SPOT = {
 };
 
 const TOXICITY_COLORS = {
-  safe: '#92a87a', // stone-1000
-  caution: '#eab308', // stone-1000
-  danger: '#ef4444', // stone-1000
-  recommended: '#6a9bcc', // stone-1000
+  safe: '#78716c', // stone-900
+  caution: '#eab308', // stone-900
+  danger: '#ef4444', // stone-900
+  recommended: '#6a9bcc', // stone-900
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -135,9 +135,9 @@ export function PredicateRadarPlot({
               y={sweetY}
               width={sweetW}
               height={sweetH}
-              fill="#92a87a"
+              fill="#78716c"
               fillOpacity={0.06}
-              stroke="#92a87a"
+              stroke="#78716c"
               strokeOpacity={0.25}
               strokeWidth={1}
               strokeDasharray="4 3"
@@ -149,7 +149,7 @@ export function PredicateRadarPlot({
               textAnchor="middle"
               dominantBaseline="central"
               fontSize={10}
-              fill="#92a87a"
+              fill="#78716c"
               opacity={0.5}
               fontWeight={600}
             >
@@ -305,16 +305,16 @@ export function PredicateRadarPlot({
         {/* Legend */}
         <div className="flex flex-wrap gap-4 mt-3 justify-center text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full bg-stone-1000" /> Safe (≤0.15)
+            <span className="inline-block h-3 w-3 rounded-full bg-stone-900" /> Safe (≤0.15)
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full bg-stone-1000" /> Caution (0.15–0.35)
+            <span className="inline-block h-3 w-3 rounded-full bg-stone-900" /> Caution (0.15–0.35)
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full bg-stone-1000" /> Danger (&gt;0.35)
+            <span className="inline-block h-3 w-3 rounded-full bg-stone-900" /> Danger (&gt;0.35)
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full bg-stone-1000" /> Recommended
+            <span className="inline-block h-3 w-3 rounded-full bg-stone-900" /> Recommended
           </span>
         </div>
       </CardContent>

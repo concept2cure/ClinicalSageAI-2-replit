@@ -130,7 +130,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   const actionVariantClasses = {
     primary: 'bg-stone-600 text-white hover:bg-stone-700 focus:ring-stone-400',
     secondary: 'bg-stone-100 text-stone-700 hover:bg-stone-200 focus:ring-stone-500',
-    destructive: 'bg-stone-700 text-white hover:bg-stone-800 focus:ring-stone-1000',
+    destructive: 'bg-stone-700 text-white hover:bg-stone-800 focus:ring-stone-900',
   };
 
   return (
@@ -687,7 +687,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
   const variantClasses = {
     default: 'bg-stone-600',
     success: 'bg-stone-700',
-    warning: 'bg-stone-1000',
+    warning: 'bg-stone-900',
     error: 'bg-stone-700',
   };
 
@@ -895,7 +895,7 @@ export const BlockedState: React.FC<BlockedStateProps> = ({
     >
       <div className="mb-4 p-3 bg-stone-100 rounded-full" aria-hidden="true">
         <svg
-          className="h-7 w-7 text-stone-1000"
+          className="h-7 w-7 text-stone-900"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -968,7 +968,7 @@ export const MissingConfigurationState: React.FC<MissingConfigurationStateProps>
     >
       <div className="mb-4 p-3 bg-stone-100 rounded-full" aria-hidden="true">
         <svg
-          className="h-7 w-7 text-stone-1000"
+          className="h-7 w-7 text-stone-900"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

@@ -128,7 +128,7 @@ export const DemoChat: React.FC<DemoChatProps> = ({
                     <motion.span
                       animate={{ opacity: [1, 0] }}
                       transition={{ duration: 0.5, repeat: Infinity }}
-                      className="inline-block w-0.5 h-4 bg-stone-1000 ml-0.5 align-middle"
+                      className="inline-block w-0.5 h-4 bg-stone-900 ml-0.5 align-middle"
                     />
                   )}
                 </div>
@@ -160,7 +160,7 @@ export const DemoChat: React.FC<DemoChatProps> = ({
                     'text-left px-4 py-2.5 rounded-xl border text-sm transition-all duration-150',
                     'border-stone-200 bg-white hover:bg-stone-100 hover:border-stone-400',
                     'text-stone-700 hover:text-stone-700',
-                    'shadow-sm hover:shadow-md',
+                    'shadow-sm hover:shadow-sm',
                   )}
                 >
                   <span className="font-medium">{choice.label}</span>

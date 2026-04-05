@@ -212,43 +212,43 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
           icon={MessageSquare}
           label="Open Threads"
           value={s.openThreads}
-          color="text-stone-1000"
+          color="text-stone-900"
         />
         <StatCard
           icon={CheckCircle2}
           label="Resolved"
           value={s.resolvedThreads}
-          color="text-stone-1000"
+          color="text-stone-900"
         />
         <StatCard
           icon={ShieldAlert}
           label="High Priority"
           value={s.highPriorityOpen}
-          color="text-stone-1000"
+          color="text-stone-900"
         />
         <StatCard
           icon={Clock}
           label="Overdue Tasks"
           value={s.overdueTasks}
-          color={s.overdueTasks > 0 ? 'text-stone-1000' : 'text-stone-400'}
+          color={s.overdueTasks > 0 ? 'text-stone-900' : 'text-stone-400'}
         />
         <StatCard
           icon={Target}
           label="Change Requests"
           value={s.changeRequests}
-          color="text-stone-1000"
+          color="text-stone-900"
         />
         <StatCard
           icon={Users}
           label="Unassigned"
           value={s.unassignedThreads + s.unassignedTasks}
-          color={s.unassignedThreads + s.unassignedTasks > 0 ? 'text-stone-1000' : 'text-stone-400'}
+          color={s.unassignedThreads + s.unassignedTasks > 0 ? 'text-stone-900' : 'text-stone-400'}
         />
         <StatCard
           icon={UserCheck}
           label="Completion"
           value={`${s.reviewCompletionRate}%`}
-          color={s.reviewCompletionRate >= 80 ? 'text-stone-1000' : 'text-stone-1000'}
+          color={s.reviewCompletionRate >= 80 ? 'text-stone-900' : 'text-stone-900'}
         />
       </div>
 
@@ -256,7 +256,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
       {riskSignals.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-stone-700 flex items-center gap-1.5">
-            <AlertTriangle className="w-3.5 h-3.5 text-stone-1000" />
+            <AlertTriangle className="w-3.5 h-3.5 text-stone-900" />
             Risk Signals
           </h3>
           <div className="space-y-1.5">
@@ -281,7 +281,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
       {/* ── Artifact readiness table ───────────────────────────────────── */}
       <div className="space-y-2">
         <h3 className="text-sm font-semibold text-stone-700 flex items-center gap-1.5">
-          <FileText className="w-3.5 h-3.5 text-stone-1000" />
+          <FileText className="w-3.5 h-3.5 text-stone-900" />
           Artifact Review Readiness
           {blockedArtifacts.length > 0 && (
             <span className="text-xs font-normal text-stone-700 ml-1">
@@ -363,7 +363,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
       {assigneeWorkload.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-stone-700 flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5 text-stone-1000" />
+            <Users className="w-3.5 h-3.5 text-stone-900" />
             Team Workload
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">

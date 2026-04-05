@@ -234,14 +234,14 @@ export default function DossierTree({ documentId, region }: DossierTreeProps) {
 
   const getStatusIcon = (status: TreeNode['status'], validationIssues?: number) => {
     if (validationIssues && validationIssues > 0) {
-      return <AlertCircle className="h-4 w-4 text-stone-1000" />;
+      return <AlertCircle className="h-4 w-4 text-stone-900" />;
     }
 
     switch (status) {
       case 'complete':
-        return <CheckCircle className="h-4 w-4 text-stone-1000" />;
+        return <CheckCircle className="h-4 w-4 text-stone-900" />;
       case 'error':
-        return <AlertCircle className="h-4 w-4 text-stone-1000" />;
+        return <AlertCircle className="h-4 w-4 text-stone-900" />;
       default:
         return <FileText className="h-4 w-4 text-muted-foreground" />;
     }

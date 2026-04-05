@@ -306,9 +306,9 @@ function OverviewTab() {
                 s.status === 'degraded' ? 'text-stone-600' : 'text-stone-700'
               }`}>
                 <span className={`w-2 h-2 rounded-full ${
-                  s.status === 'operational' ? 'bg-stone-1000' :
+                  s.status === 'operational' ? 'bg-stone-900' :
                   s.status === 'checking' ? 'bg-stone-300 animate-pulse' :
-                  s.status === 'degraded' ? 'bg-stone-1000' : 'bg-stone-1000'
+                  s.status === 'degraded' ? 'bg-stone-900' : 'bg-stone-900'
                 }`} />
                 {s.status === 'checking' ? 'Checking...' : s.status.charAt(0).toUpperCase() + s.status.slice(1)}
               </span>
@@ -486,7 +486,7 @@ function ApiKeysTab(props: {
                   {key.status === 'active' && (
                     <button
                       onClick={() => props.onRevoke(key.id)}
-                      className="text-stone-1000 hover:text-stone-800 p-1"
+                      className="text-stone-900 hover:text-stone-800 p-1"
                       title="Revoke"
                     >
                       <Trash2 size={14} />
@@ -536,14 +536,14 @@ function UsageTab({ usage }: { usage: UsageSummary[] }) {
   const features = [
     { id: 'deep_research', label: 'Deep Research', color: 'bg-stone-600' },
     { id: 'csr_builder', label: 'CSR Builder', color: 'bg-stone-600' },
-    { id: 'ctd_builder', label: 'CTD Builder', color: 'bg-stone-1000' },
+    { id: 'ctd_builder', label: 'CTD Builder', color: 'bg-stone-900' },
     { id: 'api_csr_search', label: 'API: CSR Search', color: 'bg-stone-500' },
     { id: 'api_regulatory_pathways', label: 'API: Regulatory Pathways', color: 'bg-stone-500' },
-    { id: 'api_endpoint_recommend', label: 'API: Endpoint Recommender', color: 'bg-fuchsia-500' },
+    { id: 'api_endpoint_recommend', label: 'API: Endpoint Recommender', color: 'bg-stone-900' },
     { id: 'api_precedent_search', label: 'API: Precedent Search', color: 'bg-stone-500' },
-    { id: 'api_trial_design', label: 'API: Trial Design', color: 'bg-rose-500' },
-    { id: 'ctd_onboarding', label: 'CTD Onboarding', color: 'bg-stone-1000' },
-    { id: 'biologics_intelligence', label: 'Biologics Intelligence', color: 'bg-stone-1000' },
+    { id: 'api_trial_design', label: 'API: Trial Design', color: 'bg-stone-900' },
+    { id: 'ctd_onboarding', label: 'CTD Onboarding', color: 'bg-stone-900' },
+    { id: 'biologics_intelligence', label: 'Biologics Intelligence', color: 'bg-stone-900' },
   ];
 
   return (

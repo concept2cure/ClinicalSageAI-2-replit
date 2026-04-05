@@ -326,7 +326,7 @@ export default function BiologicsDashboard() {
                 <ul className="space-y-1">
                   {section.items.map((item, i) => (
                     <li key={i} className="text-xs text-stone-500 flex items-center gap-1">
-                      <CheckCircle size={10} className="text-stone-1000" />
+                      <CheckCircle size={10} className="text-stone-900" />
                       {item}
                     </li>
                   ))}

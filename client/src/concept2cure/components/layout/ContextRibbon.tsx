@@ -168,7 +168,7 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
           className="flex items-center gap-1.5 px-1.5 py-0.5 rounded hover:bg-stone-50 transition-colors duration-150"
           title={`AnA Cortex: ${connConfig.label}${lastSyncTime ? ` \u2022 Last sync: ${lastSyncTime}` : ''}`}
         >
-          <Zap className="w-3 h-3 text-stone-1000" />
+          <Zap className="w-3 h-3 text-stone-900" />
           <span className="text-[10px] font-medium text-stone-400 tracking-wide">CORTEX</span>
           <WorkspaceStatusBadge status={connConfig.key} config={connConfig} />
         </button>

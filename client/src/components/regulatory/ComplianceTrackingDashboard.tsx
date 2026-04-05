@@ -488,10 +488,10 @@ export default function ComplianceTrackingDashboard() {
                       key={submission.sub_id}
                       className={`p-4 border-l-4 rounded-lg ${
                         color === 'red'
-                          ? 'border-stone-1000 bg-stone-100'
+                          ? 'border-stone-900 bg-stone-100'
                           : color === 'yellow'
-                            ? 'border-stone-1000 bg-stone-100'
-                            : 'border-stone-1000 bg-stone-100'
+                            ? 'border-stone-900 bg-stone-100'
+                            : 'border-stone-900 bg-stone-100'
                       }`}
                       data-testid={`deadline-${submission.sub_id}`}
                     >

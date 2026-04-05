@@ -714,7 +714,7 @@ export function SignatureWorkflow({
             {/* Error */}
             {signError && (
               <div className="flex items-center gap-2 p-3 rounded-lg bg-stone-100 border border-stone-200">
-                <AlertTriangle className="w-4 h-4 text-stone-1000 flex-shrink-0" />
+                <AlertTriangle className="w-4 h-4 text-stone-900 flex-shrink-0" />
                 <span className="text-xs text-stone-800">{signError}</span>
               </div>
             )}
@@ -951,7 +951,7 @@ export function SignatureWorkflow({
                         <div key={sig.id} className="relative flex items-start gap-3">
                           {/* Timeline dot */}
                           <div className="relative z-10 flex items-center justify-center w-7 h-7 rounded-full bg-white border-2 border-stone-300 flex-shrink-0">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-stone-1000" />
+                            <CheckCircle2 className="w-3.5 h-3.5 text-stone-900" />
                           </div>
 
                           {/* Content */}
@@ -1085,7 +1085,7 @@ export function SignatureList({ documentId, signatures, loading }: SignatureList
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-1.5">
               <ShieldCheck
-                className={cn('w-3.5 h-3.5', sig.revoked ? 'text-stone-1000' : 'text-stone-700')}
+                className={cn('w-3.5 h-3.5', sig.revoked ? 'text-stone-900' : 'text-stone-700')}
               />
               <span className="font-medium text-stone-700">{sig.signerName}</span>
             </div>

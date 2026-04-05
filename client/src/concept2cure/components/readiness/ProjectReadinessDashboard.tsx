@@ -224,8 +224,8 @@ function JudgmentScoreCard({ score }: { score: JudgmentScore }) {
               score.score >= 70
                 ? 'bg-stone-500 dark:bg-stone-400'
                 : score.score >= 50
-                  ? 'bg-stone-1000 dark:bg-stone-400'
-                  : 'bg-stone-1000 dark:bg-stone-400'
+                  ? 'bg-stone-900 dark:bg-stone-400'
+                  : 'bg-stone-900 dark:bg-stone-400'
             }`}
             style={{ width: `${score.score}%` }}
           />
@@ -365,10 +365,10 @@ function OverviewTab({
                 <div
                   className={`h-full rounded-full transition-all duration-200 ${
                     item.value >= 70
-                      ? 'bg-stone-1000'
+                      ? 'bg-stone-900'
                       : item.value >= 40
-                        ? 'bg-stone-1000'
-                        : 'bg-stone-1000'
+                        ? 'bg-stone-900'
+                        : 'bg-stone-900'
                   }`}
                   style={{ width: `${item.value}%` }}
                 />

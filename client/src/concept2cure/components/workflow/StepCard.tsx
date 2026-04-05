@@ -197,7 +197,7 @@ export const StepCard: React.FC<StepCardProps> = ({
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-semibold text-stone-900">{step.name}</h3>
-                {step.isRequired && <span className="text-xs text-stone-1000">*</span>}
+                {step.isRequired && <span className="text-xs text-stone-900">*</span>}
               </div>
               {step.description && (
                 <p className="text-sm text-stone-500 mt-1 line-clamp-2">{step.description}</p>
