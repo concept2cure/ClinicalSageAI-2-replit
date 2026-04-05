@@ -9,44 +9,48 @@
       "ZenApp.tsx": {
         "path": "client/src/concept2cure/ZenApp.tsx",
         "status": "active",
-        "action": "refactor",
-        "lines": 4100,
-        "role": "Primary application shell"
+        "action": "canonical",
+        "lines": 3940,
+        "role": "Primary application shell — single canonical shell owner"
       },
       "ZenRouter.tsx": {
         "path": "client/src/concept2cure/router/ZenRouter.tsx",
         "status": "active",
         "action": "keep",
         "lines": 495,
-        "role": "URL routing dispatcher"
+        "role": "URL routing dispatcher — funnels all paths to ZenApp"
       },
       "ZenShell.tsx": {
         "path": "client/src/concept2cure/layouts/ZenShell.tsx",
-        "status": "dormant",
-        "action": "delete",
-        "lines": 300,
-        "role": "Unused alternative shell"
+        "status": "deleted",
+        "deletedIn": "phase-3",
+        "role": "Former alternative shell — confirmed orphaned and deleted"
+      },
+      "SplitScreenLayout.tsx": {
+        "path": "client/src/concept2cure/layouts/SplitScreenLayout.tsx",
+        "status": "deleted",
+        "deletedIn": "phase-3",
+        "role": "Former split-screen layout — confirmed orphaned and deleted"
       },
       "IndustryWorkspaceShell.tsx": {
         "path": "client/src/concept2cure/components/shell/IndustryWorkspaceShell.tsx",
-        "status": "dormant",
-        "action": "delete",
-        "lines": 150,
-        "role": "Unused industry-aware shell"
+        "status": "deleted",
+        "deletedIn": "phase-3",
+        "role": "Former industry-aware shell — confirmed orphaned and deleted"
       },
       "GlobalOperatingShell.tsx": {
         "path": "client/src/concept2cure/components/shell/GlobalOperatingShell.tsx",
-        "status": "active",
-        "action": "demote",
+        "status": "demoted",
+        "action": "evaluate-for-removal",
         "lines": 74,
-        "role": "Breadcrumb wrapper — fold into ZenApp or delete"
+        "role": "Breadcrumb wrapper — still rendered but non-authoritative"
       },
       "ProjectWorkspaceShell.tsx": {
         "path": "client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx",
         "status": "active",
         "action": "keep",
         "lines": 200,
-        "role": "Document workspace sub-shell (sacred)"
+        "role": "Document workspace sub-shell (sacred machine room)"
       },
       "EmbeddedModuleHosts.tsx": {
         "path": "client/src/concept2cure/components/shell/EmbeddedModuleHosts.tsx",
@@ -60,38 +64,42 @@
       "ZenSidebar.tsx": {
         "path": "client/src/concept2cure/components/sidebar/ZenSidebar.tsx",
         "status": "active",
-        "action": "refactor",
-        "lines": 1290,
-        "currentItems": 6,
-        "targetItems": 5,
-        "role": "Left sidebar navigation"
+        "action": "canonical",
+        "lines": 1200,
+        "globalItems": 5,
+        "destinations": ["chats", "projects", "communication-center", "apps", "settings"],
+        "role": "Left sidebar — single canonical nav source with 5 destinations"
       },
       "ProjectsSidebar.tsx": {
         "path": "client/src/concept2cure/components/sidebar/ProjectsSidebar.tsx",
         "status": "active",
         "action": "keep",
         "lines": 761,
-        "role": "Project browser sub-component"
+        "role": "Project browser sub-component (embedded within ZenSidebar)"
       },
       "Sidebar.tsx (legacy)": {
         "path": "client/src/components/layout/Sidebar.tsx",
-        "status": "legacy",
-        "action": "verify-and-delete",
-        "lines": 284,
-        "role": "Legacy generic sidebar — verify orphaned"
+        "status": "deleted",
+        "deletedIn": "phase-3",
+        "role": "Former generic sidebar — confirmed orphaned and deleted"
       }
     },
     "constants": {
       "zen-app-constants.ts": {
         "path": "client/src/concept2cure/zen-app-constants.ts",
         "status": "active",
-        "action": "refactor",
-        "lines": 314,
-        "layoutModeCount": 92,
-        "targetLayoutModeCount": 8,
-        "sidebarNavEntries": 31,
-        "targetSidebarNavEntries": 5,
-        "role": "LayoutMode type + nav mappings + tool panel registry"
+        "action": "keep",
+        "layoutModeCount": 93,
+        "activeLayoutModes": 23,
+        "demotedLayoutModes": 70,
+        "sidebarNavEntries": 32,
+        "role": "LayoutMode type + nav mappings + tool panel registry. LEGACY_NAV_ID_BY_LAYOUT removed."
+      },
+      "zenRouteNormalization.ts": {
+        "path": "client/src/concept2cure/router/zenRouteNormalization.ts",
+        "status": "active",
+        "action": "keep",
+        "role": "Redirect map for 55+ demoted layout modes → active destinations"
       }
     },
     "chat": {
@@ -100,45 +108,56 @@
         "status": "active",
         "action": "keep",
         "lines": 5555,
-        "modes": ["full", "compact"],
+        "modeResolution": "full for all 5 primary destinations; compact for project-scoped module pages",
         "chatModes": ["standard", "deep-research", "nano-banana"],
-        "role": "Unified AI chat surface — primary content area"
+        "role": "Unified AI chat surface — primary content area, center of gravity"
       }
     },
     "destinations": {
       "chats": {
-        "status": "needs-refactor",
-        "currentLayoutMode": "projects",
-        "targetLayoutMode": "chats",
-        "component": "Conversation list + active chat"
+        "status": "active",
+        "layoutMode": "projects",
+        "component": "AnaPersistentPanel (mode=full) + ProjectsSidebar",
+        "navId": "projects",
+        "notes": "Conversation-first home. Projects layout mode serves as chats view."
       },
       "projects": {
-        "status": "needs-refactor",
-        "currentLayoutMode": "projects (shared)",
-        "targetLayoutMode": "projects",
-        "component": "Project management hub"
+        "status": "active",
+        "layoutMode": "projects",
+        "component": "Project cards grid in ZenApp + AnaPersistentPanel",
+        "navId": "projects",
+        "notes": "Currently shared with chats. Future: separate project browser."
       },
       "communication-center": {
-        "status": "needs-promotion",
-        "currentLayoutMode": "none (sub-view)",
-        "targetLayoutMode": "communication-center",
+        "status": "active",
+        "layoutMode": "communication-center",
         "component": "CommunicationCenter.tsx",
-        "componentPath": "client/src/concept2cure/components/workspace/CommunicationCenter.tsx"
+        "componentPath": "client/src/concept2cure/components/workspace/CommunicationCenter.tsx",
+        "navId": "communication-center",
+        "notes": "Promoted from sub-view to top-level destination in Phase 4."
       },
       "apps": {
-        "status": "wired",
-        "currentLayoutMode": "apps",
-        "targetLayoutMode": "apps",
+        "status": "active",
+        "layoutMode": "apps",
         "component": "AppsPage.tsx",
-        "componentPath": "client/src/concept2cure/pages/AppsPage.tsx"
+        "componentPath": "client/src/concept2cure/pages/AppsPage.tsx",
+        "navId": "apps"
       },
       "settings": {
-        "status": "needs-rename",
-        "currentLayoutMode": "setup",
-        "targetLayoutMode": "settings",
-        "component": "Settings panel (modal or inline)"
+        "status": "active",
+        "layoutMode": "setup",
+        "component": "SetupPage",
+        "navId": "setup",
+        "notes": "Layout mode is 'setup'. Future: rename to 'settings'."
       }
     },
+    "deletedFiles": [
+      "client/src/concept2cure/layouts/ZenShell.tsx",
+      "client/src/concept2cure/layouts/SplitScreenLayout.tsx",
+      "client/src/concept2cure/components/shell/IndustryWorkspaceShell.tsx",
+      "client/src/concept2cure/demo/UnifiedWorkspaceDemo.tsx",
+      "client/src/components/layout/Sidebar.tsx"
+    ],
     "toolPanels": {
       "status": "keep-all",
       "count": 10,
@@ -148,13 +167,15 @@
       "fonts": {
         "heading": "Poppins",
         "body": "Lora",
-        "status": "correct"
+        "status": "pending-reset",
+        "target": "System sans / DM Sans for shell, serif only for document editor"
       },
       "colors": {
         "accent": "#d97757",
         "canvas": "#FAFAF9",
         "hardcodedInstances": 15,
-        "action": "replace-hardcoded-with-tokens"
+        "action": "replace-hardcoded-with-tokens",
+        "status": "pending-reset"
       }
     }
   }

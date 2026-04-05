@@ -333,7 +333,7 @@ const AI_PROVIDERS: AIProviderOption[] = [
     label: 'Auto',
     description: 'Best model for the task',
     color: 'text-[#8A8880]',
-    activeColor: 'text-[#D97757]',
+    activeColor: 'text-terracotta-500',
   },
   {
     id: 'anthropic',
@@ -4074,7 +4074,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     <div
                       className={cn(
                         'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5',
-                        isUser ? 'bg-[#4D4B45] text-white' : 'bg-[#D97757]'
+                        isUser ? 'bg-[#4D4B45] text-white' : 'bg-terracotta-500'
                       )}
                     >
                       {isUser ? (
@@ -4098,11 +4098,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           className="prose prose-sm prose-stone max-w-none mt-0.5
                             prose-p:text-[#4D4B45] prose-p:leading-relaxed prose-p:my-2
                             prose-strong:text-[#141413]
-                            prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                            prose-code:text-[#C4623F] prose-code:bg-terracotta-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
                             prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3.5 prose-pre:text-xs
                             prose-blockquote:border-l-stone-300 prose-blockquote:text-[#6B6962] prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
                             prose-ul:text-[#4D4B45] prose-ol:text-[#4D4B45] prose-ul:my-2 prose-ol:my-2 prose-li:my-1
-                            prose-a:text-[#D97757] prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
+                            prose-a:text-terracotta-500 prose-a:underline prose-a:decoration-terracotta-200 prose-a:underline-offset-2 hover:prose-a:text-terracotta-600
                             [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                           dangerouslySetInnerHTML={{ __html: htmlContent }}
                         />
@@ -4115,7 +4115,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             {isThinking && (
               <div className="px-4 py-3 bg-white">
                 <div className="flex gap-2.5 max-w-3xl mx-auto">
-                  <div className="w-6 h-6 rounded-full bg-[#D97757] flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-full bg-terracotta-500 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Sparkles className="w-3 h-3 text-white" />
                   </div>
                   <div>
@@ -4425,7 +4425,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             <div className="max-w-2xl w-full text-center">
               {/* Greeting */}
               <div className="mb-8">
-                <div className="w-10 h-10 rounded-full bg-[#D97757] flex items-center justify-center mx-auto mb-3">
+                <div className="w-10 h-10 rounded-full bg-terracotta-500 flex items-center justify-center mx-auto mb-3">
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
                 <p className="text-[10px] font-semibold tracking-wider text-[#B0AEA5] uppercase mb-3">
@@ -4522,7 +4522,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     <div
                       className={cn(
                         'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5',
-                        isUser ? 'bg-[#4D4B45] text-white' : 'bg-[#D97757]'
+                        isUser ? 'bg-[#4D4B45] text-white' : 'bg-terracotta-500'
                       )}
                     >
                       {isUser ? (
@@ -4543,7 +4543,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             {msg.content}
                           </p>
                           {(msg as any).recalledToInput && (
-                            <p className="mt-1 text-[10px] font-medium text-[#D97757]">
+                            <p className="mt-1 text-[10px] font-medium text-terracotta-500">
                               Editing prompt in composer
                             </p>
                           )}
@@ -4554,11 +4554,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             className="prose prose-sm prose-zinc max-w-none mt-0.5
                               prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-2
                               prose-strong:text-zinc-900
-                              prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                              prose-code:text-[#C4623F] prose-code:bg-terracotta-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
                               prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3.5 prose-pre:text-xs
                               prose-blockquote:border-l-stone-300 prose-blockquote:text-zinc-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
                               prose-ul:text-zinc-700 prose-ol:text-zinc-700 prose-ul:my-2 prose-ol:my-2 prose-li:my-1
-                              prose-a:text-[#D97757] prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
+                              prose-a:text-terracotta-500 prose-a:underline prose-a:decoration-terracotta-200 prose-a:underline-offset-2 hover:prose-a:text-terracotta-600
                               [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                             dangerouslySetInnerHTML={{ __html: htmlContent }}
                           />
@@ -4737,7 +4737,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               className={cn(
                                 'text-[11px] font-medium px-1.5 py-0.5 rounded mr-1',
                                 msg.modelProvider === 'anthropic'
-                                  ? 'text-[#CC785C] bg-[#FBF0EB]'
+                                  ? 'text-[#CC785C] bg-terracotta-50'
                                   : msg.modelProvider === 'openai'
                                   ? 'text-[#10A37F] bg-stone-100'
                                   : msg.modelProvider === 'moonshot'
@@ -4759,7 +4759,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               className={cn(
                                 'text-[11px] font-medium px-1.5 py-0.5 rounded mr-1',
                                 msg.evidenceUsage.firecrawlUsed
-                                  ? 'text-[#D97757] bg-[#FBF0EB]'
+                                  ? 'text-terracotta-500 bg-terracotta-50'
                                   : 'text-zinc-500 bg-zinc-50'
                               )}
                               title="External evidence usage"
@@ -5114,7 +5114,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             {isThinking && (
               <div className="px-4 py-3 bg-white">
                 <div className="flex gap-2.5 max-w-3xl mx-auto">
-                  <div className="w-6 h-6 rounded-full bg-[#D97757] flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-full bg-terracotta-500 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Sparkles className="w-3 h-3 text-white" />
                   </div>
                   <div>
@@ -5125,7 +5125,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
                         <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
                       </div>
-                      <span className="text-xs text-[#D97757] font-medium">
+                      <span className="text-xs text-terracotta-500 font-medium">
                         {thinkingMsg || 'Thinking...'}
                       </span>
                     </div>
@@ -5219,7 +5219,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 className={cn(
                   'gap-1 px-2 h-7 text-xs font-medium rounded-lg',
                   chatMode === 'deep-research'
-                    ? 'bg-[#FBF0EB] text-[#D97757] hover:bg-[#F6E6DF]'
+                    ? 'bg-terracotta-50 text-terracotta-500 hover:bg-terracotta-100'
                     : chatMode === 'nano-banana'
                     ? 'bg-stone-100 text-stone-700 hover:bg-stone-100'
                     : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
@@ -5265,7 +5265,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       </div>
                     </div>
                     {chatMode === 'standard' && (
-                      <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-terracotta-500 ml-auto mt-0.5 flex-shrink-0" />
                     )}
                   </Button>
                   <Button
@@ -5277,10 +5277,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     }}
                     className={cn(
                       'w-full flex items-start gap-3 px-3 py-2.5 h-auto text-left justify-start rounded-none',
-                      chatMode === 'deep-research' && 'bg-[#FBF0EB]'
+                      chatMode === 'deep-research' && 'bg-terracotta-50'
                     )}
                   >
-                    <Zap className="w-4 h-4 mt-0.5 text-[#D97757] flex-shrink-0" />
+                    <Zap className="w-4 h-4 mt-0.5 text-terracotta-500 flex-shrink-0" />
                     <div className="text-left">
                       <div className="text-sm font-medium text-[#141413]">Deep Research</div>
                       <div className="text-[11px] text-[#B0AEA5] leading-tight font-normal">
@@ -5288,7 +5288,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       </div>
                     </div>
                     {chatMode === 'deep-research' && (
-                      <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-terracotta-500 ml-auto mt-0.5 flex-shrink-0" />
                     )}
                   </Button>
                   <div className="mx-2 my-0.5 border-t border-zinc-100" />
@@ -5347,7 +5347,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       useFirecrawl && 'bg-[#FAF9F5]'
                     )}
                   >
-                    <Search className="w-4 h-4 mt-0.5 text-[#D97757] flex-shrink-0" />
+                    <Search className="w-4 h-4 mt-0.5 text-terracotta-500 flex-shrink-0" />
                     <div className="min-w-0 text-left">
                       <div className="text-sm font-medium text-[#141413]">Use Firecrawl</div>
                       <div className="text-[10px] text-[#8A8880] leading-tight font-normal">
@@ -5360,7 +5360,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           : 'Optional governed open-web evidence'}
                       </div>
                     </div>
-                    {useFirecrawl && <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5" />}
+                    {useFirecrawl && <Check className="w-4 h-4 text-terracotta-500 ml-auto mt-0.5" />}
                   </Button>
                 </div>
               )}
@@ -5377,7 +5377,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   selectedProvider !== 'auto'
                     ? `bg-[#F5F4EF] ${
                         AI_PROVIDERS.find(p => p.id === selectedProvider)?.activeColor ||
-                        'text-[#D97757]'
+                        'text-terracotta-500'
                       } hover:bg-[#EDEAE0]`
                     : 'text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]'
                 )}
@@ -5495,7 +5495,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 variant="ghost"
                 type="button"
                 onClick={() => setUseFirecrawl(false)}
-                className="h-auto gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#FBF0EB] text-[#D97757] hover:bg-[#F6E6DF]"
+                className="h-auto gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-terracotta-50 text-terracotta-500 hover:bg-terracotta-100"
                 aria-label="Disable Firecrawl"
               >
                 Firecrawl On
@@ -5515,7 +5515,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   className={cn(
                     'gap-1 px-2 h-auto py-0.5 rounded-full text-[11px] font-medium',
                     intentLens === lens.id
-                      ? 'bg-[#FBF0EB] text-[#D97757]'
+                      ? 'bg-terracotta-50 text-terracotta-500'
                       : 'text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]'
                   )}
                   aria-label={lens.description}

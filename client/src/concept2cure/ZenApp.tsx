@@ -3183,115 +3183,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             </Suspense>
           )}
 
-          {/* ── Projects Index: AnA is the full-screen interface (ChatGPT/Claude style) ── */}
-          {/* PlatformHome removed — AnA handles everything via chat */}
-
-          {/* ── Project Workspace — Claude.ai-style project view ──────── */}
-          {!embeddedModule && layoutMode === 'workspace' && (
-            <div className="flex-1 flex flex-col min-h-0">
-              {/* ── Project Header — Claude.ai style: breadcrumb + title + star ── */}
-              {/* Claude.ai-style project header bar */}
-              <ProjectHeaderBar
-                projectName={activeProject?.name || 'Untitled Project'}
-                submissionType={activeProject?.type || 'IND'}
-                projectColor={activeProject?.color}
-                productName={activeProject?.product}
-                targetAgency={activeProject?.targetAgency}
-                readinessScore={projectReadinessScore}
-                onOpenConfig={() => setEditProjectOpen(true)}
-                onSwitchProject={() => setProjectSwitcherOpen(true)}
-              />
-
-              {/* ── Workspace body: AnA chat + right panel ───────────── */}
-              <div className="flex-1 flex min-h-0">
-                {/* Center: AnA (the ONE chat — Claude.ai style) */}
-                <AnaPersistentPanel
-                  mode="full"
-                  authoringContext={authoringContext}
-                  navContext={activeNavId}
-                  contextProfile={{
-                    productType: activeProject?.type,
-                    userRole: userRole,
-                    screenName: 'regulatory-workspace',
-                    activeProject: activeProject?.name,
-                    projectId: activeProjectId,
-                  }}
-                  projectIntelligence={projectIntelligenceStats}
-                  greeting={
-                    platformGreeting?.text ||
-                    `How can I help with ${activeProject?.name || 'your project'}?`
-                  }
-                  suggestedActions={workspaceSuggestedActions}
-                  onActionRun={handleActionRun}
-                  onNavigate={handleAnaPanelNavigate}
-                  onDraftInsert={handleDraftInsert}
-                  onNavigateToSection={handleNavigateToSection}
-                  onOpenArtifact={handleOpenArtifact}
-                  onRequestPromotion={handleRequestPromotion}
-                  onRefreshIntelligence={authoringIntelligence.refetch}
-                  initialMessage={
-                    pendingDraftSection
-                      ? `Draft CTD section ${pendingDraftSection.code}: ${pendingDraftSection.title}. Generate a compliant first draft following ICH M4 guidelines and 21 CFR 312.23(a) requirements.`
-                      : null
-                  }
-                />
-
-                {/* Right sidebar: Claude.ai-style project knowledge */}
-                {/* Desktop: static panel */}
-                <div className="w-72 xl:w-80 border-l border-stone-150 bg-white flex-shrink-0 hidden lg:flex">
-                  <Suspense
-                    fallback={
-                      <div className="flex items-center justify-center py-12 w-full">
-                        <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
-                      </div>
-                    }
-                  >
-                    <ProjectKnowledgePanel projectId={activeProjectId ?? null} className="w-full" />
-                  </Suspense>
-                </div>
-                {/* Mobile/Tablet: floating toggle + slide-over drawer */}
-                {workspacePanelOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 bg-black/30 z-40 lg:hidden"
-                      onClick={() => setWorkspacePanelOpen(false)}
-                    />
-                    <div className="fixed right-0 top-0 bottom-0 w-80 bg-white border-l border-stone-200 shadow z-50 lg:hidden">
-                      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100">
-                        <span className="text-sm font-medium text-stone-700">Project Context</span>
-                        <button
-                          onClick={() => setWorkspacePanelOpen(false)}
-                          className="p-1 hover:bg-stone-100 rounded"
-                        >
-                          <X className="w-4 h-4 text-stone-400" />
-                        </button>
-                      </div>
-                      <Suspense
-                        fallback={
-                          <div className="flex items-center justify-center py-12 w-full">
-                            <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
-                          </div>
-                        }
-                      >
-                        <ProjectKnowledgePanel
-                          projectId={activeProjectId ?? null}
-                          className="w-full"
-                        />
-                      </Suspense>
-                    </div>
-                  </>
-                )}
-                {/* Mobile toggle button */}
-                <button
-                  onClick={() => setWorkspacePanelOpen(true)}
-                  className="fixed right-4 bottom-4 z-30 lg:hidden w-10 h-10 bg-stone-900 text-white rounded-full shadow-sm flex items-center justify-center hover:bg-stone-800 transition-colors"
-                  title="Project context"
-                >
-                  <FileText className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
+          {/* [PHASE 5] workspace mode removed — redirects via normalizeLayoutMode to regulatory-workspace */}
           {!embeddedModule && layoutMode === 'editor' && (
             <div className="flex-1 flex min-w-0 min-h-0" data-testid="workspace-editor">
               <ErrorBoundary>
@@ -3763,15 +3655,20 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         )}
 
         {/* AnA — THE single chat surface (ChatGPT/Claude style)
-            projects/deep-research: full screen — AnA IS the interface
-            workspace/regulatory-workspace: rendered inline above (mode="full")
-            module pages (dossier, documents, etc.): compact input bar at bottom */}
-        {layoutMode !== 'workspace' &&
-          layoutMode !== 'regulatory-workspace' &&
+            Primary destinations (chats/projects/deep-research/communication-center): full mode
+            regulatory-workspace/project-home: rendered inline above (mode="full")
+            Module pages (dossier, documents, etc.): compact input bar at bottom */}
+        {layoutMode !== 'regulatory-workspace' &&
           layoutMode !== 'project-home' && (
             <AnaPersistentPanel
               mode={
-                layoutMode === 'projects' || layoutMode === 'deep-research' ? 'full' : 'compact'
+                layoutMode === 'projects' ||
+                layoutMode === 'deep-research' ||
+                layoutMode === 'communication-center' ||
+                layoutMode === 'apps' ||
+                layoutMode === 'setup'
+                  ? 'full'
+                  : 'compact'
               }
               defaultChatMode={layoutMode === 'deep-research' ? 'deep-research' : 'standard'}
               authoringContext={authoringContext}
