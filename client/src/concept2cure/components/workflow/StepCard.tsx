@@ -96,10 +96,10 @@ const STATUS_CONFIG: Record<string, {
   borderClass: string;
 }> = {
   PENDING: { pillVariant: 'default', pillLabel: 'Pending', iconBoxClass: 'bg-stone-100 text-stone-400', borderClass: 'border-stone-200' },
-  READY: { pillVariant: 'info', pillLabel: 'Ready', iconBoxClass: 'bg-blue-50 text-blue-500', borderClass: 'border-blue-200' },
-  IN_PROGRESS: { pillVariant: 'active', pillLabel: 'In Progress', iconBoxClass: 'bg-blue-100 text-blue-600', borderClass: 'border-blue-300' },
+  READY: { pillVariant: 'info', pillLabel: 'Ready', iconBoxClass: 'bg-stone-100 text-stone-600', borderClass: 'border-stone-200' },
+  IN_PROGRESS: { pillVariant: 'active', pillLabel: 'In Progress', iconBoxClass: 'bg-stone-200 text-stone-700', borderClass: 'border-stone-300' },
   AWAITING_APPROVAL: { pillVariant: 'warning', pillLabel: 'Awaiting Approval', iconBoxClass: 'bg-amber-100 text-amber-600', borderClass: 'border-amber-300' },
-  AWAITING_SIGNATURE: { pillVariant: 'purple', pillLabel: 'Awaiting Signature', iconBoxClass: 'bg-purple-100 text-purple-600', borderClass: 'border-purple-300' },
+  AWAITING_SIGNATURE: { pillVariant: 'default', pillLabel: 'Awaiting Signature', iconBoxClass: 'bg-stone-200 text-stone-700', borderClass: 'border-stone-300' },
   COMPLETED: { pillVariant: 'success', pillLabel: 'Completed', iconBoxClass: 'bg-emerald-100 text-emerald-600', borderClass: 'border-emerald-300' },
   SKIPPED: { pillVariant: 'default', pillLabel: 'Skipped', iconBoxClass: 'bg-stone-100 text-stone-400', borderClass: 'border-stone-200' },
   BLOCKED: { pillVariant: 'danger', pillLabel: 'Blocked', iconBoxClass: 'bg-red-100 text-red-600', borderClass: 'border-red-300' },

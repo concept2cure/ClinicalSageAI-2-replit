@@ -48,9 +48,9 @@ export function EnterpriseCard({
     <Component
       onClick={onClick}
       className={cn(
-        'bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden',
-        !noPadding && 'p-5',
-        interactive && 'hover:shadow-md hover:border-stone-300 transition-all duration-150 cursor-pointer',
+        'bg-white rounded-xl border border-stone-100 overflow-hidden',
+        !noPadding && 'p-4',
+        interactive && 'hover:border-stone-200 hover:bg-stone-50/50 transition-colors duration-150 cursor-pointer',
         onClick && 'w-full text-left focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
         className,
       )}

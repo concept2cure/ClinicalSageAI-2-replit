@@ -307,7 +307,7 @@ export const DossierMap: React.FC<DossierMapProps> = ({
                 className="w-full flex items-center justify-between gap-3 px-4 py-3 h-auto text-left"
               >
                 <div className="flex items-center gap-2">
-                  <Send className="w-3.5 h-3.5 text-violet-500" />
+                  <Send className="w-3.5 h-3.5 text-stone-500" />
                   <span className="text-sm font-medium text-stone-800">Check Submission Readiness</span>
                 </div>
                 <span className="text-xs text-stone-400">Review readiness & export</span>

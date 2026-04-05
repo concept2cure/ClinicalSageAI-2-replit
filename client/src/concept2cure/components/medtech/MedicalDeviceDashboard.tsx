@@ -695,7 +695,7 @@ const SubmissionCard: React.FC<{
   return (
     <button
       onClick={onClick}
-      className="w-full bg-white rounded-xl border border-stone-200 p-4 text-left hover:shadow-md hover:border-blue-300 transition-all duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
+      className="w-full bg-white rounded-xl border border-stone-200 p-4 text-left hover:shadow-sm hover:border-stone-200 transition-all duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">

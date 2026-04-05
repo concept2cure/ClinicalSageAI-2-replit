@@ -89,17 +89,17 @@ interface Project {
   status?: string;
 }
 
-/** Submission type → hex color fallback for the sidebar project dot */
+/** Submission type → muted stone-palette dot color for sidebar */
 const SIDEBAR_TYPE_COLORS: Record<string, string> = {
-  '510K': '#3b82f6',
-  IND: '#8b5cf6',
-  NDA: '#22c55e',
-  BLA: '#f97316',
-  PMA: '#ef4444',
-  MAA: '#ec4899',
-  DE_NOVO: '#f59e0b',
-  EUA: '#06b6d4',
-  IVDR: '#10b981',
+  '510K': '#78716c',    // stone-500
+  IND: '#78716c',       // stone-500
+  NDA: '#78716c',       // stone-500
+  BLA: '#78716c',       // stone-500
+  PMA: '#78716c',       // stone-500
+  MAA: '#78716c',       // stone-500
+  DE_NOVO: '#78716c',   // stone-500
+  EUA: '#78716c',       // stone-500
+  IVDR: '#78716c',      // stone-500
 };
 
 export interface ZenSidebarProps {
@@ -131,20 +131,20 @@ export interface ZenSidebarProps {
 
 // ─── Submission type badge config ────────────────────────────────────────────
 
-// 3-color palette: stone (default), blue (device/diagnostics), violet (pharma/biotech)
+// Stone-palette badges — color reserved for semantic meaning, not categorization
 const SUBMISSION_BADGE: Record<
   string,
   { label: string; icon: React.ComponentType<{ className?: string }>; color: string; bg: string }
 > = {
-  '510K': { label: '510(k)', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
-  IND: { label: 'IND', icon: Beaker, color: 'text-violet-600', bg: 'bg-violet-50' },
-  NDA: { label: 'NDA', icon: Pill, color: 'text-violet-600', bg: 'bg-violet-50' },
-  BLA: { label: 'BLA', icon: Activity, color: 'text-violet-600', bg: 'bg-violet-50' },
-  PMA: { label: 'PMA', icon: Heart, color: 'text-blue-600', bg: 'bg-blue-50' },
-  MAA: { label: 'MAA', icon: Microscope, color: 'text-violet-600', bg: 'bg-violet-50' },
-  DE_NOVO: { label: 'De Novo', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
-  EUA: { label: 'EUA', icon: Activity, color: 'text-blue-600', bg: 'bg-blue-50' },
-  IVDR: { label: 'IVDR', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
+  '510K': { label: '510(k)', icon: FileText, color: 'text-stone-600', bg: 'bg-stone-100' },
+  IND: { label: 'IND', icon: Beaker, color: 'text-stone-600', bg: 'bg-stone-100' },
+  NDA: { label: 'NDA', icon: Pill, color: 'text-stone-600', bg: 'bg-stone-100' },
+  BLA: { label: 'BLA', icon: Activity, color: 'text-stone-600', bg: 'bg-stone-100' },
+  PMA: { label: 'PMA', icon: Heart, color: 'text-stone-600', bg: 'bg-stone-100' },
+  MAA: { label: 'MAA', icon: Microscope, color: 'text-stone-600', bg: 'bg-stone-100' },
+  DE_NOVO: { label: 'De Novo', icon: FileText, color: 'text-stone-600', bg: 'bg-stone-100' },
+  EUA: { label: 'EUA', icon: Activity, color: 'text-stone-600', bg: 'bg-stone-100' },
+  IVDR: { label: 'IVDR', icon: FileText, color: 'text-stone-600', bg: 'bg-stone-100' },
 };
 
 const FALLBACK_BADGE = {

@@ -4140,7 +4140,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             {slashMenuOpen && filteredSlashCommands.length > 0 && (
               <div
                 ref={slashMenuRef}
-                className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-[#E8E6DC] shadow-lg max-h-[280px] overflow-y-auto z-50"
+                className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-stone-100 shadow-sm max-h-[280px] overflow-y-auto z-50"
                 role="listbox"
                 aria-label="Slash commands"
               >
@@ -4181,14 +4181,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             )}
             <div
               className={cn(
-                'flex items-end gap-2 px-4 py-3 bg-[#FAF9F5] border rounded-2xl transition-all duration-200',
+                'flex items-end gap-2 px-4 py-3 bg-stone-50/80 border rounded-2xl transition-all duration-200',
                 isFocused
-                  ? 'border-[#C8C5BA] ring-2 ring-[#E8E6DC]/50 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.04)]'
-                  : 'border-[#E8E6DC] hover:border-[#D8D5CA] shadow-[0_1px_3px_rgba(0,0,0,0.02)]'
+                  ? 'border-stone-300 ring-2 ring-stone-200/50 bg-white shadow-sm'
+                  : 'border-stone-200 hover:border-stone-300'
               )}
             >
               <div className="flex items-center gap-1.5 flex-shrink-0 self-center">
-                <Sparkles className="w-4 h-4 text-[#D97757]" />
+                <Sparkles className="w-4 h-4 text-stone-500" />
                 {screenLabel && (
                   <span className="text-[10px] text-[#B0AEA5] font-medium hidden sm:inline">
                     {screenLabel}
@@ -4431,7 +4431,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <p className="text-[10px] font-semibold tracking-wider text-[#B0AEA5] uppercase mb-3">
                   AnA 1.0 Regulatory Intelligence
                 </p>
-                <h2 className="text-xl font-semibold text-[#141413]">{defaultGreeting}</h2>
+                <h2 className="text-lg font-semibold text-stone-900">{defaultGreeting}</h2>
                 {screenLabel && <p className="text-sm text-[#B0AEA5] mt-1">{screenLabel}</p>}
                 {/* Project context badge */}
                 {contextProfile?.activeProject && !messages?.length && (
@@ -4488,7 +4488,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       key={action.id}
                       variant="outline"
                       onClick={() => handleSuggestedAction(action)}
-                      className="h-auto text-left px-4 py-3.5 rounded-xl border border-[#E8E6DC] hover:border-[#D8D5CA] hover:bg-[#FAF9F5] shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.05)] transition-all duration-200 group flex-col items-start justify-start whitespace-normal"
+                      className="h-auto text-left px-4 py-3 rounded-xl border border-stone-100 hover:border-stone-200 hover:bg-stone-50/80 transition-colors duration-200 group flex-col items-start justify-start whitespace-normal"
                     >
                       <p className="text-sm font-medium text-[#4D4B45] group-hover:text-[#141413]">
                         {action.label}
@@ -5164,7 +5164,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           {slashMenuOpen && filteredSlashCommands.length > 0 && (
             <div
               ref={slashMenuRef}
-              className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-[#E8E6DC] shadow-lg max-h-[280px] overflow-y-auto z-50"
+              className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-stone-100 shadow-sm max-h-[280px] overflow-y-auto z-50"
               role="listbox"
               aria-label="Slash commands"
             >
@@ -5204,10 +5204,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
           <div
             className={cn(
-              'flex items-end gap-2 px-4 py-3 bg-[#FAF9F5] border rounded-2xl transition-all duration-200',
+              'flex items-end gap-2 px-4 py-3 bg-stone-50/80 border rounded-2xl transition-all duration-200',
               isFocused
-                ? 'border-[#C8C5BA] ring-2 ring-[#E8E6DC]/50 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.04)]'
-                : 'border-[#E8E6DC] hover:border-[#D8D5CA] shadow-[0_1px_3px_rgba(0,0,0,0.02)]'
+                ? 'border-stone-300 ring-2 ring-stone-200/50 bg-white shadow-sm'
+                : 'border-stone-200 hover:border-stone-300'
             )}
           >
             {/* Mode selector — Claude.ai model-picker style */}
@@ -5243,7 +5243,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               </Button>
 
               {showModeDropdown && (
-                <div className="absolute bottom-full left-0 mb-1.5 w-56 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
+                <div className="absolute bottom-full left-0 mb-1.5 w-56 bg-white rounded-xl border border-stone-100 shadow-sm py-1 z-50">
                   <Button
                     variant="ghost"
                     type="button"
@@ -5332,7 +5332,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <span className="hidden sm:inline">Tools</span>
               </Button>
               {showToolDropdown && (
-                <div className="absolute bottom-full left-0 mb-1.5 w-64 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
+                <div className="absolute bottom-full left-0 mb-1.5 w-64 bg-white rounded-xl border border-stone-100 shadow-sm py-1 z-50">
                   <Button
                     variant="ghost"
                     type="button"
@@ -5391,7 +5391,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               </Button>
 
               {showProviderDropdown && (
-                <div className="absolute bottom-full left-0 mb-1.5 w-52 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
+                <div className="absolute bottom-full left-0 mb-1.5 w-52 bg-white rounded-xl border border-stone-100 shadow-sm py-1 z-50">
                   {AI_PROVIDERS.map(prov => (
                     <Button
                       key={prov.id}

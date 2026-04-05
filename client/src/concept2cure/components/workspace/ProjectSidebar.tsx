@@ -243,7 +243,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
         <div className="mb-3">
           <div className="w-full h-1 bg-stone-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+              className="h-full bg-stone-500 rounded-full transition-all duration-300"
               style={{ width: `${Math.max(capacityPercent, 1)}%` }}
             />
           </div>
@@ -281,7 +281,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                 </div>
                 {/* File type badge */}
                 <div className="absolute bottom-1 left-1">
-                  <span className="text-xs font-semibold text-white bg-red-500 px-1.5 py-0.5 rounded uppercase">
+                  <span className="text-xs font-semibold text-stone-600 bg-stone-200 px-1.5 py-0.5 rounded uppercase">
                     {(doc.type || doc.name?.split('.').pop() || 'file').toUpperCase()}
                   </span>
                 </div>

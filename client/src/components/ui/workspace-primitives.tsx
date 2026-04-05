@@ -264,9 +264,9 @@ export const WORKFLOW_STATUS_CONFIG: Record<string, StatusBadgeConfig> = {
   locked: {
     key: 'locked',
     label: 'Locked',
-    color: 'bg-purple-100 text-purple-700',
+    color: 'bg-stone-200 text-stone-700',
     icon: <Lock className="w-3 h-3" />,
-    bg: 'bg-purple-50',
+    bg: 'bg-stone-100',
   },
   ready: {
     key: 'ready',

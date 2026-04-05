@@ -247,7 +247,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                 onClick={() => onContinue(lastProject.id, lastConversation?.id)}
                 className={cn(
                   'w-full text-left p-5 rounded-xl border border-stone-200 bg-white shadow-sm',
-                  'hover:border-blue-200 hover:shadow-md',
+                  'hover:border-stone-200 hover:shadow-sm',
                   'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
                   'transition-all duration-150 group'
                 )}
@@ -324,7 +324,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                     onClick={() => onNewProject(action.submissionType)}
                     className={cn(
                       'p-5 rounded-xl border text-left transition-all duration-150',
-                      'hover:shadow-md shadow-sm',
+                      'hover:shadow-sm shadow-sm',
                       'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
                       action.color === 'blue' &&
                         'border-blue-200 bg-blue-50/50 hover:border-blue-300',

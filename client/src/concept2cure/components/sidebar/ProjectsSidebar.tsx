@@ -54,44 +54,48 @@ const submissionTypeConfig: Record<
 > = {
   '510K': {
     label: '510K',
-    color: 'bg-blue-100 text-stone-700 border-blue-200',
-    dotColor: 'bg-stone-600',
+    color: 'bg-stone-100 text-stone-700 border-stone-200',
+    dotColor: 'bg-stone-500',
   },
   IND: {
     label: 'IND',
-    color: 'bg-purple-100 text-purple-700 border-purple-200',
-    dotColor: 'bg-purple-500',
+    color: 'bg-stone-100 text-stone-700 border-stone-200',
+    dotColor: 'bg-stone-500',
   },
   NDA: {
     label: 'NDA',
     color: 'bg-stone-100 text-stone-700 border-stone-200',
-    dotColor: 'bg-stone-600',
+    dotColor: 'bg-stone-500',
   },
   BLA: {
     label: 'BLA',
-    color: 'bg-violet-100 text-stone-700 border-violet-200',
-    dotColor: 'bg-violet-500',
+    color: 'bg-stone-100 text-stone-700 border-stone-200',
+    dotColor: 'bg-stone-500',
   },
   MAA: {
     label: 'MAA',
-    color: 'bg-teal-100 text-teal-700 border-teal-200',
-    dotColor: 'bg-teal-500',
+    color: 'bg-stone-100 text-stone-700 border-stone-200',
+    dotColor: 'bg-stone-500',
   },
-  PMA: { label: 'PMA', color: 'bg-red-100 text-red-700 border-red-200', dotColor: 'bg-red-500' },
+  PMA: {
+    label: 'PMA',
+    color: 'bg-stone-100 text-stone-700 border-stone-200',
+    dotColor: 'bg-stone-500',
+  },
   DE_NOVO: {
     label: 'De Novo',
-    color: 'bg-cyan-100 text-cyan-700 border-cyan-200',
-    dotColor: 'bg-cyan-500',
+    color: 'bg-stone-100 text-stone-700 border-stone-200',
+    dotColor: 'bg-stone-500',
   },
   EUA: {
     label: 'EUA',
-    color: 'bg-orange-100 text-orange-700 border-orange-200',
-    dotColor: 'bg-orange-500',
+    color: 'bg-stone-100 text-stone-700 border-stone-200',
+    dotColor: 'bg-stone-500',
   },
   IVDR: {
     label: 'IVDR',
-    color: 'bg-green-100 text-green-700 border-green-200',
-    dotColor: 'bg-green-500',
+    color: 'bg-stone-100 text-stone-700 border-stone-200',
+    dotColor: 'bg-stone-500',
   },
 };
 

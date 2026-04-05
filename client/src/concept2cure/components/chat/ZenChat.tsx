@@ -161,20 +161,20 @@ const ThinkingIndicator: React.FC = () => {
   return (
     <div className="flex items-center gap-2 py-1">
       <div className="relative flex items-center gap-1">
-        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_infinite]" />
-        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
-        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-[pulse_1.4s_ease-in-out_infinite]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
       </div>
-      <span className="text-sm text-[#D97757] font-medium animate-pulse">{msg}</span>
+      <span className="text-sm text-stone-500 font-medium animate-pulse">{msg}</span>
     </div>
   );
 };
 
 const TypingIndicator: React.FC = () => (
   <div className="flex items-center gap-1.5 py-1">
-    <div className="w-2 h-2 rounded-full bg-[#D97757] animate-pulse" />
-    <div className="w-2 h-2 rounded-full bg-[#D97757] animate-pulse delay-100" />
-    <div className="w-2 h-2 rounded-full bg-[#D97757] animate-pulse delay-200" />
+    <div className="w-2 h-2 rounded-full bg-stone-400 animate-pulse" />
+    <div className="w-2 h-2 rounded-full bg-stone-400 animate-pulse delay-100" />
+    <div className="w-2 h-2 rounded-full bg-stone-400 animate-pulse delay-200" />
   </div>
 );
 
@@ -226,7 +226,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
           className={cn(
             'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150',
             isSaved
-              ? 'bg-green-50 text-green-700 border border-green-200'
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
               : 'bg-stone-100 text-stone-800 border border-stone-200 hover:bg-stone-200'
           )}
         >
@@ -513,7 +513,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   title="Copy"
                 >
                   {copied ? (
-                    <Check className="w-3.5 h-3.5 text-green-600" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
                   ) : (
                     <Copy className="w-3.5 h-3.5" />
                   )}

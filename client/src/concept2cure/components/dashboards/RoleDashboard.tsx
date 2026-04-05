@@ -267,7 +267,7 @@ const COLOR_TEXT_700: Record<string, string> = {
 
 const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
   return (
-    <div className="border border-stone-200 rounded-xl shadow-sm bg-white hover:shadow-md transition-shadow">
+    <div className="border border-stone-200 rounded-xl shadow-sm bg-white hover:shadow-sm transition-shadow">
       <div className="p-5">
         <div className="flex items-start justify-between">
           <div>

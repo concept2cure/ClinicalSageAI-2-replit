@@ -36,7 +36,7 @@ export const BiotechWorkspace: React.FC<BiotechWorkspaceProps> = ({
           ].map((item, index) => (
             <div
               key={index}
-              className="bg-white rounded-xl border border-stone-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
+              className="bg-white rounded-xl border border-stone-200 p-4 hover:bg-stone-50 transition-colors cursor-pointer"
             >
               <div className="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center mb-4">
                 <item.icon className="w-6 h-6 text-emerald-600" />

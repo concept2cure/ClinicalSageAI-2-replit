@@ -229,7 +229,7 @@ export function PatternSignalPanel({ projectId }: PatternSignalPanelProps) {
                 {/* Summary row */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl font-semibold text-stone-800 tabular-nums">
+                    <span className="text-lg font-semibold text-stone-800 tabular-nums">
                       {signals.totalSignals}
                     </span>
                     <span className="text-[12px] text-stone-400">total signals</span>

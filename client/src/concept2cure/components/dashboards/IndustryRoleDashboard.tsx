@@ -174,7 +174,7 @@ const MetricCard: React.FC<{
   return (
     <div className={cn(
       'p-4 rounded-xl border bg-white',
-      'hover:shadow-md transition-shadow cursor-pointer'
+      'hover:shadow-sm transition-shadow cursor-pointer'
     )}>
       <div className="flex items-start justify-between mb-2">
         <span className="text-sm text-stone-500">{metric.label}</span>
@@ -225,7 +225,7 @@ const ActionItemCard: React.FC<{
       onClick={onClick}
       className={cn(
         'w-full p-4 rounded-xl border text-left transition-all duration-150',
-        'hover:shadow-md hover:border-blue-200',
+        'hover:shadow-sm hover:border-stone-200',
         item.priority === 'critical' && 'border-red-200 bg-red-50',
         item.priority === 'high' && !isOverdue && 'border-amber-200 bg-amber-50',
         isOverdue && 'border-red-300 bg-red-50'
@@ -292,7 +292,7 @@ const PDUFACard: React.FC<{
       onClick={onClick}
       className={cn(
         'w-full p-4 rounded-xl border text-left transition-all duration-150',
-        'hover:shadow-md',
+        'hover:shadow-sm',
         isCritical && 'border-red-200 bg-red-50',
         isUrgent && !isCritical && 'border-amber-200 bg-amber-50',
         !isUrgent && 'border-blue-200 bg-blue-50'

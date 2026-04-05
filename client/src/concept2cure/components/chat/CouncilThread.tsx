@@ -209,9 +209,9 @@ const AttachmentBadge: React.FC<{ attachment: Attachment }> = ({ attachment }) =
   return (
     <button
       onClick={attachment.onClick}
-      className="flex items-center gap-2 px-3 py-2 text-xs bg-white border border-stone-200 rounded-lg hover:bg-stone-50 hover:border-blue-300 transition-colors shadow-sm"
+      className="flex items-center gap-2 px-3 py-2 text-xs bg-white border border-stone-200 rounded-lg hover:bg-stone-50 hover:border-stone-300 transition-colors"
     >
-      <div className="text-blue-600">{icons[attachment.type]}</div>
+      <div className="text-stone-500">{icons[attachment.type]}</div>
       <span className="font-medium text-stone-700">{attachment.name}</span>
       <ChevronRight className="w-3 h-3 text-stone-400" />
     </button>
@@ -397,11 +397,11 @@ export const CouncilThread: React.FC<CouncilThreadProps> = ({
   return (
     <div className={cn('space-y-6 p-4', className)}>
       {messages.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-blue-100 flex items-center justify-center">
-            <Sparkles className="w-8 h-8 text-blue-600" />
+        <div className="text-center py-8">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-stone-100 flex items-center justify-center">
+            <Sparkles className="w-8 h-8 text-stone-500" />
           </div>
-          <h3 className="text-lg font-semibold text-stone-900 mb-1">Your Sherpa Team is Ready</h3>
+          <h3 className="text-sm font-semibold text-stone-900 mb-1">Your Sherpa Team is Ready</h3>
           <p className="text-sm text-stone-500 max-w-sm mx-auto">
             Start a conversation and your team of expert agents will guide you through the
             regulatory mountain.

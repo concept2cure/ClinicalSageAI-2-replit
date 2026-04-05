@@ -75,10 +75,10 @@ const PRIORITY_CONFIG: Record<string, {
 
 // Status → IconBox color
 const STATUS_ICON_CLASS: Record<string, string> = {
-  READY: 'bg-blue-100 text-stone-600',
+  READY: 'bg-stone-100 text-stone-600',
   IN_PROGRESS: 'bg-emerald-100 text-emerald-600',
   AWAITING_APPROVAL: 'bg-amber-100 text-amber-600',
-  AWAITING_SIGNATURE: 'bg-purple-100 text-purple-600',
+  AWAITING_SIGNATURE: 'bg-stone-200 text-stone-700',
 };
 
 // Step type → icon
@@ -111,7 +111,7 @@ function getPrimaryAction(action: ActionableStep) {
     case 'AWAITING_APPROVAL':
       return { label: 'Review', icon: CheckCircle2, variant: 'warning' as const };
     case 'AWAITING_SIGNATURE':
-      return { label: 'Sign', icon: PenTool, variant: 'purple' as const };
+      return { label: 'Sign', icon: PenTool, variant: 'default' as const };
     default:
       return null;
   }
@@ -144,7 +144,7 @@ const ActionItem: React.FC<{
   return (
     <div
       className={cn(
-        'group relative p-4 rounded-xl border bg-white transition-all duration-150 hover:shadow-md cursor-pointer',
+        'group relative p-4 rounded-xl border bg-white transition-colors duration-150 hover:bg-stone-50 cursor-pointer',
         'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
         priority === 'CRITICAL' ? 'border-red-200' : 'border-stone-200',
       )}
@@ -259,7 +259,7 @@ export const NextActionsPanel: React.FC<NextActionsPanelProps> = ({
       <div className="px-5 py-4 border-b border-stone-100">
         <SectionHeader
           icon={Zap}
-          iconClassName="bg-gradient-to-br from-blue-500 to-purple-500 text-white"
+          iconClassName="bg-stone-800 text-white"
           title="Your Next Actions"
           subtitle={`${totalCount} pending ${totalCount === 1 ? 'action' : 'actions'}`}
           actions={

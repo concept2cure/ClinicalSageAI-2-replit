@@ -1004,7 +1004,7 @@ function MetricCard({
   return (
     <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
       <div className="text-[11px] font-medium uppercase tracking-wide text-stone-500">{label}</div>
-      <div className="mt-1 text-2xl font-semibold text-stone-900">{value}</div>
+      <div className="mt-1 text-lg font-semibold text-stone-900">{value}</div>
       <div className="mt-1 text-xs text-stone-500">{detail}</div>
     </div>
   );
