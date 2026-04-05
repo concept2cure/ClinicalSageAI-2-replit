@@ -1,6 +1,10 @@
 import type { LayoutMode } from '../zen-app-constants';
 
-export const DEMOTED_LAYOUT_REDIRECTS: Partial<Record<LayoutMode, LayoutMode>> = {
+/**
+ * Maps demoted/legacy layout mode strings to active LayoutMode values.
+ * Keys are untyped strings so the LayoutMode union stays clean.
+ */
+export const DEMOTED_LAYOUT_REDIRECTS: Record<string, LayoutMode> = {
   // ── Demoted modes (redirect to active destinations) ──
   'mission-control': 'projects',
   snowglobe: 'projects',
@@ -65,6 +69,6 @@ export const DEMOTED_LAYOUT_REDIRECTS: Partial<Record<LayoutMode, LayoutMode>> =
   'program-analytics': 'projects',
 };
 
-export const normalizeLayoutMode = (layoutMode: LayoutMode): LayoutMode => {
-  return DEMOTED_LAYOUT_REDIRECTS[layoutMode] ?? layoutMode;
+export const normalizeLayoutMode = (layoutMode: string): LayoutMode => {
+  return (DEMOTED_LAYOUT_REDIRECTS[layoutMode] ?? layoutMode) as LayoutMode;
 };

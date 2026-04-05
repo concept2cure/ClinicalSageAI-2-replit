@@ -289,7 +289,7 @@ body {
   min-height: 100vh;
   color: var(--color-text-primary);
   background: var(--color-bg);
-  font-family: 'Lora', Georgia, serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 #root {
@@ -297,7 +297,7 @@ body {
   min-height: 100vh;
 }
 
-/* UI elements use Poppins */
+/* UI elements use system sans */
 button,
 input,
 select,
@@ -308,7 +308,7 @@ nav,
 [role='button'],
 [role='tab'],
 [role='menuitem'] {
-  font-family: 'Poppins', Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 a {

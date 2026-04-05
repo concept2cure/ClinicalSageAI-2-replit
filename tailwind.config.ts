@@ -257,9 +257,10 @@ export default {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        heading: ['Poppins', 'Arial', 'sans-serif'],
-        body: ['Lora', 'Georgia', 'serif'],
-        ui: ['Poppins', 'Arial', 'sans-serif'],
+        heading: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        body: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        ui: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        document: ['Lora', 'Georgia', 'serif'],
       },
       keyframes: {
         'accordion-down': {

@@ -1127,10 +1127,10 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     :root {
-      --primary: #d97757;
-      --primary-light: #e6957a;
-      --primary-lighter: #faf0ec;
-      --primary-dark: #c15f3c;
+      --primary: #475569;
+      --primary-light: #64748b;
+      --primary-lighter: #f1f5f9;
+      --primary-dark: #334155;
       --accent: #6a9bcc;
       --accent-light: #8bb4d9;
       --accent-dark: #5585b3;

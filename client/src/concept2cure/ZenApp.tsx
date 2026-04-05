@@ -137,7 +137,7 @@ const ModuleLoadingFallback = () => (
 
 // AnA Persistent Panel — always-available AI conversation on every page
 import AnaPersistentPanel from './components/chat/AnaPersistentPanel';
-import { GlobalOperatingShell } from './components/shell/GlobalOperatingShell';
+// GlobalOperatingShell removed — breadcrumb wrapper demoted and deleted in shell convergence
 
 // Canonical authoring context resolver
 import { resolveAuthoringContext } from './services/authoring-context-resolver';
@@ -2117,19 +2117,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         userEmail={userEmail}
       />
 
-      {/* Main area — no top bar, exactly like Claude.ai */}
-      <GlobalOperatingShell
-        layoutMode={layoutMode}
-        activeProjectName={activeProject?.name}
-        activeNavId={activeNavId}
-        currentGlobalNodeLabel={currentGlobalNodeLabel}
-        activeArtifactLabel={
-          activeArtifactId
-            ? `${activeArtifactId}${activeArtifactVersion ? ` · v${activeArtifactVersion}` : ''}`
-            : undefined
-        }
-        onAction={handleHeaderAction}
-      >
+      {/* Main content area — no top bar, exactly like Claude.ai */}
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 bg-[#faf9f7]">
         {/* Content Area */}
         <div className="flex-1 flex min-w-0 min-h-0">
           {/* ── Embedded Module Host ── */}
@@ -3702,7 +3691,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               }}
             />
           )}
-      </GlobalOperatingShell>
+      </div>
 
       {/* Global right-drawer Vault presence across the app shell */}
       {!embeddedModule && !activeToolPanel && (

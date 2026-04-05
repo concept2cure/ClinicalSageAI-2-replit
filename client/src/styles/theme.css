@@ -29,10 +29,11 @@
   --color-text-primary: #141413;      /* Anthropic dark */
   --color-text-secondary: #4a4a46;    /* Warm dark gray */
 
-  /* TYPOGRAPHY — Anthropic authentic */
-  --font-heading: 'Poppins', Arial, sans-serif;
-  --font-base: 'Lora', Georgia, serif;
-  --font-ui: 'Poppins', Arial, sans-serif;  /* For UI elements, buttons, labels */
+  /* TYPOGRAPHY — Clean system sans for shell, serif preserved for documents */
+  --font-heading: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-document: 'Lora', Georgia, serif;  /* Document/editor surfaces only */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-md: 1rem;
