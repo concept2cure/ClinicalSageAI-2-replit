@@ -29,6 +29,8 @@ import React, {
   useMemo,
   ReactNode,
 } from 'react';
+import type { LayoutMode } from '../zen-app-constants';
+export type { LayoutMode };
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -36,7 +38,6 @@ import React, {
 
 export type SubmissionType = '510K' | 'IND' | 'NDA' | 'BLA' | 'PMA' | 'MAA' | 'CER' | 'DE_NOVO';
 export type ProjectPhase = 'planning' | 'drafting' | 'review' | 'approval' | 'submission' | 'response';
-export type LayoutMode = 'assistant' | 'editor' | 'analytics' | 'timeline' | 'audit' | 'ctd';
 
 export interface TeamMember {
   id: string;
@@ -182,7 +183,7 @@ const initialState: WorkspaceState = {
   activeProject: null,
   activeConversationId: null,
   activeArtifactId: null,
-  layoutMode: 'assistant',
+  layoutMode: 'projects',
   sidebarCollapsed: false,
   toolPanelOpen: null,
   projects: [],
