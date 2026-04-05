@@ -523,36 +523,40 @@ export const ZenLogin: React.FC = () => {
                ══════════════════════════════════════════════════════════════ */}
             {view === 'sign-in' && (
               <div className="space-y-5">
-                {/* SSO — governed Button variant="outline" */}
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => handleSsoRedirect('google')}
-                    className="h-[44px] rounded-[10px] border-stone-200 bg-white text-[13px] font-medium text-stone-600 hover:border-stone-300 hover:bg-stone-50 hover:shadow-sm active:scale-[0.98] gap-2.5"
-                  >
-                    <GoogleIcon />
-                    Google
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => handleSsoRedirect('microsoft')}
-                    className="h-[44px] rounded-[10px] border-stone-200 bg-white text-[13px] font-medium text-stone-600 hover:border-stone-300 hover:bg-stone-50 hover:shadow-sm active:scale-[0.98] gap-2.5"
-                  >
-                    <MicrosoftIcon />
-                    Microsoft
-                  </Button>
-                </div>
+                {/* SSO — only visible in dev mode; production returns 501 */}
+                {import.meta.env.DEV && (
+                  <div className="grid grid-cols-2 gap-3" data-testid="sso-provider-buttons">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => handleSsoRedirect('google')}
+                      className="h-[44px] rounded-[10px] border-stone-200 bg-white text-[13px] font-medium text-stone-600 hover:border-stone-300 hover:bg-stone-50 hover:shadow-sm active:scale-[0.98] gap-2.5"
+                    >
+                      <GoogleIcon />
+                      Google
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => handleSsoRedirect('microsoft')}
+                      className="h-[44px] rounded-[10px] border-stone-200 bg-white text-[13px] font-medium text-stone-600 hover:border-stone-300 hover:bg-stone-50 hover:shadow-sm active:scale-[0.98] gap-2.5"
+                    >
+                      <MicrosoftIcon />
+                      Microsoft
+                    </Button>
+                  </div>
+                )}
 
-                {/* OR divider */}
-                <div className="relative flex items-center py-1">
-                  <div className="flex-1 border-t border-stone-100" />
-                  <span className="mx-4 text-[11px] font-medium uppercase tracking-wider text-stone-300 select-none">
-                    or
-                  </span>
-                  <div className="flex-1 border-t border-stone-100" />
-                </div>
+                {/* OR divider — only when SSO is visible */}
+                {import.meta.env.DEV && (
+                  <div className="relative flex items-center py-1">
+                    <div className="flex-1 border-t border-stone-100" />
+                    <span className="mx-4 text-[11px] font-medium uppercase tracking-wider text-stone-300 select-none">
+                      or
+                    </span>
+                    <div className="flex-1 border-t border-stone-100" />
+                  </div>
+                )}
 
                 {/* Email/Password Form */}
                 <form

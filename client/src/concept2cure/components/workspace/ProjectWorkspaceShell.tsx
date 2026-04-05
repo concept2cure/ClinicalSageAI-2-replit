@@ -28,7 +28,11 @@ import {
 } from './PlacementDialog';
 import { GovernedDocumentPanel } from './GovernedDocumentPanel';
 import { GovernedDecisionReviewPanel } from './GovernedDecisionReviewPanel';
+import { WorkspaceGovernanceProvider, runTransitionPreflight, selectNavGovernanceAffordance, type TransitionPreflightResult } from './WorkspaceGovernanceContext';
+import { TransitionPreflightBanner } from './TransitionPreflightBanner';
+import { useFabricDecisions } from '../../hooks/useFabricState';
 import {
+  getSectionLabel,
   getSectionRequirements,
   type SectionRequirement,
   type DossierNode,
@@ -53,21 +57,33 @@ import {
   Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 
 import {
   DocumentModeProvider,
+  resolveDocumentMode,
+  MODE_CAPABILITIES,
   type WorkflowStage,
 } from '../../contexts/DocumentModeContext';
+import { buildDocumentConsequenceRows } from './documentConsequence';
 import {
   useWorkspaceNavigationState,
   useGuidedSequenceState,
+  usePlacementAndMoveState,
   useDocumentConsequenceState,
   usePhase4Panels,
+  useWorkflowTransitionModel,
 } from './workspaceShellControllers';
 
+// Feature flag for governed drag-and-drop (Phase 3C groundwork)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const ENABLE_GOVERNED_DND = false;
+
 import { NewDocumentDialog } from './NewDocumentDialog';
+import { canEscalateToEdit } from '../../contexts/DocumentModeContext';
 import { SectionRequirementsPanel, type SectionMetrics } from './SectionRequirementsPanel';
 
+// ── Left-rail mode type (imported from controllers to avoid duplication) ──────
 import type {
   OperatingLayer,
   WorkspaceWorkbench,
@@ -76,47 +92,9 @@ import type {
 import {
   type DocumentTab,
   FOLDER_LABELS,
+  WORKBENCHES,
+  buildTemplateContent,
 } from './workspaceShellConstants';
-
-// ── Extracted orchestration modules ─────────────────────────────────────────
-import {
-  useWorkflowTransitionApplicator,
-  useLayerSwitching,
-  useWorkbenchSwitching,
-  useGuidedSequenceDefinition,
-  useCurrentGuidedStage,
-  useGuidedStageNavigation,
-  useBuildGuidedStagePrompt,
-  useProjectNavSync,
-} from './workspaceNavigationOrchestrator';
-import {
-  useShellToasts,
-  useEscalationGate,
-  useArtifactLoader,
-  useComputeJobLoader,
-  useDossierMetricsLoader,
-  classifyArtifact,
-  useDocumentCreation,
-  usePlacementOperations,
-} from './workspaceArtifactManager';
-import {
-  usePhase4PanelOpeners,
-  useComputeArtifactOpener,
-  usePhase4DraftCreation,
-  useDocumentConsequenceRows,
-  useGovernanceNormalizer,
-  useReviewPackageCapture,
-  useSubsectionCreation,
-} from './workspacePhase4Orchestrator';
-import {
-  useConversationSnapshot as useConversationSnapshotHook,
-  useProposalActions,
-  useWorkspaceResumeState,
-  useDocumentTabSync,
-  useWorkspaceKeyboardShortcuts,
-  useOutlineNavigation,
-  useWorkspaceSelectionHandlers,
-} from './workspaceConversationAndState';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -181,8 +159,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   onSuggestedPrompt,
   guidedStageCommand,
 }) => {
-  // ── Artifact data (extracted to workspaceArtifactManager) ────────────────
-  const { artifacts, loading, loadArtifacts } = useArtifactLoader(projectId);
+  // ── Local state ──────────────────────────────────────────────────────────
+  const [artifacts, setArtifacts] = useState<TreeArtifact[]>([]);
+  const [loading, setLoading] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<string>('drafts');
   const {
     selectedDocId,
@@ -253,19 +232,30 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     else if (layer === 'reports') setActiveLayer('reports');
   };
 
-  // New document creation state
+  // New document creation
   const [showNewDoc, setShowNewDoc] = useState(false);
   const [showNewDocDialog, setShowNewDocDialog] = useState(false);
+  // Feedback message when cut/move is blocked by capability
+  const [cutBlockedMessage, setCutBlockedMessage] = useState<string | null>(null);
+  const [newDocTitle, setNewDocTitle] = useState('');
+  const [creatingNew, setCreatingNew] = useState(false);
 
   // Inspector panel to auto-open in EditorPanel (set via GovernedDocumentPanel)
   const [editorInitialInspector, setEditorInitialInspector] = useState<
     'compare' | 'provenance' | 'audit' | null
   >(null);
 
-  // Placement state now managed by usePlacementOperations below
+  const {
+    placementDialog,
+    setPlacementDialog,
+    placementLoading,
+    setPlacementLoading,
+    pendingMove,
+    setPendingMove,
+  } = usePlacementAndMoveState();
 
-  // Dossier metrics (extracted to workspaceArtifactManager)
-  const { dossierMetrics, loadDossierMetrics } = useDossierMetricsLoader(projectId);
+  // Dossier metrics
+  const [dossierMetrics, setDossierMetrics] = useState<Record<string, SectionMetrics>>({});
 
   // Active document content for outline
   const [activeDocContent, setActiveDocContent] = useState<string>('');
@@ -289,16 +279,91 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       auditRef?: string;
     }>;
   }>({ proposals: [] });
-  const { computeJobs, setComputeJobs, showGovernedPanel, setShowGovernedPanel, reviewQueueVisible, setReviewQueueVisible } =
+  const { computeJobs, setComputeJobs, governance } =
     useDocumentConsequenceState();
+  const showGovernedPanel = governance.governedPanelOpen;
+  const setShowGovernedPanel = (open: boolean) => open ? governance.openGovernedPanel() : governance.closeGovernedPanel();
+  const reviewQueueVisible = governance.isActive;
+  const setReviewQueueVisible = (visible: boolean) => visible ? governance.openQueue() : governance.closeQueue();
+
+  // Shared fabric decision fetch — pushes into governance model for all consumers
+  const fabricQuery = useFabricDecisions(projectId != null ? String(projectId) : undefined, { limit: 20 });
+  useEffect(() => {
+    governance.setFabricDetail(fabricQuery.data?.entries ?? [], fabricQuery.isLoading);
+  }, [fabricQuery.data, fabricQuery.isLoading, governance.setFabricDetail]);
+
+  // Wire manual refresh into governance model
+  useEffect(() => {
+    governance.setRefreshFn(() => fabricQuery.refetch());
+  }, [fabricQuery.refetch, governance.setRefreshFn]);
 
   // Editor ref for outline scroll
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
   const { phase4Panel, setPhase4Panel, phase4Ctx, setPhase4Ctx } = usePhase4Panels();
 
-  // ── Workflow transitions (extracted to workspaceNavigationOrchestrator) ──
-  const applyWorkflowTransition = useWorkflowTransitionApplicator(mode, setMode);
+  const workflowTransitionModel = useWorkflowTransitionModel();
+
+  // Governance-aware nav affordances for gated transitions
+  const verifyNavAffordance = useMemo(
+    () => selectNavGovernanceAffordance(governance, 'verify_review', workflowTransitionModel),
+    [governance, workflowTransitionModel],
+  );
+  const publishNavAffordance = useMemo(
+    () => selectNavGovernanceAffordance(governance, 'publish_package', workflowTransitionModel),
+    [governance, workflowTransitionModel],
+  );
+
+  // Governance-aware transition preflight state
+  const [pendingPreflight, setPendingPreflight] = useState<TransitionPreflightResult | null>(null);
+
+  const applyWorkflowTransition = useCallback(
+    (
+      key: keyof typeof workflowTransitionModel,
+      context: {
+        hasDoc?: boolean;
+        createIntent?: boolean;
+        reviewContext?: boolean;
+        submissionContext?: boolean;
+      } = {}
+    ) => {
+      const transition = workflowTransitionModel[key];
+      if (!transition) return false;
+
+      if (!transition.from.includes(mode)) {
+        setMode(transition.fallback);
+        return false;
+      }
+
+      // Governance-aware preflight — declarative gate from transition map
+      if (transition.governanceGate) {
+        const preflight = runTransitionPreflight(governance, transition.governanceGate);
+        if (!preflight.allowed) {
+          setPendingPreflight(preflight);
+          return false;
+        }
+        setPendingPreflight(null);
+      }
+
+      const requirement = transition.requires;
+      if (requirement === 'selectedDocOrCreateIntent' && !context.hasDoc && !context.createIntent) {
+        setMode(transition.fallback);
+        return false;
+      }
+      if (requirement === 'reviewContext' && !context.reviewContext) {
+        setMode(transition.fallback);
+        return false;
+      }
+      if (requirement === 'submissionContext' && !context.submissionContext) {
+        setMode(transition.fallback);
+        return false;
+      }
+
+      setMode(transition.to);
+      return true;
+    },
+    [mode, setMode, workflowTransitionModel, governance]
+  );
 
   // If initialContent is provided, go straight to edit mode
   useEffect(() => {
@@ -307,8 +372,45 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     }
   }, [initialContent, initialTitle]);
 
-  // Conversation-OS snapshot fetch (extracted to workspaceConversationAndState)
-  useConversationSnapshotHook(projectId, mode, setConversationSnapshot);
+  useEffect(() => {
+    if (!projectId || mode !== 'dashboard') return;
+    const conversationId = `project-${projectId}`;
+    const qs = `?projectId=${encodeURIComponent(projectId)}`;
+    Promise.all([
+      apiRequest('POST', `/api/conversation-os/conversations/${conversationId}/tools`, {
+        mode: 'on-demand',
+        projectId,
+      }).catch(() => null),
+      apiRequest('GET', `/api/conversation-os/conversations/${conversationId}/scout${qs}`).catch(
+        () => null
+      ),
+      apiRequest(
+        'GET',
+        `/api/conversation-os/conversations/${conversationId}/plan-summary${qs}`
+      ).catch(() => null),
+      apiRequest(
+        'GET',
+        `/api/conversation-os/conversations/${conversationId}/proposals${qs}`
+      ).catch(() => null),
+    ]).then(([manifestRes, scoutRes, planRes, proposalRes]) => {
+      setConversationSnapshot({
+        manifestMode: (manifestRes as any)?.manifest?.mode,
+        latestFinding: (scoutRes as any)?.findings?.[0]?.summary,
+        latestPlanTask: (planRes as any)?.plan?.task,
+        proposals: ((proposalRes as any)?.proposals ?? []).slice(0, 3).map((p: any) => ({
+          id: p.id,
+          status: p.status,
+          governanceState: p.governanceState,
+          artifactId: p.artifactId,
+          artifactVersion: p.artifactVersion,
+          artifactStatus: p.artifactStatus,
+          placementState: p.placementState,
+          provenanceRef: p.provenanceRef,
+          auditRef: p.auditRef,
+        })),
+      });
+    });
+  }, [projectId, mode]);
 
   useEffect(() => {
     if (!projectId || !isINDWorkspace) return;
@@ -326,15 +428,120 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     if (firstLeaf) setSelectedCtdSection(firstLeaf);
   }, [isINDWorkspace, selectedCtdSection, submissionSections]);
 
-  // loadArtifacts extracted to useArtifactLoader above
+  // ── Load artifacts (must be defined before actOnProposal) ────────────────
+  const loadArtifacts = useCallback(async () => {
+    if (!projectId) return;
+    setLoading(true);
+    try {
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts`);
+      const payload = await res.json();
+      const list = payload.data ?? payload;
+      setArtifacts(Array.isArray(list) ? list : []);
+    } catch {
+      pushShellToast('Failed to load artifacts', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId]);
 
-  const loadComputeJobs = useComputeJobLoader(projectId, setComputeJobs);
+  const loadComputeJobs = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      const res = await apiRequest('GET', `/api/concept2cure/compute/projects/${projectId}/jobs`);
+      const payload = await res.json();
+      setComputeJobs(payload.data ?? []);
+    } catch {
+      setComputeJobs([]);
+    }
+  }, [projectId]);
 
-  // Proposal accept/reject actions (extracted to workspaceConversationAndState)
-  const { actOnProposal } = useProposalActions(projectId, loadArtifacts, setConversationSnapshot);
+  const actOnProposal = useCallback(
+    async (proposalId: string, action: 'accept' | 'reject') => {
+      if (!projectId) return;
+      const conversationId = `project-${projectId}`;
+      const res = await apiRequest(
+        'POST',
+        `/api/conversation-os/conversations/${conversationId}/proposals/${proposalId}/${action}`,
+        { projectId }
+      );
+      const payload = (await res.json()) as {
+        success: boolean;
+        result?: {
+          state: string;
+          proposalId: string;
+          artifactId?: string;
+          governedConsequence?: {
+            artifactId: string;
+            version: number;
+            artifactStatus: string;
+            placementState: string;
+            provenanceEventId: string;
+            auditId: string;
+          };
+        };
+      };
 
-  // Resume where left off — persist last active artifact per project (extracted to workspaceConversationAndState)
-  useWorkspaceResumeState(projectId, selectedDocId, setSelectedDocId, artifacts, openArtifactId, initialContent, applyWorkflowTransition);
+      const result = payload.result;
+      setConversationSnapshot(prev => ({
+        ...prev,
+        proposals: prev.proposals.map(p =>
+          p.id === proposalId
+            ? {
+                ...p,
+                status: action === 'accept' ? 'accepted' : 'rejected',
+                governanceState: result?.state as any,
+                artifactId: result?.governedConsequence?.artifactId ?? result?.artifactId,
+                artifactVersion: result?.governedConsequence?.version,
+                artifactStatus: result?.governedConsequence?.artifactStatus,
+                placementState: result?.governedConsequence?.placementState,
+                provenanceRef: result?.governedConsequence?.provenanceEventId,
+                auditRef: result?.governedConsequence?.auditId,
+              }
+            : p
+        ),
+      }));
+
+      // Reload artifacts so governed artifact appears in project context
+      if (action === 'accept') {
+        await loadArtifacts();
+      }
+    },
+    [projectId, loadArtifacts]
+  );
+
+  // ── Resume where left off — persist last active artifact per project ───
+  const resumeAttemptedRef = useRef(false);
+
+  // Save last active artifact to localStorage whenever it changes
+  useEffect(() => {
+    if (!projectId || !selectedDocId) return;
+    try {
+      localStorage.setItem(`c2c_last_artifact_${projectId}`, selectedDocId);
+    } catch {
+      /* storage full — non-critical */
+    }
+  }, [projectId, selectedDocId]);
+
+  // On workspace mount, auto-restore last active artifact if nothing else is requesting a specific doc
+  useEffect(() => {
+    if (resumeAttemptedRef.current) return;
+    if (!projectId || artifacts.length === 0) return;
+    // Don't override explicit openArtifactId or initialContent
+    if (openArtifactId || initialContent) return;
+    resumeAttemptedRef.current = true;
+
+    try {
+      const lastDocId = localStorage.getItem(`c2c_last_artifact_${projectId}`);
+      if (!lastDocId) return;
+      const art = artifacts.find(a => a.id === lastDocId);
+      if (!art) return;
+      // Resume: open the document in browse mode (user can escalate to edit)
+      setSelectedDocId(lastDocId);
+      applyWorkflowTransition('browse_list', {});
+    } catch {
+      /* localStorage unavailable */
+    }
+  }, [projectId, artifacts, openArtifactId, initialContent]);
 
   useEffect(() => {
     loadArtifacts();
@@ -344,7 +551,22 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     loadComputeJobs();
   }, [loadComputeJobs]);
 
-  // loadDossierMetrics extracted to useDossierMetricsLoader above
+  // ── Load dossier metrics ─────────────────────────────────────────────────
+  const loadDossierMetrics = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      const res = await apiRequest(
+        'GET',
+        `/api/concept2cure/projects/${projectId}/dossier-metrics`
+      );
+      const payload = await res.json();
+      if (payload.data) {
+        setDossierMetrics(payload.data);
+      }
+    } catch {
+      // Metrics are non-critical — degrade gracefully
+    }
+  }, [projectId]);
 
   useEffect(() => {
     loadDossierMetrics();
@@ -355,9 +577,35 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     setPendingMove(null);
   }, [projectId]);
 
-  // ── Toast + escalation gate (extracted to workspaceArtifactManager) ──────
-  const { shellToasts, pushShellToast, dismissToast } = useShellToasts();
-  const tryOpenForEdit = useEscalationGate(pushShellToast);
+  // ── Toast notification queue ─────────────────────────────────────────────
+  type ShellToast = { id: number; message: string; type: 'success' | 'error' | 'info' };
+  const [shellToasts, setShellToasts] = useState<ShellToast[]>([]);
+  const shellToastIdRef = useRef(0);
+  const pushShellToast = useCallback(
+    (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+      const id = ++shellToastIdRef.current;
+      setShellToasts(prev => [...prev.slice(-2), { id, message, type }]);
+      setTimeout(() => setShellToasts(prev => prev.filter(t => t.id !== id)), 5000);
+    },
+    []
+  );
+
+  // ── Escalation gate — checks if opening an existing artifact in edit mode is allowed ──
+  const tryOpenForEdit = useCallback(
+    (artifactStatus?: string): boolean => {
+      const check = canEscalateToEdit('section-workspace', artifactStatus as any);
+      if (!check.allowed) {
+        pushShellToast(check.reason || 'Editing is not available for this document', 'error');
+        return false;
+      }
+      if (check.reason) {
+        // Allowed with warning (e.g. approved → editing will reset to draft)
+        pushShellToast(check.reason, 'info');
+      }
+      return true;
+    },
+    [pushShellToast]
+  );
 
   // If openArtifactId is provided, switch to edit mode for that artifact (gated)
   useEffect(() => {
@@ -373,16 +621,124 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     applyWorkflowTransition('edit_document', { hasDoc: true });
   }, [openArtifactId, artifacts, tryOpenForEdit, applyWorkflowTransition]);
 
-  // ProjectNav sync (extracted to workspaceNavigationOrchestrator)
-  useProjectNavSync(activeLayer, mode, phase4Panel, setProjectNav);
+  useEffect(() => {
+    if (activeLayer === 'vault') {
+      setProjectNav('vault');
+      return;
+    }
+    if (activeLayer === 'reports') {
+      setProjectNav('reports');
+      return;
+    }
+    if (phase4Panel === 'pulse') {
+      setProjectNav('activity');
+      return;
+    }
+    if (phase4Panel === 'communication_center' || mode === 'dashboard') {
+      setProjectNav('communication_center');
+      return;
+    }
+    setProjectNav('documents');
+  }, [activeLayer, mode, phase4Panel]);
 
-  // Document tab sync (extracted to workspaceConversationAndState)
-  useDocumentTabSync(mode, documentTab, setShowGovernedPanel, setEditorInitialInspector, setDocumentTab, showContextBars, setShowContextBars);
+  useEffect(() => {
+    if (mode !== 'edit') {
+      setDocumentTab('content');
+      setEditorInitialInspector(null);
+      return;
+    }
+    switch (documentTab) {
+      case 'content':
+        setShowGovernedPanel(false);
+        setEditorInitialInspector(null);
+        break;
+      case 'evidence':
+        setShowGovernedPanel(true);
+        setEditorInitialInspector('provenance');
+        break;
+      case 'versions':
+        setShowGovernedPanel(false);
+        setEditorInitialInspector('compare');
+        break;
+      case 'review':
+      case 'signatures':
+      case 'export':
+        setShowGovernedPanel(true);
+        setEditorInitialInspector('audit');
+        break;
+      case 'provenance':
+        setShowGovernedPanel(true);
+        setEditorInitialInspector('provenance');
+        break;
+    }
+  }, [documentTab, mode]);
 
-  // Outline navigation (extracted to workspaceConversationAndState)
-  const { handleOutlineNavigate } = useOutlineNavigation(editorContainerRef);
+  useEffect(() => {
+    if (mode === 'edit' && showContextBars) {
+      setShowContextBars(false);
+    }
+  }, [mode, showContextBars]);
 
-  // classifyArtifact extracted to workspaceArtifactManager
+  // ── Global keyboard shortcuts ────────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Escape — cancel pending move
+      if (e.key === 'Escape' && pendingMove) {
+        setPendingMove(null);
+      }
+      // Escape — dismiss phase4 panel
+      if (e.key === 'Escape' && phase4Panel !== 'none') {
+        setPhase4Panel('none');
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [pendingMove, phase4Panel]);
+
+  // ── Outline navigation ───────────────────────────────────────────────────
+  const handleOutlineNavigate = useCallback((nodeId: string) => {
+    const container = editorContainerRef.current;
+    if (!container) return;
+    // Try to find element by id, then fallback to heading text match
+    let target: Element | null = null;
+    try {
+      target = container.querySelector(`#${globalThis.CSS?.escape?.(nodeId) ?? nodeId}`);
+    } catch {
+      /* invalid selector */
+    }
+    if (!target) {
+      // Try data-outline-id
+      target = container.querySelector(`[data-outline-id="${nodeId}"]`);
+    }
+    if (!target) {
+      // Fallback: find headings and tables and match by index
+      const allAnchors = container.querySelectorAll('h1, h2, h3, table, [data-evidence]');
+      const idx = parseInt(nodeId.replace(/\D/g, ''), 10);
+      if (!isNaN(idx) && allAnchors[idx]) {
+        target = allAnchors[idx];
+      }
+    }
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
+
+  // ── Classify artifacts into folders ──────────────────────────────────────
+  function classifyArtifact(a: TreeArtifact): string {
+    const t = (a.type || '').toLowerCase();
+    const cat = (a.category || '').toLowerCase();
+    const status = (a.status || '').toLowerCase();
+    const ctd = (a.ctdSection || '').toLowerCase();
+    if (status === 'approved' || status === 'locked' || status === 'published') return 'final';
+    if (t.includes('audit') || cat.includes('audit') || t.includes('provenance')) return 'audit';
+    if (t.includes('clinical') || t.includes('csr') || cat.includes('clinical')) return 'clinical';
+    if (ctd.startsWith('3.2') || t.includes('cmc') || cat.includes('cmc')) return 'cmc';
+    if (t.includes('ind') || cat.includes('ind')) return 'ind';
+    if (t.includes('ectd') || cat.includes('ectd') || cat.includes('dossier')) return 'dossier';
+    if (t.includes('evidence') || cat.includes('evidence')) return 'evidence';
+    if (t.includes('generated') || cat.includes('generated')) return 'generated';
+    return 'drafts';
+  }
 
   // folderDocs: used in Files mode
   const folderDocs = useMemo(() => {
@@ -398,19 +754,256 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     });
   }, [artifacts, selectedCtdSection]);
 
-  // ── Document creation (5 paths — extracted to workspaceArtifactManager) ──
-  const {
-    newDocTitle, setNewDocTitle, creatingNew,
-    handleCreateNew, handleCreateFromTemplate,
-    handleDialogCreateBlank, handleDialogCreateFromTemplate,
-    handleCreateSectionDraftWithRI,
-  } = useDocumentCreation({
-    projectId, projectName, projectType, submissionType,
-    resolvedSubmissionProgram, selectedCtdSection,
-    loadArtifacts, pushShellToast, setSelectedDocId,
-    setShowNewDoc, setShowNewDocDialog, setLeftRailMode,
-    applyWorkflowTransition,
-  });
+  // ── Create new document ──────────────────────────────────────────────────
+  const handleCreateNew = useCallback(async () => {
+    if (!projectId || !newDocTitle.trim()) return;
+    setCreatingNew(true);
+    try {
+      const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
+        title: newDocTitle.trim(),
+        content: '<p>Begin editing your document here...</p>',
+        type: 'regulatory_document',
+        category: 'document',
+        submissionProgram: resolvedSubmissionProgram,
+        originSurface: 'project_workspace_shell',
+      });
+      if (res.ok) {
+        const payload = await res.json();
+        const created = payload.data ?? payload;
+        setNewDocTitle('');
+        setShowNewDoc(false);
+        await loadArtifacts();
+        setSelectedDocId(created.id);
+        applyWorkflowTransition('edit_document', { hasDoc: true });
+        pushShellToast(`Created "${newDocTitle.trim()}"`, 'success');
+      } else {
+        pushShellToast('Document creation failed', 'error');
+      }
+    } catch {
+      pushShellToast('Network error — document not created', 'error');
+    } finally {
+      setCreatingNew(false);
+    }
+  }, [projectId, newDocTitle, loadArtifacts, pushShellToast, resolvedSubmissionProgram]);
+
+  // ── Create from template ─────────────────────────────────────────────────
+  const handleCreateFromTemplate = useCallback(
+    async (templateKey: string, ctdSection: string, label: string) => {
+      if (!projectId) return;
+      setCreatingNew(true);
+      try {
+        const content = buildTemplateContent(label, ctdSection, templateKey);
+        const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
+          title: label,
+          content,
+          type: 'regulatory_document',
+          category: 'document',
+          ctdSection,
+          templateId: templateKey,
+          submissionProgram: resolvedSubmissionProgram,
+          originSurface: 'project_workspace_shell',
+        });
+        if (res.ok) {
+          const payload = await res.json();
+          const created = payload.data ?? payload;
+          await loadArtifacts();
+          setSelectedDocId(created.id);
+          applyWorkflowTransition('edit_document', { hasDoc: true });
+          setLeftRailMode('dossier');
+          pushShellToast(`Created "${label}" from template`, 'success');
+        } else {
+          pushShellToast('Template creation failed', 'error');
+        }
+      } catch {
+        pushShellToast('Network error', 'error');
+      } finally {
+        setCreatingNew(false);
+      }
+    },
+    [projectId, loadArtifacts, pushShellToast, resolvedSubmissionProgram]
+  );
+
+  // ── Create from dialog (blank or template) ─────────────────────────────
+  const handleDialogCreateBlank = useCallback(
+    async (title: string, ctdSection?: string) => {
+      if (!projectId) return;
+      setCreatingNew(true);
+      try {
+        const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
+          title,
+          content: '<p>Begin editing your document here...</p>',
+          type: 'regulatory_document',
+          category: 'document',
+          ...(ctdSection ? { ctdSection } : {}),
+          submissionProgram: resolvedSubmissionProgram,
+          originSurface: 'project_workspace_shell',
+        });
+        if (res.ok) {
+          const payload = await res.json();
+          const created = payload.data ?? payload;
+          setShowNewDocDialog(false);
+          await loadArtifacts();
+          setSelectedDocId(created.id);
+          applyWorkflowTransition('edit_document', { hasDoc: true });
+          pushShellToast(`Created "${title}"`, 'success');
+        } else {
+          pushShellToast('Document creation failed', 'error');
+        }
+      } catch {
+        pushShellToast('Network error — document not created', 'error');
+      } finally {
+        setCreatingNew(false);
+      }
+    },
+    [projectId, loadArtifacts, pushShellToast, resolvedSubmissionProgram]
+  );
+
+  const handleDialogCreateFromTemplate = useCallback(
+    async (templateId: string, title: string, ctdSection?: string) => {
+      if (!projectId) return;
+      setCreatingNew(true);
+      try {
+        const templateContent = buildTemplateContent(title, ctdSection || '', templateId);
+        const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
+          title,
+          content: templateContent,
+          type: 'regulatory_document',
+          category: 'document',
+          ...(ctdSection ? { ctdSection } : {}),
+          templateId,
+          submissionProgram: resolvedSubmissionProgram,
+          originSurface: 'project_workspace_shell',
+        });
+        if (res.ok) {
+          const payload = await res.json();
+          const created = payload.data ?? payload;
+          setShowNewDocDialog(false);
+          await loadArtifacts();
+          setSelectedDocId(created.id);
+          applyWorkflowTransition('edit_document', { hasDoc: true });
+          pushShellToast(`Created "${title}" from template`, 'success');
+        } else {
+          pushShellToast('Template creation failed', 'error');
+        }
+      } catch {
+        pushShellToast('Network error', 'error');
+      } finally {
+        setCreatingNew(false);
+      }
+    },
+    [projectId, loadArtifacts, pushShellToast, resolvedSubmissionProgram]
+  );
+
+  const handleCreateSectionDraftWithRI = useCallback(async () => {
+    if (!projectId || !selectedCtdSection) return;
+    setCreatingNew(true);
+    try {
+      const sectionLabel = getSectionLabel(selectedCtdSection);
+      const riContext = [
+        `Project: ${projectName || 'Untitled Project'}`,
+        `Submission Type: ${submissionType || projectType || 'IND'}`,
+        `Section Code: ${selectedCtdSection}`,
+        `Section Title: ${sectionLabel}`,
+      ].join('\n');
+      const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
+        title: `${selectedCtdSection} — ${sectionLabel}`,
+        content: `<h1>${sectionLabel}</h1><p>RI draft scaffold initialized.</p><pre>${riContext}</pre>`,
+        type: 'regulatory_document',
+        category: 'document',
+        ctdSection: selectedCtdSection,
+        submissionProgram: resolvedSubmissionProgram,
+        originSurface: 'project_workspace_shell',
+        metadata: {
+          draftingMode: 'ri',
+          projectId,
+          projectName: projectName || 'Untitled Project',
+          submissionType: submissionType || projectType || 'IND',
+          sectionCode: selectedCtdSection,
+          moduleCode: selectedCtdSection.split('.')[0],
+        },
+      });
+      if (!res.ok) throw new Error('Failed to create draft');
+      const payload = await res.json();
+      const created = payload.data ?? payload;
+      await loadArtifacts();
+      setSelectedDocId(created.id);
+      applyWorkflowTransition('edit_document', { hasDoc: true });
+      pushShellToast(`RI draft started for ${selectedCtdSection}`, 'success');
+    } catch {
+      pushShellToast('RI draft creation failed', 'error');
+    } finally {
+      setCreatingNew(false);
+    }
+  }, [
+    projectId,
+    selectedCtdSection,
+    projectName,
+    submissionType,
+    projectType,
+    loadArtifacts,
+    pushShellToast,
+    resolvedSubmissionProgram,
+  ]);
+
+  // ── Placement confirmation handler ───────────────────────────────────────
+  const handlePlacementConfirm = useCallback(
+    async (params: PlacementConfirmation) => {
+      if (!projectId) return;
+      setPlacementLoading(true);
+      try {
+        const res = await apiRequest(
+          'PUT',
+          `/api/concept2cure/projects/${projectId}/artifacts/${params.artifactId}/placement`,
+          {
+            operation: params.operation,
+            fromSection: params.fromSection,
+            toSection: params.toSection,
+            reason: params.reason,
+          }
+        );
+        if (res.ok) {
+          await loadArtifacts();
+          setPlacementDialog({ open: false, artifact: null, operation: 'place' });
+          pushShellToast(`Placed in ${params.toSection}`, 'success');
+          setPendingMove(null);
+        } else {
+          pushShellToast('Placement failed', 'error');
+        }
+      } catch {
+        pushShellToast('Placement error — try again', 'error');
+      } finally {
+        setPlacementLoading(false);
+      }
+    },
+    [projectId, loadArtifacts, pushShellToast]
+  );
+
+  // ── Open placement dialog from dossier tree ──────────────────────────────
+  const handlePlaceArtifact = useCallback(
+    (ctdSection: string) => {
+      if (pendingMove) {
+        setPendingMove(prev => (prev ? { ...prev, targetSection: ctdSection } : null));
+        setPlacementDialog({
+          open: true,
+          artifact: pendingMove.artifact,
+          operation: pendingMove.fromSection ? 'relocate' : 'place',
+          targetSection: ctdSection,
+        });
+        return;
+      }
+      const art = artifacts.find(a => a.id === selectedDocId);
+      if (art) {
+        const hasExistingSection = !!art.ctdSection;
+        setPlacementDialog({
+          open: true,
+          artifact: art,
+          operation: hasExistingSection ? 'relocate' : 'place',
+          targetSection: ctdSection,
+        });
+      }
+    },
+    [artifacts, selectedDocId, pendingMove]
+  );
 
   const workflowStage: WorkflowStage = (() => {
     if (mode === 'dashboard') return 'project-home';
@@ -419,20 +1012,78 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     return 'documents';
   })();
 
-  // ── Placement/move operations (extracted to workspaceArtifactManager) ──
-  const {
-    placementDialog, setPlacementDialog, placementLoading,
-    pendingMove, setPendingMove, cutBlockedMessage, setCutBlockedMessage,
-    handlePlaceArtifact, handleCutDocument, handlePasteHere,
-    handleCancelMove, handlePlacementConfirmWithCleanup,
-    handleCopyCtdPath, handleOpenPlacementForDoc,
-  } = usePlacementOperations({
-    projectId, artifacts, selectedDocId, workflowStage,
-    loadArtifacts, pushShellToast,
-  });
+  // ── Cut (start pending move) — capability-gated ──────────────────────────
+  const handleCutDocument = useCallback(
+    (art: TreeArtifact) => {
+      // Derive capabilities from canonical mode resolution
+      const artMode = resolveDocumentMode(workflowStage, art.status as any);
+      const artCaps = MODE_CAPABILITIES[artMode];
+      if (!artCaps.canMoveDocument) {
+        // Provide user feedback instead of silent return
+        setCutBlockedMessage(`"${art.title}" cannot be moved in the current mode.`);
+        setTimeout(() => setCutBlockedMessage(null), 4000);
+        return;
+      }
+      setPendingMove({ artifact: art, fromSection: art.ctdSection || null });
+    },
+    [workflowStage]
+  );
 
-  // Global keyboard shortcuts (extracted to workspaceConversationAndState)
-  useWorkspaceKeyboardShortcuts(pendingMove, setPendingMove, phase4Panel, setPhase4Panel);
+  // ── Paste here (complete pending move via governed dialog) ───────────────
+  const handlePasteHere = useCallback(
+    (ctdSection: string) => {
+      if (!pendingMove) return;
+      // Re-check capabilities at paste time (status may have changed)
+      const artMode = resolveDocumentMode(workflowStage, pendingMove.artifact.status as any);
+      const artCaps = MODE_CAPABILITIES[artMode];
+      if (!artCaps.canMoveDocument) {
+        setCutBlockedMessage(`"${pendingMove.artifact.title}" can no longer be moved.`);
+        setTimeout(() => setCutBlockedMessage(null), 4000);
+        setPendingMove(null);
+        return;
+      }
+      setPendingMove(prev => (prev ? { ...prev, targetSection: ctdSection } : null));
+      setPlacementDialog({
+        open: true,
+        artifact: pendingMove.artifact,
+        operation: pendingMove.fromSection ? 'relocate' : 'place',
+        targetSection: ctdSection,
+      });
+    },
+    [pendingMove]
+  );
+
+  // ── Cancel pending move ──────────────────────────────────────────────────
+  const handleCancelMove = useCallback(() => {
+    setPendingMove(null);
+  }, []);
+
+  // ── Placement confirm with move cleanup ──────────────────────────────────
+  const handlePlacementConfirmWithCleanup = useCallback(
+    async (params: PlacementConfirmation) => {
+      await handlePlacementConfirm(params);
+      setPendingMove(null);
+    },
+    [handlePlacementConfirm]
+  );
+
+  // ── Copy CTD path ────────────────────────────────────────────────────────
+  const handleCopyCtdPath = useCallback((art: TreeArtifact) => {
+    const section = art.ctdSection || 'unplaced';
+    const label = art.ctdSection ? getSectionLabel(art.ctdSection) : 'Unplaced';
+    const text = `${section} — ${label} → ${art.title}`;
+    navigator.clipboard.writeText(text).catch(() => {});
+  }, []);
+
+  // ── Open placement dialog for a specific doc ─────────────────────────────
+  const handleOpenPlacementForDoc = useCallback((art: TreeArtifact, op: PlacementOperation) => {
+    setPlacementDialog({
+      open: true,
+      artifact: art,
+      operation: op,
+      targetSection: undefined,
+    });
+  }, []);
 
   // ── View section requirements ────────────────────────────────────────────
   const handleViewSectionReqs = useCallback((ctdSection: string) => {
@@ -492,44 +1143,266 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     }
   }, [activeArtifact?.id, activeArtifact?.title, activeDocContent, onActiveDocumentChange]);
 
-  // ── Phase 4 panel openers (extracted to workspacePhase4Orchestrator) ────
-  const {
-    openTransformCanvas, openVerification, openProgramTwin,
-    openSubmissionApps, openReviewPulse, closePhase4Panel,
-  } = usePhase4PanelOpeners(artifacts, activeArtifactRef, setPhase4Panel, setPhase4Ctx);
-
-  const openComputeArtifact = useComputeArtifactOpener(
-    artifacts, pushShellToast, setSelectedDocId, setDocumentTab, applyWorkflowTransition
+  // ── Phase 4 panel openers ──────────────────────────────────────────────
+  const openTransformCanvas = useCallback(
+    (ctdSection?: string, templateKey?: string, artifactId?: string, artifactTitle?: string) => {
+      setPhase4Ctx({ ctdSection, templateKey, artifactId, artifactTitle });
+      setPhase4Panel('transform');
+    },
+    []
   );
 
-  const handlePhase4CreateDraft = usePhase4DraftCreation(
-    projectId, loadArtifacts, setSelectedDocId, applyWorkflowTransition, closePhase4Panel, pushShellToast
+  const openVerification = useCallback(
+    (artifactId?: string) => {
+      const art = artifactId ? artifacts.find(a => a.id === artifactId) : activeArtifactRef.current;
+      setPhase4Ctx({ artifactId: art?.id, artifactTitle: art?.title });
+      setPhase4Panel('verification');
+    },
+    [artifacts]
   );
 
-  // ── Consequence/governance (extracted to workspacePhase4Orchestrator) ──
-  const documentConsequenceRows = useDocumentConsequenceRows(
-    artifacts, computeJobs, conversationSnapshot.proposals, workflowStage
-  );
-  const normalizeGovernanceState = useGovernanceNormalizer();
-  const captureReviewPackage = useReviewPackageCapture(documentConsequenceRows, pushShellToast);
-  const handleCreateSubsection = useSubsectionCreation(
-    projectId, activeArtifactRef, activeDocContent, loadArtifacts, pushShellToast
+  const openProgramTwin = useCallback(() => {
+    setPhase4Panel('twin');
+  }, []);
+
+  const openSubmissionApps = useCallback((ctdSection?: string, templateKey?: string) => {
+    setPhase4Ctx({ ctdSection, templateKey });
+    setPhase4Panel('apps');
+  }, []);
+
+  const openReviewPulse = useCallback(() => {
+    setPhase4Panel('pulse');
+  }, []);
+
+  const closePhase4Panel = useCallback(() => {
+    setPhase4Panel('none');
+    setPhase4Ctx({});
+  }, []);
+
+  const openComputeArtifact = useCallback(
+    (artifactId: string, inspector: 'compare' | 'provenance' | 'audit' | null = null) => {
+      const art = artifacts.find(a => a.id === artifactId);
+      if (!art) {
+        pushShellToast('Computed artifact not found in project context', 'error');
+        return;
+      }
+      setSelectedDocId(artifactId);
+      applyWorkflowTransition('edit_document', { hasDoc: true });
+      if (inspector === 'compare') setDocumentTab('versions');
+      else if (inspector === 'provenance') setDocumentTab('provenance');
+      else if (inspector === 'audit') setDocumentTab('review');
+      else setDocumentTab('content');
+    },
+    [artifacts, pushShellToast]
   );
 
-  // Selection handlers (extracted to workspaceConversationAndState)
-  const { handleSelectDoc, handleSelectFolder, handleSelectSection, handleBackToList } =
-    useWorkspaceSelectionHandlers(
-      tryOpenForEdit, setSelectedDocId, applyWorkflowTransition,
-      setDocumentTab, setSectionReqs, setSelectedFolder,
-      setSelectedCtdSection, artifacts,
-    );
-
-  // ── Layer/workbench switching (extracted to workspaceNavigationOrchestrator) ──
-  const handleLayerChange = useLayerSwitching(
-    setActiveLayer, setPhase4Panel, setLeftRailMode, applyWorkflowTransition
+  /** Called when Transform Canvas / Submission App creates a draft */
+  const handlePhase4CreateDraft = useCallback(
+    async (
+      title: string,
+      ctdSection: string,
+      templateKey?: string,
+      existingArtifactId?: string
+    ) => {
+      if (!projectId) return;
+      try {
+        let createdId = existingArtifactId;
+        if (!createdId) {
+          const res = await apiRequest(
+            'POST',
+            `/api/concept2cure/projects/${projectId}/artifacts`,
+            {
+              title,
+              content: `<h1>${title}</h1><p>This governed draft was created from the selected workflow action. Continue by adding evidence-linked content, section rationale, and regulatory conclusions.</p>`,
+              type: 'regulatory_document',
+              category: 'document',
+              ctdSection,
+              templateId: templateKey,
+              metadata: {
+                source: 'generated_draft',
+                governed: true,
+              },
+            }
+          );
+          const payload = await res.json();
+          const created = payload.data ?? payload;
+          createdId = created.id;
+        }
+        await loadArtifacts();
+        if (!createdId) return;
+        setSelectedDocId(createdId);
+        applyWorkflowTransition('edit_document', { hasDoc: true });
+        closePhase4Panel();
+      } catch {
+        pushShellToast('Failed to create draft', 'error');
+      }
+    },
+    [projectId, loadArtifacts, closePhase4Panel, pushShellToast]
   );
-  const handleWorkbenchChange = useWorkbenchSwitching(
-    setActiveWorkbench, setSelectedFolder, setLeftRailMode, setPhase4Panel, applyWorkflowTransition
+
+  const documentConsequenceRows = useMemo(
+    () =>
+      buildDocumentConsequenceRows({
+        artifacts,
+        computeJobs,
+        proposals: conversationSnapshot.proposals,
+        canOpenArtifact: (artifactId: string, status: string) =>
+          artifacts.some(a => a.id === artifactId) &&
+          MODE_CAPABILITIES[resolveDocumentMode(workflowStage, status)].editable,
+      }),
+    [artifacts, computeJobs, conversationSnapshot.proposals]
+  );
+
+  const normalizeGovernanceState = useCallback(
+    (proposal: (typeof conversationSnapshot.proposals)[number]) => {
+      const artifactStatus = String(proposal.artifactStatus || '').toLowerCase();
+      if (artifactStatus === 'locked')
+        return { label: 'Locked / Finalized', tone: 'text-slate-700' };
+      if (artifactStatus === 'review') return { label: 'Review in flight', tone: 'text-blue-700' };
+      if (proposal.governanceState === 'ACCEPTED_GOVERNED')
+        return { label: 'Accepted and governed', tone: 'text-emerald-700' };
+      if (proposal.governanceState === 'ACCEPTED_PERSISTED_NO_GOVERNANCE')
+        return { label: 'Generated (not governed)', tone: 'text-amber-700' };
+      return { label: 'Generated', tone: 'text-stone-700' };
+    },
+    []
+  );
+
+  const captureReviewPackage = useCallback(
+    async (proposal: (typeof conversationSnapshot.proposals)[number]) => {
+      if (!proposal.artifactId) return;
+      const packagePayload = {
+        artifactId: proposal.artifactId,
+        artifactVersion: proposal.artifactVersion ?? 1,
+        artifactStatus: proposal.artifactStatus ?? 'draft',
+        governanceState: proposal.governanceState ?? 'unknown',
+        placementState: proposal.placementState ?? 'unplaced',
+        provenanceRef: proposal.provenanceRef ?? null,
+        auditRef: proposal.auditRef ?? null,
+        latestConsequence:
+          documentConsequenceRows.find(row => row.artifactId === proposal.artifactId) ?? null,
+      };
+      try {
+        await navigator.clipboard.writeText(JSON.stringify(packagePayload, null, 2));
+        pushShellToast('Review package copied to clipboard', 'success');
+      } catch {
+        pushShellToast('Unable to copy review package', 'error');
+      }
+    },
+    [documentConsequenceRows, pushShellToast]
+  );
+
+  // ── Create missing subsection from template structure ────────────────────
+  const handleCreateSubsection = useCallback(
+    async (subsectionKey: string, label: string) => {
+      if (!projectId || !activeArtifactRef.current) return;
+      const art = activeArtifactRef.current;
+      try {
+        const scaffoldHtml = `<h2>${label}</h2><p>Draft this subsection with explicit evidence traceability, regulatory rationale, and reviewer-ready language aligned to submission expectations.</p>`;
+        const res = await apiRequest(
+          'POST',
+          `/api/concept2cure/projects/${projectId}/artifacts/${art.id}/versions`,
+          {
+            content: (activeDocContent || '') + '\n' + scaffoldHtml,
+            changeDescription: `Added template subsection: ${label}`,
+            changeType: 'template_subsection_insert',
+          }
+        );
+        if (res.ok) {
+          await loadArtifacts();
+        }
+      } catch {
+        pushShellToast('Failed to add subsection', 'error');
+      }
+    },
+    [projectId, activeDocContent, loadArtifacts, pushShellToast]
+  );
+
+  // ── Handlers ─────────────────────────────────────────────────────────────
+  const handleSelectDoc = useCallback(
+    (doc: TreeArtifact) => {
+      if (!tryOpenForEdit(doc.status)) return;
+      setSelectedDocId(doc.id);
+      applyWorkflowTransition('edit_document', { hasDoc: true });
+      setDocumentTab('content');
+      setSectionReqs(null); // close reqs panel when opening governed panel
+    },
+    [tryOpenForEdit]
+  );
+
+  const handleSelectFolder = useCallback(
+    (folderKey: string) => {
+      setSelectedFolder(folderKey);
+      setSelectedDocId(undefined);
+      applyWorkflowTransition('browse_list', {});
+      setSectionReqs(null);
+    },
+    [applyWorkflowTransition]
+  );
+
+  const handleSelectSection = useCallback(
+    (ctdSection: string, _label: string) => {
+      setSelectedCtdSection(ctdSection);
+      const sectionArtifact = artifacts
+        .filter(
+          a => a.ctdSection === ctdSection || (a.ctdSection || '').startsWith(`${ctdSection}.`)
+        )
+        .sort((a, b) => {
+          const ta = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+          const tb = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+          return tb - ta;
+        })[0];
+      if (sectionArtifact) {
+        setSelectedDocId(sectionArtifact.id);
+        if (tryOpenForEdit(sectionArtifact.status)) {
+          applyWorkflowTransition('edit_document', { hasDoc: true });
+        } else {
+          applyWorkflowTransition('browse_list', {});
+        }
+      } else {
+        setSelectedDocId(undefined);
+        applyWorkflowTransition('browse_list', {});
+      }
+      setSectionReqs(null);
+    },
+    [artifacts, tryOpenForEdit, applyWorkflowTransition]
+  );
+
+  const handleBackToList = useCallback(() => {
+    setSelectedDocId(undefined);
+    applyWorkflowTransition('project_home', {});
+  }, []);
+
+  const handleLayerChange = useCallback(
+    (layer: OperatingLayer) => {
+      setActiveLayer(layer);
+      if (layer === 'document_studio') {
+        setPhase4Panel('none');
+        return;
+      }
+      if (layer === 'vault') {
+        setPhase4Panel('none');
+        applyWorkflowTransition('browse_list', {});
+        setLeftRailMode('files');
+        return;
+      }
+      applyWorkflowTransition('browse_list', {});
+      setPhase4Panel('pulse');
+    },
+    [applyWorkflowTransition]
+  );
+
+  const handleWorkbenchChange = useCallback(
+    (workbench: WorkspaceWorkbench) => {
+      setActiveWorkbench(workbench);
+      const config = WORKBENCHES.find(item => item.id === workbench);
+      if (!config) return;
+      setSelectedFolder(config.defaultFolder);
+      setLeftRailMode('files');
+      applyWorkflowTransition('browse_list', {});
+      setPhase4Panel('none');
+    },
+    [applyWorkflowTransition]
   );
 
   // Which docs to show in the center pane when browsing
@@ -558,19 +1431,136 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     readinessPercent >= 80 &&
     approvedOrLockedCount >= Math.max(1, Math.ceil(artifacts.length * 0.4));
 
-  // ── Guided sequence (extracted to workspaceNavigationOrchestrator) ──────
-  const guidedSequence = useGuidedSequenceDefinition(isINDWorkspace);
-  const currentGuidedStage = useCurrentGuidedStage({
-    isINDWorkspace, leftRailMode, mode, phase4Panel, projectNav,
-    reviewInFlight, selectedCtdSection, selectedDocId, submissionReady,
-  });
-  const navigateGuidedStage = useGuidedStageNavigation({
-    setProjectNav, setActiveLayer, setLeftRailMode, setPhase4Panel, setSelectedCtdSection,
-    selectedDocId, activeArtifactStatus: activeArtifactRef.current?.status,
-    nextRecommendedSectionCode: nextRecommendedSection?.code,
-    onNavigate, submissionReady, applyWorkflowTransition, pushShellToast,
-  });
-  const buildGuidedStagePrompt = useBuildGuidedStagePrompt(projectName, nextRecommendedSection);
+  const guidedSequence = useMemo<Array<{ id: GuidedSequenceStage; label: string; hint: string }>>(
+    () => [
+      { id: 'project', label: 'Project', hint: 'Goal + plan context' },
+      {
+        id: 'ind_ectd',
+        label: isINDWorkspace ? 'IND/eCTD' : 'Dossier',
+        hint: 'Section map + package structure',
+      },
+      { id: 'authoring', label: 'Authoring', hint: 'Draft and refine governed docs' },
+      { id: 'verify', label: 'Verify', hint: 'Readiness and quality checks' },
+      { id: 'submission', label: 'Submission', hint: 'Assemble and publish package' },
+    ],
+    [isINDWorkspace]
+  );
+
+  const currentGuidedStage = useMemo<GuidedSequenceStage>(() => {
+    if (submissionReady || projectNav === 'publish') return 'submission';
+    if (
+      projectNav === 'verify' ||
+      projectNav === 'review' ||
+      phase4Panel === 'verification' ||
+      phase4Panel === 'pulse' ||
+      reviewInFlight > 0
+    ) {
+      return 'verify';
+    }
+    if (mode === 'edit' || selectedDocId) return 'authoring';
+    if (mode === 'dashboard' && !selectedCtdSection && !selectedDocId) return 'project';
+    if (
+      leftRailMode === 'dossier' ||
+      !!selectedCtdSection ||
+      isINDWorkspace ||
+      projectNav === 'submission_builder'
+    ) {
+      return 'ind_ectd';
+    }
+    return 'project';
+  }, [
+    isINDWorkspace,
+    leftRailMode,
+    mode,
+    phase4Panel,
+    projectNav,
+    reviewInFlight,
+    selectedCtdSection,
+    selectedDocId,
+    submissionReady,
+  ]);
+
+  const navigateGuidedStage = useCallback(
+    (stage: GuidedSequenceStage) => {
+      if (stage === 'project') {
+        setProjectNav('submission_builder');
+        applyWorkflowTransition('project_home', {});
+        setPhase4Panel('none');
+        return;
+      }
+      if (stage === 'ind_ectd') {
+        setProjectNav('submission_builder');
+        setActiveLayer('document_studio');
+        setLeftRailMode('dossier');
+        applyWorkflowTransition('browse_list', {});
+        if (nextRecommendedSection?.code) setSelectedCtdSection(nextRecommendedSection.code);
+        return;
+      }
+      if (stage === 'authoring') {
+        setProjectNav('submission_builder');
+        setActiveLayer('document_studio');
+        setLeftRailMode('dossier');
+        if (selectedDocId) {
+          if (tryOpenForEdit(activeArtifactRef.current?.status)) {
+            applyWorkflowTransition('edit_document', { hasDoc: true });
+          } else {
+            applyWorkflowTransition('browse_list', {});
+          }
+          return;
+        }
+        if (nextRecommendedSection?.code) setSelectedCtdSection(nextRecommendedSection.code);
+        applyWorkflowTransition('browse_list', {});
+        return;
+      }
+      if (stage === 'verify') {
+        setProjectNav('verify');
+        if (applyWorkflowTransition('verify_review', { reviewContext: true })) {
+          setActiveLayer('reports');
+          setPhase4Panel('verification');
+        }
+        return;
+      }
+      setProjectNav('publish');
+      if (onNavigate) {
+        onNavigate('submissions');
+      } else {
+        applyWorkflowTransition('project_home', {});
+      }
+    },
+    [
+      applyWorkflowTransition,
+      nextRecommendedSection?.code,
+      onNavigate,
+      projectNav,
+      pushShellToast,
+      selectedDocId,
+      submissionReady,
+      tryOpenForEdit,
+    ]
+  );
+
+  const buildGuidedStagePrompt = useCallback(
+    (stage: GuidedSequenceStage) => {
+      const projectLabel = projectName || 'this project';
+      const nextSectionText = nextRecommendedSection?.code
+        ? `Next recommended section is ${nextRecommendedSection.code} ${nextRecommendedSection.title}.`
+        : 'Select the highest-priority missing section.';
+      if (stage === 'project') {
+        return `Guide ${projectLabel} through project setup and confirm the submission strategy, regulatory pathway, and governed document sequence.`;
+      }
+      if (stage === 'ind_ectd') {
+        return `Guide ${projectLabel} through IND/eCTD dossier planning. ${nextSectionText} Create the next concrete drafting plan.`;
+      }
+      if (stage === 'authoring') {
+        return `For ${projectLabel}, take the lead on authoring the next governed draft and provide executable steps I can run now. ${nextSectionText}`;
+      }
+      if (stage === 'verify') {
+        return `Run a verification pass for ${projectLabel}: readiness, blockers, contradictions, and promotion status. Provide the next required fixes in order.`;
+      }
+      return `Prepare ${projectLabel} for submission packaging and publishing. Confirm what is ready, what is missing, and execute the final assembly sequence.`;
+    },
+    [nextRecommendedSection?.code, nextRecommendedSection?.title, projectName]
+  );
 
   const handleGuidedStageAction = useCallback(
     (stage: GuidedSequenceStage) => {
@@ -608,8 +1598,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         data-testid="no-project-selected"
       >
         <div className="max-w-sm text-center">
-          <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-stone-100 flex items-center justify-center">
-            <FolderOpen className="w-7 h-7 text-stone-600" />
+          <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-blue-50 flex items-center justify-center">
+            <FolderOpen className="w-7 h-7 text-blue-600" />
           </div>
           <h2 className="text-lg font-semibold text-stone-900 mb-2">Select a Project</h2>
           <p className="text-sm text-stone-500 mb-5">
@@ -630,6 +1620,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
   return (
     <DocumentModeProvider initialStage={workflowStage} key={workflowStage}>
+      <WorkspaceGovernanceProvider value={governance}>
       <div className="flex-1 flex flex-col min-h-0" data-testid="project-workspace-shell">
         {/* ── Compact breadcrumb bar — extracted to WorkspaceTopBar ──────── */}
         <WorkspaceTopBar
@@ -681,6 +1672,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             setLeftRailMode('dossier');
             setMode(selectedDocId ? 'edit' : 'browse');
           }}
+          navAffordances={{
+            verify: verifyNavAffordance,
+            publish: publishNavAffordance,
+          }}
           onNavItemClick={id => {
             setProjectNav(id);
             if (id === 'communication_center') {
@@ -706,9 +1701,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               applyWorkflowTransition('browse_list', {});
               setPhase4Panel('none');
             } else if (id === 'verify') {
-              setActiveLayer('reports');
-              applyWorkflowTransition('browse_list', {});
-              setPhase4Panel('verification');
+              // Route through governance-gated verify transition
+              if (applyWorkflowTransition('verify_review', { reviewContext: true })) {
+                setActiveLayer('reports');
+                setPhase4Panel('verification');
+              }
             } else if (id === 'review') {
               setActiveLayer('reports');
               applyWorkflowTransition('browse_list', {});
@@ -756,62 +1753,74 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
         {/* ── Pending move banner ───────────────────────────────────────────── */}
         {pendingMove && (
-          <div className="flex items-center gap-2.5 px-4 h-10 border-b border-stone-200 bg-stone-100 shrink-0">
-            <Scissors className="w-4 h-4 text-stone-600" />
-            <span className="text-xs text-stone-900 font-medium truncate">
+          <div className="flex items-center gap-2.5 px-4 h-10 border-b border-amber-200 bg-amber-50 shrink-0">
+            <Scissors className="w-4 h-4 text-amber-600" />
+            <span className="text-xs text-amber-900 font-medium truncate">
               Moving: {pendingMove.artifact.title}
             </span>
             {pendingMove.fromSection && (
-              <span className="text-xs text-stone-700">from {pendingMove.fromSection}</span>
+              <span className="text-xs text-amber-700">from {pendingMove.fromSection}</span>
             )}
             {pendingMove.targetSection ? (
               <>
-                <span className="text-xs text-stone-900">→</span>
-                <span className="text-xs text-stone-800 font-semibold">
+                <span className="text-xs text-amber-500">→</span>
+                <span className="text-xs text-amber-800 font-semibold">
                   {pendingMove.targetSection}
                 </span>
               </>
             ) : (
-              <span className="text-xs text-stone-600 ml-1">Select a dossier section to paste</span>
+              <span className="text-xs text-amber-600 ml-1">Select a dossier section to paste</span>
             )}
             {pendingMove.artifact.status === 'approved' && (
-              <span className="text-xs px-1.5 py-0.5 rounded bg-stone-100 text-stone-800 font-medium">
+              <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-medium">
                 ⚠ Approved
               </span>
             )}
             <button
               onClick={handleCancelMove}
-              className="ml-auto text-xs text-stone-800 hover:text-stone-700 font-medium flex items-center gap-1"
+              className="ml-auto text-xs text-amber-800 hover:text-red-600 font-medium flex items-center gap-1"
             >
               <X className="w-3.5 h-3.5" />
               Cancel
-              <kbd className="ml-1 text-xs px-1.5 py-0.5 rounded bg-stone-200/60 text-stone-800 font-mono">
+              <kbd className="ml-1 text-xs px-1.5 py-0.5 rounded bg-amber-200/60 text-amber-800 font-mono">
                 Esc
               </kbd>
             </button>
           </div>
         )}
 
+        {/* ── Governance transition preflight banner ─────────────────────── */}
+        {pendingPreflight && !pendingPreflight.allowed && (
+          <TransitionPreflightBanner
+            preflight={pendingPreflight}
+            onOpenQueue={() => { setPendingPreflight(null); governance.openQueue(); }}
+            onInspectDecision={(id) => { setPendingPreflight(null); governance.inspectDecision(id, 'under_review'); }}
+            onRefresh={() => { governance.requestRefresh(); }}
+            onDismiss={() => setPendingPreflight(null)}
+            className="mx-3 mt-2 mb-1"
+          />
+        )}
+
         {/* ── Cut/move blocked feedback ───────────────────────────────────── */}
         {cutBlockedMessage && (
-          <div className="flex items-center gap-2.5 px-4 h-9 border-b border-stone-200 bg-stone-100 shrink-0 animate-in fade-in duration-200">
-            <AlertTriangle className="w-3.5 h-3.5 text-stone-900" />
-            <span className="text-xs text-stone-800 font-medium">{cutBlockedMessage}</span>
+          <div className="flex items-center gap-2.5 px-4 h-9 border-b border-red-200 bg-red-50 shrink-0 animate-in fade-in duration-200">
+            <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
+            <span className="text-xs text-red-800 font-medium">{cutBlockedMessage}</span>
             <button onClick={() => setCutBlockedMessage(null)} className="ml-auto">
-              <X className="w-3.5 h-3.5 text-stone-400 hover:text-stone-700" />
+              <X className="w-3.5 h-3.5 text-red-400 hover:text-red-600" />
             </button>
           </div>
         )}
 
         {/* ── Persistent context band (browse mode — selected doc reminder) */}
         {mode === 'browse' && activeArtifact && (
-          <div className="flex items-center gap-2.5 px-4 h-9 border-b border-stone-100 bg-stone-100/40 shrink-0">
-            <FileText className="w-3.5 h-3.5 text-stone-900" />
-            <span className="text-xs text-stone-800 font-medium truncate">
+          <div className="flex items-center gap-2.5 px-4 h-9 border-b border-blue-100 bg-blue-50/40 shrink-0">
+            <FileText className="w-3.5 h-3.5 text-blue-500" />
+            <span className="text-xs text-blue-800 font-medium truncate">
               {activeArtifact.title}
             </span>
             {activeArtifact.ctdSection && (
-              <span className="text-xs px-1.5 py-0.5 rounded bg-stone-100/60 text-stone-600 font-medium">
+              <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100/60 text-blue-600 font-medium">
                 {activeArtifact.ctdSection}
               </span>
             )}
@@ -819,9 +1828,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               className={cn(
                 'text-xs px-1.5 py-0.5 rounded font-medium',
                 activeArtifact.status === 'locked'
-                  ? 'bg-stone-100/60 text-stone-700'
+                  ? 'bg-red-100/60 text-red-600'
                   : activeArtifact.status === 'approved'
-                  ? 'bg-stone-100/60 text-stone-700'
+                  ? 'bg-green-100/60 text-green-600'
                   : 'bg-stone-100 text-stone-500'
               )}
             >
@@ -832,7 +1841,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 if (tryOpenForEdit(activeArtifact.status))
                   applyWorkflowTransition('edit_document', { hasDoc: true });
               }}
-              className="ml-auto text-xs text-stone-600 hover:text-stone-800 font-medium"
+              className="ml-auto text-xs text-blue-600 hover:text-blue-800 font-medium"
             >
               Open →
             </button>
@@ -847,7 +1856,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               {activeArtifact.title}
             </span>
             {activeArtifact.ctdSection && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 font-medium shrink-0">
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-medium shrink-0">
                 {activeArtifact.ctdSection}
               </span>
             )}
@@ -855,11 +1864,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               className={cn(
                 'text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0',
                 activeArtifact.status === 'locked'
-                  ? 'bg-stone-100 text-stone-700'
+                  ? 'bg-red-50 text-red-600'
                   : activeArtifact.status === 'approved'
-                  ? 'bg-stone-100 text-stone-700'
+                  ? 'bg-green-50 text-green-600'
                   : activeArtifact.status === 'review'
-                  ? 'bg-stone-100 text-stone-600'
+                  ? 'bg-amber-50 text-amber-600'
                   : 'bg-stone-50 text-stone-400'
               )}
             >
@@ -874,7 +1883,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             <div className="ml-auto flex items-center gap-0.5">
               <button
                 onClick={() => openVerification(activeArtifact.id)}
-                className="p-1 text-stone-300 hover:text-stone-700 rounded hover:bg-stone-100 transition-colors"
+                className="p-1 text-stone-300 hover:text-emerald-600 rounded hover:bg-emerald-50 transition-colors"
                 title="Verify document"
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
@@ -888,14 +1897,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     activeArtifact.title
                   )
                 }
-                className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100"
+                className="p-1.5 text-stone-400 hover:text-violet-600 rounded-md hover:bg-blue-50"
                 title="Transform Canvas"
               >
                 <Sparkles className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={openProgramTwin}
-                className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100"
+                className="p-1.5 text-stone-400 hover:text-blue-600 rounded-md hover:bg-blue-50"
                 title="Program Twin"
               >
                 <Target className="w-3.5 h-3.5" />
@@ -904,7 +1913,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 onClick={() =>
                   openSubmissionApps(activeArtifact.ctdSection, activeArtifact.templateId)
                 }
-                className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100"
+                className="p-1.5 text-stone-400 hover:text-orange-600 rounded-md hover:bg-orange-50"
                 title="AI Assistants"
               >
                 <AppWindow className="w-3.5 h-3.5" />
@@ -914,8 +1923,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 className={cn(
                   'p-1 rounded transition-colors',
                   phase4Panel === 'pulse'
-                    ? 'text-stone-700 bg-stone-100'
-                    : 'text-stone-300 hover:text-stone-700 hover:bg-stone-100'
+                    ? 'text-rose-600 bg-rose-50'
+                    : 'text-stone-300 hover:text-rose-600 hover:bg-rose-50'
                 )}
                 title="Review Pulse"
               >
@@ -1164,7 +2173,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             <GovernedDecisionReviewPanel
               projectId={String(projectId)}
               className="w-[320px] shrink-0 h-full"
-              onClose={() => setReviewQueueVisible(false)}
+              onClose={() => governance.closeQueue()}
+              onInspectDecision={(id, state) => governance.inspectDecision(id, state)}
+              onActionStarted={(id, action) => governance.startAction(id, action)}
+              onActionCompleted={(result) => governance.completeAction({
+                ...result,
+                completedAt: new Date().toISOString(),
+              })}
             />
           )}
         </div>
@@ -1201,8 +2216,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 key={t.id}
                 className={cn(
                   'pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-lg shadow-sm text-xs font-medium',
-                  t.type === 'success' && 'bg-stone-700 text-white',
-                  t.type === 'error' && 'bg-stone-700 text-white',
+                  t.type === 'success' && 'bg-emerald-600 text-white',
+                  t.type === 'error' && 'bg-red-600 text-white',
                   t.type === 'info' && 'bg-stone-700 text-white'
                 )}
               >
@@ -1218,6 +2233,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           </div>
         )}
       </div>
+        </WorkspaceGovernanceProvider>
     </DocumentModeProvider>
   );
 };

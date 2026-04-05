@@ -80,7 +80,7 @@ import {
 } from '../services/intelligence/rim-interceptors.js';
 import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
 import { resolveGovernedContext } from '../services/concept2cure/governedDocumentContractService';
-import { buildCanonicalGovernedState } from '../services/governed-ana-execution.js';
+import { evaluateAndInterceptGovernedDocument } from '../src/control-plane/governed-document-evaluator';
 import {
   buildWorkingMemoryPrompt,
   storeWorkingMemory,
@@ -3445,11 +3445,55 @@ router.get('/projects/:projectId/governance/review-queue', async (req, res) => {
 router.get('/governance/health', async (_req, res) => {
   try {
     const { governanceMetrics } = await import('../services/governance-observability.js');
-    const health = await governanceMetrics.getHealth();
-    return sendSuccess(res, health);
+    const { getRevocationHealth } = await import('../services/token-revocation.js');
+    const { getBridgeHealth } = await import('../services/artifact-document-bridge.js');
+
+    const [governanceHealth, revocationHealth, bridgeHealth] = await Promise.all([
+      governanceMetrics.getHealth(),
+      getRevocationHealth(),
+      getBridgeHealth(),
+    ]);
+
+    return sendSuccess(res, {
+      governance: governanceHealth,
+      tokenRevocation: revocationHealth,
+      documentBridge: bridgeHealth,
+    });
   } catch (error: any) {
     logger.error('Failed to check governance health', { error: error.message });
     return sendError(res, 500, 'Failed to check governance health');
+  }
+});
+
+/**
+ * POST /api/concept2cure/maintenance/run
+ * Run platform maintenance tasks (token cleanup, bridge integrity, backfill).
+ * Requires admin/operator access in production.
+ */
+router.post('/maintenance/run', async (req, res) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const { runPlatformMaintenance } = await import('../services/maintenance/platform-maintenance.js');
+    const result = await runPlatformMaintenance(organizationId);
+    return sendSuccess(res, result);
+  } catch (error: any) {
+    logger.error('Maintenance run failed', { error: error.message });
+    return sendError(res, 500, 'Maintenance run failed');
+  }
+});
+
+/**
+ * GET /api/concept2cure/startup/invariants
+ * Returns startup invariant check results.
+ */
+router.get('/startup/invariants', async (_req, res) => {
+  try {
+    const { runStartupInvariants } = await import('../lib/startup-invariants.js');
+    const report = await runStartupInvariants();
+    return sendSuccess(res, report);
+  } catch (error: any) {
+    logger.error('Startup invariant check failed', { error: error.message });
+    return sendError(res, 500, 'Startup invariant check failed');
   }
 });
 
@@ -7243,15 +7287,15 @@ router.put(
       });
 
       // === Governed Document Decision Fabric evaluation ===
-      let canonicalGovernedState;
+      let governedFabric;
       try {
-        const canonical = await buildCanonicalGovernedState({
+        const fabricResult = evaluateAndInterceptGovernedDocument({
           context: {
-            organizationId: String(organizationId),
-            projectId: String(dbArtifact.projectId),
-            actorId: String(userId),
+            organizationId,
+            projectId: dbArtifact.projectId,
+            actorId: userId,
             intendedAction: operation === 'relocate' ? 'relocate' : 'place',
-            artifactId: String(dbArtifact.artifactId),
+            artifactId: dbArtifact.artifactId,
             documentType: dbArtifact.type || undefined,
             ctdSection: toSection,
             currentPlacement: previousSection || undefined,
@@ -7271,19 +7315,18 @@ router.put(
             criticalContradictionCount: 0,
           },
         });
-        canonicalGovernedState = {
-          decisionId: canonical.decisionReference.decisionId,
-          outcome: canonical.decisionReference.outcome,
-          readiness: canonical.readinessState.level,
-          readinessScore: canonical.readinessState.score,
-          placementOutcome: canonical.placementDecision.outcome,
-          blockerCount: canonical.decision.blockerCount,
-          warningCount: canonical.decision.warningCount,
-          consequenceCount: canonical.decision.consequenceCount,
-          hasUnresolvedGovernedDecisions: canonical.derivedFlags.hasUnresolvedGovernedDecisions,
+        governedFabric = {
+          decisionId: fabricResult.decisionReference.decisionId,
+          outcome: fabricResult.decisionReference.outcome,
+          readiness: fabricResult.evaluation.readiness.level,
+          readinessScore: fabricResult.evaluation.readiness.score,
+          placementOutcome: fabricResult.evaluation.placement.outcome,
+          blockerCount: fabricResult.evaluation.decision.blockerCount,
+          warningCount: fabricResult.evaluation.decision.warningCount,
+          consequenceCount: fabricResult.evaluation.decision.consequenceCount,
         };
       } catch {
-        canonicalGovernedState = { outcome: 'degraded', error: 'Canonical governed-state unavailable' };
+        governedFabric = { outcome: 'degraded', error: 'Fabric evaluation unavailable' };
       }
 
       return sendSuccess(res, {
@@ -7291,7 +7334,7 @@ router.put(
         ctdSection: updated.ctdSection,
         operation,
         previousSection,
-        canonicalGovernedState,
+        governedFabric,
       });
     } catch (error: any) {
       logConcept2cureError('artifact placement', error, {
@@ -11490,10 +11533,6 @@ function validateExportGovernance(
  */
 router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
   try {
-    // Auth & tenant scoping — security fix B3
-    const organizationId = getOrganizationId(req);
-    const userId = getUserId(req);
-
     const schema = z.object({
       title: z.string().min(1).max(500),
       content: z.string().min(1).max(1000000),
@@ -11533,19 +11572,16 @@ router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
  * Generate a PDF from artifact content
  */
 router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
+  // Validate input
+  const { title, content } = req.body;
+  if (!title || !content) {
+    return res.status(400).json({ error: 'title and content are required' });
+  }
+
+  const governance = validateExportGovernance(req, res);
+  if (!governance) return;
+
   try {
-    // Auth & tenant scoping — security fix B3
-    const organizationId = getOrganizationId(req);
-    const userId = getUserId(req);
-
-    // Validate input
-    const { title, content } = req.body;
-    if (!title || !content) {
-      return sendError(res, 400, 'title and content are required');
-    }
-
-    const governance = validateExportGovernance(req, res);
-    if (!governance) return;
     // Use pdf-lib to create a PDF from the content
     const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
 
@@ -11772,10 +11808,6 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
  */
 router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
   try {
-    // Auth & tenant scoping — security fix B3
-    const organizationId = getOrganizationId(req);
-    const userId = getUserId(req);
-
     const schema = z.object({
       title: z.string().min(1).max(500),
       content: z.string().min(1).max(1000000),

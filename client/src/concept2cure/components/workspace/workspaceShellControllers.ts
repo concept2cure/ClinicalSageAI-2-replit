@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { TreeArtifact } from './ProjectFileTree';
 import type { ConsequenceComputeJob } from './documentConsequence';
+import { useWorkspaceGovernanceModel } from './workspaceGovernanceModel';
 
 export type WorkspaceMode = 'dashboard' | 'browse' | 'edit';
 export type LeftRailMode = 'files' | 'dossier' | 'templates' | 'outline' | 'registry';
@@ -88,25 +89,20 @@ export const usePlacementAndMoveState = () => {
   };
 };
 
+/**
+ * Document consequence + governance operating state.
+ *
+ * Uses the unified WorkspaceGovernanceModel as the single source of truth
+ * for all governance surface state. No more loose boolean toggles.
+ */
 export const useDocumentConsequenceState = () => {
   const [computeJobs, setComputeJobs] = useState<ConsequenceComputeJob[]>([]);
-  const [showGovernedPanel, setShowGovernedPanel] = useState(false);
-  const [proposalActionState, setProposalActionState] = useState<Record<string, 'idle' | 'running'>>(
-    {}
-  );
-
-  // Governed decision review queue
-  const [reviewQueueVisible, setReviewQueueVisible] = useState(false);
+  const governance = useWorkspaceGovernanceModel();
 
   return {
     computeJobs,
     setComputeJobs,
-    showGovernedPanel,
-    setShowGovernedPanel,
-    proposalActionState,
-    setProposalActionState,
-    reviewQueueVisible,
-    setReviewQueueVisible,
+    governance,
   };
 };
 
@@ -120,6 +116,8 @@ export interface WorkflowTransition {
   from: WorkspaceMode[];
   to: WorkspaceMode;
   requires?: 'selectedDocOrCreateIntent' | 'reviewContext' | 'submissionContext';
+  /** Governance gate — checked via runTransitionPreflight when set */
+  governanceGate?: 'verify_review' | 'publish_package';
   fallback: WorkspaceMode;
 }
 
@@ -133,11 +131,18 @@ export const WORKFLOW_TRANSITION_MAP: Record<string, WorkflowTransition> = {
     requires: 'selectedDocOrCreateIntent',
     fallback: 'browse',
   },
-  verify_review: { from: ['browse', 'edit'], to: 'browse', requires: 'reviewContext', fallback: 'browse' },
+  verify_review: {
+    from: ['browse', 'edit'],
+    to: 'browse',
+    requires: 'reviewContext',
+    governanceGate: 'verify_review',
+    fallback: 'browse',
+  },
   publish_package: {
     from: ['browse'],
     to: 'browse',
     requires: 'submissionContext',
+    governanceGate: 'publish_package',
     fallback: 'dashboard',
   },
 };
@@ -145,3 +150,13 @@ export const WORKFLOW_TRANSITION_MAP: Record<string, WorkflowTransition> = {
 export const useWorkflowTransitionModel = () => {
   return useMemo(() => WORKFLOW_TRANSITION_MAP, []);
 };
+
+/**
+ * Get all transition keys that have governance gates.
+ * Useful for navigation sources that need to know which items are gated.
+ */
+export function getGovernanceGatedTransitions(): string[] {
+  return Object.entries(WORKFLOW_TRANSITION_MAP)
+    .filter(([, t]) => t.governanceGate != null)
+    .map(([k]) => k);
+}

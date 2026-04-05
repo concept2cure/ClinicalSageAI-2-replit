@@ -18,7 +18,6 @@ import { sql } from 'drizzle-orm';
 import { eq, and } from 'drizzle-orm';
 import { users, organizations, organizationUsers } from '../../shared/schema';
 import { sendPasswordResetEmail, sendLoginOtpEmail } from '../services/emailService';
-import { getRedisClient } from '../services/ai-actions/redis-manager';
 import * as mfaService from '../services/mfaService';
 import * as emailOtpService from '../services/emailOtpService';
 import {
@@ -724,57 +723,15 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
   }
 });
 
-// Token blacklist — Redis-backed with in-memory fallback.
-// Redis provides persistence across restarts and shared state for horizontal scaling.
-// In-memory Set is used as fallback when Redis is unavailable.
-const TOKEN_BLACKLIST_TTL = 24 * 60 * 60; // 24h in seconds (matches JWT expiry)
-const TOKEN_BLACKLIST_PREFIX = 'csai:token:revoked:';
-const memoryBlacklist = new Set<string>();
+// Durable token revocation — Redis-backed with in-memory fallback.
+// See: server/services/token-revocation.ts
+// Legacy in-memory set removed; all revocation now goes through the service.
 
-// Clean up in-memory fallback periodically to prevent memory growth
-setInterval(() => {
-  if (memoryBlacklist.size > 10000) {
-    memoryBlacklist.clear();
-  }
-}, 60 * 60 * 1000);
-
-/** Add a token to the blacklist (Redis if available, else in-memory) */
-async function blacklistToken(token: string): Promise<void> {
-  memoryBlacklist.add(token);
-  try {
-    const redis = getRedisClient();
-    if (redis) {
-      await redis.setex(`${TOKEN_BLACKLIST_PREFIX}${token}`, TOKEN_BLACKLIST_TTL, '1');
-    }
-  } catch {
-    // Redis write failed — in-memory fallback already has it
-  }
-}
-
-/** Check if a token has been blacklisted (logout/rotation) */
+/** Check if a token has been blacklisted (logout) — sync check for backward compat */
 export function isTokenBlacklisted(token: string): boolean {
-  // Synchronous check — memory first (fast path)
-  if (memoryBlacklist.has(token)) return true;
-  // Redis check is async; for middleware compatibility, expose an async variant
-  return false;
-}
-
-/** Async blacklist check — use in middleware for Redis persistence */
-export async function isTokenBlacklistedAsync(token: string): Promise<boolean> {
-  if (memoryBlacklist.has(token)) return true;
-  try {
-    const redis = getRedisClient();
-    if (redis) {
-      const result = await redis.get(`${TOKEN_BLACKLIST_PREFIX}${token}`);
-      if (result) {
-        memoryBlacklist.add(token); // backfill memory cache
-        return true;
-      }
-    }
-  } catch {
-    // Redis read failed — rely on memory only
-  }
-  return false;
+  // Sync check uses memory fallback only. The async isTokenRevoked() is preferred.
+  const { isTokenRevokedSync } = require('../services/token-revocation');
+  return isTokenRevokedSync(token);
 }
 
 /**
@@ -783,16 +740,18 @@ export async function isTokenBlacklistedAsync(token: string): Promise<boolean> {
  */
 router.post('/logout', async (req: Request, res: Response) => {
   try {
-    // Extract token from Authorization header and blacklist it
+    const { revokeToken } = await import('../services/token-revocation.js');
+
+    // Extract token from Authorization header and revoke it
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.slice(7);
-      await blacklistToken(token);
+      await revokeToken(token);
     }
 
-    // Also blacklist any refresh token sent in body
+    // Also revoke any refresh token sent in body
     if (req.body?.refreshToken) {
-      await blacklistToken(req.body.refreshToken);
+      await revokeToken(req.body.refreshToken);
     }
 
     res.json({ success: true, message: 'Logged out successfully. Tokens invalidated.' });
@@ -820,8 +779,9 @@ router.post('/refresh', async (req: Request, res: Response) => {
       });
     }
 
-    // SECURITY: Check if refresh token has been blacklisted (via logout or previous rotation)
-    if (await isTokenBlacklistedAsync(refreshToken)) {
+    // SECURITY: Check if refresh token has been revoked (via logout or previous rotation)
+    const { isTokenRevoked } = await import('../services/token-revocation.js');
+    if (await isTokenRevoked(refreshToken)) {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Refresh token has been revoked' },
@@ -905,8 +865,9 @@ router.post('/refresh', async (req: Request, res: Response) => {
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
 
-    // SECURITY: Blacklist the old refresh token to prevent reuse (token rotation)
-    await blacklistToken(refreshToken);
+    // SECURITY: Revoke the old refresh token to prevent reuse (token rotation)
+    const { revokeToken: revokeOldToken } = await import('../services/token-revocation.js');
+    await revokeOldToken(refreshToken);
 
     res.json({
       success: true,
