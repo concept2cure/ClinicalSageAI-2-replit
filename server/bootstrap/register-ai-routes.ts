@@ -21,10 +21,8 @@ export async function registerAiRoutes({ app, pool, aiCircuitBreaker }: RouteBoo
   try {
     const firecrawlRoutes = await import('../routes/firecrawl');
     const externalEvidenceRoutes = await import('../routes/external-evidence');
-    const workspaceToolSettingsRoutes = await import('../routes/workspace-tool-settings');
     app.use('/api/firecrawl', firecrawlRoutes.default);
     app.use('/api/external-evidence', externalEvidenceRoutes.default);
-    app.use('/api/workspace-tool-settings', workspaceToolSettingsRoutes.default);
   } catch (error) {
     console.error('❌ Failed to mount external evidence routes:', error);
   }

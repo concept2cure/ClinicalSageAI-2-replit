@@ -584,14 +584,7 @@ try {
   console.error('❌ Failed to mount AnA Intelligence routes:', error);
 }
 
-// CSR Search routes (fast in-memory search across 779 CSR documents)
-try {
-  const { csrSearchRouter } = await import('./routes/csr_search_routes');
-  app.use('/api/csr-search', csrSearchRouter);
-  console.log('✅ CSR Search routes mounted (/api/csr-search)');
-} catch (error) {
-  console.error('❌ Failed to mount CSR Search routes:', error);
-}
+// CSR Search routes — removed (csr_search_routes.ts deleted in dead code purge)
 
 // Nano Banana (Gemini image generation) routes
 try {
@@ -881,15 +874,7 @@ try {
   console.error('❌ Failed to mount Clinical Operations routes:', error);
 }
 
-// Mount FDA Integration routes
-try {
-  const fdaIntegrationModule = await import('./routes/fda-integration-simple');
-  const fdaIntegrationRoutes = fdaIntegrationModule.default;
-  app.use('/api/fda', fdaIntegrationRoutes);
-  console.log('✅ FDA Integration API routes mounted successfully (ESG-ready)');
-} catch (error) {
-  console.error('❌ Failed to mount FDA Integration routes:', error);
-}
+// FDA Integration routes — removed (fda-integration-simple.ts deleted in dead code purge)
 
 // Mount CER (Clinical Evaluation Report) routes
 try {
@@ -938,12 +923,6 @@ try {
 // ── Literature, License, Billing, Intelligence, Reports — parallelized imports ──
 {
   const litIntConfig = [
-    { path: '/api/pubmed', mod: './routes/pubmed', name: 'PubMed' },
-    {
-      path: '/api/literature-review',
-      mod: './routes/literature-review',
-      name: 'Literature Review',
-    },
     { path: '/', mod: './routes/license-routes.js', name: 'License Management' },
     {
       path: '/api/module-subscriptions',
@@ -1025,7 +1004,6 @@ try {
   const ectdConfig = [
     { path: '/api/coauthor', mod: './routes/coauthor', name: 'eCTD Co-Author' },
     { path: '/api/ectd-documents', mod: './routes/ectd-documents', name: 'eCTD Documents' },
-    { path: '/api/ectd-validate', mod: './routes/ectd-validate', name: 'eCTD Validation' },
     { path: '/api/ectd-compile', mod: './routes/ectd-compile', name: 'eCTD Compile' },
     { path: '/api/ectd/export', mod: './routes/ectd-export', name: 'eCTD Export' },
     {
@@ -5554,14 +5532,6 @@ async function startServer() {
   }
 
   try {
-    const multiAgencyValidationRoutes = await import('./routes/multiAgencyValidation');
-    app.use('/api/multi-agency-validation', multiAgencyValidationRoutes.default);
-    console.log('✅ Multi-agency validation routes mounted successfully');
-  } catch (error) {
-    console.error('Failed to mount multi-agency validation routes:', error);
-  }
-
-  try {
     const organizationsRoutes = await import('./routes/organizations-routes.js');
     app.use('/api/organizations', organizationsRoutes.default);
     console.log('✅ Organizations routes mounted successfully');
@@ -5596,15 +5566,6 @@ async function startServer() {
   }
 
   // Predictive sections already mounted at module bootstrap to avoid duplicate prefix mounts.
-
-  // Mount Validation routes
-  try {
-    const validationRoutes = await import('./routes/validation');
-    app.use('/api', validationRoutes.default);
-    console.log('✅ Validation routes mounted successfully');
-  } catch (error) {
-    console.error('Failed to mount validation routes:', error);
-  }
 
   // Mount docs routes
   try {
@@ -5718,14 +5679,6 @@ async function startServer() {
   }
 
   try {
-    const vaultAutoRoutes = await import('./routes/vault-auto');
-    app.use('/api/vault', vaultAutoRoutes.default);
-    console.log('✅ Vault routes mounted at /api/vault');
-  } catch (error) {
-    console.error('Failed to mount vault routes:', error);
-  }
-
-  try {
     const [documentsUnified, sourceLinksRoutes, documentIntelligenceRoutes] =
       await Promise.all([
         import('./routes/documents-unified'),
@@ -5762,14 +5715,6 @@ async function startServer() {
     console.log('✅ Intelligence + RIM routes mounted at /api/intelligence');
   } catch (error) {
     console.error('Failed to mount intelligence routes:', error);
-  }
-
-  try {
-    const aiCompletionRoutes = await import('./routes/ai-completion');
-    app.use('/api', aiCompletionRoutes.default);
-    console.log('✅ AI Completion routes mounted at /api/ai/completion');
-  } catch (error) {
-    console.error('Failed to mount AI completion routes:', error);
   }
 
   try {
@@ -6147,24 +6092,6 @@ async function startServer() {
     console.log('✅ Data Lineage routes mounted at /api/data-lineage');
   } catch (error) {
     console.error('❌ Failed to mount Data Lineage routes:', error);
-  }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // C2C MISSING ROUTES — legacy stub endpoints (disabled by default)
-  // Must be explicitly opted in for non-production diagnostics only.
-  // ──────────────────────────────────────────────────────────────────────────
-  if (EXPERIMENTAL_ROUTES_ENABLED) {
-    try {
-      const c2cMissingRoutes = await import('./routes/c2c-missing-routes');
-      app.use('/api', c2cMissingRoutes.default);
-      console.log(
-        '✅ C2C missing routes registered (notifications, sections, predicates, vault/docs)'
-      );
-    } catch (error) {
-      console.error('❌ Failed to mount c2c-missing-routes:', error);
-    }
-  } else {
-    console.log('ℹ️ C2C legacy stub routes disabled.');
   }
 
   // ──────────────────────────────────────────────────────────────────────────

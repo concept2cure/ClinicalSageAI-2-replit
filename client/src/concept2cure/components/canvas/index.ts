@@ -9,11 +9,11 @@
  */
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MAIN CANVAS
+// MAIN CANVAS — ConvergentCanvas lives in layout/ConvergentCanvas.tsx
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export { ConvergentCanvas } from './ConvergentCanvas';
-export type { CanvasZone } from './ConvergentCanvas';
+export { ConvergentCanvas } from '../layout/ConvergentCanvas';
+export type CanvasZone = 'briefing' | 'council' | 'workspace';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CANVAS PANELS

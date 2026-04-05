@@ -23,7 +23,7 @@ export * as literature from './literature';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AI SERVICES
-// openai-service exports named functions (no default)
+// openai-service exports OpenAI Assistants API functions (threads, runs, etc.)
 // kimiAIService.js has export default
 // ═══════════════════════════════════════════════════════════════════════════════
 

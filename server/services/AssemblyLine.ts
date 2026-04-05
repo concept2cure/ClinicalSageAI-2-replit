@@ -54,18 +54,20 @@ export class AssemblyLine {
 
     let improvedContent: string | null = null;
 
-    // If an OpenAI API key is configured, try using it (dynamic import to avoid hard failure when key is absent)
-    if (process.env.OPENAI_API_KEY) {
-      try {
-        const openaiModule = await import('../services/openai-service');
-        const aiText = await openaiModule.analyzeText(currentContent, humanInstruction);
-        if (aiText && typeof aiText === 'string') {
-          improvedContent = aiText;
-          logger.info('AI polish succeeded', { docId });
-        }
-      } catch (err: any) {
-        logger.error('AI polish failed, falling back to append', { docId, err: err?.message || err });
+    // Use AI gateway for text analysis (Claude primary, OpenAI fallback)
+    try {
+      const { getGateway } = await import('../services/ai-gateway/index.js');
+      const gateway = getGateway();
+      const result = await gateway.chat([
+        { role: 'system', content: 'You are a regulatory document editor. Apply the instruction to improve the document text. Return only the improved text, nothing else.' },
+        { role: 'user', content: `Document:\n${currentContent}\n\nInstruction: ${humanInstruction}` },
+      ], { maxTokens: 4000 });
+      if (result && typeof result === 'string') {
+        improvedContent = result;
+        logger.info('AI polish succeeded', { docId });
       }
+    } catch (err: any) {
+      logger.error('AI polish failed, falling back to append', { docId, err: err?.message || err });
     }
 
     // Fallback behavior: append instruction note
