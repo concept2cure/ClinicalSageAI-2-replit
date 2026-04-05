@@ -44,7 +44,7 @@ describe('test-assembly routes', () => {
     delete process.env.OPENAI_API_KEY;
     vi.resetModules();
     vi.clearAllMocks();
-    try { vi.unmock('../../services/openai-service'); } catch (e) {}
+    try { vi.unmock('../../services/ai-gateway/index.js'); } catch (e) {}
 
     const app = express();
     app.use(express.json());
@@ -73,10 +73,12 @@ describe('test-assembly routes', () => {
     expect(polishResp.body.success).toBe(true);
     expect(polishResp.body.data.content).toContain('AI added: Polish tone and shorten');
 
-    // AI path: when OPENAI_API_KEY is set and analyzeText is mocked
-    const oldKey = process.env.OPENAI_API_KEY;
-    process.env.OPENAI_API_KEY = '1';
-    vi.mock('../../services/openai-service', () => ({ analyzeText: vi.fn().mockResolvedValue('AI-polish-response') }));
+    // AI path: mock the AI gateway
+    vi.mock('../../services/ai-gateway/index.js', () => ({
+      getGateway: vi.fn().mockReturnValue({
+        chat: vi.fn().mockResolvedValue('AI-polish-response'),
+      }),
+    }));
 
     const startResp2 = await request(app)
       .post('/api/test-assembly/start')
@@ -97,7 +99,7 @@ describe('test-assembly routes', () => {
     // simple check: ensure content equals AI response
     expect(polishResp2.body.data.content).toBe('AI-polish-response');
 
-    process.env.OPENAI_API_KEY = oldKey;
+    vi.restoreAllMocks();
 
     // Ensure route disabled in production
     const old = process.env.NODE_ENV;

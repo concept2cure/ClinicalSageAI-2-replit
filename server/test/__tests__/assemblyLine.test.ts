@@ -55,10 +55,12 @@ describe('AssemblyLine', () => {
     const editRes = await a.humanEdit(docId, 'human edit');
     expect(editRes.status).toBe('saved');
 
-    // Mock AI provider
-    const oldKey = process.env.OPENAI_API_KEY;
-    process.env.OPENAI_API_KEY = 'test';
-    vi.mock('../../services/openai-service', () => ({ analyzeText: vi.fn().mockResolvedValue('AI-polished content') }));
+    // Mock AI gateway for polish
+    vi.mock('../../services/ai-gateway/index.js', () => ({
+      getGateway: vi.fn().mockReturnValue({
+        chat: vi.fn().mockResolvedValue('AI-polished content'),
+      }),
+    }));
 
     const polishResAI = await a.polish(docId, 'make it concise');
     expect(polishResAI.status).toBe('polished');
@@ -67,8 +69,8 @@ describe('AssemblyLine', () => {
     // Verify audit log was written
     expect(Object.values(store).some(s => s.audit && s.audit.length > 0)).toBe(true);
 
-    // restore
-    process.env.OPENAI_API_KEY = oldKey;
+    // restore mocks
+    vi.restoreAllMocks();
   });
 
   it('throws on missing db', () => {
