@@ -25,11 +25,11 @@
   --zen-ink-disabled: #b0aea5;
   --zen-ink-inverse: #faf9f5;
 
-  /* Accent - Terracotta orange (Anthropic primary) */
-  --zen-accent: #d97757;
-  --zen-accent-hover: #c15f3c;
-  --zen-accent-muted: #f5ddd4;
-  --zen-accent-subtle: #faf0ec;
+  /* Accent - Anthropic blue (restrained, professional) */
+  --zen-accent: #5585b3;
+  --zen-accent-hover: #4a7399;
+  --zen-accent-muted: #dce8f3;
+  --zen-accent-subtle: #edf3f8;
 
   /* AI - Anthropic blue persona */
   --zen-ai: #6a9bcc;
@@ -50,7 +50,7 @@
   /* Borders - Warm */
   --zen-border: #e8e6dc;
   --zen-border-subtle: #f4f3ee;
-  --zen-border-focus: #d97757;
+  --zen-border-focus: #5585b3;
 
   /* Shadows - Warm, subtle */
   --zen-shadow-xs: 0 1px 2px 0 rgb(20 20 19 / 0.03);

@@ -1,6 +1,7 @@
 {
   "$schema": "UI Surface Registry — tracks status of every shell surface in convergence",
-  "lastUpdated": "2026-04-05",
+  "lastUpdated": "2026-04-05T22:00:00Z",
+  "convergencePhase": "phases 1-16 complete",
   "auditFile": "docs/audits/ANA_UI_FORENSIC_AUDIT_2026-04-05.md",
   "workOrderFile": "docs/plans/ANA_UI_CONVERGENCE_WORK_ORDER_2026-04-05.md",
   "allowedDestinations": ["chats", "projects", "communication-center", "apps", "settings"],
@@ -98,7 +99,8 @@
         "path": "client/src/concept2cure/router/zenRouteNormalization.ts",
         "status": "active",
         "action": "keep",
-        "role": "Redirect map for 55+ demoted layout modes → active destinations"
+        "redirectCount": 85,
+        "role": "Redirect map for 85+ demoted layout modes → 7 active destinations"
       }
     },
     "chat": {
@@ -106,9 +108,15 @@
         "path": "client/src/concept2cure/components/chat/AnaPersistentPanel.tsx",
         "status": "active",
         "action": "keep",
-        "lines": 5555,
-        "modeResolution": "full for all 5 primary destinations; compact for project-scoped module pages",
+        "lines": 5794,
+        "modeResolution": "full for all 5 primary destinations; compact for project-workspace (editor context — intentional)",
         "chatModes": ["standard", "deep-research", "nano-banana"],
+        "features": {
+          "slashCommands": "43 slash commands + 39 operational commands",
+          "appMentionAutocomplete": "10 @app mentions (deep-research, precedent, 510k, pma, cer, safety, biostats, vault, ectd, protocol)",
+          "dragDropAttach": "File drag-and-drop with visual overlay (compact mode wired)",
+          "domainPrompts": "Browse all capabilities via config/domain-prompts.ts"
+        },
         "role": "Unified AI chat surface — primary content area, center of gravity"
       }
     },
@@ -155,28 +163,35 @@
       "client/src/concept2cure/layouts/SplitScreenLayout.tsx",
       "client/src/concept2cure/components/shell/IndustryWorkspaceShell.tsx",
       "client/src/concept2cure/demo/UnifiedWorkspaceDemo.tsx",
-      "client/src/components/layout/Sidebar.tsx"
+      "client/src/components/layout/Sidebar.tsx",
+      "client/src/concept2cure/components/shell/GlobalOperatingShell.tsx",
+      "client/src/concept2cure/pages/ArtifactsPage.tsx"
     ],
     "toolPanels": {
       "status": "active",
       "action": "canonical",
       "count": 10,
       "panels": ["ectd", "protocol", "intelligence", "vault", "doc-editor", "ana-biostats", "sop", "capa", "pms", "inspection"],
-      "role": "Canonical right-side context drawer. ToolPanel is the sole right-side overlay system. ProjectKnowledgePanel is a layout sidebar (non-conflicting). Future: add tab support to ToolPanel for knowledge/context content."
+        "tabSupport": true,
+        "tabs": ["tool", "context"],
+        "role": "Canonical right-side context drawer with Tool|Context tabs. ProjectKnowledgePanel renders in Context tab."
     },
     "theme": {
       "fonts": {
-        "heading": "Poppins",
-        "body": "Lora",
-        "status": "pending-reset",
-        "target": "System sans / DM Sans for shell, serif only for document editor"
+        "heading": "DM Sans / system sans",
+        "body": "DM Sans / system sans",
+        "document": "Lora (serif, editor surfaces only)",
+        "status": "complete",
+        "notes": "Poppins removed from all shell surfaces (0 remaining in client/). Lora isolated to document editor surfaces."
       },
       "colors": {
-        "accent": "#d97757",
+        "accent": "#5585b3",
+        "accentFamily": "Anthropic blue (restrained, professional)",
+        "previousAccent": "#d97757 (terracotta — removed from shell CSS vars)",
         "canvas": "#FAFAF9",
-        "hardcodedInstances": 15,
-        "action": "replace-hardcoded-with-tokens",
-        "status": "pending-reset"
+        "shellTokens": "--zen-accent: #5585b3, --zen-accent-hover: #4a7399, --zen-accent-muted: #dce8f3, --zen-accent-subtle: #edf3f8",
+        "status": "complete",
+        "notes": "Terracotta removed from shell identity. Remains in Tailwind config for content/artifact surfaces only."
       }
     }
   }
