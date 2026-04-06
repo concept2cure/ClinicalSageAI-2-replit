@@ -63,6 +63,33 @@ export interface Module3BuildStateResponse {
   summary: Module3BuildSummary;
 }
 
+// ── Source type labels ──────────────────────────────────────────────────────
+
+export const SOURCE_TYPE_LABELS: Record<string, string> = {
+  drug_substance: 'Drug Substance',
+  drug_product: 'Drug Product',
+  specification: 'Specification',
+  method: 'Analytical Method',
+  stability: 'Stability Data',
+  batch: 'Batch Record',
+  change_control: 'Change Control',
+  comparability: 'Comparability',
+  manufacturing_process: 'Manufacturing Process',
+  characterization: 'Characterization',
+  reference_standard: 'Reference Standard',
+  container_closure: 'Container Closure',
+  excipient: 'Excipient',
+  process_validation: 'Process Validation',
+  raw_material_spec: 'Raw Material Spec',
+  impurity_profile: 'Impurity Profile',
+  dissolution_profile: 'Dissolution Profile',
+  formulation_record: 'Formulation Record',
+};
+
+export function getSourceTypeLabel(code: string): string {
+  return SOURCE_TYPE_LABELS[code] || code.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 // ── Build state display config ───────────────────────────────────────────────
 
 export const BUILD_STATE_CONFIG: Record<

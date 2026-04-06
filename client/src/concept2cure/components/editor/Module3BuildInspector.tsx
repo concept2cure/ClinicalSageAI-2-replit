@@ -40,6 +40,7 @@ import {
   BUILD_STATE_CONFIG,
   isSectionBuildable,
   isSectionRefreshable,
+  getSourceTypeLabel,
 } from '@/concept2cure/hooks/useModule3BuildState';
 import type {
   Module3SectionBuildStatus,
@@ -247,7 +248,7 @@ export function Module3BuildInspector({
             <div className="flex flex-wrap gap-1">
               {section.sourceTypes.map((t) => (
                 <Badge key={t} variant="secondary" className="text-[9px] px-1 py-0 h-4 font-normal">
-                  {t}
+                  {getSourceTypeLabel(t)}
                 </Badge>
               ))}
             </div>
@@ -384,7 +385,7 @@ export function Module3BuildInspector({
                     <p className="text-[11px] text-stone-600 font-medium truncate">
                       {src.fileName}
                     </p>
-                    <p className="text-[10px] text-stone-400 mt-0.5">{src.sourceType}</p>
+                    <p className="text-[10px] text-stone-400 mt-0.5">{getSourceTypeLabel(src.sourceType)}</p>
                     {src.extractedFields.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1">
                         {src.extractedFields.slice(0, 6).map((f) => (
