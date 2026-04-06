@@ -1347,7 +1347,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const handleSelectSection = useCallback(
     (ctdSection: string, _label: string) => {
       setSelectedCtdSection(ctdSection);
-      const sectionArtifact = artifacts
+      let sectionArtifact = artifacts
         .filter(
           a => a.ctdSection === ctdSection || (a.ctdSection || '').startsWith(`${ctdSection}.`)
         )
@@ -1356,6 +1356,16 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           const tb = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
           return tb - ta;
         })[0];
+
+      // Module 3 convergence: if no artifact found by ctdSection but M3 build state
+      // tracks an artifactId for this section, look it up directly
+      if (!sectionArtifact && module3BuildQuery.data) {
+        const m3Section = module3BuildQuery.data.sections.find(s => s.sectionKey === ctdSection);
+        if (m3Section?.artifactId) {
+          sectionArtifact = artifacts.find(a => a.id === m3Section.artifactId || a.artifactId === m3Section.artifactId);
+        }
+      }
+
       if (sectionArtifact) {
         setSelectedDocId(sectionArtifact.id);
         if (tryOpenForEdit(sectionArtifact.status)) {
@@ -1369,7 +1379,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       }
       setSectionReqs(null);
     },
-    [artifacts, tryOpenForEdit, applyWorkflowTransition]
+    [artifacts, tryOpenForEdit, applyWorkflowTransition, module3BuildQuery.data]
   );
 
   const handleBackToList = useCallback(() => {

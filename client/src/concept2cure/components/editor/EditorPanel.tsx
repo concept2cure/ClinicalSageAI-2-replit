@@ -4326,7 +4326,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             onOpenInspector={id => toggleInspector(id as InspectorPanel)}
           />
         </InspectorDrawer>
-        <InspectorDrawer visible={activeInspector === 'module3-build'} width="w-96">
+        <InspectorDrawer visible={activeInspector === 'module3-build'} width="w-[28rem]">
           <Module3BuildInspector
             projectId={projectId}
             ctdSection={activeArtifact?.ctdSection}
