@@ -202,10 +202,23 @@ function Module3BuildBadge({ buildState, completeness }: { buildState: M3BuildSt
   if (!cfg) return null;
   return (
     <span
-      className={cn('text-[9px] px-1 py-0 rounded font-medium whitespace-nowrap', cfg.bgColor, cfg.color)}
-      title={`${cfg.label} (${completeness}% complete)`}
+      className={cn(
+        'inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-medium whitespace-nowrap border',
+        cfg.bgColor,
+        cfg.color,
+        'border-stone-200/60'
+      )}
+      title={`${cfg.label} — ${completeness}% complete`}
     >
+      {buildState === 'stale' || buildState === 'contradiction_flagged' ? (
+        <AlertCircle className="w-2.5 h-2.5" />
+      ) : buildState === 'approved' || buildState === 'locked' ? (
+        <CheckCircle2 className="w-2.5 h-2.5" />
+      ) : null}
       {cfg.label}
+      {completeness > 0 && completeness < 100 && (
+        <span className="opacity-60">{completeness}%</span>
+      )}
     </span>
   );
 }

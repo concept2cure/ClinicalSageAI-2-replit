@@ -9,7 +9,7 @@
  * No new screens — this is an inline panel inside the existing Data Room.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   Upload,
   Tag,
@@ -19,11 +19,18 @@ import {
   Loader2,
   CheckCircle,
   Beaker,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getAuthHeaders } from '@/utils/authToken';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// ── Types ───────────────────────────────────────────────────────────────────��
 
 interface DossierClassification {
   submissionTrack: string;
@@ -45,7 +52,7 @@ interface DossierUploadClassifierProps {
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const SUBMISSION_TRACKS = [
-  { value: '', label: 'Not specified' },
+  { value: 'none', label: 'Not specified' },
   { value: 'IND', label: 'IND' },
   { value: 'NDA', label: 'NDA' },
   { value: 'BLA', label: 'BLA' },
@@ -57,7 +64,7 @@ const SUBMISSION_TRACKS = [
 ];
 
 const MODULE_CODES = [
-  { value: '', label: 'Not specified' },
+  { value: 'none', label: 'Not specified' },
   { value: '1', label: 'Module 1 — Administrative' },
   { value: '2', label: 'Module 2 — Summaries' },
   { value: '3', label: 'Module 3 — Quality (CMC)' },
@@ -66,7 +73,7 @@ const MODULE_CODES = [
 ];
 
 const MODULE3_SECTIONS = [
-  { value: '', label: 'Not specified' },
+  { value: 'none', label: 'Not specified' },
   { value: '3.2.S.1', label: '3.2.S.1 — General Information' },
   { value: '3.2.S.2', label: '3.2.S.2 — Manufacture (DS)' },
   { value: '3.2.S.3', label: '3.2.S.3 — Characterisation' },
@@ -85,7 +92,7 @@ const MODULE3_SECTIONS = [
 ];
 
 const SOURCE_TYPES = [
-  { value: '', label: 'Not specified' },
+  { value: 'none', label: 'Not specified' },
   { value: 'drug_substance', label: 'Drug Substance' },
   { value: 'drug_product', label: 'Drug Product' },
   { value: 'specification', label: 'Specification' },
@@ -102,7 +109,7 @@ const SOURCE_TYPES = [
 ];
 
 const DOCUMENT_FAMILIES = [
-  { value: '', label: 'Not specified' },
+  { value: 'none', label: 'Not specified' },
   { value: 'spec', label: 'Specification' },
   { value: 'method', label: 'Analytical Method' },
   { value: 'stability', label: 'Stability Report' },
@@ -126,18 +133,19 @@ const DossierUploadClassifier: React.FC<DossierUploadClassifierProps> = ({
   onUploadComplete,
   className,
 }) => {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [tagInput, setTagInput] = useState('');
 
   const [classification, setClassification] = useState<DossierClassification>({
-    submissionTrack: '',
+    submissionTrack: 'none',
     moduleCode: '3',
-    ctdSection: '',
-    documentFamily: '',
-    sourceType: '',
+    ctdSection: 'none',
+    documentFamily: 'none',
+    sourceType: 'none',
     tags: [],
     feedsModule3: true,
     sourceProcessingMode: 'artifact_plus_source_object',
@@ -168,217 +176,257 @@ const DossierUploadClassifier: React.FC<DossierUploadClassifierProps> = ({
     [classification.tags, updateField]
   );
 
+  const clearFile = useCallback(() => {
+    setFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, []);
+
   const handleUpload = useCallback(async () => {
     if (!file || !projectId) return;
     setUploading(true);
-    setSuccess(false);
     try {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('projectId', projectId);
-      // Append dossier classification fields
-      if (classification.submissionTrack) formData.append('submissionTrack', classification.submissionTrack);
-      if (classification.moduleCode) formData.append('moduleCode', classification.moduleCode);
-      if (classification.ctdSection) formData.append('ctdSection', classification.ctdSection);
-      if (classification.documentFamily) formData.append('documentFamily', classification.documentFamily);
-      if (classification.sourceType) formData.append('sourceType', classification.sourceType);
+      const track = classification.submissionTrack !== 'none' ? classification.submissionTrack : '';
+      const mod = classification.moduleCode !== 'none' ? classification.moduleCode : '';
+      const section = classification.ctdSection !== 'none' ? classification.ctdSection : '';
+      const family = classification.documentFamily !== 'none' ? classification.documentFamily : '';
+      const srcType = classification.sourceType !== 'none' ? classification.sourceType : '';
+      if (track) formData.append('submissionTrack', track);
+      if (mod) formData.append('moduleCode', mod);
+      if (section) formData.append('ctdSection', section);
+      if (family) formData.append('documentFamily', family);
+      if (srcType) formData.append('sourceType', srcType);
       if (classification.tags.length > 0) {
         for (const tag of classification.tags) formData.append('tags', tag);
       }
       formData.append('feedsModule3', String(classification.feedsModule3));
       formData.append('sourceProcessingMode', classification.sourceProcessingMode);
 
-      const headers: Record<string, string> = getAuthHeaders();
-      delete headers['Content-Type'];
+      const res = await apiRequest('POST', '/api/concept2cure/documents/upload', formData);
+      const json = await res.json();
 
-      const res = await fetch('/api/concept2cure/documents/upload', {
-        method: 'POST',
-        body: formData,
-        headers,
-        credentials: 'include',
-      });
-
-      if (res.ok) {
-        setSuccess(true);
-        setFile(null);
-        setTimeout(() => setSuccess(false), 3000);
+      if (json.success || res.ok) {
+        toast({
+          title: 'Source uploaded',
+          description: `${file.name} classified${section ? ` to ${section}` : ''}${classification.feedsModule3 ? ' — feeding Module 3' : ''}`,
+        });
+        clearFile();
         onUploadComplete?.();
+      } else {
+        toast({
+          title: 'Upload failed',
+          description: json.error || 'The upload could not be completed.',
+          variant: 'destructive',
+        });
       }
-    } catch {
-      // Upload failed
+    } catch (err: any) {
+      toast({
+        title: 'Upload error',
+        description: err?.message || 'Network error during upload.',
+        variant: 'destructive',
+      });
     } finally {
       setUploading(false);
     }
-  }, [file, projectId, classification, onUploadComplete]);
+  }, [file, projectId, classification, onUploadComplete, toast, clearFile]);
+
+  const isModule3 = classification.moduleCode === '3';
+  const classificationSummary = [
+    classification.submissionTrack !== 'none' ? classification.submissionTrack : null,
+    classification.ctdSection !== 'none' ? classification.ctdSection : null,
+    classification.sourceType !== 'none' ? SOURCE_TYPES.find(s => s.value === classification.sourceType)?.label : null,
+  ].filter(Boolean);
 
   return (
-    <div className={cn('border border-stone-200 rounded-lg bg-white', className)}>
-      {/* Header */}
+    <div className={cn('border border-stone-200 rounded-lg bg-white overflow-hidden', className)}>
+      {/* Header — always visible */}
       <button
+        type="button"
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-2 p-2.5 text-left hover:bg-stone-50 transition-colors rounded-t-lg"
+        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-stone-50/50 transition-colors"
       >
-        <Beaker className="w-4 h-4 text-stone-700" />
-        <span className="text-xs font-semibold text-stone-800">Dossier-Aware Upload</span>
-        <span className="ml-auto">
-          {expanded ? (
-            <ChevronUp className="w-3.5 h-3.5 text-stone-400" />
-          ) : (
-            <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
+        <Beaker className="w-3.5 h-3.5 text-stone-500 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <span className="text-[11px] font-medium text-stone-700">Dossier-Aware Upload</span>
+          {!expanded && classificationSummary.length > 0 && (
+            <div className="flex items-center gap-1 mt-0.5">
+              {classificationSummary.map((s) => (
+                <Badge key={s} variant="secondary" className="text-[9px] px-1 py-0 h-4 font-normal">
+                  {s}
+                </Badge>
+              ))}
+            </div>
           )}
-        </span>
+        </div>
+        {expanded ? (
+          <ChevronUp className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+        ) : (
+          <ChevronDown className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+        )}
       </button>
 
       {expanded && (
-        <div className="px-3 pb-3 space-y-2.5 border-t border-stone-100">
+        <div className="px-3 pb-3 space-y-3 border-t border-stone-100">
           {/* File picker */}
-          <div className="pt-2">
-            <label className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs border border-dashed border-stone-300 rounded-lg cursor-pointer hover:bg-stone-50 transition-colors">
-              <Upload className="w-3.5 h-3.5 text-stone-500" />
-              {file ? (
-                <span className="text-stone-700 truncate max-w-[200px]">{file.name}</span>
-              ) : (
-                <span className="text-stone-500">Choose file...</span>
-              )}
-              <input
-                type="file"
-                className="hidden"
-                accept=".pdf,.docx,.xlsx,.csv,.txt,.md"
-                onChange={(e) => {
-                  setFile(e.target.files?.[0] || null);
-                  setSuccess(false);
-                  e.target.value = '';
-                }}
+          <div className="pt-2.5">
+            {file ? (
+              <div className="flex items-center gap-2 px-2.5 py-2 bg-stone-50 rounded-lg border border-stone-100">
+                <FileText className="w-3.5 h-3.5 text-stone-500 shrink-0" />
+                <span className="text-[11px] text-stone-700 truncate flex-1">{file.name}</span>
+                <span className="text-[10px] text-stone-400 shrink-0">
+                  {(file.size / 1024).toFixed(0)} KB
+                </span>
+                <button
+                  type="button"
+                  onClick={clearFile}
+                  className="text-stone-400 hover:text-stone-600 transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 px-3 py-3 border border-dashed border-stone-300 rounded-lg cursor-pointer hover:bg-stone-50 hover:border-stone-400 transition-all">
+                <Upload className="w-4 h-4 text-stone-400" />
+                <span className="text-[11px] text-stone-500">Choose source document</span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.docx,.xlsx,.csv,.txt,.md"
+                  onChange={(e) => {
+                    setFile(e.target.files?.[0] || null);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+            )}
+          </div>
+
+          {/* Classification grid */}
+          <div className="space-y-2.5">
+            <div className="grid grid-cols-2 gap-2">
+              <ClassificationSelect
+                label="Track"
+                value={classification.submissionTrack}
+                options={SUBMISSION_TRACKS}
+                onChange={(v) => updateField('submissionTrack', v)}
               />
-            </label>
-          </div>
+              <ClassificationSelect
+                label="Module"
+                value={classification.moduleCode}
+                options={MODULE_CODES}
+                onChange={(v) => updateField('moduleCode', v)}
+              />
+            </div>
 
-          {/* Classification fields */}
-          <div className="grid grid-cols-2 gap-2">
-            <SelectField
-              label="Track"
-              value={classification.submissionTrack}
-              options={SUBMISSION_TRACKS}
-              onChange={(v) => updateField('submissionTrack', v)}
-            />
-            <SelectField
-              label="Module"
-              value={classification.moduleCode}
-              options={MODULE_CODES}
-              onChange={(v) => updateField('moduleCode', v)}
-            />
-          </div>
+            {isModule3 && (
+              <ClassificationSelect
+                label="CTD Section"
+                value={classification.ctdSection}
+                options={MODULE3_SECTIONS}
+                onChange={(v) => updateField('ctdSection', v)}
+              />
+            )}
 
-          {classification.moduleCode === '3' && (
-            <SelectField
-              label="CTD Section"
-              value={classification.ctdSection}
-              options={MODULE3_SECTIONS}
-              onChange={(v) => updateField('ctdSection', v)}
-            />
-          )}
-
-          <div className="grid grid-cols-2 gap-2">
-            <SelectField
-              label="Source Type"
-              value={classification.sourceType}
-              options={SOURCE_TYPES}
-              onChange={(v) => updateField('sourceType', v)}
-            />
-            <SelectField
-              label="Document Family"
-              value={classification.documentFamily}
-              options={DOCUMENT_FAMILIES}
-              onChange={(v) => updateField('documentFamily', v)}
-            />
+            <div className="grid grid-cols-2 gap-2">
+              <ClassificationSelect
+                label="Source Type"
+                value={classification.sourceType}
+                options={SOURCE_TYPES}
+                onChange={(v) => updateField('sourceType', v)}
+              />
+              <ClassificationSelect
+                label="Document Family"
+                value={classification.documentFamily}
+                options={DOCUMENT_FAMILIES}
+                onChange={(v) => updateField('documentFamily', v)}
+              />
+            </div>
           </div>
 
           {/* Tags */}
           <div>
             <label className="text-[10px] font-medium text-stone-500 uppercase tracking-wide">Tags</label>
-            <div className="flex items-center gap-1 mt-0.5">
-              <input
-                type="text"
+            <div className="flex items-center gap-1.5 mt-1">
+              <Input
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTag();
+                  }
+                }}
                 placeholder="Add tag..."
-                className="flex-1 text-xs px-2 py-1 border border-stone-200 rounded focus:ring-1 focus:ring-stone-400 outline-none"
+                className="h-7 text-xs"
               />
-              <button
-                onClick={addTag}
-                className="text-xs px-2 py-1 text-stone-600 hover:bg-stone-100 rounded"
-              >
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0" onClick={addTag}>
                 <Tag className="w-3 h-3" />
-              </button>
+              </Button>
             </div>
             {classification.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-1">
+              <div className="flex flex-wrap gap-1 mt-1.5">
                 {classification.tags.map((tag) => (
-                  <span
+                  <Badge
                     key={tag}
-                    className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 bg-stone-100 rounded text-stone-600"
+                    variant="secondary"
+                    className="text-[10px] px-1.5 py-0 h-5 gap-1 font-normal"
                   >
                     {tag}
-                    <button onClick={() => removeTag(tag)} className="hover:text-stone-900">
-                      &times;
+                    <button
+                      type="button"
+                      onClick={() => removeTag(tag)}
+                      className="hover:text-stone-900 transition-colors"
+                    >
+                      <X className="w-2.5 h-2.5" />
                     </button>
-                  </span>
+                  </Badge>
                 ))}
               </div>
             )}
           </div>
 
           {/* Module 3 feed toggle */}
-          {classification.moduleCode === '3' && (
-            <div className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg">
-              <button
-                onClick={() => updateField('feedsModule3', !classification.feedsModule3)}
-                className={cn(
-                  'relative w-8 h-4 rounded-full transition-colors',
-                  classification.feedsModule3 ? 'bg-stone-800' : 'bg-stone-300'
-                )}
-              >
-                <span
-                  className={cn(
-                    'absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform',
-                    classification.feedsModule3 ? 'left-[18px]' : 'left-0.5'
-                  )}
-                />
-              </button>
-              <span className="text-xs text-stone-700">Feed Module 3 source extraction</span>
+          {isModule3 && (
+            <div className="flex items-center justify-between gap-2 px-2.5 py-2 bg-stone-50 rounded-lg">
+              <span className="text-[11px] text-stone-600">Feed Module 3 source extraction</span>
+              <Switch
+                checked={classification.feedsModule3}
+                onCheckedChange={(checked) => updateField('feedsModule3', checked)}
+              />
             </div>
           )}
 
           {/* Upload button */}
-          <button
+          <Button
             onClick={handleUpload}
             disabled={!file || uploading}
-            className={cn(
-              'w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-colors',
-              file && !uploading
-                ? 'bg-stone-900 text-white hover:bg-stone-800'
-                : 'bg-stone-100 text-stone-400 cursor-not-allowed'
-            )}
+            className="w-full h-8 text-xs"
+            size="sm"
           >
             {uploading ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : success ? (
-              <CheckCircle className="w-3.5 h-3.5" />
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                Uploading...
+              </>
             ) : (
-              <FileText className="w-3.5 h-3.5" />
+              <>
+                <Upload className="w-3.5 h-3.5 mr-1.5" />
+                Upload with Classification
+              </>
             )}
-            {uploading ? 'Uploading...' : success ? 'Uploaded' : 'Upload with Classification'}
-          </button>
+          </Button>
         </div>
       )}
     </div>
   );
 };
 
-// ── Select field helper ──────────────────────────────────────────────────────
+// ── Classification select helper ─────────────────────────────────────────────
 
-function SelectField({
+function ClassificationSelect({
   label,
   value,
   options,
@@ -394,17 +442,18 @@ function SelectField({
       <label className="text-[10px] font-medium text-stone-500 uppercase tracking-wide">
         {label}
       </label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full mt-0.5 text-xs px-2 py-1 border border-stone-200 rounded bg-white text-stone-700 focus:ring-1 focus:ring-stone-400 outline-none"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="h-7 text-xs mt-0.5">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((o) => (
+            <SelectItem key={o.value} value={o.value} className="text-xs">
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

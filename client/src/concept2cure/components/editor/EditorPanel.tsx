@@ -4330,6 +4330,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           <Module3BuildInspector
             projectId={projectId}
             ctdSection={activeArtifact?.ctdSection}
+            onClose={() => setActiveInspector(null)}
           />
         </InspectorDrawer>
       </div>
