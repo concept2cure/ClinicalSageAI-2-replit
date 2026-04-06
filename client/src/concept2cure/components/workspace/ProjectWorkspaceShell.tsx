@@ -41,6 +41,7 @@ import { type RegistryKind } from './OperatingSystemRegistryPanel';
 import { WorkspaceTopBar } from './WorkspaceTopBar';
 import { WorkspaceCenterSurface } from './WorkspaceCenterSurface';
 import { WorkspaceLeftRail } from './WorkspaceLeftRail';
+import { useModule3BuildState } from '../../hooks/useModule3BuildState';
 import WorkspaceContextBars from './WorkspaceContextBars';
 import {
   Loader2,
@@ -224,6 +225,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     }
     return submissionSections.map(convertToDossierNode);
   }, [submissionSections]);
+  // Module 3 build state — used by DossierTree to show real build readiness
+  const module3BuildQuery = useModule3BuildState(projectId ? String(projectId) : undefined, undefined);
+
   // operatingLayer maps 'document_studio' -> 'documents' for OperatingSystemRegistryPanel compatibility
   const operatingLayer = activeLayer === 'document_studio' ? 'documents' : activeLayer;
   const setOperatingLayer = (layer: string) => {
@@ -1989,6 +1993,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               handleOutlineNavigate={handleOutlineNavigate}
               handleCreateSubsection={handleCreateSubsection}
               openReviewPulse={openReviewPulse}
+              module3BuildState={module3BuildQuery.data}
             />
           )}
 

@@ -182,6 +182,7 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
     try {
       bridgedArtifact = await bridgeCompileToArtifact(orgId, projectId, section.sectionKey, {
         narrativeDraft: section.narrativeDraft,
+        tables: section.tables,
         completeness: section.completeness,
         missingInputs: section.missingInputs,
         lineage: section.lineage,

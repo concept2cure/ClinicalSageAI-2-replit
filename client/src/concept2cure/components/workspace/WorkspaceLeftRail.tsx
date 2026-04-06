@@ -20,6 +20,7 @@ import type {
 } from './workspaceShellControllers';
 import type { DossierNode } from './ctdHierarchy';
 import type { SectionMetrics } from './SectionRequirementsPanel';
+import type { Module3BuildStateResponse } from '../../hooks/useModule3BuildState';
 
 export interface WorkspaceLeftRailProps {
   isINDWorkspace: boolean;
@@ -67,6 +68,7 @@ export interface WorkspaceLeftRailProps {
   handleOutlineNavigate: (heading: string) => void;
   handleCreateSubsection: (parentPath: string) => void;
   openReviewPulse: () => void;
+  module3BuildState?: Module3BuildStateResponse;
 }
 
 export const WorkspaceLeftRail: React.FC<WorkspaceLeftRailProps> = ({
@@ -114,6 +116,7 @@ export const WorkspaceLeftRail: React.FC<WorkspaceLeftRailProps> = ({
   handleOutlineNavigate,
   handleCreateSubsection,
   openReviewPulse,
+  module3BuildState,
 }) => (
   <div className="w-[200px] 2xl:w-[240px] border-r border-zinc-200 shrink-0 flex flex-col bg-white">
     {!isINDWorkspace && (
@@ -308,6 +311,7 @@ export const WorkspaceLeftRail: React.FC<WorkspaceLeftRailProps> = ({
           setLeftRailMode('files');
           applyWorkflowTransition('browse_list', {});
         }}
+        module3BuildState={module3BuildState}
       />
     ) : leftRailMode === 'outline' ? (
       outlineAvailable ? (

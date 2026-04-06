@@ -198,6 +198,7 @@ router.post('/compile/:projectId', async (req, res) => {
       try {
         const bridged = await bridgeCompileToArtifact(orgId, projectId, section.sectionKey, {
           narrativeDraft: section.narrativeDraft,
+          tables: section.tables,
           completeness: section.completeness,
           missingInputs: section.missingInputs,
           lineage: section.lineage,

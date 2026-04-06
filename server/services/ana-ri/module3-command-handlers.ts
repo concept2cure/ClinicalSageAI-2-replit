@@ -72,6 +72,7 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
       try {
         await bridgeCompileToArtifact(orgId, projectId, section.sectionKey, {
           narrativeDraft: section.narrativeDraft,
+          tables: section.tables,
           completeness: section.completeness,
           missingInputs: section.missingInputs,
           lineage: section.lineage,
@@ -143,6 +144,7 @@ export async function module3BuildSection(ctx: CommandContext, params: Record<st
   try {
     bridgedArtifact = await bridgeCompileToArtifact(orgId, projectId, sectionKey, {
       narrativeDraft: section.narrativeDraft,
+      tables: section.tables,
       completeness: section.completeness,
       missingInputs: section.missingInputs,
       lineage: section.lineage,
@@ -239,6 +241,7 @@ export async function module3RefreshStale(ctx: CommandContext, params: Record<st
     try {
       await bridgeCompileToArtifact(orgId, projectId, section.sectionKey, {
         narrativeDraft: section.narrativeDraft,
+        tables: section.tables,
         completeness: section.completeness,
         missingInputs: section.missingInputs,
         lineage: section.lineage,

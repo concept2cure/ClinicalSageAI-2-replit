@@ -140,7 +140,7 @@ router.get('/build-state/:projectId', async (req, res) => {
                   status, title, updated_at as "updatedAt"
            FROM concept2cure_artifacts
            WHERE organization_id = $1 AND project_id = $2
-                 AND ctd_section LIKE '3.2.%'`,
+                 AND (ctd_section LIKE '3.2.%' OR ctd_section IN ('3.1', '3.3'))`,
           [orgId, projectId]
         ),
         // 5. Uploaded source documents classified for Module 3

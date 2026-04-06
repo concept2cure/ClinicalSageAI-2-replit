@@ -12,7 +12,7 @@
 import { randomUUID } from 'crypto';
 import { getPool } from '../db';
 import { createSourceHash } from './cmc-module3-compiler';
-import { composeModule3FromCanonicalSources, MODULE3_SECTION_RULES, CmcSourceType } from './module3Composer';
+import { composeModule3FromCanonicalSources, MODULE3_SECTION_RULES, tablesToMarkdown, CmcSourceType } from './module3Composer';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -60,6 +60,7 @@ export interface DossierUploadClassification {
 // ── Section Label Map ──────────────────────────────────────────
 
 const SECTION_LABELS: Record<string, string> = {
+  '3.1': 'Quality — Table of Contents',
   '3.2.S.1': 'General Information',
   '3.2.S.2': 'Manufacture (Drug Substance)',
   '3.2.S.3': 'Characterisation',
@@ -75,6 +76,7 @@ const SECTION_LABELS: Record<string, string> = {
   '3.2.P.6': 'Reference Standards (Drug Product)',
   '3.2.P.7': 'Container Closure System (Drug Product)',
   '3.2.P.8': 'Stability (Drug Product)',
+  '3.3': 'Literature References',
 };
 
 // ── Public API ─────────────────────────────────────────────────
@@ -129,7 +131,7 @@ export async function getModule3BuildStatus(
        FROM concept2cure_artifacts
        WHERE organization_id = $1 AND project_id = $2
          AND ctd_section IS NOT NULL
-         AND ctd_section LIKE '3.2.%'`,
+         AND (ctd_section LIKE '3.2.%' OR ctd_section IN ('3.1', '3.3'))`,
       [orgId, projectId],
     ),
   ]);
@@ -363,6 +365,7 @@ export async function bridgeCompileToArtifact(
   sectionKey: string,
   compiledSection: {
     narrativeDraft: string;
+    tables?: Array<{ title: string; headers: string[]; rows: string[][] }>;
     completeness: number;
     missingInputs: string[];
     lineage: Array<{ sourceObjectId: string; sourceHashAtCompile: string }>;
@@ -375,7 +378,14 @@ export async function bridgeCompileToArtifact(
     await client.query('BEGIN');
 
     const sectionLabel = SECTION_LABELS[sectionKey] || sectionKey;
-    const contentHash = createSourceHash({ narrative: compiledSection.narrativeDraft, sectionKey });
+
+    // Build full document content: narrative prose + rendered tables
+    const tablesMarkdown = compiledSection.tables && compiledSection.tables.length > 0
+      ? '\n\n' + tablesToMarkdown(compiledSection.tables)
+      : '';
+    const fullContent = `## ${sectionLabel}\n\n${compiledSection.narrativeDraft}${tablesMarkdown}`;
+
+    const contentHash = createSourceHash({ narrative: fullContent, sectionKey });
     const sourceObjectIds = compiledSection.lineage.map((l) => l.sourceObjectId);
     const compiledAt = new Date().toISOString();
 
@@ -416,7 +426,7 @@ export async function bridgeCompileToArtifact(
              status       = 'draft',
              updated_at   = NOW()
          WHERE organization_id = $4 AND id = $5`,
-        [compiledSection.narrativeDraft, contentHash, JSON.stringify(metadata), orgId, row.id],
+        [fullContent, contentHash, JSON.stringify(metadata), orgId, row.id],
       );
     } else {
       // Create new governed artifact
@@ -434,7 +444,7 @@ export async function bridgeCompileToArtifact(
           projectId,
           artifactId,
           `Module 3 — ${sectionLabel}`,
-          compiledSection.narrativeDraft,
+          fullContent,
           contentHash,
           sectionKey,
           JSON.stringify(metadata),
