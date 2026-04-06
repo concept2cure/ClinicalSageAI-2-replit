@@ -61,9 +61,9 @@ type SettingsSection =
 interface ZenSettingsProps {
   isOpen: boolean;
   onClose: () => void;
-  /** Active project ID — enables the Project Context editor in AnA Intelligence */
+  /** Active project ID — enables the Active Project tab in Customize AnA */
   activeProjectId?: string | null;
-  /** Active project name — displayed in Project Context editor header */
+  /** Active project name — displayed in Active Project tab header */
   activeProjectName?: string;
   /** Initial section to open when the modal appears */
   initialSection?: SettingsSection;
@@ -84,7 +84,7 @@ const SETTINGS_NAV: {
   { id: 'security', label: 'Security', icon: Shield },
   { id: 'appearance', label: 'Appearance', icon: Palette },
   { id: 'integrations', label: 'Integrations', icon: Link2 },
-  { id: 'ana-intelligence', label: 'AnA Intelligence', icon: Brain },
+  { id: 'ana-intelligence', label: 'Customize AnA', icon: Brain },
   { id: 'help', label: 'Help & Support', icon: HelpCircle },
 ];
 
@@ -220,7 +220,7 @@ const ProfileSection: React.FC = () => {
       {/* Avatar */}
       <div className="flex items-center gap-4 mb-6 pb-6 border-b border-stone-200">
         <div className="relative">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-base font-semibold">
+          <div className="w-20 h-20 rounded-full bg-stone-900 flex items-center justify-center text-white text-base font-semibold">
             {initials}
           </div>
           <button
@@ -347,8 +347,8 @@ const OrganizationSection: React.FC = () => {
       <div className="bg-white rounded-xl border border-stone-200 divide-y divide-stone-100">
         <div className="p-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-              <Building2 className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center">
+              <Building2 className="w-6 h-6 text-stone-600" />
             </div>
             <div>
               <h3 className="text-base font-semibold text-stone-900">{orgData.name}</h3>
@@ -360,7 +360,7 @@ const OrganizationSection: React.FC = () => {
         <SettingRow label="Team Members" description={`${orgData.members} active members`}>
           <a
             href="/concept2cure/billing"
-            className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1"
+            className="text-sm text-stone-700 hover:text-stone-900 font-medium flex items-center gap-1"
           >
             Manage
             <ChevronRight className="w-4 h-4" />
@@ -370,7 +370,7 @@ const OrganizationSection: React.FC = () => {
         <SettingRow label="Billing" description={`Next billing: ${orgData.nextBilling}`}>
           <a
             href="/concept2cure/billing"
-            className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1"
+            className="text-sm text-stone-700 hover:text-stone-900 font-medium flex items-center gap-1"
           >
             View
             <ChevronRight className="w-4 h-4" />
@@ -380,7 +380,7 @@ const OrganizationSection: React.FC = () => {
         <SettingRow label="Usage" description="View token usage in billing dashboard">
           <a
             href="/concept2cure/billing"
-            className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1"
+            className="text-sm text-stone-700 hover:text-stone-900 font-medium flex items-center gap-1"
           >
             Dashboard
             <ChevronRight className="w-4 h-4" />
@@ -499,11 +499,11 @@ const SecuritySection: React.FC = () => {
         </SettingRow>
 
         <SettingRow label="Password" description="Last changed 30 days ago">
-          <button className="text-sm text-blue-600 hover:text-stone-700 font-medium">Change</button>
+          <button className="text-sm text-stone-700 hover:text-stone-900 font-medium">Change</button>
         </SettingRow>
 
         <SettingRow label="Active Sessions" description="3 devices currently signed in">
-          <button className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1">
+          <button className="text-sm text-stone-700 hover:text-stone-900 font-medium flex items-center gap-1">
             View
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -559,15 +559,15 @@ const AppearanceSection: React.FC = () => {
               className={cn(
                 'flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-150',
                 theme === id
-                  ? 'border-stone-600 bg-blue-50'
+                  ? 'border-stone-900 bg-stone-100'
                   : 'border-stone-200 hover:border-stone-300'
               )}
             >
-              <Icon className={cn('w-6 h-6', theme === id ? 'text-blue-600' : 'text-stone-400')} />
+              <Icon className={cn('w-6 h-6', theme === id ? 'text-stone-900' : 'text-stone-400')} />
               <span
                 className={cn(
                   'text-sm font-medium',
-                  theme === id ? 'text-blue-600' : 'text-stone-600'
+                  theme === id ? 'text-stone-900' : 'text-stone-600'
                 )}
               >
                 {label}
@@ -1094,7 +1094,7 @@ const IntegrationsSection: React.FC = () => {
                           onChange={e =>
                             handleConfigChange(integration.id, field.key, e.target.value)
                           }
-                          className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg bg-stone-50 focus:outline-none focus:ring-2 focus:ring-stone-300 focus:border-blue-400 transition-all"
+                          className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg bg-stone-50 focus:outline-none focus:ring-2 focus:ring-stone-300 focus:border-stone-400 transition-all"
                         />
                       </div>
                     ))}
@@ -1270,9 +1270,9 @@ const HelpSection: React.FC = () => {
 type IntelligenceTab = 'personal' | 'company' | 'project';
 
 const INTELLIGENCE_TABS: { id: IntelligenceTab; label: string; description: string }[] = [
-  { id: 'personal', label: 'Personal Preferences', description: 'How AnA adapts to your style' },
-  { id: 'company', label: 'Company Context', description: 'Organization-wide intelligence' },
-  { id: 'project', label: 'Project Context', description: 'Project-specific knowledge' },
+  { id: 'personal', label: 'My Profile', description: 'Your role, expertise, and how AnA drafts for you' },
+  { id: 'company', label: 'Organization', description: 'Company regulatory posture, markets, pipeline, and SOPs' },
+  { id: 'project', label: 'Active Project', description: 'Submission-specific strategy, agencies, risks, and instructions' },
 ];
 
 const IntelligenceSection: React.FC<{
@@ -1284,8 +1284,8 @@ const IntelligenceSection: React.FC<{
   return (
     <div>
       <SectionHeader
-        title="AnA Intelligence"
-        description="Teach AnA about you, your company, and your projects"
+        title="Customize AnA"
+        description="Configure how AnA works for your regulatory workflow — from personal drafting preferences to project-level submission strategy"
       />
 
       {/* Tab bar */}
@@ -1314,6 +1314,11 @@ const IntelligenceSection: React.FC<{
         })}
       </div>
 
+      {/* Active tab description */}
+      <p className="text-xs text-stone-500 mb-4 px-1">
+        {INTELLIGENCE_TABS.find(t => t.id === activeTab)?.description}
+      </p>
+
       {/* Editor content */}
       <div className="rounded-xl border border-stone-200 bg-white overflow-hidden">
         <Suspense
@@ -1335,8 +1340,11 @@ const IntelligenceSection: React.FC<{
           {activeTab === 'project' && !activeProjectId && (
             <div className="p-8 text-center">
               <Brain className="w-8 h-8 text-stone-300 mx-auto mb-3" />
-              <p className="text-sm text-stone-500">
-                Select a project first to configure project-specific context.
+              <p className="text-sm font-medium text-stone-700 mb-1">
+                No active project
+              </p>
+              <p className="text-xs text-stone-400 max-w-xs mx-auto">
+                Open a project to configure its submission type, target agencies, regulatory strategy, risk factors, and custom instructions for AnA.
               </p>
             </div>
           )}

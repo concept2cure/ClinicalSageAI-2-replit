@@ -55,7 +55,7 @@ import { ProjectSwitcher, NewProjectModal } from './components/projects/ProjectS
 import ProjectConfigPanel from './components/workspace/ProjectConfigPanel';
 // [BATCH 3] WorkflowTimeline — renderer removed, import kept for type compatibility
 // [BATCH 3] ProjectFilesCompact — unused, import removed
-import { ProjectHeaderBar, getProjectAccentColor } from './components/workspace/ProjectHeaderBar';
+import { ProjectHeaderBar } from './components/workspace/ProjectHeaderBar';
 // [BATCH 3] CustomInstructions — knowledge-base renderer removed
 import { useProjectTasks } from './hooks/useProjectTasks';
 import { useAuthoringIntelligence } from './hooks/useAuthoringIntelligence';
@@ -101,8 +101,6 @@ import {
   Plus,
   ArrowLeft,
   FlaskConical,
-  Star,
-  MessageSquare,
   Brain,
   Loader2,
   Search,
@@ -1522,8 +1520,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   );
 
   // Conversation star/pin are intentionally disabled until persistence lands.
-  // Keep handlers silent and hide affordance in sidebar instead of fake success UX.
-  const handleToggleConversationStar = useCallback((_id: string) => {}, []);
 
   const handleToggleConversationPin = useCallback((_id: string) => {}, []);
 
@@ -2038,12 +2034,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         onOpenSettings={() => setSettingsOpen(true)}
         onDeleteConversation={handleDeleteConversation}
         onRenameConversation={handleRenameConversation}
-        onToggleStar={handleToggleConversationStar}
         onTogglePin={handleToggleConversationPin}
         onArchiveProject={handleArchiveProject}
         onDeleteProject={handleDeleteProject}
         onMoveConversation={handleMoveConversation}
-        industryMode={industryMode}
         onNavigate={id => {
           switch (id) {
             // ── 5 Global destinations ──
@@ -2054,6 +2048,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             case 'home':
               setLayoutMode('projects');
               break;
+            case 'reports':
+              setLayoutMode('reports');
+              break;
             case 'communication-center':
               setLayoutMode('communication-center');
               break;
@@ -2062,6 +2059,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               break;
             case 'settings':
               setLayoutMode('settings');
+              break;
+            case 'customize':
+              setSettingsSection('ana-intelligence');
+              setSettingsOpen(true);
               break;
             // ── Project landing ──
             case 'overview':
@@ -2106,8 +2107,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             case 'verify':
               openWorkspaceView('review-readiness');
               break;
-            case 'reports':
             case 'haq':
+              // Legacy alias for project-scoped report engine view (sidebar 'reports' is now global)
               openWorkspaceView('report-engine');
               break;
             case 'task-board':
@@ -2155,30 +2156,28 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               openWorkspaceView('regulatory-workspace');
               setRiViewMode('intelligence');
               break;
-            // ── Embedded modules ──
+            // ── Unified Medical Device & Diagnostics workspace (510k / PMA / De Novo / CER / IVDR) ──
+            case 'medical-device':
+            // Legacy IDs preserved for back-compat with stored nav targets
             case '510k-workspace':
-              if (activeProjectId) {
-                navigate(`/concept2cure/project/${activeProjectId}/510k`);
-              } else {
-                setLayoutMode('projects');
-              }
-              break;
             case 'pma-workspace':
-              if (embeddedModule !== null || !embedModulesEnabled) {
+            case 'cer-generator': {
+              if (!activeProjectId) {
                 setLayoutMode('projects');
-              } else if (activeProjectId) {
-                navigate(`/concept2cure/project/${activeProjectId}/pma`);
-              } else {
-                setLayoutMode('projects');
+                break;
               }
-              break;
-            case 'cer-generator':
-              if (activeProjectId) {
-                navigate(`/concept2cure/project/${activeProjectId}/cer`);
-              } else {
+              const deviceType = (activeProject?.type || '').toUpperCase();
+              const subPath =
+                deviceType === 'PMA' ? 'pma'
+                : deviceType === 'CER' || deviceType === 'IVDR' ? 'cer'
+                : '510k';
+              if (id === 'pma-workspace' && (embeddedModule !== null || !embedModulesEnabled)) {
                 setLayoutMode('projects');
+                break;
               }
+              navigate(`/concept2cure/project/${activeProjectId}/${subPath}`);
               break;
+            }
             // ── Default — redirect to chats ──
             default:
               setLayoutMode('chats');
@@ -2261,48 +2260,146 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               <ErrorBoundary>
                 <Suspense fallback={<ModuleLoadingFallback />}>
                   <AppsPage
-                    submissionType={activeProject?.type}
                     onNavigate={id => {
                       switch (id) {
+                        // ── Featured ──
                         case 'deep-research':
-                          requireActiveProject('deep-research');
+                          setLayoutMode('chats');
                           break;
                         case 'precedent-intelligence':
-                          requireActiveProject('precedent-intelligence');
+                          openWorkspaceView('precedent-intelligence');
                           break;
-                        case 'safety-narrative':
-                          requireActiveProject('safety-narrative');
+                        case 'cmc':
+                          if (requireActiveProject('section-workspace')) {
+                            setRiViewMode('editor');
+                          }
                           break;
                         case 'biostatistics':
                           if (requireActiveProject('regulatory-workspace')) {
                             setActiveToolPanel('ana-biostats');
                           }
                           break;
-                        case '510k-workspace':
-                          if (activeProjectId)
-                            navigate(`/concept2cure/project/${activeProjectId}/510k`);
-                          else setLayoutMode('projects');
+                        // ── Strategy & Research hub (merges device-pathway + q-submission + predicate-finder) ──
+                        case 'device-strategy':
+                        case 'device-pathway':       // legacy
+                        case 'q-submission':         // legacy
+                        case 'predicate-finder':     // legacy
+                          setLayoutMode('chats');
+                          setExternalChatMessage({
+                            text: 'I can help you with device strategy and FDA engagement: classify your device (Class I/II/III), determine the right regulatory pathway (510(k), De Novo, PMA, HDE, or Exempt), look up FDA product codes, find predicate devices and build substantial equivalence comparison tables, and prepare an FDA Pre-Submission (Q-Sub) package with feedback questions and meeting prep. What would you like to start with?',
+                            ts: Date.now(),
+                          });
                           break;
-                        case 'pma-workspace':
-                          if (activeProjectId)
-                            navigate(`/concept2cure/project/${activeProjectId}/pma`);
-                          else setLayoutMode('projects');
+
+                        // ── Authoring ──
+                        case 'medical-device': {
+                          // Unified Medical Device & Diagnostics workspace.
+                          // Routes to the matching submission type for the active project,
+                          // defaulting to 510(k) when no specific device type is set.
+                          if (!activeProjectId) {
+                            openWorkspaceView('documents');
+                            break;
+                          }
+                          const deviceType = (activeProject?.type || '').toUpperCase();
+                          const subPath =
+                            deviceType === 'PMA' ? 'pma'
+                            : deviceType === 'CER' || deviceType === 'IVDR' ? 'cer'
+                            : '510k';
+                          navigate(`/concept2cure/project/${activeProjectId}/${subPath}`);
                           break;
-                        case 'cer-generator':
-                          if (activeProjectId)
-                            navigate(`/concept2cure/project/${activeProjectId}/cer`);
-                          else setLayoutMode('projects');
+                        }
+                        case 'safety-narrative':
+                          openWorkspaceView('safety-narrative');
                           break;
+                        case 'ind-authoring':
+                          if (requireActiveProject('section-workspace')) {
+                            setRiViewMode('editor');
+                          }
+                          break;
+                        case 'report-engine':
+                          openWorkspaceView('report-engine');
+                          break;
+
+                        // ── Intelligence & Analysis ──
+                        case 'regulatory-intelligence':
+                          if (requireActiveProject('regulatory-workspace')) {
+                            setActiveToolPanel('intelligence');
+                          }
+                          break;
+                        case 'csr-intelligence':
+                          openWorkspaceView('csr-workflow');
+                          break;
+                        case 'protocol-designer':
+                          if (requireActiveProject('regulatory-workspace')) {
+                            setActiveToolPanel('protocol');
+                          }
+                          break;
+                        case 'dossier-navigator':
+                          openWorkspaceView('dossier-map');
+                          break;
+
+                        // ── Quality & Lifecycle ──
+                        // Device Engineering hub (merges risk-management + samd-cybersecurity + human-factors + biocompatibility)
+                        case 'device-engineering':
+                        case 'risk-management':       // legacy
+                        case 'samd-cybersecurity':    // legacy
+                        case 'human-factors':         // legacy
+                        case 'biocompatibility':      // legacy
+                          setLayoutMode('chats');
+                          setExternalChatMessage({
+                            text: 'I can help with the four core engineering disciplines for medical devices: ISO 14971 risk management (Risk Management Plan, hazard analysis, FMEA for design/process/use, risk control matrix, Risk Management Report), IEC 62304 software lifecycle and FDA cybersecurity premarket guidance (software classification Class A/B/C, threat modeling, SBOM, vulnerability management), IEC 62366-1 human factors and usability (use specification, task analysis, use error analysis, formative studies, summative validation), and ISO 10993 biocompatibility (contact category and duration, biological endpoint selection, test methods, Biological Evaluation Report). Which discipline would you like to start with?',
+                            ts: Date.now(),
+                          });
+                          break;
+                        case 'ectd-navigator':
+                          if (requireActiveProject('regulatory-workspace')) {
+                            setActiveToolPanel('ectd');
+                          }
+                          break;
+                        case 'document-vault':
+                          openWorkspaceView('vault');
+                          break;
+                        case 'sop-management':
+                          if (requireActiveProject('regulatory-workspace')) {
+                            setActiveToolPanel('sop');
+                          }
+                          break;
+                        case 'capa-management':
+                          if (requireActiveProject('regulatory-workspace')) {
+                            setActiveToolPanel('capa');
+                          }
+                          break;
+                        case 'post-market':
+                          if (requireActiveProject('regulatory-workspace')) {
+                            setActiveToolPanel('pms');
+                          }
+                          break;
+                        case 'inspection-readiness':
+                          if (requireActiveProject('regulatory-workspace')) {
+                            setActiveToolPanel('inspection');
+                          }
+                          break;
+
                         default:
-                          // All apps in the catalog have explicit routes above.
-                          // If somehow an unknown app ID arrives, go to projects.
                           setLayoutMode('projects');
                           break;
                       }
                     }}
-                    activeProjectId={activeProjectId}
-                    activeProjectName={activeProject?.name}
                   />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Global destination: Reporting & Analytics ── */}
+          {!embeddedModule && layoutMode === 'reports' && (
+            <div
+              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
+              data-testid="workspace-reports"
+            >
+              <ErrorBoundary>
+                <Suspense fallback={<ModuleLoadingFallback />}>
+                  <IntelligentReportGenerator />
                 </Suspense>
               </ErrorBoundary>
             </div>
@@ -2584,45 +2681,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               />
             ))}
 
-          {/* ── Project Home: AnA-first with light context strip ── */}
-          {/* Strip is flex-shrink-0; AnA (rendered separately below) takes flex-1 */}
-          {!embeddedModule && layoutMode === 'project-home' && activeProject && (
-            <div className="flex-shrink-0" data-testid="workspace-overview">
-              <ProjectHomeDashboard
-                project={{
-                  id: Number(activeProjectId) || 0,
-                  name: activeProject.name,
-                  type: activeProject.type,
-                  description: activeProject.description ?? null,
-                  sponsor: ((activeProject as Record<string, unknown>).sponsor as string) || null,
-                  product: ((activeProject as Record<string, unknown>).product as string) || null,
-                  region: ((activeProject as Record<string, unknown>).region as string) || null,
-                }}
-                onNavigate={mode => {
-                  const mapped = SIDEBAR_NAV_TO_LAYOUT[mode];
-                  if (mapped) {
-                    if (isProjectScopedLayout(mapped)) {
-                      requireActiveProject(mapped);
-                    } else {
-                      setLayoutMode(mapped);
-                    }
-                  } else {
-                    console.warn(`[ProjectHomeDashboard] Unknown nav mode: ${mode}`);
-                  }
-                }}
-                onOpenConfig={() => setEditProjectOpen(true)}
-                onOpenSearch={() => setCommandPaletteOpen(true)}
-                onSuggestedPrompt={prompt => {
-                  setExternalChatMessage({ text: prompt, ts: Date.now() });
-                }}
-                onOpenArtifact={artifactId => {
-                  if (!requireActiveProject('regulatory-workspace')) return;
-                  setOpenArtifactId(artifactId);
-                  setRiViewMode('editor');
-                }}
-              />
-            </div>
-          )}
 
           {/* ── Unified Workflow: Dossier Map ────────────────────────────── */}
           {!embeddedModule && layoutMode === 'project-workspace' && workspaceView === 'dossier-map' && (
@@ -3250,63 +3308,21 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           {/* assistant/ctd modes redirected by normalizeLayoutMode useEffect */}
         </div>
 
-        {/* ── Project Cards Grid — Simplified entry ── */}
+        {/* ── Projects Grid — Claude.ai-style clean card layout ── */}
         {layoutMode === 'projects' &&
           !embeddedModule &&
           (() => {
-            const sortedProjects = projects
+            const sorted = projects
               .filter(p => !p.archived)
-              .sort((a, b) => {
-                if (a.starred && !b.starred) return -1;
-                if (!a.starred && b.starred) return 1;
-                return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
-              });
-            const normalizedQuery = projectsSearchQuery.trim().toLowerCase();
-            const filteredProjects = normalizedQuery
-              ? sortedProjects.filter(project =>
-                  [
-                    project.name,
-                    project.description,
-                    project.sponsor,
-                    project.product,
-                    project.targetAgency,
-                    project.region,
-                    project.type,
-                  ]
+              .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
+            const q = projectsSearchQuery.trim().toLowerCase();
+            const filtered = q
+              ? sorted.filter(p =>
+                  [p.name, p.description, p.sponsor, p.product]
                     .filter(Boolean)
-                    .some(value => String(value).toLowerCase().includes(normalizedQuery))
+                    .some(v => String(v).toLowerCase().includes(q))
                 )
-              : sortedProjects;
-            const continueProject = filteredProjects[0];
-            const remainingProjects = filteredProjects.slice(1, 16);
-            const recentThresholdMs = 14 * 24 * 60 * 60 * 1000;
-            const SUBMISSION_BADGE_MINI: Record<
-              string,
-              { label: string; color: string; bg: string }
-            > = {
-              '510K': { label: '510(k)', color: 'text-stone-700', bg: 'bg-stone-100' },
-              IND: { label: 'IND', color: 'text-stone-700', bg: 'bg-stone-100' },
-              NDA: { label: 'NDA', color: 'text-stone-800', bg: 'bg-stone-100' },
-              BLA: { label: 'BLA', color: 'text-stone-700', bg: 'bg-stone-100' },
-              PMA: { label: 'PMA', color: 'text-stone-800', bg: 'bg-stone-100' },
-              MAA: { label: 'MAA', color: 'text-stone-700', bg: 'bg-stone-100' },
-              DE_NOVO: { label: 'De Novo', color: 'text-stone-700', bg: 'bg-stone-100' },
-              EUA: { label: 'EUA', color: 'text-stone-700', bg: 'bg-stone-100' },
-            };
-            const fallbackBadge = { label: 'Project', color: 'text-stone-600', bg: 'bg-stone-50' };
-            const isPinned = (project: (typeof filteredProjects)[number]) =>
-              Boolean(project.starred || project.pinned);
-            const updatedMs = (project: (typeof filteredProjects)[number]) => {
-              const ms = new Date(project.lastUpdated).getTime();
-              return Number.isFinite(ms) ? ms : 0;
-            };
-            const pinnedProjects = remainingProjects.filter(isPinned);
-            const recentProjects = remainingProjects.filter(
-              project => !isPinned(project) && Date.now() - updatedMs(project) <= recentThresholdMs
-            );
-            const generalProjects = remainingProjects.filter(
-              project => !isPinned(project) && Date.now() - updatedMs(project) > recentThresholdMs
-            );
+              : sorted;
             const relTime = (d: Date | string) => {
               const parsed = new Date(d);
               if (isNaN(parsed.getTime())) return 'Recently';
@@ -3325,292 +3341,75 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 return 'Recently';
               }
             };
-            const openProjectHome = (projectId: string) => {
-              setActiveProjectId(projectId);
-              setLayoutMode('project-home');
-            };
-            const openProjectHomeWithLastConversation = (
-              projectId: string,
-              conversationCount?: number
-            ) => {
-              setActiveProjectId(projectId);
-              if ((conversationCount ?? 0) > 0) {
-                const rawProject = rawProjects.find(p => p.id === projectId);
-                const latestConversationId =
-                  rawProject?.conversations
-                    ?.slice()
-                    ?.sort(
-                      (a, b) =>
-                        new Date(b.updatedAt ?? b.createdAt ?? 0).getTime() -
-                        new Date(a.updatedAt ?? a.createdAt ?? 0).getTime()
-                    )?.[0]?.id ?? undefined;
-                setActiveConversationId(latestConversationId);
-                setActiveThreadId(latestConversationId);
-              } else {
-                setActiveConversationId(undefined);
-                setActiveThreadId(undefined);
-              }
-              setLayoutMode('project-home');
-            };
-            const renderProjectSection = (
-              title: string,
-              sectionProjects: typeof remainingProjects
-            ) => {
-              if (sectionProjects.length === 0) return null;
-              return (
-                <section className="mt-6 first:mt-0">
-                  <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wider mb-3">
-                    {title}
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {sectionProjects.map(project => {
-                      const badge = SUBMISSION_BADGE_MINI[project.type] || fallbackBadge;
-                      const metadata = [project.product, project.targetAgency, project.region]
-                        .filter(Boolean)
-                        .slice(0, 2)
-                        .join(' · ');
-                      const hasConversations = (project.conversationCount ?? 0) > 0;
-                      return (
-                        <Button
-                          key={project.id}
-                          type="button"
-                          variant="ghost"
-                          onClick={() => openProjectHome(project.id)}
-                          className={cn(
-                            'h-auto w-full group text-left rounded-xl border overflow-hidden transition-all duration-150 p-0',
-                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40',
-                            activeProjectId === project.id
-                              ? 'border-stone-300 bg-stone-50/80 ring-1 ring-stone-200'
-                              : 'border-stone-200 hover:border-stone-300 hover:shadow-sm bg-white'
-                          )}
-                        >
-                          <div className="p-4 w-full">
-                            <div className="flex items-center gap-2 mb-1">
-                              <div
-                                className="w-2 h-2 rounded-full flex-shrink-0"
-                                style={{
-                                  backgroundColor: getProjectAccentColor(
-                                    project.color,
-                                    project.type
-                                  ),
-                                }}
-                              />
-                              <h3 className="text-[14px] font-semibold text-stone-900 truncate group-hover:text-stone-700">
-                                {project.name}
-                              </h3>
-                              {project.starred && (
-                                <Star className="w-3 h-3 text-stone-400 fill-stone-400 flex-shrink-0" />
-                              )}
-                            </div>
-                            {metadata && (
-                              <p className="text-[11px] text-stone-500 truncate mb-1.5">
-                                {metadata}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-2 mt-1 text-[11px] text-stone-400">
-                              <span
-                                className={cn(
-                                  'font-medium px-1.5 py-0.5 rounded',
-                                  badge.bg,
-                                  badge.color
-                                )}
-                              >
-                                {badge.label}
-                              </span>
-                              <span className="flex items-center gap-1 tabular-nums">
-                                <MessageSquare className="w-3 h-3" />
-                                {project.conversationCount ?? 0}
-                              </span>
-                              <span className="ml-auto tabular-nums">
-                                {relTime(project.lastUpdated)}
-                              </span>
-                            </div>
-                            <div className="mt-2 flex items-center justify-end">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  openProjectHomeWithLastConversation(
-                                    project.id,
-                                    project.conversationCount ?? 0
-                                  );
-                                }}
-                                className="h-6 px-2 text-[11px] text-stone-500 hover:text-stone-800"
-                              >
-                                {hasConversations ? 'Resume chat' : 'Start chat'}
-                              </Button>
-                            </div>
-                          </div>
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </section>
-              );
-            };
 
             return (
-              <div className="px-6 sm:px-8 pt-8 pb-4 max-w-3xl mx-auto w-full flex-shrink-0">
-                {/* Header — quiet foyer */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
-                  <h2 className="text-lg font-semibold text-stone-800">Projects</h2>
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <div className="relative flex-1 sm:w-72">
-                      <Search className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                      <Input
-                        value={projectsSearchQuery}
-                        onChange={e => setProjectsSearchQuery(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter' && continueProject) {
-                            e.preventDefault();
-                            openProjectHome(continueProject.id);
-                          }
-                        }}
-                        placeholder="Search projects, product, agency..."
-                        aria-label="Search projects"
-                        className="h-8 pl-8 text-[12px] border-stone-200 bg-white"
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setNewProjectOpen(true)}
-                      className="h-8 px-3 text-[12px] text-stone-700 border-stone-200"
-                    >
-                      <Plus className="w-3.5 h-3.5 mr-1.5" />
-                      New project
-                    </Button>
-                  </div>
+              <div className="flex-1 overflow-y-auto px-6 sm:px-10 pt-10 pb-8 max-w-4xl mx-auto w-full">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <h1 className="text-2xl font-semibold text-stone-900">Projects</h1>
+                  <Button
+                    type="button"
+                    onClick={() => setNewProjectOpen(true)}
+                    className="bg-stone-900 text-white hover:bg-stone-800 rounded-full px-4 py-2 text-sm font-medium"
+                  >
+                    <Plus className="w-4 h-4 mr-1.5" />
+                    New project
+                  </Button>
                 </div>
 
-                {/* Continue recent work — hero card */}
-                {continueProject && (
-                  <section className="mb-8">
-                    <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wider mb-3">
-                      Continue recent work
-                    </p>
-                    <button
-                      onClick={() => {
-                        openProjectHomeWithLastConversation(
-                          continueProject.id,
-                          continueProject.conversationCount ?? 0
-                        );
-                      }}
-                      className={cn(
-                        'w-full text-left rounded-xl border border-stone-200 bg-white p-5',
-                        'hover:border-stone-300 hover:shadow-sm transition-all duration-150 group',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40'
-                      )}
-                    >
-                      <div className="flex items-start gap-4">
-                        {/* Accent dot */}
-                        <div
-                          className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0"
-                          style={{
-                            backgroundColor: getProjectAccentColor(
-                              continueProject.color,
-                              continueProject.type
-                            ),
-                          }}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-[15px] font-semibold text-stone-900 truncate group-hover:text-stone-700">
-                              {continueProject.name}
-                            </h3>
-                            {(() => {
-                              const badge =
-                                SUBMISSION_BADGE_MINI[continueProject.type] || fallbackBadge;
-                              return (
-                                <span
-                                  className={cn(
-                                    'text-[10px] font-medium px-1.5 py-0.5 rounded flex-shrink-0',
-                                    badge.bg,
-                                    badge.color
-                                  )}
-                                >
-                                  {badge.label}
-                                </span>
-                              );
-                            })()}
-                            {continueProject.starred && (
-                              <Star className="w-3 h-3 text-stone-400 fill-stone-400 flex-shrink-0" />
-                            )}
-                          </div>
-                          {continueProject.description && (
-                            <p className="text-[13px] text-stone-500 line-clamp-1 mb-2 leading-relaxed">
-                              {continueProject.description}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-3 text-[11px] text-stone-400">
-                            <span>{relTime(continueProject.lastUpdated)}</span>
-                            <span className="flex items-center gap-1">
-                              <MessageSquare className="w-3 h-3" />
-                              {continueProject.conversationCount}{' '}
-                              {continueProject.conversationCount === 1 ? 'chat' : 'chats'}
-                            </span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={e => {
-                                e.stopPropagation();
-                                openProjectHomeWithLastConversation(
-                                  continueProject.id,
-                                  continueProject.conversationCount ?? 0
-                                );
-                              }}
-                              className="h-6 px-2 text-[11px] text-stone-500 hover:text-stone-800"
-                            >
-                              {(continueProject.conversationCount ?? 0) > 0
-                                ? 'Resume latest chat'
-                                : 'Start first chat'}
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-stone-400 group-hover:text-stone-600 transition-colors flex-shrink-0 mt-1">
-                          <span className="text-[13px] font-medium hidden sm:inline">Continue</span>
-                          <ChevronLeft className="w-4 h-4 rotate-180" />
-                        </div>
-                      </div>
-                    </button>
-                  </section>
-                )}
+                {/* Search */}
+                <div className="relative mb-8">
+                  <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Input
+                    value={projectsSearchQuery}
+                    onChange={e => setProjectsSearchQuery(e.target.value)}
+                    placeholder="Search projects..."
+                    aria-label="Search projects"
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border-stone-200 bg-white rounded-xl"
+                  />
+                </div>
 
-                {filteredProjects.length === 0 && (
-                  <div className="rounded-xl border border-stone-200 bg-white p-6 text-center">
-                    <p className="text-[14px] font-medium text-stone-800 mb-1">
-                      No matching projects
+                {/* Cards grid */}
+                {filtered.length === 0 ? (
+                  <div className="text-center py-16">
+                    <p className="text-sm text-stone-500">
+                      {q ? 'No projects match your search.' : 'No projects yet.'}
                     </p>
-                    <p className="text-[12px] text-stone-500 mb-4">
-                      Try a different search term or create a new regulatory project.
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setNewProjectOpen(true)}
-                    >
-                      <Plus className="w-3.5 h-3.5 mr-1.5" />
-                      New project
-                    </Button>
-                  </div>
-                )}
-
-                {filteredProjects.length > 0 && (
-                  <>
-                    {renderProjectSection('Pinned', pinnedProjects)}
-                    {renderProjectSection('Recent', recentProjects)}
-                    {renderProjectSection(
-                      pinnedProjects.length > 0 || recentProjects.length > 0
-                        ? 'Project directory'
-                        : 'All projects',
-                      generalProjects
+                    {!q && (
+                      <Button
+                        type="button"
+                        onClick={() => setNewProjectOpen(true)}
+                        className="mt-4 bg-stone-900 text-white hover:bg-stone-800 rounded-full px-4 py-2 text-sm"
+                      >
+                        Create your first project
+                      </Button>
                     )}
-                  </>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {filtered.map(project => (
+                      <button
+                        key={project.id}
+                        onClick={() => {
+                          setActiveProjectId(project.id);
+                          setLayoutMode('project-home');
+                        }}
+                        className="text-left rounded-xl border border-stone-200 bg-white p-5 hover:shadow-sm hover:border-stone-300 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 group"
+                      >
+                        <h3 className="text-[15px] font-semibold text-stone-900 truncate group-hover:text-stone-700">
+                          {project.name}
+                        </h3>
+                        {project.description && (
+                          <p className="text-sm text-stone-500 line-clamp-2 mt-1 leading-relaxed">
+                            {project.description}
+                          </p>
+                        )}
+                        <p className="text-xs text-stone-400 mt-3">
+                          Updated {relTime(project.lastUpdated)}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
             );
@@ -3618,8 +3417,22 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
         {/* ── Project Home: AnA chat + Knowledge sidebar (Claude.ai layout) ── */}
         {layoutMode === 'project-home' && (
-          <div className="flex-1 flex min-h-0">
-            {/* Center: AnA chat */}
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Project header strip */}
+            {activeProject && (
+              <ProjectHomeDashboard
+                project={{
+                  name: activeProject.name,
+                  description: activeProject.description ?? null,
+                }}
+                onBackToProjects={() => {
+                  setActiveProjectId(undefined);
+                  setLayoutMode('projects');
+                }}
+              />
+            )}
+            {/* Center: AnA chat + right rail */}
+            <div className="flex-1 flex min-h-0">
             <AnaPersistentPanel
               mode="full"
               authoringContext={authoringContext}
@@ -3691,12 +3504,14 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 </ErrorBoundary>
               </div>
             )}
+            </div>
           </div>
         )}
 
         {/* AnA — THE single chat surface (ChatGPT/Claude style)
-            All 7 layout modes get full-mode AnA except project-home (rendered inline above) */}
-        {layoutMode !== 'project-home' && (
+            All 8 layout modes get full-mode AnA except project-home (rendered inline above),
+            projects (which renders its own full-page grid), and reports (full-page report engine) */}
+        {layoutMode !== 'project-home' && layoutMode !== 'projects' && layoutMode !== 'reports' && (
             <AnaPersistentPanel
               mode={
                 layoutMode === 'project-workspace'
@@ -3943,9 +3758,20 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               if (options?.projectId) {
                 setActiveProjectId(options.projectId);
                 const action = options.action || '';
-                // 510(k) workspace has its own embedded route
-                if (action === '510k-workspace') {
-                  navigate(`/concept2cure/project/${options.projectId}/510k`);
+                // Unified Medical Device & Diagnostics workspace — routes by submission type
+                if (
+                  action === 'medical-device' ||
+                  action === '510k-workspace' ||
+                  action === 'pma-workspace' ||
+                  action === 'cer-generator'
+                ) {
+                  const targetProject = projects.find(p => p.id === options.projectId);
+                  const deviceType = (targetProject?.type || '').toUpperCase();
+                  const subPath =
+                    deviceType === 'PMA' ? 'pma'
+                    : deviceType === 'CER' || deviceType === 'IVDR' ? 'cer'
+                    : '510k';
+                  navigate(`/concept2cure/project/${options.projectId}/${subPath}`);
                 } else {
                   const actionToMode: Record<string, LayoutMode> = {
                     work: 'documents',

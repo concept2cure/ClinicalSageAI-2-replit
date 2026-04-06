@@ -336,28 +336,28 @@ const AI_PROVIDERS: AIProviderOption[] = [
     label: 'Auto',
     description: 'Best model for the task',
     color: 'text-stone-500',
-    activeColor: 'text-blue-600',
+    activeColor: 'text-stone-900',
   },
   {
     id: 'anthropic',
     label: 'Claude',
     description: 'Anthropic Claude Sonnet 4',
     color: 'text-stone-500',
-    activeColor: 'text-blue-600',
+    activeColor: 'text-stone-900',
   },
   {
     id: 'openai',
     label: 'GPT-4o',
     description: 'OpenAI GPT-4o',
     color: 'text-stone-500',
-    activeColor: 'text-emerald-600',
+    activeColor: 'text-stone-700',
   },
   {
     id: 'moonshot',
     label: 'Kimi',
     description: 'Moonshot Kimi K2',
     color: 'text-stone-500',
-    activeColor: 'text-indigo-500',
+    activeColor: 'text-stone-700',
   },
 ];
 
@@ -622,15 +622,16 @@ const SLASH_COMMANDS: SlashCommand[] = [
 
 const APP_MENTIONS: Array<{ id: string; label: string; description: string }> = [
   { id: 'deep-research', label: 'Deep Research', description: 'Search ClinicalTrials.gov, PubMed, FDA, EMA' },
-  { id: 'precedent', label: 'Precedent Intelligence', description: 'Regulatory precedent analysis' },
-  { id: '510k', label: '510(k) Workspace', description: 'Medical device 510(k) submission' },
-  { id: 'pma', label: 'PMA Workspace', description: 'Premarket approval submission' },
-  { id: 'cer', label: 'CER Generator', description: 'Clinical evaluation report (EU MDR/IVDR)' },
-  { id: 'safety', label: 'Safety Narrative', description: 'Safety analysis and narrative generation' },
-  { id: 'biostats', label: 'Biostatistics', description: 'Statistical analysis, power calculations, SAP' },
-  { id: 'vault', label: 'Document Vault', description: 'Search and manage project documents' },
-  { id: 'ectd', label: 'eCTD Navigator', description: 'Electronic submission structure' },
-  { id: 'protocol', label: 'Protocol Designer', description: 'Clinical study protocol builder' },
+  { id: 'precedent-intelligence', label: 'Precedent Intelligence', description: 'CRL/RTF patterns and approval history' },
+  { id: 'device-strategy', label: 'Device Strategy', description: 'Classification, pathway, predicates, FDA Pre-Sub' },
+  { id: 'medical-device', label: 'Medical Device & Diagnostics', description: '510(k), PMA, De Novo, CER, IVDR submissions' },
+  { id: 'device-engineering', label: 'Device Engineering', description: 'Risk, software, human factors, biocompatibility' },
+  { id: 'cmc', label: 'CMC Module', description: 'Chemistry, Manufacturing, Controls (Module 3)' },
+  { id: 'safety-narrative', label: 'Safety Narrative', description: 'Safety analysis and narrative generation' },
+  { id: 'biostatistics', label: 'Biostatistics', description: 'Statistical analysis, power calculations, SAP' },
+  { id: 'protocol-designer', label: 'Protocol Designer', description: 'Clinical study protocol builder' },
+  { id: 'document-vault', label: 'Document Vault', description: 'Search and manage project documents' },
+  { id: 'ectd-navigator', label: 'eCTD Navigator', description: 'Electronic submission structure' },
 ];
 
 const SLASH_CATEGORY_COLORS: Record<string, string> = {
@@ -4151,7 +4152,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       <div
         className={cn(
           "flex-shrink-0 border-t border-stone-200 bg-white relative z-30 transition-colors",
-          isDragging && "border-blue-300 ring-2 ring-blue-100 bg-blue-50/20"
+          isDragging && "border-stone-400 ring-2 ring-stone-200 bg-stone-50/30"
         )}
         onDragOver={handleDragOver}
         onDragEnter={handleDragEnter}
@@ -4160,8 +4161,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       >
         {/* Drag overlay */}
         {isDragging && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 border-2 border-dashed border-blue-300 rounded-lg pointer-events-none">
-            <span className="text-sm text-blue-600 font-medium">Drop files to attach</span>
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 border-2 border-dashed border-stone-400 rounded-lg pointer-events-none">
+            <span className="text-sm text-stone-600 font-medium">Drop files to attach</span>
           </div>
         )}
         {/* Attached files preview */}
@@ -4223,7 +4224,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3.5 prose-pre:text-xs
                             prose-blockquote:border-l-stone-300 prose-blockquote:text-stone-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
                             prose-ul:text-stone-700 prose-ol:text-stone-700 prose-ul:my-2 prose-ol:my-2 prose-li:my-1
-                            prose-a:text-blue-600 prose-a:underline prose-a:decoration-blue-200 prose-a:underline-offset-2 hover:prose-a:text-blue-700
+                            prose-a:text-stone-700 prose-a:underline prose-a:decoration-stone-300 prose-a:underline-offset-2 hover:prose-a:text-stone-900
                             [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                           dangerouslySetInnerHTML={{ __html: htmlContent }}
                         />
@@ -4336,11 +4337,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             )}
             <div
               className={cn(
-                'relative flex flex-col bg-stone-50/80 border rounded-2xl transition-all duration-200',
+                'relative flex flex-col bg-white border rounded-2xl shadow-sm transition-all duration-200',
                 isFocused
-                  ? 'border-stone-300 ring-2 ring-stone-200/50 bg-white shadow-sm'
+                  ? 'border-stone-300 ring-2 ring-stone-200/50'
                   : 'border-stone-200 hover:border-stone-300',
-                isDragging && 'border-blue-300 ring-2 ring-blue-100 bg-blue-50/20'
+                isDragging && 'border-stone-400 ring-2 ring-stone-200 bg-stone-50/30'
               )}
               onDragOver={handleDragOver}
               onDragEnter={handleDragEnter}
@@ -4348,8 +4349,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               onDrop={handleDrop}
             >
               {isDragging && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/80 border-2 border-dashed border-blue-300 pointer-events-none">
-                  <div className="flex items-center gap-2 text-sm text-blue-600 font-medium">
+                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/80 border-2 border-dashed border-stone-400 pointer-events-none">
+                  <div className="flex items-center gap-2 text-sm text-stone-600 font-medium">
                     <Upload className="w-4 h-4" />
                     Drop files to attach
                   </div>
@@ -4568,14 +4569,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             <div className="max-w-2xl w-full text-center">
               {/* Greeting */}
               <div className="mb-8">
-                <div className="w-10 h-10 rounded-full bg-stone-800 flex items-center justify-center mx-auto mb-3">
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
-                <p className="text-[10px] font-semibold tracking-wider text-stone-400 uppercase mb-3">
-                  AnA 1.0 Regulatory Intelligence
+                <h2 className="text-2xl font-medium text-stone-900">{defaultGreeting}</h2>
+                <p className="text-sm text-stone-400 mt-2">
+                  Ask me anything — draft a section, check readiness, or find regulatory precedents.
                 </p>
-                <h2 className="text-lg font-semibold text-stone-900">{defaultGreeting}</h2>
-                {screenLabel && <p className="text-sm text-stone-400 mt-1">{screenLabel}</p>}
                 {/* Project context badge */}
                 {contextProfile?.activeProject && !messages?.length && (
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-stone-100 rounded-full text-[11px] border border-stone-200 mb-2">
@@ -4625,7 +4622,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
               {/* Suggested actions — up to 6 chips (authoring + intelligence + parent) */}
               {effectiveSuggestedActions && effectiveSuggestedActions.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-lg mx-auto">
+                <div className="flex flex-wrap justify-center gap-2.5 max-w-2xl mx-auto">
                   {effectiveSuggestedActions.slice(0, 6).map(action => (
                     <Button
                       key={action.id}
@@ -4686,7 +4683,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             {msg.content}
                           </p>
                           {(msg as any).recalledToInput && (
-                            <p className="mt-1 text-[10px] font-medium text-blue-600">
+                            <p className="mt-1 text-[10px] font-medium text-stone-600">
                               Editing prompt in composer
                             </p>
                           )}
@@ -4701,7 +4698,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3.5 prose-pre:text-xs
                               prose-blockquote:border-l-stone-300 prose-blockquote:text-stone-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
                               prose-ul:text-stone-700 prose-ol:text-stone-700 prose-ul:my-2 prose-ol:my-2 prose-li:my-1
-                              prose-a:text-blue-600 prose-a:underline prose-a:decoration-blue-200 prose-a:underline-offset-2 hover:prose-a:text-blue-700
+                              prose-a:text-stone-700 prose-a:underline prose-a:decoration-stone-300 prose-a:underline-offset-2 hover:prose-a:text-stone-900
                               [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                             dangerouslySetInnerHTML={{ __html: htmlContent }}
                           />
@@ -4880,11 +4877,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               className={cn(
                                 'text-[11px] font-medium px-1.5 py-0.5 rounded mr-1',
                                 msg.modelProvider === 'anthropic'
-                                  ? 'text-blue-600 bg-blue-50'
+                                  ? 'text-stone-700 bg-stone-100'
                                   : msg.modelProvider === 'openai'
-                                  ? 'text-emerald-600 bg-stone-100'
+                                  ? 'text-stone-600 bg-stone-100'
                                   : msg.modelProvider === 'moonshot'
-                                  ? 'text-indigo-500 bg-stone-100'
+                                  ? 'text-stone-600 bg-stone-100'
                                   : 'text-stone-500 bg-stone-50'
                               )}
                             >
@@ -4902,7 +4899,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               className={cn(
                                 'text-[11px] font-medium px-1.5 py-0.5 rounded mr-1',
                                 msg.evidenceUsage.firecrawlUsed
-                                  ? 'text-blue-600 bg-blue-50'
+                                  ? 'text-stone-700 bg-stone-100'
                                   : 'text-stone-500 bg-stone-50'
                               )}
                               title="External evidence usage"
@@ -5268,7 +5265,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         <div className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
                         <div className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
                       </div>
-                      <span className="text-xs text-blue-600 font-medium">
+                      <span className="text-xs text-stone-600 font-medium">
                         {thinkingMsg || 'Thinking...'}
                       </span>
                     </div>
@@ -5381,11 +5378,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
           <div
             className={cn(
-              'relative flex flex-col bg-stone-50/80 border rounded-2xl transition-all duration-200',
+              'relative flex flex-col bg-white border rounded-2xl shadow-sm transition-all duration-200',
               isFocused
-                ? 'border-stone-300 ring-2 ring-stone-200/50 bg-white shadow-sm'
+                ? 'border-stone-300 ring-2 ring-stone-200/50'
                 : 'border-stone-200 hover:border-stone-300',
-              isDragging && 'border-blue-300 ring-2 ring-blue-100 bg-blue-50/20'
+              isDragging && 'border-stone-400 ring-2 ring-stone-200 bg-stone-50/30'
             )}
             onDragOver={handleDragOver}
             onDragEnter={handleDragEnter}
@@ -5393,8 +5390,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             onDrop={handleDrop}
           >
             {isDragging && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/80 border-2 border-dashed border-blue-300 pointer-events-none">
-                <div className="flex items-center gap-2 text-sm text-blue-600 font-medium">
+              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/80 border-2 border-dashed border-stone-400 pointer-events-none">
+                <div className="flex items-center gap-2 text-sm text-stone-600 font-medium">
                   <Upload className="w-4 h-4" />
                   Drop files to attach
                 </div>
@@ -5423,7 +5420,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 className={cn(
                   'gap-1 px-2 h-7 text-xs font-medium rounded-lg',
                   chatMode === 'deep-research'
-                    ? 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                    ? 'bg-stone-200 text-stone-800 hover:bg-stone-300'
                     : chatMode === 'visual-studio'
                     ? 'bg-stone-100 text-stone-700 hover:bg-stone-100'
                     : 'text-stone-500 hover:bg-stone-100 hover:text-stone-700'
@@ -5469,7 +5466,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       </div>
                     </div>
                     {chatMode === 'standard' && (
-                      <Check className="w-4 h-4 text-blue-600 ml-auto mt-0.5 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-stone-700 ml-auto mt-0.5 flex-shrink-0" />
                     )}
                   </Button>
                   <Button
@@ -5481,10 +5478,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     }}
                     className={cn(
                       'w-full flex items-start gap-3 px-3 py-2.5 h-auto text-left justify-start rounded-none',
-                      chatMode === 'deep-research' && 'bg-blue-50'
+                      chatMode === 'deep-research' && 'bg-stone-100'
                     )}
                   >
-                    <Zap className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" />
+                    <Zap className="w-4 h-4 mt-0.5 text-stone-700 flex-shrink-0" />
                     <div className="text-left">
                       <div className="text-sm font-medium text-stone-950">Deep Research</div>
                       <div className="text-[11px] text-stone-400 leading-tight font-normal">
@@ -5492,7 +5489,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       </div>
                     </div>
                     {chatMode === 'deep-research' && (
-                      <Check className="w-4 h-4 text-blue-600 ml-auto mt-0.5 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-stone-700 ml-auto mt-0.5 flex-shrink-0" />
                     )}
                   </Button>
                   <div className="mx-2 my-0.5 border-t border-stone-100" />
@@ -5551,7 +5548,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       useFirecrawl && 'bg-stone-50'
                     )}
                   >
-                    <Search className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" />
+                    <Search className="w-4 h-4 mt-0.5 text-stone-700 flex-shrink-0" />
                     <div className="min-w-0 text-left">
                       <div className="text-sm font-medium text-stone-950">Use Firecrawl</div>
                       <div className="text-[10px] text-stone-500 leading-tight font-normal">
@@ -5564,7 +5561,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           : 'Optional governed open-web evidence'}
                       </div>
                     </div>
-                    {useFirecrawl && <Check className="w-4 h-4 text-blue-600 ml-auto mt-0.5" />}
+                    {useFirecrawl && <Check className="w-4 h-4 text-stone-700 ml-auto mt-0.5" />}
                   </Button>
                 </div>
               )}
@@ -5581,7 +5578,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   selectedProvider !== 'auto'
                     ? `bg-stone-100 ${
                         AI_PROVIDERS.find(p => p.id === selectedProvider)?.activeColor ||
-                        'text-blue-600'
+                        'text-stone-700'
                       } hover:bg-stone-200`
                     : 'text-stone-400 hover:bg-stone-100 hover:text-stone-600'
                 )}
@@ -5699,7 +5696,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 variant="ghost"
                 type="button"
                 onClick={() => setUseFirecrawl(false)}
-                className="h-auto gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-600 hover:bg-blue-100"
+                className="h-auto gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-stone-200 text-stone-700 hover:bg-stone-300"
                 aria-label="Disable Firecrawl"
               >
                 Firecrawl On
@@ -5719,7 +5716,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   className={cn(
                     'gap-1 px-2 h-auto py-0.5 rounded-full text-[11px] font-medium',
                     intentLens === lens.id
-                      ? 'bg-blue-50 text-blue-600'
+                      ? 'bg-stone-200 text-stone-800'
                       : 'text-stone-400 hover:bg-stone-100 hover:text-stone-600'
                   )}
                   aria-label={lens.description}
@@ -5733,7 +5730,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           {/* Active lens indicator when not focused */}
           {chatMode === 'standard' && !isFocused && intentLens !== 'auto' && (
             <div className="flex items-center gap-1.5 mt-1.5 pl-1">
-              <span className="text-[11px] text-blue-600 font-medium">
+              <span className="text-[11px] text-stone-700 font-medium">
                 {INTENT_LENSES.find(l => l.id === intentLens)?.icon}
                 {' '}{INTENT_LENSES.find(l => l.id === intentLens)?.label} lens active
               </span>

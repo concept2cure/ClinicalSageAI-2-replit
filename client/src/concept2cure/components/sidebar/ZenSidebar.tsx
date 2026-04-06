@@ -2,7 +2,8 @@
  * @fileoverview Zen Sidebar — Human-first OS navigation
  * @module concept2cure/components/sidebar/ZenSidebar
  *
- * Zone A (Utility): New Chat → Search
+ * Zone A (Utility): New Chat → Search → Customize AnA
+ * Zone B (6 Destinations): Chats → Projects → Reporting & Analytics → Communication Center → Apps → Settings
  * Zone B (5 Destinations): Chats → Projects → Communication Center → Apps → Settings
  * Zone C (Context): Active project indicator, pinned/recent project list
  * Zone D (Footer): Account/profile
@@ -22,29 +23,19 @@ import {
   ChevronDown,
   FileText,
   PenLine,
-  ShieldCheck,
   Search,
   Star,
   Archive,
   Beaker,
   Microscope,
-  FlaskConical,
-  Brain,
-  FileCheck,
   FileStack,
-  Upload,
-  Shield,
   Pin,
   PinOff,
   Sparkles,
   Settings,
-  Home,
-  Wrench,
-  Send,
+  SlidersHorizontal,
+  BarChart3,
   Activity,
-  ListChecks,
-  ClipboardCheck,
-  BookOpen,
   Pill,
   Heart,
   MoreHorizontal,
@@ -87,17 +78,17 @@ interface Project {
 
 /** Submission type → muted distinguishable dot color for sidebar */
 const SIDEBAR_TYPE_COLORS: Record<string, string> = {
-  '510K': '#64748b',    // slate-500 — device clearance
-  IND: '#3b82f6',       // blue-500 — investigational drug
-  NDA: '#2563eb',       // blue-600 — new drug application
-  BLA: '#7c3aed',       // violet-600 — biologics
-  PMA: '#6366f1',       // indigo-500 — device approval
-  MAA: '#0891b2',       // cyan-600 — EU marketing auth
-  DE_NOVO: '#0d9488',   // teal-500 — de novo device
-  EUA: '#dc2626',       // red-600 — emergency use
-  IVDR: '#059669',      // emerald-600 — in vitro diagnostic
-  ANDA: '#78716c',      // stone-500 — generic drug
-  CER: '#d97706',       // amber-600 — clinical evaluation
+  '510K': '#78716c',    // stone-500
+  IND: '#57534e',       // stone-600
+  NDA: '#44403c',       // stone-700
+  BLA: '#292524',       // stone-800
+  PMA: '#1c1917',       // stone-900
+  MAA: '#a8a29e',       // stone-400
+  DE_NOVO: '#d6d3d1',   // stone-300
+  EUA: '#57534e',       // stone-600
+  IVDR: '#78716c',      // stone-500
+  ANDA: '#a8a29e',      // stone-400
+  CER: '#44403c',       // stone-700
 };
 
 export interface ZenSidebarProps {
@@ -116,7 +107,6 @@ export interface ZenSidebarProps {
   onDeleteConversation: (id: string) => void;
   onRenameConversation?: (id: string) => void;
   onMoveConversation?: (conversationId: string, targetProjectId: string) => void;
-  onToggleStar: (id: string) => void;
   onTogglePin: (id: string) => void;
   onArchiveProject?: (id: string) => void;
   onDeleteProject?: (id: string) => void;
@@ -124,7 +114,6 @@ export interface ZenSidebarProps {
   userName?: string;
   userEmail?: string;
   activeNavId?: string;
-  industryMode?: string;
 }
 
 // ─── Submission type badge config ────────────────────────────────────────────
@@ -224,19 +213,11 @@ const NavItem: React.FC<{
   icon: React.ReactNode;
   label: string;
   active?: boolean;
-  accentColor?: 'blue' | 'violet' | 'emerald';
   badge?: string;
   subtitle?: string;
   onClick: () => void;
 }> = React.memo(
-  ({ icon, label, active, accentColor, badge, subtitle, onClick }) => {
-    const accentMap = {
-      blue: { bg: 'bg-stone-100', text: 'text-stone-600', iconColor: 'text-stone-900' },
-      violet: { bg: 'bg-stone-200', text: 'text-stone-600', iconColor: 'text-stone-900' },
-      emerald: { bg: 'bg-stone-100', text: 'text-stone-800', iconColor: 'text-stone-900' },
-    };
-    const accent = accentColor && accentMap[accentColor];
-
+  ({ icon, label, active, badge, subtitle, onClick }) => {
     return (
       <Button
         type="button"
@@ -247,22 +228,14 @@ const NavItem: React.FC<{
         className={cn(
           'h-auto w-full justify-start gap-2 mx-1 pl-5 pr-3 py-[5px] text-xs transition-all duration-150 rounded-md',
           active
-            ? accent
-              ? `${accent.bg} ${accent.text} font-medium`
-              : 'bg-stone-200/80 text-stone-900 font-medium'
-            : accent
-            ? cn(
-                'text-stone-600',
-                accent.bg === 'bg-stone-100' && 'hover:bg-stone-100 hover:text-stone-600',
-                accent.bg === 'bg-stone-100' && 'hover:bg-stone-100 hover:text-stone-800'
-              )
+            ? 'bg-stone-200/80 text-stone-900 font-medium'
             : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
         )}
       >
         <span
           className={cn(
             'flex-shrink-0',
-            active ? (accent ? accent.iconColor : 'text-stone-700') : 'text-stone-400'
+            active ? 'text-stone-700' : 'text-stone-400'
           )}
         >
           {icon}
@@ -286,7 +259,6 @@ const NavItem: React.FC<{
   (prev, next) =>
     prev.label === next.label &&
     prev.active === next.active &&
-    prev.accentColor === next.accentColor &&
     prev.badge === next.badge &&
     prev.subtitle === next.subtitle
 );
@@ -865,20 +837,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
     return {
       chats: h('chats'),
       projects: h('projects'),
+      reports: h('reports'),
       apps: h('apps'),
       settings: h('settings'),
       'communication-center': h('communication-center'),
-      // Project-scoped (kept for internal use but not top-level nav)
+      // Project-scoped (kept for internal routing, not rendered in sidebar)
       'project-home': h('project-home'),
-      'submission-builder': h('submission-builder'),
       overview: h('overview'),
       'task-board': h('task-board'),
-      tools: h('tools'),
-      submit: h('submit'),
-      documents: h('documents'),
-      'ri-copilot': h('ri-copilot'),
-      review: h('review'),
-      vault: h('vault'),
     };
   }, [onNavigate]);
 
@@ -905,15 +871,21 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <IconBtn label="Search" active={activeNavId === 'search'} onClick={onOpenSearch}>
           <Search className="w-4 h-4" />
         </IconBtn>
+        <IconBtn label="Customize AnA" active={activeNavId === 'customize'} onClick={() => onNavigate?.('customize')}>
+          <SlidersHorizontal className="w-4 h-4" />
+        </IconBtn>
 
         <div className="w-8 border-t border-stone-200 my-1" />
 
-        {/* ── Zone B: 5 Primary Destinations ── */}
+        {/* ── Zone B: 6 Primary Destinations ── */}
         <IconBtn label="Chats" active={activeNavId === 'chats'} onClick={nav.chats}>
           <MessageSquare className="w-4 h-4" />
         </IconBtn>
         <IconBtn label="Projects" active={activeNavId === 'projects'} onClick={nav.projects}>
           <FolderOpen className="w-4 h-4" />
+        </IconBtn>
+        <IconBtn label="Reporting & Analytics" active={activeNavId === 'reports'} onClick={nav.reports}>
+          <BarChart3 className="w-4 h-4" />
         </IconBtn>
         <IconBtn
           label="Communication Center"
@@ -997,6 +969,12 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             active={activeNavId === 'search'}
             onClick={onOpenSearch}
           />
+          <NavItem
+            icon={<SlidersHorizontal className="w-3.5 h-3.5" />}
+            label="Customize AnA"
+            active={activeNavId === 'customize'}
+            onClick={() => onNavigate?.('customize')}
+          />
         </div>
 
         <div className="mx-2 border-t border-stone-100 flex-shrink-0" />
@@ -1014,6 +992,12 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             label="Projects"
             active={activeNavId === 'projects'}
             onClick={nav.projects}
+          />
+          <NavItem
+            icon={<BarChart3 className="w-3.5 h-3.5" />}
+            label="Reporting & Analytics"
+            active={activeNavId === 'reports'}
+            onClick={nav.reports}
           />
           <NavItem
             icon={<Activity className="w-3.5 h-3.5" />}
@@ -1178,49 +1162,6 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             </>
           )}
 
-          {/* ── SUBMISSION WORKSPACE — secondary nav ────────────────── */}
-          <div className="mx-2 my-1 border-t border-stone-100" />
-          <WorkspaceGroup label="Workspace" defaultOpen={true}>
-            <NavItem
-              icon={<Wrench className="w-3.5 h-3.5" />}
-              label="Tools"
-              active={activeNavId === 'documents' || activeNavId === 'tools'}
-              onClick={nav.documents}
-            />
-            <NavItem
-              icon={<PenLine className="w-3.5 h-3.5" />}
-              label="Editor"
-              active={activeNavId === 'submission-builder'}
-              onClick={nav['submission-builder']}
-            />
-            <NavItem
-              icon={<Brain className="w-3.5 h-3.5" />}
-              label="Intelligence"
-              active={activeNavId === 'ri-copilot'}
-              accentColor="blue"
-              onClick={nav['ri-copilot']}
-            />
-            <NavItem
-              icon={<ShieldCheck className="w-3.5 h-3.5" />}
-              label="Review & Verify"
-              active={activeNavId === 'review' || activeNavId === 'verify'}
-              accentColor="emerald"
-              onClick={nav.review}
-            />
-            <NavItem
-              icon={<Archive className="w-3.5 h-3.5" />}
-              label="References"
-              active={activeNavId === 'vault'}
-              onClick={nav.vault}
-            />
-            <NavItem
-              icon={<Send className="w-3.5 h-3.5" />}
-              label="Submit & Export"
-              active={activeNavId === 'submit'}
-              accentColor="blue"
-              onClick={nav.submit}
-            />
-          </WorkspaceGroup>
         </div>
 
         {/* User / account footer */}

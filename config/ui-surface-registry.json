@@ -11,8 +11,10 @@
         "path": "client/src/concept2cure/ZenApp.tsx",
         "status": "active",
         "action": "canonical",
-        "lines": 3940,
-        "role": "Primary application shell — single canonical shell owner"
+        "lines": 3580,
+        "role": "Primary application shell — single canonical shell owner",
+        "projectsView": "2026-04-06 WO-2: Rebuilt as Claude.ai-style projects grid. Clean 2-column cards, search, + New project. Black and white only.",
+        "projectLanding": "2026-04-06 WO-2: ProjectHomeDashboard rewritten — back link, hero title, description only. Right rail (ProjectKnowledgePanel) preserved."
       },
       "ZenRouter.tsx": {
         "path": "client/src/concept2cure/router/ZenRouter.tsx",
@@ -65,10 +67,11 @@
         "path": "client/src/concept2cure/components/sidebar/ZenSidebar.tsx",
         "status": "active",
         "action": "canonical",
-        "lines": 1200,
+        "lines": 1212,
         "globalItems": 5,
         "destinations": ["chats", "projects", "communication-center", "apps", "settings"],
-        "role": "Left sidebar — single canonical nav source with 5 destinations"
+        "role": "Left sidebar — single canonical nav source with 5 destinations",
+        "workspaceSectionRemoved": "2026-04-06 — Removed Tools, Editor, Intelligence, Review & Verify, References, Submit & Export from global sidebar per ChatGPT parity design constitution"
       },
       "ProjectsSidebar.tsx": {
         "path": "client/src/concept2cure/components/sidebar/ProjectsSidebar.tsx",
@@ -143,12 +146,22 @@
         "navId": "communication-center",
         "notes": "Promoted from sub-view to top-level destination in Phase 4."
       },
+      "reports": {
+        "status": "active",
+        "layoutMode": "reports",
+        "component": "IntelligentReportGenerator",
+        "componentPath": "client/src/concept2cure/components/reports/IntelligentReportGenerator.tsx",
+        "navId": "reports",
+        "position": "sidebar Zone B, between Projects and Communication Center",
+        "notes": "2026-04-06 Reporting & Analytics elevated to core sidebar destination. Renders IntelligentReportGenerator at the global level (not project-scoped). Excluded from catch-all AnaPersistentPanel since it owns its full canvas. Backend: /api/intelligent-reports/*, /api/report-os/*, /api/analytics-routes."
+      },
       "apps": {
         "status": "active",
         "layoutMode": "apps",
         "component": "AppsPage.tsx",
         "componentPath": "client/src/concept2cure/pages/AppsPage.tsx",
-        "navId": "apps"
+        "navId": "apps",
+        "notes": "2026-04-06 Apps Convergence (25\u219220): ChatGPT-style app directory consolidated by use case after SME code audit. 4 categories: Strategy & Research (3), Submission Authoring (5), Intelligence & Analysis (4), Quality & Lifecycle (8). Two new merged hubs use chat-first priming: 'device-strategy' (merges device-pathway + q-submission + predicate-finder) and 'device-engineering' (merges risk-management + samd-cybersecurity + human-factors + biocompatibility). All 17 backend-rich apps preserved (real services, tool panels, workspace views, embedded modules). 9 legacy IDs preserved as fallthrough cases for back-compat with stored nav targets, saved actions, and project app connections. Server KNOWN_APP_IDS, useProjectApps catalog, and @-mention list synced."
       },
       "settings": {
         "status": "active",
@@ -156,6 +169,17 @@
         "component": "SetupPage",
         "navId": "settings",
         "notes": "Renamed from 'setup' to 'settings' in phase 10."
+      },
+      "customize": {
+        "status": "active",
+        "trigger": "sidebar Zone A → 'Customize AnA'",
+        "component": "ZenSettings → IntelligenceSection",
+        "tabs": {
+          "personal": "UserContextEditor — role, expertise, response style, custom context",
+          "company": "CompanyContextEditor — company profile, regulatory markets, pipeline, SOPs",
+          "project": "ProjectContextEditor — submission type, target agencies, risks, instructions"
+        },
+        "notes": "2026-04-06 WO-4: First-class sidebar entry for regulatory intelligence configuration. 3-tier: user → organization → project."
       }
     },
     "deletedFiles": [

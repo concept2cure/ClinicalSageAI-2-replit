@@ -30,10 +30,10 @@ export interface AppDefinition {
 }
 
 export const CATEGORY_META: Record<AppCategory, { label: string; color: string }> = {
-  strategy: { label: 'Strategy', color: '#6366f1' },    // indigo
-  builder: { label: 'Builders', color: '#0891b2' },     // cyan
-  studio: { label: 'Studio', color: '#7c3aed' },        // violet
-  intelligence: { label: 'Intelligence', color: '#059669' }, // emerald
+  strategy: { label: 'Strategy', color: '#1c1917' },    // stone-900
+  builder: { label: 'Builders', color: '#44403c' },     // stone-700
+  studio: { label: 'Studio', color: '#57534e' },        // stone-600
+  intelligence: { label: 'Intelligence', color: '#78716c' }, // stone-500
 };
 
 export const APP_CATALOG: AppDefinition[] = [
@@ -56,31 +56,13 @@ export const APP_CATALOG: AppDefinition[] = [
     memoryRole: 'Precedent Intelligence is connected. It provides regulatory precedent analysis including Complete Response Letter patterns, Refuse-to-File signals, approval history for similar products, and reviewer tendencies.',
   },
   {
-    id: '510k-workspace',
-    name: '510(k) Workspace',
-    description: 'Predicate comparison, substantial equivalence testing, submission package',
-    category: 'builder',
-    icon: 'FileText',
-    tracks: ['510K', 'DE_NOVO'],
-    memoryRole: '510(k) Workspace is connected. It manages predicate device comparison, substantial equivalence determination, performance testing strategy, and the full 510(k) submission package assembly.',
-  },
-  {
-    id: 'pma-workspace',
-    name: 'PMA Workspace',
-    description: 'Premarket approval application workspace with panel prep',
+    id: 'medical-device',
+    name: 'Medical Device & Diagnostics',
+    description: 'Unified workspace for 510(k), PMA, De Novo, CER, and IVDR — predicate analysis, clinical evidence, submission assembly',
     category: 'builder',
     icon: 'Heart',
-    tracks: ['PMA'],
-    memoryRole: 'PMA Workspace is connected. It handles premarket approval application development, clinical data organization, manufacturing information, and advisory panel preparation materials.',
-  },
-  {
-    id: 'cer-generator',
-    name: 'CER Generator',
-    description: 'Clinical evaluation report builder for EU MDR/IVDR compliance',
-    category: 'builder',
-    icon: 'Microscope',
-    tracks: ['IVDR', '510K', 'PMA', 'DE_NOVO', 'EUA'],
-    memoryRole: 'CER Generator is connected. It produces EU MDR/IVDR-compliant Clinical Evaluation Reports including literature search, clinical data appraisal, benefit-risk analysis, and PMCF planning.',
+    tracks: ['510K', 'PMA', 'DE_NOVO', 'EUA', 'IVDR'],
+    memoryRole: 'Medical Device & Diagnostics workspace is connected. It unifies 510(k) predicate comparison and substantial equivalence, PMA clinical evidence and panel prep, De Novo classification, and EU MDR/IVDR Clinical Evaluation Reports — adapting to the active project\'s submission type.',
   },
   {
     id: 'safety-narrative',
@@ -101,22 +83,40 @@ export const APP_CATALOG: AppDefinition[] = [
     memoryRole: 'Biostatistics studio is connected. It provides statistical analysis planning, sample size calculations, power analysis, endpoint selection rationale, multiplicity adjustment strategies, and statistical analysis plan generation.',
   },
   {
-    id: 'csr-builder',
-    name: 'CSR Builder',
-    description: 'Clinical Study Report authoring per ICH E3 guidelines',
+    id: 'csr-intelligence',
+    name: 'CSR Intelligence',
+    description: 'Clinical Study Report authoring and analysis per ICH E3 guidelines',
     category: 'builder',
     icon: 'BookOpen',
     tracks: ['IND', 'NDA', 'BLA', 'MAA'],
-    memoryRole: 'CSR Builder is connected. It assists with Clinical Study Report authoring following ICH E3 structure, including study design, patient disposition, efficacy results, safety results, and study conclusions.',
+    memoryRole: 'CSR Intelligence is connected. It assists with Clinical Study Report authoring and analysis following ICH E3 structure, including study design, patient disposition, efficacy results, safety results, and cross-study comparison.',
   },
   {
-    id: 'cmc-platform',
-    name: 'CMC Platform',
+    id: 'cmc',
+    name: 'CMC Module',
     description: 'Chemistry, Manufacturing, and Controls documentation (CTD Module 3)',
     category: 'builder',
     icon: 'FlaskConical',
     tracks: ['IND', 'NDA', 'BLA', 'MAA'],
-    memoryRole: 'CMC Platform is connected. It manages Chemistry, Manufacturing, and Controls documentation for CTD Module 3 including drug substance, drug product, specifications, stability data, and manufacturing process descriptions.',
+    memoryRole: 'CMC Module is connected. It manages Chemistry, Manufacturing, and Controls documentation for CTD Module 3 including drug substance, drug product, specifications, stability data, and manufacturing process descriptions.',
+  },
+  {
+    id: 'device-strategy',
+    name: 'Device Strategy & FDA Engagement',
+    description: 'Device classification, pathway selection, predicate search, and FDA Pre-Sub planning',
+    category: 'strategy',
+    icon: 'Compass',
+    tracks: ['510K', 'PMA', 'DE_NOVO', 'EUA', 'IVDR'],
+    memoryRole: 'Device Strategy & FDA Engagement is connected. It supports device classification (Class I/II/III), regulatory pathway selection (510(k), De Novo, PMA, HDE, Exempt), FDA product code lookup, predicate device search and substantial equivalence analysis, and FDA Pre-Submission (Q-Sub) package preparation including feedback questions and meeting prep.',
+  },
+  {
+    id: 'device-engineering',
+    name: 'Device Engineering',
+    description: 'ISO 14971 risk management, IEC 62304 software & cybersecurity, IEC 62366 human factors, and ISO 10993 biocompatibility',
+    category: 'builder',
+    icon: 'ShieldAlert',
+    tracks: ['510K', 'PMA', 'DE_NOVO', 'EUA', 'IVDR'],
+    memoryRole: 'Device Engineering is connected. It covers the four core engineering disciplines for medical devices: ISO 14971 risk management (hazard analysis, FMEA, risk control matrix, RMR), IEC 62304 software lifecycle and FDA cybersecurity premarket guidance (Class A/B/C, threat modeling, SBOM), IEC 62366-1 human factors and usability engineering (use specification, task analysis, summative validation), and ISO 10993 biocompatibility (endpoint test selection, Biological Evaluation Report).',
   },
   {
     id: 'compliance-monitor',
