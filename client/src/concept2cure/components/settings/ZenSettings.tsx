@@ -1270,9 +1270,9 @@ const HelpSection: React.FC = () => {
 type IntelligenceTab = 'personal' | 'company' | 'project';
 
 const INTELLIGENCE_TABS: { id: IntelligenceTab; label: string; description: string }[] = [
-  { id: 'personal', label: 'Personal Preferences', description: 'How AnA adapts to your style' },
-  { id: 'company', label: 'Company Context', description: 'Organization-wide intelligence' },
-  { id: 'project', label: 'Project Context', description: 'Project-specific knowledge' },
+  { id: 'personal', label: 'My Profile', description: 'Your role, expertise, and how AnA drafts for you' },
+  { id: 'company', label: 'Organization', description: 'Company regulatory posture, markets, pipeline, and SOPs' },
+  { id: 'project', label: 'Active Project', description: 'Submission-specific strategy, agencies, risks, and instructions' },
 ];
 
 const IntelligenceSection: React.FC<{
@@ -1284,8 +1284,8 @@ const IntelligenceSection: React.FC<{
   return (
     <div>
       <SectionHeader
-        title="AnA Intelligence"
-        description="Teach AnA about you, your company, and your projects"
+        title="Customize AnA"
+        description="Configure how AnA works for your regulatory workflow — from personal drafting preferences to project-level submission strategy"
       />
 
       {/* Tab bar */}
@@ -1335,8 +1335,11 @@ const IntelligenceSection: React.FC<{
           {activeTab === 'project' && !activeProjectId && (
             <div className="p-8 text-center">
               <Brain className="w-8 h-8 text-stone-300 mx-auto mb-3" />
-              <p className="text-sm text-stone-500">
-                Select a project first to configure project-specific context.
+              <p className="text-sm font-medium text-stone-700 mb-1">
+                No active project
+              </p>
+              <p className="text-xs text-stone-400 max-w-xs mx-auto">
+                Open a project to configure its submission type, target agencies, regulatory strategy, risk factors, and custom instructions for AnA.
               </p>
             </div>
           )}

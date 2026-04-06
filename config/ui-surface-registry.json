@@ -160,6 +160,17 @@
         "component": "SetupPage",
         "navId": "settings",
         "notes": "Renamed from 'setup' to 'settings' in phase 10."
+      },
+      "customize": {
+        "status": "active",
+        "trigger": "sidebar Zone A → 'Customize AnA'",
+        "component": "ZenSettings → IntelligenceSection",
+        "tabs": {
+          "personal": "UserContextEditor — role, expertise, response style, custom context",
+          "company": "CompanyContextEditor — company profile, regulatory markets, pipeline, SOPs",
+          "project": "ProjectContextEditor — submission type, target agencies, risks, instructions"
+        },
+        "notes": "2026-04-06 WO-4: First-class sidebar entry for regulatory intelligence configuration. 3-tier: user → organization → project."
       }
     },
     "deletedFiles": [

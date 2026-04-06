@@ -2,7 +2,7 @@
  * @fileoverview Zen Sidebar — Human-first OS navigation
  * @module concept2cure/components/sidebar/ZenSidebar
  *
- * Zone A (Utility): New Chat → Search
+ * Zone A (Utility): New Chat → Search → Customize AnA
  * Zone B (5 Destinations): Chats → Projects → Communication Center → Apps → Settings
  * Zone C (Context): Active project indicator, pinned/recent project list
  * Zone D (Footer): Account/profile
@@ -32,6 +32,7 @@ import {
   PinOff,
   Sparkles,
   Settings,
+  SlidersHorizontal,
   Activity,
   Pill,
   Heart,
@@ -869,6 +870,9 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <IconBtn label="Search" active={activeNavId === 'search'} onClick={onOpenSearch}>
           <Search className="w-4 h-4" />
         </IconBtn>
+        <IconBtn label="Customize AnA" active={activeNavId === 'customize'} onClick={() => onNavigate?.('customize')}>
+          <SlidersHorizontal className="w-4 h-4" />
+        </IconBtn>
 
         <div className="w-8 border-t border-stone-200 my-1" />
 
@@ -960,6 +964,12 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             label="Search"
             active={activeNavId === 'search'}
             onClick={onOpenSearch}
+          />
+          <NavItem
+            icon={<SlidersHorizontal className="w-3.5 h-3.5" />}
+            label="Customize AnA"
+            active={activeNavId === 'customize'}
+            onClick={() => onNavigate?.('customize')}
           />
         </div>
 

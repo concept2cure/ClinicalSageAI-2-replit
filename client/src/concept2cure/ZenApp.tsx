@@ -2063,6 +2063,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             case 'settings':
               setLayoutMode('settings');
               break;
+            case 'customize':
+              setSettingsSection('ana-intelligence');
+              setSettingsOpen(true);
+              break;
             // ── Project landing ──
             case 'overview':
               openWorkspaceView('regulatory-workspace');
