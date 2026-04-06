@@ -192,6 +192,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const status = val(m, 'validationStatus');
     const methodName = val(m, 'methodName');
     const impurityLimits = valObj(m, 'impurityLimits');
+    const impurities = valArr(m, 'impurities');
+    const qualBasis = val(m, 'qualificationBasis');
     const tables: GeneratedTable[] = [];
     if (criteria) {
       tables.push({
@@ -205,6 +207,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         ]),
       });
     }
+    // Impurity limits from structured object or impurity_profile source array
     if (impurityLimits) {
       tables.push({
         title: 'Impurity Limits — Drug Substance',
@@ -214,12 +217,24 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
           return [impurity, String(l.identification || '—'), String(l.qualification || '—'), String(l.specLimit || String(limits))];
         }),
       });
+    } else if (impurities.length > 0) {
+      tables.push({
+        title: 'Impurity Limits — Drug Substance',
+        headers: ['Impurity', 'Observed Level', 'Specification Limit', 'Identification'],
+        rows: impurities.map((imp: any) => [
+          imp.impurityName || 'Unknown',
+          imp.observedLevel !== undefined ? `${imp.observedLevel}%` : '—',
+          imp.specLimit !== undefined ? `${imp.specLimit}%` : '—',
+          imp.identification || '—',
+        ]),
+      });
     }
     return {
       narrative: `The drug substance specification defines acceptance criteria for quality attributes. ` +
         (status ? `Analytical methods are ${status}. ` : '') +
         (criteria ? `${Object.keys(criteria).length} test(s) are defined in the specification. ` : '') +
-        (impurityLimits ? `Impurity limits are established for ${Object.keys(impurityLimits).length} identified impurity/ies per ICH Q3A.` : ''),
+        (impurityLimits ? `Impurity limits are established for ${Object.keys(impurityLimits).length} identified impurity/ies per ICH Q3A. ` :
+          impurities.length > 0 ? `${impurities.length} specified impurity/ies characterized` + (qualBasis ? ` (${qualBasis})` : '') + `. ` : ''),
       tables,
     };
   },

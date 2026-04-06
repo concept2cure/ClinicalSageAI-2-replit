@@ -467,6 +467,47 @@ describe('Module 3 E2E Journey — Realistic IND Seed', () => {
       expect(s33.narrativeDraft.toLowerCase()).toContain('reference');
     });
 
+    // ── New source type extraction tests ──────────────────────────────────
+
+    it('process_validation data appears in 3.2.S.2 narrative and tables', () => {
+      const s2 = composed.find(s => s.sectionKey === '3.2.S.2')!;
+      expect(s2.narrativeDraft.toLowerCase()).toContain('validated');
+      const pvTable = s2.tables.find(t => t.title.includes('Process Validation'));
+      expect(pvTable).toBeDefined();
+    });
+
+    it('impurity_profile data appears in 3.2.S.3 tables', () => {
+      const s3 = composed.find(s => s.sectionKey === '3.2.S.3')!;
+      const impTable = s3.tables.find(t => t.title.includes('Impurity Profile'));
+      expect(impTable).toBeDefined();
+      expect(impTable!.rows.length).toBeGreaterThan(0);
+    });
+
+    it('impurity data feeds into 3.2.S.4 as fallback when no impurityLimits object', () => {
+      const s4 = composed.find(s => s.sectionKey === '3.2.S.4')!;
+      const impTable = s4.tables.find(t => t.title.includes('Impurity'));
+      expect(impTable).toBeDefined();
+    });
+
+    it('formulation_record data appears in 3.2.P.1 with component table', () => {
+      const p1 = composed.find(s => s.sectionKey === '3.2.P.1')!;
+      const compTable = p1.tables.find(t => t.title.includes('Quantitative Composition'));
+      expect(compTable).toBeDefined();
+      expect(compTable!.rows.length).toBeGreaterThan(0);
+    });
+
+    it('dissolution_profile data appears in 3.2.P.2 narrative', () => {
+      const p2 = composed.find(s => s.sectionKey === '3.2.P.2')!;
+      const lower = p2.narrativeDraft.toLowerCase();
+      expect(lower.includes('dissolution') || lower.includes('apparatus')).toBe(true);
+    });
+
+    it('raw_material_spec data appears in 3.2.P.4 tables', () => {
+      const p4 = composed.find(s => s.sectionKey === '3.2.P.4')!;
+      const rmTable = p4.tables.find(t => t.title.includes('Raw Material'));
+      expect(rmTable).toBeDefined();
+    });
+
     it('completeness is high for well-sourced sections', () => {
       const s1 = composed.find(s => s.sectionKey === '3.2.S.1')!;
       expect(s1.completeness).toBeGreaterThanOrEqual(80);
