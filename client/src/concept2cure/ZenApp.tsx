@@ -2641,22 +2641,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               />
             ))}
 
-          {/* ── Project Home: AnA-first with light context strip ── */}
-          {/* Strip is flex-shrink-0; AnA (rendered separately below) takes flex-1 */}
-          {!embeddedModule && layoutMode === 'project-home' && activeProject && (
-            <div className="flex-shrink-0" data-testid="workspace-overview">
-              <ProjectHomeDashboard
-                project={{
-                  name: activeProject.name,
-                  description: activeProject.description ?? null,
-                }}
-                onBackToProjects={() => {
-                  setActiveProjectId(undefined);
-                  setLayoutMode('projects');
-                }}
-              />
-            </div>
-          )}
 
           {/* ── Unified Workflow: Dossier Map ────────────────────────────── */}
           {!embeddedModule && layoutMode === 'project-workspace' && workspaceView === 'dossier-map' && (
@@ -3393,8 +3377,22 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
         {/* ── Project Home: AnA chat + Knowledge sidebar (Claude.ai layout) ── */}
         {layoutMode === 'project-home' && (
-          <div className="flex-1 flex min-h-0">
-            {/* Center: AnA chat */}
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Project header strip */}
+            {activeProject && (
+              <ProjectHomeDashboard
+                project={{
+                  name: activeProject.name,
+                  description: activeProject.description ?? null,
+                }}
+                onBackToProjects={() => {
+                  setActiveProjectId(undefined);
+                  setLayoutMode('projects');
+                }}
+              />
+            )}
+            {/* Center: AnA chat + right rail */}
+            <div className="flex-1 flex min-h-0">
             <AnaPersistentPanel
               mode="full"
               authoringContext={authoringContext}
@@ -3466,6 +3464,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 </ErrorBoundary>
               </div>
             )}
+            </div>
           </div>
         )}
 
