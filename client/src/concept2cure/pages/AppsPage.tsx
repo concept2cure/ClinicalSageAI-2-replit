@@ -45,9 +45,6 @@ interface AppEntry {
 
 interface AppsPageProps {
   onNavigate: (id: string) => void;
-  activeProjectId?: string;
-  activeProjectName?: string;
-  submissionType?: string;
 }
 
 // ─── App Catalog ──────────────────────────────────────────────────────────────

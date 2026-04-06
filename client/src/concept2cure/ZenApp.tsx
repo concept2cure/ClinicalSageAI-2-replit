@@ -2261,9 +2261,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               <ErrorBoundary>
                 <Suspense fallback={<ModuleLoadingFallback />}>
                   <AppsPage
-                    submissionType={activeProject?.type}
-                    activeProjectId={activeProjectId}
-                    activeProjectName={activeProject?.name}
                     onNavigate={id => {
                       switch (id) {
                         // ── Featured ──

@@ -5377,9 +5377,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
           <div
             className={cn(
-              'relative flex flex-col bg-stone-50/80 border rounded-2xl transition-all duration-200',
+              'relative flex flex-col bg-white border rounded-2xl shadow-sm transition-all duration-200',
               isFocused
-                ? 'border-stone-300 ring-2 ring-stone-200/50 bg-white shadow-sm'
+                ? 'border-stone-300 ring-2 ring-stone-200/50'
                 : 'border-stone-200 hover:border-stone-300',
               isDragging && 'border-stone-400 ring-2 ring-stone-200 bg-stone-50/30'
             )}
