@@ -227,6 +227,8 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
         const cat = s.category.toLowerCase();
         return cat === 'document' || cat === 'interactive' || cat === 'visualization';
       });
+    } else if (filterType === 'feedsM3') {
+      filtered = filtered.filter(s => s.metadata?.dossierClassification?.feedsModule3 === true);
     } else if (filterType !== 'all') {
       filtered = filtered.filter(s => s.type === filterType || s.category === filterType);
     }
@@ -254,6 +256,11 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
         const cat = s.category.toLowerCase();
         return cat === 'document' || cat === 'interactive' || cat === 'visualization';
       }).length,
+    [sources]
+  );
+
+  const feedsM3Count = useMemo(
+    () => sources.filter(s => s.metadata?.dossierClassification?.feedsModule3 === true).length,
     [sources]
   );
 
@@ -343,6 +350,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
               { key: 'all', label: 'All Files' },
               { key: 'sources', label: `Sources (${sourceDocCount})` },
               { key: 'authored', label: `Authored (${authoredCount})` },
+              ...(feedsM3Count > 0 ? [{ key: 'feedsM3', label: `Feeds M3 (${feedsM3Count})` }] : []),
             ].map(({ key, label }) => (
               <button
                 key={key}
