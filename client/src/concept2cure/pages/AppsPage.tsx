@@ -30,17 +30,12 @@ import {
   Activity,
   CheckSquare,
   Compass,
-  Crosshair,
-  Code2,
-  Users,
-  TestTube,
-  MessageCircle,
   ChevronRight,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Category = 'featured' | 'authoring' | 'intelligence' | 'specialist';
+type Category = 'strategy' | 'authoring' | 'intelligence' | 'quality';
 
 interface AppEntry {
   id: string;
@@ -56,66 +51,63 @@ interface AppsPageProps {
 // ─── App Catalog ──────────────────────────────────────────────────────────────
 
 const APPS: AppEntry[] = [
-  // Featured
-  { id: 'deep-research',           label: 'Deep Research',              description: 'Search ClinicalTrials.gov, PubMed, FDA, EMA databases and regulatory sources',              category: 'featured' },
-  { id: 'precedent-intelligence',  label: 'Precedent Intelligence',     description: 'Regulatory precedent analysis, submission comparison, and approval pattern mining',     category: 'featured' },
-  { id: 'device-pathway',          label: 'Device Pathway Navigator',   description: 'Classify your device, determine the right pathway (510(k), PMA, De Novo, Exempt), and look up product codes', category: 'featured' },
-  { id: 'cmc',                     label: 'CMC Module',                 description: 'Chemistry, Manufacturing and Controls — Module 3 authoring and compliance',               category: 'featured' },
-  { id: 'biostatistics',           label: 'Biostatistics',              description: 'Statistical analysis, power calculations, SAP design, and endpoint evaluation',            category: 'featured' },
-  // Authoring
+  // ── Strategy & Research (3) ──
+  { id: 'deep-research',           label: 'Deep Research',              description: 'Search ClinicalTrials.gov, PubMed, FDA, EMA databases and regulatory sources',              category: 'strategy' },
+  { id: 'precedent-intelligence',  label: 'Precedent Intelligence',     description: 'Regulatory precedent analysis, CRL/RTF patterns, and approval history mining',           category: 'strategy' },
+  { id: 'device-strategy',         label: 'Device Strategy & FDA Engagement', description: 'Device classification, pathway selection (510(k)/De Novo/PMA), predicate search, and FDA Pre-Submission planning', category: 'strategy' },
+
+  // ── Submission Authoring (5) ──
   { id: 'medical-device',          label: 'Medical Device & Diagnostics', description: 'Unified hub for 510(k), PMA, De Novo, HDE, CER (MDR), and PER (IVDR) — adapts to your project to assemble the right submission package', category: 'authoring' },
-  { id: 'q-submission',            label: 'Q-Submission Assistant',     description: 'FDA Pre-Sub package builder — feedback questions, meeting prep, and submission tracking',  category: 'authoring' },
-  { id: 'safety-narrative',        label: 'Safety Narrative',           description: 'ICH E3 §12 compliant safety narrative generation for clinical submissions',               category: 'authoring' },
   { id: 'ind-authoring',           label: 'IND Authoring',              description: 'Investigational New Drug application — Module 2 summaries, nonclinical, and clinical',    category: 'authoring' },
+  { id: 'cmc',                     label: 'CMC Module',                 description: 'Chemistry, Manufacturing and Controls — Module 3 authoring and compliance',               category: 'authoring' },
+  { id: 'safety-narrative',        label: 'Safety Narrative',           description: 'ICH E3 §12 compliant safety narrative generation for clinical submissions',               category: 'authoring' },
   { id: 'report-engine',           label: 'Report Generator',           description: 'Intelligent regulatory report generation — submission summaries and strategic analysis',   category: 'authoring' },
-  // Intelligence
-  { id: 'predicate-finder',        label: 'Predicate Finder',           description: 'Search FDA 510(k) database for predicates, compare device features, and build substantial equivalence tables', category: 'intelligence' },
+
+  // ── Intelligence & Analysis (4) ──
   { id: 'regulatory-intelligence', label: 'Regulatory Intelligence',    description: 'Real-time regulatory landscape monitoring, guideline tracking, and impact analysis',       category: 'intelligence' },
   { id: 'csr-intelligence',        label: 'CSR Intelligence',           description: 'Clinical Study Report analysis, data extraction, and cross-study comparison',              category: 'intelligence' },
+  { id: 'biostatistics',           label: 'Biostatistics',              description: 'Statistical analysis, power calculations, SAP design, and endpoint evaluation',            category: 'intelligence' },
   { id: 'protocol-designer',       label: 'Study Protocol Designer',    description: 'Protocol design, endpoint optimization, and statistical power simulation',                category: 'intelligence' },
-  { id: 'dossier-navigator',       label: 'Dossier Navigator',          description: 'CTD/eCTD structure visualization, section readiness, and placement management',            category: 'intelligence' },
-  // Specialist
-  { id: 'risk-management',         label: 'Risk Management (ISO 14971)', description: 'Hazard analysis, FMEA, risk control matrix, and Risk Management Report per ISO 14971',   category: 'specialist' },
-  { id: 'samd-cybersecurity',      label: 'SaMD & Cybersecurity',       description: 'Software lifecycle (IEC 62304), FDA cybersecurity premarket guidance, threat modeling, and SBOM', category: 'specialist' },
-  { id: 'human-factors',           label: 'Human Factors (IEC 62366)',  description: 'Use specification, task analysis, formative studies, and summative usability validation',  category: 'specialist' },
-  { id: 'biocompatibility',        label: 'Biocompatibility (ISO 10993)', description: 'Biological evaluation plan, ISO 10993 endpoint test selection, and biocompat report',   category: 'specialist' },
-  { id: 'ectd-navigator',          label: 'eCTD Navigator',             description: 'Electronic Common Technical Document assembly, validation, and regional compliance',       category: 'specialist' },
-  { id: 'document-vault',          label: 'Document Vault',             description: 'Governed document storage, version control, and evidence management',                     category: 'specialist' },
-  { id: 'sop-management',          label: 'SOP Management',             description: 'Standard Operating Procedures lifecycle, training tracking, and compliance',               category: 'specialist' },
-  { id: 'capa-management',         label: 'CAPA Management',            description: 'Corrective and preventive action tracking, root cause analysis, and closure',              category: 'specialist' },
-  { id: 'post-market',             label: 'Post-Market Surveillance',   description: 'Vigilance reporting (FDA MDR, EU MIR), signal detection, PSUR and PMCF report generation',  category: 'specialist' },
-  { id: 'inspection-readiness',    label: 'Inspection Readiness',       description: 'FDA QSIT, EU Notified Body audits, and MDSAP — mock audit and readiness scoring',         category: 'specialist' },
+
+  // ── Quality & Lifecycle (6) ──
+  { id: 'device-engineering',      label: 'Device Engineering',         description: 'ISO 14971 risk management, IEC 62304 software & cybersecurity, IEC 62366 human factors, and ISO 10993 biocompatibility', category: 'quality' },
+  { id: 'dossier-navigator',       label: 'Dossier Navigator',          description: 'CTD/eCTD structure visualization, section readiness, and placement management',            category: 'quality' },
+  { id: 'ectd-navigator',          label: 'eCTD Navigator',             description: 'Electronic Common Technical Document assembly, validation, and regional compliance',       category: 'quality' },
+  { id: 'document-vault',          label: 'Document Vault',             description: 'Governed document storage, version control, and evidence management',                     category: 'quality' },
+  { id: 'sop-management',          label: 'SOP Management',             description: 'Standard Operating Procedures lifecycle, training tracking, and compliance',               category: 'quality' },
+  { id: 'capa-management',         label: 'CAPA Management',            description: 'Corrective and preventive action tracking, root cause analysis, and closure',              category: 'quality' },
+  { id: 'post-market',             label: 'Post-Market & Vigilance',    description: 'Vigilance reporting (FDA MDR, EU MIR), signal detection, PSUR and PMCF report generation',  category: 'quality' },
+  { id: 'inspection-readiness',    label: 'Inspection Readiness',       description: 'FDA QSIT, EU Notified Body audits, and MDSAP — mock audit and readiness scoring',         category: 'quality' },
 ];
 
 const CATEGORIES: { key: Category; label: string }[] = [
-  { key: 'featured', label: 'Featured' },
-  { key: 'authoring', label: 'Authoring' },
-  { key: 'intelligence', label: 'Intelligence' },
-  { key: 'specialist', label: 'Specialist' },
+  { key: 'strategy', label: 'Strategy & Research' },
+  { key: 'authoring', label: 'Submission Authoring' },
+  { key: 'intelligence', label: 'Intelligence & Analysis' },
+  { key: 'quality', label: 'Quality & Lifecycle' },
 ];
 
 // ─── Icon Mapping ─────────────────────────────────────────────────────────────
 
 const ICON_MAP: Record<string, React.ReactNode> = {
+  // Strategy & Research
   'deep-research':           <Search className="w-5 h-5 text-stone-500" />,
   'precedent-intelligence':  <Scale className="w-5 h-5 text-stone-500" />,
-  'device-pathway':          <Compass className="w-5 h-5 text-stone-500" />,
-  'cmc':                     <FlaskConical className="w-5 h-5 text-stone-500" />,
-  'biostatistics':           <BarChart2 className="w-5 h-5 text-stone-500" />,
+  'device-strategy':         <Compass className="w-5 h-5 text-stone-500" />,
+  // Submission Authoring
   'medical-device':          <Heart className="w-5 h-5 text-stone-500" />,
-  'q-submission':            <MessageCircle className="w-5 h-5 text-stone-500" />,
-  'safety-narrative':        <Shield className="w-5 h-5 text-stone-500" />,
   'ind-authoring':           <Pill className="w-5 h-5 text-stone-500" />,
+  'cmc':                     <FlaskConical className="w-5 h-5 text-stone-500" />,
+  'safety-narrative':        <Shield className="w-5 h-5 text-stone-500" />,
   'report-engine':           <FileOutput className="w-5 h-5 text-stone-500" />,
-  'predicate-finder':        <Crosshair className="w-5 h-5 text-stone-500" />,
+  // Intelligence & Analysis
   'regulatory-intelligence': <Globe className="w-5 h-5 text-stone-500" />,
   'csr-intelligence':        <BookOpen className="w-5 h-5 text-stone-500" />,
+  'biostatistics':           <BarChart2 className="w-5 h-5 text-stone-500" />,
   'protocol-designer':       <ClipboardList className="w-5 h-5 text-stone-500" />,
+  // Quality & Lifecycle
+  'device-engineering':      <ShieldAlert className="w-5 h-5 text-stone-500" />,
   'dossier-navigator':       <Brain className="w-5 h-5 text-stone-500" />,
-  'risk-management':         <ShieldAlert className="w-5 h-5 text-stone-500" />,
-  'samd-cybersecurity':      <Code2 className="w-5 h-5 text-stone-500" />,
-  'human-factors':           <Users className="w-5 h-5 text-stone-500" />,
-  'biocompatibility':        <TestTube className="w-5 h-5 text-stone-500" />,
   'ectd-navigator':          <Layers className="w-5 h-5 text-stone-500" />,
   'document-vault':          <Archive className="w-5 h-5 text-stone-500" />,
   'sop-management':          <FileCheck className="w-5 h-5 text-stone-500" />,

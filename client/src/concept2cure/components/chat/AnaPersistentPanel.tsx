@@ -622,15 +622,16 @@ const SLASH_COMMANDS: SlashCommand[] = [
 
 const APP_MENTIONS: Array<{ id: string; label: string; description: string }> = [
   { id: 'deep-research', label: 'Deep Research', description: 'Search ClinicalTrials.gov, PubMed, FDA, EMA' },
-  { id: 'precedent', label: 'Precedent Intelligence', description: 'Regulatory precedent analysis' },
-  { id: '510k', label: '510(k) Workspace', description: 'Medical device 510(k) submission' },
-  { id: 'pma', label: 'PMA Workspace', description: 'Premarket approval submission' },
-  { id: 'cer', label: 'CER Generator', description: 'Clinical evaluation report (EU MDR/IVDR)' },
-  { id: 'safety', label: 'Safety Narrative', description: 'Safety analysis and narrative generation' },
-  { id: 'biostats', label: 'Biostatistics', description: 'Statistical analysis, power calculations, SAP' },
-  { id: 'vault', label: 'Document Vault', description: 'Search and manage project documents' },
-  { id: 'ectd', label: 'eCTD Navigator', description: 'Electronic submission structure' },
-  { id: 'protocol', label: 'Protocol Designer', description: 'Clinical study protocol builder' },
+  { id: 'precedent-intelligence', label: 'Precedent Intelligence', description: 'CRL/RTF patterns and approval history' },
+  { id: 'device-strategy', label: 'Device Strategy', description: 'Classification, pathway, predicates, FDA Pre-Sub' },
+  { id: 'medical-device', label: 'Medical Device & Diagnostics', description: '510(k), PMA, De Novo, CER, IVDR submissions' },
+  { id: 'device-engineering', label: 'Device Engineering', description: 'Risk, software, human factors, biocompatibility' },
+  { id: 'cmc', label: 'CMC Module', description: 'Chemistry, Manufacturing, Controls (Module 3)' },
+  { id: 'safety-narrative', label: 'Safety Narrative', description: 'Safety analysis and narrative generation' },
+  { id: 'biostatistics', label: 'Biostatistics', description: 'Statistical analysis, power calculations, SAP' },
+  { id: 'protocol-designer', label: 'Protocol Designer', description: 'Clinical study protocol builder' },
+  { id: 'document-vault', label: 'Document Vault', description: 'Search and manage project documents' },
+  { id: 'ectd-navigator', label: 'eCTD Navigator', description: 'Electronic submission structure' },
 ];
 
 const SLASH_CATEGORY_COLORS: Record<string, string> = {

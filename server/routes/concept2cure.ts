@@ -3572,17 +3572,53 @@ router.patch('/projects/:projectId/knowledge', async (req: Request, res: Respons
 // PROJECT CONNECTED APPS ROUTES
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Known app IDs — server-side allowlist prevents arbitrary injection */
+/**
+ * Known app IDs — server-side allowlist prevents arbitrary injection.
+ *
+ * Contains the 20 canonical catalog IDs (post-convergence) plus 9 legacy IDs
+ * preserved for back-compat with stored project app connections, saved nav
+ * targets, and external action handlers. Legacy IDs are normalized to their
+ * canonical equivalents on the client side.
+ */
 const KNOWN_APP_IDS = new Set([
+  // ── Strategy & Research ──
   'deep-research',
   'precedent-intelligence',
-  '510k-workspace',
-  'pma-workspace',
-  'cer-generator',
+  'device-strategy',
+  // ── Submission Authoring ──
+  'medical-device',
+  'ind-authoring',
+  'cmc',
   'safety-narrative',
+  'report-engine',
+  // ── Intelligence & Analysis ──
+  'regulatory-intelligence',
+  'csr-intelligence',
   'biostatistics',
-  'csr-builder',
-  'cmc-platform',
+  'protocol-designer',
+  // ── Quality & Lifecycle ──
+  'device-engineering',
+  'dossier-navigator',
+  'ectd-navigator',
+  'document-vault',
+  'sop-management',
+  'capa-management',
+  'post-market',
+  'inspection-readiness',
+  // ── Legacy IDs (back-compat) ──
+  'cmc-platform',         // → cmc
+  'csr-builder',          // → csr-intelligence
+  '510k-workspace',       // → medical-device
+  'pma-workspace',        // → medical-device
+  'cer-generator',        // → medical-device
+  'device-pathway',       // → device-strategy
+  'q-submission',         // → device-strategy
+  'predicate-finder',     // → device-strategy
+  'risk-management',      // → device-engineering
+  'samd-cybersecurity',   // → device-engineering
+  'human-factors',        // → device-engineering
+  'biocompatibility',     // → device-engineering
+  // ── Pre-existing IDs not in current catalog (preserved) ──
   'compliance-monitor',
   'evidence-engine',
 ]);
