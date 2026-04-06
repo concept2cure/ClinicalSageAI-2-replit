@@ -220,7 +220,7 @@ const ProfileSection: React.FC = () => {
       {/* Avatar */}
       <div className="flex items-center gap-4 mb-6 pb-6 border-b border-stone-200">
         <div className="relative">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-base font-semibold">
+          <div className="w-20 h-20 rounded-full bg-stone-900 flex items-center justify-center text-white text-base font-semibold">
             {initials}
           </div>
           <button
@@ -347,8 +347,8 @@ const OrganizationSection: React.FC = () => {
       <div className="bg-white rounded-xl border border-stone-200 divide-y divide-stone-100">
         <div className="p-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-              <Building2 className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center">
+              <Building2 className="w-6 h-6 text-stone-600" />
             </div>
             <div>
               <h3 className="text-base font-semibold text-stone-900">{orgData.name}</h3>
@@ -360,7 +360,7 @@ const OrganizationSection: React.FC = () => {
         <SettingRow label="Team Members" description={`${orgData.members} active members`}>
           <a
             href="/concept2cure/billing"
-            className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1"
+            className="text-sm text-stone-700 hover:text-stone-900 font-medium flex items-center gap-1"
           >
             Manage
             <ChevronRight className="w-4 h-4" />
@@ -370,7 +370,7 @@ const OrganizationSection: React.FC = () => {
         <SettingRow label="Billing" description={`Next billing: ${orgData.nextBilling}`}>
           <a
             href="/concept2cure/billing"
-            className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1"
+            className="text-sm text-stone-700 hover:text-stone-900 font-medium flex items-center gap-1"
           >
             View
             <ChevronRight className="w-4 h-4" />
@@ -380,7 +380,7 @@ const OrganizationSection: React.FC = () => {
         <SettingRow label="Usage" description="View token usage in billing dashboard">
           <a
             href="/concept2cure/billing"
-            className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1"
+            className="text-sm text-stone-700 hover:text-stone-900 font-medium flex items-center gap-1"
           >
             Dashboard
             <ChevronRight className="w-4 h-4" />
@@ -499,11 +499,11 @@ const SecuritySection: React.FC = () => {
         </SettingRow>
 
         <SettingRow label="Password" description="Last changed 30 days ago">
-          <button className="text-sm text-blue-600 hover:text-stone-700 font-medium">Change</button>
+          <button className="text-sm text-stone-700 hover:text-stone-900 font-medium">Change</button>
         </SettingRow>
 
         <SettingRow label="Active Sessions" description="3 devices currently signed in">
-          <button className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1">
+          <button className="text-sm text-stone-700 hover:text-stone-900 font-medium flex items-center gap-1">
             View
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -559,15 +559,15 @@ const AppearanceSection: React.FC = () => {
               className={cn(
                 'flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-150',
                 theme === id
-                  ? 'border-stone-600 bg-blue-50'
+                  ? 'border-stone-900 bg-stone-100'
                   : 'border-stone-200 hover:border-stone-300'
               )}
             >
-              <Icon className={cn('w-6 h-6', theme === id ? 'text-blue-600' : 'text-stone-400')} />
+              <Icon className={cn('w-6 h-6', theme === id ? 'text-stone-900' : 'text-stone-400')} />
               <span
                 className={cn(
                   'text-sm font-medium',
-                  theme === id ? 'text-blue-600' : 'text-stone-600'
+                  theme === id ? 'text-stone-900' : 'text-stone-600'
                 )}
               >
                 {label}
@@ -1094,7 +1094,7 @@ const IntegrationsSection: React.FC = () => {
                           onChange={e =>
                             handleConfigChange(integration.id, field.key, e.target.value)
                           }
-                          className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg bg-stone-50 focus:outline-none focus:ring-2 focus:ring-stone-300 focus:border-blue-400 transition-all"
+                          className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg bg-stone-50 focus:outline-none focus:ring-2 focus:ring-stone-300 focus:border-stone-400 transition-all"
                         />
                       </div>
                     ))}

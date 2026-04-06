@@ -55,7 +55,7 @@ import { ProjectSwitcher, NewProjectModal } from './components/projects/ProjectS
 import ProjectConfigPanel from './components/workspace/ProjectConfigPanel';
 // [BATCH 3] WorkflowTimeline — renderer removed, import kept for type compatibility
 // [BATCH 3] ProjectFilesCompact — unused, import removed
-import { ProjectHeaderBar, getProjectAccentColor } from './components/workspace/ProjectHeaderBar';
+import { ProjectHeaderBar } from './components/workspace/ProjectHeaderBar';
 // [BATCH 3] CustomInstructions — knowledge-base renderer removed
 import { useProjectTasks } from './hooks/useProjectTasks';
 import { useAuthoringIntelligence } from './hooks/useAuthoringIntelligence';
@@ -101,8 +101,6 @@ import {
   Plus,
   ArrowLeft,
   FlaskConical,
-  Star,
-  MessageSquare,
   Brain,
   Loader2,
   Search,
@@ -1522,8 +1520,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   );
 
   // Conversation star/pin are intentionally disabled until persistence lands.
-  // Keep handlers silent and hide affordance in sidebar instead of fake success UX.
-  const handleToggleConversationStar = useCallback((_id: string) => {}, []);
 
   const handleToggleConversationPin = useCallback((_id: string) => {}, []);
 
@@ -2038,12 +2034,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         onOpenSettings={() => setSettingsOpen(true)}
         onDeleteConversation={handleDeleteConversation}
         onRenameConversation={handleRenameConversation}
-        onToggleStar={handleToggleConversationStar}
         onTogglePin={handleToggleConversationPin}
         onArchiveProject={handleArchiveProject}
         onDeleteProject={handleDeleteProject}
         onMoveConversation={handleMoveConversation}
-        industryMode={industryMode}
         onNavigate={id => {
           switch (id) {
             // ── 5 Global destinations ──

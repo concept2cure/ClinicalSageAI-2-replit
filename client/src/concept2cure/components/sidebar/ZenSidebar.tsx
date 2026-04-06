@@ -105,7 +105,6 @@ export interface ZenSidebarProps {
   onDeleteConversation: (id: string) => void;
   onRenameConversation?: (id: string) => void;
   onMoveConversation?: (conversationId: string, targetProjectId: string) => void;
-  onToggleStar: (id: string) => void;
   onTogglePin: (id: string) => void;
   onArchiveProject?: (id: string) => void;
   onDeleteProject?: (id: string) => void;
@@ -113,7 +112,6 @@ export interface ZenSidebarProps {
   userName?: string;
   userEmail?: string;
   activeNavId?: string;
-  industryMode?: string;
 }
 
 // ─── Submission type badge config ────────────────────────────────────────────
