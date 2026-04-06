@@ -2262,46 +2262,106 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 <Suspense fallback={<ModuleLoadingFallback />}>
                   <AppsPage
                     submissionType={activeProject?.type}
+                    activeProjectId={activeProjectId}
+                    activeProjectName={activeProject?.name}
                     onNavigate={id => {
                       switch (id) {
+                        // ── Featured ──
                         case 'deep-research':
-                          requireActiveProject('deep-research');
+                          setLayoutMode('chats');
                           break;
                         case 'precedent-intelligence':
-                          requireActiveProject('precedent-intelligence');
+                          openWorkspaceView('precedent-intelligence');
                           break;
-                        case 'safety-narrative':
-                          requireActiveProject('safety-narrative');
+                        case 'cmc':
+                          if (requireActiveProject('section-workspace')) {
+                            setRiViewMode('editor');
+                          }
                           break;
                         case 'biostatistics':
                           if (requireActiveProject('regulatory-workspace')) {
                             setActiveToolPanel('ana-biostats');
                           }
                           break;
+
+                        // ── Authoring ──
                         case '510k-workspace':
-                          if (activeProjectId)
-                            navigate(`/concept2cure/project/${activeProjectId}/510k`);
-                          else setLayoutMode('projects');
+                          if (activeProjectId) navigate(`/concept2cure/project/${activeProjectId}/510k`);
+                          else openWorkspaceView('documents');
                           break;
                         case 'pma-workspace':
-                          if (activeProjectId)
-                            navigate(`/concept2cure/project/${activeProjectId}/pma`);
-                          else setLayoutMode('projects');
+                          if (activeProjectId) navigate(`/concept2cure/project/${activeProjectId}/pma`);
+                          else openWorkspaceView('documents');
                           break;
                         case 'cer-generator':
-                          if (activeProjectId)
-                            navigate(`/concept2cure/project/${activeProjectId}/cer`);
-                          else setLayoutMode('projects');
+                          if (activeProjectId) navigate(`/concept2cure/project/${activeProjectId}/cer`);
+                          else openWorkspaceView('documents');
                           break;
+                        case 'safety-narrative':
+                          openWorkspaceView('safety-narrative');
+                          break;
+                        case 'ind-authoring':
+                          if (requireActiveProject('section-workspace')) {
+                            setRiViewMode('editor');
+                          }
+                          break;
+                        case 'report-engine':
+                          openWorkspaceView('report-engine');
+                          break;
+
+                        // ── Intelligence ──
+                        case 'regulatory-intelligence':
+                          if (requireActiveProject('regulatory-workspace')) {
+                            setActiveToolPanel('intelligence');
+                          }
+                          break;
+                        case 'csr-intelligence':
+                          openWorkspaceView('csr-workflow');
+                          break;
+                        case 'protocol-designer':
+                          if (requireActiveProject('regulatory-workspace')) {
+                            setActiveToolPanel('protocol');
+                          }
+                          break;
+                        case 'dossier-navigator':
+                          openWorkspaceView('dossier-map');
+                          break;
+
+                        // ── Specialist ──
+                        case 'ectd-navigator':
+                          if (requireActiveProject('regulatory-workspace')) {
+                            setActiveToolPanel('ectd');
+                          }
+                          break;
+                        case 'document-vault':
+                          openWorkspaceView('vault');
+                          break;
+                        case 'sop-management':
+                          if (requireActiveProject('regulatory-workspace')) {
+                            setActiveToolPanel('sop');
+                          }
+                          break;
+                        case 'capa-management':
+                          if (requireActiveProject('regulatory-workspace')) {
+                            setActiveToolPanel('capa');
+                          }
+                          break;
+                        case 'post-market':
+                          if (requireActiveProject('regulatory-workspace')) {
+                            setActiveToolPanel('pms');
+                          }
+                          break;
+                        case 'inspection-readiness':
+                          if (requireActiveProject('regulatory-workspace')) {
+                            setActiveToolPanel('inspection');
+                          }
+                          break;
+
                         default:
-                          // All apps in the catalog have explicit routes above.
-                          // If somehow an unknown app ID arrives, go to projects.
                           setLayoutMode('projects');
                           break;
                       }
                     }}
-                    activeProjectId={activeProjectId}
-                    activeProjectName={activeProject?.name}
                   />
                 </Suspense>
               </ErrorBoundary>

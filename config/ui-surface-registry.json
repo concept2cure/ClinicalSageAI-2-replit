@@ -151,7 +151,8 @@
         "layoutMode": "apps",
         "component": "AppsPage.tsx",
         "componentPath": "client/src/concept2cure/pages/AppsPage.tsx",
-        "navId": "apps"
+        "navId": "apps",
+        "notes": "2026-04-06 WO-3: ChatGPT-style app directory. 4 categories (Featured/Authoring/Intelligence/Specialist), 20 apps, search, 2-col grid, stone palette. All apps route to verified workbenches."
       },
       "settings": {
         "status": "active",

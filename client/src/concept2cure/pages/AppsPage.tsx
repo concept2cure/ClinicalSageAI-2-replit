@@ -1,66 +1,47 @@
 /**
- * AppsPage — Global app launcher.
+ * AppsPage — ChatGPT-style app directory for Concept2Cure.
  *
- * Design: tabbed groups, one visible at a time. Calm, curated, not a catalog.
- * Track-aware: relevant apps shown first within each group.
+ * 20 apps across 4 categories. Always browsable without a project.
+ * Launching an app that requires a project is handled by the onNavigate
+ * callback in ZenApp (shows toast + project picker).
  */
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { WorkspaceCanvas, PageTitleHeader } from '@/components/ui/workspace-primitives';
 import {
-  Search as SearchIcon,
+  Search,
   Scale,
+  FlaskConical,
+  BarChart2,
   FileText,
-  Stethoscope,
-  Beaker,
   Heart,
   Microscope,
-  ArrowRight,
+  Shield,
+  Pill,
+  FileOutput,
+  Globe,
+  BookOpen,
+  ClipboardList,
+  Brain,
+  Layers,
+  Archive,
+  FileCheck,
+  AlertTriangle,
+  Activity,
+  CheckSquare,
+  ChevronRight,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface AppCard {
+type Category = 'featured' | 'authoring' | 'intelligence' | 'specialist';
+
+interface AppEntry {
   id: string;
   label: string;
   description: string;
-  icon: React.ReactNode;
-  tracks: string[];
+  category: Category;
 }
-
-type GroupKey = 'strategy' | 'builders' | 'studios';
-
-// ─── Track definitions ────────────────────────────────────────────────────────
-
-const PHARMA_TYPES = ['IND', 'NDA', 'BLA', 'MAA'];
-const DEVICE_TYPES = ['510K', 'PMA', 'DE_NOVO', 'EUA', 'IVDR'];
-
-// ─── App definitions (no color per-app — group color only) ────────────────────
-
-const STRATEGY_APPS: AppCard[] = [
-  { id: 'deep-research', label: 'Deep Research', description: 'Search ClinicalTrials.gov, PubMed, FDA, EMA and more', icon: <SearchIcon className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
-  { id: 'precedent-intelligence', label: 'Precedent Intelligence', description: 'Regulatory precedent analysis and comparison', icon: <Scale className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
-];
-
-const BUILDER_APPS: AppCard[] = [
-  { id: '510k-workspace', label: '510(k) Workspace', description: 'Predicate comparison, SE testing, submission package', icon: <FileText className="w-5 h-5" />, tracks: ['510K', 'DE_NOVO'] },
-  { id: 'pma-workspace', label: 'PMA Workspace', description: 'Premarket approval application workspace', icon: <Heart className="w-5 h-5" />, tracks: ['PMA'] },
-  { id: 'cer-generator', label: 'CER Generator', description: 'Clinical evaluation report for EU MDR/IVDR', icon: <Microscope className="w-5 h-5" />, tracks: ['IVDR', ...DEVICE_TYPES] },
-  { id: 'safety-narrative', label: 'Safety Narrative', description: 'Safety narrative builder for submissions', icon: <Stethoscope className="w-5 h-5" />, tracks: [...PHARMA_TYPES, 'PMA'] },
-];
-
-const STUDIO_APPS: AppCard[] = [
-  { id: 'biostatistics', label: 'Biostatistics', description: 'Statistical analysis, power calculations, endpoints', icon: <Beaker className="w-5 h-5" />, tracks: [...PHARMA_TYPES, 'PMA'] },
-];
-
-const GROUPS: { key: GroupKey; label: string; apps: AppCard[] }[] = [
-  { key: 'strategy', label: 'Strategy & Evidence', apps: STRATEGY_APPS },
-  { key: 'builders', label: 'Builders', apps: BUILDER_APPS },
-  { key: 'studios', label: 'Specialist Studios', apps: STUDIO_APPS },
-];
-
-// ─── Components ───────────────────────────────────────────────────────────────
 
 interface AppsPageProps {
   onNavigate: (id: string) => void;
@@ -69,93 +50,154 @@ interface AppsPageProps {
   submissionType?: string;
 }
 
-function sortByRelevance(apps: AppCard[], submissionType?: string): AppCard[] {
-  if (!submissionType) return apps;
-  return [...apps].sort((a, b) => {
-    const aMatch = a.tracks.includes(submissionType) ? 1 : 0;
-    const bMatch = b.tracks.includes(submissionType) ? 1 : 0;
-    if (bMatch !== aMatch) return bMatch - aMatch;
-    return apps.indexOf(a) - apps.indexOf(b);
-  });
+// ─── App Catalog ──────────────────────────────────────────────────────────────
+
+const APPS: AppEntry[] = [
+  // Featured
+  { id: 'deep-research',           label: 'Deep Research',              description: 'Search ClinicalTrials.gov, PubMed, FDA, EMA databases and regulatory sources',              category: 'featured' },
+  { id: 'precedent-intelligence',  label: 'Precedent Intelligence',     description: 'Regulatory precedent analysis, submission comparison, and approval pattern mining',     category: 'featured' },
+  { id: 'cmc',                     label: 'CMC Module',                 description: 'Chemistry, Manufacturing and Controls — Module 3 authoring and compliance',               category: 'featured' },
+  { id: 'biostatistics',           label: 'Biostatistics',              description: 'Statistical analysis, power calculations, SAP design, and endpoint evaluation',            category: 'featured' },
+  // Authoring
+  { id: '510k-workspace',          label: '510(k) Workspace',           description: 'Predicate comparison, substantial equivalence testing, and submission package assembly',   category: 'authoring' },
+  { id: 'pma-workspace',           label: 'PMA Workspace',              description: 'Premarket approval application — clinical evidence, manufacturing, and labeling',         category: 'authoring' },
+  { id: 'cer-generator',           label: 'CER Generator',              description: 'Clinical evaluation report authoring for EU MDR and IVDR compliance',                     category: 'authoring' },
+  { id: 'safety-narrative',        label: 'Safety Narrative',           description: 'ICH E3 §12 compliant safety narrative generation for clinical submissions',               category: 'authoring' },
+  { id: 'ind-authoring',           label: 'IND Authoring',              description: 'Investigational New Drug application — Module 2 summaries, nonclinical, and clinical',    category: 'authoring' },
+  { id: 'report-engine',           label: 'Report Generator',           description: 'Intelligent regulatory report generation — submission summaries and strategic analysis',   category: 'authoring' },
+  // Intelligence
+  { id: 'regulatory-intelligence', label: 'Regulatory Intelligence',    description: 'Real-time regulatory landscape monitoring, guideline tracking, and impact analysis',       category: 'intelligence' },
+  { id: 'csr-intelligence',        label: 'CSR Intelligence',           description: 'Clinical Study Report analysis, data extraction, and cross-study comparison',              category: 'intelligence' },
+  { id: 'protocol-designer',       label: 'Study Protocol Designer',    description: 'Protocol design, endpoint optimization, and statistical power simulation',                category: 'intelligence' },
+  { id: 'dossier-navigator',       label: 'Dossier Navigator',          description: 'CTD/eCTD structure visualization, section readiness, and placement management',            category: 'intelligence' },
+  // Specialist
+  { id: 'ectd-navigator',          label: 'eCTD Navigator',             description: 'Electronic Common Technical Document assembly, validation, and regional compliance',       category: 'specialist' },
+  { id: 'document-vault',          label: 'Document Vault',             description: 'Governed document storage, version control, and evidence management',                     category: 'specialist' },
+  { id: 'sop-management',          label: 'SOP Management',             description: 'Standard Operating Procedures lifecycle, training tracking, and compliance',               category: 'specialist' },
+  { id: 'capa-management',         label: 'CAPA Management',            description: 'Corrective and preventive action tracking, root cause analysis, and closure',              category: 'specialist' },
+  { id: 'post-market',             label: 'Post-Market Surveillance',   description: 'Vigilance reporting, signal detection, PSUR/PMSR generation',                             category: 'specialist' },
+  { id: 'inspection-readiness',    label: 'Inspection Readiness',       description: 'FDA and EMA inspection preparation, mock audit, and readiness scoring',                   category: 'specialist' },
+];
+
+const CATEGORIES: { key: Category; label: string }[] = [
+  { key: 'featured', label: 'Featured' },
+  { key: 'authoring', label: 'Authoring' },
+  { key: 'intelligence', label: 'Intelligence' },
+  { key: 'specialist', label: 'Specialist' },
+];
+
+// ─── Icon Mapping ─────────────────────────────────────────────────────────────
+
+const ICON_MAP: Record<string, React.ReactNode> = {
+  'deep-research':           <Search className="w-5 h-5 text-stone-500" />,
+  'precedent-intelligence':  <Scale className="w-5 h-5 text-stone-500" />,
+  'cmc':                     <FlaskConical className="w-5 h-5 text-stone-500" />,
+  'biostatistics':           <BarChart2 className="w-5 h-5 text-stone-500" />,
+  '510k-workspace':          <FileText className="w-5 h-5 text-stone-500" />,
+  'pma-workspace':           <Heart className="w-5 h-5 text-stone-500" />,
+  'cer-generator':           <Microscope className="w-5 h-5 text-stone-500" />,
+  'safety-narrative':        <Shield className="w-5 h-5 text-stone-500" />,
+  'ind-authoring':           <Pill className="w-5 h-5 text-stone-500" />,
+  'report-engine':           <FileOutput className="w-5 h-5 text-stone-500" />,
+  'regulatory-intelligence': <Globe className="w-5 h-5 text-stone-500" />,
+  'csr-intelligence':        <BookOpen className="w-5 h-5 text-stone-500" />,
+  'protocol-designer':       <ClipboardList className="w-5 h-5 text-stone-500" />,
+  'dossier-navigator':       <Brain className="w-5 h-5 text-stone-500" />,
+  'ectd-navigator':          <Layers className="w-5 h-5 text-stone-500" />,
+  'document-vault':          <Archive className="w-5 h-5 text-stone-500" />,
+  'sop-management':          <FileCheck className="w-5 h-5 text-stone-500" />,
+  'capa-management':         <AlertTriangle className="w-5 h-5 text-stone-500" />,
+  'post-market':             <Activity className="w-5 h-5 text-stone-500" />,
+  'inspection-readiness':    <CheckSquare className="w-5 h-5 text-stone-500" />,
+};
+
+function AppIcon({ id }: { id: string }) {
+  return <>{ICON_MAP[id] || <FileText className="w-5 h-5 text-stone-500" />}</>;
 }
 
-export const AppsPage: React.FC<AppsPageProps> = ({
-  onNavigate,
-  activeProjectId,
-  activeProjectName,
-  submissionType,
-}) => {
-  const noProject = !activeProjectId;
-  const [activeGroup, setActiveGroup] = useState<GroupKey>('strategy');
+// ─── Component ────────────────────────────────────────────────────────────────
 
-  const currentApps = useMemo(() => {
-    const group = GROUPS.find(g => g.key === activeGroup);
-    return sortByRelevance(group?.apps ?? [], submissionType);
-  }, [activeGroup, submissionType]);
+export const AppsPage: React.FC<AppsPageProps> = ({ onNavigate }) => {
+  const [activeCategory, setActiveCategory] = useState<Category>('featured');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredApps = useMemo(() => {
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return APPS.filter(
+        a => a.label.toLowerCase().includes(q) || a.description.toLowerCase().includes(q)
+      );
+    }
+    return APPS.filter(a => a.category === activeCategory);
+  }, [activeCategory, searchQuery]);
 
   return (
-    <WorkspaceCanvas maxWidth="3xl" testId="apps-page">
-      <PageTitleHeader
-        title="AI Assistants"
-        subtitle={activeProjectId ? `for ${activeProjectName || 'current project'}` : undefined}
-      />
+    <div className="flex-1 overflow-y-auto">
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        {/* Title */}
+        <h1 className="text-2xl font-semibold text-stone-900">Apps</h1>
 
-      {noProject && (
-        <p className="mt-3 text-sm text-stone-400">
-          Select a project to launch apps.
-        </p>
-      )}
+        {/* Search */}
+        <div className="relative mt-5 mb-6">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+          <input
+            type="text"
+            placeholder="Search apps..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-200 bg-white text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-200 transition-shadow"
+          />
+        </div>
 
-      {/* ── Group tabs ─────────────────────────────────────────────── */}
-      <div className="flex items-center gap-1 mt-6 mb-6 border-b border-stone-100 pb-2">
-        {GROUPS.map(group => (
-          <button
-            key={group.key}
-            onClick={() => setActiveGroup(group.key)}
-            className={cn(
-              'px-3 py-1.5 text-xs rounded-md transition-colors',
-              activeGroup === group.key
-                ? 'bg-stone-200 text-stone-900 font-medium'
-                : 'text-stone-500 hover:bg-stone-100 hover:text-stone-700'
-            )}
-          >
-            {group.label}
-            <span className="ml-1.5 text-[10px] opacity-50">{group.apps.length}</span>
-          </button>
-        ))}
+        {/* Category tabs */}
+        <div className="flex items-center gap-2 mb-8">
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat.key}
+              onClick={() => { setActiveCategory(cat.key); setSearchQuery(''); }}
+              className={cn(
+                'px-4 py-1.5 text-sm rounded-full transition-colors',
+                activeCategory === cat.key && !searchQuery.trim()
+                  ? 'bg-stone-900 text-white'
+                  : 'text-stone-500 hover:bg-stone-100 hover:text-stone-700 border border-stone-200'
+              )}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        {/* App grid */}
+        {filteredApps.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {filteredApps.map(app => (
+              <button
+                key={app.id}
+                onClick={() => onNavigate(app.id)}
+                className="w-full flex items-center gap-4 px-4 py-4 rounded-xl text-left hover:bg-stone-50 transition-colors group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center flex-shrink-0">
+                  <AppIcon id={app.id} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-stone-900 group-hover:text-stone-700 block">
+                    {app.label}
+                  </span>
+                  <span className="text-xs text-stone-400 block mt-0.5 line-clamp-1">
+                    {app.description}
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-stone-300 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <p className="text-sm text-stone-400">No apps match &ldquo;{searchQuery}&rdquo;</p>
+          </div>
+        )}
       </div>
-
-      {/* ── App list ───────────────────────────────────────────────── */}
-      <div className="space-y-1">
-        {currentApps.map(app => (
-          <button
-            key={app.id}
-            onClick={noProject ? undefined : () => onNavigate(app.id)}
-            disabled={noProject}
-            aria-disabled={noProject || undefined}
-            title={noProject ? 'Select a project first' : undefined}
-            aria-label={`Launch ${app.label}`}
-            className={cn(
-              'w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors',
-              noProject
-                ? 'opacity-40 cursor-not-allowed'
-                : 'hover:bg-stone-50 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none'
-            )}
-          >
-            <div className="w-9 h-9 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-stone-500">{app.icon}</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <span className="text-sm font-medium text-stone-800 block">{app.label}</span>
-              <span className="text-xs text-stone-400 block mt-0.5">{app.description}</span>
-            </div>
-            {!noProject && (
-              <ArrowRight className="w-4 h-4 text-stone-300 flex-shrink-0" />
-            )}
-          </button>
-        ))}
-      </div>
-    </WorkspaceCanvas>
+    </div>
   );
 };
 
