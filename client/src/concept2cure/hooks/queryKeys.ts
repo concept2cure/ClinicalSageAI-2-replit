@@ -176,6 +176,14 @@ export const queryKeys = {
       ['concept2cure', 'cmc', projectId] as const,
   },
 
+  // ── Module 3 Workflow Convergence ────────────────────────────────────────
+  module3: {
+    buildState: (projectId: string | undefined, cmcProjectId: string | undefined) =>
+      ['concept2cure', 'module3-build-state', projectId, cmcProjectId] as const,
+    sourceLineage: (projectId: string | undefined, ctdSection: string | undefined) =>
+      ['concept2cure', 'module3-source-lineage', projectId, ctdSection] as const,
+  },
+
   // ── Branding ─────────────────────────────────────────────────────────────
   branding: {
     settings: () => ['concept2cure', 'branding', 'settings'] as const,

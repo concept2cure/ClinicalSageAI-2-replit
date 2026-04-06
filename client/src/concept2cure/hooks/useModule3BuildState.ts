@@ -11,6 +11,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { queryKeys } from './queryKeys';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -85,7 +86,7 @@ export const BUILD_STATE_CONFIG: Record<
 
 export function useModule3BuildState(projectId: string | undefined, cmcProjectId: string | undefined) {
   return useQuery<Module3BuildStateResponse>({
-    queryKey: ['concept2cure', 'module3-build-state', projectId, cmcProjectId] as const,
+    queryKey: queryKeys.module3.buildState(projectId, cmcProjectId),
     queryFn: async () => {
       const id = cmcProjectId || projectId;
       if (!id) throw new Error('Project ID required');

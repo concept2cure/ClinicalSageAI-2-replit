@@ -6,7 +6,6 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { getAuthHeaders } from '@/utils/authToken';
 import {
   Database,
   Search,
@@ -324,14 +323,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                 formData.append('file', file);
                 formData.append('projectId', projectId);
                 try {
-                  const headers: Record<string, string> = getAuthHeaders();
-                  delete headers['Content-Type']; // let browser set multipart boundary
-                  const res = await fetch('/api/concept2cure/documents/upload', {
-                    method: 'POST',
-                    body: formData,
-                    headers,
-                    credentials: 'include',
-                  });
+                  const res = await apiRequest('POST', '/api/concept2cure/documents/upload', formData);
                   if (res.ok) {
                     loadSources();
                   }
