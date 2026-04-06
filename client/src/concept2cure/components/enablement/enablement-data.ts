@@ -119,7 +119,7 @@ export const LEARNING_PATHS: LearningPath[] = [
     ],
     certificationIds: ['cert-ana-fundamentals', 'cert-operations-master'],
     icon: 'FileEdit',
-    color: '#d97757',
+    color: '#5585b3',
     aiHighlight:
       'Dr. Sage guides you through document templates and section scaffolding while AnA 1.0 validates regulatory language, cross-references predicate evidence, and flags compliance gaps in real time.',
   },
@@ -732,7 +732,7 @@ export const CERTIFICATIONS: Certification[] = [
     competence: 'Platform Navigation & Basic Authoring',
     focus: 'ana',
     requiredModuleIds: ['mod-onboarding-platform', 'mod-authoring-fundamentals', 'mod-governance-basics'],
-    badge: { from: '#d97757', to: '#e6957a' },
+    badge: { from: '#5585b3', to: '#8bb4d9' },
     unlockCriteria: 'Complete all three foundational modules with passing quiz scores.',
   },
   {

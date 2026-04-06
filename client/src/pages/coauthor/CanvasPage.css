@@ -46,7 +46,7 @@
 
 .canvas-tab.active {
   background-color: #f0f4ff;
-  color: var(--color-primary, #d97757);
+  color: var(--color-primary, #5585b3);
   font-weight: 500;
 }
 

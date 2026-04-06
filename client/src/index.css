@@ -197,11 +197,11 @@
 
 /* ═══ Single canonical :root — tokens actually used in the codebase ═══ */
 :root {
-  /* Brand */
-  --color-primary: #d97757;
-  --color-primary-dark: #c15f3c;
-  --color-primary-light: #e6957a;
-  --color-primary-glow: rgba(217, 119, 87, 0.2);
+  /* Brand — restrained Anthropic blue */
+  --color-primary: #5585b3;
+  --color-primary-dark: #4a7399;
+  --color-primary-light: #6a9bcc;
+  --color-primary-glow: rgba(85, 133, 179, 0.2);
   --color-secondary-glow: rgba(106, 155, 204, 0.2);
   --color-accent-glow: rgba(120, 140, 93, 0.2);
 
@@ -232,7 +232,7 @@
   --dark-bg-secondary: #292524;
 
   /* Gradients (used) */
-  --gradient-primary: linear-gradient(135deg, #d97757 0%, #c15f3c 100%);
+  --gradient-primary: linear-gradient(135deg, #5585b3 0%, #4a7399 100%);
   --gradient-secondary: linear-gradient(135deg, #6a9bcc 0%, #5585b3 100%);
   --gradient-accent: linear-gradient(135deg, #788c5d 0%, #647746 100%);
 

@@ -147,7 +147,7 @@ const COLORS = {
   danger: '#EF4444', // Red
   purple: '#6a9bcc',
   indigo: '#6366F1',
-  pink: '#d97757',
+  pink: '#5585b3',
   teal: '#14B8A6',
 };
 

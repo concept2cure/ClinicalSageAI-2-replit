@@ -116,7 +116,7 @@ const PREVIEW_CSS = `
     letter-spacing: 0.05em;
   }
   .status-draft { background: #fef3c7; color: #92400e; }
-  .status-in_review { background: #faf0ec; color: #c15f3c; }
+  .status-in_review { background: #edf3f8; color: #4a7399; }
   .status-approved { background: #d1fae5; color: #065f46; }
   .status-effective { background: #d1fae5; color: #065f46; }
   .status-obsolete { background: #fee2e2; color: #991b1b; }

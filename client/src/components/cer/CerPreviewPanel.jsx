@@ -172,7 +172,7 @@ export default function CerPreviewPanel({
           <Button
             onClick={generatePDFPreview}
             disabled={isGeneratingPreview || sections.length === 0}
-            className="bg-[#d97757] hover:bg-[#c15f3c] text-white h-9"
+            className="bg-[#5585b3] hover:bg-[#4a7399] text-white h-9"
             size="sm"
           >
             {isGeneratingPreview ? (
@@ -202,7 +202,7 @@ export default function CerPreviewPanel({
                 .then(blob => cerApiService.downloadBlob(blob, `${title.replace(/\s+/g, '_')}.pdf`))
             }
             disabled={sections.length === 0}
-            className="bg-[#d97757] hover:bg-[#c15f3c] text-white h-9"
+            className="bg-[#5585b3] hover:bg-[#4a7399] text-white h-9"
             size="sm"
           >
             <FileText className="h-4 w-4 mr-2" />
@@ -283,17 +283,17 @@ export default function CerPreviewPanel({
             <h3 className="text-sm font-semibold mb-2 text-[#141413]">Table of Contents</h3>
             <ol className="list-decimal list-inside space-y-1 text-sm">
               {sections.map((section, index) => (
-                <li key={index} className="text-[#d97757]">
+                <li key={index} className="text-[#5585b3]">
                   <span className="text-[#141413]">{section.title || section.section}</span>
                 </li>
               ))}
               {faers.length > 0 && (
-                <li className="text-[#d97757]">
+                <li className="text-[#5585b3]">
                   <span className="text-[#141413]">FAERS Safety Data</span>
                 </li>
               )}
               {comparators.length > 0 && (
-                <li className="text-[#d97757]">
+                <li className="text-[#5585b3]">
                   <span className="text-[#141413]">Comparator Products Analysis</span>
                 </li>
               )}

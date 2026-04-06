@@ -64,7 +64,7 @@ const SystemSuitabilityTrending = ({ methodId, onClose }) => {
     tailingFactor: { label: 'Tailing Factor', color: '#f59e0b', unit: '' },
     resolution: { label: 'Resolution', color: '#ef4444', unit: '' },
     peakArea: { label: 'Peak Area', color: '#6a9bcc', unit: 'counts' },
-    rsdArea: { label: 'Area RSD (%)', color: '#d97757', unit: '%' },
+    rsdArea: { label: 'Area RSD (%)', color: '#5585b3', unit: '%' },
     rsdRetention: { label: 'Retention RSD (%)', color: '#06b6d4', unit: '%' },
   };
 

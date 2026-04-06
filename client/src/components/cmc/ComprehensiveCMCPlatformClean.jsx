@@ -23397,7 +23397,7 @@ This report confirms current supply chain operational status for regulatory and 
                               200,
                               20
                             )}
-                            stroke={ewsAnalysis.outlier_detected ? '#ef4444' : '#d97757'}
+                            stroke={ewsAnalysis.outlier_detected ? '#ef4444' : '#5585b3'}
                             strokeWidth="1.5"
                             fill="none"
                           />

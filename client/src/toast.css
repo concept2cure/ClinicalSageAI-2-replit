@@ -29,12 +29,12 @@
     to right,
     #788c5d,
     #6a9bcc,
-    #d97757,
-    #c15f3c,
+    #5585b3,
+    #4a7399,
     #6a9bcc,
-    #d97757
+    #5585b3
   );
-  --toastify-color-progress-dark: #d97757;
+  --toastify-color-progress-dark: #5585b3;
   --toastify-color-progress-info: var(--toastify-color-info);
   --toastify-color-progress-success: var(--toastify-color-success);
   --toastify-color-progress-warning: var(--toastify-color-warning);

@@ -112,7 +112,7 @@ export const ROLE_DISPLAY_MAP: Record<UserRole, RoleDisplayInfo> = {
     id: 'project_manager',
     label: 'Project Manager',
     description: 'Program coordination',
-    color: '#d97757',
+    color: '#5585b3',
     icon: 'Layout',
   },
   viewer: {

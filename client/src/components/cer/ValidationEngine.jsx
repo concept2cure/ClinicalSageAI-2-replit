@@ -315,7 +315,7 @@ const ValidationEngine = ({ documentId, sections = [], onValidationComplete }) =
             <option value="ich">ICH</option>
           </select>
 
-          <Button onClick={runValidation} className="gap-2 bg-[#d97757]">
+          <Button onClick={runValidation} className="gap-2 bg-[#5585b3]">
             <RefreshCw className="h-4 w-4" />
             Run Validation
           </Button>
@@ -346,7 +346,7 @@ const ValidationEngine = ({ documentId, sections = [], onValidationComplete }) =
                 }
               }}
               variant="outline"
-              className="gap-2 border-[#d97757] text-[#d97757]"
+              className="gap-2 border-[#5585b3] text-[#5585b3]"
             >
               Add to CER
             </Button>
@@ -364,7 +364,7 @@ const ValidationEngine = ({ documentId, sections = [], onValidationComplete }) =
                 <span className="flex items-center gap-2">
                   Validation Summary
                   {validationData.aiValidated && (
-                    <span className="px-2 py-1 rounded-full text-xs bg-[#d97757] text-white">
+                    <span className="px-2 py-1 rounded-full text-xs bg-[#5585b3] text-white">
                       GPT-4o AI Powered
                     </span>
                   )}

@@ -218,7 +218,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
         <Card className="shadow-sm border-[#e8e6dc]">
           <CardHeader className="bg-[#F5F5F5] pb-3 pt-3">
             <CardTitle className="text-[#141413] text-lg flex items-center">
-              <BookMarked className="h-5 w-5 mr-2 text-[#d97757]" />
+              <BookMarked className="h-5 w-5 mr-2 text-[#5585b3]" />
               State of the Art Analysis
             </CardTitle>
             <CardDescription className="text-[#616161]">
@@ -231,14 +231,14 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
               <TabsList className="bg-[#F5F5F5] mb-4 w-full grid grid-cols-2 cer-tabs-list">
                 <TabsTrigger
                   value="standard"
-                  className="cer-tab-trigger rounded-none border-b-2 border-transparent data-[state=active]:border-[#d97757] data-[state=active]:text-[#d97757]"
+                  className="cer-tab-trigger rounded-none border-b-2 border-transparent data-[state=active]:border-[#5585b3] data-[state=active]:text-[#5585b3]"
                 >
                   <BookMarked className="h-3.5 w-3.5 mr-1.5" />
                   <span>Standard</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="comparative"
-                  className="cer-tab-trigger rounded-none border-b-2 border-transparent data-[state=active]:border-[#d97757] data-[state=active]:text-[#d97757]"
+                  className="cer-tab-trigger rounded-none border-b-2 border-transparent data-[state=active]:border-[#5585b3] data-[state=active]:text-[#5585b3]"
                 >
                   <GitCompare className="h-3.5 w-3.5 mr-1.5" />
                   <span>Comparative</span>
@@ -249,7 +249,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                 {/* Standard SOTA fields */}
                 <div className="space-y-2">
                   <Label htmlFor="device-name" className="text-[#141413]">
-                    Device Name <span className="text-[#c15f3c]">*</span>
+                    Device Name <span className="text-[#4a7399]">*</span>
                   </Label>
                   <Input
                     id="device-name"
@@ -259,7 +259,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                     className="border-[#e8e6dc]"
                   />
                   {validationErrors.deviceName && (
-                    <p className="text-xs text-[#c15f3c] mt-1 flex items-center">
+                    <p className="text-xs text-[#4a7399] mt-1 flex items-center">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       {validationErrors.deviceName}
                     </p>
@@ -268,7 +268,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
 
                 <div className="space-y-2">
                   <Label htmlFor="device-type" className="text-[#141413]">
-                    Device Type <span className="text-[#c15f3c]">*</span>
+                    Device Type <span className="text-[#4a7399]">*</span>
                   </Label>
                   <Select value={deviceType} onValueChange={setDeviceType}>
                     <SelectTrigger id="device-type" className="border-[#e8e6dc]">
@@ -283,7 +283,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                     </SelectContent>
                   </Select>
                   {validationErrors.deviceType && (
-                    <p className="text-xs text-[#c15f3c] mt-1 flex items-center">
+                    <p className="text-xs text-[#4a7399] mt-1 flex items-center">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       {validationErrors.deviceType}
                     </p>
@@ -324,7 +324,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                 <Button
                   onClick={handleGenerateSOTA}
                   disabled={isGenerating}
-                  className="w-full bg-[#d97757] hover:bg-[#c15f3c] text-white"
+                  className="w-full bg-[#5585b3] hover:bg-[#4a7399] text-white"
                 >
                   {isGenerating ? (
                     <>
@@ -344,7 +344,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                 {/* Comparative SOTA fields */}
                 <div className="space-y-2">
                   <Label htmlFor="comp-device-name" className="text-[#141413]">
-                    Device Name <span className="text-[#c15f3c]">*</span>
+                    Device Name <span className="text-[#4a7399]">*</span>
                   </Label>
                   <Input
                     id="comp-device-name"
@@ -354,7 +354,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                     className="border-[#e8e6dc]"
                   />
                   {validationErrors.deviceName && (
-                    <p className="text-xs text-[#c15f3c] mt-1 flex items-center">
+                    <p className="text-xs text-[#4a7399] mt-1 flex items-center">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       {validationErrors.deviceName}
                     </p>
@@ -363,7 +363,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
 
                 <div className="space-y-2">
                   <Label htmlFor="comp-device-type" className="text-[#141413]">
-                    Device Type <span className="text-[#c15f3c]">*</span>
+                    Device Type <span className="text-[#4a7399]">*</span>
                   </Label>
                   <Select value={deviceType} onValueChange={setDeviceType}>
                     <SelectTrigger id="comp-device-type" className="border-[#e8e6dc]">
@@ -378,7 +378,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                     </SelectContent>
                   </Select>
                   {validationErrors.deviceType && (
-                    <p className="text-xs text-[#c15f3c] mt-1 flex items-center">
+                    <p className="text-xs text-[#4a7399] mt-1 flex items-center">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       {validationErrors.deviceType}
                     </p>
@@ -419,7 +419,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                         )
                       }
                       variant="outline"
-                      className="border-[#d97757] text-[#d97757]"
+                      className="border-[#5585b3] text-[#5585b3]"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -438,7 +438,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="h-4 w-4 p-0 ml-1 text-[#616161] hover:bg-transparent hover:text-[#c15f3c]"
+                            className="h-4 w-4 p-0 ml-1 text-[#616161] hover:bg-transparent hover:text-[#4a7399]"
                             onClick={() =>
                               removeItemFromArray(setCompetitorDevices, competitorDevices, index)
                             }
@@ -472,7 +472,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                         )
                       }
                       variant="outline"
-                      className="border-[#d97757] text-[#d97757]"
+                      className="border-[#5585b3] text-[#5585b3]"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -491,7 +491,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="h-4 w-4 p-0 ml-1 text-[#616161] hover:bg-transparent hover:text-[#c15f3c]"
+                            className="h-4 w-4 p-0 ml-1 text-[#616161] hover:bg-transparent hover:text-[#4a7399]"
                             onClick={() =>
                               removeItemFromArray(setManufacturers, manufacturers, index)
                             }
@@ -637,7 +637,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                         )
                       }
                       variant="outline"
-                      className="border-[#d97757] text-[#d97757]"
+                      className="border-[#5585b3] text-[#5585b3]"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -656,7 +656,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="h-4 w-4 p-0 ml-1 text-[#616161] hover:bg-transparent hover:text-[#c15f3c]"
+                            className="h-4 w-4 p-0 ml-1 text-[#616161] hover:bg-transparent hover:text-[#4a7399]"
                             onClick={() =>
                               removeItemFromArray(setOutcomeMetrics, outcomeMetrics, index)
                             }
@@ -672,7 +672,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                 <Button
                   onClick={handleGenerateComparativeSOTA}
                   disabled={isGenerating}
-                  className="w-full bg-[#d97757] hover:bg-[#c15f3c] text-white"
+                  className="w-full bg-[#5585b3] hover:bg-[#4a7399] text-white"
                 >
                   {isGenerating ? (
                     <>
@@ -700,7 +700,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
           <CardContent className="pt-4">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="regulatory" className="border-[#e8e6dc]">
-                <AccordionTrigger className="text-[#141413] hover:text-[#d97757] hover:no-underline">
+                <AccordionTrigger className="text-[#141413] hover:text-[#5585b3] hover:no-underline">
                   <span className="text-sm font-medium">Regulatory Requirements</span>
                 </AccordionTrigger>
                 <AccordionContent className="text-[#616161] text-sm">
@@ -717,7 +717,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
               </AccordionItem>
 
               <AccordionItem value="content" className="border-[#e8e6dc]">
-                <AccordionTrigger className="text-[#141413] hover:text-[#d97757] hover:no-underline">
+                <AccordionTrigger className="text-[#141413] hover:text-[#5585b3] hover:no-underline">
                   <span className="text-sm font-medium">Content Requirements</span>
                 </AccordionTrigger>
                 <AccordionContent className="text-[#616161] text-sm">
@@ -733,7 +733,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
               </AccordionItem>
 
               <AccordionItem value="comparative" className="border-[#e8e6dc]">
-                <AccordionTrigger className="text-[#141413] hover:text-[#d97757] hover:no-underline">
+                <AccordionTrigger className="text-[#141413] hover:text-[#5585b3] hover:no-underline">
                   <span className="text-sm font-medium">Comparative Analysis</span>
                 </AccordionTrigger>
                 <AccordionContent className="text-[#616161] text-sm">
@@ -758,7 +758,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
               </AccordionItem>
 
               <AccordionItem value="data" className="border-[#e8e6dc]">
-                <AccordionTrigger className="text-[#141413] hover:text-[#d97757] hover:no-underline">
+                <AccordionTrigger className="text-[#141413] hover:text-[#5585b3] hover:no-underline">
                   <span className="text-sm font-medium">Data Sources</span>
                 </AccordionTrigger>
                 <AccordionContent className="text-[#616161] text-sm">
@@ -785,7 +785,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
           <CardHeader className="bg-[#F5F5F5] pb-3 pt-3 flex-row justify-between items-center">
             <div>
               <CardTitle className="text-[#141413] text-lg flex items-center">
-                <FileText className="h-5 w-5 mr-2 text-[#d97757]" />
+                <FileText className="h-5 w-5 mr-2 text-[#5585b3]" />
                 {activeTab === 'comparative'
                   ? 'Comparative SOTA Analysis'
                   : 'Standard SOTA Analysis'}
@@ -799,7 +799,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
-                  className="h-8 px-2 text-[#d97757] border-[#d97757] bg-white"
+                  className="h-8 px-2 text-[#5585b3] border-[#5585b3] bg-white"
                   onClick={() => {
                     const blob = new Blob([sotaContent], { type: 'text/plain' });
                     const fileType =
@@ -820,7 +820,7 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
           <CardContent className="pt-4 h-[calc(100%-64px)] overflow-auto">
             {isGenerating ? (
               <div className="flex flex-col items-center justify-center h-full space-y-4 text-[#616161]">
-                <RefreshCw className="h-8 w-8 animate-spin text-[#d97757]" />
+                <RefreshCw className="h-8 w-8 animate-spin text-[#5585b3]" />
                 <p>
                   Generating {activeTab === 'comparative' ? 'Comparative' : 'State of the Art'}{' '}
                   analysis...
@@ -860,9 +860,9 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                       Enter your device information and competitor details to generate a comparative
                       analysis against standard of care and competitor devices.
                     </p>
-                    <div className="bg-[#F0F8FF] text-[#d97757] border border-[#d97757] p-3 rounded-md mt-4 text-sm">
+                    <div className="bg-[#F0F8FF] text-[#5585b3] border border-[#5585b3] p-3 rounded-md mt-4 text-sm">
                       <p className="flex items-center">
-                        <CheckCircle className="h-4 w-4 mr-2 text-[#d97757]" />
+                        <CheckCircle className="h-4 w-4 mr-2 text-[#5585b3]" />
                         <span>
                           Comparative analysis is essential for EU/UK regulatory benefit-risk
                           discussions (BSI Group guidelines).
@@ -878,9 +878,9 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
                       Enter your device information and generate a State of the Art analysis to
                       include in your Clinical Evaluation Report.
                     </p>
-                    <div className="bg-[#F0F8FF] text-[#d97757] border border-[#d97757] p-3 rounded-md mt-4 text-sm">
+                    <div className="bg-[#F0F8FF] text-[#5585b3] border border-[#5585b3] p-3 rounded-md mt-4 text-sm">
                       <p className="flex items-center">
-                        <CheckCircle className="h-4 w-4 mr-2 text-[#d97757]" />
+                        <CheckCircle className="h-4 w-4 mr-2 text-[#5585b3]" />
                         <span>
                           The SOTA section is required for regulatory compliance with MEDDEV 2.7/1
                           Rev 4 (Section 8).

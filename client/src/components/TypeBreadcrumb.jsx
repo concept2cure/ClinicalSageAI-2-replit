@@ -55,7 +55,7 @@ export default function TypeBreadcrumb({ subtypeId, className = '' }) {
   // Render the breadcrumb
   return (
     <div className={`text-xs text-gray-500 flex items-center ${className}`}>
-      <span style={{ color: '#d97757' }}>{subtype.document_types?.name || 'Unknown Type'}</span>
+      <span style={{ color: '#5585b3' }}>{subtype.document_types?.name || 'Unknown Type'}</span>
       <ChevronRight className="h-3 w-3 mx-1" />
       <span>{subtype.name}</span>
     </div>
@@ -75,7 +75,7 @@ export function StaticTypeBreadcrumb({ typeName, subtypeName, className = '' }) 
 
   return (
     <div className={`text-xs text-gray-500 flex items-center ${className}`}>
-      <span style={{ color: '#d97757' }}>{typeName}</span>
+      <span style={{ color: '#5585b3' }}>{typeName}</span>
       <ChevronRight className="h-3 w-3 mx-1" />
       <span>{subtypeName}</span>
     </div>

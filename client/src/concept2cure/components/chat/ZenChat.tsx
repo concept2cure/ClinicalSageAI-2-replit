@@ -424,13 +424,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   prose-h1:text-lg prose-h2:text-base prose-h3:text-sm
                   prose-p:text-stone-700 prose-p:leading-relaxed prose-p:my-2
                   prose-strong:text-stone-900 prose-strong:font-semibold
-                  prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
+                  prose-code:text-amber-700 prose-code:bg-amber-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
                   prose-pre:bg-stone-900 prose-pre:text-stone-100 prose-pre:rounded-xl prose-pre:p-4 prose-pre:text-xs
                   prose-blockquote:border-l-[#D8D5CA] prose-blockquote:text-stone-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
                   prose-ul:text-stone-700 prose-ol:text-stone-700 prose-ul:my-2 prose-ol:my-2
                   prose-li:my-1
                   prose-table:text-sm prose-th:bg-stone-50 prose-th:font-semibold prose-td:border-stone-200
-                  prose-a:text-[#D97757] prose-a:font-medium prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
+                  prose-a:text-blue-600 prose-a:font-medium prose-a:underline prose-a:decoration-blue-200 prose-a:underline-offset-2 hover:prose-a:text-blue-700
                   [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                 dangerouslySetInnerHTML={{ __html: htmlContent }}
               />

@@ -93,8 +93,8 @@ const SUBMISSION_TYPES: Record<
   IND: {
     label: 'IND',
     icon: Beaker,
-    color: 'text-[#6B6962]',
-    bgColor: 'bg-[#FBF0EB]',
+    color: 'text-stone-600',
+    bgColor: 'bg-blue-50',
   },
   NDA: {
     label: 'NDA',
@@ -105,8 +105,8 @@ const SUBMISSION_TYPES: Record<
   BLA: {
     label: 'BLA',
     icon: Activity,
-    color: 'text-[#6B6962]',
-    bgColor: 'bg-[#F5F4EF]',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-100',
   },
   PMA: {
     label: 'PMA',
@@ -117,26 +117,26 @@ const SUBMISSION_TYPES: Record<
   MAA: {
     label: 'MAA',
     icon: Microscope,
-    color: 'text-[#6B6962]',
-    bgColor: 'bg-[#F5F4EF]',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-100',
   },
   DE_NOVO: {
     label: 'De Novo',
     icon: FileText,
-    color: 'text-[#6B6962]',
-    bgColor: 'bg-[#FBF0EB]',
+    color: 'text-stone-600',
+    bgColor: 'bg-blue-50',
   },
   EUA: {
     label: 'EUA',
     icon: Activity,
-    color: 'text-[#6B6962]',
-    bgColor: 'bg-[#FBF0EB]',
+    color: 'text-stone-600',
+    bgColor: 'bg-blue-50',
   },
   clinical_trial: {
     label: 'Clinical Trial',
     icon: Activity,
-    color: 'text-[#6B6962]',
-    bgColor: 'bg-[#F5F4EF]',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-100',
   },
   regulatory_submission: {
     label: 'Regulatory',
@@ -147,14 +147,14 @@ const SUBMISSION_TYPES: Record<
   medical_device: {
     label: 'Medical Device',
     icon: Heart,
-    color: 'text-[#6B6962]',
-    bgColor: 'bg-[#F5F4EF]',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-100',
   },
   literature_review: {
     label: 'Literature Review',
     icon: Microscope,
-    color: 'text-[#6B6962]',
-    bgColor: 'bg-[#F5F4EF]',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-100',
   },
 };
 

@@ -60,7 +60,7 @@ import {
 // SharePoint colors and styles
 const sharePointColors = {
   primary: '#0078D4',
-  primaryDark: '#c15f3c',
+  primaryDark: '#4a7399',
   primaryLight: '#2B88D8',
   success: '#788c5d',
   warning: '#FFB900',

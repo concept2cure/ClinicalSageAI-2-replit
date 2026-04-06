@@ -152,7 +152,7 @@ const CitationItem = ({ citation, onRemove, onEdit }) => {
 // Helper to get color based on source
 const getSourceColor = source => {
   const colors = {
-    PubMed: '#d97757',
+    PubMed: '#5585b3',
     FDA: '#6a9bcc',
     'ClinicalTrials.gov': '#788c5d',
     'Previously Imported': '#6a9bcc',

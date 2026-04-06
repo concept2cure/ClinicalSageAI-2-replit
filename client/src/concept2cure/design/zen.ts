@@ -54,9 +54,9 @@ export const zenColors = {
   // ─────────────────────────────────────────────────────────────────────────────
   accent: {
     DEFAULT: '#5585b3',     // Primary action - restrained Anthropic blue
-    hover: '#c15f3c',       // Hover state
-    muted: '#FDE8E0',       // Light warm background tint
-    subtle: '#FFF5F2',      // Very light warm tint
+    hover: '#4a7399',       // Hover state
+    muted: '#dce8f3',       // Light blue background tint
+    subtle: '#edf3f8',      // Very light blue tint
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -89,7 +89,7 @@ export const zenColors = {
   border: {
     DEFAULT: '#E4E4E7',     // Standard border - stone-200
     subtle: '#F4F4F5',      // Very light border - stone-100
-    focus: '#d97757',       // Focus ring
+    focus: '#5585b3',       // Focus ring
   },
 } as const;
 
@@ -173,7 +173,7 @@ export const zenShadows = {
   md: '0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
   lg: '0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05)',
   xl: '0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05)',
-  glow: '0 0 20px rgb(217 119 87 / 0.1)', // Focus glow (warm accent)
+  glow: '0 0 20px rgb(85 133 179 / 0.1)', // Focus glow (blue accent)
 } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════

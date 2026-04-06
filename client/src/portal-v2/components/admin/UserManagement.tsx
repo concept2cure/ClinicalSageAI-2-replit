@@ -289,7 +289,7 @@ const ROLE_CONFIG: Record<UserRole, { label: string; color: string; description:
   },
   legal_counsel: {
     label: 'Legal Counsel',
-    color: '#c15f3c',
+    color: '#4a7399',
     description: 'Legal review and approval',
   },
   executive: {

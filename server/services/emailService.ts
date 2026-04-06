@@ -65,7 +65,7 @@ function buildResetEmailHtml(resetUrl: string): string {
             </p>
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr><td align="center" style="padding:8px 0 32px;">
-                <a href="${resetUrl}" style="display:inline-block;background-color:#c15f3c;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 32px;border-radius:6px;">
+                <a href="${resetUrl}" style="display:inline-block;background-color:#4a7399;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 32px;border-radius:6px;">
                   Reset Password
                 </a>
               </td></tr>
@@ -73,7 +73,7 @@ function buildResetEmailHtml(resetUrl: string): string {
             <p style="margin:0 0 12px;color:#6b6963;font-size:13px;line-height:1.5;">
               If the button doesn't work, copy and paste this URL into your browser:
             </p>
-            <p style="margin:0 0 24px;word-break:break-all;color:#c15f3c;font-size:13px;">
+            <p style="margin:0 0 24px;word-break:break-all;color:#4a7399;font-size:13px;">
               ${resetUrl}
             </p>
             <hr style="border:none;border-top:1px solid #e8e6dc;margin:24px 0;" />
@@ -223,7 +223,7 @@ function buildWelcomeEmailHtml(name: string, loginUrl: string): string {
             </ul>
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr><td align="center" style="padding:8px 0 32px;">
-                <a href="${loginUrl}" style="display:inline-block;background-color:#d97757;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 32px;border-radius:6px;">
+                <a href="${loginUrl}" style="display:inline-block;background-color:#5585b3;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 32px;border-radius:6px;">
                   Sign In to Your Account
                 </a>
               </td></tr>
@@ -378,7 +378,7 @@ export async function sendInvitationEmail(
             </p>
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr><td align="center" style="padding:8px 0 24px;">
-                <a href="${signupUrl}" style="display:inline-block;background-color:#d97757;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 32px;border-radius:6px;">
+                <a href="${signupUrl}" style="display:inline-block;background-color:#5585b3;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 32px;border-radius:6px;">
                   Accept Invitation
                 </a>
               </td></tr>
