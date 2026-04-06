@@ -536,8 +536,8 @@ const EnhancedDocumentVault = ({
   <title>${item.sectionData.section_number} ${item.sectionData.section_title}</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-    h1 { color: #5585b3; border-bottom: 2px solid #5585b3; padding-bottom: 10px; }
-    h2 { color: #4a7399; margin-top: 30px; }
+    h1 { color: #292524; border-bottom: 2px solid #292524; padding-bottom: 10px; }
+    h2 { color: #1c1917; margin-top: 30px; }
     p { margin: 10px 0; }
   </style>
 </head>

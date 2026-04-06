@@ -95,7 +95,7 @@ const Settings = () => {
 
   const [appearanceData, setAppearanceData] = useState({
     theme: 'light',
-    primaryColor: '#4a7399',
+    primaryColor: '#1c1917',
     logoUrl: '',
     customCss: '',
   });
@@ -408,7 +408,7 @@ const Settings = () => {
     },
     appearance: {
       theme: 'light',
-      accentColor: '#4a7399',
+      accentColor: '#1c1917',
       compactMode: false,
     },
     advanced: {

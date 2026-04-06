@@ -69,7 +69,7 @@ const QmpIntegrationHelp = ({
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl flex items-center gap-2 text-[#5585b3]">
+          <DialogTitle className="text-2xl flex items-center gap-2 text-[#292524]">
             <InfoIcon size={20} />
             Quality Management Plan Integration
           </DialogTitle>
@@ -139,7 +139,7 @@ const QmpIntegrationHelp = ({
             }
           >
             <AccordionItem value="ich-principles">
-              <AccordionTrigger className="text-[#5585b3]">
+              <AccordionTrigger className="text-[#292524]">
                 ICH E6(R3) Key Principles
               </AccordionTrigger>
               <AccordionContent>
@@ -169,7 +169,7 @@ const QmpIntegrationHelp = ({
             </AccordionItem>
 
             <AccordionItem value="integration-points">
-              <AccordionTrigger className="text-[#5585b3]">QMP Integration Points</AccordionTrigger>
+              <AccordionTrigger className="text-[#292524]">QMP Integration Points</AccordionTrigger>
               <AccordionContent>
                 <ul className="list-disc pl-6 space-y-2">
                   <li>
@@ -208,7 +208,7 @@ const QmpIntegrationHelp = ({
                   : ''
               }
             >
-              <AccordionTrigger className="text-[#5585b3]">
+              <AccordionTrigger className="text-[#292524]">
                 Regulatory Traceability Matrix
               </AccordionTrigger>
               <AccordionContent>
@@ -219,7 +219,7 @@ const QmpIntegrationHelp = ({
                     regulatory requirements throughout the CER lifecycle.
                   </p>
 
-                  <h4 className="font-semibold text-[#5585b3] mb-2 mt-4">Key Features</h4>
+                  <h4 className="font-semibold text-[#292524] mb-2 mt-4">Key Features</h4>
                   <ul className="list-disc pl-6 space-y-2 mb-4">
                     <li>
                       <strong>Bidirectional Mapping:</strong> Links each evidence piece to specific
@@ -244,7 +244,7 @@ const QmpIntegrationHelp = ({
                   </ul>
 
                   <div className="bg-white p-3 border border-gray-200 rounded-md mb-4">
-                    <h4 className="font-semibold text-[#5585b3] mb-2">Technical Implementation</h4>
+                    <h4 className="font-semibold text-[#292524] mb-2">Technical Implementation</h4>
                     <p className="mb-2">
                       The Regulatory Traceability Matrix leverages several advanced capabilities:
                     </p>
@@ -269,7 +269,7 @@ const QmpIntegrationHelp = ({
             </AccordionItem>
 
             <AccordionItem value="technical-details">
-              <AccordionTrigger className="text-[#5585b3]">
+              <AccordionTrigger className="text-[#292524]">
                 Technical Implementation
               </AccordionTrigger>
               <AccordionContent>
@@ -279,12 +279,12 @@ const QmpIntegrationHelp = ({
 
                 <div className="space-y-2">
                   <div className="flex items-start">
-                    <Badge className="mt-1 mr-2 bg-[#5585b3]">API</Badge>
+                    <Badge className="mt-1 mr-2 bg-[#292524]">API</Badge>
                     <span>Enhanced endpoints with ICH E6(R3) validation controls</span>
                   </div>
 
                   <div className="flex items-start">
-                    <Badge className="mt-1 mr-2 bg-[#5585b3]">AI</Badge>
+                    <Badge className="mt-1 mr-2 bg-[#292524]">AI</Badge>
                     <span>
                       GPT-4o integration specifically tuned for regulatory writing with quality
                       controls
@@ -292,12 +292,12 @@ const QmpIntegrationHelp = ({
                   </div>
 
                   <div className="flex items-start">
-                    <Badge className="mt-1 mr-2 bg-[#5585b3]">Validation</Badge>
+                    <Badge className="mt-1 mr-2 bg-[#292524]">Validation</Badge>
                     <span>Real-time compliance checking with ICH E6(R3) and MDR requirements</span>
                   </div>
 
                   <div className="flex items-start">
-                    <Badge className="mt-1 mr-2 bg-[#5585b3]">UI</Badge>
+                    <Badge className="mt-1 mr-2 bg-[#292524]">UI</Badge>
                     <span>Microsoft 365-aligned interface with quality indicators throughout</span>
                   </div>
                 </div>
@@ -305,7 +305,7 @@ const QmpIntegrationHelp = ({
             </AccordionItem>
 
             <AccordionItem value="benefits">
-              <AccordionTrigger className="text-[#5585b3]">Benefits for Users</AccordionTrigger>
+              <AccordionTrigger className="text-[#292524]">Benefits for Users</AccordionTrigger>
               <AccordionContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Card className="border border-gray-200">

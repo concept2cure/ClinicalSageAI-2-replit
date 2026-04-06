@@ -232,7 +232,7 @@ export default function CerBuilderPanel({
                 <h3 className="text-base font-semibold text-[#141413]">Section Generator</h3>
                 <Badge
                   variant="outline"
-                  className="bg-[#faf0ec] text-[#5585b3] text-xs border-[#5585b3] px-2 py-0.5"
+                  className="bg-[#faf0ec] text-[#292524] text-xs border-[#292524] px-2 py-0.5"
                 >
                   AI-Powered
                 </Badge>
@@ -276,7 +276,7 @@ export default function CerBuilderPanel({
                     value={sectionContext}
                     onChange={e => setSectionContext(e.target.value)}
                     rows={5}
-                    className="border-[#e8e6dc] focus:border-[#5585b3] focus:ring-1 focus:ring-[#5585b3] resize-none"
+                    className="border-[#e8e6dc] focus:border-[#292524] focus:ring-1 focus:ring-[#292524] resize-none"
                   />
                   <p className="text-xs text-[#616161]">
                     Include specifics about your device or product for best results.
@@ -287,7 +287,7 @@ export default function CerBuilderPanel({
                   <Button
                     onClick={generateSection}
                     disabled={isGenerating || !sectionContext}
-                    className="bg-[#5585b3] hover:bg-[#4a7399] text-white"
+                    className="bg-[#292524] hover:bg-[#1c1917] text-white"
                   >
                     {isGenerating ? (
                       <>
@@ -320,7 +320,7 @@ export default function CerBuilderPanel({
                     {generatedSection.model && (
                       <Badge
                         variant="outline"
-                        className="bg-[#faf0ec] text-[#5585b3] text-xs border-[#5585b3] px-2 py-0.5"
+                        className="bg-[#faf0ec] text-[#292524] text-xs border-[#292524] px-2 py-0.5"
                       >
                         Model: {generatedSection.model}
                       </Badge>
@@ -373,7 +373,7 @@ export default function CerBuilderPanel({
                 <div className="p-3 flex justify-end border-t border-[#e8e6dc] bg-[#faf9f5]">
                   <Button
                     onClick={addToReport}
-                    className="bg-[#5585b3] hover:bg-[#4a7399] text-white"
+                    className="bg-[#292524] hover:bg-[#1c1917] text-white"
                   >
                     <Plus className="h-3.5 w-3.5 mr-1.5" />
                     <span>Add to Report</span>
@@ -406,7 +406,7 @@ export default function CerBuilderPanel({
                   id="report-title"
                   value={cerTitle}
                   onChange={handleTitleChange}
-                  className="h-9 border-[#e8e6dc] focus:border-[#5585b3] focus:ring-1 focus:ring-[#5585b3]"
+                  className="h-9 border-[#e8e6dc] focus:border-[#292524] focus:ring-1 focus:ring-[#292524]"
                 />
               </div>
 
@@ -462,7 +462,7 @@ export default function CerBuilderPanel({
                             {section.metadata?.generatedBy && (
                               <Badge
                                 variant="outline"
-                                className="text-xs bg-[#faf0ec] text-[#5585b3] border-[#5585b3] px-2 py-0.5"
+                                className="text-xs bg-[#faf0ec] text-[#292524] border-[#292524] px-2 py-0.5"
                               >
                                 AI
                               </Badge>
@@ -494,7 +494,7 @@ export default function CerBuilderPanel({
                           variant="ghost"
                           size="sm"
                           onClick={() => removeSection(section.id)}
-                          className="h-8 w-8 p-0 text-[#616161] hover:text-[#4a7399] hover:bg-[#FFF4CE]"
+                          className="h-8 w-8 p-0 text-[#616161] hover:text-[#1c1917] hover:bg-[#FFF4CE]"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -515,7 +515,7 @@ export default function CerBuilderPanel({
             <h3 className="text-base font-semibold text-[#141413]">FDA FAERS Data Integration</h3>
             <Badge
               variant="outline"
-              className="bg-[#faf0ec] text-[#5585b3] text-xs border-[#5585b3] px-2 py-0.5"
+              className="bg-[#faf0ec] text-[#292524] text-xs border-[#292524] px-2 py-0.5"
             >
               Auto-included
             </Badge>

@@ -1467,7 +1467,7 @@ const MethodDetails = ({ methodId, onBack }) => {
                         <XAxis dataKey="x" type="number" name="Nominal" />
                         <YAxis dataKey="y" type="number" name="Response" />
                         <RTooltip />
-                        <Scatter data={stats.scatter} fill="#6a9bcc" />
+                        <Scatter data={stats.scatter} fill="#78716c" />
                         <RLine
                           type="linear"
                           dataKey="y"

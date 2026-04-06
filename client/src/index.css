@@ -197,12 +197,12 @@
 
 /* ═══ Single canonical :root — tokens actually used in the codebase ═══ */
 :root {
-  /* Brand — restrained Anthropic blue */
-  --color-primary: #5585b3;
-  --color-primary-dark: #4a7399;
-  --color-primary-light: #6a9bcc;
-  --color-primary-glow: rgba(85, 133, 179, 0.2);
-  --color-secondary-glow: rgba(106, 155, 204, 0.2);
+  /* Brand — stone-dark primary (per design principles: black/white foundation) */
+  --color-primary: #292524;
+  --color-primary-dark: #1c1917;
+  --color-primary-light: #44403c;
+  --color-primary-glow: rgba(41, 37, 36, 0.15);
+  --color-secondary-glow: rgba(41, 37, 36, 0.1);
   --color-accent-glow: rgba(120, 140, 93, 0.2);
 
   /* Status */
@@ -224,16 +224,16 @@
   --color-text-secondary: #4a4a46;
   --color-text-tertiary: #6b6963;
   --color-text-code: #141413;
-  --color-link: #6a9bcc;
-  --color-link-hover: #5585b3;
+  --color-link: #2563eb;
+  --color-link-hover: #1d4ed8;
 
   /* Dark mode (used) */
   --dark-bg-primary: #1c1917;
   --dark-bg-secondary: #292524;
 
   /* Gradients (used) */
-  --gradient-primary: linear-gradient(135deg, #5585b3 0%, #4a7399 100%);
-  --gradient-secondary: linear-gradient(135deg, #6a9bcc 0%, #5585b3 100%);
+  --gradient-primary: linear-gradient(135deg, #292524 0%, #1c1917 100%);
+  --gradient-secondary: linear-gradient(135deg, #44403c 0%, #292524 100%);
   --gradient-accent: linear-gradient(135deg, #788c5d 0%, #647746 100%);
 
   /* Shadows (used) */

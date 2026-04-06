@@ -293,7 +293,7 @@ export default function ClinicalEvaluationPlanPanel({
         <div className="flex space-x-2">
           <Button
             variant="outline"
-            className="border-[#5585b3] text-[#5585b3] hover:bg-[#faf0ec]"
+            className="border-[#292524] text-[#292524] hover:bg-[#faf0ec]"
             onClick={() => handleSave(false)}
             disabled={!changes}
           >
@@ -304,7 +304,7 @@ export default function ClinicalEvaluationPlanPanel({
             whyThisMatters="A comprehensive CEP is required by MEDDEV 2.7/1 Rev 4. It demonstrates a systematic approach to clinical evaluation and helps regulatory reviewers understand your evaluation methodology."
           >
             <Button
-              className="bg-[#5585b3] hover:bg-[#4a7399] text-white"
+              className="bg-[#292524] hover:bg-[#1c1917] text-white"
               onClick={() => handleSave(true)}
             >
               <ClipboardList className="h-4 w-4 mr-2" />
@@ -648,7 +648,7 @@ export default function ClinicalEvaluationPlanPanel({
         <CardContent className="p-6 space-y-4">
           <div className="bg-[#f4f3ee] p-4 rounded border border-[#e8e6dc] mb-4">
             <div className="flex items-start space-x-3">
-              <Info className="h-5 w-5 text-[#5585b3] mt-0.5" />
+              <Info className="h-5 w-5 text-[#292524] mt-0.5" />
               <div>
                 <h4 className="text-[#141413] font-medium">GSPR Selection Guidance</h4>
                 <p className="text-[#6b6963] text-sm">
@@ -775,8 +775,8 @@ export default function ClinicalEvaluationPlanPanel({
 
             <div className="bg-[#faf0ec] p-3 rounded mb-4 text-sm">
               <div className="flex items-start space-x-2">
-                <FileCheck className="h-4 w-4 text-[#5585b3] mt-0.5" />
-                <p className="text-[#5585b3]">
+                <FileCheck className="h-4 w-4 text-[#292524] mt-0.5" />
+                <p className="text-[#292524]">
                   The PMCF Plan is a mandatory document for EU MDR compliance and should align with
                   MDCG 2020-7 requirements.
                 </p>
@@ -810,7 +810,7 @@ export default function ClinicalEvaluationPlanPanel({
             <div className="border border-[#e8e6dc] rounded-md bg-white mb-5">
               <div className="p-3 bg-[#faf9f5] border-b border-[#e8e6dc] flex items-center justify-between">
                 <div className="flex items-center">
-                  <CalendarClock className="h-4 w-4 text-[#5585b3] mr-2" />
+                  <CalendarClock className="h-4 w-4 text-[#292524] mr-2" />
                   <h4 className="text-sm font-medium text-[#141413]">CER Update Schedule</h4>
                 </div>
                 <CerTooltipWrapper
@@ -825,7 +825,7 @@ export default function ClinicalEvaluationPlanPanel({
                   <div className="space-y-2">
                     <Label htmlFor="update-frequency" className="text-sm text-[#141413]">
                       CER Update Frequency
-                      <span className="text-xs text-[#5585b3] ml-1">*</span>
+                      <span className="text-xs text-[#292524] ml-1">*</span>
                     </Label>
                     <Select
                       value={cepData.updateFrequency}
@@ -849,7 +849,7 @@ export default function ClinicalEvaluationPlanPanel({
                   <div className="space-y-2">
                     <Label htmlFor="next-update-date" className="text-sm text-[#141413]">
                       Next Scheduled Update
-                      <span className="text-xs text-[#5585b3] ml-1">*</span>
+                      <span className="text-xs text-[#292524] ml-1">*</span>
                     </Label>
                     <Input
                       id="next-update-date"
@@ -891,7 +891,7 @@ export default function ClinicalEvaluationPlanPanel({
                       </div>
                       <Badge
                         variant="outline"
-                        className="ml-1 bg-[#E8F5FC] text-[#5585b3] border-[#85C6E8] px-2 py-0.5"
+                        className="ml-1 bg-[#E8F5FC] text-[#292524] border-[#85C6E8] px-2 py-0.5"
                       >
                         MDR Recommendation
                       </Badge>
@@ -950,7 +950,7 @@ export default function ClinicalEvaluationPlanPanel({
                   <div className="space-y-2">
                     <Label htmlFor="pmcf-objectives" className="text-sm text-[#141413]">
                       General & Specific Objectives
-                      <span className="text-xs text-[#5585b3] ml-1">*</span>
+                      <span className="text-xs text-[#292524] ml-1">*</span>
                     </Label>
                     <Textarea
                       id="pmcf-objectives"
@@ -964,7 +964,7 @@ export default function ClinicalEvaluationPlanPanel({
                   <div className="space-y-2">
                     <Label htmlFor="pmcf-methods" className="text-sm text-[#141413]">
                       PMCF Methods & Procedures
-                      <span className="text-xs text-[#5585b3] ml-1">*</span>
+                      <span className="text-xs text-[#292524] ml-1">*</span>
                     </Label>
                     <Textarea
                       id="pmcf-methods"
@@ -1005,7 +1005,7 @@ export default function ClinicalEvaluationPlanPanel({
 
                   <div className="border-t border-dashed border-gray-200 pt-4 mt-4">
                     <h5 className="text-sm font-medium text-[#141413] mb-3 flex items-center">
-                      <FileText className="h-4 w-4 mr-2 text-[#5585b3]" />
+                      <FileText className="h-4 w-4 mr-2 text-[#292524]" />
                       PMCF Reporting Schedule
                       <Badge
                         variant="outline"
@@ -1019,7 +1019,7 @@ export default function ClinicalEvaluationPlanPanel({
                       <div className="space-y-2">
                         <Label htmlFor="pmcf-report-frequency" className="text-xs text-[#141413]">
                           PMCF Report Frequency
-                          <span className="text-xs text-[#5585b3] ml-1">*</span>
+                          <span className="text-xs text-[#292524] ml-1">*</span>
                         </Label>
                         <Select
                           value={cepData.pmcfReportFrequency || 'Annual'}
@@ -1054,7 +1054,7 @@ export default function ClinicalEvaluationPlanPanel({
                     <div className="space-y-2">
                       <Label htmlFor="pmcf-timelines" className="text-sm text-[#141413]">
                         Detailed Timeline & Activities
-                        <span className="text-xs text-[#5585b3] ml-1">*</span>
+                        <span className="text-xs text-[#292524] ml-1">*</span>
                       </Label>
                       <Textarea
                         id="pmcf-timelines"
@@ -1069,7 +1069,7 @@ export default function ClinicalEvaluationPlanPanel({
                   {/* PMCF Reference Documents */}
                   <div className="border-t border-dashed border-gray-200 pt-4 mt-4">
                     <h5 className="text-sm font-medium text-[#141413] mb-3 flex items-center">
-                      <FolderOpen className="h-4 w-4 mr-2 text-[#5585b3]" />
+                      <FolderOpen className="h-4 w-4 mr-2 text-[#292524]" />
                       Related PMCF Documents
                     </h5>
 
@@ -1142,7 +1142,7 @@ export default function ClinicalEvaluationPlanPanel({
                     className="text-sm text-[#141413] flex items-center"
                   >
                     Scientific Justification for PMCF Exemption
-                    <span className="text-xs text-[#5585b3] ml-1">*</span>
+                    <span className="text-xs text-[#292524] ml-1">*</span>
                   </Label>
                   <Textarea
                     id="pmcf-justification"
@@ -1188,7 +1188,7 @@ export default function ClinicalEvaluationPlanPanel({
           <div className="flex justify-end space-x-2 w-full">
             <Button
               variant="outline"
-              className="border-[#5585b3] text-[#5585b3] hover:bg-[#faf0ec]"
+              className="border-[#292524] text-[#292524] hover:bg-[#faf0ec]"
               onClick={() => handleSave(false)}
               disabled={!changes}
             >
@@ -1199,7 +1199,7 @@ export default function ClinicalEvaluationPlanPanel({
               whyThisMatters="A comprehensive CEP is required by MEDDEV 2.7/1 Rev 4. It demonstrates a systematic approach to clinical evaluation and helps regulatory reviewers understand your evaluation methodology."
             >
               <Button
-                className="bg-[#5585b3] hover:bg-[#4a7399] text-white"
+                className="bg-[#292524] hover:bg-[#1c1917] text-white"
                 onClick={() => handleSave(true)}
               >
                 <ClipboardList className="h-4 w-4 mr-2" />

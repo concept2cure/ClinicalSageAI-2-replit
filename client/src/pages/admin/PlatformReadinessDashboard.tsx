@@ -71,10 +71,10 @@ const tabStyle = (active: boolean): React.CSSProperties => ({
   padding: '10px 20px',
   fontSize: 13,
   fontWeight: active ? 700 : 400,
-  color: active ? '#8bb4d9' : '#b0aea5',
+  color: active ? '#a8a29e' : '#b0aea5',
   background: 'transparent',
   border: 'none',
-  borderBottom: active ? '2px solid #8bb4d9' : '2px solid transparent',
+  borderBottom: active ? '2px solid #a8a29e' : '2px solid transparent',
   cursor: 'pointer',
   transition: 'color 0.2s, border-color 0.2s',
   fontFamily: 'inherit',
@@ -110,10 +110,10 @@ const QuickStats: React.FC = () => {
 
   const stats = [
     { label: 'Overall Readiness', value: '55%', color: '#f59e0b' },
-    { label: 'Modules', value: '3', color: '#6a9bcc' },
+    { label: 'Modules', value: '3', color: '#78716c' },
     { label: 'Total Gaps', value: String(totalGaps), color: '#ef4444' },
     { label: 'Critical', value: String(criticalGaps), color: '#dc2626' },
-    { label: 'Remediation Tasks', value: String(totalTasks), color: '#6a9bcc' },
+    { label: 'Remediation Tasks', value: String(totalTasks), color: '#78716c' },
     { label: 'Endpoints Broken', value: '~200', color: '#f97316' },
   ];
 
@@ -539,7 +539,7 @@ export default function PlatformReadinessDashboard() {
         <button
           onClick={toggleSummary}
           style={{
-            background: showSummary ? '#8bb4d9' : '#4a4a46',
+            background: showSummary ? '#a8a29e' : '#4a4a46',
             color: 'white',
             border: 'none',
             padding: '8px 16px',

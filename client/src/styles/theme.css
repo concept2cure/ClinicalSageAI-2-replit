@@ -3,10 +3,10 @@
   --color-bg: #fafaf9;               /* Stone-50 — warm neutral background */
   --color-surface: #ffffff;
   --color-surface-warm: #f5f5f4;      /* Stone-100 — subtle surface differentiation */
-  --color-primary: #5585b3;           /* Restrained Anthropic blue — primary action */
-  --color-primary-variant: #4a7399;   /* Deeper blue — hover/active states */
+  --color-primary: #292524;           /* Stone-800 — primary action (dark, restrained) */
+  --color-primary-variant: #1c1917;   /* Stone-900 — hover/active states */
   --color-on-primary: #ffffff;
-  --color-secondary: #6a9bcc;         /* Light blue accent */
+  --color-secondary: #57534e;         /* Stone-600 — secondary */
   --color-tertiary: #788c5d;          /* Green accent */
   --color-success: #16a34a;           /* Green-600 */
   --color-warning: #d97706;           /* Warm amber */

@@ -291,7 +291,7 @@ export default function ComplianceScorePanel({
   const getScoreColorClass = score => {
     if (score >= 0.8) return 'text-[#788c5d]';
     if (score >= 0.6) return 'text-[#986F0B]';
-    return 'text-[#4a7399]';
+    return 'text-[#1c1917]';
   };
 
   const getScoreBgClass = score => {
@@ -303,7 +303,7 @@ export default function ComplianceScorePanel({
   const getScoreBorderClass = score => {
     if (score >= 0.8) return 'border-[#788c5d]';
     if (score >= 0.6) return 'border-[#F2C811]';
-    return 'border-[#4a7399]';
+    return 'border-[#1c1917]';
   };
 
   return (
@@ -328,7 +328,7 @@ export default function ComplianceScorePanel({
                   size="sm"
                   className="h-8 border-[#e8e6dc] text-[#141413] hover:bg-[#F5F5F5] text-xs"
                 >
-                  <Shield className="h-3.5 w-3.5 mr-1.5 text-[#5585b3]" />
+                  <Shield className="h-3.5 w-3.5 mr-1.5 text-[#292524]" />
                   <span>Standards</span>
                 </Button>
               </DialogTrigger>
@@ -359,7 +359,7 @@ export default function ComplianceScorePanel({
                             }
                           }
                         }}
-                        className="h-4 w-4 rounded border-gray-300 text-[#5585b3] focus:ring-[#5585b3]"
+                        className="h-4 w-4 rounded border-gray-300 text-[#292524] focus:ring-[#292524]"
                       />
                       <Label
                         htmlFor={standard.id}
@@ -374,7 +374,7 @@ export default function ComplianceScorePanel({
                 <DialogFooter>
                   <Button
                     type="button"
-                    className="bg-[#5585b3] hover:bg-[#4a7399] text-white"
+                    className="bg-[#292524] hover:bg-[#1c1917] text-white"
                     onClick={() =>
                       document
                         .querySelector('[role="dialog"]')
@@ -391,7 +391,7 @@ export default function ComplianceScorePanel({
             <Button
               onClick={runComplianceAnalysis}
               disabled={analyzing || sections.length === 0}
-              className="bg-[#5585b3] hover:bg-[#4a7399] text-white"
+              className="bg-[#292524] hover:bg-[#1c1917] text-white"
               size="sm"
             >
               {analyzing ? (
@@ -410,9 +410,9 @@ export default function ComplianceScorePanel({
         </div>
 
         {error && (
-          <div className="p-3 my-3 bg-[#FDE7E9] border border-[#4a7399] rounded">
+          <div className="p-3 my-3 bg-[#FDE7E9] border border-[#1c1917] rounded">
             <div className="flex">
-              <AlertCircle className="h-5 w-5 text-[#4a7399] mr-2 flex-shrink-0" />
+              <AlertCircle className="h-5 w-5 text-[#1c1917] mr-2 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-[#141413]">Analysis Failed</p>
                 <p className="text-xs text-[#616161] mt-1">{error}</p>
@@ -422,9 +422,9 @@ export default function ComplianceScorePanel({
         )}
 
         {!complianceData && !analyzing && !error && (
-          <div className="p-3 my-3 bg-[#faf0ec] border border-[#5585b3] rounded">
+          <div className="p-3 my-3 bg-[#faf0ec] border border-[#292524] rounded">
             <div className="flex">
-              <Info className="h-5 w-5 text-[#5585b3] mr-2 flex-shrink-0" />
+              <Info className="h-5 w-5 text-[#292524] mr-2 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-[#141413]">Regulatory Compliance Check</p>
                 <p className="text-xs text-[#616161] mt-1">
@@ -502,7 +502,7 @@ export default function ComplianceScorePanel({
                     disabled={exporting}
                     variant="outline"
                     size="sm"
-                    className="h-8 border-[#5585b3] text-[#5585b3] text-xs hover:bg-[#faf0ec]"
+                    className="h-8 border-[#292524] text-[#292524] text-xs hover:bg-[#faf0ec]"
                   >
                     {exporting ? (
                       <RefreshCw className="h-3 w-3 mr-1.5 animate-spin" />
@@ -614,7 +614,7 @@ export default function ComplianceScorePanel({
                                       setImprovingSection(matchingSection);
                                       setSelectedStandard(framework);
                                     }}
-                                    className="mt-2 h-8 bg-[#5585b3] hover:bg-[#4a7399] text-white text-xs"
+                                    className="mt-2 h-8 bg-[#292524] hover:bg-[#1c1917] text-white text-xs"
                                   >
                                     <Sparkles className="h-3 w-3 mr-1.5" />
                                     <span>AI-Improve Section</span>
@@ -649,7 +649,7 @@ export default function ComplianceScorePanel({
           <DialogContent className="sm:max-w-[700px]">
             <DialogHeader>
               <DialogTitle className="text-[#141413] flex items-center">
-                <Sparkles className="h-4 w-4 mr-2 text-[#5585b3]" />
+                <Sparkles className="h-4 w-4 mr-2 text-[#292524]" />
                 AI-Powered Compliance Improvement
               </DialogTitle>
               <DialogDescription className="text-[#616161]">
@@ -660,7 +660,7 @@ export default function ComplianceScorePanel({
 
             <div className="grid gap-4 py-4">
               {!improvedContent ? (
-                <div className="p-4 bg-[#faf0ec] border border-[#5585b3] rounded">
+                <div className="p-4 bg-[#faf0ec] border border-[#292524] rounded">
                   <h4 className="text-sm font-medium text-[#141413] mb-2">
                     How AI Improvement Works
                   </h4>
@@ -704,7 +704,7 @@ export default function ComplianceScorePanel({
                         setIsImproving(false);
                       }
                     }}
-                    className="bg-[#5585b3] hover:bg-[#4a7399] text-white text-sm w-full"
+                    className="bg-[#292524] hover:bg-[#1c1917] text-white text-sm w-full"
                     disabled={isImproving}
                   >
                     {isImproving ? (
@@ -731,7 +731,7 @@ export default function ComplianceScorePanel({
                       id="improved-content"
                       value={improvedContent}
                       onChange={e => setImprovedContent(e.target.value)}
-                      className="h-48 text-sm border-[#e8e6dc] focus:border-[#5585b3] focus:ring-[#5585b3]"
+                      className="h-48 text-sm border-[#e8e6dc] focus:border-[#292524] focus:ring-[#292524]"
                     />
                     <p className="text-xs text-[#616161]">
                       You can further edit the content before applying it to your report.
@@ -798,7 +798,7 @@ export default function ComplianceScorePanel({
                     setSelectedStandard(null);
                     setImprovedContent('');
                   }}
-                  className="bg-[#5585b3] hover:bg-[#4a7399] text-white"
+                  className="bg-[#292524] hover:bg-[#1c1917] text-white"
                 >
                   <Plus className="h-3.5 w-3.5 mr-1.5" />
                   Apply Improvements

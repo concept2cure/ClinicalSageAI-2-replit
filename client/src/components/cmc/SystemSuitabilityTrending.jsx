@@ -59,12 +59,12 @@ const SystemSuitabilityTrending = ({ methodId, onClose }) => {
 
   // System suitability parameters configuration
   const parameters = {
-    retentionTime: { label: 'Retention Time (min)', color: '#6a9bcc', unit: 'min' },
+    retentionTime: { label: 'Retention Time (min)', color: '#1c1917', unit: 'min' },
     theoreticalPlates: { label: 'Theoretical Plates', color: '#788c5d', unit: '' },
     tailingFactor: { label: 'Tailing Factor', color: '#f59e0b', unit: '' },
     resolution: { label: 'Resolution', color: '#ef4444', unit: '' },
-    peakArea: { label: 'Peak Area', color: '#6a9bcc', unit: 'counts' },
-    rsdArea: { label: 'Area RSD (%)', color: '#5585b3', unit: '%' },
+    peakArea: { label: 'Peak Area', color: '#1c1917', unit: 'counts' },
+    rsdArea: { label: 'Area RSD (%)', color: '#292524', unit: '%' },
     rsdRetention: { label: 'Retention RSD (%)', color: '#06b6d4', unit: '%' },
   };
 
@@ -289,7 +289,7 @@ const SystemSuitabilityTrending = ({ methodId, onClose }) => {
             labelFormatter={label => `Run #${label}`}
           />
 
-          <Scatter dataKey="value" fill="#6a9bcc" />
+          <Scatter dataKey="value" fill="#78716c" />
 
           {/* Control limits lines */}
           {data[0]?.upperLimit && (

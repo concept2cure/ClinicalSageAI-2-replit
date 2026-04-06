@@ -785,7 +785,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
         <div className="flex space-x-2">
           <Button
             variant="outline"
-            className="border-[#5585b3] text-[#5585b3] hover:bg-[#faf0ec]"
+            className="border-[#292524] text-[#292524] hover:bg-[#faf0ec]"
             onClick={handleSave}
             disabled={!changes}
           >
@@ -797,7 +797,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
             tooltipPosition="bottom"
           >
             <Button
-              className="bg-[#5585b3] hover:bg-[#4a7399] text-white"
+              className="bg-[#292524] hover:bg-[#1c1917] text-white"
               onClick={handleAddToReport}
             >
               <FileCheck className="h-4 w-4 mr-2" />
@@ -809,7 +809,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
 
       <div className="bg-[#f4f3ee] p-4 rounded border border-[#e8e6dc]">
         <div className="flex items-start space-x-3">
-          <Info className="h-5 w-5 text-[#5585b3] mt-0.5" />
+          <Info className="h-5 w-5 text-[#292524] mt-0.5" />
           <div>
             <h4 className="text-[#141413] font-medium">GSPR Mapping Guidance</h4>
             <p className="text-[#6b6963] text-sm">
@@ -825,13 +825,13 @@ Compliance is determined based on evidence strength, quality, and clinical relev
         <TabsList className="bg-white border-b border-gray-200 rounded-none w-full flex justify-start gap-2 mb-4">
           <TabsTrigger
             value="mapping"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#5585b3] data-[state=active]:text-[#5585b3] data-[state=active]:shadow-none bg-transparent px-3 py-2 font-normal text-[#616161]"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#292524] data-[state=active]:text-[#292524] data-[state=active]:shadow-none bg-transparent px-3 py-2 font-normal text-[#616161]"
           >
             GSPR Mapping
           </TabsTrigger>
           <TabsTrigger
             value="evidence"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#5585b3] data-[state=active]:text-[#5585b3] data-[state=active]:shadow-none bg-transparent px-3 py-2 font-normal text-[#616161]"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#292524] data-[state=active]:text-[#292524] data-[state=active]:shadow-none bg-transparent px-3 py-2 font-normal text-[#616161]"
           >
             Evidence Library
           </TabsTrigger>
@@ -845,7 +845,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                 <div className="h-[450px] overflow-y-auto">
                   {selectedGSPRs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-                      <Info className="h-6 w-6 text-[#5585b3] mb-2" />
+                      <Info className="h-6 w-6 text-[#292524] mb-2" />
                       <p className="text-[#6b6963] text-sm">No GSPRs selected</p>
                     </div>
                   ) : (
@@ -861,7 +861,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                         return (
                           <li
                             key={gsprId}
-                            className={`p-3 cursor-pointer hover:bg-[#f4f3ee] ${isActive ? 'bg-[#faf0ec] border-l-2 border-[#5585b3]' : ''}`}
+                            className={`p-3 cursor-pointer hover:bg-[#f4f3ee] ${isActive ? 'bg-[#faf0ec] border-l-2 border-[#292524]' : ''}`}
                             onClick={() => handleSetActiveGspr(gsprId)}
                           >
                             <div className="flex items-center justify-between mb-1">
@@ -926,7 +926,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                     {console.log('Rendering AI Analysis section')}
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2">
                       <div className="flex items-center">
-                        <Shield className="h-4 w-4 text-[#5585b3] mr-2" />
+                        <Shield className="h-4 w-4 text-[#292524] mr-2" />
                         <span className="text-sm font-medium text-[#141413]">
                           AI-Assisted Regulatory Analysis
                         </span>
@@ -934,7 +934,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex items-center gap-2 border-[#5585b3] text-[#5585b3] hover:bg-[#faf0ec] w-full sm:w-auto"
+                        className="flex items-center gap-2 border-[#292524] text-[#292524] hover:bg-[#faf0ec] w-full sm:w-auto"
                         onClick={() => generateAIAnalysis(activeGspr)}
                         disabled={isGeneratingAIAnalysis}
                       >
@@ -1025,7 +1025,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                     <div>
                       <h4 className="text-sm font-medium text-[#141413] mb-2">
                         Compliance Statement
-                        <span className="text-xs text-[#5585b3] ml-1">*</span>
+                        <span className="text-xs text-[#292524] ml-1">*</span>
                       </h4>
                       <Textarea
                         value={mapping[activeGspr]?.complianceStatement || ''}
@@ -1096,7 +1096,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                       <div>
                         <label className="text-xs text-[#141413] font-medium mb-1 block">
                           Mitigation Plan & Next Steps
-                          <span className="text-xs text-[#5585b3] ml-1">*</span>
+                          <span className="text-xs text-[#292524] ml-1">*</span>
                         </label>
                         <Textarea
                           value={mapping[activeGspr]?.nextSteps || ''}
@@ -1114,7 +1114,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-xs text-[#5585b3] hover:bg-[#faf0ec]"
+                        className="text-xs text-[#292524] hover:bg-[#faf0ec]"
                         onClick={() => {}}
                       >
                         <Plus className="h-3.5 w-3.5 mr-1" />
@@ -1155,7 +1155,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                           </tbody>
                         </table>
                         {mapping[activeGspr].evidenceSources.length > 3 && (
-                          <div className="px-3 py-2 text-center text-xs text-[#5585b3] hover:bg-[#faf0ec] cursor-pointer">
+                          <div className="px-3 py-2 text-center text-xs text-[#292524] hover:bg-[#faf0ec] cursor-pointer">
                             Show {mapping[activeGspr].evidenceSources.length - 3} more items
                           </div>
                         )}
@@ -1238,7 +1238,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                   <div className="flex justify-end">
                     <Button
                       variant="outline"
-                      className="border-[#5585b3] text-[#5585b3] hover:bg-[#faf0ec]"
+                      className="border-[#292524] text-[#292524] hover:bg-[#faf0ec]"
                       onClick={handleSave}
                       disabled={!changes}
                     >
@@ -1248,7 +1248,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                 </div>
               ) : (
                 <div className="bg-white rounded border border-[#e8e6dc] flex flex-col items-center justify-center h-[450px] text-center p-6">
-                  <Info className="h-8 w-8 text-[#5585b3] mb-3" />
+                  <Info className="h-8 w-8 text-[#292524] mb-3" />
                   <h3 className="text-md font-medium text-[#141413] mb-1">Select a GSPR to Map</h3>
                   <p className="text-sm text-[#6b6963] max-w-md">
                     Choose a requirement from the list to map clinical evidence
@@ -1264,10 +1264,10 @@ Compliance is determined based on evidence strength, quality, and clinical relev
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium text-[#141413]">Evidence Library</h3>
               <div className="flex space-x-3">
-                <Badge variant="outline" className="bg-[#faf0ec] text-[#5585b3]">
+                <Badge variant="outline" className="bg-[#faf0ec] text-[#292524]">
                   FAERS: {availableEvidenceCount.FAERS}
                 </Badge>
-                <Badge variant="outline" className="bg-[#faf0ec] text-[#5585b3]">
+                <Badge variant="outline" className="bg-[#faf0ec] text-[#292524]">
                   Literature: {availableEvidenceCount.LITERATURE}
                 </Badge>
               </div>
@@ -1307,7 +1307,7 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 px-3 text-[#5585b3] hover:text-[#4a7399] hover:bg-[#faf0ec]"
+                              className="h-8 px-3 text-[#292524] hover:text-[#1c1917] hover:bg-[#faf0ec]"
                               onClick={() => handleAddEvidence(activeGspr, evidence)}
                               disabled={mapping[activeGspr]?.evidenceSources?.some(
                                 e => e.id === evidence.id

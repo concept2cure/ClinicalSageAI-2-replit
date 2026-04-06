@@ -187,14 +187,14 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
 // ------------------------------------------------------------------
 
 const MODULE_COLORS: Record<string, string> = {
-  '510(k)': '#5585b3',
-  CER: '#6a9bcc',
-  eCTD: '#8bb4d9',
-  CMC: '#b8cfe4',
-  'AI Assistance': '#3d5f7e',
+  '510(k)': '#292524',
+  CER: '#44403c',
+  eCTD: '#57534e',
+  CMC: '#78716c',
+  'AI Assistance': '#a8a29e',
 };
 
-const PIE_COLORS = ['#5585b3', '#6a9bcc', '#8bb4d9', '#b8cfe4', '#3d5f7e'];
+const PIE_COLORS = ['#292524', '#44403c', '#57534e', '#78716c', '#a8a29e'];
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
@@ -449,7 +449,7 @@ function UsageTab() {
                     <Line
                       type="monotone"
                       dataKey="cost"
-                      stroke="#5585b3"
+                      stroke="#292524"
                       strokeWidth={2}
                       dot={false}
                       activeDot={{ r: 4 }}
@@ -504,7 +504,7 @@ function UsageTab() {
                       <XAxis type="number" tick={{ fontSize: 12 }} />
                       <YAxis dataKey="module" type="category" width={100} tick={{ fontSize: 12 }} />
                       <Tooltip formatter={(value: number) => formatNumber(value)} />
-                      <Bar dataKey="requests" fill="#5585b3" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="requests" fill="#292524" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

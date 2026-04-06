@@ -23,7 +23,7 @@ const CerTooltipWrapper = ({
         <TooltipTrigger asChild>
           <div className={`inline-flex items-center ${className}`}>
             {children}
-            {showIcon && <HelpCircle className="ml-1 h-4 w-4 text-[#5585b3] opacity-70" />}
+            {showIcon && <HelpCircle className="ml-1 h-4 w-4 text-[#292524] opacity-70" />}
           </div>
         </TooltipTrigger>
         <TooltipContent
@@ -34,7 +34,7 @@ const CerTooltipWrapper = ({
             <p className="mb-2">{tooltipContent}</p>
             {whyThisMatters && (
               <div className="mt-2 pt-2 border-t border-[#e8e6dc]">
-                <p className="text-xs font-medium text-[#5585b3] mb-1">Why this matters:</p>
+                <p className="text-xs font-medium text-[#292524] mb-1">Why this matters:</p>
                 <p className="text-xs text-[#6b6963]">{whyThisMatters}</p>
               </div>
             )}

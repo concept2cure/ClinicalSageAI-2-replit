@@ -484,7 +484,7 @@ function generateHtmlDigest(text: string): string {
       padding: 20px;
     }
     h1 {
-      color: #5585b3;
+      color: #292524;
       border-bottom: 1px solid #e8e6dc;
       padding-bottom: 10px;
     }
@@ -493,7 +493,7 @@ function generateHtmlDigest(text: string): string {
     }
     .section-title {
       font-weight: bold;
-      color: #5585b3;
+      color: #292524;
       margin-bottom: 10px;
     }
     ul {

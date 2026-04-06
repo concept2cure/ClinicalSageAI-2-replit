@@ -73,7 +73,7 @@ export default function GeneratedReportPanel({ jobId }) {
           }
 
           // Draw a chart
-          ctx.fillStyle = '#8bb4d9';
+          ctx.fillStyle = '#a8a29e';
           ctx.fillRect(100, 600, 100, 100);
           ctx.fillStyle = '#34d399';
           ctx.fillRect(220, 620, 100, 80);

@@ -35,7 +35,7 @@ const TOXICITY_COLORS = {
   safe: '#78716c', // stone-900
   caution: '#eab308', // stone-900
   danger: '#ef4444', // stone-900
-  recommended: '#6a9bcc', // stone-900
+  recommended: '#78716c', // stone-900
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════

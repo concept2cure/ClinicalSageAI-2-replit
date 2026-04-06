@@ -313,7 +313,7 @@ function generateHtmlFromDocument(document: any): string {
       <title>${document.name}</title>
       <style>
         body { font-family: Arial, sans-serif; margin: 30px; }
-        h1 { color: #5585b3; }
+        h1 { color: #1c1917; }
         h2 { color: #333; margin-top: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; }
         .metadata { color: #666; font-size: 12px; margin-bottom: 30px; border: 1px solid #eee; padding: 10px; background: #f9f9f9; }

@@ -112,7 +112,7 @@ export const ROLE_DISPLAY_MAP: Record<UserRole, RoleDisplayInfo> = {
     id: 'project_manager',
     label: 'Project Manager',
     description: 'Program coordination',
-    color: '#5585b3',
+    color: '#57534e',
     icon: 'Layout',
   },
   viewer: {
@@ -332,7 +332,7 @@ export const TASK_STATUS_CONFIG: Record<
   { label: string; color: string; bgColor: string }
 > = {
   pending: { label: 'Pending', color: '#6b7280', bgColor: '#f9fafb' },
-  in_progress: { label: 'In Progress', color: '#5585b3', bgColor: '#eff6ff' },
+  in_progress: { label: 'In Progress', color: '#57534e', bgColor: '#eff6ff' },
   completed: { label: 'Completed', color: '#647746', bgColor: '#f0fdf4' },
   blocked: { label: 'Blocked', color: '#dc2626', bgColor: '#fef2f2' },
   cancelled: { label: 'Cancelled', color: '#9ca3af', bgColor: '#f3f4f6' },

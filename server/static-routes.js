@@ -1131,9 +1131,9 @@ function generatePageShell(title, bodyContent, extraStyles, navState) {
       --primary-light: #64748b;
       --primary-lighter: #f1f5f9;
       --primary-dark: #334155;
-      --accent: #6a9bcc;
-      --accent-light: #8bb4d9;
-      --accent-dark: #5585b3;
+      --accent: #57534e;
+      --accent-light: #78716c;
+      --accent-dark: #292524;
       --text: #141413;
       --text-light: #6b6963;
       --text-lighter: #8a8880;

@@ -81,17 +81,17 @@ export default function NotificationBanner({
       case 'loading':
         return {
           bg: 'bg-[#faf0ec]',
-          border: 'border-[#5585b3]',
-          icon: <Clock className="w-4 h-4 text-[#5585b3] animate-pulse" />,
-          text: 'text-[#5585b3]',
+          border: 'border-[#292524]',
+          icon: <Clock className="w-4 h-4 text-[#292524] animate-pulse" />,
+          text: 'text-[#292524]',
         };
       case 'info':
       default:
         return {
           bg: 'bg-[#faf0ec]',
-          border: 'border-[#5585b3]',
-          icon: <Info className="w-4 h-4 text-[#5585b3]" />,
-          text: 'text-[#5585b3]',
+          border: 'border-[#292524]',
+          icon: <Info className="w-4 h-4 text-[#292524]" />,
+          text: 'text-[#292524]',
         };
     }
   };
@@ -113,7 +113,7 @@ export default function NotificationBanner({
                   onMouseEnter={() => setShowTooltip(true)}
                   onMouseLeave={() => setShowTooltip(false)}
                 >
-                  <Info className="w-3.5 h-3.5 text-[#5585b3]" />
+                  <Info className="w-3.5 h-3.5 text-[#292524]" />
 
                   {showTooltip && (
                     <div className="absolute z-50 w-64 p-2 bg-white rounded shadow-lg border border-gray-200 text-xs text-gray-700 right-0 top-full mt-1">

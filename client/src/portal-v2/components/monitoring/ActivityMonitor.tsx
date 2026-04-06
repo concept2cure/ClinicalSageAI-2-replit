@@ -203,7 +203,7 @@ interface SystemMetric {
 
 const SEVERITY_CONFIG: Record<ActivitySeverity, { label: string; color: string; bgColor: string }> =
   {
-    info: { label: 'Info', color: '#5585b3', bgColor: '#dce8f3' },
+    info: { label: 'Info', color: '#57534e', bgColor: '#f5f5f4' },
     warning: { label: 'Warning', color: '#d97706', bgColor: '#fef3c7' },
     error: { label: 'Error', color: '#dc2626', bgColor: '#fee2e2' },
     critical: { label: 'Critical', color: '#7c2d12', bgColor: '#fecaca' },
@@ -213,8 +213,8 @@ const TYPE_CONFIG: Record<
   ActivityType,
   { label: string; icon: React.ComponentType<any>; color: string }
 > = {
-  auth: { label: 'Authentication', icon: Key, color: '#5585b3' },
-  document: { label: 'Document', icon: FileText, color: '#5585b3' },
+  auth: { label: 'Authentication', icon: Key, color: '#57534e' },
+  document: { label: 'Document', icon: FileText, color: '#57534e' },
   user: { label: 'User', icon: User, color: '#647746' },
   system: { label: 'System', icon: Server, color: '#8a8880' },
   security: { label: 'Security', icon: Shield, color: '#dc2626' },

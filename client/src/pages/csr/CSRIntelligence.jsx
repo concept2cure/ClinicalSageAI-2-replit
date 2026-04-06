@@ -118,7 +118,7 @@ const PieChartComponent = ({ metrics }) => {
           cy="100"
           r="80"
           fill="transparent"
-          stroke="#6a9bcc"
+          stroke="#78716c"
           strokeWidth="30"
           strokeDasharray={`${2 * Math.PI * 80 * percentages[0]} ${2 * Math.PI * 80 * (1 - percentages[0])}`}
           transform="rotate(-90) translate(-200 0)"
@@ -152,7 +152,7 @@ const LineChartComponent = () => (
     <svg width="100%" height="100%" viewBox="0 0 300 100">
       <polyline
         fill="none"
-        stroke="#6a9bcc"
+        stroke="#78716c"
         strokeWidth="2"
         points="0,80 25,70 50,75 75,60 100,65 125,55 150,45 175,50 200,30 225,40 250,35 275,25 300,20"
       />

@@ -47,7 +47,7 @@ import {
   Legend,
 } from 'recharts';
 
-const COLORS = ['#4a7399', '#92a87a', '#ef4444', '#eab308', '#06b6d4', '#6a9bcc'];
+const COLORS = ['#1c1917', '#92a87a', '#ef4444', '#eab308', '#06b6d4', '#a8a29e'];
 
 export default function ComplianceInsights({ org }) {
   const [data, setData] = useState([]);

@@ -80,7 +80,7 @@
 
 .canvas-node.selected {
   box-shadow:
-    0 0 0 2px var(--color-primary, #5585b3),
+    0 0 0 2px var(--color-primary, #292524),
     0 2px 8px rgba(0, 0, 0, 0.1);
   transform: scale(1.03);
   z-index: 10;
@@ -132,7 +132,7 @@
   position: absolute;
   top: -5px;
   left: -5px;
-  background-color: var(--color-primary, #5585b3);
+  background-color: var(--color-primary, #292524);
   color: white;
   font-size: 10px;
   font-weight: bold;

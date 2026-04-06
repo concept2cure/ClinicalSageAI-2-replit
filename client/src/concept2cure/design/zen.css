@@ -25,17 +25,17 @@
   --zen-ink-disabled: #b0aea5;
   --zen-ink-inverse: #faf9f5;
 
-  /* Accent - Anthropic blue (restrained, professional) */
-  --zen-accent: #5585b3;
-  --zen-accent-hover: #4a7399;
-  --zen-accent-muted: #dce8f3;
-  --zen-accent-subtle: #edf3f8;
+  /* Accent - Stone-dark primary (black/white foundation per design principles) */
+  --zen-accent: #292524;
+  --zen-accent-hover: #1c1917;
+  --zen-accent-muted: #f5f5f4;
+  --zen-accent-subtle: #fafaf9;
 
-  /* AI - Anthropic blue persona */
-  --zen-ai: #6a9bcc;
-  --zen-ai-hover: #5585b3;
-  --zen-ai-muted: #dce8f3;
-  --zen-ai-glow: rgba(106, 155, 204, 0.1);
+  /* AI - Neutral persona */
+  --zen-ai: #57534e;
+  --zen-ai-hover: #44403c;
+  --zen-ai-muted: #f5f5f4;
+  --zen-ai-glow: rgba(41, 37, 36, 0.08);
 
   /* Status colors - Earthy tones */
   --zen-success: #788c5d;
@@ -44,20 +44,20 @@
   --zen-warning-muted: #fef3c7;
   --zen-error: #dc3545;
   --zen-error-muted: #fde2e4;
-  --zen-info: #6a9bcc;
-  --zen-info-muted: #dce8f3;
+  --zen-info: #0284C7;
+  --zen-info-muted: #f5f5f4;
 
   /* Borders - Warm */
   --zen-border: #e8e6dc;
   --zen-border-subtle: #f4f3ee;
-  --zen-border-focus: #5585b3;
+  --zen-border-focus: #a8a29e;
 
   /* Shadows - Warm, subtle */
   --zen-shadow-xs: 0 1px 2px 0 rgb(20 20 19 / 0.03);
   --zen-shadow-sm: 0 1px 3px 0 rgb(20 20 19 / 0.05), 0 1px 2px -1px rgb(20 20 19 / 0.05);
   --zen-shadow-md: 0 4px 6px -1px rgb(20 20 19 / 0.05), 0 2px 4px -2px rgb(20 20 19 / 0.05);
   --zen-shadow-lg: 0 10px 15px -3px rgb(20 20 19 / 0.05), 0 4px 6px -4px rgb(20 20 19 / 0.05);
-  --zen-shadow-glow: 0 0 20px rgb(217 119 87 / 0.1);
+  --zen-shadow-glow: 0 0 20px rgb(41 37 36 / 0.08);
 
   /* Border radius */
   --zen-radius-sm: 0.375rem;

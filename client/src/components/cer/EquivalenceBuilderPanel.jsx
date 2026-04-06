@@ -955,7 +955,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
         <DialogContent className="max-w-md md:max-w-xl">
           <DialogHeader>
             <DialogTitle className="text-[#141413] text-lg font-semibold flex items-center">
-              <Shield className="h-5 w-5 mr-2 text-[#5585b3]" />
+              <Shield className="h-5 w-5 mr-2 text-[#292524]" />
               Data Access Verification
             </DialogTitle>
             <DialogDescription className="text-[#616161]">
@@ -968,9 +968,9 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
 
           <div className="space-y-4 my-2">
             {activeDevice && (
-              <Alert variant="outline" className="bg-[#F2F6FB] border-[#5585b3]">
+              <Alert variant="outline" className="bg-[#F2F6FB] border-[#292524]">
                 <div className="flex">
-                  <Info className="h-4 w-4 text-[#5585b3] mt-0.5 mr-2" />
+                  <Info className="h-4 w-4 text-[#292524] mt-0.5 mr-2" />
                   <div>
                     <AlertTitle>Verifying access for {activeDevice.name}</AlertTitle>
                     <AlertDescription className="text-[#616161] text-xs mt-1">
@@ -1006,7 +1006,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                   onChange={e =>
                     setDataAccessInfo({ ...dataAccessInfo, manufacturerName: e.target.value })
                   }
-                  className="h-9 border-[#e8e6dc] focus:border-[#5585b3] focus:ring-1 focus:ring-[#5585b3]"
+                  className="h-9 border-[#e8e6dc] focus:border-[#292524] focus:ring-1 focus:ring-[#292524]"
                   placeholder="e.g. Your Company, Inc."
                 />
               </div>
@@ -1014,21 +1014,21 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-[#141413] flex items-center">
                   Data Access Type
-                  <span className="ml-1 text-[#4a7399] text-xs font-medium">*</span>
+                  <span className="ml-1 text-[#1c1917] text-xs font-medium">*</span>
                 </Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div
                     className={cn(
                       'flex items-start p-3 border rounded cursor-pointer',
                       dataAccessInfo.accessType === 'direct_contract'
-                        ? 'border-[#5585b3] bg-[#F2F6FB]'
-                        : 'border-[#e8e6dc] hover:border-[#5585b3] hover:bg-[#F9FAFB]'
+                        ? 'border-[#292524] bg-[#F2F6FB]'
+                        : 'border-[#e8e6dc] hover:border-[#292524] hover:bg-[#F9FAFB]'
                     )}
                     onClick={() =>
                       setDataAccessInfo({ ...dataAccessInfo, accessType: 'direct_contract' })
                     }
                   >
-                    <Key className="h-5 w-5 text-[#5585b3] mt-0.5 mr-2" />
+                    <Key className="h-5 w-5 text-[#292524] mt-0.5 mr-2" />
                     <div>
                       <p className="text-sm font-medium text-[#141413]">Direct Contract</p>
                       <p className="text-xs text-[#616161] mt-1">
@@ -1041,14 +1041,14 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                     className={cn(
                       'flex items-start p-3 border rounded cursor-pointer',
                       dataAccessInfo.accessType === 'published_literature'
-                        ? 'border-[#5585b3] bg-[#F2F6FB]'
-                        : 'border-[#e8e6dc] hover:border-[#5585b3] hover:bg-[#F9FAFB]'
+                        ? 'border-[#292524] bg-[#F2F6FB]'
+                        : 'border-[#e8e6dc] hover:border-[#292524] hover:bg-[#F9FAFB]'
                     )}
                     onClick={() =>
                       setDataAccessInfo({ ...dataAccessInfo, accessType: 'published_literature' })
                     }
                   >
-                    <FileCheck className="h-5 w-5 text-[#5585b3] mt-0.5 mr-2" />
+                    <FileCheck className="h-5 w-5 text-[#292524] mt-0.5 mr-2" />
                     <div>
                       <p className="text-sm font-medium text-[#141413]">Published Literature</p>
                       <p className="text-xs text-[#616161] mt-1">
@@ -1061,14 +1061,14 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                     className={cn(
                       'flex items-start p-3 border rounded cursor-pointer',
                       dataAccessInfo.accessType === 'indirect_access'
-                        ? 'border-[#5585b3] bg-[#F2F6FB]'
-                        : 'border-[#e8e6dc] hover:border-[#5585b3] hover:bg-[#F9FAFB]'
+                        ? 'border-[#292524] bg-[#F2F6FB]'
+                        : 'border-[#e8e6dc] hover:border-[#292524] hover:bg-[#F9FAFB]'
                     )}
                     onClick={() =>
                       setDataAccessInfo({ ...dataAccessInfo, accessType: 'indirect_access' })
                     }
                   >
-                    <Fingerprint className="h-5 w-5 text-[#5585b3] mt-0.5 mr-2" />
+                    <Fingerprint className="h-5 w-5 text-[#292524] mt-0.5 mr-2" />
                     <div>
                       <p className="text-sm font-medium text-[#141413]">Indirect Access</p>
                       <p className="text-xs text-[#616161] mt-1">
@@ -1081,12 +1081,12 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                     className={cn(
                       'flex items-start p-3 border rounded cursor-pointer',
                       dataAccessInfo.accessType === 'other'
-                        ? 'border-[#5585b3] bg-[#F2F6FB]'
-                        : 'border-[#e8e6dc] hover:border-[#5585b3] hover:bg-[#F9FAFB]'
+                        ? 'border-[#292524] bg-[#F2F6FB]'
+                        : 'border-[#e8e6dc] hover:border-[#292524] hover:bg-[#F9FAFB]'
                     )}
                     onClick={() => setDataAccessInfo({ ...dataAccessInfo, accessType: 'other' })}
                   >
-                    <BarChart className="h-5 w-5 text-[#5585b3] mt-0.5 mr-2" />
+                    <BarChart className="h-5 w-5 text-[#292524] mt-0.5 mr-2" />
                     <div>
                       <p className="text-sm font-medium text-[#141413]">Other Method</p>
                       <p className="text-xs text-[#616161] mt-1">
@@ -1111,7 +1111,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                     onChange={e =>
                       setDataAccessInfo({ ...dataAccessInfo, contractReference: e.target.value })
                     }
-                    className="h-9 border-[#e8e6dc] focus:border-[#5585b3] focus:ring-1 focus:ring-[#5585b3]"
+                    className="h-9 border-[#e8e6dc] focus:border-[#292524] focus:ring-1 focus:ring-[#292524]"
                     placeholder="e.g. CONT-2025-4893"
                   />
                 </div>
@@ -1155,7 +1155,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                   onChange={e =>
                     setDataAccessInfo({ ...dataAccessInfo, accessDetails: e.target.value })
                   }
-                  className="border-[#e8e6dc] focus:border-[#5585b3] focus:ring-1 focus:ring-[#5585b3] resize-none"
+                  className="border-[#e8e6dc] focus:border-[#292524] focus:ring-1 focus:ring-[#292524] resize-none"
                   placeholder={
                     dataAccessInfo.accessType === 'indirect_access'
                       ? 'Please provide details including your greenlight.guru subscription level, access date, and any specific agreements in place...'
@@ -1242,7 +1242,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                 <div className="mt-4">
                   <div className="flex items-center mb-2">
                     {dataAccessStatus === 'checking' ? (
-                      <Loader2 className="h-4 w-4 text-[#5585b3] animate-spin mr-2" />
+                      <Loader2 className="h-4 w-4 text-[#292524] animate-spin mr-2" />
                     ) : dataAccessStatus === 'compliant' ? (
                       <ShieldCheck className="h-4 w-4 text-green-600 mr-2" />
                     ) : dataAccessStatus === 'non-compliant' ? (
@@ -1255,7 +1255,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                       className={cn(
                         'text-sm font-medium',
                         dataAccessStatus === 'checking'
-                          ? 'text-[#5585b3]'
+                          ? 'text-[#292524]'
                           : dataAccessStatus === 'compliant'
                             ? 'text-green-600'
                             : dataAccessStatus === 'non-compliant'
@@ -1298,7 +1298,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
 
             <Button
               variant="default"
-              className="bg-[#5585b3] text-white hover:bg-[#0C5AA0]"
+              className="bg-[#292524] text-white hover:bg-[#0C5AA0]"
               onClick={() => checkDataAccessCompliance(activeDeviceId)}
               disabled={dataAccessStatus === 'checking'}
             >
@@ -1321,7 +1321,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
           <h3 className="text-base font-semibold text-[#141413]">Subject Device</h3>
           <Badge
             variant="outline"
-            className="bg-[#faf0ec] text-[#5585b3] text-xs border-[#5585b3] px-2 py-0.5"
+            className="bg-[#faf0ec] text-[#292524] text-xs border-[#292524] px-2 py-0.5"
           >
             MEDDEV 2.7/1 Rev 4 Compliant
           </Badge>
@@ -1336,7 +1336,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
               id="subject-name"
               value={subjectDevice.name}
               onChange={e => setSubjectDevice({ ...subjectDevice, name: e.target.value })}
-              className="h-9 border-[#e8e6dc] focus:border-[#5585b3] focus:ring-1 focus:ring-[#5585b3]"
+              className="h-9 border-[#e8e6dc] focus:border-[#292524] focus:ring-1 focus:ring-[#292524]"
               placeholder="e.g. OrthoFlex Medical Implant"
             />
           </div>
@@ -1349,7 +1349,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
               id="subject-manufacturer"
               value={subjectDevice.manufacturer}
               onChange={e => setSubjectDevice({ ...subjectDevice, manufacturer: e.target.value })}
-              className="h-9 border-[#e8e6dc] focus:border-[#5585b3] focus:ring-1 focus:ring-[#5585b3]"
+              className="h-9 border-[#e8e6dc] focus:border-[#292524] focus:ring-1 focus:ring-[#292524]"
               placeholder="e.g. OrthoFlex Medical, Inc."
             />
           </div>
@@ -1362,7 +1362,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
               id="subject-model"
               value={subjectDevice.model}
               onChange={e => setSubjectDevice({ ...subjectDevice, model: e.target.value })}
-              className="h-9 border-[#e8e6dc] focus:border-[#5585b3] focus:ring-1 focus:ring-[#5585b3]"
+              className="h-9 border-[#e8e6dc] focus:border-[#292524] focus:ring-1 focus:ring-[#292524]"
               placeholder="e.g. OF-2025-A"
             />
           </div>
@@ -1375,7 +1375,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
               id="subject-description"
               value={subjectDevice.description}
               onChange={e => setSubjectDevice({ ...subjectDevice, description: e.target.value })}
-              className="border-[#e8e6dc] focus:border-[#5585b3] focus:ring-1 focus:ring-[#5585b3] resize-none"
+              className="border-[#e8e6dc] focus:border-[#292524] focus:ring-1 focus:ring-[#292524] resize-none"
               placeholder="Enter a brief description of the device..."
               rows={3}
             />
@@ -1397,7 +1397,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
             <Button
               size="sm"
               variant="outline"
-              className="h-8 text-[#5585b3] border-[#5585b3] hover:bg-[#faf0ec] hover:text-[#5585b3]"
+              className="h-8 text-[#292524] border-[#292524] hover:bg-[#faf0ec] hover:text-[#292524]"
               onClick={() => {
                 resetEquivalentDeviceForm();
                 setDialogMode('add');
@@ -1428,7 +1428,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                   variant={activeDeviceId === device.id ? 'default' : 'outline'}
                   className={
                     activeDeviceId === device.id
-                      ? 'bg-[#5585b3] hover:bg-[#4a7399] text-white'
+                      ? 'bg-[#292524] hover:bg-[#1c1917] text-white'
                       : 'text-[#141413] hover:bg-[#f4f3ee]'
                   }
                   onClick={() => setActiveDeviceId(device.id)}
@@ -1490,7 +1490,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 text-[#5585b3] border-[#5585b3] hover:bg-[#faf0ec] hover:text-[#5585b3]"
+                    className="h-8 text-[#292524] border-[#292524] hover:bg-[#faf0ec] hover:text-[#292524]"
                     onClick={() => {
                       resetFeatureForm();
                       setIsFeatureDialogOpen(true);
@@ -1589,7 +1589,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                       variant="outline"
                       disabled={activeDevice.features.length === 0}
                       onClick={() => generateOverallEquivalence(activeDevice.id)}
-                      className="h-8 text-[#5585b3] border-[#5585b3] hover:bg-[#faf0ec] hover:text-[#5585b3]"
+                      className="h-8 text-[#292524] border-[#292524] hover:bg-[#faf0ec] hover:text-[#292524]"
                     >
                       <Settings className="h-3.5 w-3.5 mr-1.5" />
                       <span>Generate Assessment</span>
@@ -1727,7 +1727,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
             </Button>
             <Button
               onClick={dialogMode === 'add' ? addEquivalentDevice : updateEquivalentDevice}
-              className="bg-[#5585b3] hover:bg-[#4a7399] text-white"
+              className="bg-[#292524] hover:bg-[#1c1917] text-white"
             >
               {dialogMode === 'add' ? 'Add Device' : 'Save Changes'}
             </Button>
@@ -1918,7 +1918,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                     !currentFeature.equivalentValue
                   }
                   onClick={generateFeatureRationale}
-                  className="h-9 border-[#5585b3] text-[#5585b3] hover:bg-[#faf0ec] hover:text-[#5585b3]"
+                  className="h-9 border-[#292524] text-[#292524] hover:bg-[#faf0ec] hover:text-[#292524]"
                 >
                   {isGeneratingRationale ? (
                     <>
@@ -1959,7 +1959,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
             </Button>
             <Button
               onClick={currentFeature.isEditing ? updateFeature : addFeature}
-              className="bg-[#5585b3] hover:bg-[#4a7399] text-white"
+              className="bg-[#292524] hover:bg-[#1c1917] text-white"
             >
               {currentFeature.isEditing ? 'Save Changes' : 'Add Feature'}
             </Button>
@@ -1982,7 +1982,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
               variant="default"
               disabled={isGeneratingSectionE4}
               onClick={generateSectionE4}
-              className="bg-[#5585b3] hover:bg-[#4a7399] text-white"
+              className="bg-[#292524] hover:bg-[#1c1917] text-white"
             >
               {isGeneratingSectionE4 ? (
                 <>
@@ -2025,7 +2025,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 border-[#5585b3] text-[#5585b3]"
+                    className="h-8 border-[#292524] text-[#292524]"
                     onClick={handleAddToCER}
                   >
                     <FileText className="mr-2 h-3.5 w-3.5" />
@@ -2043,7 +2043,7 @@ export default function EquivalenceBuilderPanel({ onEquivalenceDataChange, onAdd
                 </div>
               </div>
               <div className="flex items-center pt-2 text-sm">
-                <Info className="h-4 w-4 text-[#5585b3] mr-2" />
+                <Info className="h-4 w-4 text-[#292524] mr-2" />
                 <span className="text-[#616161]">
                   This generated content can be used directly in Section E.4 of your CER.
                 </span>

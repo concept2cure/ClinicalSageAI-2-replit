@@ -21102,7 +21102,7 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                         'insertHTML',
                         false,
                         `
-                        <div style="background: #6a9bcc; color: white; padding: 10px; border-radius: 8px; margin: 10px 0; border: 2px solid #4a7399; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                        <div style="background: #1c1917; color: white; padding: 10px; border-radius: 8px; margin: 10px 0; border: 2px solid #292524; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
                           <div style="font-weight: bold; margin-bottom: 8px;">🚀 TOKEN INSERTION MENU ACTIVE</div>
                           <div style="font-size: 14px;">
                             <div style="margin: 4px 0; cursor: pointer;" onclick="this.innerHTML='<span style=&quot;background: green; color: white; padding: 2px 8px; border-radius: 4px;&quot;>🔬 CAS Number: 123-45-6 (INSERTED)</span>'">
@@ -21225,8 +21225,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
 
                   /* Regulatory suggestion highlights */
                   .regulatory-highlight {
-                    background-color: rgba(106, 155, 204, 0.1);
-                    border-bottom: 2px solid #6a9bcc;
+                    background-color: rgba(120, 113, 108, 0.1);
+                    border-bottom: 2px solid #78716c;
                     cursor: pointer;
                     position: relative;
                   }
@@ -23397,7 +23397,7 @@ This report confirms current supply chain operational status for regulatory and 
                               200,
                               20
                             )}
-                            stroke={ewsAnalysis.outlier_detected ? '#ef4444' : '#5585b3'}
+                            stroke={ewsAnalysis.outlier_detected ? '#ef4444' : '#292524'}
                             strokeWidth="1.5"
                             fill="none"
                           />

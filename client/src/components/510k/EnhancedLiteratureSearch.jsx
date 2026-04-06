@@ -117,10 +117,10 @@ const LiteratureSearchResult = ({ result, onCite, onSummarize }) => {
 // Helper to get color based on source
 const getSourceColor = source => {
   const colors = {
-    PubMed: '#5585b3',
-    FDA: '#6a9bcc',
+    PubMed: '#292524',
+    FDA: '#1c1917',
     'ClinicalTrials.gov': '#788c5d',
-    'Previously Imported': '#6a9bcc',
+    'Previously Imported': '#1c1917',
   };
 
   return colors[source] || '#8a8880';

@@ -246,7 +246,7 @@ router.post(
       // Define default settings based on tier
       const defaultSettings = {
         branding: {
-          primaryColor: '#5585b3', // Anthropic blue
+          primaryColor: '#292524', // Stone-800
         },
         security: {
           mfaRequired: tier === 'enterprise',

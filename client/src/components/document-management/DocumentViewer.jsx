@@ -269,7 +269,7 @@ export default function DocumentViewer({
   <title>${document.displayName}</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 40px; }
-    h1 { color: #5585b3; }
+    h1 { color: #292524; }
     .metadata { background: #f4f3ee; padding: 15px; border-radius: 8px; }
   </style>
 </head>

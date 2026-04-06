@@ -507,7 +507,7 @@ const ProcessTab = () => {
               <YAxis domain={[90, 110]} />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="value" stroke="#6a9bcc" name="Measured Value" strokeWidth={2} />
+              <Line type="monotone" dataKey="value" stroke="#78716c" name="Measured Value" strokeWidth={2} />
               <Line type="monotone" dataKey="ucl" stroke="#ff0000" name="UCL" strokeDasharray="5 5" />
               <Line type="monotone" dataKey="lcl" stroke="#ff0000" name="LCL" strokeDasharray="5 5" />
               <Line type="monotone" dataKey="target" stroke="#00ff00" name="Target" strokeDasharray="3 3" />
@@ -821,7 +821,7 @@ const ProcessTab = () => {
                   { x: 7, y: 99.6 },
                   { x: 8, y: 100.2 },
                 ]}
-                fill="#6a9bcc"
+                fill="#78716c"
               />
             </ScatterChart>
           </ResponsiveContainer>
@@ -959,7 +959,7 @@ const ProcessTab = () => {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="value" stroke="#6a9bcc" strokeWidth={2} />
+                  <Line type="monotone" dataKey="value" stroke="#78716c" strokeWidth={2} />
                   <Line type="monotone" dataKey="ucl" stroke="#ff0000" strokeDasharray="5 5" />
                   <Line type="monotone" dataKey="lcl" stroke="#ff0000" strokeDasharray="5 5" />
                 </LineChart>
@@ -1279,7 +1279,7 @@ const ProcessTab = () => {
               <PolarGrid />
               <PolarAngleAxis dataKey="subject" />
               <PolarRadiusAxis angle={90} domain={[0, 100]} />
-              <Radar name="Current" dataKey="A" stroke="#6a9bcc" fill="#6a9bcc" fillOpacity={0.6} />
+              <Radar name="Current" dataKey="A" stroke="#78716c" fill="#78716c" fillOpacity={0.6} />
               <Radar name="Target" dataKey="B" stroke="#92a87a" fill="#92a87a" fillOpacity={0.6} />
               <Legend />
             </RadarChart>

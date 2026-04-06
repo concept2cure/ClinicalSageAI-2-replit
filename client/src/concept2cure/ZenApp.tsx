@@ -1976,7 +1976,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           --zen-ink: #18181B;
           --zen-ink-muted: #71717A;
           --zen-border: #E4E4E7;
-          --zen-accent: #5585b3;
+          --zen-accent: #292524;
         }
 
         .zen-scroll::-webkit-scrollbar {
