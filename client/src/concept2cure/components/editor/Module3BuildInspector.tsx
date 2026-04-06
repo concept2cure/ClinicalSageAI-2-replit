@@ -52,6 +52,8 @@ interface Module3BuildInspectorProps {
   cmcProjectId?: string;
   ctdSection?: string;
   onClose?: () => void;
+  /** Navigate to a specific CTD section (e.g. click from summary view) */
+  onNavigateToSection?: (ctdSection: string) => void;
   className?: string;
 }
 
@@ -75,6 +77,7 @@ export function Module3BuildInspector({
   cmcProjectId,
   ctdSection,
   onClose,
+  onNavigateToSection,
   className,
 }: Module3BuildInspectorProps) {
   const { toast } = useToast();
@@ -179,7 +182,7 @@ export function Module3BuildInspector({
       <div className={cn('flex flex-col', className)}>
         {header}
         {buildState ? (
-          <Module3SummaryView buildState={buildState} />
+          <Module3SummaryView buildState={buildState} onNavigateToSection={onNavigateToSection} />
         ) : (
           <div className="px-3 py-6 text-center">
             <p className="text-xs text-stone-400">
@@ -430,7 +433,7 @@ export function Module3BuildInspector({
 
 // ── Module 3 Summary View (no section selected) ─────────────────────────────
 
-function Module3SummaryView({ buildState }: { buildState: Module3BuildStateResponse }) {
+function Module3SummaryView({ buildState, onNavigateToSection }: { buildState: Module3BuildStateResponse; onNavigateToSection?: (ctdSection: string) => void }) {
   const { summary, sections } = buildState;
   const ready = sections.filter((s) => s.buildState === 'approved' || s.buildState === 'locked');
   const stale = sections.filter((s) => s.isStale);
@@ -499,7 +502,19 @@ function Module3SummaryView({ buildState }: { buildState: Module3BuildStateRespo
             return (
               <div
                 key={s.sectionKey}
-                className="flex items-center gap-2 py-1 px-1.5 rounded hover:bg-stone-50 transition-colors"
+                className={cn(
+                  'flex items-center gap-2 py-1 px-1.5 rounded hover:bg-stone-50 transition-colors',
+                  onNavigateToSection && 'cursor-pointer'
+                )}
+                onClick={() => onNavigateToSection?.(s.sectionKey)}
+                role={onNavigateToSection ? 'button' : undefined}
+                tabIndex={onNavigateToSection ? 0 : undefined}
+                onKeyDown={(e) => {
+                  if (onNavigateToSection && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    onNavigateToSection(s.sectionKey);
+                  }
+                }}
               >
                 <span className="text-[10px] text-stone-500 w-12 shrink-0 font-mono">
                   {s.sectionKey}

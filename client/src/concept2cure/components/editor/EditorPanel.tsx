@@ -4331,6 +4331,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             projectId={projectId}
             ctdSection={activeArtifact?.ctdSection}
             onClose={() => setActiveInspector(null)}
+            onNavigateToSection={(section) => {
+              const match = artifacts.find(
+                a => a.ctdSection === section || (a.ctdSection || '').startsWith(`${section}.`)
+              );
+              if (match) {
+                setActiveArtifact(match);
+                setShowArtifactList(false);
+              }
+            }}
           />
         </InspectorDrawer>
       </div>
