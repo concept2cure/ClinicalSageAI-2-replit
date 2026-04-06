@@ -22,14 +22,12 @@ import {
   ChevronDown,
   FileText,
   PenLine,
-  ShieldCheck,
   Search,
   Star,
   Archive,
   Beaker,
   Microscope,
   FlaskConical,
-  Brain,
   FileCheck,
   FileStack,
   Upload,
@@ -39,8 +37,6 @@ import {
   Sparkles,
   Settings,
   Home,
-  Wrench,
-  Send,
   Activity,
   ListChecks,
   ClipboardCheck,
@@ -868,17 +864,10 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
       apps: h('apps'),
       settings: h('settings'),
       'communication-center': h('communication-center'),
-      // Project-scoped (kept for internal use but not top-level nav)
+      // Project-scoped (kept for internal routing, not rendered in sidebar)
       'project-home': h('project-home'),
-      'submission-builder': h('submission-builder'),
       overview: h('overview'),
       'task-board': h('task-board'),
-      tools: h('tools'),
-      submit: h('submit'),
-      documents: h('documents'),
-      'ri-copilot': h('ri-copilot'),
-      review: h('review'),
-      vault: h('vault'),
     };
   }, [onNavigate]);
 
@@ -1178,49 +1167,6 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             </>
           )}
 
-          {/* ── SUBMISSION WORKSPACE — secondary nav ────────────────── */}
-          <div className="mx-2 my-1 border-t border-stone-100" />
-          <WorkspaceGroup label="Workspace" defaultOpen={true}>
-            <NavItem
-              icon={<Wrench className="w-3.5 h-3.5" />}
-              label="Tools"
-              active={activeNavId === 'documents' || activeNavId === 'tools'}
-              onClick={nav.documents}
-            />
-            <NavItem
-              icon={<PenLine className="w-3.5 h-3.5" />}
-              label="Editor"
-              active={activeNavId === 'submission-builder'}
-              onClick={nav['submission-builder']}
-            />
-            <NavItem
-              icon={<Brain className="w-3.5 h-3.5" />}
-              label="Intelligence"
-              active={activeNavId === 'ri-copilot'}
-              accentColor="blue"
-              onClick={nav['ri-copilot']}
-            />
-            <NavItem
-              icon={<ShieldCheck className="w-3.5 h-3.5" />}
-              label="Review & Verify"
-              active={activeNavId === 'review' || activeNavId === 'verify'}
-              accentColor="emerald"
-              onClick={nav.review}
-            />
-            <NavItem
-              icon={<Archive className="w-3.5 h-3.5" />}
-              label="References"
-              active={activeNavId === 'vault'}
-              onClick={nav.vault}
-            />
-            <NavItem
-              icon={<Send className="w-3.5 h-3.5" />}
-              label="Submit & Export"
-              active={activeNavId === 'submit'}
-              accentColor="blue"
-              onClick={nav.submit}
-            />
-          </WorkspaceGroup>
         </div>
 
         {/* User / account footer */}

@@ -65,10 +65,11 @@
         "path": "client/src/concept2cure/components/sidebar/ZenSidebar.tsx",
         "status": "active",
         "action": "canonical",
-        "lines": 1200,
+        "lines": 1212,
         "globalItems": 5,
         "destinations": ["chats", "projects", "communication-center", "apps", "settings"],
-        "role": "Left sidebar — single canonical nav source with 5 destinations"
+        "role": "Left sidebar — single canonical nav source with 5 destinations",
+        "workspaceSectionRemoved": "2026-04-06 — Removed Tools, Editor, Intelligence, Review & Verify, References, Submit & Export from global sidebar per ChatGPT parity design constitution"
       },
       "ProjectsSidebar.tsx": {
         "path": "client/src/concept2cure/components/sidebar/ProjectsSidebar.tsx",
