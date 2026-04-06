@@ -83,17 +83,17 @@ interface Project {
 
 /** Submission type → muted distinguishable dot color for sidebar */
 const SIDEBAR_TYPE_COLORS: Record<string, string> = {
-  '510K': '#64748b',    // slate-500 — device clearance
-  IND: '#3b82f6',       // blue-500 — investigational drug
-  NDA: '#2563eb',       // blue-600 — new drug application
-  BLA: '#7c3aed',       // violet-600 — biologics
-  PMA: '#6366f1',       // indigo-500 — device approval
-  MAA: '#0891b2',       // cyan-600 — EU marketing auth
-  DE_NOVO: '#0d9488',   // teal-500 — de novo device
-  EUA: '#dc2626',       // red-600 — emergency use
-  IVDR: '#059669',      // emerald-600 — in vitro diagnostic
-  ANDA: '#78716c',      // stone-500 — generic drug
-  CER: '#d97706',       // amber-600 — clinical evaluation
+  '510K': '#78716c',    // stone-500
+  IND: '#57534e',       // stone-600
+  NDA: '#44403c',       // stone-700
+  BLA: '#292524',       // stone-800
+  PMA: '#1c1917',       // stone-900
+  MAA: '#a8a29e',       // stone-400
+  DE_NOVO: '#d6d3d1',   // stone-300
+  EUA: '#57534e',       // stone-600
+  IVDR: '#78716c',      // stone-500
+  ANDA: '#a8a29e',      // stone-400
+  CER: '#44403c',       // stone-700
 };
 
 export interface ZenSidebarProps {
@@ -220,19 +220,11 @@ const NavItem: React.FC<{
   icon: React.ReactNode;
   label: string;
   active?: boolean;
-  accentColor?: 'blue' | 'violet' | 'emerald';
   badge?: string;
   subtitle?: string;
   onClick: () => void;
 }> = React.memo(
-  ({ icon, label, active, accentColor, badge, subtitle, onClick }) => {
-    const accentMap = {
-      blue: { bg: 'bg-stone-100', text: 'text-stone-600', iconColor: 'text-stone-900' },
-      violet: { bg: 'bg-stone-200', text: 'text-stone-600', iconColor: 'text-stone-900' },
-      emerald: { bg: 'bg-stone-100', text: 'text-stone-800', iconColor: 'text-stone-900' },
-    };
-    const accent = accentColor && accentMap[accentColor];
-
+  ({ icon, label, active, badge, subtitle, onClick }) => {
     return (
       <Button
         type="button"
@@ -243,22 +235,14 @@ const NavItem: React.FC<{
         className={cn(
           'h-auto w-full justify-start gap-2 mx-1 pl-5 pr-3 py-[5px] text-xs transition-all duration-150 rounded-md',
           active
-            ? accent
-              ? `${accent.bg} ${accent.text} font-medium`
-              : 'bg-stone-200/80 text-stone-900 font-medium'
-            : accent
-            ? cn(
-                'text-stone-600',
-                accent.bg === 'bg-stone-100' && 'hover:bg-stone-100 hover:text-stone-600',
-                accent.bg === 'bg-stone-100' && 'hover:bg-stone-100 hover:text-stone-800'
-              )
+            ? 'bg-stone-200/80 text-stone-900 font-medium'
             : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
         )}
       >
         <span
           className={cn(
             'flex-shrink-0',
-            active ? (accent ? accent.iconColor : 'text-stone-700') : 'text-stone-400'
+            active ? 'text-stone-700' : 'text-stone-400'
           )}
         >
           {icon}
@@ -282,7 +266,6 @@ const NavItem: React.FC<{
   (prev, next) =>
     prev.label === next.label &&
     prev.active === next.active &&
-    prev.accentColor === next.accentColor &&
     prev.badge === next.badge &&
     prev.subtitle === next.subtitle
 );

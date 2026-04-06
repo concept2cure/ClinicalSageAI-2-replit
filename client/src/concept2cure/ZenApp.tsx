@@ -2590,35 +2590,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             <div className="flex-shrink-0" data-testid="workspace-overview">
               <ProjectHomeDashboard
                 project={{
-                  id: Number(activeProjectId) || 0,
                   name: activeProject.name,
-                  type: activeProject.type,
                   description: activeProject.description ?? null,
-                  sponsor: ((activeProject as Record<string, unknown>).sponsor as string) || null,
-                  product: ((activeProject as Record<string, unknown>).product as string) || null,
-                  region: ((activeProject as Record<string, unknown>).region as string) || null,
-                }}
-                onNavigate={mode => {
-                  const mapped = SIDEBAR_NAV_TO_LAYOUT[mode];
-                  if (mapped) {
-                    if (isProjectScopedLayout(mapped)) {
-                      requireActiveProject(mapped);
-                    } else {
-                      setLayoutMode(mapped);
-                    }
-                  } else {
-                    console.warn(`[ProjectHomeDashboard] Unknown nav mode: ${mode}`);
-                  }
-                }}
-                onOpenConfig={() => setEditProjectOpen(true)}
-                onOpenSearch={() => setCommandPaletteOpen(true)}
-                onSuggestedPrompt={prompt => {
-                  setExternalChatMessage({ text: prompt, ts: Date.now() });
-                }}
-                onOpenArtifact={artifactId => {
-                  if (!requireActiveProject('regulatory-workspace')) return;
-                  setOpenArtifactId(artifactId);
-                  setRiViewMode('editor');
                 }}
                 onBackToProjects={() => {
                   setActiveProjectId(undefined);

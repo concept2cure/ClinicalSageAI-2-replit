@@ -12,19 +12,9 @@ import { ChevronLeft } from 'lucide-react';
 
 interface ProjectHomeDashboardProps {
   project: {
-    id: number;
     name: string;
-    type: string;
     description?: string | null;
-    sponsor?: string | null;
-    product?: string | null;
-    region?: string | null;
   };
-  onNavigate: (mode: string, sectionCode?: string) => void;
-  onOpenConfig?: () => void;
-  onSuggestedPrompt?: (prompt: string) => void;
-  onOpenSearch?: () => void;
-  onOpenArtifact?: (artifactId: string) => void;
   onBackToProjects?: () => void;
 }
 
