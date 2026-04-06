@@ -61,9 +61,9 @@ type SettingsSection =
 interface ZenSettingsProps {
   isOpen: boolean;
   onClose: () => void;
-  /** Active project ID — enables the Project Context editor in AnA Intelligence */
+  /** Active project ID — enables the Active Project tab in Customize AnA */
   activeProjectId?: string | null;
-  /** Active project name — displayed in Project Context editor header */
+  /** Active project name — displayed in Active Project tab header */
   activeProjectName?: string;
   /** Initial section to open when the modal appears */
   initialSection?: SettingsSection;
@@ -84,7 +84,7 @@ const SETTINGS_NAV: {
   { id: 'security', label: 'Security', icon: Shield },
   { id: 'appearance', label: 'Appearance', icon: Palette },
   { id: 'integrations', label: 'Integrations', icon: Link2 },
-  { id: 'ana-intelligence', label: 'AnA Intelligence', icon: Brain },
+  { id: 'ana-intelligence', label: 'Customize AnA', icon: Brain },
   { id: 'help', label: 'Help & Support', icon: HelpCircle },
 ];
 
@@ -1313,6 +1313,11 @@ const IntelligenceSection: React.FC<{
           );
         })}
       </div>
+
+      {/* Active tab description */}
+      <p className="text-xs text-stone-500 mb-4 px-1">
+        {INTELLIGENCE_TABS.find(t => t.id === activeTab)?.description}
+      </p>
 
       {/* Editor content */}
       <div className="rounded-xl border border-stone-200 bg-white overflow-hidden">
