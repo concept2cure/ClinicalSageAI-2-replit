@@ -30,10 +30,11 @@ export interface AppDefinition {
 }
 
 export const CATEGORY_META: Record<AppCategory, { label: string; color: string }> = {
-  strategy: { label: 'Strategy', color: '#1c1917' },    // stone-900
-  builder: { label: 'Builders', color: '#44403c' },     // stone-700
-  studio: { label: 'Studio', color: '#57534e' },        // stone-600
-  intelligence: { label: 'Intelligence', color: '#78716c' }, // stone-500
+  // Black-and-white only — neutral grayscale.
+  strategy: { label: 'Strategy', color: '#000000' },    // black
+  builder: { label: 'Builders', color: '#404040' },     // neutral-700
+  studio: { label: 'Studio', color: '#525252' },        // neutral-600
+  intelligence: { label: 'Intelligence', color: '#737373' }, // neutral-500
 };
 
 export const APP_CATALOG: AppDefinition[] = [

@@ -4,7 +4,6 @@
  *
  * Zone A (Utility): New Chat → Search → Customize AnA
  * Zone B (6 Destinations): Chats → Projects → Reporting & Analytics → Communication Center → Apps → Settings
- * Zone B (5 Destinations): Chats → Projects → Communication Center → Apps → Settings
  * Zone C (Context): Active project indicator, pinned/recent project list
  * Zone D (Footer): Account/profile
  */
@@ -78,17 +77,18 @@ interface Project {
 
 /** Submission type → muted distinguishable dot color for sidebar */
 const SIDEBAR_TYPE_COLORS: Record<string, string> = {
-  '510K': '#78716c',    // stone-500
-  IND: '#57534e',       // stone-600
-  NDA: '#44403c',       // stone-700
-  BLA: '#292524',       // stone-800
-  PMA: '#1c1917',       // stone-900
-  MAA: '#a8a29e',       // stone-400
-  DE_NOVO: '#d6d3d1',   // stone-300
-  EUA: '#57534e',       // stone-600
-  IVDR: '#78716c',      // stone-500
-  ANDA: '#a8a29e',      // stone-400
-  CER: '#44403c',       // stone-700
+  // Black-and-white only — neutral grayscale, no warm tones.
+  '510K': '#737373',    // neutral-500
+  IND: '#525252',       // neutral-600
+  NDA: '#404040',       // neutral-700
+  BLA: '#262626',       // neutral-800
+  PMA: '#000000',       // black
+  MAA: '#a3a3a3',       // neutral-400
+  DE_NOVO: '#d4d4d4',   // neutral-300
+  EUA: '#525252',       // neutral-600
+  IVDR: '#737373',      // neutral-500
+  ANDA: '#a3a3a3',      // neutral-400
+  CER: '#404040',       // neutral-700
 };
 
 export interface ZenSidebarProps {
@@ -438,7 +438,7 @@ const ProjectRow: React.FC<{
           onClick={onSelect}
           className="w-2 h-2 rounded-full flex-shrink-0"
           style={{
-            backgroundColor: project.color || SIDEBAR_TYPE_COLORS[project.type] || '#78716c',
+            backgroundColor: project.color || SIDEBAR_TYPE_COLORS[project.type] || '#737373',
           }}
         />
 
@@ -979,7 +979,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
         <div className="mx-2 border-t border-stone-100 flex-shrink-0" />
 
-        {/* ── Zone B: 5 Primary Destinations ──────────────────────── */}
+        {/* ── Zone B: 6 Primary Destinations ──────────────────────── */}
         <div className="px-1 py-1 flex-shrink-0 space-y-0.5">
           <NavItem
             icon={<MessageSquare className="w-3.5 h-3.5" />}

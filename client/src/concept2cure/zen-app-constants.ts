@@ -160,17 +160,19 @@ export const TOOL_PANELS: Record<
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function getProjectColor(type: string): string {
+  // Black-and-white only — no warm tones, no chroma.
+  // Submission types differentiated by neutral grayscale steps.
   const colors: Record<string, string> = {
-    '510K': 'blue',
-    IND: 'purple',
-    NDA: 'green',
-    BLA: 'orange',
-    PMA: 'red',
-    MAA: 'pink',
-    DE_NOVO: 'amber',
-    EUA: 'cyan',
+    '510K': '#737373',    // neutral-500
+    IND: '#525252',       // neutral-600
+    NDA: '#404040',       // neutral-700
+    BLA: '#262626',       // neutral-800
+    PMA: '#000000',       // black
+    MAA: '#a3a3a3',       // neutral-400
+    DE_NOVO: '#d4d4d4',   // neutral-300
+    EUA: '#525252',       // neutral-600
   };
-  return colors[type] || 'gray';
+  return colors[type] || '#737373'; // neutral-500 fallback
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -1,10 +1,10 @@
 {
   "$schema": "UI Surface Registry — tracks status of every shell surface in convergence",
-  "lastUpdated": "2026-04-05T22:00:00Z",
-  "convergencePhase": "phases 1-16 complete",
+  "lastUpdated": "2026-04-06T23:00:00Z",
+  "convergencePhase": "WO-1 through WO-6 complete — ChatGPT/Claude.ai parity convergence done",
   "auditFile": "docs/audits/ANA_UI_FORENSIC_AUDIT_2026-04-05.md",
   "workOrderFile": "docs/plans/ANA_UI_CONVERGENCE_WORK_ORDER_2026-04-05.md",
-  "allowedDestinations": ["chats", "projects", "communication-center", "apps", "settings"],
+  "allowedDestinations": ["chats", "projects", "reports", "communication-center", "apps", "settings"],
   "surfaces": {
     "shells": {
       "ZenApp.tsx": {
