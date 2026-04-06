@@ -17,49 +17,49 @@ import { ChevronRight } from 'lucide-react';
  * @param {string} props.className Optional additional CSS classes
  */
 export default function TypeBreadcrumb({ subtypeId, className = '' }) {
-  // Get subtype details with type information
-  const {
-    data: subtype,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ['/api/meta/subtypes', subtypeId],
-    queryFn: async () => {
-      if (!subtypeId) return null;
-      const response = await fetch(`/api/meta/subtypes?id=${subtypeId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch subtype information');
-      }
-      const data = await response.json();
-      return data.length > 0 ? data[0] : null;
-    },
-    enabled: !!subtypeId,
-    staleTime: 60 * 60 * 1000, // Cache for 1 hour
-  });
+ // Get subtype details with type information
+ const {
+ data: subtype,
+ isLoading,
+ error,
+ } = useQuery({
+ queryKey: ['/api/meta/subtypes', subtypeId],
+ queryFn: async () => {
+ if (!subtypeId) return null;
+ const response = await fetch(`/api/meta/subtypes?id=${subtypeId}`);
+ if (!response.ok) {
+ throw new Error('Failed to fetch subtype information');
+ }
+ const data = await response.json();
+ return data.length > 0 ? data[0] : null;
+ },
+ enabled: !!subtypeId,
+ staleTime: 60 * 60 * 1000, // Cache for 1 hour
+ });
 
-  // If not yet loaded or no subtypeId provided
-  if (isLoading) {
-    return (
-      <div className={`text-xs text-gray-500 flex items-center ${className}`}>
-        <Loader2 className="h-3 w-3 animate-spin mr-1" />
-        <span>Loading document type...</span>
-      </div>
-    );
-  }
+ // If not yet loaded or no subtypeId provided
+ if (isLoading) {
+ return (
+ <div className={`text-xs text-gray-500 flex items-center ${className}`}>
+ <Loader2 className="h-3 w-3 animate-spin mr-1" />
+ <span>Loading document type...</span>
+ </div>
+ );
+ }
 
-  // If error or no subtype found
-  if (error || !subtype) {
-    return null;
-  }
+ // If error or no subtype found
+ if (error || !subtype) {
+ return null;
+ }
 
-  // Render the breadcrumb
-  return (
-    <div className={`text-xs text-gray-500 flex items-center ${className}`}>
-      <span style={{ color: '#292524' }}>{subtype.document_types?.name || 'Unknown Type'}</span>
-      <ChevronRight className="h-3 w-3 mx-1" />
-      <span>{subtype.name}</span>
-    </div>
-  );
+ // Render the breadcrumb
+ return (
+ <div className={`text-xs text-gray-500 flex items-center ${className}`}>
+ <span style={{ color: '#292524' }}>{subtype.document_types?.name || 'Unknown Type'}</span>
+ <ChevronRight className="h-3 w-3 mx-1" />
+ <span>{subtype.name}</span>
+ </div>
+ );
 }
 
 /**
@@ -71,13 +71,13 @@ export default function TypeBreadcrumb({ subtypeId, className = '' }) {
  * @param {string} props.className Optional additional CSS classes
  */
 export function StaticTypeBreadcrumb({ typeName, subtypeName, className = '' }) {
-  if (!typeName || !subtypeName) return null;
+ if (!typeName || !subtypeName) return null;
 
-  return (
-    <div className={`text-xs text-gray-500 flex items-center ${className}`}>
-      <span style={{ color: '#292524' }}>{typeName}</span>
-      <ChevronRight className="h-3 w-3 mx-1" />
-      <span>{subtypeName}</span>
-    </div>
-  );
+ return (
+ <div className={`text-xs text-gray-500 flex items-center ${className}`}>
+ <span style={{ color: '#292524' }}>{typeName}</span>
+ <ChevronRight className="h-3 w-3 mx-1" />
+ <span>{subtypeName}</span>
+ </div>
+ );
 }

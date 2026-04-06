@@ -15,43 +15,43 @@
  * @returns {Promise<object>} The registered document information
  */
 export async function registerModuleDocument(organizationId, userId, moduleType, documentMetadata) {
-  if (!organizationId || !userId || !moduleType || !documentMetadata) {
-    throw new Error('Missing required parameters for document registration');
-  }
+ if (!organizationId || !userId || !moduleType || !documentMetadata) {
+ throw new Error('Missing required parameters for document registration');
+ }
 
-  try {
-    // Add common metadata
-    const registrationData = {
-      organizationId,
-      userId,
-      moduleType,
-      documentMetadata: {
-        ...documentMetadata,
-        registeredAt: new Date().toISOString(),
-        registeredBy: userId,
-        status: 'registered',
-      },
-    };
+ try {
+ // Add common metadata
+ const registrationData = {
+ organizationId,
+ userId,
+ moduleType,
+ documentMetadata: {
+ ...documentMetadata,
+ registeredAt: new Date().toISOString(),
+ registeredBy: userId,
+ status: 'registered',
+ },
+ };
 
-    // Make API call to register the document
-    const response = await fetch('/api/module-integration/register-document', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(registrationData),
-    });
+ // Make API call to register the document
+ const response = await fetch('/api/module-integration/register-document', {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ },
+ body: JSON.stringify(registrationData),
+ });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to register document in workflow system');
-    }
+ if (!response.ok) {
+ const errorData = await response.json().catch(() => ({}));
+ throw new Error(errorData.message || 'Failed to register document in workflow system');
+ }
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error registering document:', error);
-    throw error;
-  }
+ return await response.json();
+ } catch (error) {
+ console.error('Error registering document:', error);
+ throw error;
+ }
 }
 
 /**
@@ -64,37 +64,37 @@ export async function registerModuleDocument(organizationId, userId, moduleType,
  * @returns {Promise<object>} Updated document information
  */
 export async function updateDocumentStatus(documentId, status, userId, comment = '') {
-  if (!documentId || !status || !userId) {
-    throw new Error('Missing required parameters for status update');
-  }
+ if (!documentId || !status || !userId) {
+ throw new Error('Missing required parameters for status update');
+ }
 
-  try {
-    const updateData = {
-      documentId,
-      status,
-      userId,
-      comment,
-      updatedAt: new Date().toISOString(),
-    };
+ try {
+ const updateData = {
+ documentId,
+ status,
+ userId,
+ comment,
+ updatedAt: new Date().toISOString(),
+ };
 
-    const response = await fetch('/api/module-integration/update-document-status', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updateData),
-    });
+ const response = await fetch('/api/module-integration/update-document-status', {
+ method: 'PUT',
+ headers: {
+ 'Content-Type': 'application/json',
+ },
+ body: JSON.stringify(updateData),
+ });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to update document status');
-    }
+ if (!response.ok) {
+ const errorData = await response.json().catch(() => ({}));
+ throw new Error(errorData.message || 'Failed to update document status');
+ }
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error updating document status:', error);
-    throw error;
-  }
+ return await response.json();
+ } catch (error) {
+ console.error('Error updating document status:', error);
+ throw error;
+ }
 }
 
 /**
@@ -104,23 +104,23 @@ export async function updateDocumentStatus(documentId, status, userId, comment =
  * @returns {Promise<object>} Document registration information
  */
 export async function getDocumentRegistration(documentId) {
-  if (!documentId) {
-    throw new Error('Document ID is required');
-  }
+ if (!documentId) {
+ throw new Error('Document ID is required');
+ }
 
-  try {
-    const response = await fetch(`/api/module-integration/document/${documentId}`);
+ try {
+ const response = await fetch(`/api/module-integration/document/${documentId}`);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to retrieve document registration');
-    }
+ if (!response.ok) {
+ const errorData = await response.json().catch(() => ({}));
+ throw new Error(errorData.message || 'Failed to retrieve document registration');
+ }
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error retrieving document registration:', error);
-    throw error;
-  }
+ return await response.json();
+ } catch (error) {
+ console.error('Error retrieving document registration:', error);
+ throw error;
+ }
 }
 
 /**
@@ -130,23 +130,23 @@ export async function getDocumentRegistration(documentId) {
  * @returns {Promise<Array>} Document workflow history
  */
 export async function getDocumentWorkflowHistory(documentId) {
-  if (!documentId) {
-    throw new Error('Document ID is required');
-  }
+ if (!documentId) {
+ throw new Error('Document ID is required');
+ }
 
-  try {
-    const response = await fetch(`/api/module-integration/document/${documentId}/history`);
+ try {
+ const response = await fetch(`/api/module-integration/document/${documentId}/history`);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to retrieve document workflow history');
-    }
+ if (!response.ok) {
+ const errorData = await response.json().catch(() => ({}));
+ throw new Error(errorData.message || 'Failed to retrieve document workflow history');
+ }
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error retrieving document workflow history:', error);
-    throw error;
-  }
+ return await response.json();
+ } catch (error) {
+ console.error('Error retrieving document workflow history:', error);
+ throw error;
+ }
 }
 
 /**
@@ -158,34 +158,34 @@ export async function getDocumentWorkflowHistory(documentId) {
  * @returns {Promise<object>} The created comment
  */
 export async function addDocumentComment(documentId, userId, comment) {
-  if (!documentId || !userId || !comment) {
-    throw new Error('Missing required parameters for adding comment');
-  }
+ if (!documentId || !userId || !comment) {
+ throw new Error('Missing required parameters for adding comment');
+ }
 
-  try {
-    const commentData = {
-      documentId,
-      userId,
-      comment,
-      createdAt: new Date().toISOString(),
-    };
+ try {
+ const commentData = {
+ documentId,
+ userId,
+ comment,
+ createdAt: new Date().toISOString(),
+ };
 
-    const response = await fetch('/api/module-integration/document-comment', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(commentData),
-    });
+ const response = await fetch('/api/module-integration/document-comment', {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ },
+ body: JSON.stringify(commentData),
+ });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to add document comment');
-    }
+ if (!response.ok) {
+ const errorData = await response.json().catch(() => ({}));
+ throw new Error(errorData.message || 'Failed to add document comment');
+ }
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error adding document comment:', error);
-    throw error;
-  }
+ return await response.json();
+ } catch (error) {
+ console.error('Error adding document comment:', error);
+ throw error;
+ }
 }
