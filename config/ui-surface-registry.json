@@ -152,7 +152,7 @@
         "component": "AppsPage.tsx",
         "componentPath": "client/src/concept2cure/pages/AppsPage.tsx",
         "navId": "apps",
-        "notes": "2026-04-06 WO-3: ChatGPT-style app directory. 4 categories (Featured/Authoring/Intelligence/Specialist), 20 apps, search, 2-col grid, stone palette. All apps route to verified workbenches."
+        "notes": "2026-04-06 WO-3 + MD&D expansion: ChatGPT-style app directory. 4 categories (Featured/Authoring/Intelligence/Specialist), 25 apps, search, 2-col grid, stone palette. Includes 7 SME-driven medical device specialist apps (Device Pathway Navigator, Predicate Finder, Q-Submission Assistant, Risk Management ISO 14971, SaMD & Cybersecurity, Human Factors IEC 62366, Biocompatibility ISO 10993) all routing chat-first via setExternalChatMessage."
       },
       "settings": {
         "status": "active",

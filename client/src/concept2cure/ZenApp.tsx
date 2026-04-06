@@ -2276,6 +2276,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                             setActiveToolPanel('ana-biostats');
                           }
                           break;
+                        case 'device-pathway':
+                          setLayoutMode('chats');
+                          setExternalChatMessage({
+                            text: 'Help me determine the right regulatory pathway for my device. Walk me through device classification (Class I/II/III), pathway selection (510(k), De Novo, PMA, HDE, or Exempt), product code lookup, and the key factors that drive the decision.',
+                            ts: Date.now(),
+                          });
+                          break;
 
                         // ── Authoring ──
                         case 'medical-device': {
@@ -2294,6 +2301,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                           navigate(`/concept2cure/project/${activeProjectId}/${subPath}`);
                           break;
                         }
+                        case 'q-submission':
+                          setLayoutMode('chats');
+                          setExternalChatMessage({
+                            text: 'Help me prepare an FDA Q-Submission (Pre-Sub). Walk me through the right Q-Sub type (Pre-Sub, Submission Issue Request, Study Risk Determination), feedback questions to ask FDA, supporting materials to include, and meeting prep best practices.',
+                            ts: Date.now(),
+                          });
+                          break;
                         case 'safety-narrative':
                           openWorkspaceView('safety-narrative');
                           break;
@@ -2307,6 +2321,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                           break;
 
                         // ── Intelligence ──
+                        case 'predicate-finder':
+                          setLayoutMode('chats');
+                          setExternalChatMessage({
+                            text: 'Help me find predicate devices for substantial equivalence analysis. Search the FDA 510(k) database for predicates similar to my device, compare key features (intended use, technology, performance), and build a substantial equivalence comparison table.',
+                            ts: Date.now(),
+                          });
+                          break;
                         case 'regulatory-intelligence':
                           if (requireActiveProject('regulatory-workspace')) {
                             setActiveToolPanel('intelligence');
@@ -2325,6 +2346,34 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                           break;
 
                         // ── Specialist ──
+                        case 'risk-management':
+                          setLayoutMode('chats');
+                          setExternalChatMessage({
+                            text: 'Help me with ISO 14971 risk management for my medical device. Walk me through the Risk Management Plan, hazard analysis, FMEA (design, process, use), risk control measures, residual risk evaluation, and the Risk Management Report deliverable.',
+                            ts: Date.now(),
+                          });
+                          break;
+                        case 'samd-cybersecurity':
+                          setLayoutMode('chats');
+                          setExternalChatMessage({
+                            text: 'Help me with software lifecycle and cybersecurity for my Software as a Medical Device (SaMD). Cover IEC 62304 software classification (Class A/B/C), the FDA cybersecurity premarket guidance (threat modeling, SBOM, vulnerability management), and the documentation deliverables I need.',
+                            ts: Date.now(),
+                          });
+                          break;
+                        case 'human-factors':
+                          setLayoutMode('chats');
+                          setExternalChatMessage({
+                            text: 'Help me build a Human Factors / Usability Engineering file per IEC 62366-1 and FDA HFE guidance. Walk me through the use specification, task analysis, use error analysis, formative studies, and the summative validation study.',
+                            ts: Date.now(),
+                          });
+                          break;
+                        case 'biocompatibility':
+                          setLayoutMode('chats');
+                          setExternalChatMessage({
+                            text: 'Help me plan biocompatibility testing per ISO 10993-1. Determine the device contact category and duration, select the required biological endpoints, choose the right test methods, and outline the Biological Evaluation Report.',
+                            ts: Date.now(),
+                          });
+                          break;
                         case 'ectd-navigator':
                           if (requireActiveProject('regulatory-workspace')) {
                             setActiveToolPanel('ectd');
