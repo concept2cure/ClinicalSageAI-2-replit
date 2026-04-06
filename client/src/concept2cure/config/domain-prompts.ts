@@ -112,13 +112,22 @@ const BIOSTATISTICS: DomainPromptGroup = {
 
 const CMC: DomainPromptGroup = {
   domain: 'cmc',
-  label: 'CMC / Manufacturing',
+  label: 'CMC / Module 3',
   prompts: [
     { id: 'cmc-eval', label: 'Evaluate my CMC documentation' },
     { id: 'cmc-change', label: 'Assess manufacturing change impact on CQAs' },
     { id: 'cmc-compare', label: 'Help with comparability assessment' },
     { id: 'cmc-module3', label: 'Review Module 3 documentation completeness' },
     { id: 'cmc-workplan', label: 'Generate a CMC workplan and timeline' },
+    // Module 3 Workflow Convergence prompts (Phase 7)
+    { id: 'cmc-build-m3', label: 'Build Module 3 from current project sources', intent: 'module3_build_all', description: 'Compile all Module 3 subsections from available source objects and uploaded documents' },
+    { id: 'cmc-m3-missing', label: 'Show missing inputs for Module 3', intent: 'module3_missing_inputs', description: 'Show which subsections are missing required data to compile' },
+    { id: 'cmc-m3-stale', label: 'Show stale Module 3 sections', intent: 'module3_stale_sections', description: 'Identify sections that need refreshing due to source changes' },
+    { id: 'cmc-m3-refresh', label: 'Refresh stale Module 3 sections from latest sources', intent: 'module3_refresh_stale', description: 'Rebuild all stale sections from updated source data' },
+    { id: 'cmc-m3-readiness', label: 'Module 3 submission readiness check', intent: 'module3_readiness', description: 'Check approval state, contradictions, and export readiness' },
+    { id: 'cmc-m3-contradictions', label: 'Scan Module 3 for contradictions', intent: 'module3_contradictions', description: 'Detect cross-functional data conflicts in CMC data' },
+    { id: 'cmc-m3-section', label: 'Build a specific Module 3 subsection (e.g. 3.2.S.4)', intent: 'module3_build_section', description: 'Compile one specific subsection and open it in the editor' },
+    { id: 'cmc-m3-lineage', label: 'Show source lineage for a Module 3 section', intent: 'module3_lineage', description: 'Trace which sources feed a specific subsection' },
   ],
 };
 

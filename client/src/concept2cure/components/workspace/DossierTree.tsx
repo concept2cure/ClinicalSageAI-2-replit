@@ -41,6 +41,8 @@ import {
   type DossierNodeStatus,
 } from '../../models/ctdHierarchy';
 import type { TreeArtifact } from './ProjectFileTree';
+import type { Module3BuildStateResponse, Module3BuildState as M3BuildState } from '../../hooks/useModule3BuildState';
+import { BUILD_STATE_CONFIG } from '../../hooks/useModule3BuildState';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -79,6 +81,8 @@ interface DossierTreeProps {
   onDraftWithAI?: (ctdSection: string) => void;
   /** Suggestion chip: attach an existing document to this section */
   onAttachExisting?: (ctdSection: string) => void;
+  /** Module 3 build state from useModule3BuildState hook (Phase 3 — Workflow Convergence) */
+  module3BuildState?: Module3BuildStateResponse;
   className?: string;
 }
 
@@ -171,6 +175,41 @@ function StatusIndicator({ status }: { status: DossierNodeStatus }) {
   );
 }
 
+// ── Module 3 build-state overlay (Phase 3 — Workflow Convergence) ────────────
+
+function m3BuildStateToDossierStatus(buildState: M3BuildState): DossierNodeStatus {
+  switch (buildState) {
+    case 'locked': return 'locked';
+    case 'approved': return 'approved';
+    case 'review': return 'under_review';
+    case 'contradiction_flagged': return 'missing_evidence';
+    case 'stale': return 'draft_present';
+    case 'draft_artifact_created':
+    case 'compiled':
+    case 'extraction_complete':
+      return 'draft_present';
+    case 'sources_uploaded':
+    case 'extraction_pending':
+      return 'draft_present';
+    case 'no_sources':
+    default:
+      return 'empty';
+  }
+}
+
+function Module3BuildBadge({ buildState, completeness }: { buildState: M3BuildState; completeness: number }) {
+  const cfg = BUILD_STATE_CONFIG[buildState];
+  if (!cfg) return null;
+  return (
+    <span
+      className={cn('text-[9px] px-1 py-0 rounded font-medium whitespace-nowrap', cfg.bgColor, cfg.color)}
+      title={`${cfg.label} (${completeness}% complete)`}
+    >
+      {cfg.label}
+    </span>
+  );
+}
+
 // ── Node icon by type ────────────────────────────────────────────────────────
 
 function NodeIcon({ nodeType, isExpanded }: { nodeType: string; isExpanded: boolean }) {
@@ -222,6 +261,7 @@ interface DossierNodeRowProps {
   onCreateFromTemplate?: (ctdSection: string) => void;
   onDraftWithAI?: (ctdSection: string) => void;
   onAttachExisting?: (ctdSection: string) => void;
+  module3BuildState?: Module3BuildStateResponse;
 }
 
 function DossierNodeRow({
@@ -237,13 +277,19 @@ function DossierNodeRow({
   onCreateFromTemplate,
   onDraftWithAI,
   onAttachExisting,
+  module3BuildState,
 }: DossierNodeRowProps) {
   const isExpanded = expanded.has(node.nodeId);
   const hasChildren = node.children.length > 0;
   const isSelected = selectedSection === node.ctdSection;
-  const status = hasChildren
-    ? getAggregatedStatus(node, counts)
-    : getNodeStatus(node.ctdSection, counts);
+
+  // Module 3 build-state override: use real build state for M3 leaf sections
+  const m3Section = module3BuildState?.sections?.find(s => s.sectionKey === node.ctdSection);
+  const status = m3Section
+    ? m3BuildStateToDossierStatus(m3Section.buildState)
+    : hasChildren
+      ? getAggregatedStatus(node, counts)
+      : getNodeStatus(node.ctdSection, counts);
   const docCount = getAggregatedCount(node, counts);
 
   // Required children check: how many required children have no artifacts?
@@ -351,6 +397,11 @@ function DossierNodeRow({
 
         {/* Status */}
         <StatusIndicator status={status} />
+
+        {/* Module 3 build-state badge (Phase 3 — Workflow Convergence) */}
+        {m3Section && (
+          <Module3BuildBadge buildState={m3Section.buildState} completeness={m3Section.completeness} />
+        )}
 
         {/* Completion mini-bar with color-coded status (enhanced Sprint 3B) */}
         {metrics?.[node.ctdSection] && metrics[node.ctdSection].artifactCount > 0 && (() => {
@@ -511,6 +562,7 @@ function DossierNodeRow({
             onCreateFromTemplate={onCreateFromTemplate}
             onDraftWithAI={onDraftWithAI}
             onAttachExisting={onAttachExisting}
+            module3BuildState={module3BuildState}
           />
         ))}
     </>
@@ -535,6 +587,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
   onCreateFromTemplate,
   onDraftWithAI,
   onAttachExisting,
+  module3BuildState,
   className,
 }) => {
   // Use custom hierarchy when provided (submission-type-specific), otherwise default CTD
@@ -609,6 +662,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
             onCreateFromTemplate={onCreateFromTemplate}
             onDraftWithAI={onDraftWithAI}
             onAttachExisting={onAttachExisting}
+            module3BuildState={module3BuildState}
           />
         ))}
       </div>

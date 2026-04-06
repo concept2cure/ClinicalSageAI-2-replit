@@ -10,6 +10,7 @@ import {
 import { composeModule3FromCanonicalSources, impactedSectionsForSourceType } from '../../services/module3Composer';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
+import { bridgeCompileToArtifact } from '../../services/module3-convergence-service';
 
 const router = express.Router();
 
@@ -23,6 +24,11 @@ const upsertSourceObjectSchema = z.object({
     'batch',
     'change_control',
     'comparability',
+    'manufacturing_process',
+    'characterization',
+    'reference_standard',
+    'container_closure',
+    'excipient',
   ]),
   sourceKey: z.string().min(1),
   sourcePayload: z.record(z.any()),
@@ -185,7 +191,25 @@ router.post('/compile/:projectId', async (req, res) => {
     }
     await client.query('COMMIT');
 
-    res.json({ success: true, compiledCount: compiled.length, sections: compiled });
+    // ── AUTO-BRIDGE: Create/update governed artifacts for each compiled section ──
+    // Phase 5 — Module 3 Workflow Convergence: compile results must become governed artifacts
+    const bridgedArtifacts: Array<{ sectionKey: string; artifactId: string; isNew: boolean }> = [];
+    for (const section of compiled) {
+      try {
+        const bridged = await bridgeCompileToArtifact(orgId, projectId, section.sectionKey, {
+          narrativeDraft: section.narrativeDraft,
+          completeness: section.completeness,
+          missingInputs: section.missingInputs,
+          lineage: section.lineage,
+        });
+        bridgedArtifacts.push({ sectionKey: section.sectionKey, ...bridged });
+      } catch (bridgeErr) {
+        // Non-fatal: log but don't fail the compile
+        console.warn(`Bridge to artifact failed for ${section.sectionKey}:`, bridgeErr);
+      }
+    }
+
+    res.json({ success: true, compiledCount: compiled.length, sections: compiled, bridgedArtifacts });
   } catch (error) {
     await client.query('ROLLBACK');
     if (String(error?.message || '').includes('Organization context required')) {

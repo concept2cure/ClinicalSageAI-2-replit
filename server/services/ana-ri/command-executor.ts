@@ -33,6 +33,11 @@ import // buildEvidenceChain, computeConfidence, EvidenceSource — reserved for
 '../intelligence/evidence-confidence-model.js';
 import { intelligentReportEngine } from '../intelligent-report-engine.js';
 import { clinicalIntelligenceService } from '../clinical-intelligence-service.js';
+import {
+  module3BuildAll, module3BuildSection, module3MissingInputs,
+  module3StaleSections, module3RefreshStale, module3Readiness,
+  module3Contradictions, module3Lineage, module3ClassifySource,
+} from './module3-command-handlers.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -4216,6 +4221,61 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
     parameters: 'projectId?',
     example: '"Assess diagnostic validation readiness for this project"',
   },
+  // ── Module 3 Workflow Convergence Commands (Phase 7) ──────────────────────
+  {
+    name: 'module3_build_all',
+    description: 'Compile all Module 3 subsections from available source objects and uploaded documents. Creates governed artifacts in the shared editor.',
+    parameters: 'projectId (CMC project UUID)',
+    example: '"Build Module 3 from current project sources"',
+  },
+  {
+    name: 'module3_build_section',
+    description: 'Build a specific Module 3 subsection (e.g. 3.2.S.4) and bridge to a governed artifact.',
+    parameters: 'projectId, sectionKey (e.g. 3.2.S.4)',
+    example: '"Build section 3.2.P.5 from latest specs"',
+  },
+  {
+    name: 'module3_missing_inputs',
+    description: 'Show which Module 3 subsections are missing required source data to compile fully.',
+    parameters: 'projectId',
+    example: '"Show missing inputs for Module 3"',
+  },
+  {
+    name: 'module3_stale_sections',
+    description: 'Identify Module 3 sections that are stale due to source data changes and need refreshing.',
+    parameters: 'projectId',
+    example: '"Show stale Module 3 sections"',
+  },
+  {
+    name: 'module3_refresh_stale',
+    description: 'Recompile all stale Module 3 sections from updated source data.',
+    parameters: 'projectId',
+    example: '"Refresh stale Module 3 sections from latest sources"',
+  },
+  {
+    name: 'module3_readiness',
+    description: 'Check Module 3 submission readiness: approval state, contradictions, export eligibility.',
+    parameters: 'projectId',
+    example: '"Module 3 submission readiness check"',
+  },
+  {
+    name: 'module3_contradictions',
+    description: 'Detect contradictions in Module 3 CMC data (batch rejections, comparability risks, stability failures).',
+    parameters: 'projectId',
+    example: '"Scan Module 3 for contradictions"',
+  },
+  {
+    name: 'module3_lineage',
+    description: 'Show source-to-section lineage for a specific Module 3 subsection.',
+    parameters: 'projectId, sectionKey (e.g. 3.2.P.8)',
+    example: '"Show source lineage for 3.2.P.8"',
+  },
+  {
+    name: 'module3_classify_source',
+    description: 'Classify an uploaded artifact as a Module 3 source and map it to a CMC source object.',
+    parameters: 'projectId, artifactId, sourceType, ctdSection?',
+    example: '"Classify the uploaded stability report as a Module 3 stability source for 3.2.S.7"',
+  },
 ];
 
 /**
@@ -4365,6 +4425,16 @@ export async function executeCommands(
     // CMS + Diagnostics
     analyze_cms_strategy: analyzeCMSStrategy,
     assess_diagnostic_validation: assessDiagnosticsValidation,
+    // Module 3 Workflow Convergence (Phase 7)
+    module3_build_all: module3BuildAll,
+    module3_build_section: module3BuildSection,
+    module3_missing_inputs: module3MissingInputs,
+    module3_stale_sections: module3StaleSections,
+    module3_refresh_stale: module3RefreshStale,
+    module3_readiness: module3Readiness,
+    module3_contradictions: module3Contradictions,
+    module3_lineage: module3Lineage,
+    module3_classify_source: module3ClassifySource,
   };
 
   for (const cmd of commands) {

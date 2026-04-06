@@ -3862,6 +3862,21 @@ router.post(
       const documentId = `doc_${Date.now()}_${crypto.randomBytes(5).toString('hex')}`;
       const tokenCount = estimateTokensFromBytes(file.size);
 
+      // ── DOSSIER-AWARE CLASSIFICATION (Phase 1 — Module 3 Workflow Convergence) ──
+      // These fields allow callers to classify uploads by dossier module, CTD section,
+      // source type, and whether the file feeds Module 3 source extraction.
+      // All fields are optional — generic uploads still work without classification.
+      const dossierClassification = {
+        submissionTrack: req.body.submissionTrack || null,       // IND | NDA | BLA | 510K | PMA | SOP | CER | general
+        moduleCode: req.body.moduleCode || null,                 // 1 | 2 | 3 | 4 | 5
+        ctdSection: req.body.ctdSection || null,                 // e.g. 3.2.S.4, 3.2.P.8
+        documentFamily: req.body.documentFamily || null,         // spec | method | stability | batch | narrative | sop | ref_std | etc.
+        sourceType: req.body.sourceType || null,                 // maps to CmcSourceType for Module 3
+        tags: req.body.tags ? (Array.isArray(req.body.tags) ? req.body.tags : [req.body.tags]) : [],
+        feedsModule3: req.body.feedsModule3 === 'true' || req.body.feedsModule3 === true,
+        sourceProcessingMode: req.body.sourceProcessingMode || 'artifact_only', // artifact_only | artifact_plus_source_object
+      };
+
       const extractedText = file.mimetype.startsWith('text/')
         ? file.buffer.toString('utf8')
         : `[${file.mimetype} document ${safeOriginalName}]`;
@@ -3943,6 +3958,7 @@ router.post(
           content: contentForArtifact,
           contentHash,
           version: 1,
+          ctdSection: dossierClassification.ctdSection || undefined,
           metadata: {
             originalName: safeOriginalName,
             mimeType: file.mimetype,
@@ -3951,6 +3967,7 @@ router.post(
             tokenCount,
             uploadSource: 'knowledge_upload',
             knowledgeDocumentId: documentId,
+            dossierClassification,
             harness: {
               clientTrack: uploadGovernedResolution.contract.clientTrack,
               submissionProgram: uploadGovernedResolution.contract.submissionProgram,
@@ -3997,7 +4014,7 @@ router.post(
             artifactId,
             safeOriginalName,
             contentForArtifact.substring(0, 16000),
-            `{source,upload,${extension}}`,
+            `{source,upload,${extension}${dossierClassification.ctdSection ? `,${dossierClassification.ctdSection}` : ''}${dossierClassification.sourceType ? `,${dossierClassification.sourceType}` : ''}${dossierClassification.feedsModule3 ? ',module3_source' : ''}}`,
           ]
         );
         if (atomResult.rows.length > 0) {
@@ -4009,6 +4026,29 @@ router.post(
         }
       } catch (embedErr: any) {
         logger.warn('Auto-embedding failed (non-fatal)', { error: embedErr.message });
+      }
+
+      // ── Record dossier classification provenance ──
+      if (dossierClassification.ctdSection || dossierClassification.feedsModule3) {
+        try {
+          await pool.query(
+            `INSERT INTO concept2cure_provenance_events
+               (organization_id, artifact_id, artifact_version_id, event_type, event_action, actor_id, details, backend_route, backend_service)
+             VALUES ($1, $2, NULL, 'source_input', 'dossier_classify', $3, $4::jsonb, '/documents/upload', 'upload_pipeline')`,
+            [
+              organizationId,
+              newArtifact.id,
+              userId,
+              JSON.stringify({
+                classification: dossierClassification,
+                fileName: safeOriginalName,
+                documentId,
+              }),
+            ]
+          );
+        } catch (provErr: any) {
+          logger.warn('Dossier classification provenance event failed (non-fatal)', { error: provErr.message });
+        }
       }
 
       const settings = normalizeProjectSettings(project.settings);

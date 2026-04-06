@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
+import DossierUploadClassifier from './DossierUploadClassifier';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -49,6 +50,15 @@ interface SourceFile {
     pValues?: string[];
     therapeuticArea?: string;
     phase?: string;
+    dossierClassification?: {
+      submissionTrack?: string;
+      moduleCode?: string;
+      ctdSection?: string;
+      documentFamily?: string;
+      sourceType?: string;
+      tags?: string[];
+      feedsModule3?: boolean;
+    };
   };
   status?: 'processing' | 'ready' | 'error';
   excerpt?: string;
@@ -366,6 +376,16 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
           </div>
         )}
       </div>
+
+      {/* Dossier-Aware Upload Classifier (Phase 1 — Module 3 Workflow Convergence) */}
+      {projectId && (
+        <div className="px-2 pt-2">
+          <DossierUploadClassifier
+            projectId={projectId}
+            onUploadComplete={loadSources}
+          />
+        </div>
+      )}
 
       {/* Source list */}
       <div className="flex-1 overflow-y-auto">

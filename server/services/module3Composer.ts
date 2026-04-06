@@ -8,7 +8,12 @@ export type CmcSourceType =
   | 'stability'
   | 'batch'
   | 'change_control'
-  | 'comparability';
+  | 'comparability'
+  | 'manufacturing_process'
+  | 'characterization'
+  | 'reference_standard'
+  | 'container_closure'
+  | 'excipient';
 
 export interface CanonicalSource {
   id: string;
@@ -34,11 +39,22 @@ interface SectionRule {
 }
 
 export const MODULE3_SECTION_RULES: SectionRule[] = [
+  // --- Drug Substance (S) subsections ---
   { sectionKey: '3.2.S.1', requiredSourceTypes: ['drug_substance'], requiredFields: ['name', 'manufacturer'] },
+  { sectionKey: '3.2.S.2', requiredSourceTypes: ['drug_substance', 'manufacturing_process'], requiredFields: ['manufacturingRoute', 'processDescription', 'processControls'] },
+  { sectionKey: '3.2.S.3', requiredSourceTypes: ['drug_substance', 'characterization'], requiredFields: ['structuralElucidation', 'physicochemicalProperties', 'biologicalActivity'] },
   { sectionKey: '3.2.S.4', requiredSourceTypes: ['specification', 'method'], requiredFields: ['acceptanceCriteria', 'validationStatus'] },
+  { sectionKey: '3.2.S.5', requiredSourceTypes: ['drug_substance', 'reference_standard'], requiredFields: ['referenceStandardDescription', 'certificateOfAnalysis'] },
+  { sectionKey: '3.2.S.6', requiredSourceTypes: ['container_closure'], requiredFields: ['containerDescription', 'closureDescription', 'suitabilityJustification'] },
   { sectionKey: '3.2.S.7', requiredSourceTypes: ['stability'], requiredFields: ['timePoints', 'storageCondition'] },
+  // --- Drug Product (P) subsections ---
+  { sectionKey: '3.2.P.1', requiredSourceTypes: ['drug_product'], requiredFields: ['dosageFormDescription', 'composition', 'strength'] },
+  { sectionKey: '3.2.P.2', requiredSourceTypes: ['drug_product', 'drug_substance', 'comparability'], requiredFields: ['formulationDevelopment', 'manufacturingProcessDev', 'containerClosureStudies'] },
   { sectionKey: '3.2.P.3', requiredSourceTypes: ['drug_product', 'batch', 'change_control'], requiredFields: ['formulation', 'batchNumber'] },
+  { sectionKey: '3.2.P.4', requiredSourceTypes: ['excipient'], requiredFields: ['excipientSpecifications', 'excipientAnalyticalProcedures'] },
   { sectionKey: '3.2.P.5', requiredSourceTypes: ['specification', 'method'], requiredFields: ['releaseCriteria', 'methodName'] },
+  { sectionKey: '3.2.P.6', requiredSourceTypes: ['drug_product', 'reference_standard'], requiredFields: ['referenceStandardDescription', 'certificateOfAnalysis'] },
+  { sectionKey: '3.2.P.7', requiredSourceTypes: ['container_closure'], requiredFields: ['containerDescription', 'closureDescription', 'suitabilityJustification'] },
   { sectionKey: '3.2.P.8', requiredSourceTypes: ['stability', 'comparability'], requiredFields: ['shelfLifeClaim', 'comparabilityStatus'] },
 ];
 
