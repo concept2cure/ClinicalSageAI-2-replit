@@ -561,3 +561,13 @@ function mapTransitionRow(row: Record<string, unknown>): GovernedDecisionTransit
   };
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// Test Helpers — no-op (DB is authoritative)
+// ═══════════════════════════════════════════════════════════════════════
+
+/** No-op — DB is authoritative. Provided for test backward compatibility. */
+export function clearGovernedDecisionLog(): void {}
+
+/** No-op — DB is authoritative. Provided for test backward compatibility. */
+export function clearTransitionLog(): void {}
+

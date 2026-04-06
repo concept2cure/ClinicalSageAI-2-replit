@@ -373,6 +373,7 @@ export default function WorkspaceContextBars(props: WorkspaceContextBarsProps) {
                 </button>
               );
             })}
+
           </div>
         )}
       </div>
