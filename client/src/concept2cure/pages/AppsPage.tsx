@@ -123,7 +123,7 @@ function AppIcon({ id }: { id: string }) {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export const AppsPage: React.FC<AppsPageProps> = ({ onNavigate }) => {
-  const [activeCategory, setActiveCategory] = useState<Category>('featured');
+  const [activeCategory, setActiveCategory] = useState<Category>('strategy');
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredApps = useMemo(() => {
