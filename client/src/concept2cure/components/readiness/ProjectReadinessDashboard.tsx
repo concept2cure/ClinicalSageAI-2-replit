@@ -101,8 +101,8 @@ export function ProjectReadinessDashboard({
             onClick={() => setActiveTab(tab.id)}
             className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeTab === tab.id
-                ? 'border-stone-600 text-stone-600
-                : 'border-transparent text-stone-500 hover:text-stone-700
+                ? 'border-stone-600 text-stone-600'
+                : 'border-transparent text-stone-500 hover:text-stone-700'
             }`}
           >
             {tab.label}
@@ -183,11 +183,11 @@ const JUDGMENT_MODEL_LABELS: Record<JudgmentModel, string> = {
 };
 
 const VERDICT_STYLES: Record<JudgmentVerdict, { label: string; className: string }> = {
-  pass: { label: 'Pass', className: 'bg-stone-100 text-stone-700 },
-  acceptable: { label: 'Acceptable', className: 'bg-stone-100 text-stone-600 },
-  needs_attention: { label: 'Needs Attention', className: 'bg-stone-100 text-stone-700 },
-  at_risk: { label: 'At Risk', className: 'bg-stone-100 text-stone-800 },
-  fail: { label: 'Fail', className: 'bg-stone-100 text-stone-800 },
+  pass: { label: 'Pass', className: 'bg-stone-100 text-stone-700' },
+  acceptable: { label: 'Acceptable', className: 'bg-stone-100 text-stone-600' },
+  needs_attention: { label: 'Needs Attention', className: 'bg-stone-100 text-stone-700' },
+  at_risk: { label: 'At Risk', className: 'bg-stone-100 text-stone-800' },
+  fail: { label: 'Fail', className: 'bg-stone-100 text-stone-800' },
 };
 
 function JudgmentScoreCard({ score }: { score: JudgmentScore }) {
@@ -215,10 +215,10 @@ function JudgmentScoreCard({ score }: { score: JudgmentScore }) {
           <div
             className={`h-full rounded-full transition-all duration-200 ${
               score.score >= 70
-                ? 'bg-stone-500
+                ? 'bg-stone-500'
                 : score.score >= 50
-                  ? 'bg-stone-900
-                  : 'bg-stone-900
+                  ? 'bg-stone-900'
+                  : 'bg-stone-900'
             }`}
             style={{ width: `${score.score}%` }}
           />

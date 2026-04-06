@@ -296,9 +296,6 @@ const ComplianceScoreRing: React.FC<{
     if (s >= 90) return { stroke: '#22c55e', text: 'text-stone-900', bg: 'bg-stone-100' };
     if (s >= 70) return { stroke: '#eab308', text: 'text-stone-900', bg: 'bg-stone-100' };
     return { stroke: '#ef4444', text: 'text-stone-900', bg: 'bg-stone-100' };
-    if (s >= 90) return { stroke: '#92a87a', text: 'text-stone-900', bg: 'bg-stone-100 };
-    if (s >= 70) return { stroke: '#eab308', text: 'text-stone-900', bg: 'bg-stone-100 };
-    return { stroke: '#ef4444', text: 'text-stone-900', bg: 'bg-stone-100 };
   };
   
   const colors = getColor(score);

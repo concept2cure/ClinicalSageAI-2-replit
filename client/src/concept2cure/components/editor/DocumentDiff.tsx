@@ -222,8 +222,8 @@ function SegmentSpan({ segment }: { segment: DiffSegment }) {
     <span
       className={cn(
         'whitespace-pre-wrap',
-        segment.type === 'add' && 'bg-stone-100 text-stone-900
-        segment.type === 'remove' && 'bg-stone-100 text-stone-900 line-through
+        segment.type === 'add' && 'bg-stone-100 text-stone-900',
+        segment.type === 'remove' && 'bg-stone-100 text-stone-900 line-through',
       )}
     >
       {segment.text}
@@ -370,9 +370,9 @@ export function DocumentDiff({
   const bgForType = (type: DiffBlock['type'], isActive: boolean) =>
     cn(
       'relative group rounded px-2 py-1 my-0.5 transition-colors duration-150',
-      type === 'addition' && 'bg-stone-100
-      type === 'deletion' && 'bg-stone-100
-      type === 'modification' && 'bg-stone-100
+      type === 'addition' && 'bg-stone-100',
+      type === 'deletion' && 'bg-stone-100',
+      type === 'modification' && 'bg-stone-100',
       isActive && 'ring-2 ring-stone-400',
     );
 
@@ -486,7 +486,7 @@ export function DocumentDiff({
                       if (el) changeRefs.current.set(block.index, el);
                     }}
                     className={cn(
-                      'relative my-0.5 rounded border border-dashed border-stone-300 bg-stone-100/30 px-2 py-1 text-xs text-stone-400 italic
+                      'relative my-0.5 rounded border border-dashed border-stone-300 bg-stone-100/30 px-2 py-1 text-xs text-stone-400 italic',
                       isActive && 'ring-2 ring-stone-400',
                     )}
                   >
@@ -550,7 +550,7 @@ export function DocumentDiff({
                   <div
                     key={`blk-r-${block.index}`}
                     className={cn(
-                      'relative my-0.5 rounded border border-dashed border-stone-300 bg-stone-100/30 px-2 py-1 text-xs text-stone-400 italic
+                      'relative my-0.5 rounded border border-dashed border-stone-300 bg-stone-100/30 px-2 py-1 text-xs text-stone-400 italic',
                       isActive && 'ring-2 ring-stone-400',
                     )}
                   >

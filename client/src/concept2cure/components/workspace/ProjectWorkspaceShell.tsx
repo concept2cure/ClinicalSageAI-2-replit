@@ -185,10 +185,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [documentTab, setDocumentTab] = useState<DocumentTab>('content');
   const [activeRegistry, setActiveRegistry] = useState<RegistryKind>('documents');
 
-  // Submission-type-aware section tree for dossier mode
+  // Module 3 build state — used by DossierTree + useSubmissionSections for real build readiness
+  const module3BuildQuery = useModule3BuildState(projectId ? String(projectId) : undefined, undefined);
+
+  // Submission-type-aware section tree for dossier mode (enriched with Module 3 build state)
   const { sections: submissionSections, readinessPercent } = useSubmissionSections(
     projectId,
-    submissionType || projectType
+    submissionType || projectType,
+    module3BuildQuery.data
   );
   const normalizedSubmissionType = String(submissionType || projectType || '').toUpperCase();
   const isINDWorkspace = ['IND', 'NDA', 'BLA', 'MAA'].includes(normalizedSubmissionType);
@@ -225,8 +229,6 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     }
     return submissionSections.map(convertToDossierNode);
   }, [submissionSections]);
-  // Module 3 build state — used by DossierTree to show real build readiness
-  const module3BuildQuery = useModule3BuildState(projectId ? String(projectId) : undefined, undefined);
 
   // operatingLayer maps 'document_studio' -> 'documents' for OperatingSystemRegistryPanel compatibility
   const operatingLayer = activeLayer === 'document_studio' ? 'documents' : activeLayer;

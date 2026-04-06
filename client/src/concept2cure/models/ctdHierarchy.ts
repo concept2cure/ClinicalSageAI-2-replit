@@ -17,6 +17,7 @@ export type DossierNodeType = 'module' | 'section' | 'subsection' | 'placeholder
 
 export type DossierNodeStatus =
   | 'empty'
+  | 'sources_pending'
   | 'draft_present'
   | 'under_review'
   | 'approved'

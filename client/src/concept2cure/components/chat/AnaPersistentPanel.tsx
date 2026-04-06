@@ -5408,7 +5408,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     <span className="truncate">{file.name}</span>
                     <Button variant="ghost" size="icon" type="button" onClick={() => removeAttachedFile(idx)} className="h-4 w-4 flex-shrink-0 text-stone-400 hover:text-stone-600 transition-colors" aria-label={`Remove ${file.name}`}>
                       <X className="w-3 h-3" />
-                    </button>
+                    </Button>
                   </div>
                 ))}
               </div>

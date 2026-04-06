@@ -11,11 +11,11 @@ interface RecommendationListProps {
 }
 
 const SEVERITY_COLORS: Record<string, string> = {
-  critical: 'bg-stone-100 text-stone-800
-  high: 'bg-stone-100 text-stone-800
-  medium: 'bg-stone-100 text-stone-800
-  low: 'bg-stone-100 text-stone-800
-  info: 'bg-stone-100 text-stone-800
+  critical: 'bg-stone-100 text-stone-800',
+  high: 'bg-stone-100 text-stone-800',
+  medium: 'bg-stone-100 text-stone-800',
+  low: 'bg-stone-100 text-stone-800',
+  info: 'bg-stone-100 text-stone-800',
 };
 
 const TYPE_LABELS: Record<string, string> = {

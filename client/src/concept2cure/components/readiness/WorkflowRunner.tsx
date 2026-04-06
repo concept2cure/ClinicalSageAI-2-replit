@@ -17,7 +17,7 @@ interface WorkflowRunnerProps {
 }
 
 const STEP_STATUS_STYLES: Record<string, { bg: string; icon: string }> = {
-  pending: { bg: 'bg-stone-200 icon: '○' },
+  pending: { bg: 'bg-stone-200', icon: '○' },
   running: { bg: 'bg-stone-600', icon: '◉' },
   completed: { bg: 'bg-stone-900', icon: '✓' },
   failed: { bg: 'bg-stone-900', icon: '✗' },
@@ -145,7 +145,7 @@ export function WorkflowRunner({ projectId, module, onComplete }: WorkflowRunner
                       style.icon
                     )}
                   </span>
-                  <span className={`text-sm ${step.status === 'completed' ? 'text-stone-600 : 'text-stone-900
+                  <span className={`text-sm ${step.status === 'completed' ? 'text-stone-600' : 'text-stone-900'}`}>
                     {step.name}
                   </span>
                   {step.durationMs && (

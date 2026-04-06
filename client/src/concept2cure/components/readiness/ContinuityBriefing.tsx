@@ -12,9 +12,9 @@ interface ContinuityBriefingProps {
 }
 
 const TRAJECTORY_STYLES: Record<string, { label: string; color: string; arrow: string }> = {
-  improving: { label: 'Improving', color: 'text-stone-700 arrow: '\u2191' },
-  declining: { label: 'Declining', color: 'text-stone-700 arrow: '\u2193' },
-  stable: { label: 'Stable', color: 'text-stone-600 arrow: '\u2192' },
+  improving: { label: 'Improving', color: 'text-stone-700', arrow: '\u2191' },
+  declining: { label: 'Declining', color: 'text-stone-700', arrow: '\u2193' },
+  stable: { label: 'Stable', color: 'text-stone-600', arrow: '\u2192' },
 };
 
 export function ContinuityBriefing({ snapshot, onRefresh, isRefreshing }: ContinuityBriefingProps) {

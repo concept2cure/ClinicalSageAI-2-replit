@@ -318,7 +318,7 @@ export function DocumentUploadZone({
         }}
         className={`
           flex flex-col items-center justify-center border-2 border-dashed transition-colors
-          ${dragOver ? 'border-stone-600 bg-stone-100 : 'border-muted-foreground/25 hover:border-muted-foreground/50'}
+          ${dragOver ? 'border-stone-600 bg-stone-100' : 'border-muted-foreground/25 hover:border-muted-foreground/50'}
           ${isUploading ? 'pointer-events-none opacity-70' : 'cursor-pointer'}
           ${compact ? 'gap-2 p-4' : 'gap-3 p-8'}
         `}

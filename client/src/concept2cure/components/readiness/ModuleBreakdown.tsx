@@ -19,12 +19,12 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const STATUS_TEXT_COLORS: Record<string, string> = {
-  ready: 'text-stone-800
-  on_track: 'text-stone-700
-  needs_attention: 'text-stone-700
-  at_risk: 'text-stone-800
-  in_progress: 'text-stone-700
-  not_started: 'text-stone-500
+  ready: 'text-stone-800',
+  on_track: 'text-stone-700',
+  needs_attention: 'text-stone-700',
+  at_risk: 'text-stone-800',
+  in_progress: 'text-stone-700',
+  not_started: 'text-stone-500',
 };
 
 export function ModuleBreakdown({ modules, onModuleClick }: ModuleBreakdownProps) {
