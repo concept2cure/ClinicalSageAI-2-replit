@@ -4170,9 +4170,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             {attachedFiles.map((file, idx) => (
               <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 bg-stone-100 rounded text-[11px] text-stone-600">
                 {file.name.length > 20 ? file.name.slice(0, 17) + '...' : file.name}
-                <button onClick={() => removeAttachedFile(idx)} className="hover:text-stone-900" aria-label="Remove file">
+                <Button variant="ghost" size="icon" onClick={() => removeAttachedFile(idx)} className="h-4 w-4 hover:text-stone-900" aria-label="Remove file">
                   <X className="w-3 h-3" />
-                </button>
+                </Button>
               </span>
             ))}
           </div>
@@ -4312,8 +4312,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   Apps
                 </div>
                 {filteredApps.map((app, idx) => (
-                  <button
+                  <Button
                     key={app.id}
+                    variant="ghost"
                     type="button"
                     role="option"
                     aria-selected={idx === appMenuIndex}
@@ -4323,13 +4324,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     }}
                     onMouseEnter={() => setAppMenuIndex(idx)}
                     className={cn(
-                      'w-full text-left px-3 py-2 flex items-center gap-3 text-[13px] transition-colors',
+                      'w-full text-left px-3 py-2 h-auto flex items-center gap-3 text-[13px] justify-start rounded-none transition-colors',
                       idx === appMenuIndex ? 'bg-stone-50 text-stone-900' : 'text-stone-600 hover:bg-stone-50'
                     )}
                   >
                     <span className="font-medium text-stone-800">@{app.id}</span>
                     <span className="text-stone-400 text-[11px] truncate">{app.description}</span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
@@ -4360,9 +4361,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     <div key={`${file.name}-${idx}`} className="flex items-center gap-1.5 px-2 py-1 bg-stone-100 rounded-lg text-[11px] text-stone-600 max-w-[180px]">
                       <Paperclip className="w-3 h-3 flex-shrink-0 text-stone-400" />
                       <span className="truncate">{file.name}</span>
-                      <button type="button" onClick={() => removeAttachedFile(idx)} className="flex-shrink-0 text-stone-400 hover:text-stone-600 transition-colors" aria-label={`Remove ${file.name}`}>
+                      <Button variant="ghost" size="icon" type="button" onClick={() => removeAttachedFile(idx)} className="h-4 w-4 flex-shrink-0 text-stone-400 hover:text-stone-600 transition-colors" aria-label={`Remove ${file.name}`}>
                         <X className="w-3 h-3" />
-                      </button>
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -5355,8 +5356,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 Apps
               </div>
               {filteredApps.map((app, idx) => (
-                <button
+                <Button
                   key={app.id}
+                  variant="ghost"
                   type="button"
                   role="option"
                   aria-selected={idx === appMenuIndex}
@@ -5366,13 +5368,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   }}
                   onMouseEnter={() => setAppMenuIndex(idx)}
                   className={cn(
-                    'w-full text-left px-3 py-2 flex items-center gap-3 text-[13px] transition-colors',
+                    'w-full text-left px-3 py-2 h-auto flex items-center gap-3 text-[13px] justify-start rounded-none transition-colors',
                     idx === appMenuIndex ? 'bg-stone-50 text-stone-900' : 'text-stone-600 hover:bg-stone-50'
                   )}
                 >
                   <span className="font-medium text-stone-800">@{app.id}</span>
                   <span className="text-stone-400 text-[11px] truncate">{app.description}</span>
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -5404,7 +5406,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   <div key={`${file.name}-${idx}`} className="flex items-center gap-1.5 px-2 py-1 bg-stone-100 rounded-lg text-[11px] text-stone-600 max-w-[180px]">
                     <Paperclip className="w-3 h-3 flex-shrink-0 text-stone-400" />
                     <span className="truncate">{file.name}</span>
-                    <button type="button" onClick={() => removeAttachedFile(idx)} className="flex-shrink-0 text-stone-400 hover:text-stone-600 transition-colors" aria-label={`Remove ${file.name}`}>
+                    <Button variant="ghost" size="icon" type="button" onClick={() => removeAttachedFile(idx)} className="h-4 w-4 flex-shrink-0 text-stone-400 hover:text-stone-600 transition-colors" aria-label={`Remove ${file.name}`}>
                       <X className="w-3 h-3" />
                     </button>
                   </div>
