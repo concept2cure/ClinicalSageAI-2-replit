@@ -65,7 +65,7 @@ Pillow==10.3.0
 pytesseract==0.3.10
 
 # Async and concurrency
-celery==5.3.4
+celery==5.6.3
 redis==7.4.0
 
 # Cryptography and security
