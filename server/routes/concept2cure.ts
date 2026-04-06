@@ -4051,6 +4051,28 @@ router.post(
         }
       }
 
+      // ── AUTO-MAP: If feedsModule3, create/update cmc_source_object from uploaded artifact ──
+      if (dossierClassification.feedsModule3 && dossierClassification.sourceType) {
+        try {
+          const { classifyAndMapArtifactToSource } = await import('../services/module3-convergence-service');
+          await classifyAndMapArtifactToSource(organizationId, projectIdRaw, artifactId, {
+            submissionTrack: (dossierClassification.submissionTrack || 'general') as any,
+            dossierModule: dossierClassification.moduleCode,
+            ctdSection: dossierClassification.ctdSection,
+            sourceType: dossierClassification.sourceType as any,
+            useAsModule3Source: true,
+            tags: dossierClassification.tags || [],
+          });
+          logger.info('Auto-mapped uploaded artifact to Module 3 source object', {
+            artifactId,
+            sourceType: dossierClassification.sourceType,
+            ctdSection: dossierClassification.ctdSection,
+          });
+        } catch (mapErr: any) {
+          logger.warn('Module 3 source mapping failed (non-fatal)', { error: mapErr.message });
+        }
+      }
+
       const settings = normalizeProjectSettings(project.settings);
       const knowledge = normalizeKnowledge(settings);
       const updatedKnowledge: ProjectKnowledge = {
