@@ -388,15 +388,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               {message.isStreaming && message.content && (
                 <span className="inline-flex gap-0.5 items-center">
                   <span
-                    className="w-1 h-1 rounded-full bg-[#E8967A] animate-pulse"
+                    className="w-1 h-1 rounded-full bg-stone-400 animate-pulse"
                     style={{ animationDelay: '0ms' }}
                   />
                   <span
-                    className="w-1 h-1 rounded-full bg-[#E8967A] animate-pulse"
+                    className="w-1 h-1 rounded-full bg-stone-400 animate-pulse"
                     style={{ animationDelay: '150ms' }}
                   />
                   <span
-                    className="w-1 h-1 rounded-full bg-[#E8967A] animate-pulse"
+                    className="w-1 h-1 rounded-full bg-stone-400 animate-pulse"
                     style={{ animationDelay: '300ms' }}
                   />
                 </span>
@@ -426,7 +426,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   prose-strong:text-stone-900 prose-strong:font-semibold
                   prose-code:text-amber-700 prose-code:bg-amber-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
                   prose-pre:bg-stone-900 prose-pre:text-stone-100 prose-pre:rounded-xl prose-pre:p-4 prose-pre:text-xs
-                  prose-blockquote:border-l-[#D8D5CA] prose-blockquote:text-stone-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
+                  prose-blockquote:border-l-stone-300 prose-blockquote:text-stone-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
                   prose-ul:text-stone-700 prose-ol:text-stone-700 prose-ul:my-2 prose-ol:my-2
                   prose-li:my-1
                   prose-table:text-sm prose-th:bg-stone-50 prose-th:font-semibold prose-td:border-stone-200

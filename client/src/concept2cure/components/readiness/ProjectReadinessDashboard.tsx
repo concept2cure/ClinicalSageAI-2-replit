@@ -27,6 +27,7 @@ import { BlockerList } from './BlockerList';
 import { RecommendationList } from './RecommendationList';
 import { WorkflowRunner } from './WorkflowRunner';
 import { ContinuityBriefing } from './ContinuityBriefing';
+import { LoadingState, ErrorState } from '@/components/ui/statesV2';
 
 interface ProjectReadinessDashboardProps {
   projectId: number;
@@ -67,54 +68,46 @@ export function ProjectReadinessDashboard({
   }, []);
 
   if (readinessLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-stone-500 dark:text-stone-400">
-          Computing readiness...
-        </div>
-      </div>
-    );
+    return <LoadingState message="Computing readiness" className="h-64" />;
   }
 
   if (readinessError) {
     return (
-      <div className="p-4 rounded-lg bg-stone-100 dark:bg-stone-950/30 border border-stone-200 dark:border-stone-800">
-        <p className="text-sm text-stone-800 dark:text-stone-300">
-          Failed to load readiness: {readinessError instanceof Error ? readinessError.message : 'Unknown error'}
-        </p>
-      </div>
+      <ErrorState
+        message={readinessError instanceof Error ? readinessError.message : 'Failed to load readiness'}
+      />
     );
   }
 
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-stone-200 dark:border-stone-700">
-        <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+      <div className="px-4 py-3 border-b border-stone-200">
+        <h2 className="text-lg font-semibold text-stone-900">
           {projectName ? `${projectName} — Readiness` : 'Submission Readiness'}
         </h2>
         {readiness && (
-          <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+          <p className="text-xs text-stone-500 mt-0.5">
             Last assessed: {new Date(readiness.assessedAt).toLocaleString()}
           </p>
         )}
       </div>
 
       {/* Tab bar */}
-      <div className="px-4 border-b border-stone-200 dark:border-stone-700 flex gap-0 overflow-x-auto">
+      <div className="px-4 border-b border-stone-200 flex gap-0 overflow-x-auto">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeTab === tab.id
-                ? 'border-stone-600 text-stone-600 dark:text-stone-400'
-                : 'border-transparent text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-300'
+                ? 'border-stone-600 text-stone-600
+                : 'border-transparent text-stone-500 hover:text-stone-700
             }`}
           >
             {tab.label}
             {tab.id === 'blockers' && readiness && readiness.blockers.length > 0 && (
-              <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-stone-100 dark:bg-stone-900/40 text-stone-800 dark:text-stone-300 text-xs font-bold">
+              <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-stone-100 text-stone-800 text-xs font-bold">
                 {readiness.blockers.length}
               </span>
             )}
@@ -156,7 +149,7 @@ export function ProjectReadinessDashboard({
         )}
         {activeTab === 'continuity' && !continuity && !continuityLoading && (
           <div className="text-center py-8">
-            <p className="text-sm text-stone-500 dark:text-stone-400 mb-3">
+            <p className="text-sm text-stone-500 mb-3">
               No continuity data yet. Generate a snapshot to start tracking.
             </p>
             <button
@@ -190,11 +183,11 @@ const JUDGMENT_MODEL_LABELS: Record<JudgmentModel, string> = {
 };
 
 const VERDICT_STYLES: Record<JudgmentVerdict, { label: string; className: string }> = {
-  pass: { label: 'Pass', className: 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300' },
-  acceptable: { label: 'Acceptable', className: 'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400' },
-  needs_attention: { label: 'Needs Attention', className: 'bg-stone-100 text-stone-700 dark:bg-stone-950/40 dark:text-stone-400' },
-  at_risk: { label: 'At Risk', className: 'bg-stone-100 text-stone-800 dark:bg-stone-950/40 dark:text-stone-400' },
-  fail: { label: 'Fail', className: 'bg-stone-100 text-stone-800 dark:bg-stone-950/60 dark:text-stone-300' },
+  pass: { label: 'Pass', className: 'bg-stone-100 text-stone-700 },
+  acceptable: { label: 'Acceptable', className: 'bg-stone-100 text-stone-600 },
+  needs_attention: { label: 'Needs Attention', className: 'bg-stone-100 text-stone-700 },
+  at_risk: { label: 'At Risk', className: 'bg-stone-100 text-stone-800 },
+  fail: { label: 'Fail', className: 'bg-stone-100 text-stone-800 },
 };
 
 function JudgmentScoreCard({ score }: { score: JudgmentScore }) {
@@ -203,9 +196,9 @@ function JudgmentScoreCard({ score }: { score: JudgmentScore }) {
   const topFinding = score.findings[0];
 
   return (
-    <div className="rounded-lg border border-stone-200 dark:border-stone-700 p-3 space-y-2">
+    <div className="rounded-lg border border-stone-200 p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[13px] font-medium text-stone-700 dark:text-stone-300 truncate">
+        <span className="text-[13px] font-medium text-stone-700 truncate">
           {label}
         </span>
         <Badge
@@ -218,26 +211,26 @@ function JudgmentScoreCard({ score }: { score: JudgmentScore }) {
 
       {/* Score bar */}
       <div className="flex items-center gap-2">
-        <div className="flex-1 h-1.5 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
+        <div className="flex-1 h-1.5 rounded-full bg-stone-200 overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-200 ${
               score.score >= 70
-                ? 'bg-stone-500 dark:bg-stone-400'
+                ? 'bg-stone-500
                 : score.score >= 50
-                  ? 'bg-stone-900 dark:bg-stone-400'
-                  : 'bg-stone-900 dark:bg-stone-400'
+                  ? 'bg-stone-900
+                  : 'bg-stone-900
             }`}
             style={{ width: `${score.score}%` }}
           />
         </div>
-        <span className="text-[11px] font-medium text-stone-600 dark:text-stone-400 w-8 text-right tabular-nums">
+        <span className="text-[11px] font-medium text-stone-600 w-8 text-right tabular-nums">
           {score.score}
         </span>
       </div>
 
       {/* Top finding */}
       {topFinding && (
-        <p className="text-[11px] text-stone-500 dark:text-stone-400 leading-snug line-clamp-2">
+        <p className="text-[11px] text-stone-500 leading-snug line-clamp-2">
           {topFinding.description}
         </p>
       )}
@@ -255,18 +248,18 @@ function JudgmentAnalysisSection({
   if (isLoading) {
     return (
       <div>
-        <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300 mb-3">
+        <h3 className="text-sm font-medium text-stone-700 mb-3">
           Judgment Analysis
         </h3>
         <div className="grid grid-cols-2 gap-2">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="rounded-lg border border-stone-200 dark:border-stone-700 p-3 space-y-2 animate-pulse"
+              className="rounded-lg border border-stone-200 p-3 space-y-2 animate-pulse"
             >
-              <div className="h-3 w-24 bg-stone-200 dark:bg-stone-700 rounded" />
-              <div className="h-1.5 w-full bg-stone-200 dark:bg-stone-700 rounded-full" />
-              <div className="h-2.5 w-32 bg-stone-100 dark:bg-stone-800 rounded" />
+              <div className="h-3 w-24 bg-stone-200 rounded" />
+              <div className="h-1.5 w-full bg-stone-200 rounded-full" />
+              <div className="h-2.5 w-32 bg-stone-100 rounded" />
             </div>
           ))}
         </div>
@@ -278,7 +271,7 @@ function JudgmentAnalysisSection({
 
   return (
     <div>
-      <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300 mb-3">
+      <h3 className="text-sm font-medium text-stone-700 mb-3">
         Judgment Analysis
       </h3>
       <div className="grid grid-cols-2 gap-2">
@@ -324,7 +317,7 @@ function OverviewTab({
           />
         </div>
         <div className="flex-1">
-          <div className="text-lg font-semibold text-stone-900 dark:text-stone-100 capitalize">
+          <div className="text-lg font-semibold text-stone-900 capitalize">
             {readiness.status.replace(/_/g, ' ')}
           </div>
           <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
@@ -352,16 +345,16 @@ function OverviewTab({
 
       {/* Subscores */}
       <div>
-        <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300 mb-3">
+        <h3 className="text-sm font-medium text-stone-700 mb-3">
           Score Breakdown
         </h3>
         <div className="space-y-2">
           {SUBSCORE_ITEMS.map((item) => (
             <div key={item.label} className="flex items-center gap-3">
-              <span className="text-xs text-stone-500 dark:text-stone-400 w-24 shrink-0">
+              <span className="text-xs text-stone-500 w-24 shrink-0">
                 {item.label}
               </span>
-              <div className="flex-1 h-2 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
+              <div className="flex-1 h-2 rounded-full bg-stone-200 overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-200 ${
                     item.value >= 70
@@ -373,7 +366,7 @@ function OverviewTab({
                   style={{ width: `${item.value}%` }}
                 />
               </div>
-              <span className="text-xs font-medium text-stone-700 dark:text-stone-300 w-10 text-right">
+              <span className="text-xs font-medium text-stone-700 w-10 text-right">
                 {item.value}%
               </span>
             </div>
@@ -387,7 +380,7 @@ function OverviewTab({
       {/* Quick blockers */}
       {readiness.blockers.length > 0 && (
         <div>
-          <h3 className="text-sm font-medium text-stone-800 dark:text-stone-400 mb-2">
+          <h3 className="text-sm font-medium text-stone-800 mb-2">
             Top Blockers
           </h3>
           <BlockerList blockers={readiness.blockers.slice(0, 3)} />

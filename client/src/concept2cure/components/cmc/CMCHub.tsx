@@ -483,7 +483,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
   }, [projectId, dsForm, dpForm, submissionType, onDraftWithAI]);
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#faf9f5]">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-stone-50">
       {/* Header */}
       <div className="flex-shrink-0 border-b border-stone-200 bg-white/80 backdrop-blur-sm px-6 py-4">
         <div className="flex items-center justify-between">

@@ -135,7 +135,7 @@ const InteractiveDemoPage: React.FC = () => {
   }, [navigate, advanceToStep]);
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
+    <div className="min-h-screen bg-stone-50 flex flex-col">
       {/* Top bar */}
       <motion.header
         initial={{ opacity: 0, y: -10 }}

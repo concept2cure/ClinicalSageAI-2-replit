@@ -499,7 +499,7 @@ export const ZenSignup: React.FC = () => {
      ═════════════��═════════════════════════════════��═══════════════════════���═══════ */
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-[#f5f4f1] font-sans antialiased text-stone-900 p-0 sm:p-6 lg:p-10">
+    <div className="flex min-h-screen w-full items-center justify-center bg-stone-100 font-sans antialiased text-stone-900 p-0 sm:p-6 lg:p-10">
       {/* ── Auth Shell — locked geometry (matches ZenLogin) ──────────────── */}
       <div className="flex w-full max-w-[1160px] min-h-[700px] max-h-[820px] overflow-hidden bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_30px_rgba(0,0,0,0.06)] sm:rounded-2xl flex-col lg:flex-row">
         {/* ── LEFT PANEL — Restrained dark brand (40%) ───────────────────── */}

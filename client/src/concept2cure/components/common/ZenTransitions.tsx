@@ -67,7 +67,7 @@ export const ZenLoader: React.FC<ZenLoaderProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#faf9f5]"
+        className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-stone-50"
       >
         <Spinner />
         {message && (

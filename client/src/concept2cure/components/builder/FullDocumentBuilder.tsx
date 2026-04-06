@@ -429,7 +429,7 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="h-full overflow-y-auto bg-[#FAFAF9]">
+    <div className="h-full overflow-y-auto bg-stone-50">
       <div className="max-w-3xl mx-auto px-6 py-8">
         {/* Progress bar */}
         {step !== 'generating' && (

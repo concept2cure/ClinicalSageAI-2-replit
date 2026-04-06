@@ -183,27 +183,18 @@ export function InlineAIMenu({
       {/* Trigger button */}
       <button
         type="button"
-        className={buttonClass}
+        className={`${buttonClass} inline-flex items-center gap-1 border border-stone-200 rounded-md
+          ${variant === 'icon' ? 'px-1.5 py-1' : 'px-3 py-1.5'}
+          ${variant === 'compact' ? 'text-xs' : 'text-[13px]'}
+          ${inlineAI.isLoading ? 'bg-stone-100' : 'bg-white'}
+          text-stone-700 hover:border-stone-300 hover:bg-stone-50
+          disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150`}
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled || inlineAI.isLoading}
         title="AI Actions"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '4px',
-          padding: variant === 'icon' ? '4px 6px' : '6px 12px',
-          fontSize: variant === 'compact' ? '12px' : '13px',
-          border: '1px solid #e2e8f0',
-          borderRadius: '6px',
-          background: inlineAI.isLoading ? '#f1f5f9' : '#ffffff',
-          color: '#334155',
-          cursor: disabled ? 'not-allowed' : 'pointer',
-          opacity: disabled ? 0.5 : 1,
-          transition: 'all 0.15s',
-        }}
       >
         {inlineAI.isLoading ? (
-          <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⚙️</span>
+          <span className="inline-block animate-spin">⚙️</span>
         ) : (
           <span>✨</span>
         )}
@@ -212,49 +203,19 @@ export function InlineAIMenu({
 
       {/* Dropdown menu */}
       {isOpen && !inlineAI.isLoading && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '100%',
-            right: 0,
-            zIndex: 50,
-            marginTop: '4px',
-            minWidth: '220px',
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            overflow: 'hidden',
-          }}
-        >
-          <div style={{ padding: '4px' }}>
+        <div className="absolute top-full right-0 z-50 mt-1 min-w-[220px] bg-white border border-stone-200 rounded-lg shadow-md overflow-hidden">
+          <div className="p-1">
             {visibleActions.map((action) => (
               <button
                 key={action.id}
                 type="button"
                 onClick={() => handleAction(action.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: 'none',
-                  background: 'transparent',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  fontSize: '13px',
-                  color: '#334155',
-                  transition: 'background 0.1s',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#f1f5f9')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                className="flex items-center gap-2 w-full px-3 py-2 text-left text-[13px] text-stone-700 rounded hover:bg-stone-100 transition-colors"
               >
                 <span>{action.icon}</span>
                 <div>
-                  <div style={{ fontWeight: 500 }}>{action.label}</div>
-                  <div style={{ fontSize: '11px', color: '#94a3b8' }}>{action.description}</div>
+                  <div className="font-medium">{action.label}</div>
+                  <div className="text-[11px] text-stone-400">{action.description}</div>
                 </div>
               </button>
             ))}
@@ -264,48 +225,25 @@ export function InlineAIMenu({
 
       {/* Result panel */}
       {resultContent && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '100%',
-            right: 0,
-            zIndex: 50,
-            marginTop: '4px',
-            width: '360px',
-            maxHeight: '300px',
-            overflow: 'auto',
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            padding: '12px',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>AI Result</span>
+        <div className="absolute top-full right-0 z-50 mt-1 w-[360px] max-h-[300px] overflow-auto bg-white border border-stone-200 rounded-lg shadow-md p-3">
+          <div className="flex justify-between mb-2">
+            <span className="text-xs font-semibold text-stone-500">AI Result</span>
             <button
               type="button"
               onClick={() => setResultContent(null)}
-              style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '14px' }}
+              className="text-stone-400 hover:text-stone-600 text-sm bg-transparent border-none cursor-pointer"
             >
               ✕
             </button>
           </div>
-          <div style={{ fontSize: '13px', lineHeight: '1.5', color: '#334155', whiteSpace: 'pre-wrap' }}>
+          <div className="text-[13px] leading-relaxed text-stone-700 whitespace-pre-wrap">
             {resultContent}
           </div>
-          <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+          <div className="flex gap-2 mt-2">
             <button
               type="button"
               onClick={() => navigator.clipboard?.writeText(resultContent)}
-              style={{
-                padding: '4px 10px',
-                fontSize: '11px',
-                border: '1px solid #e2e8f0',
-                borderRadius: '4px',
-                background: '#f8fafc',
-                cursor: 'pointer',
-              }}
+              className="px-2.5 py-1 text-[11px] border border-stone-200 rounded bg-stone-50 hover:bg-stone-100 cursor-pointer transition-colors"
             >
               Copy
             </button>

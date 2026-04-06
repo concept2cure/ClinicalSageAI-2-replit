@@ -2190,7 +2190,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       />
 
       {/* Main content area — no top bar, exactly like Claude.ai */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-0 bg-[#faf9f7]">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 bg-stone-50">
         {/* Content Area */}
         <div className="flex-1 flex min-w-0 min-h-0">
           {/* ── Embedded Module Host ── */}
