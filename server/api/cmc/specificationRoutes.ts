@@ -1,6 +1,7 @@
 import express from 'express';
 import { getPool } from '../../db';
 import { z } from 'zod';
+import { writeThroughSpecification } from '../../services/cmc-write-through';
 
 const router = express.Router();
 
@@ -115,6 +116,10 @@ router.post('/', async (req, res) => {
     );
 
     console.log(`[CMC Specs] Created specification ${spec.id} for ${data.materialName}`);
+    // Write-through: upsert canonical source object for Module 3
+    if (spec.project_id) {
+      writeThroughSpecification(Number(tenantId), spec.project_id, String(spec.id), spec).catch(() => {});
+    }
 
     res.status(201).json({
       success: true,
@@ -217,6 +222,10 @@ router.put('/:id', async (req, res) => {
     );
 
     console.log(`[CMC Specs] Updated specification ${id}`);
+    // Write-through: upsert canonical source object for Module 3
+    if (updatedSpec?.project_id) {
+      writeThroughSpecification(Number(tenantId), updatedSpec.project_id, String(id), updatedSpec).catch(() => {});
+    }
 
     res.json({
       success: true,

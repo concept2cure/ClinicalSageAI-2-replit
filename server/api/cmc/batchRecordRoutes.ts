@@ -1,6 +1,7 @@
 import express from 'express';
 import { getPool } from '../../db';
 import { z } from 'zod';
+import { writeThroughBatchRecord } from '../../services/cmc-write-through';
 
 const router = express.Router();
 
@@ -124,6 +125,10 @@ router.post('/', async (req, res) => {
 
     const batch = result.rows[0];
     console.log(`[CMC Batch] Created batch record ${batch.id}: ${data.batchNumber}`);
+    // Write-through: upsert canonical source object for Module 3
+    if (batch.project_id) {
+      writeThroughBatchRecord(Number(tenantId), batch.project_id, String(batch.id), batch).catch(() => {});
+    }
 
     res.status(201).json({
       success: true,
@@ -218,10 +223,15 @@ router.put('/:id', async (req, res) => {
     const updateResult = await pool.query(updateQuery, values);
 
     console.log(`[CMC Batch] Updated batch record ${id}`);
+    // Write-through: upsert canonical source object for Module 3
+    const updatedBatch = updateResult.rows[0];
+    if (updatedBatch?.project_id) {
+      writeThroughBatchRecord(Number(tenantId), updatedBatch.project_id, String(id), updatedBatch).catch(() => {});
+    }
 
     res.json({
       success: true,
-      data: updateResult.rows[0],
+      data: updatedBatch,
       message: 'Batch record updated successfully',
       timestamp: new Date().toISOString(),
     });

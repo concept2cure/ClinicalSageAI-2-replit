@@ -19,6 +19,7 @@ import cmcModule3BuildStateRoutes from '../api/cmc/module3BuildStateRoutes';
 import cmcModule3ConvergenceRoutes from '../api/cmc/module3ConvergenceRoutes';
 import cmcCollaborationRoutes from '../api/cmc/collaborationRoutes';
 import cmcDocumentRoutes from '../api/cmc/documentRoutes';
+import cmcSubStudyTaskRoutes from '../api/cmc/subStudyTaskRoutes';
 import aiAssistanceRoutes, { setAIService } from '../routes/ai-assistance';
 import intelligentDocsRoutes from '../routes/intelligentDocs';
 import controlPlaneRouter from '../src/routes/control-plane.router';
@@ -49,6 +50,7 @@ export function registerCoreRoutes({ app, pool, aiCircuitBreaker }: RouteBootstr
     app.use('/api/cmc/module3-os', cmcModule3ConvergenceRoutes);
     app.use('/api/cmc/collaboration', cmcCollaborationRoutes);
     app.use('/api/cmc/documents', cmcDocumentRoutes);
+    app.use('/api/cmc/sub-study-tasks', cmcSubStudyTaskRoutes);
     app.use('/api/cmc/dashboard', cmcDashboardPrisma);
     console.log('✅ CMC Module API routes mounted');
   } catch (error) {
