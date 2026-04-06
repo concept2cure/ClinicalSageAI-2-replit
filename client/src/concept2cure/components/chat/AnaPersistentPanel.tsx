@@ -62,6 +62,9 @@ import {
   FolderPlus,
   Bot,
   FolderOpen,
+  Upload,
+  X,
+  Paperclip,
 } from 'lucide-react';
 
 marked.setOptions({ breaks: true, gfm: true });
@@ -5786,6 +5789,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           </p>
         </div>
       </div>
+    </div>
     </div>
     </TooltipProvider>
   );
