@@ -365,7 +365,7 @@
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "autoprefixer": "^10.4.20",
-    "babel-jest": "^29.7.0",
+    "babel-jest": "^30.3.0",
     "drizzle-kit": "^0.30.4",
     "esbuild": "^0.25.0",
     "eslint": "^8.57.0",
