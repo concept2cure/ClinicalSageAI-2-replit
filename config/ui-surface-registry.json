@@ -13,7 +13,8 @@
         "action": "canonical",
         "lines": 3580,
         "role": "Primary application shell — single canonical shell owner",
-        "projectCardsGridRemoved": "2026-04-06 — Project cards grid removed from center canvas. Projects accessible via sidebar. Home shows conversation greeting + composer only."
+        "projectsView": "2026-04-06 WO-2: Rebuilt as Claude.ai-style projects grid. Clean 2-column cards, search, + New project. Black and white only.",
+        "projectLanding": "2026-04-06 WO-2: ProjectHomeDashboard rewritten — back link, hero title, description only. Right rail (ProjectKnowledgePanel) preserved."
       },
       "ZenRouter.tsx": {
         "path": "client/src/concept2cure/router/ZenRouter.tsx",

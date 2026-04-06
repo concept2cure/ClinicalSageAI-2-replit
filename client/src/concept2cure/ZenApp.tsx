@@ -2620,6 +2620,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   setOpenArtifactId(artifactId);
                   setRiViewMode('editor');
                 }}
+                onBackToProjects={() => {
+                  setActiveProjectId(undefined);
+                  setLayoutMode('projects');
+                }}
               />
             </div>
           )}
@@ -3250,7 +3254,112 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           {/* assistant/ctd modes redirected by normalizeLayoutMode useEffect */}
         </div>
 
-        {/* Project cards grid removed — WO-2: projects accessible via sidebar Zone C */}
+        {/* ── Projects Grid — Claude.ai-style clean card layout ── */}
+        {layoutMode === 'projects' &&
+          !embeddedModule &&
+          (() => {
+            const sorted = projects
+              .filter(p => !p.archived)
+              .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
+            const q = projectsSearchQuery.trim().toLowerCase();
+            const filtered = q
+              ? sorted.filter(p =>
+                  [p.name, p.description, p.sponsor, p.product]
+                    .filter(Boolean)
+                    .some(v => String(v).toLowerCase().includes(q))
+                )
+              : sorted;
+            const relTime = (d: Date | string) => {
+              const parsed = new Date(d);
+              if (isNaN(parsed.getTime())) return 'Recently';
+              const ms = Date.now() - parsed.getTime();
+              if (ms < 0) return 'Just now';
+              const min = Math.floor(ms / 60000);
+              if (min < 1) return 'Just now';
+              if (min < 60) return `${min}m ago`;
+              const hr = Math.floor(min / 60);
+              if (hr < 24) return `${hr}h ago`;
+              const day = Math.floor(hr / 24);
+              if (day < 30) return `${day}d ago`;
+              try {
+                return parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+              } catch {
+                return 'Recently';
+              }
+            };
+
+            return (
+              <div className="flex-1 overflow-y-auto px-6 sm:px-10 pt-10 pb-8 max-w-4xl mx-auto w-full">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <h1 className="text-2xl font-semibold text-stone-900">Projects</h1>
+                  <Button
+                    type="button"
+                    onClick={() => setNewProjectOpen(true)}
+                    className="bg-stone-900 text-white hover:bg-stone-800 rounded-full px-4 py-2 text-sm font-medium"
+                  >
+                    <Plus className="w-4 h-4 mr-1.5" />
+                    New project
+                  </Button>
+                </div>
+
+                {/* Search */}
+                <div className="relative mb-8">
+                  <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Input
+                    value={projectsSearchQuery}
+                    onChange={e => setProjectsSearchQuery(e.target.value)}
+                    placeholder="Search projects..."
+                    aria-label="Search projects"
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border-stone-200 bg-white rounded-xl"
+                  />
+                </div>
+
+                {/* Cards grid */}
+                {filtered.length === 0 ? (
+                  <div className="text-center py-16">
+                    <p className="text-sm text-stone-500">
+                      {q ? 'No projects match your search.' : 'No projects yet.'}
+                    </p>
+                    {!q && (
+                      <Button
+                        type="button"
+                        onClick={() => setNewProjectOpen(true)}
+                        className="mt-4 bg-stone-900 text-white hover:bg-stone-800 rounded-full px-4 py-2 text-sm"
+                      >
+                        Create your first project
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {filtered.map(project => (
+                      <button
+                        key={project.id}
+                        onClick={() => {
+                          setActiveProjectId(project.id);
+                          setLayoutMode('project-home');
+                        }}
+                        className="text-left rounded-xl border border-stone-200 bg-white p-5 hover:shadow-sm hover:border-stone-300 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 group"
+                      >
+                        <h3 className="text-[15px] font-semibold text-stone-900 truncate group-hover:text-stone-700">
+                          {project.name}
+                        </h3>
+                        {project.description && (
+                          <p className="text-sm text-stone-500 line-clamp-2 mt-1 leading-relaxed">
+                            {project.description}
+                          </p>
+                        )}
+                        <p className="text-xs text-stone-400 mt-3">
+                          Updated {relTime(project.lastUpdated)}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
         {/* ── Project Home: AnA chat + Knowledge sidebar (Claude.ai layout) ── */}
         {layoutMode === 'project-home' && (
@@ -3331,8 +3440,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         )}
 
         {/* AnA — THE single chat surface (ChatGPT/Claude style)
-            All 7 layout modes get full-mode AnA except project-home (rendered inline above) */}
-        {layoutMode !== 'project-home' && (
+            All 7 layout modes get full-mode AnA except project-home (rendered inline above)
+            and projects (which renders its own full-page grid) */}
+        {layoutMode !== 'project-home' && layoutMode !== 'projects' && (
             <AnaPersistentPanel
               mode={
                 layoutMode === 'project-workspace'
