@@ -2048,6 +2048,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             case 'home':
               setLayoutMode('projects');
               break;
+            case 'reports':
+              setLayoutMode('reports');
+              break;
             case 'communication-center':
               setLayoutMode('communication-center');
               break;
@@ -2104,8 +2107,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             case 'verify':
               openWorkspaceView('review-readiness');
               break;
-            case 'reports':
             case 'haq':
+              // Legacy alias for project-scoped report engine view (sidebar 'reports' is now global)
               openWorkspaceView('report-engine');
               break;
             case 'task-board':
@@ -2383,6 +2386,20 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       }
                     }}
                   />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Global destination: Reporting & Analytics ── */}
+          {!embeddedModule && layoutMode === 'reports' && (
+            <div
+              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
+              data-testid="workspace-reports"
+            >
+              <ErrorBoundary>
+                <Suspense fallback={<ModuleLoadingFallback />}>
+                  <IntelligentReportGenerator />
                 </Suspense>
               </ErrorBoundary>
             </div>
@@ -3492,9 +3509,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         )}
 
         {/* AnA — THE single chat surface (ChatGPT/Claude style)
-            All 7 layout modes get full-mode AnA except project-home (rendered inline above)
-            and projects (which renders its own full-page grid) */}
-        {layoutMode !== 'project-home' && layoutMode !== 'projects' && (
+            All 8 layout modes get full-mode AnA except project-home (rendered inline above),
+            projects (which renders its own full-page grid), and reports (full-page report engine) */}
+        {layoutMode !== 'project-home' && layoutMode !== 'projects' && layoutMode !== 'reports' && (
             <AnaPersistentPanel
               mode={
                 layoutMode === 'project-workspace'

@@ -25,11 +25,12 @@ export type ToolPanel =
   | null;
 
 export type LayoutMode =
-  // ── 7 canonical layout modes ──
+  // ── 8 canonical layout modes ──
   | 'chats'                  // Conversation home (ChatGPT-style)
   | 'projects'               // Project browser grid
   | 'project-home'           // Project landing (conversation-first)
   | 'project-workspace'      // All project-scoped tools (internal sub-routing via WorkspaceView)
+  | 'reports'                // Reporting & Analytics — global report engine + analytics
   | 'communication-center'   // Tasks, reviews, submissions routing
   | 'apps'                   // App launcher + specialist tools
   | 'settings';              // Account, workspace, preferences
@@ -46,15 +47,17 @@ export const PRIMARY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
   projects: 'projects',
   'project-home': 'projects',
   'project-workspace': 'projects',
+  reports: 'reports',
   'communication-center': 'communication-center',
   apps: 'apps',
   settings: 'settings',
 };
 
 export const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
-  // ── 5 primary destinations ──
+  // ── 6 primary destinations ──
   chats: 'chats',
   projects: 'projects',
+  reports: 'reports',
   'communication-center': 'communication-center',
   apps: 'apps',
   settings: 'settings',
@@ -63,7 +66,7 @@ export const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
   overview: 'project-home',
   documents: 'project-workspace',
   submissions: 'project-workspace',
-  reports: 'project-workspace',
+  'project-reports': 'project-workspace',
   dossier: 'project-workspace',
   'ri-copilot': 'project-workspace',
   'submission-builder': 'project-workspace',

@@ -146,6 +146,15 @@
         "navId": "communication-center",
         "notes": "Promoted from sub-view to top-level destination in Phase 4."
       },
+      "reports": {
+        "status": "active",
+        "layoutMode": "reports",
+        "component": "IntelligentReportGenerator",
+        "componentPath": "client/src/concept2cure/components/reports/IntelligentReportGenerator.tsx",
+        "navId": "reports",
+        "position": "sidebar Zone B, between Projects and Communication Center",
+        "notes": "2026-04-06 Reporting & Analytics elevated to core sidebar destination. Renders IntelligentReportGenerator at the global level (not project-scoped). Excluded from catch-all AnaPersistentPanel since it owns its full canvas. Backend: /api/intelligent-reports/*, /api/report-os/*, /api/analytics-routes."
+      },
       "apps": {
         "status": "active",
         "layoutMode": "apps",

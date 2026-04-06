@@ -3,6 +3,7 @@
  * @module concept2cure/components/sidebar/ZenSidebar
  *
  * Zone A (Utility): New Chat → Search → Customize AnA
+ * Zone B (6 Destinations): Chats → Projects → Reporting & Analytics → Communication Center → Apps → Settings
  * Zone B (5 Destinations): Chats → Projects → Communication Center → Apps → Settings
  * Zone C (Context): Active project indicator, pinned/recent project list
  * Zone D (Footer): Account/profile
@@ -33,6 +34,7 @@ import {
   Sparkles,
   Settings,
   SlidersHorizontal,
+  BarChart3,
   Activity,
   Pill,
   Heart,
@@ -835,6 +837,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
     return {
       chats: h('chats'),
       projects: h('projects'),
+      reports: h('reports'),
       apps: h('apps'),
       settings: h('settings'),
       'communication-center': h('communication-center'),
@@ -874,12 +877,15 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
         <div className="w-8 border-t border-stone-200 my-1" />
 
-        {/* ── Zone B: 5 Primary Destinations ── */}
+        {/* ── Zone B: 6 Primary Destinations ── */}
         <IconBtn label="Chats" active={activeNavId === 'chats'} onClick={nav.chats}>
           <MessageSquare className="w-4 h-4" />
         </IconBtn>
         <IconBtn label="Projects" active={activeNavId === 'projects'} onClick={nav.projects}>
           <FolderOpen className="w-4 h-4" />
+        </IconBtn>
+        <IconBtn label="Reporting & Analytics" active={activeNavId === 'reports'} onClick={nav.reports}>
+          <BarChart3 className="w-4 h-4" />
         </IconBtn>
         <IconBtn
           label="Communication Center"
@@ -986,6 +992,12 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             label="Projects"
             active={activeNavId === 'projects'}
             onClick={nav.projects}
+          />
+          <NavItem
+            icon={<BarChart3 className="w-3.5 h-3.5" />}
+            label="Reporting & Analytics"
+            active={activeNavId === 'reports'}
+            onClick={nav.reports}
           />
           <NavItem
             icon={<Activity className="w-3.5 h-3.5" />}
