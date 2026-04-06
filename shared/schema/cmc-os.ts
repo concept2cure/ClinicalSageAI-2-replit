@@ -82,66 +82,6 @@ export const cmcModule3SectionVersions = pgTable('cmc_module3_section_versions',
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-// ── Sub-Study Tasks & Approval ──────────────────────────────────────────────
-
-/**
- * Tracks individual tasks/activities within CMC sub-studies.
- * Each task targets a specific data category (e.g. analytical method, stability study)
- * within a project and requires explicit approval before the data feeds Module 3.
- */
-export const cmcSubStudyTasks = pgTable('cmc_sub_study_tasks', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  organizationId: integer('organization_id').notNull().references(() => organizations.id),
-  projectId: uuid('project_id').notNull().references(() => cmcProjects.id, { onDelete: 'cascade' }),
-  /** The CMC data category this task covers */
-  dataCategory: text('data_category').notNull(), // drug_substance, drug_product, method, stability, specification, batch, change_control, comparability, process_validation, excipient, container_closure, reference_standard
-  /** Human-readable title */
-  title: text('title').notNull(),
-  description: text('description'),
-  /** ID of the specific record (in the legacy CMC table) this task relates to, if any */
-  sourceRecordId: text('source_record_id'),
-  /** ID of the canonical source object, populated after write-through */
-  sourceObjectId: uuid('source_object_id'),
-  /** Module 3 sections impacted by this task */
-  impactedSections: jsonb('impacted_sections'), // e.g. ['3.2.S.4', '3.2.S.7']
-  /** Task lifecycle: draft → in_progress → data_entered → pending_review → approved → merged → rejected */
-  status: text('status').notNull().default('draft'),
-  /** Priority: low, medium, high, critical */
-  priority: text('priority').notNull().default('medium'),
-  /** Assigned user (data entry) */
-  assignedTo: text('assigned_to'),
-  /** Due date */
-  dueDate: timestamp('due_date'),
-  /** Whether the data has been pushed/merged into the project's Module 3 pipeline */
-  mergedToModule3: boolean('merged_to_module3').notNull().default(false),
-  mergedAt: timestamp('merged_at'),
-  metadata: jsonb('metadata'),
-  createdBy: text('created_by'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
-
-/**
- * Approval records for CMC sub-study tasks.
- * Multiple approval levels can be configured per data category.
- */
-export const cmcSubStudyApprovals = pgTable('cmc_sub_study_approvals', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  organizationId: integer('organization_id').notNull().references(() => organizations.id),
-  taskId: uuid('task_id').notNull().references(() => cmcSubStudyTasks.id, { onDelete: 'cascade' }),
-  /** Approval level: 1 = data reviewer, 2 = QA/RA reviewer, 3 = study director */
-  approvalLevel: integer('approval_level').notNull(),
-  approvalLevelLabel: text('approval_level_label').notNull(), // e.g. 'Data Reviewer', 'QA Reviewer', 'Study Director'
-  /** Who must approve */
-  approverUserId: text('approver_user_id'),
-  approverName: text('approver_name'),
-  /** Approval decision */
-  decision: text('decision'), // pending, approved, rejected, returned_for_revision
-  decisionNote: text('decision_note'),
-  decidedAt: timestamp('decided_at'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-});
-
 export const cmcProvenanceEvents = pgTable('cmc_provenance_events', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: integer('organization_id').notNull().references(() => organizations.id),

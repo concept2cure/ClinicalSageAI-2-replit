@@ -15,6 +15,7 @@
 import { getPool } from '../db';
 import { createSourceHash } from './cmc-module3-compiler';
 import { impactedSectionsForSourceType, type CmcSourceType } from './module3Composer';
+import unifiedTaskService from './unifiedTaskService';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -35,7 +36,29 @@ interface WriteThroughInput {
   sourcePayload: Record<string, any>;
   /** Who triggered this write (userId or 'system') */
   createdBy?: string;
+  /** If true, auto-creates a review/approval task in the unified task system */
+  createReviewTask?: boolean;
+  /** Numeric project ID for the unified task system (concept2cure projects table) */
+  numericProjectId?: number;
 }
+
+/** Human-readable labels for CMC source types */
+const SOURCE_TYPE_LABELS: Record<string, string> = {
+  drug_substance: 'Drug Substance',
+  drug_product: 'Drug Product',
+  method: 'Analytical Method',
+  stability: 'Stability Study',
+  specification: 'Specification',
+  batch: 'Batch Record',
+  change_control: 'Change Control',
+  comparability: 'Comparability Assessment',
+  process_validation: 'Process Validation',
+  manufacturing_process: 'Manufacturing Process',
+  characterization: 'Characterization',
+  reference_standard: 'Reference Standard',
+  container_closure: 'Container Closure',
+  excipient: 'Excipient',
+};
 
 // ── Mapping helpers: legacy CMC record → canonical source payload ─────────
 
@@ -299,6 +322,35 @@ export async function writeThroughToCanonicalSource(input: WriteThroughInput): P
     }
 
     await client.query('COMMIT');
+
+    // 4. Optionally create a review task in the unified task system
+    if (input.createReviewTask && isNew) {
+      const label = SOURCE_TYPE_LABELS[sourceType] || sourceType;
+      try {
+        await unifiedTaskService.createUnifiedTask({
+          moduleType: 'CMC',
+          title: `Review: ${label} data entry`,
+          description: `New ${label} data was entered for this project and needs review before it can be merged into Module 3 documentation. Impacted sections: ${staleSections.join(', ') || 'none identified'}.`,
+          category: 'data-review',
+          taskType: 'review',
+          priority: 'medium',
+          sourceEntityId: String(sourceObjectId),
+          sourceEntityType: `cmc_source_object:${sourceType}`,
+          organizationId: orgId,
+          projectId: input.numericProjectId,
+          metadata: {
+            sourceType,
+            sourceKey,
+            sourceObjectId: String(sourceObjectId),
+            staleSections,
+            origin: 'cmc_write_through',
+          },
+        });
+      } catch (taskErr) {
+        // Non-blocking: task creation failure should not affect the write-through
+        console.warn('[CMC Write-Through] Failed to create review task:', taskErr);
+      }
+    }
 
     return {
       sourceObjectId: String(sourceObjectId),
