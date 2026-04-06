@@ -685,10 +685,17 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           'signatures',
           'export',
         ]);
-      default:
-        return new Set(['intelligence', 'dataroom', 'templates', 'batch-ai']);
+      default: {
+        const defaults = new Set(['intelligence', 'dataroom', 'templates', 'batch-ai']);
+        // Auto-suggest Module 3 build inspector when editing M3 sections
+        const ctd = activeArtifact?.ctdSection || '';
+        if (ctd.startsWith('3.2.') || ctd === '3.1' || ctd === '3.3') {
+          defaults.add('module3-build');
+        }
+        return defaults;
+      }
     }
-  }, [activeLifecycleStage]);
+  }, [activeLifecycleStage, activeArtifact?.ctdSection]);
 
   // ── Sign/Approve state ────────────────────────────────────────────────
   const [signing, setSigning] = useState(false);

@@ -72,14 +72,14 @@ export const BUILD_STATE_CONFIG: Record<
   no_sources: { label: 'No Sources', color: 'text-stone-400', bgColor: 'bg-stone-50', priority: 0 },
   sources_uploaded: { label: 'Sources Uploaded', color: 'text-amber-600', bgColor: 'bg-amber-50', priority: 1 },
   extraction_pending: { label: 'Extraction Pending', color: 'text-amber-700', bgColor: 'bg-amber-50', priority: 2 },
-  extraction_complete: { label: 'Extracted', color: 'text-blue-600', bgColor: 'bg-blue-50', priority: 3 },
-  compiled: { label: 'Compiled', color: 'text-blue-700', bgColor: 'bg-blue-50', priority: 4 },
-  draft_artifact_created: { label: 'Draft Ready', color: 'text-indigo-600', bgColor: 'bg-indigo-50', priority: 5 },
-  stale: { label: 'Stale', color: 'text-orange-700', bgColor: 'bg-orange-50', priority: 6 },
+  extraction_complete: { label: 'Extracted', color: 'text-stone-600', bgColor: 'bg-stone-100', priority: 3 },
+  compiled: { label: 'Compiled', color: 'text-stone-700', bgColor: 'bg-stone-100', priority: 4 },
+  draft_artifact_created: { label: 'Draft Ready', color: 'text-stone-800', bgColor: 'bg-stone-100', priority: 5 },
+  stale: { label: 'Stale', color: 'text-amber-700', bgColor: 'bg-amber-50', priority: 6 },
   contradiction_flagged: { label: 'Contradiction', color: 'text-red-700', bgColor: 'bg-red-50', priority: 7 },
-  review: { label: 'In Review', color: 'text-violet-600', bgColor: 'bg-violet-50', priority: 8 },
-  approved: { label: 'Approved', color: 'text-green-700', bgColor: 'bg-green-50', priority: 9 },
-  locked: { label: 'Locked', color: 'text-purple-700', bgColor: 'bg-purple-50', priority: 10 },
+  review: { label: 'In Review', color: 'text-stone-700', bgColor: 'bg-stone-50', priority: 8 },
+  approved: { label: 'Approved', color: 'text-emerald-700', bgColor: 'bg-emerald-50', priority: 9 },
+  locked: { label: 'Locked', color: 'text-stone-900', bgColor: 'bg-stone-200', priority: 10 },
 };
 
 // ── Hook ────────────────────────────────────────────────────────────────────
