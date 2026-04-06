@@ -522,7 +522,7 @@ router.post('/comparability-studies', async (req, res) => {
          organization_id, project_id, assessment_name, change_type, changed_element,
          affected_process_parameters, justification, reviewed_by, status, tenant_id
        ) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10)
-       RETURNING id, assessment_name as title, changed_element as product, change_type as type, status,
+       RETURNING id, project_id, assessment_name as title, changed_element as product, change_type as type, status,
                  created_at as "createdAt", updated_at as "updatedAt", affected_process_parameters as methods,
                  justification as outcome, reviewed_by as owner`,
       [
@@ -538,9 +538,9 @@ router.post('/comparability-studies', async (req, res) => {
         String(orgId),
       ]
     );
-    // Write-through: upsert canonical source object for Module 3
-    if (req.body.projectId && rows[0]) {
-      writeThroughComparability(orgId, req.body.projectId, String(rows[0].id || rows[0].title), rows[0]).catch(() => {});
+    // Write-through: read projectId from DB return, not request body
+    if (rows[0]?.project_id) {
+      writeThroughComparability(orgId, rows[0].project_id, String(rows[0].id), rows[0]).catch(() => {});
     }
     res.json({ success: true, data: rows[0] });
   } catch (error) {
@@ -564,7 +564,7 @@ router.put('/comparability-studies/:id', async (req, res) => {
            status = COALESCE($7, status),
            updated_at = NOW()
        WHERE id = $8 AND organization_id = $9
-       RETURNING id, assessment_name as title, changed_element as product, change_type as type, status,
+       RETURNING id, project_id, assessment_name as title, changed_element as product, change_type as type, status,
                  created_at as "createdAt", updated_at as "updatedAt", affected_process_parameters as methods,
                  justification as outcome, reviewed_by as owner`,
       [
@@ -582,9 +582,9 @@ router.put('/comparability-studies/:id', async (req, res) => {
     if (!rows[0]) {
       return res.status(404).json({ success: false, error: 'Study not found' });
     }
-    // Write-through: upsert canonical source object for Module 3
-    if (req.body.projectId && rows[0]) {
-      writeThroughComparability(orgId, req.body.projectId, String(req.params.id), rows[0]).catch(() => {});
+    // Write-through: read projectId from DB, not request body
+    if (rows[0].project_id) {
+      writeThroughComparability(orgId, rows[0].project_id, String(req.params.id), rows[0]).catch(() => {});
     }
     res.json({ success: true, data: rows[0] });
   } catch (error) {

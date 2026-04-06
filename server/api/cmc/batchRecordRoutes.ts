@@ -338,11 +338,16 @@ router.post('/:id/release', async (req, res) => {
     );
 
     console.log(`[CMC Batch] Release testing for batch ${id}: ${releaseStatus}`);
+    // Write-through: upsert canonical source object for Module 3
+    const releasedBatch = updateResult.rows[0];
+    if (releasedBatch?.project_id) {
+      writeThroughBatchRecord(Number(tenantId), releasedBatch.project_id, String(id), releasedBatch).catch(() => {});
+    }
 
     res.json({
       success: true,
       data: {
-        batchRecord: updateResult.rows[0],
+        batchRecord: releasedBatch,
         releaseEvaluation: releaseRecord,
       },
       message: `Batch ${releaseStatus === 'released' ? 'released' : 'release decision recorded'} successfully`,
