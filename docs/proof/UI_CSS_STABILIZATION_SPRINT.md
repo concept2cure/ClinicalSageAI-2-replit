@@ -1,7 +1,7 @@
 # UI CSS Stabilization Sprint — Proof Pack
 
-**Date**: 2026-04-03  
-**Branch**: `concept2cure-v2`  
+**Date**: 2026-04-03
+**Branch**: `concept2cure-v2`
 **Viewports tested**: 1366×768, 1440×900
 
 ---
@@ -15,6 +15,7 @@ CSS triage and shell stabilization sprint. Reduced `client/src/index.css` from *
 ## Phase 1 — CSS Triage & Amputation
 
 ### Removed (~2089 lines)
+
 - **SharePoint `sp-*` classes** (~580 lines) — orphaned, never used in React components
 - **Duplicate `:root` token blocks** — collapsed to single canonical Anthropic color palette
 - **Broad background overrides** — `html, body, #root, main, section` paint hack removed
@@ -25,34 +26,37 @@ CSS triage and shell stabilization sprint. Reduced `client/src/index.css` from *
 - **Duplicate gradients / shadows / scroll classes** — consolidation pass
 
 ### Retained (1101 lines)
-| Section | Purpose |
-|---------|---------|
-| `@import zen.css` + Tailwind directives | Design system + utility framework |
-| Motion `:root` tokens + `prefers-reduced-motion` | Accessible animation |
-| Radix Switch/Select/Popover fixes | Component library compatibility |
-| AnA Chat response typography (`.ana-response`) | Claude-style response rendering |
-| Single canonical `:root` color palette | Anthropic stone/cream tokens |
-| Base element styles (body, #root, font families) | Minimal global resets |
-| Typography utility classes | `.text-xs`, `.text-sm` utilities |
-| Keyframes (fadeIn, slideUp, pulse, shimmer, spin) | Standard animation library |
-| Radix tab / dropdown / select styling | Component polish |
-| Scrollbar / skeleton loader / spinner | Loading state infrastructure |
-| ProseMirror / TipTap editor styles | Document editor |
-| Markdown content styles | Chat + document rendering |
-| Print styles | Output formatting |
-| CER v2 tab navigation | Feature-specific polish |
+
+| Section                                           | Purpose                           |
+| ------------------------------------------------- | --------------------------------- |
+| `@import zen.css` + Tailwind directives           | Design system + utility framework |
+| Motion `:root` tokens + `prefers-reduced-motion`  | Accessible animation              |
+| Radix Switch/Select/Popover fixes                 | Component library compatibility   |
+| AnA Chat response typography (`.ana-response`)    | Claude-style response rendering   |
+| Single canonical `:root` color palette            | Anthropic stone/cream tokens      |
+| Base element styles (body, #root, font families)  | Minimal global resets             |
+| Typography utility classes                        | `.text-xs`, `.text-sm` utilities  |
+| Keyframes (fadeIn, slideUp, pulse, shimmer, spin) | Standard animation library        |
+| Radix tab / dropdown / select styling             | Component polish                  |
+| Scrollbar / skeleton loader / spinner             | Loading state infrastructure      |
+| ProseMirror / TipTap editor styles                | Document editor                   |
+| Markdown content styles                           | Chat + document rendering         |
+| Print styles                                      | Output formatting                 |
+| CER v2 tab navigation                             | Feature-specific polish           |
 
 ---
 
 ## Phase 2 — Shell Structure Verification
 
 ### ZenApp Layout
+
 - **Outer shell**: `<div className="zen flex h-screen w-full">` → ZenSidebar + GlobalOperatingShell
 - **16 layoutMode branches**: projects, project-home, workspace, regulatory-workspace, vault, documents, dossier-map, section-workspace, review, submissions, apps, artifacts-center, setup, biostatistics, report-engine, precedent-intelligence
 - **Center-pane gating**: ✅ Strict if/else — only ONE layoutMode renders at a time
 - **No duplicate surfaces**, no overlapping center experiences
 
 ### ZenSidebar Layout
+
 - **Collapsed**: w-14 (56px) — icon-only
 - **Expanded**: w-[260px] — full labels
 - **Fixed on mobile**, static on desktop
@@ -61,12 +65,14 @@ CSS triage and shell stabilization sprint. Reduced `client/src/index.css` from *
 - **Context-dependent project block**: Overview, Tasks, Tools, Submit (only when project active)
 
 ### ProjectWorkspaceShell Bars
+
 - **Default `showContextBars = false`**: Only breadcrumb (h-10) + workflow (h-8) = **72px** visible
 - **Remaining bars**: Work modes, Context band, Dossier modules, Project nav — all inside collapsible `max-h-48`/`max-h-0` container
 - **Conditional bars**: Pending move banner, cut-blocked error — only during active operations
 - **Verdict**: Bar overhead is acceptable. Collapsible system already in place.
 
 ### GlobalOperatingShell
+
 - ~50 lines, minimal breadcrumb wrapper
 - `flex-1 flex flex-col min-w-0 min-h-0 bg-[#faf9f7]`
 - Breadcrumb shows only for: regulatory-workspace, documents, report-engine, submissions, review, dossier-map
@@ -84,12 +90,13 @@ CSS triage and shell stabilization sprint. Reduced `client/src/index.css` from *
 
 ## Viewport Acceptance
 
-| Viewport | Login | Authenticated Shell | Verdict |
-|----------|-------|---------------------|---------|
-| 1366×768 | ✅ Renders | ✅ Sidebar + cards + AnA | Pass |
-| 1440×900 | ✅ Renders | ✅ Sidebar + cards + AnA | Pass |
+| Viewport | Login      | Authenticated Shell      | Verdict |
+| -------- | ---------- | ------------------------ | ------- |
+| 1366×768 | ✅ Renders | ✅ Sidebar + cards + AnA | Pass    |
+| 1440×900 | ✅ Renders | ✅ Sidebar + cards + AnA | Pass    |
 
 ### Screenshots
+
 - Before: `/tmp/ui-before/login-1366.png`, `/tmp/ui-before/login-1440.png`, `/tmp/ui-before/shell-1366.png`, `/tmp/ui-before/shell-1440.png`
 - After: `/tmp/ui-after/login-1366.png`, `/tmp/ui-after/shell-1440.png`
 

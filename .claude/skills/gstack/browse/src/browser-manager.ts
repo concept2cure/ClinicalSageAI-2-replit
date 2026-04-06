@@ -15,8 +15,22 @@
  *   restores state. Falls back to clean slate on any failure.
  */
 
-import { chromium, type Browser, type BrowserContext, type BrowserContextOptions, type Page, type Locator, type Cookie } from 'playwright';
-import { addConsoleEntry, addNetworkEntry, addDialogEntry, networkBuffer, type DialogEntry } from './buffers';
+import {
+  chromium,
+  type Browser,
+  type BrowserContext,
+  type BrowserContextOptions,
+  type Page,
+  type Locator,
+  type Cookie,
+} from 'playwright';
+import {
+  addConsoleEntry,
+  addNetworkEntry,
+  addDialogEntry,
+  networkBuffer,
+  type DialogEntry,
+} from './buffers';
 import { validateNavigationUrl } from './url-validation';
 
 export interface RefEntry {
@@ -30,7 +44,10 @@ export interface BrowserState {
   pages: Array<{
     url: string;
     isActive: boolean;
-    storage: { localStorage: Record<string, string>; sessionStorage: Record<string, string> } | null;
+    storage: {
+      localStorage: Record<string, string>;
+      sessionStorage: Record<string, string>;
+    } | null;
   }>;
 }
 
@@ -71,10 +88,14 @@ export class BrowserManager {
   private connectionMode: 'launched' | 'headed' = 'launched';
   private intentionalDisconnect = false;
 
-  getConnectionMode(): 'launched' | 'headed' { return this.connectionMode; }
+  getConnectionMode(): 'launched' | 'headed' {
+    return this.connectionMode;
+  }
 
   // ─── Watch Mode Methods ─────────────────────────────────
-  isWatching(): boolean { return this.watching; }
+  isWatching(): boolean {
+    return this.watching;
+  }
 
   startWatch(): void {
     this.watching = true;
@@ -151,10 +172,16 @@ export class BrowserManager {
     const launchArgs: string[] = [];
     let useHeadless = true;
 
-    // Docker/CI: Chromium sandbox requires unprivileged user namespaces which
+    // Docker/CI/Codespaces: Chromium sandbox requires unprivileged user namespaces which
     // are typically disabled in containers. Detect container environment and
     // add --no-sandbox automatically.
-    if (process.env.CI || process.env.CONTAINER) {
+    if (
+      process.env.CI ||
+      process.env.CONTAINER ||
+      process.env.CODESPACES ||
+      process.env.REMOTE_CONTAINERS ||
+      process.getuid?.() === 0
+    ) {
       launchArgs.push('--no-sandbox');
     }
 
@@ -163,7 +190,7 @@ export class BrowserManager {
         `--disable-extensions-except=${extensionsDir}`,
         `--load-extension=${extensionsDir}`,
         '--window-position=-9999,-9999',
-        '--window-size=1,1',
+        '--window-size=1,1'
       );
       useHeadless = false; // extensions require headed mode; off-screen window simulates headless
       console.log(`[browse] Extensions loaded from: ${extensionsDir}`);
@@ -174,7 +201,12 @@ export class BrowserManager {
       // On Windows, Chromium's sandbox fails when the server is spawned through
       // the Bun→Node process chain (GitHub #276). Disable it — local daemon
       // browsing user-specified URLs has marginal sandbox benefit.
-      chromiumSandbox: process.platform !== 'win32',
+      // Also disable in containers / root environments.
+      chromiumSandbox:
+        process.platform !== 'win32' &&
+        process.getuid?.() !== 0 &&
+        !process.env.CODESPACES &&
+        !process.env.REMOTE_CONTAINERS,
       ...(launchArgs.length > 0 ? { args: launchArgs } : {}),
     });
 
@@ -237,7 +269,7 @@ export class BrowserManager {
     this.context = await chromium.launchPersistentContext(userDataDir, {
       headless: false,
       args: launchArgs,
-      viewport: null,  // Use browser's default viewport (real window size)
+      viewport: null, // Use browser's default viewport (real window size)
       // Playwright adds flags that block extension loading
       ignoreDefaultArgs: [
         '--disable-extensions',
@@ -296,7 +328,9 @@ export class BrowserManager {
       this.activeTabId = id;
       this.wirePageEvents(page);
       // Inject indicator on restored page (addInitScript only fires on new navigations)
-      try { await page.evaluate(indicatorScript); } catch {}
+      try {
+        await page.evaluate(indicatorScript);
+      } catch {}
     } else {
       await this.newTab();
     }
@@ -312,7 +346,7 @@ export class BrowserManager {
     }
 
     // Headed mode defaults
-    this.dialogAutoAccept = false;  // Don't dismiss user's real dialogs
+    this.dialogAutoAccept = false; // Don't dismiss user's real dialogs
     this.isHeaded = true;
     this.consecutiveFailures = 0;
   }
@@ -409,7 +443,9 @@ export class BrowserManager {
     return this.pages.size;
   }
 
-  async getTabListWithTitles(): Promise<Array<{ id: number; url: string; title: string; active: boolean }>> {
+  async getTabListWithTitles(): Promise<
+    Array<{ id: number; url: string; title: string; active: boolean }>
+  > {
     const tabs: Array<{ id: number; url: string; title: string; active: boolean }> = [];
     for (const [id, page] of this.pages) {
       tabs.push({
@@ -455,15 +491,13 @@ export class BrowserManager {
       const ref = selector.slice(1); // "e3" or "c1"
       const entry = this.refMap.get(ref);
       if (!entry) {
-        throw new Error(
-          `Ref ${selector} not found. Run 'snapshot' to get fresh refs.`
-        );
+        throw new Error(`Ref ${selector} not found. Run 'snapshot' to get fresh refs.`);
       }
       const count = await entry.locator.count();
       if (count === 0) {
         throw new Error(
           `Ref ${selector} (${entry.role} "${entry.name}") is stale — element no longer exists. ` +
-          `Run 'snapshot' for fresh refs.`
+            `Run 'snapshot' for fresh refs.`
         );
       }
       return { locator: entry.locator };
@@ -620,23 +654,31 @@ export class BrowserManager {
       this.wirePageEvents(page);
 
       if (saved.url) {
-        await page.goto(saved.url, { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {});
+        await page
+          .goto(saved.url, { waitUntil: 'domcontentloaded', timeout: 15000 })
+          .catch(() => {});
       }
 
       if (saved.storage) {
         try {
-          await page.evaluate((s: { localStorage: Record<string, string>; sessionStorage: Record<string, string> }) => {
-            if (s.localStorage) {
-              for (const [k, v] of Object.entries(s.localStorage)) {
-                localStorage.setItem(k, v);
+          await page.evaluate(
+            (s: {
+              localStorage: Record<string, string>;
+              sessionStorage: Record<string, string>;
+            }) => {
+              if (s.localStorage) {
+                for (const [k, v] of Object.entries(s.localStorage)) {
+                  localStorage.setItem(k, v);
+                }
               }
-            }
-            if (s.sessionStorage) {
-              for (const [k, v] of Object.entries(s.sessionStorage)) {
-                sessionStorage.setItem(k, v);
+              if (s.sessionStorage) {
+                for (const [k, v] of Object.entries(s.sessionStorage)) {
+                  sessionStorage.setItem(k, v);
+                }
               }
-            }
-          }, saved.storage);
+            },
+            saved.storage
+          );
         } catch {}
       }
 
@@ -713,7 +755,9 @@ export class BrowserManager {
       } catch {
         // If even the fallback fails, we're in trouble — but browser is still alive
       }
-      return `Context recreation failed: ${err instanceof Error ? err.message : String(err)}. Browser reset to blank tab.`;
+      return `Context recreation failed: ${
+        err instanceof Error ? err.message : String(err)
+      }. Browser reset to blank tab.`;
     }
   }
 
@@ -799,7 +843,7 @@ export class BrowserManager {
 
       await this.restoreState(state);
       this.isHeaded = true;
-      this.dialogAutoAccept = false;  // User controls dialogs in headed mode
+      this.dialogAutoAccept = false; // User controls dialogs in headed mode
 
       // 4. Close old headless browser (fire-and-forget)
       oldBrowser.removeAllListeners('disconnected');
@@ -853,7 +897,7 @@ export class BrowserManager {
   private wirePageEvents(page: Page) {
     // Clear ref map on navigation — refs point to stale elements after page change
     // (lastSnapshot is NOT cleared — it's a text baseline for diffing)
-    page.on('framenavigated', (frame) => {
+    page.on('framenavigated', frame => {
       if (frame === page.mainFrame()) {
         this.clearRefs();
         this.activeFrame = null; // Navigation invalidates frame context
@@ -861,14 +905,14 @@ export class BrowserManager {
     });
 
     // ─── Dialog auto-handling (prevents browser lockup) ─────
-    page.on('dialog', async (dialog) => {
+    page.on('dialog', async dialog => {
       const entry: DialogEntry = {
         timestamp: Date.now(),
         type: dialog.type(),
         message: dialog.message(),
         defaultValue: dialog.defaultValue() || undefined,
         action: this.dialogAutoAccept ? 'accepted' : 'dismissed',
-        response: this.dialogAutoAccept ? (this.dialogPromptText ?? undefined) : undefined,
+        response: this.dialogAutoAccept ? this.dialogPromptText ?? undefined : undefined,
       };
       addDialogEntry(entry);
 
@@ -883,7 +927,7 @@ export class BrowserManager {
       }
     });
 
-    page.on('console', (msg) => {
+    page.on('console', msg => {
       addConsoleEntry({
         timestamp: Date.now(),
         level: msg.type(),
@@ -891,7 +935,7 @@ export class BrowserManager {
       });
     });
 
-    page.on('request', (req) => {
+    page.on('request', req => {
       addNetworkEntry({
         timestamp: Date.now(),
         method: req.method(),
@@ -899,7 +943,7 @@ export class BrowserManager {
       });
     });
 
-    page.on('response', (res) => {
+    page.on('response', res => {
       // Find matching request entry and update it (backward scan)
       const url = res.url();
       const status = res.status();
@@ -913,7 +957,7 @@ export class BrowserManager {
     });
 
     // Capture response sizes via response finished
-    page.on('requestfinished', async (req) => {
+    page.on('requestfinished', async req => {
       try {
         const res = await req.response();
         if (res) {

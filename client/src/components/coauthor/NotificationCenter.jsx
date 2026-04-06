@@ -94,7 +94,7 @@ function getPriorityColor(priority) {
  case 'high':
  return 'text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30';
  case 'normal':
- return 'text-stone-600 dark:text-stone-400 bg-stone-100 
+ return 'text-stone-600 bg-stone-100';
  case 'low':
  return 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30';
  default:
@@ -218,43 +218,43 @@ function NotificationSettings({ preferences, onUpdate, onClose }) {
  {/* Email Notifications */}
  <div className="space-y-3">
  <h4 className="text-sm font-medium">Email Notifications</h4>
- 
+
  <div className="space-y-2">
  <div className="flex items-center justify-between">
  <label className="text-sm text-slate-600 dark:text-slate-400">Mentions</label>
  <Switch
  checked={localPrefs.emailMentions !== false}
- onCheckedChange={(checked) => 
+ onCheckedChange={(checked) =>
  setLocalPrefs({ ...localPrefs, emailMentions: checked })
  }
  />
  </div>
- 
+
  <div className="flex items-center justify-between">
  <label className="text-sm text-slate-600 dark:text-slate-400">Shares</label>
  <Switch
  checked={localPrefs.emailShares !== false}
- onCheckedChange={(checked) => 
+ onCheckedChange={(checked) =>
  setLocalPrefs({ ...localPrefs, emailShares: checked })
  }
  />
  </div>
- 
+
  <div className="flex items-center justify-between">
  <label className="text-sm text-slate-600 dark:text-slate-400">Approvals</label>
  <Switch
  checked={localPrefs.emailApprovals !== false}
- onCheckedChange={(checked) => 
+ onCheckedChange={(checked) =>
  setLocalPrefs({ ...localPrefs, emailApprovals: checked })
  }
  />
  </div>
- 
+
  <div className="flex items-center justify-between">
  <label className="text-sm text-slate-600 dark:text-slate-400">Compliance Alerts</label>
  <Switch
  checked={localPrefs.emailCompliance !== false}
- onCheckedChange={(checked) => 
+ onCheckedChange={(checked) =>
  setLocalPrefs({ ...localPrefs, emailCompliance: checked })
  }
  />
@@ -264,7 +264,7 @@ function NotificationSettings({ preferences, onUpdate, onClose }) {
  <label className="text-sm text-slate-600 dark:text-slate-400">Daily Digest</label>
  <Switch
  checked={localPrefs.emailDigest === 'daily'}
- onCheckedChange={(checked) => 
+ onCheckedChange={(checked) =>
  setLocalPrefs({ ...localPrefs, emailDigest: checked ? 'daily' : 'none' })
  }
  />
@@ -277,23 +277,23 @@ function NotificationSettings({ preferences, onUpdate, onClose }) {
  {/* In-App Notifications */}
  <div className="space-y-3">
  <h4 className="text-sm font-medium">In-App Notifications</h4>
- 
+
  <div className="space-y-2">
  <div className="flex items-center justify-between">
  <label className="text-sm text-slate-600 dark:text-slate-400">Toast Notifications</label>
  <Switch
  checked={localPrefs.toastEnabled !== false}
- onCheckedChange={(checked) => 
+ onCheckedChange={(checked) =>
  setLocalPrefs({ ...localPrefs, toastEnabled: checked })
  }
  />
  </div>
- 
+
  <div className="flex items-center justify-between">
  <label className="text-sm text-slate-600 dark:text-slate-400">Sound</label>
  <Switch
  checked={localPrefs.soundEnabled === true}
- onCheckedChange={(checked) => 
+ onCheckedChange={(checked) =>
  setLocalPrefs({ ...localPrefs, soundEnabled: checked })
  }
  />
@@ -303,7 +303,7 @@ function NotificationSettings({ preferences, onUpdate, onClose }) {
  <label className="text-sm text-slate-600 dark:text-slate-400">Auto-follow on interaction</label>
  <Switch
  checked={localPrefs.autoFollowOnInteraction !== false}
- onCheckedChange={(checked) => 
+ onCheckedChange={(checked) =>
  setLocalPrefs({ ...localPrefs, autoFollowOnInteraction: checked })
  }
  />
@@ -316,12 +316,12 @@ function NotificationSettings({ preferences, onUpdate, onClose }) {
  {/* Quiet Hours */}
  <div className="space-y-3">
  <h4 className="text-sm font-medium">Quiet Hours</h4>
- 
+
  <div className="flex items-center justify-between">
  <label className="text-sm text-slate-600 dark:text-slate-400">Enable quiet hours</label>
  <Switch
  checked={localPrefs.quietHoursEnabled === true}
- onCheckedChange={(checked) => 
+ onCheckedChange={(checked) =>
  setLocalPrefs({ ...localPrefs, quietHoursEnabled: checked })
  }
  />
@@ -334,7 +334,7 @@ function NotificationSettings({ preferences, onUpdate, onClose }) {
  <input
  type="time"
  value={localPrefs.quietHoursStart || '22:00'}
- onChange={(e) => 
+ onChange={(e) =>
  setLocalPrefs({ ...localPrefs, quietHoursStart: e.target.value })
  }
  className="w-full mt-1 px-2 py-1 text-sm border rounded"
@@ -345,7 +345,7 @@ function NotificationSettings({ preferences, onUpdate, onClose }) {
  <input
  type="time"
  value={localPrefs.quietHoursEnd || '08:00'}
- onChange={(e) => 
+ onChange={(e) =>
  setLocalPrefs({ ...localPrefs, quietHoursEnd: e.target.value })
  }
  className="w-full mt-1 px-2 py-1 text-sm border rounded"
