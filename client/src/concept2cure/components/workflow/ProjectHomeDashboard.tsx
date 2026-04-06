@@ -261,7 +261,9 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
             {!artifactsLoading && summary.docCount > 0 && (
               <span className="text-[10px] text-stone-500 flex-shrink-0">
                 {summary.docCount} doc{summary.docCount !== 1 ? 's' : ''}
-                {summary.review > 0 && <> · <span className="text-stone-900">{summary.review} in review</span></>}
+                {summary.ready > 0 && <> · <span className="text-green-700">{summary.ready} approved</span></>}
+                {summary.review > 0 && <> · <span className="text-amber-700">{summary.review} in review</span></>}
+                {summary.draft > 0 && <> · <span className="text-stone-600">{summary.draft} draft</span></>}
               </span>
             )}
           </div>
@@ -364,6 +366,26 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
               <CheckCircle2 className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
             )}
             <ChevronRight className="w-3 h-3 text-stone-300 flex-shrink-0" />
+          </div>
+        )}
+
+        {/* ── Readiness signal: one-line, not a dashboard ────────────── */}
+        {readinessScore !== null && !artifactsLoading && summary.docCount > 0 && (
+          <div
+            className="mt-2 flex items-center gap-2 text-[11px] text-stone-500 cursor-pointer hover:text-stone-700 transition-colors"
+            onClick={() => onSuggestedPrompt?.('Analyze my submission readiness in detail. What are the gaps?')}
+            role="button"
+            tabIndex={0}
+          >
+            <Progress
+              value={readinessScore}
+              className="h-1 w-16 flex-shrink-0"
+            />
+            <span>
+              {readinessScore >= 80 ? 'Submission readiness: strong' :
+               readinessScore >= 50 ? 'Submission readiness: partial — ask AnA for details' :
+               'Submission readiness: early stage'}
+            </span>
           </div>
         )}
 

@@ -53,7 +53,7 @@ export const zenColors = {
   // ACCENT - Single brand color family (like Claude's orange-brown)
   // ─────────────────────────────────────────────────────────────────────────────
   accent: {
-    DEFAULT: '#d97757',     // Primary action - warm terracotta (Claude-inspired)
+    DEFAULT: '#5585b3',     // Primary action - restrained Anthropic blue
     hover: '#c15f3c',       // Hover state
     muted: '#FDE8E0',       // Light warm background tint
     subtle: '#FFF5F2',      // Very light warm tint

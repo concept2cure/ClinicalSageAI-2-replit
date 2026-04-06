@@ -85,17 +85,19 @@ interface Project {
   status?: string;
 }
 
-/** Submission type → muted stone-palette dot color for sidebar */
+/** Submission type → muted distinguishable dot color for sidebar */
 const SIDEBAR_TYPE_COLORS: Record<string, string> = {
-  '510K': '#78716c',    // stone-500
-  IND: '#78716c',       // stone-500
-  NDA: '#78716c',       // stone-500
-  BLA: '#78716c',       // stone-500
-  PMA: '#78716c',       // stone-500
-  MAA: '#78716c',       // stone-500
-  DE_NOVO: '#78716c',   // stone-500
-  EUA: '#78716c',       // stone-500
-  IVDR: '#78716c',      // stone-500
+  '510K': '#64748b',    // slate-500 — device clearance
+  IND: '#3b82f6',       // blue-500 — investigational drug
+  NDA: '#2563eb',       // blue-600 — new drug application
+  BLA: '#7c3aed',       // violet-600 — biologics
+  PMA: '#6366f1',       // indigo-500 — device approval
+  MAA: '#0891b2',       // cyan-600 — EU marketing auth
+  DE_NOVO: '#0d9488',   // teal-500 — de novo device
+  EUA: '#dc2626',       // red-600 — emergency use
+  IVDR: '#059669',      // emerald-600 — in vitro diagnostic
+  ANDA: '#78716c',      // stone-500 — generic drug
+  CER: '#d97706',       // amber-600 — clinical evaluation
 };
 
 export interface ZenSidebarProps {
@@ -464,7 +466,7 @@ const ProjectRow: React.FC<{
           onClick={onSelect}
           className="w-2 h-2 rounded-full flex-shrink-0"
           style={{
-            backgroundColor: project.color || SIDEBAR_TYPE_COLORS[project.type] || '#6366f1',
+            backgroundColor: project.color || SIDEBAR_TYPE_COLORS[project.type] || '#78716c',
           }}
         />
 
