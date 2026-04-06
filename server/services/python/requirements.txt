@@ -69,7 +69,8 @@ celery==5.6.3
 redis==7.4.0
 
 # Cryptography and security
-cryptography==42.0.4
+# Cryptography and security
+cryptography==46.0.6
 bcrypt==5.0.0
 
 # Monitoring and logging
