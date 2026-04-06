@@ -11,11 +11,11 @@ interface RecommendationListProps {
 }
 
 const SEVERITY_COLORS: Record<string, string> = {
-  critical: 'bg-stone-100 text-stone-800 dark:bg-stone-900/40 dark:text-stone-300',
-  high: 'bg-stone-100 text-stone-800 dark:bg-stone-900/40 dark:text-stone-300',
-  medium: 'bg-stone-100 text-stone-800 dark:bg-stone-900/40 dark:text-stone-300',
-  low: 'bg-stone-100 text-stone-800 dark:bg-stone-900/40 dark:text-stone-300',
-  info: 'bg-stone-100 text-stone-800 dark:bg-stone-800/40 dark:text-stone-300',
+  critical: 'bg-stone-100 text-stone-800
+  high: 'bg-stone-100 text-stone-800
+  medium: 'bg-stone-100 text-stone-800
+  low: 'bg-stone-100 text-stone-800
+  info: 'bg-stone-100 text-stone-800
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -41,7 +41,7 @@ export function RecommendationList({
 
   if (items.length === 0) {
     return (
-      <div className="p-4 text-center text-sm text-stone-500 dark:text-stone-400">
+      <div className="p-4 text-center text-sm text-stone-500">
         No recommendations at this time. Looking good!
       </div>
     );
@@ -52,7 +52,7 @@ export function RecommendationList({
       {items.map((rec) => (
         <div
           key={rec.id}
-          className="rounded-lg border border-stone-200 dark:border-stone-700 p-3 bg-white dark:bg-stone-900 hover:shadow-sm transition-shadow"
+          className="rounded-lg border border-stone-200 p-3 bg-white hover:shadow-sm transition-shadow"
         >
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
@@ -64,7 +64,7 @@ export function RecommendationList({
                 >
                   {rec.severity}
                 </span>
-                <span className="text-xs px-2 py-0.5 rounded bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400">
+                <span className="text-xs px-2 py-0.5 rounded bg-stone-100 text-stone-600">
                   {TYPE_LABELS[rec.recommendationType] || rec.recommendationType}
                 </span>
                 {rec.module && (
@@ -73,10 +73,10 @@ export function RecommendationList({
                   </span>
                 )}
               </div>
-              <p className="text-sm font-medium text-stone-900 dark:text-stone-100">
+              <p className="text-sm font-medium text-stone-900">
                 {rec.reason}
               </p>
-              <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+              <p className="text-xs text-stone-500 mt-1">
                 {rec.suggestedAction}
               </p>
               {rec.evidence.length > 0 && (
@@ -84,7 +84,7 @@ export function RecommendationList({
                   {rec.evidence.slice(0, 3).map((e, i) => (
                     <span
                       key={i}
-                      className="text-xs px-1.5 py-0.5 rounded bg-stone-50 dark:bg-stone-800 text-stone-500 dark:text-stone-400"
+                      className="text-xs px-1.5 py-0.5 rounded bg-stone-50 text-stone-500"
                     >
                       {e}
                     </span>
@@ -102,7 +102,7 @@ export function RecommendationList({
             )}
           </div>
           <div className="mt-1.5 flex items-center gap-2">
-            <div className="flex-1 h-1 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
+            <div className="flex-1 h-1 rounded-full bg-stone-200 overflow-hidden">
               <div
                 className="h-full rounded-full bg-stone-600 transition-all duration-300"
                 style={{ width: `${Math.round(rec.confidence * 100)}%` }}

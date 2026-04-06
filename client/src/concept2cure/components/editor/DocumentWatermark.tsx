@@ -270,11 +270,11 @@ export function WatermarkSettings({
   );
 
   return (
-    <div className="flex flex-col gap-3 p-4 rounded-lg border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
+    <div className="flex flex-col gap-3 p-4 rounded-lg border border-stone-200 bg-white">
       <div className="flex items-center justify-between">
         <label
           htmlFor="watermark-toggle"
-          className="text-sm font-medium text-stone-700 dark:text-stone-300"
+          className="text-sm font-medium text-stone-700"
         >
           Document Watermark
         </label>
@@ -286,7 +286,7 @@ export function WatermarkSettings({
           onClick={handleToggle}
           className={[
             'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 outline-none focus:ring-offset-2',
-            enabled ? 'bg-stone-800' : 'bg-stone-300 dark:bg-stone-600',
+            enabled ? 'bg-stone-800' : 'bg-stone-300
           ].join(' ')}
         >
           <span
@@ -302,7 +302,7 @@ export function WatermarkSettings({
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor="watermark-custom-text"
-            className="text-xs text-stone-500 dark:text-stone-400"
+            className="text-xs text-stone-500"
           >
             Custom watermark text (leave blank to use status default)
           </label>
@@ -313,7 +313,7 @@ export function WatermarkSettings({
             onChange={handleTextChange}
             placeholder="e.g. INTERNAL USE ONLY"
             maxLength={60}
-            className="rounded-md border border-stone-300 px-3 py-1.5 text-sm text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus-visible:ring-2 outline-none focus:ring-stone-400 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+            className="rounded-md border border-stone-300 px-3 py-1.5 text-sm text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus-visible:ring-2 outline-none focus:ring-stone-400"
           />
         </div>
       )}
