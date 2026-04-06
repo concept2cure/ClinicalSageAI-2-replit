@@ -35,6 +35,9 @@ const SECTION_MAP: Record<string, string[]> = {
   '3.2.P.6': ['drug_product', 'reference_standard'],
   '3.2.P.7': ['container_closure'],
   '3.2.P.8': ['stability', 'comparability'],
+  // Structural support sections
+  '3.1': ['drug_substance', 'drug_product'],
+  '3.3': ['drug_substance', 'drug_product', 'reference_standard'],
 };
 
 function canonicalize(input: unknown): unknown {

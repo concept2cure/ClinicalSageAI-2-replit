@@ -88,6 +88,7 @@ import { AnAMemory } from '../intelligence/AnAMemory';
 import { INDAutoDraftWizard } from './INDAutoDraftWizard';
 import ArtifactProofPanel from './ArtifactProofPanel';
 import EditorGAReadinessPanel from './EditorGAReadinessPanel';
+import { Module3BuildInspector } from './Module3BuildInspector';
 import {
   buildReadinessChecks,
   buildCapabilityModels,
@@ -644,7 +645,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     | 'ga-readiness'
     | 'sources'
     | 'templates'
-    | 'precedent';
+    | 'precedent'
+    | 'module3-build';
   const [activeInspector, setActiveInspector] = useState<InspectorPanel | null>(null);
   const [complianceIssues, setComplianceIssues] = useState<ScannerComplianceIssue[]>([]);
   const [isScanning, setIsScanning] = useState(false);
@@ -3334,6 +3336,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   icon: <ClipboardList className="w-3.5 h-3.5" />,
                   suggested: suggestedPanels.has('audit'),
                 },
+                {
+                  id: 'module3-build',
+                  label: 'M3 Build',
+                  icon: <ShieldCheck className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('module3-build'),
+                },
               ],
             },
           ] satisfies InspectorRibbonGroup[]
@@ -4316,6 +4324,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             capabilities={competitiveCapabilities}
             remediationQueue={gaRemediationQueue}
             onOpenInspector={id => toggleInspector(id as InspectorPanel)}
+          />
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'module3-build'} width="w-96">
+          <Module3BuildInspector
+            projectId={projectId}
+            ctdSection={activeArtifact?.ctdSection}
           />
         </InspectorDrawer>
       </div>

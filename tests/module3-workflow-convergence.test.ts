@@ -11,8 +11,10 @@ import { describe, it, expect } from 'vitest';
 import {
   composeModule3FromCanonicalSources,
   MODULE3_SECTION_RULES,
+  tablesToMarkdown,
   type CmcSourceType,
   type CanonicalSource,
+  type GeneratedTable,
 } from '../server/services/module3Composer';
 import {
   compileModule3Sections,
@@ -58,8 +60,8 @@ function makeCompilerSources(): CmcSourceObject[] {
 // ── 1. Composer Coverage ──────────────────────────────────────────────────────
 
 describe('Module 3 Composer — Section Rules', () => {
-  it('defines exactly 15 subsections', () => {
-    expect(MODULE3_SECTION_RULES).toHaveLength(15);
+  it('defines exactly 17 sections (15 subsections + 3.1 + 3.3)', () => {
+    expect(MODULE3_SECTION_RULES).toHaveLength(17);
   });
 
   it('covers all 7 Drug Substance (S) subsections', () => {
@@ -70,6 +72,12 @@ describe('Module 3 Composer — Section Rules', () => {
   it('covers all 8 Drug Product (P) subsections', () => {
     const pKeys = MODULE3_SECTION_RULES.filter((r) => r.sectionKey.startsWith('3.2.P.')).map((r) => r.sectionKey);
     expect(pKeys).toEqual(['3.2.P.1', '3.2.P.2', '3.2.P.3', '3.2.P.4', '3.2.P.5', '3.2.P.6', '3.2.P.7', '3.2.P.8']);
+  });
+
+  it('includes structural sections 3.1 and 3.3', () => {
+    const keys = MODULE3_SECTION_RULES.map((r) => r.sectionKey);
+    expect(keys).toContain('3.1');
+    expect(keys).toContain('3.3');
   });
 
   it('every rule has at least one requiredSourceType', () => {
@@ -114,12 +122,12 @@ describe('Module 3 Source Types', () => {
 // ── 3. Composition from Canonical Sources ─────────────────────────────────────
 
 describe('Module 3 Composer — Full Composition', () => {
-  it('produces exactly 15 sections from full source set', () => {
+  it('produces exactly 17 sections from full source set', () => {
     const composed = composeModule3FromCanonicalSources(makeSources());
-    expect(composed).toHaveLength(15);
+    expect(composed).toHaveLength(17);
   });
 
-  it('each composed section has required fields', () => {
+  it('each composed section has required fields including tables array', () => {
     const composed = composeModule3FromCanonicalSources(makeSources());
     for (const section of composed) {
       expect(section.sectionKey).toBeTruthy();
@@ -127,12 +135,12 @@ describe('Module 3 Composer — Full Composition', () => {
       expect(typeof section.completeness).toBe('number');
       expect(Array.isArray(section.missingInputs)).toBe(true);
       expect(Array.isArray(section.lineage)).toBe(true);
+      expect(Array.isArray(section.tables)).toBe(true);
     }
   });
 
   it('sections with all required fields have high completeness', () => {
     const composed = composeModule3FromCanonicalSources(makeSources());
-    // 3.2.S.1 requires name + manufacturer — both provided
     const s1 = composed.find((s) => s.sectionKey === '3.2.S.1');
     expect(s1).toBeDefined();
     expect(s1!.completeness).toBe(100);
@@ -168,10 +176,11 @@ describe('Module 3 Composer — Completeness', () => {
     expect(s1.missingInputs).toContain('manufacturer');
   });
 
-  it('returns 0% when no matching sources exist', () => {
+  it('returns 0% when no matching sources exist and generates empty tables', () => {
     const composed = composeModule3FromCanonicalSources([]);
     for (const section of composed) {
       expect(section.completeness).toBe(0);
+      expect(section.tables).toHaveLength(0);
     }
   });
 });
@@ -199,9 +208,9 @@ describe('Module 3 Composer — Missing Inputs', () => {
 // ── 6. Compiler ───────────────────────────────────────────────────────────────
 
 describe('Module 3 Compiler', () => {
-  it('compiles all 15 sections', () => {
+  it('compiles all 17 sections', () => {
     const compiled = compileModule3Sections(makeCompilerSources());
-    expect(compiled).toHaveLength(15);
+    expect(compiled).toHaveLength(17);
   });
 
   it('each compiled section has a deterministic hash', () => {
@@ -391,11 +400,11 @@ describe('Module 3 Full Pipeline — Compose → Compile → Contradict', () => 
   it('full pipeline produces consistent results', () => {
     const sources = makeSources();
     const composed = composeModule3FromCanonicalSources(sources);
-    expect(composed).toHaveLength(15);
+    expect(composed).toHaveLength(17);
 
     const compilerSources = makeCompilerSources();
     const compiled = compileModule3Sections(compilerSources);
-    expect(compiled).toHaveLength(15);
+    expect(compiled).toHaveLength(17);
 
     // All compiled hashes should be stable
     const compiled2 = compileModule3Sections(compilerSources);
@@ -443,5 +452,148 @@ describe('Module 3 Full Pipeline — Compose → Compile → Contradict', () => 
       approvalState: 'approved',
       contradictions: contradictions.map((c) => ({ severity: c.severity, status: 'open' })),
     })).toBe(false);
+  });
+});
+
+// ── 13. Narrative Generation (Real Prose, Not Placeholders) ───────────────────
+
+describe('Module 3 Composer — Narrative Generation', () => {
+  it('generates drug substance name in 3.2.S.1 narrative', () => {
+    const composed = composeModule3FromCanonicalSources(makeSources());
+    const s1 = composed.find((s) => s.sectionKey === '3.2.S.1')!;
+    expect(s1.narrativeDraft).toContain('Amlodipine Besylate');
+    expect(s1.narrativeDraft).toContain('PharmaCorp');
+    expect(s1.narrativeDraft.length).toBeGreaterThan(50);
+  });
+
+  it('generates manufacturing narrative for 3.2.S.2', () => {
+    const composed = composeModule3FromCanonicalSources(makeSources());
+    const s2 = composed.find((s) => s.sectionKey === '3.2.S.2')!;
+    expect(s2.narrativeDraft).toContain('Chemical synthesis');
+    expect(s2.narrativeDraft).toContain('Wet granulation');
+  });
+
+  it('generates stability narrative for 3.2.S.7', () => {
+    const composed = composeModule3FromCanonicalSources(makeSources());
+    const s7 = composed.find((s) => s.sectionKey === '3.2.S.7')!;
+    expect(s7.narrativeDraft).toContain('25°C/60%RH');
+    expect(s7.narrativeDraft).toContain('stable');
+  });
+
+  it('generates drug product description for 3.2.P.1', () => {
+    const composed = composeModule3FromCanonicalSources(makeSources());
+    const p1 = composed.find((s) => s.sectionKey === '3.2.P.1')!;
+    expect(p1.narrativeDraft).toContain('Tablet');
+    expect(p1.narrativeDraft).toContain('5 mg');
+  });
+
+  it('generates shelf-life narrative for 3.2.P.8', () => {
+    const composed = composeModule3FromCanonicalSources(makeSources());
+    const p8 = composed.find((s) => s.sectionKey === '3.2.P.8')!;
+    expect(p8.narrativeDraft).toContain('24 months');
+    expect(p8.narrativeDraft).toContain('comparable');
+  });
+
+  it('generates empty-data narrative when no sources match', () => {
+    const composed = composeModule3FromCanonicalSources([]);
+    const s1 = composed.find((s) => s.sectionKey === '3.2.S.1')!;
+    expect(s1.narrativeDraft).toContain('no source data');
+    expect(s1.narrativeDraft).toContain('name');
+  });
+
+  it('every populated section has narrative longer than 50 chars', () => {
+    const composed = composeModule3FromCanonicalSources(makeSources());
+    for (const section of composed) {
+      expect(section.narrativeDraft.length).toBeGreaterThan(50);
+    }
+  });
+});
+
+// ── 14. Table Generation ──────────────────────────────────────────────────────
+
+describe('Module 3 Composer — Table Generation', () => {
+  it('generates at least one table per populated section', () => {
+    const composed = composeModule3FromCanonicalSources(makeSources());
+    for (const section of composed) {
+      expect(section.tables.length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('tables have headers and rows', () => {
+    const composed = composeModule3FromCanonicalSources(makeSources());
+    for (const section of composed) {
+      for (const table of section.tables) {
+        expect(table.title).toBeTruthy();
+        expect(table.headers.length).toBeGreaterThan(0);
+        expect(table.rows.length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('3.2.S.4 generates specification table with acceptance criteria', () => {
+    const composed = composeModule3FromCanonicalSources(makeSources());
+    const s4 = composed.find((s) => s.sectionKey === '3.2.S.4')!;
+    expect(s4.tables.length).toBeGreaterThanOrEqual(1);
+    const specTable = s4.tables.find((t) => t.title.includes('Specification'));
+    expect(specTable).toBeDefined();
+    expect(specTable!.headers).toContain('Test');
+    expect(specTable!.headers).toContain('Acceptance Criteria');
+  });
+
+  it('3.2.P.3 generates batch formula table', () => {
+    const composed = composeModule3FromCanonicalSources(makeSources());
+    const p3 = composed.find((s) => s.sectionKey === '3.2.P.3')!;
+    expect(p3.tables.length).toBeGreaterThanOrEqual(1);
+    const batchRows = p3.tables[0].rows.flat();
+    expect(batchRows).toContain('B-2026-001');
+  });
+
+  it('3.1 generates Module 3 table of contents', () => {
+    const composed = composeModule3FromCanonicalSources(makeSources());
+    const s31 = composed.find((s) => s.sectionKey === '3.1')!;
+    expect(s31.tables.length).toBeGreaterThanOrEqual(1);
+    const tocTable = s31.tables[0];
+    expect(tocTable.title).toContain('Table of Contents');
+    expect(tocTable.rows.length).toBe(15); // 15 subsection entries
+  });
+
+  it('tablesToMarkdown produces valid markdown', () => {
+    const tables: GeneratedTable[] = [
+      { title: 'Test', headers: ['A', 'B'], rows: [['1', '2'], ['3', '4']] },
+    ];
+    const md = tablesToMarkdown(tables);
+    expect(md).toContain('### Test');
+    expect(md).toContain('| A | B |');
+    expect(md).toContain('| --- | --- |');
+    expect(md).toContain('| 1 | 2 |');
+  });
+});
+
+// ── 15. Structural Sections 3.1 and 3.3 ──────────────────────────────────────
+
+describe('Module 3 Structural Sections — 3.1 and 3.3', () => {
+  it('3.1 generates overview narrative with drug substance name', () => {
+    const composed = composeModule3FromCanonicalSources(makeSources());
+    const s31 = composed.find((s) => s.sectionKey === '3.1')!;
+    expect(s31).toBeDefined();
+    expect(s31.narrativeDraft).toContain('Amlodipine Besylate');
+    expect(s31.narrativeDraft).toContain('Module 3');
+  });
+
+  it('3.3 generates literature references section', () => {
+    const composed = composeModule3FromCanonicalSources(makeSources());
+    const s33 = composed.find((s) => s.sectionKey === '3.3')!;
+    expect(s33).toBeDefined();
+    expect(s33.narrativeDraft).toContain('literature references');
+    expect(s33.tables.length).toBeGreaterThanOrEqual(1);
+    expect(s33.tables[0].title).toContain('References');
+  });
+
+  it('3.1 and 3.3 have correct lineage to drug_substance and drug_product', () => {
+    const composed = composeModule3FromCanonicalSources(makeSources());
+    const s31 = composed.find((s) => s.sectionKey === '3.1')!;
+    const lineageIds = s31.lineage.map((l) => l.sourceObjectId);
+    expect(lineageIds).toContain('ds-1');
+    expect(lineageIds).toContain('dp-1');
   });
 });

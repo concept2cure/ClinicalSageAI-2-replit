@@ -20,6 +20,7 @@ const router = express.Router();
 // ── Section Labels ────────────────────────────────────────────────────────────
 
 const SECTION_LABELS: Record<string, string> = {
+  '3.1': 'Quality — Table of Contents',
   '3.2.S.1': 'General Information',
   '3.2.S.2': 'Manufacture (Drug Substance)',
   '3.2.S.3': 'Characterisation',
@@ -35,6 +36,7 @@ const SECTION_LABELS: Record<string, string> = {
   '3.2.P.6': 'Reference Standards (Drug Product)',
   '3.2.P.7': 'Container Closure System (Drug Product)',
   '3.2.P.8': 'Stability (Drug Product)',
+  '3.3': 'Literature References',
 };
 
 const ALL_SECTION_KEYS = Object.keys(SECTION_LABELS);
