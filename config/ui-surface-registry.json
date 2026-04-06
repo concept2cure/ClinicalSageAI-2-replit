@@ -11,8 +11,9 @@
         "path": "client/src/concept2cure/ZenApp.tsx",
         "status": "active",
         "action": "canonical",
-        "lines": 3940,
-        "role": "Primary application shell — single canonical shell owner"
+        "lines": 3580,
+        "role": "Primary application shell — single canonical shell owner",
+        "projectCardsGridRemoved": "2026-04-06 — Project cards grid removed from center canvas. Projects accessible via sidebar. Home shows conversation greeting + composer only."
       },
       "ZenRouter.tsx": {
         "path": "client/src/concept2cure/router/ZenRouter.tsx",
