@@ -23,6 +23,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useMorningBriefing, useRealTimeAlerts } from '../../hooks/useRegulatoryIntelligence';
+import { LoadingState } from '@/components/ui/statesV2';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -247,11 +248,7 @@ export const MorningBriefingPanel: React.FC<MorningBriefingPanelProps> = ({
   }, [briefing?.alerts, realTimeAlerts]);
 
   if (isLoading) {
-    return (
-      <div className={cn("flex items-center justify-center h-64", className)}>
-        <div className="animate-pulse text-stone-400">Loading briefing...</div>
-      </div>
-    );
+    return <LoadingState message="Loading briefing" className={cn("h-64", className)} />;
   }
 
   if (error) {

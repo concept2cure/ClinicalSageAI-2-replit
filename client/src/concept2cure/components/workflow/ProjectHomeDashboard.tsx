@@ -29,8 +29,13 @@ import {
   Upload,
   MessageSquare,
   ChevronRight,
+  Layers,
+  AlertTriangle,
+  CheckCircle2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useModule3BuildState } from '@/concept2cure/hooks/useModule3BuildState';
+import { Progress } from '@/components/ui/progress';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -176,6 +181,9 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
   // Intelligence — fetched quietly for prompt context, NOT for display
   const { data: intelligence } = useIntelligenceDashboard(project.id);
 
+  // Module 3 build readiness — shows CMC compilation progress at project level
+  const { data: m3BuildState } = useModule3BuildState(String(project.id), undefined);
+
   const upperType = (project.type || '').toUpperCase();
   const isPharma = PHARMA_TYPES.includes(upperType);
   const isDevice = DEVICE_TYPES.includes(upperType);
@@ -253,7 +261,9 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
             {!artifactsLoading && summary.docCount > 0 && (
               <span className="text-[10px] text-stone-500 flex-shrink-0">
                 {summary.docCount} doc{summary.docCount !== 1 ? 's' : ''}
-                {summary.review > 0 && <> · <span className="text-stone-900">{summary.review} in review</span></>}
+                {summary.ready > 0 && <> · <span className="text-green-700">{summary.ready} approved</span></>}
+                {summary.review > 0 && <> · <span className="text-amber-700">{summary.review} in review</span></>}
+                {summary.draft > 0 && <> · <span className="text-stone-600">{summary.draft} draft</span></>}
               </span>
             )}
           </div>
@@ -312,6 +322,70 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
                 <ChevronRight className="w-3 h-3" />
               </Button>
             )}
+          </div>
+        )}
+
+        {/* ── Module 3 readiness: thin status strip ──────────────────────── */}
+        {/* Only visible when M3 data exists and at least one section has sources */}
+        {!artifactsLoading && m3BuildState && m3BuildState.summary.readySections + m3BuildState.summary.staleSections + m3BuildState.summary.buildableSections > 0 && (
+          <div
+            className="mt-3 flex items-center gap-3 px-3 py-2 rounded-lg border border-stone-200/60 bg-stone-50/50 cursor-pointer hover:bg-stone-100/50 transition-colors"
+            onClick={() => onSuggestedPrompt?.('Show me the Module 3 build status. Which sections are ready and which need work?')}
+            role="button"
+            tabIndex={0}
+            data-testid="m3-readiness-strip"
+          >
+            <Layers className="w-3.5 h-3.5 text-stone-400 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[11px] font-medium text-stone-600">
+                  Module 3 (Quality)
+                </span>
+                <span className="text-[10px] text-stone-500 tabular-nums">
+                  {m3BuildState.summary.readySections}/{m3BuildState.summary.totalSections} sections ready
+                </span>
+              </div>
+              <Progress
+                value={m3BuildState.summary.readinessPercent}
+                className="h-1"
+              />
+            </div>
+            {m3BuildState.summary.staleSections > 0 && (
+              <span className="flex items-center gap-0.5 text-[10px] text-amber-700 flex-shrink-0">
+                <AlertTriangle className="w-3 h-3" />
+                {m3BuildState.summary.staleSections} stale
+              </span>
+            )}
+            {m3BuildState.summary.blockedSections > 0 && (
+              <span className="flex items-center gap-0.5 text-[10px] text-red-700 flex-shrink-0">
+                <AlertTriangle className="w-3 h-3" />
+                {m3BuildState.summary.blockedSections} blocked
+              </span>
+            )}
+            {m3BuildState.summary.readinessPercent >= 80 && (
+              <CheckCircle2 className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+            )}
+            <ChevronRight className="w-3 h-3 text-stone-300 flex-shrink-0" />
+          </div>
+        )}
+
+        {/* ── Readiness signal: one-line, not a dashboard ────────────── */}
+        {readinessScore !== null && !artifactsLoading && summary.docCount > 0 && (
+          <div
+            className="mt-2 flex items-center gap-2 text-[11px] text-stone-500 cursor-pointer hover:text-stone-700 transition-colors"
+            onClick={() => onSuggestedPrompt?.('Analyze my submission readiness in detail. What are the gaps?')}
+            role="button"
+            tabIndex={0}
+          >
+            <Progress
+              value={readinessScore}
+              className="h-1 w-16 flex-shrink-0"
+            />
+            <span>
+              {readinessScore >= 80 ? 'Submission readiness: strong' :
+               readinessScore >= 50 ? 'Submission readiness: partial — ask AnA for details' :
+               'Submission readiness: early stage'}
+            </span>
           </div>
         )}
 

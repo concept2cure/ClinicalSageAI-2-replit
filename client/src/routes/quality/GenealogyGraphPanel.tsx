@@ -98,7 +98,7 @@ export default function GenealogyGraphPanel({ batchId }: GenealogyGraphPanelProp
         BATCH: '#ef4444',
         RAW_MATERIAL: '#92a87a',
         INTERMEDIATE: '#f59e0b',
-        COMPONENT: '#6a9bcc',
+        COMPONENT: '#78716c',
       };
 
       ctx.fillStyle = colors[node.type as keyof typeof colors] || '#8a8880';

@@ -67,38 +67,52 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
     await client.query('COMMIT');
 
     // Bridge to governed artifacts
-    const bridged: string[] = [];
+    const bridged: Array<{ sectionKey: string; artifactId: string; isNew: boolean }> = [];
     for (const section of compiled) {
       try {
-        await bridgeCompileToArtifact(orgId, projectId, section.sectionKey, {
+        const result = await bridgeCompileToArtifact(orgId, projectId, section.sectionKey, {
           narrativeDraft: section.narrativeDraft,
           tables: section.tables,
           completeness: section.completeness,
           missingInputs: section.missingInputs,
           lineage: section.lineage,
         });
-        bridged.push(section.sectionKey);
+        if (result) bridged.push({ sectionKey: section.sectionKey, artifactId: result.artifactId, isNew: result.isNew });
       } catch { /* non-fatal */ }
     }
 
     const withData = compiled.filter(s => s.lineage.length > 0);
     const empty = compiled.filter(s => s.lineage.length === 0);
 
+    const sectionSummaryLines = compiled
+      .filter(s => s.lineage.length > 0)
+      .map(s => {
+        const b = bridged.find(br => br.sectionKey === s.sectionKey);
+        return `- **${s.sectionKey}**: ${s.completeness}% complete${s.missingInputs.length > 0 ? ` (missing: ${s.missingInputs.join(', ')})` : ''}${b ? ` → artifact ready` : ''}`;
+      });
+    const summaryBlock = sectionSummaryLines.length > 0 ? `\n\n${sectionSummaryLines.join('\n')}` : '';
+    const navHint = bridged.length > 0 ? `\n\nOpen the **M3 Build** inspector in the editor ribbon or click any Module 3 section in the dossier tree to view governed artifacts.` : '';
+
     return {
       success: true,
       action: 'module3_build_all',
-      message: `Compiled ${compiled.length} Module 3 subsections. ${withData.length} have source data, ${empty.length} are empty. ${bridged.length} bridged to governed artifacts.`,
+      message: `Compiled ${compiled.length} Module 3 subsections. ${withData.length} have source data, ${empty.length} are empty. ${bridged.length} bridged to governed artifacts.${summaryBlock}${navHint}`,
       data: {
         compiledCount: compiled.length,
         withDataCount: withData.length,
         emptyCount: empty.length,
         bridgedCount: bridged.length,
-        sections: compiled.map(s => ({
-          sectionKey: s.sectionKey,
-          completeness: s.completeness,
-          missingInputs: s.missingInputs,
-          sourceCount: s.lineage.length,
-        })),
+        bridgedArtifacts: bridged,
+        sections: compiled.map(s => {
+          const b = bridged.find(br => br.sectionKey === s.sectionKey);
+          return {
+            sectionKey: s.sectionKey,
+            completeness: s.completeness,
+            missingInputs: s.missingInputs,
+            sourceCount: s.lineage.length,
+            artifactId: b?.artifactId ?? null,
+          };
+        }),
       },
     };
   } catch (err) {
@@ -151,11 +165,14 @@ export async function module3BuildSection(ctx: CommandContext, params: Record<st
     });
   } catch { /* non-fatal */ }
 
+  const missingLine = section.missingInputs.length > 0 ? `\n\nMissing inputs: ${section.missingInputs.join(', ')}` : '';
+  const navLine = bridgedArtifact ? `\n\nClick **${sectionKey}** in the dossier tree to open the governed artifact, or use the **M3 Build** inspector in the editor ribbon.` : '';
+
   return {
     success: true,
     action: 'module3_build_section',
-    message: `Built section ${sectionKey} (${section.completeness}% complete, ${section.missingInputs.length} missing inputs).${bridgedArtifact ? ` Governed artifact: ${bridgedArtifact.artifactId}` : ''}`,
-    data: { sectionKey, completeness: section.completeness, missingInputs: section.missingInputs, bridgedArtifact },
+    message: `Built section **${sectionKey}** — ${section.completeness}% complete.${bridgedArtifact ? ` Governed artifact created.` : ''}${missingLine}${navLine}`,
+    data: { sectionKey, completeness: section.completeness, missingInputs: section.missingInputs, bridgedArtifact, artifactId: bridgedArtifact?.artifactId ?? null },
   };
 }
 
@@ -253,7 +270,7 @@ export async function module3RefreshStale(ctx: CommandContext, params: Record<st
   return {
     success: true,
     action: 'module3_refresh_stale',
-    message: `Refreshed ${refreshed.length} stale sections: ${refreshed.join(', ')}`,
+    message: `Refreshed ${refreshed.length} stale sections: ${refreshed.join(', ')}\n\nGoverned artifacts updated. Click any refreshed section in the dossier tree to review.`,
     data: { refreshedSections: refreshed },
   };
 }
@@ -277,10 +294,16 @@ export async function module3Readiness(ctx: CommandContext, params: Record<strin
   const openCritical = contradictionsRes.rows.filter((r: any) => r.severity === 'critical' && r.status !== 'resolved').length;
   const exportReady = total > 0 && approved === total && stale === 0 && openCritical === 0;
 
+  const blockers: string[] = [];
+  if (stale > 0) blockers.push(`${stale} stale section${stale > 1 ? 's' : ''} — use **/m3 refresh** to recompile`);
+  if (openCritical > 0) blockers.push(`${openCritical} unresolved critical contradiction${openCritical > 1 ? 's' : ''} — use **/m3 contradictions** to review`);
+  if (approved < total) blockers.push(`${total - approved} section${total - approved > 1 ? 's' : ''} not yet approved`);
+  const blockerBlock = blockers.length > 0 ? `\n\n**Blockers:**\n${blockers.map(b => `- ${b}`).join('\n')}` : '';
+
   return {
     success: true,
     action: 'module3_readiness',
-    message: `Module 3 Readiness: ${approved}/${total} sections approved, ${stale} stale, ${openCritical} critical contradictions. Export ${exportReady ? 'READY' : 'BLOCKED'}.`,
+    message: `**Module 3 Readiness:** ${approved}/${total} sections approved, ${stale} stale, ${openCritical} critical contradictions. Export ${exportReady ? '**READY**' : '**BLOCKED**'}.${blockerBlock}`,
     data: { totalSections: total, approvedSections: approved, staleSections: stale, openCriticalContradictions: openCritical, exportReady },
   };
 }

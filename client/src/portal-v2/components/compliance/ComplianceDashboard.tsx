@@ -161,7 +161,7 @@ const STATUS_CONFIG: Record<
   partial: { label: 'Partial', color: '#d97706', bgColor: '#fef3c7', icon: AlertTriangle },
   non_compliant: { label: 'Non-Compliant', color: '#dc2626', bgColor: '#fee2e2', icon: XCircle },
   not_applicable: { label: 'N/A', color: '#8a8880', bgColor: '#f4f3ee', icon: Minus },
-  pending_review: { label: 'Pending Review', color: '#5585b3', bgColor: '#dce8f3', icon: Clock },
+  pending_review: { label: 'Pending Review', color: '#57534e', bgColor: '#f5f5f4', icon: Clock },
 };
 
 const SEVERITY_CONFIG = {

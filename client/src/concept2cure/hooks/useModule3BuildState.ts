@@ -11,6 +11,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { queryKeys } from './queryKeys';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -62,6 +63,33 @@ export interface Module3BuildStateResponse {
   summary: Module3BuildSummary;
 }
 
+// ── Source type labels ──────────────────────────────────────────────────────
+
+export const SOURCE_TYPE_LABELS: Record<string, string> = {
+  drug_substance: 'Drug Substance',
+  drug_product: 'Drug Product',
+  specification: 'Specification',
+  method: 'Analytical Method',
+  stability: 'Stability Data',
+  batch: 'Batch Record',
+  change_control: 'Change Control',
+  comparability: 'Comparability',
+  manufacturing_process: 'Manufacturing Process',
+  characterization: 'Characterization',
+  reference_standard: 'Reference Standard',
+  container_closure: 'Container Closure',
+  excipient: 'Excipient',
+  process_validation: 'Process Validation',
+  raw_material_spec: 'Raw Material Spec',
+  impurity_profile: 'Impurity Profile',
+  dissolution_profile: 'Dissolution Profile',
+  formulation_record: 'Formulation Record',
+};
+
+export function getSourceTypeLabel(code: string): string {
+  return SOURCE_TYPE_LABELS[code] || code.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 // ── Build state display config ───────────────────────────────────────────────
 
 export const BUILD_STATE_CONFIG: Record<
@@ -71,21 +99,21 @@ export const BUILD_STATE_CONFIG: Record<
   no_sources: { label: 'No Sources', color: 'text-stone-400', bgColor: 'bg-stone-50', priority: 0 },
   sources_uploaded: { label: 'Sources Uploaded', color: 'text-amber-600', bgColor: 'bg-amber-50', priority: 1 },
   extraction_pending: { label: 'Extraction Pending', color: 'text-amber-700', bgColor: 'bg-amber-50', priority: 2 },
-  extraction_complete: { label: 'Extracted', color: 'text-blue-600', bgColor: 'bg-blue-50', priority: 3 },
-  compiled: { label: 'Compiled', color: 'text-blue-700', bgColor: 'bg-blue-50', priority: 4 },
-  draft_artifact_created: { label: 'Draft Ready', color: 'text-indigo-600', bgColor: 'bg-indigo-50', priority: 5 },
-  stale: { label: 'Stale', color: 'text-orange-700', bgColor: 'bg-orange-50', priority: 6 },
+  extraction_complete: { label: 'Extracted', color: 'text-stone-600', bgColor: 'bg-stone-100', priority: 3 },
+  compiled: { label: 'Compiled', color: 'text-stone-700', bgColor: 'bg-stone-100', priority: 4 },
+  draft_artifact_created: { label: 'Draft Ready', color: 'text-stone-800', bgColor: 'bg-stone-100', priority: 5 },
+  stale: { label: 'Stale', color: 'text-amber-700', bgColor: 'bg-amber-50', priority: 6 },
   contradiction_flagged: { label: 'Contradiction', color: 'text-red-700', bgColor: 'bg-red-50', priority: 7 },
-  review: { label: 'In Review', color: 'text-violet-600', bgColor: 'bg-violet-50', priority: 8 },
-  approved: { label: 'Approved', color: 'text-green-700', bgColor: 'bg-green-50', priority: 9 },
-  locked: { label: 'Locked', color: 'text-purple-700', bgColor: 'bg-purple-50', priority: 10 },
+  review: { label: 'In Review', color: 'text-stone-700', bgColor: 'bg-stone-50', priority: 8 },
+  approved: { label: 'Approved', color: 'text-emerald-700', bgColor: 'bg-emerald-50', priority: 9 },
+  locked: { label: 'Locked', color: 'text-stone-900', bgColor: 'bg-stone-200', priority: 10 },
 };
 
 // ── Hook ────────────────────────────────────────────────────────────────────
 
 export function useModule3BuildState(projectId: string | undefined, cmcProjectId: string | undefined) {
   return useQuery<Module3BuildStateResponse>({
-    queryKey: ['concept2cure', 'module3-build-state', projectId, cmcProjectId] as const,
+    queryKey: queryKeys.module3.buildState(projectId, cmcProjectId),
     queryFn: async () => {
       const id = cmcProjectId || projectId;
       if (!id) throw new Error('Project ID required');

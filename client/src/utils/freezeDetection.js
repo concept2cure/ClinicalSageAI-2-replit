@@ -665,7 +665,7 @@ function showPageReloadSuggestion() {
     const reloadButton = document.createElement('button');
     reloadButton.textContent = 'Reload Page';
     reloadButton.style.padding = '8px 16px';
-    reloadButton.style.backgroundColor = '#d97757';
+    reloadButton.style.backgroundColor = '#292524';
     reloadButton.style.color = 'white';
     reloadButton.style.border = 'none';
     reloadButton.style.borderRadius = '4px';

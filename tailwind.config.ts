@@ -1,10 +1,10 @@
 import type { Config } from 'tailwindcss';
 
 /*
- * Anthropic Authentic Warm Color System
+ * Concept2Cure Professional Color System
  *
- * All default Tailwind color scales are remapped to warm Anthropic equivalents:
- * - blue/indigo/violet/purple → terracotta/Anthropic blue range
+ * All default Tailwind color scales are remapped to warm, restrained equivalents:
+ * - blue/indigo/violet/purple → restrained Anthropic blue accent
  * - slate/zinc/gray → warm stone/neutral grays
  * - green/emerald/teal → earthy greens
  * - sky/cyan → Anthropic blue accent
@@ -90,15 +90,18 @@ export default {
       neutral: warmNeutral,
       stone: warmNeutral,
 
-      // Blues/indigo/violet/purple → terracotta (primary brand)
-      blue: terracotta,
-      indigo: terracotta,
+      // Blues/indigo → restrained Anthropic blue (primary accent)
+      blue: anthropicBlue,
+      indigo: anthropicBlue,
       violet: anthropicBlue,
       purple: anthropicBlue,
 
       // Sky/cyan → Anthropic blue (secondary accent)
       sky: anthropicBlue,
       cyan: anthropicBlue,
+
+      // Legacy terracotta scale — preserved for backward compatibility
+      terracotta: terracotta,
 
       // Greens → earthy green
       green: earthyGreen,

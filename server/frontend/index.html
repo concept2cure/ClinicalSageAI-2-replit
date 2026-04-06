@@ -15,14 +15,14 @@
       body { font-family: 'Lora', Georgia, serif; }
       h1, h2, h3, h4, h5, h6, button, label, nav, input, select { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
       .btn-primary {
-        background-color: #d97757;
+        background-color: #292524;
         color: white;
         font-weight: 700;
         padding: 0.5rem 1rem;
         border-radius: 0.375rem;
         transition: background-color 0.2s;
       }
-      .btn-primary:hover { background-color: #c15f3c; }
+      .btn-primary:hover { background-color: #1c1917; }
       .btn-secondary {
         background-color: #e8e6dc;
         color: #141413;
@@ -44,7 +44,7 @@
         height: 20px;
         border: 3px solid rgba(20, 20, 19, 0.15);
         border-radius: 50%;
-        border-top-color: #d97757;
+        border-top-color: #292524;
         animation: spin 1s ease-in-out infinite;
       }
       @keyframes spin {
@@ -55,7 +55,7 @@
     </style>
   </head>
   <body style="background-color: #faf9f5; min-height: 100vh; display: flex; flex-direction: column;">
-    <header style="background: linear-gradient(135deg, #d97757, #c15f3c); color: white; box-shadow: 0 2px 8px rgba(20,20,19,0.1);">
+    <header style="background: linear-gradient(135deg, #292524, #1c1917); color: white; box-shadow: 0 2px 8px rgba(20,20,19,0.1);">
       <div style="max-width: 1200px; margin: 0 auto; padding: 1.5rem 1rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
           <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
@@ -146,7 +146,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
               <h2 style="font-size: 1.25rem; font-weight: 700; color: #141413;">Protocol Design</h2>
               <div style="display: flex; gap: 0.5rem;">
-                <button data-tab="protocol" class="tab-btn" style="background: #d97757; color: white; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; border: none; cursor: pointer;">Protocol</button>
+                <button data-tab="protocol" class="tab-btn" style="background: #292524; color: white; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; border: none; cursor: pointer;">Protocol</button>
                 <button data-tab="ind" class="tab-btn" style="background: #e8e6dc; color: #4a4a46; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; border: none; cursor: pointer;">IND 2.5</button>
                 <button data-tab="risk" class="tab-btn" style="background: #e8e6dc; color: #4a4a46; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; border: none; cursor: pointer;">Risk</button>
                 <button data-tab="evidence" class="tab-btn" style="background: #e8e6dc; color: #4a4a46; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; border: none; cursor: pointer;">Evidence</button>

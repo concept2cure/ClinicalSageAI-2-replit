@@ -238,15 +238,15 @@ export function DocumentUploadZone({
   if (uploadState.status === 'success') {
     return (
       <Card
-        className={`relative flex items-center gap-3 border-stone-200 bg-stone-100 dark:border-stone-800 dark:bg-stone-950 ${compact ? 'p-3' : 'p-4'}`}
+        className={`relative flex items-center gap-3 border-stone-200 bg-stone-100 ${compact ? 'p-3' : 'p-4'}`}
         data-testid="upload-zone-success"
       >
-        <CheckCircle2 className="h-5 w-5 shrink-0 text-stone-700 dark:text-stone-400" />
+        <CheckCircle2 className="h-5 w-5 shrink-0 text-stone-700" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-stone-800 dark:text-stone-200">
+          <p className="truncate text-sm font-medium text-stone-800">
             {uploadState.fileName}
           </p>
-          <p className="text-xs text-stone-700 dark:text-stone-400">
+          <p className="text-xs text-stone-700">
             {uploadState.memoryEntriesGenerated} knowledge atom
             {uploadState.memoryEntriesGenerated !== 1 ? 's' : ''} extracted
           </p>
@@ -268,15 +268,15 @@ export function DocumentUploadZone({
   if (uploadState.status === 'error') {
     return (
       <Card
-        className={`relative flex items-center gap-3 border-stone-200 bg-stone-100 dark:border-stone-800 dark:bg-stone-950 ${compact ? 'p-3' : 'p-4'}`}
+        className={`relative flex items-center gap-3 border-stone-200 bg-stone-100 ${compact ? 'p-3' : 'p-4'}`}
         data-testid="upload-zone-error"
       >
-        <AlertCircle className="h-5 w-5 shrink-0 text-stone-700 dark:text-stone-400" />
+        <AlertCircle className="h-5 w-5 shrink-0 text-stone-700" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-stone-800 dark:text-stone-200">
+          <p className="truncate text-sm font-medium text-stone-800">
             {uploadState.fileName ?? 'Upload failed'}
           </p>
-          <p className="text-xs text-stone-700 dark:text-stone-400">{uploadState.errorMessage}</p>
+          <p className="text-xs text-stone-700">{uploadState.errorMessage}</p>
         </div>
         <Button
           variant="ghost"
@@ -318,7 +318,7 @@ export function DocumentUploadZone({
         }}
         className={`
           flex flex-col items-center justify-center border-2 border-dashed transition-colors
-          ${dragOver ? 'border-stone-600 bg-stone-100 dark:border-stone-400 dark:bg-stone-950' : 'border-muted-foreground/25 hover:border-muted-foreground/50'}
+          ${dragOver ? 'border-stone-600 bg-stone-100' : 'border-muted-foreground/25 hover:border-muted-foreground/50'}
           ${isUploading ? 'pointer-events-none opacity-70' : 'cursor-pointer'}
           ${compact ? 'gap-2 p-4' : 'gap-3 p-8'}
         `}

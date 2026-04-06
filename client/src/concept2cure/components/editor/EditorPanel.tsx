@@ -685,10 +685,17 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           'signatures',
           'export',
         ]);
-      default:
-        return new Set(['intelligence', 'dataroom', 'templates', 'batch-ai']);
+      default: {
+        const defaults = new Set(['intelligence', 'dataroom', 'templates', 'batch-ai']);
+        // Auto-suggest Module 3 build inspector when editing M3 sections
+        const ctd = activeArtifact?.ctdSection || '';
+        if (ctd.startsWith('3.2.') || ctd === '3.1' || ctd === '3.3') {
+          defaults.add('module3-build');
+        }
+        return defaults;
+      }
     }
-  }, [activeLifecycleStage]);
+  }, [activeLifecycleStage, activeArtifact?.ctdSection]);
 
   // ── Sign/Approve state ────────────────────────────────────────────────
   const [signing, setSigning] = useState(false);
@@ -4326,11 +4333,20 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             onOpenInspector={id => toggleInspector(id as InspectorPanel)}
           />
         </InspectorDrawer>
-        <InspectorDrawer visible={activeInspector === 'module3-build'} width="w-96">
+        <InspectorDrawer visible={activeInspector === 'module3-build'} width="w-[28rem]">
           <Module3BuildInspector
             projectId={projectId}
             ctdSection={activeArtifact?.ctdSection}
             onClose={() => setActiveInspector(null)}
+            onNavigateToSection={(section) => {
+              const match = artifacts.find(
+                a => a.ctdSection === section || (a.ctdSection || '').startsWith(`${section}.`)
+              );
+              if (match) {
+                setActiveArtifact(match);
+                setShowArtifactList(false);
+              }
+            }}
           />
         </InspectorDrawer>
       </div>

@@ -59,7 +59,7 @@ const Navigation = () => {
             style={{
               fontWeight: location === '/' ? 'bold' : 'normal',
               textDecoration: 'none',
-              color: '#5585b3',
+              color: '#292524',
             }}
           >
             Concept2Cure Home
@@ -70,7 +70,7 @@ const Navigation = () => {
             style={{
               fontWeight: location === '/ind-wizard' ? 'bold' : 'normal',
               textDecoration: 'none',
-              color: '#5585b3',
+              color: '#292524',
             }}
           >
             IND Wizard
@@ -81,7 +81,7 @@ const Navigation = () => {
             style={{
               fontWeight: location === '/cro' ? 'bold' : 'normal',
               textDecoration: 'none',
-              color: '#5585b3',
+              color: '#292524',
             }}
           >
             CRO Dashboard
@@ -92,7 +92,7 @@ const Navigation = () => {
             style={{
               fontWeight: location === '/reports' ? 'bold' : 'normal',
               textDecoration: 'none',
-              color: '#5585b3',
+              color: '#292524',
             }}
           >
             CSR Reports
@@ -103,7 +103,7 @@ const Navigation = () => {
             style={{
               fontWeight: location === '/diagnostic' ? 'bold' : 'normal',
               textDecoration: 'none',
-              color: '#5585b3',
+              color: '#292524',
             }}
           >
             System Diagnostic
@@ -267,7 +267,7 @@ const INDWizard = () => {
           style={{
             marginTop: '1rem',
             padding: '0.5rem 1rem',
-            backgroundColor: '#5585b3',
+            backgroundColor: '#292524',
             color: 'white',
             border: 'none',
             borderRadius: '0.25rem',
@@ -335,7 +335,7 @@ const INDWizard = () => {
               style={{
                 padding: '0.5rem',
                 borderRadius: '0.25rem',
-                backgroundColor: '#5585b3',
+                backgroundColor: '#292524',
                 color: 'white',
                 marginBottom: '0.5rem',
               }}
@@ -506,7 +506,7 @@ const INDWizard = () => {
             <button
               style={{
                 padding: '0.5rem 1rem',
-                backgroundColor: '#5585b3',
+                backgroundColor: '#292524',
                 color: 'white',
                 border: 'none',
                 borderRadius: '0.25rem',
@@ -545,7 +545,7 @@ const CRODashboard = () => {
             backgroundColor: '#faf9f5',
           }}
         >
-          <h3 style={{ margin: '0 0 0.5rem 0', color: '#5585b3' }}>Total Clients</h3>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: '#292524' }}>Total Clients</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0' }}>24</p>
           <p style={{ fontSize: '0.875rem', color: '#8a8880', margin: '0' }}>Active partnerships</p>
         </div>
@@ -557,7 +557,7 @@ const CRODashboard = () => {
             backgroundColor: '#faf9f5',
           }}
         >
-          <h3 style={{ margin: '0 0 0.5rem 0', color: '#5585b3' }}>Active Studies</h3>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: '#292524' }}>Active Studies</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0' }}>47</p>
           <p style={{ fontSize: '0.875rem', color: '#8a8880', margin: '0' }}>
             Ongoing clinical trials
@@ -571,7 +571,7 @@ const CRODashboard = () => {
             backgroundColor: '#faf9f5',
           }}
         >
-          <h3 style={{ margin: '0 0 0.5rem 0', color: '#5585b3' }}>Pending Submissions</h3>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: '#292524' }}>Pending Submissions</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0' }}>12</p>
           <p style={{ fontSize: '0.875rem', color: '#8a8880', margin: '0' }}>
             Awaiting regulatory review
@@ -585,7 +585,7 @@ const CRODashboard = () => {
             backgroundColor: '#faf9f5',
           }}
         >
-          <h3 style={{ margin: '0 0 0.5rem 0', color: '#5585b3' }}>Compliance Score</h3>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: '#292524' }}>Compliance Score</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0' }}>94%</p>
           <p style={{ fontSize: '0.875rem', color: '#8a8880', margin: '0' }}>
             Overall compliance rating
@@ -644,7 +644,7 @@ const CRODashboard = () => {
                 style={{
                   width: '0.5rem',
                   height: '0.5rem',
-                  backgroundColor: '#6a9bcc',
+                  backgroundColor: '#78716c',
                   borderRadius: '50%',
                 }}
               ></div>
@@ -760,9 +760,9 @@ const CRODashboard = () => {
                 style={{
                   fontSize: '0.75rem',
                   padding: '0.25rem 0.5rem',
-                  border: '1px solid #6a9bcc',
+                  border: '1px solid #78716c',
                   borderRadius: '0.25rem',
-                  color: '#6a9bcc',
+                  color: '#78716c',
                 }}
               >
                 Due Oct 1
@@ -841,7 +841,7 @@ const DocumentEditor = () => {
             width: '2rem',
             height: '2rem',
             border: '3px solid #e8e6dc',
-            borderTop: '3px solid #6a9bcc',
+            borderTop: '3px solid #78716c',
             borderRadius: '50%',
             animation: 'spin 1s linear infinite',
           }}
@@ -867,7 +867,7 @@ const DocumentEditor = () => {
           onClick={() => (window.location.href = '/')}
           style={{
             padding: '0.5rem 1rem',
-            backgroundColor: '#6a9bcc',
+            backgroundColor: '#78716c',
             color: 'white',
             border: 'none',
             borderRadius: '0.375rem',
@@ -936,7 +936,7 @@ const DocumentEditor = () => {
                 }}
                 style={{
                   padding: '0.375rem 0.75rem',
-                  backgroundColor: '#6a9bcc',
+                  backgroundColor: '#78716c',
                   color: 'white',
                   border: 'none',
                   borderRadius: '0.375rem',
@@ -1007,7 +1007,7 @@ const DocumentEditor = () => {
           onClick={() => (window.location.href = '/')}
           style={{
             padding: '0.5rem 1rem',
-            backgroundColor: '#6a9bcc',
+            backgroundColor: '#78716c',
             color: 'white',
             border: 'none',
             borderRadius: '0.375rem',
@@ -1060,7 +1060,7 @@ const Home = () => {
             fontSize: '2rem',
             marginTop: 0,
             marginBottom: '1rem',
-            color: '#4a7399',
+            color: '#1c1917',
           }}
         >
           Welcome to Concept2Cure
@@ -1079,7 +1079,7 @@ const Home = () => {
               style={{
                 display: 'inline-block',
                 padding: '0.75rem 1.5rem',
-                backgroundColor: '#5585b3',
+                backgroundColor: '#292524',
                 color: 'white',
                 borderRadius: '0.25rem',
                 textDecoration: 'none',
@@ -1095,8 +1095,8 @@ const Home = () => {
                 display: 'inline-block',
                 padding: '0.75rem 1.5rem',
                 backgroundColor: 'white',
-                color: '#5585b3',
-                border: '1px solid #5585b3',
+                color: '#292524',
+                border: '1px solid #292524',
                 borderRadius: '0.25rem',
                 textDecoration: 'none',
                 fontWeight: 'bold',
@@ -1176,7 +1176,7 @@ export default function SimpleApp() {
                   display: 'inline-block',
                   marginTop: '1rem',
                   padding: '0.5rem 1rem',
-                  backgroundColor: '#5585b3',
+                  backgroundColor: '#292524',
                   color: 'white',
                   borderRadius: '0.25rem',
                   textDecoration: 'none',

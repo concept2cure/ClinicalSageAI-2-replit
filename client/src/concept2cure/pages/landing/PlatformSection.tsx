@@ -69,7 +69,7 @@ function PlatformMockup() {
           </div>
 
           {/* Main content */}
-          <div className="flex-1 p-6 bg-[#FAFAF9]">
+          <div className="flex-1 p-6 bg-stone-50">
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h3 className="text-sm font-semibold text-stone-900">Mission Control</h3>

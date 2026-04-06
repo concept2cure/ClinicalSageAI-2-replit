@@ -185,13 +185,13 @@
         "notes": "Poppins removed from all shell surfaces (0 remaining in client/). Lora isolated to document editor surfaces."
       },
       "colors": {
-        "accent": "#5585b3",
-        "accentFamily": "Anthropic blue (restrained, professional)",
-        "previousAccent": "#d97757 (terracotta — removed from shell CSS vars)",
+        "accent": "#292524",
+        "accentFamily": "Stone-dark (black/white foundation per design principles)",
+        "previousAccent": "#5585b3 (blue — replaced with stone per skill.md)",
         "canvas": "#FAFAF9",
-        "shellTokens": "--zen-accent: #5585b3, --zen-accent-hover: #4a7399, --zen-accent-muted: #dce8f3, --zen-accent-subtle: #edf3f8",
+        "shellTokens": "--zen-accent: #292524, --zen-accent-hover: #1c1917, --zen-accent-muted: #f5f5f4, --zen-accent-subtle: #fafaf9",
         "status": "complete",
-        "notes": "Terracotta removed from shell identity. Remains in Tailwind config for content/artifact surfaces only."
+        "notes": "Stone palette is the foundation. Color reserved for semantic meaning only (emerald=success, amber=warning, red=error, blue=links)."
       }
     }
   }

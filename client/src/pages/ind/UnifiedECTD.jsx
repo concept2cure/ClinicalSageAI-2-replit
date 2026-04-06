@@ -9,5 +9,5 @@ import React from 'react';
 import UnifiedECTDSystem from '../../components/ectd/UnifiedECTDSystem';
 
 export default function UnifiedECTD() {
-  return <UnifiedECTDSystem />;
+ return <UnifiedECTDSystem />;
 }

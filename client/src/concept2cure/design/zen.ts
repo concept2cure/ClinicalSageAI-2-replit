@@ -53,20 +53,20 @@ export const zenColors = {
   // ACCENT - Single brand color family (like Claude's orange-brown)
   // ─────────────────────────────────────────────────────────────────────────────
   accent: {
-    DEFAULT: '#d97757',     // Primary action - warm terracotta (Claude-inspired)
-    hover: '#c15f3c',       // Hover state
-    muted: '#FDE8E0',       // Light warm background tint
-    subtle: '#FFF5F2',      // Very light warm tint
+    DEFAULT: '#292524',     // Primary action - stone-800 (dark, restrained)
+    hover: '#1c1917',       // Hover state - stone-900
+    muted: '#f5f5f4',       // Light background tint - stone-100
+    subtle: '#fafaf9',      // Very light tint - stone-50
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
   // AI - Special color for AnA AI persona (like Claude's warm tones)
   // ─────────────────────────────────────────────────────────────────────────────
   ai: {
-    DEFAULT: '#6a9bcc',     // Violet - AI/assistant identity
-    hover: '#5585b3',
-    muted: '#EDE9FE',
-    glow: 'rgba(139, 92, 246, 0.1)',
+    DEFAULT: '#57534e',     // Stone-600 - AI/assistant identity
+    hover: '#44403c',       // Stone-700
+    muted: '#f5f5f4',       // Stone-100
+    glow: 'rgba(41, 37, 36, 0.08)',
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -89,7 +89,7 @@ export const zenColors = {
   border: {
     DEFAULT: '#E4E4E7',     // Standard border - stone-200
     subtle: '#F4F4F5',      // Very light border - stone-100
-    focus: '#d97757',       // Focus ring
+    focus: '#a8a29e',       // Focus ring - stone-400
   },
 } as const;
 
@@ -173,7 +173,7 @@ export const zenShadows = {
   md: '0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
   lg: '0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05)',
   xl: '0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05)',
-  glow: '0 0 20px rgb(217 119 87 / 0.1)', // Focus glow (warm accent)
+  glow: '0 0 20px rgb(41 37 36 / 0.08)', // Focus glow (stone-800)
 } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════

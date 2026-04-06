@@ -19,12 +19,12 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const STATUS_TEXT_COLORS: Record<string, string> = {
-  ready: 'text-stone-800 dark:text-stone-400',
-  on_track: 'text-stone-700 dark:text-stone-400',
-  needs_attention: 'text-stone-700 dark:text-stone-400',
-  at_risk: 'text-stone-800 dark:text-stone-400',
-  in_progress: 'text-stone-700 dark:text-stone-400',
-  not_started: 'text-stone-500 dark:text-stone-400',
+  ready: 'text-stone-800',
+  on_track: 'text-stone-700',
+  needs_attention: 'text-stone-700',
+  at_risk: 'text-stone-800',
+  in_progress: 'text-stone-700',
+  not_started: 'text-stone-500',
 };
 
 export function ModuleBreakdown({ modules, onModuleClick }: ModuleBreakdownProps) {
@@ -45,17 +45,17 @@ export function ModuleBreakdown({ modules, onModuleClick }: ModuleBreakdownProps
         return (
           <div
             key={mod.module}
-            className={`rounded-lg border border-stone-200 dark:border-stone-700 p-3 bg-white dark:bg-stone-900 ${
+            className={`rounded-lg border border-stone-200 p-3 bg-white ${
               onModuleClick ? 'cursor-pointer hover:shadow-sm transition-shadow' : ''
             }`}
             onClick={() => onModuleClick?.(mod.module)}
           >
             <div className="flex items-center justify-between mb-2">
               <div>
-                <span className="text-sm font-medium text-stone-900 dark:text-stone-100">
+                <span className="text-sm font-medium text-stone-900">
                   {mod.module}
                 </span>
-                <span className="text-xs text-stone-500 dark:text-stone-400 ml-2">
+                <span className="text-xs text-stone-500 ml-2">
                   {mod.label}
                 </span>
               </div>
@@ -63,7 +63,7 @@ export function ModuleBreakdown({ modules, onModuleClick }: ModuleBreakdownProps
             </div>
 
             {/* Progress bar */}
-            <div className="h-2 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden mb-2">
+            <div className="h-2 rounded-full bg-stone-200 overflow-hidden mb-2">
               <div
                 className={`h-full rounded-full ${barColor} transition-all duration-200`}
                 style={{ width: `${mod.score}%` }}
@@ -71,14 +71,14 @@ export function ModuleBreakdown({ modules, onModuleClick }: ModuleBreakdownProps
             </div>
 
             {/* Stats row */}
-            <div className="flex items-center gap-3 text-xs text-stone-500 dark:text-stone-400">
+            <div className="flex items-center gap-3 text-xs text-stone-500">
               <span>
                 {mod.documentCount}/{mod.expectedDocumentCount} docs
               </span>
               <span>{mod.validatedCount} validated</span>
               <span>{mod.routedCount} routed</span>
               {mod.blockerCount > 0 && (
-                <span className="text-stone-700 dark:text-stone-400 font-medium">
+                <span className="text-stone-700 font-medium">
                   {mod.blockerCount} blocker{mod.blockerCount > 1 ? 's' : ''}
                 </span>
               )}
@@ -86,7 +86,7 @@ export function ModuleBreakdown({ modules, onModuleClick }: ModuleBreakdownProps
 
             {/* Missing items */}
             {mod.missingItems.length > 0 && (
-              <div className="mt-2 text-xs text-stone-500 dark:text-stone-400">
+              <div className="mt-2 text-xs text-stone-500">
                 {mod.missingItems.slice(0, 2).map((item, i) => (
                   <div key={i} className="flex items-center gap-1">
                     <span className="text-stone-900">!</span>

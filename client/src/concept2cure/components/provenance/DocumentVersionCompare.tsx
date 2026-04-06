@@ -457,7 +457,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
                 <button
                   onClick={() => handleReviewImpact(versionA, versionB)}
                   disabled={reviewingImpact}
-                  className="px-2 py-0.5 text-xs rounded bg-[#FBF0EB] text-[#D97757] hover:bg-[#F5E1D6] disabled:opacity-60 flex items-center gap-0.5 font-medium"
+                  className="px-2 py-0.5 text-xs rounded bg-blue-50 text-blue-600 hover:bg-blue-100 disabled:opacity-60 flex items-center gap-0.5 font-medium"
                 >
                   {reviewingImpact ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -525,9 +525,9 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
 
       {/* Regulatory Impact Review result */}
       {impactResult && (
-        <div className="border-b border-stone-200 bg-[#FAF9F5]">
-          <div className="px-3 py-2 flex items-center justify-between border-b border-[#F5F4EF]">
-            <span className="text-xs font-semibold text-[#D97757] flex items-center gap-1.5">
+        <div className="border-b border-stone-200 bg-stone-50">
+          <div className="px-3 py-2 flex items-center justify-between border-b border-stone-100">
+            <span className="text-xs font-semibold text-blue-600 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" />
               Regulatory Impact Review
             </span>
@@ -536,7 +536,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
                 <button
                   onClick={() => handleReviewImpact(versionA, versionB, true)}
                   disabled={reviewingImpact}
-                  className="px-2 py-0.5 text-xs rounded bg-[#D97757] text-white hover:bg-[#C56847] disabled:opacity-60 flex items-center gap-0.5 font-medium"
+                  className="px-2 py-0.5 text-xs rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 flex items-center gap-0.5 font-medium"
                 >
                   Save as Artifact
                 </button>
@@ -553,7 +553,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
             {impactResult.content}
           </div>
           {impactResult.savedId && (
-            <div className="px-3 py-1.5 border-t border-[#F5F4EF] text-xs text-stone-800 bg-stone-100 flex items-center gap-1">
+            <div className="px-3 py-1.5 border-t border-stone-100 text-xs text-stone-800 bg-stone-100 flex items-center gap-1">
               <CheckCircle className="w-3.5 h-3.5" />
               Saved as governed artifact #{impactResult.savedId}
             </div>

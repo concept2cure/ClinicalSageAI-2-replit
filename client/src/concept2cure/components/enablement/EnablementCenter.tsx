@@ -619,7 +619,7 @@ export function EnablementCenter({
   }, [activeView]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#faf9f5]">
+    <div className="fixed inset-0 z-50 flex flex-col bg-stone-50">
       {/* Top bar */}
       <header className="flex-shrink-0 h-12 border-b border-stone-200 bg-white">
         <div className="flex items-center h-full px-6">

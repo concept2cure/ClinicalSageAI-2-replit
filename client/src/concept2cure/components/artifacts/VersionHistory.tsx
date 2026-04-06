@@ -533,7 +533,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
                     finally { setReviewingImpact(false); }
                   }}
                   disabled={reviewingImpact}
-                  className="px-2.5 py-1 text-xs rounded-md bg-[#FBF0EB] text-[#D97757] hover:bg-[#F5E1D6] disabled:opacity-60 flex items-center gap-1 font-medium"
+                  className="px-2.5 py-1 text-xs rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 disabled:opacity-60 flex items-center gap-1 font-medium"
                 >
                   {reviewingImpact ? <span className="animate-spin">⏳</span> : <Sparkles className="w-3.5 h-3.5" />}
                   Review Regulatory Impact
@@ -542,8 +542,8 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
             </DialogDescription>
           </DialogHeader>
           {impactContent && (
-            <div className="bg-[#FAF9F5] border border-[#F5F4EF] rounded-lg p-3 mb-2 text-xs text-stone-700 whitespace-pre-wrap max-h-60 overflow-y-auto">
-              <div className="flex items-center gap-1.5 mb-2 text-[#D97757] font-semibold text-xs">
+            <div className="bg-stone-50 border border-stone-100 rounded-lg p-3 mb-2 text-xs text-stone-700 whitespace-pre-wrap max-h-60 overflow-y-auto">
+              <div className="flex items-center gap-1.5 mb-2 text-blue-600 font-semibold text-xs">
                 <Sparkles className="w-3.5 h-3.5" /> Regulatory Impact Analysis
               </div>
               {impactContent}

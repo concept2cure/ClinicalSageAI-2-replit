@@ -69,8 +69,8 @@
 }
 
 .panel-tabs .tab.active {
-  border-bottom-color: var(--color-primary, #d97757);
-  color: var(--color-primary, #d97757);
+  border-bottom-color: var(--color-primary, #292524);
+  color: var(--color-primary, #292524);
 }
 
 .panel-content {
@@ -214,7 +214,7 @@
 }
 
 .action-button:first-child {
-  background-color: var(--color-primary, #d97757);
+  background-color: var(--color-primary, #292524);
   color: #fff;
   border-color: var(--color-primary-dark, #4c3dd5);
 }

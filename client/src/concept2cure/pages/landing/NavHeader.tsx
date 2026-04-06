@@ -9,7 +9,7 @@ export function NavHeader() {
   const [, setLocation] = useLocation();
 
   return (
-    <header className="sticky top-0 z-50 bg-[#FAFAF9]/80 backdrop-blur-xl border-b border-stone-200/60">
+    <header className="sticky top-0 z-50 bg-stone-50/80 backdrop-blur-xl border-b border-stone-200/60">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}

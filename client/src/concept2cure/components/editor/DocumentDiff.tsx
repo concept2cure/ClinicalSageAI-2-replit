@@ -222,8 +222,8 @@ function SegmentSpan({ segment }: { segment: DiffSegment }) {
     <span
       className={cn(
         'whitespace-pre-wrap',
-        segment.type === 'add' && 'bg-stone-100 text-stone-900 dark:bg-stone-900/30 dark:text-stone-200',
-        segment.type === 'remove' && 'bg-stone-100 text-stone-900 line-through dark:bg-stone-900/30 dark:text-stone-200',
+        segment.type === 'add' && 'bg-stone-100 text-stone-900',
+        segment.type === 'remove' && 'bg-stone-100 text-stone-900 line-through',
       )}
     >
       {segment.text}
@@ -243,7 +243,7 @@ function ChangeToolbar({
   onReject?: (idx: number) => void;
 }) {
   return (
-    <div className="absolute -top-3 right-2 z-10 flex items-center gap-1 rounded border border-stone-200 bg-white px-1 py-0.5 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity dark:border-stone-700 dark:bg-stone-800">
+    <div className="absolute -top-3 right-2 z-10 flex items-center gap-1 rounded border border-stone-200 bg-white px-1 py-0.5 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
       <span className="text-[10px] font-medium text-stone-500 mr-1 capitalize">
         {blockType}
       </span>
@@ -251,7 +251,7 @@ function ChangeToolbar({
         <button
           type="button"
           onClick={() => onAccept(changeIndex)}
-          className="rounded p-0.5 text-stone-700 hover:bg-stone-100 dark:hover:bg-stone-900/30"
+          className="rounded p-0.5 text-stone-700 hover:bg-stone-100"
           title="Accept change"
         >
           <Check className="h-3.5 w-3.5" />
@@ -261,7 +261,7 @@ function ChangeToolbar({
         <button
           type="button"
           onClick={() => onReject(changeIndex)}
-          className="rounded p-0.5 text-stone-700 hover:bg-stone-100 dark:hover:bg-stone-900/30"
+          className="rounded p-0.5 text-stone-700 hover:bg-stone-100"
           title="Reject change"
         >
           <X className="h-3.5 w-3.5" />
@@ -370,22 +370,22 @@ export function DocumentDiff({
   const bgForType = (type: DiffBlock['type'], isActive: boolean) =>
     cn(
       'relative group rounded px-2 py-1 my-0.5 transition-colors duration-150',
-      type === 'addition' && 'bg-stone-100 dark:bg-stone-900/20',
-      type === 'deletion' && 'bg-stone-100 dark:bg-stone-900/20',
-      type === 'modification' && 'bg-stone-100 dark:bg-stone-900/20',
+      type === 'addition' && 'bg-stone-100',
+      type === 'deletion' && 'bg-stone-100',
+      type === 'modification' && 'bg-stone-100',
       isActive && 'ring-2 ring-stone-400',
     );
 
   // ---------------------------------------------------------------------------
   return (
-    <div className="flex flex-col h-full border border-stone-200 rounded-lg overflow-hidden bg-white dark:border-stone-700 dark:bg-stone-900">
+    <div className="flex flex-col h-full border border-stone-200 rounded-lg overflow-hidden bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-stone-200 bg-stone-50 px-4 py-2 dark:border-stone-700 dark:bg-stone-800">
-        <div className="flex items-center gap-2 text-sm font-semibold text-stone-700 dark:text-stone-200">
+      <div className="flex items-center justify-between border-b border-stone-200 bg-stone-50 px-4 py-2">
+        <div className="flex items-center gap-2 text-sm font-semibold text-stone-700">
           <GitCompare className="h-4 w-4" />
           <span>Document Comparison</span>
           <ArrowRight className="h-3.5 w-3.5 text-stone-400" />
-          <span className="font-normal text-stone-500 dark:text-stone-400">
+          <span className="font-normal text-stone-500">
             {leftLabel} vs {rightLabel}
           </span>
         </div>
@@ -396,7 +396,7 @@ export function DocumentDiff({
             <button
               type="button"
               onClick={() => navigateChange('prev')}
-              className="rounded p-1 hover:bg-stone-200 dark:hover:bg-stone-700"
+              className="rounded p-1 hover:bg-stone-200"
               title="Previous change (Alt+Up)"
             >
               <ChevronUp className="h-4 w-4" />
@@ -407,7 +407,7 @@ export function DocumentDiff({
             <button
               type="button"
               onClick={() => navigateChange('next')}
-              className="rounded p-1 hover:bg-stone-200 dark:hover:bg-stone-700"
+              className="rounded p-1 hover:bg-stone-200"
               title="Next change (Alt+Down)"
             >
               <ChevronDown className="h-4 w-4" />
@@ -418,7 +418,7 @@ export function DocumentDiff({
             <button
               type="button"
               onClick={onClose}
-              className="rounded p-1 text-stone-400 hover:bg-stone-200 hover:text-stone-600 dark:hover:bg-stone-700 dark:hover:text-stone-300"
+              className="rounded p-1 text-stone-400 hover:bg-stone-200 hover:text-stone-600"
               title="Close diff view"
             >
               <X className="h-4 w-4" />
@@ -428,16 +428,16 @@ export function DocumentDiff({
       </div>
 
       {/* Stats bar */}
-      <div className="flex items-center gap-4 border-b border-stone-200 bg-stone-50/60 px-4 py-1.5 text-xs dark:border-stone-700 dark:bg-stone-800/60">
-        <span className="flex items-center gap-1 text-stone-800 dark:text-stone-400">
+      <div className="flex items-center gap-4 border-b border-stone-200 bg-stone-50/60 px-4 py-1.5 text-xs">
+        <span className="flex items-center gap-1 text-stone-800">
           <Plus className="h-3 w-3" />
           {stats.additions} addition{stats.additions !== 1 ? 's' : ''}
         </span>
-        <span className="flex items-center gap-1 text-stone-800 dark:text-stone-400">
+        <span className="flex items-center gap-1 text-stone-800">
           <Minus className="h-3 w-3" />
           {stats.deletions} deletion{stats.deletions !== 1 ? 's' : ''}
         </span>
-        <span className="flex items-center gap-1 text-stone-700 dark:text-stone-400">
+        <span className="flex items-center gap-1 text-stone-700">
           <Eye className="h-3 w-3" />
           {stats.modifications} modification{stats.modifications !== 1 ? 's' : ''}
         </span>
@@ -450,15 +450,15 @@ export function DocumentDiff({
       {/* Diff panels */}
       <div className="flex flex-1 min-h-0">
         {/* Left panel */}
-        <div className="flex flex-1 flex-col border-r border-stone-200 dark:border-stone-700">
-          <div className="flex items-center gap-2 border-b border-stone-100 bg-stone-100/40 px-3 py-1.5 text-xs font-medium text-stone-600 dark:border-stone-700 dark:bg-stone-900/10 dark:text-stone-300">
+        <div className="flex flex-1 flex-col border-r border-stone-200">
+          <div className="flex items-center gap-2 border-b border-stone-100 bg-stone-100/40 px-3 py-1.5 text-xs font-medium text-stone-600">
             <Minus className="h-3 w-3 text-stone-900" />
             {leftLabel}
           </div>
           <div
             ref={leftPanelRef}
             onScroll={() => handleScroll('left')}
-            className="flex-1 overflow-auto p-4 text-sm leading-relaxed text-stone-700 dark:text-stone-300"
+            className="flex-1 overflow-auto p-4 text-sm leading-relaxed text-stone-700"
           >
             {blocks.map((block, i) => {
               const isChange = block.index >= 0;
@@ -486,7 +486,7 @@ export function DocumentDiff({
                       if (el) changeRefs.current.set(block.index, el);
                     }}
                     className={cn(
-                      'relative my-0.5 rounded border border-dashed border-stone-300 bg-stone-100/30 px-2 py-1 text-xs text-stone-400 italic dark:border-stone-800 dark:bg-stone-900/10',
+                      'relative my-0.5 rounded border border-dashed border-stone-300 bg-stone-100/30 px-2 py-1 text-xs text-stone-400 italic',
                       isActive && 'ring-2 ring-stone-400',
                     )}
                   >
@@ -520,14 +520,14 @@ export function DocumentDiff({
 
         {/* Right panel */}
         <div className="flex flex-1 flex-col">
-          <div className="flex items-center gap-2 border-b border-stone-100 bg-stone-100/40 px-3 py-1.5 text-xs font-medium text-stone-600 dark:border-stone-700 dark:bg-stone-900/10 dark:text-stone-300">
+          <div className="flex items-center gap-2 border-b border-stone-100 bg-stone-100/40 px-3 py-1.5 text-xs font-medium text-stone-600">
             <Plus className="h-3 w-3 text-stone-900" />
             {rightLabel}
           </div>
           <div
             ref={rightPanelRef}
             onScroll={() => handleScroll('right')}
-            className="flex-1 overflow-auto p-4 text-sm leading-relaxed text-stone-700 dark:text-stone-300"
+            className="flex-1 overflow-auto p-4 text-sm leading-relaxed text-stone-700"
           >
             {blocks.map((block, i) => {
               const isChange = block.index >= 0;
@@ -550,7 +550,7 @@ export function DocumentDiff({
                   <div
                     key={`blk-r-${block.index}`}
                     className={cn(
-                      'relative my-0.5 rounded border border-dashed border-stone-300 bg-stone-100/30 px-2 py-1 text-xs text-stone-400 italic dark:border-stone-800 dark:bg-stone-900/10',
+                      'relative my-0.5 rounded border border-dashed border-stone-300 bg-stone-100/30 px-2 py-1 text-xs text-stone-400 italic',
                       isActive && 'ring-2 ring-stone-400',
                     )}
                   >

@@ -11,29 +11,29 @@ interface BlockerListProps {
 
 const SEVERITY_STYLES: Record<string, { bg: string; border: string; icon: string; text: string }> = {
   critical: {
-    bg: 'bg-stone-100 dark:bg-stone-950/30',
-    border: 'border-stone-200 dark:border-stone-800',
+    bg: 'bg-stone-100',
+    border: 'border-stone-200',
     icon: 'text-stone-700',
-    text: 'text-stone-800 dark:text-stone-300',
+    text: 'text-stone-800',
   },
   major: {
-    bg: 'bg-stone-100 dark:bg-stone-950/30',
-    border: 'border-stone-200 dark:border-stone-800',
+    bg: 'bg-stone-100',
+    border: 'border-stone-200',
     icon: 'text-stone-600',
-    text: 'text-stone-800 dark:text-stone-300',
+    text: 'text-stone-800',
   },
   minor: {
-    bg: 'bg-stone-100 dark:bg-stone-950/30',
-    border: 'border-stone-200 dark:border-stone-800',
+    bg: 'bg-stone-100',
+    border: 'border-stone-200',
     icon: 'text-stone-600',
-    text: 'text-stone-800 dark:text-stone-300',
+    text: 'text-stone-800',
   },
 };
 
 export function BlockerList({ blockers, onResolve }: BlockerListProps) {
   if (blockers.length === 0) {
     return (
-      <div className="p-4 text-center text-sm text-stone-500 dark:text-stone-400">
+      <div className="p-4 text-center text-sm text-stone-500">
         No blockers found. Project is clear.
       </div>
     );
@@ -56,13 +56,13 @@ export function BlockerList({ blockers, onResolve }: BlockerListProps) {
                   >
                     {blocker.severity}
                   </span>
-                  <span className="text-xs text-stone-500 dark:text-stone-400">
+                  <span className="text-xs text-stone-500">
                     {blocker.category.replace(/_/g, ' ')}
                   </span>
                 </div>
                 <p className={`text-sm font-medium ${style.text}`}>{blocker.message}</p>
                 {blocker.suggestedResolution && (
-                  <p className="text-xs text-stone-600 dark:text-stone-400 mt-1">
+                  <p className="text-xs text-stone-600 mt-1">
                     Suggested: {blocker.suggestedResolution}
                   </p>
                 )}
@@ -70,7 +70,7 @@ export function BlockerList({ blockers, onResolve }: BlockerListProps) {
               {onResolve && (
                 <button
                   onClick={() => onResolve(blocker)}
-                  className="shrink-0 text-xs px-2 py-1 rounded bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-600 hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors"
+                  className="shrink-0 text-xs px-2 py-1 rounded bg-white border border-stone-300 hover:bg-stone-50 transition-colors"
                 >
                   Resolve
                 </button>

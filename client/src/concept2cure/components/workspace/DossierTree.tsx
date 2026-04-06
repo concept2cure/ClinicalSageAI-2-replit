@@ -150,6 +150,7 @@ const STATUS_CONFIG: Record<
   { icon: React.ReactNode; color: string; label: string }
 > = {
   empty: { icon: <Circle className="w-3 h-3" />, color: LIFECYCLE.not_started.text, label: 'Empty' },
+  sources_pending: { icon: <Target className="w-3 h-3" />, color: 'text-stone-500', label: 'Sources Uploaded' },
   draft_present: { icon: <Clock className="w-3 h-3" />, color: LIFECYCLE.draft.text, label: 'Draft' },
   under_review: { icon: <Eye className="w-3 h-3" />, color: LIFECYCLE.in_review.text, label: 'Review' },
   approved: {
@@ -183,14 +184,14 @@ function m3BuildStateToDossierStatus(buildState: M3BuildState): DossierNodeStatu
     case 'approved': return 'approved';
     case 'review': return 'under_review';
     case 'contradiction_flagged': return 'missing_evidence';
-    case 'stale': return 'draft_present';
+    case 'stale': return 'missing_evidence';
     case 'draft_artifact_created':
     case 'compiled':
     case 'extraction_complete':
       return 'draft_present';
     case 'sources_uploaded':
     case 'extraction_pending':
-      return 'draft_present';
+      return 'sources_pending';
     case 'no_sources':
     default:
       return 'empty';

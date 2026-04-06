@@ -3,6 +3,15 @@ import { z } from 'zod';
 import { db } from '../../db';
 import { getPool } from '../../db';
 import {
+  writeThroughDrugSubstance,
+  writeThroughDrugProduct,
+  writeThroughAnalyticalMethod,
+  writeThroughStabilityStudy,
+  writeThroughProcessValidation,
+  writeThroughChangeControl,
+  writeThroughComparability,
+} from '../../services/cmc-write-through';
+import {
   analyticalMethods,
   processValidation,
   stabilityStudies,
@@ -66,6 +75,10 @@ router.post('/analytical-methods', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = insertAnalyticalMethodSchema.parse(req.body);
     const [method] = await db.insert(analyticalMethods).values({ ...validatedData, organizationId: orgId }).returning();
+    // Write-through: upsert canonical source object for Module 3
+    if (method.projectId) {
+      writeThroughAnalyticalMethod(orgId, method.projectId, String(method.id), method).catch(() => {});
+    }
     res.json({ success: true, data: method });
   } catch (error) {
     console.error('Error creating analytical method:', error);
@@ -84,6 +97,10 @@ router.put('/analytical-methods/:id', async (req, res) => {
       .set({ ...safeData, updatedAt: new Date() })
       .where(and(eq(analyticalMethods.id, id), eq(analyticalMethods.organizationId, orgId)))
       .returning();
+    // Write-through: upsert canonical source object for Module 3
+    if (method?.projectId) {
+      writeThroughAnalyticalMethod(orgId, method.projectId, String(method.id), method).catch(() => {});
+    }
     res.json({ success: true, data: method });
   } catch (error) {
     console.error('Error updating analytical method:', error);
@@ -111,6 +128,10 @@ router.post('/process-validation', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = insertProcessValidationSchema.parse(req.body);
     const [validation] = await db.insert(processValidation).values({ ...validatedData, organizationId: orgId }).returning();
+    // Write-through: upsert canonical source object for Module 3
+    if (validation.projectId) {
+      writeThroughProcessValidation(orgId, validation.projectId, String(validation.id), validation).catch(() => {});
+    }
     res.json({ success: true, data: validation });
   } catch (error) {
     console.error('Error creating process validation:', error);
@@ -149,6 +170,10 @@ router.post('/stability-studies', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = insertStabilityStudySchema.parse(req.body);
     const [study] = await db.insert(stabilityStudies).values({ ...validatedData, organizationId: orgId }).returning();
+    // Write-through: upsert canonical source object for Module 3
+    if (study.projectId) {
+      writeThroughStabilityStudy(orgId, study.projectId, String(study.id), study).catch(() => {});
+    }
     res.json({ success: true, data: study });
   } catch (error) {
     console.error('Error creating stability study:', error);
@@ -200,6 +225,10 @@ router.post('/change-control', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = insertCmcChangeControlSchema.parse(req.body);
     const [change] = await db.insert(cmcChangeControl).values({ ...validatedData, organizationId: orgId }).returning();
+    // Write-through: upsert canonical source object for Module 3
+    if (change.projectId) {
+      writeThroughChangeControl(orgId, change.projectId, String(change.id), change).catch(() => {});
+    }
     res.json({ success: true, data: change });
   } catch (error) {
     console.error('Error creating change control:', error);
@@ -238,6 +267,10 @@ router.post('/drug-substances', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = insertDrugSubstanceSchema.parse(req.body);
     const [substance] = await db.insert(drugSubstances).values({ ...validatedData, organizationId: orgId }).returning();
+    // Write-through: upsert canonical source object for Module 3
+    if (substance.projectId) {
+      writeThroughDrugSubstance(orgId, substance.projectId, String(substance.id), substance).catch(() => {});
+    }
     res.json({ success: true, data: substance });
   } catch (error) {
     console.error('Error creating drug substance:', error);
@@ -276,6 +309,10 @@ router.post('/drug-products', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = insertDrugProductSchema.parse(req.body);
     const [product] = await db.insert(drugProducts).values({ ...validatedData, organizationId: orgId }).returning();
+    // Write-through: upsert canonical source object for Module 3
+    if (product.projectId) {
+      writeThroughDrugProduct(orgId, product.projectId, String(product.id), product).catch(() => {});
+    }
     res.json({ success: true, data: product });
   } catch (error) {
     console.error('Error creating drug product:', error);
@@ -485,7 +522,7 @@ router.post('/comparability-studies', async (req, res) => {
          organization_id, project_id, assessment_name, change_type, changed_element,
          affected_process_parameters, justification, reviewed_by, status, tenant_id
        ) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10)
-       RETURNING id, assessment_name as title, changed_element as product, change_type as type, status,
+       RETURNING id, project_id, assessment_name as title, changed_element as product, change_type as type, status,
                  created_at as "createdAt", updated_at as "updatedAt", affected_process_parameters as methods,
                  justification as outcome, reviewed_by as owner`,
       [
@@ -501,6 +538,10 @@ router.post('/comparability-studies', async (req, res) => {
         String(orgId),
       ]
     );
+    // Write-through: read projectId from DB return, not request body
+    if (rows[0]?.project_id) {
+      writeThroughComparability(orgId, rows[0].project_id, String(rows[0].id), rows[0]).catch(() => {});
+    }
     res.json({ success: true, data: rows[0] });
   } catch (error) {
     console.error('Error creating comparability study:', error);
@@ -523,7 +564,7 @@ router.put('/comparability-studies/:id', async (req, res) => {
            status = COALESCE($7, status),
            updated_at = NOW()
        WHERE id = $8 AND organization_id = $9
-       RETURNING id, assessment_name as title, changed_element as product, change_type as type, status,
+       RETURNING id, project_id, assessment_name as title, changed_element as product, change_type as type, status,
                  created_at as "createdAt", updated_at as "updatedAt", affected_process_parameters as methods,
                  justification as outcome, reviewed_by as owner`,
       [
@@ -540,6 +581,10 @@ router.put('/comparability-studies/:id', async (req, res) => {
     );
     if (!rows[0]) {
       return res.status(404).json({ success: false, error: 'Study not found' });
+    }
+    // Write-through: read projectId from DB, not request body
+    if (rows[0].project_id) {
+      writeThroughComparability(orgId, rows[0].project_id, String(req.params.id), rows[0]).catch(() => {});
     }
     res.json({ success: true, data: rows[0] });
   } catch (error) {

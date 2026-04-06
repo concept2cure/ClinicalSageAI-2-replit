@@ -3,7 +3,7 @@
 CREATE TABLE IF NOT EXISTS cmc_source_objects (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id INTEGER NOT NULL REFERENCES organizations(id),
-  project_id UUID NOT NULL REFERENCES cmc_projects(id) ON DELETE CASCADE,
+  project_id TEXT NOT NULL,
   source_type TEXT NOT NULL,
   source_key TEXT NOT NULL,
   source_payload JSONB NOT NULL,
@@ -19,7 +19,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS cmc_source_objects_project_key_idx
 CREATE TABLE IF NOT EXISTS cmc_module3_sections (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id INTEGER NOT NULL REFERENCES organizations(id),
-  project_id UUID NOT NULL REFERENCES cmc_projects(id) ON DELETE CASCADE,
+  project_id TEXT NOT NULL,
   section_key TEXT NOT NULL,
   section_path TEXT NOT NULL,
   deterministic_json JSONB NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS cmc_section_lineage (
 CREATE TABLE IF NOT EXISTS cmc_contradictions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id INTEGER NOT NULL REFERENCES organizations(id),
-  project_id UUID NOT NULL REFERENCES cmc_projects(id) ON DELETE CASCADE,
+  project_id TEXT NOT NULL,
   severity TEXT NOT NULL,
   contradiction_type TEXT NOT NULL,
   details TEXT NOT NULL,
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS cmc_module3_section_versions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id INTEGER NOT NULL REFERENCES organizations(id),
   section_id UUID NOT NULL REFERENCES cmc_module3_sections(id) ON DELETE CASCADE,
-  project_id UUID NOT NULL REFERENCES cmc_projects(id) ON DELETE CASCADE,
+  project_id TEXT NOT NULL,
   version_number INTEGER NOT NULL,
   snapshot_json JSONB NOT NULL,
   diff_summary JSONB,
@@ -92,7 +92,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS cmc_section_versions_unique
 CREATE TABLE IF NOT EXISTS cmc_provenance_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id INTEGER NOT NULL REFERENCES organizations(id),
-  project_id UUID NOT NULL REFERENCES cmc_projects(id) ON DELETE CASCADE,
+  project_id TEXT NOT NULL,
   artifact_type TEXT NOT NULL,
   artifact_id TEXT NOT NULL,
   event_type TEXT NOT NULL,

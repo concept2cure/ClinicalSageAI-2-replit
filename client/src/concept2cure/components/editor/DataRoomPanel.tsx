@@ -6,7 +6,6 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { getAuthHeaders } from '@/utils/authToken';
 import {
   Database,
   Search,
@@ -227,6 +226,8 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
         const cat = s.category.toLowerCase();
         return cat === 'document' || cat === 'interactive' || cat === 'visualization';
       });
+    } else if (filterType === 'feedsM3') {
+      filtered = filtered.filter(s => s.metadata?.dossierClassification?.feedsModule3 === true);
     } else if (filterType !== 'all') {
       filtered = filtered.filter(s => s.type === filterType || s.category === filterType);
     }
@@ -254,6 +255,11 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
         const cat = s.category.toLowerCase();
         return cat === 'document' || cat === 'interactive' || cat === 'visualization';
       }).length,
+    [sources]
+  );
+
+  const feedsM3Count = useMemo(
+    () => sources.filter(s => s.metadata?.dossierClassification?.feedsModule3 === true).length,
     [sources]
   );
 
@@ -317,14 +323,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                 formData.append('file', file);
                 formData.append('projectId', projectId);
                 try {
-                  const headers: Record<string, string> = getAuthHeaders();
-                  delete headers['Content-Type']; // let browser set multipart boundary
-                  const res = await fetch('/api/concept2cure/documents/upload', {
-                    method: 'POST',
-                    body: formData,
-                    headers,
-                    credentials: 'include',
-                  });
+                  const res = await apiRequest('POST', '/api/concept2cure/documents/upload', formData);
                   if (res.ok) {
                     loadSources();
                   }
@@ -343,6 +342,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
               { key: 'all', label: 'All Files' },
               { key: 'sources', label: `Sources (${sourceDocCount})` },
               { key: 'authored', label: `Authored (${authoredCount})` },
+              ...(feedsM3Count > 0 ? [{ key: 'feedsM3', label: `Feeds M3 (${feedsM3Count})` }] : []),
             ].map(({ key, label }) => (
               <button
                 key={key}

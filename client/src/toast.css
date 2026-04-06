@@ -2,7 +2,7 @@
 .Toastify__toast-container {
   --toastify-color-light: #faf9f5;
   --toastify-color-dark: #141413;
-  --toastify-color-info: #6a9bcc;
+  --toastify-color-info: #78716c;
   --toastify-color-success: #788c5d;
   --toastify-color-warning: #d97706;
   --toastify-color-error: #dc3545;
@@ -28,13 +28,13 @@
   --toastify-color-progress-light: linear-gradient(
     to right,
     #788c5d,
-    #6a9bcc,
-    #d97757,
-    #c15f3c,
-    #6a9bcc,
-    #d97757
+    #78716c,
+    #57534e,
+    #44403c,
+    #78716c,
+    #57534e
   );
-  --toastify-color-progress-dark: #d97757;
+  --toastify-color-progress-dark: #57534e;
   --toastify-color-progress-info: var(--toastify-color-info);
   --toastify-color-progress-success: var(--toastify-color-success);
   --toastify-color-progress-warning: var(--toastify-color-warning);

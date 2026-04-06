@@ -35,8 +35,8 @@
 
 .panel-tab.active {
   background-color: #ffffff;
-  color: var(--color-primary, #d97757);
-  border-left: 3px solid var(--color-primary, #d97757);
+  color: var(--color-primary, #292524);
+  border-left: 3px solid var(--color-primary, #292524);
 }
 
 .panel-content {
@@ -252,7 +252,7 @@
 }
 
 .workflow-step.active {
-  border-left: 4px solid var(--color-primary, #d97757);
+  border-left: 4px solid var(--color-primary, #292524);
   background-color: #f8f8ff;
 }
 
@@ -354,7 +354,7 @@
 }
 
 input:checked + .toggle-slider {
-  background-color: var(--color-primary, #d97757);
+  background-color: var(--color-primary, #292524);
 }
 
 input:checked + .toggle-slider:before {

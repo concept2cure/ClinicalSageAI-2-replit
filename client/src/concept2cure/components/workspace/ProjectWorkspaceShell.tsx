@@ -185,10 +185,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [documentTab, setDocumentTab] = useState<DocumentTab>('content');
   const [activeRegistry, setActiveRegistry] = useState<RegistryKind>('documents');
 
-  // Submission-type-aware section tree for dossier mode
+  // Module 3 build state — used by DossierTree + useSubmissionSections for real build readiness
+  const module3BuildQuery = useModule3BuildState(projectId ? String(projectId) : undefined, undefined);
+
+  // Submission-type-aware section tree for dossier mode (enriched with Module 3 build state)
   const { sections: submissionSections, readinessPercent } = useSubmissionSections(
     projectId,
-    submissionType || projectType
+    submissionType || projectType,
+    module3BuildQuery.data
   );
   const normalizedSubmissionType = String(submissionType || projectType || '').toUpperCase();
   const isINDWorkspace = ['IND', 'NDA', 'BLA', 'MAA'].includes(normalizedSubmissionType);
@@ -225,8 +229,6 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     }
     return submissionSections.map(convertToDossierNode);
   }, [submissionSections]);
-  // Module 3 build state — used by DossierTree to show real build readiness
-  const module3BuildQuery = useModule3BuildState(projectId ? String(projectId) : undefined, undefined);
 
   // operatingLayer maps 'document_studio' -> 'documents' for OperatingSystemRegistryPanel compatibility
   const operatingLayer = activeLayer === 'document_studio' ? 'documents' : activeLayer;
@@ -1347,7 +1349,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const handleSelectSection = useCallback(
     (ctdSection: string, _label: string) => {
       setSelectedCtdSection(ctdSection);
-      const sectionArtifact = artifacts
+      let sectionArtifact = artifacts
         .filter(
           a => a.ctdSection === ctdSection || (a.ctdSection || '').startsWith(`${ctdSection}.`)
         )
@@ -1356,6 +1358,16 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           const tb = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
           return tb - ta;
         })[0];
+
+      // Module 3 convergence: if no artifact found by ctdSection but M3 build state
+      // tracks an artifactId for this section, look it up directly
+      if (!sectionArtifact && module3BuildQuery.data) {
+        const m3Section = module3BuildQuery.data.sections.find(s => s.sectionKey === ctdSection);
+        if (m3Section?.artifactId) {
+          sectionArtifact = artifacts.find(a => a.id === m3Section.artifactId || a.artifactId === m3Section.artifactId);
+        }
+      }
+
       if (sectionArtifact) {
         setSelectedDocId(sectionArtifact.id);
         if (tryOpenForEdit(sectionArtifact.status)) {
@@ -1369,7 +1381,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       }
       setSectionReqs(null);
     },
-    [artifacts, tryOpenForEdit, applyWorkflowTransition]
+    [artifacts, tryOpenForEdit, applyWorkflowTransition, module3BuildQuery.data]
   );
 
   const handleBackToList = useCallback(() => {

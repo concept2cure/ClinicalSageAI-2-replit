@@ -711,9 +711,44 @@ async function enrichWithSafety(projectId: string | number): Promise<string> {
 }
 
 async function enrichWithCMC(projectId: string | number): Promise<string> {
-  return enrichWithDomainMemory(projectId, 'CMC',
+  const memBlock = await enrichWithDomainMemory(projectId, 'CMC',
     ['cmc_assessment', 'manufacturing_change', 'comparability', 'analytical_method'],
     'CMC Intelligence');
+
+  // Also pull Module 3 build-state summary so AnA knows which sections are stale/ready
+  let buildBlock = '';
+  try {
+    const { getPool } = await import('../../db');
+    const pool = getPool();
+    const { rows: staleSections } = await pool.query(
+      `SELECT section_key, stale_reason FROM cmc_module3_sections
+       WHERE project_id = $1::text::uuid AND stale = true
+       ORDER BY section_key LIMIT 10`,
+      [String(projectId)],
+    );
+    const { rows: sourceCount } = await pool.query(
+      `SELECT source_type, COUNT(*) as cnt FROM cmc_source_objects
+       WHERE project_id = $1::text::uuid
+       GROUP BY source_type ORDER BY cnt DESC`,
+      [String(projectId)],
+    );
+    if (staleSections.length > 0 || sourceCount.length > 0) {
+      buildBlock = '\n\n## Module 3 Build State';
+      if (sourceCount.length > 0) {
+        buildBlock += `\nCanonical sources: ${sourceCount.map((r: any) => `${r.source_type} (${r.cnt})`).join(', ')}`;
+      }
+      if (staleSections.length > 0) {
+        buildBlock += `\nStale sections needing rebuild: ${staleSections.map((r: any) => `${r.section_key} — ${r.stale_reason || 'source data updated'}`).join('; ')}`;
+      }
+      if (staleSections.length === 0 && sourceCount.length > 0) {
+        buildBlock += '\nAll compiled sections are up to date.';
+      }
+    }
+  } catch {
+    // Non-blocking — if build-state query fails, proceed with CMC memory only
+  }
+
+  return memBlock + buildBlock;
 }
 
 async function enrichWithCSR(projectId: string | number): Promise<string> {

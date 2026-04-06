@@ -463,7 +463,7 @@ interface QuickActionsProps {
 const QuickActions: React.FC<QuickActionsProps> = ({ onAction }) => {
   const actions = [
     { id: 'invite_user', label: 'Invite User', icon: UserPlus, color: '#0d6efd' },
-    { id: 'view_audit', label: 'View Audit Log', icon: Eye, color: '#5585b3' },
+    { id: 'view_audit', label: 'View Audit Log', icon: Eye, color: '#57534e' },
     { id: 'security_settings', label: 'Security Settings', icon: Shield, color: '#647746' },
     { id: 'manage_roles', label: 'Manage Roles', icon: Key, color: '#dc2626' },
   ];
@@ -539,7 +539,7 @@ export const AdminDashboard: React.FC = () => {
       changeLabel: 'improvement',
       trend: 'up',
       icon: Shield,
-      color: '#5585b3',
+      color: '#57534e',
     },
   ];
 

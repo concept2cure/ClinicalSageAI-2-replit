@@ -167,7 +167,7 @@ const STATUS_CONFIG: Record<IPEntryStatus, { label: string; color: string; bgCol
 const ENVIRONMENT_CONFIG: Record<Environment, { label: string; color: string }> = {
   production: { label: 'Production', color: '#dc2626' },
   staging: { label: 'Staging', color: '#d97706' },
-  development: { label: 'Development', color: '#5585b3' },
+  development: { label: 'Development', color: '#57534e' },
   all: { label: 'All Environments', color: '#8a8880' },
 };
 

@@ -80,7 +80,7 @@ export const ProjectHeaderBar: React.FC<ProjectHeaderBarProps> = ({
   return (
     <div
       className={cn(
-        'flex items-center gap-3 px-5 py-3 border-b border-stone-150 bg-[#f9f8f6]/80 backdrop-blur-sm flex-shrink-0',
+        'flex items-center gap-3 px-5 py-3 border-b border-stone-150 bg-stone-50/80 backdrop-blur-sm flex-shrink-0',
         className
       )}
     >

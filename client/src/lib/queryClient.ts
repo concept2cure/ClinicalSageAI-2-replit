@@ -30,8 +30,11 @@ export const apiRequest = async (
   const organizationId = getCachedOrgId();
   const authToken = getCachedAuthToken();
 
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+
   const headers: HeadersInit = {
-    'Content-Type': 'application/json',
+    // Let the browser set Content-Type (with multipart boundary) for FormData
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     'x-organization-id': organizationId,
     ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
     ...customHeaders,
@@ -44,7 +47,7 @@ export const apiRequest = async (
   };
 
   if (body && method !== 'GET') {
-    options.body = JSON.stringify(body);
+    options.body = isFormData ? body : JSON.stringify(body);
   }
 
   const response = await fetch(url, options);

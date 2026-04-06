@@ -267,7 +267,7 @@ router.get('/:id/settings', validateOrgOwnership, async (req, res) => {
       },
       appearance: {
         theme: 'light',
-        primaryColor: '#c15f3c',
+        primaryColor: '#292524',
         logoUrl: '',
         customCss: '',
       },

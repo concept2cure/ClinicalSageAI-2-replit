@@ -264,7 +264,7 @@ const ROLE_CONFIG: Record<UserRole, { label: string; color: string; description:
   },
   regulatory_lead: {
     label: 'Regulatory Lead',
-    color: '#5585b3',
+    color: '#57534e',
     description: 'Lead regulatory strategy and submissions',
   },
   clinical_ops: {
@@ -274,7 +274,7 @@ const ROLE_CONFIG: Record<UserRole, { label: string; color: string; description:
   },
   medical_writer: {
     label: 'Medical Writer',
-    color: '#5585b3',
+    color: '#57534e',
     description: 'Author and edit regulatory documents',
   },
   biostatistician: {
@@ -289,7 +289,7 @@ const ROLE_CONFIG: Record<UserRole, { label: string; color: string; description:
   },
   legal_counsel: {
     label: 'Legal Counsel',
-    color: '#c15f3c',
+    color: '#44403c',
     description: 'Legal review and approval',
   },
   executive: {
@@ -309,7 +309,7 @@ const ROLE_CONFIG: Record<UserRole, { label: string; color: string; description:
   },
   project_manager: {
     label: 'Project Manager',
-    color: '#6a9bcc',
+    color: '#78716c',
     description: 'Project coordination and timelines',
   },
   viewer: { label: 'Viewer', color: '#8a8880', description: 'Read-only access to documents' },

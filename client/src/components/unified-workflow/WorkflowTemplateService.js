@@ -13,28 +13,28 @@
  * @returns {Promise<Array>} List of available workflow templates
  */
 export async function fetchWorkflowTemplates(organizationId, moduleType) {
-  if (!organizationId) {
-    throw new Error('Organization ID is required');
-  }
+ if (!organizationId) {
+ throw new Error('Organization ID is required');
+ }
 
-  try {
-    let url = `/api/module-integration/workflow-templates?organizationId=${organizationId}`;
-    if (moduleType) {
-      url += `&moduleType=${moduleType}`;
-    }
+ try {
+ let url = `/api/module-integration/workflow-templates?organizationId=${organizationId}`;
+ if (moduleType) {
+ url += `&moduleType=${moduleType}`;
+ }
 
-    const response = await fetch(url);
+ const response = await fetch(url);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to fetch workflow templates');
-    }
+ if (!response.ok) {
+ const errorData = await response.json().catch(() => ({}));
+ throw new Error(errorData.message || 'Failed to fetch workflow templates');
+ }
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching workflow templates:', error);
-    throw error;
-  }
+ return await response.json();
+ } catch (error) {
+ console.error('Error fetching workflow templates:', error);
+ throw error;
+ }
 }
 
 /**
@@ -49,53 +49,53 @@ export async function fetchWorkflowTemplates(organizationId, moduleType) {
  * @returns {Promise<object>} The created workflow template
  */
 export async function createWorkflowTemplate(
-  organizationId,
-  name,
-  description,
-  moduleType,
-  steps,
-  isDefault = false
+ organizationId,
+ name,
+ description,
+ moduleType,
+ steps,
+ isDefault = false
 ) {
-  if (
-    !organizationId ||
-    !name ||
-    !moduleType ||
-    !steps ||
-    !Array.isArray(steps) ||
-    steps.length === 0
-  ) {
-    throw new Error('Missing required parameters for creating workflow template');
-  }
+ if (
+ !organizationId ||
+ !name ||
+ !moduleType ||
+ !steps ||
+ !Array.isArray(steps) ||
+ steps.length === 0
+ ) {
+ throw new Error('Missing required parameters for creating workflow template');
+ }
 
-  try {
-    const templateData = {
-      organizationId,
-      name,
-      description,
-      moduleType,
-      steps,
-      isDefault,
-      createdAt: new Date().toISOString(),
-    };
+ try {
+ const templateData = {
+ organizationId,
+ name,
+ description,
+ moduleType,
+ steps,
+ isDefault,
+ createdAt: new Date().toISOString(),
+ };
 
-    const response = await fetch('/api/module-integration/workflow-template', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(templateData),
-    });
+ const response = await fetch('/api/module-integration/workflow-template', {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ },
+ body: JSON.stringify(templateData),
+ });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to create workflow template');
-    }
+ if (!response.ok) {
+ const errorData = await response.json().catch(() => ({}));
+ throw new Error(errorData.message || 'Failed to create workflow template');
+ }
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating workflow template:', error);
-    throw error;
-  }
+ return await response.json();
+ } catch (error) {
+ console.error('Error creating workflow template:', error);
+ throw error;
+ }
 }
 
 /**
@@ -106,34 +106,34 @@ export async function createWorkflowTemplate(
  * @returns {Promise<object>} The updated workflow template
  */
 export async function updateWorkflowTemplate(templateId, updates) {
-  if (!templateId || !updates) {
-    throw new Error('Template ID and updates are required');
-  }
+ if (!templateId || !updates) {
+ throw new Error('Template ID and updates are required');
+ }
 
-  try {
-    const updateData = {
-      ...updates,
-      updatedAt: new Date().toISOString(),
-    };
+ try {
+ const updateData = {
+ ...updates,
+ updatedAt: new Date().toISOString(),
+ };
 
-    const response = await fetch(`/api/module-integration/workflow-template/${templateId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updateData),
-    });
+ const response = await fetch(`/api/module-integration/workflow-template/${templateId}`, {
+ method: 'PUT',
+ headers: {
+ 'Content-Type': 'application/json',
+ },
+ body: JSON.stringify(updateData),
+ });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to update workflow template');
-    }
+ if (!response.ok) {
+ const errorData = await response.json().catch(() => ({}));
+ throw new Error(errorData.message || 'Failed to update workflow template');
+ }
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error updating workflow template:', error);
-    throw error;
-  }
+ return await response.json();
+ } catch (error) {
+ console.error('Error updating workflow template:', error);
+ throw error;
+ }
 }
 
 /**
@@ -143,25 +143,25 @@ export async function updateWorkflowTemplate(templateId, updates) {
  * @returns {Promise<object>} Result of deletion
  */
 export async function deleteWorkflowTemplate(templateId) {
-  if (!templateId) {
-    throw new Error('Template ID is required');
-  }
+ if (!templateId) {
+ throw new Error('Template ID is required');
+ }
 
-  try {
-    const response = await fetch(`/api/module-integration/workflow-template/${templateId}`, {
-      method: 'DELETE',
-    });
+ try {
+ const response = await fetch(`/api/module-integration/workflow-template/${templateId}`, {
+ method: 'DELETE',
+ });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to delete workflow template');
-    }
+ if (!response.ok) {
+ const errorData = await response.json().catch(() => ({}));
+ throw new Error(errorData.message || 'Failed to delete workflow template');
+ }
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error deleting workflow template:', error);
-    throw error;
-  }
+ return await response.json();
+ } catch (error) {
+ console.error('Error deleting workflow template:', error);
+ throw error;
+ }
 }
 
 /**
@@ -174,37 +174,37 @@ export async function deleteWorkflowTemplate(templateId) {
  * @returns {Promise<object>} The started workflow information
  */
 export async function startDocumentWorkflow(documentId, templateId, userId, comment = '') {
-  if (!documentId || !templateId || !userId) {
-    throw new Error('Missing required parameters for starting workflow');
-  }
+ if (!documentId || !templateId || !userId) {
+ throw new Error('Missing required parameters for starting workflow');
+ }
 
-  try {
-    const workflowData = {
-      documentId,
-      templateId,
-      userId,
-      comment,
-      startedAt: new Date().toISOString(),
-    };
+ try {
+ const workflowData = {
+ documentId,
+ templateId,
+ userId,
+ comment,
+ startedAt: new Date().toISOString(),
+ };
 
-    const response = await fetch('/api/module-integration/start-workflow', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(workflowData),
-    });
+ const response = await fetch('/api/module-integration/start-workflow', {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ },
+ body: JSON.stringify(workflowData),
+ });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to start document workflow');
-    }
+ if (!response.ok) {
+ const errorData = await response.json().catch(() => ({}));
+ throw new Error(errorData.message || 'Failed to start document workflow');
+ }
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error starting document workflow:', error);
-    throw error;
-  }
+ return await response.json();
+ } catch (error) {
+ console.error('Error starting document workflow:', error);
+ throw error;
+ }
 }
 
 /**
@@ -214,23 +214,23 @@ export async function startDocumentWorkflow(documentId, templateId, userId, comm
  * @returns {Promise<object>} The current workflow status
  */
 export async function getDocumentWorkflowStatus(documentId) {
-  if (!documentId) {
-    throw new Error('Document ID is required');
-  }
+ if (!documentId) {
+ throw new Error('Document ID is required');
+ }
 
-  try {
-    const response = await fetch(`/api/module-integration/workflow-status/${documentId}`);
+ try {
+ const response = await fetch(`/api/module-integration/workflow-status/${documentId}`);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to retrieve workflow status');
-    }
+ if (!response.ok) {
+ const errorData = await response.json().catch(() => ({}));
+ throw new Error(errorData.message || 'Failed to retrieve workflow status');
+ }
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error retrieving workflow status:', error);
-    throw error;
-  }
+ return await response.json();
+ } catch (error) {
+ console.error('Error retrieving workflow status:', error);
+ throw error;
+ }
 }
 
 /**
@@ -243,37 +243,37 @@ export async function getDocumentWorkflowStatus(documentId) {
  * @returns {Promise<object>} The updated workflow status
  */
 export async function transitionWorkflow(workflowId, userId, action, comment = '') {
-  if (!workflowId || !userId || !action) {
-    throw new Error('Missing required parameters for workflow transition');
-  }
+ if (!workflowId || !userId || !action) {
+ throw new Error('Missing required parameters for workflow transition');
+ }
 
-  try {
-    const transitionData = {
-      workflowId,
-      userId,
-      action,
-      comment,
-      timestamp: new Date().toISOString(),
-    };
+ try {
+ const transitionData = {
+ workflowId,
+ userId,
+ action,
+ comment,
+ timestamp: new Date().toISOString(),
+ };
 
-    const response = await fetch('/api/module-integration/transition-workflow', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(transitionData),
-    });
+ const response = await fetch('/api/module-integration/transition-workflow', {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ },
+ body: JSON.stringify(transitionData),
+ });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to transition workflow');
-    }
+ if (!response.ok) {
+ const errorData = await response.json().catch(() => ({}));
+ throw new Error(errorData.message || 'Failed to transition workflow');
+ }
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error transitioning workflow:', error);
-    throw error;
-  }
+ return await response.json();
+ } catch (error) {
+ console.error('Error transitioning workflow:', error);
+ throw error;
+ }
 }
 
 /**
@@ -285,31 +285,31 @@ export async function transitionWorkflow(workflowId, userId, action, comment = '
  * @returns {Promise<Array>} List of active workflows
  */
 export async function getActiveWorkflows(organizationId, moduleType, userId) {
-  if (!organizationId) {
-    throw new Error('Organization ID is required');
-  }
+ if (!organizationId) {
+ throw new Error('Organization ID is required');
+ }
 
-  try {
-    let url = `/api/module-integration/active-workflows?organizationId=${organizationId}`;
-    if (moduleType) {
-      url += `&moduleType=${moduleType}`;
-    }
-    if (userId) {
-      url += `&userId=${userId}`;
-    }
+ try {
+ let url = `/api/module-integration/active-workflows?organizationId=${organizationId}`;
+ if (moduleType) {
+ url += `&moduleType=${moduleType}`;
+ }
+ if (userId) {
+ url += `&userId=${userId}`;
+ }
 
-    const response = await fetch(url);
+ const response = await fetch(url);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to fetch active workflows');
-    }
+ if (!response.ok) {
+ const errorData = await response.json().catch(() => ({}));
+ throw new Error(errorData.message || 'Failed to fetch active workflows');
+ }
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching active workflows:', error);
-    throw error;
-  }
+ return await response.json();
+ } catch (error) {
+ console.error('Error fetching active workflows:', error);
+ throw error;
+ }
 }
 
 /**
@@ -320,28 +320,28 @@ export async function getActiveWorkflows(organizationId, moduleType, userId) {
  * @returns {Promise<Array>} List of pending approvals
  */
 export async function getPendingApprovals(userId, organizationId) {
-  if (!userId) {
-    throw new Error('User ID is required');
-  }
+ if (!userId) {
+ throw new Error('User ID is required');
+ }
 
-  try {
-    let url = `/api/module-integration/pending-approvals?userId=${userId}`;
-    if (organizationId) {
-      url += `&organizationId=${organizationId}`;
-    }
+ try {
+ let url = `/api/module-integration/pending-approvals?userId=${userId}`;
+ if (organizationId) {
+ url += `&organizationId=${organizationId}`;
+ }
 
-    const response = await fetch(url);
+ const response = await fetch(url);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to fetch pending approvals');
-    }
+ if (!response.ok) {
+ const errorData = await response.json().catch(() => ({}));
+ throw new Error(errorData.message || 'Failed to fetch pending approvals');
+ }
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching pending approvals:', error);
-    throw error;
-  }
+ return await response.json();
+ } catch (error) {
+ console.error('Error fetching pending approvals:', error);
+ throw error;
+ }
 }
 
 /**
@@ -351,21 +351,21 @@ export async function getPendingApprovals(userId, organizationId) {
  * @returns {Promise<Array>} List of workflow history events
  */
 export async function getDocumentWorkflowHistory(documentId) {
-  if (!documentId) {
-    throw new Error('Document ID is required');
-  }
+ if (!documentId) {
+ throw new Error('Document ID is required');
+ }
 
-  try {
-    const response = await fetch(`/api/module-integration/workflow-history/${documentId}`);
+ try {
+ const response = await fetch(`/api/module-integration/workflow-history/${documentId}`);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to fetch workflow history');
-    }
+ if (!response.ok) {
+ const errorData = await response.json().catch(() => ({}));
+ throw new Error(errorData.message || 'Failed to fetch workflow history');
+ }
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching workflow history:', error);
-    throw error;
-  }
+ return await response.json();
+ } catch (error) {
+ console.error('Error fetching workflow history:', error);
+ throw error;
+ }
 }

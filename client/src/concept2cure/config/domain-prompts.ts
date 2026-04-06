@@ -128,6 +128,10 @@ const CMC: DomainPromptGroup = {
     { id: 'cmc-m3-contradictions', label: 'Scan Module 3 for contradictions', intent: 'module3_contradictions', description: 'Detect cross-functional data conflicts in CMC data' },
     { id: 'cmc-m3-section', label: 'Build a specific Module 3 subsection (e.g. 3.2.S.4)', intent: 'module3_build_section', description: 'Compile one specific subsection and open it in the editor' },
     { id: 'cmc-m3-lineage', label: 'Show source lineage for a Module 3 section', intent: 'module3_lineage', description: 'Trace which sources feed a specific subsection' },
+    // CMC Data Entry → Module 3 Write-Through prompts
+    { id: 'cmc-push-data', label: 'Push CMC data into Module 3 pipeline', intent: 'cmc_push_data', description: 'Show which CMC data entries have been synced to canonical sources and which sections were impacted' },
+    { id: 'cmc-pending-tasks', label: 'Show pending CMC review tasks', intent: 'cmc_pending_tasks', description: 'List CMC data entry tasks awaiting review or approval before merging to Module 3' },
+    { id: 'cmc-data-coverage', label: 'What CMC data is missing for my project?', intent: 'cmc_data_coverage', description: 'Compare entered CMC data against Module 3 requirements to identify gaps' },
   ],
 };
 

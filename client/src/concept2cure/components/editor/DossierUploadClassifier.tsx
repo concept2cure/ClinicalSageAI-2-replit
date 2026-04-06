@@ -106,6 +106,11 @@ const SOURCE_TYPES = [
   { value: 'reference_standard', label: 'Reference Standard' },
   { value: 'container_closure', label: 'Container Closure' },
   { value: 'excipient', label: 'Excipient' },
+  { value: 'process_validation', label: 'Process Validation' },
+  { value: 'raw_material_spec', label: 'Raw Material Specification' },
+  { value: 'impurity_profile', label: 'Impurity Profile' },
+  { value: 'dissolution_profile', label: 'Dissolution Profile' },
+  { value: 'formulation_record', label: 'Formulation Record' },
 ];
 
 const DOCUMENT_FAMILIES = [
@@ -242,10 +247,11 @@ const DossierUploadClassifier: React.FC<DossierUploadClassifierProps> = ({
   return (
     <div className={cn('border border-stone-200 rounded-lg bg-white overflow-hidden', className)}>
       {/* Header — always visible */}
-      <button
+      <Button
+        variant="ghost"
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-stone-50/50 transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2.5 h-auto text-left hover:bg-stone-50/50 rounded-none"
       >
         <Beaker className="w-3.5 h-3.5 text-stone-500 shrink-0" />
         <div className="flex-1 min-w-0">
@@ -265,7 +271,7 @@ const DossierUploadClassifier: React.FC<DossierUploadClassifierProps> = ({
         ) : (
           <ChevronDown className="w-3.5 h-3.5 text-stone-400 shrink-0" />
         )}
-      </button>
+      </Button>
 
       {expanded && (
         <div className="px-3 pb-3 space-y-3 border-t border-stone-100">
@@ -278,13 +284,15 @@ const DossierUploadClassifier: React.FC<DossierUploadClassifierProps> = ({
                 <span className="text-[10px] text-stone-400 shrink-0">
                   {(file.size / 1024).toFixed(0)} KB
                 </span>
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
                   type="button"
                   onClick={clearFile}
-                  className="text-stone-400 hover:text-stone-600 transition-colors"
+                  className="h-5 w-5 text-stone-400 hover:text-stone-600"
                 >
                   <X className="w-3 h-3" />
-                </button>
+                </Button>
               </div>
             ) : (
               <label className="flex items-center justify-center gap-2 px-3 py-3 border border-dashed border-stone-300 rounded-lg cursor-pointer hover:bg-stone-50 hover:border-stone-400 transition-all">

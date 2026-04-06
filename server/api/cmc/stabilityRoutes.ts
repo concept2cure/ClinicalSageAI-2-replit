@@ -1,6 +1,7 @@
 import express from 'express';
 import { getPool } from '../../db';
 import { z } from 'zod';
+import { writeThroughStabilityStudy } from '../../services/cmc-write-through';
 
 const router = express.Router();
 
@@ -115,6 +116,10 @@ router.post('/', async (req, res) => {
 
     const study = result.rows[0];
     console.log(`[CMC Stability] Created study ${study.id}: ${data.studyName}`);
+    // Write-through: upsert canonical source object for Module 3
+    if (study.project_id) {
+      writeThroughStabilityStudy(Number(tenantId), study.project_id, String(study.id), study).catch(() => {});
+    }
 
     res.status(201).json({
       success: true,
@@ -209,10 +214,15 @@ router.put('/:id', async (req, res) => {
     const updateResult = await pool.query(updateQuery, values);
 
     console.log(`[CMC Stability] Updated study ${id}`);
+    // Write-through: upsert canonical source object for Module 3
+    const updatedStudy = updateResult.rows[0];
+    if (updatedStudy?.project_id) {
+      writeThroughStabilityStudy(Number(tenantId), updatedStudy.project_id, String(id), updatedStudy).catch(() => {});
+    }
 
     res.json({
       success: true,
-      data: updateResult.rows[0],
+      data: updatedStudy,
       message: 'Stability study updated successfully',
       timestamp: new Date().toISOString(),
     });

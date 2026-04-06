@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
+import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -39,6 +40,7 @@ import {
   BUILD_STATE_CONFIG,
   isSectionBuildable,
   isSectionRefreshable,
+  getSourceTypeLabel,
 } from '@/concept2cure/hooks/useModule3BuildState';
 import type {
   Module3SectionBuildStatus,
@@ -52,6 +54,8 @@ interface Module3BuildInspectorProps {
   cmcProjectId?: string;
   ctdSection?: string;
   onClose?: () => void;
+  /** Navigate to a specific CTD section (e.g. click from summary view) */
+  onNavigateToSection?: (ctdSection: string) => void;
   className?: string;
 }
 
@@ -75,6 +79,7 @@ export function Module3BuildInspector({
   cmcProjectId,
   ctdSection,
   onClose,
+  onNavigateToSection,
   className,
 }: Module3BuildInspectorProps) {
   const { toast } = useToast();
@@ -95,7 +100,7 @@ export function Module3BuildInspector({
     isLoading: lineageLoading,
     isError: lineageError,
   } = useQuery<SourceLineageResponse>({
-    queryKey: ['concept2cure', 'module3-source-lineage', resolvedId, ctdSection] as const,
+    queryKey: queryKeys.module3.sourceLineage(resolvedId, ctdSection),
     queryFn: async () => {
       const res = await apiRequest(
         'GET',
@@ -122,7 +127,7 @@ export function Module3BuildInspector({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['concept2cure', 'module3-build-state', projectId, cmcProjectId],
+        queryKey: queryKeys.module3.buildState(projectId, cmcProjectId),
       });
       toast({
         title: 'Section rebuilt',
@@ -147,13 +152,15 @@ export function Module3BuildInspector({
         <span className="text-[11px] font-semibold text-stone-700">Module 3 Build</span>
       </div>
       {onClose && (
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           type="button"
           onClick={onClose}
-          className="text-stone-400 hover:text-stone-600 transition-colors"
+          className="h-6 w-6 text-stone-400 hover:text-stone-600"
         >
           <X className="w-3.5 h-3.5" />
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -179,7 +186,7 @@ export function Module3BuildInspector({
       <div className={cn('flex flex-col', className)}>
         {header}
         {buildState ? (
-          <Module3SummaryView buildState={buildState} />
+          <Module3SummaryView buildState={buildState} onNavigateToSection={onNavigateToSection} />
         ) : (
           <div className="px-3 py-6 text-center">
             <p className="text-xs text-stone-400">
@@ -241,7 +248,7 @@ export function Module3BuildInspector({
             <div className="flex flex-wrap gap-1">
               {section.sourceTypes.map((t) => (
                 <Badge key={t} variant="secondary" className="text-[9px] px-1 py-0 h-4 font-normal">
-                  {t}
+                  {getSourceTypeLabel(t)}
                 </Badge>
               ))}
             </div>
@@ -337,9 +344,10 @@ export function Module3BuildInspector({
 
         {/* Lineage (expandable) */}
         <div className="border-t border-stone-100 pt-2">
-          <button
+          <Button
+            variant="ghost"
             type="button"
-            className="flex items-center gap-1.5 text-[11px] text-stone-500 hover:text-stone-700 transition-colors"
+            className="flex items-center gap-1.5 text-[11px] text-stone-500 hover:text-stone-700 h-auto px-1 py-0.5"
             onClick={() => setLineageExpanded((v) => !v)}
           >
             {lineageExpanded ? (
@@ -349,7 +357,7 @@ export function Module3BuildInspector({
             )}
             <GitBranch className="w-3 h-3" />
             Source lineage
-          </button>
+          </Button>
 
           {lineageExpanded && (
             <div className="mt-2 pl-2 border-l-2 border-stone-100">
@@ -377,7 +385,7 @@ export function Module3BuildInspector({
                     <p className="text-[11px] text-stone-600 font-medium truncate">
                       {src.fileName}
                     </p>
-                    <p className="text-[10px] text-stone-400 mt-0.5">{src.sourceType}</p>
+                    <p className="text-[10px] text-stone-400 mt-0.5">{getSourceTypeLabel(src.sourceType)}</p>
                     {src.extractedFields.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1">
                         {src.extractedFields.slice(0, 6).map((f) => (
@@ -430,7 +438,7 @@ export function Module3BuildInspector({
 
 // ── Module 3 Summary View (no section selected) ─────────────────────────────
 
-function Module3SummaryView({ buildState }: { buildState: Module3BuildStateResponse }) {
+function Module3SummaryView({ buildState, onNavigateToSection }: { buildState: Module3BuildStateResponse; onNavigateToSection?: (ctdSection: string) => void }) {
   const { summary, sections } = buildState;
   const ready = sections.filter((s) => s.buildState === 'approved' || s.buildState === 'locked');
   const stale = sections.filter((s) => s.isStale);
@@ -499,7 +507,19 @@ function Module3SummaryView({ buildState }: { buildState: Module3BuildStateRespo
             return (
               <div
                 key={s.sectionKey}
-                className="flex items-center gap-2 py-1 px-1.5 rounded hover:bg-stone-50 transition-colors"
+                className={cn(
+                  'flex items-center gap-2 py-1 px-1.5 rounded hover:bg-stone-50 transition-colors',
+                  onNavigateToSection && 'cursor-pointer'
+                )}
+                onClick={() => onNavigateToSection?.(s.sectionKey)}
+                role={onNavigateToSection ? 'button' : undefined}
+                tabIndex={onNavigateToSection ? 0 : undefined}
+                onKeyDown={(e) => {
+                  if (onNavigateToSection && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    onNavigateToSection(s.sectionKey);
+                  }
+                }}
               >
                 <span className="text-[10px] text-stone-500 w-12 shrink-0 font-mono">
                   {s.sectionKey}
