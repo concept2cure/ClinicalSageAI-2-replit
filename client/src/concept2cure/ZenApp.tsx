@@ -2153,30 +2153,28 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               openWorkspaceView('regulatory-workspace');
               setRiViewMode('intelligence');
               break;
-            // ── Embedded modules ──
+            // ── Unified Medical Device & Diagnostics workspace (510k / PMA / De Novo / CER / IVDR) ──
+            case 'medical-device':
+            // Legacy IDs preserved for back-compat with stored nav targets
             case '510k-workspace':
-              if (activeProjectId) {
-                navigate(`/concept2cure/project/${activeProjectId}/510k`);
-              } else {
-                setLayoutMode('projects');
-              }
-              break;
             case 'pma-workspace':
-              if (embeddedModule !== null || !embedModulesEnabled) {
+            case 'cer-generator': {
+              if (!activeProjectId) {
                 setLayoutMode('projects');
-              } else if (activeProjectId) {
-                navigate(`/concept2cure/project/${activeProjectId}/pma`);
-              } else {
-                setLayoutMode('projects');
+                break;
               }
-              break;
-            case 'cer-generator':
-              if (activeProjectId) {
-                navigate(`/concept2cure/project/${activeProjectId}/cer`);
-              } else {
+              const deviceType = (activeProject?.type || '').toUpperCase();
+              const subPath =
+                deviceType === 'PMA' ? 'pma'
+                : deviceType === 'CER' || deviceType === 'IVDR' ? 'cer'
+                : '510k';
+              if (id === 'pma-workspace' && (embeddedModule !== null || !embedModulesEnabled)) {
                 setLayoutMode('projects');
+                break;
               }
+              navigate(`/concept2cure/project/${activeProjectId}/${subPath}`);
               break;
+            }
             // ── Default — redirect to chats ──
             default:
               setLayoutMode('chats');
@@ -2280,18 +2278,22 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                           break;
 
                         // ── Authoring ──
-                        case '510k-workspace':
-                          if (activeProjectId) navigate(`/concept2cure/project/${activeProjectId}/510k`);
-                          else openWorkspaceView('documents');
+                        case 'medical-device': {
+                          // Unified Medical Device & Diagnostics workspace.
+                          // Routes to the matching submission type for the active project,
+                          // defaulting to 510(k) when no specific device type is set.
+                          if (!activeProjectId) {
+                            openWorkspaceView('documents');
+                            break;
+                          }
+                          const deviceType = (activeProject?.type || '').toUpperCase();
+                          const subPath =
+                            deviceType === 'PMA' ? 'pma'
+                            : deviceType === 'CER' || deviceType === 'IVDR' ? 'cer'
+                            : '510k';
+                          navigate(`/concept2cure/project/${activeProjectId}/${subPath}`);
                           break;
-                        case 'pma-workspace':
-                          if (activeProjectId) navigate(`/concept2cure/project/${activeProjectId}/pma`);
-                          else openWorkspaceView('documents');
-                          break;
-                        case 'cer-generator':
-                          if (activeProjectId) navigate(`/concept2cure/project/${activeProjectId}/cer`);
-                          else openWorkspaceView('documents');
-                          break;
+                        }
                         case 'safety-narrative':
                           openWorkspaceView('safety-narrative');
                           break;
@@ -3716,9 +3718,20 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               if (options?.projectId) {
                 setActiveProjectId(options.projectId);
                 const action = options.action || '';
-                // 510(k) workspace has its own embedded route
-                if (action === '510k-workspace') {
-                  navigate(`/concept2cure/project/${options.projectId}/510k`);
+                // Unified Medical Device & Diagnostics workspace — routes by submission type
+                if (
+                  action === 'medical-device' ||
+                  action === '510k-workspace' ||
+                  action === 'pma-workspace' ||
+                  action === 'cer-generator'
+                ) {
+                  const targetProject = projects.find(p => p.id === options.projectId);
+                  const deviceType = (targetProject?.type || '').toUpperCase();
+                  const subPath =
+                    deviceType === 'PMA' ? 'pma'
+                    : deviceType === 'CER' || deviceType === 'IVDR' ? 'cer'
+                    : '510k';
+                  navigate(`/concept2cure/project/${options.projectId}/${subPath}`);
                 } else {
                   const actionToMode: Record<string, LayoutMode> = {
                     work: 'documents',

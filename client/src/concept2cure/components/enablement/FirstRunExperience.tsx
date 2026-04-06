@@ -298,7 +298,7 @@ function ConfidenceScreen({
   const suggestions = track === 'device'
     ? [
         { id: 'work', label: 'Start in Work', description: 'Open the document workspace' },
-        { id: '510k-workspace', label: 'Open 510(k) Workspace', description: 'Predicate comparison and SE testing' },
+        { id: 'medical-device', label: 'Open Medical Device Workspace', description: '510(k), PMA, De Novo, CER — adapts to your project type' },
         { id: 'vault', label: 'Open Vault', description: 'Browse files and evidence' },
       ]
     : [
