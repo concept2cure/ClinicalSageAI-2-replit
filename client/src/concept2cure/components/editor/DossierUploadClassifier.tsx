@@ -106,6 +106,11 @@ const SOURCE_TYPES = [
   { value: 'reference_standard', label: 'Reference Standard' },
   { value: 'container_closure', label: 'Container Closure' },
   { value: 'excipient', label: 'Excipient' },
+  { value: 'process_validation', label: 'Process Validation' },
+  { value: 'raw_material_spec', label: 'Raw Material Specification' },
+  { value: 'impurity_profile', label: 'Impurity Profile' },
+  { value: 'dissolution_profile', label: 'Dissolution Profile' },
+  { value: 'formulation_record', label: 'Formulation Record' },
 ];
 
 const DOCUMENT_FAMILIES = [

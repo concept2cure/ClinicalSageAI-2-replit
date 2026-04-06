@@ -45,6 +45,11 @@ function makeSources(): CanonicalSource[] {
     { id: 'rs-1', sourceType: 'reference_standard', sourcePayload: { referenceStandardDescription: 'USP Amlodipine Besylate RS', certificateOfAnalysis: 'Lot RS-2026-01' } },
     { id: 'cl-1', sourceType: 'container_closure', sourcePayload: { containerDescription: 'HDPE bottle', closureDescription: 'Child-resistant cap', suitabilityJustification: 'Moisture barrier demonstrated' } },
     { id: 'ex-1', sourceType: 'excipient', sourcePayload: { excipientSpecifications: 'Microcrystalline cellulose NF', excipientAnalyticalProcedures: 'Per USP monograph' } },
+    { id: 'pv-1', sourceType: 'process_validation', sourcePayload: { processStep: 'Wet granulation', validationStatus: 'validated', consecutiveBatches: 3 } },
+    { id: 'rm-1', sourceType: 'raw_material_spec', sourcePayload: { materialName: 'Amlodipine Besylate (starting material)', grade: 'Pharmaceutical grade', testParameters: ['Identity', 'Purity ≥ 99.0%'] } },
+    { id: 'ip-1', sourceType: 'impurity_profile', sourcePayload: { materialName: 'Amlodipine Besylate', impurities: [{ impurityName: 'Impurity A', observedLevel: 0.05, specLimit: 0.15 }], qualificationBasis: 'ICH Q3A' } },
+    { id: 'dp-1b', sourceType: 'dissolution_profile', sourcePayload: { condition: 'USP Apparatus II, 50 rpm, 900 mL', specification: 'Q ≥ 80% in 30 min', passFail: 'pass' } },
+    { id: 'fr-1', sourceType: 'formulation_record', sourcePayload: { formulationName: 'Amlodipine 5mg tablet v2', version: 'F-v2.0', components: [{ component: 'Amlodipine Besylate', amount: '6.93 mg', role: 'Active' }] } },
   ];
 }
 
@@ -100,9 +105,10 @@ describe('Module 3 Source Types', () => {
     'drug_substance', 'drug_product', 'specification', 'method', 'stability',
     'batch', 'change_control', 'comparability',
     'manufacturing_process', 'characterization', 'reference_standard', 'container_closure', 'excipient',
+    'process_validation', 'raw_material_spec', 'impurity_profile', 'dissolution_profile', 'formulation_record',
   ];
 
-  it('all 13 source types are usable in fixtures', () => {
+  it('all 18 source types are usable in fixtures', () => {
     const sources = makeSources();
     const usedTypes = new Set(sources.map((s) => s.sourceType));
     for (const t of ALL_EXPECTED_TYPES) {
@@ -111,7 +117,10 @@ describe('Module 3 Source Types', () => {
   });
 
   it('new source types appear in at least one section rule', () => {
-    const newTypes: CmcSourceType[] = ['manufacturing_process', 'characterization', 'reference_standard', 'container_closure', 'excipient'];
+    const newTypes: CmcSourceType[] = [
+      'manufacturing_process', 'characterization', 'reference_standard', 'container_closure', 'excipient',
+      'process_validation', 'raw_material_spec', 'impurity_profile', 'dissolution_profile', 'formulation_record',
+    ];
     for (const t of newTypes) {
       const found = MODULE3_SECTION_RULES.some((r) => r.requiredSourceTypes.includes(t));
       expect(found).toBe(true);
@@ -334,6 +343,55 @@ describe('Module 3 Contradiction Engine', () => {
     });
     expect(result).toHaveLength(3);
   });
+
+  it('detects specification_conflict for conflicting criteria', () => {
+    const result = detectContradictions({
+      specifications: [
+        { materialName: 'Lot A', acceptanceCriteria: { assay: '98-102%' } },
+        { materialName: 'Lot B', acceptanceCriteria: { assay: '95-105%' } },
+      ],
+    });
+    const conflict = result.find(c => c.contradictionType === 'specification_conflict');
+    expect(conflict).toBeDefined();
+    expect(conflict!.severity).toBe('high');
+  });
+
+  it('detects method_validation_gap for unvalidated methods', () => {
+    const result = detectContradictions({
+      specifications: [{ materialName: 'X', acceptanceCriteria: { assay: '98-102%' } }],
+      methods: [{ methodName: 'HPLC', purpose: 'assay', validationStatus: 'draft' }],
+    });
+    const gap = result.find(c => c.contradictionType === 'method_validation_gap');
+    expect(gap).toBeDefined();
+    expect(gap!.impactedSections).toContain('3.2.S.4');
+  });
+
+  it('detects impurity_exceedance when observed exceeds limit', () => {
+    const result = detectContradictions({
+      impurityProfiles: [{ impurityName: 'Imp-A', observedLevel: 0.20, specLimit: 0.15 }],
+    });
+    const exceedance = result.find(c => c.contradictionType === 'impurity_exceedance');
+    expect(exceedance).toBeDefined();
+    expect(exceedance!.severity).toBe('critical');
+  });
+
+  it('detects dissolution_failure', () => {
+    const result = detectContradictions({
+      dissolutionProfiles: [{ condition: 'USP Apparatus II', passFail: 'fail' }],
+    });
+    const failure = result.find(c => c.contradictionType === 'dissolution_failure');
+    expect(failure).toBeDefined();
+    expect(failure!.impactedSections).toContain('3.2.P.5');
+  });
+
+  it('detects change_control_open for manufacturing-affecting changes', () => {
+    const result = detectContradictions({
+      changeControl: [{ id: 'CC-99', status: 'open', affectedProcess: 'Manufacturing line transfer' }],
+    });
+    const ccOpen = result.find(c => c.contradictionType === 'change_control_open');
+    expect(ccOpen).toBeDefined();
+    expect(ccOpen!.impactedSections).toContain('3.2.P.3');
+  });
 });
 
 // ── 10. Impact Tasks ──────────────────────────────────────────────────────────
@@ -536,7 +594,7 @@ describe('Module 3 Composer — Table Generation', () => {
     expect(s4.tables.length).toBeGreaterThanOrEqual(1);
     const specTable = s4.tables.find((t) => t.title.includes('Specification'));
     expect(specTable).toBeDefined();
-    expect(specTable!.headers).toContain('Test');
+    expect(specTable!.headers).toContain('Quality Attribute');
     expect(specTable!.headers).toContain('Acceptance Criteria');
   });
 

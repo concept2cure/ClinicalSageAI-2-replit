@@ -243,6 +243,77 @@ function makeSeedSources(): CanonicalSource[] {
         safetyData: 'Established GRAS status for parenteral use at ≤ 200 mg/kg/day',
       },
     },
+    // Process Validation
+    {
+      id: 'src-pv-001',
+      sourceType: 'process_validation',
+      sourcePayload: {
+        processStep: 'Lyophilization cycle',
+        validationStatus: 'validated',
+        protocol: 'PV-2023-REM-001',
+        acceptanceCriteria: 'Residual moisture ≤ 1.0%, reconstitution time ≤ 5 min',
+        consecutiveBatches: 3,
+        conclusion: 'Process demonstrated to be in a state of control',
+      },
+    },
+    // Raw Material Specification
+    {
+      id: 'src-rm-001',
+      sourceType: 'raw_material_spec',
+      sourcePayload: {
+        materialName: 'PSI-6130 (starting material)',
+        grade: 'Pharmaceutical grade',
+        supplier: 'Gilead Sciences — internal',
+        compendialCompliance: 'In-house specification',
+        testParameters: ['Identity (NMR)', 'Purity (HPLC) ≥ 99.0%', 'Residual solvents (GC)'],
+      },
+    },
+    // Impurity Profile
+    {
+      id: 'src-imp-001',
+      sourceType: 'impurity_profile',
+      sourcePayload: {
+        materialName: DRUG_NAME,
+        impurities: [
+          { impurityName: 'Impurity A (phosphoramidate isomer)', observedLevel: 0.08, specLimit: 0.15, identification: 'Characterized by MS/NMR' },
+          { impurityName: 'Impurity B (des-phosphoryl)', observedLevel: 0.03, specLimit: 0.10, identification: 'Characterized by MS' },
+          { impurityName: 'Total degradation products', observedLevel: 0.42, specLimit: 1.0, identification: 'Per ICH Q3A' },
+        ],
+        qualificationBasis: 'Qualified per ICH Q3A(R2) — all specified impurities below qualification threshold',
+      },
+    },
+    // Dissolution Profile
+    {
+      id: 'src-diss-001',
+      sourceType: 'dissolution_profile',
+      sourcePayload: {
+        condition: 'USP Apparatus II, 50 rpm, 900 mL 0.1N HCl',
+        specification: 'Q ≥ 80% in 30 minutes',
+        results: [
+          { timepoint: '15 min', result: '72%' },
+          { timepoint: '30 min', result: '95%' },
+          { timepoint: '45 min', result: '99%' },
+        ],
+        passFail: 'pass',
+        profileType: 'immediate-release',
+      },
+    },
+    // Formulation Record
+    {
+      id: 'src-form-001',
+      sourceType: 'formulation_record',
+      sourcePayload: {
+        formulationName: 'Veklury 100 mg lyophilized powder',
+        version: 'F-v3.1',
+        components: [
+          { component: 'Remdesivir', amount: '100 mg', role: 'Active' },
+          { component: 'SBECD', amount: '3000 mg', role: 'Solubilizer' },
+          { component: 'HCl/NaOH', amount: 'q.s. pH 3.5', role: 'pH adjustment' },
+          { component: 'WFI', amount: 'q.s. 20.6 mL', role: 'Solvent (removed)' },
+        ],
+        developmentHistory: 'Formulation optimized over 3 iterations; SBECD ratio selected based on solubility and osmolality',
+      },
+    },
   ];
 }
 
@@ -269,9 +340,9 @@ describe('Module 3 E2E Journey — Realistic IND Seed', () => {
 
   // ── Step 1: Source classification coverage ────────────────────────────────
 
-  it('seed covers all 11 unique CMC source types', () => {
+  it('seed covers all 16 unique CMC source types', () => {
     const types = new Set(sources.map(s => s.sourceType));
-    expect(types.size).toBe(11);
+    expect(types.size).toBe(16);
     expect(types).toContain('drug_substance');
     expect(types).toContain('drug_product');
     expect(types).toContain('specification');
@@ -283,6 +354,11 @@ describe('Module 3 E2E Journey — Realistic IND Seed', () => {
     expect(types).toContain('reference_standard');
     expect(types).toContain('characterization');
     expect(types).toContain('excipient');
+    expect(types).toContain('process_validation');
+    expect(types).toContain('raw_material_spec');
+    expect(types).toContain('impurity_profile');
+    expect(types).toContain('dissolution_profile');
+    expect(types).toContain('formulation_record');
   });
 
   it('every source has a non-empty payload', () => {
@@ -491,6 +567,65 @@ describe('Module 3 E2E Journey — Realistic IND Seed', () => {
       expect(hasRejection || contradictions.length === 0).toBe(true);
     });
 
+    it('detects specification conflict when conflicting acceptance criteria exist', () => {
+      const contradictions = detectContradictions({
+        specifications: [
+          { materialName: 'Material A', acceptanceCriteria: { assay: '98.0-102.0%' } },
+          { materialName: 'Material B', acceptanceCriteria: { assay: '95.0-105.0%' } },
+        ],
+      });
+      const specConflict = contradictions.find(c => c.contradictionType === 'specification_conflict');
+      expect(specConflict).toBeDefined();
+      expect(specConflict!.severity).toBe('high');
+      expect(specConflict!.impactedSections).toContain('3.2.S.4');
+    });
+
+    it('detects method validation gap when methods lack validated status', () => {
+      const contradictions = detectContradictions({
+        specifications: [{ materialName: DRUG_NAME, acceptanceCriteria: { assay: '98-102%' } }],
+        methods: [{ methodName: 'HPLC-UV', purpose: 'assay', validationStatus: 'draft' }],
+      });
+      const methodGap = contradictions.find(c => c.contradictionType === 'method_validation_gap');
+      expect(methodGap).toBeDefined();
+      expect(methodGap!.severity).toBe('high');
+    });
+
+    it('detects impurity exceedance when observed level exceeds spec limit', () => {
+      const contradictions = detectContradictions({
+        impurityProfiles: [
+          { impurityName: 'Impurity A', observedLevel: 0.25, specLimit: 0.15 },
+        ],
+      });
+      const exceedance = contradictions.find(c => c.contradictionType === 'impurity_exceedance');
+      expect(exceedance).toBeDefined();
+      expect(exceedance!.severity).toBe('critical');
+      expect(exceedance!.impactedSections).toContain('3.2.S.4');
+    });
+
+    it('detects dissolution failure', () => {
+      const contradictions = detectContradictions({
+        dissolutionProfiles: [
+          { condition: 'USP Apparatus II, 50 rpm', passFail: 'fail' },
+        ],
+      });
+      const dissFailure = contradictions.find(c => c.contradictionType === 'dissolution_failure');
+      expect(dissFailure).toBeDefined();
+      expect(dissFailure!.severity).toBe('high');
+      expect(dissFailure!.impactedSections).toContain('3.2.P.5');
+    });
+
+    it('detects open change control affecting manufacturing', () => {
+      const contradictions = detectContradictions({
+        changeControl: [
+          { id: 'CC-101', status: 'open', affectedProcess: 'Manufacturing process scale-up' },
+        ],
+      });
+      const ccOpen = contradictions.find(c => c.contradictionType === 'change_control_open');
+      expect(ccOpen).toBeDefined();
+      expect(ccOpen!.severity).toBe('medium');
+      expect(ccOpen!.impactedSections).toContain('3.2.P.3');
+    });
+
     it('deriveImpactTasks produces actionable tasks from contradictions', () => {
       const fakeContradictions = [
         {
@@ -498,6 +633,7 @@ describe('Module 3 E2E Journey — Realistic IND Seed', () => {
           severity: 'critical' as const,
           details: 'Batch DS-2023-001 rejected but referenced in submission',
           impactedSections: ['3.2.S.4', '3.2.P.5'],
+          requiredReviewers: ['QA/Release'],
         },
       ];
       const tasks = deriveImpactTasks(fakeContradictions);
