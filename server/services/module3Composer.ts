@@ -129,11 +129,31 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const route = val(m, 'manufacturingRoute');
     const desc = val(m, 'processDescription');
     const controls = val(m, 'processControls');
+    const pvStatus = val(m, 'validationStatus');
+    const pvProtocol = val(m, 'protocol');
+    const pvCriteria = val(m, 'acceptanceCriteria');
+    const pvBatches = val(m, 'consecutiveBatches');
+    const tables: GeneratedTable[] = [];
+    tables.push(kvTable('Manufacturing Process Summary', { 'Synthetic Route': route, 'Process Description': desc, 'In-Process Controls': controls }));
+    if (pvStatus || pvProtocol) {
+      tables.push({
+        title: 'Process Validation Summary',
+        headers: ['Parameter', 'Value'],
+        rows: [
+          ...(pvProtocol ? [['Validation Protocol', pvProtocol]] : []),
+          ...(pvStatus ? [['Validation Status', pvStatus]] : []),
+          ...(pvCriteria ? [['Acceptance Criteria', pvCriteria]] : []),
+          ...(pvBatches ? [['Consecutive Batches', pvBatches]] : []),
+        ],
+      });
+    }
     return {
       narrative: `The drug substance is manufactured via ${route || '[route not specified]'}. ` +
         (desc ? `The manufacturing process consists of: ${desc}. ` : '') +
-        (controls ? `In-process controls include: ${controls}.` : ''),
-      tables: [kvTable('Manufacturing Process Summary', { 'Synthetic Route': route, 'Process Description': desc, 'In-Process Controls': controls })],
+        (controls ? `In-process controls include: ${controls}. ` : '') +
+        (pvStatus ? `Process validation status: ${pvStatus}` + (pvProtocol ? ` (protocol: ${pvProtocol})` : '') + `. ` : '') +
+        (pvBatches ? `${pvBatches} consecutive batch(es) validated.` : ''),
+      tables,
     };
   },
 
@@ -141,11 +161,29 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const struct = val(m, 'structuralElucidation');
     const phys = val(m, 'physicochemicalProperties');
     const bio = val(m, 'biologicalActivity');
+    const impurities = valArr(m, 'impurities');
+    const qualBasis = val(m, 'qualificationBasis');
+    const tables: GeneratedTable[] = [];
+    tables.push(kvTable('Characterisation Summary', { 'Structural Elucidation': struct, 'Physicochemical Properties': phys, 'Biological Activity': bio }));
+    if (impurities.length > 0) {
+      tables.push({
+        title: 'Impurity Profile — Drug Substance',
+        headers: ['Impurity', 'Observed Level', 'Specification Limit', 'Identification'],
+        rows: impurities.map((imp: any) => [
+          imp.impurityName || 'Unknown',
+          imp.observedLevel !== undefined ? `${imp.observedLevel}%` : '—',
+          imp.specLimit !== undefined ? `${imp.specLimit}%` : '—',
+          imp.identification || '—',
+        ]),
+      });
+    }
     return {
       narrative: `Structural elucidation of the drug substance was confirmed by ${struct || '[methods not specified]'}. ` +
         (phys ? `Physicochemical properties: ${phys}. ` : '') +
-        (bio ? `Biological activity: ${bio}.` : ''),
-      tables: [kvTable('Characterisation Summary', { 'Structural Elucidation': struct, 'Physicochemical Properties': phys, 'Biological Activity': bio })],
+        (bio ? `Biological activity: ${bio}. ` : '') +
+        (impurities.length > 0 ? `${impurities.length} impurity/ies have been identified and characterized. ` : '') +
+        (qualBasis ? `Qualification basis: ${qualBasis}.` : ''),
+      tables,
     };
   },
 
@@ -261,11 +299,34 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const form = val(m, 'dosageFormDescription');
     const comp = val(m, 'composition');
     const strength = val(m, 'strength');
+    const formulationName = val(m, 'formulationName');
+    const formulationVersion = val(m, 'version');
+    const components = valArr(m, 'components');
+    const tables: GeneratedTable[] = [];
+    tables.push(kvTable('Drug Product Description and Composition', {
+      'Dosage Form': form, 'Strength': strength,
+      ...(formulationName ? { 'Formulation': formulationName } : {}),
+      ...(formulationVersion ? { 'Formulation Version': formulationVersion } : {}),
+      'Composition': comp,
+    }));
+    if (components.length > 0) {
+      tables.push({
+        title: 'Quantitative Composition',
+        headers: ['Component', 'Function / Role', 'Amount per Unit'],
+        rows: components.map((c: any) => [
+          c.component || c.name || 'Unknown',
+          c.role || c.function || '—',
+          c.amount || '—',
+        ]),
+      });
+    }
     return {
       narrative: `The drug product is a ${form || '[dosage form not specified]'} ` +
         (strength ? `with a strength of ${strength}. ` : '. ') +
+        (formulationName ? `Formulation: ${formulationName}` + (formulationVersion ? ` (${formulationVersion})` : '') + `. ` : '') +
+        (components.length > 0 ? `The formulation comprises ${components.length} component(s). ` : '') +
         (comp ? `Composition: ${comp}.` : ''),
-      tables: [kvTable('Drug Product Description and Composition', { 'Dosage Form': form, 'Strength': strength, 'Composition': comp })],
+      tables,
     };
   },
 
@@ -273,12 +334,42 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const formDev = val(m, 'formulationDevelopment');
     const mfgDev = val(m, 'manufacturingProcessDev');
     const ccStudies = val(m, 'containerClosureStudies');
+    const devHistory = val(m, 'developmentHistory');
+    const dissCondition = val(m, 'condition');
+    const dissSpec = val(m, 'specification');
+    const dissResults = valArr(m, 'results');
+    const dissPassFail = val(m, 'passFail');
+    const tables: GeneratedTable[] = [];
+    tables.push(kvTable('Pharmaceutical Development Summary', {
+      'Formulation Development': formDev,
+      'Manufacturing Process Development': mfgDev,
+      'Container Closure Studies': ccStudies,
+      ...(devHistory ? { 'Development History': devHistory } : {}),
+    }));
+    if (dissCondition || dissResults.length > 0) {
+      const dissRows: string[][] = [];
+      if (dissCondition) dissRows.push(['Test Condition', dissCondition]);
+      if (dissSpec) dissRows.push(['Specification', dissSpec]);
+      for (const r of dissResults) {
+        if (typeof r === 'object' && r !== null) {
+          dissRows.push([r.timepoint || 'N/A', r.result || '—']);
+        }
+      }
+      if (dissPassFail) dissRows.push(['Overall Result', dissPassFail]);
+      tables.push({
+        title: 'Dissolution Profile — Development',
+        headers: ['Parameter', 'Value'],
+        rows: dissRows,
+      });
+    }
     return {
       narrative: `Pharmaceutical development studies were conducted to support the proposed formulation and manufacturing process. ` +
         (formDev ? `Formulation development: ${formDev}. ` : '') +
         (mfgDev ? `Manufacturing process development: ${mfgDev}. ` : '') +
-        (ccStudies ? `Container closure studies: ${ccStudies}.` : ''),
-      tables: [kvTable('Pharmaceutical Development Summary', { 'Formulation Development': formDev, 'Manufacturing Process Development': mfgDev, 'Container Closure Studies': ccStudies })],
+        (ccStudies ? `Container closure studies: ${ccStudies}. ` : '') +
+        (devHistory ? `Development history: ${devHistory}. ` : '') +
+        (dissCondition ? `Dissolution testing performed under: ${dissCondition}` + (dissPassFail ? ` — ${dissPassFail}` : '') + `. ` : ''),
+      tables,
     };
   },
 
@@ -290,6 +381,9 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const manufacturingSite = val(m, 'manufacturingSite');
     const processSteps = valArr(m, 'processSteps');
     const validationStatus = val(m, 'validationStatus');
+    const pvProtocol = val(m, 'protocol');
+    const pvCriteria = val(m, 'acceptanceCriteria');
+    const pvConclusion = val(m, 'conclusion');
     const tables: GeneratedTable[] = [];
     // Batch formula table
     tables.push({
@@ -302,6 +396,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         ...(manufacturingSite ? [['Manufacturing Site', manufacturingSite]] : []),
         ...(disposition ? [['Disposition', disposition]] : []),
         ...(validationStatus ? [['Process Validation Status', validationStatus]] : []),
+        ...(pvProtocol ? [['Validation Protocol', pvProtocol]] : []),
       ],
     });
     // Manufacturing process flow if steps are provided
@@ -329,7 +424,9 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         `. ` +
         (manufacturingSite ? `Manufactured at: ${manufacturingSite}. ` : '') +
         (processSteps.length > 0 ? `The process comprises ${processSteps.length} unit operations. ` : '') +
-        (disposition ? `Batch disposition: ${disposition}.` : ''),
+        (disposition ? `Batch disposition: ${disposition}. ` : '') +
+        (pvConclusion ? `Process validation conclusion: ${pvConclusion}.` :
+          validationStatus ? `Process validation status: ${validationStatus}.` : ''),
       tables,
     };
   },
@@ -337,11 +434,33 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
   '3.2.P.4': (m) => {
     const specs = val(m, 'excipientSpecifications');
     const procs = val(m, 'excipientAnalyticalProcedures');
+    const rmName = val(m, 'materialName');
+    const rmGrade = val(m, 'grade');
+    const rmSupplier = val(m, 'supplier');
+    const rmCompliance = val(m, 'compendialCompliance');
+    const rmTestParams = valArr(m, 'testParameters');
+    const tables: GeneratedTable[] = [];
+    tables.push(kvTable('Control of Excipients', { 'Excipient Specifications': specs, 'Analytical Procedures': procs }));
+    if (rmName || rmGrade) {
+      const rmRows: string[][] = [];
+      if (rmName) rmRows.push(['Material Name', rmName]);
+      if (rmGrade) rmRows.push(['Grade', rmGrade]);
+      if (rmSupplier) rmRows.push(['Supplier', rmSupplier]);
+      if (rmCompliance) rmRows.push(['Compendial Compliance', rmCompliance]);
+      if (rmTestParams.length > 0) rmRows.push(['Test Parameters', rmTestParams.join('; ')]);
+      tables.push({
+        title: 'Raw Material / Starting Material Specifications',
+        headers: ['Property', 'Value'],
+        rows: rmRows,
+      });
+    }
     return {
       narrative: `Excipients used in the drug product formulation are controlled to compendial or in-house specifications. ` +
         (specs ? `Excipient specifications: ${specs}. ` : '') +
-        (procs ? `Analytical procedures: ${procs}.` : ''),
-      tables: [kvTable('Control of Excipients', { 'Excipient Specifications': specs, 'Analytical Procedures': procs })],
+        (procs ? `Analytical procedures: ${procs}. ` : '') +
+        (rmName ? `Raw material specifications are established for ${rmName}` + (rmGrade ? ` (${rmGrade})` : '') + `. ` : '') +
+        (rmCompliance ? `Compendial compliance: ${rmCompliance}.` : ''),
+      tables,
     };
   },
 
@@ -353,6 +472,14 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const shelfLifeTests = valArr(m, 'shelfLifeTests');
     const dissolutionSpec = valObj(m, 'dissolutionSpecification');
     const impurityLimits = valObj(m, 'impurityLimits');
+    // Fields from dissolution_profile source type
+    const dissCondition = val(m, 'condition');
+    const dissSpecStr = val(m, 'specification');
+    const dissResults = valArr(m, 'results');
+    const dissPassFail = val(m, 'passFail');
+    // Fields from impurity_profile source type
+    const impurities = valArr(m, 'impurities');
+    const qualBasis = val(m, 'qualificationBasis');
     const tables: GeneratedTable[] = [];
     // Release/shelf-life specification matrix
     if (releaseTests.length > 0 || shelfLifeTests.length > 0) {
@@ -375,15 +502,30 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     } else {
       tables.push(kvTable('Drug Product Specification', { 'Release Criteria': criteria, 'Analytical Method': method, 'Validation Status': status }));
     }
-    // Dissolution specification
+    // Dissolution specification (from dissolutionSpecification object or dissolution_profile source)
     if (dissolutionSpec) {
       tables.push({
         title: 'Dissolution Specification',
         headers: ['Parameter', 'Value'],
         rows: Object.entries(dissolutionSpec).map(([k, v]) => [k, String(v)]),
       });
+    } else if (dissCondition || dissResults.length > 0) {
+      const dissRows: string[][] = [];
+      if (dissCondition) dissRows.push(['Test Condition', dissCondition]);
+      if (dissSpecStr) dissRows.push(['Specification', dissSpecStr]);
+      for (const r of dissResults) {
+        if (typeof r === 'object' && r !== null) {
+          dissRows.push([r.timepoint || 'N/A', r.result || '—']);
+        }
+      }
+      if (dissPassFail) dissRows.push(['Pass/Fail', dissPassFail]);
+      tables.push({
+        title: 'Dissolution Profile',
+        headers: ['Parameter', 'Value'],
+        rows: dissRows,
+      });
     }
-    // Impurity limits for drug product
+    // Impurity limits (from impurityLimits object or impurity_profile source)
     if (impurityLimits) {
       tables.push({
         title: 'Impurity Limits — Drug Product',
@@ -393,13 +535,25 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
           return [impurity, String(l.identification || '—'), String(l.qualification || '—'), String(l.specLimit || String(limits))];
         }),
       });
+    } else if (impurities.length > 0) {
+      tables.push({
+        title: 'Impurity Profile — Drug Product',
+        headers: ['Impurity', 'Observed Level', 'Specification Limit', 'Identification'],
+        rows: impurities.map((imp: any) => [
+          imp.impurityName || 'Unknown',
+          imp.observedLevel !== undefined ? `${imp.observedLevel}%` : '—',
+          imp.specLimit !== undefined ? `${imp.specLimit}%` : '—',
+          imp.identification || '—',
+        ]),
+      });
     }
     return {
       narrative: `The drug product specification defines release and shelf-life acceptance criteria. ` +
         (method ? `Primary analytical method: ${method}. ` : '') +
         (releaseTests.length > 0 ? `${releaseTests.length} quality attribute(s) are defined for release testing. ` : '') +
         (criteria ? `Release criteria: ${criteria}. ` : '') +
-        (dissolutionSpec ? `Dissolution specifications are established per ICH Q6A. ` : '') +
+        (dissolutionSpec || dissCondition ? `Dissolution specifications are established per ICH Q6A. ` : '') +
+        (impurities.length > 0 ? `${impurities.length} specified impurity/ies characterized` + (qualBasis ? ` (${qualBasis})` : '') + `. ` : '') +
         (status ? `Validation status: ${status}.` : ''),
       tables,
     };
