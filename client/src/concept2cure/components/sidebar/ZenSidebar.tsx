@@ -49,7 +49,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { EmptyState } from '@/design-system/patterns/EmptyState';
 // Logo image removed — text mark only
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -192,7 +191,7 @@ const WorkspaceGroup: React.FC<{
         size="sm"
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        className="h-auto w-full justify-start gap-1 px-3 py-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest hover:text-stone-500 rounded transition-colors"
+        className="h-auto w-full justify-start gap-1.5 px-3 py-2 text-[11px] font-medium text-stone-400 uppercase tracking-wider hover:text-stone-500 rounded transition-colors"
       >
         <ChevronDown
           className={cn(
@@ -226,10 +225,10 @@ const NavItem: React.FC<{
         onClick={onClick}
         aria-current={active ? 'page' : undefined}
         className={cn(
-          'h-auto w-full justify-start gap-2 mx-1 pl-5 pr-3 py-[5px] text-xs transition-all duration-150 rounded-md',
+          'h-9 w-full justify-start gap-3 px-3 py-2 text-[13px] transition-all duration-150 rounded-lg',
           active
-            ? 'bg-stone-200/80 text-stone-900 font-medium'
-            : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+            ? 'bg-stone-100 text-stone-900 font-medium'
+            : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900'
         )}
       >
         <span
@@ -408,7 +407,7 @@ const ProjectRow: React.FC<{
     <div className="mb-0.5">
       <div
         className={cn(
-          'group relative flex items-center gap-2 mx-1 px-2.5 py-2 rounded-lg cursor-pointer select-none transition-all duration-150',
+          'group relative flex items-center gap-2.5 mx-1.5 px-2.5 py-2.5 rounded-lg cursor-pointer select-none transition-all duration-150',
           isActive ? 'bg-stone-200/80 text-stone-900' : 'text-stone-700 hover:bg-stone-100'
         )}
       >
@@ -664,7 +663,7 @@ const NewDropdown: React.FC<{
         onClick={() => setOpen(o => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="h-auto w-full justify-start gap-2 px-3 py-2 rounded-lg border-stone-200 text-stone-700 text-[13px] font-medium hover:bg-stone-100"
+        className="h-9 w-full justify-start gap-3 px-3 py-2 rounded-lg border-stone-200 text-stone-700 text-[14px] font-medium hover:bg-stone-50"
       >
         <Plus className="w-4 h-4 flex-shrink-0" />
         New
@@ -855,7 +854,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
     return (
       <aside
-        className="flex flex-col h-full w-14 bg-stone-50 border-r border-stone-200 items-center py-3 gap-1 flex-shrink-0 transition-[width] duration-200 ease-out"
+        className="flex flex-col h-full w-14 bg-[#f9f9f8] border-r border-stone-150 items-center py-3 gap-1.5 flex-shrink-0 transition-[width] duration-200 ease-out"
         role="navigation"
         aria-label="Main sidebar"
       >
@@ -931,17 +930,17 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
       {/* Mobile backdrop */}
       <div className="fixed inset-0 z-40 bg-black/30 md:hidden" onClick={onToggleCollapse} />
       <aside
-        className="flex flex-col h-full w-[260px] bg-stone-50/80 border-r border-stone-100 flex-shrink-0 fixed z-50 md:static md:z-auto transition-[width] duration-200 ease-out"
+        className="flex flex-col h-full w-[260px] bg-[#f9f9f8] border-r border-stone-150 flex-shrink-0 fixed z-50 md:static md:z-auto transition-[width] duration-200 ease-out"
         role="navigation"
         aria-label="Main sidebar"
       >
         {/* Brand header */}
-        <div className="flex items-center justify-between px-3 h-11 flex-shrink-0">
+        <div className="flex items-center justify-between px-4 h-14 flex-shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-stone-800 flex items-center justify-center flex-shrink-0">
               <span className="text-[9px] font-bold text-white">C2C</span>
             </div>
-            <span className="font-semibold text-stone-800 text-[13px]">Concept2Cure</span>
+            <span className="font-semibold text-stone-900 text-[15px] tracking-tight">Concept2Cure</span>
           </div>
           <Button
             type="button"
@@ -956,7 +955,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         </div>
 
         {/* ── Zone A: Utility Actions ──────────────────────────────── */}
-        <div className="px-1 pb-1 flex-shrink-0 space-y-0.5">
+        <div className="px-2 py-2 flex-shrink-0 space-y-1">
           <NewDropdown
             onNewChat={onNewChat}
             onNewProject={onOpenProjects}
@@ -977,10 +976,10 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           />
         </div>
 
-        <div className="mx-2 border-t border-stone-100 flex-shrink-0" />
+        <div className="mx-3 my-2 border-t border-stone-100/80 flex-shrink-0" />
 
         {/* ── Zone B: 6 Primary Destinations ──────────────────────── */}
-        <div className="px-1 py-1 flex-shrink-0 space-y-0.5">
+        <div className="px-2 py-2 flex-shrink-0 space-y-0.5">
           <NavItem
             icon={<MessageSquare className="w-3.5 h-3.5" />}
             label="Chats"
@@ -1022,7 +1021,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         {/* ── Active Project Context (only when project active) ──── */}
         {activeProject && (
           <>
-            <div className="mx-2 border-t border-stone-100 flex-shrink-0" />
+            <div className="mx-3 my-2 border-t border-stone-100/80 flex-shrink-0" />
             <div className="px-2 py-2 flex-shrink-0">
               <div className="flex items-center gap-2 px-2 mb-0.5">
                 {activeBadge && (
@@ -1044,7 +1043,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           </>
         )}
 
-        <div className="mx-2 border-t border-stone-100 flex-shrink-0" />
+        <div className="mx-3 my-2 border-t border-stone-100/80 flex-shrink-0" />
 
         {/* ── Search ──────────────────────────────────────────────────── */}
         <div className="px-2 py-1.5 flex-shrink-0">
@@ -1056,7 +1055,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search projects..."
               aria-label="Search projects"
-              className="w-full pl-8 pr-3 py-1.5 text-xs"
+              className="w-full pl-8 pr-3 py-2 text-[13px] rounded-lg border-stone-200 bg-white"
             />
           </div>
         </div>
@@ -1099,19 +1098,21 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             defaultOpen={true}
           >
             {recentProjects.length === 0 && pinnedProjects.length === 0 && (
-              <EmptyState
-                icon={FolderOpen}
-                title="No projects yet"
-                description="Create your first project to start working with AnA on your submission."
-                action={{
-                  label: '+ Create your first project',
-                  onClick: onOpenProjects,
-                  icon: Plus,
-                }}
-                size="sm"
-                variant="minimal"
-                className="mx-2"
-              />
+              <div className="px-4 py-8 text-center">
+                <FolderOpen className="w-8 h-8 text-stone-300 mx-auto mb-3" />
+                <p className="text-sm font-medium text-stone-600 mb-1">No projects yet</p>
+                <p className="text-xs text-stone-400 mb-4">Create your first project to start working with AnA.</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={onOpenProjects}
+                  className="text-xs border-stone-200 hover:bg-stone-50"
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1.5" />
+                  Create project
+                </Button>
+              </div>
             )}
 
             {recentProjects.map(project => (
@@ -1171,15 +1172,15 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             variant="ghost"
             size="sm"
             onClick={onOpenSettings}
-            className="h-auto w-full justify-start gap-2 px-2 py-1.5 rounded-lg text-stone-500 hover:bg-stone-100 hover:text-stone-800 text-xs transition-colors"
+            className="h-auto w-full justify-start gap-3 px-3 py-2.5 rounded-lg text-stone-500 hover:bg-stone-50 hover:text-stone-800 text-[13px] transition-colors"
           >
-            <div className="w-6 h-6 rounded-full bg-stone-200 flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center flex-shrink-0">
               <span className="text-[10px] font-bold text-stone-600 leading-none">
                 {avatarInitial}
               </span>
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-xs font-medium text-stone-700 truncate leading-tight">
+              <p className="text-[13px] font-medium text-stone-700 truncate leading-tight">
                 {displayName}
               </p>
               {userEmail && (
