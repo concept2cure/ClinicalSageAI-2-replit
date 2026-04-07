@@ -516,8 +516,8 @@ export function OnboardingWizard({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-900 via-primary-900 to-stone-900 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-sm max-w-4xl w-full overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-8 py-6">
           <div className="flex items-center gap-4">
@@ -544,7 +544,7 @@ export function OnboardingWizard({
         </div>
 
         {/* Progress Steps */}
-        <div className="px-8 py-4 bg-stone-50 border-b">
+        <div className="px-8 py-4 bg-gray-50 border-b">
           <div className="flex items-center justify-between">
             {STEPS.map((step, index) => (
               <React.Fragment key={step.id}>
@@ -556,7 +556,7 @@ export function OnboardingWizard({
                       ? 'bg-primary-100 text-primary-700'
                       : index < currentStepIndex
                         ? 'text-primary-600 hover:bg-primary-50 cursor-pointer'
-                        : 'text-stone-400 cursor-not-allowed'
+                        : 'text-gray-400 cursor-not-allowed'
                   }`}
                 >
                   <div
@@ -565,7 +565,7 @@ export function OnboardingWizard({
                         ? 'bg-primary-600 text-white'
                         : step.id === currentStep
                           ? 'bg-primary-600 text-white'
-                          : 'bg-stone-200 text-stone-500'
+                          : 'bg-gray-200 text-gray-500'
                     }`}
                   >
                     {index < currentStepIndex ? <Check className="h-5 w-5" /> : step.icon}
@@ -575,7 +575,7 @@ export function OnboardingWizard({
                 {index < STEPS.length - 1 && (
                   <div
                     className={`flex-1 h-0.5 mx-2 ${
-                      index < currentStepIndex ? 'bg-primary-600' : 'bg-stone-200'
+                      index < currentStepIndex ? 'bg-primary-600' : 'bg-gray-200'
                     }`}
                   />
                 )}
@@ -601,10 +601,10 @@ export function OnboardingWizard({
         </div>
 
         {/* Footer */}
-        <div className="px-8 py-4 bg-stone-50 border-t flex justify-between">
+        <div className="px-8 py-4 bg-gray-50 border-t flex justify-between">
           <div>
             {onCancel && (
-              <button onClick={onCancel} className="px-4 py-2 text-stone-600 hover:text-stone-900">
+              <button onClick={onCancel} className="px-4 py-2 text-gray-600 hover:text-gray-900">
                 Cancel
               </button>
             )}
@@ -613,20 +613,20 @@ export function OnboardingWizard({
             {currentStepIndex > 0 && (
               <button
                 onClick={goBack}
-                className="flex items-center gap-2 px-4 py-2 text-stone-700 hover:text-stone-900"
+                className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900"
               >
                 <ChevronLeft className="h-5 w-5" />
                 Back
               </button>
             )}
             {checkoutError && (
-              <span className="text-sm text-stone-700 mr-2 self-center">{checkoutError}</span>
+              <span className="text-sm text-red-600 mr-2 self-center">{checkoutError}</span>
             )}
             {currentStep === 'review' ? (
               <button
                 onClick={handleComplete}
                 disabled={!canProceed || checkoutLoading}
-                className="flex items-center gap-2 px-6 py-2 bg-stone-700 text-white rounded-lg hover:bg-stone-800 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {checkoutLoading ? (
                   <>
@@ -687,29 +687,29 @@ function ActivationCompleteView({ organizationName }: { organizationName: string
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-900 via-primary-900 to-stone-900 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-sm max-w-3xl w-full p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-8">
         <div className="flex items-center gap-3 mb-4">
-          <CheckCircle className="h-7 w-7 text-stone-700" />
-          <h2 className="text-2xl font-semibold text-stone-900">Organization Setup Complete</h2>
+          <CheckCircle className="h-7 w-7 text-green-600" />
+          <h2 className="text-2xl font-semibold text-gray-900">Organization Setup Complete</h2>
         </div>
-        <p className="text-stone-600 mb-6">
+        <p className="text-gray-600 mb-6">
           {organizationName || 'Your organization'} is now active. Next, complete company-level and
           user/role-level onboarding in Admin, then launch AnA RI for first-use workflows.
         </p>
 
         <div className="grid md:grid-cols-2 gap-4 mb-6">
-          <div className="rounded-xl border border-stone-200 p-4">
-            <h3 className="font-medium text-stone-900 mb-2">Company-Level Setup</h3>
-            <ul className="text-sm text-stone-600 space-y-1">
+          <div className="rounded-xl border border-gray-200 p-4">
+            <h3 className="font-medium text-gray-900 mb-2">Company-Level Setup</h3>
+            <ul className="text-sm text-gray-600 space-y-1">
               <li>• Confirm compliance defaults and signatures</li>
               <li>• Validate security/session policies</li>
               <li>• Verify module enablement by plan</li>
             </ul>
           </div>
-          <div className="rounded-xl border border-stone-200 p-4">
-            <h3 className="font-medium text-stone-900 mb-2">User/Role-Level Setup</h3>
-            <ul className="text-sm text-stone-600 space-y-1">
+          <div className="rounded-xl border border-gray-200 p-4">
+            <h3 className="font-medium text-gray-900 mb-2">User/Role-Level Setup</h3>
+            <ul className="text-sm text-gray-600 space-y-1">
               <li>• Invite team members and assign roles</li>
               <li>• Confirm role permissions and SoD</li>
               <li>• Complete first project access checks</li>
@@ -720,7 +720,7 @@ function ActivationCompleteView({ organizationName }: { organizationName: string
         <div className="flex gap-3">
           <button
             onClick={goToAdmin}
-            className="px-4 py-2 rounded-lg border border-stone-300 text-stone-700 hover:bg-stone-50"
+            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
           >
             Open Admin Setup
           </button>
@@ -749,13 +749,13 @@ function OrganizationStep({ data, updateData }: StepProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-stone-900">Organization Details</h2>
-        <p className="text-stone-500 mt-1">Tell us about your organization</p>
+        <h2 className="text-xl font-semibold text-gray-900">Organization Details</h2>
+        <p className="text-gray-500 mt-1">Tell us about your organization</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             Organization Name *
           </label>
           <input
@@ -768,7 +768,7 @@ function OrganizationStep({ data, updateData }: StepProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1">Domain</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Domain</label>
           <input
             type="text"
             value={data.domain}
@@ -779,7 +779,7 @@ function OrganizationStep({ data, updateData }: StepProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1">Country *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Country *</label>
           <select
             value={data.country}
             onChange={e => updateData({ country: e.target.value })}
@@ -799,7 +799,7 @@ function OrganizationStep({ data, updateData }: StepProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1">Industry</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
           <select
             value={data.industry}
             onChange={e => updateData({ industry: e.target.value })}
@@ -833,8 +833,8 @@ function BusinessModelStep({ data, updateData }: StepProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-stone-900">Select Your Business Model</h2>
-        <p className="text-stone-500 mt-1">This determines your default compliance configuration</p>
+        <h2 className="text-xl font-semibold text-gray-900">Select Your Business Model</h2>
+        <p className="text-gray-500 mt-1">This determines your default compliance configuration</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
@@ -845,33 +845,33 @@ function BusinessModelStep({ data, updateData }: StepProps) {
             className={`p-6 border-2 rounded-xl text-left transition-all ${
               data.businessModel === model.id
                 ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
-                : 'border-stone-200 hover:border-primary-300 hover:bg-stone-50'
+                : 'border-gray-200 hover:border-primary-300 hover:bg-gray-50'
             }`}
           >
             <div
-              className={`${data.businessModel === model.id ? 'text-primary-600' : 'text-stone-400'}`}
+              className={`${data.businessModel === model.id ? 'text-primary-600' : 'text-gray-400'}`}
             >
               {model.icon}
             </div>
-            <h3 className="font-semibold text-stone-900 mt-3">{model.label}</h3>
-            <p className="text-sm text-stone-500 mt-1">{model.description}</p>
+            <h3 className="font-semibold text-gray-900 mt-3">{model.label}</h3>
+            <p className="text-sm text-gray-500 mt-1">{model.description}</p>
           </button>
         ))}
       </div>
 
       {/* Preview archetype config */}
       {data.archetype && (
-        <div className="mt-6 p-4 bg-stone-100 border border-stone-200 rounded-lg">
-          <h4 className="font-medium text-stone-900 flex items-center gap-2">
+        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h4 className="font-medium text-blue-900 flex items-center gap-2">
             <Sparkles className="h-5 w-5" />
             Recommended Configuration: {data.archetype.name}
           </h4>
-          <p className="text-sm text-stone-700 mt-1">{data.archetype.description}</p>
+          <p className="text-sm text-blue-700 mt-1">{data.archetype.description}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {data.archetype.compliance.frameworks.map(framework => (
               <span
                 key={framework}
-                className="px-2 py-1 bg-stone-100 text-stone-700 text-xs rounded-full"
+                className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full"
               >
                 {framework.replace(/_/g, ' ')}
               </span>
@@ -896,8 +896,8 @@ function SubscriptionStep({ data, updateData }: StepProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-stone-900">Choose Your Plan</h2>
-        <p className="text-stone-500 mt-1">Select the subscription that fits your needs</p>
+        <h2 className="text-xl font-semibold text-gray-900">Choose Your Plan</h2>
+        <p className="text-gray-500 mt-1">Select the subscription that fits your needs</p>
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">
@@ -908,7 +908,7 @@ function SubscriptionStep({ data, updateData }: StepProps) {
             className={`relative p-6 border-2 rounded-xl text-left transition-all ${
               data.subscriptionTier === tier.id
                 ? 'border-primary-500 bg-primary-50'
-                : 'border-stone-200 hover:border-primary-300'
+                : 'border-gray-200 hover:border-primary-300'
             }`}
           >
             {tier.recommended && (
@@ -916,12 +916,12 @@ function SubscriptionStep({ data, updateData }: StepProps) {
                 Recommended
               </span>
             )}
-            <h3 className="text-lg font-semibold text-stone-900">{tier.name}</h3>
-            <p className="text-sm text-stone-500 mt-1">{tier.description}</p>
+            <h3 className="text-lg font-semibold text-gray-900">{tier.name}</h3>
+            <p className="text-sm text-gray-500 mt-1">{tier.description}</p>
             <ul className="mt-4 space-y-2">
               {tier.features.map((feature, idx) => (
-                <li key={idx} className="flex items-center gap-2 text-sm text-stone-600">
-                  <Check className="h-4 w-4 text-stone-900" />
+                <li key={idx} className="flex items-center gap-2 text-sm text-gray-600">
+                  <Check className="h-4 w-4 text-green-500" />
                   {feature}
                 </li>
               ))}
@@ -933,7 +933,7 @@ function SubscriptionStep({ data, updateData }: StepProps) {
       {/* Billing */}
       <div className="grid md:grid-cols-2 gap-6 pt-6 border-t">
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1">Billing Email *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Billing Email *</label>
           <input
             type="email"
             value={data.billingEmail}
@@ -942,12 +942,12 @@ function SubscriptionStep({ data, updateData }: StepProps) {
             className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           />
           {data.billingEmail && !isValidEmail(data.billingEmail) && (
-            <p className="text-xs text-stone-700 mt-1">Enter a valid billing email address.</p>
+            <p className="text-xs text-red-600 mt-1">Enter a valid billing email address.</p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-2">Billing Cycle</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Billing Cycle</label>
           <div className="flex gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -973,7 +973,7 @@ function SubscriptionStep({ data, updateData }: StepProps) {
 
       {/* AI Model Pack */}
       <div className="space-y-3 pt-4 border-t">
-        <h3 className="font-semibold text-stone-900">AI Model Pack</h3>
+        <h3 className="font-semibold text-gray-900">AI Model Pack</h3>
         <div className="grid md:grid-cols-3 gap-3">
           {MODEL_PACKS.map(model => (
             <button
@@ -982,12 +982,12 @@ function SubscriptionStep({ data, updateData }: StepProps) {
               className={`p-4 border rounded-xl text-left transition ${
                 data.modelPack === model.id
                   ? 'border-primary-500 bg-primary-50'
-                  : 'border-stone-200 hover:border-primary-300'
+                  : 'border-gray-200 hover:border-primary-300'
               }`}
             >
-              <p className="font-medium text-stone-900">{model.name}</p>
-              <p className="text-xs text-stone-500 mt-1">{model.description}</p>
-              <p className="text-sm text-stone-700 mt-2">
+              <p className="font-medium text-gray-900">{model.name}</p>
+              <p className="text-xs text-gray-500 mt-1">{model.description}</p>
+              <p className="text-sm text-gray-700 mt-2">
                 {model.monthlyAddon === 0 ? 'Included' : `+$${model.monthlyAddon}/mo`}
               </p>
             </button>
@@ -997,7 +997,7 @@ function SubscriptionStep({ data, updateData }: StepProps) {
 
       {/* Module Add-ons */}
       <div className="space-y-3 pt-4 border-t">
-        <h3 className="font-semibold text-stone-900">Module Add-ons</h3>
+        <h3 className="font-semibold text-gray-900">Module Add-ons</h3>
         <div className="grid md:grid-cols-2 gap-3">
           {MODULE_ADDONS.map(module => {
             const selected = data.selectedModules.includes(module.id);
@@ -1014,12 +1014,12 @@ function SubscriptionStep({ data, updateData }: StepProps) {
                 className={`p-4 border rounded-xl text-left transition ${
                   selected
                     ? 'border-primary-500 bg-primary-50'
-                    : 'border-stone-200 hover:border-primary-300'
+                    : 'border-gray-200 hover:border-primary-300'
                 }`}
               >
-                <p className="font-medium text-stone-900">{module.name}</p>
-                <p className="text-xs text-stone-500 mt-1">{module.description}</p>
-                <p className="text-sm text-stone-700 mt-2">+${module.monthlyAddon}/mo</p>
+                <p className="font-medium text-gray-900">{module.name}</p>
+                <p className="text-xs text-gray-500 mt-1">{module.description}</p>
+                <p className="text-sm text-gray-700 mt-2">+${module.monthlyAddon}/mo</p>
               </button>
             );
           })}
@@ -1029,7 +1029,7 @@ function SubscriptionStep({ data, updateData }: StepProps) {
       {/* Usage Inputs */}
       <div className="grid md:grid-cols-2 gap-6 pt-4 border-t">
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1">Estimated Seats</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Seats</label>
           <input
             type="number"
             min={1}
@@ -1039,7 +1039,7 @@ function SubscriptionStep({ data, updateData }: StepProps) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             Estimated Storage (GB)
           </label>
           <input
@@ -1056,8 +1056,8 @@ function SubscriptionStep({ data, updateData }: StepProps) {
 
       {/* Pricing Summary */}
       {pricing && (
-        <div className="p-4 bg-stone-50 rounded-lg">
-          <div className="text-sm text-stone-600 mb-3 space-y-1">
+        <div className="p-4 bg-gray-50 rounded-lg">
+          <div className="text-sm text-gray-600 mb-3 space-y-1">
             <div className="flex justify-between">
               <span>Base Plan</span>
               <span>${pricingEstimate.basePrice.toLocaleString()}/mo</span>
@@ -1080,20 +1080,20 @@ function SubscriptionStep({ data, updateData }: StepProps) {
             </div>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-stone-600">Estimated Monthly Cost</span>
+            <span className="text-gray-600">Estimated Monthly Cost</span>
             <div className="text-right">
               {pricingEstimate.discount > 0 && (
-                <span className="text-stone-400 line-through text-sm mr-2">
+                <span className="text-gray-400 line-through text-sm mr-2">
                   ${pricingEstimate.preDiscountMonthly.toLocaleString()}/mo
                 </span>
               )}
-              <span className="text-2xl font-bold text-stone-900">
+              <span className="text-2xl font-bold text-gray-900">
                 ${pricingEstimate.finalMonthly.toLocaleString()}
               </span>
-              <span className="text-stone-500">/mo</span>
+              <span className="text-gray-500">/mo</span>
             </div>
           </div>
-          <p className="text-xs text-stone-500 mt-2">
+          <p className="text-xs text-gray-500 mt-2">
             Plus ${pricing.perUserMonthly}/user/month and ${pricing.storagePerGBMonthly}/GB storage
           </p>
         </div>
@@ -1112,20 +1112,20 @@ function ComplianceStep({ data, updateData: _updateData }: StepProps) {
 
   if (!config) {
     return (
-      <div className="text-center py-8 text-stone-500">Please select a business model first</div>
+      <div className="text-center py-8 text-gray-500">Please select a business model first</div>
     );
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-stone-900">Compliance Configuration</h2>
-        <p className="text-stone-500 mt-1">Review and customize your compliance settings</p>
+        <h2 className="text-xl font-semibold text-gray-900">Compliance Configuration</h2>
+        <p className="text-gray-500 mt-1">Review and customize your compliance settings</p>
       </div>
 
       {/* Security Settings */}
-      <div className="bg-stone-50 rounded-xl p-6">
-        <h3 className="font-semibold text-stone-900 flex items-center gap-2 mb-4">
+      <div className="bg-gray-50 rounded-xl p-6">
+        <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
           <Lock className="h-5 w-5" />
           Security Settings
         </h3>
@@ -1156,8 +1156,8 @@ function ComplianceStep({ data, updateData: _updateData }: StepProps) {
       </div>
 
       {/* Electronic Signatures */}
-      <div className="bg-stone-50 rounded-xl p-6">
-        <h3 className="font-semibold text-stone-900 flex items-center gap-2 mb-4">
+      <div className="bg-gray-50 rounded-xl p-6">
+        <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
           <FileText className="h-5 w-5" />
           Electronic Signatures (21 CFR 11)
         </h3>
@@ -1185,8 +1185,8 @@ function ComplianceStep({ data, updateData: _updateData }: StepProps) {
       </div>
 
       {/* Audit Trail */}
-      <div className="bg-stone-50 rounded-xl p-6">
-        <h3 className="font-semibold text-stone-900 flex items-center gap-2 mb-4">
+      <div className="bg-gray-50 rounded-xl p-6">
+        <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
           <Database className="h-5 w-5" />
           Audit Trail
         </h3>
@@ -1214,12 +1214,12 @@ function ComplianceStep({ data, updateData: _updateData }: StepProps) {
       </div>
 
       {/* Compliance Note */}
-      <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg">
-        <div className="flex items-center gap-2 text-stone-800">
+      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+        <div className="flex items-center gap-2 text-amber-800">
           <AlertTriangle className="h-5 w-5" />
           <span className="font-medium">Compliance Note</span>
         </div>
-        <p className="text-sm text-stone-700 mt-2">
+        <p className="text-sm text-amber-700 mt-2">
           These settings are optimized for {archetype?.name}. Changes may affect regulatory
           compliance. Contact support if you need custom configurations.
         </p>
@@ -1241,11 +1241,11 @@ function SettingRow({
 }) {
   return (
     <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
-      <div className="flex items-center gap-2 text-stone-600">
+      <div className="flex items-center gap-2 text-gray-600">
         {icon}
         <span className="text-sm">{label}</span>
       </div>
-      <span className={`text-sm font-medium ${highlight ? 'text-stone-700' : 'text-stone-900'}`}>
+      <span className={`text-sm font-medium ${highlight ? 'text-green-600' : 'text-gray-900'}`}>
         {value}
       </span>
     </div>
@@ -1293,8 +1293,8 @@ function UsersStep({ data, updateData }: StepProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-stone-900">Set Up Initial Users</h2>
-        <p className="text-stone-500 mt-1">Create your administrator and invite team members</p>
+        <h2 className="text-xl font-semibold text-gray-900">Set Up Initial Users</h2>
+        <p className="text-gray-500 mt-1">Create your administrator and invite team members</p>
       </div>
 
       {/* Primary Admin */}
@@ -1306,7 +1306,7 @@ function UsersStep({ data, updateData }: StepProps) {
 
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1">Admin Name *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Admin Name *</label>
             <input
               type="text"
               value={data.adminName}
@@ -1316,7 +1316,7 @@ function UsersStep({ data, updateData }: StepProps) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1">Admin Email *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Admin Email *</label>
             <input
               type="email"
               value={data.adminEmail}
@@ -1325,7 +1325,7 @@ function UsersStep({ data, updateData }: StepProps) {
               className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
             {data.adminEmail && !isValidEmail(data.adminEmail) && (
-              <p className="text-xs text-stone-700 mt-1">Enter a valid admin email address.</p>
+              <p className="text-xs text-red-600 mt-1">Enter a valid admin email address.</p>
             )}
           </div>
         </div>
@@ -1336,8 +1336,8 @@ function UsersStep({ data, updateData }: StepProps) {
       </div>
 
       {/* Invite Team Members */}
-      <div className="bg-stone-50 rounded-xl p-6">
-        <h3 className="font-semibold text-stone-900 flex items-center gap-2 mb-4">
+      <div className="bg-gray-50 rounded-xl p-6">
+        <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
           <Users className="h-5 w-5" />
           Invite Team Members (Optional)
         </h3>
@@ -1368,7 +1368,7 @@ function UsersStep({ data, updateData }: StepProps) {
             Add
           </button>
         </div>
-        {inviteError && <p className="text-xs text-stone-700 mb-3">{inviteError}</p>}
+        {inviteError && <p className="text-xs text-red-600 mb-3">{inviteError}</p>}
 
         {data.initialUsers.length > 0 && (
           <ul className="space-y-2">
@@ -1379,11 +1379,11 @@ function UsersStep({ data, updateData }: StepProps) {
               >
                 <div>
                   <span className="font-medium">{user.email}</span>
-                  <span className="text-stone-500 ml-2">({user.role})</span>
+                  <span className="text-gray-500 ml-2">({user.role})</span>
                 </div>
                 <button
                   onClick={() => removeUser(idx)}
-                  className="p-1 text-stone-400 hover:text-stone-900"
+                  className="p-1 text-gray-400 hover:text-red-500"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -1409,70 +1409,70 @@ function ReviewStep({ data, updateData }: StepProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-stone-900">Review Your Setup</h2>
-        <p className="text-stone-500 mt-1">
+        <h2 className="text-xl font-semibold text-gray-900">Review Your Setup</h2>
+        <p className="text-gray-500 mt-1">
           Please review your configuration before completing setup
         </p>
       </div>
 
       {/* Summary Cards */}
       <div className="grid md:grid-cols-2 gap-4">
-        <div className="bg-stone-50 rounded-xl p-4">
-          <h4 className="font-medium text-stone-700 mb-2 flex items-center gap-2">
+        <div className="bg-gray-50 rounded-xl p-4">
+          <h4 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
             <Building className="h-4 w-4" />
             Organization
           </h4>
-          <p className="font-semibold text-stone-900">{data.organizationName}</p>
-          <p className="text-sm text-stone-500">{data.country}</p>
+          <p className="font-semibold text-gray-900">{data.organizationName}</p>
+          <p className="text-sm text-gray-500">{data.country}</p>
         </div>
 
-        <div className="bg-stone-50 rounded-xl p-4">
-          <h4 className="font-medium text-stone-700 mb-2 flex items-center gap-2">
+        <div className="bg-gray-50 rounded-xl p-4">
+          <h4 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
             <Briefcase className="h-4 w-4" />
             Business Model
           </h4>
-          <p className="font-semibold text-stone-900">{archetype?.name}</p>
-          <p className="text-sm text-stone-500">
+          <p className="font-semibold text-gray-900">{archetype?.name}</p>
+          <p className="text-sm text-gray-500">
             {archetype?.compliance.frameworks.length} compliance frameworks
           </p>
         </div>
 
-        <div className="bg-stone-50 rounded-xl p-4">
-          <h4 className="font-medium text-stone-700 mb-2 flex items-center gap-2">
+        <div className="bg-gray-50 rounded-xl p-4">
+          <h4 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
             Subscription
           </h4>
-          <p className="font-semibold text-stone-900">{tier?.name}</p>
-          <p className="text-sm text-stone-500">
+          <p className="font-semibold text-gray-900">{tier?.name}</p>
+          <p className="text-sm text-gray-500">
             Billed {data.billingCycle === 'annual' ? 'annually' : 'monthly'}
           </p>
-          <p className="text-sm text-stone-500 mt-1">Model: {model.name}</p>
+          <p className="text-sm text-gray-500 mt-1">Model: {model.name}</p>
         </div>
 
-        <div className="bg-stone-50 rounded-xl p-4">
-          <h4 className="font-medium text-stone-700 mb-2 flex items-center gap-2">
+        <div className="bg-gray-50 rounded-xl p-4">
+          <h4 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
             <Users className="h-4 w-4" />
             Initial Users
           </h4>
-          <p className="font-semibold text-stone-900">{1 + data.initialUsers.length} user(s)</p>
-          <p className="text-sm text-stone-500">Admin: {data.adminEmail}</p>
+          <p className="font-semibold text-gray-900">{1 + data.initialUsers.length} user(s)</p>
+          <p className="text-sm text-gray-500">Admin: {data.adminEmail}</p>
         </div>
       </div>
 
-      <div className="bg-stone-100 border border-stone-200 rounded-xl p-4">
-        <h4 className="font-medium text-stone-900 mb-2">Estimated Monthly Total</h4>
-        <p className="text-2xl font-bold text-stone-900">
+      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+        <h4 className="font-medium text-emerald-900 mb-2">Estimated Monthly Total</h4>
+        <p className="text-2xl font-bold text-emerald-900">
           ${pricingEstimate.finalMonthly.toLocaleString()}/mo
         </p>
-        <p className="text-xs text-stone-800 mt-1">
+        <p className="text-xs text-emerald-800 mt-1">
           Includes base plan, {data.estimatedSeats} seat(s), {data.estimatedStorageGB} GB storage,
           {` ${model.name}`}, and {data.selectedModules.length} module add-on(s).
         </p>
       </div>
 
       {/* Compliance Summary */}
-      <div className="bg-stone-100 border border-stone-200 rounded-xl p-4">
-        <h4 className="font-medium text-stone-900 flex items-center gap-2 mb-2">
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <h4 className="font-medium text-blue-900 flex items-center gap-2 mb-2">
           <Shield className="h-5 w-5" />
           Compliance Configuration
         </h4>
@@ -1480,13 +1480,13 @@ function ReviewStep({ data, updateData }: StepProps) {
           {archetype?.compliance.frameworks.map(framework => (
             <span
               key={framework}
-              className="px-2 py-1 bg-stone-100 text-stone-700 text-xs rounded-full"
+              className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full"
             >
               {framework.replace(/_/g, ' ')}
             </span>
           ))}
         </div>
-        <div className="mt-3 grid grid-cols-3 gap-2 text-sm text-stone-800">
+        <div className="mt-3 grid grid-cols-3 gap-2 text-sm text-blue-800">
           <div>✓ Electronic Signatures</div>
           <div>✓ Immutable Audit Trail</div>
           <div>✓ MFA Authentication</div>
@@ -1500,9 +1500,9 @@ function ReviewStep({ data, updateData }: StepProps) {
             type="checkbox"
             checked={data.agreedToTerms}
             onChange={e => updateData({ agreedToTerms: e.target.checked })}
-            className="mt-1 h-4 w-4 text-primary-600 border-stone-300 rounded focus:ring-primary-500"
+            className="mt-1 h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
           />
-          <span className="text-sm text-stone-700">
+          <span className="text-sm text-gray-700">
             I agree to the{' '}
             <a href="#" className="text-primary-600 hover:underline">
               Terms of Service
@@ -1519,9 +1519,9 @@ function ReviewStep({ data, updateData }: StepProps) {
             type="checkbox"
             checked={data.agreedToDataProcessing}
             onChange={e => updateData({ agreedToDataProcessing: e.target.checked })}
-            className="mt-1 h-4 w-4 text-primary-600 border-stone-300 rounded focus:ring-primary-500"
+            className="mt-1 h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
           />
-          <span className="text-sm text-stone-700">
+          <span className="text-sm text-gray-700">
             I agree to the{' '}
             <a href="#" className="text-primary-600 hover:underline">
               Data Processing Agreement

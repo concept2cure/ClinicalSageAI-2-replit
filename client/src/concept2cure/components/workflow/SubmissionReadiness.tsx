@@ -165,7 +165,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
   const { data: indStatus } = useQuery<{ sections: Array<{ code: string; title: string; status: string }> }>({
     queryKey: queryKeys.ind.status(projectId || 'none'),
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/ind-generation/status/${projectId}`);
+      const res = await apiRequest('GET', `/api/ind/status/${projectId}`);
       const json = await res.json();
       return json.data || { sections: [] };
     },
@@ -178,7 +178,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
   const { data: deviceStatus } = useQuery<{ sections: Array<{ code: string; title: string; status: string }> }>({
     queryKey: queryKeys.device.status(upperType, projectId || 'none'),
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/ind-generation/device-status/${upperType}/${projectId}`);
+      const res = await apiRequest('GET', `/api/ind/device-status/${upperType}/${projectId}`);
       const json = await res.json();
       return json.data || { sections: [] };
     },
@@ -230,7 +230,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-stone-50/50">
       <WorkspaceHeader
         title="Submission Readiness"
-        titleIcon={<Send className="w-3.5 h-3.5 text-stone-900" />}
+        titleIcon={<Send className="w-3.5 h-3.5 text-blue-500" />}
         onBack={onBack}
         typeBadge={projectType}
         testId="submission-readiness-header"
@@ -259,13 +259,13 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
                 {/* Status breakdown */}
                 <div className="flex items-center gap-3 mt-1">
                   {readyCount > 0 && (
-                    <span className="text-[11px] text-stone-700 font-medium">{readyCount} ready</span>
+                    <span className="text-[11px] text-emerald-600 font-medium">{readyCount} ready</span>
                   )}
                   {needsWorkCount > 0 && (
-                    <span className="text-[11px] text-stone-600 font-medium">{needsWorkCount} in progress</span>
+                    <span className="text-[11px] text-amber-600 font-medium">{needsWorkCount} in progress</span>
                   )}
                   {blockedCount > 0 && (
-                    <span className="text-[11px] text-stone-700 font-medium">{blockedCount} blocked</span>
+                    <span className="text-[11px] text-red-600 font-medium">{blockedCount} blocked</span>
                   )}
                   {notStartedCount > 0 && (
                     <span className="text-[11px] text-stone-400 font-medium">{notStartedCount} not started</span>
@@ -287,7 +287,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
                   {isRefreshing ? 'Refreshing...' : 'Refresh'}
                 </Button>
                 {readinessPercent >= 100 && (
-                  <span className="text-xs text-stone-700 font-medium">✓ All sections ready</span>
+                  <span className="text-xs text-emerald-600 font-medium">✓ All sections ready</span>
                 )}
                 <Button
                   variant="default"
@@ -334,9 +334,9 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
                           {item.issues.map((issue, i) => (
                             <p key={i} className="text-xs text-stone-500 flex items-start gap-1">
                               {item.status === 'blocked' ? (
-                                <AlertTriangle className="w-3 h-3 mt-0.5 text-stone-400 shrink-0" />
+                                <AlertTriangle className="w-3 h-3 mt-0.5 text-red-400 shrink-0" />
                               ) : item.status === 'needs-work' ? (
-                                <Clock className="w-3 h-3 mt-0.5 text-stone-400 shrink-0" />
+                                <Clock className="w-3 h-3 mt-0.5 text-amber-400 shrink-0" />
                               ) : (
                                 <FileText className="w-3 h-3 mt-0.5 text-stone-300 shrink-0" />
                               )}
@@ -348,7 +348,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {isReady ? (
-                        <span className="flex items-center gap-1 text-xs text-stone-700">
+                        <span className="flex items-center gap-1 text-xs text-emerald-600">
                           <Check className="w-3.5 h-3.5" />
                         </span>
                       ) : (

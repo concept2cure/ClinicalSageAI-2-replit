@@ -289,11 +289,11 @@ function runValidation(artifacts: Artifact[], submissionType?: string): ModuleVa
 function StatusIcon({ status }: { status: CheckStatus }) {
   switch (status) {
     case 'pass':
-      return <CheckCircle className="w-4 h-4 text-stone-900 shrink-0" />;
+      return <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />;
     case 'fail':
-      return <XCircle className="w-4 h-4 text-stone-900 shrink-0" />;
+      return <XCircle className="w-4 h-4 text-red-500 shrink-0" />;
     case 'warning':
-      return <AlertTriangle className="w-4 h-4 text-stone-900 shrink-0" />;
+      return <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />;
     case 'not-applicable':
       return <div className="w-4 h-4 rounded-full bg-stone-200 shrink-0" />;
     default:
@@ -369,9 +369,9 @@ export function SubmissionReadinessValidator({
   }, [stats]);
 
   const readinessColor =
-    readinessScore >= 80 ? 'text-stone-700' :
-    readinessScore >= 50 ? 'text-stone-600' :
-    'text-stone-700';
+    readinessScore >= 80 ? 'text-emerald-600' :
+    readinessScore >= 50 ? 'text-amber-600' :
+    'text-red-600';
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -379,7 +379,7 @@ export function SubmissionReadinessValidator({
       <div className="px-4 py-3 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-stone-600" />
+            <ShieldCheck className="w-5 h-5 text-blue-600" />
             <div>
               <h2 className="text-sm font-semibold text-stone-900">Submission Readiness</h2>
               <p className="text-[10px] text-stone-500">
@@ -390,7 +390,7 @@ export function SubmissionReadinessValidator({
           <button
             onClick={handleRevalidate}
             disabled={running}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-stone-600 bg-white border border-stone-200 rounded-lg hover:bg-stone-100 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-blue-600 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50"
           >
             <RefreshCw className={cn('w-3 h-3', running && 'animate-spin')} />
             {running ? 'Validating...' : 'Re-validate'}
@@ -403,9 +403,9 @@ export function SubmissionReadinessValidator({
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-200',
-                readinessScore >= 80 ? 'bg-stone-900' :
-                readinessScore >= 50 ? 'bg-stone-900' :
-                'bg-stone-900',
+                readinessScore >= 80 ? 'bg-emerald-500' :
+                readinessScore >= 50 ? 'bg-amber-500' :
+                'bg-red-500',
               )}
               style={{ width: `${readinessScore}%` }}
             />
@@ -418,15 +418,15 @@ export function SubmissionReadinessValidator({
         {/* Quick stats */}
         <div className="grid grid-cols-4 gap-2 mt-2">
           <div className="text-center">
-            <div className="text-lg font-semibold text-stone-700 tabular-nums">{stats.pass}</div>
+            <div className="text-lg font-semibold text-emerald-600 tabular-nums">{stats.pass}</div>
             <div className="text-[10px] text-stone-400">Pass</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-semibold text-stone-700 tabular-nums">{stats.fail}</div>
+            <div className="text-lg font-semibold text-red-600 tabular-nums">{stats.fail}</div>
             <div className="text-[10px] text-stone-400">Fail</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-semibold text-stone-600 tabular-nums">{stats.warning}</div>
+            <div className="text-lg font-semibold text-amber-600 tabular-nums">{stats.warning}</div>
             <div className="text-[10px] text-stone-400">Warn</div>
           </div>
           <div className="text-center">
@@ -458,17 +458,17 @@ export function SubmissionReadinessValidator({
                 <span className="text-xs font-semibold text-stone-700 flex-1">{mod.label}</span>
                 <div className="flex items-center gap-1.5 text-[10px]">
                   {modFail > 0 && (
-                    <span className="px-1.5 py-0.5 rounded bg-stone-100 text-stone-800 font-medium">
+                    <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-medium">
                       {modFail} fail
                     </span>
                   )}
                   {modWarn > 0 && (
-                    <span className="px-1.5 py-0.5 rounded bg-stone-100 text-stone-700 font-medium">
+                    <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">
                       {modWarn} warn
                     </span>
                   )}
                   {modFail === 0 && modWarn === 0 && (
-                    <span className="px-1.5 py-0.5 rounded bg-stone-100 text-stone-800 font-medium">
+                    <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium">
                       {modPass} pass
                     </span>
                   )}
@@ -483,8 +483,8 @@ export function SubmissionReadinessValidator({
                       key={check.id}
                       className={cn(
                         'flex items-start gap-2 px-3 py-2 rounded-lg text-xs',
-                        check.status === 'fail' && 'bg-stone-100',
-                        check.status === 'warning' && 'bg-stone-100',
+                        check.status === 'fail' && 'bg-red-50',
+                        check.status === 'warning' && 'bg-amber-50',
                         check.status === 'pass' && 'bg-stone-50',
                         check.status === 'not-applicable' && 'bg-stone-50 opacity-60',
                       )}
@@ -499,7 +499,7 @@ export function SubmissionReadinessValidator({
                       </div>
                       {check.autoFixable && (
                         <button
-                          className="shrink-0 px-2 py-1 text-[10px] font-medium text-stone-600 bg-stone-100 rounded hover:bg-stone-200 transition-colors duration-150"
+                          className="shrink-0 px-2 py-1 text-[10px] font-medium text-violet-600 bg-violet-50 rounded hover:bg-violet-100 transition-colors duration-150"
                           onClick={() => {
                             // Extract artifact ID from check.id
                             const artifactId = check.id.replace(/-(?:wordcount|placeholder|headings|status)$/, '');

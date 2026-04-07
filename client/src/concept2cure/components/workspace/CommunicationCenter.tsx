@@ -63,13 +63,13 @@ export function CommunicationCenter({ projectId, projectName, submissionType = '
               Operational control room for tasks, collaboration, correspondence, final-mile submission, and C2C PublishOps.
             </p>
             {dataUnavailable && (
-              <p className="text-[11px] text-stone-700" role="alert">Live communication-center feeds are currently unavailable.</p>
+              <p className="text-[11px] text-amber-700" role="alert">Live communication-center feeds are currently unavailable.</p>
             )}
           </div>
           <div className="flex items-center gap-2 text-xs">
-            <Badge variant="outline" className="border-stone-200 text-stone-700">{openEvents} unresolved agency events</Badge>
-            <Badge variant="outline" className="border-stone-200 text-stone-700">{responseDueSoon} response items due</Badge>
-            <Badge variant="outline" className="border-stone-200 text-stone-800">Authority-aware lane active</Badge>
+            <Badge variant="outline" className="border-blue-200 text-blue-700">{openEvents} unresolved agency events</Badge>
+            <Badge variant="outline" className="border-amber-200 text-amber-700">{responseDueSoon} response items due</Badge>
+            <Badge variant="outline" className="border-emerald-200 text-emerald-700">Authority-aware lane active</Badge>
           </div>
         </div>
       </div>
@@ -86,9 +86,9 @@ export function CommunicationCenter({ projectId, projectName, submissionType = '
 
         <TabsContent value="overview" className="mt-3">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <OverviewCard icon={<Workflow className="h-4 w-4 text-stone-600" />} title="Operational Graph" body="Tasks, threads, and correspondence map into one project timeline with linked artifacts and submissions." />
-            <OverviewCard icon={<BellRing className="h-4 w-4 text-stone-600" />} title="Notification Routing" body="Assignments, approvals, validation failures, acknowledgments, and PublishOps changes route to source objects." />
-            <OverviewCard icon={<ShieldCheck className="h-4 w-4 text-stone-700" />} title="Visibility and Audit" body={`Visibility tiers in use: ${visibilityTierLabel}. Collaboration and agency events are auditable.`} />
+            <OverviewCard icon={<Workflow className="h-4 w-4 text-blue-600" />} title="Operational Graph" body="Tasks, threads, and correspondence map into one project timeline with linked artifacts and submissions." />
+            <OverviewCard icon={<BellRing className="h-4 w-4 text-amber-600" />} title="Notification Routing" body="Assignments, approvals, validation failures, acknowledgments, and PublishOps changes route to source objects." />
+            <OverviewCard icon={<ShieldCheck className="h-4 w-4 text-emerald-600" />} title="Visibility and Audit" body={`Visibility tiers in use: ${visibilityTierLabel}. Collaboration and agency events are auditable.`} />
           </div>
         </TabsContent>
 
@@ -181,9 +181,9 @@ export function CommunicationCenter({ projectId, projectName, submissionType = '
         <TabsContent value="publishops" className="mt-3">
           <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
             <div className="flex items-center gap-2">
-              <Send className="h-4 w-4 text-stone-600" />
+              <Send className="h-4 w-4 text-indigo-600" />
               <h3 className="text-sm font-semibold text-stone-900">C2C PublishOps</h3>
-              <Badge className="bg-stone-100 text-stone-700 border-stone-200" variant="outline">Managed service lane</Badge>
+              <Badge className="bg-indigo-50 text-indigo-700 border-indigo-200" variant="outline">Managed service lane</Badge>
             </div>
             <p className="text-xs text-stone-600">
               Entitlement-aware service queue for technical publishing, compile, validation remediation, dispatch, acknowledgment monitoring, and response support.
@@ -254,7 +254,7 @@ function CorrespondenceRow({ event }: { event: AgencyCommunicationEvent }) {
         Linked submission: {event.linkedSubmissionId ?? '—'} · Package: {event.linkedPackageId ?? '—'}
       </p>
       {event.extractedIssues.length > 0 && (
-        <ul className="mt-1.5 list-disc pl-4 text-xs text-stone-700">
+        <ul className="mt-1.5 list-disc pl-4 text-xs text-amber-700">
           {event.extractedIssues.map(issue => (
             <li key={issue}>{issue}</li>
           ))}

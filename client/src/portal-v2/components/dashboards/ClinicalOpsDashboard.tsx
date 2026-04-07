@@ -56,17 +56,17 @@ const StudyOverview: React.FC<StudyOverviewProps> = ({ studies }) => {
   const getStatusConfig = (status: Study['status']) => {
     switch (status) {
       case 'recruiting':
-        return { label: 'Recruiting', color: 'bg-stone-100 text-stone-800', icon: UserPlus };
+        return { label: 'Recruiting', color: 'bg-green-100 text-green-800', icon: UserPlus };
       case 'active':
-        return { label: 'Active', color: 'bg-stone-100 text-stone-800', icon: Activity };
+        return { label: 'Active', color: 'bg-blue-100 text-blue-800', icon: Activity };
       case 'follow_up':
-        return { label: 'Follow-up', color: 'bg-stone-100 text-stone-800', icon: Clock };
+        return { label: 'Follow-up', color: 'bg-purple-100 text-purple-800', icon: Clock };
       case 'completed':
-        return { label: 'Completed', color: 'bg-stone-100 text-stone-800', icon: CheckCircle2 };
+        return { label: 'Completed', color: 'bg-gray-100 text-gray-800', icon: CheckCircle2 };
       case 'paused':
-        return { label: 'Paused', color: 'bg-stone-100 text-stone-800', icon: AlertTriangle };
+        return { label: 'Paused', color: 'bg-amber-100 text-amber-800', icon: AlertTriangle };
       default:
-        return { label: status, color: 'bg-stone-100', icon: Activity };
+        return { label: status, color: 'bg-gray-100', icon: Activity };
     }
   };
 
@@ -76,7 +76,7 @@ const StudyOverview: React.FC<StudyOverviewProps> = ({ studies }) => {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Stethoscope className="h-5 w-5 text-stone-600" />
+              <Stethoscope className="h-5 w-5 text-blue-600" />
               Active Studies
             </CardTitle>
             <CardDescription>Clinical trial portfolio overview</CardDescription>
@@ -168,7 +168,7 @@ const EnrollmentTracker: React.FC<EnrollmentTrackerProps> = ({ data, currentRate
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <UserPlus className="h-5 w-5 text-stone-600" />
+          <UserPlus className="h-5 w-5 text-blue-600" />
           Enrollment Tracking
         </CardTitle>
         <CardDescription>Monthly enrollment performance</CardDescription>
@@ -177,7 +177,7 @@ const EnrollmentTracker: React.FC<EnrollmentTrackerProps> = ({ data, currentRate
         <div className="space-y-4">
           {/* Rate Summary */}
           <div
-            className={`rounded-lg p-4 ${isOnTrack ? 'bg-stone-100 border border-stone-200' : 'bg-stone-100 border border-stone-200'}`}
+            className={`rounded-lg p-4 ${isOnTrack ? 'bg-green-50 border border-green-200' : 'bg-amber-50 border border-amber-200'}`}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -212,7 +212,7 @@ const EnrollmentTracker: React.FC<EnrollmentTrackerProps> = ({ data, currentRate
                 <div className="flex items-center gap-4">
                   <div className="text-sm">
                     <span
-                      className={month.actual >= month.target ? 'text-stone-700' : 'text-stone-600'}
+                      className={month.actual >= month.target ? 'text-green-600' : 'text-amber-600'}
                     >
                       {month.actual}
                     </span>
@@ -222,9 +222,9 @@ const EnrollmentTracker: React.FC<EnrollmentTrackerProps> = ({ data, currentRate
                     {month.screenFailure} SF
                   </div>
                   {month.actual >= month.target ? (
-                    <CheckCircle2 className="h-4 w-4 text-stone-900" />
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
                   ) : (
-                    <AlertTriangle className="h-4 w-4 text-stone-900" />
+                    <AlertTriangle className="h-4 w-4 text-amber-500" />
                   )}
                 </div>
               </div>
@@ -259,15 +259,15 @@ const SitePerformance: React.FC<SitePerformanceProps> = ({ sites }) => {
   const getStatusConfig = (status: Site['status']) => {
     switch (status) {
       case 'high_performer':
-        return { label: 'High Performer', color: 'text-stone-700', bg: 'bg-stone-100' };
+        return { label: 'High Performer', color: 'text-green-600', bg: 'bg-green-50' };
       case 'on_track':
-        return { label: 'On Track', color: 'text-stone-600', bg: 'bg-stone-100' };
+        return { label: 'On Track', color: 'text-blue-600', bg: 'bg-blue-50' };
       case 'needs_attention':
-        return { label: 'Needs Attention', color: 'text-stone-600', bg: 'bg-stone-100' };
+        return { label: 'Needs Attention', color: 'text-amber-600', bg: 'bg-amber-50' };
       case 'inactive':
-        return { label: 'Inactive', color: 'text-stone-600', bg: 'bg-stone-50' };
+        return { label: 'Inactive', color: 'text-gray-600', bg: 'bg-gray-50' };
       default:
-        return { label: status, color: 'text-stone-600', bg: 'bg-stone-50' };
+        return { label: status, color: 'text-gray-600', bg: 'bg-gray-50' };
     }
   };
 
@@ -283,7 +283,7 @@ const SitePerformance: React.FC<SitePerformanceProps> = ({ sites }) => {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-stone-600" />
+              <Building2 className="h-5 w-5 text-blue-600" />
               Site Performance
             </CardTitle>
             <CardDescription>Enrollment by investigator site</CardDescription>
@@ -303,7 +303,7 @@ const SitePerformance: React.FC<SitePerformanceProps> = ({ sites }) => {
             return (
               <div
                 key={site.id}
-                className="flex items-center justify-between rounded-lg border p-3 hover:bg-stone-50 cursor-pointer"
+                className="flex items-center justify-between rounded-lg border p-3 hover:bg-gray-50 cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -330,21 +330,21 @@ const SitePerformance: React.FC<SitePerformanceProps> = ({ sites }) => {
         </div>
 
         {/* Summary */}
-        <div className="mt-4 grid grid-cols-3 gap-2 p-3 bg-stone-50 rounded-lg">
+        <div className="mt-4 grid grid-cols-3 gap-2 p-3 bg-gray-50 rounded-lg">
           <div className="text-center">
-            <div className="text-lg font-bold text-stone-700">
+            <div className="text-lg font-bold text-green-600">
               {sites.filter(s => s.status === 'high_performer').length}
             </div>
             <div className="text-xs text-muted-foreground">High Performers</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-stone-600">
+            <div className="text-lg font-bold text-blue-600">
               {sites.filter(s => s.status === 'on_track').length}
             </div>
             <div className="text-xs text-muted-foreground">On Track</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-stone-600">
+            <div className="text-lg font-bold text-amber-600">
               {sites.filter(s => s.status === 'needs_attention').length}
             </div>
             <div className="text-xs text-muted-foreground">Need Attention</div>
@@ -376,15 +376,15 @@ const UpcomingMilestones: React.FC<UpcomingMilestonesProps> = ({ milestones }) =
   const getStatusConfig = (status: Milestone['status']) => {
     switch (status) {
       case 'pending':
-        return { color: 'bg-stone-100 text-stone-800' };
+        return { color: 'bg-gray-100 text-gray-800' };
       case 'in_progress':
-        return { color: 'bg-stone-100 text-stone-800' };
+        return { color: 'bg-blue-100 text-blue-800' };
       case 'completed':
-        return { color: 'bg-stone-100 text-stone-800' };
+        return { color: 'bg-green-100 text-green-800' };
       case 'at_risk':
-        return { color: 'bg-stone-100 text-stone-800' };
+        return { color: 'bg-red-100 text-red-800' };
       default:
-        return { color: 'bg-stone-100' };
+        return { color: 'bg-gray-100' };
     }
   };
 
@@ -405,7 +405,7 @@ const UpcomingMilestones: React.FC<UpcomingMilestonesProps> = ({ milestones }) =
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-stone-600" />
+          <Target className="h-5 w-5 text-blue-600" />
           Upcoming Milestones
         </CardTitle>
         <CardDescription>Key study milestones and deadlines</CardDescription>
@@ -423,7 +423,7 @@ const UpcomingMilestones: React.FC<UpcomingMilestonesProps> = ({ milestones }) =
               return (
                 <div
                   key={milestone.id}
-                  className="flex items-center justify-between rounded-lg border p-3 hover:bg-stone-50 cursor-pointer"
+                  className="flex items-center justify-between rounded-lg border p-3 hover:bg-gray-50 cursor-pointer"
                 >
                   <div className="space-y-1">
                     <div className="font-medium text-sm">{milestone.name}</div>
@@ -436,7 +436,7 @@ const UpcomingMilestones: React.FC<UpcomingMilestonesProps> = ({ milestones }) =
                       {milestone.status.replace('_', ' ')}
                     </Badge>
                     <span
-                      className={`text-sm font-medium ${isUrgent ? 'text-stone-700' : 'text-muted-foreground'}`}
+                      className={`text-sm font-medium ${isUrgent ? 'text-red-600' : 'text-muted-foreground'}`}
                     >
                       {formatDate(milestone.date)}
                     </span>
@@ -622,11 +622,11 @@ export const ClinicalOpsDashboard: React.FC = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Total Enrolled</p>
                 <p className="text-2xl font-bold">1,054</p>
-                <p className="text-xs text-stone-700 flex items-center gap-1 mt-1">
+                <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
                   <TrendingUp className="h-3 w-3" /> +12% vs target
                 </p>
               </div>
-              <Users className="h-8 w-8 text-stone-900 opacity-50" />
+              <Users className="h-8 w-8 text-blue-500 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -638,7 +638,7 @@ export const ClinicalOpsDashboard: React.FC = () => {
                 <p className="text-2xl font-bold">108</p>
                 <p className="text-xs text-muted-foreground mt-1">across 3 studies</p>
               </div>
-              <Building2 className="h-8 w-8 text-stone-900 opacity-50" />
+              <Building2 className="h-8 w-8 text-green-500 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -648,11 +648,11 @@ export const ClinicalOpsDashboard: React.FC = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Screen Failure Rate</p>
                 <p className="text-2xl font-bold">18%</p>
-                <p className="text-xs text-stone-700 flex items-center gap-1 mt-1">
+                <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
                   <TrendingDown className="h-3 w-3" /> -3% vs last month
                 </p>
               </div>
-              <AlertTriangle className="h-8 w-8 text-stone-900 opacity-50" />
+              <AlertTriangle className="h-8 w-8 text-amber-500 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -664,7 +664,7 @@ export const ClinicalOpsDashboard: React.FC = () => {
                 <p className="text-2xl font-bold">142</p>
                 <p className="text-xs text-muted-foreground mt-1">for MX-201-301</p>
               </div>
-              <Calendar className="h-8 w-8 text-stone-900 opacity-50" />
+              <Calendar className="h-8 w-8 text-purple-500 opacity-50" />
             </div>
           </CardContent>
         </Card>

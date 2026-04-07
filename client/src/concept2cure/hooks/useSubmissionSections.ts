@@ -10,7 +10,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import type { Module3BuildStateResponse } from './useModule3BuildState';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -129,8 +128,7 @@ function enrichWithArtifactStatus(sections: SectionNode[], artifacts: ArtifactSu
 
 export function useSubmissionSections(
   projectId: string | undefined,
-  submissionType: string | undefined,
-  module3BuildState?: Module3BuildStateResponse | null
+  submissionType: string | undefined
 ) {
   // Fetch IND sections from API (only for IND/NDA/BLA/MAA pharma types)
   const isPharma = ['IND', 'NDA', 'BLA', 'MAA'].includes(submissionType || '');
@@ -191,16 +189,11 @@ export function useSubmissionSections(
 
   // Enrich with live artifact status
   const artifacts = Array.isArray(artifactsQuery.data) ? artifactsQuery.data : [];
-  let sections = baseSections.length > 0
+  const sections = baseSections.length > 0
     ? enrichWithArtifactStatus(baseSections, artifacts)
     : baseSections;
 
-  // Enrich Module 3 sections with build-state pipeline status
-  if (module3BuildState?.sections) {
-    sections = enrichWithModule3BuildState(sections, module3BuildState);
-  }
-
-  // Calculate summary stats — include Module 3 build-state-aware statuses
+  // Calculate summary stats
   const flatSections = flattenSections(sections);
   const totalRequired = flatSections.filter(s => s.required).length;
   const completedRequired = flatSections.filter(s => s.required && (s.status === 'approved' || s.status === 'locked')).length;
@@ -216,58 +209,6 @@ export function useSubmissionSections(
     readinessPercent,
     submissionType: submissionType || null,
   };
-}
-
-// ─── Module 3 build-state enrichment ────────────────────────────────────────
-
-function enrichWithModule3BuildState(
-  sections: SectionNode[],
-  m3State: Module3BuildStateResponse
-): SectionNode[] {
-  const m3Map = new Map(m3State.sections.map(s => [s.sectionKey, s]));
-
-  function enrich(nodes: SectionNode[]): SectionNode[] {
-    return nodes.map(node => {
-      const m3 = m3Map.get(node.code);
-      if (m3) {
-        // Module 3 build state overrides artifact-only status when it provides
-        // more specific pipeline information
-        let status = node.status;
-        switch (m3.buildState) {
-          case 'locked': status = 'locked'; break;
-          case 'approved': status = 'approved'; break;
-          case 'review': status = 'review'; break;
-          case 'draft_artifact_created':
-          case 'compiled':
-          case 'extraction_complete':
-            // Upgrade empty → draft if M3 pipeline has produced content
-            if (status === 'empty') status = 'draft';
-            break;
-          case 'sources_uploaded':
-          case 'extraction_pending':
-            // Sources exist but no draft yet — show as drafting
-            if (status === 'empty') status = 'drafting';
-            break;
-          case 'contradiction_flagged':
-          case 'stale':
-            // Keep existing status but don't upgrade to approved
-            if (status === 'empty') status = 'drafting';
-            break;
-        }
-        return {
-          ...node,
-          status,
-          children: node.children ? enrich(node.children) : undefined,
-        };
-      }
-      return {
-        ...node,
-        children: node.children ? enrich(node.children) : undefined,
-      };
-    });
-  }
-
-  return enrich(sections);
 }
 
 // ─── Helper: flatten nested tree ─────────────────────────────────────────────

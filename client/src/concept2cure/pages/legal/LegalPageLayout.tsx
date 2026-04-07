@@ -23,7 +23,7 @@ const LegalPageLayout: React.FC<LegalPageLayoutProps> = ({ title, lastUpdated, c
           </div>
           <span
             className="text-lg font-semibold text-stone-900"
-            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}
+            style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
           >
             Concept2Cure
           </span>
@@ -31,7 +31,7 @@ const LegalPageLayout: React.FC<LegalPageLayoutProps> = ({ title, lastUpdated, c
         <a
           href="/concept2cure"
           className="text-sm text-stone-500 hover:text-stone-700 transition-colors"
-          style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}
+          style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
         >
           Back to Platform
         </a>
@@ -46,24 +46,24 @@ const LegalPageLayout: React.FC<LegalPageLayoutProps> = ({ title, lastUpdated, c
           <div className="flex items-center gap-2 mb-4">
             <div
               className="w-1 h-8 rounded-full"
-              style={{ background: 'linear-gradient(180deg, #44403c, #292524)' }}
+              style={{ background: 'linear-gradient(180deg, #d97757, #c15f3c)' }}
             />
             <h1
               className="text-base font-semibold text-stone-900"
-              style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}
+              style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
             >
               {title}
             </h1>
           </div>
           <p
             className="text-sm text-stone-500"
-            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}
+            style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
           >
             Last updated: {lastUpdated}
           </p>
           <p
             className="text-sm text-stone-500 mt-1"
-            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}
+            style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
           >
             Concept2Cure, Inc. — AI-Powered Regulatory Intelligence Platform
           </p>
@@ -82,7 +82,7 @@ const LegalPageLayout: React.FC<LegalPageLayoutProps> = ({ title, lastUpdated, c
               <div>
                 <p
                   className="text-xs font-medium text-stone-700"
-                  style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}
+                  style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
                 >
                   Concept2Cure, Inc.
                 </p>
@@ -113,7 +113,7 @@ const LegalPageLayout: React.FC<LegalPageLayoutProps> = ({ title, lastUpdated, c
             key={link.href}
             href={link.href}
             className="text-xs text-stone-400 hover:text-stone-600 transition-colors"
-            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}
+            style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
           >
             {link.label}
           </a>

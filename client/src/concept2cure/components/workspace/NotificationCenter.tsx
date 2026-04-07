@@ -58,22 +58,22 @@ function formatTimeAgo(dateStr: string): string {
 function getNotifIcon(type: string) {
   switch (type) {
     case 'assignment':
-      return <ListTodo className="w-3 h-3 text-stone-900" />;
+      return <ListTodo className="w-3 h-3 text-blue-500" />;
     case 'due_soon':
-      return <Clock className="w-3 h-3 text-stone-900" />;
+      return <Clock className="w-3 h-3 text-amber-500" />;
     case 'overdue':
-      return <AlertTriangle className="w-3 h-3 text-stone-900" />;
+      return <AlertTriangle className="w-3 h-3 text-red-500" />;
     case 'approval_needed':
-      return <CheckCircle2 className="w-3 h-3 text-stone-900" />;
+      return <CheckCircle2 className="w-3 h-3 text-violet-500" />;
     case 'changes_requested':
-      return <AlertTriangle className="w-3 h-3 text-stone-600" />;
+      return <AlertTriangle className="w-3 h-3 text-amber-600" />;
     case 'thread_reply':
-      return <MessageSquare className="w-3 h-3 text-stone-900" />;
+      return <MessageSquare className="w-3 h-3 text-blue-500" />;
     case 'thread_resolved':
     case 'task_resolved':
-      return <CheckCircle2 className="w-3 h-3 text-stone-900" />;
+      return <CheckCircle2 className="w-3 h-3 text-emerald-500" />;
     case 'escalation':
-      return <AlertTriangle className="w-3 h-3 text-stone-700" />;
+      return <AlertTriangle className="w-3 h-3 text-red-600" />;
     default:
       return <Bell className="w-3 h-3 text-stone-400" />;
   }
@@ -188,13 +188,13 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
         onClick={() => setOpen(!open)}
         className={cn(
           'p-1 rounded relative',
-          open ? 'text-stone-600 bg-stone-100' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'
+          open ? 'text-blue-600 bg-blue-50' : 'text-stone-400 hover:text-blue-600 hover:bg-blue-50'
         )}
         title="Notifications"
       >
         <Bell className="w-3 h-3" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[12px] h-3 px-0.5 bg-stone-900 text-white text-[7px] font-semibold rounded-full flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 min-w-[12px] h-3 px-0.5 bg-red-500 text-white text-[7px] font-semibold rounded-full flex items-center justify-center">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -210,7 +210,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="text-xs text-stone-600 hover:text-stone-700 flex items-center gap-0.5"
+                  className="text-xs text-blue-600 hover:text-stone-700 flex items-center gap-0.5"
                   title="Mark all read"
                 >
                   <CheckCheck className="w-3 h-3" />
@@ -228,7 +228,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                 className={cn(
                   'flex-1 py-1 text-xs font-medium capitalize',
                   tab === t
-                    ? 'text-stone-600 border-b-2 border-stone-800'
+                    ? 'text-blue-600 border-b-2 border-stone-800'
                     : 'text-stone-400 hover:text-stone-600'
                 )}
               >
@@ -251,7 +251,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                   key={n.notificationId}
                   className={cn(
                     'flex items-start gap-2 px-3 py-2 border-b border-stone-50 hover:bg-stone-50 transition-colors group',
-                    n.status === 'unread' && 'bg-stone-100/30'
+                    n.status === 'unread' && 'bg-blue-50/30'
                   )}
                 >
                   <div className="mt-0.5 shrink-0">{getNotifIcon(n.notificationType)}</div>
@@ -261,17 +261,17 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span className="text-xs text-stone-400">{formatTimeAgo(n.createdAt)}</span>
                       {n.severity === 'critical' && (
-                        <span className="text-[7px] bg-stone-100 text-stone-800 px-1 rounded font-medium">
+                        <span className="text-[7px] bg-red-100 text-red-700 px-1 rounded font-medium">
                           {tailoring.severityLabels.critical?.toUpperCase() || 'CRITICAL'}
                         </span>
                       )}
                       {n.severity === 'warning' && (
-                        <span className="text-[7px] bg-stone-100 text-stone-700 px-1 rounded font-medium">
+                        <span className="text-[7px] bg-amber-100 text-amber-700 px-1 rounded font-medium">
                           {tailoring.severityLabels.warning?.toUpperCase() || 'WARNING'}
                         </span>
                       )}
                       {(n.escalationLevel ?? 0) > 0 && (
-                        <span className="text-[7px] bg-stone-100 text-stone-800 px-1 rounded font-medium">
+                        <span className="text-[7px] bg-red-100 text-red-700 px-1 rounded font-medium">
                           L{n.escalationLevel}
                         </span>
                       )}
@@ -284,7 +284,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                           e.stopPropagation();
                           markRead(n.notificationId);
                         }}
-                        className="p-1.5 text-stone-400 hover:text-stone-600 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
+                        className="p-1.5 text-stone-400 hover:text-blue-600 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
                         title="Mark read"
                         aria-label="Mark as read"
                       >
@@ -296,7 +296,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                         e.stopPropagation();
                         dismiss(n.notificationId);
                       }}
-                      className="p-1.5 text-stone-400 hover:text-stone-900 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
+                      className="p-1.5 text-stone-400 hover:text-red-500 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
                       title="Dismiss"
                       aria-label="Dismiss notification"
                     >

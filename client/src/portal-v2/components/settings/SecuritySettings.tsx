@@ -124,7 +124,7 @@ export function SecuritySettings() {
   if (healthLoading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="text-sm text-stone-400">Loading compliance health data...</div>
+        <div className="text-sm text-gray-400">Loading compliance health data...</div>
       </div>
     );
   }
@@ -132,8 +132,8 @@ export function SecuritySettings() {
   return (
     <div className="flex h-full">
       {/* Sidebar Navigation */}
-      <div className="w-64 border-r bg-stone-50 p-4">
-        <h2 className="text-lg font-semibold text-stone-900 mb-4 flex items-center gap-2">
+      <div className="w-64 border-r bg-gray-50 p-4">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <Settings className="h-5 w-5" />
           Security Settings
         </h2>
@@ -146,7 +146,7 @@ export function SecuritySettings() {
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
                 activeSection === section.id
                   ? 'bg-primary-100 text-primary-700'
-                  : 'text-stone-600 hover:bg-stone-100'
+                  : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
               {section.icon}
@@ -158,11 +158,11 @@ export function SecuritySettings() {
         {/* Quick Health Score */}
         <div className="mt-6 p-4 bg-white rounded-xl border">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-stone-600">Compliance Score</span>
+            <span className="text-sm font-medium text-gray-600">Compliance Score</span>
             <ComplianceBadge category={health.category} />
           </div>
-          <div className="text-3xl font-bold text-stone-900">{health.overallScore}%</div>
-          <div className="mt-2 h-2 bg-stone-200 rounded-full overflow-hidden">
+          <div className="text-3xl font-bold text-gray-900">{health.overallScore}%</div>
+          <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all"
               style={{
@@ -176,7 +176,7 @@ export function SecuritySettings() {
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="mb-4 rounded-lg border border-stone-200 bg-stone-100 p-3 text-sm text-stone-900">
+        <div className="mb-4 rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-900">
           Need user-level controls? Use the{' '}
           <button
             onClick={() => setLocation('/client-portal/profile')}
@@ -276,8 +276,8 @@ function ComplianceOverview({ health }: { health: ComplianceHealth }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-stone-900">Compliance Overview</h1>
-        <p className="text-stone-500 mt-1">
+        <h1 className="text-2xl font-bold text-gray-900">Compliance Overview</h1>
+        <p className="text-gray-500 mt-1">
           Monitor your organization's regulatory compliance health
         </p>
       </div>
@@ -298,8 +298,8 @@ function ComplianceOverview({ health }: { health: ComplianceHealth }) {
                 style={{ color: COMPLIANCE_CATEGORY_CONFIG[health.category].color }}
               />
               <div>
-                <h2 className="text-xl font-semibold text-stone-900">Overall Compliance Score</h2>
-                <p className="text-stone-600">21 CFR Part 11 + EU Annex 11 + GCP</p>
+                <h2 className="text-xl font-semibold text-gray-900">Overall Compliance Score</h2>
+                <p className="text-gray-600">21 CFR Part 11 + EU Annex 11 + GCP</p>
               </div>
             </div>
           </div>
@@ -323,10 +323,10 @@ function ComplianceOverview({ health }: { health: ComplianceHealth }) {
           return (
             <div
               key={metric.key}
-              className="p-4 bg-white border rounded-xl hover:shadow-sm transition-shadow"
+              className="p-4 bg-white border rounded-xl hover:shadow-md transition-shadow"
             >
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2 text-stone-600">
+                <div className="flex items-center gap-2 text-gray-600">
                   {metric.icon}
                   <span className="text-sm font-medium">{metric.label}</span>
                 </div>
@@ -337,7 +337,7 @@ function ComplianceOverview({ health }: { health: ComplianceHealth }) {
                   {value}%
                 </span>
               </div>
-              <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all"
                   style={{
@@ -354,9 +354,9 @@ function ComplianceOverview({ health }: { health: ComplianceHealth }) {
       {/* Findings */}
       {health.findings.length > 0 && (
         <div className="bg-white border rounded-xl overflow-hidden">
-          <div className="px-4 py-3 bg-stone-100 border-b border-stone-200 flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-stone-600" />
-            <h3 className="font-semibold text-stone-900">
+          <div className="px-4 py-3 bg-amber-50 border-b border-amber-200 flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-amber-600" />
+            <h3 className="font-semibold text-amber-900">
               Compliance Findings ({health.findings.length})
             </h3>
           </div>
@@ -369,21 +369,21 @@ function ComplianceOverview({ health }: { health: ComplianceHealth }) {
                       <span
                         className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                           finding.severity === 'critical'
-                            ? 'bg-stone-100 text-stone-800'
+                            ? 'bg-red-100 text-red-700'
                             : finding.severity === 'major'
-                              ? 'bg-stone-100 text-stone-700'
-                              : 'bg-stone-100 text-stone-700'
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-blue-100 text-blue-700'
                         }`}
                       >
                         {finding.severity.toUpperCase()}
                       </span>
-                      <span className="text-sm text-stone-500">{finding.category}</span>
+                      <span className="text-sm text-gray-500">{finding.category}</span>
                     </div>
-                    <p className="font-medium text-stone-900 mt-1">{finding.description}</p>
-                    <p className="text-sm text-stone-500 mt-1">{finding.remediation}</p>
+                    <p className="font-medium text-gray-900 mt-1">{finding.description}</p>
+                    <p className="text-sm text-gray-500 mt-1">{finding.remediation}</p>
                   </div>
                   {finding.dueDate && (
-                    <span className="text-sm text-stone-500">
+                    <span className="text-sm text-gray-500">
                       Due: {finding.dueDate.toLocaleDateString()}
                     </span>
                   )}
@@ -396,14 +396,14 @@ function ComplianceOverview({ health }: { health: ComplianceHealth }) {
 
       {/* Recommendations */}
       {health.recommendations.length > 0 && (
-        <div className="bg-stone-100 border border-stone-200 rounded-xl p-4">
-          <h3 className="font-semibold text-stone-900 flex items-center gap-2 mb-3">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+          <h3 className="font-semibold text-blue-900 flex items-center gap-2 mb-3">
             <Info className="h-5 w-5" />
             Recommendations
           </h3>
           <ul className="space-y-2">
             {health.recommendations.map((rec, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-sm text-stone-800">
+              <li key={idx} className="flex items-start gap-2 text-sm text-blue-800">
                 <ChevronRight className="h-4 w-4 mt-0.5 flex-shrink-0" />
                 {rec}
               </li>
@@ -446,8 +446,8 @@ function AuthenticationSettings({ config, canEdit }: SettingsPanelProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-stone-900">Authentication Settings</h1>
-          <p className="text-stone-500 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900">Authentication Settings</h1>
+          <p className="text-gray-500 mt-1">
             Configure multi-factor authentication and access controls
           </p>
         </div>
@@ -461,23 +461,23 @@ function AuthenticationSettings({ config, canEdit }: SettingsPanelProps) {
 
       {/* MFA Settings */}
       <div className="bg-white border rounded-xl overflow-hidden">
-        <div className="px-6 py-4 bg-stone-50 border-b flex items-center justify-between">
-          <h3 className="font-semibold text-stone-900 flex items-center gap-2">
+        <div className="px-6 py-4 bg-gray-50 border-b flex items-center justify-between">
+          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
             <Key className="h-5 w-5" />
             Multi-Factor Authentication
           </h3>
           <span
             className={`px-3 py-1 text-sm font-medium rounded-full ${
               config.accessControl.mfaRequired
-                ? 'bg-stone-100 text-stone-800'
-                : 'bg-stone-100 text-stone-600'
+                ? 'bg-green-100 text-green-700'
+                : 'bg-gray-100 text-gray-600'
             }`}
           >
             {config.accessControl.mfaRequired ? 'Required' : 'Optional'}
           </span>
         </div>
         <div className="p-6">
-          <h4 className="text-sm font-medium text-stone-700 mb-3">Allowed MFA Methods</h4>
+          <h4 className="text-sm font-medium text-gray-700 mb-3">Allowed MFA Methods</h4>
           <div className="grid md:grid-cols-2 gap-3">
             {mfaMethods.map(method => {
               const enabled = config.accessControl.mfaMethods.includes(method.id as never);
@@ -485,18 +485,18 @@ function AuthenticationSettings({ config, canEdit }: SettingsPanelProps) {
                 <div
                   key={method.id}
                   className={`p-3 border rounded-lg ${
-                    enabled ? 'border-stone-200 bg-stone-100' : 'border-stone-200 bg-stone-50'
+                    enabled ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-medium text-stone-900">{method.label}</span>
+                    <span className="font-medium text-gray-900">{method.label}</span>
                     {enabled ? (
-                      <CheckCircle className="h-5 w-5 text-stone-900" />
+                      <CheckCircle className="h-5 w-5 text-green-500" />
                     ) : (
-                      <XCircle className="h-5 w-5 text-stone-300" />
+                      <XCircle className="h-5 w-5 text-gray-300" />
                     )}
                   </div>
-                  <p className="text-sm text-stone-500 mt-1">{method.description}</p>
+                  <p className="text-sm text-gray-500 mt-1">{method.description}</p>
                 </div>
               );
             })}
@@ -506,8 +506,8 @@ function AuthenticationSettings({ config, canEdit }: SettingsPanelProps) {
 
       {/* Access Restrictions */}
       <div className="bg-white border rounded-xl overflow-hidden">
-        <div className="px-6 py-4 bg-stone-50 border-b">
-          <h3 className="font-semibold text-stone-900 flex items-center gap-2">
+        <div className="px-6 py-4 bg-gray-50 border-b">
+          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
             <Globe className="h-5 w-5" />
             Access Restrictions
           </h3>
@@ -551,8 +551,8 @@ function SignatureSettings({ config, canEdit }: SettingsPanelProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-stone-900">Electronic Signatures</h1>
-          <p className="text-stone-500 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900">Electronic Signatures</h1>
+          <p className="text-gray-500 mt-1">
             21 CFR Part 11 compliant electronic signature configuration
           </p>
         </div>
@@ -561,18 +561,18 @@ function SignatureSettings({ config, canEdit }: SettingsPanelProps) {
       {/* E-Sig Status */}
       <div
         className={`p-6 rounded-xl border-2 ${
-          esig.enabled ? 'border-stone-200 bg-stone-100' : 'border-stone-200 bg-stone-50'
+          esig.enabled ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
         }`}
       >
         <div className="flex items-center gap-4">
-          <div className={`p-3 rounded-lg ${esig.enabled ? 'bg-stone-100' : 'bg-stone-200'}`}>
-            <FileText className={`h-8 w-8 ${esig.enabled ? 'text-stone-700' : 'text-stone-500'}`} />
+          <div className={`p-3 rounded-lg ${esig.enabled ? 'bg-green-100' : 'bg-gray-200'}`}>
+            <FileText className={`h-8 w-8 ${esig.enabled ? 'text-green-600' : 'text-gray-500'}`} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-stone-900">
+            <h3 className="text-lg font-semibold text-gray-900">
               Electronic Signatures {esig.enabled ? 'Enabled' : 'Disabled'}
             </h3>
-            <p className="text-stone-600">
+            <p className="text-gray-600">
               {esig.enabled
                 ? 'Full 21 CFR Part 11 compliant electronic signatures are active'
                 : 'Electronic signatures are not enabled for this organization'}
@@ -585,8 +585,8 @@ function SignatureSettings({ config, canEdit }: SettingsPanelProps) {
         <>
           {/* Requirements */}
           <div className="bg-white border rounded-xl overflow-hidden">
-            <div className="px-6 py-4 bg-stone-50 border-b">
-              <h3 className="font-semibold text-stone-900">Signature Requirements</h3>
+            <div className="px-6 py-4 bg-gray-50 border-b">
+              <h3 className="font-semibold text-gray-900">Signature Requirements</h3>
             </div>
             <div className="p-6 grid md:grid-cols-2 gap-6">
               <SettingItem
@@ -619,8 +619,8 @@ function SignatureSettings({ config, canEdit }: SettingsPanelProps) {
 
           {/* Required Actions */}
           <div className="bg-white border rounded-xl overflow-hidden">
-            <div className="px-6 py-4 bg-stone-50 border-b">
-              <h3 className="font-semibold text-stone-900">Actions Requiring Signature</h3>
+            <div className="px-6 py-4 bg-gray-50 border-b">
+              <h3 className="font-semibold text-gray-900">Actions Requiring Signature</h3>
             </div>
             <div className="p-6">
               <div className="flex flex-wrap gap-2">
@@ -653,16 +653,16 @@ function AuditSettings({ config, canEdit }: SettingsPanelProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-stone-900">Audit Trail Settings</h1>
-        <p className="text-stone-500 mt-1">
+        <h1 className="text-2xl font-bold text-gray-900">Audit Trail Settings</h1>
+        <p className="text-gray-500 mt-1">
           21 CFR Part 11.10(e) compliant audit trail configuration
         </p>
       </div>
 
       {/* Audit Features */}
       <div className="bg-white border rounded-xl overflow-hidden">
-        <div className="px-6 py-4 bg-stone-50 border-b">
-          <h3 className="font-semibold text-stone-900 flex items-center gap-2">
+        <div className="px-6 py-4 bg-gray-50 border-b">
+          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
             <Database className="h-5 w-5" />
             Audit Trail Features
           </h3>
@@ -707,13 +707,13 @@ function AuditSettings({ config, canEdit }: SettingsPanelProps) {
 
       {/* Metadata Collection */}
       <div className="bg-white border rounded-xl overflow-hidden">
-        <div className="px-6 py-4 bg-stone-50 border-b">
-          <h3 className="font-semibold text-stone-900">Collected Metadata</h3>
+        <div className="px-6 py-4 bg-gray-50 border-b">
+          <h3 className="font-semibold text-gray-900">Collected Metadata</h3>
         </div>
         <div className="p-6">
           <div className="flex flex-wrap gap-2">
             {audit.includeMetadata.map(meta => (
-              <span key={meta} className="px-3 py-1 bg-stone-100 text-stone-700 text-sm rounded-full">
+              <span key={meta} className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
                 {meta === 'ip' ? 'IP Address' : meta.charAt(0).toUpperCase() + meta.slice(1)}
               </span>
             ))}
@@ -723,15 +723,15 @@ function AuditSettings({ config, canEdit }: SettingsPanelProps) {
 
       {/* Data Integrity (ALCOA+) */}
       <div className="bg-white border rounded-xl overflow-hidden">
-        <div className="px-6 py-4 bg-stone-50 border-b">
-          <h3 className="font-semibold text-stone-900">Data Integrity (ALCOA+)</h3>
+        <div className="px-6 py-4 bg-gray-50 border-b">
+          <h3 className="font-semibold text-gray-900">Data Integrity (ALCOA+)</h3>
         </div>
         <div className="p-6">
           <div className="flex flex-wrap gap-2">
             {config.dataIntegrity.alcoaPrinciples.map(principle => (
               <span
                 key={principle}
-                className="px-3 py-1 bg-stone-100 text-stone-800 text-sm rounded-full"
+                className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full"
               >
                 {principle}
               </span>
@@ -770,14 +770,14 @@ function PasswordSettings({ config, canEdit }: SettingsPanelProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-stone-900">Password Policy</h1>
-        <p className="text-stone-500 mt-1">21 CFR Part 11.300 compliant password requirements</p>
+        <h1 className="text-2xl font-bold text-gray-900">Password Policy</h1>
+        <p className="text-gray-500 mt-1">21 CFR Part 11.300 compliant password requirements</p>
       </div>
 
       {/* Password Requirements */}
       <div className="bg-white border rounded-xl overflow-hidden">
-        <div className="px-6 py-4 bg-stone-50 border-b">
-          <h3 className="font-semibold text-stone-900 flex items-center gap-2">
+        <div className="px-6 py-4 bg-gray-50 border-b">
+          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
             <Lock className="h-5 w-5" />
             Password Requirements
           </h3>
@@ -815,8 +815,8 @@ function PasswordSettings({ config, canEdit }: SettingsPanelProps) {
 
       {/* Lockout Policy */}
       <div className="bg-white border rounded-xl overflow-hidden">
-        <div className="px-6 py-4 bg-stone-50 border-b">
-          <h3 className="font-semibold text-stone-900 flex items-center gap-2">
+        <div className="px-6 py-4 bg-gray-50 border-b">
+          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
             <ShieldAlert className="h-5 w-5" />
             Account Lockout Policy
           </h3>
@@ -857,15 +857,15 @@ function SessionSettings({ config, canEdit }: SettingsPanelProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-stone-900">Session Management</h1>
-        <p className="text-stone-500 mt-1">
+        <h1 className="text-2xl font-bold text-gray-900">Session Management</h1>
+        <p className="text-gray-500 mt-1">
           Configure session timeout and concurrent access policies
         </p>
       </div>
 
       <div className="bg-white border rounded-xl overflow-hidden">
-        <div className="px-6 py-4 bg-stone-50 border-b">
-          <h3 className="font-semibold text-stone-900 flex items-center gap-2">
+        <div className="px-6 py-4 bg-gray-50 border-b">
+          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
             <Clock className="h-5 w-5" />
             Session Policy
           </h3>
@@ -899,26 +899,26 @@ function TrainingSettings({ config, canEdit }: SettingsPanelProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-stone-900">Training Requirements</h1>
-        <p className="text-stone-500 mt-1">GCP-compliant training certification requirements</p>
+        <h1 className="text-2xl font-bold text-gray-900">Training Requirements</h1>
+        <p className="text-gray-500 mt-1">GCP-compliant training certification requirements</p>
       </div>
 
       <div
         className={`p-6 rounded-xl border-2 ${
-          training.required ? 'border-stone-200 bg-stone-100' : 'border-stone-200 bg-stone-50'
+          training.required ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
         }`}
       >
         <div className="flex items-center gap-4">
-          <div className={`p-3 rounded-lg ${training.required ? 'bg-stone-100' : 'bg-stone-200'}`}>
+          <div className={`p-3 rounded-lg ${training.required ? 'bg-green-100' : 'bg-gray-200'}`}>
             <Users
-              className={`h-8 w-8 ${training.required ? 'text-stone-700' : 'text-stone-500'}`}
+              className={`h-8 w-8 ${training.required ? 'text-green-600' : 'text-gray-500'}`}
             />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-stone-900">
+            <h3 className="text-lg font-semibold text-gray-900">
               Training {training.required ? 'Required' : 'Optional'}
             </h3>
-            <p className="text-stone-600">
+            <p className="text-gray-600">
               {training.required
                 ? 'Users must complete required training before accessing regulated functions'
                 : 'Training tracking is available but not enforced'}
@@ -930,8 +930,8 @@ function TrainingSettings({ config, canEdit }: SettingsPanelProps) {
       {training.required && (
         <>
           <div className="bg-white border rounded-xl overflow-hidden">
-            <div className="px-6 py-4 bg-stone-50 border-b">
-              <h3 className="font-semibold text-stone-900">Training Configuration</h3>
+            <div className="px-6 py-4 bg-gray-50 border-b">
+              <h3 className="font-semibold text-gray-900">Training Configuration</h3>
             </div>
             <div className="p-6 grid md:grid-cols-2 gap-6">
               <SettingItem
@@ -952,15 +952,15 @@ function TrainingSettings({ config, canEdit }: SettingsPanelProps) {
           </div>
 
           <div className="bg-white border rounded-xl overflow-hidden">
-            <div className="px-6 py-4 bg-stone-50 border-b">
-              <h3 className="font-semibold text-stone-900">Required Courses</h3>
+            <div className="px-6 py-4 bg-gray-50 border-b">
+              <h3 className="font-semibold text-gray-900">Required Courses</h3>
             </div>
             <div className="p-6">
               <div className="space-y-2">
                 {training.requiredCourses.map(course => (
-                  <div key={course} className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg">
-                    <CheckCircle className="h-5 w-5 text-stone-900" />
-                    <span className="font-medium text-stone-900">{course.replace(/_/g, ' ')}</span>
+                  <div key={course} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <span className="font-medium text-gray-900">{course.replace(/_/g, ' ')}</span>
                   </div>
                 ))}
               </div>
@@ -990,16 +990,16 @@ function SettingItem({
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-stone-600">{label}</span>
+        <span className="text-sm text-gray-600">{label}</span>
         <span
           className={`text-sm font-medium ${
-            enabled !== undefined ? (enabled ? 'text-stone-700' : 'text-stone-500') : 'text-stone-900'
+            enabled !== undefined ? (enabled ? 'text-green-600' : 'text-gray-500') : 'text-gray-900'
           }`}
         >
           {value}
         </span>
       </div>
-      {description && <p className="text-xs text-stone-400">{description}</p>}
+      {description && <p className="text-xs text-gray-400">{description}</p>}
     </div>
   );
 }

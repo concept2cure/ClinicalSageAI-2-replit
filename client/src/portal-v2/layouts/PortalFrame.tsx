@@ -252,7 +252,7 @@ export const PortalFrame: React.FC<PortalFrameProps> = ({
   }, [location, breadcrumbs]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-stone-50">
+    <div className="flex min-h-screen flex-col bg-gray-50">
       {/* Top Navigation Bar */}
       <TopBar onMenuToggle={() => setMobileMenuOpen(true)} showMenuButton={true} />
 
@@ -275,16 +275,16 @@ export const PortalFrame: React.FC<PortalFrameProps> = ({
               <nav className="flex items-center space-x-1 text-sm">
                 {currentBreadcrumbs.map((crumb, index) => (
                   <React.Fragment key={index}>
-                    {index > 0 && <ChevronRight className="h-4 w-4 text-stone-400" />}
+                    {index > 0 && <ChevronRight className="h-4 w-4 text-gray-400" />}
                     {crumb.href ? (
                       <button
                         onClick={() => setLocation(crumb.href!)}
-                        className="text-stone-500 hover:text-stone-700"
+                        className="text-gray-500 hover:text-gray-700"
                       >
                         {crumb.label}
                       </button>
                     ) : (
-                      <span className="font-medium text-stone-900">{crumb.label}</span>
+                      <span className="font-medium text-gray-900">{crumb.label}</span>
                     )}
                   </React.Fragment>
                 ))}
@@ -295,7 +295,7 @@ export const PortalFrame: React.FC<PortalFrameProps> = ({
           {/* Page Title */}
           {title && (
             <div className="border-b bg-white px-4 py-4 lg:px-6">
-              <h1 className="text-xl font-semibold text-stone-900">{title}</h1>
+              <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
             </div>
           )}
 
@@ -304,7 +304,7 @@ export const PortalFrame: React.FC<PortalFrameProps> = ({
             {loading ? (
               <div className="flex h-64 items-center justify-center">
                 <div className="flex flex-col items-center gap-3">
-                  <Loader2 className="h-8 w-8 animate-spin text-stone-600" />
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                   <p className="text-sm text-muted-foreground">Loading...</p>
                 </div>
               </div>

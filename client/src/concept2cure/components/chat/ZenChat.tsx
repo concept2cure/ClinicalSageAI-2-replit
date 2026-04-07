@@ -161,20 +161,20 @@ const ThinkingIndicator: React.FC = () => {
   return (
     <div className="flex items-center gap-2 py-1">
       <div className="relative flex items-center gap-1">
-        <div className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-[pulse_1.4s_ease-in-out_infinite]" />
-        <div className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
-        <div className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_infinite]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
       </div>
-      <span className="text-sm text-stone-500 font-medium animate-pulse">{msg}</span>
+      <span className="text-sm text-[#D97757] font-medium animate-pulse">{msg}</span>
     </div>
   );
 };
 
 const TypingIndicator: React.FC = () => (
   <div className="flex items-center gap-1.5 py-1">
-    <div className="w-2 h-2 rounded-full bg-stone-400 animate-pulse" />
-    <div className="w-2 h-2 rounded-full bg-stone-400 animate-pulse delay-100" />
-    <div className="w-2 h-2 rounded-full bg-stone-400 animate-pulse delay-200" />
+    <div className="w-2 h-2 rounded-full bg-[#D97757] animate-pulse" />
+    <div className="w-2 h-2 rounded-full bg-[#D97757] animate-pulse delay-100" />
+    <div className="w-2 h-2 rounded-full bg-[#D97757] animate-pulse delay-200" />
   </div>
 );
 
@@ -226,7 +226,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
           className={cn(
             'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150',
             isSaved
-              ? 'bg-stone-900 text-white border border-stone-900'
+              ? 'bg-green-50 text-green-700 border border-green-200'
               : 'bg-stone-100 text-stone-800 border border-stone-200 hover:bg-stone-200'
           )}
         >
@@ -268,7 +268,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
                   onClick={() => { onExportPdf(artifact); setShowExportMenu(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50"
                 >
-                  <FileText className="w-4 h-4 text-stone-500" />
+                  <FileText className="w-4 h-4 text-red-500" />
                   <div className="text-left">
                     <div className="font-medium text-xs">PDF Document (.pdf)</div>
                     <div className="text-xs text-stone-400">Read-only, print-ready</div>
@@ -388,15 +388,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               {message.isStreaming && message.content && (
                 <span className="inline-flex gap-0.5 items-center">
                   <span
-                    className="w-1 h-1 rounded-full bg-stone-400 animate-pulse"
+                    className="w-1 h-1 rounded-full bg-[#E8967A] animate-pulse"
                     style={{ animationDelay: '0ms' }}
                   />
                   <span
-                    className="w-1 h-1 rounded-full bg-stone-400 animate-pulse"
+                    className="w-1 h-1 rounded-full bg-[#E8967A] animate-pulse"
                     style={{ animationDelay: '150ms' }}
                   />
                   <span
-                    className="w-1 h-1 rounded-full bg-stone-400 animate-pulse"
+                    className="w-1 h-1 rounded-full bg-[#E8967A] animate-pulse"
                     style={{ animationDelay: '300ms' }}
                   />
                 </span>
@@ -424,13 +424,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   prose-h1:text-lg prose-h2:text-base prose-h3:text-sm
                   prose-p:text-stone-700 prose-p:leading-relaxed prose-p:my-2
                   prose-strong:text-stone-900 prose-strong:font-semibold
-                  prose-code:text-amber-700 prose-code:bg-amber-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
+                  prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
                   prose-pre:bg-stone-900 prose-pre:text-stone-100 prose-pre:rounded-xl prose-pre:p-4 prose-pre:text-xs
-                  prose-blockquote:border-l-stone-300 prose-blockquote:text-stone-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
+                  prose-blockquote:border-l-[#D8D5CA] prose-blockquote:text-stone-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
                   prose-ul:text-stone-700 prose-ol:text-stone-700 prose-ul:my-2 prose-ol:my-2
                   prose-li:my-1
                   prose-table:text-sm prose-th:bg-stone-50 prose-th:font-semibold prose-td:border-stone-200
-                  prose-a:text-blue-600 prose-a:font-medium prose-a:underline prose-a:decoration-blue-200 prose-a:underline-offset-2 hover:prose-a:text-blue-700
+                  prose-a:text-[#D97757] prose-a:font-medium prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
                   [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                 dangerouslySetInnerHTML={{ __html: htmlContent }}
               />
@@ -513,7 +513,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   title="Copy"
                 >
                   {copied ? (
-                    <Check className="w-3.5 h-3.5 text-stone-900" />
+                    <Check className="w-3.5 h-3.5 text-green-600" />
                   ) : (
                     <Copy className="w-3.5 h-3.5" />
                   )}
@@ -1391,7 +1391,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     <div className="flex flex-col flex-1 min-h-0 bg-white">
       {/* Connection status indicator - only show if confirmed unhealthy after load */}
       {health && !isConnected && (
-        <div className="flex items-center justify-center gap-2 px-4 py-2 bg-stone-100 border-b border-stone-200 text-stone-700 text-sm">
+        <div className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-100 text-amber-700 text-sm">
           <WifiOff className="w-4 h-4" />
           <span>Connecting to AnA...</span>
         </div>
@@ -1399,7 +1399,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
 
       {/* Error banner */}
       {chatError && (
-        <div className="flex items-center justify-between gap-2 px-4 py-2 bg-stone-100 border-b border-stone-200 text-stone-900 text-sm font-medium">
+        <div className="flex items-center justify-between gap-2 px-4 py-2 bg-red-50 border-b border-red-100 text-red-700 text-sm">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             <span>{chatError.message}</span>
@@ -1410,7 +1410,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
                 type="button"
                 variant="ghost"
                 onClick={() => streamMessage((chatError as any).failedMessage)}
-                className="h-auto px-1 py-0 text-xs underline hover:text-stone-900"
+                className="h-auto px-1 py-0 text-xs underline hover:text-red-900"
               >
                 Retry
               </Button>

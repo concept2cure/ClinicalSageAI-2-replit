@@ -176,14 +176,6 @@ export const queryKeys = {
       ['concept2cure', 'cmc', projectId] as const,
   },
 
-  // ── Module 3 Workflow Convergence ────────────────────────────────────────
-  module3: {
-    buildState: (projectId: string | undefined, cmcProjectId: string | undefined) =>
-      ['concept2cure', 'module3-build-state', projectId, cmcProjectId] as const,
-    sourceLineage: (projectId: string | undefined, ctdSection: string | undefined) =>
-      ['concept2cure', 'module3-source-lineage', projectId, ctdSection] as const,
-  },
-
   // ── Branding ─────────────────────────────────────────────────────────────
   branding: {
     settings: () => ['concept2cure', 'branding', 'settings'] as const,
@@ -222,18 +214,6 @@ export const queryKeys = {
       ['intelligence', 'rim-assessment', projectId] as const,
     rimSignals: (projectId: number | string) =>
       ['intelligence', 'rim-signals', projectId] as const,
-  },
-
-  // ── Governance ────────────────────────────────────────────────────────
-  governance: {
-    promotionBlockers: (projectId: string | number) =>
-      ['concept2cure', 'governance', 'promotion-blockers', projectId] as const,
-    decisions: (projectId: string | number) =>
-      ['concept2cure', 'governance', 'decisions', projectId] as const,
-    fabricDecisions: (projectId?: string) =>
-      ['concept2cure', 'governance', 'fabric-decisions', projectId] as const,
-    fabricSummary: (projectId?: string) =>
-      ['concept2cure', 'governance', 'fabric-summary', projectId] as const,
   },
 
   // ── AnA Intelligence (CLAUDE.md Memory Compression Model) ─────────────

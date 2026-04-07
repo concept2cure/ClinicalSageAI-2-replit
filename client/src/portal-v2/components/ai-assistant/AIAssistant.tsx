@@ -72,8 +72,8 @@ const Message: React.FC<MessageProps> = ({ message, onCopy, onFeedback, onRegene
         <div
           className={`rounded-2xl px-4 py-3 ${
             isUser
-              ? 'bg-stone-600 text-white rounded-br-md'
-              : 'bg-stone-100 text-stone-900 rounded-bl-md'
+              ? 'bg-blue-600 text-white rounded-br-md'
+              : 'bg-gray-100 text-gray-900 rounded-bl-md'
           }`}
         >
           {/* Message content */}
@@ -87,7 +87,7 @@ const Message: React.FC<MessageProps> = ({ message, onCopy, onFeedback, onRegene
 
           {/* Attachments */}
           {message.attachments && message.attachments.length > 0 && (
-            <div className="mt-2 pt-2 border-t border-stone-200/50">
+            <div className="mt-2 pt-2 border-t border-gray-200/50">
               {message.attachments.map(attachment => (
                 <div
                   key={attachment.id}
@@ -104,7 +104,7 @@ const Message: React.FC<MessageProps> = ({ message, onCopy, onFeedback, onRegene
           {isAssistant && message.citations && message.citations.length > 0 && (
             <button
               onClick={() => setShowCitations(!showCitations)}
-              className="flex items-center gap-1 mt-2 text-xs text-stone-500 hover:text-stone-700"
+              className="flex items-center gap-1 mt-2 text-xs text-gray-500 hover:text-gray-700"
             >
               <BookOpen className="h-3 w-3" />
               {message.citations.length} source{message.citations.length !== 1 ? 's' : ''}
@@ -119,15 +119,15 @@ const Message: React.FC<MessageProps> = ({ message, onCopy, onFeedback, onRegene
 
         {/* Citations panel */}
         {showCitations && message.citations && (
-          <div className="mt-2 bg-stone-50 rounded-lg p-3 space-y-2">
+          <div className="mt-2 bg-gray-50 rounded-lg p-3 space-y-2">
             {message.citations.map(citation => (
               <div key={citation.id} className="flex items-start gap-2 text-sm">
-                <FileText className="h-4 w-4 text-stone-400 flex-shrink-0 mt-0.5" />
+                <FileText className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <div className="font-medium text-stone-700">{citation.documentName}</div>
-                  <p className="text-stone-500 text-xs mt-0.5 line-clamp-2">{citation.excerpt}</p>
+                  <div className="font-medium text-gray-700">{citation.documentName}</div>
+                  <p className="text-gray-500 text-xs mt-0.5 line-clamp-2">{citation.excerpt}</p>
                   {citation.page && (
-                    <span className="text-xs text-stone-400">Page {citation.page}</span>
+                    <span className="text-xs text-gray-400">Page {citation.page}</span>
                   )}
                 </div>
                 <Badge variant="secondary" className="text-xs flex-shrink-0">
@@ -140,31 +140,31 @@ const Message: React.FC<MessageProps> = ({ message, onCopy, onFeedback, onRegene
 
         {/* Message meta */}
         <div
-          className={`flex items-center gap-2 mt-1 text-xs text-stone-400 ${isUser ? 'justify-end' : ''}`}
+          className={`flex items-center gap-2 mt-1 text-xs text-gray-400 ${isUser ? 'justify-end' : ''}`}
         >
           <span>{formatTimestamp(message.timestamp)}</span>
           {isAssistant && (
             <>
-              <span className="px-1.5 py-0.5 rounded bg-stone-100 text-stone-800 border border-stone-200">
+              <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
                 AI-generated
               </span>
               <button
                 onClick={() => onCopy(message.content)}
-                className="p-1 hover:bg-stone-100 rounded"
+                className="p-1 hover:bg-gray-100 rounded"
                 title="Copy"
               >
                 <Copy className="h-3 w-3" />
               </button>
               <button
                 onClick={() => onFeedback(message.id, 'positive')}
-                className="p-1 hover:bg-stone-100 rounded"
+                className="p-1 hover:bg-gray-100 rounded"
                 title="Helpful"
               >
                 <ThumbsUp className="h-3 w-3" />
               </button>
               <button
                 onClick={() => onFeedback(message.id, 'negative')}
-                className="p-1 hover:bg-stone-100 rounded"
+                className="p-1 hover:bg-gray-100 rounded"
                 title="Not helpful"
               >
                 <ThumbsDown className="h-3 w-3" />
@@ -172,7 +172,7 @@ const Message: React.FC<MessageProps> = ({ message, onCopy, onFeedback, onRegene
               {onRegenerate && (
                 <button
                   onClick={() => onRegenerate(message.id)}
-                  className="p-1 hover:bg-stone-100 rounded"
+                  className="p-1 hover:bg-gray-100 rounded"
                   title="Regenerate"
                 >
                   <RotateCcw className="h-3 w-3" />
@@ -270,9 +270,9 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onSelectAction }) => {
           <button
             key={action.id}
             onClick={() => onSelectAction(action.prompt)}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-stone-700 bg-white border rounded-lg hover:bg-stone-50 hover:border-stone-200 transition-colors text-left"
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 bg-white border rounded-lg hover:bg-gray-50 hover:border-blue-200 transition-colors text-left"
           >
-            <Icon className="h-4 w-4 text-stone-600" />
+            <Icon className="h-4 w-4 text-blue-600" />
             <span>{action.label}</span>
           </button>
         );
@@ -291,12 +291,12 @@ interface ContextPanelProps {
 
 const ContextPanel: React.FC<ContextPanelProps> = ({ context }) => {
   return (
-    <div className="bg-stone-100 rounded-lg p-3 text-sm">
-      <div className="flex items-center gap-2 text-stone-700 font-medium mb-2">
+    <div className="bg-blue-50 rounded-lg p-3 text-sm">
+      <div className="flex items-center gap-2 text-blue-700 font-medium mb-2">
         <Brain className="h-4 w-4" />
         Current Context
       </div>
-      <div className="space-y-1 text-stone-600">
+      <div className="space-y-1 text-gray-600">
         <div>
           Module: <span className="font-medium">{context.currentModule}</span>
         </div>
@@ -320,17 +320,17 @@ const ContextPanel: React.FC<ContextPanelProps> = ({ context }) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const TypingIndicator: React.FC = () => (
-  <div className="flex items-center gap-1 px-4 py-3 bg-stone-100 rounded-2xl rounded-bl-md max-w-[100px]">
+  <div className="flex items-center gap-1 px-4 py-3 bg-gray-100 rounded-2xl rounded-bl-md max-w-[100px]">
     <div
-      className="w-2 h-2 bg-stone-400 rounded-full animate-bounce"
+      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
       style={{ animationDelay: '0ms' }}
     />
     <div
-      className="w-2 h-2 bg-stone-400 rounded-full animate-bounce"
+      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
       style={{ animationDelay: '150ms' }}
     />
     <div
-      className="w-2 h-2 bg-stone-400 rounded-full animate-bounce"
+      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
       style={{ animationDelay: '300ms' }}
     />
   </div>
@@ -447,7 +447,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
       {/* Header */}
       <CardHeader className="flex-row items-center justify-between space-y-0 pb-3 border-b">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-stone-900 to-stone-900 flex items-center justify-center">
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
             <Sparkles className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -469,7 +469,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
         </div>
       </CardHeader>
 
-      <div className="mx-4 mt-3 rounded-md border border-stone-200 bg-stone-100 px-3 py-2 text-xs text-stone-900">
+      <div className="mx-4 mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
         <strong>Regulatory safety notice:</strong> Responses are AI-generated and may be incomplete
         or incorrect. Human review and approval are required before use in regulated submissions,
         safety decisions, or external communications.
@@ -504,7 +504,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
       </ScrollArea>
 
       {/* Context Panel (collapsible) */}
-      <div className="px-4 py-2 border-t bg-stone-50">
+      <div className="px-4 py-2 border-t bg-gray-50">
         <ContextPanel context={context} />
       </div>
 

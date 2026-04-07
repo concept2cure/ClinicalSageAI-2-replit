@@ -71,17 +71,17 @@ const MODE_CONFIG: Record<
 > = {
   monitoring: {
     label: 'Monitoring',
-    color: 'text-stone-600',
+    color: 'text-blue-600',
     icon: <Activity className="w-3 h-3" />,
   },
-  drafting: { label: 'Drafting', color: 'text-stone-600', icon: <Target className="w-3 h-3" /> },
-  review: { label: 'Review', color: 'text-stone-600', icon: <Activity className="w-3 h-3" /> },
+  drafting: { label: 'Drafting', color: 'text-violet-600', icon: <Target className="w-3 h-3" /> },
+  review: { label: 'Review', color: 'text-amber-600', icon: <Activity className="w-3 h-3" /> },
   submission: {
     label: 'Submission',
-    color: 'text-stone-700',
+    color: 'text-green-600',
     icon: <Mountain className="w-3 h-3" />,
   },
-  audit: { label: 'Audit Mode', color: 'text-stone-700', icon: <ShieldCheck className="w-3 h-3" /> },
+  audit: { label: 'Audit Mode', color: 'text-red-600', icon: <ShieldCheck className="w-3 h-3" /> },
 };
 
 /** Connection status mapped to WorkspaceStatusBadge-compatible configs */
@@ -92,13 +92,13 @@ const CONNECTION_STATUS_CONFIG: Record<
   LIVE: {
     key: 'connected',
     label: 'Connected',
-    color: 'bg-stone-100 text-stone-700',
+    color: 'bg-blue-100 text-stone-700',
     icon: <CloudLightning className="w-3 h-3" />,
   },
   SYNCING: {
     key: 'syncing',
     label: 'Syncing',
-    color: 'bg-stone-100 text-stone-700',
+    color: 'bg-amber-100 text-amber-700',
     icon: <CloudLightning className="w-3 h-3 animate-pulse" />,
   },
   OFFLINE: {
@@ -168,7 +168,7 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
           className="flex items-center gap-1.5 px-1.5 py-0.5 rounded hover:bg-stone-50 transition-colors duration-150"
           title={`AnA Cortex: ${connConfig.label}${lastSyncTime ? ` \u2022 Last sync: ${lastSyncTime}` : ''}`}
         >
-          <Zap className="w-3 h-3 text-stone-900" />
+          <Zap className="w-3 h-3 text-blue-500" />
           <span className="text-[10px] font-medium text-stone-400 tracking-wide">CORTEX</span>
           <WorkspaceStatusBadge status={connConfig.key} config={connConfig} />
         </button>

@@ -8,7 +8,7 @@
  * Integrates specifications, impurities, stability, and ICH compliance.
  */
 
-import { useQuery, useMutation, useQueryClient, QueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import cmcService, {
   type Specification,
@@ -45,15 +45,6 @@ export const cmcQueryKeys = {
   batchTrends: (params: Record<string, unknown>) => [...cmcQueryKeys.batches(), 'trends', params] as const,
 };
 
-/**
- * Invalidate Module 3 build-state cache after any CMC data mutation.
- * This ensures the dossier tree and build indicators reflect the latest data.
- */
-function invalidateModule3BuildState(queryClient: QueryClient) {
-  queryClient.invalidateQueries({ queryKey: ['concept2cure', 'module3-build-state'] });
-  queryClient.invalidateQueries({ queryKey: ['concept2cure', 'module3-source-lineage'] });
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // SPECIFICATION HOOKS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -86,7 +77,6 @@ export function useCreateSpecification() {
     mutationFn: (data) => cmcService.createSpecification(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: cmcQueryKeys.specifications() });
-      invalidateModule3BuildState(queryClient);
     },
   });
 }
@@ -105,7 +95,6 @@ export function useUpdateSpecification() {
         queryKey: cmcQueryKeys.specificationDetail(variables.id),
       });
       queryClient.invalidateQueries({ queryKey: cmcQueryKeys.specifications() });
-      invalidateModule3BuildState(queryClient);
     },
   });
 }
@@ -144,9 +133,9 @@ export function useAddImpurity() {
 
   return useMutation<Impurity, Error, { profileId: string; impurity: Partial<Impurity> }>({
     mutationFn: ({ profileId, impurity }) => cmcService.addImpurity(profileId, impurity),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      // Extract productId from profileId or invalidate all
       queryClient.invalidateQueries({ queryKey: cmcQueryKeys.impurities() });
-      invalidateModule3BuildState(queryClient);
     },
   });
 }
@@ -163,7 +152,6 @@ export function useUpdateImpurity() {
       cmcService.updateImpurity(profileId, impurityId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: cmcQueryKeys.impurities() });
-      invalidateModule3BuildState(queryClient);
     },
   });
 }
@@ -214,7 +202,6 @@ export function useCreateStabilityProtocol() {
     mutationFn: (data) => cmcService.createStabilityProtocol(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: cmcQueryKeys.stability() });
-      invalidateModule3BuildState(queryClient);
     },
   });
 }
@@ -230,7 +217,6 @@ export function useAddStabilityResult() {
     mutationFn: ({ batchId, result }) => cmcService.addStabilityResult(batchId, result),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: cmcQueryKeys.stability() });
-      invalidateModule3BuildState(queryClient);
     },
   });
 }

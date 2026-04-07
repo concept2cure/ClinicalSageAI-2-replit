@@ -3,19 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import {
-  TrendingUp,
-  TrendingDown,
-  Activity,
-  AlertTriangle,
-  CheckCircle2,
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  Activity, 
+  AlertTriangle, 
+  CheckCircle2, 
   Clock,
   Target,
   BarChart3,
   Zap,
   Shield,
   Factory,
-  Bot,
+  Bot
 } from 'lucide-react';
 
 function Card_({ label, value, sub }) {
@@ -28,10 +28,11 @@ function Card_({ label, value, sub }) {
   );
 }
 
+
 // Real-time KPI mapping from API data
 function mapKPIData(apiKpis) {
   if (!apiKpis) return [];
-
+  
   return [
     {
       id: 'readiness',
@@ -40,14 +41,9 @@ function mapKPIData(apiKpis) {
       trend: apiKpis.readinessPct >= 78 ? 'up' : 'down',
       trendValue: `${apiKpis.readinessPct >= 78 ? '+' : ''}${apiKpis.readinessPct - 70}%`,
       target: '85%',
-      status:
-        apiKpis.readinessPct >= 85
-          ? 'excellent'
-          : apiKpis.readinessPct >= 75
-          ? 'on-track'
-          : 'in-progress',
+      status: apiKpis.readinessPct >= 85 ? 'excellent' : apiKpis.readinessPct >= 75 ? 'on-track' : 'in-progress',
       icon: CheckCircle2,
-      description: 'Manufacturing dimension readiness (PPQ, OEE, AI compliance blend)',
+      description: 'Manufacturing dimension readiness (PPQ, OEE, AI compliance blend)'
     },
     {
       id: 'ppq',
@@ -56,46 +52,31 @@ function mapKPIData(apiKpis) {
       trend: apiKpis.ppqPct >= 67 ? 'up' : 'stable',
       trendValue: `${apiKpis.ppqPct}%`,
       target: '100%',
-      status:
-        apiKpis.ppqPct >= 100 ? 'excellent' : apiKpis.ppqPct >= 67 ? 'on-track' : 'in-progress',
+      status: apiKpis.ppqPct >= 100 ? 'excellent' : apiKpis.ppqPct >= 67 ? 'on-track' : 'in-progress',
       icon: Target,
-      description: 'Completed runs / Target runs with acceptance criteria',
+      description: 'Completed runs / Target runs with acceptance criteria'
     },
     {
       id: 'deviation-rate',
       title: 'Deviation Rate (90d)',
       value: `${apiKpis.deviationRate90d}`,
-      trend: apiKpis.deviationRate90d <= 0.2 ? 'down' : 'up',
-      trendValue: `${apiKpis.deviationRate90d <= 0.2 ? '-' : '+'}${Math.abs(
-        apiKpis.deviationRate90d - 0.25
-      ).toFixed(2)}`,
+      trend: apiKpis.deviationRate90d <= 0.20 ? 'down' : 'up',
+      trendValue: `${apiKpis.deviationRate90d <= 0.20 ? '-' : '+'}${Math.abs(apiKpis.deviationRate90d - 0.25).toFixed(2)}`,
       target: '< 0.30',
-      status:
-        apiKpis.deviationRate90d <= 0.15
-          ? 'excellent'
-          : apiKpis.deviationRate90d <= 0.25
-          ? 'on-track'
-          : 'at-risk',
+      status: apiKpis.deviationRate90d <= 0.15 ? 'excellent' : apiKpis.deviationRate90d <= 0.25 ? 'on-track' : 'at-risk',
       icon: AlertTriangle,
-      description: 'Deviations per batch over last 90 days',
+      description: 'Deviations per batch over last 90 days'
     },
     {
       id: 'release-time',
       title: 'Release Lead Time',
       value: `${apiKpis.releaseLeadTimeDays} days`,
       trend: apiKpis.releaseLeadTimeDays <= 7 ? 'down' : 'up',
-      trendValue: `${apiKpis.releaseLeadTimeDays <= 7 ? '-' : '+'}${Math.abs(
-        apiKpis.releaseLeadTimeDays - 8
-      ).toFixed(1)}d`,
+      trendValue: `${apiKpis.releaseLeadTimeDays <= 7 ? '-' : '+'}${Math.abs(apiKpis.releaseLeadTimeDays - 8).toFixed(1)}d`,
       target: '< 5d',
-      status:
-        apiKpis.releaseLeadTimeDays <= 5
-          ? 'excellent'
-          : apiKpis.releaseLeadTimeDays <= 8
-          ? 'on-track'
-          : 'at-risk',
+      status: apiKpis.releaseLeadTimeDays <= 5 ? 'excellent' : apiKpis.releaseLeadTimeDays <= 8 ? 'on-track' : 'at-risk',
       icon: Clock,
-      description: 'QA release cycle average time',
+      description: 'QA release cycle average time'
     },
     {
       id: 'oee',
@@ -106,7 +87,7 @@ function mapKPIData(apiKpis) {
       target: '80%',
       status: apiKpis.oeePct >= 80 ? 'excellent' : apiKpis.oeePct >= 70 ? 'on-track' : 'at-risk',
       icon: Factory,
-      description: 'Equipment effectiveness (penalized for overdue calibration/PQ)',
+      description: 'Equipment effectiveness (penalized for overdue calibration/PQ)'
     },
     {
       id: 'ai-compliance',
@@ -115,53 +96,42 @@ function mapKPIData(apiKpis) {
       trend: apiKpis.aiComplianceScore >= 85 ? 'up' : 'stable',
       trendValue: `${apiKpis.aiComplianceScore >= 85 ? '+' : ''}${apiKpis.aiComplianceScore - 80}%`,
       target: '> 90%',
-      status:
-        apiKpis.aiComplianceScore >= 90
-          ? 'excellent'
-          : apiKpis.aiComplianceScore >= 80
-          ? 'on-track'
-          : 'at-risk',
+      status: apiKpis.aiComplianceScore >= 90 ? 'excellent' : apiKpis.aiComplianceScore >= 80 ? 'on-track' : 'at-risk',
       icon: Bot,
-      description: '100 - weighted(high×8 + medium×4) open AI findings',
-    },
+      description: '100 - weighted(high×8 + medium×4) open AI findings'
+    }
   ];
 }
 
 const STATUS_CONFIG = {
-  excellent: {
-    color: 'text-green-600 dark:text-green-400',
+  'excellent': { 
+    color: 'text-green-600 dark:text-green-400', 
     bgColor: 'bg-green-50 dark:bg-green-950',
-    badge: 'bg-green-100 text-green-800 border-green-300',
+    badge: 'bg-green-100 text-green-800 border-green-300'
   },
-  'on-track': {
-    color: 'text-stone-600 dark:text-stone-400',
-    bgColor: 'bg-stone-50',
-    badge: 'bg-stone-100 text-stone-800 border-stone-300',
+  'on-track': { 
+    color: 'text-blue-600 dark:text-blue-400', 
+    bgColor: 'bg-blue-50 dark:bg-blue-950',
+    badge: 'bg-blue-100 text-blue-800 border-blue-300'
   },
-  'in-progress': {
-    color: 'text-orange-600 dark:text-orange-400',
+  'in-progress': { 
+    color: 'text-orange-600 dark:text-orange-400', 
     bgColor: 'bg-orange-50 dark:bg-orange-950',
-    badge: 'bg-orange-100 text-orange-800 border-orange-300',
+    badge: 'bg-orange-100 text-orange-800 border-orange-300'
   },
-  'at-risk': {
-    color: 'text-red-600 dark:text-red-400',
+  'at-risk': { 
+    color: 'text-red-600 dark:text-red-400', 
     bgColor: 'bg-red-50 dark:bg-red-950',
-    badge: 'bg-red-100 text-red-800 border-red-300',
-  },
+    badge: 'bg-red-100 text-red-800 border-red-300'
+  }
 };
 
 function KPICard({ kpi }) {
   const Icon = kpi.icon;
   const statusConfig = STATUS_CONFIG[kpi.status] || STATUS_CONFIG['in-progress'];
-
+  
   return (
-    <Card
-      className={`hover:shadow-md transition-shadow ${
-        statusConfig.bgColor
-      } border-l-4 ${statusConfig.color
-        .replace('text-', 'border-')
-        .replace(' dark:text-', ' dark:border-')}`}
-    >
+    <Card className={`hover:shadow-md transition-shadow ${statusConfig.bgColor} border-l-4 ${statusConfig.color.replace('text-', 'border-').replace(' dark:text-', ' dark:border-')}`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -175,37 +145,39 @@ function KPICard({ kpi }) {
           </Badge>
         </div>
       </CardHeader>
-
+      
       <CardContent className="space-y-3">
         <div className="flex items-end justify-between">
           <div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{kpi.value}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-500">Target: {kpi.target}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              {kpi.value}
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-500">
+              Target: {kpi.target}
+            </div>
           </div>
-
-          <div
-            className={`flex items-center gap-1 text-sm ${
-              kpi.trend === 'up'
-                ? 'text-green-600'
-                : kpi.trend === 'down'
-                ? 'text-red-600'
-                : 'text-gray-500'
-            }`}
-          >
+          
+          <div className={`flex items-center gap-1 text-sm ${
+            kpi.trend === 'up' ? 'text-green-600' : 
+            kpi.trend === 'down' ? 'text-red-600' : 
+            'text-gray-500'
+          }`}>
             {kpi.trend === 'up' && <TrendingUp className="w-4 h-4" />}
             {kpi.trend === 'down' && <TrendingDown className="w-4 h-4" />}
             {kpi.trend === 'stable' && <Activity className="w-4 h-4" />}
             <span>{kpi.trendValue}</span>
           </div>
         </div>
-
-        <Progress
-          value={parseFloat(kpi.value)}
+        
+        <Progress 
+          value={parseFloat(kpi.value)} 
           className="h-2"
           indicatorClassName={statusConfig.color.replace('text-', 'bg-')}
         />
-
-        <p className="text-xs text-gray-600 dark:text-gray-400">{kpi.description}</p>
+        
+        <p className="text-xs text-gray-600 dark:text-gray-400">
+          {kpi.description}
+        </p>
       </CardContent>
     </Card>
   );
@@ -234,9 +206,7 @@ export default function ManufacturingKPICards() {
         }
       }
     })();
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, []);
 
   const kpiData = React.useMemo(() => {
@@ -283,14 +253,9 @@ export default function ManufacturingKPICards() {
             Real-time performance indicators with event-driven updates
           </p>
         </div>
-
+        
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            data-testid="btn-kpi-refresh"
-            onClick={() => window.location.reload()}
-          >
+          <Button variant="outline" size="sm" data-testid="btn-kpi-refresh" onClick={() => window.location.reload()}>
             <BarChart3 className="w-4 h-4 mr-2" />
             Refresh
           </Button>
@@ -303,15 +268,15 @@ export default function ManufacturingKPICards() {
 
       {/* KPI Cards Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="kpi-cards-grid">
-        {kpiData.map(kpi => (
+        {kpiData.map((kpi) => (
           <KPICard key={kpi.id} kpi={kpi} />
         ))}
       </div>
 
       {/* Summary Insights */}
-      <Card className="bg-gradient-to-r from-stone-50 to-indigo-50 dark:from-stone-50 dark:to-indigo-50 border-stone-200 dark:border-stone-300">
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-50 dark:to-indigo-50 border-blue-200 dark:border-blue-300">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-stone-900 dark:text-stone-800">
+          <CardTitle className="flex items-center gap-2 text-blue-900 dark:text-blue-800">
             <Zap className="w-5 h-5" />
             Manufacturing Insights
           </CardTitle>
@@ -327,9 +292,9 @@ export default function ManufacturingKPICards() {
                 KPIs updated via event-driven system from seed data
               </p>
             </div>
-
+            
             <div className="p-3 bg-white dark:bg-gray-50 rounded-lg border">
-              <div className="flex items-center gap-2 text-stone-600 dark:text-stone-400">
+              <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
                 <Shield className="w-4 h-4" />
                 <span className="text-sm font-medium">Formula-driven</span>
               </div>
@@ -338,12 +303,12 @@ export default function ManufacturingKPICards() {
               </p>
             </div>
           </div>
-
-          <div className="flex items-center justify-between pt-2 border-t border-stone-200 ">
-            <span className="text-sm text-stone-700 dark:text-stone-300">
+          
+          <div className="flex items-center justify-between pt-2 border-t border-blue-200 dark:border-blue-800">
+            <span className="text-sm text-blue-700 dark:text-blue-300">
               Last updated: {new Date().toLocaleString()}
             </span>
-            <Button variant="ghost" size="sm" className="text-stone-700 dark:text-stone-300">
+            <Button variant="ghost" size="sm" className="text-blue-700 dark:text-blue-300">
               View Full Dashboard
             </Button>
           </div>

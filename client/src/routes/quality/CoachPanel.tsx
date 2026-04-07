@@ -46,9 +46,9 @@ export default function CoachPanel({ batchId }: { batchId: string }) {
         </Button>
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
-        {note && <div className="text-xs text-stone-600">Rationale: {note}</div>}
+        {note && <div className="text-xs text-slate-600">Rationale: {note}</div>}
         {!rows.length ? (
-          <div className="text-stone-600">No open recommendations.</div>
+          <div className="text-slate-600">No open recommendations.</div>
         ) : (
           rows.map((r: any) => (
             <div key={r.reco_id} className="rounded border p-2 flex items-center justify-between">

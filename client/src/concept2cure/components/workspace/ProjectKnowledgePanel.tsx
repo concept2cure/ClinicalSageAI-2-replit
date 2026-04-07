@@ -211,7 +211,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
 
       {/* Error banner */}
       {error && (
-        <div className="mx-4 mt-3 p-2.5 rounded-lg bg-stone-100 border border-stone-100 text-xs text-stone-800">
+        <div className="mx-4 mt-3 p-2.5 rounded-lg bg-red-50 border border-red-100 text-xs text-red-700">
           {error}
         </div>
       )}
@@ -302,7 +302,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
               <div
                 className={cn(
                   'h-full rounded-full transition-all duration-300',
-                  capacityPercent > 85 ? 'bg-stone-900' : capacityPercent > 60 ? 'bg-stone-900' : 'bg-stone-900'
+                  capacityPercent > 85 ? 'bg-red-500' : capacityPercent > 60 ? 'bg-amber-500' : 'bg-emerald-500'
                 )}
                 style={{ width: `${Math.max(capacityPercent, 1)}%` }}
               />
@@ -421,7 +421,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
                           removeDocument(doc.id);
                         }
                       }}
-                      className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded text-stone-400 hover:text-stone-900 hover:bg-stone-100 transition-all"
+                      className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded text-stone-400 hover:text-red-500 hover:bg-red-50 transition-all"
                       title="Remove file"
                       aria-label={`Remove ${doc.name}`}
                     >
@@ -481,13 +481,13 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <p className="text-[13px] font-medium text-stone-700 truncate">{def.name}</p>
-                        <span className="w-1.5 h-1.5 rounded-full bg-stone-900 flex-shrink-0" title="Active" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" title="Active" />
                       </div>
                       <p className="text-[11px] text-stone-400 truncate leading-tight">{def.description}</p>
                     </div>
                     <button
                       onClick={() => disconnectApp(ca.appId)}
-                      className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded text-stone-400 hover:text-stone-900 hover:bg-stone-100 transition-all"
+                      className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded text-stone-400 hover:text-red-500 hover:bg-red-50 transition-all"
                       title="Disconnect app"
                       aria-label={`Disconnect ${def.name}`}
                     >
@@ -612,7 +612,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
                   </p>
                 )}
                 {riskCount > 0 && (
-                  <p className="text-[12px] text-stone-600">
+                  <p className="text-[12px] text-amber-600">
                     {riskCount} risk factor{riskCount !== 1 ? 's' : ''} identified
                   </p>
                 )}

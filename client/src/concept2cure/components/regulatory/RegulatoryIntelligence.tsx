@@ -137,14 +137,14 @@ interface ApprovalTrend {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const AGENCY_CONFIG: Record<Agency, { label: string; color: string; flag: string }> = {
-  FDA: { label: 'FDA (US)', color: 'bg-stone-100 text-stone-800', flag: '🇺🇸' },
-  EMA: { label: 'EMA (EU)', color: 'bg-stone-100 text-stone-800', flag: '🇪🇺' },
-  PMDA: { label: 'PMDA (Japan)', color: 'bg-stone-100 text-stone-800', flag: '🇯🇵' },
-  'Health Canada': { label: 'Health Canada', color: 'bg-stone-200 text-stone-800', flag: '🇨🇦' },
-  TGA: { label: 'TGA (Australia)', color: 'bg-stone-100 text-stone-800', flag: '🇦🇺' },
-  MHRA: { label: 'MHRA (UK)', color: 'bg-stone-200 text-stone-800', flag: '🇬🇧' },
-  Swissmedic: { label: 'Swissmedic', color: 'bg-stone-100 text-stone-800', flag: '🇨🇭' },
-  NMPA: { label: 'NMPA (China)', color: 'bg-stone-100 text-stone-800', flag: '🇨🇳' },
+  FDA: { label: 'FDA (US)', color: 'bg-blue-100 text-blue-800', flag: '🇺🇸' },
+  EMA: { label: 'EMA (EU)', color: 'bg-blue-100 text-blue-800', flag: '🇪🇺' },
+  PMDA: { label: 'PMDA (Japan)', color: 'bg-red-100 text-red-800', flag: '🇯🇵' },
+  'Health Canada': { label: 'Health Canada', color: 'bg-pink-100 text-pink-800', flag: '🇨🇦' },
+  TGA: { label: 'TGA (Australia)', color: 'bg-green-100 text-green-800', flag: '🇦🇺' },
+  MHRA: { label: 'MHRA (UK)', color: 'bg-purple-100 text-purple-800', flag: '🇬🇧' },
+  Swissmedic: { label: 'Swissmedic', color: 'bg-orange-100 text-orange-800', flag: '🇨🇭' },
+  NMPA: { label: 'NMPA (China)', color: 'bg-yellow-100 text-yellow-800', flag: '🇨🇳' },
 };
 
 const THERAPEUTIC_AREAS: Record<TherapeuticArea, string> = {
@@ -307,9 +307,9 @@ function IntelligenceMetrics() {
             <div>
               <p className="text-sm text-muted-foreground">New Guidance</p>
               <p className="text-base font-semibold">12</p>
-              <p className="text-xs text-stone-700">+3 this week</p>
+              <p className="text-xs text-green-600">+3 this week</p>
             </div>
-            <FileText className="w-8 h-8 text-stone-900" />
+            <FileText className="w-8 h-8 text-blue-500" />
           </div>
         </div>
       </div>
@@ -319,10 +319,10 @@ function IntelligenceMetrics() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Active Alerts</p>
-              <p className="text-base font-semibold text-stone-600">5</p>
-              <p className="text-xs text-stone-700">2 high priority</p>
+              <p className="text-base font-semibold text-orange-600">5</p>
+              <p className="text-xs text-red-600">2 high priority</p>
             </div>
-            <Bell className="w-8 h-8 text-stone-900" />
+            <Bell className="w-8 h-8 text-orange-500" />
           </div>
         </div>
       </div>
@@ -335,7 +335,7 @@ function IntelligenceMetrics() {
               <p className="text-base font-semibold">24</p>
               <p className="text-xs text-muted-foreground">Last 30 days</p>
             </div>
-            <CheckCircle2 className="w-8 h-8 text-stone-900" />
+            <CheckCircle2 className="w-8 h-8 text-green-500" />
           </div>
         </div>
       </div>
@@ -345,10 +345,10 @@ function IntelligenceMetrics() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Comment Deadlines</p>
-              <p className="text-base font-semibold text-stone-600">3</p>
+              <p className="text-base font-semibold text-purple-600">3</p>
               <p className="text-xs text-muted-foreground">Open for comments</p>
             </div>
-            <Calendar className="w-8 h-8 text-stone-500" />
+            <Calendar className="w-8 h-8 text-purple-500" />
           </div>
         </div>
       </div>
@@ -361,7 +361,7 @@ function IntelligenceMetrics() {
               <p className="text-base font-semibold">8</p>
               <p className="text-xs text-muted-foreground">Saved items</p>
             </div>
-            <Bookmark className="w-8 h-8 text-stone-900" />
+            <Bookmark className="w-8 h-8 text-yellow-500" />
           </div>
         </div>
       </div>
@@ -437,7 +437,7 @@ function GuidanceDocuments({ documents }: { documents: RegulatoryDocument[] }) {
         {filteredDocs.map(doc => {
           const agencyConfig = AGENCY_CONFIG[doc.agency];
           return (
-            <div key={doc.id} className="border border-border/40 rounded-sm bg-background hover:shadow-sm transition-shadow">
+            <div key={doc.id} className="border border-border/40 rounded-sm bg-background hover:shadow-md transition-shadow">
               <div className="px-3 py-2 p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -468,7 +468,7 @@ function GuidanceDocuments({ documents }: { documents: RegulatoryDocument[] }) {
                       <span>Published: {doc.publishDate}</span>
                       {doc.effectiveDate && <span>Effective: {doc.effectiveDate}</span>}
                       {doc.commentDeadline && (
-                        <span className="text-stone-600">Comments due: {doc.commentDeadline}</span>
+                        <span className="text-orange-600">Comments due: {doc.commentDeadline}</span>
                       )}
                     </div>
                   </div>
@@ -482,7 +482,7 @@ function GuidanceDocuments({ documents }: { documents: RegulatoryDocument[] }) {
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8">
                         <Star
-                          className={`w-4 h-4 ${doc.isBookmarked ? 'fill-stone-400 text-stone-400' : ''}`}
+                          className={`w-4 h-4 ${doc.isBookmarked ? 'fill-yellow-400 text-yellow-400' : ''}`}
                         />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -508,10 +508,10 @@ function GuidanceDocuments({ documents }: { documents: RegulatoryDocument[] }) {
  */
 function RegulatoryAlerts({ alerts }: { alerts: RegulatoryAlert[] }) {
   const priorityConfig: Record<AlertPriority, { color: string; icon: React.ReactNode }> = {
-    critical: { color: 'bg-stone-900 text-white', icon: <AlertCircle className="w-4 h-4" /> },
-    high: { color: 'bg-stone-900 text-white', icon: <AlertCircle className="w-4 h-4" /> },
-    medium: { color: 'bg-stone-900 text-white', icon: <Bell className="w-4 h-4" /> },
-    low: { color: 'bg-stone-100 text-stone-800', icon: <Bell className="w-4 h-4" /> },
+    critical: { color: 'bg-red-500 text-white', icon: <AlertCircle className="w-4 h-4" /> },
+    high: { color: 'bg-orange-500 text-white', icon: <AlertCircle className="w-4 h-4" /> },
+    medium: { color: 'bg-yellow-500 text-white', icon: <Bell className="w-4 h-4" /> },
+    low: { color: 'bg-blue-100 text-blue-800', icon: <Bell className="w-4 h-4" /> },
   };
 
   return (
@@ -534,7 +534,7 @@ function RegulatoryAlerts({ alerts }: { alerts: RegulatoryAlert[] }) {
           return (
             <div
               key={alert.id}
-              className={`border border-border/40 rounded-sm bg-background ${!alert.acknowledged ? 'border-l-4 border-l-stone-900' : ''}`}
+              className={`border border-border/40 rounded-sm bg-background ${!alert.acknowledged ? 'border-l-4 border-l-orange-500' : ''}`}
             >
               <div className="px-3 py-2 p-4">
                 <div className="flex items-start justify-between">
@@ -556,7 +556,7 @@ function RegulatoryAlerts({ alerts }: { alerts: RegulatoryAlert[] }) {
                         <span>{alert.date}</span>
                         <span>{alert.category}</span>
                         {alert.deadline && (
-                          <span className="text-stone-700">Deadline: {alert.deadline}</span>
+                          <span className="text-red-600">Deadline: {alert.deadline}</span>
                         )}
                       </div>
                     </div>
@@ -585,10 +585,10 @@ function RegulatoryAlerts({ alerts }: { alerts: RegulatoryAlert[] }) {
 function CompetitiveIntelligence({ approvals }: { approvals: CompetitorApproval[] }) {
   const approvalTypeConfig: Record<string, { label: string; color: string }> = {
     standard: { label: 'Standard', color: 'bg-stone-100 text-stone-900' },
-    priority: { label: 'Priority Review', color: 'bg-stone-100 text-stone-800' },
-    accelerated: { label: 'Accelerated', color: 'bg-stone-100 text-stone-800' },
-    breakthrough: { label: 'Breakthrough', color: 'bg-stone-200 text-stone-800' },
-    fast_track: { label: 'Fast Track', color: 'bg-stone-100 text-stone-800' },
+    priority: { label: 'Priority Review', color: 'bg-blue-100 text-blue-800' },
+    accelerated: { label: 'Accelerated', color: 'bg-green-100 text-green-800' },
+    breakthrough: { label: 'Breakthrough', color: 'bg-purple-100 text-purple-800' },
+    fast_track: { label: 'Fast Track', color: 'bg-orange-100 text-orange-800' },
   };
 
   return (
@@ -675,22 +675,22 @@ function CompetitiveIntelligence({ approvals }: { approvals: CompetitorApproval[
         </div>
         <div className="px-3 py-2">
           <div className="grid grid-cols-4 gap-4">
-            <div className="border border-border/40 rounded-sm bg-background p-4 bg-stone-100">
+            <div className="border border-border/40 rounded-sm bg-background p-4 bg-blue-50">
               <p className="text-sm text-muted-foreground">FDA 2024</p>
               <p className="text-base font-semibold">50</p>
-              <p className="text-xs text-stone-700">+12% vs 2023</p>
+              <p className="text-xs text-green-600">+12% vs 2023</p>
             </div>
-            <div className="border border-border/40 rounded-sm bg-background p-4 bg-stone-100">
+            <div className="border border-border/40 rounded-sm bg-background p-4 bg-blue-50">
               <p className="text-sm text-muted-foreground">EMA 2024</p>
               <p className="text-base font-semibold">42</p>
-              <p className="text-xs text-stone-700">+8% vs 2023</p>
+              <p className="text-xs text-green-600">+8% vs 2023</p>
             </div>
-            <div className="border border-border/40 rounded-sm bg-background p-4 bg-stone-100">
+            <div className="border border-border/40 rounded-sm bg-background p-4 bg-purple-50">
               <p className="text-sm text-muted-foreground">Priority Reviews</p>
               <p className="text-base font-semibold">35%</p>
               <p className="text-xs text-muted-foreground">of total</p>
             </div>
-            <div className="border border-border/40 rounded-sm bg-background p-4 bg-stone-100">
+            <div className="border border-border/40 rounded-sm bg-background p-4 bg-green-50">
               <p className="text-sm text-muted-foreground">Avg Review Time</p>
               <p className="text-base font-semibold">10.2</p>
               <p className="text-xs text-muted-foreground">months</p>
@@ -766,7 +766,7 @@ export function RegulatoryIntelligence() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-base font-semibold flex items-center gap-3">
-            <Globe className="w-8 h-8 text-stone-600" />
+            <Globe className="w-8 h-8 text-blue-600" />
             Regulatory Intelligence Hub
           </h1>
           <p className="text-muted-foreground">
@@ -815,23 +815,23 @@ export function RegulatoryIntelligence() {
       </Tabs>
 
       {/* RI Assistance */}
-      <div className="border border-border/40 rounded-sm bg-background border-stone-200 bg-stone-50">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-stone-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-stone-200 rounded-full">
-              <Sparkles className="w-6 h-6 text-stone-600" />
+            <div className="p-3 bg-purple-100 rounded-full">
+              <Sparkles className="w-6 h-6 text-purple-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-stone-900">Regulatory Intelligence</h3>
-              <p className="text-sm text-stone-700">
+              <h3 className="font-semibold text-purple-900">Regulatory Intelligence</h3>
+              <p className="text-sm text-purple-700">
                 Get RI-powered analysis of regulatory trends, impact assessments for your products,
                 and automated summaries of new guidance documents.
               </p>
             </div>
-            <Button variant="outline" className="border-stone-300 text-stone-700">
+            <Button variant="outline" className="border-purple-300 text-purple-700">
               Impact Analysis
             </Button>
-            <Button className="bg-stone-600 hover:bg-stone-700">Ask RI</Button>
+            <Button className="bg-purple-600 hover:bg-purple-700">Ask RI</Button>
           </div>
         </div>
       </div>

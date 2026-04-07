@@ -112,26 +112,13 @@ const BIOSTATISTICS: DomainPromptGroup = {
 
 const CMC: DomainPromptGroup = {
   domain: 'cmc',
-  label: 'CMC / Module 3',
+  label: 'CMC / Manufacturing',
   prompts: [
     { id: 'cmc-eval', label: 'Evaluate my CMC documentation' },
     { id: 'cmc-change', label: 'Assess manufacturing change impact on CQAs' },
     { id: 'cmc-compare', label: 'Help with comparability assessment' },
     { id: 'cmc-module3', label: 'Review Module 3 documentation completeness' },
     { id: 'cmc-workplan', label: 'Generate a CMC workplan and timeline' },
-    // Module 3 Workflow Convergence prompts (Phase 7)
-    { id: 'cmc-build-m3', label: 'Build Module 3 from current project sources', intent: 'module3_build_all', description: 'Compile all Module 3 subsections from available source objects and uploaded documents' },
-    { id: 'cmc-m3-missing', label: 'Show missing inputs for Module 3', intent: 'module3_missing_inputs', description: 'Show which subsections are missing required data to compile' },
-    { id: 'cmc-m3-stale', label: 'Show stale Module 3 sections', intent: 'module3_stale_sections', description: 'Identify sections that need refreshing due to source changes' },
-    { id: 'cmc-m3-refresh', label: 'Refresh stale Module 3 sections from latest sources', intent: 'module3_refresh_stale', description: 'Rebuild all stale sections from updated source data' },
-    { id: 'cmc-m3-readiness', label: 'Module 3 submission readiness check', intent: 'module3_readiness', description: 'Check approval state, contradictions, and export readiness' },
-    { id: 'cmc-m3-contradictions', label: 'Scan Module 3 for contradictions', intent: 'module3_contradictions', description: 'Detect cross-functional data conflicts in CMC data' },
-    { id: 'cmc-m3-section', label: 'Build a specific Module 3 subsection (e.g. 3.2.S.4)', intent: 'module3_build_section', description: 'Compile one specific subsection and open it in the editor' },
-    { id: 'cmc-m3-lineage', label: 'Show source lineage for a Module 3 section', intent: 'module3_lineage', description: 'Trace which sources feed a specific subsection' },
-    // CMC Data Entry → Module 3 Write-Through prompts
-    { id: 'cmc-push-data', label: 'Push CMC data into Module 3 pipeline', intent: 'cmc_push_data', description: 'Show which CMC data entries have been synced to canonical sources and which sections were impacted' },
-    { id: 'cmc-pending-tasks', label: 'Show pending CMC review tasks', intent: 'cmc_pending_tasks', description: 'List CMC data entry tasks awaiting review or approval before merging to Module 3' },
-    { id: 'cmc-data-coverage', label: 'What CMC data is missing for my project?', intent: 'cmc_data_coverage', description: 'Compare entered CMC data against Module 3 requirements to identify gaps' },
   ],
 };
 
@@ -288,30 +275,6 @@ const LABELING: DomainPromptGroup = {
   ],
 };
 
-const IND_AUTHORING: DomainPromptGroup = {
-  domain: 'ind-authoring',
-  label: 'IND Authoring',
-  prompts: [
-    // Module 1 — Administrative
-    { id: 'ind-cover', label: 'Draft the IND cover letter (Section 1.1)', intent: 'ind_draft_section', description: 'Generate a complete FDA IND cover letter for your product' },
-    { id: 'ind-1571', label: 'Prepare FDA Form 1571 data (Section 1.2)', intent: 'ind_draft_section', description: 'Generate structured data for the IND Application form' },
-    { id: 'ind-1572', label: 'Prepare FDA Form 1572 data (Section 1.3)', intent: 'ind_draft_section', description: 'Statement of Investigator form data' },
-    { id: 'ind-toc', label: 'Generate Table of Contents (Section 1.5)', intent: 'ind_draft_section', description: 'ICH M4 CTD structure with all modules' },
-    // Module 2 — CTD Summaries
-    { id: 'ind-intro', label: 'Draft CTD Introduction (Section 2.2)', intent: 'ind_draft_section', description: 'Product overview, mechanism of action, development rationale' },
-    { id: 'ind-qos', label: 'Draft Quality Overall Summary (Section 2.3)', intent: 'ind_draft_section', description: 'Drug substance and drug product quality summary' },
-    { id: 'ind-nco', label: 'Draft Nonclinical Overview (Section 2.4)', intent: 'ind_draft_section', description: 'Integrated pharmacology, PK, and toxicology assessment' },
-    { id: 'ind-co', label: 'Draft Clinical Overview (Section 2.5)', intent: 'ind_draft_section', description: 'Clinical development rationale and safety/efficacy overview' },
-    { id: 'ind-ncs', label: 'Draft Nonclinical Summaries (Section 2.6)', intent: 'ind_draft_section', description: 'Written and tabulated nonclinical summaries' },
-    { id: 'ind-cs', label: 'Draft Clinical Summary (Section 2.7)', intent: 'ind_draft_section', description: 'Biopharmaceutics, pharmacology, efficacy, safety summaries' },
-    // General IND workflow
-    { id: 'ind-gap', label: 'Run IND gap analysis', description: 'Identify missing sections and data gaps across Module 1-5' },
-    { id: 'ind-readiness', label: 'Assess IND submission readiness', description: 'Score each module and identify blockers' },
-    { id: 'ind-reviewer', label: 'Anticipate FDA reviewer questions', description: 'Predict likely deficiency letters based on your submission state' },
-    { id: 'ind-strategy', label: 'Review my IND regulatory strategy', description: 'Fast Track, Breakthrough, Orphan designation assessment' },
-  ],
-};
-
 const DOSSIER: DomainPromptGroup = {
   domain: 'dossier',
   label: 'Dossier & Submission',
@@ -379,7 +342,6 @@ export const ALL_DOMAIN_GROUPS: DomainPromptGroup[] = [
   REGULATORY_STRATEGY,
   MULTI_AGENCY_STRATEGY,
   LABELING,
-  IND_AUTHORING,
   DOSSIER,
   KNOWLEDGE,
   CONTEXT_TRANSPARENCY,
@@ -412,13 +374,6 @@ const CONTEXT_DOMAIN_MAP: Record<string, string[]> = {
   'device':             ['device', 'strategy', 'dossier', 'authoring'],
   'diagnostics':        ['diagnostics', 'device', 'clinical', 'biostatistics', 'risk'],
   'cms':                ['cms', 'strategy', 'reports', 'recommendations', 'risk'],
-
-  // IND-specific contexts
-  'ind':                ['ind-authoring', 'dossier', 'risk', 'recommendations'],
-  'ind-checklist':      ['ind-authoring', 'dossier', 'authoring', 'risk'],
-  'ind-workspace':      ['ind-authoring', 'authoring', 'dossier', 'risk'],
-  'bla':                ['ind-authoring', 'cmc', 'clinical', 'dossier'],
-  'nda':                ['ind-authoring', 'clinical', 'safety', 'dossier'],
 
   // Workflow views
   'verify':             ['recommendations', 'risk', 'doc-lifecycle', 'authoring'],

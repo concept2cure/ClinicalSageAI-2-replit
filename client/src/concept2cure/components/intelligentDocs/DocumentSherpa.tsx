@@ -134,23 +134,23 @@ const HazardAlert: React.FC<{
   const majorBlockers = blockers.filter(b => b.severity === 'major');
   
   return (
-    <div className="p-4 bg-stone-100/60 rounded-xl border border-stone-200">
+    <div className="p-4 bg-red-50/60 rounded-xl border border-red-200">
       <div className="flex items-center gap-2 mb-3">
-        <AlertOctagon className="w-5 h-5 text-stone-900" />
-        <span className="font-semibold text-stone-800">
+        <AlertOctagon className="w-5 h-5 text-red-500" />
+        <span className="font-semibold text-red-700">
           Hazard Ahead: {blockers.length} Blocker{blockers.length > 1 ? 's' : ''}
         </span>
       </div>
       
       {criticalBlockers.length > 0 && (
         <div className="mb-3">
-          <span className="text-xs font-medium text-stone-700 uppercase tracking-wider">
+          <span className="text-xs font-medium text-red-600 uppercase tracking-wider">
             Critical - Must Fix Now
           </span>
           {criticalBlockers.map(blocker => (
-            <div key={blocker.id} className="mt-2 p-3 bg-stone-100 rounded-lg">
-              <p className="font-medium text-stone-800">{blocker.title}</p>
-              <p className="text-sm text-stone-700 mt-1">{blocker.description}</p>
+            <div key={blocker.id} className="mt-2 p-3 bg-red-100 rounded-lg">
+              <p className="font-medium text-red-800">{blocker.title}</p>
+              <p className="text-sm text-red-600 mt-1">{blocker.description}</p>
               <button
                 onClick={() => onAction(blocker)}
                 data-testid={`button-blocker-action-${blocker.id}`}
@@ -165,16 +165,16 @@ const HazardAlert: React.FC<{
       
       {majorBlockers.length > 0 && (
         <div>
-          <span className="text-xs font-medium text-stone-600 uppercase tracking-wider">
+          <span className="text-xs font-medium text-amber-600 uppercase tracking-wider">
             Major - Address Soon
           </span>
           {majorBlockers.map(blocker => (
-            <div key={blocker.id} className="mt-2 p-3 bg-stone-100 rounded-lg">
-              <p className="font-medium text-stone-800">{blocker.title}</p>
-              <p className="text-sm text-stone-600 mt-1">{blocker.description}</p>
+            <div key={blocker.id} className="mt-2 p-3 bg-amber-50 rounded-lg">
+              <p className="font-medium text-amber-800">{blocker.title}</p>
+              <p className="text-sm text-amber-600 mt-1">{blocker.description}</p>
               <button
                 onClick={() => onAction(blocker)}
-                className="mt-2 flex items-center gap-1.5 text-sm font-medium text-stone-700 hover:text-stone-800"
+                className="mt-2 flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:text-amber-800"
                 data-testid={`button-blocker-action-${blocker.id}`}
               >
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -197,13 +197,13 @@ const NextBestActionCard: React.FC<{
   onAction: () => void;
 }> = ({ guidance, onAction }) => {
   return (
-    <div className="p-4 bg-stone-100/60 rounded-xl border border-stone-200">
+    <div className="p-4 bg-blue-50/60 rounded-xl border border-blue-200">
       <div className="flex items-center gap-2 mb-3">
         <div className="p-2 bg-stone-600 rounded-lg">
           <Sparkles className="w-4 h-4 text-white" />
         </div>
         <div>
-          <span className="text-xs font-medium text-stone-600 uppercase tracking-wider">
+          <span className="text-xs font-medium text-blue-600 uppercase tracking-wider">
             AnA Guided Authoring Recommends
           </span>
           <h3 className="font-semibold text-stone-900">
@@ -221,7 +221,7 @@ const NextBestActionCard: React.FC<{
           <Clock className="w-3.5 h-3.5" />
           {guidance.estimatedTime}
         </span>
-        <span className="flex items-center gap-1 text-stone-700">
+        <span className="flex items-center gap-1 text-green-600">
           <CheckCircle className="w-3.5 h-3.5" />
           {guidance.expectedOutcome}
         </span>
@@ -262,21 +262,21 @@ const StatusDashboard: React.FC<{
       {/* Compliance Score */}
       <div className={`p-3 rounded-xl border shadow-sm ${
         complianceScore >= 90 
-          ? 'bg-stone-100 border-stone-200' 
+          ? 'bg-green-50 border-green-200' 
           : complianceScore >= 70
-          ? 'bg-stone-100 border-stone-200'
-          : 'bg-stone-100 border-stone-200'
+          ? 'bg-amber-50 border-amber-200'
+          : 'bg-red-50 border-red-200'
       }`}>
         <div className="flex items-center gap-2 mb-1">
           <Shield className={`w-4 h-4 ${
-            complianceScore >= 90 ? 'text-stone-900' : complianceScore >= 70 ? 'text-stone-900' : 'text-stone-900'
+            complianceScore >= 90 ? 'text-green-500' : complianceScore >= 70 ? 'text-amber-500' : 'text-red-500'
           }`} />
           <span className="text-xs font-medium text-stone-600">Compliance</span>
         </div>
         <p className={`text-base font-semibold ${
-          complianceScore >= 90 ? 'text-stone-700' 
-          : complianceScore >= 70 ? 'text-stone-600' 
-          : 'text-stone-700'
+          complianceScore >= 90 ? 'text-green-600' 
+          : complianceScore >= 70 ? 'text-amber-600' 
+          : 'text-red-600'
         }`}>
           {complianceScore}%
         </p>
@@ -285,27 +285,27 @@ const StatusDashboard: React.FC<{
       {/* Claims Status */}
       <div className={`p-3 rounded-xl border shadow-sm ${
         claimPercent >= 90 
-          ? 'bg-stone-100 border-stone-200' 
-          : 'bg-stone-100 border-stone-200'
+          ? 'bg-green-50 border-green-200' 
+          : 'bg-amber-50 border-amber-200'
       }`}>
         <div className="flex items-center gap-2 mb-1">
-          <Link2 className={`w-4 h-4 ${claimPercent >= 90 ? 'text-stone-900' : 'text-stone-900'}`} />
+          <Link2 className={`w-4 h-4 ${claimPercent >= 90 ? 'text-green-500' : 'text-amber-500'}`} />
           <span className="text-xs font-medium text-stone-600">Claims Sourced</span>
         </div>
         <p className={`text-base font-semibold ${
-          claimPercent >= 90 ? 'text-stone-700' : 'text-stone-600'
+          claimPercent >= 90 ? 'text-green-600' : 'text-amber-600'
         }`}>
           {supportedClaims}/{totalClaims}
         </p>
       </div>
       
       {/* Data Connections */}
-      <div className="p-3 rounded-xl border bg-stone-100 border-stone-200 shadow-sm">
+      <div className="p-3 rounded-xl border bg-blue-50 border-blue-200 shadow-sm">
         <div className="flex items-center gap-2 mb-1">
-          <Compass className="w-4 h-4 text-stone-900" />
+          <Compass className="w-4 h-4 text-blue-500" />
           <span className="text-xs font-medium text-stone-600">Data Sources</span>
         </div>
-        <p className="text-base font-semibold text-stone-600">
+        <p className="text-base font-semibold text-blue-600">
           {connectedModules}
         </p>
       </div>
@@ -314,15 +314,15 @@ const StatusDashboard: React.FC<{
       {pendingReviews !== undefined && (
         <div className={`p-3 rounded-xl border shadow-sm ${
           pendingReviews === 0 
-            ? 'bg-stone-100 border-stone-200'
-            : 'bg-stone-100 border-stone-200'
+            ? 'bg-green-50 border-green-200'
+            : 'bg-amber-50 border-amber-200'
         }`}>
           <div className="flex items-center gap-2 mb-1">
-            <Users className={`w-4 h-4 ${pendingReviews === 0 ? 'text-stone-900' : 'text-stone-900'}`} />
+            <Users className={`w-4 h-4 ${pendingReviews === 0 ? 'text-green-500' : 'text-amber-500'}`} />
             <span className="text-xs font-medium text-stone-600">Reviews</span>
           </div>
           <p className={`text-base font-semibold ${
-            pendingReviews === 0 ? 'text-stone-700' : 'text-stone-600'
+            pendingReviews === 0 ? 'text-green-600' : 'text-amber-600'
           }`}>
             {pendingReviews}
           </p>
@@ -353,12 +353,12 @@ const UpcomingActionsList: React.FC<{
         <button
           key={g.id}
           onClick={() => onAction(g)}
-          className="w-full flex items-center gap-3 p-3 bg-white rounded-lg border border-stone-200 hover:border-stone-300 transition-colors text-left"
+          className="w-full flex items-center gap-3 p-3 bg-white rounded-lg border border-stone-200 hover:border-blue-300 transition-colors text-left"
           data-testid={`button-upcoming-action-${g.id}`}
         >
           <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium
             ${g.priority === 'high' 
-              ? 'bg-stone-100 text-stone-600' 
+              ? 'bg-blue-100 text-blue-600' 
               : 'bg-stone-100 text-stone-600'
             }`}
           >
@@ -553,7 +553,7 @@ export const DocumentSherpa: React.FC<DocumentSherpaProps> = ({
       {/* All Clear State */}
       {blockers.length === 0 && guidance.length === 0 && (
         <div className="text-center py-8">
-          <CheckCircle className="w-12 h-12 mx-auto mb-3 text-stone-900" />
+          <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
           <h3 className="font-semibold text-stone-900">All Clear!</h3>
           <p className="text-sm text-stone-600 mt-1">
             Your document is on track. Keep up the great work!

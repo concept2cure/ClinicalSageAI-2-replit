@@ -127,9 +127,9 @@ function TemplateNodeRow({
 
         {/* Icon */}
         {isParent ? (
-          <Layers className="w-3.5 h-3.5 text-stone-500 shrink-0" />
+          <Layers className="w-3.5 h-3.5 text-violet-500 shrink-0" />
         ) : (
-          <Sparkles className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+          <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
         )}
 
         {/* CTD section badge */}
@@ -146,8 +146,8 @@ function TemplateNodeRow({
             className={cn(
               'text-xs px-1 rounded shrink-0 font-medium',
               node.templateType === 'subsection'
-                ? 'bg-stone-100 text-stone-600'
-                : 'bg-stone-100 text-stone-600'
+                ? 'bg-blue-50 text-blue-600'
+                : 'bg-amber-50 text-amber-600'
             )}
           >
             {node.templateType}
@@ -157,21 +157,21 @@ function TemplateNodeRow({
         {/* Create button */}
         <button
           onClick={() => onCreateFromTemplate(node.templateKey, node.ctdSection, node.label)}
-          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-violet-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           title={`Create "${node.label}" from template`}
           aria-label={`Create ${node.label} from template`}
         >
-          <Plus className="w-3 h-3 text-stone-600" />
+          <Plus className="w-3 h-3 text-violet-600" />
         </button>
         {/* Transform Canvas button */}
         {onOpenTransformCanvas && (
           <button
             onClick={() => onOpenTransformCanvas(node.ctdSection, node.templateKey)}
-            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-amber-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
             title={`Open Transform Canvas for "${node.label}"`}
             aria-label={`Open Transform Canvas for ${node.label}`}
           >
-            <Wand2 className="w-3 h-3 text-stone-600" />
+            <Wand2 className="w-3 h-3 text-amber-600" />
           </button>
         )}
       </div>
@@ -253,8 +253,8 @@ export const TemplateTree: React.FC<TemplateTreeProps> = ({
       </div>
 
       {/* Tip */}
-      <div className="px-3 py-2 border-b border-stone-200 bg-stone-100/40">
-        <p className="text-xs text-stone-600 leading-relaxed">
+      <div className="px-3 py-2 border-b border-stone-200 bg-violet-50/40">
+        <p className="text-xs text-violet-600 leading-relaxed">
           Templates are pre-structured documents wired to CTD sections. Click + to create a new
           document from any template.
         </p>
@@ -269,7 +269,7 @@ export const TemplateTree: React.FC<TemplateTreeProps> = ({
           aria-label={`Recommended templates for ${submissionType}`}
         >
           <div className="flex items-center gap-1.5 px-3 py-1">
-            <Star className="w-3 h-3 text-stone-900" />
+            <Star className="w-3 h-3 text-amber-500" />
             <span className="text-[11px] font-medium text-stone-500 uppercase tracking-wider">
               Best for {submissionType}
             </span>
@@ -284,7 +284,7 @@ export const TemplateTree: React.FC<TemplateTreeProps> = ({
               style={{ paddingLeft: '12px' }}
               data-testid={`recommended-template-${node.templateKey}`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
               <span className="text-xs text-stone-400 font-mono shrink-0 min-w-[28px]">
                 {node.ctdSection}
               </span>
@@ -294,20 +294,20 @@ export const TemplateTree: React.FC<TemplateTreeProps> = ({
               </span>
               <button
                 onClick={() => onCreateFromTemplate(node.templateKey, node.ctdSection, node.label)}
-                className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+                className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-violet-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
                 title={`Create "${node.label}" from template`}
                 aria-label={`Create ${node.label} from template`}
               >
-                <Plus className="w-3 h-3 text-stone-600" />
+                <Plus className="w-3 h-3 text-violet-600" />
               </button>
               {onOpenTransformCanvas && (
                 <button
                   onClick={() => onOpenTransformCanvas(node.ctdSection, node.templateKey)}
-                  className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+                  className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-amber-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
                   title={`Open Transform Canvas for "${node.label}"`}
                   aria-label={`Open Transform Canvas for ${node.label}`}
                 >
-                  <Wand2 className="w-3 h-3 text-stone-600" />
+                  <Wand2 className="w-3 h-3 text-amber-600" />
                 </button>
               )}
             </div>

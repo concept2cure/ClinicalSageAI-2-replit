@@ -9,7 +9,7 @@ export function NavHeader() {
   const [, setLocation] = useLocation();
 
   return (
-    <header className="sticky top-0 z-50 bg-stone-50/80 backdrop-blur-xl border-b border-stone-200/60">
+    <header className="sticky top-0 z-50 bg-[#FAFAF9]/80 backdrop-blur-xl border-b border-stone-200/60">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -41,11 +41,11 @@ export function NavHeader() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setLocation('/concept2cure/demo')}
-            className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-stone-700 bg-stone-100 hover:bg-stone-100 border border-stone-200 rounded-lg transition-colors"
+            className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg transition-colors"
           >
             <span className="flex h-1.5 w-1.5 relative" aria-hidden="true">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-stone-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-stone-900" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-violet-500" />
             </span>
             Live Demo
           </button>
@@ -57,7 +57,7 @@ export function NavHeader() {
           </button>
           <button
             onClick={() => setLocation('/concept2cure/signup')}
-            className="px-5 py-2.5 text-sm font-medium text-white bg-stone-600 hover:bg-stone-700 rounded-lg transition-colors shadow-sm"
+            className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
           >
             Start Free Trial
           </button>

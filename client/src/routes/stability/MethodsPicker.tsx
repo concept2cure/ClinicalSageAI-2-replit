@@ -1,0 +1,60 @@
+import React, { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+
+export default function MethodsPicker({ test, onLinked }: { test: any; onLinked: () => void }) {
+  const [q, setQ] = useState('');
+  const [rows, setRows] = useState<any[]>([]);
+
+  async function search() {
+    try {
+      const r = await apiRequest('GET', `/api/stability/methods?q=${encodeURIComponent(q)}`);
+      setRows(await r.json());
+    } catch (error) {
+      // search failed silently
+    }
+  }
+
+  async function link(method_id: string) {
+    try {
+      await apiRequest('PATCH', `/api/stability/tests/${test.test_id}`, { method_id });
+      onLinked();
+    } catch (error) {
+      toast({ title: 'Error', description: 'Method linking failed', variant: 'destructive' });
+    }
+  }
+
+  useEffect(() => {
+    search();
+  }, []);
+
+  return (
+    <div className="rounded border p-2 space-y-2">
+      <div className="text-sm font-medium">Link Analytical Method — {test.name}</div>
+      <div className="flex items-center gap-2">
+        <Input
+          className="w-72"
+          placeholder="search 'Assay', 'Dissolution'…"
+          value={q}
+          onChange={e => setQ(e.target.value)}
+        />
+        <Button variant="outline" onClick={search}>
+          Search
+        </Button>
+      </div>
+      <div className="text-xs text-slate-600">{rows.length} methods</div>
+      {rows.slice(0, 8).map(m => (
+        <div key={m.method_id} className="flex items-center justify-between text-sm">
+          <div>
+            {m.name} — {m.status || '—'}
+          </div>
+          <Button variant="outline" onClick={() => link(m.method_id)}>
+            Link
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+}

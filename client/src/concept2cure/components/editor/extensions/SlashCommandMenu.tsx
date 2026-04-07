@@ -47,7 +47,7 @@ export function getSlashCommands(
       id: 'ai-rewrite',
       label: 'AI Rewrite',
       description: 'Improve clarity and precision',
-      icon: <Sparkles className="w-4 h-4 text-stone-500" />,
+      icon: <Sparkles className="w-4 h-4 text-purple-500" />,
       category: 'ai',
       action: () => onAIAction?.('rewrite', ''),
     },
@@ -55,7 +55,7 @@ export function getSlashCommands(
       id: 'ai-expand',
       label: 'AI Expand',
       description: 'Add detail and evidence',
-      icon: <Maximize2 className="w-4 h-4 text-stone-500" />,
+      icon: <Maximize2 className="w-4 h-4 text-purple-500" />,
       category: 'ai',
       action: () => onAIAction?.('expand', ''),
     },
@@ -63,7 +63,7 @@ export function getSlashCommands(
       id: 'ai-summarize',
       label: 'AI Summarize',
       description: 'Create executive summary',
-      icon: <Minimize2 className="w-4 h-4 text-stone-500" />,
+      icon: <Minimize2 className="w-4 h-4 text-purple-500" />,
       category: 'ai',
       action: () => onAIAction?.('summarize', ''),
     },
@@ -71,7 +71,7 @@ export function getSlashCommands(
       id: 'ai-regulatory',
       label: 'Regulatory Tone',
       description: 'Convert to formal FDA/EMA language',
-      icon: <FileText className="w-4 h-4 text-stone-500" />,
+      icon: <FileText className="w-4 h-4 text-purple-500" />,
       category: 'ai',
       action: () => onAIAction?.('regulatory-tone', ''),
     },
@@ -79,7 +79,7 @@ export function getSlashCommands(
       id: 'ai-references',
       label: 'Add References',
       description: 'Insert reference placeholders',
-      icon: <BookOpen className="w-4 h-4 text-stone-500" />,
+      icon: <BookOpen className="w-4 h-4 text-purple-500" />,
       category: 'ai',
       action: () => onAIAction?.('add-references', ''),
     },
@@ -87,7 +87,7 @@ export function getSlashCommands(
       id: 'ai-table',
       label: 'AI Generate Table',
       description: 'Create a data table from surrounding content',
-      icon: <TableIcon className="w-4 h-4 text-stone-500" />,
+      icon: <TableIcon className="w-4 h-4 text-purple-500" />,
       category: 'ai',
       action: () => onAIAction?.('generate-table', ''),
     },
@@ -96,7 +96,7 @@ export function getSlashCommands(
       id: 'table',
       label: 'Table',
       description: 'Insert a 3x3 table',
-      icon: <TableIcon className="w-4 h-4 text-stone-900" />,
+      icon: <TableIcon className="w-4 h-4 text-blue-500" />,
       category: 'insert',
       action: (editor) => {
         editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
@@ -106,7 +106,7 @@ export function getSlashCommands(
       id: 'checklist',
       label: 'Checklist',
       description: 'Insert a task list',
-      icon: <ListChecks className="w-4 h-4 text-stone-900" />,
+      icon: <ListChecks className="w-4 h-4 text-blue-500" />,
       category: 'insert',
       action: (editor) => {
         editor.chain().focus().toggleTaskList().run();
@@ -116,7 +116,7 @@ export function getSlashCommands(
       id: 'source-link',
       label: 'Link to Source',
       description: 'Link selected text to a source document',
-      icon: <Link className="w-4 h-4 text-stone-900" />,
+      icon: <Link className="w-4 h-4 text-blue-500" />,
       category: 'insert',
       action: () => {
         // Trigger the source linking modal via the parent
@@ -238,7 +238,7 @@ export const SlashCommandList = React.forwardRef<
                 onClick={() => selectItem(idx)}
                 className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
                   idx === selectedIndex
-                    ? 'bg-stone-100 text-stone-700'
+                    ? 'bg-blue-50 text-stone-700'
                     : 'hover:bg-stone-50 text-stone-700'
                 }`}
               >

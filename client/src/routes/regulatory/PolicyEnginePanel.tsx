@@ -427,7 +427,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
       case 'CRITICAL':
         return <Badge variant="destructive">Critical</Badge>;
       case 'WARN':
-        return <Badge className="bg-stone-900">Warning</Badge>;
+        return <Badge className="bg-orange-500">Warning</Badge>;
       case 'INFO':
         return <Badge variant="outline">Info</Badge>;
       default:
@@ -444,11 +444,11 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Compliance Score</p>
-                <p className="text-2xl font-bold text-stone-700">
+                <p className="text-2xl font-bold text-green-600">
                   {policyMetrics?.compliance_score}%
                 </p>
               </div>
-              <Shield className="h-8 w-8 text-stone-700" />
+              <Shield className="h-8 w-8 text-green-600" />
             </div>
             <div className="mt-2">
               <Progress value={policyMetrics?.compliance_score} className="h-2" />
@@ -460,11 +460,11 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Policy Coverage</p>
-                <p className="text-2xl font-bold text-stone-600">
+                <p className="text-2xl font-bold text-blue-600">
                   {policyMetrics?.coverage_percentage}%
                 </p>
               </div>
-              <Target className="h-8 w-8 text-stone-600" />
+              <Target className="h-8 w-8 text-blue-600" />
             </div>
             <div className="mt-2">
               <Progress value={policyMetrics?.coverage_percentage} className="h-2" />
@@ -476,11 +476,11 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">AI Optimization</p>
-                <p className="text-2xl font-bold text-stone-600">
+                <p className="text-2xl font-bold text-purple-600">
                   {policyMetrics?.ai_optimization_score}%
                 </p>
               </div>
-              <Brain className="h-8 w-8 text-stone-600" />
+              <Brain className="h-8 w-8 text-purple-600" />
             </div>
             <div className="mt-2">
               <Progress value={policyMetrics?.ai_optimization_score} className="h-2" />
@@ -494,7 +494,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                 <p className="text-sm font-medium text-muted-foreground">Active Submissions</p>
                 <p className="text-2xl font-bold">{policyMetrics?.active_submissions}</p>
               </div>
-              <Activity className="h-8 w-8 text-stone-600" />
+              <Activity className="h-8 w-8 text-indigo-600" />
             </div>
           </CardContent>
         </Card>
@@ -503,11 +503,11 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Predictive Accuracy</p>
-                <p className="text-2xl font-bold text-stone-600">
+                <p className="text-2xl font-bold text-orange-600">
                   {policyMetrics?.predictive_accuracy}%
                 </p>
               </div>
-              <TrendingUp className="h-8 w-8 text-stone-600" />
+              <TrendingUp className="h-8 w-8 text-orange-600" />
             </div>
           </CardContent>
         </Card>
@@ -517,7 +517,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-stone-600" />
+            <Sparkles className="w-5 h-5 text-purple-600" />
             AI-Powered Policy Recommendations
           </CardTitle>
         </CardHeader>
@@ -526,7 +526,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
             {aiRecommendations.map((recommendation: AIRecommendation) => (
               <div
                 key={recommendation.id}
-                className="border rounded-lg p-4 bg-stone-100"
+                className="border rounded-lg p-4 bg-gradient-to-r from-purple-50 to-blue-50"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -610,10 +610,10 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                   <div
                     className={`w-3 h-3 rounded-full ${
                       system.status === 'healthy'
-                        ? 'bg-stone-900'
+                        ? 'bg-green-500'
                         : system.status === 'warning'
-                          ? 'bg-stone-900'
-                          : 'bg-stone-900'
+                          ? 'bg-yellow-500'
+                          : 'bg-red-500'
                     }`}
                   />
                   <div className="flex-1">
@@ -639,10 +639,10 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                     variant="outline"
                     className={`text-xs ${
                       system.status === 'healthy'
-                        ? 'text-stone-700'
+                        ? 'text-green-600'
                         : system.status === 'warning'
-                          ? 'text-stone-600'
-                          : 'text-stone-700'
+                          ? 'text-yellow-600'
+                          : 'text-red-600'
                     }`}
                   >
                     {system.status}
@@ -662,7 +662,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Bot className="w-5 h-5 text-stone-600" />
+            <Bot className="w-5 h-5 text-blue-600" />
             AI Policy Assistant
           </CardTitle>
         </CardHeader>
@@ -713,12 +713,12 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
 
           {/* AI Response */}
           {aiResponse && (
-            <Card className="bg-stone-100 border-stone-200">
+            <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <Brain className="w-6 h-6 text-stone-600 mt-1 flex-shrink-0" />
+                  <Brain className="w-6 h-6 text-blue-600 mt-1 flex-shrink-0" />
                   <div className="space-y-2">
-                    <p className="font-medium text-stone-800">AI Analysis</p>
+                    <p className="font-medium text-blue-800">AI Analysis</p>
                     <p className="text-sm leading-relaxed">{aiResponse}</p>
                   </div>
                 </div>
@@ -741,19 +741,19 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm">Compliance Trajectory</span>
-                <Badge variant="outline" className="text-stone-700">
+                <Badge variant="outline" className="text-green-600">
                   ↑ +2.3% projected
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Processing Time Trend</span>
-                <Badge variant="outline" className="text-stone-600">
+                <Badge variant="outline" className="text-blue-600">
                   ↓ -15% this quarter
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Policy Optimization Score</span>
-                <Badge variant="outline" className="text-stone-600">
+                <Badge variant="outline" className="text-purple-600">
                   92.1% (+1.8%)
                 </Badge>
               </div>
@@ -772,7 +772,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm">Policy Updates Available</span>
-                <Badge className="bg-stone-600">3 ready</Badge>
+                <Badge className="bg-purple-600">3 ready</Badge>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Optimization Opportunities</span>
@@ -780,7 +780,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Risk Mitigation Actions</span>
-                <Badge className="bg-stone-600">2 urgent</Badge>
+                <Badge className="bg-orange-600">2 urgent</Badge>
               </div>
               <Button className="w-full mt-3" size="sm">
                 <Sparkles className="w-4 h-4 mr-2" />
@@ -801,8 +801,8 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <Settings className="w-6 h-6 text-stone-600" />
-                <Sparkles className="w-3 h-3 text-stone-600 absolute -top-1 -right-1" />
+                <Settings className="w-6 h-6 text-blue-600" />
+                <Sparkles className="w-3 h-3 text-purple-600 absolute -top-1 -right-1" />
               </div>
               <div>
                 <CardTitle>Enterprise AI Policy Engine</CardTitle>
@@ -897,7 +897,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                 <CardContent>
                   <div className="space-y-4">
                     {policy ? (
-                      <div className="bg-stone-50 rounded-lg p-4">
+                      <div className="bg-gray-50 rounded-lg p-4">
                         <div className="space-y-3">
                           <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
@@ -964,9 +964,9 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                   </div>
 
                   {simulationResults && (
-                    <Card className="bg-stone-100 border-stone-200">
+                    <Card className="bg-green-50 border-green-200">
                       <CardContent className="p-4">
-                        <h4 className="font-semibold text-stone-800 mb-2">Validation Results</h4>
+                        <h4 className="font-semibold text-green-800 mb-2">Validation Results</h4>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
                             <span>Affected Submissions:</span>
@@ -976,13 +976,13 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                           </div>
                           <div className="flex justify-between">
                             <span>Compliance Improvement:</span>
-                            <span className="font-medium text-stone-700">
+                            <span className="font-medium text-green-600">
                               +{simulationResults.compliance_improvement}%
                             </span>
                           </div>
                           <div className="flex justify-between">
                             <span>Time Savings:</span>
-                            <span className="font-medium text-stone-600">
+                            <span className="font-medium text-blue-600">
                               {simulationResults.estimated_time_savings}
                             </span>
                           </div>
@@ -1009,13 +1009,13 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                       <div
                         key={index}
                         className={`flex items-center justify-between p-3 border rounded-lg ${
-                          version.is_active ? 'bg-stone-100 border-stone-200' : 'bg-stone-50'
+                          version.is_active ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <div
                             className={`w-3 h-3 rounded-full ${
-                              version.is_active ? 'bg-stone-900' : 'bg-stone-400'
+                              version.is_active ? 'bg-blue-500' : 'bg-gray-400'
                             }`}
                           />
                           <div>
@@ -1027,7 +1027,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                         </div>
                         <div className="flex items-center gap-2">
                           {version.is_active ? (
-                            <Badge className="bg-stone-600">ACTIVE</Badge>
+                            <Badge className="bg-blue-600">ACTIVE</Badge>
                           ) : (
                             <Button
                               size="sm"
@@ -1057,7 +1057,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
 
             {/* Edit Mode Modal */}
             {editMode && (
-              <Card className="border-2 border-stone-900">
+              <Card className="border-2 border-blue-500">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
@@ -1110,7 +1110,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Gauge className="w-5 h-5 text-stone-600" />
+                  <Gauge className="w-5 h-5 text-purple-600" />
                   Policy Impact Simulation Engine
                 </CardTitle>
               </CardHeader>
@@ -1198,35 +1198,35 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                   </Card>
 
                   {/* AI Recommendations */}
-                  <Card className="border-dashed bg-stone-100">
+                  <Card className="border-dashed bg-gradient-to-br from-purple-50 to-blue-50">
                     <CardContent className="p-4 space-y-4">
                       <h4 className="font-semibold flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-stone-600" />
+                        <Sparkles className="w-4 h-4 text-purple-600" />
                         AI Optimization
                       </h4>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
                           <span>Efficiency Score:</span>
-                          <Badge variant="outline" className="text-stone-700">
+                          <Badge variant="outline" className="text-green-600">
                             94.2%
                           </Badge>
                         </div>
                         <div className="flex items-center justify-between text-xs">
                           <span>Risk Level:</span>
-                          <Badge variant="outline" className="text-stone-600">
+                          <Badge variant="outline" className="text-yellow-600">
                             Medium
                           </Badge>
                         </div>
                         <div className="flex items-center justify-between text-xs">
                           <span>Confidence:</span>
-                          <Badge variant="outline" className="text-stone-600">
+                          <Badge variant="outline" className="text-blue-600">
                             89.7%
                           </Badge>
                         </div>
                       </div>
                       <Button
                         size="sm"
-                        className="w-full bg-stone-600"
+                        className="w-full bg-gradient-to-r from-purple-600 to-blue-600"
                       >
                         <Wand2 className="w-3 h-3 mr-1" />
                         Apply AI Recommendations
@@ -1244,28 +1244,28 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <BarChart3 className="w-5 h-5 text-stone-600" />
+                      <BarChart3 className="w-5 h-5 text-blue-600" />
                       Predicted Impact Metrics
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="text-center p-3 bg-stone-100 rounded-lg">
-                          <p className="text-2xl font-bold text-stone-600">
+                        <div className="text-center p-3 bg-blue-50 rounded-lg">
+                          <p className="text-2xl font-bold text-blue-600">
                             {simulationResults.affected_submissions}
                           </p>
                           <p className="text-xs text-muted-foreground">Affected Submissions</p>
                         </div>
-                        <div className="text-center p-3 bg-stone-100 rounded-lg">
-                          <p className="text-2xl font-bold text-stone-700">
+                        <div className="text-center p-3 bg-green-50 rounded-lg">
+                          <p className="text-2xl font-bold text-green-600">
                             +{simulationResults.compliance_improvement}%
                           </p>
                           <p className="text-xs text-muted-foreground">Compliance Improvement</p>
                         </div>
                       </div>
-                      <div className="p-3 bg-stone-100 rounded-lg text-center">
-                        <p className="text-xl font-bold text-stone-600">
+                      <div className="p-3 bg-purple-50 rounded-lg text-center">
+                        <p className="text-xl font-bold text-purple-600">
                           {simulationResults.estimated_time_savings}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -1274,9 +1274,9 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                       </div>
                       <div className="space-y-2">
                         <Label className="text-sm font-medium">Risk Assessment:</Label>
-                        <div className="flex items-center justify-between p-2 bg-stone-100 rounded">
+                        <div className="flex items-center justify-between p-2 bg-yellow-50 rounded">
                           <span className="text-sm">{simulationResults.risk_reduction}</span>
-                          <Badge variant="outline" className="text-stone-600">
+                          <Badge variant="outline" className="text-yellow-600">
                             Acceptable
                           </Badge>
                         </div>
@@ -1289,7 +1289,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <Network className="w-5 h-5 text-stone-600" />
+                      <Network className="w-5 h-5 text-indigo-600" />
                       System Impact Analysis
                     </CardTitle>
                   </CardHeader>
@@ -1301,10 +1301,10 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                           className="flex items-center justify-between p-3 border rounded-lg"
                         >
                           <div className="flex items-center gap-3">
-                            <Server className="w-4 h-4 text-stone-500" />
+                            <Server className="w-4 h-4 text-gray-500" />
                             <span className="font-medium">{system}</span>
                           </div>
-                          <Badge variant="outline" className="text-stone-700">
+                          <Badge variant="outline" className="text-green-600">
                             ✓ Compatible
                           </Badge>
                         </div>
@@ -1318,9 +1318,9 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                           {simulationResults.recommendations.map((rec: string, index: number) => (
                             <div
                               key={index}
-                              className="flex items-start gap-2 p-2 bg-stone-100 rounded text-sm"
+                              className="flex items-start gap-2 p-2 bg-blue-50 rounded text-sm"
                             >
-                              <CheckCircle className="w-4 h-4 text-stone-600 mt-0.5 flex-shrink-0" />
+                              <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
                               <span>{rec}</span>
                             </div>
                           ))}
@@ -1341,11 +1341,11 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
-                    <Network className="w-5 h-5 text-stone-600" />
+                    <Network className="w-5 h-5 text-blue-600" />
                     Regulatory System Integration Health
                   </CardTitle>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-stone-700">
+                    <Badge variant="outline" className="text-green-600">
                       <CheckCircle className="w-3 h-3 mr-1" />6 Systems Online
                     </Badge>
                     <Button onClick={validatePolicyIntegrity} disabled={loading} size="sm">
@@ -1362,10 +1362,10 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                       key={index}
                       className={`border-2 ${
                         system.status === 'healthy'
-                          ? 'border-stone-200 bg-stone-100'
+                          ? 'border-green-200 bg-green-50'
                           : system.status === 'warning'
-                            ? 'border-stone-200 bg-stone-100'
-                            : 'border-stone-200 bg-stone-100'
+                            ? 'border-yellow-200 bg-yellow-50'
+                            : 'border-red-200 bg-red-50'
                       }`}
                     >
                       <CardContent className="p-4">
@@ -1374,10 +1374,10 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                             <div
                               className={`w-3 h-3 rounded-full ${
                                 system.status === 'healthy'
-                                  ? 'bg-stone-900'
+                                  ? 'bg-green-500'
                                   : system.status === 'warning'
-                                    ? 'bg-stone-900'
-                                    : 'bg-stone-900'
+                                    ? 'bg-yellow-500'
+                                    : 'bg-red-500'
                               }`}
                             />
                             <h3 className="font-semibold text-sm">{system.system}</h3>
@@ -1386,10 +1386,10 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                             variant="outline"
                             className={`text-xs ${
                               system.status === 'healthy'
-                                ? 'text-stone-700'
+                                ? 'text-green-600'
                                 : system.status === 'warning'
-                                  ? 'text-stone-600'
-                                  : 'text-stone-700'
+                                  ? 'text-yellow-600'
+                                  : 'text-red-600'
                             }`}
                           >
                             {system.status}
@@ -1407,7 +1407,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                           </div>
                           <div className="flex justify-between">
                             <span>AI Health Score:</span>
-                            <span className="font-medium text-stone-600">
+                            <span className="font-medium text-purple-600">
                               {system.ai_health_score.toFixed(1)}%
                             </span>
                           </div>
@@ -1447,7 +1447,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <ArrowRight className="w-5 h-5 text-stone-600" />
+                    <ArrowRight className="w-5 h-5 text-blue-600" />
                     Upstream Data Sources
                   </CardTitle>
                 </CardHeader>
@@ -1455,7 +1455,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center gap-3">
-                        <Database className="w-4 h-4 text-stone-600" />
+                        <Database className="w-4 h-4 text-blue-600" />
                         <div>
                           <p className="font-medium text-sm">Regulatory Intelligence Hub</p>
                           <p className="text-xs text-muted-foreground">
@@ -1463,13 +1463,13 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                           </p>
                         </div>
                       </div>
-                      <Badge variant="outline" className="text-stone-700">
+                      <Badge variant="outline" className="text-green-600">
                         Active
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center gap-3">
-                        <FileText className="w-4 h-4 text-stone-600" />
+                        <FileText className="w-4 h-4 text-purple-600" />
                         <div>
                           <p className="font-medium text-sm">Document Intelligence</p>
                           <p className="text-xs text-muted-foreground">
@@ -1477,13 +1477,13 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                           </p>
                         </div>
                       </div>
-                      <Badge variant="outline" className="text-stone-700">
+                      <Badge variant="outline" className="text-green-600">
                         Active
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center gap-3">
-                        <Bot className="w-4 h-4 text-stone-600" />
+                        <Bot className="w-4 h-4 text-orange-600" />
                         <div>
                           <p className="font-medium text-sm">AI Recommendation Engine</p>
                           <p className="text-xs text-muted-foreground">
@@ -1491,7 +1491,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                           </p>
                         </div>
                       </div>
-                      <Badge variant="outline" className="text-stone-700">
+                      <Badge variant="outline" className="text-green-600">
                         Active
                       </Badge>
                     </div>
@@ -1502,7 +1502,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <ArrowLeft className="w-5 h-5 text-stone-700" />
+                    <ArrowLeft className="w-5 h-5 text-green-600" />
                     Downstream Consumers
                   </CardTitle>
                 </CardHeader>
@@ -1510,7 +1510,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center gap-3">
-                        <Shield className="w-4 h-4 text-stone-600" />
+                        <Shield className="w-4 h-4 text-blue-600" />
                         <div>
                           <p className="font-medium text-sm">Gatekeeper v2</p>
                           <p className="text-xs text-muted-foreground">
@@ -1518,13 +1518,13 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                           </p>
                         </div>
                       </div>
-                      <Badge variant="outline" className="text-stone-700">
+                      <Badge variant="outline" className="text-green-600">
                         Synced
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center gap-3">
-                        <Layers className="w-4 h-4 text-stone-600" />
+                        <Layers className="w-4 h-4 text-purple-600" />
                         <div>
                           <p className="font-medium text-sm">M3 Builder</p>
                           <p className="text-xs text-muted-foreground">
@@ -1532,13 +1532,13 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                           </p>
                         </div>
                       </div>
-                      <Badge variant="outline" className="text-stone-700">
+                      <Badge variant="outline" className="text-green-600">
                         Synced
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center gap-3">
-                        <GitBranch className="w-4 h-4 text-stone-600" />
+                        <GitBranch className="w-4 h-4 text-orange-600" />
                         <div>
                           <p className="font-medium text-sm">Q12 Change Control</p>
                           <p className="text-xs text-muted-foreground">
@@ -1546,7 +1546,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                           </p>
                         </div>
                       </div>
-                      <Badge variant="outline" className="text-stone-600">
+                      <Badge variant="outline" className="text-yellow-600">
                         Pending
                       </Badge>
                     </div>
@@ -1559,26 +1559,26 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-stone-600" />
+                  <BarChart3 className="w-5 h-5 text-indigo-600" />
                   Integration Performance Metrics
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="text-center p-4 bg-stone-100 rounded-lg">
-                    <p className="text-2xl font-bold text-stone-600">99.8%</p>
+                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <p className="text-2xl font-bold text-blue-600">99.8%</p>
                     <p className="text-sm text-muted-foreground">Uptime</p>
                   </div>
-                  <div className="text-center p-4 bg-stone-100 rounded-lg">
-                    <p className="text-2xl font-bold text-stone-700">1.2s</p>
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <p className="text-2xl font-bold text-green-600">1.2s</p>
                     <p className="text-sm text-muted-foreground">Avg Sync Time</p>
                   </div>
-                  <div className="text-center p-4 bg-stone-100 rounded-lg">
-                    <p className="text-2xl font-bold text-stone-600">847</p>
+                  <div className="text-center p-4 bg-purple-50 rounded-lg">
+                    <p className="text-2xl font-bold text-purple-600">847</p>
                     <p className="text-sm text-muted-foreground">Daily Sync Events</p>
                   </div>
-                  <div className="text-center p-4 bg-stone-100 rounded-lg">
-                    <p className="text-2xl font-bold text-stone-600">0</p>
+                  <div className="text-center p-4 bg-orange-50 rounded-lg">
+                    <p className="text-2xl font-bold text-orange-600">0</p>
                     <p className="text-sm text-muted-foreground">Failed Syncs</p>
                   </div>
                 </div>
@@ -1594,31 +1594,31 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
               <Card className="md:col-span-2">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <LineChart className="w-5 h-5 text-stone-600" />
+                    <LineChart className="w-5 h-5 text-blue-600" />
                     Policy Compliance Trends
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="grid grid-cols-3 gap-4">
-                      <div className="text-center p-3 bg-stone-100 rounded-lg">
-                        <p className="text-lg font-bold text-stone-600">94.7%</p>
+                      <div className="text-center p-3 bg-blue-50 rounded-lg">
+                        <p className="text-lg font-bold text-blue-600">94.7%</p>
                         <p className="text-xs text-muted-foreground">Current Compliance</p>
                       </div>
-                      <div className="text-center p-3 bg-stone-100 rounded-lg">
-                        <p className="text-lg font-bold text-stone-700">+2.3%</p>
+                      <div className="text-center p-3 bg-green-50 rounded-lg">
+                        <p className="text-lg font-bold text-green-600">+2.3%</p>
                         <p className="text-xs text-muted-foreground">30-Day Change</p>
                       </div>
-                      <div className="text-center p-3 bg-stone-100 rounded-lg">
-                        <p className="text-lg font-bold text-stone-600">97.1%</p>
+                      <div className="text-center p-3 bg-purple-50 rounded-lg">
+                        <p className="text-lg font-bold text-purple-600">97.1%</p>
                         <p className="text-xs text-muted-foreground">Projected (90d)</p>
                       </div>
                     </div>
 
                     {/* Simulated chart area */}
-                    <div className="h-48 bg-stone-100 rounded-lg p-4 flex items-center justify-center border-dashed border-2 border-stone-200">
+                    <div className="h-48 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-4 flex items-center justify-center border-dashed border-2 border-blue-200">
                       <div className="text-center">
-                        <BarChart3 className="w-12 h-12 mx-auto mb-2 text-stone-400" />
+                        <BarChart3 className="w-12 h-12 mx-auto mb-2 text-blue-400" />
                         <p className="text-sm text-muted-foreground">
                           Policy Compliance Trend Chart
                         </p>
@@ -1634,7 +1634,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <PieChart className="w-5 h-5 text-stone-700" />
+                    <PieChart className="w-5 h-5 text-green-600" />
                     Policy Distribution
                   </CardTitle>
                 </CardHeader>
@@ -1674,7 +1674,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-stone-700" />
+                  <TrendingUp className="w-5 h-5 text-green-600" />
                   Policy Performance Analytics
                 </CardTitle>
               </CardHeader>
@@ -1685,11 +1685,11 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span>Average Processing Time:</span>
-                        <span className="font-medium text-stone-600">4.2 hrs</span>
+                        <span className="font-medium text-blue-600">4.2 hrs</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>Time Saved (30d):</span>
-                        <span className="font-medium text-stone-700">127 hrs</span>
+                        <span className="font-medium text-green-600">127 hrs</span>
                       </div>
                       <Progress value={87} className="h-2" />
                     </div>
@@ -1700,11 +1700,11 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span>Error Rate:</span>
-                        <span className="font-medium text-stone-700">0.3%</span>
+                        <span className="font-medium text-green-600">0.3%</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>Improvement (30d):</span>
-                        <span className="font-medium text-stone-700">-0.8%</span>
+                        <span className="font-medium text-green-600">-0.8%</span>
                       </div>
                       <Progress value={97} className="h-2" />
                     </div>
@@ -1715,11 +1715,11 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span>Tasks Automated:</span>
-                        <span className="font-medium text-stone-600">234</span>
+                        <span className="font-medium text-purple-600">234</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>Manual Effort Saved:</span>
-                        <span className="font-medium text-stone-600">67%</span>
+                        <span className="font-medium text-purple-600">67%</span>
                       </div>
                       <Progress value={67} className="h-2" />
                     </div>
@@ -1730,11 +1730,11 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span>Quality Score:</span>
-                        <span className="font-medium text-stone-600">9.2/10</span>
+                        <span className="font-medium text-blue-600">9.2/10</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>Consistency Rate:</span>
-                        <span className="font-medium text-stone-600">98.4%</span>
+                        <span className="font-medium text-blue-600">98.4%</span>
                       </div>
                       <Progress value={92} className="h-2" />
                     </div>
@@ -1748,14 +1748,14 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-stone-600" />
+                    <FileText className="w-5 h-5 text-indigo-600" />
                     Executive Reports
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-stone-50 cursor-pointer">
+                  <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
                     <div className="flex items-center gap-3">
-                      <FileText className="w-4 h-4 text-stone-600" />
+                      <FileText className="w-4 h-4 text-blue-600" />
                       <div>
                         <p className="font-medium text-sm">Monthly Policy Summary</p>
                         <p className="text-xs text-muted-foreground">Generated 2 hours ago</p>
@@ -1766,9 +1766,9 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                     </Button>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-stone-50 cursor-pointer">
+                  <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
                     <div className="flex items-center gap-3">
-                      <BarChart3 className="w-4 h-4 text-stone-700" />
+                      <BarChart3 className="w-4 h-4 text-green-600" />
                       <div>
                         <p className="font-medium text-sm">Compliance Analytics</p>
                         <p className="text-xs text-muted-foreground">Updated daily</p>
@@ -1779,9 +1779,9 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                     </Button>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-stone-50 cursor-pointer">
+                  <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
                     <div className="flex items-center gap-3">
-                      <TrendingUp className="w-4 h-4 text-stone-600" />
+                      <TrendingUp className="w-4 h-4 text-purple-600" />
                       <div>
                         <p className="font-medium text-sm">Performance Benchmarks</p>
                         <p className="text-xs text-muted-foreground">Weekly analysis</p>
@@ -1802,14 +1802,14 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Brain className="w-5 h-5 text-stone-600" />
+                    <Brain className="w-5 h-5 text-purple-600" />
                     AI Insights & Predictions
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="p-3 bg-stone-100 rounded-lg">
+                  <div className="p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
-                      <Lightbulb className="w-4 h-4 text-stone-600" />
+                      <Lightbulb className="w-4 h-4 text-purple-600" />
                       <p className="font-semibold text-sm">Key Insight</p>
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">
@@ -1822,9 +1822,9 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                     </Button>
                   </div>
 
-                  <div className="p-3 bg-stone-100 rounded-lg">
+                  <div className="p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
-                      <Target className="w-4 h-4 text-stone-700" />
+                      <Target className="w-4 h-4 text-green-600" />
                       <p className="font-semibold text-sm">Prediction</p>
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">
@@ -1836,9 +1836,9 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
                     </Button>
                   </div>
 
-                  <div className="p-3 bg-stone-100 rounded-lg">
+                  <div className="p-3 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
-                      <AlertTriangle className="w-4 h-4 text-stone-600" />
+                      <AlertTriangle className="w-4 h-4 text-orange-600" />
                       <p className="font-semibold text-sm">Risk Alert</p>
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">

@@ -133,26 +133,26 @@ export const ActionCard: React.FC<ActionCardProps> = ({
         className={cn(
           'group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium',
           'border border-stone-200 bg-white text-stone-700',
-          'hover:border-stone-300 hover:bg-stone-50 hover:text-stone-800',
+          'hover:border-blue-300 hover:bg-blue-50 hover:text-stone-700',
           'transition-colors duration-150',
           'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
           className,
         )}
       >
-        <Icon className="w-4 h-4 text-stone-400 group-hover:text-stone-600 transition-colors duration-150" />
+        <Icon className="w-4 h-4 text-stone-400 group-hover:text-blue-500 transition-colors duration-150" />
         <span>{label}</span>
-        <ArrowRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-500 group-hover:translate-x-0.5 transition-all duration-150" />
+        <ArrowRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all duration-150" />
       </button>
     );
   }
 
   return (
     <div className={cn(
-      'rounded-xl border border-stone-100 bg-white p-4 hover:border-stone-200 transition-colors duration-150',
+      'rounded-xl border border-stone-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow duration-150',
       className,
     )}>
       <div className="flex items-start gap-3">
-        <IconBox icon={Icon} size="sm" className="bg-stone-100 text-stone-600" />
+        <IconBox icon={Icon} size="sm" className="bg-blue-50 text-blue-600" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-stone-900">{label}</p>
           {description && (

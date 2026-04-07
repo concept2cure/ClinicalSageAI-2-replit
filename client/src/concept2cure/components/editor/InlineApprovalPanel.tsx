@@ -69,18 +69,18 @@ interface InlineApprovalPanelProps {
 }
 
 const ANNOTATION_TYPES = [
-  { key: 'approval_request', label: 'Request Approval', icon: Shield, color: 'text-stone-600', bg: 'bg-stone-100' },
-  { key: 'review_request', label: 'Request Review', icon: Eye, color: 'text-stone-600', bg: 'bg-stone-100' },
+  { key: 'approval_request', label: 'Request Approval', icon: Shield, color: 'text-blue-600', bg: 'bg-blue-50' },
+  { key: 'review_request', label: 'Request Review', icon: Eye, color: 'text-violet-600', bg: 'bg-violet-50' },
   { key: 'comment', label: 'Comment', icon: MessageSquare, color: 'text-stone-600', bg: 'bg-stone-50' },
-  { key: 'question', label: 'Question', icon: AlertTriangle, color: 'text-stone-600', bg: 'bg-stone-100' },
-  { key: 'suggestion', label: 'Suggestion', icon: CheckCircle2, color: 'text-stone-700', bg: 'bg-stone-100' },
+  { key: 'question', label: 'Question', icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50' },
+  { key: 'suggestion', label: 'Suggestion', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
 ] as const;
 
 const STATUS_CONFIG = {
-  pending: { label: 'Pending', color: 'text-stone-600', bg: 'bg-stone-100', border: 'border-stone-200' },
-  approved: { label: 'Approved', color: 'text-stone-700', bg: 'bg-stone-100', border: 'border-stone-200' },
-  rejected: { label: 'Rejected', color: 'text-stone-700', bg: 'bg-stone-100', border: 'border-stone-200' },
-  resolved: { label: 'Resolved', color: 'text-stone-600', bg: 'bg-stone-100', border: 'border-stone-200' },
+  pending: { label: 'Pending', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
+  approved: { label: 'Approved', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+  rejected: { label: 'Rejected', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
+  resolved: { label: 'Resolved', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
 };
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -185,7 +185,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b bg-stone-50/50">
         <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-stone-900" />
+          <Shield className="w-4 h-4 text-blue-500" />
           <span className="text-xs font-semibold text-stone-800">Inline Annotation</span>
         </div>
         <div className="flex items-center gap-1">
@@ -207,8 +207,8 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
       </div>
 
       {/* Selected text preview */}
-      <div className="px-4 py-2 bg-stone-100/50 border-b border-stone-100">
-        <p className="text-[10px] text-stone-600 font-medium mb-0.5">Selected Text</p>
+      <div className="px-4 py-2 bg-amber-50/50 border-b border-amber-100">
+        <p className="text-[10px] text-amber-600 font-medium mb-0.5">Selected Text</p>
         <p className="text-xs text-stone-700 line-clamp-2 italic">
           &ldquo;{selectedText.slice(0, 150)}{selectedText.length > 150 ? '...' : ''}&rdquo;
         </p>
@@ -252,7 +252,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
                     : 'Add your comment...'
               }
               rows={3}
-              className="w-full text-xs px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 resize-none"
+              className="w-full text-xs px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none"
             />
           </div>
 
@@ -264,7 +264,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
                 value={assignedTo}
                 onChange={e => setAssignedTo(e.target.value)}
                 placeholder="Assign to (name or email)..."
-                className="w-full text-xs px-3 py-1.5 border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400"
+                className="w-full text-xs px-3 py-1.5 border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
               />
             </div>
           )}
@@ -360,7 +360,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
                             onChange={e => setReplyContent(e.target.value)}
                             placeholder="Write a reply..."
                             rows={2}
-                            className="w-full text-xs px-2 py-1.5 border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 resize-none"
+                            className="w-full text-xs px-2 py-1.5 border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none"
                           />
                           <div className="flex items-center gap-1">
                             <button
@@ -390,13 +390,13 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
                             <>
                               <button
                                 onClick={() => decideAnnotation.mutate({ annotationId: ann.id, decision: 'approved' })}
-                                className="px-2 py-1 text-[10px] font-medium text-stone-700 hover:bg-stone-100 rounded-md flex items-center gap-0.5"
+                                className="px-2 py-1 text-[10px] font-medium text-emerald-600 hover:bg-emerald-50 rounded-md flex items-center gap-0.5"
                               >
                                 <CheckCircle2 className="w-3 h-3" /> Approve
                               </button>
                               <button
                                 onClick={() => decideAnnotation.mutate({ annotationId: ann.id, decision: 'rejected' })}
-                                className="px-2 py-1 text-[10px] font-medium text-stone-700 hover:bg-stone-100 rounded-md flex items-center gap-0.5"
+                                className="px-2 py-1 text-[10px] font-medium text-red-600 hover:bg-red-50 rounded-md flex items-center gap-0.5"
                               >
                                 <XCircle className="w-3 h-3" /> Reject
                               </button>
@@ -405,7 +405,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
                           {(ann.status === 'pending' || ann.annotationType === 'comment' || ann.annotationType === 'question') && ann.status !== 'resolved' && (
                             <button
                               onClick={() => decideAnnotation.mutate({ annotationId: ann.id, decision: 'resolved' })}
-                              className="px-2 py-1 text-[10px] font-medium text-stone-600 hover:bg-stone-100 rounded-md"
+                              className="px-2 py-1 text-[10px] font-medium text-blue-600 hover:bg-blue-50 rounded-md"
                             >
                               Resolve
                             </button>

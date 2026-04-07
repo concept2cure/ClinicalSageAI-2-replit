@@ -1,11 +1,6 @@
 import type { LayoutMode } from '../zen-app-constants';
 
-/**
- * Maps demoted/legacy layout mode strings to active LayoutMode values.
- * Keys are untyped strings so the LayoutMode union stays clean.
- */
-export const DEMOTED_LAYOUT_REDIRECTS: Record<string, LayoutMode> = {
-  // ── Demoted modes (redirect to active destinations) ──
+export const DEMOTED_LAYOUT_REDIRECTS: Partial<Record<LayoutMode, LayoutMode>> = {
   'mission-control': 'projects',
   snowglobe: 'projects',
   'snowglobe-chambers': 'projects',
@@ -13,10 +8,11 @@ export const DEMOTED_LAYOUT_REDIRECTS: Record<string, LayoutMode> = {
   'ectd-coauthor': 'documents',
   cmc: 'documents',
   'document-vault': 'vault',
+  'vault-workspace': 'vault',
+  'review-readiness': 'review',
   'clinical-trial': 'documents',
   'document-builder': 'documents',
-  artifacts: 'apps',
-  'artifacts-center': 'apps',
+  artifacts: 'artifacts-center',
   sherpa: 'projects',
   analytics: 'projects',
   timeline: 'projects',
@@ -34,64 +30,8 @@ export const DEMOTED_LAYOUT_REDIRECTS: Record<string, LayoutMode> = {
   'knowledge-base': 'projects',
   'project-knowledge': 'projects',
   'ana-platform-control': 'projects',
-  // ── Legacy batch-1 modes ──
-  'ind-workspace': 'projects',
-  'submission-workspace': 'projects',
-  author: 'projects',
-  'intelligence-hub': 'projects',
-  'command-center': 'projects',
-  'legal-center': 'projects',
-  'about-training': 'projects',
-  'ana-dashboard': 'projects',
-  integrations: 'projects',
-  // ── Compatibility redirects ──
-  setup: 'settings',
-  workspace: 'project-workspace',
-  assistant: 'chats',
-  ctd: 'chats',
-  'medtech-dashboard': 'projects',
-  dossier: 'project-workspace',
-  // ── Former project-scoped layout modes (now WorkspaceView inside project-workspace) ──
-  documents: 'project-workspace',
-  vault: 'project-workspace',
-  review: 'project-workspace',
-  submissions: 'project-workspace',
-  'dossier-map': 'project-workspace',
-  'section-workspace': 'project-workspace',
-  'csr-workflow': 'project-workspace',
-  'ind-checklist': 'project-workspace',
-  'template-library': 'project-workspace',
-  'regulatory-workspace': 'project-workspace',
-  editor: 'project-workspace',
-  'deep-research': 'chats',
-  'precedent-intelligence': 'project-workspace',
-  biostatistics: 'project-workspace',
-  'review-readiness': 'project-workspace',
-  'report-engine': 'project-workspace',
-  'safety-narrative': 'project-workspace',
-  'vault-workspace': 'project-workspace',
-  'task-board': 'project-workspace',
-  templates: 'project-workspace',
-  // ── Unused MissionControl sub-modes ──
-  'intelligence-feed': 'projects',
-  'gap-analysis': 'projects',
-  'change-impact': 'projects',
-  'ana-memory': 'projects',
-  'artifact-graph': 'projects',
-  'review-center': 'projects',
-  'dossier-view': 'projects',
-  'risk-cockpit': 'projects',
-  'route-planner': 'projects',
-  'evidence-manager': 'projects',
-  'decision-log': 'projects',
-  'authority-tracker': 'projects',
-  'provenance-trail': 'projects',
-  notifications: 'projects',
-  'program-wizard': 'projects',
-  'team-workspace': 'projects',
-  'program-analytics': 'projects',
 };
 
-export const normalizeLayoutMode = (layoutMode: string): LayoutMode => {
-  return (DEMOTED_LAYOUT_REDIRECTS[layoutMode] ?? layoutMode) as LayoutMode;
+export const normalizeLayoutMode = (layoutMode: LayoutMode): LayoutMode => {
+  return DEMOTED_LAYOUT_REDIRECTS[layoutMode] ?? layoutMode;
 };

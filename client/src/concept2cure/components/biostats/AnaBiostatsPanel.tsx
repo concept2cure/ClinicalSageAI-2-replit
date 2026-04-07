@@ -788,12 +788,12 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
             </div>
           </div>
 
-          <div className="space-y-2 rounded-md border border-stone-800/30 bg-stone-900/20 p-3">
-            <p className="text-xs font-medium text-stone-200">Assumption Traceability Preview</p>
-            <p className="text-[11px] text-stone-300/80">What your current SAP settings will drive in governed outputs.</p>
+          <div className="space-y-2 rounded-md border border-emerald-700/30 bg-emerald-950/20 p-3">
+            <p className="text-xs font-medium text-emerald-200">Assumption Traceability Preview</p>
+            <p className="text-[11px] text-emerald-300/80">What your current SAP settings will drive in governed outputs.</p>
             <ul className="space-y-1">
               {traceabilityPreview.map((line, idx) => (
-                <li key={idx} className="text-[11px] text-stone-100/90">• {line}</li>
+                <li key={idx} className="text-[11px] text-emerald-100/90">• {line}</li>
               ))}
             </ul>
           </div>
@@ -958,7 +958,7 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span>{new Date(item.generatedAt).toLocaleTimeString()}</span>
                       {item.editorUrl && (
-                        <a href={item.editorUrl} className="text-[10px] text-stone-300 hover:text-stone-200 underline">
+                        <a href={item.editorUrl} className="text-[10px] text-emerald-300 hover:text-emerald-200 underline">
                           Open
                         </a>
                       )}
@@ -982,7 +982,7 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
                   <p className="text-xs text-stone-400 font-medium">Workflow Actions</p>
                   {results.workflowActions.map((action: any, i: number) => (
                     <div key={i} className="flex items-center gap-2 text-xs">
-                      <span className={action.success ? 'text-stone-400' : 'text-stone-400'}>
+                      <span className={action.success ? 'text-emerald-400' : 'text-red-400'}>
                         {action.success ? '✓' : '✗'}
                       </span>
                       <span>{action.message}</span>
@@ -1010,9 +1010,9 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
 
 function VerdictBadge({ verdict }: { verdict: string }) {
   const colorMap: Record<string, string> = {
-    adequate: 'bg-stone-900/20 text-stone-300 border-stone-900/30',
-    marginal: 'bg-stone-900/20 text-stone-300 border-stone-900/30',
-    inadequate: 'bg-stone-900/20 text-stone-300 border-stone-900/30',
+    adequate: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    marginal: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    inadequate: 'bg-red-500/20 text-red-300 border-red-500/30',
     insufficient_information: 'bg-stone-500/20 text-stone-300 border-stone-500/30',
   };
   return <Badge variant="outline" className={`text-[10px] ${colorMap[verdict] ?? ''}`}>{verdict}</Badge>;
@@ -1020,10 +1020,10 @@ function VerdictBadge({ verdict }: { verdict: string }) {
 
 function RiskBadge({ risk }: { risk: string }) {
   const colorMap: Record<string, string> = {
-    low: 'text-stone-400',
-    moderate: 'text-stone-400',
-    high: 'text-stone-400',
-    critical: 'text-stone-400',
+    low: 'text-emerald-400',
+    moderate: 'text-amber-400',
+    high: 'text-orange-400',
+    critical: 'text-red-400',
   };
   return <span className={`font-medium ${colorMap[risk] ?? ''}`}>{risk}</span>;
 }

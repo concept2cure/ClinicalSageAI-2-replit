@@ -76,13 +76,13 @@ function StatusBadge({ status }: { status: string }) {
   switch (status) {
     case 'APPROVED':
       return (
-        <Badge className="bg-stone-100 text-stone-800">
+        <Badge className="bg-green-100 text-green-800">
           <CheckCircle2 className="mr-1 h-3 w-3" /> Approved
         </Badge>
       );
     case 'IN_REVIEW':
       return (
-        <Badge className="bg-stone-100 text-stone-800">
+        <Badge className="bg-yellow-100 text-yellow-800">
           <Clock className="mr-1 h-3 w-3" /> In Review
         </Badge>
       );

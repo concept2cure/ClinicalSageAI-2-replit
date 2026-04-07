@@ -184,7 +184,7 @@ const ClientBrandingSettings: React.FC = () => {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2.5 mb-1">
-          <Building2 className="w-5 h-5 text-stone-900" />
+          <Building2 className="w-5 h-5 text-blue-500" />
           <h1 className="text-base font-semibold text-stone-900">Brand & Template Settings</h1>
         </div>
         <p className="text-xs text-stone-500">
@@ -222,7 +222,7 @@ const ClientBrandingSettings: React.FC = () => {
           {/* Logo upload */}
           <div className="bg-white rounded-xl border p-5">
             <h3 className="text-sm font-semibold text-stone-800 mb-3 flex items-center gap-2">
-              <Image className="w-4 h-4 text-stone-900" />
+              <Image className="w-4 h-4 text-blue-500" />
               Company Logo
             </h3>
             <div className="flex items-center gap-4">
@@ -256,7 +256,7 @@ const ClientBrandingSettings: React.FC = () => {
           {/* Colors */}
           <div className="bg-white rounded-xl border p-5">
             <h3 className="text-sm font-semibold text-stone-800 mb-3 flex items-center gap-2">
-              <Paintbrush className="w-4 h-4 text-stone-900" />
+              <Paintbrush className="w-4 h-4 text-violet-500" />
               Brand Colors
             </h3>
             <div className="grid grid-cols-3 gap-4">
@@ -278,7 +278,7 @@ const ClientBrandingSettings: React.FC = () => {
                       type="text"
                       value={(branding as Record<string, string>)[key] || ''}
                       onChange={e => updateBranding.mutate({ [key]: e.target.value })}
-                      className="flex-1 text-xs px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-stone-400 font-mono"
+                      className="flex-1 text-xs px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-400 font-mono"
                     />
                   </div>
                 </div>
@@ -289,7 +289,7 @@ const ClientBrandingSettings: React.FC = () => {
           {/* Typography */}
           <div className="bg-white rounded-xl border p-5">
             <h3 className="text-sm font-semibold text-stone-800 mb-3 flex items-center gap-2">
-              <Type className="w-4 h-4 text-stone-900" />
+              <Type className="w-4 h-4 text-emerald-500" />
               Typography
             </h3>
             <div>
@@ -297,7 +297,7 @@ const ClientBrandingSettings: React.FC = () => {
               <select
                 value={branding.fontFamily}
                 onChange={e => updateBranding.mutate({ fontFamily: e.target.value })}
-                className="w-full mt-1 text-xs px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400"
+                className="w-full mt-1 text-xs px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
               >
                 <option value="Inter, sans-serif">Inter (Default)</option>
                 <option value="'Times New Roman', serif">Times New Roman</option>
@@ -317,7 +317,7 @@ const ClientBrandingSettings: React.FC = () => {
               value={branding.watermarkText || ''}
               onChange={e => updateBranding.mutate({ watermarkText: e.target.value || null })}
               placeholder="e.g., CONFIDENTIAL, DRAFT, COMPANY PROPRIETARY"
-              className="w-full text-xs px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400"
+              className="w-full text-xs px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
             />
             <p className="text-[10px] text-stone-400 mt-1">Applied as a diagonal watermark on all exported PDFs.</p>
           </div>
@@ -353,7 +353,7 @@ const ClientBrandingSettings: React.FC = () => {
                     <span className="text-[9px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">
                       {CATEGORY_LABELS[tmpl.category] || tmpl.category}
                     </span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-600">
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600">
                       {tmpl.fileType.toUpperCase()}
                     </span>
                   </div>
@@ -376,7 +376,7 @@ const ClientBrandingSettings: React.FC = () => {
                   </button>
                   <button
                     onClick={() => deleteTemplate.mutate(tmpl.id)}
-                    className="p-1.5 text-stone-400 hover:text-stone-900 rounded hover:bg-stone-100"
+                    className="p-1.5 text-stone-400 hover:text-red-500 rounded hover:bg-red-50"
                     title="Delete"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -410,7 +410,7 @@ const ClientBrandingSettings: React.FC = () => {
         <div className="space-y-6">
           <div className="bg-white rounded-xl border p-5">
             <h3 className="text-sm font-semibold text-stone-800 mb-3 flex items-center gap-2">
-              <Layout className="w-4 h-4 text-stone-900" />
+              <Layout className="w-4 h-4 text-blue-500" />
               Document Header
             </h3>
             <p className="text-xs text-stone-500 mb-3">
@@ -422,7 +422,7 @@ const ClientBrandingSettings: React.FC = () => {
               onChange={e => updateBranding.mutate({ headerHtml: e.target.value || null })}
               placeholder="<div>Custom header HTML...</div>"
               rows={4}
-              className="w-full text-xs px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 resize-none font-mono"
+              className="w-full text-xs px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none font-mono"
             />
           </div>
 
@@ -436,7 +436,7 @@ const ClientBrandingSettings: React.FC = () => {
               onChange={e => updateBranding.mutate({ footerHtml: e.target.value || null })}
               placeholder="<div>{{companyName}} — Confidential | Page {{pageNumber}}</div>"
               rows={3}
-              className="w-full text-xs px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 resize-none font-mono"
+              className="w-full text-xs px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none font-mono"
             />
           </div>
 
@@ -512,7 +512,7 @@ function NewTemplateForm({
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="e.g., FDA Cover Letter"
-            className="w-full mt-1 text-xs px-3 py-1.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400"
+            className="w-full mt-1 text-xs px-3 py-1.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
           />
         </div>
         <div>
@@ -520,7 +520,7 @@ function NewTemplateForm({
           <select
             value={category}
             onChange={e => setCategory(e.target.value)}
-            className="w-full mt-1 text-xs px-3 py-1.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400"
+            className="w-full mt-1 text-xs px-3 py-1.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
           >
             {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
               <option key={key} value={key}>{label}</option>
@@ -535,7 +535,7 @@ function NewTemplateForm({
           value={description}
           onChange={e => setDescription(e.target.value)}
           placeholder="Brief description of this template"
-          className="w-full mt-1 text-xs px-3 py-1.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400"
+          className="w-full mt-1 text-xs px-3 py-1.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
         />
       </div>
       <div>
@@ -545,7 +545,7 @@ function NewTemplateForm({
           onChange={e => setContent(e.target.value)}
           placeholder="<div>Your template HTML with {{placeholders}}...</div>"
           rows={6}
-          className="w-full mt-1 text-xs px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 resize-none font-mono"
+          className="w-full mt-1 text-xs px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none font-mono"
         />
       </div>
       <div className="flex items-center gap-2">

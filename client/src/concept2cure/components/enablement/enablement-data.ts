@@ -119,7 +119,7 @@ export const LEARNING_PATHS: LearningPath[] = [
     ],
     certificationIds: ['cert-ana-fundamentals', 'cert-operations-master'],
     icon: 'FileEdit',
-    color: '#57534e',
+    color: '#d97757',
     aiHighlight:
       'Dr. Sage guides you through document templates and section scaffolding while AnA 1.0 validates regulatory language, cross-references predicate evidence, and flags compliance gaps in real time.',
   },
@@ -142,7 +142,7 @@ export const LEARNING_PATHS: LearningPath[] = [
     ],
     certificationIds: ['cert-intelligence-specialist', 'cert-compliance-champion'],
     icon: 'Target',
-    color: '#78716c',
+    color: '#6a9bcc',
     aiHighlight:
       'AnA 1.0 surfaces predicate device comparisons, literature contradictions, and regulatory precedent while Dr. Sage walks you through strategic gap analysis and submission pathway recommendations.',
   },
@@ -732,7 +732,7 @@ export const CERTIFICATIONS: Certification[] = [
     competence: 'Platform Navigation & Basic Authoring',
     focus: 'ana',
     requiredModuleIds: ['mod-onboarding-platform', 'mod-authoring-fundamentals', 'mod-governance-basics'],
-    badge: { from: '#292524', to: '#57534e' },
+    badge: { from: '#d97757', to: '#e6957a' },
     unlockCriteria: 'Complete all three foundational modules with passing quiz scores.',
   },
   {
@@ -743,7 +743,7 @@ export const CERTIFICATIONS: Certification[] = [
     competence: 'Evidence Intelligence & Comparative Analysis',
     focus: 'combined',
     requiredModuleIds: ['mod-evidence-fundamentals', 'mod-evidence-advanced', 'mod-review-audit-basics'],
-    badge: { from: '#44403c', to: '#78716c' },
+    badge: { from: '#6a9bcc', to: '#8bb4d9' },
     unlockCriteria: 'Complete all evidence intelligence modules and pass the comparative analysis assessment.',
   },
   {

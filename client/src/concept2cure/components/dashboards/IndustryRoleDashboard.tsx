@@ -174,15 +174,15 @@ const MetricCard: React.FC<{
   return (
     <div className={cn(
       'p-4 rounded-xl border bg-white',
-      'hover:shadow-sm transition-shadow cursor-pointer'
+      'hover:shadow-md transition-shadow cursor-pointer'
     )}>
       <div className="flex items-start justify-between mb-2">
         <span className="text-sm text-stone-500">{metric.label}</span>
         {metric.trend && (
           <TrendIcon className={cn(
             'w-4 h-4',
-            metric.trend === 'up' && metric.status !== 'critical' && 'text-stone-900',
-            metric.trend === 'down' && metric.status !== 'good' && 'text-stone-900',
+            metric.trend === 'up' && metric.status !== 'critical' && 'text-emerald-500',
+            metric.trend === 'down' && metric.status !== 'good' && 'text-red-500',
             metric.trend === 'stable' && 'text-stone-400'
           )} />
         )}
@@ -190,9 +190,9 @@ const MetricCard: React.FC<{
       <div className="flex items-baseline gap-2">
         <span className={cn(
           'text-base font-semibold',
-          metric.status === 'good' && 'text-stone-700',
-          metric.status === 'warning' && 'text-stone-600',
-          metric.status === 'critical' && 'text-stone-700',
+          metric.status === 'good' && 'text-emerald-600',
+          metric.status === 'warning' && 'text-amber-600',
+          metric.status === 'critical' && 'text-red-600',
           !metric.status && 'text-stone-900'
         )}>
           {metric.value}
@@ -225,20 +225,20 @@ const ActionItemCard: React.FC<{
       onClick={onClick}
       className={cn(
         'w-full p-4 rounded-xl border text-left transition-all duration-150',
-        'hover:shadow-sm hover:border-stone-200',
-        item.priority === 'critical' && 'border-stone-200 bg-stone-100',
-        item.priority === 'high' && !isOverdue && 'border-stone-200 bg-stone-100',
-        isOverdue && 'border-stone-300 bg-stone-100'
+        'hover:shadow-md hover:border-blue-200',
+        item.priority === 'critical' && 'border-red-200 bg-red-50',
+        item.priority === 'high' && !isOverdue && 'border-amber-200 bg-amber-50',
+        isOverdue && 'border-red-300 bg-red-50'
       )}
     >
       <div className="flex items-start gap-3">
         <div className={cn(
           'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
-          item.priority === 'critical' || isOverdue ? 'bg-stone-100' : 'bg-stone-100'
+          item.priority === 'critical' || isOverdue ? 'bg-red-100' : 'bg-blue-100'
         )}>
           <Icon className={cn(
             'w-4 h-4',
-            item.priority === 'critical' || isOverdue ? 'text-stone-700' : 'text-stone-600'
+            item.priority === 'critical' || isOverdue ? 'text-red-600' : 'text-blue-600'
           )} />
         </div>
         
@@ -246,7 +246,7 @@ const ActionItemCard: React.FC<{
           <div className="flex items-center gap-2 mb-1">
             <h4 className="font-medium text-stone-900 truncate">{item.title}</h4>
             {item.priority === 'critical' && (
-              <span className="text-xs font-medium text-stone-800 bg-stone-100 px-1.5 py-0.5 rounded">
+              <span className="text-xs font-medium text-red-700 bg-red-100 px-1.5 py-0.5 rounded">
                 Critical
               </span>
             )}
@@ -265,7 +265,7 @@ const ActionItemCard: React.FC<{
             )}
             <span className={cn(
               'flex items-center gap-1',
-              isOverdue ? 'text-stone-700 font-medium' : isUrgent ? 'text-stone-600' : 'text-stone-500'
+              isOverdue ? 'text-red-600 font-medium' : isUrgent ? 'text-amber-600' : 'text-stone-500'
             )}>
               <Clock className="w-3 h-3" />
               {isOverdue ? `${Math.abs(daysUntil)} days overdue` : daysUntil === 0 ? 'Due today' : `${daysUntil} days`}
@@ -292,10 +292,10 @@ const PDUFACard: React.FC<{
       onClick={onClick}
       className={cn(
         'w-full p-4 rounded-xl border text-left transition-all duration-150',
-        'hover:shadow-sm',
-        isCritical && 'border-stone-200 bg-stone-100',
-        isUrgent && !isCritical && 'border-stone-200 bg-stone-100',
-        !isUrgent && 'border-stone-200 bg-stone-100'
+        'hover:shadow-md',
+        isCritical && 'border-red-200 bg-red-50',
+        isUrgent && !isCritical && 'border-amber-200 bg-amber-50',
+        !isUrgent && 'border-blue-200 bg-blue-50'
       )}
     >
       <div className="flex items-start justify-between mb-2">
@@ -305,9 +305,9 @@ const PDUFACard: React.FC<{
         </div>
         <span className={cn(
           'text-lg font-semibold',
-          isCritical && 'text-stone-700',
-          isUrgent && !isCritical && 'text-stone-600',
-          !isUrgent && 'text-stone-600'
+          isCritical && 'text-red-600',
+          isUrgent && !isCritical && 'text-amber-600',
+          !isUrgent && 'text-blue-600'
         )}>
           {daysRemaining}d
         </span>
@@ -317,9 +317,9 @@ const PDUFACard: React.FC<{
         <span>PDUFA: {new Date(pdufa.pdufa_date).toLocaleDateString()}</span>
         <span className={cn(
           'px-2 py-0.5 rounded-full',
-          pdufa.status === 'active' && 'bg-stone-100 text-stone-700',
-          pdufa.status === 'crl_received' && 'bg-stone-100 text-stone-800',
-          pdufa.status === 'approved' && 'bg-stone-100 text-stone-800'
+          pdufa.status === 'active' && 'bg-blue-100 text-stone-700',
+          pdufa.status === 'crl_received' && 'bg-red-100 text-red-700',
+          pdufa.status === 'approved' && 'bg-emerald-100 text-emerald-700'
         )}>
           {pdufa.status}
         </span>
@@ -340,17 +340,17 @@ const CommitmentCard: React.FC<{
       className={cn(
         'w-full p-3 rounded-lg border text-left transition-all duration-150',
         'hover:shadow-sm',
-        commitment.status === 'overdue' && 'border-stone-200 bg-stone-100',
-        commitment.status === 'at_risk' && 'border-stone-200 bg-stone-100'
+        commitment.status === 'overdue' && 'border-red-200 bg-red-50',
+        commitment.status === 'at_risk' && 'border-amber-200 bg-amber-50'
       )}
     >
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs font-medium text-stone-500 uppercase">{commitment.type}</span>
         <span className={cn(
           'text-xs px-1.5 py-0.5 rounded',
-          commitment.status === 'on_track' && 'bg-stone-100 text-stone-800',
-          commitment.status === 'at_risk' && 'bg-stone-100 text-stone-700',
-          commitment.status === 'overdue' && 'bg-stone-100 text-stone-800',
+          commitment.status === 'on_track' && 'bg-emerald-100 text-emerald-700',
+          commitment.status === 'at_risk' && 'bg-amber-100 text-amber-700',
+          commitment.status === 'overdue' && 'bg-red-100 text-red-700',
           commitment.status === 'completed' && 'bg-stone-100 text-stone-600'
         )}>
           {commitment.status}
@@ -416,7 +416,7 @@ const CROProjectManagerView: React.FC<{
               <button
                 key={d.id}
                 onClick={() => onDeliverableClick?.(d.id)}
-                className="w-full p-3 bg-white rounded-lg border border-stone-200 text-left hover:border-stone-300 transition-colors duration-150"
+                className="w-full p-3 bg-white rounded-lg border border-stone-200 text-left hover:border-blue-300 transition-colors duration-150"
               >
                 <p className="text-sm font-medium text-stone-900 line-clamp-2">{d.name}</p>
                 <div className="mt-2 flex items-center justify-between text-xs text-stone-500">
@@ -431,7 +431,7 @@ const CROProjectManagerView: React.FC<{
         {/* Internal QC */}
         <div className="bg-stone-50 rounded-xl p-4">
           <h3 className="text-sm font-semibold text-stone-700 mb-3 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-stone-900" />
+            <div className="w-2 h-2 rounded-full bg-amber-500" />
             Internal QC ({grouped.internal_qc.length})
           </h3>
           <div className="space-y-2">
@@ -439,7 +439,7 @@ const CROProjectManagerView: React.FC<{
               <button
                 key={d.id}
                 onClick={() => onDeliverableClick?.(d.id)}
-                className="w-full p-3 bg-white rounded-lg border border-stone-200 text-left hover:border-stone-300 transition-colors duration-150"
+                className="w-full p-3 bg-white rounded-lg border border-amber-200 text-left hover:border-amber-300 transition-colors duration-150"
               >
                 <p className="text-sm font-medium text-stone-900 line-clamp-2">{d.name}</p>
                 <div className="mt-2 flex items-center justify-between text-xs text-stone-500">
@@ -454,7 +454,7 @@ const CROProjectManagerView: React.FC<{
         {/* Client Review */}
         <div className="bg-stone-50 rounded-xl p-4">
           <h3 className="text-sm font-semibold text-stone-700 mb-3 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-stone-900" />
+            <div className="w-2 h-2 rounded-full bg-violet-500" />
             Client Review ({grouped.client_review.length})
           </h3>
           <div className="space-y-2">
@@ -462,7 +462,7 @@ const CROProjectManagerView: React.FC<{
               <button
                 key={d.id}
                 onClick={() => onDeliverableClick?.(d.id)}
-                className="w-full p-3 bg-white rounded-lg border border-stone-200 text-left hover:border-stone-200 transition-colors duration-150"
+                className="w-full p-3 bg-white rounded-lg border border-blue-200 text-left hover:border-blue-200 transition-colors duration-150"
               >
                 <p className="text-sm font-medium text-stone-900 line-clamp-2">{d.name}</p>
                 <div className="mt-2 flex items-center justify-between text-xs text-stone-500">
@@ -564,7 +564,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
           {/* PDUFA Dates */}
           <div className="col-span-1">
             <h2 className="text-lg font-semibold text-stone-900 mb-4 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-stone-900" />
+              <Calendar className="w-5 h-5 text-blue-500" />
               PDUFA Dates
             </h2>
             <div className="space-y-3">
@@ -580,7 +580,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
           {/* Action Items */}
           <div className="col-span-1">
             <h2 className="text-lg font-semibold text-stone-900 mb-4 flex items-center gap-2">
-              <Flag className="w-5 h-5 text-stone-900" />
+              <Flag className="w-5 h-5 text-amber-500" />
               Action Items
             </h2>
             <div className="space-y-3">
@@ -600,7 +600,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
           {/* Commitments */}
           <div className="col-span-1">
             <h2 className="text-lg font-semibold text-stone-900 mb-4 flex items-center gap-2">
-              <ClipboardCheck className="w-5 h-5 text-stone-900" />
+              <ClipboardCheck className="w-5 h-5 text-emerald-500" />
               Regulatory Commitments
             </h2>
             <div className="space-y-3">
@@ -637,7 +637,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
         {/* Action Items */}
         <div>
           <h2 className="text-lg font-semibold text-stone-900 mb-4 flex items-center gap-2">
-            <Flag className="w-5 h-5 text-stone-900" />
+            <Flag className="w-5 h-5 text-amber-500" />
             Your Action Items
           </h2>
           <div className="space-y-3">
@@ -654,7 +654,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
         {/* Watchlist */}
         <div>
           <h2 className="text-lg font-semibold text-stone-900 mb-4 flex items-center gap-2">
-            <Bell className="w-5 h-5 text-stone-900" />
+            <Bell className="w-5 h-5 text-blue-500" />
             Watchlist
           </h2>
           <div className="space-y-2">
@@ -662,7 +662,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
               <button
                 key={item.id}
                 onClick={() => onWatchlistClick?.(item)}
-                className="w-full p-3 rounded-lg border border-stone-200 text-left hover:border-stone-200 transition-colors flex items-center justify-between"
+                className="w-full p-3 rounded-lg border border-stone-200 text-left hover:border-blue-200 transition-colors flex items-center justify-between"
               >
                 <div>
                   <p className="text-sm font-medium text-stone-900">{item.title}</p>
@@ -671,7 +671,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
                 {item.daysRemaining !== undefined && (
                   <span className={cn(
                     'text-sm font-medium',
-                    item.daysRemaining <= 7 ? 'text-stone-700' : 'text-stone-600'
+                    item.daysRemaining <= 7 ? 'text-red-600' : 'text-stone-600'
                   )}>
                     {item.daysRemaining}d
                   </span>

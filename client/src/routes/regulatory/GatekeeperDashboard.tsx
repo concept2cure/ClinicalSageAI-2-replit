@@ -109,20 +109,20 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'PASS':
-        return <CheckCircle className="w-5 h-5 text-stone-700" />;
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
       case 'HOLD':
-        return <AlertTriangle className="w-5 h-5 text-stone-600" />;
+        return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
       case 'REJECT':
-        return <XCircle className="w-5 h-5 text-stone-700" />;
+        return <XCircle className="w-5 h-5 text-red-600" />;
       default:
-        return <Shield className="w-5 h-5 text-stone-500" />;
+        return <Shield className="w-5 h-5 text-gray-500" />;
     }
   };
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, any> = {
-      PASS: { variant: 'default', className: 'bg-stone-700' },
-      HOLD: { variant: 'default', className: 'bg-stone-600' },
+      PASS: { variant: 'default', className: 'bg-green-600' },
+      HOLD: { variant: 'default', className: 'bg-yellow-600' },
       REJECT: { variant: 'destructive' },
     };
     return <Badge {...(variants[status] || { variant: 'outline' })}>{status}</Badge>;
@@ -133,16 +133,16 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
       case 'CRITICAL':
         return <Badge variant="destructive">Critical</Badge>;
       case 'WARN':
-        return <Badge className="bg-stone-900">Warning</Badge>;
+        return <Badge className="bg-orange-500">Warning</Badge>;
       default:
         return <Badge variant="outline">{severity}</Badge>;
     }
   };
 
   const getRPIColor = (score: number) => {
-    if (score >= 80) return 'text-stone-700';
-    if (score >= 60) return 'text-stone-600';
-    return 'text-stone-700';
+    if (score >= 80) return 'text-green-600';
+    if (score >= 60) return 'text-yellow-600';
+    return 'text-red-600';
   };
 
   return (
@@ -150,7 +150,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-xl font-semibold">Regulatory Gatekeeper v2</h3>
-          <p className="text-stone-600">AI-powered submission readiness with RPI dashboard</p>
+          <p className="text-gray-600">AI-powered submission readiness with RPI dashboard</p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -181,7 +181,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
                   {getStatusIcon(gatekeeperData.status)}
                   {getStatusBadge(gatekeeperData.status)}
                 </div>
-                <div className="text-sm text-stone-600">
+                <div className="text-sm text-gray-600">
                   {gatekeeperData.blockers?.length || 0} blockers found
                 </div>
                 {gatekeeperData.blockers?.length > 0 && (
@@ -198,7 +198,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
                 )}
               </div>
             ) : (
-              <div className="text-sm text-stone-500">Run Gatekeeper to see status</div>
+              <div className="text-sm text-gray-500">Run Gatekeeper to see status</div>
             )}
           </CardContent>
         </Card>
@@ -218,10 +218,10 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
                   {rpiData.rpi}/100
                 </div>
                 <Progress value={rpiData.rpi} className="h-2" />
-                <div className="text-sm text-stone-600">Regulatory Posture Index</div>
+                <div className="text-sm text-gray-600">Regulatory Posture Index</div>
               </div>
             ) : (
-              <div className="text-sm text-stone-500">Loading RPI data...</div>
+              <div className="text-sm text-gray-500">Loading RPI data...</div>
             )}
           </CardContent>
         </Card>
@@ -240,7 +240,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
                 <div className="text-sm">
                   <span className="font-medium">On-time probability:</span>
                   <span
-                    className={`ml-2 ${timelineData.onTimeProb > 0.7 ? 'text-stone-700' : 'text-stone-700'}`}
+                    className={`ml-2 ${timelineData.onTimeProb > 0.7 ? 'text-green-600' : 'text-red-600'}`}
                   >
                     {Math.round(timelineData.onTimeProb * 100)}%
                   </span>
@@ -253,7 +253,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
                 </div>
               </div>
             ) : (
-              <div className="text-sm text-stone-500">Loading timeline data...</div>
+              <div className="text-sm text-gray-500">Loading timeline data...</div>
             )}
           </CardContent>
         </Card>
@@ -271,7 +271,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
                 <Alert
                   key={idx}
                   className={
-                    blocker.severity === 'CRITICAL' ? 'border-stone-900' : 'border-stone-900'
+                    blocker.severity === 'CRITICAL' ? 'border-red-500' : 'border-yellow-500'
                   }
                 >
                   <AlertTriangle className="h-4 w-4" />
@@ -353,12 +353,12 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
                     {getStatusIcon(run.status)}
                     <div>
                       <div className="font-medium">{run.status}</div>
-                      <div className="text-sm text-stone-600">
+                      <div className="text-sm text-gray-600">
                         {new Date(run.created_at).toLocaleDateString()} by {run.created_by}
                       </div>
                     </div>
                   </div>
-                  <div className="text-sm text-stone-600">{run.blockers?.length || 0} blockers</div>
+                  <div className="text-sm text-gray-600">{run.blockers?.length || 0} blockers</div>
                 </div>
               ))}
             </div>

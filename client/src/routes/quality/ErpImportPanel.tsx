@@ -35,7 +35,7 @@ export default function ErpImportPanel() {
         <Button variant="outline" onClick={upload} disabled={!file}>
           Upload CSV
         </Button>
-        <div className="text-xs text-stone-600">
+        <div className="text-xs text-slate-600">
           CSV headers: parent_type,parent_code,parent_lot,qty,unit,note,batch_lot
         </div>
       </CardContent>

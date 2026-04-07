@@ -25,69 +25,196 @@ export type ToolPanel =
   | null;
 
 export type LayoutMode =
-  // ── 8 canonical layout modes ──
-  | 'chats'                  // Conversation home (ChatGPT-style)
-  | 'projects'               // Project browser grid
-  | 'project-home'           // Project landing (conversation-first)
-  | 'project-workspace'      // All project-scoped tools (internal sub-routing via WorkspaceView)
-  | 'reports'                // Reporting & Analytics — global report engine + analytics
-  | 'communication-center'   // Tasks, reviews, submissions routing
-  | 'apps'                   // App launcher + specialist tools
-  | 'settings';              // Account, workspace, preferences
-  // All project-scoped modes (documents, vault, review, etc.) are now WorkspaceView values
-  // inside the project-workspace layout. Deep-research is a chat mode, not a layout mode.
-  // All demoted/legacy modes handled as untyped strings in zenRouteNormalization.ts.
+  // ── Global destinations ──
+  | 'projects'
+  | 'apps'
+  | 'artifacts-center'
+  | 'setup'
+  // ── Project tabs ──
+  | 'project-home'
+  | 'documents'
+  | 'vault'
+  | 'review'
+  | 'submissions'
+  | 'dossier-map'
+  | 'section-workspace'
+  | 'csr-workflow'
+  | 'ind-checklist'
+  | 'template-library'
+  // ── Canonical workspace + editor ──
+  | 'regulatory-workspace'
+  | 'editor'
+  | 'deep-research'
+  // ── Specialist tools (launched from Apps) ──
+  | 'precedent-intelligence'
+  | 'biostatistics'
+  | 'review-readiness'
+  | 'report-engine'
+  | 'safety-narrative'
+  | 'vault-workspace'
+  // ── Compatibility redirects (redirect on mount, no renderer) ──
+  | 'workspace'
+  | 'assistant'
+  | 'ctd'
+  | 'medtech-dashboard'
+  | 'dossier'
+  // ── Demoted modes (redirect to projects or documents via DEMOTED_REDIRECTS) ──
+  | 'mission-control'
+  | 'snowglobe'
+  | 'snowglobe-chambers'
+  | 'rules'
+  | 'ectd-coauthor'
+  | 'cmc'
+  | 'document-vault'
+  | 'clinical-trial'
+  | 'templates'
+  | 'sherpa'
+  | 'analytics'
+  | 'timeline'
+  | 'audit'
+  | 'enablement-center'
+  | 'platform-admin'
+  | 'biologics-dashboard'
+  | 'ctd-onboarding'
+  | 'client-intelligence'
+  | 'collaboration-hub'
+  | 'user-inbox'
+  | 'client-branding'
+  | 'training-center'
+  | 'client-onboarding'
+  | 'knowledge-base'
+  | 'project-knowledge'
+  | 'artifacts'
+  | 'document-builder'
+  | 'ana-platform-control'
+  // ── Legacy batch-1 modes (kept for type safety only) ──
+  | 'ind-workspace'
+  | 'submission-workspace'
+  | 'author'
+  | 'intelligence-hub'
+  | 'command-center'
+  | 'legal-center'
+  | 'about-training'
+  | 'ana-dashboard'
+  | 'integrations'
+  // ── Unused MissionControl sub-modes (no renderer, no redirect needed) ──
+  | 'intelligence-feed'
+  | 'gap-analysis'
+  | 'change-impact'
+  | 'ana-memory'
+  | 'artifact-graph'
+  | 'review-center'
+  | 'dossier-view'
+  | 'risk-cockpit'
+  | 'route-planner'
+  | 'evidence-manager'
+  | 'decision-log'
+  | 'authority-tracker'
+  | 'provenance-trail'
+  | 'notifications'
+  | 'program-wizard'
+  | 'task-board'
+  | 'team-workspace'
+  | 'program-analytics';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // NAV MAPPINGS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const PRIMARY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
-  chats: 'chats',
-  projects: 'projects',
-  'project-home': 'projects',
-  'project-workspace': 'projects',
-  reports: 'reports',
-  'communication-center': 'communication-center',
-  apps: 'apps',
-  settings: 'settings',
+  projects: 'ri-copilot',
+  'project-home': 'ri-copilot',
+  'dossier-map': 'clinical-module5',
+  documents: 'work',
+  review: 'review',
+  submissions: 'publish',
+  'section-workspace': 'clinical-module5',
+  'vault-workspace': 'vault',
+  'review-readiness': 'verify',
+  'report-engine': 'haq',
+  'task-board': 'task-board',
+  'csr-workflow': 'csr-workflow',
+  'ind-checklist': 'ind-checklist',
+  'template-library': 'templates',
+};
+
+export const LEGACY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
+  'regulatory-workspace': 'submission-builder',
+  workspace: 'work',
+  'ind-workspace': 'work',
+  'ectd-coauthor': 'work',
+  cmc: 'cmc',
+  'clinical-trial': 'clinical-module5',
+  author: 'work',
+  editor: 'work',
+  templates: 'work',
+  'document-builder': 'work',
+  'intelligence-hub': 'ri-copilot',
+  snowglobe: 'projects',
+  'snowglobe-chambers': 'projects',
+  'command-center': 'projects',
+  'mission-control': 'projects',
+  'submission-workspace': 'submissions',
+  'document-vault': 'vault',
+  'enablement-center': 'projects',
+  'client-intelligence': 'projects',
+  'collaboration-hub': 'review',
+  'user-inbox': 'projects',
+  'client-branding': 'projects',
+  biostatistics: 'biostatistics',
+  'training-center': 'projects',
+  'client-onboarding': 'projects',
+  'knowledge-base': 'projects',
+  'project-knowledge': 'projects',
+  'legal-center': 'review',
+  sherpa: 'documents',
+  audit: 'review',
+  timeline: 'projects',
+  analytics: 'projects',
+  artifacts: 'documents',
+  'about-training': 'projects',
+  'precedent-intelligence': 'documents',
+  'deep-research': 'documents',
+  'safety-narrative': 'documents',
+  'ana-dashboard': 'projects',
+  'ana-platform-control': 'projects',
+  'platform-admin': 'projects',
+  'biologics-dashboard': 'documents',
+  'ctd-onboarding': 'projects',
+  integrations: 'projects',
 };
 
 export const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
-  // ── 6 primary destinations ──
-  chats: 'chats',
-  projects: 'projects',
-  reports: 'reports',
-  'communication-center': 'communication-center',
   apps: 'apps',
-  settings: 'settings',
-  // ── Project context entries (all route to project-workspace) ──
+  'artifacts-center': 'artifacts-center',
+  setup: 'setup',
+  projects: 'projects',
   home: 'projects',
+  documents: 'regulatory-workspace',
+  submissions: 'submissions',
+  reports: 'report-engine',
+  dossier: 'dossier-map',
+  'ri-copilot': 'regulatory-workspace',
+  'submission-builder': 'regulatory-workspace',
+  cmc: 'section-workspace',
+  'clinical-module5': 'section-workspace',
+  verify: 'review-readiness',
+  vault: 'vault-workspace',
+  review: 'review',
+  publish: 'submissions',
+  haq: 'report-engine',
+  'task-board': 'task-board',
+  'csr-workflow': 'csr-workflow',
+  'ind-checklist': 'ind-checklist',
   overview: 'project-home',
-  documents: 'project-workspace',
-  submissions: 'project-workspace',
-  'project-reports': 'project-workspace',
-  dossier: 'project-workspace',
-  'ri-copilot': 'project-workspace',
-  'submission-builder': 'project-workspace',
-  cmc: 'project-workspace',
-  'clinical-module5': 'project-workspace',
-  verify: 'project-workspace',
-  vault: 'project-workspace',
-  review: 'project-workspace',
-  publish: 'project-workspace',
-  haq: 'project-workspace',
-  'task-board': 'project-workspace',
-  'csr-workflow': 'project-workspace',
-  'ind-checklist': 'project-workspace',
-  work: 'project-workspace',
-  'review-tab': 'project-workspace',
-  submit: 'project-workspace',
-  templates: 'project-workspace',
-  'template-library': 'project-workspace',
-  tools: 'project-workspace',
-  dataroom: 'project-workspace',
-  upload: 'project-workspace',
+  work: 'documents',
+  'review-tab': 'review',
+  submit: 'submissions',
+  templates: 'template-library',
+  'template-library': 'template-library',
+  tools: 'documents',
+  dataroom: 'regulatory-workspace',
+  upload: 'regulatory-workspace',
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -160,19 +287,17 @@ export const TOOL_PANELS: Record<
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function getProjectColor(type: string): string {
-  // Black-and-white only — no warm tones, no chroma.
-  // Submission types differentiated by neutral grayscale steps.
   const colors: Record<string, string> = {
-    '510K': '#737373',    // neutral-500
-    IND: '#525252',       // neutral-600
-    NDA: '#404040',       // neutral-700
-    BLA: '#262626',       // neutral-800
-    PMA: '#000000',       // black
-    MAA: '#a3a3a3',       // neutral-400
-    DE_NOVO: '#d4d4d4',   // neutral-300
-    EUA: '#525252',       // neutral-600
+    '510K': 'blue',
+    IND: 'purple',
+    NDA: 'green',
+    BLA: 'orange',
+    PMA: 'red',
+    MAA: 'pink',
+    DE_NOVO: 'amber',
+    EUA: 'cyan',
   };
-  return colors[type] || '#737373'; // neutral-500 fallback
+  return colors[type] || 'gray';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -348,7 +348,7 @@ export default function GuidancePanel({ region, section }: GuidancePanelProps) {
                                   <CheckSquare
                                     className={`h-4 w-4 ${
                                       item.completed
-                                        ? 'text-stone-700 fill-stone-100'
+                                        ? 'text-green-600 fill-green-100'
                                         : 'text-muted-foreground'
                                     }`}
                                   />

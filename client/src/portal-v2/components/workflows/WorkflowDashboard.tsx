@@ -92,25 +92,25 @@ interface WorkflowTemplate {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const WORKFLOW_STATUS_CONFIG = {
-  active: { label: 'Active', color: 'bg-stone-100 text-stone-700', icon: Play },
-  completed: { label: 'Completed', color: 'bg-stone-100 text-stone-800', icon: CheckCircle2 },
-  cancelled: { label: 'Cancelled', color: 'bg-stone-100 text-stone-700', icon: XCircle },
-  on_hold: { label: 'On Hold', color: 'bg-stone-100 text-stone-700', icon: Pause },
+  active: { label: 'Active', color: 'bg-blue-100 text-blue-700', icon: Play },
+  completed: { label: 'Completed', color: 'bg-green-100 text-green-700', icon: CheckCircle2 },
+  cancelled: { label: 'Cancelled', color: 'bg-gray-100 text-gray-700', icon: XCircle },
+  on_hold: { label: 'On Hold', color: 'bg-amber-100 text-amber-700', icon: Pause },
 };
 
 const STEP_STATUS_CONFIG = {
-  pending: { label: 'Pending', color: 'bg-stone-100 text-stone-600' },
-  in_progress: { label: 'In Progress', color: 'bg-stone-100 text-stone-700' },
-  completed: { label: 'Completed', color: 'bg-stone-100 text-stone-800' },
-  rejected: { label: 'Rejected', color: 'bg-stone-100 text-stone-800' },
-  skipped: { label: 'Skipped', color: 'bg-stone-100 text-stone-500' },
+  pending: { label: 'Pending', color: 'bg-gray-100 text-gray-600' },
+  in_progress: { label: 'In Progress', color: 'bg-blue-100 text-blue-700' },
+  completed: { label: 'Completed', color: 'bg-green-100 text-green-700' },
+  rejected: { label: 'Rejected', color: 'bg-red-100 text-red-700' },
+  skipped: { label: 'Skipped', color: 'bg-gray-100 text-gray-500' },
 };
 
 const PRIORITY_CONFIG = {
-  critical: { color: 'bg-stone-100 text-stone-800 border-stone-200' },
-  high: { color: 'bg-stone-100 text-stone-700 border-stone-200' },
-  medium: { color: 'bg-stone-100 text-stone-700 border-stone-200' },
-  low: { color: 'bg-stone-100 text-stone-700 border-stone-200' },
+  critical: { color: 'bg-red-100 text-red-700 border-red-200' },
+  high: { color: 'bg-amber-100 text-amber-700 border-amber-200' },
+  medium: { color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  low: { color: 'bg-gray-100 text-gray-700 border-gray-200' },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -146,7 +146,7 @@ const WorkflowCard: React.FC<WorkflowCardProps> = ({ workflow, onView }) => {
 
   return (
     <Card
-      className="hover:shadow-sm transition-shadow cursor-pointer"
+      className="hover:shadow-md transition-shadow cursor-pointer"
       onClick={() => onView(workflow)}
     >
       <CardContent className="p-4">
@@ -190,12 +190,12 @@ const WorkflowCard: React.FC<WorkflowCardProps> = ({ workflow, onView }) => {
               <div
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
                   step.status === 'completed'
-                    ? 'bg-stone-100 text-stone-800'
+                    ? 'bg-green-100 text-green-700'
                     : step.status === 'in_progress'
-                      ? 'bg-stone-100 text-stone-700'
+                      ? 'bg-blue-100 text-blue-700'
                       : step.status === 'rejected'
-                        ? 'bg-stone-100 text-stone-800'
-                        : 'bg-stone-100 text-stone-500'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-gray-100 text-gray-500'
                 }`}
                 title={step.name}
               >
@@ -210,7 +210,7 @@ const WorkflowCard: React.FC<WorkflowCardProps> = ({ workflow, onView }) => {
               {index < workflow.steps.length - 1 && (
                 <div
                   className={`flex-1 h-0.5 ${
-                    step.status === 'completed' ? 'bg-stone-300' : 'bg-stone-200'
+                    step.status === 'completed' ? 'bg-green-300' : 'bg-gray-200'
                   }`}
                 />
               )}
@@ -235,7 +235,7 @@ const WorkflowCard: React.FC<WorkflowCardProps> = ({ workflow, onView }) => {
             {workflow.workflowRunId && (
               <a
                 href={`/concept2cure/proofs/${workflow.workflowRunId}`}
-                className="flex items-center gap-1 text-stone-600 hover:text-stone-700"
+                className="flex items-center gap-1 text-blue-600 hover:text-blue-700"
                 onClick={(event) => event.stopPropagation()}
               >
                 <ShieldCheck className="h-3.5 w-3.5" />
@@ -244,7 +244,7 @@ const WorkflowCard: React.FC<WorkflowCardProps> = ({ workflow, onView }) => {
             )}
             <div
               className={`flex items-center gap-1 ${
-                isOverdue ? 'text-stone-700 font-medium' : isUrgent ? 'text-stone-600' : ''
+                isOverdue ? 'text-red-600 font-medium' : isUrgent ? 'text-amber-600' : ''
               }`}
             >
               <Calendar className="h-3.5 w-3.5" />
@@ -344,7 +344,7 @@ const WorkflowDetail: React.FC<WorkflowDetailProps> = ({ workflow, onClose, onAc
               <div
                 key={step.id}
                 className={`rounded-lg border p-3 ${
-                  isCurrentStep ? 'border-stone-300 bg-stone-100' : ''
+                  isCurrentStep ? 'border-blue-300 bg-blue-50' : ''
                 }`}
               >
                 <div className="flex items-start justify-between mb-2">
@@ -469,13 +469,13 @@ const WorkflowTemplates: React.FC<WorkflowTemplatesProps> = ({ templates, onCrea
       {templates.map(template => (
         <Card
           key={template.id}
-          className="hover:shadow-sm transition-shadow cursor-pointer"
+          className="hover:shadow-md transition-shadow cursor-pointer"
           onClick={() => onCreateWorkflow(template)}
         >
           <CardContent className="p-4">
             <div className="flex items-start justify-between mb-2">
-              <div className="h-10 w-10 rounded-lg bg-stone-100 flex items-center justify-center">
-                <GitBranch className="h-5 w-5 text-stone-600" />
+              <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                <GitBranch className="h-5 w-5 text-blue-600" />
               </div>
               <Badge variant="secondary" className="text-xs">
                 {template.usageCount} uses
@@ -685,7 +685,7 @@ export const WorkflowDashboard: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-stone-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
         <span className="ml-2 text-muted-foreground">Loading workflows...</span>
       </div>
     );
@@ -693,10 +693,10 @@ export const WorkflowDashboard: React.FC = () => {
 
   if (projectsError) {
     return (
-      <div className="rounded-lg border border-stone-200 bg-stone-100 p-6 text-center">
-        <AlertTriangleIcon className="h-8 w-8 text-stone-900 mx-auto mb-2" />
-        <p className="text-stone-800 font-medium">Failed to load workflow data</p>
-        <p className="text-stone-700 text-sm mt-1">Please try refreshing the page.</p>
+      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+        <AlertTriangleIcon className="h-8 w-8 text-red-500 mx-auto mb-2" />
+        <p className="text-red-700 font-medium">Failed to load workflow data</p>
+        <p className="text-red-600 text-sm mt-1">Please try refreshing the page.</p>
       </div>
     );
   }
@@ -707,7 +707,7 @@ export const WorkflowDashboard: React.FC = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <GitBranch className="h-6 w-6 text-stone-600" />
+            <GitBranch className="h-6 w-6 text-blue-600" />
             Workflow Dashboard
           </h1>
           <p className="text-muted-foreground">Manage reviews, approvals, and submissions</p>
@@ -729,7 +729,7 @@ export const WorkflowDashboard: React.FC = () => {
                 <p className="text-sm text-muted-foreground">Active</p>
                 <p className="text-2xl font-bold">{stats.active}</p>
               </div>
-              <Play className="h-8 w-8 text-stone-900 opacity-50" />
+              <Play className="h-8 w-8 text-blue-500 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -740,7 +740,7 @@ export const WorkflowDashboard: React.FC = () => {
                 <p className="text-sm text-muted-foreground">On Hold</p>
                 <p className="text-2xl font-bold">{stats.onHold}</p>
               </div>
-              <Pause className="h-8 w-8 text-stone-900 opacity-50" />
+              <Pause className="h-8 w-8 text-amber-500 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -751,7 +751,7 @@ export const WorkflowDashboard: React.FC = () => {
                 <p className="text-sm text-muted-foreground">My Pending Actions</p>
                 <p className="text-2xl font-bold">{stats.myPending}</p>
               </div>
-              <Clock className="h-8 w-8 text-stone-900 opacity-50" />
+              <Clock className="h-8 w-8 text-purple-500 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -762,7 +762,7 @@ export const WorkflowDashboard: React.FC = () => {
                 <p className="text-sm text-muted-foreground">Completed This Month</p>
                 <p className="text-2xl font-bold">{stats.completed}</p>
               </div>
-              <CheckCircle2 className="h-8 w-8 text-stone-900 opacity-50" />
+              <CheckCircle2 className="h-8 w-8 text-green-500 opacity-50" />
             </div>
           </CardContent>
         </Card>

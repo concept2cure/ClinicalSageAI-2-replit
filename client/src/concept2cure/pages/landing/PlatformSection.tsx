@@ -11,13 +11,13 @@ import { Section, fadeUp } from './shared';
 function PlatformMockup() {
   return (
     <div className="relative mx-auto max-w-5xl">
-      <div className="rounded-xl border border-stone-200 bg-white shadow-sm shadow-stone-900/8 overflow-hidden">
+      <div className="rounded-xl border border-stone-200 bg-white shadow-sm shadow-blue-900/8 overflow-hidden">
         {/* Browser chrome */}
         <div className="flex items-center gap-2 px-4 py-3 bg-stone-50 border-b border-stone-200">
           <div className="flex gap-1.5" aria-hidden="true">
-            <div className="w-3 h-3 rounded-full bg-stone-400" />
-            <div className="w-3 h-3 rounded-full bg-stone-400" />
-            <div className="w-3 h-3 rounded-full bg-stone-400" />
+            <div className="w-3 h-3 rounded-full bg-red-400" />
+            <div className="w-3 h-3 rounded-full bg-amber-400" />
+            <div className="w-3 h-3 rounded-full bg-green-400" />
           </div>
           <div className="flex-1 flex justify-center">
             <div className="px-4 py-1 bg-white rounded-md border border-stone-200 text-xs text-stone-500 font-mono">
@@ -31,7 +31,7 @@ function PlatformMockup() {
           {/* Sidebar */}
           <div className="w-52 bg-stone-900 text-white p-4 hidden md:block">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-6 h-6 rounded bg-stone-600 flex items-center justify-center">
+              <div className="w-6 h-6 rounded bg-blue-600 flex items-center justify-center">
                 <svg
                   className="w-3.5 h-3.5 text-white"
                   fill="none"
@@ -69,31 +69,31 @@ function PlatformMockup() {
           </div>
 
           {/* Main content */}
-          <div className="flex-1 p-6 bg-stone-50">
+          <div className="flex-1 p-6 bg-[#FAFAF9]">
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h3 className="text-sm font-semibold text-stone-900">Mission Control</h3>
                 <p className="text-xs text-stone-500">3 active submissions</p>
               </div>
-              <div className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-800 text-xs font-medium">
+              <div className="px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
                 All Systems Healthy
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3 mb-5">
               {[
-                { label: 'Readiness', value: '87%', bg: 'bg-stone-100', color: 'text-stone-600' },
+                { label: 'Readiness', value: '87%', bg: 'bg-blue-50', color: 'text-blue-600' },
                 {
                   label: 'Active Agents',
                   value: '12',
-                  bg: 'bg-stone-100',
-                  color: 'text-stone-600',
+                  bg: 'bg-violet-50',
+                  color: 'text-violet-600',
                 },
                 {
                   label: 'Days to PDUFA',
                   value: '142',
-                  bg: 'bg-stone-100',
-                  color: 'text-stone-600',
+                  bg: 'bg-amber-50',
+                  color: 'text-amber-600',
                 },
               ].map(m => (
                 <div key={m.label} className={`${m.bg} rounded-xl p-3`}>
@@ -109,19 +109,19 @@ function PlatformMockup() {
                   name: 'IND-2024-0847',
                   status: 'Module 2.7 Review',
                   progress: 78,
-                  color: 'bg-stone-900',
+                  color: 'bg-blue-500',
                 },
                 {
                   name: 'NDA-2024-1203',
                   status: 'CSR Drafting',
                   progress: 45,
-                  color: 'bg-stone-900',
+                  color: 'bg-violet-500',
                 },
                 {
                   name: '510(k)-K241567',
                   status: 'Predicate Analysis',
                   progress: 92,
-                  color: 'bg-stone-900',
+                  color: 'bg-green-500',
                 },
               ].map(s => (
                 <div

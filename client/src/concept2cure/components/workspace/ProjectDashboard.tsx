@@ -293,7 +293,7 @@ export function ProjectDashboard({
             <h1 className="text-base font-semibold tracking-tight text-stone-900">{projectName}</h1>
             <div className="flex flex-wrap items-center gap-2">
               {projectType && (
-                <span className="inline-flex items-center rounded-md bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-700 ring-1 ring-inset ring-stone-300">
+                <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-stone-700 ring-1 ring-inset ring-stone-300">
                   {projectType}
                 </span>
               )}
@@ -381,14 +381,14 @@ export function ProjectDashboard({
           <div className="flex h-3 w-full overflow-hidden rounded-full bg-stone-100">
             {stats.counts.locked > 0 && (
               <div
-                className="bg-stone-700 transition-all duration-150"
+                className="bg-emerald-600 transition-all duration-150"
                 style={{ width: `${(stats.counts.locked / barTotal) * 100}%` }}
                 title={`${stats.counts.locked} Published`}
               />
             )}
             {stats.counts.approved > 0 && (
               <div
-                className="bg-stone-900 transition-all duration-150"
+                className="bg-green-500 transition-all duration-150"
                 style={{ width: `${(stats.counts.approved / barTotal) * 100}%` }}
                 title={`${stats.counts.approved} Approved`}
               />
@@ -402,7 +402,7 @@ export function ProjectDashboard({
             )}
             {stats.counts.draft > 0 && (
               <div
-                className="bg-stone-400 transition-all duration-150"
+                className="bg-amber-400 transition-all duration-150"
                 style={{ width: `${(stats.counts.draft / barTotal) * 100}%` }}
                 title={`${stats.counts.draft} Draft`}
               />
@@ -420,28 +420,28 @@ export function ProjectDashboard({
           {/* Risk Score */}
           <div className={cn(
             'flex flex-col items-center justify-center rounded-xl border p-5 transition-shadow hover:shadow-sm',
-            stats.riskLevel === 'high' ? 'bg-stone-100 border-stone-200' :
-            stats.riskLevel === 'medium' ? 'bg-stone-100 border-stone-200' :
-            'bg-stone-100 border-stone-200',
+            stats.riskLevel === 'high' ? 'bg-red-50 border-red-200' :
+            stats.riskLevel === 'medium' ? 'bg-amber-50 border-amber-200' :
+            'bg-emerald-50 border-emerald-200',
           )}>
             <Shield size={18} className={cn(
-              stats.riskLevel === 'high' ? 'text-stone-900' :
-              stats.riskLevel === 'medium' ? 'text-stone-900' :
-              'text-stone-900',
+              stats.riskLevel === 'high' ? 'text-red-500' :
+              stats.riskLevel === 'medium' ? 'text-amber-500' :
+              'text-emerald-500',
             )} />
             <span className={cn(
               'text-base font-semibold tabular-nums mt-1',
-              stats.riskLevel === 'high' ? 'text-stone-800' :
-              stats.riskLevel === 'medium' ? 'text-stone-700' :
-              'text-stone-800',
+              stats.riskLevel === 'high' ? 'text-red-700' :
+              stats.riskLevel === 'medium' ? 'text-amber-700' :
+              'text-emerald-700',
             )}>
               {100 - stats.riskScore}
             </span>
             <span className={cn(
               'text-xs font-medium mt-0.5',
-              stats.riskLevel === 'high' ? 'text-stone-700' :
-              stats.riskLevel === 'medium' ? 'text-stone-600' :
-              'text-stone-700',
+              stats.riskLevel === 'high' ? 'text-red-600' :
+              stats.riskLevel === 'medium' ? 'text-amber-600' :
+              'text-emerald-600',
             )}>
               Readiness Score
             </span>
@@ -449,21 +449,21 @@ export function ProjectDashboard({
 
           {/* CTD Coverage */}
           <div className="flex flex-col items-center justify-center rounded-xl border border-stone-200 bg-white p-5 hover:shadow-sm transition-shadow">
-            <Layers size={18} className="text-stone-900" />
+            <Layers size={18} className="text-blue-500" />
             <span className="text-base font-semibold tabular-nums text-stone-900 mt-1">{stats.ctdCoverage}%</span>
             <span className="text-xs font-medium text-stone-500 mt-0.5">CTD Coverage</span>
           </div>
 
           {/* Approval Rate */}
           <div className="flex flex-col items-center justify-center rounded-xl border border-stone-200 bg-white p-5 hover:shadow-sm transition-shadow">
-            <TrendingUp size={18} className="text-stone-900" />
+            <TrendingUp size={18} className="text-green-500" />
             <span className="text-base font-semibold tabular-nums text-stone-900 mt-1">{stats.approvalRate}%</span>
             <span className="text-xs font-medium text-stone-500 mt-0.5">Approval Rate</span>
           </div>
 
           {/* In Review */}
           <div className="flex flex-col items-center justify-center rounded-xl border border-stone-200 bg-white p-5 hover:shadow-sm transition-shadow">
-            <AlertTriangle size={18} className={stats.reviewCycle > 30 ? 'text-stone-900' : 'text-stone-900'} />
+            <AlertTriangle size={18} className={stats.reviewCycle > 30 ? 'text-amber-500' : 'text-blue-500'} />
             <span className="text-base font-semibold tabular-nums text-stone-900 mt-1">{stats.counts.review}</span>
             <span className="text-xs font-medium text-stone-500 mt-0.5">Awaiting Review</span>
           </div>
@@ -486,7 +486,7 @@ export function ProjectDashboard({
               <button
                 type="button"
                 onClick={onCreateDocument}
-                className="mt-3 text-sm font-medium text-stone-600 hover:text-stone-700"
+                className="mt-3 text-sm font-medium text-blue-600 hover:text-stone-700"
               >
                 Create your first document
               </button>
@@ -634,8 +634,8 @@ export function ProjectDashboard({
 
       {/* ── 3B. Getting Started — type-specific workflow guidance ──────────── */}
       {stats.total < 5 && (
-        <section className="rounded-xl border border-stone-100 bg-stone-100/60 p-6 shadow-sm">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-stone-600">
+        <section className="rounded-xl border border-blue-100 bg-blue-50/60 p-6 shadow-sm">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-blue-600">
             {(projectType || submissionType || 'IND').toUpperCase()} Submission Workflow
           </h2>
           <ol className="space-y-2.5">
@@ -646,8 +646,8 @@ export function ProjectDashboard({
                   <span className={cn(
                     'flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold',
                     isCompleted
-                      ? 'bg-stone-100 text-stone-800'
-                      : 'bg-stone-100 text-stone-600'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-blue-100 text-blue-600'
                   )}>
                     {isCompleted ? <CheckCircle2 size={14} /> : i + 1}
                   </span>
@@ -687,7 +687,7 @@ export function ProjectDashboard({
                       {mod.label}
                     </p>
                     {isFocusModule && (
-                      <span className="text-[9px] font-semibold uppercase tracking-wider text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded">
+                      <span className="text-[9px] font-semibold uppercase tracking-wider text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
                         Key
                       </span>
                     )}
@@ -705,7 +705,7 @@ export function ProjectDashboard({
                   <span className={cn(
                     'inline-flex min-w-[1.5rem] items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums',
                     hasContent
-                      ? 'bg-stone-100 text-stone-700'
+                      ? 'bg-blue-50 text-stone-700'
                       : 'bg-stone-50 text-stone-300',
                   )}>
                     {docCount}

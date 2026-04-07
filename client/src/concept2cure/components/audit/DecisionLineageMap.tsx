@@ -87,19 +87,19 @@ interface DecisionLineageMapProps {
 // ── Config ───────────────────────────────────────────────────────────────────
 
 const NODE_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  decision: { label: 'Decision', color: 'text-stone-600', bg: 'bg-stone-100', border: 'border-stone-200' },
-  document_state: { label: 'Document', color: 'text-stone-700', bg: 'bg-stone-100', border: 'border-stone-200' },
-  workflow_step: { label: 'Workflow', color: 'text-stone-600', bg: 'bg-stone-100', border: 'border-stone-200' },
-  evidence_link: { label: 'Evidence', color: 'text-stone-600', bg: 'bg-stone-100', border: 'border-stone-200' },
-  delegation: { label: 'Delegation', color: 'text-stone-600', bg: 'bg-stone-100', border: 'border-stone-200' },
+  decision: { label: 'Decision', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
+  document_state: { label: 'Document', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+  workflow_step: { label: 'Workflow', color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-200' },
+  evidence_link: { label: 'Evidence', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
+  delegation: { label: 'Delegation', color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200' },
 };
 
 const ACTION_ICONS: Record<string, React.ReactNode> = {
-  approved: <CheckCircle2 className="w-3.5 h-3.5 text-stone-700" />,
-  rejected: <XCircle className="w-3.5 h-3.5 text-stone-700" />,
-  pending: <Clock className="w-3.5 h-3.5 text-stone-600" />,
-  awaiting_decision: <Clock className="w-3.5 h-3.5 text-stone-900" />,
-  delegated: <ArrowRight className="w-3.5 h-3.5 text-stone-600" />,
+  approved: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />,
+  rejected: <XCircle className="w-3.5 h-3.5 text-red-600" />,
+  pending: <Clock className="w-3.5 h-3.5 text-amber-600" />,
+  awaiting_decision: <Clock className="w-3.5 h-3.5 text-amber-500" />,
+  delegated: <ArrowRight className="w-3.5 h-3.5 text-orange-600" />,
 };
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -168,7 +168,7 @@ const DecisionLineageMap: React.FC<DecisionLineageMapProps> = ({
       {/* Header */}
       <div className="border-b px-5 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <GitBranch className="w-5 h-5 text-stone-900" />
+          <GitBranch className="w-5 h-5 text-blue-500" />
           <h2 className="text-sm font-semibold text-stone-900">Decision Lineage</h2>
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">
             {graphData.nodes.length} records
@@ -179,8 +179,8 @@ const DecisionLineageMap: React.FC<DecisionLineageMapProps> = ({
           <div className={cn(
             'flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium',
             chainStatus?.chainIntegrity === 'VERIFIED'
-              ? 'bg-stone-100 text-stone-800 border border-stone-200'
-              : 'bg-stone-100 text-stone-700 border border-stone-200',
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+              : 'bg-amber-50 text-amber-700 border border-amber-200',
           )}>
             {chainStatus?.chainIntegrity === 'VERIFIED' ? (
               <ShieldCheck className="w-3 h-3" />
@@ -222,10 +222,10 @@ const DecisionLineageMap: React.FC<DecisionLineageMapProps> = ({
       {/* Compliance summary bar */}
       <div className="border-b bg-stone-50/50 px-5 py-2 flex items-center gap-4 text-[10px]">
         <div className="flex items-center gap-1.5">
-          <Shield className="w-3 h-3 text-stone-900" />
+          <Shield className="w-3 h-3 text-blue-500" />
           <span className="font-medium text-stone-600">Compliance:</span>
           {graphData.metadata.complianceFrameworks.slice(0, 3).map(f => (
-            <span key={f} className="px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 font-medium">
+            <span key={f} className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-medium">
               {f}
             </span>
           ))}
@@ -237,13 +237,13 @@ const DecisionLineageMap: React.FC<DecisionLineageMapProps> = ({
         </div>
         <div className="ml-auto flex items-center gap-3">
           <span className="text-stone-500">
-            <span className="font-semibold text-stone-700">{graphData.metadata.totalApprovals}</span> approved
+            <span className="font-semibold text-emerald-600">{graphData.metadata.totalApprovals}</span> approved
           </span>
           <span className="text-stone-500">
-            <span className="font-semibold text-stone-700">{graphData.metadata.totalRejections}</span> rejected
+            <span className="font-semibold text-red-600">{graphData.metadata.totalRejections}</span> rejected
           </span>
           <span className="text-stone-500">
-            <span className="font-semibold text-stone-600">{graphData.metadata.totalDelegations}</span> delegated
+            <span className="font-semibold text-orange-600">{graphData.metadata.totalDelegations}</span> delegated
           </span>
         </div>
       </div>
@@ -306,7 +306,7 @@ const DecisionLineageMap: React.FC<DecisionLineageMapProps> = ({
                             {typeConf.label}
                           </span>
                           {node.regulatory.gxpRelevant && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-stone-100 text-stone-600">
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600">
                               GxP
                             </span>
                           )}
@@ -314,10 +314,10 @@ const DecisionLineageMap: React.FC<DecisionLineageMapProps> = ({
                             <span className={cn(
                               'text-[9px] px-1.5 py-0.5 rounded-full',
                               node.regulatory.signatureStatus === 'signed'
-                                ? 'bg-stone-100 text-stone-700'
+                                ? 'bg-emerald-50 text-emerald-600'
                                 : node.regulatory.signatureStatus === 'pending'
-                                  ? 'bg-stone-100 text-stone-600'
-                                  : 'bg-stone-100 text-stone-700',
+                                  ? 'bg-amber-50 text-amber-600'
+                                  : 'bg-red-50 text-red-600',
                             )}>
                               <Lock className="w-2.5 h-2.5 inline mr-0.5" />
                               {node.regulatory.signatureStatus || 'pending'}

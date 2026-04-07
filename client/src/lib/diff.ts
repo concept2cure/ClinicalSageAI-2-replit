@@ -106,7 +106,7 @@ export function renderUnifiedFiltered(
         stats.addsByType[type]++;
         if (hide) return ''; // filtered out
         stats.totalChangedVisible++;
-        return `<span class="bg-stone-100">${escapeHtml(t)}</span>`;
+        return `<span class="bg-green-100">${escapeHtml(t)}</span>`;
       }
 
       // del
@@ -114,7 +114,7 @@ export function renderUnifiedFiltered(
       stats.delsByType[type]++;
       if (hide) return '';
       stats.totalChangedVisible++;
-      return `<span class="bg-stone-100 line-through">${escapeHtml(t)}</span>`;
+      return `<span class="bg-red-100 line-through">${escapeHtml(t)}</span>`;
     })
     .join('');
 
@@ -148,10 +148,10 @@ export function renderUnified(tokens: DiffToken[]): { html: string; adds: number
       if (op === 'same') return escapeHtml(t);
       if (op === 'add') {
         adds++;
-        return `<span class="bg-stone-100 text-stone-800">${escapeHtml(t)}</span>`;
+        return `<span class="bg-green-100 text-green-800">${escapeHtml(t)}</span>`;
       }
       dels++;
-      return `<span class="bg-stone-100 text-stone-800 line-through">${escapeHtml(t)}</span>`;
+      return `<span class="bg-red-100 text-red-800 line-through">${escapeHtml(t)}</span>`;
     })
     .join('');
   return { html, adds, dels };

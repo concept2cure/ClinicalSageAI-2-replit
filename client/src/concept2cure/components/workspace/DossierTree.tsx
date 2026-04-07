@@ -41,8 +41,6 @@ import {
   type DossierNodeStatus,
 } from '../../models/ctdHierarchy';
 import type { TreeArtifact } from './ProjectFileTree';
-import type { Module3BuildStateResponse, Module3BuildState as M3BuildState } from '../../hooks/useModule3BuildState';
-import { BUILD_STATE_CONFIG } from '../../hooks/useModule3BuildState';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -81,8 +79,6 @@ interface DossierTreeProps {
   onDraftWithAI?: (ctdSection: string) => void;
   /** Suggestion chip: attach an existing document to this section */
   onAttachExisting?: (ctdSection: string) => void;
-  /** Module 3 build state from useModule3BuildState hook (Phase 3 — Workflow Convergence) */
-  module3BuildState?: Module3BuildStateResponse;
   className?: string;
 }
 
@@ -150,7 +146,6 @@ const STATUS_CONFIG: Record<
   { icon: React.ReactNode; color: string; label: string }
 > = {
   empty: { icon: <Circle className="w-3 h-3" />, color: LIFECYCLE.not_started.text, label: 'Empty' },
-  sources_pending: { icon: <Target className="w-3 h-3" />, color: 'text-stone-500', label: 'Sources Uploaded' },
   draft_present: { icon: <Clock className="w-3 h-3" />, color: LIFECYCLE.draft.text, label: 'Draft' },
   under_review: { icon: <Eye className="w-3 h-3" />, color: LIFECYCLE.in_review.text, label: 'Review' },
   approved: {
@@ -161,7 +156,7 @@ const STATUS_CONFIG: Record<
   locked: { icon: <Lock className="w-3 h-3" />, color: LIFECYCLE.published.text, label: 'Locked' },
   missing_evidence: {
     icon: <AlertCircle className="w-3 h-3" />,
-    color: 'text-stone-900',
+    color: 'text-orange-500',
     label: 'Missing Evidence',
   },
   ready: { icon: <ShieldCheck className="w-3 h-3" />, color: LIFECYCLE.approved.text, label: 'Ready' },
@@ -176,58 +171,10 @@ function StatusIndicator({ status }: { status: DossierNodeStatus }) {
   );
 }
 
-// ── Module 3 build-state overlay (Phase 3 — Workflow Convergence) ────────────
-
-function m3BuildStateToDossierStatus(buildState: M3BuildState): DossierNodeStatus {
-  switch (buildState) {
-    case 'locked': return 'locked';
-    case 'approved': return 'approved';
-    case 'review': return 'under_review';
-    case 'contradiction_flagged': return 'missing_evidence';
-    case 'stale': return 'missing_evidence';
-    case 'draft_artifact_created':
-    case 'compiled':
-    case 'extraction_complete':
-      return 'draft_present';
-    case 'sources_uploaded':
-    case 'extraction_pending':
-      return 'sources_pending';
-    case 'no_sources':
-    default:
-      return 'empty';
-  }
-}
-
-function Module3BuildBadge({ buildState, completeness }: { buildState: M3BuildState; completeness: number }) {
-  const cfg = BUILD_STATE_CONFIG[buildState];
-  if (!cfg) return null;
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-medium whitespace-nowrap border',
-        cfg.bgColor,
-        cfg.color,
-        'border-stone-200/60'
-      )}
-      title={`${cfg.label} — ${completeness}% complete`}
-    >
-      {buildState === 'stale' || buildState === 'contradiction_flagged' ? (
-        <AlertCircle className="w-2.5 h-2.5" />
-      ) : buildState === 'approved' || buildState === 'locked' ? (
-        <CheckCircle2 className="w-2.5 h-2.5" />
-      ) : null}
-      {cfg.label}
-      {completeness > 0 && completeness < 100 && (
-        <span className="opacity-60">{completeness}%</span>
-      )}
-    </span>
-  );
-}
-
 // ── Node icon by type ────────────────────────────────────────────────────────
 
 function NodeIcon({ nodeType, isExpanded }: { nodeType: string; isExpanded: boolean }) {
-  if (nodeType === 'module') return <Package className="w-3.5 h-3.5 text-stone-900 shrink-0" />;
+  if (nodeType === 'module') return <Package className="w-3.5 h-3.5 text-blue-500 shrink-0" />;
   if (nodeType === 'section') {
     return isExpanded ? (
       <FolderOpen className="w-3.5 h-3.5 text-stone-400 shrink-0" />
@@ -275,7 +222,6 @@ interface DossierNodeRowProps {
   onCreateFromTemplate?: (ctdSection: string) => void;
   onDraftWithAI?: (ctdSection: string) => void;
   onAttachExisting?: (ctdSection: string) => void;
-  module3BuildState?: Module3BuildStateResponse;
 }
 
 function DossierNodeRow({
@@ -291,19 +237,13 @@ function DossierNodeRow({
   onCreateFromTemplate,
   onDraftWithAI,
   onAttachExisting,
-  module3BuildState,
 }: DossierNodeRowProps) {
   const isExpanded = expanded.has(node.nodeId);
   const hasChildren = node.children.length > 0;
   const isSelected = selectedSection === node.ctdSection;
-
-  // Module 3 build-state override: use real build state for M3 leaf sections
-  const m3Section = module3BuildState?.sections?.find(s => s.sectionKey === node.ctdSection);
-  const status = m3Section
-    ? m3BuildStateToDossierStatus(m3Section.buildState)
-    : hasChildren
-      ? getAggregatedStatus(node, counts)
-      : getNodeStatus(node.ctdSection, counts);
+  const status = hasChildren
+    ? getAggregatedStatus(node, counts)
+    : getNodeStatus(node.ctdSection, counts);
   const docCount = getAggregatedCount(node, counts);
 
   // Required children check: how many required children have no artifacts?
@@ -334,7 +274,7 @@ function DossierNodeRow({
         className={cn(
           'w-full flex items-center gap-1 py-[4px] pr-2 text-left transition-all duration-150 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-400 focus-visible:outline-none',
           isSelected
-            ? 'bg-stone-100 text-stone-700'
+            ? 'bg-blue-50 text-stone-700'
             : 'text-stone-600 hover:bg-stone-50 hover:translate-x-px'
         )}
         style={{ paddingLeft: `${8 + depth * 14}px` }}
@@ -368,7 +308,7 @@ function DossierNodeRow({
 
         {/* Required badge for empty required sections */}
         {showRequiredBadge && (
-          <span className="text-[10px] text-stone-900 font-medium shrink-0" aria-label="Required section">
+          <span className="text-[10px] text-amber-500 font-medium shrink-0" aria-label="Required section">
             Required
           </span>
         )}
@@ -387,22 +327,22 @@ function DossierNodeRow({
             title={`${metrics[node.ctdSection].draftCount ?? 0}D / ${metrics[node.ctdSection].reviewCount ?? 0}R / ${metrics[node.ctdSection].approvedCount ?? 0}A / ${metrics[node.ctdSection].lockedCount ?? 0}L`}
           >
             {(metrics[node.ctdSection].draftCount ?? 0) > 0 && (
-              <span className="text-xs tabular-nums text-stone-600 bg-stone-100 rounded px-0.5">
+              <span className="text-xs tabular-nums text-amber-600 bg-amber-50 rounded px-0.5">
                 {metrics[node.ctdSection].draftCount}D
               </span>
             )}
             {(metrics[node.ctdSection].reviewCount ?? 0) > 0 && (
-              <span className="text-xs tabular-nums text-stone-600 bg-stone-100 rounded px-0.5">
+              <span className="text-xs tabular-nums text-blue-600 bg-blue-50 rounded px-0.5">
                 {metrics[node.ctdSection].reviewCount}R
               </span>
             )}
             {(metrics[node.ctdSection].approvedCount ?? 0) > 0 && (
-              <span className="text-xs tabular-nums text-stone-700 bg-stone-100 rounded px-0.5">
+              <span className="text-xs tabular-nums text-emerald-600 bg-emerald-50 rounded px-0.5">
                 {metrics[node.ctdSection].approvedCount}A
               </span>
             )}
             {(metrics[node.ctdSection].lockedCount ?? 0) > 0 && (
-              <span className="text-xs tabular-nums text-stone-700 bg-stone-100 rounded px-0.5">
+              <span className="text-xs tabular-nums text-red-600 bg-red-50 rounded px-0.5">
                 {metrics[node.ctdSection].lockedCount}L
               </span>
             )}
@@ -412,11 +352,6 @@ function DossierNodeRow({
         {/* Status */}
         <StatusIndicator status={status} />
 
-        {/* Module 3 build-state badge (Phase 3 — Workflow Convergence) */}
-        {m3Section && (
-          <Module3BuildBadge buildState={m3Section.buildState} completeness={m3Section.completeness} />
-        )}
-
         {/* Completion mini-bar with color-coded status (enhanced Sprint 3B) */}
         {metrics?.[node.ctdSection] && metrics[node.ctdSection].artifactCount > 0 && (() => {
           const m = metrics[node.ctdSection];
@@ -425,16 +360,16 @@ function DossierNodeRow({
           const total = m.artifactCount;
           // Color: green if all approved, amber if in progress, red if none started
           const barColor = approved === total && total > 0
-            ? 'bg-stone-900'
+            ? 'bg-emerald-500'
             : (m.reviewCount ?? 0) > 0 || (m.draftCount ?? 0) > 0
-              ? 'bg-stone-400'
-              : 'bg-stone-400';
+              ? 'bg-amber-400'
+              : 'bg-red-400';
           // Status dot
           const dotColor = approved === total && total > 0
-            ? 'bg-stone-900'
+            ? 'bg-emerald-500'
             : (m.draftCount ?? 0) > 0 || (m.reviewCount ?? 0) > 0
-              ? 'bg-stone-400'
-              : 'bg-stone-400';
+              ? 'bg-amber-400'
+              : 'bg-red-400';
           return (
             <span className="flex items-center gap-1 shrink-0" title={`${pct}% complete — ${approved}/${total} approved`}>
               <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', dotColor)} />
@@ -451,7 +386,7 @@ function DossierNodeRow({
         {/* Evidence/precedent chips */}
         {metrics?.[node.ctdSection] && metrics[node.ctdSection].evidenceCount > 0 && (
           <span
-            className="text-xs text-stone-700 bg-stone-100 rounded px-0.5 shrink-0"
+            className="text-xs text-emerald-600 bg-emerald-50 rounded px-0.5 shrink-0"
             title="Evidence linked"
           >
             E{metrics[node.ctdSection].evidenceCount}
@@ -459,7 +394,7 @@ function DossierNodeRow({
         )}
         {metrics?.[node.ctdSection] && metrics[node.ctdSection].precedentCount > 0 && (
           <span
-            className="text-xs text-stone-600 bg-stone-100 rounded px-0.5 shrink-0"
+            className="text-xs text-violet-600 bg-violet-50 rounded px-0.5 shrink-0"
             title="Precedents"
           >
             P{metrics[node.ctdSection].precedentCount}
@@ -472,14 +407,14 @@ function DossierNodeRow({
           metrics[node.ctdSection].evidenceCount === 0 &&
           metrics[node.ctdSection].precedentCount === 0 && (
             <span title="No evidence or precedents linked">
-              <AlertCircle className="w-3 h-3 text-stone-400 shrink-0" />
+              <AlertCircle className="w-3 h-3 text-amber-400 shrink-0" />
             </span>
           )}
         {docCount === 0 &&
           metrics?.[node.ctdSection] &&
           metrics[node.ctdSection].templateCoverageAvailable && (
             <span
-              className="text-xs text-stone-900 bg-stone-100 rounded px-0.5 shrink-0"
+              className="text-xs text-blue-500 bg-blue-50 rounded px-0.5 shrink-0"
               title="Template available, no document created"
             >
               T
@@ -489,7 +424,7 @@ function DossierNodeRow({
         {/* Required children missing indicator */}
         {missingRequired.length > 0 && docCount > 0 && (
           <span
-            className="text-xs text-stone-900 bg-stone-100 rounded px-0.5 shrink-0"
+            className="text-xs text-red-500 bg-red-50 rounded px-0.5 shrink-0"
             title={`${missingRequired.length} required section${missingRequired.length > 1 ? 's' : ''} missing: ${missingRequired.join(', ')}`}
           >
             !{missingRequired.length}
@@ -576,7 +511,6 @@ function DossierNodeRow({
             onCreateFromTemplate={onCreateFromTemplate}
             onDraftWithAI={onDraftWithAI}
             onAttachExisting={onAttachExisting}
-            module3BuildState={module3BuildState}
           />
         ))}
     </>
@@ -601,7 +535,6 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
   onCreateFromTemplate,
   onDraftWithAI,
   onAttachExisting,
-  module3BuildState,
   className,
 }) => {
   // Use custom hierarchy when provided (submission-type-specific), otherwise default CTD
@@ -676,7 +609,6 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
             onCreateFromTemplate={onCreateFromTemplate}
             onDraftWithAI={onDraftWithAI}
             onAttachExisting={onAttachExisting}
-            module3BuildState={module3BuildState}
           />
         ))}
       </div>
@@ -714,7 +646,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onPlaceArtifact(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-stone-100 hover:text-stone-700 transition-colors flex items-center gap-2 focus-visible:bg-stone-100 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-blue-50 hover:text-stone-700 transition-colors flex items-center gap-2 focus-visible:bg-blue-50 focus-visible:outline-none"
               role="menuitem"
             >
               <MapPin className="w-3 h-3" />
@@ -727,7 +659,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onPasteHere(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-stone-100 transition-colors flex items-center gap-2 focus-visible:bg-stone-100 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-2 focus-visible:bg-amber-50 focus-visible:outline-none"
               role="menuitem"
             >
               <ClipboardPaste className="w-3 h-3" />
@@ -764,7 +696,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onOpenTransformCanvas(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-stone-100 transition-colors flex items-center gap-2 focus-visible:bg-stone-100 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-blue-50 transition-colors flex items-center gap-2 focus-visible:bg-violet-50 focus-visible:outline-none"
               role="menuitem"
             >
               <Sparkles className="w-3 h-3" />
@@ -777,7 +709,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onOpenSubmissionApps(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-stone-100 transition-colors flex items-center gap-2 focus-visible:bg-stone-100 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-orange-700 hover:bg-orange-50 transition-colors flex items-center gap-2 focus-visible:bg-orange-50 focus-visible:outline-none"
               role="menuitem"
             >
               <AppWindow className="w-3 h-3" />
@@ -790,7 +722,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onOpenProgramTwin();
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-stone-100 transition-colors flex items-center gap-2 focus-visible:bg-stone-100 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-blue-50 transition-colors flex items-center gap-2 focus-visible:bg-blue-50 focus-visible:outline-none"
               role="menuitem"
             >
               <Target className="w-3 h-3" />

@@ -58,17 +58,17 @@ const SubmissionTracker: React.FC<SubmissionTrackerProps> = ({ submissions }) =>
   const getStatusConfig = (status: Submission['status']) => {
     switch (status) {
       case 'drafting':
-        return { label: 'Drafting', color: 'bg-stone-100 text-stone-800', icon: FileClock };
+        return { label: 'Drafting', color: 'bg-gray-100 text-gray-800', icon: FileClock };
       case 'review':
-        return { label: 'In Review', color: 'bg-stone-100 text-stone-800', icon: FileText };
+        return { label: 'In Review', color: 'bg-blue-100 text-blue-800', icon: FileText };
       case 'ready':
-        return { label: 'Ready', color: 'bg-stone-100 text-stone-800', icon: FileCheck };
+        return { label: 'Ready', color: 'bg-green-100 text-green-800', icon: FileCheck };
       case 'submitted':
-        return { label: 'Submitted', color: 'bg-stone-100 text-stone-800', icon: Send };
+        return { label: 'Submitted', color: 'bg-purple-100 text-purple-800', icon: Send };
       case 'pending_response':
-        return { label: 'Pending Response', color: 'bg-stone-100 text-stone-800', icon: Clock };
+        return { label: 'Pending Response', color: 'bg-amber-100 text-amber-800', icon: Clock };
       default:
-        return { label: status, color: 'bg-stone-100', icon: FileText };
+        return { label: status, color: 'bg-gray-100', icon: FileText };
     }
   };
 
@@ -93,7 +93,7 @@ const SubmissionTracker: React.FC<SubmissionTrackerProps> = ({ submissions }) =>
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <FileStack className="h-5 w-5 text-stone-600" />
+              <FileStack className="h-5 w-5 text-blue-600" />
               Active Submissions
             </CardTitle>
             <CardDescription>Track preparation and filing status</CardDescription>
@@ -141,7 +141,7 @@ const SubmissionTracker: React.FC<SubmissionTrackerProps> = ({ submissions }) =>
                       Documents: {submission.documentsReady}/{submission.documentsTotal}
                     </span>
                     <span
-                      className={`flex items-center gap-1 ${isUrgent ? 'text-stone-600 font-medium' : 'text-muted-foreground'}`}
+                      className={`flex items-center gap-1 ${isUrgent ? 'text-amber-600 font-medium' : 'text-muted-foreground'}`}
                     >
                       <Calendar className="h-3.5 w-3.5" />
                       {formatDate(submission.dueDate)}
@@ -182,25 +182,25 @@ const DocumentStatusOverview: React.FC<DocumentStatusOverviewProps> = ({ documen
     DocumentStatus,
     { label: string; color: string; icon: React.ElementType }
   > = {
-    draft: { label: 'Draft', color: 'text-stone-600 bg-stone-100', icon: FileClock },
-    in_review: { label: 'In Review', color: 'text-stone-600 bg-stone-100', icon: FileText },
+    draft: { label: 'Draft', color: 'text-gray-600 bg-gray-100', icon: FileClock },
+    in_review: { label: 'In Review', color: 'text-blue-600 bg-blue-100', icon: FileText },
     pending_approval: {
       label: 'Pending Approval',
-      color: 'text-stone-600 bg-stone-100',
+      color: 'text-amber-600 bg-amber-100',
       icon: Clock,
     },
-    approved: { label: 'Approved', color: 'text-stone-700 bg-stone-100', icon: CheckCircle2 },
-    rejected: { label: 'Rejected', color: 'text-stone-700 bg-stone-100', icon: FileX },
-    superseded: { label: 'Superseded', color: 'text-stone-500 bg-stone-100', icon: FileText },
-    archived: { label: 'Archived', color: 'text-stone-500 bg-stone-100', icon: FileText },
-    effective: { label: 'Effective', color: 'text-stone-700 bg-stone-100', icon: FileCheck },
+    approved: { label: 'Approved', color: 'text-green-600 bg-green-100', icon: CheckCircle2 },
+    rejected: { label: 'Rejected', color: 'text-red-600 bg-red-100', icon: FileX },
+    superseded: { label: 'Superseded', color: 'text-gray-500 bg-gray-100', icon: FileText },
+    archived: { label: 'Archived', color: 'text-gray-500 bg-gray-100', icon: FileText },
+    effective: { label: 'Effective', color: 'text-emerald-600 bg-emerald-100', icon: FileCheck },
   };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5 text-stone-600" />
+          <FileText className="h-5 w-5 text-blue-600" />
           Document Status
         </CardTitle>
         <CardDescription>Overview of document workflow status</CardDescription>
@@ -238,7 +238,7 @@ const DocumentStatusOverview: React.FC<DocumentStatusOverviewProps> = ({ documen
               .map(doc => (
                 <div
                   key={doc.id}
-                  className="flex items-center justify-between rounded-lg border p-2 hover:bg-stone-50 cursor-pointer"
+                  className="flex items-center justify-between rounded-lg border p-2 hover:bg-gray-50 cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />
@@ -268,15 +268,15 @@ const TaskList: React.FC<TaskListProps> = ({ tasks }) => {
   const getPriorityColor = (priority: TaskSummary['priority']) => {
     switch (priority) {
       case 'critical':
-        return 'bg-stone-100 text-stone-800 border-stone-200';
+        return 'bg-red-100 text-red-800 border-red-200';
       case 'high':
-        return 'bg-stone-100 text-stone-800 border-stone-200';
+        return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'medium':
-        return 'bg-stone-100 text-stone-800 border-stone-200';
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'low':
-        return 'bg-stone-100 text-stone-800 border-stone-200';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
-        return 'bg-stone-100 text-stone-800';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -301,7 +301,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks }) => {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-stone-600" />
+              <CheckCircle2 className="h-5 w-5 text-blue-600" />
               My Tasks
             </CardTitle>
             <CardDescription>Pending actions and deadlines</CardDescription>
@@ -323,12 +323,12 @@ const TaskList: React.FC<TaskListProps> = ({ tasks }) => {
               return (
                 <div
                   key={task.id}
-                  className="flex items-start justify-between rounded-lg border p-3 hover:bg-stone-50 cursor-pointer"
+                  className="flex items-start justify-between rounded-lg border p-3 hover:bg-gray-50 cursor-pointer"
                 >
                   <div className="flex items-start gap-3">
                     <input
                       type="checkbox"
-                      className="mt-1 h-4 w-4 rounded border-stone-300"
+                      className="mt-1 h-4 w-4 rounded border-gray-300"
                       onChange={() => {}}
                     />
                     <div className="space-y-1">
@@ -341,7 +341,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks }) => {
                       {task.priority}
                     </Badge>
                     <span
-                      className={`text-xs ${dueInfo.urgent ? 'text-stone-700 font-medium' : 'text-muted-foreground'}`}
+                      className={`text-xs ${dueInfo.urgent ? 'text-red-600 font-medium' : 'text-muted-foreground'}`}
                     >
                       {dueInfo.text}
                     </span>
@@ -379,21 +379,21 @@ const AIInsights: React.FC<AIInsightsProps> = ({ insights }) => {
   const getInsightConfig = (type: AIInsight['type']) => {
     switch (type) {
       case 'recommendation':
-        return { color: 'border-stone-200 bg-stone-100', icon: Sparkles, iconColor: 'text-stone-600' };
+        return { color: 'border-blue-200 bg-blue-50', icon: Sparkles, iconColor: 'text-blue-600' };
       case 'alert':
         return {
-          color: 'border-stone-200 bg-stone-100',
+          color: 'border-amber-200 bg-amber-50',
           icon: AlertTriangle,
-          iconColor: 'text-stone-600',
+          iconColor: 'text-amber-600',
         };
       case 'opportunity':
         return {
-          color: 'border-stone-200 bg-stone-100',
+          color: 'border-green-200 bg-green-50',
           icon: ArrowUpRight,
-          iconColor: 'text-stone-700',
+          iconColor: 'text-green-600',
         };
       default:
-        return { color: 'border-stone-200 bg-stone-50', icon: Sparkles, iconColor: 'text-stone-600' };
+        return { color: 'border-gray-200 bg-gray-50', icon: Sparkles, iconColor: 'text-gray-600' };
     }
   };
 
@@ -401,7 +401,7 @@ const AIInsights: React.FC<AIInsightsProps> = ({ insights }) => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-stone-600" />
+          <Sparkles className="h-5 w-5 text-purple-600" />
           AI Insights
         </CardTitle>
         <CardDescription>Intelligent recommendations and alerts</CardDescription>
@@ -670,7 +670,7 @@ export const RegulatoryLeadDashboard: React.FC = () => {
                 <p className="text-sm text-muted-foreground">Active Submissions</p>
                 <p className="text-2xl font-bold">{submissions.length}</p>
               </div>
-              <FileStack className="h-8 w-8 text-stone-900 opacity-50" />
+              <FileStack className="h-8 w-8 text-blue-500 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -683,7 +683,7 @@ export const RegulatoryLeadDashboard: React.FC = () => {
                   {documents.filter(d => d.status === 'in_review').length}
                 </p>
               </div>
-              <FileText className="h-8 w-8 text-stone-900 opacity-50" />
+              <FileText className="h-8 w-8 text-amber-500 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -703,7 +703,7 @@ export const RegulatoryLeadDashboard: React.FC = () => {
                   }
                 </p>
               </div>
-              <Clock className="h-8 w-8 text-stone-900 opacity-50" />
+              <Clock className="h-8 w-8 text-red-500 opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -716,7 +716,7 @@ export const RegulatoryLeadDashboard: React.FC = () => {
                   {insights.filter(i => i.type === 'alert').length}
                 </p>
               </div>
-              <AlertTriangle className="h-8 w-8 text-stone-900 opacity-50" />
+              <AlertTriangle className="h-8 w-8 text-purple-500 opacity-50" />
             </div>
           </CardContent>
         </Card>

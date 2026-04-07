@@ -293,9 +293,12 @@ const ComplianceScoreRing: React.FC<{
   const offset = circumference - (score / 100) * circumference;
   
   const getColor = (s: number) => {
-    if (s >= 90) return { stroke: '#22c55e', text: 'text-stone-900', bg: 'bg-stone-100' };
-    if (s >= 70) return { stroke: '#eab308', text: 'text-stone-900', bg: 'bg-stone-100' };
-    return { stroke: '#ef4444', text: 'text-stone-900', bg: 'bg-stone-100' };
+    if (s >= 90) return { stroke: '#22c55e', text: 'text-green-500', bg: 'bg-green-50' };
+    if (s >= 70) return { stroke: '#eab308', text: 'text-amber-500', bg: 'bg-amber-50' };
+    return { stroke: '#ef4444', text: 'text-red-500', bg: 'bg-red-50' };
+    if (s >= 90) return { stroke: '#92a87a', text: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/20' };
+    if (s >= 70) return { stroke: '#eab308', text: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20' };
+    return { stroke: '#ef4444', text: 'text-red-500', bg: 'bg-red-50 dark:bg-red-900/20' };
   };
   
   const colors = getColor(score);
@@ -348,22 +351,22 @@ const IssueCard: React.FC<IssueCardProps> = ({ guard, onAction, onAutoFix }) => 
     error: {
       icon: XCircle,
       label: 'Error',
-      color: 'border-stone-200 bg-stone-100',
-      iconColor: 'text-stone-900',
-      buttonColor: 'bg-stone-700 hover:bg-stone-800',
+      color: 'border-red-200 bg-red-50',
+      iconColor: 'text-red-500',
+      buttonColor: 'bg-red-600 hover:bg-red-700',
     },
     warning: {
       icon: AlertTriangle,
       label: 'Warning',
-      color: 'border-stone-200 bg-stone-100',
-      iconColor: 'text-stone-900',
-      buttonColor: 'bg-stone-600 hover:bg-stone-700',
+      color: 'border-amber-200 bg-amber-50',
+      iconColor: 'text-amber-500',
+      buttonColor: 'bg-amber-600 hover:bg-amber-700',
     },
     suggestion: {
       icon: Lightbulb,
       label: 'Suggestion',
-      color: 'border-stone-200 bg-stone-100',
-      iconColor: 'text-stone-900',
+      color: 'border-blue-200 bg-blue-50',
+      iconColor: 'text-blue-500',
       buttonColor: 'bg-stone-800 hover:bg-stone-900',
     },
   };
@@ -381,9 +384,9 @@ const IssueCard: React.FC<IssueCardProps> = ({ guard, onAction, onAutoFix }) => 
               {guard.title}
             </h4>
             <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-              guard.severity === 'error' ? 'bg-stone-100 text-stone-800' :
-              guard.severity === 'warning' ? 'bg-stone-100 text-stone-700' :
-              'bg-stone-100 text-stone-700'
+              guard.severity === 'error' ? 'bg-red-100 text-red-700' :
+              guard.severity === 'warning' ? 'bg-amber-100 text-amber-700' :
+              'bg-blue-100 text-stone-700'
             }`}>
               {config.label}
             </span>
@@ -562,9 +565,9 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
   
   // Get status
   const getStatus = () => {
-    if (errorCount > 0) return { label: 'Blocked', icon: ShieldX, color: 'text-stone-900' };
-    if (warningCount > 0) return { label: 'Needs Attention', icon: ShieldAlert, color: 'text-stone-900' };
-    return { label: 'Ready', icon: ShieldCheck, color: 'text-stone-900' };
+    if (errorCount > 0) return { label: 'Blocked', icon: ShieldX, color: 'text-red-500' };
+    if (warningCount > 0) return { label: 'Needs Attention', icon: ShieldAlert, color: 'text-amber-500' };
+    return { label: 'Ready', icon: ShieldCheck, color: 'text-green-500' };
   };
   
   const status = getStatus();
@@ -576,7 +579,7 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
       <div className={`${className}`}>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full flex items-center justify-between p-3 bg-white rounded-lg border border-stone-200 hover:border-stone-300 transition-colors duration-150"
+          className="w-full flex items-center justify-between p-3 bg-white rounded-lg border border-stone-200 hover:border-blue-300 transition-colors duration-150"
           data-testid="button-compliance-compact-toggle"
           aria-expanded={isExpanded}
         >
@@ -632,25 +635,25 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
           
           <div className="flex items-center gap-4 text-sm">
             {errorCount > 0 && (
-              <span className="flex items-center gap-1 text-stone-700">
+              <span className="flex items-center gap-1 text-red-600">
                 <XCircle className="w-4 h-4" />
                 {errorCount} error{errorCount > 1 ? 's' : ''}
               </span>
             )}
             {warningCount > 0 && (
-              <span className="flex items-center gap-1 text-stone-600">
+              <span className="flex items-center gap-1 text-amber-600">
                 <AlertTriangle className="w-4 h-4" />
                 {warningCount} warning{warningCount > 1 ? 's' : ''}
               </span>
             )}
             {suggestionCount > 0 && (
-              <span className="flex items-center gap-1 text-stone-600">
+              <span className="flex items-center gap-1 text-blue-600">
                 <Lightbulb className="w-4 h-4" />
                 {suggestionCount} suggestion{suggestionCount > 1 ? 's' : ''}
               </span>
             )}
             {complianceIssues.length === 0 && (
-              <span className="flex items-center gap-1 text-stone-700">
+              <span className="flex items-center gap-1 text-green-600">
                 <CheckCircle className="w-4 h-4" />
                 All checks passed
               </span>
@@ -660,7 +663,7 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
           {complianceScore >= 90 && !hasSignatures && (
             <button
               onClick={onRequestReview}
-              className="mt-3 flex items-center gap-2 px-4 py-2 bg-stone-700 text-white text-sm font-medium rounded-lg hover:bg-stone-800 transition-colors duration-150"
+              className="mt-3 flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors duration-150"
               data-testid="button-request-review"
             >
               <Users className="w-4 h-4" />
@@ -695,7 +698,7 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
                 {count > 0 && (
                   <span className={`px-1.5 py-0.5 rounded-full text-xs
                     ${selectedCategory === tab.id
-                      ? 'bg-stone-100 text-stone-600'
+                      ? 'bg-blue-100 text-blue-600'
                       : 'bg-stone-200 text-stone-600'
                     }`}
                   >
@@ -711,7 +714,7 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
       {/* Issues List */}
       {filteredIssues.length === 0 ? (
         <div className="text-center py-8">
-          <ShieldCheck className="w-12 h-12 mx-auto mb-3 text-stone-900" />
+          <ShieldCheck className="w-12 h-12 mx-auto mb-3 text-green-500" />
           <h4 className="font-semibold text-stone-900">All Clear!</h4>
           <p className="text-sm text-stone-600 mt-1">
             {selectedCategory === 'all' 

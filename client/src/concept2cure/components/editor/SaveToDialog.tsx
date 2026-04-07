@@ -83,7 +83,7 @@ const DESTINATIONS: SaveDestination[] = [
     label: 'Project Vault',
     description: 'Save to the project document vault (internal DMS)',
     icon: Database,
-    iconColor: 'text-stone-600 bg-stone-100',
+    iconColor: 'text-indigo-600 bg-indigo-50',
     requiresSetup: false,
     category: 'local',
   },
@@ -92,7 +92,7 @@ const DESTINATIONS: SaveDestination[] = [
     label: 'Veeva Vault',
     description: 'Upload to your Veeva Vault document library',
     icon: FolderOpen,
-    iconColor: 'text-stone-600 bg-stone-100',
+    iconColor: 'text-orange-600 bg-orange-50',
     requiresSetup: true,
     category: 'cloud',
   },
@@ -101,7 +101,7 @@ const DESTINATIONS: SaveDestination[] = [
     label: 'Microsoft SharePoint',
     description: 'Save to SharePoint document library',
     icon: Cloud,
-    iconColor: 'text-stone-600 bg-stone-100',
+    iconColor: 'text-blue-600 bg-blue-50',
     requiresSetup: true,
     category: 'cloud',
   },
@@ -110,7 +110,7 @@ const DESTINATIONS: SaveDestination[] = [
     label: 'Microsoft OneDrive',
     description: 'Save to OneDrive for Business or personal',
     icon: Cloud,
-    iconColor: 'text-stone-600 bg-stone-100',
+    iconColor: 'text-sky-600 bg-sky-50',
     requiresSetup: true,
     category: 'cloud',
   },
@@ -119,7 +119,7 @@ const DESTINATIONS: SaveDestination[] = [
     label: 'Google Drive',
     description: 'Upload to Google Drive via service account',
     icon: HardDrive,
-    iconColor: 'text-stone-700 bg-stone-100',
+    iconColor: 'text-emerald-600 bg-emerald-50',
     requiresSetup: true,
     category: 'cloud',
   },
@@ -128,7 +128,7 @@ const DESTINATIONS: SaveDestination[] = [
     label: 'Box',
     description: 'Upload to your Box enterprise account',
     icon: FolderOpen,
-    iconColor: 'text-stone-900 bg-stone-100',
+    iconColor: 'text-blue-500 bg-blue-50',
     requiresSetup: true,
     category: 'cloud',
   },
@@ -287,7 +287,7 @@ export function SaveToDialog({
       aria-label="Save document to destination"
     >
       <div
-        className="bg-white rounded-xl shadow-sm w-full max-w-lg mx-4 overflow-hidden"
+        className="bg-white rounded-xl shadow-lg w-full max-w-lg mx-4 overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* ── Header ── */}
@@ -313,8 +313,8 @@ export function SaveToDialog({
             className={cn(
               'mx-5 mt-3 px-3 py-2.5 rounded-lg flex items-start gap-2.5 text-[12px]',
               result.success
-                ? 'bg-stone-100 text-stone-800'
-                : 'bg-stone-100 text-stone-800'
+                ? 'bg-emerald-50 text-emerald-700'
+                : 'bg-red-50 text-red-700'
             )}
           >
             {result.success ? (
@@ -329,7 +329,7 @@ export function SaveToDialog({
                   href={result.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 mt-1 text-[11px] text-stone-700 hover:underline"
+                  className="inline-flex items-center gap-1 mt-1 text-[11px] text-emerald-600 hover:underline"
                 >
                   Open in destination <ExternalLink className="w-3 h-3" />
                 </a>

@@ -76,7 +76,7 @@ const STATUS_CONFIG: Record<ReviewStatus, {
   in_progress:       { label: 'Reviewing',          icon: MessageSquare,  color: LIFECYCLE.in_review.text,    bg: LIFECYCLE.in_review.bg },
   approved:          { label: 'Approved',           icon: CheckCircle,    color: LIFECYCLE.approved.text,     bg: LIFECYCLE.approved.bg },
   changes_requested: { label: 'Changes Requested',  icon: AlertCircle,    color: LIFECYCLE.draft.text,        bg: LIFECYCLE.draft.bg },
-  rejected:          { label: 'Rejected',           icon: XCircle,        color: 'text-stone-700',              bg: 'bg-stone-100' },
+  rejected:          { label: 'Rejected',           icon: XCircle,        color: 'text-red-600',              bg: 'bg-red-50' },
 };
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -100,8 +100,8 @@ function getInitials(name: string): string {
 }
 
 const AVATAR_COLORS = [
-  'bg-stone-600', 'bg-stone-900', 'bg-stone-500', 'bg-stone-900',
-  'bg-stone-900', 'bg-stone-900', 'bg-stone-600', 'bg-stone-900',
+  'bg-stone-600', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500',
+  'bg-rose-500', 'bg-cyan-500', 'bg-stone-600', 'bg-teal-500',
 ];
 
 function avatarColor(name: string): string {
@@ -156,7 +156,7 @@ export function ReviewerAssignment({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100">
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-stone-900" />
+          <Users className="h-4 w-4 text-blue-500" />
           <h3 className="text-sm font-semibold text-stone-900">Review Team</h3>
           {reviewers.length > 0 && (
             <span className="text-[10px] font-medium text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded">
@@ -178,7 +178,7 @@ export function ReviewerAssignment({
             <span className="text-[10px] font-medium text-stone-500">Review Progress</span>
             <span className={cn(
               'text-[10px] font-semibold',
-              progress.allApproved ? 'text-stone-700' : 'text-stone-500',
+              progress.allApproved ? 'text-emerald-600' : 'text-stone-500',
             )}>
               {progress.allApproved ? 'All Approved' : `${progress.completed} of ${progress.total} complete`}
             </span>
@@ -187,7 +187,7 @@ export function ReviewerAssignment({
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-150',
-                progress.allApproved ? 'bg-stone-900' : 'bg-stone-600',
+                progress.allApproved ? 'bg-emerald-500' : 'bg-stone-600',
               )}
               style={{ width: `${progress.total > 0 ? (progress.completed / progress.total) * 100 : 0}%` }}
             />
@@ -253,7 +253,7 @@ export function ReviewerAssignment({
                       variant="ghost"
                       size="icon"
                       onClick={() => onSendReminder(reviewer.id)}
-                      className="h-5 w-5 text-stone-400 hover:text-stone-600"
+                      className="h-5 w-5 text-stone-400 hover:text-blue-600"
                       title="Send reminder"
                     >
                       <Send className="h-3 w-3" />
@@ -264,7 +264,7 @@ export function ReviewerAssignment({
                       variant="ghost"
                       size="icon"
                       onClick={() => onRemoveReviewer(reviewer.id)}
-                      className="h-5 w-5 text-stone-400 hover:text-stone-900"
+                      className="h-5 w-5 text-stone-400 hover:text-red-500"
                       title="Remove reviewer"
                     >
                       <X className="h-3 w-3" />
@@ -283,7 +283,7 @@ export function ReviewerAssignment({
           <Button
             variant="ghost"
             onClick={() => setShowAddDropdown(!showAddDropdown)}
-            className="w-full flex items-center gap-1.5 h-auto px-3 py-1.5 text-xs font-medium text-stone-600 bg-stone-100 hover:bg-stone-100 justify-start"
+            className="w-full flex items-center gap-1.5 h-auto px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 justify-start"
           >
             <Plus className="h-3 w-3" />
             Add Reviewer

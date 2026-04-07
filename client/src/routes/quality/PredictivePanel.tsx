@@ -48,16 +48,16 @@ export default function PredictivePanel({ batchId }: { batchId: string }) {
 
         <div className="space-y-3">
           {predictions.map((pred: any, i: number) => (
-            <div key={i} className="p-3 bg-stone-50 rounded">
+            <div key={i} className="p-3 bg-slate-50 rounded">
               <div className="flex justify-between items-center mb-2">
                 <div className="font-medium">{pred.test_name}</div>
                 <div
                   className={
                     pred.risk_level === 'HIGH'
-                      ? 'text-stone-700'
+                      ? 'text-red-600'
                       : pred.risk_level === 'MEDIUM'
-                        ? 'text-stone-600'
-                        : 'text-stone-700'
+                        ? 'text-orange-600'
+                        : 'text-green-600'
                   }
                 >
                   {pred.risk_level} RISK
@@ -70,20 +70,20 @@ export default function PredictivePanel({ batchId }: { batchId: string }) {
                 </div>
                 <Progress value={pred.failure_prob * 100} className="h-2" />
               </div>
-              <div className="mt-2 text-xs text-stone-600">{pred.recommendation}</div>
+              <div className="mt-2 text-xs text-slate-600">{pred.recommendation}</div>
             </div>
           ))}
           {predictions.length === 0 && !loading && (
-            <div className="text-center py-4 text-stone-500">
+            <div className="text-center py-4 text-slate-500">
               No predictions available. Run analysis to generate ML insights.
             </div>
           )}
           {loading && (
-            <div className="text-center py-4 text-stone-500">Generating ML predictions...</div>
+            <div className="text-center py-4 text-slate-500">Generating ML predictions...</div>
           )}
         </div>
 
-        <div className="text-xs text-stone-600">
+        <div className="text-xs text-slate-600">
           Uses machine learning models trained on historical batch data to predict potential quality
           issues.
         </div>

@@ -120,11 +120,11 @@ const REGULATORY_REFERENCES = {
 const getSeverityColor = (severity: string): string => {
   switch (severity) {
     case 'critical':
-      return 'text-stone-800 bg-stone-100 border-stone-200';
+      return 'text-red-700 bg-red-50 border-red-200';
     case 'warning':
-      return 'text-stone-700 bg-stone-100 border-stone-200';
+      return 'text-amber-700 bg-amber-50 border-amber-200';
     case 'info':
-      return 'text-stone-700 bg-stone-100 border-stone-200';
+      return 'text-stone-700 bg-blue-50 border-blue-200';
     default:
       return 'text-stone-700 bg-stone-50 border-stone-200';
   }
@@ -144,9 +144,9 @@ const getSeverityIcon = (severity: string) => {
 };
 
 const getScoreColor = (score: number): string => {
-  if (score >= 90) return 'text-stone-800';
-  if (score >= 70) return 'text-stone-700';
-  return 'text-stone-800';
+  if (score >= 90) return 'text-green-700';
+  if (score >= 70) return 'text-amber-700';
+  return 'text-red-700';
 };
 
 const getScoreLabel = (score: number): string => {
@@ -187,9 +187,9 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onResolve }) => {
           <SeverityIcon
             className={cn(
               'h-5 w-5 mt-0.5 flex-shrink-0',
-              issue.severity === 'critical' && 'text-stone-700',
-              issue.severity === 'warning' && 'text-stone-600',
-              issue.severity === 'info' && 'text-stone-600'
+              issue.severity === 'critical' && 'text-red-600',
+              issue.severity === 'warning' && 'text-amber-600',
+              issue.severity === 'info' && 'text-blue-600'
             )}
           />
           <div className="flex-1 min-w-0">
@@ -235,12 +235,12 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onResolve }) => {
             </div>
 
             {/* Recommendation */}
-            <div className="p-3 bg-stone-100 rounded-lg">
+            <div className="p-3 bg-blue-50 rounded-lg">
               <div className="flex items-center gap-1 text-xs font-medium text-stone-700 mb-1">
                 <Sparkles className="h-3 w-3" />
                 RI Recommendation
               </div>
-              <p className="text-xs text-stone-600">{issue.recommendation}</p>
+              <p className="text-xs text-blue-600">{issue.recommendation}</p>
             </div>
 
             {/* Regulatory reference */}
@@ -315,17 +315,17 @@ const ScoreCard: React.FC<ScoreCardProps> = ({ result }) => {
           <div className="text-sm text-stone-500 mb-1">Issues Found</div>
           <div className="flex items-center gap-2">
             {result.criticalCount > 0 && (
-              <Badge className="bg-stone-100 text-stone-800 border-stone-200">
+              <Badge className="bg-red-100 text-red-700 border-red-200">
                 {result.criticalCount} Critical
               </Badge>
             )}
             {result.warningCount > 0 && (
-              <Badge className="bg-stone-100 text-stone-700 border-stone-200">
+              <Badge className="bg-amber-100 text-amber-700 border-amber-200">
                 {result.warningCount} Warnings
               </Badge>
             )}
             {result.infoCount > 0 && (
-              <Badge className="bg-stone-100 text-stone-700 border-stone-200">
+              <Badge className="bg-blue-100 text-stone-700 border-blue-200">
                 {result.infoCount} Info
               </Badge>
             )}
@@ -337,9 +337,9 @@ const ScoreCard: React.FC<ScoreCardProps> = ({ result }) => {
         value={result.overallScore}
         className={cn(
           'h-2',
-          result.overallScore >= 90 && '[&>div]:bg-stone-900',
-          result.overallScore >= 70 && result.overallScore < 90 && '[&>div]:bg-stone-900',
-          result.overallScore < 70 && '[&>div]:bg-stone-900'
+          result.overallScore >= 90 && '[&>div]:bg-green-500',
+          result.overallScore >= 70 && result.overallScore < 90 && '[&>div]:bg-amber-500',
+          result.overallScore < 70 && '[&>div]:bg-red-500'
         )}
       />
 
@@ -401,7 +401,7 @@ export const IFUConsistencyChecker: React.FC<IFUConsistencyCheckerProps> = ({
       <DialogContent className="max-w-3xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileCheck className="h-5 w-5 text-stone-600" />
+            <FileCheck className="h-5 w-5 text-blue-600" />
             IFU Consistency Checker
           </DialogTitle>
           <DialogDescription>
@@ -457,7 +457,7 @@ export const IFUConsistencyChecker: React.FC<IFUConsistencyCheckerProps> = ({
                 )}
               </Button>
               {!ifuArtifact && (
-                <p className="text-xs text-stone-600 mt-2">
+                <p className="text-xs text-amber-600 mt-2">
                   Please create or select an IFU document first.
                 </p>
               )}
@@ -500,8 +500,8 @@ export const IFUConsistencyChecker: React.FC<IFUConsistencyCheckerProps> = ({
 
                 {result.totalIssues === 0 && (
                   <div className="text-center py-8">
-                    <CheckCircle2 className="h-12 w-12 mx-auto text-stone-900 mb-4" />
-                    <p className="text-lg font-medium text-stone-800">All Clear!</p>
+                    <CheckCircle2 className="h-12 w-12 mx-auto text-green-500 mb-4" />
+                    <p className="text-lg font-medium text-green-700">All Clear!</p>
                     <p className="text-sm text-stone-600 mt-1">
                       No consistency issues found between documents.
                     </p>

@@ -1,12 +1,12 @@
 import React from 'react';
 import {
- Select,
- SelectContent,
- SelectItem,
- SelectTrigger,
- SelectValue,
- SelectGroup,
- SelectLabel,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectGroup,
+  SelectLabel,
 } from './select';
 import { FormControl } from './form';
 
@@ -30,100 +30,100 @@ import { FormControl } from './form';
  * @returns {React.ReactElement}
  */
 export const EnhancedSelect = ({
- value,
- onValueChange,
- placeholder = 'Select an option',
- options = {},
- optionsArray = [],
- className = '',
- children,
- triggerProps = {},
- inForm = false,
- groups = [],
- defaultValue,
- ...props
+  value,
+  onValueChange,
+  placeholder = 'Select an option',
+  options = {},
+  optionsArray = [],
+  className = '',
+  children,
+  triggerProps = {},
+  inForm = false,
+  groups = [],
+  defaultValue,
+  ...props
 }) => {
- // Get options from either options object or optionsArray
- let selectOptions =
- optionsArray.length > 0
- ? optionsArray
- : Object.entries(options).map(([value, label]) => ({ value, label }));
+  // Get options from either options object or optionsArray
+  let selectOptions =
+    optionsArray.length > 0
+      ? optionsArray
+      : Object.entries(options).map(([value, label]) => ({ value, label }));
 
- // Find the label for the current value
- const getCurrentLabel = () => {
- if (!value && !defaultValue) return null;
- const currentValue = value || defaultValue;
+  // Find the label for the current value
+  const getCurrentLabel = () => {
+    if (!value && !defaultValue) return null;
+    const currentValue = value || defaultValue;
 
- // Check in optionsArray or options object
- if (optionsArray.length > 0) {
- const option = optionsArray.find(opt => opt.value === currentValue);
- if (option) {
- console.log(`Found label for value ${currentValue}:`, option.label);
- return option.label;
- }
- } else if (Object.keys(options).length > 0) {
- const label = options[currentValue];
- if (label) {
- console.log(`Found label for value ${currentValue}:`, label);
- return label;
- }
- }
+    // Check in optionsArray or options object
+    if (optionsArray.length > 0) {
+      const option = optionsArray.find(opt => opt.value === currentValue);
+      if (option) {
+        console.log(`Found label for value ${currentValue}:`, option.label);
+        return option.label;
+      }
+    } else if (Object.keys(options).length > 0) {
+      const label = options[currentValue];
+      if (label) {
+        console.log(`Found label for value ${currentValue}:`, label);
+        return label;
+      }
+    }
 
- // Check in groups
- if (groups.length > 0) {
- for (const group of groups) {
- const option = group.options.find(opt => opt.value === currentValue);
- if (option) {
- console.log(`Found label in group for value ${currentValue}:`, option.label);
- return option.label;
- }
- }
- }
+    // Check in groups
+    if (groups.length > 0) {
+      for (const group of groups) {
+        const option = group.options.find(opt => opt.value === currentValue);
+        if (option) {
+          console.log(`Found label in group for value ${currentValue}:`, option.label);
+          return option.label;
+        }
+      }
+    }
 
- // If no label found, return the value itself but log the issue
- console.log(`No label found for value ${currentValue}`, {
- value,
- defaultValue,
- optionsArray,
- options,
- groups,
- });
- return currentValue;
- };
+    // If no label found, return the value itself but log the issue
+    console.log(`No label found for value ${currentValue}`, {
+      value,
+      defaultValue,
+      optionsArray,
+      options,
+      groups,
+    });
+    return currentValue;
+  };
 
- const currentLabel = getCurrentLabel();
+  const currentLabel = getCurrentLabel();
 
- const selectTrigger = (
- <SelectTrigger className={className} {...triggerProps}>
- <SelectValue>{currentLabel || placeholder}</SelectValue>
- </SelectTrigger>
- );
+  const selectTrigger = (
+    <SelectTrigger className={className} {...triggerProps}>
+      <SelectValue>{currentLabel || placeholder}</SelectValue>
+    </SelectTrigger>
+  );
 
- return (
- <Select value={value} defaultValue={defaultValue} onValueChange={onValueChange} {...props}>
- {inForm ? <FormControl>{selectTrigger}</FormControl> : selectTrigger}
- <SelectContent>
- {children
- ? children
- : groups.length > 0
- ? groups.map((group, index) => (
- <SelectGroup key={index}>
- {group.label && <SelectLabel>{group.label}</SelectLabel>}
- {group.options.map(option => (
- <SelectItem key={option.value} value={option.value}>
- {option.label}
- </SelectItem>
- ))}
- </SelectGroup>
- ))
- : selectOptions.map(option => (
- <SelectItem key={option.value} value={option.value}>
- {option.label}
- </SelectItem>
- ))}
- </SelectContent>
- </Select>
- );
+  return (
+    <Select value={value} defaultValue={defaultValue} onValueChange={onValueChange} {...props}>
+      {inForm ? <FormControl>{selectTrigger}</FormControl> : selectTrigger}
+      <SelectContent>
+        {children
+          ? children
+          : groups.length > 0
+            ? groups.map((group, index) => (
+                <SelectGroup key={index}>
+                  {group.label && <SelectLabel>{group.label}</SelectLabel>}
+                  {group.options.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              ))
+            : selectOptions.map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+      </SelectContent>
+    </Select>
+  );
 };
 
 /**
@@ -137,14 +137,14 @@ export const EnhancedSelect = ({
  * @returns {React.ReactElement}
  */
 export const FormSelectField = ({ field, selectProps = {} }) => {
- return (
- <EnhancedSelect
- value={field.value}
- onValueChange={field.onChange}
- inForm={true}
- {...selectProps}
- />
- );
+  return (
+    <EnhancedSelect
+      value={field.value}
+      onValueChange={field.onChange}
+      inForm={true}
+      {...selectProps}
+    />
+  );
 };
 
 export default EnhancedSelect;

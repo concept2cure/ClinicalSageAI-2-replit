@@ -98,7 +98,7 @@ export default function GenealogyGraphPanel({ batchId }: GenealogyGraphPanelProp
         BATCH: '#ef4444',
         RAW_MATERIAL: '#92a87a',
         INTERMEDIATE: '#f59e0b',
-        COMPONENT: '#78716c',
+        COMPONENT: '#6a9bcc',
       };
 
       ctx.fillStyle = colors[node.type as keyof typeof colors] || '#8a8880';
@@ -142,15 +142,15 @@ export default function GenealogyGraphPanel({ batchId }: GenealogyGraphPanelProp
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'BATCH':
-        return 'bg-stone-100 text-stone-800';
+        return 'bg-red-100 text-red-800';
       case 'RAW_MATERIAL':
-        return 'bg-stone-100 text-stone-800';
+        return 'bg-green-100 text-green-800';
       case 'INTERMEDIATE':
-        return 'bg-stone-100 text-stone-800';
+        return 'bg-yellow-100 text-yellow-800';
       case 'COMPONENT':
-        return 'bg-stone-100 text-stone-800';
+        return 'bg-blue-100 text-blue-800';
       default:
-        return 'bg-stone-100 text-stone-800';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -159,7 +159,7 @@ export default function GenealogyGraphPanel({ batchId }: GenealogyGraphPanelProp
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <GitBranch className="w-5 h-5 text-stone-600" />
+            <GitBranch className="w-5 h-5 text-purple-600" />
             Material Genealogy Graph
           </CardTitle>
           <Button variant="outline" size="sm" onClick={loadGraph} disabled={loading}>
@@ -169,19 +169,19 @@ export default function GenealogyGraphPanel({ batchId }: GenealogyGraphPanelProp
       </CardHeader>
       <CardContent className="space-y-4">
         {!graphData ? (
-          <div className="text-center py-8 text-stone-500">
+          <div className="text-center py-8 text-gray-500">
             <GitBranch className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>Loading genealogy data...</p>
           </div>
         ) : graphData.nodes.length === 0 ? (
-          <div className="text-center py-8 text-stone-500">
+          <div className="text-center py-8 text-gray-500">
             <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>No genealogy data available</p>
             <p className="text-sm">Add material lineage information to view the graph</p>
           </div>
         ) : (
           <>
-            <div className="border rounded-lg bg-stone-50">
+            <div className="border rounded-lg bg-gray-50">
               <canvas
                 ref={canvasRef}
                 width={600}
@@ -212,7 +212,7 @@ export default function GenealogyGraphPanel({ batchId }: GenealogyGraphPanelProp
 
               <div>
                 <h4 className="font-medium mb-2">Connections ({graphData.edges.length})</h4>
-                <div className="space-y-1 max-h-32 overflow-y-auto text-sm text-stone-600">
+                <div className="space-y-1 max-h-32 overflow-y-auto text-sm text-gray-600">
                   {graphData.edges.map(edge => {
                     const sourceNode = graphData.nodes.find(n => n.id === edge.source);
                     const targetNode = graphData.nodes.find(n => n.id === edge.target);
@@ -227,7 +227,7 @@ export default function GenealogyGraphPanel({ batchId }: GenealogyGraphPanelProp
             </div>
 
             <div className="flex items-center justify-between pt-4 border-t">
-              <div className="text-xs text-stone-600">
+              <div className="text-xs text-gray-600">
                 Material traceability supports regulatory compliance and quality investigations
               </div>
               <Button variant="outline" size="sm">

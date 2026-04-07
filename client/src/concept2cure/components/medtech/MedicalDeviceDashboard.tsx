@@ -218,26 +218,26 @@ const PATHWAY_CONFIG: Record<
   '510k': {
     label: '510(k)',
     description: 'Substantial Equivalence',
-    color: 'text-stone-600',
-    bgColor: 'bg-stone-100',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100',
   },
   pma: {
     label: 'PMA',
     description: 'Premarket Approval',
-    color: 'text-stone-600',
-    bgColor: 'bg-stone-200',
+    color: 'text-violet-600',
+    bgColor: 'bg-violet-100',
   },
   de_novo: {
     label: 'De Novo',
     description: 'Novel Low-Moderate Risk',
-    color: 'text-stone-700',
-    bgColor: 'bg-stone-100',
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-100',
   },
   hde: {
     label: 'HDE',
     description: 'Humanitarian Device Exemption',
-    color: 'text-stone-600',
-    bgColor: 'bg-stone-100',
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-100',
   },
   exempt: {
     label: 'Exempt',
@@ -259,30 +259,30 @@ const STATUS_CONFIG: Record<
   planning: { label: 'Planning', color: 'text-stone-600', bgColor: 'bg-stone-100', step: 1 },
   predicate_search: {
     label: 'Predicate Search',
-    color: 'text-stone-600',
-    bgColor: 'bg-stone-100',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100',
     step: 2,
   },
-  testing: { label: 'Testing', color: 'text-stone-600', bgColor: 'bg-stone-100', step: 3 },
-  drafting: { label: 'Drafting', color: 'text-stone-600', bgColor: 'bg-stone-200', step: 4 },
+  testing: { label: 'Testing', color: 'text-amber-600', bgColor: 'bg-amber-100', step: 3 },
+  drafting: { label: 'Drafting', color: 'text-violet-600', bgColor: 'bg-violet-100', step: 4 },
   internal_review: {
     label: 'Internal Review',
-    color: 'text-stone-600',
-    bgColor: 'bg-stone-200',
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-100',
     step: 5,
   },
-  estar_prep: { label: 'eSTAR Prep', color: 'text-stone-600', bgColor: 'bg-stone-100', step: 6 },
-  submitted: { label: 'Submitted', color: 'text-stone-600', bgColor: 'bg-stone-100', step: 7 },
-  fda_review: { label: 'FDA Review', color: 'text-stone-600', bgColor: 'bg-stone-100', step: 8 },
+  estar_prep: { label: 'eSTAR Prep', color: 'text-cyan-600', bgColor: 'bg-cyan-100', step: 6 },
+  submitted: { label: 'Submitted', color: 'text-blue-600', bgColor: 'bg-blue-100', step: 7 },
+  fda_review: { label: 'FDA Review', color: 'text-orange-600', bgColor: 'bg-orange-100', step: 8 },
   additional_info: {
     label: 'Additional Info Requested',
-    color: 'text-stone-700',
-    bgColor: 'bg-stone-100',
+    color: 'text-red-600',
+    bgColor: 'bg-red-100',
     step: 8,
   },
-  cleared: { label: 'Cleared', color: 'text-stone-700', bgColor: 'bg-stone-100', step: 9 },
-  approved: { label: 'Approved', color: 'text-stone-700', bgColor: 'bg-stone-100', step: 9 },
-  rejected: { label: 'Rejected', color: 'text-stone-700', bgColor: 'bg-stone-100', step: 9 },
+  cleared: { label: 'Cleared', color: 'text-green-600', bgColor: 'bg-green-100', step: 9 },
+  approved: { label: 'Approved', color: 'text-green-600', bgColor: 'bg-green-100', step: 9 },
+  rejected: { label: 'Rejected', color: 'text-red-600', bgColor: 'bg-red-100', step: 9 },
 };
 
 const RECOMMENDATION_CONFIG: Record<
@@ -291,22 +291,22 @@ const RECOMMENDATION_CONFIG: Record<
 > = {
   strong: {
     label: 'Strong Match',
-    color: 'text-stone-700 bg-stone-100 border-stone-200',
+    color: 'text-green-600 bg-green-50 border-green-200',
     icon: <CheckCircle className="w-4 h-4" />,
   },
   acceptable: {
     label: 'Acceptable',
-    color: 'text-stone-600 bg-stone-100 border-stone-200',
+    color: 'text-blue-600 bg-blue-50 border-blue-200',
     icon: <Target className="w-4 h-4" />,
   },
   caution: {
     label: 'Use Caution',
-    color: 'text-stone-600 bg-stone-100 border-stone-200',
+    color: 'text-amber-600 bg-amber-50 border-amber-200',
     icon: <AlertTriangle className="w-4 h-4" />,
   },
   avoid: {
     label: 'Avoid',
-    color: 'text-stone-700 bg-stone-100 border-stone-200',
+    color: 'text-red-600 bg-red-50 border-red-200',
     icon: <AlertOctagon className="w-4 h-4" />,
   },
 };
@@ -340,11 +340,11 @@ const PredicatePathfinder: React.FC<{
 
   return (
     <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
-      <div className="p-4 border-b border-stone-200 bg-stone-100">
+      <div className="p-4 border-b border-stone-200 bg-blue-50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-stone-100 rounded-lg">
-              <Compass className="w-5 h-5 text-stone-600" />
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Compass className="w-5 h-5 text-blue-600" />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-stone-900">Predicate Pathfinder</h3>
@@ -365,8 +365,8 @@ const PredicatePathfinder: React.FC<{
 
       {/* Selected Predicate */}
       {selected && (
-        <div className="p-4 border-b border-stone-200 bg-stone-100">
-          <p className="text-xs font-medium text-stone-700 mb-2 flex items-center gap-1">
+        <div className="p-4 border-b border-stone-200 bg-green-50">
+          <p className="text-xs font-medium text-green-600 mb-2 flex items-center gap-1">
             <CheckCircle className="w-3 h-3" />
             SELECTED PREDICATE
           </p>
@@ -378,10 +378,10 @@ const PredicatePathfinder: React.FC<{
             </div>
             <div className="text-right">
               <div className="flex items-center gap-1">
-                <span className="text-base font-semibold text-stone-700">
+                <span className="text-base font-semibold text-green-600">
                   {selected.similarityScore}
                 </span>
-                <span className="text-xs text-stone-700">% Match</span>
+                <span className="text-xs text-green-600">% Match</span>
               </div>
               <span
                 className={cn(
@@ -409,17 +409,17 @@ const PredicatePathfinder: React.FC<{
                 key={candidate.id}
                 className={cn(
                   'p-3 border-b border-stone-200 hover:bg-stone-50 transition-colors cursor-pointer',
-                  isSelected && 'bg-stone-100'
+                  isSelected && 'bg-blue-50'
                 )}
               >
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-sm font-semibold text-stone-600">
+                      <span className="font-mono text-sm font-semibold text-blue-600">
                         {candidate.kNumber}
                       </span>
                       {candidate.hasRecalls && (
-                        <span className="px-1.5 py-0.5 text-xs font-semibold bg-stone-100 text-stone-800 rounded flex items-center gap-0.5">
+                        <span className="px-1.5 py-0.5 text-xs font-semibold bg-red-100 text-red-700 rounded flex items-center gap-0.5">
                           <AlertTriangle className="w-3 h-3" />
                           {candidate.recallCount} RECALL{candidate.recallCount > 1 ? 'S' : ''}
                         </span>
@@ -488,10 +488,10 @@ const MAUDEHazardMonitor: React.FC<{
 
   return (
     <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
-      <div className="p-4 border-b border-stone-200 bg-stone-100">
+      <div className="p-4 border-b border-stone-200 bg-red-50">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-stone-100 rounded-lg">
-            <AlertOctagon className="w-5 h-5 text-stone-700" />
+          <div className="p-2 bg-red-100 rounded-lg">
+            <AlertOctagon className="w-5 h-5 text-red-600" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-stone-900">MAUDE Hazard Monitor</h3>
@@ -505,13 +505,13 @@ const MAUDEHazardMonitor: React.FC<{
         <div
           className={cn(
             'p-2 rounded-lg text-center',
-            deaths.length > 0 ? 'bg-stone-100' : 'bg-stone-100'
+            deaths.length > 0 ? 'bg-red-100' : 'bg-stone-100'
           )}
         >
           <p
             className={cn(
               'text-lg font-semibold',
-              deaths.length > 0 ? 'text-stone-800' : 'text-stone-400'
+              deaths.length > 0 ? 'text-red-700' : 'text-stone-400'
             )}
           >
             {deaths.length}
@@ -521,13 +521,13 @@ const MAUDEHazardMonitor: React.FC<{
         <div
           className={cn(
             'p-2 rounded-lg text-center',
-            injuries.length > 0 ? 'bg-stone-100' : 'bg-stone-100'
+            injuries.length > 0 ? 'bg-amber-100' : 'bg-stone-100'
           )}
         >
           <p
             className={cn(
               'text-lg font-semibold',
-              injuries.length > 0 ? 'text-stone-700' : 'text-stone-400'
+              injuries.length > 0 ? 'text-amber-700' : 'text-stone-400'
             )}
           >
             {injuries.length}
@@ -548,9 +548,9 @@ const MAUDEHazardMonitor: React.FC<{
             onClick={() => onAlertClick?.(alert)}
             className={cn(
               'w-full p-3 text-left border-b border-stone-200 hover:bg-stone-50 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
-              alert.eventType === 'death' && 'border-l-4 border-l-stone-900',
-              alert.eventType === 'injury' && 'border-l-4 border-l-stone-900',
-              alert.eventType === 'malfunction' && 'border-l-4 border-l-stone-900'
+              alert.eventType === 'death' && 'border-l-4 border-l-red-500',
+              alert.eventType === 'injury' && 'border-l-4 border-l-amber-500',
+              alert.eventType === 'malfunction' && 'border-l-4 border-l-blue-500'
             )}
           >
             <div className="flex items-start justify-between mb-1">
@@ -558,15 +558,15 @@ const MAUDEHazardMonitor: React.FC<{
                 <span
                   className={cn(
                     'px-2 py-0.5 text-xs font-semibold rounded uppercase',
-                    alert.eventType === 'death' && 'bg-stone-100 text-stone-800',
-                    alert.eventType === 'injury' && 'bg-stone-100 text-stone-700',
-                    alert.eventType === 'malfunction' && 'bg-stone-100 text-stone-700'
+                    alert.eventType === 'death' && 'bg-red-100 text-red-700',
+                    alert.eventType === 'injury' && 'bg-amber-100 text-amber-700',
+                    alert.eventType === 'malfunction' && 'bg-blue-100 text-stone-700'
                   )}
                 >
                   {alert.eventType}
                 </span>
                 {alert.isCompetitor && (
-                  <span className="px-1.5 py-0.5 text-xs font-medium bg-stone-100 text-stone-700 rounded">
+                  <span className="px-1.5 py-0.5 text-xs font-medium bg-blue-100 text-stone-700 rounded">
                     COMPETITOR
                   </span>
                 )}
@@ -585,7 +585,7 @@ const MAUDEHazardMonitor: React.FC<{
 
         {alerts.length === 0 && (
           <div className="p-8 text-center">
-            <Shield className="w-12 h-12 text-stone-300 mx-auto mb-3" />
+            <Shield className="w-12 h-12 text-green-300 mx-auto mb-3" />
             <p className="text-sm text-stone-500">No hazards detected</p>
             <p className="text-xs text-stone-400">The path looks clear</p>
           </div>
@@ -611,10 +611,10 @@ const ESTARProgressTracker: React.FC<{
       <div className="p-4 border-b border-stone-200">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <FileCheck className="w-5 h-5 text-stone-600" />
+            <FileCheck className="w-5 h-5 text-cyan-600" />
             <h3 className="text-sm font-semibold text-stone-900">eSTAR Submission</h3>
           </div>
-          <span className="text-sm font-semibold text-stone-600">{submission.estarProgress}%</span>
+          <span className="text-sm font-semibold text-cyan-600">{submission.estarProgress}%</span>
         </div>
 
         {/* Progress Bar */}
@@ -636,13 +636,13 @@ const ESTARProgressTracker: React.FC<{
             key={section.id}
             className={cn(
               'px-4 py-2 border-b border-stone-200 flex items-center justify-between',
-              section.status === 'complete' && 'bg-stone-100',
-              section.status === 'in_progress' && 'bg-stone-100'
+              section.status === 'complete' && 'bg-green-50',
+              section.status === 'in_progress' && 'bg-blue-50'
             )}
           >
             <div className="flex items-center gap-2">
-              {section.status === 'complete' && <CheckCircle className="w-4 h-4 text-stone-900" />}
-              {section.status === 'in_progress' && <Clock className="w-4 h-4 text-stone-900" />}
+              {section.status === 'complete' && <CheckCircle className="w-4 h-4 text-green-500" />}
+              {section.status === 'in_progress' && <Clock className="w-4 h-4 text-blue-500" />}
               {section.status === 'not_started' && (
                 <div className="w-4 h-4 rounded-full border-2 border-stone-300" />
               )}
@@ -659,7 +659,7 @@ const ESTARProgressTracker: React.FC<{
                 <span
                   className={cn(
                     'text-xs font-medium',
-                    section.completionPct === 100 ? 'text-stone-700' : 'text-stone-500'
+                    section.completionPct === 100 ? 'text-green-600' : 'text-stone-500'
                   )}
                 >
                   {section.completionPct}%
@@ -695,7 +695,7 @@ const SubmissionCard: React.FC<{
   return (
     <button
       onClick={onClick}
-      className="w-full bg-white rounded-xl border border-stone-200 p-4 text-left hover:shadow-sm hover:border-stone-200 transition-all duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
+      className="w-full bg-white rounded-xl border border-stone-200 p-4 text-left hover:shadow-md hover:border-blue-300 transition-all duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
@@ -730,8 +730,8 @@ const SubmissionCard: React.FC<{
 
       {/* Predicate (if 510k) */}
       {submission.pathway === '510k' && submission.predicateDevice && (
-        <div className="p-2 bg-stone-100 rounded-lg mb-3">
-          <p className="text-xs font-medium text-stone-600 mb-1">PREDICATE</p>
+        <div className="p-2 bg-blue-50 rounded-lg mb-3">
+          <p className="text-xs font-medium text-blue-600 mb-1">PREDICATE</p>
           <p className="text-xs font-medium text-stone-900">{submission.predicateDevice.kNumber}</p>
           <p className="text-xs text-stone-500">{submission.predicateDevice.deviceName}</p>
         </div>
@@ -756,16 +756,16 @@ const SubmissionCard: React.FC<{
           <div
             className={cn(
               'px-3 py-1.5 rounded-lg text-right',
-              daysToTarget <= 14 && 'bg-stone-100',
-              daysToTarget > 14 && daysToTarget <= 30 && 'bg-stone-100',
+              daysToTarget <= 14 && 'bg-red-50',
+              daysToTarget > 14 && daysToTarget <= 30 && 'bg-amber-50',
               daysToTarget > 30 && 'bg-stone-50'
             )}
           >
             <p
               className={cn(
                 'text-lg font-semibold',
-                daysToTarget <= 14 && 'text-stone-700',
-                daysToTarget > 14 && daysToTarget <= 30 && 'text-stone-600',
+                daysToTarget <= 14 && 'text-red-600',
+                daysToTarget > 14 && daysToTarget <= 30 && 'text-amber-600',
                 daysToTarget > 30 && 'text-stone-600'
               )}
             >
@@ -790,8 +790,8 @@ const CERTracker: React.FC<{
     <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
       <div className="p-4 border-b border-stone-200">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-stone-200 rounded-lg">
-            <Globe className="w-5 h-5 text-stone-600" />
+          <div className="p-2 bg-violet-100 rounded-lg">
+            <Globe className="w-5 h-5 text-violet-600" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-stone-900">Clinical Evaluation Reports</h3>
@@ -811,12 +811,12 @@ const CERTracker: React.FC<{
                 </p>
               </div>
               {doc.mdrCompliant ? (
-                <span className="px-2 py-0.5 text-xs font-medium bg-stone-100 text-stone-800 rounded flex items-center gap-1">
+                <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded flex items-center gap-1">
                   <CheckCircle className="w-3 h-3" />
                   MDR
                 </span>
               ) : (
-                <span className="px-2 py-0.5 text-xs font-medium bg-stone-100 text-stone-700 rounded">
+                <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
                   In Progress
                 </span>
               )}
@@ -894,7 +894,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
             </div>
             <div>
               <h1 className="text-base font-medium">Medical Device Regulatory Pathfinder</h1>
-              <p className="text-stone-200 text-sm">Your Sherpa to FDA Clearance</p>
+              <p className="text-blue-200 text-sm">Your Sherpa to FDA Clearance</p>
             </div>
           </div>
 
@@ -913,33 +913,33 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
         {/* Metrics */}
         <div className="grid grid-cols-5 gap-4">
           <div className="p-3 bg-white/10 rounded-xl backdrop-blur">
-            <p className="text-xs text-stone-200">510(k) Active</p>
+            <p className="text-xs text-blue-200">510(k) Active</p>
             <p className="text-base font-semibold">{metrics.total510k}</p>
           </div>
           <div className="p-3 bg-white/10 rounded-xl backdrop-blur">
-            <p className="text-xs text-stone-200">PMA Active</p>
+            <p className="text-xs text-blue-200">PMA Active</p>
             <p className="text-base font-semibold">{metrics.totalPMA}</p>
           </div>
           <div className="p-3 bg-white/10 rounded-xl backdrop-blur">
-            <p className="text-xs text-stone-200">Submitted</p>
+            <p className="text-xs text-blue-200">Submitted</p>
             <p className="text-base font-semibold">{metrics.submitted}</p>
           </div>
           <div
             className={cn(
               'p-3 rounded-xl',
-              metrics.needsAction > 0 ? 'bg-stone-900/30' : 'bg-white/10'
+              metrics.needsAction > 0 ? 'bg-amber-500/30' : 'bg-white/10'
             )}
           >
-            <p className="text-xs text-stone-200">Needs Action</p>
+            <p className="text-xs text-amber-200">Needs Action</p>
             <p className="text-base font-semibold">{metrics.needsAction}</p>
           </div>
           <div
             className={cn(
               'p-3 rounded-xl',
-              metrics.criticalAlerts > 0 ? 'bg-stone-900/30' : 'bg-white/10'
+              metrics.criticalAlerts > 0 ? 'bg-red-500/30' : 'bg-white/10'
             )}
           >
-            <p className="text-xs text-stone-200">MAUDE Alerts</p>
+            <p className="text-xs text-red-200">MAUDE Alerts</p>
             <p className="text-base font-semibold">{metrics.criticalAlerts}</p>
           </div>
         </div>

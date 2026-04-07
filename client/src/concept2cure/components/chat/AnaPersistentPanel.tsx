@@ -16,8 +16,6 @@ import { apiRequest } from '@/lib/queryClient';
 import { getAuthHeaders, getOrgId } from '@/utils/authToken';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAIAction } from '../../hooks/useAIAction';
 import { useAnaQueueState } from '../../hooks/useAnaQueueState';
 import type { AIActionType, AIActionSourceSurface } from '../../hooks/useAIAction';
@@ -62,9 +60,6 @@ import {
   FolderPlus,
   Bot,
   FolderOpen,
-  Upload,
-  X,
-  Paperclip,
 } from 'lucide-react';
 
 marked.setOptions({ breaks: true, gfm: true });
@@ -159,29 +154,29 @@ function detectVerdictSignals(content: string): VerdictSignal[] {
     signals.push({
       type: 'verdict',
       label: 'Defensible',
-      color: 'text-stone-800',
-      bgColor: 'bg-stone-100 border-stone-200',
+      color: 'text-emerald-700',
+      bgColor: 'bg-emerald-50 border-emerald-200',
     });
   else if (/\bvulnerable\b/.test(lower) && /\bverdict\b/i.test(content))
     signals.push({
       type: 'verdict',
       label: 'Vulnerable',
-      color: 'text-stone-700',
-      bgColor: 'bg-stone-100 border-stone-200',
+      color: 'text-amber-700',
+      bgColor: 'bg-amber-50 border-amber-200',
     });
   else if (/\boverclaimed\b/.test(lower))
     signals.push({
       type: 'verdict',
       label: 'Overclaimed',
-      color: 'text-stone-800',
-      bgColor: 'bg-stone-100 border-stone-200',
+      color: 'text-red-700',
+      bgColor: 'bg-red-50 border-red-200',
     });
   else if (/\bsupportable with revision\b/.test(lower))
     signals.push({
       type: 'verdict',
       label: 'Supportable with Revision',
-      color: 'text-stone-700',
-      bgColor: 'bg-stone-100 border-stone-200',
+      color: 'text-blue-700',
+      bgColor: 'bg-blue-50 border-blue-200',
     });
 
   // Priority detection
@@ -192,15 +187,15 @@ function detectVerdictSignals(content: string): VerdictSignal[] {
     signals.push({
       type: 'priority',
       label: 'Blocker Identified',
-      color: 'text-stone-800',
-      bgColor: 'bg-stone-100 border-stone-200',
+      color: 'text-red-700',
+      bgColor: 'bg-red-50 border-red-200',
     });
   else if (/\breviewer friction\b/.test(lower))
     signals.push({
       type: 'priority',
       label: 'Reviewer Friction',
-      color: 'text-stone-700',
-      bgColor: 'bg-stone-100 border-stone-200',
+      color: 'text-amber-700',
+      bgColor: 'bg-amber-50 border-amber-200',
     });
 
   // Confidence detection
@@ -208,15 +203,15 @@ function detectVerdictSignals(content: string): VerdictSignal[] {
     signals.push({
       type: 'confidence',
       label: 'High Confidence',
-      color: 'text-stone-800',
-      bgColor: 'bg-stone-100 border-stone-200',
+      color: 'text-emerald-700',
+      bgColor: 'bg-emerald-50 border-emerald-200',
     });
   else if (/\bprovisional\b.*\bpending\b/.test(lower))
     signals.push({
       type: 'confidence',
       label: 'Provisional',
-      color: 'text-stone-700',
-      bgColor: 'bg-stone-100 border-stone-200',
+      color: 'text-amber-700',
+      bgColor: 'bg-amber-50 border-amber-200',
     });
 
   // Action detection
@@ -224,22 +219,22 @@ function detectVerdictSignals(content: string): VerdictSignal[] {
     signals.push({
       type: 'action',
       label: 'Escalation Recommended',
-      color: 'text-stone-700',
-      bgColor: 'bg-stone-100 border-stone-200',
+      color: 'text-violet-700',
+      bgColor: 'bg-violet-50 border-violet-200',
     });
   else if (/\bno[- ]go\b/.test(lower))
     signals.push({
       type: 'action',
       label: 'No-Go',
-      color: 'text-stone-800',
-      bgColor: 'bg-stone-100 border-stone-200',
+      color: 'text-red-700',
+      bgColor: 'bg-red-50 border-red-200',
     });
   else if (/\bproceed\b/.test(lower) && /\bmitigation\b/.test(lower))
     signals.push({
       type: 'action',
       label: 'Proceed with Mitigation',
-      color: 'text-stone-700',
-      bgColor: 'bg-stone-100 border-stone-200',
+      color: 'text-blue-700',
+      bgColor: 'bg-blue-50 border-blue-200',
     });
 
   return signals;
@@ -252,9 +247,9 @@ interface AnaMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  /** Base64 images from Visual Studio mode */
+  /** Base64 images from Nano Banana */
   images?: Array<{ base64: string; mimeType: string }>;
-  /** Downloadable PPTX from Visual Studio mode */
+  /** Downloadable PPTX from Nano Banana */
   pptx?: { base64: string; filename: string; mimeType: string };
   /** Whether this message has been saved as an artifact */
   savedAsArtifact?: boolean;
@@ -335,29 +330,29 @@ const AI_PROVIDERS: AIProviderOption[] = [
     id: 'auto',
     label: 'Auto',
     description: 'Best model for the task',
-    color: 'text-stone-500',
-    activeColor: 'text-stone-900',
+    color: 'text-[#8A8880]',
+    activeColor: 'text-[#D97757]',
   },
   {
     id: 'anthropic',
     label: 'Claude',
     description: 'Anthropic Claude Sonnet 4',
-    color: 'text-stone-500',
-    activeColor: 'text-stone-900',
+    color: 'text-[#8A8880]',
+    activeColor: 'text-[#CC785C]',
   },
   {
     id: 'openai',
     label: 'GPT-4o',
     description: 'OpenAI GPT-4o',
-    color: 'text-stone-500',
-    activeColor: 'text-stone-700',
+    color: 'text-[#8A8880]',
+    activeColor: 'text-[#10A37F]',
   },
   {
     id: 'moonshot',
     label: 'Kimi',
     description: 'Moonshot Kimi K2',
-    color: 'text-stone-500',
-    activeColor: 'text-stone-700',
+    color: 'text-[#8A8880]',
+    activeColor: 'text-[#6366F1]',
   },
 ];
 
@@ -620,28 +615,14 @@ const SLASH_COMMANDS: SlashCommand[] = [
   { command: '/export', description: 'Download conversation as markdown', category: 'Navigation' },
 ];
 
-const APP_MENTIONS: Array<{ id: string; label: string; description: string }> = [
-  { id: 'deep-research', label: 'Deep Research', description: 'Search ClinicalTrials.gov, PubMed, FDA, EMA' },
-  { id: 'precedent-intelligence', label: 'Precedent Intelligence', description: 'CRL/RTF patterns and approval history' },
-  { id: 'device-strategy', label: 'Device Strategy', description: 'Classification, pathway, predicates, FDA Pre-Sub' },
-  { id: 'medical-device', label: 'Medical Device & Diagnostics', description: '510(k), PMA, De Novo, CER, IVDR submissions' },
-  { id: 'device-engineering', label: 'Device Engineering', description: 'Risk, software, human factors, biocompatibility' },
-  { id: 'cmc', label: 'CMC Module', description: 'Chemistry, Manufacturing, Controls (Module 3)' },
-  { id: 'safety-narrative', label: 'Safety Narrative', description: 'Safety analysis and narrative generation' },
-  { id: 'biostatistics', label: 'Biostatistics', description: 'Statistical analysis, power calculations, SAP' },
-  { id: 'protocol-designer', label: 'Protocol Designer', description: 'Clinical study protocol builder' },
-  { id: 'document-vault', label: 'Document Vault', description: 'Search and manage project documents' },
-  { id: 'ectd-navigator', label: 'eCTD Navigator', description: 'Electronic submission structure' },
-];
-
 const SLASH_CATEGORY_COLORS: Record<string, string> = {
-  Intelligence: 'text-stone-600',
-  Analysis: 'text-stone-600',
-  Biostatistics: 'text-stone-700',
-  Subspecialties: 'text-stone-600',
-  Authoring: 'text-stone-700',
-  Lifecycle: 'text-stone-700',
-  Navigation: 'text-stone-500',
+  Intelligence: 'text-violet-600',
+  Analysis: 'text-blue-600',
+  Biostatistics: 'text-emerald-600',
+  Subspecialties: 'text-amber-600',
+  Authoring: 'text-rose-600',
+  Lifecycle: 'text-teal-600',
+  Navigation: 'text-zinc-500',
 };
 
 // ─── Authoring context import ────────────────────────────────────────────────
@@ -704,8 +685,8 @@ interface AnaPersistentPanelProps {
    * "compact" = just the input bar at bottom, conversation expands as overlay
    */
   mode?: 'full' | 'compact';
-  /** Pre-select the chat mode (standard, deep-research, or visual-studio) */
-  defaultChatMode?: 'standard' | 'deep-research' | 'visual-studio';
+  /** Pre-select the chat mode (standard, deep-research, or nano-banana) */
+  defaultChatMode?: 'standard' | 'deep-research' | 'nano-banana';
   /** Project intelligence stats for enriched greeting */
   projectIntelligence?: {
     documentCount: number;
@@ -777,7 +758,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const isThinking = !queue.state.canSubmit;
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
-  const [chatMode, setChatMode] = useState<'standard' | 'deep-research' | 'visual-studio'>(
+  const [chatMode, setChatMode] = useState<'standard' | 'deep-research' | 'nano-banana'>(
     defaultChatMode
   );
   const [showModeDropdown, setShowModeDropdown] = useState(false);
@@ -807,14 +788,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [slashMenuOpen, setSlashMenuOpen] = useState(false);
   const [slashMenuIndex, setSlashMenuIndex] = useState(0);
   const slashMenuRef = useRef<HTMLDivElement>(null);
-  // Drag-and-drop file attachments
-  const [isDragging, setIsDragging] = useState(false);
-  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-  const dragCounterRef = useRef(0);
-  // @app mention autocomplete
-  const [appMenuOpen, setAppMenuOpen] = useState(false);
-  const [appMenuIndex, setAppMenuIndex] = useState(0);
-  const appMenuRef = useRef<HTMLDivElement>(null);
   const initialMessageSentRef = useRef(false);
   // Thread persistence — reuse thread_id across messages for continuous conversation
   const threadIdRef = useRef<string | null>(null);
@@ -957,17 +930,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     if (!trimmed.startsWith('/') || trimmed.includes(' ')) {
       setSlashMenuOpen(false);
     }
-  }, [input]);
-
-  // ── @app mention autocomplete filtering ──────────────────────────────────
-  const filteredApps = useMemo(() => {
-    const trimmed = input.trim();
-    if (!trimmed.startsWith('@') || trimmed.includes(' ')) return [];
-    const query = trimmed.slice(1).toLowerCase();
-    if (!query) return APP_MENTIONS;
-    return APP_MENTIONS.filter(
-      app => app.id.includes(query) || app.label.toLowerCase().includes(query)
-    ).slice(0, 8);
   }, [input]);
 
   // ── Authoring-aware suggested actions (Wave 1) ─────────────────────────────
@@ -1791,8 +1753,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       try {
         let data: any;
 
-        if (chatMode === 'visual-studio') {
-          // Route to Visual Studio (Gemini image gen) endpoint
+        if (chatMode === 'nano-banana') {
+          // Route to Nano Banana (Gemini image gen) endpoint
           const response = await apiRequest('POST', '/api/nano-banana/chat', {
             message: text,
             conversationHistory: messages.slice(-10).map(m => ({
@@ -2189,9 +2151,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       setSlashMenuOpen(true);
       setSlashMenuIndex(0);
     }
-    // @app menu detection
-    setAppMenuOpen(trimmed.startsWith('@') && !trimmed.includes(' '));
-    setAppMenuIndex(0);
   };
 
   const handleDecisionsSlash = useCallback(() => {
@@ -2337,62 +2296,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     inputRef.current?.focus();
   };
 
-  const selectApp = useCallback((app: typeof APP_MENTIONS[0]) => {
-    setInput(`@${app.id} `);
-    setAppMenuOpen(false);
-    setAppMenuIndex(0);
-    inputRef.current?.focus();
-  }, []);
-
-  // ── Drag/drop file attachment handlers ──
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault(); e.stopPropagation();
-    dragCounterRef.current += 1;
-    if (dragCounterRef.current === 1) setIsDragging(true);
-  }, []);
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault(); e.stopPropagation();
-    dragCounterRef.current -= 1;
-    if (dragCounterRef.current === 0) setIsDragging(false);
-  }, []);
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault(); e.stopPropagation();
-  }, []);
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault(); e.stopPropagation();
-    dragCounterRef.current = 0;
-    setIsDragging(false);
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) setAttachedFiles(prev => [...prev, ...files]);
-  }, []);
-  const removeAttachedFile = useCallback((idx: number) => {
-    setAttachedFiles(prev => prev.filter((_, i) => i !== idx));
-  }, []);
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    // @app mention navigation
-    if (appMenuOpen && filteredApps.length > 0) {
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setAppMenuIndex(i => (i + 1) % filteredApps.length);
-        return;
-      }
-      if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setAppMenuIndex(i => (i - 1 + filteredApps.length) % filteredApps.length);
-        return;
-      }
-      if (e.key === 'Tab' || (e.key === 'Enter' && !e.shiftKey)) {
-        e.preventDefault();
-        selectApp(filteredApps[appMenuIndex]);
-        return;
-      }
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        setAppMenuOpen(false);
-        return;
-      }
-    }
     // Slash command navigation
     if (slashMenuOpen && filteredSlashCommands.length > 0) {
       if (e.key === 'ArrowDown') {
@@ -4149,39 +4053,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   // ── Compact mode: just input bar + expandable overlay ──
   if (isCompact) {
     return (
-      <div
-        className={cn(
-          "flex-shrink-0 border-t border-stone-200 bg-white relative z-30 transition-colors",
-          isDragging && "border-stone-400 ring-2 ring-stone-200 bg-stone-50/30"
-        )}
-        onDragOver={handleDragOver}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        {/* Drag overlay */}
-        {isDragging && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 border-2 border-dashed border-stone-400 rounded-lg pointer-events-none">
-            <span className="text-sm text-stone-600 font-medium">Drop files to attach</span>
-          </div>
-        )}
-        {/* Attached files preview */}
-        {attachedFiles.length > 0 && (
-          <div className="flex gap-1.5 px-4 pt-2 flex-wrap">
-            {attachedFiles.map((file, idx) => (
-              <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 bg-stone-100 rounded text-[11px] text-stone-600">
-                {file.name.length > 20 ? file.name.slice(0, 17) + '...' : file.name}
-                <Button variant="ghost" size="icon" onClick={() => removeAttachedFile(idx)} className="h-4 w-4 hover:text-stone-900" aria-label="Remove file">
-                  <X className="w-3 h-3" />
-                </Button>
-              </span>
-            ))}
-          </div>
-        )}
+      <div className="flex-shrink-0 border-t border-[#E8E6DC] bg-white relative z-30">
         {/* Expanded conversation overlay (slides up from bottom) */}
         {hasMessages && (
           <div
-            className="max-h-[50vh] overflow-y-auto zen-scroll border-t border-stone-100"
+            className="max-h-[50vh] overflow-y-auto zen-scroll border-t border-[#F5F4EF]"
             style={{ scrollbarWidth: 'thin' }}
           >
             {messages.map(msg => {
@@ -4190,13 +4066,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               return (
                 <div
                   key={msg.id}
-                  className={cn('group px-4 py-3', isUser ? 'bg-stone-50/60' : 'bg-white')}
+                  className={cn('group px-4 py-3', isUser ? 'bg-[#FAF9F5]/60' : 'bg-white')}
                 >
                   <div className="flex gap-2.5 max-w-3xl mx-auto">
                     <div
                       className={cn(
                         'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5',
-                        isUser ? 'bg-stone-700 text-white' : 'bg-stone-800'
+                        isUser ? 'bg-[#4D4B45] text-white' : 'bg-[#D97757]'
                       )}
                     >
                       {isUser ? (
@@ -4208,23 +4084,23 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="text-xs font-semibold text-stone-900">
+                      <span className="text-xs font-semibold text-[#2D2C28]">
                         {isUser ? 'You' : 'AnA'}
                       </span>
                       {isUser ? (
-                        <p className="text-sm text-stone-900 leading-relaxed whitespace-pre-wrap mt-0.5">
+                        <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">
                           {msg.content}
                         </p>
                       ) : (
                         <div
                           className="prose prose-sm prose-stone max-w-none mt-0.5
-                            prose-p:text-stone-700 prose-p:leading-relaxed prose-p:my-2
-                            prose-strong:text-stone-950
-                            prose-code:text-amber-700 prose-code:bg-amber-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                            prose-p:text-[#4D4B45] prose-p:leading-relaxed prose-p:my-2
+                            prose-strong:text-[#141413]
+                            prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
                             prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3.5 prose-pre:text-xs
-                            prose-blockquote:border-l-stone-300 prose-blockquote:text-stone-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
-                            prose-ul:text-stone-700 prose-ol:text-stone-700 prose-ul:my-2 prose-ol:my-2 prose-li:my-1
-                            prose-a:text-stone-700 prose-a:underline prose-a:decoration-stone-300 prose-a:underline-offset-2 hover:prose-a:text-stone-900
+                            prose-blockquote:border-l-stone-300 prose-blockquote:text-[#6B6962] prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
+                            prose-ul:text-[#4D4B45] prose-ol:text-[#4D4B45] prose-ul:my-2 prose-ol:my-2 prose-li:my-1
+                            prose-a:text-[#D97757] prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
                             [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                           dangerouslySetInnerHTML={{ __html: htmlContent }}
                         />
@@ -4237,15 +4113,15 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             {isThinking && (
               <div className="px-4 py-3 bg-white">
                 <div className="flex gap-2.5 max-w-3xl mx-auto">
-                  <div className="w-6 h-6 rounded-full bg-stone-800 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-full bg-[#D97757] flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Sparkles className="w-3 h-3 text-white" />
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-stone-900">AnA</span>
+                    <span className="text-xs font-semibold text-[#2D2C28]">AnA</span>
                     <div className="flex items-center gap-1 mt-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-[pulse_1.4s_ease-in-out_infinite]" />
-                      <div className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
-                      <div className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_infinite]" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
                     </div>
                   </div>
                 </div>
@@ -4262,14 +4138,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             {slashMenuOpen && filteredSlashCommands.length > 0 && (
               <div
                 ref={slashMenuRef}
-                className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-stone-100 shadow-sm max-h-[280px] overflow-y-auto z-50"
+                className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-[#E8E6DC] shadow-lg max-h-[280px] overflow-y-auto z-50"
                 role="listbox"
                 aria-label="Slash commands"
               >
                 {filteredSlashCommands.map((cmd, i) => (
-                  <Button
+                  <button
                     key={cmd.command}
-                    variant="ghost"
                     type="button"
                     role="option"
                     aria-selected={i === slashMenuIndex}
@@ -4279,173 +4154,102 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     }}
                     onMouseEnter={() => setSlashMenuIndex(i)}
                     className={cn(
-                      'w-full flex items-center gap-3 px-3.5 py-2 h-auto text-left justify-start rounded-none',
-                      i === slashMenuIndex ? 'bg-stone-50' : 'hover:bg-stone-50/50'
+                      'w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors',
+                      i === slashMenuIndex ? 'bg-[#FAF9F5]' : 'hover:bg-[#FAF9F5]/50'
                     )}
                   >
-                    <code className="text-xs font-mono font-semibold text-stone-950 min-w-[100px]">
+                    <code className="text-xs font-mono font-semibold text-[#141413] min-w-[100px]">
                       {cmd.command}
                     </code>
-                    <span className="text-xs text-stone-600 flex-1 truncate">
+                    <span className="text-xs text-[#6B6962] flex-1 truncate">
                       {cmd.description}
                     </span>
                     <span
                       className={cn(
                         'text-[10px] font-medium',
-                        SLASH_CATEGORY_COLORS[cmd.category] || 'text-stone-400'
+                        SLASH_CATEGORY_COLORS[cmd.category] || 'text-zinc-400'
                       )}
                     >
                       {cmd.category}
                     </span>
-                  </Button>
-                ))}
-              </div>
-            )}
-            {/* @app mention autocomplete dropdown */}
-            {appMenuOpen && filteredApps.length > 0 && (
-              <div
-                ref={appMenuRef}
-                className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-stone-100 shadow-sm max-h-[280px] overflow-y-auto z-50"
-                role="listbox"
-                aria-label="App mentions"
-              >
-                <div className="px-3 py-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-wide">
-                  Apps
-                </div>
-                {filteredApps.map((app, idx) => (
-                  <Button
-                    key={app.id}
-                    variant="ghost"
-                    type="button"
-                    role="option"
-                    aria-selected={idx === appMenuIndex}
-                    onMouseDown={e => {
-                      e.preventDefault();
-                      selectApp(app);
-                    }}
-                    onMouseEnter={() => setAppMenuIndex(idx)}
-                    className={cn(
-                      'w-full text-left px-3 py-2 h-auto flex items-center gap-3 text-[13px] justify-start rounded-none transition-colors',
-                      idx === appMenuIndex ? 'bg-stone-50 text-stone-900' : 'text-stone-600 hover:bg-stone-50'
-                    )}
-                  >
-                    <span className="font-medium text-stone-800">@{app.id}</span>
-                    <span className="text-stone-400 text-[11px] truncate">{app.description}</span>
-                  </Button>
+                  </button>
                 ))}
               </div>
             )}
             <div
               className={cn(
-                'relative flex flex-col bg-white border rounded-2xl shadow-sm transition-all duration-200',
+                'flex items-end gap-2 px-3.5 py-2.5 bg-[#FAF9F5] border rounded-2xl transition-colors duration-150',
                 isFocused
-                  ? 'border-stone-300 ring-2 ring-stone-200/50'
-                  : 'border-stone-200 hover:border-stone-300',
-                isDragging && 'border-stone-400 ring-2 ring-stone-200 bg-stone-50/30'
+                  ? 'border-[#D8D5CA] ring-2 ring-[#F5F4EF] bg-white shadow-sm'
+                  : 'border-[#E8E6DC] hover:border-[#D8D5CA]'
               )}
-              onDragOver={handleDragOver}
-              onDragEnter={handleDragEnter}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
             >
-              {isDragging && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/80 border-2 border-dashed border-stone-400 pointer-events-none">
-                  <div className="flex items-center gap-2 text-sm text-stone-600 font-medium">
-                    <Upload className="w-4 h-4" />
-                    Drop files to attach
-                  </div>
-                </div>
-              )}
-              {attachedFiles.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 px-4 pt-2.5 pb-0">
-                  {attachedFiles.map((file, idx) => (
-                    <div key={`${file.name}-${idx}`} className="flex items-center gap-1.5 px-2 py-1 bg-stone-100 rounded-lg text-[11px] text-stone-600 max-w-[180px]">
-                      <Paperclip className="w-3 h-3 flex-shrink-0 text-stone-400" />
-                      <span className="truncate">{file.name}</span>
-                      <Button variant="ghost" size="icon" type="button" onClick={() => removeAttachedFile(idx)} className="h-4 w-4 flex-shrink-0 text-stone-400 hover:text-stone-600 transition-colors" aria-label={`Remove ${file.name}`}>
-                        <X className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="flex items-end gap-2 px-4 py-3">
-                <div className="flex items-center gap-1.5 flex-shrink-0 self-center">
-                  <Sparkles className="w-4 h-4 text-stone-500" />
-                  {screenLabel && (
-                    <span className="text-[10px] text-stone-400 font-medium hidden sm:inline">
-                      {screenLabel}
+              <div className="flex items-center gap-1.5 flex-shrink-0 self-center">
+                <Sparkles className="w-4 h-4 text-[#D97757]" />
+                {screenLabel && (
+                  <span className="text-[10px] text-[#B0AEA5] font-medium hidden sm:inline">
+                    {screenLabel}
+                  </span>
+                )}
+              </div>
+              {/* Queue Status Banner */}
+              {conversationQueue.length > 0 && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 border-t border-stone-100 text-[11px] text-stone-500">
+                  {activeQueueItemId && <span className="text-amber-600">● Working</span>}
+                  {conversationQueue.filter(i => i.status === 'queued').length > 0 && (
+                    <span>
+                      Queued: {conversationQueue.filter(i => i.status === 'queued').length}
                     </span>
                   )}
+                  <button
+                    onClick={() => setConversationQueue([])}
+                    className="ml-auto text-stone-400 hover:text-stone-600"
+                  >
+                    Clear
+                  </button>
                 </div>
-                {/* Queue Status Banner */}
-                {conversationQueue.length > 0 && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 border-t border-stone-100 text-[11px] text-stone-500">
-                    {activeQueueItemId && <span className="text-stone-600">● Working</span>}
-                    {conversationQueue.filter(i => i.status === 'queued').length > 0 && (
-                      <span>
-                        Queued: {conversationQueue.filter(i => i.status === 'queued').length}
-                      </span>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setConversationQueue([])}
-                      className="ml-auto h-auto py-0 px-1 text-stone-400 hover:text-stone-600"
-                    >
-                      Clear
-                    </Button>
-                  </div>
-                )}
-                <textarea
-                  ref={inputRef}
-                  value={input}
-                  onChange={handleInputChange}
-                  onKeyDown={handleKeyDown}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => {
-                    setIsFocused(false);
-                    setTimeout(() => setSlashMenuOpen(false), 150);
+              )}
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => {
+                  setIsFocused(false);
+                  setTimeout(() => setSlashMenuOpen(false), 150);
+                }}
+                placeholder="Message AnA — type / for commands..."
+                rows={1}
+                className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
+              />
+              {hasMessages && (
+                <button
+                  onClick={() => {
+                    setMessages([]);
+                    threadIdRef.current = null;
+                    // Keep selection state in sync with cleared local thread context.
+                    onThreadChange?.(undefined);
                   }}
-                  placeholder="Message AnA — type / for commands, @ for apps..."
-                  rows={1}
-                  className="flex-1 resize-none bg-transparent border-none outline-none text-stone-950 placeholder:text-stone-400 text-sm leading-6 min-h-[24px] max-h-[120px]"
-                />
-                {hasMessages && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setMessages([]);
-                          threadIdRef.current = null;
-                          onThreadChange?.(undefined);
-                        }}
-                        className="flex-shrink-0 h-7 w-7 text-stone-400 hover:text-stone-600 rounded-lg"
-                        aria-label="New thread"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="text-xs">New thread</TooltipContent>
-                  </Tooltip>
-                )}
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSend()}
-                  disabled={!input.trim() || isThinking}
-                  className={cn(
-                    'flex-shrink-0 p-2 h-auto rounded-full transition-colors duration-150',
-                    input.trim() && !isThinking
-                      ? 'bg-stone-950 text-white hover:bg-stone-800'
-                      : 'bg-stone-200 text-stone-400 cursor-not-allowed'
-                  )}
-                  aria-label="Send message"
+                  className="flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors"
+                  title="New thread"
                 >
-                  <ArrowUp className="w-4 h-4" />
-                </Button>
-              </div>
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              )}
+              <button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || isThinking}
+                className={cn(
+                  'flex-shrink-0 p-2 rounded-full transition-colors duration-150',
+                  input.trim() && !isThinking
+                    ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
+                    : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
+                )}
+                aria-label="Send message"
+              >
+                <ArrowUp className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
@@ -4455,12 +4259,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
   // ── Full mode: fills available space like Claude.ai ──
   return (
-    <TooltipProvider delayDuration={300}>
     <div className="flex-1 flex flex-col min-h-0 bg-white">
       {/* ── E3: Persistent project context banner ── */}
       {contextProfile?.activeProject && (
         <div
-          className="flex items-center justify-between bg-stone-50 border-b border-stone-200 px-4 py-2 shrink-0 cursor-pointer hover:bg-stone-100 transition-colors"
+          className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800 px-4 py-2 shrink-0 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-900/70 transition-colors"
           onClick={() => onNavigate?.('project-config')}
           role="button"
           tabIndex={0}
@@ -4470,87 +4273,125 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           aria-label={`Active project: ${contextProfile.activeProject}. Click to open project config.`}
         >
           <div className="flex items-center gap-2 min-w-0">
-            <FolderOpen className="w-3.5 h-3.5 text-stone-500 shrink-0" />
-            <span className="text-[13px] font-semibold text-stone-700 truncate">
+            <FolderOpen className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+            <span className="text-[13px] font-semibold text-zinc-700 dark:text-zinc-300 truncate">
               {contextProfile.activeProject}
             </span>
             {contextProfile.productType && (
               <>
-                <span className="text-stone-300">·</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-stone-100 text-stone-600">
+                <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                <span
+                  className={cn(
+                    'text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded',
+                    contextProfile.productType.includes('510')
+                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                      : contextProfile.productType.includes('PMA')
+                      ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+                      : contextProfile.productType.includes('NDA')
+                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+                      : contextProfile.productType.includes('BLA')
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                      : contextProfile.productType.includes('IND')
+                      ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300'
+                      : contextProfile.productType.includes('ANDA')
+                      ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300'
+                      : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                  )}
+                >
                   {contextProfile.productType}
                 </span>
               </>
             )}
           </div>
-          <span className="text-[11px] text-stone-400 whitespace-nowrap ml-3">
+          <span className="text-[11px] text-zinc-400 dark:text-zinc-500 whitespace-nowrap ml-3">
             Quick project switch ←
           </span>
         </div>
       )}
-      {/* Decision status — only visible when actionable items exist */}
-      {contextProfile?.activeProject && (decisionStatus.pendingApprovals > 0 || decisionStatus.pendingConfirmations > 0 || decisionStatus.unresolvedContradictions) && (
-        <div className="shrink-0 border-b border-stone-200 bg-white px-4 py-1.5">
-          <Button
-            variant="ghost"
+      {contextProfile?.activeProject && (
+        <div className="shrink-0 border-b border-zinc-200 bg-white px-4 py-2">
+          <button
             type="button"
             onClick={() => setDecisionRailExpanded(prev => !prev)}
-            className="w-full h-auto text-left rounded-lg px-2.5 py-1.5 hover:bg-stone-50 justify-start"
+            className="w-full text-left rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 hover:bg-zinc-100 transition-colors"
             aria-expanded={decisionRailExpanded}
             aria-label="Toggle decision status details"
           >
-            <div className="flex items-center gap-2 w-full">
-              <div className="flex items-center gap-1.5 text-[11px] text-stone-600 min-w-0">
-                {decisionStatus.pendingApprovals > 0 && (
-                  <span className="rounded-full bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-amber-700 font-medium">
-                    {decisionStatus.pendingApprovals} pending approval
-                  </span>
-                )}
-                {decisionStatus.pendingConfirmations > 0 && (
-                  <span className="rounded-full bg-stone-50 border border-stone-200 px-1.5 py-0.5 text-stone-600 font-medium">
-                    {decisionStatus.pendingConfirmations} confirmation
-                  </span>
-                )}
-                {decisionStatus.unresolvedContradictions && (
-                  <span className="rounded-full bg-red-50 border border-red-200 px-1.5 py-0.5 text-red-700 font-medium">
-                    contradictions
-                  </span>
-                )}
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+                  Decision status
+                </p>
+                <p className="text-xs text-zinc-700 truncate">
+                  {decisionStatus.loading ? 'Loading decision status...' : decisionStatus.summary}
+                </p>
               </div>
               <ChevronDown
                 className={cn(
-                  'w-3 h-3 text-stone-400 transition-transform ml-auto flex-shrink-0',
+                  'w-3.5 h-3.5 text-zinc-500 transition-transform',
                   decisionRailExpanded && 'rotate-180'
                 )}
               />
             </div>
-          </Button>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px] text-zinc-600">
+              {decisionStatus.pendingConfirmations > 0 && (
+                <span className="rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-amber-700">
+                  {decisionStatus.pendingConfirmations} confirmation
+                </span>
+              )}
+              {decisionStatus.pendingApprovals > 0 && (
+                <span className="rounded-full border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-blue-700">
+                  {decisionStatus.pendingApprovals} approval
+                </span>
+              )}
+              {decisionStatus.unresolvedContradictions && (
+                <span className="rounded-full border border-red-200 bg-red-50 px-1.5 py-0.5 text-red-700">
+                  unresolved contradictions
+                </span>
+              )}
+              {decisionStatus.provisional && (
+                <span className="rounded-full border border-orange-200 bg-orange-50 px-1.5 py-0.5 text-orange-700">
+                  provisional decisions
+                </span>
+              )}
+              {!decisionStatus.loading &&
+                decisionStatus.pendingConfirmations === 0 &&
+                decisionStatus.pendingApprovals === 0 &&
+                !decisionStatus.unresolvedContradictions &&
+                !decisionStatus.provisional && (
+                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-emerald-700">
+                    clear
+                  </span>
+                )}
+              <span className="text-zinc-400">·</span>
+              <span>{decisionStatus.count} tracked</span>
+            </div>
+          </button>
           {decisionRailExpanded && (
-            <div className="mt-2 rounded-lg border border-stone-200 bg-white px-3 py-2">
+            <div className="mt-2 rounded-lg border border-zinc-200 bg-white px-3 py-2">
               {decisionStatus.error ? (
-                <p className="text-xs text-stone-700">{decisionStatus.error}</p>
+                <p className="text-xs text-red-600">{decisionStatus.error}</p>
               ) : decisionStatus.details.length > 0 ? (
                 <ul className="space-y-1.5">
                   {decisionStatus.details.map(row => (
                     <li key={row.id || `${row.status}-${row.kind}-${row.summary.slice(0, 20)}`}>
-                      <p className="text-[11px] text-stone-800">
+                      <p className="text-[11px] text-zinc-800">
                         <span className="font-medium">[{row.status.toUpperCase()}]</span> {row.kind}
                       </p>
-                      <p className="text-[11px] text-stone-600">{row.summary}</p>
+                      <p className="text-[11px] text-zinc-600">{row.summary}</p>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs text-stone-600">No recent decisions for this scope.</p>
+                <p className="text-xs text-zinc-600">No recent decisions for this scope.</p>
               )}
-              <Button
-                variant="link"
+              <button
                 type="button"
                 onClick={() => void loadDecisionRail()}
-                className="mt-2 h-auto p-0 text-[11px] text-stone-500 hover:text-stone-700 no-underline"
+                className="mt-2 text-[11px] text-zinc-500 hover:text-zinc-700"
               >
                 Refresh
-              </Button>
+              </button>
             </div>
           )}
         </div>
@@ -4569,22 +4410,26 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             <div className="max-w-2xl w-full text-center">
               {/* Greeting */}
               <div className="mb-8">
-                <h2 className="text-2xl font-medium text-stone-900">{defaultGreeting}</h2>
-                <p className="text-sm text-stone-400 mt-2">
-                  Ask me anything — draft a section, check readiness, or find regulatory precedents.
+                <div className="w-10 h-10 rounded-full bg-[#D97757] flex items-center justify-center mx-auto mb-3">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <p className="text-[10px] font-semibold tracking-wider text-[#B0AEA5] uppercase mb-3">
+                  AnA 1.0 Regulatory Intelligence
                 </p>
+                <h2 className="text-xl font-semibold text-[#141413]">{defaultGreeting}</h2>
+                {screenLabel && <p className="text-sm text-[#B0AEA5] mt-1">{screenLabel}</p>}
                 {/* Project context badge */}
                 {contextProfile?.activeProject && !messages?.length && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-stone-100 rounded-full text-[11px] border border-stone-200 mb-2">
-                    <FolderOpen className="w-3 h-3 text-stone-500" />
-                    <span className="font-medium text-stone-700">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F5F4EF] rounded-full text-[11px] border border-[#E8E6DC] mb-2">
+                    <FolderOpen className="w-3 h-3 text-[#6D6B63]" />
+                    <span className="font-medium text-[#4D4B45]">
                       {contextProfile.activeProject}
                     </span>
                     {contextProfile.productType && (
                       <>
-                        <span className="text-stone-400">·</span>
+                        <span className="text-[#B0AEA5]">·</span>
                         <span
-                          className="font-medium text-stone-500 uppercase tracking-wider"
+                          className="font-medium text-[#6D6B63] uppercase tracking-wider"
                           style={{ fontSize: '9px' }}
                         >
                           {contextProfile.productType}
@@ -4596,23 +4441,23 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 {/* Authoring context indicator strip */}
                 {authoringContext &&
                   (authoringContext.sectionCode || authoringContext.artifactId) && (
-                    <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-stone-100 rounded-full text-[10px] text-stone-500 border border-stone-200">
+                    <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#F5F4EF] rounded-full text-[10px] text-[#6D6B63] border border-[#E8E6DC]">
                       <FileSearch className="w-3 h-3" />
                       <span className="font-medium">{authoringContext.workflowStage}</span>
                       {authoringContext.sectionCode && (
                         <>
-                          <span className="text-stone-400">·</span>
+                          <span className="text-[#B0AEA5]">·</span>
                           <span>§{authoringContext.sectionCode}</span>
                         </>
                       )}
                       {authoringContext.sectionTitle && (
-                        <span className="text-stone-400 truncate max-w-[120px]">
+                        <span className="text-[#B0AEA5] truncate max-w-[120px]">
                           {authoringContext.sectionTitle}
                         </span>
                       )}
                       {authoringContext.artifactStatus && (
                         <>
-                          <span className="text-stone-400">·</span>
+                          <span className="text-[#B0AEA5]">·</span>
                           <span className="capitalize">{authoringContext.artifactStatus}</span>
                         </>
                       )}
@@ -4622,23 +4467,22 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
               {/* Suggested actions — up to 6 chips (authoring + intelligence + parent) */}
               {effectiveSuggestedActions && effectiveSuggestedActions.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-2.5 max-w-2xl mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
                   {effectiveSuggestedActions.slice(0, 6).map(action => (
-                    <Button
+                    <button
                       key={action.id}
-                      variant="outline"
                       onClick={() => handleSuggestedAction(action)}
-                      className="h-auto text-left px-4 py-3 rounded-xl border border-stone-100 hover:border-stone-200 hover:bg-stone-50/80 transition-colors duration-200 group flex-col items-start justify-start whitespace-normal"
+                      className="text-left px-4 py-3 rounded-xl border border-[#E8E6DC] hover:border-[#D8D5CA] hover:bg-[#FAF9F5] transition-colors group"
                     >
-                      <p className="text-sm font-medium text-stone-700 group-hover:text-stone-950">
+                      <p className="text-sm font-medium text-[#4D4B45] group-hover:text-[#141413]">
                         {action.label}
                       </p>
                       {action.description && (
-                        <p className="text-xs text-stone-400 mt-0.5 line-clamp-1 font-normal">
+                        <p className="text-xs text-[#B0AEA5] mt-0.5 line-clamp-1">
                           {action.description}
                         </p>
                       )}
-                    </Button>
+                    </button>
                   ))}
                 </div>
               )}
@@ -4654,7 +4498,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               return (
                 <div
                   key={msg.id}
-                  className={cn('group px-4 py-3', isUser ? 'bg-stone-50/60' : 'bg-white')}
+                  className={cn('group px-4 py-3', isUser ? 'bg-[#FAF9F5]/60' : 'bg-white')}
                   onMouseEnter={() => !isUser && setShowActions(msg.id)}
                   onMouseLeave={() => setShowActions(null)}
                 >
@@ -4662,7 +4506,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     <div
                       className={cn(
                         'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5',
-                        isUser ? 'bg-stone-700 text-white' : 'bg-stone-800'
+                        isUser ? 'bg-[#4D4B45] text-white' : 'bg-[#D97757]'
                       )}
                     >
                       {isUser ? (
@@ -4674,16 +4518,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="text-xs font-semibold text-stone-900">
+                      <span className="text-xs font-semibold text-[#2D2C28]">
                         {isUser ? 'You' : 'AnA'}
                       </span>
                       {isUser ? (
                         <>
-                          <p className="text-sm text-stone-900 leading-relaxed whitespace-pre-wrap mt-0.5">
+                          <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">
                             {msg.content}
                           </p>
                           {(msg as any).recalledToInput && (
-                            <p className="mt-1 text-[10px] font-medium text-stone-600">
+                            <p className="mt-1 text-[10px] font-medium text-[#D97757]">
                               Editing prompt in composer
                             </p>
                           )}
@@ -4691,18 +4535,18 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       ) : (
                         <>
                           <div
-                            className="prose prose-sm prose-stone max-w-none mt-0.5
-                              prose-p:text-stone-700 prose-p:leading-relaxed prose-p:my-2
-                              prose-strong:text-stone-900
-                              prose-code:text-amber-700 prose-code:bg-amber-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                            className="prose prose-sm prose-zinc max-w-none mt-0.5
+                              prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-2
+                              prose-strong:text-zinc-900
+                              prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
                               prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3.5 prose-pre:text-xs
-                              prose-blockquote:border-l-stone-300 prose-blockquote:text-stone-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
-                              prose-ul:text-stone-700 prose-ol:text-stone-700 prose-ul:my-2 prose-ol:my-2 prose-li:my-1
-                              prose-a:text-stone-700 prose-a:underline prose-a:decoration-stone-300 prose-a:underline-offset-2 hover:prose-a:text-stone-900
+                              prose-blockquote:border-l-stone-300 prose-blockquote:text-zinc-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
+                              prose-ul:text-zinc-700 prose-ol:text-zinc-700 prose-ul:my-2 prose-ol:my-2 prose-li:my-1
+                              prose-a:text-[#D97757] prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
                               [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                             dangerouslySetInnerHTML={{ __html: htmlContent }}
                           />
-                          {/* Visual Studio generated images */}
+                          {/* Nano Banana generated images */}
                           {msg.images && msg.images.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-2">
                               {msg.images.map((img, idx) => (
@@ -4710,7 +4554,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                   key={idx}
                                   src={`data:${img.mimeType};base64,${img.base64}`}
                                   alt={`Generated image ${idx + 1}`}
-                                  className="rounded-lg border border-stone-200 max-w-sm shadow-sm"
+                                  className="rounded-lg border border-zinc-200 max-w-sm shadow-sm"
                                 />
                               ))}
                             </div>
@@ -4755,16 +4599,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                   className={cn(
                                     'flex items-center gap-2 px-3 py-2 rounded-lg border text-xs',
                                     action.executed && !action.error
-                                      ? 'bg-stone-100 border-stone-200 text-stone-800'
+                                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                                       : action.error
-                                      ? 'bg-stone-100 border-stone-200 text-stone-800'
-                                      : 'bg-stone-50 border-stone-200 text-stone-600'
+                                      ? 'bg-red-50 border-red-200 text-red-800'
+                                      : 'bg-zinc-50 border-zinc-200 text-zinc-600'
                                   )}
                                 >
                                   {action.executed && !action.error ? (
                                     <Check className="w-3.5 h-3.5 flex-shrink-0" />
                                   ) : action.error ? (
-                                    <span className="w-3.5 h-3.5 flex-shrink-0 text-stone-900">
+                                    <span className="w-3.5 h-3.5 flex-shrink-0 text-red-500">
                                       !
                                     </span>
                                   ) : (
@@ -4780,12 +4624,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                         })`}
                                   </span>
                                   {action.artifactId && (
-                                    <span className="text-stone-700 font-mono text-[10px]">
+                                    <span className="text-emerald-600 font-mono text-[10px]">
                                       {action.artifactId}
                                     </span>
                                   )}
                                   {action.threadId && (
-                                    <span className="text-stone-700 font-mono text-[10px]">
+                                    <span className="text-emerald-600 font-mono text-[10px]">
                                       thread:{action.threadId.slice(0, 8)}
                                     </span>
                                   )}
@@ -4793,11 +4637,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               ))}
                             </div>
                           )}
-                          {/* Visual Studio PPTX download button */}
+                          {/* Nano Banana PPTX download button */}
                           {msg.pptx && (
-                            <Button
-                              variant="outline"
-                              size="sm"
+                            <button
                               onClick={() => {
                                 const blob = new Blob(
                                   [Uint8Array.from(atob(msg.pptx!.base64), c => c.charCodeAt(0))],
@@ -4810,53 +4652,40 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 a.click();
                                 URL.revokeObjectURL(url);
                               }}
-                              className="mt-2 gap-1.5 text-xs rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-100 border-stone-200"
+                              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors"
                             >
                               <Download className="w-3.5 h-3.5" />
                               {msg.pptx.filename}
-                            </Button>
+                            </button>
                           )}
                         </>
                       )}
                       {isUser && (
                         <div
                           className={cn(
-                            'flex items-center gap-0.5 mt-1.5 transition-opacity duration-150',
+                            'flex items-center gap-1 mt-1.5 transition-opacity duration-150',
                             showActions === msg.id ? 'opacity-100' : 'opacity-0'
                           )}
                         >
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleRecallPrompt(msg.id, msg.content)}
-                                className="h-6 w-6 text-stone-400 hover:text-stone-700"
-                                aria-label="Recall this prompt to edit"
-                              >
-                                <RotateCcw className="w-3 h-3" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" className="text-xs">Edit prompt</TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleCopy(msg.id, msg.content)}
-                                className="h-6 w-6 text-stone-400 hover:text-stone-700"
-                                aria-label="Copy message"
-                              >
-                                {copiedId === msg.id ? (
-                                  <Check className="w-3 h-3 text-stone-700" />
-                                ) : (
-                                  <Copy className="w-3 h-3" />
-                                )}
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" className="text-xs">Copy</TooltipContent>
-                          </Tooltip>
+                          <button
+                            onClick={() => handleRecallPrompt(msg.id, msg.content)}
+                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
+                            title="Recall this prompt to edit"
+                            aria-label="Recall this prompt to edit"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleCopy(msg.id, msg.content)}
+                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
+                            title="Copy"
+                          >
+                            {copiedId === msg.id ? (
+                              <Check className="w-3 h-3 text-green-600" />
+                            ) : (
+                              <Copy className="w-3 h-3" />
+                            )}
+                          </button>
                           {(msg as any).recalledToInput && (
                             <span className="text-[11px] text-stone-600 font-medium ml-1">
                               Loaded to input
@@ -4877,12 +4706,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               className={cn(
                                 'text-[11px] font-medium px-1.5 py-0.5 rounded mr-1',
                                 msg.modelProvider === 'anthropic'
-                                  ? 'text-stone-700 bg-stone-100'
+                                  ? 'text-[#CC785C] bg-[#FBF0EB]'
                                   : msg.modelProvider === 'openai'
-                                  ? 'text-stone-600 bg-stone-100'
+                                  ? 'text-[#10A37F] bg-emerald-50'
                                   : msg.modelProvider === 'moonshot'
-                                  ? 'text-stone-600 bg-stone-100'
-                                  : 'text-stone-500 bg-stone-50'
+                                  ? 'text-[#6366F1] bg-indigo-50'
+                                  : 'text-zinc-500 bg-zinc-50'
                               )}
                             >
                               {msg.modelProvider === 'anthropic'
@@ -4899,8 +4728,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               className={cn(
                                 'text-[11px] font-medium px-1.5 py-0.5 rounded mr-1',
                                 msg.evidenceUsage.firecrawlUsed
-                                  ? 'text-stone-700 bg-stone-100'
-                                  : 'text-stone-500 bg-stone-50'
+                                  ? 'text-[#D97757] bg-[#FBF0EB]'
+                                  : 'text-zinc-500 bg-zinc-50'
                               )}
                               title="External evidence usage"
                             >
@@ -4909,168 +4738,136 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 : 'Firecrawl requested'}
                             </span>
                           )}
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleCopy(msg.id, msg.content)}
-                                className="h-6 w-6 text-stone-400 hover:text-stone-700"
-                                aria-label="Copy"
-                              >
-                                {copiedId === msg.id ? (
-                                  <Check className="w-3 h-3 text-stone-700" />
-                                ) : (
-                                  <Copy className="w-3 h-3" />
-                                )}
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" className="text-xs">Copy</TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => {
-                                  apiRequest('POST', '/api/concept2cure/feedback', {
-                                    messageId: msg.id,
-                                    positive: true,
-                                  }).catch(() => {});
-                                }}
-                                className="h-6 w-6 text-stone-400 hover:text-stone-700"
-                                aria-label="Good response"
-                              >
-                                <ThumbsUp className="w-3 h-3" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" className="text-xs">Good response</TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => {
-                                  apiRequest('POST', '/api/concept2cure/feedback', {
-                                    messageId: msg.id,
-                                    positive: false,
-                                  }).catch(() => {});
-                                }}
-                                className="h-6 w-6 text-stone-400 hover:text-stone-700"
-                                aria-label="Bad response"
-                              >
-                                <ThumbsDown className="w-3 h-3" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" className="text-xs">Bad response</TooltipContent>
-                          </Tooltip>
+                          <button
+                            onClick={() => handleCopy(msg.id, msg.content)}
+                            className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors"
+                            title="Copy"
+                          >
+                            {copiedId === msg.id ? (
+                              <Check className="w-3 h-3 text-green-600" />
+                            ) : (
+                              <Copy className="w-3 h-3" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => {
+                              apiRequest('POST', '/api/concept2cure/feedback', {
+                                messageId: msg.id,
+                                positive: true,
+                              }).catch(() => {});
+                            }}
+                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
+                            title="Good"
+                          >
+                            <ThumbsUp className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              apiRequest('POST', '/api/concept2cure/feedback', {
+                                messageId: msg.id,
+                                positive: false,
+                              }).catch(() => {});
+                            }}
+                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
+                            title="Bad"
+                          >
+                            <ThumbsDown className="w-3 h-3" />
+                          </button>
                           {/* Save to Vault — persist AI response as a governed artifact */}
                           {contextProfile?.projectId &&
                             msg.content.length > 100 &&
                             !msg.savedAsArtifact && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={async () => {
-                                      const numProjId = String(contextProfile.projectId).replace(
-                                        /^proj_/,
-                                        ''
-                                      );
-                                      try {
-                                        const saveRes = await apiRequest(
-                                          'POST',
-                                          `/api/concept2cure/projects/${numProjId}/artifacts`,
-                                          {
-                                            title: `AnA Response — ${
-                                              new Date().toISOString().split('T')[0]
-                                            }`,
-                                            content: msg.content,
-                                            type: 'document_section',
-                                            category: 'document',
-                                          }
-                                        );
-                                        if (saveRes.ok) {
-                                          setMessages(prev =>
-                                            prev.map(m =>
-                                              m.id === msg.id ? { ...m, savedAsArtifact: true } : m
-                                            )
-                                          );
-                                        }
-                                      } catch {
-                                        /* non-blocking */
+                              <button
+                                onClick={async () => {
+                                  const numProjId = String(contextProfile.projectId).replace(
+                                    /^proj_/,
+                                    ''
+                                  );
+                                  try {
+                                    const saveRes = await apiRequest(
+                                      'POST',
+                                      `/api/concept2cure/projects/${numProjId}/artifacts`,
+                                      {
+                                        title: `AnA Response — ${
+                                          new Date().toISOString().split('T')[0]
+                                        }`,
+                                        content: msg.content,
+                                        type: 'document_section',
+                                        category: 'document',
                                       }
-                                    }}
-                                    className="h-6 w-6 text-stone-400 hover:text-stone-700 hover:bg-stone-100"
-                                    aria-label="Save to Vault"
-                                  >
-                                    <Download className="w-3 h-3" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="bottom" className="text-xs">Save to Vault</TooltipContent>
-                              </Tooltip>
+                                    );
+                                    if (saveRes.ok) {
+                                      setMessages(prev =>
+                                        prev.map(m =>
+                                          m.id === msg.id ? { ...m, savedAsArtifact: true } : m
+                                        )
+                                      );
+                                    }
+                                  } catch {
+                                    /* non-blocking */
+                                  }
+                                }}
+                                className="p-1 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                                title="Save to Vault"
+                              >
+                                <Download className="w-3 h-3" />
+                              </button>
                             )}
                           {/* Insert into Editor — when onDraftInsert is available and content is substantial */}
                           {onDraftInsert &&
                             contextProfile?.projectId &&
                             msg.content.length > 100 &&
                             authoringContext?.sectionCode && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => {
-                                      let insertContent = msg.content;
-                                      const codeBlockMatch = msg.content.match(
-                                        /```(?:\w+)?\n([\s\S]*?)```/
-                                      );
-                                      if (codeBlockMatch && codeBlockMatch[1].trim().length > 50) {
-                                        insertContent = codeBlockMatch[1].trim();
-                                      } else {
-                                        insertContent = insertContent
-                                          .replace(/^\*\*[A-Z][^*]+\*\*\s*[-—]\s*/gm, '')
-                                          .replace(
-                                            /^#{1,3}\s+(?:Draft|Note|Summary|Action)\b[^\n]*/gm,
-                                            ''
-                                          )
-                                          .trim();
-                                      }
-                                      if (!insertContent.startsWith('<')) {
-                                        insertContent = insertContent
-                                          .split('\n\n')
-                                          .filter(p => p.trim())
-                                          .map(p => `<p>${p.trim()}</p>`)
-                                          .join('\n');
-                                      }
-                                      const title = authoringContext.sectionTitle
-                                        ? `${authoringContext.sectionCode} — ${authoringContext.sectionTitle}`
-                                        : `Section ${authoringContext.sectionCode} Draft`;
-                                      onDraftInsert(insertContent, title, authoringContext.sectionCode);
-                                      setMessages(prev =>
-                                        prev.map(m =>
-                                          m.id === msg.id ? { ...m, insertedToEditor: true } : m
-                                        )
-                                      );
-                                    }}
-                                    className="h-6 w-6 text-stone-400 hover:text-stone-600 hover:bg-stone-100"
-                                    aria-label="Insert into Editor"
-                                  >
-                                    <FileEdit className="w-3 h-3" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="bottom" className="text-xs">Insert into Editor</TooltipContent>
-                              </Tooltip>
+                              <button
+                                onClick={() => {
+                                  // Extract draft content: try code block, then content after "---", then strip markdown metadata
+                                  let insertContent = msg.content;
+                                  const codeBlockMatch = msg.content.match(
+                                    /```(?:\w+)?\n([\s\S]*?)```/
+                                  );
+                                  if (codeBlockMatch && codeBlockMatch[1].trim().length > 50) {
+                                    insertContent = codeBlockMatch[1].trim();
+                                  } else {
+                                    // Strip markdown headers that look like meta commentary (not section content)
+                                    insertContent = insertContent
+                                      .replace(/^\*\*[A-Z][^*]+\*\*\s*[-—]\s*/gm, '') // "**Draft Ready** —" prefix
+                                      .replace(
+                                        /^#{1,3}\s+(?:Draft|Note|Summary|Action)\b[^\n]*/gm,
+                                        ''
+                                      ) // Meta headers
+                                      .trim();
+                                  }
+                                  // Wrap in HTML paragraphs for TipTap consumption
+                                  if (!insertContent.startsWith('<')) {
+                                    insertContent = insertContent
+                                      .split('\n\n')
+                                      .filter(p => p.trim())
+                                      .map(p => `<p>${p.trim()}</p>`)
+                                      .join('\n');
+                                  }
+                                  const title = authoringContext.sectionTitle
+                                    ? `${authoringContext.sectionCode} — ${authoringContext.sectionTitle}`
+                                    : `Section ${authoringContext.sectionCode} Draft`;
+                                  onDraftInsert(insertContent, title, authoringContext.sectionCode);
+                                  setMessages(prev =>
+                                    prev.map(m =>
+                                      m.id === msg.id ? { ...m, insertedToEditor: true } : m
+                                    )
+                                  );
+                                }}
+                                className="p-1 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                title="Insert into Editor"
+                              >
+                                <FileEdit className="w-3 h-3" />
+                              </button>
                             )}
                           {(msg as any).insertedToEditor && (
-                            <span className="text-[11px] text-stone-600 font-medium ml-1">
+                            <span className="text-[11px] text-blue-600 font-medium ml-1">
                               Inserted
                             </span>
                           )}
                           {msg.savedAsArtifact && (
-                            <span className="text-[11px] text-stone-700 font-medium ml-1">
+                            <span className="text-[11px] text-emerald-600 font-medium ml-1">
                               Saved
                             </span>
                           )}
@@ -5080,8 +4877,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       {!isUser &&
                         msg.id === messages.filter(m => m.role === 'assistant').at(-1)?.id &&
                         lastOrchestration && (
-                          <div className="mt-3 pt-3 border-t border-stone-100">
-                            <p className="text-[10px] font-medium text-stone-400 uppercase tracking-wide mb-2">
+                          <div className="mt-3 pt-3 border-t border-[#F5F4EF]">
+                            <p className="text-[10px] font-medium text-[#B0AEA5] uppercase tracking-wide mb-2">
                               Document Actions
                             </p>
                             <div className="flex flex-wrap gap-1.5">
@@ -5093,10 +4890,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               )
                                 .slice(0, 5)
                                 .map(action => (
-                                  <Button
+                                  <button
                                     key={action.type}
-                                    variant="outline"
-                                    size="sm"
                                     disabled={isThinking}
                                     onClick={async () => {
                                       if (isThinking) return;
@@ -5166,19 +4961,19 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                       }
                                     }}
                                     className={cn(
-                                      'gap-1.5 h-auto px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors',
+                                      'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors',
                                       isThinking
-                                        ? 'border-stone-200 text-stone-300'
-                                        : 'border-stone-200 text-stone-600 hover:bg-stone-50 hover:border-stone-300 hover:text-stone-700'
+                                        ? 'border-[#E8E6DC] text-[#D8D5CA] cursor-not-allowed'
+                                        : 'border-[#E8E6DC] text-[#6B6962] hover:bg-[#FAF9F5] hover:border-[#D8D5CA] hover:text-[#4D4B45]'
                                     )}
                                   >
                                     {action.icon}
                                     {action.label}
-                                  </Button>
+                                  </button>
                                 ))}
                             </div>
                             {lastOrchestration.detectedSubmissionType && (
-                              <p className="text-[10px] text-stone-400 mt-2">
+                              <p className="text-[10px] text-[#B0AEA5] mt-2">
                                 Detected: {lastOrchestration.detectedSubmissionType.toUpperCase()}{' '}
                                 submission
                                 {lastOrchestration.detectedIntent.lens !== 'auto' &&
@@ -5186,11 +4981,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               </p>
                             )}
                             {lastOrchestration.activeWorkstream && (
-                              <div className="mt-2 rounded-lg border border-stone-200 bg-stone-50 px-3 py-2">
-                                <p className="text-[10px] font-medium text-stone-500 uppercase tracking-wide">
+                              <div className="mt-2 rounded-lg border border-[#E8E6DC] bg-[#FAF9F5] px-3 py-2">
+                                <p className="text-[10px] font-medium text-[#8A877D] uppercase tracking-wide">
                                   Active Workstream
                                 </p>
-                                <p className="mt-1 text-[12px] text-stone-700">
+                                <p className="mt-1 text-[12px] text-[#4D4B45]">
                                   <span className="font-medium">
                                     {lastOrchestration.activeWorkstream.stream.replace(/_/g, ' ')}
                                   </span>
@@ -5204,18 +4999,18 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                   )}
                                 </p>
                                 {lastOrchestration.activeWorkstream.currentFocus && (
-                                  <p className="mt-1 text-[11px] text-stone-600">
+                                  <p className="mt-1 text-[11px] text-[#6B6962]">
                                     Focus: {lastOrchestration.activeWorkstream.currentFocus}
                                   </p>
                                 )}
                                 {lastOrchestration.activeWorkstream.nextStep && (
-                                  <p className="mt-1 text-[11px] text-stone-600">
+                                  <p className="mt-1 text-[11px] text-[#6B6962]">
                                     Next: {lastOrchestration.activeWorkstream.nextStep}
                                   </p>
                                 )}
                                 {lastOrchestration.activeWorkstream.blockers &&
                                   lastOrchestration.activeWorkstream.blockers.length > 0 && (
-                                    <p className="mt-1 text-[11px] text-stone-500">
+                                    <p className="mt-1 text-[11px] text-[#8A877D]">
                                       Blockers:{' '}
                                       {lastOrchestration.activeWorkstream.blockers.join(' | ')}
                                     </p>
@@ -5223,19 +5018,19 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               </div>
                             )}
                             {lastOrchestration.workstreamHandoff && (
-                              <div className="mt-2 rounded-lg border border-stone-200 bg-stone-100 px-3 py-2">
-                                <p className="text-[10px] font-medium text-stone-700 uppercase tracking-wide">
+                              <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                                <p className="text-[10px] font-medium text-amber-700 uppercase tracking-wide">
                                   Workstream Handoff
                                 </p>
-                                <p className="mt-1 text-[11px] text-stone-900">
+                                <p className="mt-1 text-[11px] text-amber-900">
                                   {lastOrchestration.workstreamHandoff.from.replace(/_/g, ' ')} to{' '}
                                   {lastOrchestration.workstreamHandoff.to.replace(/_/g, ' ')}
                                 </p>
-                                <p className="mt-1 text-[11px] text-stone-800">
+                                <p className="mt-1 text-[11px] text-amber-800">
                                   {lastOrchestration.workstreamHandoff.transitionReason}
                                 </p>
                                 {lastOrchestration.workstreamHandoff.openLoops.length > 0 && (
-                                  <p className="mt-1 text-[11px] text-stone-800">
+                                  <p className="mt-1 text-[11px] text-amber-800">
                                     Open loops:{' '}
                                     {lastOrchestration.workstreamHandoff.openLoops.join(' | ')}
                                   </p>
@@ -5254,18 +5049,18 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             {isThinking && (
               <div className="px-4 py-3 bg-white">
                 <div className="flex gap-2.5 max-w-3xl mx-auto">
-                  <div className="w-6 h-6 rounded-full bg-stone-800 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-full bg-[#D97757] flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Sparkles className="w-3 h-3 text-white" />
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-stone-900">AnA</span>
+                    <span className="text-xs font-semibold text-[#2D2C28]">AnA</span>
                     <div className="flex items-center gap-2 mt-1">
                       <div className="flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-[pulse_1.4s_ease-in-out_infinite]" />
-                        <div className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
-                        <div className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_infinite]" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
                       </div>
-                      <span className="text-xs text-stone-600 font-medium">
+                      <span className="text-xs text-[#D97757] font-medium">
                         {thinkingMsg || 'Thinking...'}
                       </span>
                     </div>
@@ -5279,24 +5074,23 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       </div>
 
       {/* ── Bottom input bar — always visible ── */}
-      <div className="flex-shrink-0 px-4 py-3 border-t border-stone-100 bg-white">
+      <div className="flex-shrink-0 px-4 py-3 border-t border-[#F5F4EF] bg-white">
         <div className="max-w-3xl mx-auto relative">
           {/* Clear conversation button */}
           {hasMessages && (
             <div className="flex justify-center mb-2">
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
                 onClick={() => {
                   setMessages([]);
                   threadIdRef.current = null;
+                  // Keep selection state in sync with cleared local thread context.
                   onThreadChange?.(undefined);
                 }}
-                className="gap-1.5 px-3 h-7 text-xs text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full"
+                className="flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors"
               >
                 <RotateCcw className="w-3 h-3" />
                 New thread
-              </Button>
+              </button>
             </div>
           )}
 
@@ -5304,14 +5098,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           {slashMenuOpen && filteredSlashCommands.length > 0 && (
             <div
               ref={slashMenuRef}
-              className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-stone-100 shadow-sm max-h-[280px] overflow-y-auto z-50"
+              className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-[#E8E6DC] shadow-lg max-h-[280px] overflow-y-auto z-50"
               role="listbox"
               aria-label="Slash commands"
             >
               {filteredSlashCommands.map((cmd, i) => (
-                <Button
+                <button
                   key={cmd.command}
-                  variant="ghost"
                   type="button"
                   role="option"
                   aria-selected={i === slashMenuIndex}
@@ -5321,114 +5114,52 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   }}
                   onMouseEnter={() => setSlashMenuIndex(i)}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3.5 py-2 h-auto text-left justify-start rounded-none',
-                    i === slashMenuIndex ? 'bg-stone-50' : 'hover:bg-stone-50/50'
+                    'w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors',
+                    i === slashMenuIndex ? 'bg-[#FAF9F5]' : 'hover:bg-[#FAF9F5]/50'
                   )}
                 >
-                  <code className="text-xs font-mono font-semibold text-stone-950 min-w-[100px]">
+                  <code className="text-xs font-mono font-semibold text-[#141413] min-w-[100px]">
                     {cmd.command}
                   </code>
-                  <span className="text-xs text-stone-600 flex-1 truncate">{cmd.description}</span>
+                  <span className="text-xs text-[#6B6962] flex-1 truncate">{cmd.description}</span>
                   <span
                     className={cn(
                       'text-[10px] font-medium',
-                      SLASH_CATEGORY_COLORS[cmd.category] || 'text-stone-400'
+                      SLASH_CATEGORY_COLORS[cmd.category] || 'text-zinc-400'
                     )}
                   >
                     {cmd.category}
                   </span>
-                </Button>
-              ))}
-            </div>
-          )}
-          {/* @app mention autocomplete dropdown (full mode) */}
-          {appMenuOpen && filteredApps.length > 0 && (
-            <div
-              ref={appMenuRef}
-              className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-stone-100 shadow-sm max-h-[280px] overflow-y-auto z-50"
-              role="listbox"
-              aria-label="App mentions"
-            >
-              <div className="px-3 py-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-wide">
-                Apps
-              </div>
-              {filteredApps.map((app, idx) => (
-                <Button
-                  key={app.id}
-                  variant="ghost"
-                  type="button"
-                  role="option"
-                  aria-selected={idx === appMenuIndex}
-                  onMouseDown={e => {
-                    e.preventDefault();
-                    selectApp(app);
-                  }}
-                  onMouseEnter={() => setAppMenuIndex(idx)}
-                  className={cn(
-                    'w-full text-left px-3 py-2 h-auto flex items-center gap-3 text-[13px] justify-start rounded-none transition-colors',
-                    idx === appMenuIndex ? 'bg-stone-50 text-stone-900' : 'text-stone-600 hover:bg-stone-50'
-                  )}
-                >
-                  <span className="font-medium text-stone-800">@{app.id}</span>
-                  <span className="text-stone-400 text-[11px] truncate">{app.description}</span>
-                </Button>
+                </button>
               ))}
             </div>
           )}
 
           <div
             className={cn(
-              'relative flex flex-col bg-white border rounded-2xl shadow-sm transition-all duration-200',
+              'flex items-end gap-2 px-3.5 py-2.5 bg-[#FAF9F5] border rounded-2xl transition-colors duration-150',
               isFocused
-                ? 'border-stone-300 ring-2 ring-stone-200/50'
-                : 'border-stone-200 hover:border-stone-300',
-              isDragging && 'border-stone-400 ring-2 ring-stone-200 bg-stone-50/30'
+                ? 'border-[#D8D5CA] ring-2 ring-[#F5F4EF] bg-white shadow-sm'
+                : 'border-[#E8E6DC] hover:border-[#D8D5CA]'
             )}
-            onDragOver={handleDragOver}
-            onDragEnter={handleDragEnter}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
           >
-            {isDragging && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/80 border-2 border-dashed border-stone-400 pointer-events-none">
-                <div className="flex items-center gap-2 text-sm text-stone-600 font-medium">
-                  <Upload className="w-4 h-4" />
-                  Drop files to attach
-                </div>
-              </div>
-            )}
-            {attachedFiles.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 px-4 pt-2.5 pb-0">
-                {attachedFiles.map((file, idx) => (
-                  <div key={`${file.name}-${idx}`} className="flex items-center gap-1.5 px-2 py-1 bg-stone-100 rounded-lg text-[11px] text-stone-600 max-w-[180px]">
-                    <Paperclip className="w-3 h-3 flex-shrink-0 text-stone-400" />
-                    <span className="truncate">{file.name}</span>
-                    <Button variant="ghost" size="icon" type="button" onClick={() => removeAttachedFile(idx)} className="h-4 w-4 flex-shrink-0 text-stone-400 hover:text-stone-600 transition-colors" aria-label={`Remove ${file.name}`}>
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="flex items-end gap-2 px-4 py-3">
             {/* Mode selector — Claude.ai model-picker style */}
             <div className="relative flex-shrink-0 self-center" ref={modeDropdownRef}>
-              <Button
-                variant="ghost"
+              <button
                 type="button"
                 onClick={() => setShowModeDropdown(prev => !prev)}
                 className={cn(
-                  'gap-1 px-2 h-7 text-xs font-medium rounded-lg',
+                  'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
                   chatMode === 'deep-research'
-                    ? 'bg-stone-200 text-stone-800 hover:bg-stone-300'
-                    : chatMode === 'visual-studio'
-                    ? 'bg-stone-100 text-stone-700 hover:bg-stone-100'
-                    : 'text-stone-500 hover:bg-stone-100 hover:text-stone-700'
+                    ? 'bg-[#FBF0EB] text-[#D97757] hover:bg-[#F6E6DF]'
+                    : chatMode === 'nano-banana'
+                    ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                    : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
                 )}
               >
                 {chatMode === 'deep-research' ? (
                   <Zap className="w-3.5 h-3.5" />
-                ) : chatMode === 'visual-studio' ? (
+                ) : chatMode === 'nano-banana' ? (
                   <ImageIcon className="w-3.5 h-3.5" />
                 ) : (
                   <Sparkles className="w-3.5 h-3.5" />
@@ -5436,17 +5167,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <span className="hidden sm:inline">
                   {chatMode === 'deep-research'
                     ? 'Deep Research'
-                    : chatMode === 'visual-studio'
-                    ? 'Visual Studio'
+                    : chatMode === 'nano-banana'
+                    ? 'Nano Banana'
                     : 'AnA'}
                 </span>
                 <ChevronDown className="w-3 h-3 opacity-50" />
-              </Button>
+              </button>
 
               {showModeDropdown && (
-                <div className="absolute bottom-full left-0 mb-1.5 w-56 bg-white rounded-xl border border-stone-100 shadow-sm py-1 z-50">
-                  <Button
-                    variant="ghost"
+                <div className="absolute bottom-full left-0 mb-1.5 w-56 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
+                  <button
                     type="button"
                     onClick={() => {
                       setChatMode('standard');
@@ -5454,104 +5184,102 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       setShowModeDropdown(false);
                     }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 h-auto text-left justify-start rounded-none',
-                      chatMode === 'standard' && 'bg-stone-50'
+                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-[#FAF9F5] transition-colors',
+                      chatMode === 'standard' && 'bg-[#FAF9F5]'
                     )}
                   >
-                    <MessageSquare className="w-4 h-4 mt-0.5 text-stone-500 flex-shrink-0" />
-                    <div className="text-left">
-                      <div className="text-sm font-medium text-stone-950">AnA</div>
-                      <div className="text-[11px] text-stone-400 leading-tight font-normal">
+                    <MessageSquare className="w-4 h-4 mt-0.5 text-[#8A8880] flex-shrink-0" />
+                    <div>
+                      <div className="text-sm font-medium text-[#141413]">AnA</div>
+                      <div className="text-[11px] text-[#B0AEA5] leading-tight">
                         Fast regulatory co-pilot for everyday questions
                       </div>
                     </div>
                     {chatMode === 'standard' && (
-                      <Check className="w-4 h-4 text-stone-700 ml-auto mt-0.5 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />
                     )}
-                  </Button>
-                  <Button
-                    variant="ghost"
+                  </button>
+                  <button
                     type="button"
                     onClick={() => {
                       setChatMode('deep-research');
                       setShowModeDropdown(false);
                     }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 h-auto text-left justify-start rounded-none',
-                      chatMode === 'deep-research' && 'bg-stone-100'
+                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-[#FAF9F5] transition-colors',
+                      chatMode === 'deep-research' && 'bg-[#FBF0EB]'
                     )}
                   >
-                    <Zap className="w-4 h-4 mt-0.5 text-stone-700 flex-shrink-0" />
-                    <div className="text-left">
-                      <div className="text-sm font-medium text-stone-950">Deep Research</div>
-                      <div className="text-[11px] text-stone-400 leading-tight font-normal">
+                    <Zap className="w-4 h-4 mt-0.5 text-[#D97757] flex-shrink-0" />
+                    <div>
+                      <div className="text-sm font-medium text-[#141413]">Deep Research</div>
+                      <div className="text-[11px] text-[#B0AEA5] leading-tight">
                         Multi-source search across ClinicalTrials.gov, PubMed, FDA &amp; more
                       </div>
                     </div>
                     {chatMode === 'deep-research' && (
-                      <Check className="w-4 h-4 text-stone-700 ml-auto mt-0.5 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />
                     )}
-                  </Button>
-                  <div className="mx-2 my-0.5 border-t border-stone-100" />
-                  <Button
-                    variant="ghost"
+                  </button>
+                  <div className="mx-2 my-0.5 border-t border-zinc-100" />
+                  <button
                     type="button"
                     onClick={() => {
-                      setChatMode('visual-studio');
+                      setChatMode('nano-banana');
                       setShowModeDropdown(false);
                     }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 h-auto text-left justify-start rounded-none',
-                      chatMode === 'visual-studio' && 'bg-stone-100'
+                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors',
+                      chatMode === 'nano-banana' && 'bg-amber-50'
                     )}
                   >
-                    <ImageIcon className="w-4 h-4 mt-0.5 text-stone-600 flex-shrink-0" />
-                    <div className="text-left">
-                      <div className="text-sm font-medium text-stone-900">Visual Studio</div>
-                      <div className="text-[11px] text-stone-400 leading-tight font-normal">
-                        Figures, diagrams, presentations &amp; visual assets
+                    <ImageIcon className="w-4 h-4 mt-0.5 text-amber-600 flex-shrink-0" />
+                    <div>
+                      <div className="text-sm font-medium text-zinc-900">Nano Banana</div>
+                      <div className="text-[11px] text-zinc-400 leading-tight">
+                        AI image generation, presentations &amp; visual design via Gemini
                       </div>
                     </div>
-                    {chatMode === 'visual-studio' && (
-                      <Check className="w-4 h-4 text-stone-600 ml-auto mt-0.5 flex-shrink-0" />
+                    {chatMode === 'nano-banana' && (
+                      <Check className="w-4 h-4 text-amber-600 ml-auto mt-0.5 flex-shrink-0" />
                     )}
-                  </Button>
+                  </button>
                 </div>
               )}
             </div>
 
             {/* External tool selector (+) */}
             <div className="relative flex-shrink-0 self-center" ref={toolsDropdownRef}>
-              <Button
-                variant="ghost"
+              <button
                 type="button"
                 onClick={() => setShowToolDropdown(prev => !prev)}
-                className="gap-1 px-2 h-7 text-xs font-medium text-stone-400 hover:bg-stone-100 hover:text-stone-600"
-                aria-label="Add tools"
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]"
+                title="Add tools"
               >
                 <FolderPlus className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Tools</span>
-              </Button>
+              </button>
               {showToolDropdown && (
-                <div className="absolute bottom-full left-0 mb-1.5 w-64 bg-white rounded-xl border border-stone-100 shadow-sm py-1 z-50">
-                  <Button
-                    variant="ghost"
+                <div className="absolute bottom-full left-0 mb-1.5 w-64 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
+                  <button
                     type="button"
-                    disabled={!!firecrawlDisabledReason}
                     onClick={() => {
                       if (firecrawlDisabledReason) return;
                       setUseFirecrawl(v => !v);
                       setShowToolDropdown(false);
                     }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2 h-auto text-left justify-start rounded-none',
-                      useFirecrawl && 'bg-stone-50'
+                      'w-full flex items-start gap-3 px-3 py-2 text-left transition-colors',
+                      firecrawlDisabledReason
+                        ? 'opacity-60 cursor-not-allowed'
+                        : 'hover:bg-[#FAF9F5]',
+                      useFirecrawl && 'bg-[#FAF9F5]'
                     )}
                   >
-                    <Search className="w-4 h-4 mt-0.5 text-stone-700 flex-shrink-0" />
-                    <div className="min-w-0 text-left">
-                      <div className="text-sm font-medium text-stone-950">Use Firecrawl</div>
-                      <div className="text-[10px] text-stone-500 leading-tight font-normal">
+                    <Search className="w-4 h-4 mt-0.5 text-[#D97757] flex-shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-[#141413]">Use Firecrawl</div>
+                      <div className="text-[10px] text-[#8A8880] leading-tight">
                         {firecrawlDisabledReason === 'quota_exhausted'
                           ? 'On but quota exhausted'
                           : firecrawlDisabledReason === 'admin_disabled'
@@ -5561,50 +5289,48 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           : 'Optional governed open-web evidence'}
                       </div>
                     </div>
-                    {useFirecrawl && <Check className="w-4 h-4 text-stone-700 ml-auto mt-0.5" />}
-                  </Button>
+                    {useFirecrawl && <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5" />}
+                  </button>
                 </div>
               )}
             </div>
 
             {/* AI Provider / Model Selector — clean, minimal like Claude.ai */}
             <div className="relative flex-shrink-0 self-center" ref={providerDropdownRef}>
-              <Button
-                variant="ghost"
+              <button
                 type="button"
                 onClick={() => setShowProviderDropdown(prev => !prev)}
                 className={cn(
-                  'gap-1 px-2 h-7 text-xs font-medium rounded-lg',
+                  'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
                   selectedProvider !== 'auto'
-                    ? `bg-stone-100 ${
+                    ? `bg-[#F5F4EF] ${
                         AI_PROVIDERS.find(p => p.id === selectedProvider)?.activeColor ||
-                        'text-stone-700'
-                      } hover:bg-stone-200`
-                    : 'text-stone-400 hover:bg-stone-100 hover:text-stone-600'
+                        'text-[#D97757]'
+                      } hover:bg-[#EDEAE0]`
+                    : 'text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]'
                 )}
-                aria-label="Select AI model"
+                title="Select AI model"
               >
                 <Bot className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">
                   {AI_PROVIDERS.find(p => p.id === selectedProvider)?.label}
                 </span>
                 <ChevronDown className="w-3 h-3 opacity-50" />
-              </Button>
+              </button>
 
               {showProviderDropdown && (
-                <div className="absolute bottom-full left-0 mb-1.5 w-52 bg-white rounded-xl border border-stone-100 shadow-sm py-1 z-50">
+                <div className="absolute bottom-full left-0 mb-1.5 w-52 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
                   {AI_PROVIDERS.map(prov => (
-                    <Button
+                    <button
                       key={prov.id}
-                      variant="ghost"
                       type="button"
                       onClick={() => {
                         setSelectedProvider(prov.id);
                         setShowProviderDropdown(false);
                       }}
                       className={cn(
-                        'w-full flex items-start gap-3 px-3 py-2 h-auto text-left justify-start rounded-none',
-                        selectedProvider === prov.id && 'bg-stone-50'
+                        'w-full flex items-start gap-3 px-3 py-2 text-left hover:bg-[#FAF9F5] transition-colors',
+                        selectedProvider === prov.id && 'bg-[#FAF9F5]'
                       )}
                     >
                       <span
@@ -5615,9 +5341,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       >
                         <Bot className="w-3.5 h-3.5" />
                       </span>
-                      <div className="min-w-0 text-left">
-                        <div className="text-sm font-medium text-stone-950">{prov.label}</div>
-                        <div className="text-[10px] text-stone-400 leading-tight font-normal">
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-[#141413]">{prov.label}</div>
+                        <div className="text-[10px] text-[#B0AEA5] leading-tight">
                           {prov.description}
                         </div>
                       </div>
@@ -5626,7 +5352,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           className={cn('w-4 h-4 ml-auto mt-0.5 flex-shrink-0', prov.activeColor)}
                         />
                       )}
-                    </Button>
+                    </button>
                   ))}
                 </div>
               )}
@@ -5636,18 +5362,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             {/* Queue Status Banner */}
             {conversationQueue.length > 0 && (
               <div className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 border-t border-stone-100 text-[11px] text-stone-500">
-                {activeQueueItemId && <span className="text-stone-600">● Working</span>}
+                {activeQueueItemId && <span className="text-amber-600">● Working</span>}
                 {conversationQueue.filter(i => i.status === 'queued').length > 0 && (
                   <span>Queued: {conversationQueue.filter(i => i.status === 'queued').length}</span>
                 )}
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
                   onClick={() => setConversationQueue([])}
-                  className="ml-auto h-auto py-0 px-1 text-stone-400 hover:text-stone-600"
+                  className="ml-auto text-stone-400 hover:text-stone-600"
                 >
                   Clear
-                </Button>
+                </button>
               </div>
             )}
             <textarea
@@ -5663,103 +5387,88 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               placeholder={
                 chatMode === 'deep-research'
                   ? 'Ask a deep research question...'
-                  : chatMode === 'visual-studio'
-                  ? 'Describe a figure, diagram, or presentation...'
+                  : chatMode === 'nano-banana'
+                  ? 'Describe an image, infographic, or presentation...'
                   : intentLens !== 'auto'
                   ? `Message AnA (${intentLens} lens)...`
-                  : 'Message AnA — type / for commands, @ for apps...'
+                  : 'Message AnA — type / for commands...'
               }
               rows={1}
-              className="flex-1 resize-none bg-transparent border-none outline-none text-stone-950 placeholder:text-stone-400 text-sm leading-6 min-h-[24px] max-h-[120px]"
+              className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
             />
 
             {/* Send */}
-            <Button
-              variant="ghost"
+            <button
               onClick={() => handleSend()}
               disabled={!input.trim() || isThinking}
               className={cn(
-                'flex-shrink-0 p-2 h-auto rounded-full transition-colors duration-150',
+                'flex-shrink-0 p-2 rounded-full transition-colors duration-150',
                 input.trim() && !isThinking
-                  ? 'bg-stone-950 text-white hover:bg-stone-800'
-                  : 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                  ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
+                  : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
               )}
               aria-label="Send message"
             >
               <ArrowUp className="w-4 h-4" />
-            </Button>
+            </button>
           </div>
 
           {useFirecrawl && (
             <div className="mt-1.5 pl-1">
-              <Button
-                variant="ghost"
+              <button
                 type="button"
                 onClick={() => setUseFirecrawl(false)}
-                className="h-auto gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-stone-200 text-stone-700 hover:bg-stone-300"
-                aria-label="Disable Firecrawl"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#FBF0EB] text-[#D97757] hover:bg-[#F6E6DF]"
+                title="Disable Firecrawl for this message"
               >
                 Firecrawl On
-              </Button>
+              </button>
             </div>
           )}
 
-          {/* ── Intent lens strip — progressive disclosure: only when focused ── */}
-          {chatMode === 'standard' && isFocused && (
-            <div className="flex items-center gap-1.5 mt-1.5 pl-1 animate-in fade-in duration-150" ref={lensDropdownRef}>
+          {/* ── Intent lens strip — subtle pills below input (Claude.ai clean) ── */}
+          {chatMode === 'standard' && (
+            <div className="flex items-center gap-1.5 mt-1.5 pl-1" ref={lensDropdownRef}>
               {INTENT_LENSES.map(lens => (
-                <Button
+                <button
                   key={lens.id}
-                  variant="ghost"
                   type="button"
                   onClick={() => setIntentLens(lens.id)}
                   className={cn(
-                    'gap-1 px-2 h-auto py-0.5 rounded-full text-[11px] font-medium',
+                    'flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors',
                     intentLens === lens.id
-                      ? 'bg-stone-200 text-stone-800'
-                      : 'text-stone-400 hover:bg-stone-100 hover:text-stone-600'
+                      ? 'bg-[#FBF0EB] text-[#D97757]'
+                      : 'text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]'
                   )}
-                  aria-label={lens.description}
+                  title={lens.description}
                 >
                   {lens.icon}
                   <span className="hidden sm:inline">{lens.label}</span>
-                </Button>
+                </button>
               ))}
             </div>
           )}
-          {/* Active lens indicator when not focused */}
-          {chatMode === 'standard' && !isFocused && intentLens !== 'auto' && (
-            <div className="flex items-center gap-1.5 mt-1.5 pl-1">
-              <span className="text-[11px] text-stone-700 font-medium">
-                {INTENT_LENSES.find(l => l.id === intentLens)?.icon}
-                {' '}{INTENT_LENSES.find(l => l.id === intentLens)?.label} lens active
-              </span>
-            </div>
-          )}
-          <p className={cn(
-            "mt-1.5 pl-1 text-[11px] text-stone-400 transition-opacity duration-150",
-            isFocused ? "opacity-100" : "opacity-0"
-          )}>
-            Type <span className="font-semibold text-stone-600">/</span> for commands, <span className="font-semibold text-stone-600">@</span> for apps.
+          <p className="mt-1.5 pl-1 text-[11px] text-[#B0AEA5]">
+            Type <span className="font-semibold text-[#6B6962]">/</span> for commands. Use{' '}
+            <span className="font-semibold text-[#6B6962]">↑</span> on an empty input to recall your
+            last prompt.
             {onNavigate ? (
               <>
                 {' '}
-                <Button
-                  variant="link"
+                <button
                   type="button"
                   onClick={() => onNavigate('apps')}
-                  className="h-auto p-0 text-[11px] font-semibold text-stone-600 underline decoration-stone-300 underline-offset-2 hover:text-stone-700"
+                  className="font-semibold text-[#6B6962] underline decoration-[#D8D5CA] underline-offset-2 hover:text-[#4D4B45]"
                 >
-                  All capabilities
-                </Button>
+                  Browse all capabilities
+                </button>
+                .
               </>
             ) : null}
           </p>
         </div>
       </div>
     </div>
-    </div>
-    </TooltipProvider>
   );
 };
 

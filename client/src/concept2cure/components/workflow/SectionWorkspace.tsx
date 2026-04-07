@@ -240,17 +240,17 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                 className={cn(
                   'font-medium',
                   readinessScore >= 70
-                    ? 'text-stone-700'
+                    ? 'text-emerald-600'
                     : readinessScore >= 40
-                      ? 'text-stone-600'
-                      : 'text-stone-700'
+                      ? 'text-amber-600'
+                      : 'text-red-600'
                 )}
               >
                 Readiness: {readinessScore}%
               </SecondaryInfoItem>
             )}
             {isBlocked && (
-              <SecondaryInfoItem className="font-medium text-stone-700">
+              <SecondaryInfoItem className="font-medium text-red-600">
                 Promotion Blocked
               </SecondaryInfoItem>
             )}
@@ -291,14 +291,14 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
       {/* ── Tab content ─────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-auto min-h-0">
         {activeTab === 'editor' && (
-          <div className="p-4 space-y-4">
+          <div className="p-6 space-y-4">
             {/* Section cockpit — status, readiness, and primary action */}
             {onOpenInEditor ? (
               /* Document exists — route to full editor */
-              <div className="rounded-xl border border-stone-200 bg-white p-4">
+              <div className="rounded-xl border border-stone-200 bg-white p-6">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-stone-100 shrink-0">
-                    <PenLine className="h-5 w-5 text-stone-600" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 shrink-0">
+                    <PenLine className="h-5 w-5 text-blue-600" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-semibold text-stone-900 mb-0.5">
@@ -316,7 +316,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
               </div>
             ) : section.status === 'not-started' && onCreateDraft ? (
               /* No document — clean creation decision */
-              <div className="rounded-xl border border-dashed border-stone-200 bg-white/80 p-6 text-center">
+              <div className="rounded-xl border border-dashed border-stone-200 bg-white/80 p-8 text-center">
                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-50">
                   <FilePlus className="h-5 w-5 text-stone-400" />
                 </div>
@@ -333,7 +333,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
               </div>
             ) : (
               /* Section exists but no explicit editor link — guide user */
-              <div className="rounded-xl border border-stone-100 bg-stone-50/50 p-4 text-center">
+              <div className="rounded-xl border border-stone-100 bg-stone-50/50 p-6 text-center">
                 <p className="text-xs text-stone-500">
                   Use the Issues, Evidence, and Versions tabs to review this section.
                   {section.status !== 'locked' && section.status !== 'approved' && (
@@ -351,7 +351,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                   {readinessScore != null && (
                     <span className={cn(
                       'font-semibold',
-                      readinessScore >= 70 ? 'text-stone-700' : readinessScore >= 40 ? 'text-stone-600' : 'text-stone-700'
+                      readinessScore >= 70 ? 'text-emerald-600' : readinessScore >= 40 ? 'text-amber-600' : 'text-red-600'
                     )}>
                       Readiness: {readinessScore}%
                     </span>
@@ -362,7 +362,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                     </span>
                   )}
                   {isBlocked && (
-                    <span className="font-semibold text-stone-700">Promotion blocked</span>
+                    <span className="font-semibold text-red-600">Promotion blocked</span>
                   )}
                 </div>
               </div>
@@ -371,7 +371,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
         )}
 
         {activeTab === 'issues' && (
-          <div className="p-4 space-y-3">
+          <div className="p-6 space-y-3">
             {isLoadingIssues && (
               <div className="flex items-center gap-2 text-xs text-stone-400 py-4">
                 <Spinner size="sm" />
@@ -391,9 +391,9 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                 className={cn(
                   'border rounded-lg p-3',
                   issue.severity === 'critical'
-                    ? 'border-stone-200 bg-stone-100'
+                    ? 'border-red-200 bg-red-50'
                     : issue.severity === 'warning'
-                      ? 'border-stone-200 bg-stone-100'
+                      ? 'border-amber-200 bg-amber-50'
                       : 'border-stone-200 bg-stone-50'
                 )}
               >
@@ -402,9 +402,9 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                     className={cn(
                       'text-[10px] font-bold uppercase px-1.5 py-0.5 rounded',
                       issue.severity === 'critical'
-                        ? 'bg-stone-200 text-stone-800'
+                        ? 'bg-red-200 text-red-800'
                         : issue.severity === 'warning'
-                          ? 'bg-stone-200 text-stone-800'
+                          ? 'bg-amber-200 text-amber-800'
                           : 'bg-stone-200 text-stone-700'
                     )}
                   >
@@ -426,7 +426,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                     <XCircle
                       className={cn(
                         'w-3.5 h-3.5 mt-0.5 flex-shrink-0',
-                        b.severity === 'critical' ? 'text-stone-900' : 'text-stone-900'
+                        b.severity === 'critical' ? 'text-red-500' : 'text-amber-500'
                       )}
                     />
                     <div>
@@ -443,7 +443,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
         )}
 
         {activeTab === 'evidence' && (
-          <div className="p-4 space-y-3">
+          <div className="p-6 space-y-3">
             {evidence.length === 0 && (
               <EmptyState
                 title="No evidence linked yet"
@@ -470,7 +470,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
         )}
 
         {activeTab === 'versions' && (
-          <div className="p-4 space-y-3">
+          <div className="p-6 space-y-3">
             {versions.length === 0 && (
               <EmptyState
                 title="No versions yet"

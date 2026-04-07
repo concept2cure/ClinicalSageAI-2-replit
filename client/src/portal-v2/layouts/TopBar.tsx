@@ -54,13 +54,13 @@ import type { Notification } from '../core/portalTypes';
 
 // Notification icon mapping
 const notificationIcons: Record<Notification['type'], React.ReactNode> = {
-  info: <Info className="h-4 w-4 text-stone-900" />,
-  success: <CheckCircle className="h-4 w-4 text-stone-900" />,
-  warning: <AlertTriangle className="h-4 w-4 text-stone-900" />,
-  error: <AlertTriangle className="h-4 w-4 text-stone-900" />,
-  task: <Clock className="h-4 w-4 text-stone-900" />,
-  document: <FileText className="h-4 w-4 text-stone-900" />,
-  system: <Zap className="h-4 w-4 text-stone-500" />,
+  info: <Info className="h-4 w-4 text-blue-500" />,
+  success: <CheckCircle className="h-4 w-4 text-green-500" />,
+  warning: <AlertTriangle className="h-4 w-4 text-yellow-500" />,
+  error: <AlertTriangle className="h-4 w-4 text-red-500" />,
+  task: <Clock className="h-4 w-4 text-purple-500" />,
+  document: <FileText className="h-4 w-4 text-indigo-500" />,
+  system: <Zap className="h-4 w-4 text-gray-500" />,
 };
 
 interface TopBarProps {
@@ -172,12 +172,12 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuToggle, showMenuButton = f
 
         {/* Organization badge */}
         <div className="flex items-center gap-3">
-          <div className="hidden rounded-md bg-gradient-to-br from-stone-900 to-stone-600 p-2 text-white sm:block">
+          <div className="hidden rounded-md bg-gradient-to-br from-blue-500 to-indigo-600 p-2 text-white sm:block">
             <Building className="h-5 w-5" />
           </div>
           <div className="hidden md:block">
             <div className="text-xs text-muted-foreground">Current Organization</div>
-            <div className="text-sm font-semibold text-stone-900">{orgName}</div>
+            <div className="text-sm font-semibold text-gray-900">{orgName}</div>
           </div>
         </div>
 
@@ -193,7 +193,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuToggle, showMenuButton = f
             <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="cursor-pointer">
-              <CheckCircle className="mr-2 h-4 w-4 text-stone-900" />
+              <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
               {clientName}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -220,7 +220,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuToggle, showMenuButton = f
                 className="w-full pl-10 pr-20"
               />
               <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
-                <kbd className="hidden rounded bg-stone-100 px-1.5 py-0.5 text-xs text-stone-500 sm:inline">
+                <kbd className="hidden rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 sm:inline">
                   ESC
                 </kbd>
                 <Button
@@ -245,7 +245,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuToggle, showMenuButton = f
             >
               <Search className="h-4 w-4" />
               <span className="hidden sm:inline">Search...</span>
-              <kbd className="ml-auto hidden rounded bg-stone-100 px-1.5 py-0.5 text-xs sm:inline">
+              <kbd className="ml-auto hidden rounded bg-gray-100 px-1.5 py-0.5 text-xs sm:inline">
                 ⌘K
               </kbd>
             </Button>
@@ -284,7 +284,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuToggle, showMenuButton = f
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-stone-900 text-xs font-medium text-white">
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-medium text-white">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
@@ -297,7 +297,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuToggle, showMenuButton = f
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-xs text-stone-600 hover:text-stone-700"
+                  className="text-xs text-blue-600 hover:text-blue-700"
                   onClick={() => markAllAsRead()}
                 >
                   Mark all as read
@@ -307,15 +307,15 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuToggle, showMenuButton = f
             <div className="max-h-80 overflow-y-auto">
               {notifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <Bell className="h-8 w-8 text-stone-300" />
+                  <Bell className="h-8 w-8 text-gray-300" />
                   <p className="mt-2 text-sm text-muted-foreground">No notifications yet</p>
                 </div>
               ) : (
                 notifications.slice(0, 10).map(notification => (
                   <button
                     key={notification.id}
-                    className={`flex w-full gap-3 border-b p-3 text-left transition-colors hover:bg-stone-50 ${
-                      !notification.read ? 'bg-stone-100/50' : ''
+                    className={`flex w-full gap-3 border-b p-3 text-left transition-colors hover:bg-gray-50 ${
+                      !notification.read ? 'bg-blue-50/50' : ''
                     }`}
                     onClick={() => handleNotificationClick(notification)}
                   >
@@ -327,12 +327,12 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuToggle, showMenuButton = f
                       <p className="mt-0.5 truncate text-xs text-muted-foreground">
                         {notification.message}
                       </p>
-                      <p className="mt-1 text-xs text-stone-400">
+                      <p className="mt-1 text-xs text-gray-400">
                         {formatTimestamp(notification.timestamp)}
                       </p>
                     </div>
                     {!notification.read && (
-                      <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-stone-900" />
+                      <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
                     )}
                   </button>
                 ))
@@ -367,7 +367,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuToggle, showMenuButton = f
         <Button
           variant="ghost"
           size="icon"
-          className="hidden text-stone-600 hover:bg-stone-100 hover:text-stone-700 sm:flex"
+          className="hidden text-purple-600 hover:bg-purple-50 hover:text-purple-700 sm:flex"
           onClick={() => setLocation('/client-portal/ai-assistant')}
         >
           <MessageSquare className="h-5 w-5" />
@@ -377,7 +377,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuToggle, showMenuButton = f
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="gap-2 pl-2 pr-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-stone-900 to-stone-600 text-sm font-medium text-white">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-medium text-white">
                 {user?.name?.charAt(0) || 'U'}
               </div>
               <div className="hidden text-left md:block">
@@ -452,7 +452,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuToggle, showMenuButton = f
                 <DropdownMenuSeparator />
               </>
             )}
-            <DropdownMenuItem className="cursor-pointer text-stone-700 focus:bg-stone-100 focus:text-stone-700">
+            <DropdownMenuItem className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-600">
               <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>

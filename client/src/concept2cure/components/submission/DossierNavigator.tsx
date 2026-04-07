@@ -303,7 +303,7 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
     <div
       className={cn(
         'group flex items-center gap-2 py-1.5 px-2 rounded-lg cursor-pointer transition-colors duration-150',
-        isSelected ? 'bg-stone-100' : 'hover:bg-stone-50',
+        isSelected ? 'bg-blue-50' : 'hover:bg-stone-50',
         level > 0 && 'ml-4'
       )}
     >
@@ -330,12 +330,12 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
       <div onClick={onSelect} className="flex-1 flex items-center gap-2 min-w-0">
         {node.type === 'module' || node.type === 'section' ? (
           isExpanded ? (
-            <FolderOpen className="w-4 h-4 text-stone-900 flex-shrink-0" />
+            <FolderOpen className="w-4 h-4 text-amber-500 flex-shrink-0" />
           ) : (
-            <Folder className="w-4 h-4 text-stone-900 flex-shrink-0" />
+            <Folder className="w-4 h-4 text-amber-500 flex-shrink-0" />
           )
         ) : (
-          <FileText className="w-4 h-4 text-stone-900 flex-shrink-0" />
+          <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
         )}
 
         {/* Name */}
@@ -369,10 +369,10 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
         {node.type === 'subsection' && onCreateArtifact && (
           <button
             onClick={(e) => { e.stopPropagation(); onCreateArtifact(node.id, node.name); }}
-            className="p-1 hover:bg-stone-100 rounded"
+            className="p-1 hover:bg-blue-100 rounded"
             title="Create draft with AI"
           >
-            <Plus className="w-3.5 h-3.5 text-stone-900" />
+            <Plus className="w-3.5 h-3.5 text-blue-500" />
           </button>
         )}
         {node.type === 'subsection' && onUpload && (
@@ -421,11 +421,11 @@ const ModuleHeader: React.FC<{
       <div
         className={cn(
           'w-10 h-10 rounded-lg flex items-center justify-center text-lg font-semibold flex-shrink-0',
-          moduleId === '1' && 'bg-stone-100 text-stone-700',
-          moduleId === '2' && 'bg-stone-100 text-stone-700',
-          moduleId === '3' && 'bg-stone-100 text-stone-800',
-          moduleId === '4' && 'bg-stone-100 text-stone-700',
-          moduleId === '5' && 'bg-stone-200 text-stone-700'
+          moduleId === '1' && 'bg-blue-100 text-stone-700',
+          moduleId === '2' && 'bg-blue-100 text-stone-700',
+          moduleId === '3' && 'bg-emerald-100 text-emerald-700',
+          moduleId === '4' && 'bg-amber-100 text-amber-700',
+          moduleId === '5' && 'bg-pink-100 text-pink-700'
         )}
       >
         {moduleId}
@@ -450,9 +450,9 @@ const ModuleHeader: React.FC<{
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-150',
-                progressPercent === 100 && 'bg-stone-900',
+                progressPercent === 100 && 'bg-emerald-500',
                 progressPercent >= 50 && progressPercent < 100 && 'bg-stone-600',
-                progressPercent < 50 && 'bg-stone-900'
+                progressPercent < 50 && 'bg-amber-500'
               )}
               style={{ width: `${progressPercent}%` }}
             />
@@ -557,10 +557,10 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
             <div
               className={cn(
                 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium',
-                dossier.status.overall === 'drafting' && 'bg-stone-100 text-stone-700',
-                dossier.status.overall === 'internal_review' && 'bg-stone-100 text-stone-700',
-                dossier.status.overall === 'qc' && 'bg-stone-100 text-stone-700',
-                dossier.status.overall === 'ready' && 'bg-stone-100 text-stone-800',
+                dossier.status.overall === 'drafting' && 'bg-blue-100 text-stone-700',
+                dossier.status.overall === 'internal_review' && 'bg-amber-100 text-amber-700',
+                dossier.status.overall === 'qc' && 'bg-blue-100 text-stone-700',
+                dossier.status.overall === 'ready' && 'bg-emerald-100 text-emerald-700',
                 dossier.status.overall === 'submitted' && 'bg-stone-100 text-stone-700'
               )}
             >
@@ -705,15 +705,15 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                                   <div
                                     key={art.id}
                                     onClick={() => onOpenArtifact?.(art.id)}
-                                    className="ml-12 flex items-center gap-2 py-1 px-2 text-xs text-stone-600 hover:bg-stone-100 rounded cursor-pointer group"
+                                    className="ml-12 flex items-center gap-2 py-1 px-2 text-xs text-stone-600 hover:bg-blue-50 rounded cursor-pointer group"
                                   >
-                                    <FileText className="w-3 h-3 text-stone-400" />
+                                    <FileText className="w-3 h-3 text-blue-400" />
                                     <span className="truncate flex-1">{art.title}</span>
                                     <span className={cn(
                                       'px-1.5 py-0.5 rounded text-xs font-medium',
-                                      art.status === 'draft' && 'bg-stone-100 text-stone-600',
-                                      art.status === 'review' && 'bg-stone-100 text-stone-600',
-                                      (art.status === 'approved' || art.status === 'locked') && 'bg-stone-100 text-stone-700',
+                                      art.status === 'draft' && 'bg-blue-50 text-blue-600',
+                                      art.status === 'review' && 'bg-amber-50 text-amber-600',
+                                      (art.status === 'approved' || art.status === 'locked') && 'bg-emerald-50 text-emerald-600',
                                     )}>
                                       {art.status}
                                     </span>

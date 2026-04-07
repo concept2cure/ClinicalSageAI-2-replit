@@ -56,38 +56,38 @@ const artifactTypeConfig: Record<
   ArtifactType,
   { icon: React.ElementType; label: string; color: string }
 > = {
-  cover_letter: { icon: FileText, label: 'Cover Letter', color: 'text-stone-600' },
-  device_description: { icon: FileText, label: 'Device Description', color: 'text-stone-600' },
-  ifu_statement: { icon: FileText, label: 'IFU Statement', color: 'text-stone-600' },
-  clinical_summary: { icon: FileText, label: 'Clinical Summary', color: 'text-stone-600' },
-  se_summary: { icon: FileText, label: 'SE Summary', color: 'text-stone-600' },
-  performance_summary: { icon: FileText, label: 'Performance Summary', color: 'text-stone-600' },
-  labeling: { icon: FileText, label: 'Labeling', color: 'text-stone-600' },
-  user_manual: { icon: FileText, label: 'User Manual', color: 'text-stone-600' },
+  cover_letter: { icon: FileText, label: 'Cover Letter', color: 'text-blue-600' },
+  device_description: { icon: FileText, label: 'Device Description', color: 'text-blue-600' },
+  ifu_statement: { icon: FileText, label: 'IFU Statement', color: 'text-blue-600' },
+  clinical_summary: { icon: FileText, label: 'Clinical Summary', color: 'text-blue-600' },
+  se_summary: { icon: FileText, label: 'SE Summary', color: 'text-blue-600' },
+  performance_summary: { icon: FileText, label: 'Performance Summary', color: 'text-blue-600' },
+  labeling: { icon: FileText, label: 'Labeling', color: 'text-blue-600' },
+  user_manual: { icon: FileText, label: 'User Manual', color: 'text-blue-600' },
   biocompatibility_summary: {
     icon: FileText,
     label: 'Biocompatibility Summary',
-    color: 'text-stone-600',
+    color: 'text-blue-600',
   },
   software_documentation: {
     icon: FileText,
     label: 'Software Documentation',
-    color: 'text-stone-600',
+    color: 'text-blue-600',
   },
-  pyramid_gantt: { icon: BarChart3, label: 'Pyramid Gantt', color: 'text-stone-600' },
-  risk_heatmap: { icon: BarChart3, label: 'Risk Heatmap', color: 'text-stone-700' },
-  traceability_matrix: { icon: Table2, label: 'Traceability Matrix', color: 'text-stone-700' },
-  protocol_designer: { icon: Workflow, label: 'Protocol Designer', color: 'text-stone-600' },
-  ifu_checker: { icon: Workflow, label: 'IFU Checker', color: 'text-stone-600' },
-  predicate_search: { icon: Workflow, label: 'Predicate Search', color: 'text-stone-600' },
-  timeline_planner: { icon: Workflow, label: 'Timeline Planner', color: 'text-stone-600' },
-  knowledge_graph: { icon: Network, label: 'Knowledge Graph', color: 'text-stone-600' },
+  pyramid_gantt: { icon: BarChart3, label: 'Pyramid Gantt', color: 'text-purple-600' },
+  risk_heatmap: { icon: BarChart3, label: 'Risk Heatmap', color: 'text-red-600' },
+  traceability_matrix: { icon: Table2, label: 'Traceability Matrix', color: 'text-green-600' },
+  protocol_designer: { icon: Workflow, label: 'Protocol Designer', color: 'text-orange-600' },
+  ifu_checker: { icon: Workflow, label: 'IFU Checker', color: 'text-cyan-600' },
+  predicate_search: { icon: Workflow, label: 'Predicate Search', color: 'text-blue-600' },
+  timeline_planner: { icon: Workflow, label: 'Timeline Planner', color: 'text-pink-600' },
+  knowledge_graph: { icon: Network, label: 'Knowledge Graph', color: 'text-violet-600' },
   compliance_dashboard: {
     icon: BarChart3,
     label: 'Compliance Dashboard',
-    color: 'text-stone-700',
+    color: 'text-emerald-600',
   },
-  submission_progress: { icon: BarChart3, label: 'Submission Progress', color: 'text-stone-600' },
+  submission_progress: { icon: BarChart3, label: 'Submission Progress', color: 'text-sky-600' },
   document: { icon: FileText, label: 'Document', color: 'text-stone-600' },
   code: { icon: FileText, label: 'Code', color: 'text-stone-600' },
   table: { icon: Table2, label: 'Table', color: 'text-stone-600' },
@@ -151,10 +151,10 @@ const InteractiveArtifact: React.FC<InteractiveArtifactProps> = ({ type, content
                 className={cn(
                   'w-3 h-3 rounded-full',
                   risk.severity > 0.7
-                    ? 'bg-stone-900'
+                    ? 'bg-red-500'
                     : risk.severity > 0.4
-                      ? 'bg-stone-900'
-                      : 'bg-stone-900'
+                      ? 'bg-yellow-500'
+                      : 'bg-green-500'
                 )}
               />
               <div className="flex-1">
@@ -201,7 +201,7 @@ const VersionHistory: React.FC<VersionHistoryProps> = ({ artifact, onSelectVersi
             className={cn(
               'w-full p-3 text-left rounded-lg border transition-colors duration-150',
               version.version === artifact.version
-                ? 'border-stone-300 bg-stone-100'
+                ? 'border-blue-300 bg-blue-50'
                 : 'border-stone-200 hover:bg-stone-50'
             )}
           >
@@ -369,7 +369,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
                     className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg"
                   >
                     {copied ? (
-                      <Check className="h-4 w-4 text-stone-900" />
+                      <Check className="h-4 w-4 text-green-500" />
                     ) : (
                       <Copy className="h-4 w-4" />
                     )}

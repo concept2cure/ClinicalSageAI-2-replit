@@ -506,7 +506,7 @@ export default function ClinicalEvidenceTracker() {
                         <Link2 className="h-3 w-3" />
                         <span className="max-w-[200px] truncate">{doc}</span>
                         <button
-                          className="ml-1 hover:text-stone-900"
+                          className="ml-1 hover:text-red-500"
                           onClick={() => setNewSourceDocs(prev => prev.filter((_, i) => i !== idx))}
                         >
                           <X className="h-3 w-3" />
@@ -557,7 +557,7 @@ export default function ClinicalEvidenceTracker() {
                     </span>
                     <Badge
                       variant={r.status === 'completed' ? 'default' : 'outline'}
-                      className={r.status === 'completed' ? 'bg-stone-700' : ''}
+                      className={r.status === 'completed' ? 'bg-green-600' : ''}
                     >
                       {r.status}
                     </Badge>
@@ -566,7 +566,7 @@ export default function ClinicalEvidenceTracker() {
                     {STUDY_TYPES.find(s => s.value === r.study_type)?.label || r.study_type}
                   </p>
                   {r.registry_id && (
-                    <p className="text-xs text-stone-600 mt-1 flex items-center gap-1">
+                    <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
                       <ExternalLink className="h-3 w-3" />
                       {r.registry_id}
                     </p>
@@ -656,22 +656,22 @@ export default function ClinicalEvidenceTracker() {
                             <th className="border border-stone-300 p-3 bg-muted/50 font-semibold">
                               Index Test
                             </th>
-                            <th className="border border-stone-300 p-3 bg-stone-100 font-medium text-center w-[160px]">
+                            <th className="border border-stone-300 p-3 bg-green-50 font-medium text-center w-[160px]">
                               Condition +
                             </th>
-                            <th className="border border-stone-300 p-3 bg-stone-100 font-medium text-center w-[160px]">
+                            <th className="border border-stone-300 p-3 bg-red-50 font-medium text-center w-[160px]">
                               Condition −
                             </th>
                           </tr>
                         </thead>
                         <tbody>
                           <tr>
-                            <td className="border border-stone-300 p-3 bg-stone-100 font-medium">
+                            <td className="border border-stone-300 p-3 bg-green-50 font-medium">
                               Test +
                             </td>
-                            <td className="border border-stone-300 p-2 bg-stone-100/50">
+                            <td className="border border-stone-300 p-2 bg-green-50/50">
                               <div className="text-center">
-                                <Label className="text-xs text-stone-800 font-semibold">
+                                <Label className="text-xs text-green-700 font-semibold">
                                   True Positive (TP)
                                 </Label>
                                 <Input
@@ -688,9 +688,9 @@ export default function ClinicalEvidenceTracker() {
                                 />
                               </div>
                             </td>
-                            <td className="border border-stone-300 p-2 bg-stone-100/30">
+                            <td className="border border-stone-300 p-2 bg-red-50/30">
                               <div className="text-center">
-                                <Label className="text-xs text-stone-800 font-semibold">
+                                <Label className="text-xs text-red-700 font-semibold">
                                   False Positive (FP)
                                 </Label>
                                 <Input
@@ -709,12 +709,12 @@ export default function ClinicalEvidenceTracker() {
                             </td>
                           </tr>
                           <tr>
-                            <td className="border border-stone-300 p-3 bg-stone-100 font-medium">
+                            <td className="border border-stone-300 p-3 bg-red-50 font-medium">
                               Test −
                             </td>
-                            <td className="border border-stone-300 p-2 bg-stone-100/30">
+                            <td className="border border-stone-300 p-2 bg-red-50/30">
                               <div className="text-center">
-                                <Label className="text-xs text-stone-800 font-semibold">
+                                <Label className="text-xs text-red-700 font-semibold">
                                   False Negative (FN)
                                 </Label>
                                 <Input
@@ -731,9 +731,9 @@ export default function ClinicalEvidenceTracker() {
                                 />
                               </div>
                             </td>
-                            <td className="border border-stone-300 p-2 bg-stone-100/50">
+                            <td className="border border-stone-300 p-2 bg-green-50/50">
                               <div className="text-center">
-                                <Label className="text-xs text-stone-800 font-semibold">
+                                <Label className="text-xs text-green-700 font-semibold">
                                   True Negative (TN)
                                 </Label>
                                 <Input
@@ -820,7 +820,7 @@ export default function ClinicalEvidenceTracker() {
 
                   {metrics.total === 0 ? (
                     <div className="p-4 border rounded-lg bg-muted/20 text-center text-sm text-muted-foreground">
-                      <AlertTriangle className="h-5 w-5 mx-auto mb-2 text-stone-900" />
+                      <AlertTriangle className="h-5 w-5 mx-auto mb-2 text-amber-500" />
                       Enter 2×2 contingency table data to calculate performance metrics.
                     </div>
                   ) : (
@@ -1054,7 +1054,7 @@ export default function ClinicalEvidenceTracker() {
                             <Link2 className="h-3 w-3" />
                             <span className="max-w-[250px] truncate">{doc}</span>
                             <button
-                              className="ml-1 hover:text-stone-900"
+                              className="ml-1 hover:text-red-500"
                               onClick={() =>
                                 setSourceDocUrls(prev => prev.filter((_, i) => i !== idx))
                               }

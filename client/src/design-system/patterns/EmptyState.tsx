@@ -76,7 +76,7 @@ const DefaultIllustration: React.FC<{ icon?: LucideIcon }> = ({ icon: Icon = Inb
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.4, delay: 0.3, type: 'spring', stiffness: 200 }}
     >
-      <div className="w-16 h-16 rounded-2xl bg-white shadow-sm shadow-primary-500/10 flex items-center justify-center">
+      <div className="w-16 h-16 rounded-2xl bg-white shadow-lg shadow-primary-500/10 flex items-center justify-center">
         <Icon className="w-8 h-8 text-primary-600" />
       </div>
     </motion.div>

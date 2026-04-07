@@ -53,20 +53,20 @@ export const zenColors = {
   // ACCENT - Single brand color family (like Claude's orange-brown)
   // ─────────────────────────────────────────────────────────────────────────────
   accent: {
-    DEFAULT: '#292524',     // Primary action - stone-800 (dark, restrained)
-    hover: '#1c1917',       // Hover state - stone-900
-    muted: '#f5f5f4',       // Light background tint - stone-100
-    subtle: '#fafaf9',      // Very light tint - stone-50
+    DEFAULT: '#d97757',     // Primary action - warm terracotta (Claude-inspired)
+    hover: '#c15f3c',       // Hover state
+    muted: '#FDE8E0',       // Light warm background tint
+    subtle: '#FFF5F2',      // Very light warm tint
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
   // AI - Special color for AnA AI persona (like Claude's warm tones)
   // ─────────────────────────────────────────────────────────────────────────────
   ai: {
-    DEFAULT: '#57534e',     // Stone-600 - AI/assistant identity
-    hover: '#44403c',       // Stone-700
-    muted: '#f5f5f4',       // Stone-100
-    glow: 'rgba(41, 37, 36, 0.08)',
+    DEFAULT: '#6a9bcc',     // Violet - AI/assistant identity
+    hover: '#5585b3',
+    muted: '#EDE9FE',
+    glow: 'rgba(139, 92, 246, 0.1)',
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -89,7 +89,7 @@ export const zenColors = {
   border: {
     DEFAULT: '#E4E4E7',     // Standard border - stone-200
     subtle: '#F4F4F5',      // Very light border - stone-100
-    focus: '#a8a29e',       // Focus ring - stone-400
+    focus: '#d97757',       // Focus ring
   },
 } as const;
 
@@ -128,7 +128,7 @@ export const zenSpacing = {
 export const zenTypography = {
   // Font families - system fonts for performance and native feel
   fontFamily: {
-    sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    sans: '-apple-system, BlinkMacSystemFont, "Poppins", Roboto, "Helvetica Neue", Arial, sans-serif',
     mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace',
   },
 
@@ -173,7 +173,7 @@ export const zenShadows = {
   md: '0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
   lg: '0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05)',
   xl: '0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05)',
-  glow: '0 0 20px rgb(41 37 36 / 0.08)', // Focus glow (stone-800)
+  glow: '0 0 20px rgb(217 119 87 / 0.1)', // Focus glow (warm accent)
 } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -397,9 +397,9 @@ export const zenClasses = {
   buttonPrimary: 'bg-stone-800 text-white hover:bg-stone-900 shadow-sm px-4 py-2 text-sm',
   buttonSecondary: 'bg-white text-stone-700 border border-stone-200 hover:bg-stone-50 hover:border-stone-300 px-4 py-2 text-sm',
   buttonGhost: 'text-stone-600 hover:text-stone-900 hover:bg-stone-100 px-3 py-2 text-sm',
-  buttonDanger: 'bg-stone-700 text-white hover:bg-stone-800 shadow-sm px-4 py-2 text-sm',
-  buttonSuccess: 'bg-stone-700 text-white hover:bg-stone-800 shadow-sm px-4 py-2 text-sm',
-  buttonWarning: 'bg-stone-900 text-white hover:bg-stone-600 shadow-sm px-4 py-2 text-sm',
+  buttonDanger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm px-4 py-2 text-sm',
+  buttonSuccess: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm px-4 py-2 text-sm',
+  buttonWarning: 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm px-4 py-2 text-sm',
   buttonIcon: 'p-2 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded-lg',
   // Size modifiers (combine with variant)
   buttonSm: 'px-3 py-1.5 text-xs gap-1.5',
@@ -408,7 +408,7 @@ export const zenClasses = {
   // ─── Cards ───────────────────────────────────────────────────────────────────
   // RULE: rounded-xl, border-stone-200, shadow-sm. Never rounded-2xl or border-2.
   card: 'bg-white rounded-xl border border-stone-200 shadow-sm',
-  cardHover: 'bg-white rounded-xl border border-stone-200 shadow-sm hover:shadow-sm hover:border-stone-300 transition-all duration-150 cursor-pointer',
+  cardHover: 'bg-white rounded-xl border border-stone-200 shadow-sm hover:shadow-md hover:border-stone-300 transition-all duration-150 cursor-pointer',
   cardPadding: 'p-5',
   cardSection: 'px-5 py-4 border-t border-stone-100',
   cardSectionMuted: 'px-5 py-4 border-t border-stone-100 bg-stone-50',

@@ -467,17 +467,17 @@ const STATUS_CONFIG: Record<
   draft: { label: 'Draft', color: 'bg-stone-100 text-stone-700', icon: <File className="w-4 h-4" /> },
   in_review: {
     label: 'In Review',
-    color: 'bg-stone-100 text-stone-700',
+    color: 'bg-yellow-100 text-yellow-700',
     icon: <Clock className="w-4 h-4" />,
   },
   approved: {
     label: 'Approved',
-    color: 'bg-stone-100 text-stone-800',
+    color: 'bg-green-100 text-green-700',
     icon: <CheckCircle2 className="w-4 h-4" />,
   },
   pending: {
     label: 'Pending',
-    color: 'bg-stone-100 text-stone-700',
+    color: 'bg-blue-100 text-stone-700',
     icon: <Clock className="w-4 h-4" />,
   },
   not_applicable: {
@@ -487,7 +487,7 @@ const STATUS_CONFIG: Record<
   },
   not_started: {
     label: 'Not Started',
-    color: 'bg-stone-100 text-stone-700',
+    color: 'bg-red-50 text-red-600',
     icon: <AlertCircle className="w-4 h-4" />,
   },
 };
@@ -564,16 +564,16 @@ function SectionNode({
 
           {hasChildren || hasDocuments ? (
             isOpen ? (
-              <FolderOpen className="h-4 w-4 text-stone-900" />
+              <FolderOpen className="h-4 w-4 text-blue-500" />
             ) : (
-              <Folder className="h-4 w-4 text-stone-900" />
+              <Folder className="h-4 w-4 text-blue-500" />
             )
           ) : (
             <File className="h-4 w-4 text-stone-400" />
           )}
 
           <span
-            className="flex-1 text-sm cursor-pointer hover:text-stone-600"
+            className="flex-1 text-sm cursor-pointer hover:text-blue-600"
             onClick={() => onSelect(section)}
           >
             {section.title}
@@ -582,12 +582,12 @@ function SectionNode({
           {counts.total > 0 && (
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               {counts.approved > 0 && (
-                <Badge variant="outline" className="text-xs bg-stone-100 text-stone-800">
+                <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
                   {counts.approved} ✓
                 </Badge>
               )}
               {counts.inReview > 0 && (
-                <Badge variant="outline" className="text-xs bg-stone-100 text-stone-700">
+                <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700">
                   {counts.inReview} 👁
                 </Badge>
               )}
@@ -626,7 +626,7 @@ function SectionDetail({ section }: { section: eCTDSection }) {
     <div className="border border-border/40 rounded-sm bg-background">
       <div className="px-3 py-2 border-b border-border/30">
         <h3 className="text-sm font-semibold flex items-center gap-2">
-          <Folder className="w-5 h-5 text-stone-900" />
+          <Folder className="w-5 h-5 text-blue-500" />
           {section.title}
         </h3>
         {section.description && <p className="text-xs text-muted-foreground mt-0.5">{section.description}</p>}
@@ -651,7 +651,7 @@ function SectionDetail({ section }: { section: eCTDSection }) {
                   <TableRow key={doc.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-stone-900" />
+                        <FileText className="w-4 h-4 text-blue-500" />
                         <span className="font-medium">{doc.title}</span>
                       </div>
                     </TableCell>
@@ -719,17 +719,17 @@ function SubmissionSequences({ sequences }: { sequences: SubmissionSequence[] })
             key={seq.id}
             className={`border border-border/40 rounded-sm bg-background ${
               seq.status === 'submitted'
-                ? 'border-stone-200'
+                ? 'border-green-200'
                 : seq.status === 'ready'
-                  ? 'border-stone-200'
+                  ? 'border-blue-200'
                   : ''
             }`}
           >
             <div className="px-3 py-2 p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-stone-100 rounded-lg">
-                    <Package className="w-5 h-5 text-stone-600" />
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Package className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
                     <h4 className="font-semibold flex items-center gap-2">
@@ -941,14 +941,14 @@ export function ECTDNavigator() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-base font-semibold flex items-center gap-3">
-            <Package className="w-8 h-8 text-stone-600" />
+            <Package className="w-8 h-8 text-blue-600" />
             eCTD Navigator
           </h1>
           <p className="text-muted-foreground">
             Electronic Common Technical Document structure and management
           </p>
           {activeProject && (
-            <p className="text-xs text-stone-700 flex items-center gap-1 mt-1">
+            <p className="text-xs text-emerald-600 flex items-center gap-1 mt-1">
               <CheckCircle2 className="w-3 h-3" />
               Live data from: {activeProject.name}
             </p>
@@ -984,7 +984,7 @@ export function ECTDNavigator() {
                 <p className="text-sm text-muted-foreground">Total Documents</p>
                 <p className="text-base font-semibold">{overallStats.total}</p>
               </div>
-              <FileText className="w-8 h-8 text-stone-900" />
+              <FileText className="w-8 h-8 text-blue-500" />
             </div>
           </div>
         </div>
@@ -993,9 +993,9 @@ export function ECTDNavigator() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Approved</p>
-                <p className="text-base font-semibold text-stone-700">{overallStats.approved}</p>
+                <p className="text-base font-semibold text-green-600">{overallStats.approved}</p>
               </div>
-              <CheckCircle2 className="w-8 h-8 text-stone-900" />
+              <CheckCircle2 className="w-8 h-8 text-green-500" />
             </div>
           </div>
         </div>
@@ -1004,9 +1004,9 @@ export function ECTDNavigator() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">In Review</p>
-                <p className="text-base font-semibold text-stone-600">{overallStats.inReview}</p>
+                <p className="text-base font-semibold text-yellow-600">{overallStats.inReview}</p>
               </div>
-              <Clock className="w-8 h-8 text-stone-900" />
+              <Clock className="w-8 h-8 text-yellow-500" />
             </div>
           </div>
         </div>
@@ -1099,23 +1099,23 @@ export function ECTDNavigator() {
       </Tabs>
 
       {/* RI Assistance */}
-      <div className="border border-border/40 rounded-sm bg-background border-stone-200 bg-stone-50">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-stone-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-stone-200 rounded-full">
-              <Sparkles className="w-6 h-6 text-stone-600" />
+            <div className="p-3 bg-purple-100 rounded-full">
+              <Sparkles className="w-6 h-6 text-purple-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-stone-900">RI eCTD Assistant</h3>
-              <p className="text-sm text-stone-700">
+              <h3 className="font-semibold text-purple-900">RI eCTD Assistant</h3>
+              <p className="text-sm text-purple-700">
                 Validate eCTD structure, identify missing documents, generate section templates, and
                 ensure compliance with regional requirements.
               </p>
             </div>
-            <Button variant="outline" className="border-stone-300 text-stone-700">
+            <Button variant="outline" className="border-purple-300 text-purple-700">
               Validate Structure
             </Button>
-            <Button className="bg-stone-600 hover:bg-stone-700">RI Guidance</Button>
+            <Button className="bg-purple-600 hover:bg-purple-700">RI Guidance</Button>
           </div>
         </div>
       </div>

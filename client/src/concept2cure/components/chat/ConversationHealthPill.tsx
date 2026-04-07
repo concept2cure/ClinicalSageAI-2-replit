@@ -1,14 +1,13 @@
 /**
  * Conversation Health Pill
  *
- * Minimal indicator of conversation health. Stone-palette badge with
- * Tooltip-based detail panel. Uses governed Button component for actions.
+ * Visual indicator of conversation health state. Shows a color-coded badge
+ * in the chat header with tooltip details about message count, token load,
+ * and suggested recovery actions.
  */
 
 import React, { useEffect, useState } from 'react';
 import { apiRequest } from '@/lib/queryClient';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 type HealthState = 'healthy' | 'heavy' | 'degrading' | 'at_risk';
 
@@ -33,11 +32,11 @@ interface ConversationHealthPillProps {
   onAction?: (action: 'summarize' | 'split' | 'promote') => void;
 }
 
-const STATE_CONFIG: Record<HealthState, { badgeClass: string; dotClass: string; label: string }> = {
-  healthy: { badgeClass: 'border-stone-200 bg-white text-stone-600', dotClass: 'bg-stone-900', label: 'Healthy' },
-  heavy: { badgeClass: 'border-stone-300 bg-stone-50 text-stone-700', dotClass: 'bg-stone-600', label: 'Heavy' },
-  degrading: { badgeClass: 'border-stone-400 bg-stone-100 text-stone-800', dotClass: 'bg-stone-700', label: 'Degrading' },
-  at_risk: { badgeClass: 'border-stone-500 bg-stone-200 text-stone-900', dotClass: 'bg-stone-900', label: 'At Risk' },
+const STATE_CONFIG: Record<HealthState, { color: string; bg: string; label: string }> = {
+  healthy: { color: '#16a34a', bg: '#dcfce7', label: 'Healthy' },
+  heavy: { color: '#ca8a04', bg: '#fef9c3', label: 'Heavy' },
+  degrading: { color: '#ea580c', bg: '#ffedd5', label: 'Degrading' },
+  at_risk: { color: '#dc2626', bg: '#fee2e2', label: 'At Risk' },
 };
 
 export function ConversationHealthPill({
@@ -60,7 +59,7 @@ export function ConversationHealthPill({
         }
       })
       .catch(() => {
-        /* Health check is non-critical — suppress */
+        // Health check is non-critical — suppress
       })
       .finally(() => setLoading(false));
   }, [conversationId, organizationId]);
@@ -70,57 +69,86 @@ export function ConversationHealthPill({
   const config = STATE_CONFIG[report.healthState];
 
   return (
-    <div className="relative inline-block">
-      <Button
-        variant="outline"
-        size="sm"
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      <button
         onClick={() => setShowTooltip(!showTooltip)}
-        className={cn(
-          'h-6 px-2.5 rounded-full text-[11px] font-semibold gap-1.5',
-          config.badgeClass
-        )}
-        aria-label={`Conversation Health: ${config.label} (${report.healthScore}/100)`}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '4px 10px',
+          borderRadius: '9999px',
+          border: `1px solid ${config.color}`,
+          backgroundColor: config.bg,
+          color: config.color,
+          fontSize: '12px',
+          fontWeight: 600,
+          cursor: 'pointer',
+          lineHeight: 1,
+        }}
+        title={`Conversation Health: ${config.label} (${report.healthScore}/100)`}
       >
-        <span className={cn('w-1.5 h-1.5 rounded-full inline-block', config.dotClass)} />
+        <span
+          style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            backgroundColor: config.color,
+            display: 'inline-block',
+          }}
+        />
         {config.label}
-      </Button>
+      </button>
 
       {showTooltip && (
         <div
-          className="absolute top-full right-0 mt-2 w-72 bg-white border border-stone-100 rounded-lg shadow-sm p-4 z-50 text-[13px] text-stone-600"
-          role="tooltip"
+          style={{
+            position: 'absolute',
+            top: '100%',
+            right: 0,
+            marginTop: '8px',
+            width: '320px',
+            backgroundColor: '#fff',
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            padding: '16px',
+            zIndex: 50,
+            fontSize: '13px',
+            color: '#374151',
+          }}
         >
-          <div className="flex justify-between mb-3">
-            <span className="font-semibold text-stone-900">Context Health</span>
-            <span className="font-semibold text-stone-700">
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <span style={{ fontWeight: 700 }}>Context Health</span>
+            <span style={{ fontWeight: 700, color: config.color }}>
               {report.healthScore}/100
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 mb-3">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
             <div>
-              <div className="text-[11px] text-stone-400">Messages</div>
-              <div className="font-semibold text-stone-700">{report.signals.messageCount}</div>
+              <div style={{ color: '#9ca3af', fontSize: '11px' }}>Messages</div>
+              <div style={{ fontWeight: 600 }}>{report.signals.messageCount}</div>
             </div>
             <div>
-              <div className="text-[11px] text-stone-400">Tokens (est.)</div>
-              <div className="font-semibold text-stone-700">{Math.round(report.signals.estimatedTokens / 1000)}k</div>
+              <div style={{ color: '#9ca3af', fontSize: '11px' }}>Tokens (est.)</div>
+              <div style={{ fontWeight: 600 }}>{Math.round(report.signals.estimatedTokens / 1000)}k</div>
             </div>
             <div>
-              <div className="text-[11px] text-stone-400">Topics</div>
-              <div className="font-semibold text-stone-700">{report.signals.topicCount}</div>
+              <div style={{ color: '#9ca3af', fontSize: '11px' }}>Topics</div>
+              <div style={{ fontWeight: 600 }}>{report.signals.topicCount}</div>
             </div>
             <div>
-              <div className="text-[11px] text-stone-400">Open Questions</div>
-              <div className="font-semibold text-stone-700">{report.signals.unresolvedQuestions}</div>
+              <div style={{ color: '#9ca3af', fontSize: '11px' }}>Open Questions</div>
+              <div style={{ fontWeight: 600 }}>{report.signals.unresolvedQuestions}</div>
             </div>
           </div>
 
           {report.warnings.length > 0 && (
-            <div className="mb-3">
-              <div className="font-semibold text-stone-900 mb-1 text-[12px]">Warnings</div>
+            <div style={{ marginBottom: '12px' }}>
+              <div style={{ fontWeight: 600, marginBottom: '4px', color: '#92400e' }}>Warnings</div>
               {report.warnings.map((w, i) => (
-                <div key={i} className="text-[12px] text-stone-500 mb-0.5 pl-2">
+                <div key={i} style={{ fontSize: '12px', marginBottom: '2px', paddingLeft: '8px' }}>
                   {w}
                 </div>
               ))}
@@ -129,36 +157,51 @@ export function ConversationHealthPill({
 
           {report.suggestedActions.length > 0 && onAction && (
             <div>
-              <div className="font-semibold text-stone-700 mb-1.5 text-[12px]">Suggested Actions</div>
-              <div className="flex flex-wrap gap-1.5">
+              <div style={{ fontWeight: 600, marginBottom: '6px' }}>Suggested Actions</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                 {report.suggestedActions.some(a => a.toLowerCase().includes('summar')) && (
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <button
                     onClick={() => onAction('summarize')}
-                    className="h-7 text-[11px] text-stone-600"
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid #d1d5db',
+                      backgroundColor: '#f9fafb',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                    }}
                   >
                     Summarize
-                  </Button>
+                  </button>
                 )}
                 {report.suggestedActions.some(a => a.toLowerCase().includes('split')) && (
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <button
                     onClick={() => onAction('split')}
-                    className="h-7 text-[11px] text-stone-600"
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid #d1d5db',
+                      backgroundColor: '#f9fafb',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                    }}
                   >
                     Split Topics
-                  </Button>
+                  </button>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
+                <button
                   onClick={() => onAction('promote')}
-                  className="h-7 text-[11px] text-stone-600"
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #d1d5db',
+                    backgroundColor: '#f9fafb',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                  }}
                 >
                   Promote to Document
-                </Button>
+                </button>
               </div>
             </div>
           )}

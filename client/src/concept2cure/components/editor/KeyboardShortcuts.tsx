@@ -204,7 +204,7 @@ export function KeyboardShortcutsOverlay({ isOpen, onClose }: KeyboardShortcutsO
       <div
         className={cn(
           'relative w-full max-w-2xl max-h-[80vh] overflow-hidden rounded-xl',
-          'bg-stone-800/95',
+          'bg-gradient-to-br from-slate-900/95 to-slate-800/95',
           'border border-white/10',
           'shadow-sm shadow-black/40',
           'backdrop-blur-xl',
@@ -214,7 +214,7 @@ export function KeyboardShortcutsOverlay({ isOpen, onClose }: KeyboardShortcutsO
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-3">
           <div className="flex items-center gap-2">
-            <Keyboard className="h-5 w-5 text-stone-400" />
+            <Keyboard className="h-5 w-5 text-blue-400" />
             <h2 className="text-lg font-semibold text-white">Keyboard Shortcuts</h2>
           </div>
           <button
@@ -263,7 +263,7 @@ export function KeyboardShortcutsOverlay({ isOpen, onClose }: KeyboardShortcutsO
             {filtered.map((cat) => (
               <div key={cat.label}>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-stone-400">{cat.icon}</span>
+                  <span className="text-blue-400">{cat.icon}</span>
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-white/60">
                     {cat.label}
                   </h3>

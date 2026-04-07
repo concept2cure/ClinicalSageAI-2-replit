@@ -16,8 +16,8 @@ export function HeroSection() {
     <section className="relative pt-20 pb-24 px-6 overflow-hidden">
       {/* Subtle background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-stone-100/30 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full bg-stone-100/20 blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-blue-100/30 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full bg-violet-100/20 blur-3xl" />
       </div>
 
       <div className="relative max-w-4xl mx-auto text-center">
@@ -25,9 +25,9 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-full bg-stone-100 border border-stone-100/60"
+          className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-full bg-blue-50 border border-blue-100/60"
         >
-          <span className="text-sm font-medium text-stone-700">
+          <span className="text-sm font-medium text-blue-700">
             AI-powered regulatory intelligence for life sciences
           </span>
         </motion.div>
@@ -40,7 +40,7 @@ export function HeroSection() {
         >
           From research to submission
           <br />
-          <span className="text-stone-600">in one workspace</span>
+          <span className="text-blue-600">in one workspace</span>
         </motion.h1>
 
         <motion.p
@@ -61,7 +61,7 @@ export function HeroSection() {
         >
           <button
             onClick={() => setLocation('/concept2cure/demo')}
-            className="group px-8 py-3.5 text-base font-medium text-white bg-stone-600 hover:bg-stone-700 rounded-xl transition-all shadow-sm flex items-center gap-2"
+            className="group px-8 py-3.5 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-md flex items-center gap-2"
           >
             Try the Live Demo
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />

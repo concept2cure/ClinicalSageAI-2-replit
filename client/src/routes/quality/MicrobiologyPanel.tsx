@@ -37,7 +37,7 @@ export default function MicrobiologyPanel({ testId }: MicrobiologyPanelProps) {
       <CardHeader>
         <div className="flex items-center gap-2">
           <CardTitle className="flex items-center gap-2">
-            <Microscope className="w-5 h-5 text-stone-600" />
+            <Microscope className="w-5 h-5 text-purple-600" />
             Microbiology Evaluation
           </CardTitle>
           <InfoTip>
@@ -58,7 +58,7 @@ export default function MicrobiologyPanel({ testId }: MicrobiologyPanelProps) {
           <Button
             onClick={evaluate}
             disabled={loading || !value.trim()}
-            className="bg-stone-600 hover:bg-stone-700"
+            className="bg-purple-600 hover:bg-purple-700"
           >
             {loading ? 'Evaluating...' : 'Evaluate'}
           </Button>
@@ -80,9 +80,9 @@ export default function MicrobiologyPanel({ testId }: MicrobiologyPanelProps) {
         </div>
 
         {result && (
-          <div className="border rounded-lg p-4 bg-stone-50">
+          <div className="border rounded-lg p-4 bg-gray-50">
             <h4 className="font-medium mb-2">Evaluation Result</h4>
-            <div className="text-sm text-stone-700">
+            <div className="text-sm text-gray-700">
               <p>
                 <strong>Status:</strong> {result.evaluation?.pass === true ? 'PASS' : 'FAIL'}
               </p>
@@ -92,8 +92,8 @@ export default function MicrobiologyPanel({ testId }: MicrobiologyPanelProps) {
             </div>
 
             {result.evaluation?.pass === false && (
-              <div className="mt-3 p-3 bg-stone-100 border border-stone-200 rounded">
-                <p className="text-sm text-stone-800">
+              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded">
+                <p className="text-sm text-red-800">
                   <strong>Alert Generated:</strong> Quality alert has been automatically created.
                   This result requires investigation and may trigger OOS procedures.
                 </p>
@@ -102,7 +102,7 @@ export default function MicrobiologyPanel({ testId }: MicrobiologyPanelProps) {
           </div>
         )}
 
-        <div className="text-xs text-stone-600 space-y-2">
+        <div className="text-xs text-gray-600 space-y-2">
           <p>
             <strong>Supported Formats:</strong>
           </p>
@@ -114,7 +114,7 @@ export default function MicrobiologyPanel({ testId }: MicrobiologyPanelProps) {
               <strong>Absence/Presence:</strong> "Absent", "Detected", "Positive", "Negative"
             </li>
           </ul>
-          <p className="text-stone-600">
+          <p className="text-amber-600">
             <strong>Note:</strong> Evaluation rules are configured per test. Contact QA if
             microbiology rules need updating.
           </p>

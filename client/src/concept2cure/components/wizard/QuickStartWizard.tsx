@@ -297,17 +297,17 @@ const IndustryStep: React.FC<{
               className={cn(
                 'p-5 rounded-xl border text-left transition-all duration-150',
                 isSelected
-                  ? 'border-stone-600 bg-stone-100'
-                  : 'border-stone-200 hover:border-stone-300'
+                  ? 'border-stone-600 bg-blue-50'
+                  : 'border-stone-200 hover:border-blue-300'
               )}
             >
               <Icon className={cn(
                 'w-8 h-8 mb-3',
-                isSelected ? 'text-stone-600' : 'text-stone-400'
+                isSelected ? 'text-blue-600' : 'text-stone-400'
               )} />
               <h4 className={cn(
                 'font-semibold mb-1',
-                isSelected ? 'text-stone-900' : 'text-stone-900'
+                isSelected ? 'text-blue-900' : 'text-stone-900'
               )}>
                 {option.label}
               </h4>
@@ -352,19 +352,19 @@ const SubmissionTypeStep: React.FC<{
               className={cn(
                 'p-4 rounded-lg border text-left transition-all duration-150',
                 isSelected
-                  ? 'border-stone-600 bg-stone-100'
-                  : 'border-stone-200 hover:border-stone-300'
+                  ? 'border-stone-600 bg-blue-50'
+                  : 'border-stone-200 hover:border-blue-300'
               )}
             >
               <div className="flex items-start justify-between">
                 <h4 className={cn(
                   'font-medium text-sm',
-                  isSelected ? 'text-stone-900' : 'text-stone-900'
+                  isSelected ? 'text-blue-900' : 'text-stone-900'
                 )}>
                   {config.label}
                 </h4>
                 {isSelected && (
-                  <Check className="w-4 h-4 text-stone-600 flex-shrink-0" />
+                  <Check className="w-4 h-4 text-blue-600 flex-shrink-0" />
                 )}
               </div>
               <p className="text-xs text-stone-500 mt-1">{config.description}</p>
@@ -450,11 +450,11 @@ const ProductStep: React.FC<{
                 className={cn(
                   'p-3 rounded-lg border text-center transition-all duration-150',
                   isSelected
-                    ? 'border-stone-600 bg-stone-100 text-stone-700'
-                    : 'border-stone-200 hover:border-stone-300 text-stone-600'
+                    ? 'border-stone-600 bg-blue-50 text-stone-700'
+                    : 'border-stone-200 hover:border-blue-300 text-stone-600'
                 )}
               >
-                <Icon className={cn('w-5 h-5 mx-auto mb-1', isSelected ? 'text-stone-600' : 'text-stone-400')} />
+                <Icon className={cn('w-5 h-5 mx-auto mb-1', isSelected ? 'text-blue-600' : 'text-stone-400')} />
                 <span className="text-xs font-medium">{ta.label}</span>
               </button>
             );
@@ -514,8 +514,8 @@ const TimelineStep: React.FC<{
                 className={cn(
                   'p-3 rounded-lg border text-left transition-all duration-150',
                   isSelected
-                    ? 'border-stone-600 bg-stone-100'
-                    : 'border-stone-200 hover:border-stone-300'
+                    ? 'border-stone-600 bg-blue-50'
+                    : 'border-stone-200 hover:border-blue-300'
                 )}
               >
                 <div className="flex items-center gap-2">
@@ -581,7 +581,7 @@ const SummaryStep: React.FC<{
         
         <div className="flex items-center justify-between pb-4 border-b border-stone-200">
           <span className="text-sm text-stone-500">Submission Type</span>
-          <span className="text-sm font-medium text-stone-600">{submissionConfig?.label || '-'}</span>
+          <span className="text-sm font-medium text-blue-600">{submissionConfig?.label || '-'}</span>
         </div>
         
         <div className="flex items-center justify-between pb-4 border-b border-stone-200">
@@ -615,8 +615,8 @@ const SummaryStep: React.FC<{
       </div>
       
       {/* What will be created */}
-      <div className="mt-6 p-4 bg-stone-100 rounded-lg">
-        <h4 className="text-sm font-semibold text-stone-800 mb-2">What will be created:</h4>
+      <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+        <h4 className="text-sm font-semibold text-blue-800 mb-2">What will be created:</h4>
         <ul className="text-sm text-stone-700 space-y-1">
           <li>• Project workspace with eCTD structure</li>
           <li>• Document templates for selected modules</li>

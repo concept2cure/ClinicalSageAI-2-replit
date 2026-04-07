@@ -157,24 +157,24 @@ const STAGE_CONFIG: Record<DevelopmentStage, {
 }> = {
   discovery: { label: 'Discovery', shortLabel: 'Disc', color: 'bg-stone-400', phase: 'preclinical' },
   lead_optimization: { label: 'Lead Optimization', shortLabel: 'Lead Opt', color: 'bg-stone-500', phase: 'preclinical' },
-  preclinical: { label: 'Preclinical', shortLabel: 'Preclin', color: 'bg-stone-500', phase: 'preclinical' },
-  ind_enabling: { label: 'IND-Enabling Studies', shortLabel: 'IND-En', color: 'bg-stone-500', phase: 'preclinical' },
-  pre_ind_meeting: { label: 'Pre-IND Meeting', shortLabel: 'Pre-IND', color: 'bg-stone-400', phase: 'regulatory' },
+  preclinical: { label: 'Preclinical', shortLabel: 'Preclin', color: 'bg-purple-500', phase: 'preclinical' },
+  ind_enabling: { label: 'IND-Enabling Studies', shortLabel: 'IND-En', color: 'bg-violet-500', phase: 'preclinical' },
+  pre_ind_meeting: { label: 'Pre-IND Meeting', shortLabel: 'Pre-IND', color: 'bg-blue-400', phase: 'regulatory' },
   ind_prep: { label: 'IND Preparation', shortLabel: 'IND Prep', color: 'bg-stone-600', phase: 'regulatory' },
   ind_filed: { label: 'IND Filed', shortLabel: 'IND Filed', color: 'bg-stone-800', phase: 'regulatory' },
-  ind_active: { label: 'IND Active', shortLabel: 'IND Active', color: 'bg-stone-900', phase: 'clinical' },
-  phase_1: { label: 'Phase 1', shortLabel: 'Ph1', color: 'bg-stone-900', phase: 'clinical' },
-  phase_1b: { label: 'Phase 1b', shortLabel: 'Ph1b', color: 'bg-stone-700', phase: 'clinical' },
-  phase_2: { label: 'Phase 2', shortLabel: 'Ph2', color: 'bg-stone-900', phase: 'clinical' },
-  phase_2b: { label: 'Phase 2b', shortLabel: 'Ph2b', color: 'bg-stone-600', phase: 'clinical' },
-  eop2_meeting: { label: 'EOP2 Meeting', shortLabel: 'EOP2', color: 'bg-stone-900', phase: 'regulatory' },
-  phase_3: { label: 'Phase 3', shortLabel: 'Ph3', color: 'bg-stone-900', phase: 'clinical' },
-  pre_nda_meeting: { label: 'Pre-NDA Meeting', shortLabel: 'Pre-NDA', color: 'bg-stone-500', phase: 'regulatory' },
-  nda_prep: { label: 'NDA Preparation', shortLabel: 'NDA Prep', color: 'bg-stone-900', phase: 'regulatory' },
-  nda_filed: { label: 'NDA Filed', shortLabel: 'NDA Filed', color: 'bg-stone-700', phase: 'regulatory' },
-  fda_review: { label: 'FDA Review', shortLabel: 'Review', color: 'bg-stone-700', phase: 'regulatory' },
-  advisory_committee: { label: 'Advisory Committee', shortLabel: 'AdCom', color: 'bg-stone-800', phase: 'regulatory' },
-  approved: { label: 'Approved', shortLabel: 'Approved', color: 'bg-stone-700', phase: 'regulatory' },
+  ind_active: { label: 'IND Active', shortLabel: 'IND Active', color: 'bg-cyan-500', phase: 'clinical' },
+  phase_1: { label: 'Phase 1', shortLabel: 'Ph1', color: 'bg-emerald-500', phase: 'clinical' },
+  phase_1b: { label: 'Phase 1b', shortLabel: 'Ph1b', color: 'bg-emerald-600', phase: 'clinical' },
+  phase_2: { label: 'Phase 2', shortLabel: 'Ph2', color: 'bg-amber-500', phase: 'clinical' },
+  phase_2b: { label: 'Phase 2b', shortLabel: 'Ph2b', color: 'bg-amber-600', phase: 'clinical' },
+  eop2_meeting: { label: 'EOP2 Meeting', shortLabel: 'EOP2', color: 'bg-orange-500', phase: 'regulatory' },
+  phase_3: { label: 'Phase 3', shortLabel: 'Ph3', color: 'bg-red-500', phase: 'clinical' },
+  pre_nda_meeting: { label: 'Pre-NDA Meeting', shortLabel: 'Pre-NDA', color: 'bg-pink-500', phase: 'regulatory' },
+  nda_prep: { label: 'NDA Preparation', shortLabel: 'NDA Prep', color: 'bg-rose-500', phase: 'regulatory' },
+  nda_filed: { label: 'NDA Filed', shortLabel: 'NDA Filed', color: 'bg-rose-600', phase: 'regulatory' },
+  fda_review: { label: 'FDA Review', shortLabel: 'Review', color: 'bg-red-600', phase: 'regulatory' },
+  advisory_committee: { label: 'Advisory Committee', shortLabel: 'AdCom', color: 'bg-red-700', phase: 'regulatory' },
+  approved: { label: 'Approved', shortLabel: 'Approved', color: 'bg-green-600', phase: 'regulatory' },
 };
 
 const VENDOR_TYPE_CONFIG: Record<VendorDeliverable['vendorType'], {
@@ -244,7 +244,7 @@ const DevelopmentPipeline: React.FC<{
             <div className="flex flex-col items-center">
               <div className={cn(
                 'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-150',
-                isCompleted && 'bg-stone-900 text-white',
+                isCompleted && 'bg-green-500 text-white',
                 isCurrent && cn(config.color, 'text-white ring-4 ring-offset-2'),
                 !isCompleted && !isCurrent && 'bg-stone-200 text-stone-400'
               )}>
@@ -260,7 +260,7 @@ const DevelopmentPipeline: React.FC<{
             {i < stages.length - 1 && (
               <div className={cn(
                 'flex-1 h-0.5 min-w-[20px]',
-                isCompleted ? 'bg-stone-900' : 'bg-stone-200'
+                isCompleted ? 'bg-green-500' : 'bg-stone-200'
               )} />
             )}
           </React.Fragment>
@@ -286,7 +286,7 @@ const CriticalPathTracker: React.FC<{
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-stone-900">Critical Path Deliverables</h3>
         {atRisk.length > 0 && (
-          <span className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-stone-800 bg-stone-100 rounded-full">
+          <span className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full">
             <AlertTriangle className="w-3 h-3" />
             {atRisk.length} at risk
           </span>
@@ -307,17 +307,17 @@ const CriticalPathTracker: React.FC<{
               className={cn(
                 'w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left',
                 d.status === 'at_risk' || d.status === 'delayed'
-                  ? 'border-stone-200 bg-stone-100 hover:bg-stone-100'
+                  ? 'border-red-200 bg-red-50 hover:bg-red-100'
                   : 'border-stone-200 hover:bg-stone-50'
               )}
             >
               <div className={cn(
                 'w-8 h-8 rounded-lg flex items-center justify-center',
-                d.status === 'delivered' ? 'bg-stone-100' : 'bg-stone-100'
+                d.status === 'delivered' ? 'bg-green-100' : 'bg-stone-100'
               )}>
                 <VendorIcon className={cn(
                   'w-4 h-4',
-                  d.status === 'delivered' ? 'text-stone-700' : 'text-stone-500'
+                  d.status === 'delivered' ? 'text-green-600' : 'text-stone-500'
                 )} />
               </div>
               
@@ -340,10 +340,10 @@ const CriticalPathTracker: React.FC<{
               
               <div className={cn(
                 'text-xs font-medium',
-                d.status === 'delivered' && 'text-stone-700',
-                d.status === 'at_risk' && 'text-stone-700',
-                d.status === 'delayed' && 'text-stone-800',
-                d.status === 'on_track' && isUrgent && 'text-stone-600',
+                d.status === 'delivered' && 'text-green-600',
+                d.status === 'at_risk' && 'text-red-600',
+                d.status === 'delayed' && 'text-red-700',
+                d.status === 'on_track' && isUrgent && 'text-amber-600',
                 d.status === 'on_track' && !isUrgent && 'text-stone-600'
               )}>
                 {d.status === 'delivered' ? (
@@ -391,8 +391,8 @@ const FDAInteractionTimeline: React.FC<{
             key={interaction.id}
             className={cn(
               'p-3 rounded-lg border-l-4',
-              interaction.status === 'scheduled' && 'border-l-stone-900 bg-stone-100',
-              interaction.status === 'submitted' && 'border-l-stone-900 bg-stone-100',
+              interaction.status === 'scheduled' && 'border-l-blue-500 bg-blue-50',
+              interaction.status === 'submitted' && 'border-l-amber-500 bg-amber-50',
               interaction.status === 'planning' && 'border-l-stone-400 bg-stone-50'
             )}
           >
@@ -400,8 +400,8 @@ const FDAInteractionTimeline: React.FC<{
               <span className="text-sm font-medium text-stone-900">{typeLabels[interaction.type]}</span>
               <span className={cn(
                 'text-xs font-medium px-2 py-0.5 rounded-full',
-                interaction.status === 'scheduled' && 'bg-stone-100 text-stone-700',
-                interaction.status === 'submitted' && 'bg-stone-100 text-stone-700',
+                interaction.status === 'scheduled' && 'bg-blue-100 text-stone-700',
+                interaction.status === 'submitted' && 'bg-amber-100 text-amber-700',
                 interaction.status === 'planning' && 'bg-stone-100 text-stone-600'
               )}>
                 {interaction.status}
@@ -421,14 +421,14 @@ const FDAInteractionTimeline: React.FC<{
             <p className="text-xs text-stone-500 mb-2">Completed ({completed.length})</p>
             {completed.slice(0, 2).map(interaction => (
               <div key={interaction.id} className="flex items-center gap-2 text-xs text-stone-500 py-1">
-                <CheckCircle className="w-3 h-3 text-stone-900" />
+                <CheckCircle className="w-3 h-3 text-green-500" />
                 <span>{typeLabels[interaction.type]}</span>
                 {interaction.outcome && (
                   <span className={cn(
                     'px-1.5 py-0.5 rounded text-xs',
-                    interaction.outcome === 'favorable' && 'bg-stone-100 text-stone-800',
+                    interaction.outcome === 'favorable' && 'bg-green-100 text-green-700',
                     interaction.outcome === 'neutral' && 'bg-stone-100 text-stone-600',
-                    interaction.outcome === 'unfavorable' && 'bg-stone-100 text-stone-800'
+                    interaction.outcome === 'unfavorable' && 'bg-red-100 text-red-700'
                   )}>
                     {interaction.outcome}
                   </span>
@@ -457,33 +457,33 @@ const FundingMilestoneCard: React.FC<{
       onClick={onClick}
       className={cn(
         'w-full p-4 rounded-xl border text-left transition-all duration-150',
-        milestone.status === 'achieved' && 'border-stone-300 bg-stone-100',
-        milestone.status === 'on_track' && 'border-stone-300 bg-stone-100',
-        milestone.status === 'at_risk' && 'border-stone-300 bg-stone-100',
-        milestone.status === 'upcoming' && 'border-stone-200 bg-white hover:border-stone-300'
+        milestone.status === 'achieved' && 'border-green-300 bg-green-50',
+        milestone.status === 'on_track' && 'border-blue-300 bg-blue-50',
+        milestone.status === 'at_risk' && 'border-red-300 bg-red-50',
+        milestone.status === 'upcoming' && 'border-stone-200 bg-white hover:border-blue-300'
       )}
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <Milestone className={cn(
             'w-5 h-5',
-            milestone.status === 'achieved' && 'text-stone-700',
-            milestone.status === 'on_track' && 'text-stone-600',
-            milestone.status === 'at_risk' && 'text-stone-700',
+            milestone.status === 'achieved' && 'text-green-600',
+            milestone.status === 'on_track' && 'text-blue-600',
+            milestone.status === 'at_risk' && 'text-red-600',
             milestone.status === 'upcoming' && 'text-stone-400'
           )} />
           <span className={cn(
             'text-xs font-medium px-2 py-0.5 rounded-full',
-            milestone.type === 'regulatory' && 'bg-stone-100 text-stone-700',
-            milestone.type === 'clinical' && 'bg-stone-100 text-stone-800',
-            milestone.type === 'scientific' && 'bg-stone-200 text-stone-700',
-            milestone.type === 'commercial' && 'bg-stone-100 text-stone-700'
+            milestone.type === 'regulatory' && 'bg-blue-100 text-stone-700',
+            milestone.type === 'clinical' && 'bg-emerald-100 text-emerald-700',
+            milestone.type === 'scientific' && 'bg-purple-100 text-purple-700',
+            milestone.type === 'commercial' && 'bg-amber-100 text-amber-700'
           )}>
             {milestone.type}
           </span>
         </div>
         {milestone.linkedFunding && (
-          <span className="text-xs font-semibold text-stone-600 bg-stone-200 px-2 py-0.5 rounded-full">
+          <span className="text-xs font-semibold text-violet-600 bg-violet-100 px-2 py-0.5 rounded-full">
             {milestone.linkedFunding}
           </span>
         )}
@@ -500,13 +500,13 @@ const FundingMilestoneCard: React.FC<{
         {milestone.status !== 'achieved' && (
           <span className={cn(
             'text-xs font-medium',
-            daysUntil <= 30 && milestone.status !== 'achieved' ? 'text-stone-600' : 'text-stone-500'
+            daysUntil <= 30 && milestone.status !== 'achieved' ? 'text-amber-600' : 'text-stone-500'
           )}>
             {daysUntil}d remaining
           </span>
         )}
         {milestone.status === 'achieved' && (
-          <CheckCircle className="w-4 h-4 text-stone-700" />
+          <CheckCircle className="w-4 h-4 text-green-600" />
         )}
       </div>
     </button>
@@ -557,12 +557,12 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
             {companyRunway && (
               <div className={cn(
                 'px-4 py-2 rounded-lg',
-                companyRunway <= 12 ? 'bg-stone-100' : companyRunway <= 18 ? 'bg-stone-100' : 'bg-stone-100'
+                companyRunway <= 12 ? 'bg-red-100' : companyRunway <= 18 ? 'bg-amber-100' : 'bg-green-100'
               )}>
                 <p className="text-xs text-stone-600">Runway</p>
                 <p className={cn(
                   'text-lg font-semibold',
-                  companyRunway <= 12 ? 'text-stone-800' : companyRunway <= 18 ? 'text-stone-700' : 'text-stone-800'
+                  companyRunway <= 12 ? 'text-red-700' : companyRunway <= 18 ? 'text-amber-700' : 'text-green-700'
                 )}>
                   {companyRunway} months
                 </p>
@@ -575,14 +575,14 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
             </div>
             
             {metrics.criticalAtRisk > 0 && (
-              <div className="px-4 py-2 bg-stone-100 rounded-lg">
-                <p className="text-xs text-stone-700">Critical Path Risk</p>
-                <p className="text-lg font-semibold text-stone-800">{metrics.criticalAtRisk}</p>
+              <div className="px-4 py-2 bg-red-100 rounded-lg">
+                <p className="text-xs text-red-600">Critical Path Risk</p>
+                <p className="text-lg font-semibold text-red-700">{metrics.criticalAtRisk}</p>
               </div>
             )}
             
-            <div className="px-4 py-2 bg-stone-100 rounded-lg">
-              <p className="text-xs text-stone-600">Upcoming FDA Meetings</p>
+            <div className="px-4 py-2 bg-blue-100 rounded-lg">
+              <p className="text-xs text-blue-600">Upcoming FDA Meetings</p>
               <p className="text-lg font-semibold text-stone-700">{metrics.upcomingFDAMeetings}</p>
             </div>
           </div>
@@ -613,7 +613,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
                     <span className="text-sm font-medium">{program.programName}</span>
                     <span className={cn(
                       'text-xs px-1.5 py-0.5 rounded',
-                      isSelected ? 'bg-stone-600 text-stone-100' : 'bg-stone-200 text-stone-600'
+                      isSelected ? 'bg-stone-600 text-blue-100' : 'bg-stone-200 text-stone-600'
                     )}>
                       {stageConfig.shortLabel}
                     </span>
@@ -637,7 +637,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
                   {selectedProgram.therapeuticArea} • {selectedProgram.indication} • {selectedProgram.modality.replace('_', ' ')}
                 </p>
                 {selectedProgram.indNumber && (
-                  <p className="text-xs text-stone-600 mt-1">IND #{selectedProgram.indNumber}</p>
+                  <p className="text-xs text-blue-600 mt-1">IND #{selectedProgram.indNumber}</p>
                 )}
               </div>
               

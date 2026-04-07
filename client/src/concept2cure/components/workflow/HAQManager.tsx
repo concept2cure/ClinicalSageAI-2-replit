@@ -414,7 +414,7 @@ Submission type context: ${projectName || 'regulatory submission'}`,
           <span className="text-xs text-stone-500">{questions.filter(q => q.status === 'reviewed').length} reviewed</span>
           <span className="text-xs text-stone-500">{questions.filter(q => q.status === 'finalized').length} finalized</span>
           {criticalCount > 0 && (
-            <span className="text-xs text-stone-700 flex items-center gap-1">
+            <span className="text-xs text-red-600 flex items-center gap-1">
               <AlertTriangle className="w-3 h-3" />
               {criticalCount} critical
             </span>
@@ -525,7 +525,7 @@ Submission type context: ${projectName || 'regulatory submission'}`,
             </p>
             {questions.map(q => {
               const PriorityIcon = q.priority === 'critical' ? AlertTriangle : q.priority === 'major' ? Circle : CheckCircle;
-              const priorityColor = q.priority === 'critical' ? 'text-stone-900' : q.priority === 'major' ? 'text-stone-900' : 'text-stone-400';
+              const priorityColor = q.priority === 'critical' ? 'text-red-500' : q.priority === 'major' ? 'text-amber-500' : 'text-stone-400';
               return (
                 <Button
                   key={q.id}
@@ -574,14 +574,14 @@ Submission type context: ${projectName || 'regulatory submission'}`,
                 <div className="flex items-center gap-2 mt-2">
                   <span className={cn(
                     'text-[10px] font-medium px-1.5 py-0.5 rounded',
-                    selected.priority === 'critical' && 'bg-stone-100 text-stone-800',
-                    selected.priority === 'major' && 'bg-stone-100 text-stone-700',
+                    selected.priority === 'critical' && 'bg-red-50 text-red-700',
+                    selected.priority === 'major' && 'bg-amber-50 text-amber-700',
                     selected.priority === 'minor' && 'bg-stone-100 text-stone-500',
                   )}>
                     {selected.priority}
                   </span>
                   {selected.ctdSection && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-700 font-mono">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-stone-700 font-mono">
                       Module {selected.ctdSection}
                     </span>
                   )}

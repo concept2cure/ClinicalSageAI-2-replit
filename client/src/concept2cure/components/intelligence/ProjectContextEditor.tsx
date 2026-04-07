@@ -182,16 +182,16 @@ function computeKeyFieldProgress(profile: ProjectProfile): { filled: number; tot
 }
 
 const RISK_COLORS: Record<string, string> = {
-  low: 'bg-stone-100 text-stone-800',
-  medium: 'bg-stone-100 text-stone-800',
-  high: 'bg-stone-100 text-stone-800',
+  low: 'bg-emerald-100 text-emerald-800',
+  medium: 'bg-amber-100 text-amber-800',
+  high: 'bg-red-100 text-red-800',
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  missing: 'bg-stone-100 text-stone-600',
-  uploaded: 'bg-stone-100 text-stone-700',
-  processing: 'bg-stone-100 text-stone-700',
-  ready: 'bg-stone-100 text-stone-800',
+  missing: 'bg-slate-100 text-slate-600',
+  uploaded: 'bg-blue-100 text-stone-700',
+  processing: 'bg-amber-100 text-amber-700',
+  ready: 'bg-emerald-100 text-emerald-800',
 };
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
@@ -230,10 +230,10 @@ function Section({
   }, [collapsible]);
 
   return (
-    <div className="border-b border-stone-100 last:border-b-0">
+    <div className="border-b border-slate-100 last:border-b-0">
       <div
         className={`flex items-center justify-between px-4 py-3 ${
-          collapsible ? 'cursor-pointer hover:bg-stone-50' : ''
+          collapsible ? 'cursor-pointer hover:bg-slate-50' : ''
         }`}
         onClick={collapsible && !editing ? toggle : undefined}
         role={collapsible ? 'button' : undefined}
@@ -246,9 +246,9 @@ function Section({
           }
         } : undefined}
       >
-        <div className="flex items-center gap-2 text-sm font-semibold text-stone-800">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
           {collapsible && (
-            <span className="text-stone-400">
+            <span className="text-slate-400">
               {open ? (
                 <ChevronDown className="h-4 w-4" />
               ) : (
@@ -268,7 +268,7 @@ function Section({
                 <X className="h-3.5 w-3.5" />
               </Button>
               <Button variant="ghost" size="sm" onClick={onSave} disabled={saving}>
-                <Check className="h-3.5 w-3.5 text-stone-700" />
+                <Check className="h-3.5 w-3.5 text-emerald-600" />
               </Button>
             </>
           ) : !readOnly ? (
@@ -279,7 +279,7 @@ function Section({
               className="opacity-0 group-hover/section:opacity-100 transition-opacity"
               aria-label={`Edit ${title}`}
             >
-              <Pencil className="h-3.5 w-3.5 text-stone-400" />
+              <Pencil className="h-3.5 w-3.5 text-slate-400" />
             </Button>
           ) : null}
         </div>
@@ -299,15 +299,15 @@ function FactLine({ label, value }: { label: string; value: React.ReactNode }) {
   if (!value || (typeof value === 'string' && !value.trim())) {
     return (
       <div className="flex items-start gap-2 py-0.5 text-sm">
-        <span className="text-stone-400 min-w-[140px] shrink-0">{label}</span>
-        <span className="text-stone-300 italic">Not set</span>
+        <span className="text-slate-400 min-w-[140px] shrink-0">{label}</span>
+        <span className="text-slate-300 italic">Not set</span>
       </div>
     );
   }
   return (
     <div className="flex items-start gap-2 py-0.5 text-sm">
-      <span className="text-stone-500 min-w-[140px] shrink-0">{label}</span>
-      <span className="text-stone-800">{value}</span>
+      <span className="text-slate-500 min-w-[140px] shrink-0">{label}</span>
+      <span className="text-slate-800">{value}</span>
     </div>
   );
 }
@@ -341,7 +341,7 @@ function AgencyChips({
             key={agency}
             variant={active ? 'default' : 'outline'}
             className={`${readOnly ? 'cursor-default' : 'cursor-pointer'} text-xs ${
-              active ? '' : 'text-stone-400 border-stone-200'
+              active ? '' : 'text-slate-400 border-slate-200'
             }`}
             onClick={() => toggle(agency)}
             role="checkbox"
@@ -467,7 +467,7 @@ export function ProjectContextEditor({
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-stone-900" />
+            <Brain className="h-5 w-5 text-violet-500" />
             <CardTitle className="text-base">
               {projectName
                 ? `${projectName} -- Project Context`
@@ -480,7 +480,7 @@ export function ProjectContextEditor({
             </Button>
           )}
         </div>
-        <p className="text-xs text-stone-500 mt-1">
+        <p className="text-xs text-slate-500 mt-1">
           What AnA knows about this project. The more you fill in, the better AnA
           can assist.
         </p>
@@ -490,7 +490,7 @@ export function ProjectContextEditor({
             value={(progress.filled / progress.total) * 100}
             className="h-2 flex-1"
           />
-          <span className="text-xs font-medium text-stone-600 whitespace-nowrap">
+          <span className="text-xs font-medium text-slate-600 whitespace-nowrap">
             {progress.filled}/{progress.total} key fields filled
           </span>
         </div>
@@ -507,7 +507,7 @@ export function ProjectContextEditor({
           retry={() => refetch()}
         >
           {(data) => (
-            <div className="divide-y divide-stone-100">
+            <div className="divide-y divide-slate-100">
               {/* ── 1. About This Project ─────────────────────────── */}
               <div className="group/section">
                 <Section
@@ -530,7 +530,7 @@ export function ProjectContextEditor({
                   editContent={
                     <div className="space-y-3">
                       <div>
-                        <label htmlFor="project-field-projectName" className="text-xs text-stone-500 mb-1 block">
+                        <label htmlFor="project-field-projectName" className="text-xs text-slate-500 mb-1 block">
                           Project Name
                         </label>
                         <Input
@@ -540,7 +540,7 @@ export function ProjectContextEditor({
                         />
                       </div>
                       <div>
-                        <label htmlFor="project-field-projectType" className="text-xs text-stone-500 mb-1 block">
+                        <label htmlFor="project-field-projectType" className="text-xs text-slate-500 mb-1 block">
                           Project Type
                         </label>
                         <Controller
@@ -566,7 +566,7 @@ export function ProjectContextEditor({
                         />
                       </div>
                       <div>
-                        <label htmlFor="project-field-developmentPhase" className="text-xs text-stone-500 mb-1 block">
+                        <label htmlFor="project-field-developmentPhase" className="text-xs text-slate-500 mb-1 block">
                           Development Phase
                         </label>
                         <Controller
@@ -592,7 +592,7 @@ export function ProjectContextEditor({
                         />
                       </div>
                       <div>
-                        <label htmlFor="project-field-drugDeviceName" className="text-xs text-stone-500 mb-1 block">
+                        <label htmlFor="project-field-drugDeviceName" className="text-xs text-slate-500 mb-1 block">
                           Drug / Device Name
                         </label>
                         <Input
@@ -602,7 +602,7 @@ export function ProjectContextEditor({
                         />
                       </div>
                       <div>
-                        <label htmlFor="project-field-therapeuticArea" className="text-xs text-stone-500 mb-1 block">
+                        <label htmlFor="project-field-therapeuticArea" className="text-xs text-slate-500 mb-1 block">
                           Therapeutic Area
                         </label>
                         <Input
@@ -612,7 +612,7 @@ export function ProjectContextEditor({
                         />
                       </div>
                       <div>
-                        <label htmlFor="project-field-mechanismOfAction" className="text-xs text-stone-500 mb-1 block">
+                        <label htmlFor="project-field-mechanismOfAction" className="text-xs text-slate-500 mb-1 block">
                           Mechanism of Action
                         </label>
                         <Input
@@ -622,7 +622,7 @@ export function ProjectContextEditor({
                         />
                       </div>
                       <div>
-                        <label htmlFor="project-field-indication" className="text-xs text-stone-500 mb-1 block">
+                        <label htmlFor="project-field-indication" className="text-xs text-slate-500 mb-1 block">
                           Indication
                         </label>
                         <Input
@@ -704,9 +704,9 @@ export function ProjectContextEditor({
                     />
                   }
                 >
-                  <p className="text-sm text-stone-700 whitespace-pre-wrap">
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">
                     {data.clinicalDesign || (
-                      <span className="text-stone-300 italic">
+                      <span className="text-slate-300 italic">
                         No clinical design details set
                       </span>
                     )}
@@ -732,9 +732,9 @@ export function ProjectContextEditor({
                     />
                   }
                 >
-                  <p className="text-sm text-stone-700 whitespace-pre-wrap">
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">
                     {data.projectInstructions || (
-                      <span className="text-stone-300 italic">
+                      <span className="text-slate-300 italic">
                         No project instructions set
                       </span>
                     )}
@@ -755,7 +755,7 @@ export function ProjectContextEditor({
                   readOnly
                 >
                   {data.documentStatuses.length === 0 ? (
-                    <p className="text-sm text-stone-300 italic">
+                    <p className="text-sm text-slate-300 italic">
                       No documents tracked yet
                     </p>
                   ) : (
@@ -766,8 +766,8 @@ export function ProjectContextEditor({
                           className="flex items-center justify-between text-sm"
                         >
                           <div className="flex items-center gap-2">
-                            <FileText className="h-3.5 w-3.5 text-stone-400" />
-                            <span className="text-stone-700">{doc.type}</span>
+                            <FileText className="h-3.5 w-3.5 text-slate-400" />
+                            <span className="text-slate-700">{doc.type}</span>
                           </div>
                           <Badge
                             variant="outline"
@@ -799,7 +799,7 @@ export function ProjectContextEditor({
                   editContent={<DecisionsEditor form={form} />}
                 >
                   {data.decisions.length === 0 ? (
-                    <p className="text-sm text-stone-300 italic">
+                    <p className="text-sm text-slate-300 italic">
                       No decisions recorded
                     </p>
                   ) : (
@@ -807,18 +807,18 @@ export function ProjectContextEditor({
                       {data.decisions.map((d, i) => (
                         <div
                           key={i}
-                          className="text-sm border-l-2 border-stone-200 pl-3"
+                          className="text-sm border-l-2 border-slate-200 pl-3"
                         >
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-stone-400">
+                            <span className="text-xs text-slate-400">
                               {d.date}
                             </span>
-                            <span className="text-stone-800 font-medium">
+                            <span className="text-slate-800 font-medium">
                               {d.decision}
                             </span>
                           </div>
                           {d.rationale && (
-                            <p className="text-xs text-stone-500 mt-0.5">
+                            <p className="text-xs text-slate-500 mt-0.5">
                               {d.rationale}
                             </p>
                           )}
@@ -843,7 +843,7 @@ export function ProjectContextEditor({
                   editContent={<RisksEditor form={form} />}
                 >
                   {data.risks.length === 0 ? (
-                    <p className="text-sm text-stone-300 italic">
+                    <p className="text-sm text-slate-300 italic">
                       No risks identified
                     </p>
                   ) : (
@@ -863,12 +863,12 @@ export function ProjectContextEditor({
                             >
                               I:{r.impact}
                             </Badge>
-                            <span className="text-stone-800">
+                            <span className="text-slate-800">
                               {r.description}
                             </span>
                           </div>
                           {r.mitigation && (
-                            <p className="text-xs text-stone-500 mt-0.5 ml-[100px]">
+                            <p className="text-xs text-slate-500 mt-0.5 ml-[100px]">
                               Mitigation: {r.mitigation}
                             </p>
                           )}
@@ -893,7 +893,7 @@ export function ProjectContextEditor({
                   editContent={<QuestionsEditor form={form} />}
                 >
                   {data.openQuestions.length === 0 ? (
-                    <p className="text-sm text-stone-300 italic">
+                    <p className="text-sm text-slate-300 italic">
                       No open questions
                     </p>
                   ) : (
@@ -909,7 +909,7 @@ export function ProjectContextEditor({
                           >
                             {q.priority}
                           </Badge>
-                          <span className="text-stone-700">{q.question}</span>
+                          <span className="text-slate-700">{q.question}</span>
                         </li>
                       ))}
                     </ul>
@@ -937,9 +937,9 @@ export function ProjectContextEditor({
                     />
                   }
                 >
-                  <p className="text-sm text-stone-700 whitespace-pre-wrap">
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">
                     {data.submissionTimeline || (
-                      <span className="text-stone-300 italic">
+                      <span className="text-slate-300 italic">
                         No submission timeline set
                       </span>
                     )}
@@ -960,7 +960,7 @@ export function ProjectContextEditor({
                   readOnly
                 >
                   {data.capabilities.length === 0 ? (
-                    <p className="text-sm text-stone-300 italic">
+                    <p className="text-sm text-slate-300 italic">
                       Capabilities are auto-detected based on project type and data
                     </p>
                   ) : (
@@ -972,12 +972,12 @@ export function ProjectContextEditor({
                         >
                           <div
                             className={`h-2 w-2 rounded-full ${
-                              cap.enabled ? 'bg-stone-900' : 'bg-stone-300'
+                              cap.enabled ? 'bg-emerald-500' : 'bg-slate-300'
                             }`}
                           />
                           <span
                             className={
-                              cap.enabled ? 'text-stone-700' : 'text-stone-400'
+                              cap.enabled ? 'text-slate-700' : 'text-slate-400'
                             }
                           >
                             {cap.name}
@@ -1029,7 +1029,7 @@ function DecisionsEditor({
             />
           </div>
           <Button variant="ghost" size="sm" onClick={() => remove(i)}>
-            <Trash2 className="h-3.5 w-3.5 text-stone-400" />
+            <Trash2 className="h-3.5 w-3.5 text-red-400" />
           </Button>
         </div>
       ))}
@@ -1110,7 +1110,7 @@ function RisksEditor({
             />
           </div>
           <Button variant="ghost" size="sm" onClick={() => remove(i)}>
-            <Trash2 className="h-3.5 w-3.5 text-stone-400" />
+            <Trash2 className="h-3.5 w-3.5 text-red-400" />
           </Button>
         </div>
       ))}
@@ -1169,7 +1169,7 @@ function QuestionsEditor({
             />
           </div>
           <Button variant="ghost" size="sm" onClick={() => remove(i)}>
-            <Trash2 className="h-3.5 w-3.5 text-stone-400" />
+            <Trash2 className="h-3.5 w-3.5 text-red-400" />
           </Button>
         </div>
       ))}

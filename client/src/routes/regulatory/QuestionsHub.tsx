@@ -59,7 +59,7 @@ export default function QuestionsHub({ subId }: { subId: string }) {
       case 'CRITICAL':
         return <Badge variant="destructive">Critical</Badge>;
       case 'MAJOR':
-        return <Badge className="bg-stone-900">Major</Badge>;
+        return <Badge className="bg-orange-500">Major</Badge>;
       case 'MINOR':
         return <Badge variant="secondary">Minor</Badge>;
       default:
@@ -69,13 +69,13 @@ export default function QuestionsHub({ subId }: { subId: string }) {
 
   const getRegionBadge = (region: string) => {
     const colors: Record<string, string> = {
-      FDA: 'bg-stone-600',
-      EMA: 'bg-stone-700',
-      PMDA: 'bg-stone-600',
-      HC: 'bg-stone-700',
-      MHRA: 'bg-stone-600',
+      FDA: 'bg-blue-600',
+      EMA: 'bg-green-600',
+      PMDA: 'bg-purple-600',
+      HC: 'bg-red-600',
+      MHRA: 'bg-gray-600',
     };
-    return <Badge className={colors[region] || 'bg-stone-500'}>{region}</Badge>;
+    return <Badge className={colors[region] || 'bg-gray-500'}>{region}</Badge>;
   };
 
   const formatDate = (dateStr: string) => {
@@ -88,7 +88,7 @@ export default function QuestionsHub({ subId }: { subId: string }) {
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-xl font-semibold">Questions Hub</h3>
-          <p className="text-stone-600">
+          <p className="text-gray-600">
             IR/Deficiency letter management with AI-assisted responses
           </p>
         </div>
@@ -176,7 +176,7 @@ export default function QuestionsHub({ subId }: { subId: string }) {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <FileText className="w-4 h-4" />
-                    <span className="text-sm text-stone-600">
+                    <span className="text-sm text-gray-600">
                       {question.src_subject || 'Direct Question'}
                     </span>
                     {question.region && getRegionBadge(question.region)}
@@ -184,7 +184,7 @@ export default function QuestionsHub({ subId }: { subId: string }) {
                   </div>
                   <CardTitle className="text-base leading-relaxed">{question.text}</CardTitle>
                 </div>
-                <div className="flex flex-col gap-2 text-sm text-stone-600">
+                <div className="flex flex-col gap-2 text-sm text-gray-600">
                   {question.due_date && (
                     <div className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
@@ -235,7 +235,7 @@ export default function QuestionsHub({ subId }: { subId: string }) {
                 </div>
 
                 {question.priority === 'High' && (
-                  <div className="flex items-center gap-2 text-stone-600 text-sm">
+                  <div className="flex items-center gap-2 text-orange-600 text-sm">
                     <AlertTriangle className="w-4 h-4" />
                     High priority - requires immediate attention
                   </div>
@@ -249,8 +249,8 @@ export default function QuestionsHub({ subId }: { subId: string }) {
       {questions.length === 0 && (
         <Card>
           <CardContent className="text-center py-8">
-            <Mail className="w-12 h-12 mx-auto text-stone-400 mb-4" />
-            <p className="text-stone-600">
+            <Mail className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+            <p className="text-gray-600">
               No questions ingested yet. Click "Ingest Email" to extract questions from IR letters.
             </p>
           </CardContent>

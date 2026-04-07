@@ -143,16 +143,16 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
   }
 
   const statusIcon = {
-    pass: <CheckCircle className="w-5 h-5 text-stone-900" />,
-    caution: <AlertTriangle className="w-5 h-5 text-stone-900" />,
-    fail: <XCircle className="w-5 h-5 text-stone-900" />,
+    pass: <CheckCircle className="w-5 h-5 text-emerald-500" />,
+    caution: <AlertTriangle className="w-5 h-5 text-amber-500" />,
+    fail: <XCircle className="w-5 h-5 text-red-500" />,
   };
 
   const statusLabel = { pass: 'Pass', caution: 'Caution', fail: 'Fail' };
   const statusColor = {
-    pass: 'bg-stone-100 border-stone-200 text-stone-800',
-    caution: 'bg-stone-100 border-stone-200 text-stone-800',
-    fail: 'bg-stone-100 border-stone-200 text-stone-800',
+    pass: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+    caution: 'bg-amber-50 border-amber-200 text-amber-800',
+    fail: 'bg-red-50 border-red-200 text-red-800',
   };
 
   const sections: { key: string; label: string; findings: Finding[] }[] = [
@@ -199,11 +199,11 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
           const hasFail = findings.some(f => f.status === 'fail');
           const hasCaution = findings.some(f => f.status === 'caution');
           const sectionIcon = hasFail ? (
-            <XCircle className="w-3.5 h-3.5 text-stone-900" />
+            <XCircle className="w-3.5 h-3.5 text-red-500" />
           ) : hasCaution ? (
-            <AlertTriangle className="w-3.5 h-3.5 text-stone-900" />
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
           ) : (
-            <CheckCircle className="w-3.5 h-3.5 text-stone-900" />
+            <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
           );
 
           return (
@@ -240,7 +240,7 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
             <ul className="space-y-1.5">
               {result.recommendedActions.map((action, i) => (
                 <li key={i} className="flex items-center gap-2 text-xs text-stone-600">
-                  <span className="w-4 h-4 rounded-full bg-stone-100 text-stone-600 text-xs font-semibold flex items-center justify-center shrink-0">
+                  <span className="w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-xs font-semibold flex items-center justify-center shrink-0">
                     {i + 1}
                   </span>
                   {action}
@@ -308,7 +308,7 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
 function PanelHeader({ onClose, title }: { onClose: () => void; title: string }) {
   return (
     <div className="flex items-center gap-2 px-4 h-10 border-b border-stone-200 shrink-0">
-      <ShieldCheck className="w-4 h-4 text-stone-900" />
+      <ShieldCheck className="w-4 h-4 text-emerald-500" />
       <h2 className="text-sm font-semibold text-stone-900">{title}</h2>
       <button
         onClick={onClose}
@@ -323,9 +323,9 @@ function PanelHeader({ onClose, title }: { onClose: () => void; title: string })
 
 function FindingRow({ finding }: { finding: Finding }) {
   const icon = {
-    pass: <CheckCircle className="w-3 h-3 text-stone-900 shrink-0" />,
-    caution: <AlertTriangle className="w-3 h-3 text-stone-900 shrink-0" />,
-    fail: <XCircle className="w-3 h-3 text-stone-900 shrink-0" />,
+    pass: <CheckCircle className="w-3 h-3 text-emerald-500 shrink-0" />,
+    caution: <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />,
+    fail: <XCircle className="w-3 h-3 text-red-500 shrink-0" />,
   };
 
   return (

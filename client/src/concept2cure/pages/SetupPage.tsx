@@ -1,5 +1,5 @@
 /**
- * SetupPage — Global settings destination.
+ * SetupPage — Global setup/configuration destination.
  *
  * A full-page settings experience (not a modal). Mirrors ZenSettings
  * sections but rendered inline as a page. 8 sections: Profile,
@@ -40,7 +40,7 @@ const SECTIONS: {
   { id: 'security', label: 'Security', description: 'Two-factor authentication, password, and sessions', icon: Shield },
   { id: 'appearance', label: 'Appearance', description: 'Theme, compact mode, and display preferences', icon: Palette },
   { id: 'integrations', label: 'Integrations', description: 'Connect to Veeva, Medidata, Slack, and more', icon: Link2 },
-  { id: 'ana-intelligence', label: 'Customize AnA', description: 'Your role, company regulatory posture, and project-level submission strategy', icon: Brain },
+  { id: 'ana-intelligence', label: 'AnA Intelligence', description: 'Personal preferences, company context, and project knowledge for AnA', icon: Brain },
   { id: 'help', label: 'Help & Support', description: 'Documentation, tutorials, and contact support', icon: HelpCircle },
 ];
 
@@ -56,7 +56,7 @@ export const SetupPage: React.FC<SetupPageProps> = ({ onOpenSettings }) => {
   return (
     <WorkspaceCanvas maxWidth="3xl" testId="setup-page">
       <PageTitleHeader
-        title="Settings"
+        title="Setup"
         subtitle="Configure your workspace, profile, and integrations"
       />
 

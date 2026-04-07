@@ -128,8 +128,8 @@ export const ProofCertificatePage: React.FC = () => {
 
   if (!workflowRunId) {
     return (
-      <div className="min-h-screen bg-stone-50 p-10">
-        <div className="mx-auto max-w-4xl rounded-xl border border-stone-200 bg-stone-100 p-6 text-sm text-stone-800">
+      <div className="min-h-screen bg-[#faf9f5] p-10">
+        <div className="mx-auto max-w-4xl rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
           Missing workflow run id.
         </div>
       </div>
@@ -194,7 +194,7 @@ export const ProofCertificatePage: React.FC = () => {
                       key={agent.id}
                       className="flex items-start gap-2 rounded-lg bg-white px-3 py-2 text-sm"
                     >
-                      <div className="mt-1 h-2 w-2 rounded-full bg-stone-900" />
+                      <div className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
                       <div className="min-w-0">
                         <p className="font-medium text-stone-900 truncate">{agent.name}</p>
                         <p className="text-xs text-stone-500 truncate">

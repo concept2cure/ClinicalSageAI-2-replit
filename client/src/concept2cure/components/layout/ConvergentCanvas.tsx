@@ -189,14 +189,14 @@ const Sidebar: React.FC<{
       <div className="h-16 flex items-center justify-between px-4 border-b border-stone-800">
         {!collapsed && (
           <div className="flex items-center gap-3">
-            <Mountain className="w-8 h-8 text-stone-400" />
+            <Mountain className="w-8 h-8 text-blue-400" />
             <div>
               <h1 className="font-semibold text-sm tracking-tight">CONCEPT2CURE</h1>
               <p className="text-xs text-stone-400">Regulatory Sherpa</p>
             </div>
           </div>
         )}
-        {collapsed && <Mountain className="w-8 h-8 text-stone-400 mx-auto" />}
+        {collapsed && <Mountain className="w-8 h-8 text-blue-400 mx-auto" />}
         <button
           onClick={() => onCollapsedChange(!collapsed)}
           className="p-1.5 rounded-lg hover:bg-stone-800 transition-colors duration-150"
@@ -307,13 +307,13 @@ const CortexSidecar: React.FC<{
             {/* Quick Actions */}
             <div className="mt-6 space-y-2">
               <p className="text-xs font-medium text-stone-500 uppercase tracking-wider">Quick Start</p>
-              <button className="w-full px-4 py-2 text-sm text-left bg-stone-50 hover:bg-stone-100 rounded-lg border border-stone-200 hover:border-stone-300 transition-colors duration-150">
+              <button className="w-full px-4 py-2 text-sm text-left bg-stone-50 hover:bg-blue-50 rounded-lg border border-stone-200 hover:border-blue-300 transition-colors duration-150">
                 📝 Draft a Clinical Overview
               </button>
-              <button className="w-full px-4 py-2 text-sm text-left bg-stone-50 hover:bg-stone-100 rounded-lg border border-stone-200 hover:border-stone-300 transition-colors duration-150">
+              <button className="w-full px-4 py-2 text-sm text-left bg-stone-50 hover:bg-blue-50 rounded-lg border border-stone-200 hover:border-blue-300 transition-colors duration-150">
                 🔍 Find a predicate device
               </button>
-              <button className="w-full px-4 py-2 text-sm text-left bg-stone-50 hover:bg-stone-100 rounded-lg border border-stone-200 hover:border-stone-300 transition-colors duration-150">
+              <button className="w-full px-4 py-2 text-sm text-left bg-stone-50 hover:bg-blue-50 rounded-lg border border-stone-200 hover:border-blue-300 transition-colors duration-150">
                 ⚗️ Check CMC guardrails
               </button>
             </div>
@@ -384,7 +384,7 @@ const Header: React.FC<{
       <button className="relative p-2 rounded-lg hover:bg-stone-100 text-stone-600 transition-colors duration-150">
         <Bell className="w-5 h-5" />
         {notificationCount > 0 && (
-          <span className="absolute top-1 right-1 w-4 h-4 text-xs font-semibold bg-stone-900 text-white rounded-full flex items-center justify-center">
+          <span className="absolute top-1 right-1 w-4 h-4 text-xs font-semibold bg-red-500 text-white rounded-full flex items-center justify-center">
             {notificationCount}
           </span>
         )}
@@ -396,7 +396,7 @@ const Header: React.FC<{
         className={cn(
           'flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-150',
           cortexOpen
-            ? 'bg-stone-100 text-stone-700'
+            ? 'bg-blue-100 text-stone-700'
             : 'hover:bg-stone-100 text-stone-600'
         )}
       >

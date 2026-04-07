@@ -287,9 +287,9 @@ function formatTimestamp(iso: string): string {
 }
 
 function statusColor(status: QCStatus): string {
-  if (status === 'pass') return 'text-stone-800';
-  if (status === 'warning') return 'text-stone-600';
-  return 'text-stone-700';
+  if (status === 'pass') return 'text-green-700';
+  if (status === 'warning') return 'text-amber-600';
+  return 'text-red-600';
 }
 
 function statusLabel(status: QCStatus): string {
@@ -299,15 +299,15 @@ function statusLabel(status: QCStatus): string {
 }
 
 function complianceColor(status: ComplianceStatus): string {
-  if (status === 'passed') return 'text-stone-800';
-  if (status === 'warning') return 'text-stone-600';
-  return 'text-stone-700';
+  if (status === 'passed') return 'text-green-700';
+  if (status === 'warning') return 'text-amber-600';
+  return 'text-red-600';
 }
 
 function strengthColor(s: EvidenceStrength): string {
-  if (s === 'strong') return 'text-stone-800';
-  if (s === 'adequate') return 'text-stone-600';
-  if (s === 'weak') return 'text-stone-900';
+  if (s === 'strong') return 'text-green-700';
+  if (s === 'adequate') return 'text-amber-600';
+  if (s === 'weak') return 'text-red-500';
   return 'text-stone-400';
 }
 
@@ -316,9 +316,9 @@ function strengthLabel(s: EvidenceStrength): string {
 }
 
 function riskColor(score: number): string {
-  if (score <= 25) return 'text-stone-800';
-  if (score <= 50) return 'text-stone-600';
-  return 'text-stone-700';
+  if (score <= 25) return 'text-green-700';
+  if (score <= 50) return 'text-amber-600';
+  return 'text-red-600';
 }
 
 // ---------------------------------------------------------------------------
@@ -405,7 +405,7 @@ function QualityCenterView({ qcSections }: { qcSections: QCSection[] }) {
               </div>
               <div>
                 <p className="text-xs text-stone-400 uppercase tracking-wide">Critical</p>
-                <p className="text-base font-semibold text-stone-700 mt-1">{critical}</p>
+                <p className="text-base font-semibold text-red-600 mt-1">{critical}</p>
               </div>
             </div>
             <p className="text-xs text-stone-400 mt-4">
@@ -501,11 +501,11 @@ function ComplianceView({ complianceRules }: { complianceRules: ComplianceRule[]
           </div>
           <div>
             <p className="text-xs text-stone-400 uppercase tracking-wide">Passed</p>
-            <p className="text-base font-semibold text-stone-800 mt-1">{passed}</p>
+            <p className="text-base font-semibold text-green-700 mt-1">{passed}</p>
           </div>
           <div>
             <p className="text-xs text-stone-400 uppercase tracking-wide">Warnings</p>
-            <p className="text-base font-semibold text-stone-600 mt-1">{warnings}</p>
+            <p className="text-base font-semibold text-amber-600 mt-1">{warnings}</p>
           </div>
         </div>
         <p className="text-xs text-stone-400 mt-4">
@@ -564,13 +564,13 @@ function ComplianceView({ complianceRules }: { complianceRules: ComplianceRule[]
               <tr key={i} className="border-b border-stone-50 last:border-0">
                 <td className="px-5 py-3 text-stone-900">{row.requirement}</td>
                 <td className="px-5 py-3 text-center">
-                  <span className={row.fda ? 'text-stone-800' : 'text-stone-400'}>{row.fda ? 'Met' : '\u2014'}</span>
+                  <span className={row.fda ? 'text-green-700' : 'text-stone-400'}>{row.fda ? 'Met' : '\u2014'}</span>
                 </td>
                 <td className="px-5 py-3 text-center">
-                  <span className={row.ema ? 'text-stone-800' : 'text-stone-400'}>{row.ema ? 'Met' : '\u2014'}</span>
+                  <span className={row.ema ? 'text-green-700' : 'text-stone-400'}>{row.ema ? 'Met' : '\u2014'}</span>
                 </td>
                 <td className="px-5 py-3 text-center">
-                  <span className={row.pmda ? 'text-stone-800' : 'text-stone-400'}>{row.pmda ? 'Met' : '\u2014'}</span>
+                  <span className={row.pmda ? 'text-green-700' : 'text-stone-400'}>{row.pmda ? 'Met' : '\u2014'}</span>
                 </td>
               </tr>
             ))}
@@ -702,7 +702,7 @@ function _removed() { // eslint-disable-line
 
             <button
               onClick={() => handleRunSimulation(i)}
-              className="mt-4 flex items-center gap-1.5 text-xs font-medium text-stone-600 hover:text-stone-700 transition-colors duration-150"
+              className="mt-4 flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-stone-700 transition-colors duration-150"
             >
               <Play className="w-3 h-3" />
               Run simulation
@@ -720,8 +720,8 @@ function _removed() { // eslint-disable-line
           </div>
           <span className={cn(
             'text-base font-semibold',
-            ANA_PREDICTION.successProbability >= 0.7 ? 'text-stone-700' :
-            ANA_PREDICTION.successProbability >= 0.5 ? 'text-stone-900' : 'text-stone-900',
+            ANA_PREDICTION.successProbability >= 0.7 ? 'text-emerald-600' :
+            ANA_PREDICTION.successProbability >= 0.5 ? 'text-amber-500' : 'text-red-500',
           )}>
             {(ANA_PREDICTION.successProbability * 100).toFixed(0)}%
           </span>
@@ -735,12 +735,12 @@ function _removed() { // eslint-disable-line
               <div key={i} className="flex items-start gap-2">
                 <span className={cn(
                   'mt-0.5 w-1.5 h-1.5 rounded-full shrink-0',
-                  rf.impact === 'high' ? 'bg-stone-400' : rf.impact === 'medium' ? 'bg-stone-400' : 'bg-stone-300',
+                  rf.impact === 'high' ? 'bg-red-400' : rf.impact === 'medium' ? 'bg-amber-400' : 'bg-stone-300',
                 )} />
                 <span className="text-xs text-stone-600">{rf.factor}</span>
                 <span className={cn(
                   'text-xs font-medium uppercase ml-auto shrink-0',
-                  rf.impact === 'high' ? 'text-stone-900' : rf.impact === 'medium' ? 'text-stone-900' : 'text-stone-400',
+                  rf.impact === 'high' ? 'text-red-500' : rf.impact === 'medium' ? 'text-amber-500' : 'text-stone-400',
                 )}>{rf.impact}</span>
               </div>
             ))}
@@ -792,8 +792,8 @@ function _removed() { // eslint-disable-line
               </div>
               <span className={cn(
                 'text-xs font-medium px-2 py-0.5 rounded-full',
-                ep.type === 'Primary' ? 'bg-stone-100 text-stone-600' :
-                ep.type === 'Co-primary' ? 'bg-stone-100 text-stone-600' :
+                ep.type === 'Primary' ? 'bg-blue-50 text-blue-600' :
+                ep.type === 'Co-primary' ? 'bg-blue-50 text-blue-600' :
                 'bg-stone-100 text-stone-500',
               )}>{ep.type}</span>
             </div>
@@ -807,7 +807,7 @@ function _removed() { // eslint-disable-line
         <ul className="space-y-2">
           {ANA_PREDICTION.protocolFindings.map((finding: any, i: any) => (
             <li key={i} className="text-xs text-stone-600 flex items-start gap-2">
-              <span className="text-stone-900 mt-0.5 shrink-0">{'\u2192'}</span>
+              <span className="text-blue-500 mt-0.5 shrink-0">{'\u2192'}</span>
               {finding}
             </li>
           ))}
@@ -907,8 +907,8 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
               {trendDirection && (
                 <span className={cn(
                   'ml-2 font-medium capitalize',
-                  trendDirection === 'improving' ? 'text-stone-700'
-                    : trendDirection === 'declining' ? 'text-stone-700'
+                  trendDirection === 'improving' ? 'text-emerald-600'
+                    : trendDirection === 'declining' ? 'text-red-600'
                     : 'text-stone-500'
                 )}>
                   • Trend: {trendDirection}
@@ -925,9 +925,9 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
                   <p className="text-xs text-stone-400 uppercase tracking-wide capitalize">{dim}</p>
                   <p className={cn(
                     'text-base font-semibold mt-1',
-                    dimensions[dim] >= 75 ? 'text-stone-700'
-                      : dimensions[dim] >= 50 ? 'text-stone-900'
-                      : 'text-stone-900'
+                    dimensions[dim] >= 75 ? 'text-green-600'
+                      : dimensions[dim] >= 50 ? 'text-amber-500'
+                      : 'text-red-500'
                   )}>
                     {dimensions[dim]}%
                   </p>
@@ -935,9 +935,9 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
                     <div
                       className={cn(
                         'h-full rounded-full',
-                        dimensions[dim] >= 75 ? 'bg-stone-900'
-                          : dimensions[dim] >= 50 ? 'bg-stone-400'
-                          : 'bg-stone-400'
+                        dimensions[dim] >= 75 ? 'bg-green-500'
+                          : dimensions[dim] >= 50 ? 'bg-amber-400'
+                          : 'bg-red-400'
                       )}
                       style={{ width: `${dimensions[dim]}%` }}
                     />
@@ -958,8 +958,8 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
                   <div key={gap.id} className="px-5 py-3 flex items-start gap-3">
                     <span className={cn(
                       'w-2 h-2 rounded-full mt-1.5 flex-shrink-0',
-                      gap.severity === 'critical' ? 'bg-stone-900'
-                        : gap.severity === 'high' ? 'bg-stone-900'
+                      gap.severity === 'critical' ? 'bg-red-500'
+                        : gap.severity === 'high' ? 'bg-amber-500'
                         : 'bg-stone-600'
                     )} />
                     <div className="flex-1 min-w-0">
@@ -968,9 +968,9 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
                     </div>
                     <span className={cn(
                       'text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 capitalize',
-                      gap.severity === 'critical' ? 'bg-stone-100 text-stone-800'
-                        : gap.severity === 'high' ? 'bg-stone-100 text-stone-700'
-                        : 'bg-stone-100 text-stone-700'
+                      gap.severity === 'critical' ? 'bg-red-100 text-red-700'
+                        : gap.severity === 'high' ? 'bg-amber-100 text-amber-700'
+                        : 'bg-blue-100 text-stone-700'
                     )}>
                       {gap.severity}
                     </span>
@@ -1005,7 +1005,7 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
                           <div
                             className={cn(
                               'h-full rounded-full',
-                              mod.completeness >= 85 ? 'bg-stone-900' : mod.completeness >= 65 ? 'bg-stone-400' : 'bg-stone-400'
+                              mod.completeness >= 85 ? 'bg-green-500' : mod.completeness >= 65 ? 'bg-amber-400' : 'bg-red-400'
                             )}
                             style={{ width: `${mod.completeness}%` }}
                           />
@@ -1015,7 +1015,7 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
                     </td>
                     <td className={cn(
                       'px-5 py-3 text-sm capitalize',
-                      mod.status === 'ready' ? 'text-stone-800' : mod.status === 'in-progress' ? 'text-stone-600' : 'text-stone-700'
+                      mod.status === 'ready' ? 'text-green-700' : mod.status === 'in-progress' ? 'text-amber-600' : 'text-red-600'
                     )}>
                       {mod.status.replace('-', ' ')}
                     </td>
@@ -1138,14 +1138,14 @@ function EvidenceConfidenceView({ evidenceSections }: { evidenceSections: Eviden
                   <td className="px-5 py-3 text-center">
                     <span className={cn(
                       'font-medium',
-                      section.confidence >= 80 ? 'text-stone-800' : section.confidence >= 60 ? 'text-stone-600' : 'text-stone-900'
+                      section.confidence >= 80 ? 'text-green-700' : section.confidence >= 60 ? 'text-amber-600' : 'text-red-500'
                     )}>
                       {section.confidence}%
                     </span>
                   </td>
                   <td className="px-5 py-3 text-stone-400 text-xs">
                     {section.gaps.length === 0 ? (
-                      <span className="text-stone-800">None</span>
+                      <span className="text-green-700">None</span>
                     ) : (
                       <ul className="space-y-0.5">
                         {section.gaps.map((g, j) => (
@@ -1364,7 +1364,7 @@ function TraceabilityView({ traceability }: { traceability: TraceabilityClaim[] 
               </div>
               <div>
                 <p className="text-xs text-stone-400 uppercase tracking-wide">Orphaned Claims</p>
-                <p className="text-base font-semibold text-stone-700 mt-1">{orphaned.length}</p>
+                <p className="text-base font-semibold text-red-600 mt-1">{orphaned.length}</p>
               </div>
             </div>
             <p className="text-xs text-stone-400 mt-4">
@@ -1380,7 +1380,7 @@ function TraceabilityView({ traceability }: { traceability: TraceabilityClaim[] 
               <ul className="mt-3 space-y-2">
                 {orphaned.map((claim) => (
                   <li key={claim.id} className="text-sm text-stone-600 flex items-start gap-2">
-                    <XCircle className="w-4 h-4 text-stone-400 mt-0.5 flex-shrink-0" />
+                    <XCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
                     <div>
                       <span className="font-mono text-xs text-stone-400 mr-2">{claim.requirement}</span>
                       {claim.claim}
@@ -1421,14 +1421,14 @@ function TraceabilityView({ traceability }: { traceability: TraceabilityClaim[] 
                           ))}
                         </ul>
                       ) : (
-                        <span className="text-stone-400">No evidence linked</span>
+                        <span className="text-red-400">No evidence linked</span>
                       )}
                     </td>
                     <td className="px-5 py-3 text-center">
                       {claim.traced ? (
-                        <span className="text-stone-800 text-xs font-medium">Yes</span>
+                        <span className="text-green-700 text-xs font-medium">Yes</span>
                       ) : (
-                        <span className="text-stone-900 text-xs font-medium">No</span>
+                        <span className="text-red-500 text-xs font-medium">No</span>
                       )}
                     </td>
                   </tr>

@@ -90,8 +90,8 @@ export const ProofExplorer: React.FC<ProofExplorerProps> = ({ workflowRunId, cla
                 className={cn(
                   'flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium',
                   verification.valid
-                    ? 'bg-stone-100 text-stone-800'
-                    : 'bg-stone-100 text-stone-800'
+                    ? 'bg-green-50 text-green-700'
+                    : 'bg-red-50 text-red-700'
                 )}
                 role="status"
                 aria-live="polite"
@@ -137,7 +137,7 @@ export const ProofExplorer: React.FC<ProofExplorerProps> = ({ workflowRunId, cla
                   : 'Run verification to confirm proof validity.'}
               </p>
               {verification?.failures?.length ? (
-                <p className="mt-1 text-xs text-stone-700" role="alert">
+                <p className="mt-1 text-xs text-red-600" role="alert">
                   {verification.failures.map(f => `${f.type}: ${f.reason}`).join(' \u2022 ')}
                 </p>
               ) : null}

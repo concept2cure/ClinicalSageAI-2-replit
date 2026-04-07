@@ -81,13 +81,13 @@ function formatRelativeTime(dateString: string): string {
 
 const AUTHOR_COLORS = [
   "bg-stone-600",
-  "bg-stone-900",
-  "bg-stone-500",
-  "bg-stone-900",
-  "bg-stone-900",
-  "bg-stone-900",
-  "bg-stone-900",
-  "bg-stone-900",
+  "bg-emerald-500",
+  "bg-violet-500",
+  "bg-amber-500",
+  "bg-rose-500",
+  "bg-cyan-500",
+  "bg-fuchsia-500",
+  "bg-lime-500",
 ];
 
 function getAuthorColor(authorId: string): string {
@@ -220,23 +220,23 @@ function AIRewritePreview({
 }) {
   return (
     <div
-      className="mt-2 ml-8 rounded-md border border-stone-200 bg-stone-100/40 p-3 space-y-2 transition-all duration-200"
+      className="mt-2 ml-8 rounded-md border border-violet-200 bg-violet-50/40 p-3 space-y-2 transition-all duration-200"
       role="region"
       aria-label="AI rewrite suggestion"
     >
       <div className="flex items-center gap-1.5">
-        <Sparkles className="h-3 w-3 text-stone-500" />
-        <span className="text-[11px] font-semibold text-stone-700">AI Suggestion</span>
+        <Sparkles className="h-3 w-3 text-violet-500" />
+        <span className="text-[11px] font-semibold text-violet-700">AI Suggestion</span>
       </div>
       <p className="text-[10px] text-stone-500 italic">{explanation}</p>
-      <div className="rounded border border-stone-200 bg-white p-2 text-xs text-stone-700 leading-relaxed max-h-40 overflow-y-auto">
+      <div className="rounded border border-violet-100 bg-white p-2 text-xs text-stone-700 leading-relaxed max-h-40 overflow-y-auto">
         {rewrittenText.length > 600 ? rewrittenText.substring(0, 600) + '...' : rewrittenText}
       </div>
       <div className="flex items-center gap-2">
         <Button
           variant="ghost"
           onClick={onApply}
-          className="px-3 py-1 text-[11px] font-medium text-white bg-stone-700 rounded-md hover:bg-stone-800 transition-colors duration-150 flex items-center gap-1"
+          className="px-3 py-1 text-[11px] font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700 transition-colors duration-150 flex items-center gap-1"
           aria-label="Apply AI rewrite"
         >
           <Check className="h-3 w-3" />
@@ -322,7 +322,7 @@ function CommentCard({
           <div
             className={cn(
               "h-2 w-2 rounded-full shrink-0 mt-0.5",
-              comment.resolved ? "bg-stone-400" : "bg-stone-400"
+              comment.resolved ? "bg-emerald-400" : "bg-amber-400"
             )}
           />
           <AuthorAvatar
@@ -361,7 +361,7 @@ function CommentCard({
                 disabled={aiLoading}
                 title="Address with AI"
                 aria-label="Address comment with AI"
-                className="p-1 rounded hover:bg-stone-100 text-muted-foreground hover:text-stone-600 transition-colors duration-150 disabled:opacity-50"
+                className="p-1 rounded hover:bg-violet-50 text-muted-foreground hover:text-violet-600 transition-colors duration-150 disabled:opacity-50"
               >
                 {aiLoading ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -375,7 +375,7 @@ function CommentCard({
                   onResolve(comment.id);
                 }}
                 title="Resolve"
-                className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-stone-900 transition-colors duration-150"
+                className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-emerald-500 transition-colors duration-150"
               >
                 <CheckCircle className="h-3.5 w-3.5" />
               </button>
@@ -416,7 +416,7 @@ function CommentCard({
 
       {/* Resolved badge */}
       {comment.resolved && (
-        <div className="mt-2 ml-8 flex items-center gap-1 text-[10px] text-stone-900 font-medium">
+        <div className="mt-2 ml-8 flex items-center gap-1 text-[10px] text-emerald-500 font-medium">
           <Check className="h-3 w-3" />
           Resolved
         </div>
@@ -450,7 +450,7 @@ function CommentCard({
 
       {/* AI Rewrite Loading */}
       {aiLoading && (
-        <div className="mt-2 ml-8 flex items-center gap-2 text-xs text-stone-600" role="status" aria-live="polite">
+        <div className="mt-2 ml-8 flex items-center gap-2 text-xs text-violet-600" role="status" aria-live="polite">
           <Loader2 className="h-3 w-3 animate-spin" />
           <span>Generating AI suggestion...</span>
         </div>
@@ -547,7 +547,7 @@ export function CommentThreadPanel({
                   className="fixed inset-0 z-10"
                   onClick={() => setShowFilterMenu(false)}
                 />
-                <div className="absolute right-0 top-full mt-1 z-20 w-32 rounded-md border border-border bg-popover shadow-sm py-1">
+                <div className="absolute right-0 top-full mt-1 z-20 w-32 rounded-md border border-border bg-popover shadow-md py-1">
                   {(Object.keys(filterLabels) as FilterMode[]).map((mode) => (
                     <button
                       key={mode}

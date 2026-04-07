@@ -112,11 +112,11 @@ function classifyArtifact(a: TreeArtifact): string {
 function StatusIcon({ status }: { status?: string }) {
   switch (status) {
     case 'approved':
-      return <CheckCircle className="w-3 h-3 text-stone-900 shrink-0" />;
+      return <CheckCircle className="w-3 h-3 text-emerald-500 shrink-0" />;
     case 'locked':
-      return <Lock className="w-3 h-3 text-stone-900 shrink-0" />;
+      return <Lock className="w-3 h-3 text-red-500 shrink-0" />;
     case 'review':
-      return <AlertTriangle className="w-3 h-3 text-stone-900 shrink-0" />;
+      return <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />;
     case 'draft':
     default:
       return <Clock className="w-3 h-3 text-stone-400 shrink-0" />;
@@ -243,7 +243,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                 className={cn(
                   'w-full flex items-center gap-1.5 px-2 py-[5px] text-left transition-all duration-150 group focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded',
                   isFolderSelected
-                    ? 'bg-stone-100 text-stone-700'
+                    ? 'bg-blue-50 text-stone-700'
                     : 'text-stone-600 hover:bg-stone-50 hover:translate-x-px'
                 )}
                 data-testid={`folder-${folder.key}`}
@@ -279,7 +279,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                       className={cn(
                         'w-full flex items-center gap-1.5 pl-7 pr-2 py-[4px] text-left transition-all duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded',
                         isSelected
-                          ? 'bg-stone-100/70 text-stone-800'
+                          ? 'bg-blue-100/70 text-blue-800'
                           : 'text-stone-600 hover:bg-stone-50 hover:translate-x-px'
                       )}
                       data-testid="tree-file-node"
@@ -288,7 +288,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                       <FileText
                         className={cn(
                           'w-3.5 h-3.5 shrink-0',
-                          isSelected ? 'text-stone-600' : 'text-stone-400'
+                          isSelected ? 'text-blue-600' : 'text-stone-400'
                         )}
                       />
                       <span className="text-sm truncate flex-1 leading-snug">{a.title}</span>
@@ -308,7 +308,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
             {onCreateNew && (
               <button
                 onClick={onCreateNew}
-                className="mt-2 text-xs text-stone-600 hover:text-stone-700 font-medium"
+                className="mt-2 text-xs text-blue-600 hover:text-stone-700 font-medium"
               >
                 Create first document
               </button>
@@ -319,7 +319,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
 
       {/* Pending cut/paste banner */}
       {pendingMove && (
-        <div className="px-3 py-1.5 border-t border-stone-200 bg-stone-100 text-xs text-stone-700 flex items-center gap-1.5 shrink-0">
+        <div className="px-3 py-1.5 border-t border-amber-200 bg-amber-50 text-xs text-amber-700 flex items-center gap-1.5 shrink-0">
           <Scissors className="w-3 h-3" />
           <span className="truncate flex-1">Cut: {pendingMove.artifact.title}</span>
         </div>
@@ -364,7 +364,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                 onOpenPlacement(contextMenu.artifact);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-stone-100 hover:text-stone-700 transition-colors flex items-center gap-2 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-blue-50 hover:text-stone-700 transition-colors flex items-center gap-2 focus-visible:outline-none"
               role="menuitem"
             >
               <MapPin className="w-3 h-3" />
@@ -390,7 +390,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                 onPasteHere(contextMenu.artifact.ctdSection || '');
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-stone-100 transition-colors flex items-center gap-2 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-2 focus-visible:outline-none"
               role="menuitem"
             >
               <ClipboardPaste className="w-3 h-3" />

@@ -31,22 +31,22 @@ export interface PatternSignalPanelProps {
 // ── Severity colors (stone palette, muted) ─────────────────────────────────────
 
 const SEVERITY_STYLES: Record<string, string> = {
-  critical: 'bg-stone-100 text-stone-800 border-stone-200',
-  high: 'bg-stone-100 text-stone-700 border-stone-200',
-  medium: 'bg-stone-100 text-stone-700 border-stone-200',
+  critical: 'bg-red-50 text-red-700 border-red-200',
+  high: 'bg-orange-50 text-orange-700 border-orange-200',
+  medium: 'bg-amber-50 text-amber-700 border-amber-200',
   low: 'bg-stone-100 text-stone-600 border-stone-200',
 };
 
 const CATEGORY_STYLES: Record<string, string> = {
-  deficiency: 'bg-stone-100 text-stone-700',
-  reviewer_trigger: 'bg-stone-100 text-stone-600',
-  rejection: 'bg-stone-100 text-stone-800',
-  strong_language: 'bg-stone-100 text-stone-700',
-  weak_language: 'bg-stone-100 text-stone-600',
-  data_gap: 'bg-stone-100 text-stone-600',
-  consistency_issue: 'bg-stone-100 text-stone-600',
+  deficiency: 'bg-red-50 text-red-600',
+  reviewer_trigger: 'bg-orange-50 text-orange-600',
+  rejection: 'bg-red-50 text-red-700',
+  strong_language: 'bg-emerald-50 text-emerald-600',
+  weak_language: 'bg-amber-50 text-amber-600',
+  data_gap: 'bg-violet-50 text-violet-600',
+  consistency_issue: 'bg-blue-50 text-blue-600',
   formatting: 'bg-stone-100 text-stone-500',
-  risk_signal: 'bg-stone-100 text-stone-600',
+  risk_signal: 'bg-orange-50 text-orange-600',
 };
 
 function categoryLabel(cat: string): string {
@@ -57,9 +57,9 @@ function categoryLabel(cat: string): string {
 
 function TrendIcon({ direction }: { direction: 'improving' | 'stable' | 'declining' }) {
   if (direction === 'improving')
-    return <TrendingUp className="w-3.5 h-3.5 text-stone-700" aria-label="Improving" />;
+    return <TrendingUp className="w-3.5 h-3.5 text-emerald-600" aria-label="Improving" />;
   if (direction === 'declining')
-    return <TrendingDown className="w-3.5 h-3.5 text-stone-900" aria-label="Declining" />;
+    return <TrendingDown className="w-3.5 h-3.5 text-red-500" aria-label="Declining" />;
   return <Minus className="w-3.5 h-3.5 text-stone-400" aria-label="Stable" />;
 }
 
@@ -96,11 +96,11 @@ function RiskBreakdown({ byRiskLevel }: { byRiskLevel: Partial<Record<string, nu
             <span
               className={`inline-block w-2 h-2 rounded-full ${
                 level === 'critical'
-                  ? 'bg-stone-900'
+                  ? 'bg-red-500'
                   : level === 'high'
-                    ? 'bg-stone-400'
+                    ? 'bg-orange-400'
                     : level === 'medium'
-                      ? 'bg-stone-400'
+                      ? 'bg-amber-400'
                       : 'bg-stone-300'
               }`}
             />
@@ -229,7 +229,7 @@ export function PatternSignalPanel({ projectId }: PatternSignalPanelProps) {
                 {/* Summary row */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-semibold text-stone-800 tabular-nums">
+                    <span className="text-2xl font-semibold text-stone-800 tabular-nums">
                       {signals.totalSignals}
                     </span>
                     <span className="text-[12px] text-stone-400">total signals</span>

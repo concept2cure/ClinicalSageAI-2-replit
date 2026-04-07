@@ -48,21 +48,21 @@ export interface WatermarkSettingsProps {
 const WATERMARK_CONFIGS: Record<WatermarkStatus, WatermarkConfig | null> = {
   draft: {
     text: 'DRAFT',
-    color: '#6b7280', // stone-500
+    color: '#6b7280', // gray-500
     opacity: 0.08,
     fontSize: '6rem',
     mode: 'diagonal',
   },
   review: {
     text: 'UNDER REVIEW',
-    color: '#d97706', // stone-600
+    color: '#d97706', // amber-600
     opacity: 0.08,
     fontSize: '5rem',
     mode: 'diagonal',
   },
   confidential: {
     text: 'CONFIDENTIAL',
-    color: '#dc2626', // stone-700
+    color: '#dc2626', // red-600
     opacity: 0.12,
     fontSize: '5rem',
     mode: 'diagonal',
@@ -70,7 +70,7 @@ const WATERMARK_CONFIGS: Record<WatermarkStatus, WatermarkConfig | null> = {
   approved: null, // clean document, no watermark
   locked: {
     text: 'CONTROLLED COPY',
-    color: '#16a34a', // stone-700
+    color: '#16a34a', // green-600
     opacity: 0.35,
     fontSize: '0.875rem',
     mode: 'top-banner',
@@ -270,11 +270,11 @@ export function WatermarkSettings({
   );
 
   return (
-    <div className="flex flex-col gap-3 p-4 rounded-lg border border-stone-200 bg-white">
+    <div className="flex flex-col gap-3 p-4 rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
       <div className="flex items-center justify-between">
         <label
           htmlFor="watermark-toggle"
-          className="text-sm font-medium text-stone-700"
+          className="text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           Document Watermark
         </label>
@@ -286,7 +286,7 @@ export function WatermarkSettings({
           onClick={handleToggle}
           className={[
             'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 outline-none focus:ring-offset-2',
-            enabled ? 'bg-stone-800' : 'bg-stone-300',
+            enabled ? 'bg-stone-800' : 'bg-gray-300 dark:bg-gray-600',
           ].join(' ')}
         >
           <span
@@ -302,7 +302,7 @@ export function WatermarkSettings({
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor="watermark-custom-text"
-            className="text-xs text-stone-500"
+            className="text-xs text-gray-500 dark:text-gray-400"
           >
             Custom watermark text (leave blank to use status default)
           </label>
@@ -313,7 +313,7 @@ export function WatermarkSettings({
             onChange={handleTextChange}
             placeholder="e.g. INTERNAL USE ONLY"
             maxLength={60}
-            className="rounded-md border border-stone-300 px-3 py-1.5 text-sm text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus-visible:ring-2 outline-none focus:ring-stone-400"
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-stone-400 focus-visible:ring-2 outline-none focus:ring-stone-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
           />
         </div>
       )}

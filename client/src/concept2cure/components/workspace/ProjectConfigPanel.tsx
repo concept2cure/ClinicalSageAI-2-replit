@@ -391,14 +391,14 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
     <Sheet open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <SheetContent
         side="right"
-        className="w-[420px] sm:max-w-[420px] p-0 flex flex-col bg-stone-50 border-l border-stone-200"
+        className="w-[420px] sm:max-w-[420px] p-0 flex flex-col bg-[#FAFAF8] border-l border-[#E8E6DC]"
       >
         <SheetHeader className="px-6 pt-6 pb-2">
-          <SheetTitle className="text-lg font-semibold text-stone-700 flex items-center gap-2">
-            <Settings className="h-5 w-5 text-stone-700/60" />
+          <SheetTitle className="text-lg font-semibold text-[#4D4B45] flex items-center gap-2">
+            <Settings className="h-5 w-5 text-[#4D4B45]/60" />
             Project Configuration
           </SheetTitle>
-          <SheetDescription className="text-sm text-stone-700/60">
+          <SheetDescription className="text-sm text-[#4D4B45]/60">
             {project?.name || 'Configure project settings'}
           </SheetDescription>
         </SheetHeader>
@@ -408,45 +408,45 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
           onValueChange={setActiveTab}
           className="flex-1 flex flex-col overflow-hidden"
         >
-          <TabsList className="mx-6 bg-transparent border-b border-stone-200 rounded-none h-auto p-0 gap-0">
+          <TabsList className="mx-6 bg-transparent border-b border-[#E8E6DC] rounded-none h-auto p-0 gap-0">
             <TabsTrigger
               value="general"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-stone-700 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 py-2.5 text-sm text-stone-700/60 data-[state=active]:text-stone-700 font-medium"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#4D4B45] data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 py-2.5 text-sm text-[#4D4B45]/60 data-[state=active]:text-[#4D4B45] font-medium"
             >
               <Settings className="h-3.5 w-3.5 mr-1.5" />
               General
             </TabsTrigger>
             <TabsTrigger
               value="instructions"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-stone-700 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 py-2.5 text-sm text-stone-700/60 data-[state=active]:text-stone-700 font-medium"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#4D4B45] data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 py-2.5 text-sm text-[#4D4B45]/60 data-[state=active]:text-[#4D4B45] font-medium"
             >
               <FileText className="h-3.5 w-3.5 mr-1.5" />
               Instructions
             </TabsTrigger>
             <TabsTrigger
               value="team"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-stone-700 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 py-2.5 text-sm text-stone-700/60 data-[state=active]:text-stone-700 font-medium"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#4D4B45] data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 py-2.5 text-sm text-[#4D4B45]/60 data-[state=active]:text-[#4D4B45] font-medium"
             >
               <Users className="h-3.5 w-3.5 mr-1.5" />
               Team
             </TabsTrigger>
             <TabsTrigger
               value="sharing"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-stone-700 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 py-2.5 text-sm text-stone-700/60 data-[state=active]:text-stone-700 font-medium"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#4D4B45] data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 py-2.5 text-sm text-[#4D4B45]/60 data-[state=active]:text-[#4D4B45] font-medium"
             >
               <Share2 className="h-3.5 w-3.5 mr-1.5" />
               Sharing
             </TabsTrigger>
             <TabsTrigger
               value="modules"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-stone-700 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 py-2.5 text-sm text-stone-700/60 data-[state=active]:text-stone-700 font-medium"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#4D4B45] data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 py-2.5 text-sm text-[#4D4B45]/60 data-[state=active]:text-[#4D4B45] font-medium"
             >
               <Link2 className="h-3.5 w-3.5 mr-1.5" />
               Modules
             </TabsTrigger>
             <TabsTrigger
               value="compliance"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-stone-700 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 py-2.5 text-sm text-stone-700/60 data-[state=active]:text-stone-700 font-medium"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#4D4B45] data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 py-2.5 text-sm text-[#4D4B45]/60 data-[state=active]:text-[#4D4B45] font-medium"
             >
               <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
               Compliance
@@ -458,39 +458,39 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
             <TabsContent value="general" className="px-6 py-5 space-y-5 m-0">
               {/* Project Name */}
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1.5">
-                  Project Name <span className="text-stone-900">*</span>
+                <label className="block text-sm font-medium text-[#4D4B45] mb-1.5">
+                  Project Name <span className="text-red-500">*</span>
                 </label>
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g., CardioFlow Heart Monitor"
-                  className="border-stone-200 bg-white text-stone-700 placeholder:text-stone-700/40 focus-visible:ring-stone-400/20 focus-visible:border-stone-400"
+                  className="border-[#E8E6DC] bg-white text-[#4D4B45] placeholder:text-[#4D4B45]/40 focus-visible:ring-[#4D4B45]/20 focus-visible:border-[#4D4B45]/40"
                   required
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1.5">
-                  Description <span className="text-stone-700/40 font-normal">(optional)</span>
+                <label className="block text-sm font-medium text-[#4D4B45] mb-1.5">
+                  Description <span className="text-[#4D4B45]/40 font-normal">(optional)</span>
                 </label>
                 <Textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Brief description of the project..."
                   rows={2}
-                  className="border-stone-200 bg-white text-stone-700 placeholder:text-stone-700/40 focus-visible:ring-stone-400/20 focus-visible:border-stone-400 resize-none"
+                  className="border-[#E8E6DC] bg-white text-[#4D4B45] placeholder:text-[#4D4B45]/40 focus-visible:ring-[#4D4B45]/20 focus-visible:border-[#4D4B45]/40 resize-none"
                 />
               </div>
 
               {/* Submission Type */}
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                <label className="block text-sm font-medium text-[#4D4B45] mb-1.5">
                   Submission Type
                 </label>
                 <Select value={submissionType} onValueChange={setSubmissionType}>
-                  <SelectTrigger className="border-stone-200 bg-white text-stone-700 focus:ring-stone-400/20">
+                  <SelectTrigger className="border-[#E8E6DC] bg-white text-[#4D4B45] focus:ring-[#4D4B45]/20">
                     <SelectValue placeholder="Select submission type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -505,35 +505,35 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
 
               {/* Product / Device Name */}
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                <label className="block text-sm font-medium text-[#4D4B45] mb-1.5">
                   Product / Device / Molecule{' '}
-                  <span className="text-stone-700/40 font-normal">(optional)</span>
+                  <span className="text-[#4D4B45]/40 font-normal">(optional)</span>
                 </label>
                 <Input
                   value={productName}
                   onChange={(e) => setProductName(e.target.value)}
                   placeholder="e.g., CardioFlow™, Atorvastatin 20 mg"
-                  className="border-stone-200 bg-white text-stone-700 placeholder:text-stone-700/40 focus-visible:ring-stone-400/20 focus-visible:border-stone-400"
+                  className="border-[#E8E6DC] bg-white text-[#4D4B45] placeholder:text-[#4D4B45]/40 focus-visible:ring-[#4D4B45]/20 focus-visible:border-[#4D4B45]/40"
                 />
               </div>
 
               {/* Sponsor */}
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                <label className="block text-sm font-medium text-[#4D4B45] mb-1.5">
                   Sponsor / Client{' '}
-                  <span className="text-stone-700/40 font-normal">(optional)</span>
+                  <span className="text-[#4D4B45]/40 font-normal">(optional)</span>
                 </label>
                 <Input
                   value={sponsor}
                   onChange={(e) => setSponsor(e.target.value)}
                   placeholder="e.g., Acme Biotech, Inc."
-                  className="border-stone-200 bg-white text-stone-700 placeholder:text-stone-700/40 focus-visible:ring-stone-400/20 focus-visible:border-stone-400"
+                  className="border-[#E8E6DC] bg-white text-[#4D4B45] placeholder:text-[#4D4B45]/40 focus-visible:ring-[#4D4B45]/20 focus-visible:border-[#4D4B45]/40"
                 />
               </div>
 
               {/* Target Agency */}
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                <label className="block text-sm font-medium text-[#4D4B45] mb-1.5">
                   Target Agency
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -544,8 +544,8 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                       onClick={() => setTargetAgency(agency)}
                       className={`px-3.5 py-1.5 text-sm font-medium rounded-lg border transition-all duration-150 ${
                         targetAgency === agency
-                          ? 'bg-stone-700 text-white border-stone-700'
-                          : 'bg-white text-stone-700 border-stone-200 hover:border-stone-700/30'
+                          ? 'bg-[#4D4B45] text-white border-[#4D4B45]'
+                          : 'bg-white text-[#4D4B45] border-[#E8E6DC] hover:border-[#4D4B45]/30'
                       }`}
                     >
                       {agency}
@@ -556,24 +556,24 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
 
               {/* Target Submission Date */}
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                <label className="block text-sm font-medium text-[#4D4B45] mb-1.5">
                   Target Submission Date
                 </label>
                 <Input
                   type="date"
                   value={targetSubmissionDate}
                   onChange={(e) => setTargetSubmissionDate(e.target.value)}
-                  className="border-stone-200 bg-white text-stone-700 focus-visible:ring-stone-400/20 focus-visible:border-stone-400"
+                  className="border-[#E8E6DC] bg-white text-[#4D4B45] focus-visible:ring-[#4D4B45]/20 focus-visible:border-[#4D4B45]/40"
                 />
               </div>
 
               {/* Status */}
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                <label className="block text-sm font-medium text-[#4D4B45] mb-1.5">
                   Status
                 </label>
                 <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger className="border-stone-200 bg-white text-stone-700 focus:ring-stone-400/20">
+                  <SelectTrigger className="border-[#E8E6DC] bg-white text-[#4D4B45] focus:ring-[#4D4B45]/20">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -591,19 +591,19 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
             <TabsContent value="instructions" className="px-6 py-5 space-y-4 m-0">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-sm font-medium text-stone-700">
+                  <label className="block text-sm font-medium text-[#4D4B45]">
                     Custom Instructions
                   </label>
                   {customInstructions.trim().length > 0 && (
                     <Badge
                       variant="secondary"
-                      className="bg-stone-100 text-stone-800 border-stone-200 text-xs font-medium"
+                      className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs font-medium"
                     >
                       Active — injected into every conversation
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-stone-700/50 mb-3">
+                <p className="text-xs text-[#4D4B45]/50 mb-3">
                   Provide context or rules that AnA should follow for this project.
                   These instructions are included in every conversation within this project.
                 </p>
@@ -616,7 +616,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                   }}
                   placeholder="e.g., Always reference ICH E6(R2) guidelines. Focus on Class III device requirements. Use formal language in all outputs."
                   rows={10}
-                  className="border-stone-200 bg-white text-stone-700 placeholder:text-stone-700/40 focus-visible:ring-stone-400/20 focus-visible:border-stone-400 resize-none text-sm leading-relaxed"
+                  className="border-[#E8E6DC] bg-white text-[#4D4B45] placeholder:text-[#4D4B45]/40 focus-visible:ring-[#4D4B45]/20 focus-visible:border-[#4D4B45]/40 resize-none text-sm leading-relaxed"
                 />
                 <div className="flex items-center justify-between mt-2">
                   <Button
@@ -624,12 +624,12 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                     variant="ghost"
                     size="sm"
                     onClick={handleResetInstructions}
-                    className="text-xs text-stone-700/50 hover:text-stone-700 h-auto py-1 px-2"
+                    className="text-xs text-[#4D4B45]/50 hover:text-[#4D4B45] h-auto py-1 px-2"
                     disabled={!customInstructions.trim()}
                   >
                     Reset to default
                   </Button>
-                  <span className="text-xs text-stone-700/40">
+                  <span className="text-xs text-[#4D4B45]/40">
                     {customInstructions.length.toLocaleString()} / {INSTRUCTIONS_MAX.toLocaleString()} characters
                   </span>
                 </div>
@@ -640,17 +640,17 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
             <TabsContent value="team" className="px-6 py-5 m-0">
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-medium text-stone-700 mb-1.5">Project collaborators</h3>
-                  <p className="text-xs text-stone-700/50">
+                  <h3 className="text-sm font-medium text-[#4D4B45] mb-1.5">Project collaborators</h3>
+                  <p className="text-xs text-[#4D4B45]/50">
                     Assign project-specific access controls. <strong>Can use</strong> grants project
                     access in AnA; <strong>Can edit</strong> grants full editing rights.
                   </p>
                 </div>
 
-                <div className="p-3 rounded-lg border border-stone-200 bg-white space-y-3">
+                <div className="p-3 rounded-lg border border-[#E8E6DC] bg-white space-y-3">
                   <div className="grid grid-cols-1 gap-2">
                     <Select value={newCollaboratorUserId} onValueChange={setNewCollaboratorUserId}>
-                      <SelectTrigger className="border-stone-200 bg-white text-stone-700">
+                      <SelectTrigger className="border-[#E8E6DC] bg-white text-[#4D4B45]">
                         <SelectValue placeholder="Select organization user" />
                       </SelectTrigger>
                       <SelectContent>
@@ -662,7 +662,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                       </SelectContent>
                     </Select>
                     {teamMembersError && (
-                      <p className="text-xs text-stone-700">
+                      <p className="text-xs text-red-600">
                         Failed to load team members: {teamMembersError.message}
                       </p>
                     )}
@@ -673,7 +673,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                           setNewCollaboratorPermission(value as ProjectCollaboratorPermission)
                         }
                       >
-                        <SelectTrigger className="border-stone-200 bg-white text-stone-700">
+                        <SelectTrigger className="border-[#E8E6DC] bg-white text-[#4D4B45]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -686,7 +686,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                         size="sm"
                         onClick={handleAddCollaborator}
                         disabled={!newCollaboratorUserId || isLoadingTeamMembers}
-                        className="bg-stone-700 text-white hover:bg-stone-800 disabled:opacity-40"
+                        className="bg-[#4D4B45] text-white hover:bg-[#3A3935] disabled:opacity-40"
                       >
                         Add
                       </Button>
@@ -707,13 +707,13 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                       {items.map(member => (
                         <div
                           key={member.userId}
-                          className="flex items-center justify-between gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2"
+                          className="flex items-center justify-between gap-2 rounded-lg border border-[#E8E6DC] bg-white px-3 py-2"
                         >
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-stone-700 truncate">
+                            <p className="text-sm font-medium text-[#4D4B45] truncate">
                               {member.name || `User ${member.userId}`}
                             </p>
-                            <p className="text-xs text-stone-700/55 truncate">
+                            <p className="text-xs text-[#4D4B45]/55 truncate">
                               {member.email || `ID: ${member.userId}`}
                             </p>
                           </div>
@@ -727,7 +727,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                                 )
                               }
                             >
-                              <SelectTrigger className="h-8 w-[120px] border-stone-200">
+                              <SelectTrigger className="h-8 w-[120px] border-[#E8E6DC]">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -739,7 +739,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="text-stone-700/60 hover:text-stone-700"
+                              className="text-[#4D4B45]/60 hover:text-red-600"
                               onClick={() => handleRemoveCollaborator(member.userId)}
                             >
                               Remove
@@ -757,7 +757,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                     size="sm"
                     onClick={handleSaveTeam}
                     disabled={isUpdatingCollaborators}
-                    className="bg-stone-700 text-white hover:bg-stone-800 disabled:opacity-40"
+                    className="bg-[#4D4B45] text-white hover:bg-[#3A3935] disabled:opacity-40"
                   >
                     {isUpdatingCollaborators ? 'Saving team...' : 'Save team permissions'}
                   </Button>
@@ -768,19 +768,19 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
             {/* ── Sharing Tab ── */}
             <TabsContent value="sharing" className="px-6 py-5 m-0">
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-stone-700">Project sharing controls</h3>
-                <p className="text-xs text-stone-700/55">
+                <h3 className="text-sm font-medium text-[#4D4B45]">Project sharing controls</h3>
+                <p className="text-xs text-[#4D4B45]/55">
                   Sharing is organization-scoped and fail-closed by default. Grant explicit access
                   and distribute a project URL for approved collaborators.
                 </p>
-                <div className="rounded-lg border border-stone-200 bg-white p-3">
-                  <p className="text-xs text-stone-700/70">
+                <div className="rounded-lg border border-[#E8E6DC] bg-white p-3">
+                  <p className="text-xs text-[#4D4B45]/70">
                     Current collaborators: <strong>{effectiveCollaborators.length}</strong>
                   </p>
-                  <p className="text-xs text-stone-700/50 mt-1">
+                  <p className="text-xs text-[#4D4B45]/50 mt-1">
                     Required: explicit user assignment with <em>Can use</em> or <em>Can edit</em>.
                   </p>
-                  <p className="text-xs text-stone-700/50 mt-2">
+                  <p className="text-xs text-[#4D4B45]/50 mt-2">
                     Share path: <code className="text-[11px]">{project?.id ? buildProjectSharePath(project.id) : 'N/A'}</code>
                   </p>
                 </div>
@@ -788,7 +788,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                   <Button
                     type="button"
                     variant="outline"
-                    className="border-stone-200 text-stone-700"
+                    className="border-[#E8E6DC] text-[#4D4B45]"
                     onClick={handleCopyShareLink}
                     disabled={!project?.id || isCopyingShareLink}
                   >
@@ -798,7 +798,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                   <Button
                     type="button"
                     variant="outline"
-                    className="border-stone-200 text-stone-700"
+                    className="border-[#E8E6DC] text-[#4D4B45]"
                     onClick={() => setActiveTab('team')}
                   >
                     Manage collaborators
@@ -810,21 +810,21 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
             {/* ── Modules Tab ── */}
             <TabsContent value="modules" className="px-6 py-5 m-0 space-y-4">
               <div>
-                <h3 className="text-sm font-medium text-stone-700 mb-1.5">Module linking</h3>
-                <p className="text-xs text-stone-700/55">
+                <h3 className="text-sm font-medium text-[#4D4B45] mb-1.5">Module linking</h3>
+                <p className="text-xs text-[#4D4B45]/55">
                   Connect operational modules to this project to stabilize navigation paths and
                   preserve context.
                 </p>
               </div>
               {!canManageModules && (
-                <div className="rounded-lg border border-stone-200 bg-stone-100 px-3 py-2 text-xs text-stone-700">
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
                   Module links require a numeric project ID.
                 </div>
               )}
-              <div className="rounded-lg border border-stone-200 bg-white p-3 space-y-2">
+              <div className="rounded-lg border border-[#E8E6DC] bg-white p-3 space-y-2">
                 <div className="grid grid-cols-1 gap-2">
                   <Select value={newModuleType} onValueChange={v => setNewModuleType(v as ModuleType)}>
-                    <SelectTrigger className="border-stone-200 bg-white text-stone-700">
+                    <SelectTrigger className="border-[#E8E6DC] bg-white text-[#4D4B45]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -839,7 +839,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                     value={newModuleInstanceId}
                     onChange={e => setNewModuleInstanceId(e.target.value)}
                     placeholder="Module instance ID (e.g., 42)"
-                    className="border-stone-200 bg-white text-stone-700"
+                    className="border-[#E8E6DC] bg-white text-[#4D4B45]"
                   />
                 </div>
                 <Button
@@ -847,7 +847,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                   size="sm"
                   onClick={handleLinkModule}
                   disabled={!canManageModules || linkModuleMutation.isPending}
-                  className="bg-stone-700 text-white hover:bg-stone-800 disabled:opacity-40"
+                  className="bg-[#4D4B45] text-white hover:bg-[#3A3935] disabled:opacity-40"
                 >
                   {linkModuleMutation.isPending ? 'Linking…' : 'Link module'}
                 </Button>
@@ -865,13 +865,13 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                     {items.map(item => (
                       <div
                         key={`${item.moduleType}-${item.moduleInstanceId}`}
-                        className="flex items-center justify-between gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2"
+                        className="flex items-center justify-between gap-2 rounded-lg border border-[#E8E6DC] bg-white px-3 py-2"
                       >
                         <div>
-                          <p className="text-sm font-medium text-stone-700">
+                          <p className="text-sm font-medium text-[#4D4B45]">
                             {formatModuleTypeLabel(item.moduleType)} #{item.moduleInstanceId}
                           </p>
-                          <p className="text-xs text-stone-700/50">
+                          <p className="text-xs text-[#4D4B45]/50">
                             Linked {new Date(item.createdAt).toLocaleDateString()}
                           </p>
                         </div>
@@ -886,7 +886,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                               )
                             }
                           >
-                            <SelectTrigger className="h-8 w-[120px] border-stone-200">
+                            <SelectTrigger className="h-8 w-[120px] border-[#E8E6DC]">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -901,7 +901,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="text-stone-700/60 hover:text-stone-700"
+                            className="text-[#4D4B45]/60 hover:text-[#4D4B45]"
                             onClick={() => handleOpenModule(item.moduleType)}
                           >
                             Open
@@ -910,7 +910,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="text-stone-700/60 hover:text-stone-700"
+                            className="text-[#4D4B45]/60 hover:text-red-600"
                             onClick={() => handleUnlinkModule(item.moduleType, item.moduleInstanceId)}
                             disabled={unlinkModuleMutation.isPending}
                           >
@@ -928,25 +928,25 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
             {/* ── Compliance Tab (placeholder) ── */}
             <TabsContent value="compliance" className="px-6 py-5 m-0">
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-12 h-12 rounded-xl bg-stone-200/50 flex items-center justify-center mb-4">
-                  <ShieldCheck className="h-6 w-6 text-stone-700/40" />
+                <div className="w-12 h-12 rounded-xl bg-[#E8E6DC]/50 flex items-center justify-center mb-4">
+                  <ShieldCheck className="h-6 w-6 text-[#4D4B45]/40" />
                 </div>
-                <h3 className="text-sm font-medium text-stone-700 mb-1.5">
+                <h3 className="text-sm font-medium text-[#4D4B45] mb-1.5">
                   21 CFR Part 11 Compliance Tracking
                 </h3>
-                <p className="text-sm text-stone-700/50 max-w-[260px]">
+                <p className="text-sm text-[#4D4B45]/50 max-w-[260px]">
                   Audit trail summary, electronic signature tracking, and compliance
-                  verification controls for this project.
+                  verification controls will be available here.
                 </p>
               </div>
             </TabsContent>
           </div>
 
           {/* ── Footer with Save ── */}
-          <div className="px-6 py-4 border-t border-stone-200 bg-white flex items-center justify-between">
-            <div className="text-xs text-stone-700/40">
+          <div className="px-6 py-4 border-t border-[#E8E6DC] bg-white flex items-center justify-between">
+            <div className="text-xs text-[#4D4B45]/40">
               {saved && (
-                <span className="text-stone-700 font-medium">Changes saved</span>
+                <span className="text-emerald-600 font-medium">Changes saved</span>
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -955,7 +955,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
-                className="text-stone-700/60 hover:text-stone-700"
+                className="text-[#4D4B45]/60 hover:text-[#4D4B45]"
               >
                 Close
               </Button>
@@ -964,7 +964,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                 size="sm"
                 onClick={handleSave}
                 disabled={!name.trim() || saving}
-                className="bg-stone-700 text-white hover:bg-stone-800 disabled:opacity-40"
+                className="bg-[#4D4B45] text-white hover:bg-[#3A3935] disabled:opacity-40"
               >
                 <Save className="h-3.5 w-3.5 mr-1.5" />
                 {saving ? 'Saving...' : 'Save'}

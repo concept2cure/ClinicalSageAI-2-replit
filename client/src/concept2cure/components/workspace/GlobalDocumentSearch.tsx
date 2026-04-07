@@ -200,7 +200,7 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
             size="icon"
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
-              showFilters ? 'bg-stone-100 text-stone-600 hover:bg-stone-200' : ''
+              showFilters ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' : ''
             )}
           >
             <Filter className="w-4 h-4" />
@@ -294,7 +294,7 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
                           {doc.projectName}
                         </span>
                         {doc.ctdSection && (
-                          <span className="text-[10px] text-stone-900 font-medium">
+                          <span className="text-[10px] text-violet-500 font-medium">
                             CTD {doc.ctdSection}
                           </span>
                         )}

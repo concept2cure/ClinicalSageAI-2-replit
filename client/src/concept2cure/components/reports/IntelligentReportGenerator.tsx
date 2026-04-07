@@ -168,13 +168,13 @@ function statusTone(status?: string) {
 function toneClass(status?: string) {
   switch (statusTone(status)) {
     case 'ready':
-      return 'border-stone-200 bg-stone-100 text-stone-800';
+      return 'border-emerald-200 bg-emerald-50 text-emerald-700';
     case 'needs-work':
-      return 'border-stone-200 bg-stone-100 text-stone-700';
+      return 'border-amber-200 bg-amber-50 text-amber-700';
     case 'blocked':
-      return 'border-stone-200 bg-stone-100 text-stone-800';
+      return 'border-red-200 bg-red-50 text-red-700';
     default:
-      return 'border-stone-200 bg-stone-100 text-stone-700';
+      return 'border-blue-200 bg-blue-50 text-blue-700';
   }
 }
 
@@ -460,7 +460,7 @@ export default function IntelligentReportGenerator() {
         secondaryInfo={
           <div className="flex flex-wrap items-center gap-2 text-[11px] text-stone-500">
             <span>Bundle-first reporting for executives, RA, QA, writers, and agency response teams.</span>
-            <Badge variant="outline" className="border-stone-200 text-stone-800">
+            <Badge variant="outline" className="border-emerald-200 text-emerald-700">
               Wisdom capture active
             </Badge>
           </div>
@@ -564,7 +564,7 @@ export default function IntelligentReportGenerator() {
 
                     <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-xs text-stone-600">
                       <div className="flex items-start gap-2">
-                        <ShieldCheck className="mt-0.5 h-4 w-4 text-stone-700" />
+                        <ShieldCheck className="mt-0.5 h-4 w-4 text-emerald-600" />
                         <div>
                           Platform email sends through Concept2Cure and records outbound correspondence for future learning.
                           Saving as PDF still logs the delivery event so rejection-response workflows continue improving AnA.
@@ -713,7 +713,7 @@ export default function IntelligentReportGenerator() {
                                 </div>
                                 <p className="mt-2 text-sm text-stone-600">{bundle.description}</p>
                               </div>
-                              {isSelected && <CheckCircle2 className="h-4 w-4 text-stone-700" />}
+                              {isSelected && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
                             </div>
                             <div className="mt-4 flex flex-wrap gap-2">
                               {bundle.personas.map(persona => (
@@ -973,7 +973,7 @@ export default function IntelligentReportGenerator() {
               </Tabs>
 
               {selectedReports.length > 0 && (
-                <div className="rounded-xl border border-stone-200 bg-stone-100 px-4 py-3 text-sm text-stone-800">
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                   <div className="flex items-start gap-2">
                     <AlertTriangle className="mt-0.5 h-4 w-4" />
                     <div>
@@ -1004,7 +1004,7 @@ function MetricCard({
   return (
     <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
       <div className="text-[11px] font-medium uppercase tracking-wide text-stone-500">{label}</div>
-      <div className="mt-1 text-lg font-semibold text-stone-900">{value}</div>
+      <div className="mt-1 text-2xl font-semibold text-stone-900">{value}</div>
       <div className="mt-1 text-xs text-stone-500">{detail}</div>
     </div>
   );

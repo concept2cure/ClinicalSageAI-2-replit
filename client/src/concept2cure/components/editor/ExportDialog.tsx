@@ -62,7 +62,7 @@ const FORMATS: ExportOption[] = [
     label: 'Microsoft Word (.docx)',
     description: 'Editable document with formatting preserved',
     icon: FileText,
-    iconColor: 'text-stone-600 bg-stone-100',
+    iconColor: 'text-blue-600 bg-blue-50',
     available: true,
   },
   {
@@ -70,7 +70,7 @@ const FORMATS: ExportOption[] = [
     label: 'PDF Document (.pdf)',
     description: 'Fixed-layout document for review and submission',
     icon: FileType,
-    iconColor: 'text-stone-700 bg-stone-100',
+    iconColor: 'text-red-600 bg-red-50',
     available: true,
   },
   {
@@ -78,7 +78,7 @@ const FORMATS: ExportOption[] = [
     label: 'PowerPoint (.pptx)',
     description: 'Presentation slides for regulatory meetings',
     icon: Presentation,
-    iconColor: 'text-stone-600 bg-stone-100',
+    iconColor: 'text-orange-600 bg-orange-50',
     available: true,
   },
   {
@@ -153,7 +153,7 @@ export function ExportDialog({
         <div className="px-5 py-3 bg-stone-50 border-b border-stone-100 flex items-center gap-4">
           <span className="text-xs text-stone-500">{wordCount.toLocaleString()} words</span>
           {ctdSection && (
-            <span className="text-xs text-stone-600 font-medium">CTD {ctdSection}</span>
+            <span className="text-xs text-violet-600 font-medium">CTD {ctdSection}</span>
           )}
         </div>
 
@@ -173,7 +173,7 @@ export function ExportDialog({
                   className={cn(
                     'flex items-start gap-3 p-3 h-auto rounded-xl text-left transition-all duration-150',
                     isSelected
-                      ? 'border-stone-600 bg-stone-100/50 shadow-sm'
+                      ? 'border-stone-600 bg-blue-50/50 shadow-sm'
                       : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50',
                     !fmt.available && 'opacity-40 cursor-not-allowed',
                   )}
@@ -246,9 +246,9 @@ export function ExportDialog({
             className={cn(
               'flex items-center gap-2 text-xs font-medium transition-all duration-150',
               exportResult === 'success'
-                ? 'bg-stone-700 text-white hover:bg-stone-800'
+                ? 'bg-emerald-600 text-white hover:bg-emerald-700'
                 : exportResult === 'error'
-                ? 'bg-stone-700 text-white hover:bg-stone-800'
+                ? 'bg-red-600 text-white hover:bg-red-700'
                 : '',
               exporting && 'opacity-70',
             )}

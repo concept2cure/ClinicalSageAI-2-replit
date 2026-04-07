@@ -131,15 +131,15 @@ const DOCUMENT_TYPE_CONFIG: Record<DocumentType, {
   avgDays: number;
 }> = {
   csr: { label: 'Clinical Study Report', shortLabel: 'CSR', color: 'bg-stone-600', avgDays: 45 },
-  ib: { label: 'Investigator Brochure', shortLabel: 'IB', color: 'bg-stone-500', avgDays: 21 },
-  protocol: { label: 'Protocol', shortLabel: 'Protocol', color: 'bg-stone-900', avgDays: 14 },
-  protocol_amend: { label: 'Protocol Amendment', shortLabel: 'Amendment', color: 'bg-stone-900', avgDays: 7 },
-  icf: { label: 'Informed Consent Form', shortLabel: 'ICF', color: 'bg-stone-900', avgDays: 10 },
-  ctd_2_5: { label: 'Clinical Overview (2.5)', shortLabel: 'CTD 2.5', color: 'bg-stone-900', avgDays: 30 },
-  ctd_2_7: { label: 'Clinical Summary (2.7)', shortLabel: 'CTD 2.7', color: 'bg-stone-500', avgDays: 35 },
-  response: { label: 'Regulatory Response', shortLabel: 'Response', color: 'bg-stone-900', avgDays: 14 },
-  briefing: { label: 'Briefing Document', shortLabel: 'Briefing', color: 'bg-stone-900', avgDays: 21 },
-  nonclinical_summary: { label: 'Nonclinical Summary', shortLabel: 'CTD 2.4', color: 'bg-stone-900', avgDays: 21 },
+  ib: { label: 'Investigator Brochure', shortLabel: 'IB', color: 'bg-violet-500', avgDays: 21 },
+  protocol: { label: 'Protocol', shortLabel: 'Protocol', color: 'bg-emerald-500', avgDays: 14 },
+  protocol_amend: { label: 'Protocol Amendment', shortLabel: 'Amendment', color: 'bg-teal-500', avgDays: 7 },
+  icf: { label: 'Informed Consent Form', shortLabel: 'ICF', color: 'bg-amber-500', avgDays: 10 },
+  ctd_2_5: { label: 'Clinical Overview (2.5)', shortLabel: 'CTD 2.5', color: 'bg-red-500', avgDays: 30 },
+  ctd_2_7: { label: 'Clinical Summary (2.7)', shortLabel: 'CTD 2.7', color: 'bg-pink-500', avgDays: 35 },
+  response: { label: 'Regulatory Response', shortLabel: 'Response', color: 'bg-orange-500', avgDays: 14 },
+  briefing: { label: 'Briefing Document', shortLabel: 'Briefing', color: 'bg-cyan-500', avgDays: 21 },
+  nonclinical_summary: { label: 'Nonclinical Summary', shortLabel: 'CTD 2.4', color: 'bg-lime-500', avgDays: 21 },
   quality_summary: { label: 'Quality Summary', shortLabel: 'CTD 2.3', color: 'bg-stone-600', avgDays: 14 },
 };
 
@@ -150,12 +150,12 @@ const STAGE_CONFIG: Record<ReviewStage, {
   bgColor: string;
 }> = {
   draft: { label: 'Drafting', icon: PenTool, color: 'text-stone-600', bgColor: 'bg-stone-100' },
-  internal_review: { label: 'Internal Review', icon: Eye, color: 'text-stone-600', bgColor: 'bg-stone-100' },
-  sme_review: { label: 'SME Review', icon: User, color: 'text-stone-600', bgColor: 'bg-stone-200' },
-  qc: { label: 'QC', icon: FileCheck, color: 'text-stone-600', bgColor: 'bg-stone-100' },
-  sponsor_review: { label: 'Sponsor Review', icon: Send, color: 'text-stone-600', bgColor: 'bg-stone-100' },
-  final_qc: { label: 'Final QC', icon: CheckCircle, color: 'text-stone-700', bgColor: 'bg-stone-100' },
-  approved: { label: 'Approved', icon: Star, color: 'text-stone-700', bgColor: 'bg-stone-100' },
+  internal_review: { label: 'Internal Review', icon: Eye, color: 'text-blue-600', bgColor: 'bg-blue-100' },
+  sme_review: { label: 'SME Review', icon: User, color: 'text-violet-600', bgColor: 'bg-violet-100' },
+  qc: { label: 'QC', icon: FileCheck, color: 'text-amber-600', bgColor: 'bg-amber-100' },
+  sponsor_review: { label: 'Sponsor Review', icon: Send, color: 'text-cyan-600', bgColor: 'bg-cyan-100' },
+  final_qc: { label: 'Final QC', icon: CheckCircle, color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
+  approved: { label: 'Approved', icon: Star, color: 'text-green-600', bgColor: 'bg-green-100' },
   published: { label: 'Published', icon: BookOpen, color: 'text-stone-600', bgColor: 'bg-stone-100' },
 };
 
@@ -204,10 +204,10 @@ const TaskCard: React.FC<{
       <div
         onClick={onClick}
         className={cn(
-          'flex items-center gap-4 p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm',
-          task.isOverdue && 'border-stone-300 bg-stone-100',
-          task.isBlocked && 'border-stone-300 bg-stone-100',
-          !task.isOverdue && !task.isBlocked && 'border-stone-200 hover:border-stone-300'
+          'flex items-center gap-4 p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md',
+          task.isOverdue && 'border-red-300 bg-red-50',
+          task.isBlocked && 'border-amber-300 bg-amber-50',
+          !task.isOverdue && !task.isBlocked && 'border-stone-200 hover:border-blue-300'
         )}
       >
         {/* Document Type Badge */}
@@ -239,7 +239,7 @@ const TaskCard: React.FC<{
             <div
               className={cn(
                 'h-full rounded-full transition-all',
-                task.progress >= 100 ? 'bg-stone-900' : 'bg-stone-600'
+                task.progress >= 100 ? 'bg-green-500' : 'bg-stone-600'
               )}
               style={{ width: `${task.progress}%` }}
             />
@@ -249,8 +249,8 @@ const TaskCard: React.FC<{
         {/* Due Date */}
         <div className={cn(
           'text-xs font-medium',
-          task.isOverdue && 'text-stone-700',
-          isUrgent && !task.isOverdue && 'text-stone-600',
+          task.isOverdue && 'text-red-600',
+          isUrgent && !task.isOverdue && 'text-amber-600',
           !isUrgent && !task.isOverdue && 'text-stone-500'
         )}>
           {formatDueDate(task.dueDate)}
@@ -259,7 +259,7 @@ const TaskCard: React.FC<{
         {/* Actions */}
         <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
           {task.pendingComments && task.pendingComments > 0 && (
-            <span className="flex items-center gap-0.5 text-xs text-stone-600">
+            <span className="flex items-center gap-0.5 text-xs text-amber-600">
               <MessageSquare className="w-3.5 h-3.5" />
               {task.pendingComments}
             </span>
@@ -284,10 +284,10 @@ const TaskCard: React.FC<{
     <div
       onClick={onClick}
       className={cn(
-        'p-4 rounded-lg border cursor-pointer transition-all hover:shadow-sm',
-        task.isOverdue && 'border-stone-300 bg-stone-100',
-        task.isBlocked && 'border-stone-300 bg-stone-100',
-        !task.isOverdue && !task.isBlocked && 'border-stone-200 hover:border-stone-300'
+        'p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md',
+        task.isOverdue && 'border-red-300 bg-red-50',
+        task.isBlocked && 'border-amber-300 bg-amber-50',
+        !task.isOverdue && !task.isBlocked && 'border-stone-200 hover:border-blue-300'
       )}
     >
       {/* Header */}
@@ -299,7 +299,7 @@ const TaskCard: React.FC<{
           {docConfig.shortLabel}
         </span>
         {task.priority === 'critical' && (
-          <span className="flex items-center gap-1 text-xs text-stone-700 font-medium">
+          <span className="flex items-center gap-1 text-xs text-red-600 font-medium">
             <AlertTriangle className="w-3.5 h-3.5" />
             Critical
           </span>
@@ -333,7 +333,7 @@ const TaskCard: React.FC<{
           <div
             className={cn(
               'h-full rounded-full transition-all',
-              task.progress >= 100 ? 'bg-stone-900' : 'bg-stone-600'
+              task.progress >= 100 ? 'bg-green-500' : 'bg-stone-600'
             )}
             style={{ width: `${task.progress}%` }}
           />
@@ -349,7 +349,7 @@ const TaskCard: React.FC<{
           <span>{task.pageCount} pages</span>
         )}
         {task.pendingComments && task.pendingComments > 0 && (
-          <span className="flex items-center gap-0.5 text-stone-600">
+          <span className="flex items-center gap-0.5 text-amber-600">
             <MessageSquare className="w-3 h-3" />
             {task.pendingComments}
           </span>
@@ -361,14 +361,14 @@ const TaskCard: React.FC<{
         <div className="flex items-center gap-1.5">
           <Calendar className={cn(
             'w-3.5 h-3.5',
-            task.isOverdue && 'text-stone-900',
-            isUrgent && !task.isOverdue && 'text-stone-900',
+            task.isOverdue && 'text-red-500',
+            isUrgent && !task.isOverdue && 'text-amber-500',
             !isUrgent && !task.isOverdue && 'text-stone-400'
           )} />
           <span className={cn(
             'text-xs font-medium',
-            task.isOverdue && 'text-stone-700',
-            isUrgent && !task.isOverdue && 'text-stone-600',
+            task.isOverdue && 'text-red-600',
+            isUrgent && !task.isOverdue && 'text-amber-600',
             !isUrgent && !task.isOverdue && 'text-stone-600'
           )}>
             {formatDueDate(task.dueDate)}
@@ -516,7 +516,7 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
               onClick={() => setView('list')}
               className={cn(
                 'p-2 rounded transition-colors',
-                view === 'list' ? 'bg-stone-100 text-stone-600' : 'text-stone-400 hover:bg-stone-100'
+                view === 'list' ? 'bg-blue-100 text-blue-600' : 'text-stone-400 hover:bg-stone-100'
               )}
             >
               <List className="w-4 h-4" />
@@ -525,7 +525,7 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
               onClick={() => setView('pipeline')}
               className={cn(
                 'p-2 rounded transition-colors',
-                view === 'pipeline' ? 'bg-stone-100 text-stone-600' : 'text-stone-400 hover:bg-stone-100'
+                view === 'pipeline' ? 'bg-blue-100 text-blue-600' : 'text-stone-400 hover:bg-stone-100'
               )}
             >
               <Layout className="w-4 h-4" />
@@ -540,17 +540,17 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
             <p className="text-lg font-semibold text-stone-900">{tasks.length}</p>
           </div>
           {metrics.overdue > 0 && (
-            <div className="px-3 py-2 bg-stone-100 rounded-lg">
-              <p className="text-xs text-stone-700">Overdue</p>
-              <p className="text-lg font-semibold text-stone-800">{metrics.overdue}</p>
+            <div className="px-3 py-2 bg-red-100 rounded-lg">
+              <p className="text-xs text-red-600">Overdue</p>
+              <p className="text-lg font-semibold text-red-700">{metrics.overdue}</p>
             </div>
           )}
-          <div className="px-3 py-2 bg-stone-100 rounded-lg">
-            <p className="text-xs text-stone-600">Due This Week</p>
-            <p className="text-lg font-semibold text-stone-700">{metrics.dueThisWeek}</p>
+          <div className="px-3 py-2 bg-amber-100 rounded-lg">
+            <p className="text-xs text-amber-600">Due This Week</p>
+            <p className="text-lg font-semibold text-amber-700">{metrics.dueThisWeek}</p>
           </div>
-          <div className="px-3 py-2 bg-stone-100 rounded-lg">
-            <p className="text-xs text-stone-600">In Review</p>
+          <div className="px-3 py-2 bg-blue-100 rounded-lg">
+            <p className="text-xs text-blue-600">In Review</p>
             <p className="text-lg font-semibold text-stone-700">{metrics.inReview}</p>
           </div>
         </div>

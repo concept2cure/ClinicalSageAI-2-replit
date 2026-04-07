@@ -165,34 +165,34 @@ const TYPE_CONFIG: Record<
   full: {
     label: 'Full Authority',
     description: 'All permissions of the delegator',
-    color: 'text-stone-700',
-    bgColor: 'bg-stone-100',
+    color: 'text-purple-700',
+    bgColor: 'bg-purple-100',
   },
   approval: {
     label: 'Approval Authority',
     description: 'Document and workflow approvals only',
-    color: 'text-stone-700',
-    bgColor: 'bg-stone-100',
+    color: 'text-blue-700',
+    bgColor: 'bg-blue-100',
   },
   view: {
     label: 'View Access',
     description: 'Read-only access to resources',
-    color: 'text-stone-800',
-    bgColor: 'bg-stone-100',
+    color: 'text-green-700',
+    bgColor: 'bg-green-100',
   },
   specific: {
     label: 'Specific Permissions',
     description: 'Custom selected permissions',
-    color: 'text-stone-700',
-    bgColor: 'bg-stone-100',
+    color: 'text-amber-700',
+    bgColor: 'bg-amber-100',
   },
 };
 
 const STATUS_CONFIG: Record<DelegationStatus, { label: string; color: string; bgColor: string }> = {
-  active: { label: 'Active', color: 'text-stone-700', bgColor: 'bg-stone-100' },
-  pending: { label: 'Pending Approval', color: 'text-stone-600', bgColor: 'bg-stone-100' },
-  expired: { label: 'Expired', color: 'text-stone-600', bgColor: 'bg-stone-100' },
-  revoked: { label: 'Revoked', color: 'text-stone-700', bgColor: 'bg-stone-100' },
+  active: { label: 'Active', color: 'text-green-600', bgColor: 'bg-green-100' },
+  pending: { label: 'Pending Approval', color: 'text-amber-600', bgColor: 'bg-amber-100' },
+  expired: { label: 'Expired', color: 'text-gray-600', bgColor: 'bg-gray-100' },
+  revoked: { label: 'Revoked', color: 'text-red-600', bgColor: 'bg-red-100' },
 };
 
 const DELEGABLE_PERMISSIONS = [
@@ -369,7 +369,7 @@ const DelegationCard: React.FC<{
   const isExpiringSoon = delegation.status === 'active' && daysRemaining <= 3 && daysRemaining > 0;
 
   return (
-    <Card className={isExpiringSoon ? 'border-stone-300' : ''}>
+    <Card className={isExpiringSoon ? 'border-amber-300' : ''}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           {/* Delegation Flow Visual */}
@@ -422,7 +422,7 @@ const DelegationCard: React.FC<{
                 {statusConfig.label}
               </Badge>
               {isExpiringSoon && (
-                <Badge variant="outline" className="text-stone-600 border-stone-300">
+                <Badge variant="outline" className="text-amber-600 border-amber-300">
                   <Clock className="mr-1 h-3 w-3" />
                   Expires in {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}
                 </Badge>
@@ -906,8 +906,8 @@ const DelegationDetailsDialog: React.FC<{
 
           {/* Approval Info */}
           {delegation.requireApproval && delegation.approvedBy && (
-            <div className="p-3 bg-stone-100 rounded-lg text-sm">
-              <div className="flex items-center gap-2 text-stone-800">
+            <div className="p-3 bg-green-50 rounded-lg text-sm">
+              <div className="flex items-center gap-2 text-green-700">
                 <CheckCircle className="h-4 w-4" />
                 <span>Approved by Admin on {delegation.approvedAt?.toLocaleDateString()}</span>
               </div>
@@ -1102,35 +1102,35 @@ export const DelegationOfAuthority: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
-            <ShieldCheck className="h-8 w-8 mx-auto text-stone-700 mb-2" />
+            <ShieldCheck className="h-8 w-8 mx-auto text-green-600 mb-2" />
             <p className="text-2xl font-bold">{stats.active}</p>
             <p className="text-sm text-muted-foreground">Active</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <Clock className="h-8 w-8 mx-auto text-stone-600 mb-2" />
+            <Clock className="h-8 w-8 mx-auto text-amber-600 mb-2" />
             <p className="text-2xl font-bold">{stats.pending}</p>
             <p className="text-sm text-muted-foreground">Pending</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <AlertTriangle className="h-8 w-8 mx-auto text-stone-700 mb-2" />
+            <AlertTriangle className="h-8 w-8 mx-auto text-red-600 mb-2" />
             <p className="text-2xl font-bold">{stats.expiringSoon}</p>
             <p className="text-sm text-muted-foreground">Expiring Soon</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <ArrowRight className="h-8 w-8 mx-auto text-stone-600 mb-2" />
+            <ArrowRight className="h-8 w-8 mx-auto text-blue-600 mb-2" />
             <p className="text-2xl font-bold">{stats.myDelegations}</p>
             <p className="text-sm text-muted-foreground">My Delegations</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <User className="h-8 w-8 mx-auto text-stone-600 mb-2" />
+            <User className="h-8 w-8 mx-auto text-purple-600 mb-2" />
             <p className="text-2xl font-bold">{stats.delegatedToMe}</p>
             <p className="text-sm text-muted-foreground">Delegated to Me</p>
           </CardContent>

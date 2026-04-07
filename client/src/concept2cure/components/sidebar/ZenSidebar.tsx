@@ -2,10 +2,14 @@
  * @fileoverview Zen Sidebar — Human-first OS navigation
  * @module concept2cure/components/sidebar/ZenSidebar
  *
- * Zone A (Utility): New Chat → Search → Customize AnA
- * Zone B (6 Destinations): Chats → Projects → Reporting & Analytics → Communication Center → Apps → Settings
- * Zone C (Context): Active project indicator, pinned/recent project list
- * Zone D (Footer): Account/profile
+ * Global shell (6 items):
+ *   New → Search → Projects → Apps → Artifacts → Setup
+ *
+ * Project shell (5 tabs, shown when project is active):
+ *   Overview → Tools → Vault → Review → Submit
+ *
+ * Below: Pinned + Recent project list with nested conversations.
+ * Account/profile at bottom.
  */
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
@@ -22,19 +26,29 @@ import {
   ChevronDown,
   FileText,
   PenLine,
+  ShieldCheck,
   Search,
   Star,
   Archive,
   Beaker,
   Microscope,
+  FlaskConical,
+  Brain,
+  FileCheck,
   FileStack,
+  Upload,
+  Shield,
   Pin,
   PinOff,
   Sparkles,
   Settings,
-  SlidersHorizontal,
-  BarChart3,
+  Home,
+  Wrench,
+  Send,
   Activity,
+  ListChecks,
+  ClipboardCheck,
+  BookOpen,
   Pill,
   Heart,
   MoreHorizontal,
@@ -49,6 +63,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { EmptyState } from '@/design-system/patterns/EmptyState';
 // Logo image removed — text mark only
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -74,20 +89,17 @@ interface Project {
   status?: string;
 }
 
-/** Submission type → muted distinguishable dot color for sidebar */
+/** Submission type → hex color fallback for the sidebar project dot */
 const SIDEBAR_TYPE_COLORS: Record<string, string> = {
-  // Black-and-white only — neutral grayscale, no warm tones.
-  '510K': '#737373',    // neutral-500
-  IND: '#525252',       // neutral-600
-  NDA: '#404040',       // neutral-700
-  BLA: '#262626',       // neutral-800
-  PMA: '#000000',       // black
-  MAA: '#a3a3a3',       // neutral-400
-  DE_NOVO: '#d4d4d4',   // neutral-300
-  EUA: '#525252',       // neutral-600
-  IVDR: '#737373',      // neutral-500
-  ANDA: '#a3a3a3',      // neutral-400
-  CER: '#404040',       // neutral-700
+  '510K': '#3b82f6',
+  IND: '#8b5cf6',
+  NDA: '#22c55e',
+  BLA: '#f97316',
+  PMA: '#ef4444',
+  MAA: '#ec4899',
+  DE_NOVO: '#f59e0b',
+  EUA: '#06b6d4',
+  IVDR: '#10b981',
 };
 
 export interface ZenSidebarProps {
@@ -106,6 +118,7 @@ export interface ZenSidebarProps {
   onDeleteConversation: (id: string) => void;
   onRenameConversation?: (id: string) => void;
   onMoveConversation?: (conversationId: string, targetProjectId: string) => void;
+  onToggleStar: (id: string) => void;
   onTogglePin: (id: string) => void;
   onArchiveProject?: (id: string) => void;
   onDeleteProject?: (id: string) => void;
@@ -113,24 +126,25 @@ export interface ZenSidebarProps {
   userName?: string;
   userEmail?: string;
   activeNavId?: string;
+  industryMode?: string;
 }
 
 // ─── Submission type badge config ────────────────────────────────────────────
 
-// Stone-palette badges — color reserved for semantic meaning, not categorization
+// 3-color palette: stone (default), blue (device/diagnostics), violet (pharma/biotech)
 const SUBMISSION_BADGE: Record<
   string,
   { label: string; icon: React.ComponentType<{ className?: string }>; color: string; bg: string }
 > = {
-  '510K': { label: '510(k)', icon: FileText, color: 'text-stone-600', bg: 'bg-stone-100' },
-  IND: { label: 'IND', icon: Beaker, color: 'text-stone-600', bg: 'bg-stone-100' },
-  NDA: { label: 'NDA', icon: Pill, color: 'text-stone-600', bg: 'bg-stone-100' },
-  BLA: { label: 'BLA', icon: Activity, color: 'text-stone-600', bg: 'bg-stone-100' },
-  PMA: { label: 'PMA', icon: Heart, color: 'text-stone-600', bg: 'bg-stone-100' },
-  MAA: { label: 'MAA', icon: Microscope, color: 'text-stone-600', bg: 'bg-stone-100' },
-  DE_NOVO: { label: 'De Novo', icon: FileText, color: 'text-stone-600', bg: 'bg-stone-100' },
-  EUA: { label: 'EUA', icon: Activity, color: 'text-stone-600', bg: 'bg-stone-100' },
-  IVDR: { label: 'IVDR', icon: FileText, color: 'text-stone-600', bg: 'bg-stone-100' },
+  '510K': { label: '510(k)', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
+  IND: { label: 'IND', icon: Beaker, color: 'text-violet-600', bg: 'bg-violet-50' },
+  NDA: { label: 'NDA', icon: Pill, color: 'text-violet-600', bg: 'bg-violet-50' },
+  BLA: { label: 'BLA', icon: Activity, color: 'text-violet-600', bg: 'bg-violet-50' },
+  PMA: { label: 'PMA', icon: Heart, color: 'text-blue-600', bg: 'bg-blue-50' },
+  MAA: { label: 'MAA', icon: Microscope, color: 'text-violet-600', bg: 'bg-violet-50' },
+  DE_NOVO: { label: 'De Novo', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
+  EUA: { label: 'EUA', icon: Activity, color: 'text-blue-600', bg: 'bg-blue-50' },
+  IVDR: { label: 'IVDR', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
 };
 
 const FALLBACK_BADGE = {
@@ -145,18 +159,18 @@ const FALLBACK_BADGE = {
 function statusDotColor(status?: string): string {
   switch (status) {
     case 'active':
-      return 'bg-stone-900';
+      return 'bg-emerald-400';
     case 'in_review':
-      return 'bg-stone-600';
+      return 'bg-amber-400';
     case 'submitted':
-      return 'bg-stone-700';
+      return 'bg-blue-400';
     case 'approved':
-      return 'bg-stone-900';
+      return 'bg-emerald-500';
     case 'archived':
       return 'bg-stone-300';
     case 'draft':
     default:
-      return 'bg-stone-400';
+      return 'bg-stone-300';
   }
 }
 
@@ -191,7 +205,7 @@ const WorkspaceGroup: React.FC<{
         size="sm"
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        className="h-auto w-full justify-start gap-1.5 px-3 py-2 text-[11px] font-medium text-stone-400 uppercase tracking-wider hover:text-stone-500 rounded transition-colors"
+        className="h-auto w-full justify-start gap-1 px-3 py-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest hover:text-stone-500 rounded transition-colors"
       >
         <ChevronDown
           className={cn(
@@ -212,11 +226,19 @@ const NavItem: React.FC<{
   icon: React.ReactNode;
   label: string;
   active?: boolean;
+  accentColor?: 'blue' | 'violet' | 'emerald';
   badge?: string;
   subtitle?: string;
   onClick: () => void;
 }> = React.memo(
-  ({ icon, label, active, badge, subtitle, onClick }) => {
+  ({ icon, label, active, accentColor, badge, subtitle, onClick }) => {
+    const accentMap = {
+      blue: { bg: 'bg-blue-100', text: 'text-blue-600', iconColor: 'text-blue-500' },
+      violet: { bg: 'bg-violet-100', text: 'text-violet-600', iconColor: 'text-violet-500' },
+      emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', iconColor: 'text-emerald-500' },
+    };
+    const accent = accentColor && accentMap[accentColor];
+
     return (
       <Button
         type="button"
@@ -225,16 +247,24 @@ const NavItem: React.FC<{
         onClick={onClick}
         aria-current={active ? 'page' : undefined}
         className={cn(
-          'h-9 w-full justify-start gap-3 px-3 py-2 text-[13px] transition-all duration-150 rounded-lg',
+          'h-auto w-full justify-start gap-2 mx-1 pl-5 pr-3 py-[5px] text-xs transition-all duration-150 rounded-md',
           active
-            ? 'bg-stone-100 text-stone-900 font-medium'
-            : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900'
+            ? accent
+              ? `${accent.bg} ${accent.text} font-medium`
+              : 'bg-stone-200/80 text-stone-900 font-medium'
+            : accent
+            ? cn(
+                'text-stone-600',
+                accent.bg === 'bg-blue-100' && 'hover:bg-blue-100 hover:text-blue-600',
+                accent.bg === 'bg-emerald-50' && 'hover:bg-emerald-50 hover:text-emerald-700'
+              )
+            : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
         )}
       >
         <span
           className={cn(
             'flex-shrink-0',
-            active ? 'text-stone-700' : 'text-stone-400'
+            active ? (accent ? accent.iconColor : 'text-stone-700') : 'text-stone-400'
           )}
         >
           {icon}
@@ -248,7 +278,7 @@ const NavItem: React.FC<{
           )}
         </div>
         {badge && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-stone-100 text-stone-700 font-medium leading-none flex-shrink-0">
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium leading-none flex-shrink-0">
             {badge}
           </span>
         )}
@@ -258,6 +288,7 @@ const NavItem: React.FC<{
   (prev, next) =>
     prev.label === next.label &&
     prev.active === next.active &&
+    prev.accentColor === next.accentColor &&
     prev.badge === next.badge &&
     prev.subtitle === next.subtitle
 );
@@ -352,7 +383,7 @@ const ConvoRow: React.FC<{
               e.stopPropagation();
               onDelete();
             }}
-            className="text-stone-700 focus:text-stone-700"
+            className="text-red-600 focus:text-red-600"
           >
             <Trash2 className="w-3.5 h-3.5 mr-2" />
             Delete
@@ -407,7 +438,7 @@ const ProjectRow: React.FC<{
     <div className="mb-0.5">
       <div
         className={cn(
-          'group relative flex items-center gap-2.5 mx-1.5 px-2.5 py-2.5 rounded-lg cursor-pointer select-none transition-all duration-150',
+          'group relative flex items-center gap-2 mx-1 px-2.5 py-2 rounded-lg cursor-pointer select-none transition-all duration-150',
           isActive ? 'bg-stone-200/80 text-stone-900' : 'text-stone-700 hover:bg-stone-100'
         )}
       >
@@ -437,7 +468,7 @@ const ProjectRow: React.FC<{
           onClick={onSelect}
           className="w-2 h-2 rounded-full flex-shrink-0"
           style={{
-            backgroundColor: project.color || SIDEBAR_TYPE_COLORS[project.type] || '#737373',
+            backgroundColor: project.color || SIDEBAR_TYPE_COLORS[project.type] || '#6366f1',
           }}
         />
 
@@ -468,7 +499,7 @@ const ProjectRow: React.FC<{
         )}
 
         {/* Starred indicator */}
-        {isPinned && <Star className="w-3 h-3 flex-shrink-0 fill-current text-stone-400" />}
+        {isPinned && <Star className="w-3 h-3 flex-shrink-0 fill-current text-amber-400" />}
 
         {/* Three-dot menu — visible on hover */}
         <DropdownMenu>
@@ -534,7 +565,7 @@ const ProjectRow: React.FC<{
                 e.stopPropagation();
                 onDeleteProject?.(project.id);
               }}
-              className="text-stone-700 focus:text-stone-700"
+              className="text-red-600 focus:text-red-600"
             >
               <Trash2 className="w-3.5 h-3.5 mr-2" />
               Delete
@@ -600,8 +631,8 @@ const IconBtn: React.FC<{
   ({
     label,
     active,
-    accentBg = 'bg-stone-100',
-    accentText = 'text-stone-900',
+    accentBg = 'bg-blue-100',
+    accentText = 'text-blue-500',
     onClick,
     children,
   }) => (
@@ -663,7 +694,7 @@ const NewDropdown: React.FC<{
         onClick={() => setOpen(o => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="h-9 w-full justify-start gap-3 px-3 py-2 rounded-lg border-stone-200 text-stone-700 text-[14px] font-medium hover:bg-stone-50"
+        className="h-auto w-full justify-start gap-2 px-3 py-2 rounded-lg border-stone-200 text-stone-700 text-[13px] font-medium hover:bg-stone-100"
       >
         <Plus className="w-4 h-4 flex-shrink-0" />
         New
@@ -834,16 +865,20 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   const nav = useMemo(() => {
     const h = (id: string) => () => onNavigate?.(id);
     return {
-      chats: h('chats'),
       projects: h('projects'),
-      reports: h('reports'),
       apps: h('apps'),
-      settings: h('settings'),
-      'communication-center': h('communication-center'),
-      // Project-scoped (kept for internal routing, not rendered in sidebar)
+      'artifacts-center': h('artifacts-center'),
+      setup: h('setup'),
       'project-home': h('project-home'),
+      'submission-builder': h('submission-builder'),
       overview: h('overview'),
       'task-board': h('task-board'),
+      tools: h('tools'),
+      submit: h('submit'),
+      documents: h('documents'),
+      'ri-copilot': h('ri-copilot'),
+      review: h('review'),
+      vault: h('vault'),
     };
   }, [onNavigate]);
 
@@ -854,7 +889,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
     return (
       <aside
-        className="flex flex-col h-full w-14 bg-[#f9f9f8] border-r border-stone-150 items-center py-3 gap-1.5 flex-shrink-0 transition-[width] duration-200 ease-out"
+        className="flex flex-col h-full w-14 bg-stone-50 border-r border-stone-200 items-center py-3 gap-1 flex-shrink-0 transition-[width] duration-200 ease-out"
         role="navigation"
         aria-label="Main sidebar"
       >
@@ -863,41 +898,48 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <span className="text-[10px] font-bold text-white">C2C</span>
         </div>
 
-        {/* ── Zone A: Utility ── */}
-        <IconBtn label="New Chat" onClick={onNewChat}>
+        {/* ── Global nav (6 items) ── */}
+        <IconBtn label="New" onClick={onNewChat}>
           <Plus className="w-4 h-4" />
         </IconBtn>
         <IconBtn label="Search" active={activeNavId === 'search'} onClick={onOpenSearch}>
           <Search className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="Customize AnA" active={activeNavId === 'customize'} onClick={() => onNavigate?.('customize')}>
-          <SlidersHorizontal className="w-4 h-4" />
-        </IconBtn>
-
-        <div className="w-8 border-t border-stone-200 my-1" />
-
-        {/* ── Zone B: 6 Primary Destinations ── */}
-        <IconBtn label="Chats" active={activeNavId === 'chats'} onClick={nav.chats}>
-          <MessageSquare className="w-4 h-4" />
-        </IconBtn>
-        <IconBtn label="Projects" active={activeNavId === 'projects'} onClick={nav.projects}>
+        <IconBtn label="Projects" active={activeNavId === 'projects'} onClick={onOpenProjects}>
           <FolderOpen className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="Reporting & Analytics" active={activeNavId === 'reports'} onClick={nav.reports}>
-          <BarChart3 className="w-4 h-4" />
-        </IconBtn>
         <IconBtn
-          label="Communication Center"
-          active={activeNavId === 'communication-center'}
-          onClick={nav['communication-center']}
+          label="Workspace Home"
+          active={activeNavId === 'project-home'}
+          onClick={nav['project-home']}
         >
-          <Activity className="w-4 h-4" />
-        </IconBtn>
-        <IconBtn label="Apps" active={activeNavId === 'apps'} onClick={nav.apps}>
           <Sparkles className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="Settings" active={activeNavId === 'settings'} onClick={nav.settings}>
+        <IconBtn
+          label="Documents"
+          active={activeNavId === 'submission-builder'}
+          onClick={nav['submission-builder']}
+        >
+          <FileStack className="w-4 h-4" />
+        </IconBtn>
+        <IconBtn
+          label="Intelligence"
+          active={activeNavId === 'ri-copilot'}
+          onClick={nav['ri-copilot']}
+        >
           <Settings className="w-4 h-4" />
+        </IconBtn>
+
+        {/* Workflow shortcut — just one icon for the editor workspace */}
+        <div className="w-8 border-t border-stone-200 my-1" />
+        <IconBtn
+          label="Editor"
+          active={['submission-builder', 'ri-copilot', 'verify', 'review', 'publish'].includes(
+            activeNavId || ''
+          )}
+          onClick={nav['submission-builder']}
+        >
+          <PenLine className="w-4 h-4" />
         </IconBtn>
 
         {/* Bottom: expand + account */}
@@ -912,8 +954,8 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
-          <div className="w-7 h-7 rounded-full bg-stone-200 flex items-center justify-center">
-            <span className="text-[10px] font-bold text-stone-600 leading-none">
+          <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center">
+            <span className="text-[10px] font-bold text-blue-600 leading-none">
               {avatarInitial}
             </span>
           </div>
@@ -930,17 +972,17 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
       {/* Mobile backdrop */}
       <div className="fixed inset-0 z-40 bg-black/30 md:hidden" onClick={onToggleCollapse} />
       <aside
-        className="flex flex-col h-full w-[260px] bg-[#f9f9f8] border-r border-stone-150 flex-shrink-0 fixed z-50 md:static md:z-auto transition-[width] duration-200 ease-out"
+        className="flex flex-col h-full w-[260px] bg-stone-50/80 border-r border-stone-100 flex-shrink-0 fixed z-50 md:static md:z-auto transition-[width] duration-200 ease-out"
         role="navigation"
         aria-label="Main sidebar"
       >
         {/* Brand header */}
-        <div className="flex items-center justify-between px-4 h-14 flex-shrink-0">
+        <div className="flex items-center justify-between px-3 h-11 flex-shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-stone-800 flex items-center justify-center flex-shrink-0">
               <span className="text-[9px] font-bold text-white">C2C</span>
             </div>
-            <span className="font-semibold text-stone-900 text-[15px] tracking-tight">Concept2Cure</span>
+            <span className="font-semibold text-stone-800 text-[13px]">Concept2Cure</span>
           </div>
           <Button
             type="button"
@@ -954,12 +996,13 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           </Button>
         </div>
 
-        {/* ── Zone A: Utility Actions ──────────────────────────────── */}
-        <div className="px-2 py-2 flex-shrink-0 space-y-1">
+        {/* ── Global Navigation (6 items) ──────────────────────────────── */}
+        <div className="px-1 pb-1 flex-shrink-0 space-y-0.5">
+          {/* New — dropdown with 3 options */}
           <NewDropdown
             onNewChat={onNewChat}
             onNewProject={onOpenProjects}
-            onNewArtifact={() => onNavigate?.('apps')}
+            onNewArtifact={() => onNavigate?.('artifacts-center')}
           />
 
           <NavItem
@@ -969,61 +1012,40 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             onClick={onOpenSearch}
           />
           <NavItem
-            icon={<SlidersHorizontal className="w-3.5 h-3.5" />}
-            label="Customize AnA"
-            active={activeNavId === 'customize'}
-            onClick={() => onNavigate?.('customize')}
-          />
-        </div>
-
-        <div className="mx-3 my-2 border-t border-stone-100/80 flex-shrink-0" />
-
-        {/* ── Zone B: 6 Primary Destinations ──────────────────────── */}
-        <div className="px-2 py-2 flex-shrink-0 space-y-0.5">
-          <NavItem
-            icon={<MessageSquare className="w-3.5 h-3.5" />}
-            label="Chats"
-            active={activeNavId === 'chats'}
-            onClick={nav.chats}
-          />
-          <NavItem
             icon={<FolderOpen className="w-3.5 h-3.5" />}
             label="Projects"
             active={activeNavId === 'projects'}
-            onClick={nav.projects}
-          />
-          <NavItem
-            icon={<BarChart3 className="w-3.5 h-3.5" />}
-            label="Reporting & Analytics"
-            active={activeNavId === 'reports'}
-            onClick={nav.reports}
-          />
-          <NavItem
-            icon={<Activity className="w-3.5 h-3.5" />}
-            label="Communication Center"
-            active={activeNavId === 'communication-center'}
-            onClick={nav['communication-center']}
+            accentColor="blue"
+            onClick={onOpenProjects}
           />
           <NavItem
             icon={<Sparkles className="w-3.5 h-3.5" />}
-            label="Apps"
-            active={activeNavId === 'apps'}
-            onClick={nav.apps}
+            label="Workspace Home"
+            active={activeNavId === 'project-home'}
+            accentColor="violet"
+            onClick={nav['project-home']}
+          />
+          <NavItem
+            icon={<FileStack className="w-3.5 h-3.5" />}
+            label="Documents"
+            active={activeNavId === 'submission-builder'}
+            onClick={nav['submission-builder']}
           />
           <NavItem
             icon={<Settings className="w-3.5 h-3.5" />}
-            label="Settings"
-            active={activeNavId === 'settings'}
-            onClick={nav.settings}
+            label="Intelligence"
+            active={activeNavId === 'ri-copilot'}
+            onClick={nav['ri-copilot']}
           />
         </div>
 
-        {/* ── Active Project Context (only when project active) ──── */}
+        {/* ── Current Project Block (only when project active) ──────── */}
         {activeProject && (
           <>
-            <div className="mx-3 my-2 border-t border-stone-100/80 flex-shrink-0" />
+            <div className="mx-2 border-t border-stone-200 flex-shrink-0" />
             <div className="px-2 py-2 flex-shrink-0">
-              <div className="flex items-center gap-2 px-2 mb-0.5">
+              {/* Project identity */}
+              <div className="flex items-center gap-2 px-2 mb-1.5">
                 {activeBadge && (
                   <span
                     className={cn(
@@ -1039,11 +1061,41 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
                   {activeProject.name}
                 </span>
               </div>
+
+              {/* Project tabs */}
+              <div className="space-y-0.5">
+                <NavItem
+                  icon={<Home className="w-3.5 h-3.5" />}
+                  label="Overview"
+                  active={activeNavId === 'overview'}
+                  onClick={nav.overview}
+                />
+                <NavItem
+                  icon={<ListChecks className="w-3.5 h-3.5" />}
+                  label="Tasks"
+                  active={activeNavId === 'task-board'}
+                  onClick={nav['task-board']}
+                />
+                <NavItem
+                  icon={<Wrench className="w-3.5 h-3.5" />}
+                  label="Tools"
+                  active={activeNavId === 'work'}
+                  accentColor="blue"
+                  onClick={nav.tools}
+                />
+                <NavItem
+                  icon={<Send className="w-3.5 h-3.5" />}
+                  label="Submit"
+                  active={activeNavId === 'submit'}
+                  accentColor="blue"
+                  onClick={nav.submit}
+                />
+              </div>
             </div>
           </>
         )}
 
-        <div className="mx-3 my-2 border-t border-stone-100/80 flex-shrink-0" />
+        <div className="mx-2 border-t border-stone-100 flex-shrink-0" />
 
         {/* ── Search ──────────────────────────────────────────────────── */}
         <div className="px-2 py-1.5 flex-shrink-0">
@@ -1055,7 +1107,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search projects..."
               aria-label="Search projects"
-              className="w-full pl-8 pr-3 py-2 text-[13px] rounded-lg border-stone-200 bg-white"
+              className="w-full pl-8 pr-3 py-1.5 text-xs"
             />
           </div>
         </div>
@@ -1098,21 +1150,19 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             defaultOpen={true}
           >
             {recentProjects.length === 0 && pinnedProjects.length === 0 && (
-              <div className="px-4 py-8 text-center">
-                <FolderOpen className="w-8 h-8 text-stone-300 mx-auto mb-3" />
-                <p className="text-sm font-medium text-stone-600 mb-1">No projects yet</p>
-                <p className="text-xs text-stone-400 mb-4">Create your first project to start working with AnA.</p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={onOpenProjects}
-                  className="text-xs border-stone-200 hover:bg-stone-50"
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1.5" />
-                  Create project
-                </Button>
-              </div>
+              <EmptyState
+                icon={FolderOpen}
+                title="No projects yet"
+                description="Create your first project to start working with AnA on your submission."
+                action={{
+                  label: '+ Create your first project',
+                  onClick: onOpenProjects,
+                  icon: Plus,
+                }}
+                size="sm"
+                variant="minimal"
+                className="mx-2"
+              />
             )}
 
             {recentProjects.map(project => (
@@ -1163,6 +1213,49 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             </>
           )}
 
+          {/* ── SUBMISSION WORKSPACE — secondary nav ────────────────── */}
+          <div className="mx-2 my-1 border-t border-stone-100" />
+          <WorkspaceGroup label="Workspace" defaultOpen={true}>
+            <NavItem
+              icon={<Wrench className="w-3.5 h-3.5" />}
+              label="Tools"
+              active={activeNavId === 'documents' || activeNavId === 'tools'}
+              onClick={nav.documents}
+            />
+            <NavItem
+              icon={<PenLine className="w-3.5 h-3.5" />}
+              label="Editor"
+              active={activeNavId === 'submission-builder'}
+              onClick={nav['submission-builder']}
+            />
+            <NavItem
+              icon={<Brain className="w-3.5 h-3.5" />}
+              label="Intelligence"
+              active={activeNavId === 'ri-copilot'}
+              accentColor="blue"
+              onClick={nav['ri-copilot']}
+            />
+            <NavItem
+              icon={<ShieldCheck className="w-3.5 h-3.5" />}
+              label="Review & Verify"
+              active={activeNavId === 'review' || activeNavId === 'verify'}
+              accentColor="emerald"
+              onClick={nav.review}
+            />
+            <NavItem
+              icon={<Archive className="w-3.5 h-3.5" />}
+              label="References"
+              active={activeNavId === 'vault'}
+              onClick={nav.vault}
+            />
+            <NavItem
+              icon={<Send className="w-3.5 h-3.5" />}
+              label="Submit & Export"
+              active={activeNavId === 'submit'}
+              accentColor="blue"
+              onClick={nav.submit}
+            />
+          </WorkspaceGroup>
         </div>
 
         {/* User / account footer */}
@@ -1172,15 +1265,15 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             variant="ghost"
             size="sm"
             onClick={onOpenSettings}
-            className="h-auto w-full justify-start gap-3 px-3 py-2.5 rounded-lg text-stone-500 hover:bg-stone-50 hover:text-stone-800 text-[13px] transition-colors"
+            className="h-auto w-full justify-start gap-2 px-2 py-1.5 rounded-lg text-stone-500 hover:bg-stone-100 hover:text-stone-800 text-xs transition-colors"
           >
-            <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center flex-shrink-0">
-              <span className="text-[10px] font-bold text-stone-600 leading-none">
+            <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-[10px] font-bold text-blue-600 leading-none">
                 {avatarInitial}
               </span>
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-[13px] font-medium text-stone-700 truncate leading-tight">
+              <p className="text-xs font-medium text-stone-700 truncate leading-tight">
                 {displayName}
               </p>
               {userEmail && (

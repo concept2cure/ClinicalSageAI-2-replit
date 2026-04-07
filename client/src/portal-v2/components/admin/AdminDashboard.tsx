@@ -65,13 +65,13 @@ const AdminMetricCard: React.FC<{ metric: AdminMetric }> = ({ metric }) => {
     metric.trend === 'up' ? TrendingUp : metric.trend === 'down' ? TrendingDown : null;
   const trendColor =
     metric.trend === 'up'
-      ? 'text-stone-700'
+      ? 'text-green-600'
       : metric.trend === 'down'
-        ? 'text-stone-700'
-        : 'text-stone-500';
+        ? 'text-red-600'
+        : 'text-gray-500';
 
   return (
-    <Card className="hover:shadow-sm transition-shadow">
+    <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -113,17 +113,17 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ activities }) => {
     switch (eventType) {
       case 'LOGIN':
       case 'LOGOUT':
-        return <Key className="h-4 w-4 text-stone-900" />;
+        return <Key className="h-4 w-4 text-blue-500" />;
       case 'LOGIN_FAILED':
-        return <AlertTriangle className="h-4 w-4 text-stone-900" />;
+        return <AlertTriangle className="h-4 w-4 text-red-500" />;
       case 'USER_CREATED':
-        return <UserPlus className="h-4 w-4 text-stone-900" />;
+        return <UserPlus className="h-4 w-4 text-green-500" />;
       case 'DOCUMENT_APPROVED':
-        return <CheckCircle2 className="h-4 w-4 text-stone-900" />;
+        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
       case 'SETTINGS_CHANGED':
-        return <Settings className="h-4 w-4 text-stone-900" />;
+        return <Settings className="h-4 w-4 text-purple-500" />;
       default:
-        return <Activity className="h-4 w-4 text-stone-500" />;
+        return <Activity className="h-4 w-4 text-gray-500" />;
     }
   };
 
@@ -146,7 +146,7 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ activities }) => {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-stone-600" />
+              <Activity className="h-5 w-5 text-blue-600" />
               Recent Activity
             </CardTitle>
             <CardDescription>Latest actions across your organization</CardDescription>
@@ -167,7 +167,7 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ activities }) => {
             activities.map(activity => (
               <div
                 key={activity.id}
-                className="flex items-start gap-3 p-3 rounded-lg hover:bg-stone-50 transition-colors"
+                className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <div className="mt-1">{getActivityIcon(activity.eventType)}</div>
                 <div className="flex-1 min-w-0">
@@ -177,10 +177,10 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ activities }) => {
                       variant="outline"
                       className={
                         activity.severity === 'critical'
-                          ? 'border-stone-200 bg-stone-100 text-stone-800'
+                          ? 'border-red-200 bg-red-50 text-red-700'
                           : activity.severity === 'warning'
-                            ? 'border-stone-200 bg-stone-100 text-stone-700'
-                            : 'border-stone-200'
+                            ? 'border-yellow-200 bg-yellow-50 text-yellow-700'
+                            : 'border-gray-200'
                       }
                     >
                       {activity.severity}
@@ -214,13 +214,13 @@ const SecurityAlerts: React.FC<SecurityAlertsProps> = ({ alerts, onResolve }) =>
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return 'border-stone-200 bg-stone-100 text-stone-800';
+        return 'border-red-200 bg-red-50 text-red-800';
       case 'high':
-        return 'border-stone-200 bg-stone-100 text-stone-800';
+        return 'border-orange-200 bg-orange-50 text-orange-800';
       case 'medium':
-        return 'border-stone-200 bg-stone-100 text-stone-800';
+        return 'border-yellow-200 bg-yellow-50 text-yellow-800';
       default:
-        return 'border-stone-200 bg-stone-100 text-stone-800';
+        return 'border-blue-200 bg-blue-50 text-blue-800';
     }
   };
 
@@ -230,7 +230,7 @@ const SecurityAlerts: React.FC<SecurityAlertsProps> = ({ alerts, onResolve }) =>
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-stone-700" />
+              <Shield className="h-5 w-5 text-red-600" />
               Security Alerts
               {unresolvedAlerts.length > 0 && (
                 <Badge variant="destructive" className="ml-2">
@@ -246,8 +246,8 @@ const SecurityAlerts: React.FC<SecurityAlertsProps> = ({ alerts, onResolve }) =>
         <div className="space-y-3">
           {unresolvedAlerts.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-stone-900" />
-              <p className="font-medium text-stone-800">All Clear</p>
+              <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-green-500" />
+              <p className="font-medium text-green-700">All Clear</p>
               <p className="text-sm">No active security alerts</p>
             </div>
           ) : (
@@ -306,9 +306,9 @@ const ResourceUsage: React.FC<ResourceUsageProps> = ({ limits, current }) => {
   };
 
   const getUsageColor = (percent: number) => {
-    if (percent >= 90) return 'bg-stone-900';
-    if (percent >= 75) return 'bg-stone-900';
-    return 'bg-stone-900';
+    if (percent >= 90) return 'bg-red-500';
+    if (percent >= 75) return 'bg-yellow-500';
+    return 'bg-blue-500';
   };
 
   const resources = [
@@ -337,7 +337,7 @@ const ResourceUsage: React.FC<ResourceUsageProps> = ({ limits, current }) => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Server className="h-5 w-5 text-stone-600" />
+          <Server className="h-5 w-5 text-blue-600" />
           Resource Usage
         </CardTitle>
         <CardDescription>Current utilization of your plan limits</CardDescription>
@@ -392,16 +392,16 @@ const UserStatusOverview: React.FC<UserStatusOverviewProps> = ({ users }) => {
   const mfaEnabled = users.filter(u => u.mfaEnabled).length;
 
   const stats = [
-    { label: 'Active', value: activeUsers, color: 'bg-stone-900' },
-    { label: 'Pending', value: pendingUsers, color: 'bg-stone-900' },
-    { label: 'Locked', value: lockedUsers, color: 'bg-stone-900' },
+    { label: 'Active', value: activeUsers, color: 'bg-green-500' },
+    { label: 'Pending', value: pendingUsers, color: 'bg-yellow-500' },
+    { label: 'Locked', value: lockedUsers, color: 'bg-red-500' },
   ];
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-stone-600" />
+          <Users className="h-5 w-5 text-blue-600" />
           User Overview
         </CardTitle>
         <CardDescription>Status breakdown of all organization users</CardDescription>
@@ -409,7 +409,7 @@ const UserStatusOverview: React.FC<UserStatusOverviewProps> = ({ users }) => {
       <CardContent>
         <div className="space-y-4">
           {/* Status bars */}
-          <div className="flex h-3 rounded-full overflow-hidden bg-stone-100">
+          <div className="flex h-3 rounded-full overflow-hidden bg-gray-100">
             {stats.map(stat => (
               <div
                 key={stat.label}
@@ -434,7 +434,7 @@ const UserStatusOverview: React.FC<UserStatusOverviewProps> = ({ users }) => {
           <div className="pt-4 border-t mt-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Lock className="h-4 w-4 text-stone-700" />
+                <Lock className="h-4 w-4 text-green-600" />
                 <span className="text-sm">MFA Enabled</span>
               </div>
               <div className="flex items-center gap-2">
@@ -463,7 +463,7 @@ interface QuickActionsProps {
 const QuickActions: React.FC<QuickActionsProps> = ({ onAction }) => {
   const actions = [
     { id: 'invite_user', label: 'Invite User', icon: UserPlus, color: '#0d6efd' },
-    { id: 'view_audit', label: 'View Audit Log', icon: Eye, color: '#57534e' },
+    { id: 'view_audit', label: 'View Audit Log', icon: Eye, color: '#5585b3' },
     { id: 'security_settings', label: 'Security Settings', icon: Shield, color: '#647746' },
     { id: 'manage_roles', label: 'Manage Roles', icon: Key, color: '#dc2626' },
   ];
@@ -472,7 +472,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onAction }) => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Settings className="h-5 w-5 text-stone-600" />
+          <Settings className="h-5 w-5 text-blue-600" />
           Quick Actions
         </CardTitle>
       </CardHeader>
@@ -539,7 +539,7 @@ export const AdminDashboard: React.FC = () => {
       changeLabel: 'improvement',
       trend: 'up',
       icon: Shield,
-      color: '#57534e',
+      color: '#5585b3',
     },
   ];
 
@@ -645,7 +645,7 @@ export const AdminDashboard: React.FC = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Building2 className="h-6 w-6 text-stone-600" />
+            <Building2 className="h-6 w-6 text-blue-600" />
             Administration
           </h1>
           <p className="text-muted-foreground">

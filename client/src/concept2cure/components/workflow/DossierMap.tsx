@@ -220,7 +220,7 @@ export const DossierMap: React.FC<DossierMapProps> = ({
   const { data: indStatus } = useQuery<{ sections: Array<{ code: string; title: string; status: string }> }>({
     queryKey: ['concept2cure', 'ind', 'status', projectId],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/ind-generation/status/${projectId}`);
+      const res = await apiRequest('GET', `/api/ind/status/${projectId}`);
       if (!res.ok) return { sections: [] };
       const json = await res.json();
       return json.data || { sections: [] };
@@ -233,7 +233,7 @@ export const DossierMap: React.FC<DossierMapProps> = ({
   const { data: deviceStatus } = useQuery<{ sections: Array<{ code: string; title: string; status: string }> }>({
     queryKey: ['concept2cure', 'device', 'status', upperType, projectId],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/ind-generation/device-status/${upperType}/${projectId}`);
+      const res = await apiRequest('GET', `/api/ind/device-status/${upperType}/${projectId}`);
       if (!res.ok) return { sections: [] };
       const json = await res.json();
       return json.data || { sections: [] };
@@ -307,7 +307,7 @@ export const DossierMap: React.FC<DossierMapProps> = ({
                 className="w-full flex items-center justify-between gap-3 px-4 py-3 h-auto text-left"
               >
                 <div className="flex items-center gap-2">
-                  <Send className="w-3.5 h-3.5 text-stone-500" />
+                  <Send className="w-3.5 h-3.5 text-violet-500" />
                   <span className="text-sm font-medium text-stone-800">Check Submission Readiness</span>
                 </div>
                 <span className="text-xs text-stone-400">Review readiness & export</span>

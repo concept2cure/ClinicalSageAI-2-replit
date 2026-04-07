@@ -406,7 +406,7 @@ function StepDemo({ submissionType }: { submissionType: SubmissionType }) {
         );
       })}
       {visibleCount >= steps.length && (
-        <motion.p {...fade} className="text-xs text-stone-600 mt-4">
+        <motion.p {...fade} className="text-xs text-blue-600 mt-4">
           Demo complete. Continue to connect to your project.
         </motion.p>
       )}
@@ -636,7 +636,7 @@ export function AgentSetupWizard({ onSkip, onComplete }: { onSkip?: () => void; 
               className={cn(
                 "flex items-center gap-1 text-sm transition-colors duration-100",
                 canContinue()
-                  ? "text-stone-600 hover:text-stone-700"
+                  ? "text-blue-600 hover:text-stone-700"
                   : "text-stone-400 cursor-not-allowed"
               )}
             >

@@ -107,8 +107,8 @@ const PreconditionBadge: React.FC<{
       <div
         className={cn(
           "w-2 h-2 rounded-full cursor-pointer transition-transform hover:scale-150",
-          isPassed && "bg-stone-900",
-          isFailed && "bg-stone-900",
+          isPassed && "bg-green-500",
+          isFailed && "bg-red-500",
           isPending && "bg-stone-300"
         )}
         onClick={onClick}
@@ -122,15 +122,15 @@ const PreconditionBadge: React.FC<{
     <div
       className={cn(
         "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors cursor-pointer",
-        isPassed && "bg-stone-100 text-stone-800 hover:bg-stone-100",
-        isFailed && "bg-stone-100 text-stone-800 hover:bg-stone-100",
+        isPassed && "bg-green-50 text-green-700 hover:bg-green-100",
+        isFailed && "bg-red-50 text-red-700 hover:bg-red-100",
         isPending && "bg-stone-100 text-stone-600 hover:bg-stone-200"
       )}
       onClick={onClick}
     >
       {/* Status icon */}
-      {isPassed && <CheckCircle2 size={14} className="text-stone-900" />}
-      {isFailed && <XCircle size={14} className="text-stone-900" />}
+      {isPassed && <CheckCircle2 size={14} className="text-green-500" />}
+      {isFailed && <XCircle size={14} className="text-red-500" />}
       {isPending && <Circle size={14} className="text-stone-400" />}
       
       {/* Type icon */}
@@ -161,8 +161,8 @@ const PreconditionSummary: React.FC<{
       onClick={onClick}
       className={cn(
         "flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors duration-150",
-        allPassed && "bg-stone-100 text-stone-800 hover:bg-stone-200",
-        hasFailed && "bg-stone-100 text-stone-800 hover:bg-stone-200",
+        allPassed && "bg-green-100 text-green-700 hover:bg-green-200",
+        hasFailed && "bg-red-100 text-red-700 hover:bg-red-200",
         !allPassed && !hasFailed && "bg-stone-100 text-stone-600 hover:bg-stone-200"
       )}
     >
@@ -233,7 +233,7 @@ export const PreconditionBadges: React.FC<PreconditionBadgesProps> = ({
       {/* Failed preconditions first */}
       {failed.length > 0 && (
         <div className="space-y-2">
-          <div className="text-xs font-medium text-stone-700 uppercase tracking-wide flex items-center gap-1">
+          <div className="text-xs font-medium text-red-600 uppercase tracking-wide flex items-center gap-1">
             <XCircle size={12} />
             Blockers ({failed.length})
           </div>
@@ -249,9 +249,9 @@ export const PreconditionBadges: React.FC<PreconditionBadgesProps> = ({
           
           {/* Error messages */}
           {failed.some(p => p.errorMessage) && (
-            <div className="mt-2 p-2 bg-stone-100 rounded-lg border border-stone-100">
+            <div className="mt-2 p-2 bg-red-50 rounded-lg border border-red-100">
               {failed.filter(p => p.errorMessage).map((precondition) => (
-                <p key={precondition.id} className="text-xs text-stone-700">
+                <p key={precondition.id} className="text-xs text-red-600">
                   • {precondition.errorMessage}
                 </p>
               ))}
@@ -282,7 +282,7 @@ export const PreconditionBadges: React.FC<PreconditionBadgesProps> = ({
       {/* Passed preconditions */}
       {passed.length > 0 && showAll && (
         <div className="space-y-2">
-          <div className="text-xs font-medium text-stone-700 uppercase tracking-wide flex items-center gap-1">
+          <div className="text-xs font-medium text-green-600 uppercase tracking-wide flex items-center gap-1">
             <CheckCircle2 size={12} />
             Met ({passed.length})
           </div>
@@ -322,7 +322,7 @@ export const PreconditionInlineSummary: React.FC<{
   return (
     <div className={cn(
       "flex items-center gap-1 text-xs",
-      allPassed ? "text-stone-700" : "text-stone-600",
+      allPassed ? "text-green-600" : "text-amber-600",
       className
     )}>
       {allPassed ? (

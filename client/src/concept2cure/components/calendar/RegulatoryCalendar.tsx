@@ -100,30 +100,30 @@ const EVENT_CONFIG: Record<EventType, {
 }> = {
   pdufa: {
     icon: CalendarIcon,
-    color: 'text-stone-800',
-    bgColor: 'bg-stone-100',
-    borderColor: 'border-stone-300',
+    color: 'text-red-700',
+    bgColor: 'bg-red-100',
+    borderColor: 'border-red-300',
     label: 'PDUFA Date',
   },
   commitment: {
     icon: Flag,
-    color: 'text-stone-700',
-    bgColor: 'bg-stone-100',
-    borderColor: 'border-stone-300',
+    color: 'text-amber-700',
+    bgColor: 'bg-amber-100',
+    borderColor: 'border-amber-300',
     label: 'Commitment',
   },
   meeting: {
     icon: Users,
     color: 'text-stone-700',
-    bgColor: 'bg-stone-100',
-    borderColor: 'border-stone-300',
+    bgColor: 'bg-blue-100',
+    borderColor: 'border-blue-300',
     label: 'Meeting',
   },
   filing: {
     icon: FileText,
     color: 'text-stone-700',
-    bgColor: 'bg-stone-200',
-    borderColor: 'border-stone-300',
+    bgColor: 'bg-violet-100',
+    borderColor: 'border-violet-300',
     label: 'Filing',
   },
   internal: {
@@ -135,23 +135,23 @@ const EVENT_CONFIG: Record<EventType, {
   },
   renewal: {
     icon: Bell,
-    color: 'text-stone-800',
-    bgColor: 'bg-stone-100',
-    borderColor: 'border-stone-300',
+    color: 'text-emerald-700',
+    bgColor: 'bg-emerald-100',
+    borderColor: 'border-emerald-300',
     label: 'Renewal',
   },
   variation: {
     icon: FileText,
-    color: 'text-stone-700',
-    bgColor: 'bg-stone-200',
-    borderColor: 'border-stone-300',
+    color: 'text-pink-700',
+    bgColor: 'bg-pink-100',
+    borderColor: 'border-pink-300',
     label: 'Variation',
   },
   psur: {
     icon: AlertTriangle,
-    color: 'text-stone-700',
-    bgColor: 'bg-stone-100',
-    borderColor: 'border-stone-300',
+    color: 'text-orange-700',
+    bgColor: 'bg-orange-100',
+    borderColor: 'border-orange-300',
     label: 'PSUR/PBRER',
   },
 };
@@ -221,7 +221,7 @@ const EventBadge: React.FC<{
         'w-full text-left p-2 rounded-lg border transition-all duration-150',
         config.bgColor,
         config.borderColor,
-        'hover:shadow-sm'
+        'hover:shadow-md'
       )}
     >
       <div className="flex items-start gap-2">
@@ -240,7 +240,7 @@ const EventBadge: React.FC<{
           )}
         </div>
         {event.priority === 'critical' && (
-          <span className="w-2 h-2 rounded-full bg-stone-900 flex-shrink-0" />
+          <span className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
         )}
       </div>
     </button>
@@ -300,8 +300,8 @@ const UpcomingEventsSidebar: React.FC<{
               <div key={dateKey}>
                 <div className={cn(
                   'text-xs font-medium mb-2 px-2 py-1 rounded',
-                  isToday(date) && 'bg-stone-100 text-stone-700',
-                  isSelectedDay && !isToday(date) && 'bg-stone-100 text-stone-700',
+                  isToday(date) && 'bg-blue-100 text-stone-700',
+                  isSelectedDay && !isToday(date) && 'bg-blue-100 text-stone-700',
                   !isToday(date) && !isSelectedDay && 'text-stone-500'
                 )}>
                   {isToday(date) ? 'Today' : date.toLocaleDateString(undefined, {
@@ -435,7 +435,7 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
               </div>
               <button
                 onClick={goToToday}
-                className="px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-100 rounded-lg transition-colors duration-150"
+                className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-150"
               >
                 Today
               </button>
@@ -513,9 +513,9 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
                   }}
                   className={cn(
                     'min-h-[100px] p-1 text-left rounded-lg border transition-colors duration-150',
-                    isSelected && 'border-stone-600 bg-stone-100',
+                    isSelected && 'border-stone-600 bg-blue-50',
                     !isSelected && 'border-stone-200 hover:border-stone-200 hover:bg-stone-50',
-                    hasPdufa && !isSelected && 'border-stone-200 bg-stone-100/50'
+                    hasPdufa && !isSelected && 'border-red-200 bg-red-50/50'
                   )}
                 >
                   <div className="flex items-center justify-between mb-1">
@@ -528,7 +528,7 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
                       {date.getDate()}
                     </span>
                     {hasCritical && (
-                      <span className="w-2 h-2 rounded-full bg-stone-900" />
+                      <span className="w-2 h-2 rounded-full bg-red-500" />
                     )}
                   </div>
                   

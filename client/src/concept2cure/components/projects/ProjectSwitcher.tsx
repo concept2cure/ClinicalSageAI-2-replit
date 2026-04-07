@@ -93,50 +93,50 @@ const SUBMISSION_TYPES: Record<
   IND: {
     label: 'IND',
     icon: Beaker,
-    color: 'text-stone-600',
-    bgColor: 'bg-blue-50',
+    color: 'text-[#6B6962]',
+    bgColor: 'bg-[#FBF0EB]',
   },
   NDA: {
     label: 'NDA',
     icon: Pill,
-    color: 'text-stone-700',
-    bgColor: 'bg-stone-100',
+    color: 'text-green-600',
+    bgColor: 'bg-green-50',
   },
   BLA: {
     label: 'BLA',
     icon: Activity,
-    color: 'text-stone-600',
-    bgColor: 'bg-stone-100',
+    color: 'text-[#6B6962]',
+    bgColor: 'bg-[#F5F4EF]',
   },
   PMA: {
     label: 'PMA',
     icon: Heart,
-    color: 'text-stone-700',
-    bgColor: 'bg-stone-100',
+    color: 'text-red-600',
+    bgColor: 'bg-red-50',
   },
   MAA: {
     label: 'MAA',
     icon: Microscope,
-    color: 'text-stone-600',
-    bgColor: 'bg-stone-100',
+    color: 'text-[#6B6962]',
+    bgColor: 'bg-[#F5F4EF]',
   },
   DE_NOVO: {
     label: 'De Novo',
     icon: FileText,
-    color: 'text-stone-600',
-    bgColor: 'bg-blue-50',
+    color: 'text-[#6B6962]',
+    bgColor: 'bg-[#FBF0EB]',
   },
   EUA: {
     label: 'EUA',
     icon: Activity,
-    color: 'text-stone-600',
-    bgColor: 'bg-blue-50',
+    color: 'text-[#6B6962]',
+    bgColor: 'bg-[#FBF0EB]',
   },
   clinical_trial: {
     label: 'Clinical Trial',
     icon: Activity,
-    color: 'text-stone-600',
-    bgColor: 'bg-stone-100',
+    color: 'text-[#6B6962]',
+    bgColor: 'bg-[#F5F4EF]',
   },
   regulatory_submission: {
     label: 'Regulatory',
@@ -147,14 +147,14 @@ const SUBMISSION_TYPES: Record<
   medical_device: {
     label: 'Medical Device',
     icon: Heart,
-    color: 'text-stone-600',
-    bgColor: 'bg-stone-100',
+    color: 'text-[#6B6962]',
+    bgColor: 'bg-[#F5F4EF]',
   },
   literature_review: {
     label: 'Literature Review',
     icon: Microscope,
-    color: 'text-stone-600',
-    bgColor: 'bg-stone-100',
+    color: 'text-[#6B6962]',
+    bgColor: 'bg-[#F5F4EF]',
   },
 };
 
@@ -234,8 +234,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         className={cn(
           'absolute top-3 left-3 h-6 w-6',
           project.starred
-            ? 'text-stone-900'
-            : 'text-stone-400 opacity-0 group-hover:opacity-100 hover:text-stone-900'
+            ? 'text-amber-500'
+            : 'text-stone-400 opacity-0 group-hover:opacity-100 hover:text-amber-500'
         )}
       >
         <Star className={cn('w-4 h-4', project.starred && 'fill-current')} />
@@ -285,7 +285,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                   onDelete();
                   setShowMenu(false);
                 }}
-                className="w-full flex items-center justify-start gap-2 px-3 py-2 h-auto text-sm text-stone-700 hover:bg-stone-100"
+                className="w-full flex items-center justify-start gap-2 px-3 py-2 h-auto text-sm text-red-600 hover:bg-red-50"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete

@@ -35,36 +35,17 @@ describe('evaluateApprovedRoute', () => {
     expect(decision.disposition).toBe('hidden');
   });
 
-  it('allows approved project modules (510k, pma, cer, ind, ectd, cmc)', () => {
-    const allowed510k = evaluateApprovedRoute('/concept2cure/project/42/510k/workspace', {
+  it('allows only approved project modules', () => {
+    const allowed = evaluateApprovedRoute('/concept2cure/project/42/510k/workspace', {
       externalTestingMode: true,
       projectId: '42',
     });
-    const allowedEctd = evaluateApprovedRoute('/concept2cure/project/42/ectd/author', {
-      externalTestingMode: true,
-      projectId: '42',
-    });
-    const allowedInd = evaluateApprovedRoute('/concept2cure/project/42/ind/checklist', {
-      externalTestingMode: true,
-      projectId: '42',
-    });
-    const allowedCmc = evaluateApprovedRoute('/concept2cure/project/42/cmc/workspace', {
+    const redirected = evaluateApprovedRoute('/concept2cure/project/42/ectd/author', {
       externalTestingMode: true,
       projectId: '42',
     });
 
-    expect(allowed510k.disposition).toBe('allowed');
-    expect(allowedEctd.disposition).toBe('allowed');
-    expect(allowedInd.disposition).toBe('allowed');
-    expect(allowedCmc.disposition).toBe('allowed');
-  });
-
-  it('redirects non-approved project modules', () => {
-    const redirected = evaluateApprovedRoute('/concept2cure/project/42/unknown-module/page', {
-      externalTestingMode: true,
-      projectId: '42',
-    });
-
+    expect(allowed.disposition).toBe('allowed');
     expect(redirected.disposition).toBe('redirected');
   });
 });

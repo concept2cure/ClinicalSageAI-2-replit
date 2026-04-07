@@ -69,18 +69,18 @@ const StatusIcon: React.FC<{ status: WorkflowStep['status']; size?: number }> = 
   
   switch (status) {
     case 'COMPLETED':
-      return <CheckCircle2 {...iconProps} className="text-stone-900" />;
+      return <CheckCircle2 {...iconProps} className="text-green-500" />;
     case 'IN_PROGRESS':
-      return <Circle {...iconProps} className="text-stone-900 fill-stone-100" />;
+      return <Circle {...iconProps} className="text-blue-500 fill-blue-100" />;
     case 'AWAITING_APPROVAL':
     case 'AWAITING_SIGNATURE':
-      return <Clock {...iconProps} className="text-stone-900" />;
+      return <Clock {...iconProps} className="text-amber-500" />;
     case 'READY':
-      return <Circle {...iconProps} className="text-stone-400" />;
+      return <Circle {...iconProps} className="text-blue-400" />;
     case 'BLOCKED':
-      return <Lock {...iconProps} className="text-stone-900" />;
+      return <Lock {...iconProps} className="text-red-500" />;
     case 'FAILED':
-      return <AlertTriangle {...iconProps} className="text-stone-900" />;
+      return <AlertTriangle {...iconProps} className="text-red-500" />;
     case 'SKIPPED':
       return <CheckCircle2 {...iconProps} className="text-stone-400" />;
     default:
@@ -120,12 +120,12 @@ const TimelineStep: React.FC<{
         <div className={cn(
           "flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-150",
           isActive && "ring-2 ring-stone-300 ring-offset-2",
-          step.status === 'COMPLETED' && "border-stone-900 bg-stone-100",
-          step.status === 'IN_PROGRESS' && "border-stone-600 bg-stone-100",
-          step.status === 'AWAITING_APPROVAL' && "border-stone-900 bg-stone-100",
-          step.status === 'BLOCKED' && "border-stone-900 bg-stone-100",
+          step.status === 'COMPLETED' && "border-green-500 bg-green-50",
+          step.status === 'IN_PROGRESS' && "border-stone-600 bg-blue-50",
+          step.status === 'AWAITING_APPROVAL' && "border-amber-500 bg-amber-50",
+          step.status === 'BLOCKED' && "border-red-500 bg-red-50",
           step.status === 'PENDING' && "border-stone-200 bg-white",
-          step.status === 'READY' && "border-stone-300 bg-stone-100"
+          step.status === 'READY' && "border-blue-300 bg-blue-50"
         )}>
           <StatusIcon status={step.status} size={18} />
         </div>
@@ -134,7 +134,7 @@ const TimelineStep: React.FC<{
         {!isLast && (
           <div className={cn(
             "w-0.5 h-12 mt-2",
-            step.status === 'COMPLETED' ? 'bg-stone-300' : 'bg-stone-200'
+            step.status === 'COMPLETED' ? 'bg-emerald-300' : 'bg-stone-200'
           )} />
         )}
       </div>
@@ -146,7 +146,7 @@ const TimelineStep: React.FC<{
             "font-medium",
             step.status === 'COMPLETED' && LIFECYCLE.approved.text,
             step.status === 'IN_PROGRESS' && LIFECYCLE.in_review.text,
-            step.status === 'BLOCKED' && "text-stone-800",
+            step.status === 'BLOCKED' && "text-red-700",
             step.status === 'PENDING' && LIFECYCLE.not_started.text
           )}>
             {step.name}
@@ -158,7 +158,7 @@ const TimelineStep: React.FC<{
             </span>
           )}
           {step.slaBreached && (
-            <span className="text-xs px-1.5 py-0.5 bg-stone-100 text-stone-800 rounded flex items-center gap-1">
+            <span className="text-xs px-1.5 py-0.5 bg-red-100 text-red-700 rounded flex items-center gap-1">
               <AlertTriangle size={12} />
               SLA Breached
             </span>
@@ -181,13 +181,13 @@ const TimelineStep: React.FC<{
           )}
           {step.slaDueAt && step.status !== 'COMPLETED' && (
             <span className={cn(
-              step.slaBreached && "text-stone-900"
+              step.slaBreached && "text-red-500"
             )}>
               • Due: {new Date(step.slaDueAt).toLocaleDateString()}
             </span>
           )}
           {step.completedAt && (
-            <span className="text-stone-900">
+            <span className="text-green-500">
               • Completed: {new Date(step.completedAt).toLocaleDateString()}
             </span>
           )}
@@ -247,7 +247,7 @@ const PhaseGroup: React.FC<{
         <div className="flex items-center gap-2">
           <div className="w-24 h-1.5 bg-stone-200 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-stone-900 transition-all duration-200"
+              className="h-full bg-green-500 transition-all duration-200"
               style={{ width: `${phaseProgress}%` }}
             />
           </div>
@@ -327,11 +327,11 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
   const assetStateBadgeClass = useMemo(() => {
     switch (assetState) {
       case 'DRAFT': return 'bg-stone-100 text-stone-700';
-      case 'REVIEW': return 'bg-stone-100 text-stone-700';
-      case 'APPROVED': return 'bg-stone-100 text-stone-800';
-      case 'SUBMITTED': return 'bg-stone-100 text-stone-700';
-      case 'ACCEPTED': return 'bg-stone-100 text-stone-800';
-      case 'DEFICIENCY': return 'bg-stone-100 text-stone-800';
+      case 'REVIEW': return 'bg-amber-100 text-amber-700';
+      case 'APPROVED': return 'bg-green-100 text-green-700';
+      case 'SUBMITTED': return 'bg-blue-100 text-stone-700';
+      case 'ACCEPTED': return 'bg-emerald-100 text-emerald-700';
+      case 'DEFICIENCY': return 'bg-red-100 text-red-700';
       default: return 'bg-stone-100 text-stone-700';
     }
   }, [assetState]);
@@ -379,16 +379,16 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
                 <div className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-150",
                   step.id === currentStepId && "ring-2 ring-stone-300",
-                  step.status === 'COMPLETED' && "border-stone-900 bg-stone-100",
-                  step.status === 'IN_PROGRESS' && "border-stone-600 bg-stone-100",
+                  step.status === 'COMPLETED' && "border-green-500 bg-green-50",
+                  step.status === 'IN_PROGRESS' && "border-stone-600 bg-blue-50",
                   step.status === 'PENDING' && "border-stone-200"
                 )}>
                   <StatusIcon status={step.status} size={14} />
                 </div>
                 <span className={cn(
                   "text-xs text-center max-w-[80px] truncate",
-                  step.status === 'COMPLETED' && "text-stone-700",
-                  step.status === 'IN_PROGRESS' && "text-stone-600",
+                  step.status === 'COMPLETED' && "text-green-600",
+                  step.status === 'IN_PROGRESS' && "text-blue-600",
                   step.status === 'PENDING' && "text-stone-400"
                 )}>
                   {step.name}
@@ -400,7 +400,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
                   <div 
                     className={cn(
                       "h-full transition-all duration-200",
-                      step.status === 'COMPLETED' ? 'bg-stone-900' : 'bg-transparent'
+                      step.status === 'COMPLETED' ? 'bg-green-500' : 'bg-transparent'
                     )}
                     style={{ width: step.status === 'COMPLETED' ? '100%' : '0%' }}
                   />

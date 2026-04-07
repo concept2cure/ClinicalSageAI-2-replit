@@ -4,12 +4,12 @@ import { apiRequest } from '../../lib/queryClient';
 import { useTenant } from '../../contexts/TenantContext';
 import { useToast } from '@/hooks/use-toast';
 import {
- Card,
- CardContent,
- CardDescription,
- CardFooter,
- CardHeader,
- CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -18,1276 +18,1276 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import {
- Select,
- SelectContent,
- SelectItem,
- SelectTrigger,
- SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import EnhancedSelect from '@/components/ui/select-wrapper';
 import {
- Shield,
- AlertTriangle,
- Key,
- Lock,
- Clock,
- UserCheck,
- FileText,
- FileCheck,
- ClipboardCheck,
- CheckSquare,
- Globe as GlobeIcon,
+  Shield,
+  AlertTriangle,
+  Key,
+  Lock,
+  Clock,
+  UserCheck,
+  FileText,
+  FileCheck,
+  ClipboardCheck,
+  CheckSquare,
+  Globe as GlobeIcon,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const ClientSecuritySettings = ({ clientId: propClientId }) => {
- const { currentClientWorkspace, clientWorkspaces, currentOrganization } = useTenant();
- const { toast } = useToast();
- const queryClient = useQueryClient();
-
- // Track tab state
- const [activeTab, setActiveTab] = useState('password-policy');
-
- // Use prop clientId if provided, otherwise fall back to tenant context
- const clientId = propClientId || currentClientWorkspace?.id;
-
- // Debug the TenantContext values and prop clientId
- React.useEffect(() => {
- console.log('🔧 ClientSecuritySettings Debug:', {
- propClientId,
- currentClientWorkspace,
- resolvedClientId: clientId,
- totalClientWorkspaces: clientWorkspaces?.length || 0,
- currentOrganization: currentOrganization?.id,
- filteredClientWorkspaces:
- clientWorkspaces?.filter(c => c.organizationId === String(currentOrganization?.id))
- ?.length || 0,
- });
- }, [propClientId, currentClientWorkspace, clientWorkspaces, currentOrganization, clientId]);
-
- // Fetch security settings for the client
- const {
- data: securitySettings,
- isLoading,
- isError,
- error,
- } = useQuery({
- queryKey: ['/api/clients', clientId, 'security-settings'],
- queryFn: () => {
- if (!clientId) {
- console.warn('No client workspace selected. Cannot fetch security settings.');
- return Promise.resolve(null);
- }
- return apiRequest(`/api/clients/${clientId}/security-settings`).catch(err => {
- console.error('Error fetching security settings:', err);
- // Return default settings on error instead of throwing
- return null;
- });
- },
- enabled: !!clientId,
- // Load saved data, use defaults only when no saved data exists
- select: data => {
- if (!data) return null; // Let defaults be handled elsewhere
-
- return {
- passwordPolicy: {
- minLength: data.passwordPolicy?.minLength ?? 12,
- requireUppercase: data.passwordPolicy?.requireUppercase ?? true,
- requireLowercase: data.passwordPolicy?.requireLowercase ?? true,
- requireNumber: data.passwordPolicy?.requireNumber ?? true,
- requireSpecialChar: data.passwordPolicy?.requireSpecialChar ?? true,
- historyCount: data.passwordPolicy?.historyCount ?? 5,
- expiryDays: data.passwordPolicy?.expiryDays ?? 90,
- },
- sessionSettings: {
- timeoutMinutes: data.sessionSettings?.timeoutMinutes ?? 30,
- maxConcurrentSessions: data.sessionSettings?.maxConcurrentSessions ?? 3,
- enforceIpLock: data.sessionSettings?.enforceIpLock ?? false,
- requireMfaForExternalAccess: data.sessionSettings?.requireMfaForExternalAccess ?? true,
- },
- dataProtection: {
- autoLockDocuments: data.dataProtection?.autoLockDocuments ?? true,
- enforceDocumentClassification: data.dataProtection?.enforceDocumentClassification ?? true,
- dataRetentionDays: data.dataProtection?.dataRetentionDays ?? 3650,
- enableDLP: data.dataProtection?.enableDLP ?? false,
- sensitiveDataScanFrequency: data.dataProtection?.sensitiveDataScanFrequency ?? 'weekly',
- },
- auditSettings: {
- retentionDays: data.auditSettings?.retentionDays ?? 365,
- enableBlockchainBackup: data.auditSettings?.enableBlockchainBackup ?? true,
- realTimeMonitoring: data.auditSettings?.realTimeMonitoring ?? true,
- autoExportFrequency: data.auditSettings?.autoExportFrequency ?? 24,
- trackUserActivity: data.auditSettings?.trackUserActivity ?? true,
- },
- fdaCompliance: {
- enforceElectronicSignatures: data.fdaCompliance?.enforceElectronicSignatures ?? true,
- requireReason: data.fdaCompliance?.requireReason ?? true,
- enableAuditTrails: data.fdaCompliance?.enableAuditTrails ?? true,
- validationApproach: data.fdaCompliance?.validationApproach ?? 'riskBased',
- documentRetentionPeriod: data.fdaCompliance?.documentRetentionPeriod ?? 'lifeplus10',
- enforceUserTesting: data.fdaCompliance?.enforceUserTesting ?? false,
- autoGenerateDocumentation: data.fdaCompliance?.autoGenerateDocumentation ?? true,
- reportGeneration: data.fdaCompliance?.reportGeneration ?? 'quarterly',
- submissionFormat: data.fdaCompliance?.submissionFormat ?? 'ectd',
- inspectionReadiness: data.fdaCompliance?.inspectionReadiness ?? true,
- enforceApprovalWorkflows: data.fdaCompliance?.enforceApprovalWorkflows ?? true,
- enableEuGmpCompliance: data.fdaCompliance?.enableEuGmpCompliance ?? false,
- enableIchGcpCompliance: data.fdaCompliance?.enableIchGcpCompliance ?? false,
- industryType: data.fdaCompliance?.industryType ?? 'pharma',
- },
- };
- },
- });
-
- // State to manage form values
- const [formValues, setFormValues] = useState(
- securitySettings || {
- passwordPolicy: {
- minLength: 12,
- requireUppercase: true,
- requireLowercase: true,
- requireNumber: true,
- requireSpecialChar: true,
- historyCount: 5,
- expiryDays: 90,
- },
- sessionSettings: {
- timeoutMinutes: 30,
- maxConcurrentSessions: 3,
- enforceIpLock: false,
- requireMfaForExternalAccess: true,
- },
- dataProtection: {
- autoLockDocuments: true,
- enforceDocumentClassification: true,
- dataRetentionDays: 3650, // 10 years default
- enableDLP: false,
- sensitiveDataScanFrequency: 'weekly',
- },
- auditSettings: {
- retentionDays: 365,
- enableBlockchainBackup: true,
- realTimeMonitoring: true,
- autoExportFrequency: 24,
- trackUserActivity: true,
- },
- fdaCompliance: {
- enforceElectronicSignatures: true,
- requireReason: true,
- enableAuditTrails: true,
- validationApproach: 'riskBased',
- documentRetentionPeriod: 'lifeplus10',
- enforceUserTesting: false,
- autoGenerateDocumentation: true,
- reportGeneration: 'quarterly',
- submissionFormat: 'ectd',
- inspectionReadiness: true,
- enforceApprovalWorkflows: true,
- enableEuGmpCompliance: false,
- enableIchGcpCompliance: false,
- industryType: 'pharma',
- },
- }
- );
-
- // Update form values when data is loaded
- React.useEffect(() => {
- console.log('🔄 ClientSecuritySettings: Data loaded', { securitySettings, clientId });
- if (securitySettings) {
- console.log('🔄 Updating form values with loaded data:', securitySettings);
- setFormValues(securitySettings);
- }
- }, [securitySettings, clientId]);
-
- // Mutation to update security settings
- const updateSecuritySettingsMutation = useMutation({
- mutationFn: data => {
- console.log('🔧 Mutation Debug - Using clientId:', clientId, 'from prop/context');
-
- if (!clientId) {
- throw new Error('No client workspace selected. Cannot save security settings.');
- }
-
- return apiRequest(`/api/clients/${clientId}/security-settings`, {
- method: 'PATCH',
- data,
- });
- },
- onSuccess: () => {
- queryClient.invalidateQueries(['/api/clients', clientId, 'security-settings']);
- toast({
- title: 'Security settings updated',
- description: 'Client workspace security settings have been updated successfully',
- });
- },
- onError: err => {
- toast({
- variant: 'destructive',
- title: 'Error updating security settings',
- description: err.message || 'Could not update security settings. Please try again.',
- });
- },
- });
-
- // Handle form submission
- const handleSubmit = e => {
- e.preventDefault();
-
- console.log('🔧 Security Settings Submit Debug:', {
- clientId,
- currentClientWorkspace,
- formValues: Object.keys(formValues),
- });
-
- if (!clientId) {
- toast({
- variant: 'destructive',
- title: 'Error saving settings',
- description: 'No client workspace selected. Please select a client workspace first.',
- });
- return;
- }
-
- updateSecuritySettingsMutation.mutate(formValues);
- };
-
- // Handle section-specific save
- const handleSectionSave = sectionName => {
- console.log('🔧 Frontend Debug - handleSectionSave called:', {
- sectionName,
- clientId,
- currentClientWorkspace,
- apiUrl: `/api/clients/${clientId}/security-settings`,
- });
-
- const sectionData = {
- [sectionName]: formValues[sectionName],
- };
-
- console.log('🔧 Frontend Debug - Section data to save:', sectionData);
- updateSecuritySettingsMutation.mutate(sectionData);
- };
-
- // Handle input changes for text/number inputs
- const handleInputChange = (section, field, value) => {
- setFormValues(prev => {
- return {
- ...prev,
- [section]: {
- ...prev[section],
- [field]: value,
- },
- };
- });
- };
-
- // Handle toggle/checkbox changes
- const handleToggleChange = (section, field) => {
- setFormValues(prev => ({
- ...prev,
- [section]: {
- ...prev[section],
- [field]: !prev[section][field],
- },
- }));
- };
-
- // Loading state
- if (isLoading && !formValues) {
- return (
- <Card>
- <CardHeader>
- <Skeleton className="h-8 w-64 mb-2" />
- <Skeleton className="h-4 w-full" />
- </CardHeader>
- <CardContent>
- <div className="space-y-6">
- <Skeleton className="h-10 w-full" />
- <Skeleton className="h-32 w-full" />
- <Skeleton className="h-32 w-full" />
- </div>
- </CardContent>
- </Card>
- );
- }
-
- // Error state
- if (isError) {
- return (
- <Card className="border-red-200">
- <CardHeader>
- <CardTitle className="flex items-center text-red-600">
- <AlertTriangle className="h-5 w-5 mr-2" />
- Error Loading Security Settings
- </CardTitle>
- <CardDescription className="text-red-500">
- {error?.message || 'Could not load security settings. Please try again later.'}
- </CardDescription>
- </CardHeader>
- <CardContent>
- <Button
- variant="outline"
- onClick={() =>
- queryClient.invalidateQueries(['/api/clients', clientId, 'security-settings'])
- }
- >
- Retry
- </Button>
- </CardContent>
- </Card>
- );
- }
-
- return (
- <Card className="w-full">
- <CardHeader>
- <div className="flex items-center">
- <Shield className="h-5 w-5 mr-2 text-primary" />
- <CardTitle>Client Security Settings</CardTitle>
- </div>
- <CardDescription>
- Configure security settings specific to the {currentClientWorkspace?.name} workspace
- </CardDescription>
- </CardHeader>
- <CardContent>
- <form onSubmit={handleSubmit}>
- <Tabs value={activeTab} onValueChange={setActiveTab}>
- <TabsList className="grid grid-cols-5 mb-6">
- <TabsTrigger value="password-policy" className="flex items-center">
- <Key className="h-4 w-4 mr-2" />
- <span className="hidden sm:inline">Password Policy</span>
- <span className="inline sm:hidden">Password</span>
- </TabsTrigger>
- <TabsTrigger value="session" className="flex items-center">
- <Clock className="h-4 w-4 mr-2" />
- <span className="hidden sm:inline">Session Settings</span>
- <span className="inline sm:hidden">Session</span>
- </TabsTrigger>
- <TabsTrigger value="data-protection" className="flex items-center">
- <Lock className="h-4 w-4 mr-2" />
- <span className="hidden sm:inline">Data Protection</span>
- <span className="inline sm:hidden">Data</span>
- </TabsTrigger>
- <TabsTrigger value="audit" className="flex items-center">
- <FileText className="h-4 w-4 mr-2" />
- <span className="hidden sm:inline">Audit Settings</span>
- <span className="inline sm:hidden">Audit</span>
- </TabsTrigger>
- <TabsTrigger value="compliance" className="flex items-center">
- <Shield className="h-4 w-4 mr-2" />
- <span className="hidden sm:inline">FDA Compliance</span>
- <span className="inline sm:hidden">FDA</span>
- </TabsTrigger>
- </TabsList>
-
- {/* Password Policy Tab */}
- <TabsContent value="password-policy" className="space-y-6">
- <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
- <div className="space-y-3">
- <Label htmlFor="minLength">Minimum Password Length</Label>
- <Input
- id="minLength"
- type="number"
- min="8"
- max="32"
- value={formValues.passwordPolicy.minLength}
- onChange={e => {
- const value = e.target.value;
- handleInputChange(
- 'passwordPolicy',
- 'minLength',
- value === '' ? '' : parseInt(value) || ''
- );
- }}
- />
- <p className="text-sm text-muted-foreground">
- Minimum number of characters required for passwords
- </p>
- </div>
-
- <div className="space-y-3">
- <Label htmlFor="historyCount">Password History</Label>
- <Input
- id="historyCount"
- type="number"
- min="0"
- max="24"
- value={formValues.passwordPolicy.historyCount}
- onChange={e => {
- const value = e.target.value;
- handleInputChange(
- 'passwordPolicy',
- 'historyCount',
- value === '' ? '' : parseInt(value) || ''
- );
- }}
- />
- <p className="text-sm text-muted-foreground">
- Number of previous passwords that cannot be reused
- </p>
- </div>
-
- <div className="space-y-3">
- <Label htmlFor="expiryDays">Password Expiry (Days)</Label>
- <Input
- id="expiryDays"
- type="number"
- min="0"
- max="365"
- value={formValues.passwordPolicy.expiryDays}
- onChange={e => {
- const value = e.target.value;
- handleInputChange(
- 'passwordPolicy',
- 'expiryDays',
- value === '' ? '' : parseInt(value) || ''
- );
- }}
- />
- <p className="text-sm text-muted-foreground">
- Days until password must be changed (0 = never expires)
- </p>
- </div>
- </div>
-
- <Separator />
-
- <div className="space-y-3">
- <h3 className="text-sm font-medium">Password Complexity Requirements</h3>
- <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
- <div className="flex items-center space-x-2">
- <Checkbox
- id="requireUppercase"
- checked={formValues.passwordPolicy.requireUppercase}
- onCheckedChange={() =>
- handleToggleChange('passwordPolicy', 'requireUppercase')
- }
- />
- <Label htmlFor="requireUppercase">Require uppercase letter</Label>
- </div>
- <div className="flex items-center space-x-2">
- <Checkbox
- id="requireLowercase"
- checked={formValues.passwordPolicy.requireLowercase}
- onCheckedChange={() =>
- handleToggleChange('passwordPolicy', 'requireLowercase')
- }
- />
- <Label htmlFor="requireLowercase">Require lowercase letter</Label>
- </div>
- <div className="flex items-center space-x-2">
- <Checkbox
- id="requireNumber"
- checked={formValues.passwordPolicy.requireNumber}
- onCheckedChange={() => handleToggleChange('passwordPolicy', 'requireNumber')}
- />
- <Label htmlFor="requireNumber">Require number</Label>
- </div>
- <div className="flex items-center space-x-2">
- <Checkbox
- id="requireSpecialChar"
- checked={formValues.passwordPolicy.requireSpecialChar}
- onCheckedChange={() =>
- handleToggleChange('passwordPolicy', 'requireSpecialChar')
- }
- />
- <Label htmlFor="requireSpecialChar">Require special character</Label>
- </div>
- </div>
- </div>
-
- <div className="flex justify-end pt-4">
- <Button
- type="button"
- onClick={() => handleSectionSave('passwordPolicy')}
- disabled={updateSecuritySettingsMutation.isPending}
- className="min-w-[120px]"
- >
- {updateSecuritySettingsMutation.isPending ? 'Saving...' : 'Save Password Policy'}
- </Button>
- </div>
- </TabsContent>
-
- {/* Session Settings Tab */}
- <TabsContent value="session" className="space-y-6">
- <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
- <div className="space-y-3">
- <Label htmlFor="timeoutMinutes">Session Timeout (Minutes)</Label>
- <Input
- id="timeoutMinutes"
- type="number"
- min="5"
- max="240"
- value={formValues.sessionSettings.timeoutMinutes}
- onChange={e => {
- const value = e.target.value;
- handleInputChange(
- 'sessionSettings',
- 'timeoutMinutes',
- value === '' ? '' : parseInt(value) || ''
- );
- }}
- />
- <p className="text-sm text-muted-foreground">
- Minutes of inactivity before user is automatically logged out
- </p>
- </div>
-
- <div className="space-y-3">
- <Label htmlFor="maxConcurrentSessions">Max Concurrent Sessions</Label>
- <Input
- id="maxConcurrentSessions"
- type="number"
- min="1"
- max="10"
- value={formValues.sessionSettings.maxConcurrentSessions}
- onChange={e => {
- const value = e.target.value;
- handleInputChange(
- 'sessionSettings',
- 'maxConcurrentSessions',
- value === '' ? '' : parseInt(value) || ''
- );
- }}
- />
- <p className="text-sm text-muted-foreground">
- Maximum number of simultaneous logins allowed per user
- </p>
- </div>
- </div>
-
- <Separator />
-
- <div className="space-y-3">
- <h3 className="text-sm font-medium">Advanced Session Security</h3>
- <div className="space-y-4">
- <div className="flex items-center justify-between">
- <div className="space-y-0.5">
- <Label htmlFor="enforceIpLock">IP Lock Enforcement</Label>
- <p className="text-sm text-muted-foreground">
- Prevent session from being used across different IP addresses
- </p>
- </div>
- <Switch
- id="enforceIpLock"
- checked={formValues.sessionSettings.enforceIpLock}
- onCheckedChange={() => handleToggleChange('sessionSettings', 'enforceIpLock')}
- />
- </div>
-
- <div className="flex items-center justify-between">
- <div className="space-y-0.5">
- <Label htmlFor="requireMfaForExternalAccess">
- Require MFA for External Access
- </Label>
- <p className="text-sm text-muted-foreground">
- Require multi-factor authentication for non-corporate networks
- </p>
- </div>
- <Switch
- id="requireMfaForExternalAccess"
- checked={formValues.sessionSettings.requireMfaForExternalAccess}
- onCheckedChange={() =>
- handleToggleChange('sessionSettings', 'requireMfaForExternalAccess')
- }
- />
- </div>
- </div>
- </div>
-
- <div className="flex justify-end pt-4">
- <Button
- type="button"
- onClick={() => handleSectionSave('sessionSettings')}
- disabled={updateSecuritySettingsMutation.isPending}
- className="min-w-[120px]"
- >
- {updateSecuritySettingsMutation.isPending ? 'Saving...' : 'Save Session Settings'}
- </Button>
- </div>
- </TabsContent>
-
- {/* Data Protection Tab */}
- <TabsContent value="data-protection" className="space-y-6">
- <div className="space-y-4">
- <div className="flex items-center justify-between">
- <div className="space-y-0.5">
- <Label htmlFor="autoLockDocuments">Auto-Lock Documents</Label>
- <p className="text-sm text-muted-foreground">
- Automatically lock documents when not actively being edited
- </p>
- </div>
- <Switch
- id="autoLockDocuments"
- checked={formValues.dataProtection.autoLockDocuments}
- onCheckedChange={() =>
- handleToggleChange('dataProtection', 'autoLockDocuments')
- }
- />
- </div>
-
- <div className="flex items-center justify-between">
- <div className="space-y-0.5">
- <Label htmlFor="enforceDocumentClassification">
- Enforce Document Classification
- </Label>
- <p className="text-sm text-muted-foreground">
- Require sensitivity classification for all documents
- </p>
- </div>
- <Switch
- id="enforceDocumentClassification"
- checked={formValues.dataProtection.enforceDocumentClassification}
- onCheckedChange={() =>
- handleToggleChange('dataProtection', 'enforceDocumentClassification')
- }
- />
- </div>
-
- <div className="flex items-center justify-between">
- <div className="space-y-0.5">
- <Label htmlFor="enableDLP">Enable Data Loss Prevention</Label>
- <p className="text-sm text-muted-foreground">
- Scan and prevent exfiltration of sensitive information
- </p>
- </div>
- <Switch
- id="enableDLP"
- checked={formValues.dataProtection.enableDLP}
- onCheckedChange={() => handleToggleChange('dataProtection', 'enableDLP')}
- />
- </div>
- </div>
-
- <Separator />
-
- <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
- <div className="space-y-3">
- <Label htmlFor="dataRetentionDays">Data Retention Period (Days)</Label>
- <Input
- id="dataRetentionDays"
- type="number"
- min="365"
- max="7300"
- value={formValues.dataProtection.dataRetentionDays}
- onChange={e => {
- const value = e.target.value;
- handleInputChange(
- 'dataProtection',
- 'dataRetentionDays',
- value === '' ? '' : parseInt(value) || ''
- );
- }}
- />
- <p className="text-sm text-muted-foreground">
- Number of days to retain data after project completion
- </p>
- </div>
-
- <div className="space-y-3">
- <Label htmlFor="sensitiveDataScanFrequency">Sensitive Data Scan Frequency</Label>
- <Select
- value={formValues.dataProtection.sensitiveDataScanFrequency}
- onValueChange={value =>
- handleInputChange('dataProtection', 'sensitiveDataScanFrequency', value)
- }
- >
- <SelectTrigger>
- <SelectValue>
- {formValues.dataProtection.sensitiveDataScanFrequency === 'daily' &&
- 'Daily'}
- {formValues.dataProtection.sensitiveDataScanFrequency === 'weekly' &&
- 'Weekly'}
- {formValues.dataProtection.sensitiveDataScanFrequency === 'monthly' &&
- 'Monthly'}
- {formValues.dataProtection.sensitiveDataScanFrequency === 'quarterly' &&
- 'Quarterly'}
- {!formValues.dataProtection.sensitiveDataScanFrequency &&
- 'Select frequency'}
- </SelectValue>
- </SelectTrigger>
- <SelectContent>
- <SelectItem value="daily">Daily</SelectItem>
- <SelectItem value="weekly">Weekly</SelectItem>
- <SelectItem value="monthly">Monthly</SelectItem>
- <SelectItem value="quarterly">Quarterly</SelectItem>
- </SelectContent>
- </Select>
- <p className="text-sm text-muted-foreground">
- How often to scan for unprotected sensitive data
- </p>
- </div>
- </div>
-
- <div className="flex justify-end pt-4">
- <Button
- type="button"
- onClick={() => handleSectionSave('dataProtection')}
- disabled={updateSecuritySettingsMutation.isPending}
- className="min-w-[120px]"
- >
- {updateSecuritySettingsMutation.isPending ? 'Saving...' : 'Save Data Protection'}
- </Button>
- </div>
- </TabsContent>
-
- {/* Audit Settings Tab */}
- <TabsContent value="audit" className="space-y-6">
- <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
- <div className="space-y-3">
- <Label htmlFor="retentionDays">Audit Trail Retention (Days)</Label>
- <Input
- id="retentionDays"
- type="number"
- min="365"
- max="3650"
- value={formValues.auditSettings.retentionDays}
- onChange={e => {
- const value = e.target.value;
- handleInputChange(
- 'auditSettings',
- 'retentionDays',
- value === '' ? '' : parseInt(value) || ''
- );
- }}
- />
- <p className="text-sm text-muted-foreground">
- Number of days to retain audit trail records
- </p>
- </div>
-
- <div className="space-y-3">
- <Label htmlFor="autoExportFrequency">Auto-Export Frequency (Hours)</Label>
- <Input
- id="autoExportFrequency"
- type="number"
- min="1"
- max="168"
- value={formValues.auditSettings.autoExportFrequency}
- onChange={e => {
- const value = e.target.value;
- handleInputChange(
- 'auditSettings',
- 'autoExportFrequency',
- value === '' ? '' : parseInt(value) || ''
- );
- }}
- />
- <p className="text-sm text-muted-foreground">
- How often audit logs are automatically exported
- </p>
- </div>
- </div>
-
- <Separator />
-
- <div className="space-y-4">
- <div className="flex items-center justify-between">
- <div className="space-y-0.5">
- <Label htmlFor="trackUserActivity">Track Detailed User Activity</Label>
- <p className="text-sm text-muted-foreground">
- Record detailed user interactions for compliance purposes
- </p>
- </div>
- <Switch
- id="trackUserActivity"
- checked={formValues.auditSettings.trackUserActivity}
- onCheckedChange={() => handleToggleChange('auditSettings', 'trackUserActivity')}
- />
- </div>
-
- <div className="flex items-center justify-between">
- <div className="space-y-0.5">
- <Label htmlFor="enableBlockchainBackup">Blockchain Backup</Label>
- <p className="text-sm text-muted-foreground">
- Use blockchain technology for tamper-evident audit storage
- </p>
- </div>
- <Switch
- id="enableBlockchainBackup"
- checked={formValues.auditSettings.enableBlockchainBackup}
- onCheckedChange={() =>
- handleToggleChange('auditSettings', 'enableBlockchainBackup')
- }
- />
- </div>
-
- <div className="flex items-center justify-between">
- <div className="space-y-0.5">
- <Label htmlFor="realTimeMonitoring">Real-Time Monitoring</Label>
- <p className="text-sm text-muted-foreground">
- Monitor and alert on suspicious activities in real-time
- </p>
- </div>
- <Switch
- id="realTimeMonitoring"
- checked={formValues.auditSettings.realTimeMonitoring}
- onCheckedChange={() =>
- handleToggleChange('auditSettings', 'realTimeMonitoring')
- }
- />
- </div>
- </div>
-
- <div className="flex justify-end pt-4">
- <Button
- type="button"
- onClick={() => handleSectionSave('auditSettings')}
- disabled={updateSecuritySettingsMutation.isPending}
- className="min-w-[120px]"
- >
- {updateSecuritySettingsMutation.isPending ? 'Saving...' : 'Save Audit Settings'}
- </Button>
- </div>
- </TabsContent>
-
- {/* FDA Compliance Tab */}
- <TabsContent value="compliance" className="space-y-6">
- <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
- <div className="border p-4 rounded-lg bg-stone-50">
- <div className="flex items-start">
- <div className="h-10 w-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-600">
- <Shield className="h-5 w-5" />
- </div>
- <div className="ml-3">
- <h3 className="text-sm font-medium text-stone-800">
- FDA 21 CFR Part 11 Compliance
- </h3>
- <p className="text-xs text-stone-700 mt-1">
- Requirements for electronic records and electronic signatures
- </p>
- </div>
- </div>
- </div>
-
- <div className="border p-4 rounded-lg bg-purple-50">
- <div className="flex items-start">
- <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
- <GlobeIcon className="h-5 w-5" />
- </div>
- <div className="ml-3">
- <h3 className="text-sm font-medium text-purple-800">
- EU GMP Annex 11 Compliance
- </h3>
- <p className="text-xs text-purple-700 mt-1">
- Computerized systems validation requirements for EU markets
- </p>
- </div>
- </div>
- </div>
- </div>
-
- <div className="grid grid-cols-1 gap-6">
- {/* Electronic Signatures Section */}
- <div className="border rounded-lg p-4 shadow-sm">
- <div className="flex items-center mb-3">
- <FileCheck className="h-5 w-5 text-stone-600 mr-2" />
- <h3 className="text-base font-medium">Electronic Signatures & Records</h3>
- </div>
-
- <div className="space-y-4">
- <div className="flex items-center justify-between">
- <div className="space-y-0.5">
- <Label htmlFor="enforceElectronicSignatures" className="flex items-center">
- Enforce Electronic Signatures
- <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
- Required
- </span>
- </Label>
- <p className="text-sm text-muted-foreground">
- Require dual-factor identity verification for all document approvals and
- critical actions
- </p>
- </div>
- <Switch
- id="enforceElectronicSignatures"
- checked={formValues.fdaCompliance.enforceElectronicSignatures}
- onCheckedChange={() =>
- handleToggleChange('fdaCompliance', 'enforceElectronicSignatures')
- }
- />
- </div>
-
- <div className="flex items-center justify-between">
- <div className="space-y-0.5">
- <Label htmlFor="requireReason">Require Reason for Change</Label>
- <p className="text-sm text-muted-foreground">
- Users must provide documented reason for all modifications to controlled
- documents
- </p>
- </div>
- <Switch
- id="requireReason"
- checked={formValues.fdaCompliance.requireReason}
- onCheckedChange={() => handleToggleChange('fdaCompliance', 'requireReason')}
- />
- </div>
-
- <div className="flex items-center justify-between">
- <div className="space-y-0.5">
- <Label htmlFor="enableAuditTrails">Comprehensive Audit Trails</Label>
- <p className="text-sm text-muted-foreground">
- Maintain tamper-evident audit trails for all system activities with
- cryptographic verification
- </p>
- </div>
- <Switch
- id="enableAuditTrails"
- checked={formValues.fdaCompliance.enableAuditTrails}
- onCheckedChange={() =>
- handleToggleChange('fdaCompliance', 'enableAuditTrails')
- }
- />
- </div>
-
- <div className="flex items-center justify-between">
- <div className="space-y-0.5">
- <Label htmlFor="enforceApprovalWorkflows">
- Multi-Level Approval Workflows
- </Label>
- <p className="text-sm text-muted-foreground">
- Enforce configurable approval sequences with role-based authorization
- </p>
- </div>
- <Switch
- id="enforceApprovalWorkflows"
- checked={formValues.fdaCompliance.enforceApprovalWorkflows}
- onCheckedChange={() =>
- handleToggleChange('fdaCompliance', 'enforceApprovalWorkflows')
- }
- />
- </div>
- </div>
- </div>
-
- {/* System Validation & Documentation Section */}
- <div className="border rounded-lg p-4 shadow-sm">
- <div className="flex items-center mb-3">
- <ClipboardCheck className="h-5 w-5 text-green-600 mr-2" />
- <h3 className="text-base font-medium">System Validation & Documentation</h3>
- </div>
-
- <div className="space-y-4">
- <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
- <div className="space-y-2">
- <Label htmlFor="validationApproach">System Validation Approach</Label>
- <EnhancedSelect
- id="validationApproach"
- value={formValues.fdaCompliance?.validationApproach || 'riskBased'}
- onValueChange={value =>
- handleInputChange('fdaCompliance', 'validationApproach', value)
- }
- optionsArray={[
- { value: 'riskBased', label: 'Risk-Based Approach (GAMP 5)' },
- { value: 'traditional', label: 'Traditional Approach (IQ/OQ/PQ)' },
- { value: 'agile', label: 'Agile CSV Methodology' },
- { value: 'hybrid', label: 'Hybrid Approach' },
- ]}
- placeholder="Select validation approach"
- />
- <p className="text-xs text-muted-foreground">
- Determines validation methodology used for this workspace
- </p>
- </div>
-
- <div className="space-y-2">
- <Label htmlFor="documentRetentionPeriod">
- Validation Document Retention
- </Label>
- <EnhancedSelect
- id="documentRetentionPeriod"
- value={formValues.fdaCompliance?.documentRetentionPeriod || 'lifeplus10'}
- onValueChange={value =>
- handleInputChange('fdaCompliance', 'documentRetentionPeriod', value)
- }
- optionsArray={[
- { value: 'standard', label: 'Standard (10 years)' },
- { value: 'extended', label: 'Extended (15 years)' },
- { value: 'lifeplus2', label: 'Product Life + 2 years' },
- { value: 'lifeplus10', label: 'Product Life + 10 years' },
- { value: 'permanent', label: 'Permanent' },
- ]}
- placeholder="Select retention period"
- />
- <p className="text-xs text-muted-foreground">
- How long validation-related documentation will be retained
- </p>
- </div>
- </div>
-
- <div className="space-y-4 pt-2">
- <div className="flex items-center justify-between">
- <div className="space-y-0.5">
- <Label htmlFor="enforceUserTesting">
- Enforce User Acceptance Testing
- </Label>
- <p className="text-sm text-muted-foreground">
- Require formal UAT completion before production use
- </p>
- </div>
- <Switch
- id="enforceUserTesting"
- checked={formValues.fdaCompliance?.enforceUserTesting || false}
- onCheckedChange={() =>
- handleToggleChange('fdaCompliance', 'enforceUserTesting')
- }
- />
- </div>
-
- <div className="flex items-center justify-between">
- <div className="space-y-0.5">
- <Label htmlFor="autoGenerateDocumentation">
- Auto-Generate Validation Documentation
- </Label>
- <p className="text-sm text-muted-foreground">
- Automatically generate required compliance documentation templates
- </p>
- </div>
- <Switch
- id="autoGenerateDocumentation"
- checked={formValues.fdaCompliance?.autoGenerateDocumentation || true}
- onCheckedChange={() =>
- handleToggleChange('fdaCompliance', 'autoGenerateDocumentation')
- }
- />
- </div>
- </div>
- </div>
- </div>
-
- {/* Regulatory Reporting Section */}
- <div className="border rounded-lg p-4 shadow-sm">
- <div className="flex items-center mb-3">
- <FileText className="h-5 w-5 text-indigo-600 mr-2" />
- <h3 className="text-base font-medium">Regulatory Reporting & Submissions</h3>
- </div>
-
- <div className="space-y-4">
- <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
- <div className="space-y-2">
- <Label htmlFor="reportGeneration">Automated Report Generation</Label>
- <EnhancedSelect
- id="reportGeneration"
- value={formValues.fdaCompliance?.reportGeneration || 'quarterly'}
- onValueChange={value =>
- handleInputChange('fdaCompliance', 'reportGeneration', value)
- }
- optionsArray={[
- { value: 'monthly', label: 'Monthly' },
- { value: 'quarterly', label: 'Quarterly' },
- { value: 'biannually', label: 'Bi-annually' },
- { value: 'annually', label: 'Annually' },
- { value: 'manual', label: 'Manual Generation Only' },
- ]}
- placeholder="Select report frequency"
- />
- <p className="text-xs text-muted-foreground">
- Frequency of automated regulatory compliance reports
- </p>
- </div>
-
- <div className="space-y-2">
- <Label htmlFor="submissionFormat">Submission Format</Label>
- <EnhancedSelect
- id="submissionFormat"
- value={formValues.fdaCompliance?.submissionFormat || 'ectd'}
- onValueChange={value =>
- handleInputChange('fdaCompliance', 'submissionFormat', value)
- }
- optionsArray={[
- { value: 'ectd', label: 'eCTD (Electronic Common Technical Document)' },
- { value: 'nees', label: 'FDA NEES Format' },
- { value: 'cesp', label: 'EU CESP Format' },
- { value: 'mixed', label: 'Mixed Format (Market-dependent)' },
- ]}
- placeholder="Select submission format"
- />
- <p className="text-xs text-muted-foreground">
- Default format for regulatory submissions
- </p>
- </div>
- </div>
-
- <div className="space-y-4 pt-2">
- <div className="flex items-center justify-between">
- <div className="space-y-0.5">
- <Label htmlFor="inspectionReadiness">Inspection Readiness Mode</Label>
- <p className="text-sm text-muted-foreground">
- Maintain system in continuously inspection-ready state with proactive
- monitoring
- </p>
- </div>
- <Switch
- id="inspectionReadiness"
- checked={formValues.fdaCompliance?.inspectionReadiness || true}
- onCheckedChange={() =>
- handleToggleChange('fdaCompliance', 'inspectionReadiness')
- }
- />
- </div>
-
- <div className="flex items-center justify-between">
- <div className="space-y-0.5">
- <Label htmlFor="enforceApprovalWorkflows">
- Enforce Regulatory Approval Workflows
- </Label>
- <p className="text-sm text-muted-foreground">
- Require all documents to follow predefined regulatory approval workflows
- with strict sequencing
- </p>
- </div>
- <Switch
- id="enforceApprovalWorkflows"
- checked={formValues.fdaCompliance?.enforceApprovalWorkflows || true}
- onCheckedChange={() =>
- handleToggleChange('fdaCompliance', 'enforceApprovalWorkflows')
- }
- />
- </div>
- </div>
- </div>
- </div>
-
- {/* International Regulatory Compliance Section */}
- <div className="border rounded-lg p-4 shadow-sm">
- <div className="flex items-center mb-3">
- <GlobeIcon className="h-5 w-5 text-indigo-600 mr-2" />
- <h3 className="text-base font-medium">International Regulatory Compliance</h3>
- </div>
-
- <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
- <div className="p-3 border rounded-md bg-sky-50">
- <div className="flex items-center justify-between">
- <div>
- <div className="flex items-center">
- <Badge
- variant="outline"
- className="mr-2 bg-sky-100 text-sky-700 border-sky-200"
- >
- EU
- </Badge>
- <h4 className="text-sm font-medium">EU GMP Annex 11</h4>
- </div>
- <p className="text-xs text-muted-foreground mt-1">
- Computerized Systems for EU Markets
- </p>
- </div>
- <Switch
- id="enableEuGmpCompliance"
- checked={formValues.fdaCompliance?.enableEuGmpCompliance || false}
- onCheckedChange={() =>
- handleToggleChange('fdaCompliance', 'enableEuGmpCompliance')
- }
- />
- </div>
- </div>
-
- <div className="p-3 border rounded-md bg-amber-50">
- <div className="flex items-center justify-between">
- <div>
- <div className="flex items-center">
- <Badge
- variant="outline"
- className="mr-2 bg-amber-100 text-amber-700 border-amber-200"
- >
- ICH
- </Badge>
- <h4 className="text-sm font-medium">ICH GCP E6(R2)</h4>
- </div>
- <p className="text-xs text-muted-foreground mt-1">
- Good Clinical Practice Guidelines
- </p>
- </div>
- <Switch
- id="enableIchGcpCompliance"
- checked={formValues.fdaCompliance?.enableIchGcpCompliance || false}
- onCheckedChange={() =>
- handleToggleChange('fdaCompliance', 'enableIchGcpCompliance')
- }
- />
- </div>
- </div>
- </div>
-
- <div className="mt-4 space-y-4">
- <h4 className="text-sm font-medium text-muted-foreground">
- Industry-Specific Regulations
- </h4>
- <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
- <button
- type="button"
- onClick={() => handleInputChange('fdaCompliance', 'industryType', 'pharma')}
- className={`rounded-md py-1.5 text-sm font-medium justify-center flex items-center ${
- formValues.fdaCompliance?.industryType === 'pharma'
- ? 'bg-indigo-100 border border-indigo-200 text-indigo-800'
- : 'border border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
- }`}
- >
- Biotech / Pharma
- </button>
- <button
- type="button"
- onClick={() => handleInputChange('fdaCompliance', 'industryType', 'device')}
- className={`rounded-md py-1.5 text-sm font-medium justify-center flex items-center ${
- formValues.fdaCompliance?.industryType === 'device'
- ? 'bg-stone-100 border border-stone-200 text-stone-800'
- : 'border border-stone-100 bg-stone-50 text-stone-700 hover:bg-stone-100'
- }`}
- >
- Medical Device
- </button>
- <button
- type="button"
- onClick={() => handleInputChange('fdaCompliance', 'industryType', 'cro')}
- className={`rounded-md py-1.5 text-sm font-medium justify-center flex items-center ${
- formValues.fdaCompliance?.industryType === 'cro'
- ? 'bg-green-100 border border-green-200 text-green-800'
- : 'border border-green-100 bg-green-50 text-green-700 hover:bg-green-100'
- }`}
- >
- CRO Services
- </button>
- </div>
- </div>
- </div>
- </div>
-
- <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
- <div className="flex items-start">
- <div className="mt-0.5">
- <AlertTriangle className="h-5 w-5 text-amber-600" />
- </div>
- <div className="ml-3">
- <h3 className="text-sm font-medium text-amber-800">
- Regulatory Compliance Notice
- </h3>
- <p className="text-sm text-amber-700 mt-1">
- Changes to these settings may impact your organization's regulatory compliance
- status. It is recommended to consult with your Quality Assurance and
- Regulatory Affairs teams before modifying these settings.
- </p>
- </div>
- </div>
- </div>
-
- <div className="flex justify-end pt-4">
- <Button
- type="button"
- onClick={() => handleSectionSave('fdaCompliance')}
- disabled={updateSecuritySettingsMutation.isPending}
- className="min-w-[120px]"
- >
- {updateSecuritySettingsMutation.isPending ? 'Saving...' : 'Save FDA Compliance'}
- </Button>
- </div>
- </TabsContent>
- </Tabs>
- </form>
- </CardContent>
- </Card>
- );
+  const { currentClientWorkspace, clientWorkspaces, currentOrganization } = useTenant();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Track tab state
+  const [activeTab, setActiveTab] = useState('password-policy');
+
+  // Use prop clientId if provided, otherwise fall back to tenant context
+  const clientId = propClientId || currentClientWorkspace?.id;
+
+  // Debug the TenantContext values and prop clientId
+  React.useEffect(() => {
+    console.log('🔧 ClientSecuritySettings Debug:', {
+      propClientId,
+      currentClientWorkspace,
+      resolvedClientId: clientId,
+      totalClientWorkspaces: clientWorkspaces?.length || 0,
+      currentOrganization: currentOrganization?.id,
+      filteredClientWorkspaces:
+        clientWorkspaces?.filter(c => c.organizationId === String(currentOrganization?.id))
+          ?.length || 0,
+    });
+  }, [propClientId, currentClientWorkspace, clientWorkspaces, currentOrganization, clientId]);
+
+  // Fetch security settings for the client
+  const {
+    data: securitySettings,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ['/api/clients', clientId, 'security-settings'],
+    queryFn: () => {
+      if (!clientId) {
+        console.warn('No client workspace selected. Cannot fetch security settings.');
+        return Promise.resolve(null);
+      }
+      return apiRequest(`/api/clients/${clientId}/security-settings`).catch(err => {
+        console.error('Error fetching security settings:', err);
+        // Return default settings on error instead of throwing
+        return null;
+      });
+    },
+    enabled: !!clientId,
+    // Load saved data, use defaults only when no saved data exists
+    select: data => {
+      if (!data) return null; // Let defaults be handled elsewhere
+
+      return {
+        passwordPolicy: {
+          minLength: data.passwordPolicy?.minLength ?? 12,
+          requireUppercase: data.passwordPolicy?.requireUppercase ?? true,
+          requireLowercase: data.passwordPolicy?.requireLowercase ?? true,
+          requireNumber: data.passwordPolicy?.requireNumber ?? true,
+          requireSpecialChar: data.passwordPolicy?.requireSpecialChar ?? true,
+          historyCount: data.passwordPolicy?.historyCount ?? 5,
+          expiryDays: data.passwordPolicy?.expiryDays ?? 90,
+        },
+        sessionSettings: {
+          timeoutMinutes: data.sessionSettings?.timeoutMinutes ?? 30,
+          maxConcurrentSessions: data.sessionSettings?.maxConcurrentSessions ?? 3,
+          enforceIpLock: data.sessionSettings?.enforceIpLock ?? false,
+          requireMfaForExternalAccess: data.sessionSettings?.requireMfaForExternalAccess ?? true,
+        },
+        dataProtection: {
+          autoLockDocuments: data.dataProtection?.autoLockDocuments ?? true,
+          enforceDocumentClassification: data.dataProtection?.enforceDocumentClassification ?? true,
+          dataRetentionDays: data.dataProtection?.dataRetentionDays ?? 3650,
+          enableDLP: data.dataProtection?.enableDLP ?? false,
+          sensitiveDataScanFrequency: data.dataProtection?.sensitiveDataScanFrequency ?? 'weekly',
+        },
+        auditSettings: {
+          retentionDays: data.auditSettings?.retentionDays ?? 365,
+          enableBlockchainBackup: data.auditSettings?.enableBlockchainBackup ?? true,
+          realTimeMonitoring: data.auditSettings?.realTimeMonitoring ?? true,
+          autoExportFrequency: data.auditSettings?.autoExportFrequency ?? 24,
+          trackUserActivity: data.auditSettings?.trackUserActivity ?? true,
+        },
+        fdaCompliance: {
+          enforceElectronicSignatures: data.fdaCompliance?.enforceElectronicSignatures ?? true,
+          requireReason: data.fdaCompliance?.requireReason ?? true,
+          enableAuditTrails: data.fdaCompliance?.enableAuditTrails ?? true,
+          validationApproach: data.fdaCompliance?.validationApproach ?? 'riskBased',
+          documentRetentionPeriod: data.fdaCompliance?.documentRetentionPeriod ?? 'lifeplus10',
+          enforceUserTesting: data.fdaCompliance?.enforceUserTesting ?? false,
+          autoGenerateDocumentation: data.fdaCompliance?.autoGenerateDocumentation ?? true,
+          reportGeneration: data.fdaCompliance?.reportGeneration ?? 'quarterly',
+          submissionFormat: data.fdaCompliance?.submissionFormat ?? 'ectd',
+          inspectionReadiness: data.fdaCompliance?.inspectionReadiness ?? true,
+          enforceApprovalWorkflows: data.fdaCompliance?.enforceApprovalWorkflows ?? true,
+          enableEuGmpCompliance: data.fdaCompliance?.enableEuGmpCompliance ?? false,
+          enableIchGcpCompliance: data.fdaCompliance?.enableIchGcpCompliance ?? false,
+          industryType: data.fdaCompliance?.industryType ?? 'pharma',
+        },
+      };
+    },
+  });
+
+  // State to manage form values
+  const [formValues, setFormValues] = useState(
+    securitySettings || {
+      passwordPolicy: {
+        minLength: 12,
+        requireUppercase: true,
+        requireLowercase: true,
+        requireNumber: true,
+        requireSpecialChar: true,
+        historyCount: 5,
+        expiryDays: 90,
+      },
+      sessionSettings: {
+        timeoutMinutes: 30,
+        maxConcurrentSessions: 3,
+        enforceIpLock: false,
+        requireMfaForExternalAccess: true,
+      },
+      dataProtection: {
+        autoLockDocuments: true,
+        enforceDocumentClassification: true,
+        dataRetentionDays: 3650, // 10 years default
+        enableDLP: false,
+        sensitiveDataScanFrequency: 'weekly',
+      },
+      auditSettings: {
+        retentionDays: 365,
+        enableBlockchainBackup: true,
+        realTimeMonitoring: true,
+        autoExportFrequency: 24,
+        trackUserActivity: true,
+      },
+      fdaCompliance: {
+        enforceElectronicSignatures: true,
+        requireReason: true,
+        enableAuditTrails: true,
+        validationApproach: 'riskBased',
+        documentRetentionPeriod: 'lifeplus10',
+        enforceUserTesting: false,
+        autoGenerateDocumentation: true,
+        reportGeneration: 'quarterly',
+        submissionFormat: 'ectd',
+        inspectionReadiness: true,
+        enforceApprovalWorkflows: true,
+        enableEuGmpCompliance: false,
+        enableIchGcpCompliance: false,
+        industryType: 'pharma',
+      },
+    }
+  );
+
+  // Update form values when data is loaded
+  React.useEffect(() => {
+    console.log('🔄 ClientSecuritySettings: Data loaded', { securitySettings, clientId });
+    if (securitySettings) {
+      console.log('🔄 Updating form values with loaded data:', securitySettings);
+      setFormValues(securitySettings);
+    }
+  }, [securitySettings, clientId]);
+
+  // Mutation to update security settings
+  const updateSecuritySettingsMutation = useMutation({
+    mutationFn: data => {
+      console.log('🔧 Mutation Debug - Using clientId:', clientId, 'from prop/context');
+
+      if (!clientId) {
+        throw new Error('No client workspace selected. Cannot save security settings.');
+      }
+
+      return apiRequest(`/api/clients/${clientId}/security-settings`, {
+        method: 'PATCH',
+        data,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['/api/clients', clientId, 'security-settings']);
+      toast({
+        title: 'Security settings updated',
+        description: 'Client workspace security settings have been updated successfully',
+      });
+    },
+    onError: err => {
+      toast({
+        variant: 'destructive',
+        title: 'Error updating security settings',
+        description: err.message || 'Could not update security settings. Please try again.',
+      });
+    },
+  });
+
+  // Handle form submission
+  const handleSubmit = e => {
+    e.preventDefault();
+
+    console.log('🔧 Security Settings Submit Debug:', {
+      clientId,
+      currentClientWorkspace,
+      formValues: Object.keys(formValues),
+    });
+
+    if (!clientId) {
+      toast({
+        variant: 'destructive',
+        title: 'Error saving settings',
+        description: 'No client workspace selected. Please select a client workspace first.',
+      });
+      return;
+    }
+
+    updateSecuritySettingsMutation.mutate(formValues);
+  };
+
+  // Handle section-specific save
+  const handleSectionSave = sectionName => {
+    console.log('🔧 Frontend Debug - handleSectionSave called:', {
+      sectionName,
+      clientId,
+      currentClientWorkspace,
+      apiUrl: `/api/clients/${clientId}/security-settings`,
+    });
+
+    const sectionData = {
+      [sectionName]: formValues[sectionName],
+    };
+
+    console.log('🔧 Frontend Debug - Section data to save:', sectionData);
+    updateSecuritySettingsMutation.mutate(sectionData);
+  };
+
+  // Handle input changes for text/number inputs
+  const handleInputChange = (section, field, value) => {
+    setFormValues(prev => {
+      return {
+        ...prev,
+        [section]: {
+          ...prev[section],
+          [field]: value,
+        },
+      };
+    });
+  };
+
+  // Handle toggle/checkbox changes
+  const handleToggleChange = (section, field) => {
+    setFormValues(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: !prev[section][field],
+      },
+    }));
+  };
+
+  // Loading state
+  if (isLoading && !formValues) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-8 w-64 mb-2" />
+          <Skeleton className="h-4 w-full" />
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <Card className="border-red-200">
+        <CardHeader>
+          <CardTitle className="flex items-center text-red-600">
+            <AlertTriangle className="h-5 w-5 mr-2" />
+            Error Loading Security Settings
+          </CardTitle>
+          <CardDescription className="text-red-500">
+            {error?.message || 'Could not load security settings. Please try again later.'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="outline"
+            onClick={() =>
+              queryClient.invalidateQueries(['/api/clients', clientId, 'security-settings'])
+            }
+          >
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <div className="flex items-center">
+          <Shield className="h-5 w-5 mr-2 text-primary" />
+          <CardTitle>Client Security Settings</CardTitle>
+        </div>
+        <CardDescription>
+          Configure security settings specific to the {currentClientWorkspace?.name} workspace
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit}>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid grid-cols-5 mb-6">
+              <TabsTrigger value="password-policy" className="flex items-center">
+                <Key className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Password Policy</span>
+                <span className="inline sm:hidden">Password</span>
+              </TabsTrigger>
+              <TabsTrigger value="session" className="flex items-center">
+                <Clock className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Session Settings</span>
+                <span className="inline sm:hidden">Session</span>
+              </TabsTrigger>
+              <TabsTrigger value="data-protection" className="flex items-center">
+                <Lock className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Data Protection</span>
+                <span className="inline sm:hidden">Data</span>
+              </TabsTrigger>
+              <TabsTrigger value="audit" className="flex items-center">
+                <FileText className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Audit Settings</span>
+                <span className="inline sm:hidden">Audit</span>
+              </TabsTrigger>
+              <TabsTrigger value="compliance" className="flex items-center">
+                <Shield className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">FDA Compliance</span>
+                <span className="inline sm:hidden">FDA</span>
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Password Policy Tab */}
+            <TabsContent value="password-policy" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="minLength">Minimum Password Length</Label>
+                  <Input
+                    id="minLength"
+                    type="number"
+                    min="8"
+                    max="32"
+                    value={formValues.passwordPolicy.minLength}
+                    onChange={e => {
+                      const value = e.target.value;
+                      handleInputChange(
+                        'passwordPolicy',
+                        'minLength',
+                        value === '' ? '' : parseInt(value) || ''
+                      );
+                    }}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Minimum number of characters required for passwords
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="historyCount">Password History</Label>
+                  <Input
+                    id="historyCount"
+                    type="number"
+                    min="0"
+                    max="24"
+                    value={formValues.passwordPolicy.historyCount}
+                    onChange={e => {
+                      const value = e.target.value;
+                      handleInputChange(
+                        'passwordPolicy',
+                        'historyCount',
+                        value === '' ? '' : parseInt(value) || ''
+                      );
+                    }}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Number of previous passwords that cannot be reused
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="expiryDays">Password Expiry (Days)</Label>
+                  <Input
+                    id="expiryDays"
+                    type="number"
+                    min="0"
+                    max="365"
+                    value={formValues.passwordPolicy.expiryDays}
+                    onChange={e => {
+                      const value = e.target.value;
+                      handleInputChange(
+                        'passwordPolicy',
+                        'expiryDays',
+                        value === '' ? '' : parseInt(value) || ''
+                      );
+                    }}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Days until password must be changed (0 = never expires)
+                  </p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium">Password Complexity Requirements</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="requireUppercase"
+                      checked={formValues.passwordPolicy.requireUppercase}
+                      onCheckedChange={() =>
+                        handleToggleChange('passwordPolicy', 'requireUppercase')
+                      }
+                    />
+                    <Label htmlFor="requireUppercase">Require uppercase letter</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="requireLowercase"
+                      checked={formValues.passwordPolicy.requireLowercase}
+                      onCheckedChange={() =>
+                        handleToggleChange('passwordPolicy', 'requireLowercase')
+                      }
+                    />
+                    <Label htmlFor="requireLowercase">Require lowercase letter</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="requireNumber"
+                      checked={formValues.passwordPolicy.requireNumber}
+                      onCheckedChange={() => handleToggleChange('passwordPolicy', 'requireNumber')}
+                    />
+                    <Label htmlFor="requireNumber">Require number</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="requireSpecialChar"
+                      checked={formValues.passwordPolicy.requireSpecialChar}
+                      onCheckedChange={() =>
+                        handleToggleChange('passwordPolicy', 'requireSpecialChar')
+                      }
+                    />
+                    <Label htmlFor="requireSpecialChar">Require special character</Label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <Button
+                  type="button"
+                  onClick={() => handleSectionSave('passwordPolicy')}
+                  disabled={updateSecuritySettingsMutation.isPending}
+                  className="min-w-[120px]"
+                >
+                  {updateSecuritySettingsMutation.isPending ? 'Saving...' : 'Save Password Policy'}
+                </Button>
+              </div>
+            </TabsContent>
+
+            {/* Session Settings Tab */}
+            <TabsContent value="session" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="timeoutMinutes">Session Timeout (Minutes)</Label>
+                  <Input
+                    id="timeoutMinutes"
+                    type="number"
+                    min="5"
+                    max="240"
+                    value={formValues.sessionSettings.timeoutMinutes}
+                    onChange={e => {
+                      const value = e.target.value;
+                      handleInputChange(
+                        'sessionSettings',
+                        'timeoutMinutes',
+                        value === '' ? '' : parseInt(value) || ''
+                      );
+                    }}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Minutes of inactivity before user is automatically logged out
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="maxConcurrentSessions">Max Concurrent Sessions</Label>
+                  <Input
+                    id="maxConcurrentSessions"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={formValues.sessionSettings.maxConcurrentSessions}
+                    onChange={e => {
+                      const value = e.target.value;
+                      handleInputChange(
+                        'sessionSettings',
+                        'maxConcurrentSessions',
+                        value === '' ? '' : parseInt(value) || ''
+                      );
+                    }}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Maximum number of simultaneous logins allowed per user
+                  </p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium">Advanced Session Security</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="enforceIpLock">IP Lock Enforcement</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Prevent session from being used across different IP addresses
+                      </p>
+                    </div>
+                    <Switch
+                      id="enforceIpLock"
+                      checked={formValues.sessionSettings.enforceIpLock}
+                      onCheckedChange={() => handleToggleChange('sessionSettings', 'enforceIpLock')}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="requireMfaForExternalAccess">
+                        Require MFA for External Access
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Require multi-factor authentication for non-corporate networks
+                      </p>
+                    </div>
+                    <Switch
+                      id="requireMfaForExternalAccess"
+                      checked={formValues.sessionSettings.requireMfaForExternalAccess}
+                      onCheckedChange={() =>
+                        handleToggleChange('sessionSettings', 'requireMfaForExternalAccess')
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <Button
+                  type="button"
+                  onClick={() => handleSectionSave('sessionSettings')}
+                  disabled={updateSecuritySettingsMutation.isPending}
+                  className="min-w-[120px]"
+                >
+                  {updateSecuritySettingsMutation.isPending ? 'Saving...' : 'Save Session Settings'}
+                </Button>
+              </div>
+            </TabsContent>
+
+            {/* Data Protection Tab */}
+            <TabsContent value="data-protection" className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="autoLockDocuments">Auto-Lock Documents</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Automatically lock documents when not actively being edited
+                    </p>
+                  </div>
+                  <Switch
+                    id="autoLockDocuments"
+                    checked={formValues.dataProtection.autoLockDocuments}
+                    onCheckedChange={() =>
+                      handleToggleChange('dataProtection', 'autoLockDocuments')
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="enforceDocumentClassification">
+                      Enforce Document Classification
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Require sensitivity classification for all documents
+                    </p>
+                  </div>
+                  <Switch
+                    id="enforceDocumentClassification"
+                    checked={formValues.dataProtection.enforceDocumentClassification}
+                    onCheckedChange={() =>
+                      handleToggleChange('dataProtection', 'enforceDocumentClassification')
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="enableDLP">Enable Data Loss Prevention</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Scan and prevent exfiltration of sensitive information
+                    </p>
+                  </div>
+                  <Switch
+                    id="enableDLP"
+                    checked={formValues.dataProtection.enableDLP}
+                    onCheckedChange={() => handleToggleChange('dataProtection', 'enableDLP')}
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="dataRetentionDays">Data Retention Period (Days)</Label>
+                  <Input
+                    id="dataRetentionDays"
+                    type="number"
+                    min="365"
+                    max="7300"
+                    value={formValues.dataProtection.dataRetentionDays}
+                    onChange={e => {
+                      const value = e.target.value;
+                      handleInputChange(
+                        'dataProtection',
+                        'dataRetentionDays',
+                        value === '' ? '' : parseInt(value) || ''
+                      );
+                    }}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Number of days to retain data after project completion
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="sensitiveDataScanFrequency">Sensitive Data Scan Frequency</Label>
+                  <Select
+                    value={formValues.dataProtection.sensitiveDataScanFrequency}
+                    onValueChange={value =>
+                      handleInputChange('dataProtection', 'sensitiveDataScanFrequency', value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue>
+                        {formValues.dataProtection.sensitiveDataScanFrequency === 'daily' &&
+                          'Daily'}
+                        {formValues.dataProtection.sensitiveDataScanFrequency === 'weekly' &&
+                          'Weekly'}
+                        {formValues.dataProtection.sensitiveDataScanFrequency === 'monthly' &&
+                          'Monthly'}
+                        {formValues.dataProtection.sensitiveDataScanFrequency === 'quarterly' &&
+                          'Quarterly'}
+                        {!formValues.dataProtection.sensitiveDataScanFrequency &&
+                          'Select frequency'}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-muted-foreground">
+                    How often to scan for unprotected sensitive data
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <Button
+                  type="button"
+                  onClick={() => handleSectionSave('dataProtection')}
+                  disabled={updateSecuritySettingsMutation.isPending}
+                  className="min-w-[120px]"
+                >
+                  {updateSecuritySettingsMutation.isPending ? 'Saving...' : 'Save Data Protection'}
+                </Button>
+              </div>
+            </TabsContent>
+
+            {/* Audit Settings Tab */}
+            <TabsContent value="audit" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="retentionDays">Audit Trail Retention (Days)</Label>
+                  <Input
+                    id="retentionDays"
+                    type="number"
+                    min="365"
+                    max="3650"
+                    value={formValues.auditSettings.retentionDays}
+                    onChange={e => {
+                      const value = e.target.value;
+                      handleInputChange(
+                        'auditSettings',
+                        'retentionDays',
+                        value === '' ? '' : parseInt(value) || ''
+                      );
+                    }}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Number of days to retain audit trail records
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="autoExportFrequency">Auto-Export Frequency (Hours)</Label>
+                  <Input
+                    id="autoExportFrequency"
+                    type="number"
+                    min="1"
+                    max="168"
+                    value={formValues.auditSettings.autoExportFrequency}
+                    onChange={e => {
+                      const value = e.target.value;
+                      handleInputChange(
+                        'auditSettings',
+                        'autoExportFrequency',
+                        value === '' ? '' : parseInt(value) || ''
+                      );
+                    }}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    How often audit logs are automatically exported
+                  </p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="trackUserActivity">Track Detailed User Activity</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Record detailed user interactions for compliance purposes
+                    </p>
+                  </div>
+                  <Switch
+                    id="trackUserActivity"
+                    checked={formValues.auditSettings.trackUserActivity}
+                    onCheckedChange={() => handleToggleChange('auditSettings', 'trackUserActivity')}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="enableBlockchainBackup">Blockchain Backup</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Use blockchain technology for tamper-evident audit storage
+                    </p>
+                  </div>
+                  <Switch
+                    id="enableBlockchainBackup"
+                    checked={formValues.auditSettings.enableBlockchainBackup}
+                    onCheckedChange={() =>
+                      handleToggleChange('auditSettings', 'enableBlockchainBackup')
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="realTimeMonitoring">Real-Time Monitoring</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Monitor and alert on suspicious activities in real-time
+                    </p>
+                  </div>
+                  <Switch
+                    id="realTimeMonitoring"
+                    checked={formValues.auditSettings.realTimeMonitoring}
+                    onCheckedChange={() =>
+                      handleToggleChange('auditSettings', 'realTimeMonitoring')
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <Button
+                  type="button"
+                  onClick={() => handleSectionSave('auditSettings')}
+                  disabled={updateSecuritySettingsMutation.isPending}
+                  className="min-w-[120px]"
+                >
+                  {updateSecuritySettingsMutation.isPending ? 'Saving...' : 'Save Audit Settings'}
+                </Button>
+              </div>
+            </TabsContent>
+
+            {/* FDA Compliance Tab */}
+            <TabsContent value="compliance" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border p-4 rounded-lg bg-blue-50">
+                  <div className="flex items-start">
+                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                      <Shield className="h-5 w-5" />
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-blue-800">
+                        FDA 21 CFR Part 11 Compliance
+                      </h3>
+                      <p className="text-xs text-blue-700 mt-1">
+                        Requirements for electronic records and electronic signatures
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border p-4 rounded-lg bg-purple-50">
+                  <div className="flex items-start">
+                    <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+                      <GlobeIcon className="h-5 w-5" />
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-purple-800">
+                        EU GMP Annex 11 Compliance
+                      </h3>
+                      <p className="text-xs text-purple-700 mt-1">
+                        Computerized systems validation requirements for EU markets
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-6">
+                {/* Electronic Signatures Section */}
+                <div className="border rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center mb-3">
+                    <FileCheck className="h-5 w-5 text-blue-600 mr-2" />
+                    <h3 className="text-base font-medium">Electronic Signatures & Records</h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="enforceElectronicSignatures" className="flex items-center">
+                          Enforce Electronic Signatures
+                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                            Required
+                          </span>
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          Require dual-factor identity verification for all document approvals and
+                          critical actions
+                        </p>
+                      </div>
+                      <Switch
+                        id="enforceElectronicSignatures"
+                        checked={formValues.fdaCompliance.enforceElectronicSignatures}
+                        onCheckedChange={() =>
+                          handleToggleChange('fdaCompliance', 'enforceElectronicSignatures')
+                        }
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="requireReason">Require Reason for Change</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Users must provide documented reason for all modifications to controlled
+                          documents
+                        </p>
+                      </div>
+                      <Switch
+                        id="requireReason"
+                        checked={formValues.fdaCompliance.requireReason}
+                        onCheckedChange={() => handleToggleChange('fdaCompliance', 'requireReason')}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="enableAuditTrails">Comprehensive Audit Trails</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Maintain tamper-evident audit trails for all system activities with
+                          cryptographic verification
+                        </p>
+                      </div>
+                      <Switch
+                        id="enableAuditTrails"
+                        checked={formValues.fdaCompliance.enableAuditTrails}
+                        onCheckedChange={() =>
+                          handleToggleChange('fdaCompliance', 'enableAuditTrails')
+                        }
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="enforceApprovalWorkflows">
+                          Multi-Level Approval Workflows
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          Enforce configurable approval sequences with role-based authorization
+                        </p>
+                      </div>
+                      <Switch
+                        id="enforceApprovalWorkflows"
+                        checked={formValues.fdaCompliance.enforceApprovalWorkflows}
+                        onCheckedChange={() =>
+                          handleToggleChange('fdaCompliance', 'enforceApprovalWorkflows')
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* System Validation & Documentation Section */}
+                <div className="border rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center mb-3">
+                    <ClipboardCheck className="h-5 w-5 text-green-600 mr-2" />
+                    <h3 className="text-base font-medium">System Validation & Documentation</h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="validationApproach">System Validation Approach</Label>
+                        <EnhancedSelect
+                          id="validationApproach"
+                          value={formValues.fdaCompliance?.validationApproach || 'riskBased'}
+                          onValueChange={value =>
+                            handleInputChange('fdaCompliance', 'validationApproach', value)
+                          }
+                          optionsArray={[
+                            { value: 'riskBased', label: 'Risk-Based Approach (GAMP 5)' },
+                            { value: 'traditional', label: 'Traditional Approach (IQ/OQ/PQ)' },
+                            { value: 'agile', label: 'Agile CSV Methodology' },
+                            { value: 'hybrid', label: 'Hybrid Approach' },
+                          ]}
+                          placeholder="Select validation approach"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Determines validation methodology used for this workspace
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="documentRetentionPeriod">
+                          Validation Document Retention
+                        </Label>
+                        <EnhancedSelect
+                          id="documentRetentionPeriod"
+                          value={formValues.fdaCompliance?.documentRetentionPeriod || 'lifeplus10'}
+                          onValueChange={value =>
+                            handleInputChange('fdaCompliance', 'documentRetentionPeriod', value)
+                          }
+                          optionsArray={[
+                            { value: 'standard', label: 'Standard (10 years)' },
+                            { value: 'extended', label: 'Extended (15 years)' },
+                            { value: 'lifeplus2', label: 'Product Life + 2 years' },
+                            { value: 'lifeplus10', label: 'Product Life + 10 years' },
+                            { value: 'permanent', label: 'Permanent' },
+                          ]}
+                          placeholder="Select retention period"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          How long validation-related documentation will be retained
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 pt-2">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="enforceUserTesting">
+                            Enforce User Acceptance Testing
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            Require formal UAT completion before production use
+                          </p>
+                        </div>
+                        <Switch
+                          id="enforceUserTesting"
+                          checked={formValues.fdaCompliance?.enforceUserTesting || false}
+                          onCheckedChange={() =>
+                            handleToggleChange('fdaCompliance', 'enforceUserTesting')
+                          }
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="autoGenerateDocumentation">
+                            Auto-Generate Validation Documentation
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            Automatically generate required compliance documentation templates
+                          </p>
+                        </div>
+                        <Switch
+                          id="autoGenerateDocumentation"
+                          checked={formValues.fdaCompliance?.autoGenerateDocumentation || true}
+                          onCheckedChange={() =>
+                            handleToggleChange('fdaCompliance', 'autoGenerateDocumentation')
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Regulatory Reporting Section */}
+                <div className="border rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center mb-3">
+                    <FileText className="h-5 w-5 text-indigo-600 mr-2" />
+                    <h3 className="text-base font-medium">Regulatory Reporting & Submissions</h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="reportGeneration">Automated Report Generation</Label>
+                        <EnhancedSelect
+                          id="reportGeneration"
+                          value={formValues.fdaCompliance?.reportGeneration || 'quarterly'}
+                          onValueChange={value =>
+                            handleInputChange('fdaCompliance', 'reportGeneration', value)
+                          }
+                          optionsArray={[
+                            { value: 'monthly', label: 'Monthly' },
+                            { value: 'quarterly', label: 'Quarterly' },
+                            { value: 'biannually', label: 'Bi-annually' },
+                            { value: 'annually', label: 'Annually' },
+                            { value: 'manual', label: 'Manual Generation Only' },
+                          ]}
+                          placeholder="Select report frequency"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Frequency of automated regulatory compliance reports
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="submissionFormat">Submission Format</Label>
+                        <EnhancedSelect
+                          id="submissionFormat"
+                          value={formValues.fdaCompliance?.submissionFormat || 'ectd'}
+                          onValueChange={value =>
+                            handleInputChange('fdaCompliance', 'submissionFormat', value)
+                          }
+                          optionsArray={[
+                            { value: 'ectd', label: 'eCTD (Electronic Common Technical Document)' },
+                            { value: 'nees', label: 'FDA NEES Format' },
+                            { value: 'cesp', label: 'EU CESP Format' },
+                            { value: 'mixed', label: 'Mixed Format (Market-dependent)' },
+                          ]}
+                          placeholder="Select submission format"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Default format for regulatory submissions
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 pt-2">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="inspectionReadiness">Inspection Readiness Mode</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Maintain system in continuously inspection-ready state with proactive
+                            monitoring
+                          </p>
+                        </div>
+                        <Switch
+                          id="inspectionReadiness"
+                          checked={formValues.fdaCompliance?.inspectionReadiness || true}
+                          onCheckedChange={() =>
+                            handleToggleChange('fdaCompliance', 'inspectionReadiness')
+                          }
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="enforceApprovalWorkflows">
+                            Enforce Regulatory Approval Workflows
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            Require all documents to follow predefined regulatory approval workflows
+                            with strict sequencing
+                          </p>
+                        </div>
+                        <Switch
+                          id="enforceApprovalWorkflows"
+                          checked={formValues.fdaCompliance?.enforceApprovalWorkflows || true}
+                          onCheckedChange={() =>
+                            handleToggleChange('fdaCompliance', 'enforceApprovalWorkflows')
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* International Regulatory Compliance Section */}
+                <div className="border rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center mb-3">
+                    <GlobeIcon className="h-5 w-5 text-indigo-600 mr-2" />
+                    <h3 className="text-base font-medium">International Regulatory Compliance</h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="p-3 border rounded-md bg-sky-50">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center">
+                            <Badge
+                              variant="outline"
+                              className="mr-2 bg-sky-100 text-sky-700 border-sky-200"
+                            >
+                              EU
+                            </Badge>
+                            <h4 className="text-sm font-medium">EU GMP Annex 11</h4>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Computerized Systems for EU Markets
+                          </p>
+                        </div>
+                        <Switch
+                          id="enableEuGmpCompliance"
+                          checked={formValues.fdaCompliance?.enableEuGmpCompliance || false}
+                          onCheckedChange={() =>
+                            handleToggleChange('fdaCompliance', 'enableEuGmpCompliance')
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="p-3 border rounded-md bg-amber-50">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center">
+                            <Badge
+                              variant="outline"
+                              className="mr-2 bg-amber-100 text-amber-700 border-amber-200"
+                            >
+                              ICH
+                            </Badge>
+                            <h4 className="text-sm font-medium">ICH GCP E6(R2)</h4>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Good Clinical Practice Guidelines
+                          </p>
+                        </div>
+                        <Switch
+                          id="enableIchGcpCompliance"
+                          checked={formValues.fdaCompliance?.enableIchGcpCompliance || false}
+                          onCheckedChange={() =>
+                            handleToggleChange('fdaCompliance', 'enableIchGcpCompliance')
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 space-y-4">
+                    <h4 className="text-sm font-medium text-muted-foreground">
+                      Industry-Specific Regulations
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleInputChange('fdaCompliance', 'industryType', 'pharma')}
+                        className={`rounded-md py-1.5 text-sm font-medium justify-center flex items-center ${
+                          formValues.fdaCompliance?.industryType === 'pharma'
+                            ? 'bg-indigo-100 border border-indigo-200 text-indigo-800'
+                            : 'border border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                        }`}
+                      >
+                        Biotech / Pharma
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleInputChange('fdaCompliance', 'industryType', 'device')}
+                        className={`rounded-md py-1.5 text-sm font-medium justify-center flex items-center ${
+                          formValues.fdaCompliance?.industryType === 'device'
+                            ? 'bg-blue-100 border border-blue-200 text-blue-800'
+                            : 'border border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                        }`}
+                      >
+                        Medical Device
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleInputChange('fdaCompliance', 'industryType', 'cro')}
+                        className={`rounded-md py-1.5 text-sm font-medium justify-center flex items-center ${
+                          formValues.fdaCompliance?.industryType === 'cro'
+                            ? 'bg-green-100 border border-green-200 text-green-800'
+                            : 'border border-green-100 bg-green-50 text-green-700 hover:bg-green-100'
+                        }`}
+                      >
+                        CRO Services
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
+                <div className="flex items-start">
+                  <div className="mt-0.5">
+                    <AlertTriangle className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-amber-800">
+                      Regulatory Compliance Notice
+                    </h3>
+                    <p className="text-sm text-amber-700 mt-1">
+                      Changes to these settings may impact your organization's regulatory compliance
+                      status. It is recommended to consult with your Quality Assurance and
+                      Regulatory Affairs teams before modifying these settings.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <Button
+                  type="button"
+                  onClick={() => handleSectionSave('fdaCompliance')}
+                  disabled={updateSecuritySettingsMutation.isPending}
+                  className="min-w-[120px]"
+                >
+                  {updateSecuritySettingsMutation.isPending ? 'Saving...' : 'Save FDA Compliance'}
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </form>
+      </CardContent>
+    </Card>
+  );
 };
 
 export default ClientSecuritySettings;

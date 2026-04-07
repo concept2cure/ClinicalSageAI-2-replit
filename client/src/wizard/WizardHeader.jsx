@@ -213,7 +213,7 @@ function Chip({ icon: Icon, label, delta, color, data = [], onClick }) {
   const sparklineColors = {
     emerald: '#788c5d',
     amber: '#d97706',
-    sky: '#78716c',
+    sky: '#6a9bcc',
     regulatory: '#7549ff',
   };
 

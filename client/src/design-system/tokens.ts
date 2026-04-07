@@ -130,8 +130,8 @@ export const colors = {
     200: '#DDD6FE',
     300: '#C4B5FD',
     400: '#A78BFA',
-    500: '#78716c',
-    600: '#57534e', // AI accent — stone-600
+    500: '#6a9bcc',
+    600: '#5585b3', // AI accent
     700: '#6D28D9',
     800: '#5B21B6',
     900: '#4C1D95',
@@ -149,9 +149,9 @@ export const colors = {
 export const typography = {
   // Font families
   fontFamily: {
-    sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    sans: 'Inter, -apple-system, BlinkMacSystemFont, "Poppins", Roboto, sans-serif',
     mono: '"JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace',
-    display: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    display: 'Inter, -apple-system, BlinkMacSystemFont, "Poppins", Roboto, sans-serif',
   },
 
   // Font sizes with line heights

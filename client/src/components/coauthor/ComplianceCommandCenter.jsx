@@ -16,21 +16,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -70,7 +57,7 @@ import {
   Gauge,
   ArrowUp,
   ArrowDown,
-  ArrowRight,
+  ArrowRight
 } from 'lucide-react';
 
 /**
@@ -87,7 +74,7 @@ const generateMockComplianceData = () => {
     { ref: '21 CFR 211', description: 'Current Good Manufacturing Practice' },
     { ref: '21 CFR 201.56', description: 'Labeling requirements' },
     { ref: '21 CFR 312.32', description: 'IND safety reporting' },
-    { ref: '21 CFR 814.20', description: 'PMA application' },
+    { ref: '21 CFR 814.20', description: 'PMA application' }
   ];
 
   const severities = ['critical', 'major', 'minor', 'info'];
@@ -97,7 +84,7 @@ const generateMockComplianceData = () => {
   for (let i = 0; i < 15; i++) {
     const regulation = regulations[Math.floor(Math.random() * regulations.length)];
     const severity = severities[Math.floor(Math.random() * severities.length)];
-
+    
     issues.push({
       id: `COMP-${1000 + i}`,
       severity,
@@ -105,28 +92,27 @@ const generateMockComplianceData = () => {
       cfr: regulation.ref,
       title: regulation.description,
       description: `Non-compliance detected in ${regulation.description} requirements`,
-      impact:
-        severity === 'critical'
-          ? 'High - May delay regulatory approval'
-          : severity === 'major'
-          ? 'Medium - Requires immediate attention'
-          : severity === 'minor'
-          ? 'Low - Should be addressed before submission'
-          : 'Informational - Best practice recommendation',
+      impact: severity === 'critical' 
+        ? 'High - May delay regulatory approval'
+        : severity === 'major'
+        ? 'Medium - Requires immediate attention'
+        : severity === 'minor'
+        ? 'Low - Should be addressed before submission'
+        : 'Informational - Best practice recommendation',
       remediation: [
         'Review and update documentation',
         'Implement required controls',
         'Validate changes per SOP',
-        'Document rationale for approach',
+        'Document rationale for approach'
       ],
       detectedAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
       assignedTo: Math.random() > 0.5 ? 'John Doe' : null,
       moduleContext: ['Module 3', 'Module 2', 'Module 5'][Math.floor(Math.random() * 3)],
       documentCount: Math.floor(Math.random() * 10) + 1,
-      estimatedEffort: `${Math.floor(Math.random() * 8) + 1} hours`,
+      estimatedEffort: `${Math.floor(Math.random() * 8) + 1} hours`
     });
   }
-
+  
   return issues;
 };
 
@@ -134,14 +120,14 @@ const generateMockComplianceData = () => {
  * Compliance Score Gauge Component
  */
 function ComplianceScoreGauge({ score }) {
-  const getScoreColor = score => {
+  const getScoreColor = (score) => {
     if (score >= 90) return 'text-green-600 dark:text-green-400';
     if (score >= 75) return 'text-yellow-600 dark:text-yellow-400';
     if (score >= 60) return 'text-orange-600 dark:text-orange-400';
     return 'text-red-600 dark:text-red-400';
   };
 
-  const getScoreLabel = score => {
+  const getScoreLabel = (score) => {
     if (score >= 90) return 'Excellent';
     if (score >= 75) return 'Good';
     if (score >= 60) return 'Fair';
@@ -174,12 +160,18 @@ function ComplianceScoreGauge({ score }) {
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <Gauge className={`h-6 w-6 ${getScoreColor(score)}`} />
-          <span className={`text-2xl font-bold ${getScoreColor(score)}`}>{score}%</span>
+          <span className={`text-2xl font-bold ${getScoreColor(score)}`}>
+            {score}%
+          </span>
         </div>
       </div>
       <div className="text-center mt-3">
-        <div className={`font-semibold ${getScoreColor(score)}`}>{getScoreLabel(score)}</div>
-        <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Compliance Score</div>
+        <div className={`font-semibold ${getScoreColor(score)}`}>
+          {getScoreLabel(score)}
+        </div>
+        <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          Compliance Score
+        </div>
       </div>
     </div>
   );
@@ -194,48 +186,45 @@ function ComplianceIssueCard({ issue, onAction }) {
   const [clarificationText, setClarificationText] = useState('');
   const [showClarificationDialog, setShowClarificationDialog] = useState(false);
 
-  const getSeverityConfig = severity => {
+  const getSeverityConfig = (severity) => {
     switch (severity?.toLowerCase()) {
       case 'critical':
         return {
           icon: <ShieldX className="h-5 w-5" />,
           color: 'border-red-500 bg-red-50 dark:bg-red-950/30',
           iconColor: 'text-red-600 dark:text-red-400',
-          badgeClass:
-            'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200 border-red-300 dark:border-red-700',
+          badgeClass: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200 border-red-300 dark:border-red-700'
         };
       case 'major':
         return {
           icon: <ShieldAlert className="h-5 w-5" />,
           color: 'border-orange-500 bg-orange-50 dark:bg-orange-950/30',
           iconColor: 'text-orange-600 dark:text-orange-400',
-          badgeClass:
-            'bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-200 border-orange-300 dark:border-orange-700',
+          badgeClass: 'bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-200 border-orange-300 dark:border-orange-700'
         };
       case 'minor':
         return {
           icon: <AlertTriangle className="h-5 w-5" />,
           color: 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30',
           iconColor: 'text-yellow-600 dark:text-yellow-400',
-          badgeClass:
-            'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 border-yellow-300 dark:border-yellow-700',
+          badgeClass: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 border-yellow-300 dark:border-yellow-700'
         };
       default:
         return {
           icon: <Info className="h-5 w-5" />,
-          color: 'border-stone-500 bg-stone-50',
-          iconColor: 'text-stone-600',
-          badgeClass: 'bg-stone-100 text-stone-800 border-stone-300',
+          color: 'border-blue-500 bg-blue-50 dark:bg-blue-950/30',
+          iconColor: 'text-blue-600 dark:text-blue-400',
+          badgeClass: 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700'
         };
     }
   };
 
-  const getStatusIcon = status => {
+  const getStatusIcon = (status) => {
     switch (status) {
       case 'resolved':
         return <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />;
       case 'in_progress':
-        return <Clock className="h-4 w-4 text-stone-600 dark:text-stone-400" />;
+        return <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
       case 'pending_review':
         return <Activity className="h-4 w-4 text-purple-600 dark:text-purple-400" />;
       default:
@@ -269,7 +258,7 @@ function ComplianceIssueCard({ issue, onAction }) {
     onAction('resolve', issue);
   };
 
-  const timeSince = date => {
+  const timeSince = (date) => {
     const seconds = Math.floor((new Date() - new Date(date)) / 1000);
     const intervals = {
       year: 31536000,
@@ -277,7 +266,7 @@ function ComplianceIssueCard({ issue, onAction }) {
       week: 604800,
       day: 86400,
       hour: 3600,
-      minute: 60,
+      minute: 60
     };
 
     for (const [name, count] of Object.entries(intervals)) {
@@ -291,7 +280,7 @@ function ComplianceIssueCard({ issue, onAction }) {
 
   return (
     <>
-      <Card
+      <Card 
         className={`border-2 ${config.color} hover:shadow-lg transition-all duration-200 cursor-pointer`}
         onMouseEnter={() => setShowActions(true)}
         onMouseLeave={() => setShowActions(false)}
@@ -300,7 +289,9 @@ function ComplianceIssueCard({ issue, onAction }) {
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
-              <div className={config.iconColor}>{config.icon}</div>
+              <div className={config.iconColor}>
+                {config.icon}
+              </div>
               <Badge variant="outline" className={config.badgeClass}>
                 {issue.severity.toUpperCase()}
               </Badge>
@@ -311,16 +302,20 @@ function ComplianceIssueCard({ issue, onAction }) {
             </Badge>
           </div>
           <CardTitle className="text-base mt-2 flex items-center gap-2">
-            <Shield className="h-4 w-4 text-stone-600 dark:text-stone-400" />
+            <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             {issue.cfr}
           </CardTitle>
-          <CardDescription className="mt-1">{issue.title}</CardDescription>
+          <CardDescription className="mt-1">
+            {issue.title}
+          </CardDescription>
         </CardHeader>
-
+        
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <div className="text-sm text-slate-700 dark:text-slate-300">{issue.description}</div>
-
+            <div className="text-sm text-slate-700 dark:text-slate-300">
+              {issue.description}
+            </div>
+            
             <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
@@ -340,13 +335,17 @@ function ComplianceIssueCard({ issue, onAction }) {
               <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">
                 Impact Assessment
               </div>
-              <div className="text-sm text-slate-700 dark:text-slate-300">{issue.impact}</div>
+              <div className="text-sm text-slate-700 dark:text-slate-300">
+                {issue.impact}
+              </div>
             </div>
 
             {issue.status === 'resolved' && (
               <div className="flex items-center gap-2 p-2 bg-green-100 dark:bg-green-900/30 rounded-md">
                 <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                <span className="text-sm text-green-800 dark:text-green-200">Issue Resolved</span>
+                <span className="text-sm text-green-800 dark:text-green-200">
+                  Issue Resolved
+                </span>
               </div>
             )}
 
@@ -366,10 +365,7 @@ function ComplianceIssueCard({ issue, onAction }) {
             </div>
             <ul className="space-y-1">
               {issue.remediation.map((step, idx) => (
-                <li
-                  key={idx}
-                  className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
-                >
+                <li key={idx} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
                   <ChevronRight className="h-3 w-3 mt-0.5 flex-shrink-0 text-slate-400" />
                   <span>{step}</span>
                 </li>
@@ -390,7 +386,7 @@ function ComplianceIssueCard({ issue, onAction }) {
                 <Zap className="h-3 w-3 mr-1" />
                 Fix Now
               </Button>
-
+              
               <Button
                 size="sm"
                 variant="outline"
@@ -401,7 +397,7 @@ function ComplianceIssueCard({ issue, onAction }) {
                 <CheckCircle className="h-3 w-3 mr-1" />
                 Mark Resolved
               </Button>
-
+              
               <Dialog>
                 <DialogTrigger asChild>
                   <Button
@@ -431,27 +427,20 @@ function ComplianceIssueCard({ issue, onAction }) {
                         <SelectContent>
                           <SelectItem value="John Doe">John Doe - Regulatory Lead</SelectItem>
                           <SelectItem value="Jane Smith">Jane Smith - QA Manager</SelectItem>
-                          <SelectItem value="Mike Johnson">
-                            Mike Johnson - Clinical Expert
-                          </SelectItem>
-                          <SelectItem value="Sarah Williams">
-                            Sarah Williams - CMC Specialist
-                          </SelectItem>
+                          <SelectItem value="Mike Johnson">Mike Johnson - Clinical Expert</SelectItem>
+                          <SelectItem value="Sarah Williams">Sarah Williams - CMC Specialist</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button
-                      onClick={handleAssignOwner}
-                      data-testid={`button-confirm-assign-${issue.id}`}
-                    >
+                    <Button onClick={handleAssignOwner} data-testid={`button-confirm-assign-${issue.id}`}>
                       Assign
                     </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-
+              
               <Button
                 size="sm"
                 variant="outline"
@@ -467,7 +456,9 @@ function ComplianceIssueCard({ issue, onAction }) {
 
           {issue.estimatedEffort && (
             <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
-              <span className="text-xs text-slate-500 dark:text-slate-400">Estimated effort:</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                Estimated effort:
+              </span>
               <Badge variant="secondary" className="text-xs">
                 {issue.estimatedEffort}
               </Badge>
@@ -489,7 +480,7 @@ function ComplianceIssueCard({ issue, onAction }) {
               <Label>Your Question</Label>
               <Textarea
                 value={clarificationText}
-                onChange={e => setClarificationText(e.target.value)}
+                onChange={(e) => setClarificationText(e.target.value)}
                 placeholder="Enter your questions or concerns about this compliance issue..."
                 className="min-h-[100px]"
                 data-testid={`textarea-clarification-${issue.id}`}
@@ -500,10 +491,7 @@ function ComplianceIssueCard({ issue, onAction }) {
             <Button variant="outline" onClick={() => setShowClarificationDialog(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={handleSubmitClarification}
-              data-testid={`button-submit-clarification-${issue.id}`}
-            >
+            <Button onClick={handleSubmitClarification} data-testid={`button-submit-clarification-${issue.id}`}>
               Submit Request
             </Button>
           </DialogFooter>
@@ -519,7 +507,7 @@ function ComplianceIssueCard({ issue, onAction }) {
 export function ComplianceCommandCenter({ documentId, onClose }) {
   const { toast } = useToast();
   const { currentOrganization } = useTenantContext();
-
+  
   const [complianceIssues, setComplianceIssues] = useState([]);
   const [filteredIssues, setFilteredIssues] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -534,7 +522,7 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
     const mockData = generateMockComplianceData();
     setComplianceIssues(mockData);
     setFilteredIssues(mockData);
-
+    
     // Calculate compliance score
     const resolved = mockData.filter(i => i.status === 'resolved').length;
     const total = mockData.length;
@@ -548,12 +536,11 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
 
     // Apply search filter
     if (searchQuery) {
-      filtered = filtered.filter(
-        issue =>
-          issue.cfr.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          issue.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          issue.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          issue.id.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(issue =>
+        issue.cfr.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        issue.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        issue.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        issue.id.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -595,42 +582,42 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
     switch (action) {
       case 'fix':
         toast({
-          title: 'Applying Fix',
+          title: "Applying Fix",
           description: `Automated remediation initiated for ${issue.cfr}`,
         });
         // Update issue status
-        setComplianceIssues(prev =>
-          prev.map(i => (i.id === issue.id ? { ...i, status: 'in_progress' } : i))
-        );
+        setComplianceIssues(prev => prev.map(i =>
+          i.id === issue.id ? { ...i, status: 'in_progress' } : i
+        ));
         break;
-
+      
       case 'assign':
         toast({
-          title: 'Owner Assigned',
+          title: "Owner Assigned",
           description: `${issue.assignedTo} assigned to ${issue.cfr}`,
         });
         // Update issue
-        setComplianceIssues(prev =>
-          prev.map(i => (i.id === issue.id ? { ...i, assignedTo: issue.assignedTo } : i))
-        );
+        setComplianceIssues(prev => prev.map(i =>
+          i.id === issue.id ? { ...i, assignedTo: issue.assignedTo } : i
+        ));
         break;
-
+      
       case 'clarify':
         toast({
-          title: 'Clarification Requested',
-          description: 'Your question has been submitted to the compliance team',
+          title: "Clarification Requested",
+          description: "Your question has been submitted to the compliance team",
         });
         break;
-
+      
       case 'resolve':
         toast({
-          title: 'Issue Resolved',
+          title: "Issue Resolved",
           description: `${issue.cfr} marked as resolved`,
         });
         // Update issue status
-        setComplianceIssues(prev =>
-          prev.map(i => (i.id === issue.id ? { ...i, status: 'resolved' } : i))
-        );
+        setComplianceIssues(prev => prev.map(i =>
+          i.id === issue.id ? { ...i, status: 'resolved' } : i
+        ));
         // Recalculate score
         setComplianceScore(prev => Math.min(100, prev + 5));
         break;
@@ -643,7 +630,7 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
     const major = complianceIssues.filter(i => i.severity === 'major').length;
     const minor = complianceIssues.filter(i => i.severity === 'minor').length;
     const info = complianceIssues.filter(i => i.severity === 'info').length;
-
+    
     const open = complianceIssues.filter(i => i.status === 'open').length;
     const inProgress = complianceIssues.filter(i => i.status === 'in_progress').length;
     const resolved = complianceIssues.filter(i => i.status === 'resolved').length;
@@ -652,7 +639,7 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
     return {
       bySeverity: { critical, major, minor, info },
       byStatus: { open, inProgress, resolved, pendingReview },
-      total: complianceIssues.length,
+      total: complianceIssues.length
     };
   }, [complianceIssues]);
 
@@ -666,7 +653,7 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Shield className="h-8 w-8 text-stone-600 dark:text-stone-400" />
+          <Shield className="h-8 w-8 text-blue-600 dark:text-blue-400" />
           <div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
               FDA Compliance Command Center
@@ -676,7 +663,7 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
             </p>
           </div>
         </div>
-
+        
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
@@ -701,7 +688,7 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
       {/* Metrics Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Compliance Score */}
-        <Card className="border-2 border-stone-200 bg-gradient-to-br from-stone-50 to-indigo-50 dark:to-indigo-950/30">
+        <Card className="border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
           <CardContent className="p-6 flex items-center justify-center">
             <ComplianceScoreGauge score={complianceScore} />
           </CardContent>
@@ -744,9 +731,7 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
               </div>
               <Separator />
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  Total
-                </span>
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Total</span>
                 <Badge variant="secondary">{stats.total}</Badge>
               </div>
             </div>
@@ -769,7 +754,9 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600 dark:text-slate-400">In Progress</span>
-                <Badge className="bg-stone-100 text-stone-800 ">{stats.byStatus.inProgress}</Badge>
+                <Badge className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200">
+                  {stats.byStatus.inProgress}
+                </Badge>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600 dark:text-slate-400">Pending Review</span>
@@ -801,9 +788,7 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
                 <span className="text-sm text-slate-600 dark:text-slate-400">This Week</span>
                 <div className="flex items-center gap-1">
                   <ArrowUp className="h-4 w-4 text-green-600 dark:text-green-400" />
-                  <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                    +12%
-                  </span>
+                  <span className="text-sm font-medium text-green-600 dark:text-green-400">+12%</span>
                 </div>
               </div>
               <Progress value={complianceScore} className="h-2" />
@@ -812,12 +797,8 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
               </div>
               <Separator />
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  Avg. Resolution Time
-                </span>
-                <Badge variant="secondary" className="text-xs">
-                  2.5 days
-                </Badge>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Avg. Resolution Time</span>
+                <Badge variant="secondary" className="text-xs">2.5 days</Badge>
               </div>
             </div>
           </CardContent>
@@ -834,13 +815,13 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
                 <Input
                   placeholder="Search by CFR, ID, or description..."
                   value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
                   data-testid="input-search-compliance"
                 />
               </div>
             </div>
-
+            
             <Select value={severityFilter} onValueChange={setSeverityFilter}>
               <SelectTrigger className="w-[140px]" data-testid="select-severity-filter">
                 <SelectValue placeholder="Severity" />
@@ -874,9 +855,7 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
               <SelectContent>
                 <SelectItem value="all">All CFR Sections</SelectItem>
                 {uniqueCFRs.map(cfr => (
-                  <SelectItem key={cfr} value={cfr}>
-                    {cfr}
-                  </SelectItem>
+                  <SelectItem key={cfr} value={cfr}>{cfr}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -903,10 +882,8 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
             Critical Issues Require Immediate Attention
           </AlertTitle>
           <AlertDescription className="text-red-800 dark:text-red-200">
-            You have{' '}
-            {filteredIssues.filter(i => i.severity === 'critical' && i.status === 'open').length}{' '}
-            critical compliance issues that should be addressed immediately to avoid regulatory
-            delays.
+            You have {filteredIssues.filter(i => i.severity === 'critical' && i.status === 'open').length} critical 
+            compliance issues that should be addressed immediately to avoid regulatory delays.
           </AlertDescription>
         </Alert>
       )}
@@ -927,8 +904,12 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
           </Card>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredIssues.map(issue => (
-              <ComplianceIssueCard key={issue.id} issue={issue} onAction={handleIssueAction} />
+            {filteredIssues.map((issue) => (
+              <ComplianceIssueCard
+                key={issue.id}
+                issue={issue}
+                onAction={handleIssueAction}
+              />
             ))}
           </div>
         )}
@@ -951,7 +932,7 @@ export function ComplianceCommandCenter({ documentId, onClose }) {
                   <div key={issue.id} className="flex items-start gap-4">
                     <div className="relative">
                       <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center">
-                        <div className="w-3 h-3 rounded-full bg-stone-800 dark:bg-stone-400" />
+                        <div className="w-3 h-3 rounded-full bg-blue-600 dark:bg-blue-400" />
                       </div>
                     </div>
                     <div className="flex-1">

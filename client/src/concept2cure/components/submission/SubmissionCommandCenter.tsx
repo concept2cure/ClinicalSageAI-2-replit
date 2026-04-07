@@ -45,9 +45,9 @@ interface SubmissionCommandCenterProps {
 // ── Severity badge ──────────────────────────────────────────────────────────
 
 const SEVERITY_STYLES: Record<string, string> = {
-  critical: 'bg-stone-100 text-stone-800 border-stone-200',
-  high: 'bg-stone-100 text-stone-700 border-stone-200',
-  medium: 'bg-stone-100 text-stone-700 border-stone-200',
+  critical: 'bg-red-50 text-red-700 border-red-200',
+  high: 'bg-amber-50 text-amber-700 border-amber-200',
+  medium: 'bg-yellow-50 text-yellow-700 border-yellow-200',
   low: 'bg-stone-50 text-stone-600 border-stone-200',
 };
 
@@ -66,11 +66,11 @@ function SeverityBadge({ severity }: { severity: string }) {
 // ── Milestone status badge ──────────────────────────────────────────────────
 
 const MILESTONE_STYLES: Record<string, string> = {
-  completed: 'bg-stone-100 text-stone-800 border-stone-200',
-  in_progress: 'bg-stone-100 text-stone-700 border-stone-200',
+  completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  in_progress: 'bg-blue-50 text-blue-700 border-blue-200',
   pending: 'bg-stone-50 text-stone-500 border-stone-200',
-  overdue: 'bg-stone-100 text-stone-800 border-stone-200',
-  blocked: 'bg-stone-100 text-stone-700 border-stone-200',
+  overdue: 'bg-red-50 text-red-700 border-red-200',
+  blocked: 'bg-amber-50 text-amber-700 border-amber-200',
 };
 
 function MilestoneStatusBadge({ status }: { status: string }) {
@@ -157,7 +157,7 @@ function BlockersSection({ projectId }: { projectId: number }) {
         if (active.length === 0) {
           return (
             <div className="flex items-center gap-2 py-2 text-[12px] text-stone-400">
-              <CheckCircle className="w-3.5 h-3.5 text-stone-900" />
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
               No active blockers
             </div>
           );
@@ -189,7 +189,7 @@ function BlockersSection({ projectId }: { projectId: number }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 px-2 text-[10px] text-stone-500 hover:text-stone-800 hover:bg-stone-100 shrink-0"
+                  className="h-6 px-2 text-[10px] text-stone-500 hover:text-emerald-700 hover:bg-emerald-50 shrink-0"
                   disabled={resolve.isPending}
                   onClick={() => handleResolve(blocker.id)}
                 >
@@ -240,11 +240,11 @@ function MilestonesSection({ packageId }: { packageId?: string }) {
                   className={cn(
                     'w-2 h-2 rounded-full',
                     ms.status === 'completed'
-                      ? 'bg-stone-900'
+                      ? 'bg-emerald-500'
                       : ms.status === 'overdue'
-                        ? 'bg-stone-900'
+                        ? 'bg-red-500'
                         : ms.status === 'in_progress'
-                          ? 'bg-stone-900'
+                          ? 'bg-blue-500'
                           : 'bg-stone-300'
                   )}
                 />
@@ -287,7 +287,7 @@ function ApprovalBottlenecksSection({ projectId }: { projectId: number }) {
         if (items.length === 0) {
           return (
             <div className="flex items-center gap-2 py-2 text-[12px] text-stone-400">
-              <CheckCircle className="w-3.5 h-3.5 text-stone-900" />
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
               No pending approvals
             </div>
           );
@@ -309,7 +309,7 @@ function ApprovalBottlenecksSection({ projectId }: { projectId: number }) {
                       <span className="text-[10px] text-stone-400">Approver: {item.approver}</span>
                     )}
                     {item.waitingDays != null && (
-                      <span className="text-[10px] text-stone-600">
+                      <span className="text-[10px] text-amber-600">
                         {item.waitingDays}d waiting
                       </span>
                     )}
@@ -356,7 +356,7 @@ function WorkloadSection({ projectId }: { projectId: number }) {
                     <div
                       className={cn(
                         'h-full rounded-full transition-all duration-200',
-                        pct > 80 ? 'bg-stone-900' : 'bg-stone-400'
+                        pct > 80 ? 'bg-amber-500' : 'bg-stone-400'
                       )}
                       style={{ width: `${pct}%` }}
                     />
@@ -391,7 +391,7 @@ function DueSoonSection({ projectId }: { projectId: number }) {
         if (items.length === 0) {
           return (
             <div className="flex items-center gap-2 py-2 text-[12px] text-stone-400">
-              <CheckCircle className="w-3.5 h-3.5 text-stone-900" />
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
               No upcoming deadlines
             </div>
           );
@@ -410,7 +410,7 @@ function DueSoonSection({ projectId }: { projectId: number }) {
                   <CalendarDays
                     className={cn(
                       'w-3.5 h-3.5 shrink-0',
-                      isUrgent ? 'text-stone-900' : 'text-stone-400'
+                      isUrgent ? 'text-red-500' : 'text-stone-400'
                     )}
                   />
                   <div className="flex-1 min-w-0">
@@ -421,7 +421,7 @@ function DueSoonSection({ projectId }: { projectId: number }) {
                       <span
                         className={cn(
                           'text-[10px]',
-                          isUrgent ? 'text-stone-700 font-medium' : 'text-stone-400'
+                          isUrgent ? 'text-red-600 font-medium' : 'text-stone-400'
                         )}
                       >
                         {new Date(dueDate).toLocaleDateString()}

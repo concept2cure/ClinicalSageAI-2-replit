@@ -182,7 +182,7 @@ const RegulatoryIntelligence = () => {
   const getAgencyBadgeColor = agency => {
     switch (agency) {
       case 'FDA':
-        return 'bg-stone-100 text-stone-800';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
       case 'EMA':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
       case 'PMDA':

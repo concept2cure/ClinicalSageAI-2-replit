@@ -166,56 +166,56 @@ const SOURCE_LABELS: Record<CAPASource, string> = {
 const STATUS_CONFIG: Record<CAPAStatus, { label: string; color: string; icon: React.ReactNode }> = {
   open: {
     label: 'Open',
-    color: 'bg-stone-100 text-stone-800',
+    color: 'bg-blue-100 text-blue-800',
     icon: <FileWarning className="w-4 h-4" />,
   },
   investigation: {
     label: 'Investigation',
-    color: 'bg-stone-100 text-stone-800',
+    color: 'bg-yellow-100 text-yellow-800',
     icon: <Search className="w-4 h-4" />,
   },
   root_cause_identified: {
     label: 'Root Cause Identified',
-    color: 'bg-stone-200 text-stone-800',
+    color: 'bg-purple-100 text-purple-800',
     icon: <GitBranch className="w-4 h-4" />,
   },
   action_planning: {
     label: 'Action Planning',
-    color: 'bg-stone-100 text-stone-800',
+    color: 'bg-blue-100 text-blue-800',
     icon: <ClipboardList className="w-4 h-4" />,
   },
   implementation: {
     label: 'Implementation',
-    color: 'bg-stone-100 text-stone-800',
+    color: 'bg-orange-100 text-orange-800',
     icon: <ArrowRight className="w-4 h-4" />,
   },
   verification: {
     label: 'Verification',
-    color: 'bg-stone-100 text-stone-800',
+    color: 'bg-cyan-100 text-cyan-800',
     icon: <CheckCircle2 className="w-4 h-4" />,
   },
   effectiveness_check: {
     label: 'Effectiveness Check',
-    color: 'bg-stone-100 text-stone-800',
+    color: 'bg-teal-100 text-teal-800',
     icon: <TrendingUp className="w-4 h-4" />,
   },
   closed: {
     label: 'Closed',
-    color: 'bg-stone-100 text-stone-800',
+    color: 'bg-green-100 text-green-800',
     icon: <CheckCircle2 className="w-4 h-4" />,
   },
   closed_ineffective: {
     label: 'Closed - Ineffective',
-    color: 'bg-stone-100 text-stone-800',
+    color: 'bg-red-100 text-red-800',
     icon: <XCircle className="w-4 h-4" />,
   },
 };
 
 const PRIORITY_CONFIG: Record<CAPAPriority, { label: string; color: string; daysToClose: number }> =
   {
-    critical: { label: 'Critical', color: 'bg-stone-900 text-white', daysToClose: 30 },
-    major: { label: 'Major', color: 'bg-stone-900 text-white', daysToClose: 60 },
-    minor: { label: 'Minor', color: 'bg-stone-900 text-white', daysToClose: 90 },
+    critical: { label: 'Critical', color: 'bg-red-500 text-white', daysToClose: 30 },
+    major: { label: 'Major', color: 'bg-orange-500 text-white', daysToClose: 60 },
+    minor: { label: 'Minor', color: 'bg-yellow-500 text-white', daysToClose: 90 },
   };
 
 // Mock data
@@ -388,7 +388,7 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
               <p className="text-sm text-muted-foreground">Open CAPAs</p>
               <p className="text-base font-semibold">{metrics.open}</p>
             </div>
-            <FileWarning className="w-8 h-8 text-stone-900" />
+            <FileWarning className="w-8 h-8 text-blue-500" />
           </div>
         </div>
       </div>
@@ -398,9 +398,9 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Overdue</p>
-              <p className="text-base font-semibold text-stone-700">{metrics.overdue}</p>
+              <p className="text-base font-semibold text-red-600">{metrics.overdue}</p>
             </div>
-            <Clock className="w-8 h-8 text-stone-900" />
+            <Clock className="w-8 h-8 text-red-500" />
           </div>
         </div>
       </div>
@@ -410,9 +410,9 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Critical</p>
-              <p className="text-base font-semibold text-stone-600">{metrics.critical}</p>
+              <p className="text-base font-semibold text-orange-600">{metrics.critical}</p>
             </div>
-            <AlertTriangle className="w-8 h-8 text-stone-900" />
+            <AlertTriangle className="w-8 h-8 text-orange-500" />
           </div>
         </div>
       </div>
@@ -422,9 +422,9 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Regulatory</p>
-              <p className="text-base font-semibold text-stone-600">{metrics.regulatory}</p>
+              <p className="text-base font-semibold text-purple-600">{metrics.regulatory}</p>
             </div>
-            <FileWarning className="w-8 h-8 text-stone-500" />
+            <FileWarning className="w-8 h-8 text-purple-500" />
           </div>
         </div>
       </div>
@@ -560,11 +560,11 @@ function RootCausePanel({
           />
         </div>
 
-        <div className="flex items-center gap-2 p-3 bg-stone-100 rounded-lg">
-          <Sparkles className="w-5 h-5 text-stone-600" />
+        <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
+          <Sparkles className="w-5 h-5 text-purple-600" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-stone-800">AnA Analysis</p>
-            <p className="text-xs text-stone-600">
+            <p className="text-sm font-medium text-purple-800">AnA Analysis</p>
+            <p className="text-xs text-purple-600">
               Let AnA analyze similar CAPAs and suggest potential root causes based on historical data
             </p>
           </div>
@@ -771,7 +771,7 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
             <p className="text-sm text-muted-foreground">
               {isOverdue ? 'Days Overdue' : 'Days Remaining'}
             </p>
-            <p className={`text-base font-semibold ${isOverdue ? 'text-stone-700' : ''}`}>
+            <p className={`text-base font-semibold ${isOverdue ? 'text-red-600' : ''}`}>
               {Math.abs(daysRemaining)}
             </p>
           </div>
@@ -793,10 +793,10 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
             <p
               className={`text-base font-semibold ${
                 (capa.riskScore || 0) >= 80
-                  ? 'text-stone-700'
+                  ? 'text-red-600'
                   : (capa.riskScore || 0) >= 50
-                    ? 'text-stone-600'
-                    : 'text-stone-700'
+                    ? 'text-orange-600'
+                    : 'text-green-600'
               }`}
             >
               {capa.riskScore || 'N/A'}
@@ -845,12 +845,12 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
           </div>
           <div className="flex gap-4 mt-4">
             {capa.regulatoryImpact && (
-              <Badge variant="outline" className="border-stone-900 text-stone-700">
+              <Badge variant="outline" className="border-red-500 text-red-600">
                 Regulatory Impact
               </Badge>
             )}
             {capa.customerImpact && (
-              <Badge variant="outline" className="border-stone-900 text-stone-600">
+              <Badge variant="outline" className="border-orange-500 text-orange-600">
                 Customer Impact
               </Badge>
             )}
@@ -886,7 +886,7 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Root Cause</Label>
-                  <p className="mt-1 p-3 bg-stone-100 rounded-lg text-stone-800">
+                  <p className="mt-1 p-3 bg-red-50 rounded-lg text-red-800">
                     {capa.rootCauseAnalysis.rootCause}
                   </p>
                 </div>
@@ -1188,7 +1188,7 @@ export function CAPAManagement() {
                 return (
                   <TableRow
                     key={capa.id}
-                    className={`cursor-pointer hover:bg-muted/50 ${isOverdue ? 'bg-stone-100' : ''}`}
+                    className={`cursor-pointer hover:bg-muted/50 ${isOverdue ? 'bg-red-50' : ''}`}
                     onClick={() => setSelectedCAPA(capa)}
                   >
                     <TableCell className="font-mono font-medium">{capa.id}</TableCell>
@@ -1211,7 +1211,7 @@ export function CAPAManagement() {
                     </TableCell>
                     <TableCell>{capa.owner}</TableCell>
                     <TableCell>
-                      <span className={isOverdue ? 'text-stone-700 font-medium' : ''}>
+                      <span className={isOverdue ? 'text-red-600 font-medium' : ''}>
                         {capa.targetCloseDate}
                         {isOverdue && ' (Overdue)'}
                       </span>
@@ -1239,27 +1239,27 @@ export function CAPAManagement() {
       </div>
 
       {/* RI Integration */}
-      <div className="border border-border/40 rounded-sm bg-background border-stone-200 bg-stone-50">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-stone-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-stone-200 rounded-full">
-              <Sparkles className="w-6 h-6 text-stone-600" />
+            <div className="p-3 bg-purple-100 rounded-full">
+              <Sparkles className="w-6 h-6 text-purple-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-stone-900">AnA CAPA Intelligence</h3>
-              <p className="text-sm text-stone-700">
+              <h3 className="font-semibold text-purple-900">AnA CAPA Intelligence</h3>
+              <p className="text-sm text-purple-700">
                 Analyze CAPA trends, identify recurring issues, and get RI-powered recommendations
                 for root cause analysis and preventive actions.
               </p>
             </div>
             <Button
               variant="outline"
-              className="border-stone-300 text-stone-700 hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
+              className="border-purple-300 text-purple-700 hover:bg-purple-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
             >
               <BarChart3 className="w-4 h-4 mr-2" />
               View Trends
             </Button>
-            <Button className="bg-stone-600 hover:bg-stone-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none">
+            <Button className="bg-purple-600 hover:bg-purple-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none">
               <Brain className="w-4 h-4 mr-2" />
               RI Analysis
             </Button>

@@ -203,7 +203,7 @@ interface SystemMetric {
 
 const SEVERITY_CONFIG: Record<ActivitySeverity, { label: string; color: string; bgColor: string }> =
   {
-    info: { label: 'Info', color: '#57534e', bgColor: '#f5f5f4' },
+    info: { label: 'Info', color: '#5585b3', bgColor: '#dce8f3' },
     warning: { label: 'Warning', color: '#d97706', bgColor: '#fef3c7' },
     error: { label: 'Error', color: '#dc2626', bgColor: '#fee2e2' },
     critical: { label: 'Critical', color: '#7c2d12', bgColor: '#fecaca' },
@@ -213,8 +213,8 @@ const TYPE_CONFIG: Record<
   ActivityType,
   { label: string; icon: React.ComponentType<any>; color: string }
 > = {
-  auth: { label: 'Authentication', icon: Key, color: '#57534e' },
-  document: { label: 'Document', icon: FileText, color: '#57534e' },
+  auth: { label: 'Authentication', icon: Key, color: '#5585b3' },
+  document: { label: 'Document', icon: FileText, color: '#5585b3' },
   user: { label: 'User', icon: User, color: '#647746' },
   system: { label: 'System', icon: Server, color: '#8a8880' },
   security: { label: 'Security', icon: Shield, color: '#dc2626' },
@@ -370,13 +370,13 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ events, isLive }) => {
   const getStatusIcon = (status: ActivityEvent['status']) => {
     switch (status) {
       case 'success':
-        return <CheckCircle className="h-4 w-4 text-stone-900" />;
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'failure':
-        return <XCircle className="h-4 w-4 text-stone-900" />;
+        return <XCircle className="h-4 w-4 text-red-500" />;
       case 'warning':
-        return <AlertTriangle className="h-4 w-4 text-stone-900" />;
+        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
       case 'pending':
-        return <Clock className="h-4 w-4 text-stone-900" />;
+        return <Clock className="h-4 w-4 text-blue-500" />;
     }
   };
 
@@ -385,15 +385,15 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ events, isLive }) => {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-stone-100 rounded-lg">
-              <Activity className="h-5 w-5 text-stone-600" />
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Activity className="h-5 w-5 text-blue-600" />
             </div>
             <div>
               <CardTitle className="flex items-center gap-2">
                 Activity Feed
                 {isLive && (
-                  <span className="flex items-center gap-1 text-xs text-stone-700 font-normal">
-                    <Circle className="h-2 w-2 fill-stone-900 animate-pulse" />
+                  <span className="flex items-center gap-1 text-xs text-green-600 font-normal">
+                    <Circle className="h-2 w-2 fill-green-500 animate-pulse" />
                     Live
                   </span>
                 )}
@@ -414,14 +414,14 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ events, isLive }) => {
               return (
                 <div
                   key={event.id}
-                  className={`p-4 rounded-lg border transition-colors hover:bg-stone-50 ${
+                  className={`p-4 rounded-lg border transition-colors hover:bg-gray-50 ${
                     event.severity === 'critical'
-                      ? 'border-stone-200 bg-stone-100'
+                      ? 'border-red-200 bg-red-50'
                       : event.severity === 'error'
-                        ? 'border-stone-100 bg-stone-100/50'
+                        ? 'border-red-100 bg-red-50/50'
                         : event.severity === 'warning'
-                          ? 'border-stone-100 bg-stone-100/50'
-                          : 'border-stone-100'
+                          ? 'border-amber-100 bg-amber-50/50'
+                          : 'border-gray-100'
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -441,10 +441,10 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ events, isLive }) => {
                           <span className="font-medium text-sm">{event.action}</span>
                           {getStatusIcon(event.status)}
                         </div>
-                        <span className="text-xs text-stone-500">{formatTime(event.timestamp)}</span>
+                        <span className="text-xs text-gray-500">{formatTime(event.timestamp)}</span>
                       </div>
 
-                      <p className="text-sm text-stone-600 mb-2">{event.details}</p>
+                      <p className="text-sm text-gray-600 mb-2">{event.details}</p>
 
                       <div className="flex items-center flex-wrap gap-2 text-xs">
                         {event.userName && (
@@ -502,11 +502,11 @@ const ActiveSessions: React.FC<ActiveSessionsProps> = ({ sessions, onTerminate }
   const getStatusColor = (status: ActiveSession['status']) => {
     switch (status) {
       case 'active':
-        return 'text-stone-900';
+        return 'text-green-500';
       case 'idle':
-        return 'text-stone-900';
+        return 'text-amber-500';
       case 'locked':
-        return 'text-stone-900';
+        return 'text-red-500';
     }
   };
 
@@ -522,8 +522,8 @@ const ActiveSessions: React.FC<ActiveSessionsProps> = ({ sessions, onTerminate }
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-stone-100 rounded-lg">
-              <Users className="h-5 w-5 text-stone-700" />
+            <div className="p-2 bg-green-100 rounded-lg">
+              <Users className="h-5 w-5 text-green-600" />
             </div>
             <div>
               <CardTitle>Active Sessions</CardTitle>
@@ -551,7 +551,7 @@ const ActiveSessions: React.FC<ActiveSessionsProps> = ({ sessions, onTerminate }
                 <TableCell>
                   <div>
                     <p className="font-medium">{session.userName}</p>
-                    <p className="text-xs text-stone-500">{session.userRole}</p>
+                    <p className="text-xs text-gray-500">{session.userRole}</p>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -559,13 +559,13 @@ const ActiveSessions: React.FC<ActiveSessionsProps> = ({ sessions, onTerminate }
                     {getDeviceIcon(session.device.type)}
                     <div>
                       <p className="text-sm">{session.device.browser}</p>
-                      <p className="text-xs text-stone-500">{session.device.os}</p>
+                      <p className="text-xs text-gray-500">{session.device.os}</p>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3 text-stone-400" />
+                    <MapPin className="h-3 w-3 text-gray-400" />
                     <span className="text-sm">
                       {session.location?.city}, {session.location?.country}
                     </span>
@@ -579,7 +579,7 @@ const ActiveSessions: React.FC<ActiveSessionsProps> = ({ sessions, onTerminate }
                     <Circle className={`h-2 w-2 fill-current ${getStatusColor(session.status)}`} />
                     <span className="text-sm capitalize">{session.status}</span>
                     {session.mfaVerified && (
-                      <Shield className="h-3 w-3 text-stone-900" title="MFA Verified" />
+                      <Shield className="h-3 w-3 text-blue-500" title="MFA Verified" />
                     )}
                   </div>
                 </TableCell>
@@ -587,7 +587,7 @@ const ActiveSessions: React.FC<ActiveSessionsProps> = ({ sessions, onTerminate }
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-stone-700 hover:text-stone-800"
+                    className="text-red-600 hover:text-red-700"
                     onClick={() => onTerminate(session.id)}
                   >
                     <LogOut className="h-4 w-4" />
@@ -648,9 +648,9 @@ const SystemMetricsPanel: React.FC<SystemMetricsProps> = ({ metrics }) => {
             </div>
             <p className="text-2xl font-bold">
               {metric.value}
-              <span className="text-sm text-stone-500 font-normal ml-1">{metric.unit}</span>
+              <span className="text-sm text-gray-500 font-normal ml-1">{metric.unit}</span>
             </p>
-            <p className="text-xs text-stone-500 mt-1">{metric.name}</p>
+            <p className="text-xs text-gray-500 mt-1">{metric.name}</p>
           </CardContent>
         </Card>
       ))}
@@ -671,9 +671,9 @@ const SecurityAlerts: React.FC<SecurityAlertsProps> = ({ events }) => {
     return (
       <Card>
         <CardContent className="py-12 text-center">
-          <ShieldAlert className="h-12 w-12 mx-auto mb-4 text-stone-900" />
-          <p className="font-medium text-stone-800">No Security Alerts</p>
-          <p className="text-sm text-stone-500">All systems operating normally</p>
+          <ShieldAlert className="h-12 w-12 mx-auto mb-4 text-green-500" />
+          <p className="font-medium text-green-700">No Security Alerts</p>
+          <p className="text-sm text-gray-500">All systems operating normally</p>
         </CardContent>
       </Card>
     );
@@ -683,8 +683,8 @@ const SecurityAlerts: React.FC<SecurityAlertsProps> = ({ events }) => {
     <Card>
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-stone-100 rounded-lg">
-            <ShieldAlert className="h-5 w-5 text-stone-700" />
+          <div className="p-2 bg-red-100 rounded-lg">
+            <ShieldAlert className="h-5 w-5 text-red-600" />
           </div>
           <div>
             <CardTitle>Security Alerts</CardTitle>
@@ -702,8 +702,8 @@ const SecurityAlerts: React.FC<SecurityAlertsProps> = ({ events }) => {
                 event.severity === 'critical'
                   ? ''
                   : event.severity === 'error'
-                    ? 'border-stone-200'
-                    : 'border-stone-200'
+                    ? 'border-red-200'
+                    : 'border-amber-200'
               }
             >
               <AlertTriangle className="h-4 w-4" />
@@ -843,7 +843,7 @@ export const ActivityMonitor: React.FC = () => {
             <Monitor className="h-6 w-6" />
             Activity Monitor
           </h1>
-          <p className="text-stone-500">Real-time system activity and security monitoring</p>
+          <p className="text-gray-500">Real-time system activity and security monitoring</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant={isLive ? 'default' : 'outline'} onClick={() => setIsLive(!isLive)}>
@@ -894,7 +894,7 @@ export const ActivityMonitor: React.FC = () => {
           {/* Filters */}
           <div className="flex items-center gap-4">
             <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search activities..."
                 value={searchQuery}

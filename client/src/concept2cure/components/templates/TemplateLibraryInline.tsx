@@ -155,8 +155,8 @@ const categoryIcons: Record<ArtifactCategory, React.ElementType> = {
 
 const categoryColors: Record<ArtifactCategory, string> = {
   document: 'bg-stone-100 text-stone-600',
-  interactive: 'bg-stone-100 text-stone-600',
-  visualization: 'bg-stone-100 text-stone-700',
+  interactive: 'bg-blue-50 text-blue-600',
+  visualization: 'bg-emerald-50 text-emerald-600',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -342,7 +342,7 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
                     </div>
                     <div className="flex items-center gap-2 mt-2">
                       {t.ctdSection && (
-                        <Badge variant="outline" className="text-xs px-1 py-0 border-stone-200 text-stone-900">
+                        <Badge variant="outline" className="text-xs px-1 py-0 border-blue-200 text-blue-500">
                           {t.ctdSection}
                         </Badge>
                       )}
@@ -376,7 +376,7 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
               <button
                 key={t.id}
                 onClick={() => handleUse(t)}
-                className="group text-left p-4 rounded-lg border border-stone-200 hover:border-stone-200 bg-white transition-all duration-150"
+                className="group text-left p-4 rounded-lg border border-stone-200 hover:border-blue-200 bg-white transition-all duration-150"
               >
                 <div className="flex items-start gap-3">
                   <div className={cn('p-1.5 rounded-md flex-shrink-0', categoryColors[t.category])}>
@@ -390,7 +390,7 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
                       {t.description}
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-stone-400 group-hover:text-stone-900 flex-shrink-0 mt-1 transition-colors duration-150" />
+                  <ArrowRight className="h-4 w-4 text-stone-400 group-hover:text-blue-500 flex-shrink-0 mt-1 transition-colors duration-150" />
                 </div>
               </button>
             ))}

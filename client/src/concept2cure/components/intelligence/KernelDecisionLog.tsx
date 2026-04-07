@@ -145,8 +145,8 @@ function DecisionDetail({ decision }: { decision: KernelDecision }) {
 
       {decision.errorMessage && (
         <div>
-          <span className="text-[10px] uppercase tracking-wider text-stone-400">Error</span>
-          <p className="text-stone-700 text-[12px] mt-1">{decision.errorMessage}</p>
+          <span className="text-[10px] uppercase tracking-wider text-red-400">Error</span>
+          <p className="text-red-600 text-[12px] mt-1">{decision.errorMessage}</p>
         </div>
       )}
     </div>

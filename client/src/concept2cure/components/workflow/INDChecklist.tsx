@@ -11,8 +11,6 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   CheckCircle2,
   Circle,
@@ -27,7 +25,8 @@ import {
   Sparkles,
   ArrowLeft,
   Loader2,
-  PenLine,
+  Clock,
+  ExternalLink,
 } from 'lucide-react';
 import { useINDStatus, getNextRecommendedSection, type INDSectionStatus } from '../../hooks/useINDStatus';
 import { DataStateWrapper } from '@/components/ui/statesV2';
@@ -45,20 +44,20 @@ interface INDModuleConfig {
 
 const IND_MODULES: INDModuleConfig[] = [
   { number: 1, name: 'Administrative Information', icon: FileText, color: 'text-stone-700', bg: 'bg-stone-50', description: 'Forms FDA 1571/1572/3674, cover letter, debarment certification' },
-  { number: 2, name: 'CTD Summaries', icon: Activity, color: 'text-stone-700', bg: 'bg-stone-100', description: 'Quality, nonclinical, and clinical overviews and summaries' },
-  { number: 3, name: 'Quality (CMC)', icon: Beaker, color: 'text-stone-700', bg: 'bg-stone-100', description: 'Drug substance, drug product, manufacturing, stability' },
-  { number: 4, name: 'Nonclinical Study Reports', icon: FlaskConical, color: 'text-stone-700', bg: 'bg-stone-100', description: 'Pharmacology, pharmacokinetics, toxicology reports' },
-  { number: 5, name: 'Clinical Study Reports', icon: Shield, color: 'text-stone-800', bg: 'bg-stone-100', description: 'Clinical protocols, study reports, case report forms' },
+  { number: 2, name: 'CTD Summaries', icon: Activity, color: 'text-stone-700', bg: 'bg-blue-50', description: 'Quality, nonclinical, and clinical overviews and summaries' },
+  { number: 3, name: 'Quality (CMC)', icon: Beaker, color: 'text-stone-700', bg: 'bg-violet-50', description: 'Drug substance, drug product, manufacturing, stability' },
+  { number: 4, name: 'Nonclinical Study Reports', icon: FlaskConical, color: 'text-amber-700', bg: 'bg-amber-50', description: 'Pharmacology, pharmacokinetics, toxicology reports' },
+  { number: 5, name: 'Clinical Study Reports', icon: Shield, color: 'text-emerald-700', bg: 'bg-emerald-50', description: 'Clinical protocols, study reports, case report forms' },
 ];
 
 type SectionStatus = 'not_started' | 'draft' | 'review' | 'approved' | 'locked';
 
 const STATUS_CONFIG: Record<SectionStatus, { label: string; color: string; dot: string }> = {
   not_started: { label: 'Not Started', color: 'text-stone-400', dot: 'bg-stone-300' },
-  draft: { label: 'Draft', color: 'text-stone-600', dot: 'bg-stone-900' },
-  review: { label: 'In Review', color: 'text-stone-600', dot: 'bg-stone-600' },
-  approved: { label: 'Approved', color: 'text-stone-700', dot: 'bg-stone-900' },
-  locked: { label: 'Locked', color: 'text-stone-800', dot: 'bg-stone-700' },
+  draft: { label: 'Draft', color: 'text-amber-600', dot: 'bg-amber-500' },
+  review: { label: 'In Review', color: 'text-blue-600', dot: 'bg-stone-600' },
+  approved: { label: 'Approved', color: 'text-emerald-600', dot: 'bg-emerald-500' },
+  locked: { label: 'Locked', color: 'text-emerald-700', dot: 'bg-emerald-600' },
 };
 
 // ── Props ────────────────────────────────────────────────────────────────────
@@ -140,15 +139,9 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-stone-200 bg-white/95 backdrop-blur-sm px-6 py-4">
         <div className="flex items-center gap-3 mb-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onBack}
-            className="h-7 w-7 text-stone-500 hover:text-stone-700"
-            aria-label="Back to project"
-          >
+          <button onClick={onBack} className="text-stone-500 hover:text-stone-700">
             <ArrowLeft className="h-4 w-4" />
-          </Button>
+          </button>
           <div>
             <h1 className="text-lg font-semibold text-stone-900">IND Requirements — 21 CFR 312.23</h1>
             <p className="text-xs text-stone-500">{projectName || 'IND Application'}</p>
@@ -159,7 +152,7 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
         <div className="flex items-center gap-4">
           <div className="flex-1 h-2 rounded-full bg-stone-100 overflow-hidden">
             <div
-              className="h-full rounded-full bg-stone-900 transition-all duration-300"
+              className="h-full rounded-full bg-emerald-500 transition-all duration-300"
               style={{ width: `${overallStats.pct}%` }}
             />
           </div>
@@ -171,18 +164,17 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
         {/* Next recommended + stats */}
         <div className="flex items-center gap-4 mt-3">
           {nextSection && (
-            <Button
-              size="sm"
+            <button
               onClick={() => onSectionClick(nextSection.code)}
-              className="gap-1.5 bg-stone-900 hover:bg-stone-800"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-stone-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-stone-800 transition-colors"
             >
               <Sparkles className="h-3 w-3" />
               Next: {nextSection.code} — {nextSection.title}
               <ChevronRight className="h-3 w-3" />
-            </Button>
+            </button>
           )}
           <div className="flex gap-3 ml-auto">
-            <span className="text-xs text-stone-700">{overallStats.completed} complete</span>
+            <span className="text-xs text-emerald-600">{overallStats.completed} complete</span>
             <span className="text-xs text-stone-400">{overallStats.total - overallStats.completed} remaining</span>
           </div>
         </div>
@@ -206,21 +198,20 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
 
               return (
                 <div key={group.number} className="rounded-xl border border-stone-200 bg-white overflow-hidden">
-                  {/* Module header — full-width toggle */}
-                  <Button
-                    variant="ghost"
+                  {/* Module header */}
+                  <button
                     onClick={() => toggleModule(group.number)}
                     className={cn(
-                      'w-full flex items-center gap-3 px-4 py-3 h-auto text-left rounded-none justify-start hover:bg-transparent',
+                      'w-full flex items-center gap-3 px-4 py-3 text-left transition-colors',
                       group.bg,
                     )}
                   >
                     {isExpanded ? (
-                      <ChevronDown className={cn('h-4 w-4 shrink-0', group.color)} />
+                      <ChevronDown className={cn('h-4 w-4', group.color)} />
                     ) : (
-                      <ChevronRight className={cn('h-4 w-4 shrink-0', group.color)} />
+                      <ChevronRight className={cn('h-4 w-4', group.color)} />
                     )}
-                    <group.icon className={cn('h-4 w-4 shrink-0', group.color)} />
+                    <group.icon className={cn('h-4 w-4', group.color)} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className={cn('text-sm font-semibold', group.color)}>
@@ -228,16 +219,16 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
                         </span>
                         <span className="text-sm text-stone-700">{group.name}</span>
                       </div>
-                      <p className="text-xs text-stone-500 mt-0.5 font-normal">{group.description}</p>
+                      <p className="text-xs text-stone-500 mt-0.5">{group.description}</p>
                     </div>
 
                     {/* Module progress */}
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {hasGaps && (
-                        <AlertTriangle className="h-3.5 w-3.5 text-stone-900" />
+                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
                       )}
                       {allComplete ? (
-                        <CheckCircle2 className="h-4 w-4 text-stone-900" />
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                       ) : (
                         <span className="text-xs font-medium text-stone-500 tabular-nums">
                           {group.stats.completed}/{group.stats.total}
@@ -247,13 +238,13 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
                         <div
                           className={cn(
                             'h-full rounded-full transition-all',
-                            allComplete ? 'bg-stone-900' : 'bg-stone-600',
+                            allComplete ? 'bg-emerald-500' : 'bg-stone-600',
                           )}
                           style={{ width: `${modulePct}%` }}
                         />
                       </div>
                     </div>
-                  </Button>
+                  </button>
 
                   {/* Section list */}
                   {isExpanded && group.sections.length > 0 && (
@@ -270,16 +261,15 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
                           >
                             {/* Status icon */}
                             {isComplete ? (
-                              <CheckCircle2 className="h-4 w-4 text-stone-900 flex-shrink-0" />
+                              <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
                             ) : (
                               <Circle className={cn('h-4 w-4 flex-shrink-0', statusCfg.color)} />
                             )}
 
-                            {/* Section info — click to open */}
-                            <Button
-                              variant="ghost"
+                            {/* Section info */}
+                            <button
                               onClick={() => onSectionClick(section.code)}
-                              className="flex-1 min-w-0 text-left h-auto py-0 px-0 hover:bg-transparent justify-start"
+                              className="flex-1 min-w-0 text-left"
                             >
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-mono text-stone-400">{section.code}</span>
@@ -290,49 +280,34 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
                                   {section.title}
                                 </span>
                                 {section.required && (
-                                  <Badge variant="destructive" className="text-[9px] font-semibold uppercase tracking-wider px-1 py-0 h-4">
+                                  <span className="text-[9px] font-semibold uppercase tracking-wider text-red-600 bg-red-50 px-1 py-0.5 rounded">
                                     Required
-                                  </Badge>
+                                  </span>
                                 )}
                               </div>
-                            </Button>
+                            </button>
 
                             {/* Status badge */}
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                'flex-shrink-0 text-[10px] font-medium border-0',
-                                isComplete ? 'bg-stone-100 text-stone-800' :
-                                section.status === 'review' ? 'bg-stone-100 text-stone-700' :
-                                section.status === 'draft' ? 'bg-stone-100 text-stone-700' :
-                                'bg-stone-50 text-stone-400',
-                              )}
-                            >
+                            <span className={cn(
+                              'flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
+                              isComplete ? 'bg-emerald-50 text-emerald-700' :
+                              section.status === 'review' ? 'bg-blue-50 text-stone-700' :
+                              section.status === 'draft' ? 'bg-amber-50 text-amber-700' :
+                              'bg-stone-50 text-stone-400'
+                            )}>
                               {statusCfg.label}
-                            </Badge>
+                            </span>
 
-                            {/* Action buttons — context-aware */}
+                            {/* AI Draft button for not-started sections */}
                             {section.status === 'not_started' && (
-                              <Button
-                                size="sm"
+                              <button
                                 onClick={() => handleAIDraft(section.code, section.title)}
                                 disabled={isDrafting}
-                                className="flex-shrink-0 opacity-0 group-hover:opacity-100 gap-1 h-7 text-[10px] transition-opacity bg-stone-900 hover:bg-stone-800"
+                                className="flex-shrink-0 opacity-0 group-hover:opacity-100 inline-flex items-center gap-1 rounded-md bg-stone-900 px-2.5 py-1 text-[10px] font-medium text-white hover:bg-stone-800 disabled:opacity-50 transition-opacity"
                               >
                                 {isDrafting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
                                 AI Draft
-                              </Button>
-                            )}
-                            {section.status === 'draft' && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => onSectionClick(section.code)}
-                                className="flex-shrink-0 opacity-0 group-hover:opacity-100 gap-1 h-7 text-[10px] transition-opacity"
-                              >
-                                <PenLine className="h-3 w-3" />
-                                Edit
-                              </Button>
+                              </button>
                             )}
                           </div>
                         );

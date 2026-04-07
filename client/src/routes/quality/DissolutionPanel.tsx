@@ -62,11 +62,11 @@ export default function DissolutionPanel({ testId, Q = 80 }: { testId: string; Q
           </Button>
         </div>
         {result && (
-          <div className={`p-2 rounded ${result.pass ? 'bg-stone-100' : 'bg-stone-100'}`}>
+          <div className={`p-2 rounded ${result.pass ? 'bg-green-100' : 'bg-red-100'}`}>
             <strong>{result.stage}:</strong> {result.pass ? 'PASS' : 'FAIL'} - {result.reason}
           </div>
         )}
-        <div className="text-xs text-stone-500">
+        <div className="text-xs text-slate-500">
           Q value: {Q}%. Enter comma-separated dissolution values.
         </div>
       </CardContent>

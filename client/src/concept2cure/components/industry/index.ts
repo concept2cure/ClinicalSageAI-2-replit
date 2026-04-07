@@ -26,7 +26,7 @@ export {
   type VendorDeliverable,
   type FDAInteraction,
   type BiotechProgram,
-} from '../biotech/BiotechProgramDashboard';
+} from './biotech/BiotechProgramDashboard';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PHARMA COMPONENTS
@@ -41,7 +41,7 @@ export {
   type GlobalRegistration,
   type PharmaProduct,
   type TherapeuticAreaPortfolio,
-} from '../pharma/PharmaPortfolioDashboard';
+} from './pharma/PharmaPortfolioDashboard';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CRO COMPONENTS
@@ -57,7 +57,7 @@ export {
   type CROProgram,
   type CROClient,
   type CROResource,
-} from '../cro/CROClientPortal';
+} from './cro/CROClientPortal';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // REGULATORY COMPONENTS
@@ -71,7 +71,7 @@ export {
   type MeetingQuestion,
   type ActionItem,
   type FDAMeeting,
-} from '../regulatory/FDAMeetingWorkspace';
+} from './regulatory/FDAMeetingWorkspace';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MEDICAL WRITING COMPONENTS
@@ -86,7 +86,7 @@ export {
   type DocumentSection,
   type DocumentVersion,
   type RegulatoryDocument,
-} from '../writing/ClinicalDocAuthoringWorkspace';
+} from './writing/ClinicalDocAuthoringWorkspace';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MEDTECH / DEVICE COMPONENTS - "THE PATHFINDER"

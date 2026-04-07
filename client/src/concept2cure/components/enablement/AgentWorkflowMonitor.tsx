@@ -355,7 +355,7 @@ function WorkflowHeader({
         </div>
         <button
           onClick={onTogglePause}
-          className="inline-flex items-center gap-1 text-xs text-stone-600 hover:underline"
+          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
         >
           {run.status === "paused" ? (
             <>
@@ -486,7 +486,7 @@ function HITLReviewPanel({
       <div className="flex items-center gap-4 pt-1">
         <button
           onClick={() => onDecision(step.id, "approved")}
-          className="text-xs text-stone-600 hover:underline"
+          className="text-xs text-blue-600 hover:underline"
         >
           Approve
         </button>
@@ -602,7 +602,7 @@ function StepRow({
             <div>
               <button
                 onClick={() => setReasoningOpen(!reasoningOpen)}
-                className="inline-flex items-center gap-1 text-xs text-stone-600 hover:underline"
+                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
               >
                 {reasoningOpen ? (
                   <ChevronDown className="h-3 w-3" />
@@ -634,7 +634,7 @@ function StepRow({
             <div>
               <button
                 onClick={() => setArtifactsOpen(!artifactsOpen)}
-                className="inline-flex items-center gap-1 text-xs text-stone-600 hover:underline"
+                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
               >
                 {artifactsOpen ? (
                   <ChevronDown className="h-3 w-3" />
@@ -761,7 +761,7 @@ function SummaryFooter({ run }: { run: WorkflowRun }) {
         </p>
       )}
 
-      <button className="text-xs text-stone-600 hover:underline">
+      <button className="text-xs text-blue-600 hover:underline">
         View full audit trail
       </button>
     </motion.div>

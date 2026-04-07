@@ -156,7 +156,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
     <div className="flex-1 flex flex-col bg-white min-h-0 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 h-10 border-b border-stone-200 shrink-0">
-        <Sparkles className="w-4 h-4 text-stone-900" />
+        <Sparkles className="w-4 h-4 text-violet-500" />
         <h2 className="text-sm font-semibold text-stone-900">Regulatory Transform Canvas</h2>
         {projectName && (
           <>
@@ -179,7 +179,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
           {/* ── Lane 1: Inputs ── */}
           <div className="bg-white p-3 flex flex-col gap-3">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-700 pb-1 border-b border-stone-200">
-              <Database className="w-3.5 h-3.5 text-stone-900" />
+              <Database className="w-3.5 h-3.5 text-blue-500" />
               Inputs
             </div>
             {context ? (
@@ -219,7 +219,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
           {/* ── Lane 2: Structured Transform ── */}
           <div className="bg-white p-3 flex flex-col gap-3">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-700 pb-1 border-b border-stone-200">
-              <Layers className="w-3.5 h-3.5 text-stone-900" />
+              <Layers className="w-3.5 h-3.5 text-violet-500" />
               Structured Transform
             </div>
             {selectedCtd ? (
@@ -244,7 +244,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
                           className="flex items-center gap-1 text-xs text-stone-600"
                         >
                           {s.required ? (
-                            <CheckCircle className="w-3 h-3 text-stone-900 shrink-0" />
+                            <CheckCircle className="w-3 h-3 text-emerald-500 shrink-0" />
                           ) : (
                             <span className="w-3 h-3 rounded-full border border-stone-300 shrink-0" />
                           )}
@@ -268,7 +268,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
                     </span>
                     <ul className="mt-1 space-y-0.5">
                       {matchingApps.map(app => (
-                        <li key={app.appId} className="text-xs text-stone-600">
+                        <li key={app.appId} className="text-xs text-violet-600">
                           {app.label}
                         </li>
                       ))}
@@ -285,7 +285,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
                       <button
                         key={s}
                         onClick={() => setSelectedCtd(s)}
-                        className="w-full text-left text-xs px-2 py-1 rounded hover:bg-stone-100 text-stone-600 transition-colors duration-150"
+                        className="w-full text-left text-xs px-2 py-1 rounded hover:bg-blue-50 text-blue-600 transition-colors duration-150"
                       >
                         {s} — {getSectionLabel(s)}
                       </button>
@@ -299,7 +299,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
           {/* ── Lane 3: Draft Output ── */}
           <div className="bg-white p-3 flex flex-col gap-3">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-700 pb-1 border-b border-stone-200">
-              <FileText className="w-3.5 h-3.5 text-stone-900" />
+              <FileText className="w-3.5 h-3.5 text-emerald-500" />
               Draft Output
             </div>
             <div>
@@ -311,7 +311,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
                 value={draftTitle}
                 onChange={e => setDraftTitle(e.target.value)}
                 placeholder="Document title..."
-                className="w-full text-sm px-2 py-1.5 rounded border border-stone-200 focus:border-stone-400 focus:ring-1 focus:ring-stone-300 outline-none"
+                className="w-full text-sm px-2 py-1.5 rounded border border-stone-200 focus:border-blue-400 focus:ring-1 focus:ring-stone-300 outline-none"
               />
             </div>
             {selectedCtd && (
@@ -328,7 +328,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
               <select
                 value={docType}
                 onChange={e => setDocType(e.target.value)}
-                className="w-full text-sm px-2 py-1.5 rounded border border-stone-200 outline-none focus:border-stone-400"
+                className="w-full text-sm px-2 py-1.5 rounded border border-stone-200 outline-none focus:border-blue-400"
               >
                 <option value="regulatory_document">Regulatory Document</option>
                 <option value="evidence_memo">Evidence Memo</option>
@@ -344,7 +344,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
           {/* ── Lane 4: Governance ── */}
           <div className="bg-white p-3 flex flex-col gap-3">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-700 pb-1 border-b border-stone-200">
-              <ShieldCheck className="w-3.5 h-3.5 text-stone-900" />
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
               Governance
             </div>
             <LaneStat label="Provenance" value="always on" sublabel="Every action recorded" />
@@ -359,7 +359,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
           {/* ── Lane 5: Downstream Actions ── */}
           <div className="bg-white p-3 flex flex-col gap-2">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-700 pb-1 border-b border-stone-200">
-              <ArrowRight className="w-3.5 h-3.5 text-stone-900" />
+              <ArrowRight className="w-3.5 h-3.5 text-blue-500" />
               Downstream Actions
             </div>
             <ActionButton

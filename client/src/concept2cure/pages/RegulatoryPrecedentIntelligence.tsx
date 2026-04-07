@@ -108,22 +108,22 @@ function CRLPanel() {
     <div className="space-y-6">
       {/* Summary metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard label="Trigger Categories" value={String(categories.length)} icon={BarChart3} iconClassName="bg-stone-100 text-stone-600" />
-        <MetricCard label="Total Patterns" value={String(totalPatterns)} icon={FileSearch} iconClassName="bg-stone-100 text-stone-600" />
-        <MetricCard label="Avg Cycles to Resolve" value={avgCycles} icon={Clock} iconClassName="bg-stone-100 text-stone-600" />
-        <MetricCard label="Highest Risk" value={formatCategory(categories[0])} icon={AlertTriangle} iconClassName="bg-stone-100 text-stone-700" />
+        <MetricCard label="Trigger Categories" value={String(categories.length)} icon={BarChart3} iconClassName="bg-blue-100 text-blue-600" />
+        <MetricCard label="Total Patterns" value={String(totalPatterns)} icon={FileSearch} iconClassName="bg-purple-100 text-purple-600" />
+        <MetricCard label="Avg Cycles to Resolve" value={avgCycles} icon={Clock} iconClassName="bg-amber-100 text-amber-600" />
+        <MetricCard label="Highest Risk" value={formatCategory(categories[0])} icon={AlertTriangle} iconClassName="bg-red-100 text-red-600" />
       </div>
 
       {/* Category breakdown */}
       <EnterpriseCard noPadding>
         <CardSection border={false}>
-          <CardHeader icon={AlertTriangle} iconClassName="bg-stone-100 text-stone-700" title="CRL Trigger Categories" subtitle="Ordered by frequency rate" />
+          <CardHeader icon={AlertTriangle} iconClassName="bg-red-100 text-red-600" title="CRL Trigger Categories" subtitle="Ordered by frequency rate" />
         </CardSection>
         {categories.map((cat) => (
           <CardSection key={cat}>
             <ListItem
               icon={AlertTriangle}
-              iconClassName="bg-stone-100 text-stone-600"
+              iconClassName="bg-amber-100 text-amber-600"
               title={formatCategory(cat)}
               subtitle={`${stats[cat].count} patterns · ${stats[cat].avgCycles.toFixed(1)} avg cycles`}
               meta={
@@ -178,9 +178,9 @@ function RTFPanel() {
             value={String(stats[center].count)}
             icon={Shield}
             iconClassName={
-              stats[center].avgFrequency > 0.15 ? 'bg-stone-100 text-stone-700'
-              : stats[center].avgFrequency > 0.08 ? 'bg-stone-100 text-stone-600'
-              : 'bg-stone-100 text-stone-700'
+              stats[center].avgFrequency > 0.15 ? 'bg-red-100 text-red-600'
+              : stats[center].avgFrequency > 0.08 ? 'bg-amber-100 text-amber-600'
+              : 'bg-emerald-100 text-emerald-600'
             }
             change={{ value: `${stats[center].avgRecoveryDays}d avg recovery`, positive: stats[center].avgRecoveryDays < 90 }}
           />
@@ -213,7 +213,7 @@ function EMAPanel() {
     <div className="space-y-6">
       {/* Phase selector */}
       <EnterpriseCard>
-        <CardHeader icon={BookOpen} iconClassName="bg-stone-100 text-stone-600" title="EMA Procedure Phase" subtitle="Select a phase to view question patterns" />
+        <CardHeader icon={BookOpen} iconClassName="bg-purple-100 text-purple-600" title="EMA Procedure Phase" subtitle="Select a phase to view question patterns" />
         <div className="flex gap-2 flex-wrap mt-4">
           {phases.map(phase => (
             <EnterpriseButton
@@ -242,19 +242,19 @@ function EMAPanel() {
       ) : (
         <EnterpriseCard noPadding>
           <CardSection border={false}>
-            <CardHeader icon={BookOpen} iconClassName="bg-stone-100 text-stone-600" title={`${patterns.length} Question Patterns`} subtitle={`Phase: ${selectedPhase.replace(/_/g, ' ').toUpperCase()}`} />
+            <CardHeader icon={BookOpen} iconClassName="bg-purple-100 text-purple-600" title={`${patterns.length} Question Patterns`} subtitle={`Phase: ${selectedPhase.replace(/_/g, ' ').toUpperCase()}`} />
           </CardSection>
           {patterns.map((pattern: Record<string, unknown>) => (
             <CardSection key={pattern.id as string}>
               <ListItem
                 icon={BookOpen}
-                iconClassName="bg-stone-100 text-stone-600"
+                iconClassName="bg-blue-100 text-blue-600"
                 title={pattern.patternName as string}
                 subtitle={`${formatCategory(pattern.questionCategory as string)} · Freq: ${(((pattern.frequencyRate as number) ?? 0) * 100).toFixed(1)}%`}
                 meta={
                   <div className="flex items-center gap-2">
                     {(pattern.escalationRisk as number) > 0.3 && <StatusPill label="Major Objection Risk" variant="danger" dot />}
-                    {(pattern.clockStopProbability as number) > 0.4 && <StatusPill label="Clock Stop" variant="muted" dot />}
+                    {(pattern.clockStopProbability as number) > 0.4 && <StatusPill label="Clock Stop" variant="purple" dot />}
                   </div>
                 }
                 chevron
@@ -300,7 +300,7 @@ function AdvisoryCommitteePanel() {
           <EnterpriseCard key={t.type} interactive>
             <CardHeader
               icon={Users}
-              iconClassName="bg-stone-100 text-stone-600"
+              iconClassName="bg-purple-100 text-purple-600"
               title={t.type}
               subtitle={`${t.patternCount} risk patterns`}
               actions={<StatusPill label={`${t.patternCount}`} variant="info" />}
@@ -349,7 +349,7 @@ function CrossJurisdictionalPanel() {
           <EnterpriseCard key={fw.id as string} interactive>
             <CardHeader
               icon={Globe}
-              iconClassName="bg-stone-100 text-stone-600"
+              iconClassName="bg-blue-100 text-blue-600"
               title={fw.frameworkName as string}
               actions={<StatusPill label={(fw.frameworkType as string).replace(/_/g, ' ')} variant="info" />}
             />
@@ -398,21 +398,21 @@ function CalibrationPanel() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard label="Total Predictions" value={String(data.totalPredictions)} icon={BarChart3} iconClassName="bg-stone-100 text-stone-600" />
-        <MetricCard label="Resolved" value={String(data.resolvedPredictions)} icon={CheckCircle} iconClassName="bg-stone-100 text-stone-700" />
-        <MetricCard label="Brier Score" value={data.averageBrierScore.toFixed(4)} icon={Target} iconClassName={brierVariant === 'success' ? 'bg-stone-100 text-stone-700' : 'bg-stone-100 text-stone-600'} />
-        <MetricCard label="Overconfidence Bias" value={data.overconfidenceBias.toFixed(4)} icon={Scale} iconClassName={biasVariant === 'success' ? 'bg-stone-100 text-stone-700' : 'bg-stone-100 text-stone-600'} />
+        <MetricCard label="Total Predictions" value={String(data.totalPredictions)} icon={BarChart3} iconClassName="bg-blue-100 text-blue-600" />
+        <MetricCard label="Resolved" value={String(data.resolvedPredictions)} icon={CheckCircle} iconClassName="bg-emerald-100 text-emerald-600" />
+        <MetricCard label="Brier Score" value={data.averageBrierScore.toFixed(4)} icon={Target} iconClassName={brierVariant === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'} />
+        <MetricCard label="Overconfidence Bias" value={data.overconfidenceBias.toFixed(4)} icon={Scale} iconClassName={biasVariant === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'} />
       </div>
 
       <EnterpriseCard>
-        <CardHeader icon={Zap} iconClassName="bg-stone-100 text-stone-600" title="Recommendation" />
+        <CardHeader icon={Zap} iconClassName="bg-blue-100 text-blue-600" title="Recommendation" />
         <p className="text-sm text-stone-600 mt-3">{data.recommendation}</p>
       </EnterpriseCard>
 
       {Object.keys(data.calibrationByBucket).length > 0 && (
         <EnterpriseCard noPadding>
           <CardSection border={false}>
-            <CardHeader icon={BarChart3} iconClassName="bg-stone-100 text-stone-600" title="Calibration by Confidence Bucket" />
+            <CardHeader icon={BarChart3} iconClassName="bg-purple-100 text-purple-600" title="Calibration by Confidence Bucket" />
           </CardSection>
           {Object.entries(data.calibrationByBucket).map(([bucket, vals]: [string, Record<string, number>]) => (
             <CardSection key={bucket}>
@@ -475,18 +475,18 @@ function AssumptionsPanel() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard label="Active Assumptions" value={String(assumptions.length)} icon={Layers} iconClassName="bg-stone-100 text-stone-600" />
-        <MetricCard label="Domains" value={String(Object.keys(byDomain).length)} icon={Activity} iconClassName="bg-stone-100 text-stone-600" />
+        <MetricCard label="Active Assumptions" value={String(assumptions.length)} icon={Layers} iconClassName="bg-blue-100 text-blue-600" />
+        <MetricCard label="Domains" value={String(Object.keys(byDomain).length)} icon={Activity} iconClassName="bg-purple-100 text-purple-600" />
       </div>
       <EnterpriseCard noPadding>
         <CardSection border={false}>
-          <CardHeader icon={Layers} iconClassName="bg-stone-100 text-stone-600" title="Assumption Registry" subtitle="Structured, project-bound assumptions" />
+          <CardHeader icon={Layers} iconClassName="bg-blue-100 text-blue-600" title="Assumption Registry" subtitle="Structured, project-bound assumptions" />
         </CardSection>
         {assumptions.slice(0, 15).map((a: Record<string, unknown>) => (
           <CardSection key={a.id as string}>
             <ListItem
               icon={Layers}
-              iconClassName="bg-stone-100 text-stone-600"
+              iconClassName="bg-blue-100 text-blue-600"
               title={a.title as string}
               subtitle={`${formatCategory(a.domainTrack as string)} · ${formatCategory(a.category as string)} · Value: ${a.assumedValue as string}`}
               meta={
@@ -543,13 +543,13 @@ function DecisionsPanel() {
     <div className="space-y-6">
       <EnterpriseCard noPadding>
         <CardSection border={false}>
-          <CardHeader icon={CheckCircle} iconClassName="bg-stone-100 text-stone-700" title="Decision Records" subtitle="Recommendation → Approval → Execution lifecycle" />
+          <CardHeader icon={CheckCircle} iconClassName="bg-emerald-100 text-emerald-600" title="Decision Records" subtitle="Recommendation → Approval → Execution lifecycle" />
         </CardSection>
         {decisions.slice(0, 15).map((d: Record<string, unknown>) => (
           <CardSection key={d.id as string}>
             <ListItem
               icon={CheckCircle}
-              iconClassName="bg-stone-100 text-stone-700"
+              iconClassName="bg-emerald-100 text-emerald-600"
               title={d.title as string}
               subtitle={`${formatCategory(d.domainTrack as string)} · ${formatCategory(d.recommendationType as string)}`}
               meta={
@@ -635,7 +635,7 @@ function ContradictionsPanel() {
           </EnterpriseButton>
         </div>
         {scanResult && (
-          <div className={cn('mx-6 mb-4 px-3 py-2 rounded text-xs', scanResult.count > 0 ? 'bg-stone-100 text-stone-700' : 'bg-stone-100 text-stone-800')}>
+          <div className={cn('mx-6 mb-4 px-3 py-2 rounded text-xs', scanResult.count > 0 ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700')}>
             {scanResult.message}
           </div>
         )}
@@ -651,8 +651,8 @@ function ContradictionsPanel() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
-          <MetricCard label="Total Findings" value={String(findings.length)} icon={AlertTriangle} iconClassName="bg-stone-100 text-stone-700" />
-          <MetricCard label="Unresolved" value={String(findings.filter((f: Record<string, unknown>) => f.reviewState === 'unresolved').length)} icon={XCircle} iconClassName="bg-stone-100 text-stone-600" />
+          <MetricCard label="Total Findings" value={String(findings.length)} icon={AlertTriangle} iconClassName="bg-red-100 text-red-600" />
+          <MetricCard label="Unresolved" value={String(findings.filter((f: Record<string, unknown>) => f.reviewState === 'unresolved').length)} icon={XCircle} iconClassName="bg-amber-100 text-amber-600" />
         </div>
         <div className="ml-4 flex-shrink-0">
           <EnterpriseButton onClick={() => handleScanProject()} disabled={scanning} size="sm" variant="secondary">
@@ -661,19 +661,19 @@ function ContradictionsPanel() {
         </div>
       </div>
       {scanResult && (
-        <div className={cn('px-3 py-2 rounded text-xs', scanResult.count > 0 ? 'bg-stone-100 text-stone-700' : 'bg-stone-100 text-stone-800')}>
+        <div className={cn('px-3 py-2 rounded text-xs', scanResult.count > 0 ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700')}>
           {scanResult.message}
         </div>
       )}
       <EnterpriseCard noPadding>
         <CardSection border={false}>
-          <CardHeader icon={AlertTriangle} iconClassName="bg-stone-100 text-stone-700" title="Contradiction Findings" subtitle="Structured-first detection with source classification" />
+          <CardHeader icon={AlertTriangle} iconClassName="bg-red-100 text-red-600" title="Contradiction Findings" subtitle="Structured-first detection with source classification" />
         </CardSection>
         {findings.slice(0, 15).map((f: Record<string, unknown>) => (
           <CardSection key={f.id as string}>
             <ListItem
               icon={AlertTriangle}
-              iconClassName={f.severity === 'critical' ? 'bg-stone-100 text-stone-700' : f.severity === 'high' ? 'bg-stone-100 text-stone-600' : 'bg-stone-100 text-stone-600'}
+              iconClassName={f.severity === 'critical' ? 'bg-red-100 text-red-600' : f.severity === 'high' ? 'bg-orange-100 text-orange-600' : 'bg-amber-100 text-amber-600'}
               title={f.title as string}
               subtitle={`${formatCategory(f.contradictionType as string)} · Source: ${formatCategory(f.sourceClassification as string)} · ${formatCategory(f.authorityState as string)}`}
               meta={
@@ -723,7 +723,7 @@ function OverlayRulesPanel() {
 
   if (isLoading) return <LoadingCards count={3} />;
 
-  const bodyIcon: Record<string, string> = { FDA: 'bg-stone-100 text-stone-600', EMA: 'bg-stone-100 text-stone-700', PMDA: 'bg-stone-100 text-stone-600', MHRA: 'bg-stone-100 text-stone-600' };
+  const bodyIcon: Record<string, string> = { FDA: 'bg-blue-100 text-blue-600', EMA: 'bg-green-100 text-green-600', PMDA: 'bg-purple-100 text-purple-600', MHRA: 'bg-amber-100 text-amber-600' };
   const authorityVariant: Record<string, 'default' | 'info' | 'success' | 'warning' | 'danger'> = {
     advisory_only: 'default', requires_review: 'info', requires_approval: 'warning', blocks_promotion: 'danger', requires_escalation: 'danger',
   };
@@ -759,10 +759,10 @@ function OverlayRulesPanel() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard label="Total Rules" value={String(rules.length)} icon={Layers} iconClassName="bg-stone-100 text-stone-600" />
-        <MetricCard label="Regulator Bodies" value={String(Object.keys(byBody).length)} icon={Globe} iconClassName="bg-stone-100 text-stone-700" />
-        <MetricCard label="Blocking Rules" value={String(rules.filter((r: Record<string, unknown>) => r.authorityOverride === 'blocks_promotion').length)} icon={Shield} iconClassName="bg-stone-100 text-stone-700" />
-        <MetricCard label="Active" value={String(rules.filter((r: Record<string, unknown>) => r.active !== false).length)} icon={CheckCircle} iconClassName="bg-stone-100 text-stone-700" />
+        <MetricCard label="Total Rules" value={String(rules.length)} icon={Layers} iconClassName="bg-blue-100 text-blue-600" />
+        <MetricCard label="Regulator Bodies" value={String(Object.keys(byBody).length)} icon={Globe} iconClassName="bg-green-100 text-green-600" />
+        <MetricCard label="Blocking Rules" value={String(rules.filter((r: Record<string, unknown>) => r.authorityOverride === 'blocks_promotion').length)} icon={Shield} iconClassName="bg-red-100 text-red-600" />
+        <MetricCard label="Active" value={String(rules.filter((r: Record<string, unknown>) => r.active !== false).length)} icon={CheckCircle} iconClassName="bg-emerald-100 text-emerald-600" />
       </div>
 
       {Object.entries(byBody).map(([body, bodyRules]) => (
@@ -779,7 +779,7 @@ function OverlayRulesPanel() {
             <CardSection key={r.id as string || r.ruleCode as string}>
               <ListItem
                 icon={Shield}
-                iconClassName={r.authorityOverride === 'blocks_promotion' ? 'bg-stone-100 text-stone-700' : r.authorityOverride === 'requires_approval' ? 'bg-stone-100 text-stone-600' : 'bg-stone-100 text-stone-600'}
+                iconClassName={r.authorityOverride === 'blocks_promotion' ? 'bg-red-100 text-red-600' : r.authorityOverride === 'requires_approval' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}
                 title={r.ruleName as string || r.ruleCode as string}
                 subtitle={`${formatCategory(r.contradictionType as string)} · Priority: ${r.priority ?? '—'} · ${r.regulatoryReference || 'No ref'}`}
                 meta={
@@ -865,19 +865,19 @@ function ImpactPanel() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard label="Total Dependencies" value={String(data.totalDependencies)} icon={Layers} iconClassName="bg-stone-100 text-stone-600" />
+        <MetricCard label="Total Dependencies" value={String(data.totalDependencies)} icon={Layers} iconClassName="bg-blue-100 text-blue-600" />
         <MetricCard
           label="Stale"
           value={String(data.staleDependencies)}
           icon={Clock}
-          iconClassName={data.staleDependencies > 0 ? 'bg-stone-100 text-stone-700' : 'bg-stone-100 text-stone-700'}
+          iconClassName={data.staleDependencies > 0 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}
         />
       </div>
 
       {/* Impact state breakdown */}
       {Object.keys(data.byImpactState).length > 0 && (
         <EnterpriseCard>
-          <CardHeader icon={AlertTriangle} iconClassName="bg-stone-100 text-stone-600" title="Impact States" subtitle="Governed objects requiring attention" />
+          <CardHeader icon={AlertTriangle} iconClassName="bg-amber-100 text-amber-600" title="Impact States" subtitle="Governed objects requiring attention" />
           <div className="flex flex-wrap gap-2 mt-3">
             {Object.entries(data.byImpactState).map(([state, count]: [string, number]) => (
               <StatusPill key={state} label={`${formatCategory(state)}: ${count}`} variant={impactVariant[state] ?? 'default'} dot />
@@ -890,13 +890,13 @@ function ImpactPanel() {
       {staleDeps.length > 0 && (
         <EnterpriseCard noPadding>
           <CardSection border={false}>
-            <CardHeader icon={Clock} iconClassName="bg-stone-100 text-stone-700" title="Stale Dependencies" subtitle="Upstream changes have invalidated these objects" />
+            <CardHeader icon={Clock} iconClassName="bg-red-100 text-red-600" title="Stale Dependencies" subtitle="Upstream changes have invalidated these objects" />
           </CardSection>
           {staleDeps.slice(0, 10).map((dep: Record<string, unknown>) => (
             <CardSection key={dep.id as string}>
               <ListItem
                 icon={AlertTriangle}
-                iconClassName="bg-stone-100 text-stone-600"
+                iconClassName="bg-amber-100 text-amber-600"
                 title={`${formatCategory(dep.targetType as string)}: ${dep.targetLabel ?? dep.targetId}`}
                 subtitle={`Stale because: ${dep.staleReason ?? 'upstream changed'} · Source: ${formatCategory(dep.sourceType as string)}`}
                 meta={
@@ -913,7 +913,7 @@ function ImpactPanel() {
       {data.recentPropagations?.length > 0 && (
         <EnterpriseCard noPadding>
           <CardSection border={false}>
-            <CardHeader icon={Activity} iconClassName="bg-stone-100 text-stone-600" title="Recent Propagation Events" subtitle="System reactivity audit trail" />
+            <CardHeader icon={Activity} iconClassName="bg-purple-100 text-purple-600" title="Recent Propagation Events" subtitle="System reactivity audit trail" />
           </CardSection>
           {data.recentPropagations.slice(0, 8).map((p: Record<string, unknown>, i: number) => (
             <CardSection key={i}>
@@ -1010,7 +1010,7 @@ export default function RegulatoryPrecedentIntelligence({ onClose, onContextChan
         )}
         <SectionHeader
           icon={Shield}
-          iconClassName="bg-stone-100 text-stone-600"
+          iconClassName="bg-blue-100 text-blue-600"
           title="Regulatory Precedent Intelligence"
           subtitle="Precedent patterns · Assumptions · Decisions · Contradictions · Overlays"
           level={1}
@@ -1027,7 +1027,7 @@ export default function RegulatoryPrecedentIntelligence({ onClose, onContextChan
               className={cn(
                 'px-4 py-3 text-sm font-medium transition-colors border-b-2',
                 activeTab === tab.key
-                  ? 'text-stone-600 border-stone-800'
+                  ? 'text-blue-600 border-stone-800'
                   : 'text-stone-500 border-transparent hover:text-stone-700 hover:border-stone-300'
               )}
             >

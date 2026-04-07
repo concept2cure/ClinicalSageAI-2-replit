@@ -172,7 +172,7 @@ export function MessageBubble({ text, typing, actions, className }: MessageBubbl
             <button
               key={action.label}
               onClick={action.onClick}
-              className="text-sm text-stone-600 hover:underline"
+              className="text-sm text-blue-600 hover:underline"
             >
               {action.label}
             </button>
@@ -224,7 +224,7 @@ export function ContextualTip({ tip, onDismiss, onExpand, autoHide = 10000 }: Co
         Dismiss
       </button>
       {onExpand && (
-        <button onClick={onExpand} className="text-stone-600 hover:underline ml-2">
+        <button onClick={onExpand} className="text-blue-600 hover:underline ml-2">
           Tell me more
         </button>
       )}
@@ -252,7 +252,7 @@ export function QuickAction({ actions, visible }: QuickActionProps) {
           <button
             key={action.label}
             onClick={action.onClick}
-            className="text-sm text-stone-600 hover:underline text-left"
+            className="text-sm text-blue-600 hover:underline text-left"
           >
             {action.label}
           </button>

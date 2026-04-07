@@ -236,6 +236,19 @@ export interface IntelligenceDashboard {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
+ * Unified intelligence dashboard — all signals in one request.
+ */
+export function useIntelligenceDashboard(projectId: number | string | null) {
+  return useQuery<IntelligenceDashboard>({
+    queryKey: intelligenceKeys.dashboard(projectId ?? 0),
+    queryFn: () => apiFetch(`/api/intelligence/projects/${projectId}/dashboard`),
+    enabled: !!projectId,
+    staleTime: 60_000, // 1 minute
+    refetchOnWindowFocus: false,
+  });
+}
+
+/**
  * Recommendations for a project.
  */
 export function useRecommendations(projectId: number | string | null) {

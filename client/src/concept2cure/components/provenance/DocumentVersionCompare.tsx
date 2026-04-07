@@ -92,14 +92,14 @@ const WordDiffView: React.FC<{ textA: string; textB: string }> = ({ textA, textB
       {changes.map((part, i) => {
         if (part.added) {
           return (
-            <span key={i} className="bg-stone-100 text-stone-900 rounded px-0.5">
+            <span key={i} className="bg-emerald-100 text-emerald-900 rounded px-0.5">
               {part.value}
             </span>
           );
         }
         if (part.removed) {
           return (
-            <span key={i} className="bg-stone-100 text-stone-900 line-through rounded px-0.5">
+            <span key={i} className="bg-red-100 text-red-900 line-through rounded px-0.5">
               {part.value}
             </span>
           );
@@ -145,7 +145,7 @@ const SideBySideView: React.FC<{ textA: string; textB: string }> = ({ textA, tex
             key={i}
             className={`px-2 py-0.5 min-h-[1.4em] ${
               p.type === 'removed'
-                ? 'bg-stone-100 text-stone-800'
+                ? 'bg-red-50 text-red-800'
                 : p.type === 'added'
                   ? 'bg-stone-50 text-stone-400'
                   : ''
@@ -165,7 +165,7 @@ const SideBySideView: React.FC<{ textA: string; textB: string }> = ({ textA, tex
             key={i}
             className={`px-2 py-0.5 min-h-[1.4em] ${
               p.type === 'added'
-                ? 'bg-stone-100 text-stone-800'
+                ? 'bg-emerald-50 text-emerald-800'
                 : p.type === 'removed'
                   ? 'bg-stone-50 text-stone-400'
                   : ''
@@ -190,8 +190,8 @@ const DiffStats: React.FC<{ textA: string; textB: string }> = ({ textA, textB })
 
   return (
     <div className="flex items-center gap-3 text-xs">
-      <span className="text-stone-700">+{added} added</span>
-      <span className="text-stone-700">−{removed} removed</span>
+      <span className="text-emerald-600">+{added} added</span>
+      <span className="text-red-600">−{removed} removed</span>
       <span className="text-stone-400">{unchanged} unchanged</span>
     </div>
   );
@@ -345,7 +345,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
       <div className="h-full flex flex-col bg-white border-l border-stone-200">
         <div className="flex items-center justify-between px-3 py-2 border-b border-stone-200">
           <span className="text-xs font-semibold text-stone-700 flex items-center gap-1.5">
-            <GitCompare className="w-4 h-4 text-stone-500" /> Version Compare
+            <GitCompare className="w-4 h-4 text-purple-500" /> Version Compare
           </span>
           <button onClick={onClose} className="text-stone-400 hover:text-stone-600">
             <X className="w-4 h-4" />
@@ -353,7 +353,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
         </div>
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
-            <AlertTriangle className="w-5 h-5 text-stone-400 mx-auto mb-2" />
+            <AlertTriangle className="w-5 h-5 text-amber-400 mx-auto mb-2" />
             <p className="text-xs text-stone-500">
               {error ||
                 'No versions available for comparison. Save document edits to create version history for regulatory change control.'}
@@ -369,7 +369,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-stone-200 bg-stone-50 shrink-0">
         <div className="flex items-center gap-2">
-          <GitCompare className="w-4 h-4 text-stone-500" />
+          <GitCompare className="w-4 h-4 text-purple-500" />
           <span className="text-xs font-semibold text-stone-900">Version Compare</span>
         </div>
         <button onClick={onClose} className="text-stone-400 hover:text-stone-600">
@@ -457,7 +457,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
                 <button
                   onClick={() => handleReviewImpact(versionA, versionB)}
                   disabled={reviewingImpact}
-                  className="px-2 py-0.5 text-xs rounded bg-blue-50 text-blue-600 hover:bg-blue-100 disabled:opacity-60 flex items-center gap-0.5 font-medium"
+                  className="px-2 py-0.5 text-xs rounded bg-[#FBF0EB] text-[#D97757] hover:bg-[#F5E1D6] disabled:opacity-60 flex items-center gap-0.5 font-medium"
                 >
                   {reviewingImpact ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -472,7 +472,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
                 <button
                   onClick={() => handleRollback(versionA)}
                   disabled={rollingBack}
-                  className="px-2 py-0.5 text-xs rounded bg-stone-100 text-stone-800 hover:bg-stone-200 disabled:opacity-60 flex items-center gap-0.5 font-medium"
+                  className="px-2 py-0.5 text-xs rounded bg-amber-100 text-amber-800 hover:bg-amber-200 disabled:opacity-60 flex items-center gap-0.5 font-medium"
                 >
                   {rollingBack ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -486,7 +486,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
                 onClick={() => setViewMode('side-by-side')}
                 className={`px-2 py-0.5 text-xs rounded ${
                   viewMode === 'side-by-side'
-                    ? 'bg-stone-200 text-stone-700'
+                    ? 'bg-purple-100 text-purple-700'
                     : 'text-stone-400 hover:text-stone-600'
                 }`}
               >
@@ -497,7 +497,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
                 onClick={() => setViewMode('unified')}
                 className={`px-2 py-0.5 text-xs rounded ${
                   viewMode === 'unified'
-                    ? 'bg-stone-200 text-stone-700'
+                    ? 'bg-purple-100 text-purple-700'
                     : 'text-stone-400 hover:text-stone-600'
                 }`}
               >
@@ -512,7 +512,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
       {/* Rollback result banner */}
       {rollbackResult && (
         <div
-          className={`px-3 py-1.5 text-xs flex items-center gap-1.5 border-b ${rollbackResult.success ? 'bg-stone-100 border-stone-200 text-stone-800' : 'bg-stone-100 border-stone-200 text-stone-800'}`}
+          className={`px-3 py-1.5 text-xs flex items-center gap-1.5 border-b ${rollbackResult.success ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}
         >
           {rollbackResult.success ? (
             <CheckCircle className="w-3.5 h-3.5" />
@@ -525,9 +525,9 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
 
       {/* Regulatory Impact Review result */}
       {impactResult && (
-        <div className="border-b border-stone-200 bg-stone-50">
-          <div className="px-3 py-2 flex items-center justify-between border-b border-stone-100">
-            <span className="text-xs font-semibold text-blue-600 flex items-center gap-1.5">
+        <div className="border-b border-stone-200 bg-[#FAF9F5]">
+          <div className="px-3 py-2 flex items-center justify-between border-b border-[#F5F4EF]">
+            <span className="text-xs font-semibold text-[#D97757] flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" />
               Regulatory Impact Review
             </span>
@@ -536,7 +536,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
                 <button
                   onClick={() => handleReviewImpact(versionA, versionB, true)}
                   disabled={reviewingImpact}
-                  className="px-2 py-0.5 text-xs rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 flex items-center gap-0.5 font-medium"
+                  className="px-2 py-0.5 text-xs rounded bg-[#D97757] text-white hover:bg-[#C56847] disabled:opacity-60 flex items-center gap-0.5 font-medium"
                 >
                   Save as Artifact
                 </button>
@@ -553,7 +553,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
             {impactResult.content}
           </div>
           {impactResult.savedId && (
-            <div className="px-3 py-1.5 border-t border-stone-100 text-xs text-stone-800 bg-stone-100 flex items-center gap-1">
+            <div className="px-3 py-1.5 border-t border-[#F5F4EF] text-xs text-emerald-700 bg-emerald-50 flex items-center gap-1">
               <CheckCircle className="w-3.5 h-3.5" />
               Saved as governed artifact #{impactResult.savedId}
             </div>
@@ -586,7 +586,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
           {onOpenProvenance && (
             <button
               onClick={onOpenProvenance}
-              className="flex-1 flex items-center justify-center gap-1 px-2 py-1 text-xs rounded bg-stone-100 text-stone-700 hover:bg-stone-200 font-medium"
+              className="flex-1 flex items-center justify-center gap-1 px-2 py-1 text-xs rounded bg-violet-50 text-stone-700 hover:bg-violet-100 font-medium"
             >
               Provenance
             </button>
@@ -594,7 +594,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
           {onOpenAudit && (
             <button
               onClick={onOpenAudit}
-              className="flex-1 flex items-center justify-center gap-1 px-2 py-1 text-xs rounded bg-stone-100 text-stone-800 hover:bg-stone-100 font-medium"
+              className="flex-1 flex items-center justify-center gap-1 px-2 py-1 text-xs rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-medium"
             >
               Audit Report
             </button>

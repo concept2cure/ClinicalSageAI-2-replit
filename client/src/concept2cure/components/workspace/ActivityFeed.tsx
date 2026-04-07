@@ -66,8 +66,8 @@ const ACTIVITY_CONFIG: Record<ActivityType, {
 }> = {
   created: {
     icon: FileText,
-    color: 'text-stone-900',
-    bgColor: 'bg-stone-100',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-50',
     verb: 'created',
   },
   edited: {
@@ -78,44 +78,44 @@ const ACTIVITY_CONFIG: Record<ActivityType, {
   },
   status_change: {
     icon: ArrowRight,
-    color: 'text-stone-900',
-    bgColor: 'bg-stone-100',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-50',
     verb: 'changed status of',
   },
   commented: {
     icon: MessageSquare,
-    color: 'text-stone-900',
-    bgColor: 'bg-stone-100',
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-50',
     verb: 'commented on',
   },
   review_requested: {
     icon: Eye,
-    color: 'text-stone-900',
-    bgColor: 'bg-stone-100',
+    color: 'text-violet-500',
+    bgColor: 'bg-violet-50',
     verb: 'requested review for',
   },
   review_completed: {
     icon: CheckCircle,
-    color: 'text-stone-900',
-    bgColor: 'bg-stone-100',
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-50',
     verb: 'completed review of',
   },
   ai_action: {
     icon: Sparkles,
-    color: 'text-stone-900',
-    bgColor: 'bg-stone-100',
+    color: 'text-violet-500',
+    bgColor: 'bg-violet-50',
     verb: 'used AI on',
   },
   exported: {
     icon: Upload,
-    color: 'text-stone-900',
-    bgColor: 'bg-stone-100',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-50',
     verb: 'exported',
   },
   locked: {
     icon: Lock,
-    color: 'text-stone-700',
-    bgColor: 'bg-stone-100',
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50',
     verb: 'locked',
   },
 };
@@ -219,7 +219,7 @@ export function ActivityFeed({
                       {config.verb}{' '}
                       <button
                         onClick={() => item.documentId && onOpenDocument?.(item.documentId)}
-                        className="font-medium text-stone-600 hover:text-stone-700 hover:underline"
+                        className="font-medium text-blue-600 hover:text-stone-700 hover:underline"
                       >
                         {item.documentTitle}
                       </button>

@@ -167,7 +167,7 @@ const STATUS_CONFIG: Record<IPEntryStatus, { label: string; color: string; bgCol
 const ENVIRONMENT_CONFIG: Record<Environment, { label: string; color: string }> = {
   production: { label: 'Production', color: '#dc2626' },
   staging: { label: 'Staging', color: '#d97706' },
-  development: { label: 'Development', color: '#57534e' },
+  development: { label: 'Development', color: '#5585b3' },
   all: { label: 'All Environments', color: '#8a8880' },
 };
 
@@ -397,25 +397,11 @@ const AllowlistStats: React.FC<AllowlistStatsProps> = ({ entries, blocked }) => 
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-stone-500">Active Entries</p>
-              <p className="text-2xl font-bold text-stone-700">{stats.active}</p>
+              <p className="text-sm text-gray-500">Active Entries</p>
+              <p className="text-2xl font-bold text-green-600">{stats.active}</p>
             </div>
-            <div className="p-3 bg-stone-100 rounded-lg">
-              <ShieldCheck className="h-6 w-6 text-stone-700" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-stone-500">Expiring Soon</p>
-              <p className="text-2xl font-bold text-stone-600">{stats.expiringSoon}</p>
-            </div>
-            <div className="p-3 bg-stone-100 rounded-lg">
-              <Clock className="h-6 w-6 text-stone-600" />
+            <div className="p-3 bg-green-100 rounded-lg">
+              <ShieldCheck className="h-6 w-6 text-green-600" />
             </div>
           </div>
         </CardContent>
@@ -425,11 +411,11 @@ const AllowlistStats: React.FC<AllowlistStatsProps> = ({ entries, blocked }) => 
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-stone-500">Blocked IPs</p>
-              <p className="text-2xl font-bold text-stone-700">{stats.totalBlocked}</p>
+              <p className="text-sm text-gray-500">Expiring Soon</p>
+              <p className="text-2xl font-bold text-amber-600">{stats.expiringSoon}</p>
             </div>
-            <div className="p-3 bg-stone-100 rounded-lg">
-              <Ban className="h-6 w-6 text-stone-700" />
+            <div className="p-3 bg-amber-100 rounded-lg">
+              <Clock className="h-6 w-6 text-amber-600" />
             </div>
           </div>
         </CardContent>
@@ -439,11 +425,25 @@ const AllowlistStats: React.FC<AllowlistStatsProps> = ({ entries, blocked }) => 
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-stone-500">Auto-Blocked</p>
-              <p className="text-2xl font-bold text-stone-600">{stats.autoBlocked}</p>
+              <p className="text-sm text-gray-500">Blocked IPs</p>
+              <p className="text-2xl font-bold text-red-600">{stats.totalBlocked}</p>
             </div>
-            <div className="p-3 bg-stone-100 rounded-lg">
-              <Zap className="h-6 w-6 text-stone-600" />
+            <div className="p-3 bg-red-100 rounded-lg">
+              <Ban className="h-6 w-6 text-red-600" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Auto-Blocked</p>
+              <p className="text-2xl font-bold text-purple-600">{stats.autoBlocked}</p>
+            </div>
+            <div className="p-3 bg-purple-100 rounded-lg">
+              <Zap className="h-6 w-6 text-purple-600" />
             </div>
           </div>
         </CardContent>
@@ -525,7 +525,7 @@ const AddIPModal: React.FC<AddIPModalProps> = ({ open, onClose, onSubmit }) => {
                   <SelectItem key={key} value={key}>
                     <div>
                       <span className="font-medium">{config.label}</span>
-                      <p className="text-xs text-stone-500">{config.description}</p>
+                      <p className="text-xs text-gray-500">{config.description}</p>
                     </div>
                   </SelectItem>
                 ))}
@@ -602,7 +602,7 @@ const AddIPModal: React.FC<AddIPModalProps> = ({ open, onClose, onSubmit }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium">Set Expiration</p>
-              <p className="text-sm text-stone-500">Automatically expire this entry after a date</p>
+              <p className="text-sm text-gray-500">Automatically expire this entry after a date</p>
             </div>
             <Switch
               checked={formData.hasExpiry}
@@ -692,7 +692,7 @@ const AllowlistTable: React.FC<AllowlistTableProps> = ({
           </div>
           <div className="flex items-center gap-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search entries..."
                 value={searchQuery}
@@ -738,8 +738,8 @@ const AllowlistTable: React.FC<AllowlistTableProps> = ({
               <TableRow key={entry.id}>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Network className="h-4 w-4 text-stone-400" />
-                    <code className="text-sm bg-stone-100 px-2 py-0.5 rounded">
+                    <Network className="h-4 w-4 text-gray-400" />
+                    <code className="text-sm bg-gray-100 px-2 py-0.5 rounded">
                       {entry.ipAddress}
                     </code>
                   </div>
@@ -797,7 +797,7 @@ const AllowlistTable: React.FC<AllowlistTableProps> = ({
                   {entry.expiresAt ? (
                     <span className="text-sm">{formatDate(entry.expiresAt)}</span>
                   ) : (
-                    <span className="text-sm text-stone-400">Never</span>
+                    <span className="text-sm text-gray-400">Never</span>
                   )}
                 </TableCell>
                 <TableCell className="text-right">
@@ -815,7 +815,7 @@ const AllowlistTable: React.FC<AllowlistTableProps> = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-stone-700 hover:text-stone-800"
+                      className="text-red-600 hover:text-red-700"
                       onClick={() => onDelete(entry.id)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -828,7 +828,7 @@ const AllowlistTable: React.FC<AllowlistTableProps> = ({
         </Table>
 
         {filteredEntries.length === 0 && (
-          <div className="text-center py-8 text-stone-500">
+          <div className="text-center py-8 text-gray-500">
             <Network className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>No entries found matching your criteria</p>
           </div>
@@ -858,8 +858,8 @@ const BlocklistTable: React.FC<BlocklistTableProps> = ({ blocked, onUnblock }) =
     <Card>
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-stone-100 rounded-lg">
-            <Ban className="h-5 w-5 text-stone-700" />
+          <div className="p-2 bg-red-100 rounded-lg">
+            <Ban className="h-5 w-5 text-red-600" />
           </div>
           <div>
             <CardTitle>Blocked IPs</CardTitle>
@@ -884,7 +884,7 @@ const BlocklistTable: React.FC<BlocklistTableProps> = ({ blocked, onUnblock }) =
             {blocked.map(entry => (
               <TableRow key={entry.id}>
                 <TableCell>
-                  <code className="text-sm bg-stone-100 text-stone-800 px-2 py-0.5 rounded">
+                  <code className="text-sm bg-red-50 text-red-700 px-2 py-0.5 rounded">
                     {entry.ipAddress}
                   </code>
                 </TableCell>
@@ -904,7 +904,7 @@ const BlocklistTable: React.FC<BlocklistTableProps> = ({ blocked, onUnblock }) =
                   )}
                 </TableCell>
                 <TableCell>
-                  <span className="text-sm font-medium text-stone-700">{entry.attemptCount}</span>
+                  <span className="text-sm font-medium text-red-600">{entry.attemptCount}</span>
                 </TableCell>
                 <TableCell>
                   {entry.autoBlocked ? (
@@ -928,8 +928,8 @@ const BlocklistTable: React.FC<BlocklistTableProps> = ({ blocked, onUnblock }) =
         </Table>
 
         {blocked.length === 0 && (
-          <div className="text-center py-8 text-stone-500">
-            <ShieldCheck className="h-12 w-12 mx-auto mb-4 text-stone-900" />
+          <div className="text-center py-8 text-gray-500">
+            <ShieldCheck className="h-12 w-12 mx-auto mb-4 text-green-500" />
             <p>No blocked IP addresses</p>
           </div>
         )}
@@ -948,8 +948,8 @@ const GeoRestrictionsPanel: React.FC<GeoRestrictionsProps> = ({ restrictions, on
     <Card>
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-stone-100 rounded-lg">
-            <Globe className="h-5 w-5 text-stone-600" />
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <Globe className="h-5 w-5 text-blue-600" />
           </div>
           <div>
             <CardTitle>Geographic Restrictions</CardTitle>
@@ -963,16 +963,16 @@ const GeoRestrictionsPanel: React.FC<GeoRestrictionsProps> = ({ restrictions, on
             key={restriction.id}
             className={`p-4 border rounded-lg ${
               restriction.type === 'allow'
-                ? 'border-stone-200 bg-stone-100/50'
-                : 'border-stone-200 bg-stone-100/50'
+                ? 'border-green-200 bg-green-50/50'
+                : 'border-red-200 bg-red-50/50'
             }`}
           >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 {restriction.type === 'allow' ? (
-                  <CheckCircle className="h-5 w-5 text-stone-700" />
+                  <CheckCircle className="h-5 w-5 text-green-600" />
                 ) : (
-                  <XCircle className="h-5 w-5 text-stone-700" />
+                  <XCircle className="h-5 w-5 text-red-600" />
                 )}
                 <span className="font-medium capitalize">
                   {restriction.type === 'allow' ? 'Allowed Countries' : 'Blocked Countries'}
@@ -984,7 +984,7 @@ const GeoRestrictionsPanel: React.FC<GeoRestrictionsProps> = ({ restrictions, on
               />
             </div>
             {restriction.description && (
-              <p className="text-sm text-stone-600 mb-3">{restriction.description}</p>
+              <p className="text-sm text-gray-600 mb-3">{restriction.description}</p>
             )}
             <div className="flex flex-wrap gap-2">
               {restriction.countries.map(country => (
@@ -1017,22 +1017,22 @@ const AccessLogs: React.FC<AccessLogsProps> = ({ logs }) => {
   const getActionIcon = (action: AccessLog['action']) => {
     switch (action) {
       case 'allowed':
-        return <CheckCircle className="h-4 w-4 text-stone-900" />;
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'blocked':
-        return <XCircle className="h-4 w-4 text-stone-900" />;
+        return <XCircle className="h-4 w-4 text-red-500" />;
       case 'challenged':
-        return <AlertTriangle className="h-4 w-4 text-stone-900" />;
+        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
     }
   };
 
   const getActionBadge = (action: AccessLog['action']) => {
     switch (action) {
       case 'allowed':
-        return <Badge className="bg-stone-100 text-stone-800">Allowed</Badge>;
+        return <Badge className="bg-green-100 text-green-700">Allowed</Badge>;
       case 'blocked':
-        return <Badge className="bg-stone-100 text-stone-800">Blocked</Badge>;
+        return <Badge className="bg-red-100 text-red-700">Blocked</Badge>;
       case 'challenged':
-        return <Badge className="bg-stone-100 text-stone-700">Challenged</Badge>;
+        return <Badge className="bg-amber-100 text-amber-700">Challenged</Badge>;
     }
   };
 
@@ -1049,8 +1049,8 @@ const AccessLogs: React.FC<AccessLogsProps> = ({ logs }) => {
     <Card>
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-stone-100 rounded-lg">
-            <History className="h-5 w-5 text-stone-600" />
+          <div className="p-2 bg-gray-100 rounded-lg">
+            <History className="h-5 w-5 text-gray-600" />
           </div>
           <div>
             <CardTitle>Access Logs</CardTitle>
@@ -1065,13 +1065,13 @@ const AccessLogs: React.FC<AccessLogsProps> = ({ logs }) => {
               {getActionIcon(log.action)}
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <code className="text-sm bg-stone-100 px-2 py-0.5 rounded">{log.ipAddress}</code>
+                  <code className="text-sm bg-gray-100 px-2 py-0.5 rounded">{log.ipAddress}</code>
                   {getActionBadge(log.action)}
                 </div>
-                <p className="text-sm text-stone-600">{log.reason}</p>
-                {log.userName && <p className="text-xs text-stone-500">User: {log.userName}</p>}
+                <p className="text-sm text-gray-600">{log.reason}</p>
+                {log.userName && <p className="text-xs text-gray-500">User: {log.userName}</p>}
               </div>
-              <div className="text-right text-sm text-stone-500">
+              <div className="text-right text-sm text-gray-500">
                 <p>{formatTime(log.timestamp)}</p>
                 {log.city && log.country && (
                   <p className="text-xs">
@@ -1148,7 +1148,7 @@ export const IPAllowlistManagement: React.FC = () => {
             <Shield className="h-6 w-6" />
             IP Allowlist Management
           </h1>
-          <p className="text-stone-500">Manage trusted IP addresses and network access controls</p>
+          <p className="text-gray-500">Manage trusted IP addresses and network access controls</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline">

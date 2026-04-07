@@ -89,12 +89,12 @@ export interface TraceabilityLinkingProps {
 
 const DocumentTypeBadge: React.FC<{ type: SourceDocument['documentType'] }> = ({ type }) => {
   const config = {
-    clinical_study: { label: 'Clinical Study', color: 'bg-stone-200 text-stone-700' },
-    regulatory_guidance: { label: 'Guidance', color: 'bg-stone-100 text-stone-700' },
-    literature: { label: 'Literature', color: 'bg-stone-100 text-stone-800' },
-    internal_sop: { label: 'SOP', color: 'bg-stone-100 text-stone-700' },
-    device_spec: { label: 'Device Spec', color: 'bg-stone-100 text-stone-700' },
-    test_report: { label: 'Test Report', color: 'bg-stone-100 text-stone-700' },
+    clinical_study: { label: 'Clinical Study', color: 'bg-purple-100 text-purple-700' },
+    regulatory_guidance: { label: 'Guidance', color: 'bg-blue-100 text-stone-700' },
+    literature: { label: 'Literature', color: 'bg-green-100 text-green-700' },
+    internal_sop: { label: 'SOP', color: 'bg-orange-100 text-orange-700' },
+    device_spec: { label: 'Device Spec', color: 'bg-cyan-100 text-cyan-700' },
+    test_report: { label: 'Test Report', color: 'bg-yellow-100 text-yellow-700' },
     other: { label: 'Other', color: 'bg-stone-100 text-stone-700' },
   };
 
@@ -113,9 +113,9 @@ const DocumentTypeBadge: React.FC<{ type: SourceDocument['documentType'] }> = ({
 
 const VerificationBadge: React.FC<{ status: TraceabilityLink['verificationStatus'] }> = ({ status }) => {
   const config = {
-    valid: { icon: CheckCircle, label: 'Valid', color: 'text-stone-900' },
-    outdated: { icon: RefreshCw, label: 'Outdated', color: 'text-stone-900' },
-    broken: { icon: AlertTriangle, label: 'Broken', color: 'text-stone-900' },
+    valid: { icon: CheckCircle, label: 'Valid', color: 'text-green-500' },
+    outdated: { icon: RefreshCw, label: 'Outdated', color: 'text-yellow-500' },
+    broken: { icon: AlertTriangle, label: 'Broken', color: 'text-red-500' },
     pending: { icon: RefreshCw, label: 'Pending', color: 'text-stone-400 animate-spin' },
   };
 
@@ -152,7 +152,7 @@ const SourceDocumentCard: React.FC<SourceDocumentCardProps> = ({
     <div
       className={`border rounded-lg transition-all ${
         isSelected
-          ? 'border-stone-600 bg-stone-100'
+          ? 'border-stone-600 bg-blue-50'
           : 'border-stone-200 bg-white hover:border-stone-300'
       }`}
     >
@@ -161,13 +161,13 @@ const SourceDocumentCard: React.FC<SourceDocumentCardProps> = ({
         className="w-full p-3 text-left"
       >
         <div className="flex items-start gap-3">
-          <FileText className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isSelected ? 'text-stone-900' : 'text-stone-400'}`} />
+          <FileText className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isSelected ? 'text-blue-500' : 'text-stone-400'}`} />
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <h4 className="font-medium text-stone-900 line-clamp-1">
                 {source.title}
               </h4>
-              {isSelected && <CheckCircle className="w-4 h-4 text-stone-900 flex-shrink-0" />}
+              {isSelected && <CheckCircle className="w-4 h-4 text-blue-500 flex-shrink-0" />}
             </div>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <DocumentTypeBadge type={source.documentType} />
@@ -224,7 +224,7 @@ const SourceDocumentCard: React.FC<SourceDocumentCardProps> = ({
             {onPreview && (
               <button
                 onClick={onPreview}
-                className="flex items-center gap-1 mt-2 text-stone-600 hover:text-stone-700"
+                className="flex items-center gap-1 mt-2 text-blue-600 hover:text-stone-700"
               >
                 <Eye className="w-3 h-3" />
                 Preview full document
@@ -262,7 +262,7 @@ const LinkCard: React.FC<LinkCardProps> = ({ link, source, onVerify, onRemove, o
       <div className="flex items-start justify-between gap-2">
         <button
           onClick={onClick}
-          className="flex-1 text-left hover:text-stone-600 transition-colors duration-150"
+          className="flex-1 text-left hover:text-blue-600 transition-colors duration-150"
         >
           <p className="text-sm text-stone-700 line-clamp-2">
             "{link.linkedText}"
@@ -290,14 +290,14 @@ const LinkCard: React.FC<LinkCardProps> = ({ link, source, onVerify, onRemove, o
         <div className="flex items-center gap-1">
           <button
             onClick={onVerify}
-            className="p-1 text-stone-400 hover:text-stone-900 rounded"
+            className="p-1 text-stone-400 hover:text-blue-500 rounded"
             title="Verify link"
           >
             <RefreshCw className="w-3 h-3" />
           </button>
           <button
             onClick={onRemove}
-            className="p-1 text-stone-400 hover:text-stone-900 rounded"
+            className="p-1 text-stone-400 hover:text-red-500 rounded"
             title="Remove link"
           >
             <Trash2 className="w-3 h-3" />
@@ -333,7 +333,7 @@ const CitationTypeSelector: React.FC<CitationTypeSelectorProps> = ({ value, onCh
           onClick={() => onChange(option.value)}
           className={`p-2 text-left rounded-lg border transition-colors ${
             value === option.value
-              ? 'border-stone-600 bg-stone-100'
+              ? 'border-stone-600 bg-blue-50'
               : 'border-stone-200 hover:border-stone-300'
           }`}
         >
@@ -427,14 +427,14 @@ export const TraceabilityLinking: React.FC<TraceabilityLinkingProps> = ({
       {/* Header */}
       <div className="p-4 border-b border-stone-200 bg-white">
         <div className="flex items-center gap-2 mb-3">
-          <Link className="w-5 h-5 text-stone-900" />
+          <Link className="w-5 h-5 text-blue-500" />
           <h2 className="font-semibold text-stone-900">Traceability Linking</h2>
         </div>
 
         {/* Selected Text Preview */}
         {selectedText && (
-          <div className="mb-3 p-3 bg-stone-100 border border-stone-200 rounded-lg">
-            <p className="text-xs text-stone-600 mb-1">Selected text to link:</p>
+          <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-xs text-blue-600 mb-1">Selected text to link:</p>
             <p className="text-sm text-stone-700 line-clamp-2">"{selectedText}"</p>
           </div>
         )}

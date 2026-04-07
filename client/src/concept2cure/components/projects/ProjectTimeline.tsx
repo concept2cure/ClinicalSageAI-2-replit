@@ -135,24 +135,24 @@ const getStatusColors = (status: PhaseStatus) => {
   switch (status) {
     case 'completed':
       return {
-        bg: 'bg-stone-900',
-        border: 'border-stone-900',
-        text: 'text-stone-800',
-        line: 'bg-stone-900',
+        bg: 'bg-emerald-500',
+        border: 'border-emerald-500',
+        text: 'text-emerald-700',
+        line: 'bg-emerald-500',
       };
     case 'current':
       return {
         bg: 'bg-stone-600',
         border: 'border-stone-600',
         text: 'text-stone-700',
-        line: 'bg-stone-200',
+        line: 'bg-blue-200',
       };
     case 'blocked':
       return {
-        bg: 'bg-stone-900',
-        border: 'border-stone-900',
-        text: 'text-stone-800',
-        line: 'bg-stone-200',
+        bg: 'bg-red-500',
+        border: 'border-red-500',
+        text: 'text-red-700',
+        line: 'bg-red-200',
       };
     case 'skipped':
       return {
@@ -339,7 +339,7 @@ const FullTimeline: React.FC<{
                 className={cn(
                   'w-full flex items-start gap-4 p-4 rounded-xl transition-all duration-150',
                   'text-left',
-                  isCurrent && 'bg-stone-100 border border-stone-200',
+                  isCurrent && 'bg-blue-50 border border-blue-200',
                   !isCurrent && 'hover:bg-stone-50',
                   onPhaseClick && 'cursor-pointer'
                 )}
@@ -366,12 +366,12 @@ const FullTimeline: React.FC<{
                       {phase.name}
                     </h4>
                     {isCurrent && (
-                      <span className="text-xs font-medium text-stone-700 bg-stone-100 px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-medium text-stone-700 bg-blue-100 px-2 py-0.5 rounded-full">
                         In Progress
                       </span>
                     )}
                     {phase.status === 'blocked' && (
-                      <span className="text-xs font-medium text-stone-800 bg-stone-100 px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-medium text-red-700 bg-red-100 px-2 py-0.5 rounded-full">
                         Blocked
                       </span>
                     )}
@@ -388,7 +388,7 @@ const FullTimeline: React.FC<{
                         <span>Progress</span>
                         <span>{phase.progress}%</span>
                       </div>
-                      <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-blue-100 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-stone-600 rounded-full transition-all duration-150"
                           style={{ width: `${phase.progress}%` }}
@@ -399,7 +399,7 @@ const FullTimeline: React.FC<{
                   
                   {/* Blocked reason */}
                   {phase.status === 'blocked' && phase.blockedReason && (
-                    <div className="mt-2 flex items-center gap-2 text-sm text-stone-700">
+                    <div className="mt-2 flex items-center gap-2 text-sm text-red-600">
                       <AlertCircle className="w-4 h-4" />
                       {phase.blockedReason}
                     </div>
@@ -418,8 +418,8 @@ const FullTimeline: React.FC<{
                           className={cn(
                             'flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs',
                             'border transition-colors duration-150',
-                            doc.status === 'approved' && 'bg-stone-100 border-stone-200 text-stone-800',
-                            doc.status === 'review' && 'bg-stone-100 border-stone-200 text-stone-700',
+                            doc.status === 'approved' && 'bg-emerald-50 border-emerald-200 text-emerald-700',
+                            doc.status === 'review' && 'bg-amber-50 border-amber-200 text-amber-700',
                             doc.status === 'draft' && 'bg-stone-50 border-stone-200 text-stone-700',
                             'hover:opacity-80'
                           )}
@@ -441,7 +441,7 @@ const FullTimeline: React.FC<{
                     )}
                     {phase.completedDate && (
                       <span className="flex items-center gap-1">
-                        <Check className="w-3 h-3 text-stone-900" />
+                        <Check className="w-3 h-3 text-emerald-500" />
                         Completed {new Date(phase.completedDate).toLocaleDateString()}
                       </span>
                     )}

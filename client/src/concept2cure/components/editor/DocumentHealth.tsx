@@ -233,21 +233,21 @@ export const DocumentHealth: React.FC<DocumentHealthProps> = ({
   const totalIssues = dimensions.reduce((acc, d) => acc + d.issues.length, 0);
 
   const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-stone-700';
-    if (score >= 70) return 'text-stone-600';
-    return 'text-stone-700';
+    if (score >= 90) return 'text-emerald-600';
+    if (score >= 70) return 'text-amber-600';
+    return 'text-red-600';
   };
 
   const getScoreBg = (score: number) => {
-    if (score >= 90) return 'bg-stone-100 border-stone-200';
-    if (score >= 70) return 'bg-stone-100 border-stone-200';
-    return 'bg-stone-100 border-stone-200';
+    if (score >= 90) return 'bg-emerald-50 border-emerald-200';
+    if (score >= 70) return 'bg-amber-50 border-amber-200';
+    return 'bg-red-50 border-red-200';
   };
 
   const getBarColor = (score: number) => {
-    if (score >= 90) return 'bg-stone-900';
-    if (score >= 70) return 'bg-stone-900';
-    return 'bg-stone-900';
+    if (score >= 90) return 'bg-emerald-500';
+    if (score >= 70) return 'bg-amber-500';
+    return 'bg-red-500';
   };
 
   return (
@@ -306,7 +306,7 @@ export const DocumentHealth: React.FC<DocumentHealthProps> = ({
                 <div className="px-5 pb-3 space-y-1.5">
                   {dim.issues.map((issue, i) => (
                     <div key={i} className="flex items-start gap-2 text-xs">
-                      <AlertTriangle className="w-3 h-3 text-stone-900 mt-0.5 shrink-0" />
+                      <AlertTriangle className="w-3 h-3 text-amber-500 mt-0.5 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <span className="text-stone-600">{issue}</span>
                         {dim.suggestions[i] && (
@@ -316,7 +316,7 @@ export const DocumentHealth: React.FC<DocumentHealthProps> = ({
                       {onFixIssue && (
                         <button
                           onClick={() => onFixIssue(dim.id, i)}
-                          className="text-xs text-stone-600 hover:text-stone-800 font-medium shrink-0"
+                          className="text-xs text-blue-600 hover:text-blue-800 font-medium shrink-0"
                         >
                           Fix
                         </button>
@@ -328,7 +328,7 @@ export const DocumentHealth: React.FC<DocumentHealthProps> = ({
 
               {/* All good */}
               {!hasIssues && (
-                <div className="px-5 pb-3 flex items-center gap-1.5 text-xs text-stone-700">
+                <div className="px-5 pb-3 flex items-center gap-1.5 text-xs text-emerald-600">
                   <CheckCircle className="w-3 h-3" />
                   <span>All checks passed</span>
                 </div>
@@ -363,10 +363,10 @@ export const DocumentHealthBadge: React.FC<{ content: string; requiredSections?:
 
   const color =
     score >= 90
-      ? 'bg-stone-100 text-stone-800 border-stone-200'
+      ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
       : score >= 70
-        ? 'bg-stone-100 text-stone-700 border-stone-200'
-        : 'bg-stone-100 text-stone-800 border-stone-200';
+        ? 'bg-amber-100 text-amber-700 border-amber-200'
+        : 'bg-red-100 text-red-700 border-red-200';
 
   return (
     <span className={cn('inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium border', color)}>

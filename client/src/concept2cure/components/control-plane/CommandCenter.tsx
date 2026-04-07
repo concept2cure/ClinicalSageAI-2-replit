@@ -136,23 +136,23 @@ export default function CommandCenter() {
   ];
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-stone-200 px-6 py-4">
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-stone-700 rounded-lg flex items-center justify-center">
             <Shield size={20} className="text-white" />
           </div>
           <div>
-            <h1 className="text-base font-medium text-stone-900">Regulatory Command Center</h1>
-            <p className="text-sm text-stone-500">Platform administration & API management</p>
+            <h1 className="text-base font-medium text-gray-900">Regulatory Command Center</h1>
+            <p className="text-sm text-gray-500">Platform administration & API management</p>
           </div>
         </div>
       </div>
 
       <div className="flex">
         {/* Sidebar */}
-        <nav className="w-56 bg-white border-r border-stone-200 min-h-[calc(100vh-73px)] p-3">
+        <nav className="w-56 bg-white border-r border-gray-200 min-h-[calc(100vh-73px)] p-3">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -160,7 +160,7 @@ export default function CommandCenter() {
               className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm mb-1 transition-colors ${
                 activeTab === tab.id
                   ? 'bg-stone-100 text-stone-700 font-medium'
-                  : 'text-stone-600 hover:bg-stone-50'
+                  : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
               {tab.icon}
@@ -278,37 +278,37 @@ function OverviewTab() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-stone-900 mb-4">Dashboard Overview</h2>
+      <h2 className="text-lg font-semibold text-gray-900 mb-4">Dashboard Overview</h2>
 
       {/* Metric Cards */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         {metricCards.map((m) => (
-          <div key={m.label} className="bg-white rounded-xl border border-stone-200 p-4">
+          <div key={m.label} className="bg-white rounded-xl border border-gray-200 p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-stone-400">{m.icon}</span>
+              <span className="text-gray-400">{m.icon}</span>
             </div>
-            <div className="text-base font-semibold text-stone-900">{m.value}</div>
-            <div className="text-sm text-stone-500">{m.label}</div>
+            <div className="text-base font-semibold text-gray-900">{m.value}</div>
+            <div className="text-sm text-gray-500">{m.label}</div>
           </div>
         ))}
       </div>
 
       {/* System Status */}
-      <div className="bg-white rounded-xl border border-stone-200 p-4">
-        <h3 className="text-sm font-medium text-stone-900 mb-3">System Status</h3>
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <h3 className="text-sm font-medium text-gray-900 mb-3">System Status</h3>
         <div className="space-y-2">
           {serviceStatus.map((s) => (
             <div key={s.service} className="flex items-center justify-between py-1">
-              <span className="text-sm text-stone-700">{s.service}</span>
+              <span className="text-sm text-gray-700">{s.service}</span>
               <span className={`flex items-center gap-1.5 text-xs ${
-                s.status === 'operational' ? 'text-stone-700' :
-                s.status === 'checking' ? 'text-stone-400' :
-                s.status === 'degraded' ? 'text-stone-600' : 'text-stone-700'
+                s.status === 'operational' ? 'text-green-600' :
+                s.status === 'checking' ? 'text-gray-400' :
+                s.status === 'degraded' ? 'text-yellow-600' : 'text-red-600'
               }`}>
                 <span className={`w-2 h-2 rounded-full ${
-                  s.status === 'operational' ? 'bg-stone-900' :
-                  s.status === 'checking' ? 'bg-stone-300 animate-pulse' :
-                  s.status === 'degraded' ? 'bg-stone-900' : 'bg-stone-900'
+                  s.status === 'operational' ? 'bg-green-500' :
+                  s.status === 'checking' ? 'bg-gray-300 animate-pulse' :
+                  s.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
                 }`} />
                 {s.status === 'checking' ? 'Checking...' : s.status.charAt(0).toUpperCase() + s.status.slice(1)}
               </span>
@@ -351,7 +351,7 @@ function ApiKeysTab(props: {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-stone-900">API Key Management</h2>
+        <h2 className="text-lg font-semibold text-gray-900">API Key Management</h2>
         <button
           onClick={() => props.setShowCreate(true)}
           className="flex items-center gap-1.5 bg-stone-700 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-stone-800 transition-colors"
@@ -360,29 +360,29 @@ function ApiKeysTab(props: {
         </button>
       </div>
 
-      <p className="text-sm text-stone-500 mb-4">
+      <p className="text-sm text-gray-500 mb-4">
         API keys provide external programmatic access to ClinicalSageAI intelligence services.
-        Base URL: <code className="bg-stone-100 px-1 rounded">/api/v1/</code>
+        Base URL: <code className="bg-gray-100 px-1 rounded">/api/v1/</code>
       </p>
 
       {/* Created Key Banner */}
       {props.createdKey && (
-        <div className="bg-stone-100 border border-stone-200 rounded-xl p-4 mb-4">
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
           <div className="flex items-start gap-2">
-            <AlertTriangle size={16} className="text-stone-600 mt-0.5" />
+            <AlertTriangle size={16} className="text-amber-600 mt-0.5" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-stone-800 mb-1">
+              <p className="text-sm font-medium text-amber-800 mb-1">
                 Store this key securely — it will not be shown again.
               </p>
-              <div className="flex items-center gap-2 bg-white border border-stone-300 rounded-lg px-3 py-2">
-                <code className="text-xs text-stone-800 flex-1 font-mono break-all">{props.createdKey}</code>
-                <button onClick={props.onCopy} className="text-stone-500 hover:text-stone-700">
-                  {props.copied ? <Check size={14} className="text-stone-700" /> : <Copy size={14} />}
+              <div className="flex items-center gap-2 bg-white border border-amber-300 rounded-lg px-3 py-2">
+                <code className="text-xs text-gray-800 flex-1 font-mono break-all">{props.createdKey}</code>
+                <button onClick={props.onCopy} className="text-gray-500 hover:text-gray-700">
+                  {props.copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
                 </button>
               </div>
               <button
                 onClick={() => props.setCreatedKey(null)}
-                className="text-xs text-stone-600 mt-2 hover:underline"
+                className="text-xs text-amber-600 mt-2 hover:underline"
               >
                 Dismiss
               </button>
@@ -393,28 +393,28 @@ function ApiKeysTab(props: {
 
       {/* Create Key Form */}
       {props.showCreate && !props.createdKey && (
-        <div className="bg-white border border-stone-200 rounded-xl p-4 mb-4">
-          <h3 className="text-sm font-medium text-stone-900 mb-3">Create New API Key</h3>
+        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
+          <h3 className="text-sm font-medium text-gray-900 mb-3">Create New API Key</h3>
           <div className="mb-3">
-            <label className="text-xs text-stone-500 mb-1 block">Key Name</label>
+            <label className="text-xs text-gray-500 mb-1 block">Key Name</label>
             <input
               type="text"
               value={props.newKeyName}
               onChange={(e) => props.setNewKeyName(e.target.value)}
               placeholder="e.g., Production Key, Partner Integration"
-              className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-500"
             />
           </div>
           <div className="mb-3">
-            <label className="text-xs text-stone-500 mb-1 block">Scopes</label>
+            <label className="text-xs text-gray-500 mb-1 block">Scopes</label>
             <div className="grid grid-cols-3 gap-2">
               {ALL_SCOPES.map((scope) => (
-                <label key={scope} className="flex items-center gap-2 text-sm text-stone-700 cursor-pointer">
+                <label key={scope} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={props.newKeyScopes.includes(scope)}
                     onChange={() => toggleScope(scope)}
-                    className="rounded border-stone-300 text-stone-600 focus:ring-stone-500"
+                    className="rounded border-gray-300 text-stone-600 focus:ring-stone-500"
                   />
                   {SCOPE_LABELS[scope]}
                 </label>
@@ -431,7 +431,7 @@ function ApiKeysTab(props: {
             </button>
             <button
               onClick={() => props.setShowCreate(false)}
-              className="text-stone-600 px-4 py-1.5 rounded-lg text-sm hover:bg-stone-100 transition-colors"
+              className="text-gray-600 px-4 py-1.5 rounded-lg text-sm hover:bg-gray-100 transition-colors"
             >
               Cancel
             </button>
@@ -440,53 +440,53 @@ function ApiKeysTab(props: {
       )}
 
       {/* Key List */}
-      <div className="bg-white border border-stone-200 rounded-xl overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-stone-50 border-b border-stone-200">
-              <th className="text-left px-4 py-2 text-xs font-medium text-stone-500">Name</th>
-              <th className="text-left px-4 py-2 text-xs font-medium text-stone-500">Prefix</th>
-              <th className="text-left px-4 py-2 text-xs font-medium text-stone-500">Status</th>
-              <th className="text-left px-4 py-2 text-xs font-medium text-stone-500">Scopes</th>
-              <th className="text-right px-4 py-2 text-xs font-medium text-stone-500">Requests</th>
-              <th className="text-left px-4 py-2 text-xs font-medium text-stone-500">Last Used</th>
-              <th className="text-right px-4 py-2 text-xs font-medium text-stone-500">Actions</th>
+            <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="text-left px-4 py-2 text-xs font-medium text-gray-500">Name</th>
+              <th className="text-left px-4 py-2 text-xs font-medium text-gray-500">Prefix</th>
+              <th className="text-left px-4 py-2 text-xs font-medium text-gray-500">Status</th>
+              <th className="text-left px-4 py-2 text-xs font-medium text-gray-500">Scopes</th>
+              <th className="text-right px-4 py-2 text-xs font-medium text-gray-500">Requests</th>
+              <th className="text-left px-4 py-2 text-xs font-medium text-gray-500">Last Used</th>
+              <th className="text-right px-4 py-2 text-xs font-medium text-gray-500">Actions</th>
             </tr>
           </thead>
           <tbody>
             {props.keys.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-center text-stone-400 py-8">
+                <td colSpan={7} className="text-center text-gray-400 py-8">
                   No API keys created yet. Create one to enable external access.
                 </td>
               </tr>
             )}
             {props.keys.map((key) => (
-              <tr key={key.id} className="border-b border-stone-100 last:border-0">
-                <td className="px-4 py-3 font-medium text-stone-900">{key.name}</td>
-                <td className="px-4 py-3 font-mono text-xs text-stone-500">{key.keyPrefix}...</td>
+              <tr key={key.id} className="border-b border-gray-100 last:border-0">
+                <td className="px-4 py-3 font-medium text-gray-900">{key.name}</td>
+                <td className="px-4 py-3 font-mono text-xs text-gray-500">{key.keyPrefix}...</td>
                 <td className="px-4 py-3">
                   <span
                     className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
                       key.status === 'active'
-                        ? 'bg-stone-100 text-stone-800'
-                        : 'bg-stone-100 text-stone-800'
+                        ? 'bg-green-50 text-green-700'
+                        : 'bg-red-50 text-red-700'
                     }`}
                   >
                     {key.status === 'active' ? <Unlock size={10} /> : <Lock size={10} />}
                     {key.status}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-xs text-stone-500">{key.scopes?.length || 0} scopes</td>
-                <td className="px-4 py-3 text-right text-stone-700">{key.requestCount.toLocaleString()}</td>
-                <td className="px-4 py-3 text-xs text-stone-500">
+                <td className="px-4 py-3 text-xs text-gray-500">{key.scopes?.length || 0} scopes</td>
+                <td className="px-4 py-3 text-right text-gray-700">{key.requestCount.toLocaleString()}</td>
+                <td className="px-4 py-3 text-xs text-gray-500">
                   {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleDateString() : 'Never'}
                 </td>
                 <td className="px-4 py-3 text-right">
                   {key.status === 'active' && (
                     <button
                       onClick={() => props.onRevoke(key.id)}
-                      className="text-stone-900 hover:text-stone-800 p-1"
+                      className="text-red-500 hover:text-red-700 p-1"
                       title="Revoke"
                     >
                       <Trash2 size={14} />
@@ -512,15 +512,15 @@ function UsersTab() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-stone-900">Users & Roles</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Users & Roles</h2>
         <button className="flex items-center gap-1.5 bg-stone-700 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-stone-800 transition-colors">
           <Plus size={14} /> Invite User
         </button>
       </div>
-      <div className="bg-white border border-stone-200 rounded-xl p-6 text-center text-stone-500">
-        <Users size={32} className="mx-auto mb-2 text-stone-300" />
+      <div className="bg-white border border-gray-200 rounded-xl p-6 text-center text-gray-500">
+        <Users size={32} className="mx-auto mb-2 text-gray-300" />
         <p className="text-sm">User management loads from your organization settings.</p>
-        <p className="text-xs text-stone-400 mt-1">
+        <p className="text-xs text-gray-400 mt-1">
           Roles: {roles.join(', ')} | Seat-based licensing enforced
         </p>
       </div>
@@ -536,19 +536,19 @@ function UsageTab({ usage }: { usage: UsageSummary[] }) {
   const features = [
     { id: 'deep_research', label: 'Deep Research', color: 'bg-stone-600' },
     { id: 'csr_builder', label: 'CSR Builder', color: 'bg-stone-600' },
-    { id: 'ctd_builder', label: 'CTD Builder', color: 'bg-stone-900' },
-    { id: 'api_csr_search', label: 'API: CSR Search', color: 'bg-stone-500' },
-    { id: 'api_regulatory_pathways', label: 'API: Regulatory Pathways', color: 'bg-stone-500' },
-    { id: 'api_endpoint_recommend', label: 'API: Endpoint Recommender', color: 'bg-stone-900' },
-    { id: 'api_precedent_search', label: 'API: Precedent Search', color: 'bg-stone-500' },
-    { id: 'api_trial_design', label: 'API: Trial Design', color: 'bg-stone-900' },
-    { id: 'ctd_onboarding', label: 'CTD Onboarding', color: 'bg-stone-900' },
-    { id: 'biologics_intelligence', label: 'Biologics Intelligence', color: 'bg-stone-900' },
+    { id: 'ctd_builder', label: 'CTD Builder', color: 'bg-teal-500' },
+    { id: 'api_csr_search', label: 'API: CSR Search', color: 'bg-purple-500' },
+    { id: 'api_regulatory_pathways', label: 'API: Regulatory Pathways', color: 'bg-violet-500' },
+    { id: 'api_endpoint_recommend', label: 'API: Endpoint Recommender', color: 'bg-fuchsia-500' },
+    { id: 'api_precedent_search', label: 'API: Precedent Search', color: 'bg-pink-500' },
+    { id: 'api_trial_design', label: 'API: Trial Design', color: 'bg-rose-500' },
+    { id: 'ctd_onboarding', label: 'CTD Onboarding', color: 'bg-emerald-500' },
+    { id: 'biologics_intelligence', label: 'Biologics Intelligence', color: 'bg-cyan-500' },
   ];
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-stone-900 mb-4">Usage & Billing</h2>
+      <h2 className="text-lg font-semibold text-gray-900 mb-4">Usage & Billing</h2>
       <div className="space-y-3">
         {features.map((f) => {
           const data = usage.find((u) => u.featureId === f.id);
@@ -557,14 +557,14 @@ function UsageTab({ usage }: { usage: UsageSummary[] }) {
           const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
 
           return (
-            <div key={f.id} className="bg-white border border-stone-200 rounded-xl p-4">
+            <div key={f.id} className="bg-white border border-gray-200 rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-stone-900">{f.label}</span>
-                <span className="text-xs text-stone-500">
+                <span className="text-sm font-medium text-gray-900">{f.label}</span>
+                <span className="text-xs text-gray-500">
                   {used} / {limit === -1 ? 'unlimited' : limit}
                 </span>
               </div>
-              <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${f.color}`}
                   style={{ width: `${limit === -1 ? 5 : pct}%` }}
@@ -594,17 +594,17 @@ function SecurityTab() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-stone-900 mb-4">Security & Compliance</h2>
+      <h2 className="text-lg font-semibold text-gray-900 mb-4">Security & Compliance</h2>
       <div className="space-y-2">
         {policies.map((p) => (
-          <div key={p.label} className="bg-white border border-stone-200 rounded-xl p-4 flex items-center justify-between">
+          <div key={p.label} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
             <div>
-              <div className="text-sm font-medium text-stone-900">{p.label}</div>
-              <div className="text-xs text-stone-500">{p.description}</div>
+              <div className="text-sm font-medium text-gray-900">{p.label}</div>
+              <div className="text-xs text-gray-500">{p.description}</div>
             </div>
             <div
               className={`w-10 h-6 rounded-full flex items-center px-0.5 cursor-pointer transition-colors ${
-                p.enabled ? 'bg-stone-700 justify-end' : 'bg-stone-300 justify-start'
+                p.enabled ? 'bg-stone-700 justify-end' : 'bg-gray-300 justify-start'
               }`}
             >
               <div className="w-5 h-5 bg-white rounded-full shadow" />
@@ -642,23 +642,23 @@ function ModulesTab() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-stone-900 mb-4">Platform Modules</h2>
+      <h2 className="text-lg font-semibold text-gray-900 mb-4">Platform Modules</h2>
       {categories.map((cat) => (
         <div key={cat} className="mb-6">
-          <h3 className="text-sm font-medium text-stone-500 mb-2">{cat}</h3>
+          <h3 className="text-sm font-medium text-gray-500 mb-2">{cat}</h3>
           <div className="grid grid-cols-2 gap-2">
             {modules
               .filter((m) => m.category === cat)
               .map((m) => (
                 <div
                   key={m.name}
-                  className="bg-white border border-stone-200 rounded-xl p-3 flex items-center justify-between"
+                  className="bg-white border border-gray-200 rounded-xl p-3 flex items-center justify-between"
                 >
                   <div>
-                    <div className="text-sm font-medium text-stone-900">{m.name}</div>
-                    <div className="text-xs text-stone-400 capitalize">{m.tier}+</div>
+                    <div className="text-sm font-medium text-gray-900">{m.name}</div>
+                    <div className="text-xs text-gray-400 capitalize">{m.tier}+</div>
                   </div>
-                  <span className="text-xs bg-stone-100 text-stone-800 px-2 py-0.5 rounded-full">
+                  <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
                     Active
                   </span>
                 </div>

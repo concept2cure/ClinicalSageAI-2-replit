@@ -151,9 +151,9 @@ const ROLE_CONFIG: Record<
   { color: string; bg: string; border: string; icon: React.ElementType }
 > = {
   Author: {
-    color: 'text-stone-600',
-    bg: 'bg-stone-100',
-    border: 'border-stone-200',
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
     icon: PenTool,
   },
   Reviewer: {
@@ -169,9 +169,9 @@ const ROLE_CONFIG: Record<
     icon: BadgeCheck,
   },
   QA: {
-    color: 'text-stone-600',
-    bg: 'bg-stone-100',
-    border: 'border-stone-200',
+    color: 'text-purple-600',
+    bg: 'bg-purple-50',
+    border: 'border-purple-200',
     icon: Shield,
   },
 };
@@ -193,7 +193,7 @@ const STATUS_CONFIG: Record<
     bg: LIFECYCLE.approved.bg,
     icon: CheckCircle2,
   },
-  rejected: { label: 'Rejected', color: 'text-stone-800', bg: 'bg-stone-100', icon: XCircle },
+  rejected: { label: 'Rejected', color: 'text-red-700', bg: 'bg-red-50', icon: XCircle },
 };
 
 const ROLE_MEANING_MAP: Record<SignerRole, string> = {
@@ -498,16 +498,16 @@ export function SignatureWorkflow({
       pending_signatures: {
         label: 'Pending Signatures',
         icon: Shield,
-        color: 'text-stone-700',
-        bg: 'bg-stone-100',
-        border: 'border-stone-300',
+        color: 'text-amber-700',
+        bg: 'bg-amber-50',
+        border: 'border-amber-300',
       },
       fully_signed: {
         label: 'Fully Signed',
         icon: ShieldCheck,
-        color: 'text-stone-800',
-        bg: 'bg-stone-100',
-        border: 'border-stone-300',
+        color: 'text-emerald-700',
+        bg: 'bg-emerald-50',
+        border: 'border-emerald-300',
       },
     };
 
@@ -541,9 +541,9 @@ export function SignatureWorkflow({
         className={cn(
           'flex items-center justify-between p-3 rounded-lg border transition-colors duration-150',
           signer.status === 'signed'
-            ? 'bg-stone-100/60 border-stone-200'
+            ? 'bg-emerald-50/60 border-emerald-200'
             : signer.status === 'rejected'
-              ? 'bg-stone-100/60 border-stone-200'
+              ? 'bg-red-50/60 border-red-200'
               : 'bg-white border-stone-200'
         )}
       >
@@ -587,7 +587,7 @@ export function SignatureWorkflow({
                 const match = signatures.find(s => s.id === signer.signatureId);
                 if (match) setShowCertificate(match);
               }}
-              className="h-auto p-0 text-[11px] text-stone-600 hover:text-stone-800 underline underline-offset-2"
+              className="h-auto p-0 text-[11px] text-blue-600 hover:text-blue-800 underline underline-offset-2"
             >
               Certificate
             </Button>
@@ -609,8 +609,8 @@ export function SignatureWorkflow({
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200 bg-stone-50">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-stone-100 border border-stone-200">
-                <Fingerprint className="w-5 h-5 text-stone-600" />
+              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-100 border border-blue-200">
+                <Fingerprint className="w-5 h-5 text-blue-600" />
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-stone-900">Electronic Signature</h3>
@@ -698,14 +698,14 @@ export function SignatureWorkflow({
             </div>
 
             {/* Legal acknowledgment */}
-            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-stone-100 border border-stone-200 cursor-pointer group">
+            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50 border border-amber-200 cursor-pointer group">
               <Checkbox
                 id="legal-ack"
                 checked={legalAck}
                 onCheckedChange={(checked) => setLegalAck(!!checked)}
-                className="mt-0.5 border-stone-300 data-[state=checked]:bg-stone-600 data-[state=checked]:border-stone-600"
+                className="mt-0.5 border-amber-300 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
               />
-              <label htmlFor="legal-ack" className="text-xs text-stone-800 leading-relaxed group-hover:text-stone-900 transition-colors duration-150 cursor-pointer">
+              <label htmlFor="legal-ack" className="text-xs text-amber-800 leading-relaxed group-hover:text-amber-900 transition-colors duration-150 cursor-pointer">
                 I understand this constitutes a legally binding electronic signature equivalent to a
                 handwritten signature under 21 CFR Part 11 and applicable regulations.
               </label>
@@ -713,9 +713,9 @@ export function SignatureWorkflow({
 
             {/* Error */}
             {signError && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-stone-100 border border-stone-200">
-                <AlertTriangle className="w-4 h-4 text-stone-900 flex-shrink-0" />
-                <span className="text-xs text-stone-800">{signError}</span>
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
+                <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                <span className="text-xs text-red-700">{signError}</span>
               </div>
             )}
           </div>
@@ -767,14 +767,14 @@ export function SignatureWorkflow({
 
     return (
       <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-        <div className="w-full max-w-md mx-4 bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="w-full max-w-md mx-4 bg-white border border-emerald-200 rounded-xl shadow-sm overflow-hidden">
           {/* Certificate header */}
-          <div className="px-5 py-4 border-b border-stone-100 bg-stone-100 text-center">
-            <div className="flex items-center justify-center w-12 h-12 mx-auto rounded-full bg-stone-100 border border-stone-200 mb-2">
-              <Award className="w-6 h-6 text-stone-700" />
+          <div className="px-5 py-4 border-b border-emerald-100 bg-emerald-50 text-center">
+            <div className="flex items-center justify-center w-12 h-12 mx-auto rounded-full bg-emerald-100 border border-emerald-200 mb-2">
+              <Award className="w-6 h-6 text-emerald-600" />
             </div>
             <h3 className="text-base font-semibold text-stone-900">Signature Certificate</h3>
-            <p className="text-[10px] text-stone-700 mt-0.5">
+            <p className="text-[10px] text-emerald-600 mt-0.5">
               21 CFR Part 11 Electronic Signature Record
             </p>
           </div>
@@ -829,8 +829,8 @@ export function SignatureWorkflow({
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-stone-100 border border-stone-200">
-            <Shield className="w-5 h-5 text-stone-600" />
+          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-100 border border-blue-200">
+            <Shield className="w-5 h-5 text-blue-600" />
           </div>
           <div>
             <h2 className="text-sm font-semibold text-stone-900">E-Signature Workflow</h2>
@@ -891,20 +891,20 @@ export function SignatureWorkflow({
             className={cn(
               'p-4 rounded-xl border',
               verificationResult.verified
-                ? 'bg-stone-100 border-stone-200'
-                : 'bg-stone-100 border-stone-200'
+                ? 'bg-emerald-50 border-emerald-200'
+                : 'bg-red-50 border-red-200'
             )}
           >
             <div className="flex items-center gap-2 mb-1">
               {verificationResult.verified ? (
-                <ShieldCheck className="w-5 h-5 text-stone-700" />
+                <ShieldCheck className="w-5 h-5 text-emerald-600" />
               ) : (
-                <ShieldAlert className="w-5 h-5 text-stone-700" />
+                <ShieldAlert className="w-5 h-5 text-red-600" />
               )}
               <span
                 className={cn(
                   'text-sm font-semibold',
-                  verificationResult.verified ? 'text-stone-800' : 'text-stone-800'
+                  verificationResult.verified ? 'text-emerald-700' : 'text-red-700'
                 )}
               >
                 {verificationResult.message}
@@ -950,8 +950,8 @@ export function SignatureWorkflow({
                       return (
                         <div key={sig.id} className="relative flex items-start gap-3">
                           {/* Timeline dot */}
-                          <div className="relative z-10 flex items-center justify-center w-7 h-7 rounded-full bg-white border-2 border-stone-300 flex-shrink-0">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-stone-900" />
+                          <div className="relative z-10 flex items-center justify-center w-7 h-7 rounded-full bg-white border-2 border-emerald-300 flex-shrink-0">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                           </div>
 
                           {/* Content */}
@@ -1079,20 +1079,20 @@ export function SignatureList({ documentId, signatures, loading }: SignatureList
           key={sig.id}
           className={cn(
             'p-3 rounded-lg border text-xs',
-            sig.revoked ? 'bg-stone-100 border-stone-200' : 'bg-stone-100 border-stone-200'
+            sig.revoked ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'
           )}
         >
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-1.5">
               <ShieldCheck
-                className={cn('w-3.5 h-3.5', sig.revoked ? 'text-stone-900' : 'text-stone-700')}
+                className={cn('w-3.5 h-3.5', sig.revoked ? 'text-red-500' : 'text-emerald-600')}
               />
               <span className="font-medium text-stone-700">{sig.signerName}</span>
             </div>
             <span
               className={cn(
                 'px-1.5 py-0.5 rounded text-[10px] font-medium',
-                sig.revoked ? 'bg-stone-100 text-stone-800' : 'bg-stone-100 text-stone-800'
+                sig.revoked ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
               )}
             >
               {sig.revoked ? 'REVOKED' : 'VALID'}

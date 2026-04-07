@@ -120,40 +120,40 @@ const AGENTS: Record<
     name: 'RI Author',
     title: 'The Heavy Lifter',
     color: 'text-stone-700',
-    bgColor: 'bg-stone-100',
-    bubbleColor: 'bg-white border border-stone-200 text-stone-700',
+    bgColor: 'bg-blue-100',
+    bubbleColor: 'bg-white border border-blue-200 text-stone-700',
     icon: <FileText className="w-4 h-4" />,
   },
   STATISTICIAN: {
     name: 'Dr. Stat',
     title: 'Verification Specialist',
-    color: 'text-stone-800',
-    bgColor: 'bg-stone-100',
-    bubbleColor: 'bg-stone-100 border border-stone-200 text-stone-900',
+    color: 'text-emerald-700',
+    bgColor: 'bg-emerald-100',
+    bubbleColor: 'bg-emerald-50 border border-emerald-200 text-emerald-900',
     icon: <Search className="w-4 h-4" />,
   },
   CRITIC: {
     name: 'The Auditor',
     title: 'Risk Assessor',
-    color: 'text-stone-800',
-    bgColor: 'bg-stone-100',
-    bubbleColor: 'bg-stone-100 border border-stone-200 text-stone-900',
+    color: 'text-red-700',
+    bgColor: 'bg-red-100',
+    bubbleColor: 'bg-red-50 border border-red-200 text-red-900',
     icon: <AlertOctagon className="w-4 h-4" />,
   },
   SYNTHESIZER: {
     name: 'Cortex Core',
     title: 'Expedition Leader',
-    color: 'text-stone-700',
-    bgColor: 'bg-stone-200',
-    bubbleColor: 'bg-white border border-stone-200 text-stone-700',
+    color: 'text-purple-700',
+    bgColor: 'bg-purple-100',
+    bubbleColor: 'bg-white border border-purple-200 text-stone-700',
     icon: <Sparkles className="w-4 h-4" />,
   },
   PATHFINDER: {
     name: 'CERV2',
     title: 'Regulatory Pathfinder',
     color: 'text-stone-700',
-    bgColor: 'bg-stone-100',
-    bubbleColor: 'bg-stone-100 border border-stone-200 text-stone-900',
+    bgColor: 'bg-blue-100',
+    bubbleColor: 'bg-blue-50 border border-blue-200 text-blue-900',
     icon: <ShieldCheck className="w-4 h-4" />,
   },
   VAULT: {
@@ -173,15 +173,15 @@ const AGENTS: Record<
 const ThinkingIndicator: React.FC = () => (
   <div className="flex items-center gap-1">
     <div
-      className="w-2 h-2 bg-stone-400 rounded-full animate-pulse"
+      className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"
       style={{ animationDelay: '0ms' }}
     />
     <div
-      className="w-2 h-2 bg-stone-400 rounded-full animate-pulse"
+      className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"
       style={{ animationDelay: '150ms' }}
     />
     <div
-      className="w-2 h-2 bg-stone-400 rounded-full animate-pulse"
+      className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"
       style={{ animationDelay: '300ms' }}
     />
   </div>
@@ -190,11 +190,11 @@ const ThinkingIndicator: React.FC = () => (
 const CitationBadge: React.FC<{ citation: Citation }> = ({ citation }) => (
   <button
     onClick={citation.onClick}
-    className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-stone-100 text-stone-700 rounded hover:bg-stone-200 transition-colors duration-150"
+    className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-blue-100 text-stone-700 rounded hover:bg-blue-200 transition-colors duration-150"
   >
     <FileText className="w-3 h-3" />
     {citation.label}
-    {citation.page && <span className="text-stone-900">p.{citation.page}</span>}
+    {citation.page && <span className="text-blue-500">p.{citation.page}</span>}
   </button>
 );
 
@@ -209,9 +209,9 @@ const AttachmentBadge: React.FC<{ attachment: Attachment }> = ({ attachment }) =
   return (
     <button
       onClick={attachment.onClick}
-      className="flex items-center gap-2 px-3 py-2 text-xs bg-white border border-stone-200 rounded-lg hover:bg-stone-50 hover:border-stone-300 transition-colors"
+      className="flex items-center gap-2 px-3 py-2 text-xs bg-white border border-stone-200 rounded-lg hover:bg-stone-50 hover:border-blue-300 transition-colors shadow-sm"
     >
-      <div className="text-stone-500">{icons[attachment.type]}</div>
+      <div className="text-blue-600">{icons[attachment.type]}</div>
       <span className="font-medium text-stone-700">{attachment.name}</span>
       <ChevronRight className="w-3 h-3 text-stone-400" />
     </button>
@@ -284,10 +284,10 @@ const MessageBubble: React.FC<{
                       <div
                         className={cn(
                           'h-full rounded-full transition-all duration-150',
-                          message.confidence >= 90 && 'bg-stone-900',
+                          message.confidence >= 90 && 'bg-green-500',
                           message.confidence >= 70 && message.confidence < 90 && 'bg-stone-600',
-                          message.confidence >= 50 && message.confidence < 70 && 'bg-stone-900',
-                          message.confidence < 50 && 'bg-stone-900'
+                          message.confidence >= 50 && message.confidence < 70 && 'bg-amber-500',
+                          message.confidence < 50 && 'bg-red-500'
                         )}
                         style={{ width: `${message.confidence}%` }}
                       />
@@ -333,9 +333,9 @@ const MessageBubble: React.FC<{
                   'text-xs font-semibold px-3 py-1.5 rounded-full transition-all shadow-sm',
                   'flex items-center gap-1.5',
                   action.variant === 'primary' && 'bg-stone-800 text-white hover:bg-stone-900',
-                  action.variant === 'danger' && 'bg-stone-100 text-stone-800 hover:bg-stone-200',
+                  action.variant === 'danger' && 'bg-red-100 text-red-700 hover:bg-red-200',
                   !action.variant &&
-                    'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50 hover:border-stone-300'
+                    'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50 hover:border-blue-300'
                 )}
               >
                 {action.icon}
@@ -350,28 +350,28 @@ const MessageBubble: React.FC<{
           <div className="flex items-center gap-2 mt-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => onFeedback?.(true)}
-              className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded transition-colors duration-150"
+              className="p-1 text-stone-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors duration-150"
               title="Good response"
             >
               <ThumbsUp className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => onFeedback?.(false)}
-              className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded transition-colors duration-150"
+              className="p-1 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-150"
               title="Poor response"
             >
               <ThumbsDown className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={onCopy}
-              className="p-1 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded transition-colors duration-150"
+              className="p-1 text-stone-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-150"
               title="Copy"
             >
               <Copy className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={onRetry}
-              className="p-1 text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded transition-colors duration-150"
+              className="p-1 text-stone-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors duration-150"
               title="Regenerate"
             >
               <RefreshCw className="w-3.5 h-3.5" />
@@ -397,11 +397,11 @@ export const CouncilThread: React.FC<CouncilThreadProps> = ({
   return (
     <div className={cn('space-y-6 p-4', className)}>
       {messages.length === 0 ? (
-        <div className="text-center py-8">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-stone-100 flex items-center justify-center">
-            <Sparkles className="w-8 h-8 text-stone-500" />
+        <div className="text-center py-12">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-blue-100 flex items-center justify-center">
+            <Sparkles className="w-8 h-8 text-blue-600" />
           </div>
-          <h3 className="text-sm font-semibold text-stone-900 mb-1">Your Sherpa Team is Ready</h3>
+          <h3 className="text-lg font-semibold text-stone-900 mb-1">Your Sherpa Team is Ready</h3>
           <p className="text-sm text-stone-500 max-w-sm mx-auto">
             Start a conversation and your team of expert agents will guide you through the
             regulatory mountain.

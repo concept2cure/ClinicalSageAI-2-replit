@@ -50,13 +50,13 @@ export default function AutoReleasePanel({ batchId }: { batchId: string }) {
           <Badge variant={status?.enabled ? 'default' : 'secondary'}>
             {status?.enabled ? 'ENABLED' : 'DISABLED'}
           </Badge>
-          <span className="text-stone-600">Auto-Release Status</span>
+          <span className="text-slate-600">Auto-Release Status</span>
         </div>
 
         <div className="space-y-2">
           <div className="font-medium">Active Rules ({rules.length}):</div>
           {rules.map((rule: any, i: number) => (
-            <div key={i} className="flex justify-between p-2 bg-stone-50 rounded">
+            <div key={i} className="flex justify-between p-2 bg-slate-50 rounded">
               <span>{rule.name}</span>
               <Badge variant={rule.active ? 'default' : 'outline'}>
                 {rule.active ? 'ACTIVE' : 'INACTIVE'}
@@ -74,7 +74,7 @@ export default function AutoReleasePanel({ batchId }: { batchId: string }) {
           </Button>
         </div>
 
-        <div className="text-xs text-stone-600">
+        <div className="text-xs text-slate-600">
           Automated release executes when all QC tests pass specification limits and regulatory
           rules are satisfied.
         </div>

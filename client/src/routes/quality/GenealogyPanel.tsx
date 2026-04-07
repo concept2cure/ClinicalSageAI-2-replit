@@ -101,7 +101,7 @@ export default function GenealogyPanel({ batchId }: { batchId: string }) {
 
         <div className="mt-4 space-y-1 text-sm">
           {items.map(item => (
-            <div key={item.edge_id} className="p-2 bg-stone-50 rounded">
+            <div key={item.edge_id} className="p-2 bg-slate-50 rounded">
               <strong>{item.parent_type}</strong>: {item.parent_code}
               {item.parent_lot && <span> (Lot: {item.parent_lot})</span>}
               {item.qty && (
@@ -110,7 +110,7 @@ export default function GenealogyPanel({ batchId }: { batchId: string }) {
                   - {item.qty} {item.unit}
                 </span>
               )}
-              {item.note && <div className="text-stone-600">{item.note}</div>}
+              {item.note && <div className="text-slate-600">{item.note}</div>}
             </div>
           ))}
         </div>

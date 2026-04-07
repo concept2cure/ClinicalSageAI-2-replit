@@ -155,10 +155,10 @@ const STATUS_CONFIG: Record<CROProject['status'], {
   color: string;
   bgColor: string;
 }> = {
-  active: { label: 'Active', color: 'text-stone-800', bgColor: 'bg-stone-100' },
-  on_hold: { label: 'On Hold', color: 'text-stone-700', bgColor: 'bg-stone-100' },
-  at_risk: { label: 'At Risk', color: 'text-stone-800', bgColor: 'bg-stone-100' },
-  completed: { label: 'Completed', color: 'text-stone-700', bgColor: 'bg-stone-100' },
+  active: { label: 'Active', color: 'text-green-700', bgColor: 'bg-green-100' },
+  on_hold: { label: 'On Hold', color: 'text-amber-700', bgColor: 'bg-amber-100' },
+  at_risk: { label: 'At Risk', color: 'text-red-700', bgColor: 'bg-red-100' },
+  completed: { label: 'Completed', color: 'text-stone-700', bgColor: 'bg-blue-100' },
   cancelled: { label: 'Cancelled', color: 'text-stone-500', bgColor: 'bg-stone-100' },
 };
 
@@ -166,8 +166,8 @@ const TIER_CONFIG: Record<CROClient['tier'], {
   label: string;
   color: string;
 }> = {
-  enterprise: { label: 'Enterprise', color: 'text-stone-600' },
-  strategic: { label: 'Strategic', color: 'text-stone-600' },
+  enterprise: { label: 'Enterprise', color: 'text-violet-600' },
+  strategic: { label: 'Strategic', color: 'text-blue-600' },
   standard: { label: 'Standard', color: 'text-stone-600' },
 };
 
@@ -186,9 +186,9 @@ const formatCurrency = (amount: number): string => {
 };
 
 const getHealthColor = (score: number): string => {
-  if (score >= 80) return 'text-stone-700';
-  if (score >= 60) return 'text-stone-600';
-  return 'text-stone-700';
+  if (score >= 80) return 'text-green-600';
+  if (score >= 60) return 'text-amber-600';
+  return 'text-red-600';
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -221,7 +221,7 @@ const ClientCard: React.FC<{
               {tierConfig.label}
             </span>
             {atRiskProjects.length > 0 && (
-              <span className="flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-stone-800 bg-stone-100 rounded-full">
+              <span className="flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-red-700 bg-red-100 rounded-full">
                 <AlertTriangle className="w-3 h-3" />
                 {atRiskProjects.length} at risk
               </span>
@@ -243,7 +243,7 @@ const ClientCard: React.FC<{
               <div
                 className={cn(
                   'h-full rounded-full',
-                  revenueProgress > 90 ? 'bg-stone-900' : revenueProgress > 70 ? 'bg-stone-900' : 'bg-stone-600'
+                  revenueProgress > 90 ? 'bg-green-500' : revenueProgress > 70 ? 'bg-amber-500' : 'bg-stone-600'
                 )}
                 style={{ width: `${Math.min(revenueProgress, 100)}%` }}
               />
@@ -270,7 +270,7 @@ const ClientCard: React.FC<{
                 <button
                   key={project.id}
                   onClick={() => onProjectClick?.(project)}
-                  className="w-full flex items-center gap-3 p-3 bg-white rounded-lg border border-stone-200 hover:border-stone-300 transition-colors text-left"
+                  className="w-full flex items-center gap-3 p-3 bg-white rounded-lg border border-stone-200 hover:border-blue-300 transition-colors text-left"
                 >
                   <FileText className="w-5 h-5 text-stone-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -344,7 +344,7 @@ const UtilizationChart: React.FC<{
                 <span className="text-sm font-medium text-stone-700">{dept}</span>
                 <span className={cn(
                   'text-sm font-medium',
-                  avgUtil > 100 ? 'text-stone-700' : avgUtil > 85 ? 'text-stone-600' : 'text-stone-700'
+                  avgUtil > 100 ? 'text-red-600' : avgUtil > 85 ? 'text-amber-600' : 'text-green-600'
                 )}>
                   {avgUtil.toFixed(0)}% avg
                 </span>
@@ -358,10 +358,10 @@ const UtilizationChart: React.FC<{
                     onClick={() => onResourceClick?.(resource)}
                     className={cn(
                       'h-full transition-opacity hover:opacity-80',
-                      resource.utilizationRate > 100 && 'bg-stone-900',
-                      resource.utilizationRate > 85 && resource.utilizationRate <= 100 && 'bg-stone-900',
-                      resource.utilizationRate >= 70 && resource.utilizationRate <= 85 && 'bg-stone-900',
-                      resource.utilizationRate < 70 && 'bg-stone-300'
+                      resource.utilizationRate > 100 && 'bg-red-500',
+                      resource.utilizationRate > 85 && resource.utilizationRate <= 100 && 'bg-amber-500',
+                      resource.utilizationRate >= 70 && resource.utilizationRate <= 85 && 'bg-green-500',
+                      resource.utilizationRate < 70 && 'bg-blue-300'
                     )}
                     style={{ width: `${100 / deptResources.length}%` }}
                     title={`${resource.resourceName}: ${resource.utilizationRate}%`}
@@ -372,10 +372,10 @@ const UtilizationChart: React.FC<{
               <div className="flex items-center gap-4 mt-1 text-xs text-stone-500">
                 <span>{deptResources.length} resources</span>
                 {overAllocated > 0 && (
-                  <span className="text-stone-700">{overAllocated} over-allocated</span>
+                  <span className="text-red-600">{overAllocated} over-allocated</span>
                 )}
                 {underUtilized > 0 && (
-                  <span className="text-stone-600">{underUtilized} under-utilized</span>
+                  <span className="text-blue-600">{underUtilized} under-utilized</span>
                 )}
               </div>
             </div>
@@ -386,19 +386,19 @@ const UtilizationChart: React.FC<{
       {/* Legend */}
       <div className="flex items-center gap-4 mt-4 pt-4 border-t border-stone-200">
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded bg-stone-900" />
+          <span className="w-3 h-3 rounded bg-red-500" />
           <span className="text-xs text-stone-500">&gt;100%</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded bg-stone-900" />
+          <span className="w-3 h-3 rounded bg-amber-500" />
           <span className="text-xs text-stone-500">85-100%</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded bg-stone-900" />
+          <span className="w-3 h-3 rounded bg-green-500" />
           <span className="text-xs text-stone-500">70-85%</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded bg-stone-300" />
+          <span className="w-3 h-3 rounded bg-blue-300" />
           <span className="text-xs text-stone-500">&lt;70%</span>
         </div>
       </div>
@@ -420,14 +420,14 @@ const ChangeOrderPanel: React.FC<{
     <div className="p-4 border border-stone-200 rounded-lg">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-stone-900">Change Orders</h3>
-        <span className="px-2 py-1 text-xs font-medium text-stone-700 bg-stone-100 rounded-full">
+        <span className="px-2 py-1 text-xs font-medium text-amber-700 bg-amber-100 rounded-full">
           {pending.length} pending
         </span>
       </div>
       
       {pending.length > 0 && (
-        <div className="bg-stone-100 border border-stone-200 rounded-lg p-3 mb-4">
-          <p className="text-sm text-stone-800">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+          <p className="text-sm text-amber-800">
             <span className="font-semibold">{formatCurrency(totalImpact)}</span> pending approval
           </p>
         </div>
@@ -445,16 +445,16 @@ const ChangeOrderPanel: React.FC<{
             </div>
             <span className={cn(
               'px-2 py-0.5 text-xs font-medium rounded-full',
-              co.status === 'pending_approval' && 'bg-stone-100 text-stone-700',
-              co.status === 'approved' && 'bg-stone-100 text-stone-800',
-              co.status === 'rejected' && 'bg-stone-100 text-stone-800',
+              co.status === 'pending_approval' && 'bg-amber-100 text-amber-700',
+              co.status === 'approved' && 'bg-green-100 text-green-700',
+              co.status === 'rejected' && 'bg-red-100 text-red-700',
               co.status === 'draft' && 'bg-stone-100 text-stone-600'
             )}>
               {co.status.replace('_', ' ')}
             </span>
             <span className={cn(
               'text-sm font-medium',
-              co.financialImpact >= 0 ? 'text-stone-700' : 'text-stone-700'
+              co.financialImpact >= 0 ? 'text-green-600' : 'text-red-600'
             )}>
               {co.financialImpact >= 0 ? '+' : ''}{formatCurrency(co.financialImpact)}
             </span>
@@ -522,35 +522,35 @@ export const CROResourceDashboard: React.FC<CROResourceDashboardProps> = ({
         
         {/* Metrics Bar */}
         <div className="grid grid-cols-6 gap-4">
-          <div className="p-3 bg-stone-100 rounded-lg">
-            <p className="text-xs text-stone-600 mb-0.5">Total Contract Value</p>
+          <div className="p-3 bg-blue-50 rounded-lg">
+            <p className="text-xs text-blue-600 mb-0.5">Total Contract Value</p>
             <p className="text-lg font-semibold text-stone-700">{formatCurrency(metrics.totalContractValue)}</p>
           </div>
-          <div className="p-3 bg-stone-100 rounded-lg">
-            <p className="text-xs text-stone-700 mb-0.5">Billed YTD</p>
-            <p className="text-lg font-semibold text-stone-800">{formatCurrency(metrics.totalBilled)}</p>
+          <div className="p-3 bg-green-50 rounded-lg">
+            <p className="text-xs text-green-600 mb-0.5">Billed YTD</p>
+            <p className="text-lg font-semibold text-green-700">{formatCurrency(metrics.totalBilled)}</p>
           </div>
-          <div className="p-3 bg-stone-100 rounded-lg">
-            <p className="text-xs text-stone-600 mb-0.5">Active Projects</p>
+          <div className="p-3 bg-violet-50 rounded-lg">
+            <p className="text-xs text-violet-600 mb-0.5">Active Projects</p>
             <p className="text-lg font-semibold text-stone-700">{metrics.activeProjects}</p>
           </div>
           <div className={cn(
             'p-3 rounded-lg',
-            metrics.atRiskProjects > 0 ? 'bg-stone-100' : 'bg-stone-50'
+            metrics.atRiskProjects > 0 ? 'bg-red-50' : 'bg-stone-50'
           )}>
-            <p className={cn('text-xs mb-0.5', metrics.atRiskProjects > 0 ? 'text-stone-700' : 'text-stone-500')}>At Risk</p>
-            <p className={cn('text-lg font-semibold', metrics.atRiskProjects > 0 ? 'text-stone-800' : 'text-stone-600')}>
+            <p className={cn('text-xs mb-0.5', metrics.atRiskProjects > 0 ? 'text-red-600' : 'text-stone-500')}>At Risk</p>
+            <p className={cn('text-lg font-semibold', metrics.atRiskProjects > 0 ? 'text-red-700' : 'text-stone-600')}>
               {metrics.atRiskProjects}
             </p>
           </div>
           <div className={cn(
             'p-3 rounded-lg',
-            metrics.avgUtilization > 90 ? 'bg-stone-100' : 'bg-stone-50'
+            metrics.avgUtilization > 90 ? 'bg-amber-50' : 'bg-stone-50'
           )}>
-            <p className={cn('text-xs mb-0.5', metrics.avgUtilization > 90 ? 'text-stone-600' : 'text-stone-500')}>
+            <p className={cn('text-xs mb-0.5', metrics.avgUtilization > 90 ? 'text-amber-600' : 'text-stone-500')}>
               Avg Utilization
             </p>
-            <p className={cn('text-lg font-semibold', metrics.avgUtilization > 90 ? 'text-stone-700' : 'text-stone-700')}>
+            <p className={cn('text-lg font-semibold', metrics.avgUtilization > 90 ? 'text-amber-700' : 'text-stone-700')}>
               {metrics.avgUtilization.toFixed(0)}%
             </p>
           </div>
@@ -591,7 +591,7 @@ export const CROResourceDashboard: React.FC<CROResourceDashboardProps> = ({
                 <button
                   key={project.id}
                   onClick={() => onProjectClick?.(project)}
-                  className="w-full flex items-center gap-4 p-4 rounded-lg border border-stone-200 hover:border-stone-300 transition-colors text-left"
+                  className="w-full flex items-center gap-4 p-4 rounded-lg border border-stone-200 hover:border-blue-300 transition-colors text-left"
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-stone-900">{project.projectName}</p>

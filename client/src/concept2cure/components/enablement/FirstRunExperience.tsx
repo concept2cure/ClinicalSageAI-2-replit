@@ -244,7 +244,7 @@ function CreateProjectScreen({
       </p>
 
       {createError && (
-        <div className="max-w-sm w-full mb-4 px-4 py-3 rounded-lg bg-stone-100 text-stone-800 text-sm">
+        <div className="max-w-sm w-full mb-4 px-4 py-3 rounded-lg bg-red-50 text-red-700 text-sm">
           Project creation failed. Check your connection and try again.
         </div>
       )}
@@ -298,7 +298,7 @@ function ConfidenceScreen({
   const suggestions = track === 'device'
     ? [
         { id: 'work', label: 'Start in Work', description: 'Open the document workspace' },
-        { id: 'medical-device', label: 'Open Medical Device Workspace', description: '510(k), PMA, De Novo, CER — adapts to your project type' },
+        { id: '510k-workspace', label: 'Open 510(k) Workspace', description: 'Predicate comparison and SE testing' },
         { id: 'vault', label: 'Open Vault', description: 'Browse files and evidence' },
       ]
     : [

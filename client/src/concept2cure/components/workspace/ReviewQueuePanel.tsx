@@ -113,16 +113,16 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
       {/* Header */}
       <WorkspaceHeader
         title="Review Queue"
-        titleIcon={<Inbox className="w-3.5 h-3.5 text-stone-600" />}
+        titleIcon={<Inbox className="w-3.5 h-3.5 text-blue-600" />}
         actions={
           <div className="flex items-center gap-1.5">
             {totalItems > 0 && (
-              <span className="text-[9px] bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded-full font-medium">
+              <span className="text-[9px] bg-blue-100 text-stone-700 px-1.5 py-0.5 rounded-full font-medium">
                 {totalItems}
               </span>
             )}
             {unreadNotifications > 0 && (
-              <span className="text-[9px] bg-stone-100 text-stone-800 px-1.5 py-0.5 rounded-full font-medium">
+              <span className="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-medium">
                 {unreadNotifications} new
               </span>
             )}
@@ -143,9 +143,9 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
           <LoadingState message="Loading queue…" size="sm" />
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-8 text-stone-400">
-            <AlertTriangle className="w-6 h-6 mb-1 text-stone-400" />
-            <p className="text-[10px] text-stone-900">{error}</p>
-            <button onClick={fetchQueue} className="text-[10px] text-stone-600 hover:underline mt-1">Retry</button>
+            <AlertTriangle className="w-6 h-6 mb-1 text-red-400" />
+            <p className="text-[10px] text-red-500">{error}</p>
+            <button onClick={fetchQueue} className="text-[10px] text-blue-600 hover:underline mt-1">Retry</button>
           </div>
         ) : totalItems === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-stone-400">
@@ -161,22 +161,22 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
               approvalsNeeded > 0) && (
               <div className="flex flex-wrap gap-1 mb-2">
                 {overdueTasks > 0 && (
-                  <span className="text-[8px] bg-stone-100 text-stone-800 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
+                  <span className="text-[8px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
                     <AlertTriangle className="w-2.5 h-2.5" /> {overdueTasks} overdue
                   </span>
                 )}
                 {dueSoonTasks > 0 && (
-                  <span className="text-[8px] bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
+                  <span className="text-[8px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
                     <Clock className="w-2.5 h-2.5" /> {dueSoonTasks} due soon
                   </span>
                 )}
                 {changeRequests > 0 && (
-                  <span className="text-[8px] bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded-full font-medium">
+                  <span className="text-[8px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-medium">
                     {changeRequests} changes requested
                   </span>
                 )}
                 {approvalsNeeded > 0 && (
-                  <span className="text-[8px] bg-stone-200 text-stone-700 px-1.5 py-0.5 rounded-full font-medium">
+                  <span className="text-[8px] bg-violet-100 text-stone-700 px-1.5 py-0.5 rounded-full font-medium">
                     {approvalsNeeded} awaiting approval
                   </span>
                 )}
@@ -193,13 +193,13 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
                   <button
                     key={t.threadId}
                     onClick={() => onNavigateToArtifact?.(t.projectId, t.artifactId)}
-                    className="w-full mb-1.5 p-2 bg-white border border-stone-200 rounded-lg text-left hover:border-stone-200 hover:bg-stone-100/30 transition-colors"
+                    className="w-full mb-1.5 p-2 bg-white border border-stone-200 rounded-lg text-left hover:border-blue-200 hover:bg-blue-50/30 transition-colors"
                   >
                     <p className="text-[10px] font-medium text-stone-800 truncate">{t.title}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span className="text-[8px] text-stone-400 truncate">{t.artifactTitle}</span>
                       {t.priority === 'high' && (
-                        <AlertTriangle className="w-2.5 h-2.5 text-stone-900 shrink-0" />
+                        <AlertTriangle className="w-2.5 h-2.5 text-amber-500 shrink-0" />
                       )}
                       <span className="text-[8px] text-stone-400 ml-auto shrink-0">
                         {formatTime(t.updatedAt)}
@@ -238,7 +238,7 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
                   <button
                     key={t.taskId}
                     onClick={() => onNavigateToArtifact?.(t.projectId, t.artifactId)}
-                    className="w-full mb-1.5 p-2 bg-white border border-stone-200 rounded-lg text-left hover:border-stone-200 hover:bg-stone-100/30 transition-colors"
+                    className="w-full mb-1.5 p-2 bg-white border border-stone-200 rounded-lg text-left hover:border-blue-200 hover:bg-blue-50/30 transition-colors"
                   >
                     <p className="text-[10px] font-medium text-stone-800 truncate">{t.title}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">

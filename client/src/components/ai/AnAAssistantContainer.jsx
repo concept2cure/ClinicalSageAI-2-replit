@@ -8,15 +8,15 @@ import { useAnAAssistant } from '@/contexts/AnAAssistantContext';
  * and renders the assistant when isOpen is true
  */
 export function AnAAssistantContainer() {
- const { isOpen, closeAssistant, moduleContext } = useAnAAssistant();
+  const { isOpen, closeAssistant, moduleContext } = useAnAAssistant();
 
- // Extract module and context from moduleContext
- const module = moduleContext?.module || 'general';
- const context = moduleContext?.context || {};
+  // Extract module and context from moduleContext
+  const module = moduleContext?.module || 'general';
+  const context = moduleContext?.context || {};
 
- return (
- <AnAAssistant isOpen={isOpen} onClose={closeAssistant} module={module} context={context} />
- );
+  return (
+    <AnAAssistant isOpen={isOpen} onClose={closeAssistant} module={module} context={context} />
+  );
 }
 
 export default AnAAssistantContainer;

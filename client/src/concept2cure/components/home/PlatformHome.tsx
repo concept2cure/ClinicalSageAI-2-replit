@@ -64,8 +64,8 @@ const QUICK_ACTIONS = [
     label: 'New Project',
     subtitle: 'Start a submission',
     icon: Plus,
-    color: 'text-stone-600',
-    bg: 'bg-stone-100',
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
     action: 'new-project',
   },
   {
@@ -73,8 +73,8 @@ const QUICK_ACTIONS = [
     label: 'AI Copilot',
     subtitle: 'Chat with AnA',
     icon: Sparkles,
-    color: 'text-stone-600',
-    bg: 'bg-stone-100',
+    color: 'text-violet-600',
+    bg: 'bg-violet-50',
     action: 'assistant',
   },
   {
@@ -82,8 +82,8 @@ const QUICK_ACTIONS = [
     label: 'Collaboration',
     subtitle: 'Team workspace',
     icon: Users,
-    color: 'text-stone-600',
-    bg: 'bg-stone-100',
+    color: 'text-amber-600',
+    bg: 'bg-amber-50',
     action: 'collaboration-hub',
   },
   {
@@ -91,8 +91,8 @@ const QUICK_ACTIONS = [
     label: 'Biostatistics',
     subtitle: 'Statistical analysis',
     icon: FlaskConical,
-    color: 'text-stone-700',
-    bg: 'bg-stone-100',
+    color: 'text-teal-600',
+    bg: 'bg-teal-50',
     action: 'biostatistics',
   },
 ];
@@ -103,28 +103,28 @@ const MODULE_CATALOG = [
     label: 'Regulatory Workspace',
     subtitle: 'Full submission environment',
     icon: FileText,
-    color: 'text-stone-600',
+    color: 'text-blue-600',
   },
   {
     id: 'ectd-coauthor',
     label: 'eCTD Co-Author',
     subtitle: 'Document authoring',
     icon: PenLine,
-    color: 'text-stone-600',
+    color: 'text-violet-600',
   },
   {
     id: 'intelligence-hub',
     label: 'Intelligence Hub',
     subtitle: 'Evidence & insights',
     icon: Search,
-    color: 'text-stone-600',
+    color: 'text-blue-600',
   },
   {
     id: 'review-readiness',
     label: 'Review Readiness',
     subtitle: 'Submission QC',
     icon: ShieldCheck,
-    color: 'text-stone-700',
+    color: 'text-emerald-600',
   },
   {
     id: 'command-center',
@@ -145,59 +145,59 @@ const MODULE_CATALOG = [
     label: 'Biostatistics',
     subtitle: 'Statistical platform',
     icon: FlaskConical,
-    color: 'text-stone-700',
+    color: 'text-teal-600',
   },
   {
     id: 'training-center',
     label: 'Training Center',
     subtitle: 'Courses & certs',
     icon: GraduationCap,
-    color: 'text-stone-600',
+    color: 'text-amber-600',
   },
   {
     id: 'snowglobe',
     label: 'SnowGlobe',
     subtitle: 'Cross-platform intel',
     icon: Snowflake,
-    color: 'text-stone-600',
+    color: 'text-sky-600',
   },
   {
     id: 'collaboration-hub',
     label: 'Collaboration Hub',
     subtitle: 'Team threads',
     icon: Users,
-    color: 'text-stone-600',
+    color: 'text-amber-600',
   },
   {
     id: 'knowledge-base',
     label: 'Knowledge Base',
     subtitle: 'Skills & uploads',
     icon: Upload,
-    color: 'text-stone-600',
+    color: 'text-violet-600',
   },
   {
     id: 'project-knowledge',
     label: 'Project Knowledge',
     subtitle: 'Project context',
     icon: FileStack,
-    color: 'text-stone-600',
+    color: 'text-blue-600',
   },
   {
     id: 'client-onboarding',
     label: 'Client Onboarding',
     subtitle: 'Setup wizard',
     icon: Rocket,
-    color: 'text-stone-700',
+    color: 'text-emerald-600',
   },
 ];
 
 const TYPE_COLORS: Record<string, string> = {
   '510K': 'bg-stone-600',
-  IND: 'bg-stone-500',
-  NDA: 'bg-stone-900',
-  BLA: 'bg-stone-900',
-  PMA: 'bg-stone-900',
-  CER: 'bg-stone-500',
+  IND: 'bg-violet-500',
+  NDA: 'bg-emerald-500',
+  BLA: 'bg-teal-500',
+  PMA: 'bg-orange-500',
+  CER: 'bg-pink-500',
   MAA: 'bg-stone-600',
 };
 
@@ -325,7 +325,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
                       <td className="px-4 py-2.5">
                         <span className="font-medium text-stone-900">{project.name}</span>
                         {project.starred && (
-                          <Star className="w-3 h-3 text-stone-400 fill-stone-400 inline ml-1.5 -mt-0.5" />
+                          <Star className="w-3 h-3 text-amber-400 fill-amber-400 inline ml-1.5 -mt-0.5" />
                         )}
                         {project.description && (
                           <span className="block text-xs text-stone-400 truncate max-w-md">
@@ -394,7 +394,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
                   key={a.id}
                   className="flex items-center gap-3 px-4 py-2.5 hover:bg-stone-50 transition-colors"
                 >
-                  <FileText className="w-3.5 h-3.5 text-stone-500 flex-shrink-0" />
+                  <FileText className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
                   <span className="text-sm font-medium text-stone-900 truncate flex-1">
                     {a.title || a.type}
                   </span>

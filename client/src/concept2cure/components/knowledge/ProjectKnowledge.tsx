@@ -119,8 +119,8 @@ const DocumentItem: React.FC<DocumentItemProps> = ({ document, onRemove }) => {
     <>
       <div className="group flex items-center gap-3 p-2 rounded-lg hover:bg-stone-50 transition-colors duration-150">
         {/* Icon */}
-        <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0">
-          <FileIcon className="h-4 w-4 text-stone-600" />
+        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+          <FileIcon className="h-4 w-4 text-blue-600" />
         </div>
 
         {/* Info */}
@@ -128,7 +128,7 @@ const DocumentItem: React.FC<DocumentItemProps> = ({ document, onRemove }) => {
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-stone-900 truncate">{document.name}</span>
             {document.status === 'processing' && (
-              <Loader2 className="h-3 w-3 animate-spin text-stone-600" />
+              <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
             )}
           </div>
           <div className="flex items-center gap-2 text-xs text-stone-500">
@@ -168,7 +168,7 @@ const DocumentItem: React.FC<DocumentItemProps> = ({ document, onRemove }) => {
               <Download className="h-4 w-4 mr-2" />
               Download
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-stone-700" onClick={() => setShowDeleteDialog(true)}>
+            <DropdownMenuItem className="text-red-600" onClick={() => setShowDeleteDialog(true)}>
               <Trash2 className="h-4 w-4 mr-2" />
               Remove
             </DropdownMenuItem>
@@ -188,7 +188,7 @@ const DocumentItem: React.FC<DocumentItemProps> = ({ document, onRemove }) => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onRemove} className="bg-stone-700 hover:bg-stone-800">
+            <AlertDialogAction onClick={onRemove} className="bg-red-600 hover:bg-red-700">
               Remove
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -222,8 +222,8 @@ const ContextMeter: React.FC<ContextMeterProps> = ({ used, max }) => {
         <span
           className={cn(
             'font-medium',
-            isAtLimit && 'text-stone-700',
-            isNearLimit && !isAtLimit && 'text-stone-600',
+            isAtLimit && 'text-red-600',
+            isNearLimit && !isAtLimit && 'text-amber-600',
             !isNearLimit && 'text-stone-700'
           )}
         >
@@ -234,12 +234,12 @@ const ContextMeter: React.FC<ContextMeterProps> = ({ used, max }) => {
         value={percentage}
         className={cn(
           'h-2',
-          isAtLimit && '[&>div]:bg-stone-900',
-          isNearLimit && !isAtLimit && '[&>div]:bg-stone-900'
+          isAtLimit && '[&>div]:bg-red-500',
+          isNearLimit && !isAtLimit && '[&>div]:bg-amber-500'
         )}
       />
       {isNearLimit && (
-        <div className="flex items-center gap-1 text-xs text-stone-600">
+        <div className="flex items-center gap-1 text-xs text-amber-600">
           <AlertTriangle className="h-3 w-3" />
           <span>
             {isAtLimit
@@ -290,8 +290,8 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({ project, cla
             )}
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-stone-100 flex items-center justify-center">
-                <FolderOpen className="h-5 w-5 text-stone-600" />
+              <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                <FolderOpen className="h-5 w-5 text-blue-600" />
               </div>
               <div>
                 <div className="text-sm font-medium text-stone-900">Project Knowledge</div>
@@ -311,7 +311,7 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({ project, cla
         <SheetContent side="right" className="w-full sm:max-w-lg">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
-              <FolderOpen className="h-5 w-5 text-stone-600" />
+              <FolderOpen className="h-5 w-5 text-blue-600" />
               Project Knowledge
             </SheetTitle>
             <SheetDescription>

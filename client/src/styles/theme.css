@@ -1,24 +1,38 @@
 :root {
-  /* COLORS — Professional neutral palette with restrained blue accent */
-  --color-bg: #fafaf9;               /* Stone-50 — warm neutral background */
+  /* COLORS — Claude/Anthropic warm palette */
+  --color-bg: #FAF9F5;
   --color-surface: #ffffff;
-  --color-surface-warm: #f5f5f4;      /* Stone-100 — subtle surface differentiation */
-  --color-primary: #292524;           /* Stone-800 — primary action (dark, restrained) */
-  --color-primary-variant: #1c1917;   /* Stone-900 — hover/active states */
-  --color-on-primary: #ffffff;
-  --color-secondary: #57534e;         /* Stone-600 — secondary */
-  --color-tertiary: #788c5d;          /* Green accent */
-  --color-success: #16a34a;           /* Green-600 */
-  --color-warning: #d97706;           /* Warm amber */
-  --color-danger: #dc2626;            /* Red-600 */
-  --color-text-primary: #1c1917;      /* Stone-900 */
-  --color-text-secondary: #57534e;    /* Stone-600 */
+  --color-primary: #D97757;
+  --color-primary-variant: #C4623F;
+  --color-on-primary: #FAF9F5;
+  --color-success: #788C5D;
+  --color-warning: #D97706;
+  --color-danger: #DC2626;
+  --color-text-primary: #141413;
+  --color-text-secondary: #4D4B45;
 
-  /* TYPOGRAPHY — Clean system sans for shell, serif preserved for documents */
-  --font-heading: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-document: 'Lora', Georgia, serif;  /* Document/editor surfaces only */
+  /* TYPOGRAPHY */
+  --font-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  /* ANTHROPIC AUTHENTIC COLOR PALETTE */
+  /* Warm, humanistic — NOT cold indigo/purple */
+  --color-bg: #faf9f5;               /* Warm cream background */
+  --color-surface: #ffffff;
+  --color-surface-warm: #f4f3ee;      /* Pampas - subtle warm surface */
+  --color-primary: #d97757;           /* Terracotta orange - Anthropic brand */
+  --color-primary-variant: #c15f3c;   /* Crail - deeper terracotta */
+  --color-on-primary: #ffffff;
+  --color-secondary: #6a9bcc;         /* Anthropic blue accent */
+  --color-tertiary: #788c5d;          /* Anthropic green accent */
+  --color-success: #788c5d;           /* Earthy green */
+  --color-warning: #d97706;           /* Warm amber */
+  --color-danger: #dc3545;
+  --color-text-primary: #141413;      /* Anthropic dark */
+  --color-text-secondary: #4a4a46;    /* Warm dark gray */
+
+  /* TYPOGRAPHY — Anthropic authentic */
+  --font-heading: 'Poppins', Arial, sans-serif;
+  --font-base: 'Lora', Georgia, serif;
+  --font-ui: 'Poppins', Arial, sans-serif;  /* For UI elements, buttons, labels */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-md: 1rem;

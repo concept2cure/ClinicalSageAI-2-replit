@@ -243,7 +243,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
         <div className="mb-3">
           <div className="w-full h-1 bg-stone-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-stone-500 rounded-full transition-all duration-300"
+              className="h-full bg-emerald-500 rounded-full transition-all duration-300"
               style={{ width: `${Math.max(capacityPercent, 1)}%` }}
             />
           </div>
@@ -281,17 +281,17 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                 </div>
                 {/* File type badge */}
                 <div className="absolute bottom-1 left-1">
-                  <span className="text-xs font-semibold text-stone-600 bg-stone-200 px-1.5 py-0.5 rounded uppercase">
+                  <span className="text-xs font-semibold text-white bg-red-500 px-1.5 py-0.5 rounded uppercase">
                     {(doc.type || doc.name?.split('.').pop() || 'file').toUpperCase()}
                   </span>
                 </div>
                 {/* Remove button on hover */}
                 <button
                   onClick={() => removeDocument(doc.id || doc.name)}
-                  className="absolute top-1 right-1 p-0.5 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-stone-100"
+                  className="absolute top-1 right-1 p-0.5 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
                   title="Remove"
                 >
-                  <X className="w-3 h-3 text-stone-500 hover:text-stone-900" />
+                  <X className="w-3 h-3 text-stone-500 hover:text-red-500" />
                 </button>
               </div>
             ))}

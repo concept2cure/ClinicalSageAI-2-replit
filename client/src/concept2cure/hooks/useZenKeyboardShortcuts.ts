@@ -65,7 +65,7 @@ export function useZenKeyboardShortcuts(
       if (
         (e.metaKey || e.ctrlKey) &&
         e.key === 'e' &&
-        st.layoutMode === 'project-workspace' &&
+        st.layoutMode === 'workspace' &&
         st.activeProjectId
       ) {
         e.preventDefault();

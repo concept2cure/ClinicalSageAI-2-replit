@@ -136,9 +136,9 @@ const STATUS_CONFIG: Record<TeamMember['status'], {
   bgColor: string;
   label: string;
 }> = {
-  online: { color: 'bg-stone-900', bgColor: 'bg-stone-100', label: 'Online' },
-  away: { color: 'bg-stone-900', bgColor: 'bg-stone-100', label: 'Away' },
-  busy: { color: 'bg-stone-900', bgColor: 'bg-stone-100', label: 'Busy' },
+  online: { color: 'bg-green-500', bgColor: 'bg-green-100', label: 'Online' },
+  away: { color: 'bg-amber-500', bgColor: 'bg-amber-100', label: 'Away' },
+  busy: { color: 'bg-red-500', bgColor: 'bg-red-100', label: 'Busy' },
   offline: { color: 'bg-stone-400', bgColor: 'bg-stone-100', label: 'Offline' },
 };
 
@@ -147,17 +147,17 @@ const ACTIVITY_CONFIG: Record<ActivityType, {
   color: string;
   label: string;
 }> = {
-  document_edit: { icon: PenTool, color: 'text-stone-600', label: 'edited' },
+  document_edit: { icon: PenTool, color: 'text-blue-600', label: 'edited' },
   document_view: { icon: Eye, color: 'text-stone-500', label: 'viewed' },
-  comment_added: { icon: MessageSquare, color: 'text-stone-600', label: 'commented on' },
-  comment_resolved: { icon: CheckCircle, color: 'text-stone-700', label: 'resolved comment on' },
-  task_assigned: { icon: UserPlus, color: 'text-stone-600', label: 'assigned task' },
-  task_completed: { icon: CheckCircle, color: 'text-stone-700', label: 'completed' },
-  review_requested: { icon: Eye, color: 'text-stone-600', label: 'requested review on' },
-  review_completed: { icon: CheckCircle, color: 'text-stone-700', label: 'completed review of' },
-  approval_granted: { icon: CheckCircle, color: 'text-stone-700', label: 'approved' },
-  document_uploaded: { icon: FileText, color: 'text-stone-600', label: 'uploaded' },
-  mention: { icon: AtSign, color: 'text-stone-600', label: 'mentioned you in' },
+  comment_added: { icon: MessageSquare, color: 'text-violet-600', label: 'commented on' },
+  comment_resolved: { icon: CheckCircle, color: 'text-green-600', label: 'resolved comment on' },
+  task_assigned: { icon: UserPlus, color: 'text-amber-600', label: 'assigned task' },
+  task_completed: { icon: CheckCircle, color: 'text-green-600', label: 'completed' },
+  review_requested: { icon: Eye, color: 'text-cyan-600', label: 'requested review on' },
+  review_completed: { icon: CheckCircle, color: 'text-green-600', label: 'completed review of' },
+  approval_granted: { icon: CheckCircle, color: 'text-emerald-600', label: 'approved' },
+  document_uploaded: { icon: FileText, color: 'text-blue-600', label: 'uploaded' },
+  mention: { icon: AtSign, color: 'text-pink-600', label: 'mentioned you in' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -261,7 +261,7 @@ const TeamPresenceSection: React.FC<{
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-stone-900">Team</h3>
-        <span className="text-xs text-stone-700 font-medium">
+        <span className="text-xs text-green-600 font-medium">
           {onlineMembers.length} online
         </span>
       </div>
@@ -284,7 +284,7 @@ const TeamPresenceSection: React.FC<{
                     <p className="text-xs text-stone-500 truncate">{member.role}</p>
                   </div>
                   {member.currentDocument && (
-                    <span className="text-xs text-stone-600 truncate max-w-24">
+                    <span className="text-xs text-blue-600 truncate max-w-24">
                       {member.currentDocument}
                     </span>
                   )}
@@ -316,7 +316,7 @@ const TeamPresenceSection: React.FC<{
       <div className="mt-4 pt-4 border-t border-stone-200 flex gap-2">
         <button
           onClick={() => onStartCall?.(onlineMembers)}
-          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-stone-600 bg-stone-100 rounded-lg hover:bg-stone-100 transition-colors duration-150"
+          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-150"
         >
           <Video className="w-4 h-4" />
           Start Call
@@ -351,7 +351,7 @@ const ActivityFeed: React.FC<{
       {/* My mentions */}
       {myMentions.length > 0 && (
         <div className="mb-4">
-          <p className="text-xs font-medium text-stone-600 mb-2 flex items-center gap-1">
+          <p className="text-xs font-medium text-pink-600 mb-2 flex items-center gap-1">
             <AtSign className="w-3 h-3" />
             Mentions
           </p>
@@ -364,14 +364,14 @@ const ActivityFeed: React.FC<{
                 <button
                   key={activity.id}
                   onClick={() => onActivityClick?.(activity)}
-                  className="w-full flex items-start gap-2 p-2 bg-stone-100 rounded-lg hover:bg-stone-200 transition-colors text-left"
+                  className="w-full flex items-start gap-2 p-2 bg-pink-50 rounded-lg hover:bg-pink-100 transition-colors text-left"
                 >
                   <MemberAvatar member={activity.actor} size="sm" showStatus={false} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-stone-900">
                       <span className="font-medium">{activity.actor.name}</span>
                       {' '}{config.label}{' '}
-                      <span className="text-stone-600">{activity.documentName || activity.taskTitle}</span>
+                      <span className="text-pink-600">{activity.documentName || activity.taskTitle}</span>
                     </p>
                     {activity.message && (
                       <p className="text-xs text-stone-500 truncate mt-0.5">{activity.message}</p>
@@ -402,7 +402,7 @@ const ActivityFeed: React.FC<{
                 <p className="text-sm text-stone-700">
                   <span className="font-medium text-stone-900">{activity.actor.name}</span>
                   {' '}{config.label}{' '}
-                  <span className="text-stone-600">{activity.documentName || activity.taskTitle}</span>
+                  <span className="text-blue-600">{activity.documentName || activity.taskTitle}</span>
                 </p>
                 <p className="text-xs text-stone-400">{formatTimeAgo(activity.timestamp)}</p>
               </div>
@@ -433,16 +433,16 @@ const ActiveSessionsSection: React.FC<{
         {sessions.map(session => (
           <div
             key={session.documentId}
-            className="p-3 bg-stone-100 border border-stone-200 rounded-lg"
+            className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg"
           >
             <div className="flex items-start justify-between mb-2">
               <div>
-                <p className="text-sm font-medium text-stone-800">{session.documentName}</p>
-                <p className="text-xs text-stone-700">{session.documentType}</p>
+                <p className="text-sm font-medium text-emerald-800">{session.documentName}</p>
+                <p className="text-xs text-emerald-600">{session.documentType}</p>
               </div>
               <button
                 onClick={() => onJoinSession?.(session)}
-                className="px-2 py-1 text-xs font-medium text-white bg-stone-700 rounded hover:bg-stone-800 transition-colors duration-150"
+                className="px-2 py-1 text-xs font-medium text-white bg-emerald-600 rounded hover:bg-emerald-700 transition-colors duration-150"
               >
                 Join
               </button>
@@ -455,9 +455,9 @@ const ActiveSessionsSection: React.FC<{
                 ))}
               </div>
               {session.participants.length > 4 && (
-                <span className="text-xs text-stone-700">+{session.participants.length - 4}</span>
+                <span className="text-xs text-emerald-600">+{session.participants.length - 4}</span>
               )}
-              <span className="ml-auto text-xs text-stone-700">
+              <span className="ml-auto text-xs text-emerald-600">
                 {formatTimeAgo(session.startedAt)}
               </span>
             </div>
@@ -500,13 +500,13 @@ export const TeamCollaborationPanel: React.FC<TeamCollaborationPanelProps> = ({
             className={cn(
               'flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors duration-150',
               activeTab === 'activity'
-                ? 'border-stone-600 text-stone-600'
+                ? 'border-stone-600 text-blue-600'
                 : 'border-transparent text-stone-500 hover:text-stone-700'
             )}
           >
             Activity
             {unreadMentions > 0 && (
-              <span className="ml-1.5 px-1.5 py-0.5 text-xs font-medium text-white bg-stone-500 rounded-full">
+              <span className="ml-1.5 px-1.5 py-0.5 text-xs font-medium text-white bg-pink-500 rounded-full">
                 {unreadMentions}
               </span>
             )}
@@ -516,12 +516,12 @@ export const TeamCollaborationPanel: React.FC<TeamCollaborationPanelProps> = ({
             className={cn(
               'flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors duration-150',
               activeTab === 'team'
-                ? 'border-stone-600 text-stone-600'
+                ? 'border-stone-600 text-blue-600'
                 : 'border-transparent text-stone-500 hover:text-stone-700'
             )}
           >
             Team
-            <span className="ml-1.5 text-xs text-stone-700">
+            <span className="ml-1.5 text-xs text-green-600">
               {teamMembers.filter(m => m.status !== 'offline').length}
             </span>
           </button>
@@ -563,7 +563,7 @@ export const TeamCollaborationPanel: React.FC<TeamCollaborationPanelProps> = ({
             <button className="p-1.5 text-stone-400 hover:text-stone-600 transition-colors duration-150">
               <Paperclip className="w-4 h-4" />
             </button>
-            <button className="p-1.5 text-stone-600 hover:text-stone-700 transition-colors duration-150">
+            <button className="p-1.5 text-blue-600 hover:text-stone-700 transition-colors duration-150">
               <Send className="w-4 h-4" />
             </button>
           </div>

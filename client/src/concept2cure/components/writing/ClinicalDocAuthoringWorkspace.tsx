@@ -195,38 +195,38 @@ interface ClinicalDocAuthoringWorkspaceProps {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const DOC_TYPE_CONFIG: Record<DocumentType, { label: string; shortLabel: string; color: string }> = {
-  ctd_2_3: { label: 'Quality Overall Summary', shortLabel: 'CTD 2.3', color: 'bg-stone-100 text-stone-800' },
-  ctd_2_4: { label: 'Nonclinical Overview', shortLabel: 'CTD 2.4', color: 'bg-stone-100 text-stone-800' },
-  ctd_2_5: { label: 'Clinical Overview', shortLabel: 'CTD 2.5', color: 'bg-stone-100 text-stone-700' },
-  ctd_2_6: { label: 'Nonclinical Summaries', shortLabel: 'CTD 2.6', color: 'bg-stone-100 text-stone-800' },
-  ctd_2_7: { label: 'Clinical Summary', shortLabel: 'CTD 2.7', color: 'bg-stone-100 text-stone-700' },
-  csr: { label: 'Clinical Study Report', shortLabel: 'CSR', color: 'bg-stone-100 text-stone-700' },
-  ib: { label: "Investigator's Brochure", shortLabel: 'IB', color: 'bg-stone-200 text-stone-700' },
-  protocol: { label: 'Protocol', shortLabel: 'Protocol', color: 'bg-stone-100 text-stone-700' },
-  protocol_amendment: { label: 'Protocol Amendment', shortLabel: 'Amendment', color: 'bg-stone-100 text-stone-700' },
-  informed_consent: { label: 'Informed Consent', shortLabel: 'ICF', color: 'bg-stone-200 text-stone-700' },
-  regulatory_response: { label: 'Regulatory Response', shortLabel: 'Response', color: 'bg-stone-100 text-stone-800' },
-  briefing_document: { label: 'Briefing Document', shortLabel: 'Briefing', color: 'bg-stone-100 text-stone-800' },
-  dsur: { label: 'DSUR', shortLabel: 'DSUR', color: 'bg-stone-100 text-stone-700' },
-  psur: { label: 'PSUR', shortLabel: 'PSUR', color: 'bg-stone-100 text-stone-800' },
+  ctd_2_3: { label: 'Quality Overall Summary', shortLabel: 'CTD 2.3', color: 'bg-green-100 text-green-700' },
+  ctd_2_4: { label: 'Nonclinical Overview', shortLabel: 'CTD 2.4', color: 'bg-emerald-100 text-emerald-700' },
+  ctd_2_5: { label: 'Clinical Overview', shortLabel: 'CTD 2.5', color: 'bg-blue-100 text-stone-700' },
+  ctd_2_6: { label: 'Nonclinical Summaries', shortLabel: 'CTD 2.6', color: 'bg-teal-100 text-teal-700' },
+  ctd_2_7: { label: 'Clinical Summary', shortLabel: 'CTD 2.7', color: 'bg-cyan-100 text-cyan-700' },
+  csr: { label: 'Clinical Study Report', shortLabel: 'CSR', color: 'bg-blue-100 text-stone-700' },
+  ib: { label: "Investigator's Brochure", shortLabel: 'IB', color: 'bg-purple-100 text-purple-700' },
+  protocol: { label: 'Protocol', shortLabel: 'Protocol', color: 'bg-amber-100 text-amber-700' },
+  protocol_amendment: { label: 'Protocol Amendment', shortLabel: 'Amendment', color: 'bg-orange-100 text-orange-700' },
+  informed_consent: { label: 'Informed Consent', shortLabel: 'ICF', color: 'bg-pink-100 text-pink-700' },
+  regulatory_response: { label: 'Regulatory Response', shortLabel: 'Response', color: 'bg-red-100 text-red-700' },
+  briefing_document: { label: 'Briefing Document', shortLabel: 'Briefing', color: 'bg-rose-100 text-rose-700' },
+  dsur: { label: 'DSUR', shortLabel: 'DSUR', color: 'bg-blue-100 text-stone-700' },
+  psur: { label: 'PSUR', shortLabel: 'PSUR', color: 'bg-fuchsia-100 text-fuchsia-700' },
 };
 
 const STATUS_CONFIG: Record<AuthoringStatus, { label: string; color: string; bgColor: string; step: number }> = {
   not_started: { label: 'Not Started', color: 'text-stone-500', bgColor: 'bg-stone-100', step: 0 },
-  outline: { label: 'Outline', color: 'text-stone-600', bgColor: 'bg-stone-100', step: 1 },
-  first_draft: { label: 'First Draft', color: 'text-stone-600', bgColor: 'bg-stone-100', step: 2 },
-  internal_review: { label: 'Internal Review', color: 'text-stone-600', bgColor: 'bg-stone-200', step: 3 },
-  cross_functional_review: { label: 'Cross-Functional Review', color: 'text-stone-600', bgColor: 'bg-stone-200', step: 4 },
-  revision: { label: 'Revision', color: 'text-stone-600', bgColor: 'bg-stone-100', step: 5 },
-  final_qc: { label: 'Final QC', color: 'text-stone-600', bgColor: 'bg-stone-100', step: 6 },
-  approved: { label: 'Approved', color: 'text-stone-700', bgColor: 'bg-stone-100', step: 7 },
+  outline: { label: 'Outline', color: 'text-blue-600', bgColor: 'bg-blue-100', step: 1 },
+  first_draft: { label: 'First Draft', color: 'text-amber-600', bgColor: 'bg-amber-100', step: 2 },
+  internal_review: { label: 'Internal Review', color: 'text-violet-600', bgColor: 'bg-violet-100', step: 3 },
+  cross_functional_review: { label: 'Cross-Functional Review', color: 'text-purple-600', bgColor: 'bg-purple-100', step: 4 },
+  revision: { label: 'Revision', color: 'text-orange-600', bgColor: 'bg-orange-100', step: 5 },
+  final_qc: { label: 'Final QC', color: 'text-cyan-600', bgColor: 'bg-cyan-100', step: 6 },
+  approved: { label: 'Approved', color: 'text-green-600', bgColor: 'bg-green-100', step: 7 },
   locked: { label: 'Locked', color: 'text-stone-600', bgColor: 'bg-stone-200', step: 8 },
 };
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string }> = {
-  critical: { label: 'Critical', color: 'bg-stone-100 text-stone-800' },
-  major: { label: 'Major', color: 'bg-stone-100 text-stone-700' },
-  minor: { label: 'Minor', color: 'bg-stone-100 text-stone-700' },
+  critical: { label: 'Critical', color: 'bg-red-100 text-red-700' },
+  major: { label: 'Major', color: 'bg-amber-100 text-amber-700' },
+  minor: { label: 'Minor', color: 'bg-blue-100 text-stone-700' },
   editorial: { label: 'Editorial', color: 'bg-stone-100 text-stone-600' },
 };
 
@@ -293,7 +293,7 @@ const SectionTreeItem: React.FC<{
         </span>
         
         {section.comments.filter(c => c.status === 'open').length > 0 && (
-          <span className="px-1.5 py-0.5 text-xs font-medium bg-stone-100 text-stone-700 rounded">
+          <span className="px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
             {section.comments.filter(c => c.status === 'open').length}
           </span>
         )}
@@ -325,7 +325,7 @@ const DocumentOutlineTree: React.FC<{
     <div className="bg-white rounded-xl border border-stone-200 overflow-hidden h-full flex flex-col">
       <div className="p-3 border-b border-stone-200">
         <h3 className="text-sm font-semibold text-stone-900 mb-2 flex items-center gap-2">
-          <BookOpen className="w-4 h-4 text-stone-600" />
+          <BookOpen className="w-4 h-4 text-blue-600" />
           Document Structure
         </h3>
         <div className="relative">
@@ -359,15 +359,15 @@ const DocumentOutlineTree: React.FC<{
             <span className="text-stone-500">Not Started</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-stone-400" />
+            <span className="w-2 h-2 rounded-full bg-blue-400" />
             <span className="text-stone-500">Draft</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-stone-400" />
+            <span className="w-2 h-2 rounded-full bg-amber-400" />
             <span className="text-stone-500">Review</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-stone-400" />
+            <span className="w-2 h-2 rounded-full bg-green-400" />
             <span className="text-stone-500">Complete</span>
           </div>
         </div>
@@ -415,7 +415,7 @@ const ReviewCommentsPanel: React.FC<{
       <div className="p-3 border-b border-stone-200">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-stone-600" />
+            <MessageSquare className="w-4 h-4 text-amber-600" />
             Review Comments
           </h3>
           <span className="text-xs text-stone-500">
@@ -430,7 +430,7 @@ const ReviewCommentsPanel: React.FC<{
               onClick={() => setFilter(f)}
               className={cn(
                 'px-2 py-1 text-xs font-medium rounded transition-colors capitalize',
-                filter === f ? 'bg-stone-100 text-stone-700' : 'text-stone-500 hover:bg-stone-100'
+                filter === f ? 'bg-blue-100 text-stone-700' : 'text-stone-500 hover:bg-stone-100'
               )}
             >
               {f}
@@ -457,14 +457,14 @@ const ReviewCommentsPanel: React.FC<{
                 <div key={comment.id} className="p-3 border-t border-stone-200 hover:bg-stone-50">
                   <div className="flex items-start justify-between mb-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-stone-600">{comment.sectionNumber}</span>
+                      <span className="text-xs font-medium text-blue-600">{comment.sectionNumber}</span>
                       <span className="text-xs text-stone-400">•</span>
                       <span className="text-xs text-stone-500">{comment.author}</span>
                     </div>
                     {comment.status === 'open' && (
                       <button
                         onClick={() => onCommentResolve?.(comment)}
-                        className="p-1 text-stone-400 hover:text-stone-700 transition-colors duration-150"
+                        className="p-1 text-stone-400 hover:text-green-600 transition-colors duration-150"
                         title="Resolve"
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -475,7 +475,7 @@ const ReviewCommentsPanel: React.FC<{
                   <p className="text-sm text-stone-700">{comment.commentText}</p>
                   
                   {comment.suggestedChange && (
-                    <div className="mt-2 p-2 bg-stone-100 rounded text-xs text-stone-800">
+                    <div className="mt-2 p-2 bg-green-50 rounded text-xs text-green-700">
                       <span className="font-medium">Suggested: </span>
                       {comment.suggestedChange}
                     </div>
@@ -540,7 +540,7 @@ const SourceDocumentsPanel: React.FC<{
     <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
       <div className="p-3 border-b border-stone-200">
         <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-2">
-          <Link2 className="w-4 h-4 text-stone-600" />
+          <Link2 className="w-4 h-4 text-violet-600" />
           Source Documents
         </h3>
       </div>
@@ -566,7 +566,7 @@ const SourceDocumentsPanel: React.FC<{
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-xs text-stone-400">v{source.version}</span>
                     {source.studyId && (
-                      <span className="text-xs text-stone-600">{source.studyId}</span>
+                      <span className="text-xs text-blue-600">{source.studyId}</span>
                     )}
                   </div>
                 </button>
@@ -610,7 +610,7 @@ const DocumentList: React.FC<{
     <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
       <div className="p-3 border-b border-stone-200">
         <h3 className="text-sm font-semibold text-stone-900 mb-2 flex items-center gap-2">
-          <FileText className="w-4 h-4 text-stone-600" />
+          <FileText className="w-4 h-4 text-blue-600" />
           Documents
         </h3>
         
@@ -621,7 +621,7 @@ const DocumentList: React.FC<{
               onClick={() => setFilter(f)}
               className={cn(
                 'px-2 py-1 text-xs font-medium rounded transition-colors capitalize',
-                filter === f ? 'bg-stone-100 text-stone-700' : 'text-stone-500 hover:bg-stone-100'
+                filter === f ? 'bg-blue-100 text-stone-700' : 'text-stone-500 hover:bg-stone-100'
               )}
             >
               {f}
@@ -643,7 +643,7 @@ const DocumentList: React.FC<{
               onClick={() => onDocumentSelect?.(doc)}
               className={cn(
                 'w-full p-3 text-left border-b border-stone-200 transition-colors duration-150',
-                isActive ? 'bg-stone-100' : 'hover:bg-stone-50'
+                isActive ? 'bg-blue-50' : 'hover:bg-stone-50'
               )}
             >
               <div className="flex items-start justify-between mb-1">
@@ -677,7 +677,7 @@ const DocumentList: React.FC<{
               
               {/* Open Comments */}
               {doc.openComments > 0 && (
-                <div className="mt-2 flex items-center gap-1 text-xs text-stone-600">
+                <div className="mt-2 flex items-center gap-1 text-xs text-amber-600">
                   <MessageSquare className="w-3 h-3" />
                   {doc.openComments} open comments
                 </div>
@@ -770,7 +770,7 @@ const DocumentHeader: React.FC<{
         </div>
         <div>
           <p className="text-xs text-stone-500">Open Comments</p>
-          <p className={cn('text-sm font-medium', document.openComments > 0 ? 'text-stone-600' : 'text-stone-900')}>
+          <p className={cn('text-sm font-medium', document.openComments > 0 ? 'text-amber-600' : 'text-stone-900')}>
             {document.openComments}
           </p>
         </div>
@@ -833,23 +833,23 @@ export const ClinicalDocAuthoringWorkspace: React.FC<ClinicalDocAuthoringWorkspa
             <p className="text-xs text-stone-500">Documents</p>
             <p className="text-base font-medium text-stone-900">{metrics.totalDocuments}</p>
           </div>
-          <div className="p-3 bg-stone-100 rounded-lg">
-            <p className="text-xs text-stone-600">In Draft</p>
+          <div className="p-3 bg-blue-50 rounded-lg">
+            <p className="text-xs text-blue-600">In Draft</p>
             <p className="text-base font-medium text-stone-700">{metrics.inDraft}</p>
           </div>
-          <div className="p-3 bg-stone-100 rounded-lg">
-            <p className="text-xs text-stone-600">In Review</p>
+          <div className="p-3 bg-violet-50 rounded-lg">
+            <p className="text-xs text-violet-600">In Review</p>
             <p className="text-base font-medium text-stone-700">{metrics.inReview}</p>
           </div>
-          <div className={cn('p-3 rounded-lg', metrics.openComments > 0 ? 'bg-stone-100' : 'bg-stone-100')}>
-            <p className={cn('text-xs', metrics.openComments > 0 ? 'text-stone-600' : 'text-stone-500')}>Open Comments</p>
-            <p className={cn('text-base font-medium', metrics.openComments > 0 ? 'text-stone-700' : 'text-stone-900')}>
+          <div className={cn('p-3 rounded-lg', metrics.openComments > 0 ? 'bg-amber-50' : 'bg-stone-100')}>
+            <p className={cn('text-xs', metrics.openComments > 0 ? 'text-amber-600' : 'text-stone-500')}>Open Comments</p>
+            <p className={cn('text-base font-medium', metrics.openComments > 0 ? 'text-amber-700' : 'text-stone-900')}>
               {metrics.openComments}
             </p>
           </div>
-          <div className="p-3 bg-stone-100 rounded-lg">
-            <p className="text-xs text-stone-700">Avg Progress</p>
-            <p className="text-base font-medium text-stone-800">{metrics.avgProgress}%</p>
+          <div className="p-3 bg-green-50 rounded-lg">
+            <p className="text-xs text-green-600">Avg Progress</p>
+            <p className="text-base font-medium text-green-700">{metrics.avgProgress}%</p>
           </div>
         </div>
       </div>

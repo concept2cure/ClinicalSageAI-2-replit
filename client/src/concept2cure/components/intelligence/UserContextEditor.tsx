@@ -163,8 +163,8 @@ export function UserContextEditor({ onClose }: UserContextEditorProps) {
 
       <CardContent>
         {isLoading ? (
-          <div className="flex items-center justify-center py-8 text-sm text-stone-500" role="status" aria-label="Loading preferences">
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-stone-300 border-t-transparent mr-2" />
+          <div className="flex items-center justify-center py-8 text-sm text-slate-500" role="status" aria-label="Loading preferences">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-transparent mr-2" />
             Loading your preferences...
           </div>
         ) : (

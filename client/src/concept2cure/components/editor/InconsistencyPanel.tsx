@@ -49,11 +49,11 @@ interface InconsistencyPanelProps {
 function getSeverityColor(severity: string) {
   switch (severity) {
     case 'high':
-      return 'text-stone-700 bg-stone-100 border-stone-200';
+      return 'text-red-600 bg-red-50 border-red-200';
     case 'medium':
-      return 'text-stone-600 bg-stone-100 border-stone-200';
+      return 'text-amber-600 bg-amber-50 border-amber-200';
     case 'low':
-      return 'text-stone-600 bg-stone-100 border-stone-200';
+      return 'text-blue-600 bg-blue-50 border-blue-200';
     default:
       return 'text-stone-600 bg-stone-50 border-stone-200';
   }
@@ -62,11 +62,11 @@ function getSeverityColor(severity: string) {
 function getSeverityIcon(severity: string) {
   switch (severity) {
     case 'high':
-      return <AlertTriangle className="w-3.5 h-3.5 text-stone-900" />;
+      return <AlertTriangle className="w-3.5 h-3.5 text-red-500" />;
     case 'medium':
-      return <AlertTriangle className="w-3.5 h-3.5 text-stone-900" />;
+      return <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />;
     case 'low':
-      return <Link2 className="w-3.5 h-3.5 text-stone-900" />;
+      return <Link2 className="w-3.5 h-3.5 text-blue-500" />;
     default:
       return <Link2 className="w-3.5 h-3.5 text-stone-500" />;
   }
@@ -168,7 +168,7 @@ const InconsistencyPanel: React.FC<InconsistencyPanelProps> = ({
       {/* Header */}
       <div className="p-3 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center gap-2 mb-1">
-          <Sparkles className="w-4 h-4 text-stone-900" />
+          <Sparkles className="w-4 h-4 text-amber-500" />
           <span className="font-semibold text-sm text-stone-900">
             Inconsistency Intelligence
           </span>
@@ -180,17 +180,17 @@ const InconsistencyPanel: React.FC<InconsistencyPanelProps> = ({
         {visibleAffected.length > 0 && (
           <div className="flex items-center gap-2 mt-2">
             {highCount > 0 && (
-              <span className="px-1.5 py-0.5 text-xs bg-stone-100 text-stone-700 rounded-full">
+              <span className="px-1.5 py-0.5 text-xs bg-red-100 text-red-600 rounded-full">
                 {highCount} critical
               </span>
             )}
             {medCount > 0 && (
-              <span className="px-1.5 py-0.5 text-xs bg-stone-100 text-stone-600 rounded-full">
+              <span className="px-1.5 py-0.5 text-xs bg-amber-100 text-amber-600 rounded-full">
                 {medCount} moderate
               </span>
             )}
             {lowCount > 0 && (
-              <span className="px-1.5 py-0.5 text-xs bg-stone-100 text-stone-600 rounded-full">
+              <span className="px-1.5 py-0.5 text-xs bg-blue-100 text-blue-600 rounded-full">
                 {lowCount} minor
               </span>
             )}
@@ -215,7 +215,7 @@ const InconsistencyPanel: React.FC<InconsistencyPanelProps> = ({
       <div className="flex-1 overflow-y-auto">
         {loading && visibleAffected.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-stone-500">
-            <Loader2 className="w-6 h-6 animate-spin text-stone-900 mb-2" />
+            <Loader2 className="w-6 h-6 animate-spin text-amber-500 mb-2" />
             <p className="text-xs">Analyzing cross-section impacts...</p>
             <p className="text-xs text-stone-400 mt-1">
               Comparing with other project documents
@@ -223,7 +223,7 @@ const InconsistencyPanel: React.FC<InconsistencyPanelProps> = ({
           </div>
         ) : visibleAffected.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-stone-500">
-            <CheckCircle className="w-8 h-8 text-stone-400 mb-2" />
+            <CheckCircle className="w-8 h-8 text-emerald-400 mb-2" />
             <p className="text-xs font-medium">No inconsistencies detected</p>
             <p className="text-xs text-stone-400 mt-1">
               {lastCheckedContent

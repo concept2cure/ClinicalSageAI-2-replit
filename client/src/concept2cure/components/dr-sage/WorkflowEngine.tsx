@@ -98,10 +98,10 @@ const STATUS_CONFIG = {
     label: 'Complete',
   },
   blocked: {
-    bg: 'bg-stone-100',
-    border: 'border-stone-400',
+    bg: 'bg-red-50',
+    border: 'border-red-400',
     icon: AlertCircle,
-    iconColor: 'text-stone-900',
+    iconColor: 'text-red-500',
     label: 'Blocked',
   },
   'action-needed': {
@@ -116,17 +116,17 @@ const STATUS_CONFIG = {
 const ACTOR_CONFIG = {
   'dr-sage': {
     label: 'Dr. Sage',
-    bg: 'bg-stone-100 text-stone-700',
+    bg: 'bg-blue-100 text-stone-700',
     icons: [Bot],
   },
   ana: {
     label: 'AnA 1.0',
-    bg: 'bg-stone-100 text-stone-700',
+    bg: 'bg-blue-100 text-stone-700',
     icons: [Brain],
   },
   both: {
     label: 'Dr. Sage + AnA 1.0',
-    bg: 'bg-stone-100 text-stone-700',
+    bg: 'bg-blue-50 text-stone-700',
     icons: [Bot, Brain],
   },
 } as const;
@@ -205,7 +205,7 @@ function StepCard({
             className={cn(
               'w-0.5 flex-1 min-h-[24px]',
               step.status === 'complete'
-                ? 'bg-stone-300'
+                ? 'bg-emerald-300'
                 : 'bg-border',
             )}
           />
@@ -218,7 +218,7 @@ function StepCard({
           'mb-4 flex-1 rounded-lg border p-4 transition-colors duration-150',
           cfg.border,
           cfg.bg,
-          step.status === 'running' && 'ring-2 ring-stone-400/30',
+          step.status === 'running' && 'ring-2 ring-blue-400/30',
         )}
         layout
       >
@@ -253,7 +253,7 @@ function StepCard({
               transition={{ duration: 0.3 }}
               className="overflow-hidden"
             >
-              <div className="mt-3 flex items-start gap-2 rounded-md bg-stone-100/60 p-2.5 text-xs text-stone-800">
+              <div className="mt-3 flex items-start gap-2 rounded-md bg-emerald-100/60 p-2.5 text-xs text-emerald-700">
                 <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
                 <span>{step.result}</span>
               </div>
@@ -272,7 +272,7 @@ function StepCard({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-stone-400 text-stone-700 hover:bg-stone-100"
+                  className="border-amber-400 text-amber-700 hover:bg-amber-100"
                   onClick={() => onAction(step.id)}
                 >
                   <AlertTriangle className="mr-1.5 h-3.5 w-3.5" />
@@ -324,8 +324,8 @@ export function WorkflowEngine({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-stone-100">
-              <Zap className="h-4 w-4 text-stone-600" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100">
+              <Zap className="h-4 w-4 text-blue-600" />
             </div>
             <div>
               <CardTitle className="text-base">{title}</CardTitle>
@@ -342,7 +342,7 @@ export function WorkflowEngine({
               variant={allComplete ? 'default' : 'secondary'}
               className={cn(
                 'text-xs',
-                allComplete && 'bg-stone-900 hover:bg-stone-700',
+                allComplete && 'bg-emerald-500 hover:bg-emerald-600',
                 isRunning && !allComplete && 'bg-stone-600 hover:bg-stone-800 text-white',
               )}
             >
@@ -361,7 +361,7 @@ export function WorkflowEngine({
             className={cn(
               'h-full rounded-full',
               allComplete
-                ? 'bg-stone-900'
+                ? 'bg-emerald-500'
                 : 'bg-stone-600',
             )}
             initial={{ width: 0 }}
@@ -396,7 +396,7 @@ export function WorkflowEngine({
               exit={{ opacity: 0, y: 12 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <div className="mt-2 rounded-lg border border-stone-300 bg-stone-100 p-4">
+              <div className="mt-2 rounded-lg border border-emerald-300 bg-emerald-50 p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <motion.div
                     initial={{ scale: 0 }}
@@ -408,9 +408,9 @@ export function WorkflowEngine({
                       delay: 0.4,
                     }}
                   >
-                    <CheckCircle2 className="h-5 w-5 text-stone-900" />
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                   </motion.div>
-                  <span className="font-semibold text-sm text-stone-800">
+                  <span className="font-semibold text-sm text-emerald-700">
                     Workflow Complete
                   </span>
                 </div>
@@ -569,7 +569,7 @@ export function WorkflowDemo({
           className="flex w-full items-center justify-between text-left"
         >
           <span className="flex items-center gap-2 text-sm font-medium">
-            <Sparkles className="h-4 w-4 text-stone-900" />
+            <Sparkles className="h-4 w-4 text-amber-500" />
             Why this is better
           </span>
           {whyExpanded ? (

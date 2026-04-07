@@ -43,19 +43,19 @@ const AUDIENCES = [
 
 const accentStyles: Record<string, { badge: string; border: string; bg: string }> = {
   blue: {
-    badge: 'bg-stone-100 text-stone-700',
-    border: 'border-stone-100 hover:border-stone-300',
-    bg: 'from-stone-100/30 to-white',
+    badge: 'bg-blue-100 text-blue-700',
+    border: 'border-blue-100 hover:border-blue-300',
+    bg: 'from-blue-50/30 to-white',
   },
   violet: {
-    badge: 'bg-stone-100 text-stone-700',
-    border: 'border-stone-100 hover:border-stone-300',
-    bg: 'from-stone-100/30 to-white',
+    badge: 'bg-violet-100 text-violet-700',
+    border: 'border-violet-100 hover:border-violet-300',
+    bg: 'from-violet-50/30 to-white',
   },
   indigo: {
     badge: 'bg-stone-100 text-stone-700',
-    border: 'border-stone-100 hover:border-stone-300',
-    bg: 'from-stone-100/30 to-white',
+    border: 'border-indigo-100 hover:border-indigo-300',
+    bg: 'from-indigo-50/30 to-white',
   },
 };
 
@@ -91,7 +91,7 @@ export function SocialProofSection() {
                 <ul className="space-y-3">
                   {a.points.map(point => (
                     <li key={point} className="flex items-start gap-2.5 text-sm text-stone-700">
-                      <CheckIcon className="w-4 h-4 text-stone-900 mt-0.5 flex-shrink-0" />
+                      <CheckIcon className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                       <span>{point}</span>
                     </li>
                   ))}

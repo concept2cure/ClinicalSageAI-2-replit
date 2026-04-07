@@ -55,31 +55,31 @@ export default function GatekeeperPanel({ batchId }: { batchId: string }) {
       </CardHeader>
       <CardContent className="text-sm space-y-2">
         {!out ? (
-          <div className="text-stone-600">Evaluating…</div>
+          <div className="text-slate-600">Evaluating…</div>
         ) : (
           <>
             <div
               className={
                 out.status === 'PASS'
-                  ? 'text-stone-800'
+                  ? 'text-emerald-700'
                   : out.status === 'REJECT'
-                    ? 'text-stone-800'
-                    : 'text-stone-700'
+                    ? 'text-red-700'
+                    : 'text-amber-700'
               }
             >
               Status: {out.status}
             </div>
             {(out.blockers || []).length === 0 ? (
-              <div className="text-stone-600">No blockers 🎉</div>
+              <div className="text-slate-600">No blockers 🎉</div>
             ) : (
               <ul className="list-disc ml-6">
                 {out.blockers.map((b: any, i: number) => (
                   <li
                     key={i}
-                    className={/CRITICAL/.test(b.severity) ? 'text-stone-800' : 'text-stone-700'}
+                    className={/CRITICAL/.test(b.severity) ? 'text-red-700' : 'text-amber-700'}
                   >
                     [{b.severity}] {b.msg}{' '}
-                    {b.fixable && <span className="text-stone-600">(fixable)</span>}
+                    {b.fixable && <span className="text-blue-600">(fixable)</span>}
                   </li>
                 ))}
               </ul>

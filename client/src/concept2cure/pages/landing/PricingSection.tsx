@@ -120,7 +120,7 @@ export function PricingSection() {
                 billing === 'annual' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600'
               }`}
             >
-              Annual <span className="text-stone-700 text-xs ml-1">Save 15%</span>
+              Annual <span className="text-green-600 text-xs ml-1">Save 15%</span>
             </button>
           </div>
         </motion.div>
@@ -132,12 +132,12 @@ export function PricingSection() {
               variants={fadeUp}
               className={`relative p-6 rounded-2xl border transition-all ${
                 tier.highlighted
-                  ? 'border-stone-600 bg-stone-100/30 shadow shadow-stone-600/10'
-                  : 'border-stone-200 bg-white hover:border-stone-300 hover:shadow-sm'
+                  ? 'border-blue-600 bg-blue-50/30 shadow shadow-blue-600/10'
+                  : 'border-stone-200 bg-white hover:border-stone-300 hover:shadow-md'
               }`}
             >
               {tier.highlighted && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-stone-600 text-white text-xs font-medium rounded-full">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-full">
                   Most Popular
                 </div>
               )}
@@ -155,7 +155,7 @@ export function PricingSection() {
               <ul className="space-y-2.5 mb-8">
                 {tier.features.map(f => (
                   <li key={f} className="flex items-start gap-2 text-sm text-stone-700">
-                    <CheckIcon className="w-4 h-4 text-stone-900 mt-0.5 flex-shrink-0" />
+                    <CheckIcon className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
                     {f}
                   </li>
                 ))}
@@ -172,7 +172,7 @@ export function PricingSection() {
                 }}
                 className={`w-full py-2.5 px-4 text-sm font-medium rounded-xl transition-all ${
                   tier.highlighted
-                    ? 'bg-stone-600 text-white hover:bg-stone-700 shadow-sm'
+                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md'
                     : 'bg-stone-100 text-stone-800 hover:bg-stone-200'
                 }`}
               >

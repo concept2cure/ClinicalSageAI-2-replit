@@ -14,7 +14,6 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { cn } from '@/lib/utils';
 import { useInlineAI, type InlineAIResult } from '../../hooks/useInlineAI';
 import type { ValidationFinding, AIActionModuleType } from '../../hooks/useAIAction';
 
@@ -41,11 +40,11 @@ export interface ValidationRefineTriggerProps {
   className?: string;
 }
 
-const SEVERITY_CONFIG: Record<string, { bg: string; text: string; border: string; badge: string }> = {
-  critical: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-300', badge: 'bg-red-200 text-red-700' },
-  major: { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-300', badge: 'bg-amber-200 text-amber-700' },
-  minor: { bg: 'bg-yellow-50', text: 'text-yellow-600', border: 'border-yellow-300', badge: 'bg-yellow-200 text-yellow-700' },
-  info: { bg: 'bg-stone-50', text: 'text-stone-600', border: 'border-stone-300', badge: 'bg-stone-200 text-stone-700' },
+const SEVERITY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  critical: { bg: '#fef2f2', text: '#dc2626', border: '#fca5a5' },
+  major: { bg: '#fff7ed', text: '#ea580c', border: '#fdba74' },
+  minor: { bg: '#fefce8', text: '#ca8a04', border: '#fde047' },
+  info: { bg: '#f0f9ff', text: '#0284c7', border: '#7dd3fc' },
 };
 
 export function ValidationRefineTrigger({
@@ -121,7 +120,7 @@ export function ValidationRefineTrigger({
 
   if (findings.length === 0) {
     return (
-      <div className={cn("p-4 text-center text-stone-500 text-[13px]", className)}>
+      <div className={className} style={{ padding: '16px', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
         No validation findings.
       </div>
     );
@@ -131,29 +130,29 @@ export function ValidationRefineTrigger({
   const majorCount = findings.filter(f => f.severity === 'major').length;
 
   return (
-    <div className={cn("text-[13px]", className)}>
+    <div className={className} style={{ fontSize: '13px' }}>
       {/* Header with summary */}
-      <div className="flex justify-between items-center mb-3">
-        <div className="flex gap-2 items-center">
-          <span className="font-semibold text-stone-900">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <span style={{ fontWeight: 600, color: '#1e293b' }}>
             {findings.length} Finding{findings.length !== 1 ? 's' : ''}
           </span>
           {criticalCount > 0 && (
-            <span className="px-1.5 rounded-full text-[11px] bg-red-50 text-red-600">
+            <span style={{ padding: '1px 6px', borderRadius: '10px', fontSize: '11px', background: '#fef2f2', color: '#dc2626' }}>
               {criticalCount} critical
             </span>
           )}
           {majorCount > 0 && (
-            <span className="px-1.5 rounded-full text-[11px] bg-amber-50 text-amber-600">
+            <span style={{ padding: '1px 6px', borderRadius: '10px', fontSize: '11px', background: '#fff7ed', color: '#ea580c' }}>
               {majorCount} major
             </span>
           )}
         </div>
-        <div className="flex gap-1.5">
+        <div style={{ display: 'flex', gap: '6px' }}>
           <button
             type="button"
             onClick={selectAll}
-            className="px-2.5 py-1 text-[11px] border border-stone-200 rounded bg-white hover:bg-stone-50 cursor-pointer transition-colors"
+            style={{ padding: '4px 10px', fontSize: '11px', border: '1px solid #e2e8f0', borderRadius: '4px', background: '#fff', cursor: 'pointer' }}
           >
             Select All
           </button>
@@ -161,12 +160,15 @@ export function ValidationRefineTrigger({
             type="button"
             onClick={selectedFindings.size > 0 ? handleRefineSelected : handleRefineAll}
             disabled={inlineAI.isLoading}
-            className={cn(
-              "px-2.5 py-1 text-[11px] border-none rounded text-white transition-colors",
-              inlineAI.isLoading
-                ? "bg-stone-400 cursor-wait"
-                : "bg-stone-800 hover:bg-stone-900 cursor-pointer"
-            )}
+            style={{
+              padding: '4px 10px',
+              fontSize: '11px',
+              border: 'none',
+              borderRadius: '4px',
+              background: inlineAI.isLoading ? '#94a3b8' : '#3b82f6',
+              color: '#fff',
+              cursor: inlineAI.isLoading ? 'wait' : 'pointer',
+            }}
           >
             {inlineAI.isLoading ? 'Refining...' : selectedFindings.size > 0 ? `Refine ${selectedFindings.size} Selected` : 'Refine All'}
           </button>
@@ -174,46 +176,48 @@ export function ValidationRefineTrigger({
       </div>
 
       {/* Findings list */}
-      <div className="flex flex-col gap-1.5">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {visibleFindings.map((finding, index) => {
-          const config = SEVERITY_CONFIG[finding.severity] || SEVERITY_CONFIG.info;
+          const colors = SEVERITY_COLORS[finding.severity] || SEVERITY_COLORS.info;
           const isSelected = selectedFindings.has(index);
           const explanation = explanations.get(index);
 
           return (
             <div
               key={index}
-              className={cn(
-                "p-2 px-2.5 border rounded-md transition-all duration-150",
-                isSelected
-                  ? "border-stone-400 bg-stone-50"
-                  : cn(config.border, config.bg)
-              )}
+              style={{
+                padding: '8px 10px',
+                border: `1px solid ${isSelected ? '#3b82f6' : colors.border}`,
+                borderRadius: '6px',
+                background: isSelected ? '#eff6ff' : colors.bg,
+                transition: 'all 0.15s',
+              }}
             >
-              <div className="flex items-start gap-2">
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                 <input
                   type="checkbox"
                   checked={isSelected}
                   onChange={() => toggleFinding(index)}
-                  className="mt-0.5 cursor-pointer accent-stone-700"
+                  style={{ marginTop: '2px', cursor: 'pointer' }}
                 />
-                <div className="flex-1">
-                  <div className="flex gap-1.5 items-center mb-0.5">
-                    <span className={cn("px-1.5 rounded text-[10px] font-semibold uppercase", config.badge)}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '2px' }}>
+                    <span style={{ padding: '0 5px', borderRadius: '3px', fontSize: '10px', fontWeight: 600, background: colors.border, color: colors.text, textTransform: 'uppercase' }}>
                       {finding.severity}
                     </span>
-                    <span className="text-[10px] text-stone-400">{finding.issueType}</span>
+                    <span style={{ fontSize: '10px', color: '#94a3b8' }}>{finding.issueType}</span>
                     {finding.affectedSection && (
-                      <span className="text-[10px] text-stone-500">&bull; {finding.affectedSection}</span>
+                      <span style={{ fontSize: '10px', color: '#64748b' }}>• {finding.affectedSection}</span>
                     )}
                   </div>
-                  <div className="text-stone-700 mb-0.5">{finding.message}</div>
-                  <div className="text-[11px] text-stone-500">
+                  <div style={{ color: '#334155', marginBottom: '2px' }}>{finding.message}</div>
+                  <div style={{ fontSize: '11px', color: '#64748b' }}>
                     Recommendation: {finding.recommendation}
                   </div>
 
+                  {/* Explanation (if fetched) */}
                   {explanation && (
-                    <div className="mt-1.5 p-1.5 px-2 bg-stone-50 rounded text-[12px] text-stone-600 leading-snug">
+                    <div style={{ marginTop: '6px', padding: '6px 8px', background: '#f8fafc', borderRadius: '4px', fontSize: '12px', color: '#475569', lineHeight: '1.4' }}>
                       {explanation}
                     </div>
                   )}
@@ -223,9 +227,9 @@ export function ValidationRefineTrigger({
                   onClick={() => handleExplain(index)}
                   disabled={inlineAI.isLoading}
                   title="Explain this finding"
-                  className="px-1.5 py-0.5 border border-stone-200 rounded bg-white hover:bg-stone-50 cursor-pointer text-[11px] whitespace-nowrap transition-colors"
+                  style={{ padding: '2px 6px', border: '1px solid #e2e8f0', borderRadius: '3px', background: '#fff', cursor: 'pointer', fontSize: '11px', whiteSpace: 'nowrap' }}
                 >
-                  Explain
+                  💡 Explain
                 </button>
               </div>
             </div>
@@ -238,7 +242,7 @@ export function ValidationRefineTrigger({
         <button
           type="button"
           onClick={() => setShowAll(true)}
-          className="mt-2 px-3 py-1.5 w-full border border-stone-200 rounded bg-stone-50 hover:bg-stone-100 cursor-pointer text-[12px] text-stone-500 transition-colors"
+          style={{ marginTop: '8px', padding: '6px 12px', width: '100%', border: '1px solid #e2e8f0', borderRadius: '4px', background: '#f8fafc', cursor: 'pointer', fontSize: '12px', color: '#64748b' }}
         >
           Show {findings.length - maxVisible} more findings
         </button>
@@ -246,23 +250,23 @@ export function ValidationRefineTrigger({
 
       {/* Result panel */}
       {inlineAI.result && (
-        <div className="mt-3 p-3 bg-emerald-50 border border-emerald-300 rounded-md">
-          <div className="font-semibold text-emerald-800 mb-1.5 text-[12px]">Refined Content</div>
-          <div className="text-[13px] leading-relaxed text-stone-700 whitespace-pre-wrap max-h-[200px] overflow-auto">
+        <div style={{ marginTop: '12px', padding: '12px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '6px' }}>
+          <div style={{ fontWeight: 600, color: '#166534', marginBottom: '6px', fontSize: '12px' }}>Refined Content</div>
+          <div style={{ fontSize: '13px', lineHeight: '1.5', color: '#334155', whiteSpace: 'pre-wrap', maxHeight: '200px', overflow: 'auto' }}>
             {inlineAI.result.content}
           </div>
-          <div className="flex gap-1.5 mt-2">
+          <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
             <button
               type="button"
               onClick={() => navigator.clipboard?.writeText(inlineAI.result?.content || '')}
-              className="px-2.5 py-1 text-[11px] border border-emerald-300 rounded bg-white hover:bg-emerald-50 cursor-pointer transition-colors"
+              style={{ padding: '4px 10px', fontSize: '11px', border: '1px solid #86efac', borderRadius: '4px', background: '#fff', cursor: 'pointer' }}
             >
               Copy
             </button>
             <button
               type="button"
               onClick={() => onRefined?.(inlineAI.result!)}
-              className="px-2.5 py-1 text-[11px] border-none rounded bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer transition-colors"
+              style={{ padding: '4px 10px', fontSize: '11px', border: 'none', borderRadius: '4px', background: '#16a34a', color: '#fff', cursor: 'pointer' }}
             >
               Apply Changes
             </button>

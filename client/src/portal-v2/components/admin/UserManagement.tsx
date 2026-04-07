@@ -264,7 +264,7 @@ const ROLE_CONFIG: Record<UserRole, { label: string; color: string; description:
   },
   regulatory_lead: {
     label: 'Regulatory Lead',
-    color: '#57534e',
+    color: '#5585b3',
     description: 'Lead regulatory strategy and submissions',
   },
   clinical_ops: {
@@ -274,7 +274,7 @@ const ROLE_CONFIG: Record<UserRole, { label: string; color: string; description:
   },
   medical_writer: {
     label: 'Medical Writer',
-    color: '#57534e',
+    color: '#5585b3',
     description: 'Author and edit regulatory documents',
   },
   biostatistician: {
@@ -289,7 +289,7 @@ const ROLE_CONFIG: Record<UserRole, { label: string; color: string; description:
   },
   legal_counsel: {
     label: 'Legal Counsel',
-    color: '#44403c',
+    color: '#c15f3c',
     description: 'Legal review and approval',
   },
   executive: {
@@ -309,7 +309,7 @@ const ROLE_CONFIG: Record<UserRole, { label: string; color: string; description:
   },
   project_manager: {
     label: 'Project Manager',
-    color: '#78716c',
+    color: '#6a9bcc',
     description: 'Project coordination and timelines',
   },
   viewer: { label: 'Viewer', color: '#8a8880', description: 'Read-only access to documents' },
@@ -445,11 +445,11 @@ export function UserManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-stone-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Users className="h-7 w-7" />
             User Management
           </h1>
-          <p className="text-stone-500 mt-1">Manage organization members, roles, and compliance</p>
+          <p className="text-gray-500 mt-1">Manage organization members, roles, and compliance</p>
         </div>
 
         {can('users', 'create') && (
@@ -469,50 +469,50 @@ export function UserManagement() {
           label="Total Users"
           value={stats.total}
           icon={<Users className="h-5 w-5" />}
-          color="text-stone-600"
+          color="text-gray-600"
         />
         <StatCard
           label="Active"
           value={stats.active}
           icon={<UserCheck className="h-5 w-5" />}
-          color="text-stone-700"
+          color="text-green-600"
         />
         <StatCard
           label="Pending"
           value={stats.pending}
           icon={<Clock className="h-5 w-5" />}
-          color="text-stone-600"
+          color="text-amber-600"
         />
         <StatCard
           label="Suspended"
           value={stats.suspended}
           icon={<UserX className="h-5 w-5" />}
-          color="text-stone-700"
+          color="text-red-600"
         />
         <StatCard
           label="Compliant"
           value={stats.compliant}
           icon={<ShieldCheck className="h-5 w-5" />}
-          color="text-stone-700"
+          color="text-green-600"
         />
         <StatCard
           label="Non-Compliant"
           value={stats.nonCompliant}
           icon={<ShieldAlert className="h-5 w-5" />}
-          color="text-stone-700"
+          color="text-red-600"
         />
       </div>
 
       {/* Compliance Alerts */}
       {stats.nonCompliant > 0 && (
-        <div className="bg-stone-100 border border-stone-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-stone-800">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-amber-800">
             <AlertTriangle className="h-5 w-5" />
             <span className="font-medium">
               {stats.nonCompliant} user(s) have compliance issues requiring attention
             </span>
           </div>
-          <div className="mt-2 text-sm text-stone-700">
+          <div className="mt-2 text-sm text-amber-700">
             Review users marked with warning icons to resolve MFA, password, or training issues.
           </div>
         </div>
@@ -524,7 +524,7 @@ export function UserManagement() {
           {/* Search */}
           <div className="flex-1 min-w-[200px]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-stone-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
                 value={searchQuery}
@@ -582,7 +582,7 @@ export function UserManagement() {
 
           {/* Export */}
           {can('users', 'export') && (
-            <button className="flex items-center gap-2 px-3 py-2 text-stone-600 border rounded-lg hover:bg-stone-50">
+            <button className="flex items-center gap-2 px-3 py-2 text-gray-600 border rounded-lg hover:bg-gray-50">
               <Download className="h-4 w-4" />
               Export
             </button>
@@ -593,14 +593,14 @@ export function UserManagement() {
       {/* User List */}
       <div className="bg-white border rounded-lg overflow-hidden">
         <table className="w-full">
-          <thead className="bg-stone-50 border-b">
+          <thead className="bg-gray-50 border-b">
             <tr>
-              <th className="px-4 py-3 text-left text-sm font-medium text-stone-600">User</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-stone-600">Roles</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-stone-600">Status</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-stone-600">Compliance</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-stone-600">Last Active</th>
-              <th className="px-4 py-3 text-right text-sm font-medium text-stone-600">Actions</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">User</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Roles</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Status</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Compliance</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Last Active</th>
+              <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -625,7 +625,7 @@ export function UserManagement() {
         </table>
 
         {filteredUsers.length === 0 && (
-          <div className="p-8 text-center text-stone-500">
+          <div className="p-8 text-center text-gray-500">
             No users found matching your criteria.
           </div>
         )}
@@ -666,7 +666,7 @@ function StatCard({ label, value, icon, color }: StatCardProps) {
         {icon}
         <span className="text-2xl font-bold">{value}</span>
       </div>
-      <p className="text-sm text-stone-500 mt-1">{label}</p>
+      <p className="text-sm text-gray-500 mt-1">{label}</p>
     </div>
   );
 }
@@ -695,18 +695,18 @@ function UserRow({
   canDelete,
 }: UserRowProps) {
   const statusConfig: Record<MembershipStatus, { label: string; color: string; bg: string }> = {
-    ACTIVE: { label: 'Active', color: 'text-stone-800', bg: 'bg-stone-100' },
-    PENDING: { label: 'Pending', color: 'text-stone-700', bg: 'bg-stone-100' },
-    SUSPENDED: { label: 'Suspended', color: 'text-stone-800', bg: 'bg-stone-100' },
-    EXPIRED: { label: 'Expired', color: 'text-stone-700', bg: 'bg-stone-100' },
-    REVOKED: { label: 'Revoked', color: 'text-stone-700', bg: 'bg-stone-100' },
+    ACTIVE: { label: 'Active', color: 'text-green-700', bg: 'bg-green-100' },
+    PENDING: { label: 'Pending', color: 'text-amber-700', bg: 'bg-amber-100' },
+    SUSPENDED: { label: 'Suspended', color: 'text-red-700', bg: 'bg-red-100' },
+    EXPIRED: { label: 'Expired', color: 'text-gray-700', bg: 'bg-gray-100' },
+    REVOKED: { label: 'Revoked', color: 'text-gray-700', bg: 'bg-gray-100' },
   };
 
   const status = statusConfig[user.membership.status];
 
   return (
     <>
-      <tr className="hover:bg-stone-50">
+      <tr className="hover:bg-gray-50">
         {/* User Info */}
         <td className="px-4 py-3">
           <div className="flex items-center gap-3">
@@ -714,9 +714,9 @@ function UserRow({
               {user.displayName?.[0] || user.email[0].toUpperCase()}
             </div>
             <div>
-              <div className="font-medium text-stone-900">{user.displayName || user.email}</div>
-              <div className="text-sm text-stone-500">{user.email}</div>
-              {user.title && <div className="text-xs text-stone-400">{user.title}</div>}
+              <div className="font-medium text-gray-900">{user.displayName || user.email}</div>
+              <div className="text-sm text-gray-500">{user.email}</div>
+              {user.title && <div className="text-xs text-gray-400">{user.title}</div>}
             </div>
           </div>
         </td>
@@ -737,7 +737,7 @@ function UserRow({
               </span>
             ))}
             {user.membership.roles.length > 2 && (
-              <span className="px-2 py-0.5 text-xs bg-stone-100 text-stone-600 rounded-full">
+              <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
                 +{user.membership.roles.length - 2}
               </span>
             )}
@@ -756,18 +756,18 @@ function UserRow({
         {/* Compliance */}
         <td className="px-4 py-3">
           {issues.length === 0 ? (
-            <div className="flex items-center gap-1 text-stone-700">
+            <div className="flex items-center gap-1 text-green-600">
               <ShieldCheck className="h-4 w-4" />
               <span className="text-sm">Compliant</span>
             </div>
           ) : (
             <div className="flex items-center gap-1">
               {issues.some(i => i.severity === 'critical') ? (
-                <ShieldX className="h-4 w-4 text-stone-900" />
+                <ShieldX className="h-4 w-4 text-red-500" />
               ) : (
-                <ShieldAlert className="h-4 w-4 text-stone-900" />
+                <ShieldAlert className="h-4 w-4 text-amber-500" />
               )}
-              <span className="text-sm text-stone-600">
+              <span className="text-sm text-gray-600">
                 {issues.length} issue{issues.length !== 1 ? 's' : ''}
               </span>
             </div>
@@ -775,11 +775,11 @@ function UserRow({
         </td>
 
         {/* Last Active */}
-        <td className="px-4 py-3 text-sm text-stone-500">
+        <td className="px-4 py-3 text-sm text-gray-500">
           {user.lastLoginAt ? (
             new Date(user.lastLoginAt).toLocaleDateString()
           ) : (
-            <span className="text-stone-400">Never</span>
+            <span className="text-gray-400">Never</span>
           )}
         </td>
 
@@ -788,7 +788,7 @@ function UserRow({
           <div className="flex items-center justify-end gap-2">
             <button
               onClick={onToggleExpand}
-              className="p-1 text-stone-400 hover:text-stone-600"
+              className="p-1 text-gray-400 hover:text-gray-600"
               title="View Details"
             >
               {expanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
@@ -796,7 +796,7 @@ function UserRow({
             {canEdit && (
               <button
                 onClick={onEdit}
-                className="p-1 text-stone-400 hover:text-primary-600"
+                className="p-1 text-gray-400 hover:text-primary-600"
                 title="Edit User"
               >
                 <UserCog className="h-5 w-5" />
@@ -808,7 +808,7 @@ function UserRow({
 
       {/* Expanded Details */}
       {expanded && (
-        <tr className="bg-stone-50">
+        <tr className="bg-gray-50">
           <td colSpan={6} className="px-4 py-4">
             <UserDetailPanel user={user} issues={issues} />
           </td>
@@ -838,63 +838,63 @@ function UserDetailPanel({ user, issues }: UserDetailPanelProps) {
     <div className="grid grid-cols-3 gap-6">
       {/* User Details */}
       <div>
-        <h4 className="text-sm font-medium text-stone-700 mb-3">User Details</h4>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">User Details</h4>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-stone-500">Department</span>
-            <span className="text-stone-900">{user.department || '—'}</span>
+            <span className="text-gray-500">Department</span>
+            <span className="text-gray-900">{user.department || '—'}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-stone-500">Phone</span>
-            <span className="text-stone-900">{user.phone || '—'}</span>
+            <span className="text-gray-500">Phone</span>
+            <span className="text-gray-900">{user.phone || '—'}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-stone-500">Timezone</span>
-            <span className="text-stone-900">{user.timezone}</span>
+            <span className="text-gray-500">Timezone</span>
+            <span className="text-gray-900">{user.timezone}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-stone-500">Login Count</span>
-            <span className="text-stone-900">{user.loginCount}</span>
+            <span className="text-gray-500">Login Count</span>
+            <span className="text-gray-900">{user.loginCount}</span>
           </div>
         </div>
       </div>
 
       {/* Security Info */}
       <div>
-        <h4 className="text-sm font-medium text-stone-700 mb-3">Security</h4>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">Security</h4>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-stone-500">MFA Enabled</span>
-            <span className={user.mfaEnabled ? 'text-stone-700' : 'text-stone-700'}>
+            <span className="text-gray-500">MFA Enabled</span>
+            <span className={user.mfaEnabled ? 'text-green-600' : 'text-red-600'}>
               {user.mfaEnabled ? 'Yes' : 'No'}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-stone-500">MFA Methods</span>
-            <span className="text-stone-900">
+            <span className="text-gray-500">MFA Methods</span>
+            <span className="text-gray-900">
               {user.mfaMethods.length > 0 ? user.mfaMethods.join(', ') : '—'}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-stone-500">Password Changed</span>
-            <span className="text-stone-900">
+            <span className="text-gray-500">Password Changed</span>
+            <span className="text-gray-900">
               {user.passwordLastChangedAt
                 ? new Date(user.passwordLastChangedAt).toLocaleDateString()
                 : '—'}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-stone-500">Access Level</span>
-            <span className="text-stone-900">{user.membership.accessLevel}</span>
+            <span className="text-gray-500">Access Level</span>
+            <span className="text-gray-900">{user.membership.accessLevel}</span>
           </div>
         </div>
       </div>
 
       {/* Compliance Issues */}
       <div>
-        <h4 className="text-sm font-medium text-stone-700 mb-3">Compliance Issues</h4>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">Compliance Issues</h4>
         {issues.length === 0 ? (
-          <div className="flex items-center gap-2 text-stone-700 text-sm">
+          <div className="flex items-center gap-2 text-green-600 text-sm">
             <CheckCircle className="h-4 w-4" />
             <span>No compliance issues</span>
           </div>
@@ -907,8 +907,8 @@ function UserDetailPanel({ user, issues }: UserDetailPanelProps) {
                   key={idx}
                   className={`p-2 rounded text-sm ${
                     issue.severity === 'critical'
-                      ? 'bg-stone-100 text-stone-800'
-                      : 'bg-stone-100 text-stone-700'
+                      ? 'bg-red-50 text-red-700'
+                      : 'bg-amber-50 text-amber-700'
                   }`}
                 >
                   <div className="font-medium">{msg?.label || issue.type}</div>
@@ -970,9 +970,9 @@ function InviteUserModal({ onClose }: InviteUserModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-sm max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b">
-          <h2 className="text-xl font-semibold text-stone-900 flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
             <UserPlus className="h-6 w-6" />
             Invite New User
           </h2>
@@ -981,7 +981,7 @@ function InviteUserModal({ onClose }: InviteUserModalProps) {
         <div className="p-6 space-y-6">
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1">Email Address *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
             <input
               type="email"
               value={email}
@@ -993,7 +993,7 @@ function InviteUserModal({ onClose }: InviteUserModalProps) {
 
           {/* Access Level */}
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1">Access Level</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Access Level</label>
             <select
               value={accessLevel}
               onChange={e => setAccessLevel(e.target.value as AccessLevel)}
@@ -1007,7 +1007,7 @@ function InviteUserModal({ onClose }: InviteUserModalProps) {
 
           {/* Roles */}
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">Assign Roles</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Assign Roles</label>
             <div className="grid grid-cols-2 gap-2">
               {ALL_ROLES.map(role => (
                 <label
@@ -1015,20 +1015,20 @@ function InviteUserModal({ onClose }: InviteUserModalProps) {
                   className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
                     selectedRoles.includes(role)
                       ? 'border-primary-500 bg-primary-50'
-                      : 'hover:bg-stone-50'
+                      : 'hover:bg-gray-50'
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={selectedRoles.includes(role)}
                     onChange={() => handleRoleToggle(role)}
-                    className="h-4 w-4 text-primary-600 border-stone-300 rounded focus:ring-primary-500"
+                    className="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                   />
                   <div>
                     <div className="text-sm font-medium" style={{ color: ROLE_CONFIG[role].color }}>
                       {ROLE_CONFIG[role].label}
                     </div>
-                    <div className="text-xs text-stone-500">{ROLE_CONFIG[role].description}</div>
+                    <div className="text-xs text-gray-500">{ROLE_CONFIG[role].description}</div>
                   </div>
                 </label>
               ))}
@@ -1037,14 +1037,14 @@ function InviteUserModal({ onClose }: InviteUserModalProps) {
 
           {/* SoD Warning */}
           {sodValidation && !sodValidation.isCompliant && (
-            <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg">
-              <div className="flex items-center gap-2 text-stone-800 font-medium">
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-center gap-2 text-amber-800 font-medium">
                 <ShieldAlert className="h-5 w-5" />
                 Segregation of Duties Conflict Detected
               </div>
               <div className="mt-2 space-y-2">
                 {sodValidation.conflicts.map((conflict, idx) => (
-                  <div key={idx} className="text-sm text-stone-700">
+                  <div key={idx} className="text-sm text-amber-700">
                     <strong>{ROLE_CONFIG[conflict.roleA].label}</strong> conflicts with{' '}
                     <strong>{ROLE_CONFIG[conflict.roleB].label}</strong>
                     <p className="text-xs opacity-80">{conflict.reason}</p>
@@ -1052,7 +1052,7 @@ function InviteUserModal({ onClose }: InviteUserModalProps) {
                 ))}
               </div>
               {sodValidation.waiverRequired && (
-                <p className="mt-2 text-sm text-stone-600">
+                <p className="mt-2 text-sm text-amber-600">
                   A waiver may be granted by:{' '}
                   {sodValidation.waiverApprovers.map(r => ROLE_CONFIG[r].label).join(', ')}
                 </p>
@@ -1061,8 +1061,8 @@ function InviteUserModal({ onClose }: InviteUserModalProps) {
           )}
         </div>
 
-        <div className="p-6 border-t bg-stone-50 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-stone-700 hover:text-stone-900">
+        <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-gray-700 hover:text-gray-900">
             Cancel
           </button>
           <button
@@ -1126,13 +1126,13 @@ function RoleManagementModal({ user, onClose }: RoleManagementModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-sm max-w-lg w-full mx-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4">
         <div className="p-6 border-b">
-          <h2 className="text-xl font-semibold text-stone-900 flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
             <UserCog className="h-6 w-6" />
             Manage Roles
           </h2>
-          <p className="text-stone-500 mt-1">{user.displayName || user.email}</p>
+          <p className="text-gray-500 mt-1">{user.displayName || user.email}</p>
         </div>
 
         <div className="p-6">
@@ -1143,7 +1143,7 @@ function RoleManagementModal({ user, onClose }: RoleManagementModalProps) {
                 className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
                   selectedRoles.includes(role)
                     ? 'border-primary-500 bg-primary-50'
-                    : 'hover:bg-stone-50'
+                    : 'hover:bg-gray-50'
                 }`}
               >
                 <input
@@ -1156,21 +1156,21 @@ function RoleManagementModal({ user, onClose }: RoleManagementModalProps) {
                       setSelectedRoles([...selectedRoles, role]);
                     }
                   }}
-                  className="h-4 w-4 text-primary-600 border-stone-300 rounded focus:ring-primary-500"
+                  className="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                 />
                 <div className="flex-1">
                   <div className="font-medium" style={{ color: ROLE_CONFIG[role].color }}>
                     {ROLE_CONFIG[role].label}
                   </div>
-                  <div className="text-xs text-stone-500">{ROLE_CONFIG[role].description}</div>
+                  <div className="text-xs text-gray-500">{ROLE_CONFIG[role].description}</div>
                 </div>
               </label>
             ))}
           </div>
         </div>
 
-        <div className="p-6 border-t bg-stone-50 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-stone-700 hover:text-stone-900">
+        <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-gray-700 hover:text-gray-900">
             Cancel
           </button>
           <button

@@ -54,48 +54,44 @@ const submissionTypeConfig: Record<
 > = {
   '510K': {
     label: '510K',
-    color: 'bg-stone-100 text-stone-700 border-stone-200',
-    dotColor: 'bg-stone-500',
+    color: 'bg-blue-100 text-stone-700 border-blue-200',
+    dotColor: 'bg-stone-600',
   },
   IND: {
     label: 'IND',
-    color: 'bg-stone-100 text-stone-700 border-stone-200',
-    dotColor: 'bg-stone-500',
+    color: 'bg-purple-100 text-purple-700 border-purple-200',
+    dotColor: 'bg-purple-500',
   },
   NDA: {
     label: 'NDA',
     color: 'bg-stone-100 text-stone-700 border-stone-200',
-    dotColor: 'bg-stone-500',
+    dotColor: 'bg-stone-600',
   },
   BLA: {
     label: 'BLA',
-    color: 'bg-stone-100 text-stone-700 border-stone-200',
-    dotColor: 'bg-stone-500',
+    color: 'bg-violet-100 text-stone-700 border-violet-200',
+    dotColor: 'bg-violet-500',
   },
   MAA: {
     label: 'MAA',
-    color: 'bg-stone-100 text-stone-700 border-stone-200',
-    dotColor: 'bg-stone-500',
+    color: 'bg-teal-100 text-teal-700 border-teal-200',
+    dotColor: 'bg-teal-500',
   },
-  PMA: {
-    label: 'PMA',
-    color: 'bg-stone-100 text-stone-700 border-stone-200',
-    dotColor: 'bg-stone-500',
-  },
+  PMA: { label: 'PMA', color: 'bg-red-100 text-red-700 border-red-200', dotColor: 'bg-red-500' },
   DE_NOVO: {
     label: 'De Novo',
-    color: 'bg-stone-100 text-stone-700 border-stone-200',
-    dotColor: 'bg-stone-500',
+    color: 'bg-cyan-100 text-cyan-700 border-cyan-200',
+    dotColor: 'bg-cyan-500',
   },
   EUA: {
     label: 'EUA',
-    color: 'bg-stone-100 text-stone-700 border-stone-200',
-    dotColor: 'bg-stone-500',
+    color: 'bg-orange-100 text-orange-700 border-orange-200',
+    dotColor: 'bg-orange-500',
   },
   IVDR: {
     label: 'IVDR',
-    color: 'bg-stone-100 text-stone-700 border-stone-200',
-    dotColor: 'bg-stone-500',
+    color: 'bg-green-100 text-green-700 border-green-200',
+    dotColor: 'bg-green-500',
   },
 };
 
@@ -123,23 +119,23 @@ const SubmissionBadge: React.FC<{ type: SubmissionType; compact?: boolean }> = (
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STATUS DOT — monochrome intensity indicates state
+// STATUS DOT — active (green), in review (amber), submitted (blue), archived (gray)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const statusDotColor: Record<string, string> = {
-  active: 'bg-stone-900',
-  in_review: 'bg-stone-600',
-  submitted: 'bg-stone-700',
-  archived: 'bg-stone-300',
-  draft: 'bg-stone-400',
-  planning: 'bg-stone-400',
+  active: 'bg-emerald-500',
+  in_review: 'bg-amber-500',
+  submitted: 'bg-stone-600',
+  archived: 'bg-stone-400',
+  draft: 'bg-stone-300',
+  planning: 'bg-stone-300',
 };
 
 const StatusDot: React.FC<{ status?: string }> = ({ status }) => (
   <span
     className={cn(
       'inline-block w-1.5 h-1.5 rounded-full flex-shrink-0',
-      statusDotColor[status || 'active'] ?? 'bg-stone-900'
+      statusDotColor[status || 'active'] ?? 'bg-emerald-500'
     )}
     title={status || 'active'}
   />
@@ -356,7 +352,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({
               Archive
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onDelete} className="text-stone-700 focus:text-stone-700">
+            <DropdownMenuItem onClick={onDelete} className="text-red-600 focus:text-red-600">
               <Trash2 className="mr-2 h-3.5 w-3.5" />
               Delete
             </DropdownMenuItem>
@@ -370,7 +366,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({
           {/* New conversation link */}
           <button
             onClick={onNewConversation}
-            className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-stone-600 hover:bg-stone-100 rounded-md transition-colors"
+            className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
           >
             <Plus className="h-3 w-3" />
             New chat

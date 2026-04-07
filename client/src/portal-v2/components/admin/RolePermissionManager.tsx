@@ -171,19 +171,19 @@ const PERMISSION_CATEGORIES: PermissionCategory[] = [
 ];
 
 const PERMISSION_ACTIONS: { action: PermissionAction; label: string; color: string }[] = [
-  { action: 'create', label: 'Create', color: 'bg-stone-100 text-stone-800' },
-  { action: 'read', label: 'Read', color: 'bg-stone-100 text-stone-700' },
-  { action: 'update', label: 'Update', color: 'bg-stone-100 text-stone-700' },
-  { action: 'delete', label: 'Delete', color: 'bg-stone-100 text-stone-800' },
-  { action: 'approve', label: 'Approve', color: 'bg-stone-100 text-stone-700' },
-  { action: 'export', label: 'Export', color: 'bg-stone-100 text-stone-700' },
-  { action: 'admin', label: 'Admin', color: 'bg-stone-100 text-stone-700' },
+  { action: 'create', label: 'Create', color: 'bg-green-100 text-green-700' },
+  { action: 'read', label: 'Read', color: 'bg-blue-100 text-blue-700' },
+  { action: 'update', label: 'Update', color: 'bg-amber-100 text-amber-700' },
+  { action: 'delete', label: 'Delete', color: 'bg-red-100 text-red-700' },
+  { action: 'approve', label: 'Approve', color: 'bg-purple-100 text-purple-700' },
+  { action: 'export', label: 'Export', color: 'bg-cyan-100 text-cyan-700' },
+  { action: 'admin', label: 'Admin', color: 'bg-gray-100 text-gray-700' },
 ];
 
 const SOD_SEVERITY_COLORS = {
-  critical: 'text-stone-700 bg-stone-100',
-  high: 'text-stone-600 bg-stone-100',
-  medium: 'text-stone-600 bg-stone-100',
+  critical: 'text-red-600 bg-red-100',
+  high: 'text-amber-600 bg-amber-100',
+  medium: 'text-yellow-600 bg-yellow-100',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -320,9 +320,9 @@ const RoleList: React.FC<{
           >
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-3">
-                <div className={`p-2 rounded-lg ${role.isActive ? 'bg-stone-100' : 'bg-stone-100'}`}>
+                <div className={`p-2 rounded-lg ${role.isActive ? 'bg-green-100' : 'bg-gray-100'}`}>
                   <Shield
-                    className={`h-5 w-5 ${role.isActive ? 'text-stone-700' : 'text-stone-400'}`}
+                    className={`h-5 w-5 ${role.isActive ? 'text-green-600' : 'text-gray-400'}`}
                   />
                 </div>
                 <div>
@@ -592,8 +592,8 @@ const SoDConflictViewer: React.FC<{
   if (conflicts.length === 0) {
     return (
       <div className="text-center py-8">
-        <ShieldCheck className="h-12 w-12 mx-auto mb-3 text-stone-900" />
-        <p className="font-medium text-stone-800">No Segregation of Duties Conflicts</p>
+        <ShieldCheck className="h-12 w-12 mx-auto mb-3 text-green-500" />
+        <p className="font-medium text-green-700">No Segregation of Duties Conflicts</p>
         <p className="text-sm text-muted-foreground mt-1">
           The current role configuration meets SoD requirements
         </p>
@@ -830,8 +830,8 @@ const RoleDetailsPanel: React.FC<{
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
-          <div className={`p-3 rounded-lg ${role.isActive ? 'bg-stone-100' : 'bg-stone-100'}`}>
-            <Shield className={`h-8 w-8 ${role.isActive ? 'text-stone-700' : 'text-stone-400'}`} />
+          <div className={`p-3 rounded-lg ${role.isActive ? 'bg-green-100' : 'bg-gray-100'}`}>
+            <Shield className={`h-8 w-8 ${role.isActive ? 'text-green-600' : 'text-gray-400'}`} />
           </div>
           <div>
             <div className="flex items-center gap-2">

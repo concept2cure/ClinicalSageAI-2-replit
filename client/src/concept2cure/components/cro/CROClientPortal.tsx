@@ -288,8 +288,8 @@ const DeliverablesDuePanel: React.FC<{
         onClick={() => onDeliverableClick?.(item.deliverable, item.sow)}
         className={cn(
           'w-full p-3 rounded-lg border text-left transition-colors duration-150',
-          isOverdue && 'border-stone-300 bg-stone-100',
-          isUrgent && !isOverdue && 'border-stone-300 bg-stone-100',
+          isOverdue && 'border-red-300 bg-red-50',
+          isUrgent && !isOverdue && 'border-amber-300 bg-amber-50',
           !isOverdue && !isUrgent && 'border-stone-200 bg-white hover:bg-stone-50'
         )}
       >
@@ -304,8 +304,8 @@ const DeliverablesDuePanel: React.FC<{
           </div>
           <div className={cn(
             'text-sm font-semibold',
-            isOverdue && 'text-stone-700',
-            isUrgent && !isOverdue && 'text-stone-600',
+            isOverdue && 'text-red-600',
+            isUrgent && !isOverdue && 'text-amber-600',
             !isOverdue && !isUrgent && 'text-stone-600'
           )}>
             {isOverdue ? `${Math.abs(daysUntil)}d late` : `${daysUntil}d`}
@@ -325,8 +325,8 @@ const DeliverablesDuePanel: React.FC<{
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-150',
-                item.deliverable.completionPct >= 80 && 'bg-stone-900',
-                item.deliverable.completionPct >= 50 && item.deliverable.completionPct < 80 && 'bg-stone-900',
+                item.deliverable.completionPct >= 80 && 'bg-green-500',
+                item.deliverable.completionPct >= 50 && item.deliverable.completionPct < 80 && 'bg-amber-500',
                 item.deliverable.completionPct < 50 && 'bg-stone-600'
               )}
               style={{ width: `${item.deliverable.completionPct}%` }}
@@ -340,14 +340,14 @@ const DeliverablesDuePanel: React.FC<{
   return (
     <div className="bg-white rounded-xl border border-stone-200 p-4">
       <h3 className="text-sm font-semibold text-stone-900 mb-4 flex items-center gap-2">
-        <FileText className="w-4 h-4 text-stone-600" />
+        <FileText className="w-4 h-4 text-blue-600" />
         Deliverables Pipeline
       </h3>
       
       <div className="space-y-4 max-h-[500px] overflow-y-auto">
         {overdue.length > 0 && (
           <div>
-            <p className="text-xs font-semibold text-stone-700 mb-2 flex items-center gap-1">
+            <p className="text-xs font-semibold text-red-600 mb-2 flex items-center gap-1">
               <AlertTriangle className="w-3 h-3" />
               OVERDUE ({overdue.length})
             </p>
@@ -359,7 +359,7 @@ const DeliverablesDuePanel: React.FC<{
         
         {thisWeek.length > 0 && (
           <div>
-            <p className="text-xs font-semibold text-stone-600 mb-2">THIS WEEK ({thisWeek.length})</p>
+            <p className="text-xs font-semibold text-amber-600 mb-2">THIS WEEK ({thisWeek.length})</p>
             <div className="space-y-2">
               {thisWeek.map(renderDeliverable)}
             </div>
@@ -413,14 +413,14 @@ const ResourceUtilizationPanel: React.FC<{
     <div className="bg-white rounded-xl border border-stone-200 p-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-2">
-          <Users className="w-4 h-4 text-stone-600" />
+          <Users className="w-4 h-4 text-violet-600" />
           Resource Utilization
         </h3>
         <span className={cn(
           'px-3 py-1 text-sm font-semibold rounded-full',
-          avgUtilization >= 80 && 'bg-stone-100 text-stone-800',
-          avgUtilization >= 60 && avgUtilization < 80 && 'bg-stone-100 text-stone-700',
-          avgUtilization < 60 && 'bg-stone-100 text-stone-800'
+          avgUtilization >= 80 && 'bg-green-100 text-green-700',
+          avgUtilization >= 60 && avgUtilization < 80 && 'bg-amber-100 text-amber-700',
+          avgUtilization < 60 && 'bg-red-100 text-red-700'
         )}>
           {avgUtilization}% Avg
         </span>
@@ -430,13 +430,13 @@ const ResourceUtilizationPanel: React.FC<{
       {(overUtilized.length > 0 || underUtilized.length > 0) && (
         <div className="flex gap-2 mb-4">
           {overUtilized.length > 0 && (
-            <span className="px-2 py-1 text-xs font-medium bg-stone-100 text-stone-800 rounded-full flex items-center gap-1">
+            <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-full flex items-center gap-1">
               <TrendingUp className="w-3 h-3" />
               {overUtilized.length} over capacity
             </span>
           )}
           {underUtilized.length > 0 && (
-            <span className="px-2 py-1 text-xs font-medium bg-stone-100 text-stone-700 rounded-full flex items-center gap-1">
+            <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-stone-700 rounded-full flex items-center gap-1">
               <TrendingDown className="w-3 h-3" />
               {underUtilized.length} available
             </span>
@@ -463,17 +463,17 @@ const ResourceUtilizationPanel: React.FC<{
                       <div
                         className={cn(
                           'h-full rounded-full transition-all duration-150',
-                          resource.currentUtilization > 90 && 'bg-stone-900',
-                          resource.currentUtilization > 75 && resource.currentUtilization <= 90 && 'bg-stone-900',
-                          resource.currentUtilization >= 60 && resource.currentUtilization <= 75 && 'bg-stone-900',
-                          resource.currentUtilization < 60 && 'bg-stone-400'
+                          resource.currentUtilization > 90 && 'bg-red-500',
+                          resource.currentUtilization > 75 && resource.currentUtilization <= 90 && 'bg-green-500',
+                          resource.currentUtilization >= 60 && resource.currentUtilization <= 75 && 'bg-amber-500',
+                          resource.currentUtilization < 60 && 'bg-blue-400'
                         )}
                         style={{ width: `${Math.min(resource.currentUtilization, 100)}%` }}
                       />
                     </div>
                     <span className={cn(
                       'w-10 text-xs font-medium text-right',
-                      resource.currentUtilization > 90 && 'text-stone-700',
+                      resource.currentUtilization > 90 && 'text-red-600',
                       resource.currentUtilization <= 90 && 'text-stone-600'
                     )}>
                       {resource.currentUtilization}%
@@ -524,11 +524,11 @@ const ChangeOrdersPanel: React.FC<{
     <div className="bg-white rounded-xl border border-stone-200 p-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-2">
-          <FileEdit className="w-4 h-4 text-stone-600" />
+          <FileEdit className="w-4 h-4 text-amber-600" />
           Change Orders
         </h3>
         {pending.length > 0 && (
-          <span className="px-2 py-1 text-xs font-medium bg-stone-100 text-stone-700 rounded-full">
+          <span className="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">
             {pending.length} pending • {formatCurrency(totalPendingValue)}
           </span>
         )}
@@ -540,9 +540,9 @@ const ChangeOrdersPanel: React.FC<{
             key={co.id}
             className={cn(
               'p-3 rounded-lg border',
-              co.status === 'submitted' && 'border-stone-200 bg-stone-100',
+              co.status === 'submitted' && 'border-amber-200 bg-amber-50',
               co.status === 'draft' && 'border-stone-200 bg-stone-50',
-              co.status === 'approved' && 'border-stone-200 bg-stone-100'
+              co.status === 'approved' && 'border-green-200 bg-green-50'
             )}
           >
             <div className="flex items-start justify-between mb-1">
@@ -552,9 +552,9 @@ const ChangeOrdersPanel: React.FC<{
               </div>
               <span className={cn(
                 'px-2 py-0.5 text-xs font-medium rounded-full',
-                co.status === 'submitted' && 'bg-stone-200 text-stone-700',
+                co.status === 'submitted' && 'bg-amber-200 text-amber-700',
                 co.status === 'draft' && 'bg-stone-200 text-stone-600',
-                co.status === 'approved' && 'bg-stone-200 text-stone-800'
+                co.status === 'approved' && 'bg-green-200 text-green-700'
               )}>
                 {co.status}
               </span>
@@ -565,7 +565,7 @@ const ChangeOrdersPanel: React.FC<{
                 <Clock className="w-3 h-3 inline mr-1" />
                 +{co.additionalHours}h
               </span>
-              <span className="font-medium text-stone-700">
+              <span className="font-medium text-green-600">
                 <DollarSign className="w-3 h-3 inline" />
                 {formatCurrency(co.additionalFees)}
               </span>
@@ -621,17 +621,17 @@ const ClientCard: React.FC<{
         <div className="flex items-center gap-3">
           <div className={cn(
             'w-10 h-10 rounded-lg flex items-center justify-center',
-            client.type === 'biotech' && 'bg-stone-100',
-            client.type === 'pharma' && 'bg-stone-100',
-            client.type === 'medtech' && 'bg-stone-200',
-            client.type === 'academic' && 'bg-stone-100'
+            client.type === 'biotech' && 'bg-green-100',
+            client.type === 'pharma' && 'bg-blue-100',
+            client.type === 'medtech' && 'bg-violet-100',
+            client.type === 'academic' && 'bg-amber-100'
           )}>
             <Building2 className={cn(
               'w-5 h-5',
-              client.type === 'biotech' && 'text-stone-700',
-              client.type === 'pharma' && 'text-stone-600',
-              client.type === 'medtech' && 'text-stone-600',
-              client.type === 'academic' && 'text-stone-600'
+              client.type === 'biotech' && 'text-green-600',
+              client.type === 'pharma' && 'text-blue-600',
+              client.type === 'medtech' && 'text-violet-600',
+              client.type === 'academic' && 'text-amber-600'
             )} />
           </div>
           <div className="text-left">
@@ -643,7 +643,7 @@ const ClientCard: React.FC<{
         <div className="flex items-center gap-6">
           {/* MSA Status */}
           {client.msaStatus === 'renewal_pending' && (
-            <span className="px-2 py-1 text-xs font-medium text-stone-700 bg-stone-100 rounded-full flex items-center gap-1">
+            <span className="px-2 py-1 text-xs font-medium text-amber-700 bg-amber-100 rounded-full flex items-center gap-1">
               <RefreshCw className="w-3 h-3" />
               MSA Renewal
             </span>
@@ -658,12 +658,12 @@ const ClientCard: React.FC<{
           {/* Contract Value */}
           <div className="text-right">
             <p className="text-xs text-stone-500">Contract Value</p>
-            <p className="text-lg font-semibold text-stone-600">{formatCurrency(metrics.totalContractValue)}</p>
+            <p className="text-lg font-semibold text-blue-600">{formatCurrency(metrics.totalContractValue)}</p>
           </div>
           
           {/* Alerts */}
           {metrics.overdueDeliverables > 0 && (
-            <span className="px-2 py-1 text-xs font-semibold text-stone-800 bg-stone-100 rounded-full">
+            <span className="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">
               {metrics.overdueDeliverables} overdue
             </span>
           )}
@@ -695,18 +695,18 @@ const ClientCard: React.FC<{
                         onClick={() => onSOWClick?.(sow, client)}
                         className={cn(
                           'p-3 rounded-lg border text-left transition-colors duration-150',
-                          sow.status === 'active' && 'bg-white border-stone-200 hover:border-stone-300',
-                          sow.status === 'complete' && 'bg-stone-100 border-stone-200',
-                          sow.status === 'on_hold' && 'bg-stone-100 border-stone-200'
+                          sow.status === 'active' && 'bg-white border-stone-200 hover:border-blue-300',
+                          sow.status === 'complete' && 'bg-green-50 border-green-200',
+                          sow.status === 'on_hold' && 'bg-amber-50 border-amber-200'
                         )}
                       >
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-xs font-medium text-stone-500">{sow.sowNumber}</span>
                           <span className={cn(
                             'px-2 py-0.5 text-xs font-medium rounded-full',
-                            sow.status === 'active' && 'bg-stone-100 text-stone-700',
-                            sow.status === 'complete' && 'bg-stone-100 text-stone-800',
-                            sow.status === 'on_hold' && 'bg-stone-100 text-stone-700'
+                            sow.status === 'active' && 'bg-blue-100 text-stone-700',
+                            sow.status === 'complete' && 'bg-green-100 text-green-700',
+                            sow.status === 'on_hold' && 'bg-amber-100 text-amber-700'
                           )}>
                             {sow.status}
                           </span>
@@ -722,9 +722,9 @@ const ClientCard: React.FC<{
                           <div
                             className={cn(
                               'h-full rounded-full',
-                              hoursUsed <= 80 && 'bg-stone-900',
-                              hoursUsed > 80 && hoursUsed <= 100 && 'bg-stone-900',
-                              hoursUsed > 100 && 'bg-stone-900'
+                              hoursUsed <= 80 && 'bg-green-500',
+                              hoursUsed > 80 && hoursUsed <= 100 && 'bg-amber-500',
+                              hoursUsed > 100 && 'bg-red-500'
                             )}
                             style={{ width: `${Math.min(hoursUsed, 120)}%` }}
                           />
@@ -809,28 +809,28 @@ export const CROClientPortal: React.FC<CROClientPortalProps> = ({
             <p className="text-xs text-stone-500">Clients</p>
             <p className="text-base font-medium text-stone-900">{metrics.totalClients}</p>
           </div>
-          <div className="p-3 bg-stone-100 rounded-lg">
-            <p className="text-xs text-stone-600">Active SOWs</p>
+          <div className="p-3 bg-blue-50 rounded-lg">
+            <p className="text-xs text-blue-600">Active SOWs</p>
             <p className="text-base font-medium text-stone-700">{metrics.activeSOWs}</p>
           </div>
-          <div className="p-3 bg-stone-100 rounded-lg">
-            <p className="text-xs text-stone-700">Contract Value</p>
-            <p className="text-base font-medium text-stone-800">{formatCurrency(metrics.totalContractValue)}</p>
+          <div className="p-3 bg-green-50 rounded-lg">
+            <p className="text-xs text-green-600">Contract Value</p>
+            <p className="text-base font-medium text-green-700">{formatCurrency(metrics.totalContractValue)}</p>
           </div>
-          <div className={cn('p-3 rounded-lg', metrics.overdueDeliverables > 0 ? 'bg-stone-100' : 'bg-stone-100')}>
-            <p className={cn('text-xs', metrics.overdueDeliverables > 0 ? 'text-stone-700' : 'text-stone-500')}>Overdue</p>
-            <p className={cn('text-base font-medium', metrics.overdueDeliverables > 0 ? 'text-stone-800' : 'text-stone-900')}>
+          <div className={cn('p-3 rounded-lg', metrics.overdueDeliverables > 0 ? 'bg-red-50' : 'bg-stone-100')}>
+            <p className={cn('text-xs', metrics.overdueDeliverables > 0 ? 'text-red-600' : 'text-stone-500')}>Overdue</p>
+            <p className={cn('text-base font-medium', metrics.overdueDeliverables > 0 ? 'text-red-700' : 'text-stone-900')}>
               {metrics.overdueDeliverables}
             </p>
           </div>
-          <div className={cn('p-3 rounded-lg', metrics.pendingCOs > 0 ? 'bg-stone-100' : 'bg-stone-100')}>
-            <p className={cn('text-xs', metrics.pendingCOs > 0 ? 'text-stone-600' : 'text-stone-500')}>Pending COs</p>
-            <p className={cn('text-base font-medium', metrics.pendingCOs > 0 ? 'text-stone-700' : 'text-stone-900')}>
+          <div className={cn('p-3 rounded-lg', metrics.pendingCOs > 0 ? 'bg-amber-50' : 'bg-stone-100')}>
+            <p className={cn('text-xs', metrics.pendingCOs > 0 ? 'text-amber-600' : 'text-stone-500')}>Pending COs</p>
+            <p className={cn('text-base font-medium', metrics.pendingCOs > 0 ? 'text-amber-700' : 'text-stone-900')}>
               {metrics.pendingCOs}
             </p>
           </div>
-          <div className="p-3 bg-stone-100 rounded-lg">
-            <p className="text-xs text-stone-600">Utilization</p>
+          <div className="p-3 bg-violet-50 rounded-lg">
+            <p className="text-xs text-violet-600">Utilization</p>
             <p className="text-base font-medium text-stone-700">{metrics.avgUtilization}%</p>
           </div>
         </div>

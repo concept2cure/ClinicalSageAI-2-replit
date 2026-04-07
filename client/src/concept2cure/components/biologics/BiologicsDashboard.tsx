@@ -125,38 +125,38 @@ export default function BiologicsDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-stone-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-6">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-stone-600 rounded-lg flex items-center justify-center">
+        <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
           <FlaskConical size={20} className="text-white" />
         </div>
         <div>
-          <h1 className="text-base font-medium text-stone-900">Biologics Intelligence</h1>
-          <p className="text-sm text-stone-500">Regulatory pathway analysis for biologic & biosimilar products</p>
+          <h1 className="text-base font-medium text-gray-900">Biologics Intelligence</h1>
+          <p className="text-sm text-gray-500">Regulatory pathway analysis for biologic & biosimilar products</p>
         </div>
       </div>
 
       {/* Configuration Bar */}
-      <div className="bg-white border border-stone-200 rounded-xl p-4 mb-4">
+      <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
         <div className="grid grid-cols-4 gap-4">
           <div>
-            <label className="text-xs text-stone-500 mb-1 block">Product Type</label>
+            <label className="text-xs text-gray-500 mb-1 block">Product Type</label>
             <select
               value={productType}
               onChange={(e) => setProductType(e.target.value as 'biologic' | 'biosimilar')}
-              className="w-full border border-stone-300 rounded-lg px-3 py-1.5 text-sm"
+              className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
             >
               <option value="biologic">New Biologic</option>
               <option value="biosimilar">Biosimilar</option>
             </select>
           </div>
           <div>
-            <label className="text-xs text-stone-500 mb-1 block">Modality</label>
+            <label className="text-xs text-gray-500 mb-1 block">Modality</label>
             <select
               value={modalityType}
               onChange={(e) => setModalityType(e.target.value)}
-              className="w-full border border-stone-300 rounded-lg px-3 py-1.5 text-sm"
+              className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
             >
               {MODALITY_TYPES.map((m) => (
                 <option key={m.value} value={m.value}>{m.label}</option>
@@ -164,17 +164,17 @@ export default function BiologicsDashboard() {
             </select>
           </div>
           <div>
-            <label className="text-xs text-stone-500 mb-1 block">Indication</label>
+            <label className="text-xs text-gray-500 mb-1 block">Indication</label>
             <input
               type="text"
               value={indication}
               onChange={(e) => setIndication(e.target.value)}
               placeholder="e.g., Rheumatoid arthritis"
-              className="w-full border border-stone-300 rounded-lg px-3 py-1.5 text-sm"
+              className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
             />
           </div>
           <div>
-            <label className="text-xs text-stone-500 mb-1 block">Target Agencies</label>
+            <label className="text-xs text-gray-500 mb-1 block">Target Agencies</label>
             <div className="flex gap-1 flex-wrap">
               {AGENCIES.map((a) => (
                 <button
@@ -182,8 +182,8 @@ export default function BiologicsDashboard() {
                   onClick={() => toggleAgency(a)}
                   className={`px-2 py-0.5 rounded text-xs transition-colors ${
                     selectedAgencies.includes(a)
-                      ? 'bg-stone-200 text-stone-700 border border-stone-300'
-                      : 'bg-stone-100 text-stone-500 border border-stone-200'
+                      ? 'bg-purple-100 text-purple-700 border border-purple-300'
+                      : 'bg-gray-100 text-gray-500 border border-gray-200'
                   }`}
                 >
                   {a}
@@ -195,7 +195,7 @@ export default function BiologicsDashboard() {
         <div className="mt-3 flex justify-end">
           <button
             onClick={() => { fetchPathway(); fetchExpedited(); }}
-            className="bg-stone-600 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-stone-700 transition-colors"
+            className="bg-purple-600 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-purple-700 transition-colors"
           >
             Analyze
           </button>
@@ -210,8 +210,8 @@ export default function BiologicsDashboard() {
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors ${
               activeTab === tab.id
-                ? 'bg-white border border-stone-200 text-stone-900 font-medium shadow-sm'
-                : 'text-stone-500 hover:text-stone-700'
+                ? 'bg-white border border-gray-200 text-gray-900 font-medium shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             {tab.icon} {tab.label}
@@ -224,23 +224,23 @@ export default function BiologicsDashboard() {
         <div className="grid grid-cols-2 gap-4">
           {pathways.length > 0 ? (
             pathways.map((p) => (
-              <div key={p.agency} className="bg-white border border-stone-200 rounded-xl p-4">
+              <div key={p.agency} className="bg-white border border-gray-200 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-semibold text-stone-900">{p.agency}</span>
-                  <span className="text-xs bg-stone-100 text-stone-700 px-2 py-0.5 rounded-full">
+                  <span className="text-sm font-semibold text-gray-900">{p.agency}</span>
+                  <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">
                     {p.center}
                   </span>
                 </div>
-                <div className="text-sm font-medium text-stone-700 mb-1">{p.pathway}</div>
-                <div className="text-xs text-stone-500 mb-3">{p.submissionType}</div>
-                <div className="text-xs text-stone-500 mb-2">Timeline: {p.estimatedTimeline}</div>
+                <div className="text-sm font-medium text-purple-700 mb-1">{p.pathway}</div>
+                <div className="text-xs text-gray-500 mb-3">{p.submissionType}</div>
+                <div className="text-xs text-gray-500 mb-2">Timeline: {p.estimatedTimeline}</div>
                 {p.specialConsiderations.length > 0 && (
                   <div>
-                    <div className="text-xs font-medium text-stone-700 mb-1">Key Considerations:</div>
+                    <div className="text-xs font-medium text-gray-700 mb-1">Key Considerations:</div>
                     <ul className="space-y-1">
                       {p.specialConsiderations.slice(0, 3).map((c, i) => (
-                        <li key={i} className="text-xs text-stone-500 flex items-start gap-1">
-                          <Info size={10} className="mt-0.5 flex-shrink-0 text-stone-400" />
+                        <li key={i} className="text-xs text-gray-500 flex items-start gap-1">
+                          <Info size={10} className="mt-0.5 flex-shrink-0 text-gray-400" />
                           {c}
                         </li>
                       ))}
@@ -250,7 +250,7 @@ export default function BiologicsDashboard() {
               </div>
             ))
           ) : (
-            <div className="col-span-2 text-center text-stone-400 py-12">
+            <div className="col-span-2 text-center text-gray-400 py-12">
               <Globe size={32} className="mx-auto mb-2" />
               <p className="text-sm">Enter an indication and click Analyze to see pathway recommendations.</p>
             </div>
@@ -263,17 +263,17 @@ export default function BiologicsDashboard() {
         <div className="space-y-3">
           {expedited.length > 0 ? (
             expedited.map((p, i) => (
-              <div key={i} className="bg-white border border-stone-200 rounded-xl p-4">
+              <div key={i} className="bg-white border border-gray-200 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-stone-900">{p.name}</span>
-                    <span className="text-xs text-stone-400">({p.agency})</span>
+                    <span className="text-sm font-semibold text-gray-900">{p.name}</span>
+                    <span className="text-xs text-gray-400">({p.agency})</span>
                   </div>
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full ${
                       p.eligible
-                        ? 'bg-stone-100 text-stone-800'
-                        : 'bg-stone-100 text-stone-500'
+                        ? 'bg-green-50 text-green-700'
+                        : 'bg-gray-100 text-gray-500'
                     }`}
                   >
                     {p.eligible ? 'Potentially Eligible' : 'May Not Qualify'}
@@ -281,18 +281,18 @@ export default function BiologicsDashboard() {
                 </div>
                 <div className="grid grid-cols-2 gap-4 mt-2">
                   <div>
-                    <div className="text-xs font-medium text-stone-600 mb-1">Criteria</div>
+                    <div className="text-xs font-medium text-gray-600 mb-1">Criteria</div>
                     <ul className="space-y-0.5">
                       {p.criteria.map((c, j) => (
-                        <li key={j} className="text-xs text-stone-500">- {c}</li>
+                        <li key={j} className="text-xs text-gray-500">- {c}</li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <div className="text-xs font-medium text-stone-600 mb-1">Benefits</div>
+                    <div className="text-xs font-medium text-gray-600 mb-1">Benefits</div>
                     <ul className="space-y-0.5">
                       {p.benefits.map((b, j) => (
-                        <li key={j} className="text-xs text-stone-700">+ {b}</li>
+                        <li key={j} className="text-xs text-green-600">+ {b}</li>
                       ))}
                     </ul>
                   </div>
@@ -300,7 +300,7 @@ export default function BiologicsDashboard() {
               </div>
             ))
           ) : (
-            <div className="text-center text-stone-400 py-12">
+            <div className="text-center text-gray-400 py-12">
               <Zap size={32} className="mx-auto mb-2" />
               <p className="text-sm">Run analysis to see expedited pathway eligibility.</p>
             </div>
@@ -310,8 +310,8 @@ export default function BiologicsDashboard() {
 
       {/* Comparability Tab */}
       {activeTab === 'comparability' && (
-        <div className="bg-white border border-stone-200 rounded-xl p-6">
-          <h3 className="text-sm font-semibold text-stone-900 mb-4">
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <h3 className="text-sm font-semibold text-gray-900 mb-4">
             {productType === 'biosimilar' ? 'Biosimilar Comparability Requirements' : 'Biologic Comparability Protocol'}
           </h3>
           <div className="grid grid-cols-2 gap-4">
@@ -321,12 +321,12 @@ export default function BiologicsDashboard() {
               { title: 'PK/PD Studies', items: ['Randomized crossover or parallel PK study', 'AUC and Cmax equivalence', 'PD markers if available'] },
               { title: 'Immunogenicity', items: ['Comparative ADA incidence', 'Neutralizing antibody assessment', 'Impact on PK/efficacy/safety', 'Pre-existing antibody analysis'] },
             ].map((section) => (
-              <div key={section.title} className="border border-stone-100 rounded-lg p-3">
-                <div className="text-sm font-medium text-stone-900 mb-2">{section.title}</div>
+              <div key={section.title} className="border border-gray-100 rounded-lg p-3">
+                <div className="text-sm font-medium text-gray-900 mb-2">{section.title}</div>
                 <ul className="space-y-1">
                   {section.items.map((item, i) => (
-                    <li key={i} className="text-xs text-stone-500 flex items-center gap-1">
-                      <CheckCircle size={10} className="text-stone-900" />
+                    <li key={i} className="text-xs text-gray-500 flex items-center gap-1">
+                      <CheckCircle size={10} className="text-green-500" />
                       {item}
                     </li>
                   ))}
@@ -339,8 +339,8 @@ export default function BiologicsDashboard() {
 
       {/* CMC Tab */}
       {activeTab === 'cmc' && (
-        <div className="bg-white border border-stone-200 rounded-xl p-6">
-          <h3 className="text-sm font-semibold text-stone-900 mb-4">Biologic CMC Considerations</h3>
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <h3 className="text-sm font-semibold text-gray-900 mb-4">Biologic CMC Considerations</h3>
           <div className="space-y-3">
             {[
               { area: 'Cell Line Characterization', items: ['Master/working cell bank establishment', 'Genetic stability assessment', 'Adventitious agent testing', 'Cell line identity confirmation'] },
@@ -348,12 +348,12 @@ export default function BiologicsDashboard() {
               { area: 'Analytical Methods', items: ['Method development and qualification', 'Potency assay (cell-based preferred)', 'Specifications setting with clinical lot data', 'Reference standard establishment'] },
               { area: 'Stability Program', items: ['ICH Q5C: Stability of Biotechnological Products', 'Real-time and accelerated conditions', 'Photostability per ICH Q1B', 'Container closure integrity'] },
             ].map((section) => (
-              <div key={section.area} className="border border-stone-100 rounded-lg p-3">
-                <div className="text-sm font-medium text-stone-900 mb-2">{section.area}</div>
+              <div key={section.area} className="border border-gray-100 rounded-lg p-3">
+                <div className="text-sm font-medium text-gray-900 mb-2">{section.area}</div>
                 <div className="grid grid-cols-2 gap-1">
                   {section.items.map((item, i) => (
-                    <div key={i} className="text-xs text-stone-500 flex items-center gap-1">
-                      <Layers size={10} className="text-stone-400" />
+                    <div key={i} className="text-xs text-gray-500 flex items-center gap-1">
+                      <Layers size={10} className="text-purple-400" />
                       {item}
                     </div>
                   ))}
@@ -366,16 +366,16 @@ export default function BiologicsDashboard() {
 
       {/* Multi-Agency Tab */}
       {activeTab === 'multi-agency' && (
-        <div className="bg-white border border-stone-200 rounded-xl p-6">
-          <h3 className="text-sm font-semibold text-stone-900 mb-4">Multi-Agency Strategy Comparison</h3>
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <h3 className="text-sm font-semibold text-gray-900 mb-4">Multi-Agency Strategy Comparison</h3>
           {pathways.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-stone-200">
-                    <th className="text-left px-3 py-2 text-xs font-medium text-stone-500">Aspect</th>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-gray-500">Aspect</th>
                     {pathways.map((p) => (
-                      <th key={p.agency} className="text-left px-3 py-2 text-xs font-medium text-stone-500">
+                      <th key={p.agency} className="text-left px-3 py-2 text-xs font-medium text-gray-500">
                         {p.agency}
                       </th>
                     ))}
@@ -388,10 +388,10 @@ export default function BiologicsDashboard() {
                     { label: 'Submission Type', key: 'submissionType' },
                     { label: 'Timeline', key: 'estimatedTimeline' },
                   ].map((row) => (
-                    <tr key={row.label} className="border-b border-stone-100">
-                      <td className="px-3 py-2 text-xs font-medium text-stone-700">{row.label}</td>
+                    <tr key={row.label} className="border-b border-gray-100">
+                      <td className="px-3 py-2 text-xs font-medium text-gray-700">{row.label}</td>
                       {pathways.map((p) => (
-                        <td key={p.agency} className="px-3 py-2 text-xs text-stone-600">
+                        <td key={p.agency} className="px-3 py-2 text-xs text-gray-600">
                           {(p as any)[row.key]}
                         </td>
                       ))}
@@ -401,7 +401,7 @@ export default function BiologicsDashboard() {
               </table>
             </div>
           ) : (
-            <div className="text-center text-stone-400 py-8">
+            <div className="text-center text-gray-400 py-8">
               <Shield size={32} className="mx-auto mb-2" />
               <p className="text-sm">Run analysis to compare multi-agency strategies.</p>
             </div>

@@ -12,15 +12,15 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-// RightRail panels — minimal stubs
+// RightRail panels and Modals not yet built — inline stubs
 function DataPanel(_props: { documentId?: string; productName?: string }) {
-  return <div className="p-4 text-sm text-muted-foreground">No data sources linked to this document.</div>;
+  return <div className="p-4 text-sm text-muted-foreground">Data panel — not yet implemented.</div>;
 }
 function CitationsPanel(_props: { documentId?: string }) {
-  return <div className="p-4 text-sm text-muted-foreground">No citations added yet.</div>;
+  return <div className="p-4 text-sm text-muted-foreground">Citations panel — not yet implemented.</div>;
 }
 function HistoryPanel(_props: { documentId?: string }) {
-  return <div className="p-4 text-sm text-muted-foreground">No version history available.</div>;
+  return <div className="p-4 text-sm text-muted-foreground">History panel — not yet implemented.</div>;
 }
 function CompareVersionsModal(_props: { open: boolean; onClose: () => void; documentId?: string }) {
   return null;

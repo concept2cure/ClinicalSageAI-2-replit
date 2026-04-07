@@ -395,7 +395,7 @@ const SOPList: React.FC<SOPListProps> = ({ sops, onSelect, onEdit }) => {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{sop.title}</span>
                       {isReviewDue(sop.reviewDate) && sop.status === 'effective' && (
-                        <Badge variant="outline" className="bg-stone-100 text-stone-700 border-stone-200 text-xs">
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
                           Review Due
                         </Badge>
                       )}
@@ -500,21 +500,21 @@ const TrainingMatrix: React.FC<TrainingMatrixProps> = ({ records, onAcknowledge 
             <p className="text-xs text-stone-500">Total</p>
           </div>
         </div>
-        <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-stone-300" onClick={() => setFilterStatus('completed')}>
+        <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-green-300" onClick={() => setFilterStatus('completed')}>
           <div className="px-3 py-2 p-3 text-center">
-            <p className="text-base font-semibold text-stone-700">{stats.completed}</p>
+            <p className="text-base font-semibold text-green-600">{stats.completed}</p>
             <p className="text-xs text-stone-500">Completed</p>
           </div>
         </div>
-        <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-stone-300" onClick={() => setFilterStatus('pending')}>
+        <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-amber-300" onClick={() => setFilterStatus('pending')}>
           <div className="px-3 py-2 p-3 text-center">
-            <p className="text-base font-semibold text-stone-600">{stats.pending}</p>
+            <p className="text-base font-semibold text-amber-600">{stats.pending}</p>
             <p className="text-xs text-stone-500">Pending</p>
           </div>
         </div>
-        <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-stone-300" onClick={() => setFilterStatus('overdue')}>
+        <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-red-300" onClick={() => setFilterStatus('overdue')}>
           <div className="px-3 py-2 p-3 text-center">
-            <p className="text-base font-semibold text-stone-700">{stats.overdue}</p>
+            <p className="text-base font-semibold text-red-600">{stats.overdue}</p>
             <p className="text-xs text-stone-500">Overdue</p>
           </div>
         </div>
@@ -549,9 +549,9 @@ const TrainingMatrix: React.FC<TrainingMatrixProps> = ({ records, onAcknowledge 
                     variant="outline"
                     className={cn(
                       'text-xs',
-                      record.status === 'completed' && 'bg-stone-100 text-stone-800',
-                      record.status === 'pending' && 'bg-stone-100 text-stone-700',
-                      record.status === 'overdue' && 'bg-stone-100 text-stone-800'
+                      record.status === 'completed' && 'bg-green-100 text-green-700',
+                      record.status === 'pending' && 'bg-amber-100 text-amber-700',
+                      record.status === 'overdue' && 'bg-red-100 text-red-700'
                     )}
                   >
                     {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
@@ -572,7 +572,7 @@ const TrainingMatrix: React.FC<TrainingMatrixProps> = ({ records, onAcknowledge 
                     </Button>
                   )}
                   {record.status === 'completed' && (
-                    <span className="text-xs text-stone-700 flex items-center gap-1">
+                    <span className="text-xs text-green-600 flex items-center gap-1">
                       <CheckCircle2 className="h-3 w-3" />
                       Done
                     </span>
@@ -625,8 +625,8 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b bg-white">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center">
-            <BookOpen className="h-5 w-5 text-stone-700" />
+          <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+            <BookOpen className="h-5 w-5 text-green-600" />
           </div>
           <div>
             <h1 className="text-lg font-semibold text-stone-900">SOP Management</h1>
@@ -643,8 +643,8 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
       <div className="grid grid-cols-4 gap-3 p-4 bg-stone-50 border-b">
         <div className="border border-border/40 rounded-sm bg-background">
           <div className="px-3 py-2 p-3 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center">
-              <FileText className="h-5 w-5 text-stone-600" />
+            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+              <FileText className="h-5 w-5 text-blue-600" />
             </div>
             <div>
               <p className="text-base font-semibold text-stone-900">{stats.total}</p>
@@ -654,33 +654,33 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
         </div>
         <div className="border border-border/40 rounded-sm bg-background">
           <div className="px-3 py-2 p-3 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center">
-              <CheckCircle2 className="h-5 w-5 text-stone-700" />
+            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <p className="text-base font-semibold text-stone-700">{stats.effective}</p>
+              <p className="text-base font-semibold text-green-600">{stats.effective}</p>
               <p className="text-xs text-stone-500">Effective</p>
             </div>
           </div>
         </div>
         <div className="border border-border/40 rounded-sm bg-background">
           <div className="px-3 py-2 p-3 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center">
-              <Clock className="h-5 w-5 text-stone-600" />
+            <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+              <Clock className="h-5 w-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-base font-semibold text-stone-600">{stats.underReview}</p>
+              <p className="text-base font-semibold text-amber-600">{stats.underReview}</p>
               <p className="text-xs text-stone-500">Under Review</p>
             </div>
           </div>
         </div>
         <div className="border border-border/40 rounded-sm bg-background">
           <div className="px-3 py-2 p-3 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center">
-              <RefreshCw className="h-5 w-5 text-stone-700" />
+            <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+              <RefreshCw className="h-5 w-5 text-red-600" />
             </div>
             <div>
-              <p className="text-base font-semibold text-stone-700">{stats.reviewDue}</p>
+              <p className="text-base font-semibold text-red-600">{stats.reviewDue}</p>
               <p className="text-xs text-stone-500">Review Due</p>
             </div>
           </div>
@@ -734,11 +734,11 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             'w-10 h-10 rounded-lg flex items-center justify-center',
-                            daysUntil <= 30 ? 'bg-stone-100' : 'bg-stone-100'
+                            daysUntil <= 30 ? 'bg-red-100' : 'bg-stone-100'
                           )}>
                             <Calendar className={cn(
                               'h-5 w-5',
-                              daysUntil <= 30 ? 'text-stone-700' : 'text-stone-600'
+                              daysUntil <= 30 ? 'text-red-600' : 'text-stone-600'
                             )} />
                           </div>
                           <div>
@@ -749,7 +749,7 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
                         <div className="text-right">
                           <p className={cn(
                             'font-medium',
-                            daysUntil <= 30 ? 'text-stone-700' : 'text-stone-900'
+                            daysUntil <= 30 ? 'text-red-600' : 'text-stone-900'
                           )}>
                             {daysUntil} days
                           </p>

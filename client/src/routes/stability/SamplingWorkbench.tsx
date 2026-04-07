@@ -47,7 +47,7 @@ export default function SamplingWorkbench({ studyId }: { studyId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-end">
-        <button className="text-xs text-stone-600 underline" onClick={() => setHelpOpen(true)}>
+        <button className="text-xs text-blue-600 underline" onClick={() => setHelpOpen(true)}>
           Help
         </button>
       </div>
@@ -72,7 +72,7 @@ export default function SamplingWorkbench({ studyId }: { studyId: string }) {
         </CardHeader>
         <CardContent className="space-y-2">
           {!due.length ? (
-            <div className="text-sm text-stone-600">Nothing due.</div>
+            <div className="text-sm text-slate-600">Nothing due.</div>
           ) : (
             due.map(tp => (
               <div
@@ -113,7 +113,7 @@ export default function SamplingWorkbench({ studyId }: { studyId: string }) {
         </CardHeader>
         <CardContent className="space-y-2">
           {!samples.length ? (
-            <div className="text-sm text-stone-600">No samples.</div>
+            <div className="text-sm text-slate-600">No samples.</div>
           ) : (
             samples.map(s => (
               <div
@@ -168,7 +168,7 @@ export default function SamplingWorkbench({ studyId }: { studyId: string }) {
             evidence.
           </div>
           <hr />
-          <div className="text-stone-600">
+          <div className="text-slate-600">
             Approvals are blocked until results are linked to a collected sample. Links appear in
             the <i>Results → Review</i> tab.
           </div>

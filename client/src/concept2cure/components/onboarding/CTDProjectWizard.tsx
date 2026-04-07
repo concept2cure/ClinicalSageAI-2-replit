@@ -218,18 +218,18 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                   step > i + 1
-                    ? 'bg-stone-900 text-white'
+                    ? 'bg-green-500 text-white'
                     : step === i + 1
                     ? 'bg-stone-700 text-white'
-                    : 'bg-stone-200 text-stone-500'
+                    : 'bg-gray-200 text-gray-500'
                 }`}
               >
                 {step > i + 1 ? <CheckCircle size={16} /> : i + 1}
               </div>
-              <span className={`ml-2 text-xs ${step === i + 1 ? 'text-stone-900 font-medium' : 'text-stone-400'}`}>
+              <span className={`ml-2 text-xs ${step === i + 1 ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
                 {label}
               </span>
-              {i < 4 && <ChevronRight size={14} className="mx-2 text-stone-300" />}
+              {i < 4 && <ChevronRight size={14} className="mx-2 text-gray-300" />}
             </div>
           )
         )}
@@ -237,31 +237,31 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
 
       {/* Step 1: Project Basics */}
       {step === 1 && (
-        <div className="bg-white border border-stone-200 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-stone-900 mb-4">Project Basics</h2>
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Project Basics</h2>
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-stone-600 block mb-1">Project Name</label>
+              <label className="text-sm text-gray-600 block mb-1">Project Name</label>
               <input
                 type="text"
                 value={project.name}
                 onChange={(e) => setProject({ ...project, name: e.target.value })}
                 placeholder="e.g., ABC-123 NDA Submission"
-                className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-500"
               />
             </div>
             <div>
-              <label className="text-sm text-stone-600 block mb-1">Product Name</label>
+              <label className="text-sm text-gray-600 block mb-1">Product Name</label>
               <input
                 type="text"
                 value={project.productName}
                 onChange={(e) => setProject({ ...project, productName: e.target.value })}
                 placeholder="e.g., Drugamazin 50mg"
-                className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-500"
               />
             </div>
             <div>
-              <label className="text-sm text-stone-600 block mb-1">Product Type</label>
+              <label className="text-sm text-gray-600 block mb-1">Product Type</label>
               <div className="grid grid-cols-3 gap-2">
                 {PRODUCT_TYPES.map((pt) => (
                   <button
@@ -270,7 +270,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
                     className={`border rounded-lg px-3 py-2 text-sm transition-colors ${
                       project.productType === pt.value
                         ? 'border-stone-500 bg-stone-100 text-stone-700'
-                        : 'border-stone-300 text-stone-600 hover:border-stone-400'
+                        : 'border-gray-300 text-gray-600 hover:border-gray-400'
                     }`}
                   >
                     {pt.label}
@@ -280,23 +280,23 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm text-stone-600 block mb-1">Therapeutic Area</label>
+                <label className="text-sm text-gray-600 block mb-1">Therapeutic Area</label>
                 <input
                   type="text"
                   value={project.therapeuticArea}
                   onChange={(e) => setProject({ ...project, therapeuticArea: e.target.value })}
                   placeholder="e.g., Oncology"
-                  className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-500"
                 />
               </div>
               <div>
-                <label className="text-sm text-stone-600 block mb-1">Indication</label>
+                <label className="text-sm text-gray-600 block mb-1">Indication</label>
                 <input
                   type="text"
                   value={project.indication}
                   onChange={(e) => setProject({ ...project, indication: e.target.value })}
                   placeholder="e.g., Non-small cell lung cancer"
-                  className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-500"
                 />
               </div>
             </div>
@@ -306,11 +306,11 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
 
       {/* Step 2: Regulatory Region */}
       {step === 2 && (
-        <div className="bg-white border border-stone-200 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-stone-900 mb-4">Regulatory Region & Submission Type</h2>
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Regulatory Region & Submission Type</h2>
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-stone-600 block mb-2">Target Regulatory Agency</label>
+              <label className="text-sm text-gray-600 block mb-2">Target Regulatory Agency</label>
               <div className="grid grid-cols-4 gap-2">
                 {REGIONS.map((r) => (
                   <button
@@ -325,17 +325,17 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
                     className={`border rounded-lg p-3 text-center transition-colors ${
                       project.regulatoryRegion === r.value
                         ? 'border-stone-500 bg-stone-50'
-                        : 'border-stone-300 hover:border-stone-400'
+                        : 'border-gray-300 hover:border-gray-400'
                     }`}
                   >
-                    <div className="text-sm font-medium text-stone-900">{r.label}</div>
-                    <div className="text-xs text-stone-500">{r.country}</div>
+                    <div className="text-sm font-medium text-gray-900">{r.label}</div>
+                    <div className="text-xs text-gray-500">{r.country}</div>
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <label className="text-sm text-stone-600 block mb-2">Submission Type</label>
+              <label className="text-sm text-gray-600 block mb-2">Submission Type</label>
               <div className="flex gap-2 flex-wrap">
                 {(SUBMISSION_TYPES[project.regulatoryRegion] || []).map((st) => (
                   <button
@@ -344,7 +344,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
                     className={`border rounded-lg px-4 py-2 text-sm transition-colors ${
                       project.submissionType === st
                         ? 'border-stone-500 bg-stone-100 text-stone-700'
-                        : 'border-stone-300 text-stone-600 hover:border-stone-400'
+                        : 'border-gray-300 text-gray-600 hover:border-gray-400'
                     }`}
                   >
                     {st}
@@ -358,11 +358,11 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
 
       {/* Step 3: Document Upload */}
       {step === 3 && (
-        <div className="bg-white border border-stone-200 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-stone-900 mb-4">Upload CTD Documents</h2>
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Upload CTD Documents</h2>
 
           {/* Module Tabs */}
-          <div className="flex gap-1 mb-4 border-b border-stone-200">
+          <div className="flex gap-1 mb-4 border-b border-gray-200">
             {[1, 2, 3, 4, 5].map((m) => (
               <button
                 key={m}
@@ -370,7 +370,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
                 className={`px-4 py-2 text-sm border-b-2 transition-colors ${
                   activeModule === m
                     ? 'border-stone-500 text-stone-700 font-medium'
-                    : 'border-transparent text-stone-500 hover:text-stone-700'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
                 M{m}: {MODULE_NAMES[m]}
@@ -382,7 +382,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
           <div
             onDrop={handleDrop}
             onDragOver={(e) => e.preventDefault()}
-            className="border-2 border-dashed border-stone-300 rounded-xl p-8 text-center mb-4 hover:border-stone-400 transition-colors cursor-pointer"
+            className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center mb-4 hover:border-stone-400 transition-colors cursor-pointer"
             onClick={() => {
               const input = document.createElement('input');
               input.type = 'file';
@@ -395,11 +395,11 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
               input.click();
             }}
           >
-            <Upload size={32} className="mx-auto mb-2 text-stone-400" />
-            <p className="text-sm text-stone-600">
+            <Upload size={32} className="mx-auto mb-2 text-gray-400" />
+            <p className="text-sm text-gray-600">
               Drag & drop CTD documents here, or click to browse
             </p>
-            <p className="text-xs text-stone-400 mt-1">
+            <p className="text-xs text-gray-400 mt-1">
               PDF, DOCX, XML, TXT, XLSX — auto-detects CTD section from filename
             </p>
             {uploading && <p className="text-xs text-stone-600 mt-2">Uploading...</p>}
@@ -408,23 +408,23 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
           {/* Uploaded Documents */}
           {documents.length > 0 && (
             <div className="space-y-1">
-              <h3 className="text-sm font-medium text-stone-700 mb-2">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">
                 Uploaded ({documents.length} documents)
               </h3>
               {documents
                 .filter((d) => d.ctdModule === activeModule)
                 .map((doc, i) => (
-                  <div key={i} className="flex items-center gap-3 bg-stone-50 rounded-lg px-3 py-2 text-sm">
-                    <FileText size={14} className="text-stone-400" />
-                    <span className="flex-1 text-stone-700 truncate">{doc.fileName}</span>
-                    <span className="text-xs text-stone-500">{doc.ctdSection}</span>
-                    <span className="text-xs bg-stone-100 text-stone-800 px-2 py-0.5 rounded-full">
+                  <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-lg px-3 py-2 text-sm">
+                    <FileText size={14} className="text-gray-400" />
+                    <span className="flex-1 text-gray-700 truncate">{doc.fileName}</span>
+                    <span className="text-xs text-gray-500">{doc.ctdSection}</span>
+                    <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
                       {doc.status}
                     </span>
                   </div>
                 ))}
               {documents.filter((d) => d.ctdModule === activeModule).length === 0 && (
-                <p className="text-sm text-stone-400 text-center py-4">
+                <p className="text-sm text-gray-400 text-center py-4">
                   No documents uploaded for Module {activeModule} yet.
                 </p>
               )}
@@ -435,16 +435,16 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
 
       {/* Step 4: Compliance Check */}
       {step === 4 && (
-        <div className="bg-white border border-stone-200 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-stone-900 mb-4">Compliance Check</h2>
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Compliance Check</h2>
 
           {validationResult && (
             <div className="mb-4 bg-stone-50 rounded-xl p-4 flex items-center justify-between">
               <div>
-                <div className="text-sm font-medium text-stone-900">
+                <div className="text-sm font-medium text-gray-900">
                   {validationResult.fulfilled} / {validationResult.totalRequired} required sections fulfilled
                 </div>
-                <div className="text-xs text-stone-500 mt-0.5">
+                <div className="text-xs text-gray-500 mt-0.5">
                   {validationResult.completionPercentage}% complete for {project.regulatoryRegion} {project.submissionType}
                 </div>
               </div>
@@ -461,10 +461,10 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
                   key={i}
                   className={`border rounded-lg p-3 ${
                     gap.severity === 'critical'
-                      ? 'border-stone-200 bg-stone-100'
+                      ? 'border-red-200 bg-red-50'
                       : gap.severity === 'major'
-                      ? 'border-stone-200 bg-stone-100'
-                      : 'border-stone-200 bg-stone-100'
+                      ? 'border-amber-200 bg-amber-50'
+                      : 'border-yellow-200 bg-yellow-50'
                   }`}
                 >
                   <div className="flex items-start gap-2">
@@ -472,16 +472,16 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
                       size={14}
                       className={
                         gap.severity === 'critical'
-                          ? 'text-stone-900'
+                          ? 'text-red-500'
                           : gap.severity === 'major'
-                          ? 'text-stone-900'
-                          : 'text-stone-900'
+                          ? 'text-amber-500'
+                          : 'text-yellow-500'
                       }
                     />
                     <div>
-                      <div className="text-sm font-medium text-stone-900">{gap.description}</div>
-                      <div className="text-xs text-stone-500 mt-0.5">{gap.recommendation}</div>
-                      <div className="text-xs text-stone-400 mt-0.5">
+                      <div className="text-sm font-medium text-gray-900">{gap.description}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">{gap.recommendation}</div>
+                      <div className="text-xs text-gray-400 mt-0.5">
                         Module {gap.ctdModule} | Section {gap.ctdSection} | {gap.severity}
                       </div>
                     </div>
@@ -490,12 +490,12 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
               ))}
             </div>
           ) : validationResult ? (
-            <div className="text-center text-stone-700 py-8">
+            <div className="text-center text-green-600 py-8">
               <CheckCircle size={32} className="mx-auto mb-2" />
               <p className="text-sm">All required sections are present. Ready to activate.</p>
             </div>
           ) : (
-            <div className="text-center text-stone-400 py-8">
+            <div className="text-center text-gray-400 py-8">
               <AlertTriangle size={32} className="mx-auto mb-2" />
               <p className="text-sm">Validation has not been run yet. Click &ldquo;Run Compliance Check&rdquo; above.</p>
             </div>
@@ -505,26 +505,26 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
 
       {/* Step 5: Confirmation */}
       {step === 5 && (
-        <div className="bg-white border border-stone-200 rounded-xl p-6 text-center">
-          <CheckCircle size={48} className="mx-auto mb-4 text-stone-900" />
-          <h2 className="text-lg font-semibold text-stone-900 mb-2">CTD Project Ready</h2>
-          <p className="text-sm text-stone-500 mb-6">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 text-center">
+          <CheckCircle size={48} className="mx-auto mb-4 text-green-500" />
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">CTD Project Ready</h2>
+          <p className="text-sm text-gray-500 mb-6">
             {project.name} — {project.regulatoryRegion} {project.submissionType}
           </p>
           <div className="grid grid-cols-3 gap-4 mb-6 max-w-md mx-auto">
-            <div className="bg-stone-50 rounded-lg p-3">
-              <div className="text-lg font-semibold text-stone-900">{documents.length}</div>
-              <div className="text-xs text-stone-500">Documents</div>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <div className="text-lg font-semibold text-gray-900">{documents.length}</div>
+              <div className="text-xs text-gray-500">Documents</div>
             </div>
-            <div className="bg-stone-50 rounded-lg p-3">
-              <div className="text-lg font-semibold text-stone-900">
+            <div className="bg-gray-50 rounded-lg p-3">
+              <div className="text-lg font-semibold text-gray-900">
                 {validationResult?.completionPercentage || 0}%
               </div>
-              <div className="text-xs text-stone-500">Complete</div>
+              <div className="text-xs text-gray-500">Complete</div>
             </div>
-            <div className="bg-stone-50 rounded-lg p-3">
-              <div className="text-lg font-semibold text-stone-900">{gaps.length}</div>
-              <div className="text-xs text-stone-500">Gaps</div>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <div className="text-lg font-semibold text-gray-900">{gaps.length}</div>
+              <div className="text-xs text-gray-500">Gaps</div>
             </div>
           </div>
           <button
@@ -539,11 +539,11 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
       {/* Navigation */}
       {/* Error message */}
       {createError && (
-        <div className="mt-4 flex items-start gap-2 p-3 bg-stone-100 border border-stone-200 rounded-lg">
-          <AlertTriangle size={16} className="text-stone-900 flex-shrink-0 mt-0.5" />
+        <div className="mt-4 flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <AlertTriangle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-stone-800">Project creation failed</p>
-            <p className="text-xs text-stone-700 mt-0.5">{createError}</p>
+            <p className="text-sm font-medium text-red-800">Project creation failed</p>
+            <p className="text-xs text-red-600 mt-0.5">{createError}</p>
           </div>
         </div>
       )}
@@ -552,7 +552,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
         <button
           onClick={() => { setStep(Math.max(1, step - 1)); setCreateError(null); }}
           disabled={step === 1}
-          className="flex items-center gap-1 text-sm text-stone-500 hover:text-stone-700 disabled:opacity-30"
+          className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 disabled:opacity-30"
         >
           <ChevronLeft size={14} /> Back
         </button>

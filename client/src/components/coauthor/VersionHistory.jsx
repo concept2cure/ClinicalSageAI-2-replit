@@ -13,21 +13,8 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -43,15 +30,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTenantContext } from '@/contexts/TenantContext';
 import { cn } from '@/lib/utils';
-import {
-  format,
-  formatDistanceToNow,
-  parseISO,
-  isAfter,
-  isBefore,
-  isWithinInterval,
-  differenceInDays,
-} from 'date-fns';
+import { format, formatDistanceToNow, parseISO, isAfter, isBefore, isWithinInterval, differenceInDays } from 'date-fns';
 import { diffWords, diffLines, createPatch } from 'diff';
 import { saveAs } from 'file-saver';
 import {
@@ -111,27 +90,23 @@ import {
   CircleDot,
   Target,
   Zap,
-  Award,
+  Award
 } from 'lucide-react';
 // Removed non-existent SiMicrosoftsharepoint import
 
 /**
  * Get user initials for avatar
  */
-const getUserInitials = name => {
+const getUserInitials = (name) => {
   if (!name) return 'U';
   const parts = name.split(' ');
-  return parts
-    .map(p => p[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  return parts.map(p => p[0]).join('').toUpperCase().slice(0, 2);
 };
 
 /**
  * Format file size to human readable
  */
-const formatFileSize = bytes => {
+const formatFileSize = (bytes) => {
   if (!bytes) return 'N/A';
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
@@ -141,39 +116,14 @@ const formatFileSize = bytes => {
 /**
  * Get status badge configuration
  */
-const getStatusBadgeConfig = status => {
+const getStatusBadgeConfig = (status) => {
   const configs = {
-    current: {
-      variant: 'default',
-      icon: CircleDot,
-      className:
-        'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200 border-green-300',
-    },
-    draft: {
-      variant: 'secondary',
-      icon: Edit3,
-      className: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200',
-    },
-    published: {
-      variant: 'default',
-      icon: CheckCircle,
-      className: 'bg-stone-100 text-stone-800 border-stone-300',
-    },
-    archived: {
-      variant: 'outline',
-      icon: Package,
-      className: 'bg-slate-100 text-slate-600 dark:bg-slate-900/30 dark:text-slate-400',
-    },
-    approved: {
-      variant: 'default',
-      icon: ShieldCheck,
-      className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200',
-    },
-    locked: {
-      variant: 'destructive',
-      icon: Lock,
-      className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200',
-    },
+    current: { variant: 'default', icon: CircleDot, className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200 border-green-300' },
+    draft: { variant: 'secondary', icon: Edit3, className: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200' },
+    published: { variant: 'default', icon: CheckCircle, className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200 border-blue-300' },
+    archived: { variant: 'outline', icon: Package, className: 'bg-slate-100 text-slate-600 dark:bg-slate-900/30 dark:text-slate-400' },
+    approved: { variant: 'default', icon: ShieldCheck, className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200' },
+    locked: { variant: 'destructive', icon: Lock, className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200' }
   };
   return configs[status?.toLowerCase()] || configs.draft;
 };
@@ -181,12 +131,12 @@ const getStatusBadgeConfig = status => {
 /**
  * Get change type badge configuration
  */
-const getChangeTypeBadgeConfig = changeType => {
+const getChangeTypeBadgeConfig = (changeType) => {
   const configs = {
     major: { icon: TrendingUp, color: 'text-red-600 dark:text-red-400', label: 'Major' },
     minor: { icon: TrendingDown, color: 'text-yellow-600 dark:text-yellow-400', label: 'Minor' },
     patch: { icon: Minus, color: 'text-green-600 dark:text-green-400', label: 'Patch' },
-    formatting: { icon: Edit3, color: 'text-stone-600 dark:text-stone-400', label: 'Format' },
+    formatting: { icon: Edit3, color: 'text-blue-600 dark:text-blue-400', label: 'Format' }
   };
   return configs[changeType?.toLowerCase()] || configs.minor;
 };
@@ -202,14 +152,14 @@ const VersionTimeline = ({ versions, currentVersion, onVersionSelect }) => {
     <div className="relative w-full overflow-x-auto pb-4">
       <div ref={timelineRef} className="relative min-w-full h-24 flex items-center px-4">
         {/* Timeline line */}
-        <div className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-stone-200 via-stone-400 to-stone-200 dark:from-stone-800 dark:via-stone-600 dark:to-stone-800 top-1/2 -translate-y-1/2" />
-
+        <div className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-blue-200 via-blue-400 to-blue-200 dark:from-blue-800 dark:via-blue-600 dark:to-blue-800 top-1/2 -translate-y-1/2" />
+        
         {/* Version nodes */}
         {versions.map((version, idx) => {
           const isActive = version.versionNumber === currentVersion?.versionNumber;
           const isBranch = version.metadata?.branchPoint;
           const isMerge = version.metadata?.mergePoint;
-
+          
           return (
             <div
               key={version.id}
@@ -223,39 +173,35 @@ const VersionTimeline = ({ versions, currentVersion, onVersionSelect }) => {
               {isBranch && (
                 <GitBranch className="absolute -top-6 left-1/2 -translate-x-1/2 h-4 w-4 text-purple-600 dark:text-purple-400" />
               )}
-
+              
               {/* Merge indicator */}
               {isMerge && (
                 <GitMerge className="absolute -bottom-6 left-1/2 -translate-x-1/2 h-4 w-4 text-green-600 dark:text-green-400" />
               )}
-
+              
               {/* Version dot */}
               <div
                 className={cn(
-                  'w-4 h-4 rounded-full border-2 transition-all duration-200',
-                  isActive
-                    ? 'bg-stone-800 border-stone-700 dark:bg-stone-400 dark:border-stone-400 scale-150 ring-4 ring-stone-200 dark:ring-stone-800'
-                    : 'bg-white dark:bg-gray-800 border-gray-400 dark:border-gray-600 hover:border-stone-500 dark:hover:border-stone-400'
+                  "w-4 h-4 rounded-full border-2 transition-all duration-200",
+                  isActive 
+                    ? "bg-blue-600 border-blue-600 dark:bg-blue-400 dark:border-blue-400 scale-150 ring-4 ring-blue-200 dark:ring-blue-800" 
+                    : "bg-white dark:bg-gray-800 border-gray-400 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400"
                 )}
               />
-
+              
               {/* Version label */}
               <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs font-medium whitespace-nowrap">
                 v{version.versionLabel || version.versionNumber}
               </div>
-
+              
               {/* Hover tooltip */}
               {hoveredVersion?.id === version.id && (
                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 whitespace-nowrap">
-                  <div className="text-sm font-medium">
-                    {version.versionLabel || `Version ${version.versionNumber}`}
-                  </div>
+                  <div className="text-sm font-medium">{version.versionLabel || `Version ${version.versionNumber}`}</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">
                     {format(parseISO(version.createdAt), 'MMM d, yyyy HH:mm')}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    by {version.createdByName}
-                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">by {version.createdByName}</div>
                 </div>
               )}
             </div>
@@ -276,7 +222,7 @@ const VersionComparisonView = ({ leftVersion, rightVersion, onClose }) => {
   const rightRef = useRef(null);
 
   // Synchronized scrolling
-  const handleScroll = useCallback(source => {
+  const handleScroll = useCallback((source) => {
     if (source === 'left' && rightRef.current && leftRef.current) {
       rightRef.current.scrollTop = leftRef.current.scrollTop;
       rightRef.current.scrollLeft = leftRef.current.scrollLeft;
@@ -289,15 +235,13 @@ const VersionComparisonView = ({ leftVersion, rightVersion, onClose }) => {
   // Calculate diff
   const diffResult = useMemo(() => {
     if (!leftVersion?.content || !rightVersion?.content) return null;
-
-    const leftContent =
-      typeof leftVersion.content === 'string'
-        ? leftVersion.content
-        : JSON.stringify(leftVersion.content, null, 2);
-    const rightContent =
-      typeof rightVersion.content === 'string'
-        ? rightVersion.content
-        : JSON.stringify(rightVersion.content, null, 2);
+    
+    const leftContent = typeof leftVersion.content === 'string' 
+      ? leftVersion.content 
+      : JSON.stringify(leftVersion.content, null, 2);
+    const rightContent = typeof rightVersion.content === 'string' 
+      ? rightVersion.content 
+      : JSON.stringify(rightVersion.content, null, 2);
 
     const wordDiff = diffWords(leftContent, rightContent);
     const lineDiff = diffLines(leftContent, rightContent);
@@ -311,8 +255,7 @@ const VersionComparisonView = ({ leftVersion, rightVersion, onClose }) => {
     wordDiff.forEach(part => {
       if (part.added) additions += part.value.split(' ').length;
       else if (part.removed) deletions += part.value.split(' ').length;
-      else if (part.value.trim())
-        modifications += part.value.split(' ').filter(w => w.trim()).length;
+      else if (part.value.trim()) modifications += part.value.split(' ').filter(w => w.trim()).length;
     });
 
     return { wordDiff, lineDiff, patch, stats: { additions, deletions, modifications } };
@@ -321,21 +264,17 @@ const VersionComparisonView = ({ leftVersion, rightVersion, onClose }) => {
   // Render diff content
   const renderDiffContent = (diff, side) => {
     if (!diff) return null;
-
+    
     return diff.wordDiff.map((part, index) => {
       if (showOnlyChanges && !part.added && !part.removed) {
         return null;
       }
 
       const className = cn(
-        'px-1 rounded',
-        part.added &&
-          side === 'right' &&
-          'bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-100',
-        part.removed &&
-          side === 'left' &&
-          'bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-100 line-through',
-        !part.added && !part.removed && 'text-gray-700 dark:text-gray-300'
+        "px-1 rounded",
+        part.added && side === 'right' && "bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-100",
+        part.removed && side === 'left' && "bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-100 line-through",
+        !part.added && !part.removed && "text-gray-700 dark:text-gray-300"
       );
 
       if ((side === 'left' && part.added) || (side === 'right' && part.removed)) {
@@ -356,7 +295,7 @@ const VersionComparisonView = ({ leftVersion, rightVersion, onClose }) => {
       <div className="p-4 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <DiffIcon className="h-5 w-5 text-stone-600 dark:text-stone-400" />
+            <DiffIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             <h3 className="text-lg font-semibold">Version Comparison</h3>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -369,23 +308,17 @@ const VersionComparisonView = ({ leftVersion, rightVersion, onClose }) => {
           <div className="flex items-center gap-4 text-sm">
             <span className="flex items-center gap-1">
               <Plus className="h-4 w-4 text-green-600 dark:text-green-400" />
-              <span className="font-medium text-green-600 dark:text-green-400">
-                {diffResult.stats.additions}
-              </span>
+              <span className="font-medium text-green-600 dark:text-green-400">{diffResult.stats.additions}</span>
               <span className="text-gray-500 dark:text-gray-400">additions</span>
             </span>
             <span className="flex items-center gap-1">
               <Minus className="h-4 w-4 text-red-600 dark:text-red-400" />
-              <span className="font-medium text-red-600 dark:text-red-400">
-                {diffResult.stats.deletions}
-              </span>
+              <span className="font-medium text-red-600 dark:text-red-400">{diffResult.stats.deletions}</span>
               <span className="text-gray-500 dark:text-gray-400">deletions</span>
             </span>
             <span className="flex items-center gap-1">
               <Edit3 className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-              <span className="font-medium text-yellow-600 dark:text-yellow-400">
-                {diffResult.stats.modifications}
-              </span>
+              <span className="font-medium text-yellow-600 dark:text-yellow-400">{diffResult.stats.modifications}</span>
               <span className="text-gray-500 dark:text-gray-400">modifications</span>
             </span>
           </div>
@@ -393,40 +326,28 @@ const VersionComparisonView = ({ leftVersion, rightVersion, onClose }) => {
 
         {/* View controls */}
         <div className="flex items-center gap-3 mt-3">
-          <RadioGroup
-            value={viewMode}
-            onValueChange={setViewMode}
-            className="flex items-center gap-3"
-          >
+          <RadioGroup value={viewMode} onValueChange={setViewMode} className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <RadioGroupItem value="side-by-side" id="side-by-side" />
-              <Label htmlFor="side-by-side" className="text-sm cursor-pointer">
-                Side by Side
-              </Label>
+              <Label htmlFor="side-by-side" className="text-sm cursor-pointer">Side by Side</Label>
             </div>
             <div className="flex items-center gap-2">
               <RadioGroupItem value="unified" id="unified" />
-              <Label htmlFor="unified" className="text-sm cursor-pointer">
-                Unified
-              </Label>
+              <Label htmlFor="unified" className="text-sm cursor-pointer">Unified</Label>
             </div>
             <div className="flex items-center gap-2">
               <RadioGroupItem value="raw" id="raw" />
-              <Label htmlFor="raw" className="text-sm cursor-pointer">
-                Raw Diff
-              </Label>
+              <Label htmlFor="raw" className="text-sm cursor-pointer">Raw Diff</Label>
             </div>
           </RadioGroup>
           <Separator orientation="vertical" className="h-6" />
           <div className="flex items-center gap-2">
-            <Checkbox
-              id="show-only-changes"
-              checked={showOnlyChanges}
+            <Checkbox 
+              id="show-only-changes" 
+              checked={showOnlyChanges} 
               onCheckedChange={setShowOnlyChanges}
             />
-            <Label htmlFor="show-only-changes" className="text-sm cursor-pointer">
-              Show only changes
-            </Label>
+            <Label htmlFor="show-only-changes" className="text-sm cursor-pointer">Show only changes</Label>
           </div>
         </div>
       </div>
@@ -439,16 +360,13 @@ const VersionComparisonView = ({ leftVersion, rightVersion, onClose }) => {
             <div className="bg-white dark:bg-gray-900">
               <div className="p-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">
-                    Version {leftVersion?.versionLabel || leftVersion?.versionNumber}
-                  </span>
+                  <span className="text-sm font-medium">Version {leftVersion?.versionLabel || leftVersion?.versionNumber}</span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {leftVersion?.createdAt &&
-                      format(parseISO(leftVersion.createdAt), 'MMM d, yyyy HH:mm')}
+                    {leftVersion?.createdAt && format(parseISO(leftVersion.createdAt), 'MMM d, yyyy HH:mm')}
                   </span>
                 </div>
               </div>
-              <ScrollArea
+              <ScrollArea 
                 ref={leftRef}
                 onScroll={() => handleScroll('left')}
                 className="h-[calc(100%-40px)] p-4"
@@ -463,16 +381,13 @@ const VersionComparisonView = ({ leftVersion, rightVersion, onClose }) => {
             <div className="bg-white dark:bg-gray-900">
               <div className="p-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">
-                    Version {rightVersion?.versionLabel || rightVersion?.versionNumber}
-                  </span>
+                  <span className="text-sm font-medium">Version {rightVersion?.versionLabel || rightVersion?.versionNumber}</span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {rightVersion?.createdAt &&
-                      format(parseISO(rightVersion.createdAt), 'MMM d, yyyy HH:mm')}
+                    {rightVersion?.createdAt && format(parseISO(rightVersion.createdAt), 'MMM d, yyyy HH:mm')}
                   </span>
                 </div>
               </div>
-              <ScrollArea
+              <ScrollArea 
                 ref={rightRef}
                 onScroll={() => handleScroll('right')}
                 className="h-[calc(100%-40px)] p-4"
@@ -490,11 +405,9 @@ const VersionComparisonView = ({ leftVersion, rightVersion, onClose }) => {
                 <div
                   key={index}
                   className={cn(
-                    'px-2 py-1',
-                    part.added &&
-                      'bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-100',
-                    part.removed &&
-                      'bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-100 line-through'
+                    "px-2 py-1",
+                    part.added && "bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-100",
+                    part.removed && "bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-100 line-through"
                   )}
                 >
                   {part.value}
@@ -519,7 +432,7 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentOrganization } = useTenantContext();
-
+  
   // State management
   const [selectedVersions, setSelectedVersions] = useState([]);
   const [compareMode, setCompareMode] = useState(false);
@@ -531,22 +444,18 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
     dateRange: null,
     user: '',
     changeType: 'all',
-    searchTerm: '',
+    searchTerm: ''
   });
   const [quickFilter, setQuickFilter] = useState('all'); // all, my-changes, last-30-days, major-only
 
   // Fetch version history
-  const {
-    data: versions,
-    isLoading,
-    refetch,
-  } = useQuery({
+  const { data: versions, isLoading, refetch } = useQuery({
     queryKey: [`/api/coauthor/components/${componentId}/versions`],
     enabled: isOpen && !!componentId,
     queryFn: async () => {
       const response = await apiRequest('GET', `/api/coauthor/components/${componentId}/versions`);
       return response.json();
-    },
+    }
   });
 
   // Fetch component details
@@ -556,76 +465,54 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
     queryFn: async () => {
       const response = await apiRequest('GET', `/api/coauthor/components/${componentId}`);
       return response.json();
-    },
+    }
   });
 
   // Restore version mutation
   const restoreVersionMutation = useMutation({
     mutationFn: async ({ versionId, reason }) => {
-      const response = await apiRequest(
-        'POST',
-        `/api/coauthor/components/${componentId}/versions/${versionId}/restore`,
-        { reason }
-      );
+      const response = await apiRequest('POST', `/api/coauthor/components/${componentId}/versions/${versionId}/restore`, { reason });
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: 'Version Restored',
-        description: 'A new version has been created from the restored content',
-      });
+      toast({ title: "Version Restored", description: "A new version has been created from the restored content" });
       refetch();
       queryClient.invalidateQueries([`/api/coauthor/components/${componentId}`]);
     },
-    onError: error => {
-      toast({ title: 'Restore Failed', description: error.message, variant: 'destructive' });
-    },
+    onError: (error) => {
+      toast({ title: "Restore Failed", description: error.message, variant: "destructive" });
+    }
   });
 
   // Export version history
-  const exportHistory = useCallback(
-    async format => {
-      try {
-        if (format === 'pdf') {
-          // Generate PDF report
-          const response = await apiRequest(
-            'GET',
-            `/api/coauthor/components/${componentId}/versions/export?format=pdf`
-          );
-          const blob = await response.blob();
-          saveAs(blob, `version-history-${componentId}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
-        } else if (format === 'html') {
-          // Export diff as HTML
-          const response = await apiRequest(
-            'GET',
-            `/api/coauthor/components/${componentId}/versions/export?format=html`
-          );
-          const blob = await response.blob();
-          saveAs(blob, `version-diff-${componentId}-${format(new Date(), 'yyyy-MM-dd')}.html`);
-        } else if (format === 'csv') {
-          // Export metadata as CSV
-          const response = await apiRequest(
-            'GET',
-            `/api/coauthor/components/${componentId}/versions/export?format=csv`
-          );
-          const blob = await response.blob();
-          saveAs(blob, `version-metadata-${componentId}-${format(new Date(), 'yyyy-MM-dd')}.csv`);
-        }
-        toast({
-          title: 'Export Successful',
-          description: `Version history exported as ${format.toUpperCase()}`,
-        });
-      } catch (error) {
-        toast({ title: 'Export Failed', description: error.message, variant: 'destructive' });
+  const exportHistory = useCallback(async (format) => {
+    try {
+      if (format === 'pdf') {
+        // Generate PDF report
+        const response = await apiRequest('GET', `/api/coauthor/components/${componentId}/versions/export?format=pdf`);
+        const blob = await response.blob();
+        saveAs(blob, `version-history-${componentId}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      } else if (format === 'html') {
+        // Export diff as HTML
+        const response = await apiRequest('GET', `/api/coauthor/components/${componentId}/versions/export?format=html`);
+        const blob = await response.blob();
+        saveAs(blob, `version-diff-${componentId}-${format(new Date(), 'yyyy-MM-dd')}.html`);
+      } else if (format === 'csv') {
+        // Export metadata as CSV
+        const response = await apiRequest('GET', `/api/coauthor/components/${componentId}/versions/export?format=csv`);
+        const blob = await response.blob();
+        saveAs(blob, `version-metadata-${componentId}-${format(new Date(), 'yyyy-MM-dd')}.csv`);
       }
-    },
-    [componentId]
-  );
+      toast({ title: "Export Successful", description: `Version history exported as ${format.toUpperCase()}` });
+    } catch (error) {
+      toast({ title: "Export Failed", description: error.message, variant: "destructive" });
+    }
+  }, [componentId]);
 
   // Filter versions based on criteria
   const filteredVersions = useMemo(() => {
     if (!versions) return [];
-
+    
     let filtered = [...versions];
 
     // Quick filters
@@ -648,7 +535,7 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
     }
 
     if (filters.user) {
-      filtered = filtered.filter(v =>
+      filtered = filtered.filter(v => 
         v.createdByName?.toLowerCase().includes(filters.user.toLowerCase())
       );
     }
@@ -658,10 +545,9 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
     }
 
     if (filters.searchTerm) {
-      filtered = filtered.filter(
-        v =>
-          v.changeDescription?.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-          v.versionLabel?.toLowerCase().includes(filters.searchTerm.toLowerCase())
+      filtered = filtered.filter(v => 
+        v.changeDescription?.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        v.versionLabel?.toLowerCase().includes(filters.searchTerm.toLowerCase())
       );
     }
 
@@ -671,15 +557,17 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
   // Handle version comparison
   const handleCompare = () => {
     if (selectedVersions.length !== 2) {
-      toast({
-        title: 'Select Two Versions',
-        description: 'Please select exactly two versions to compare',
-        variant: 'destructive',
+      toast({ 
+        title: "Select Two Versions", 
+        description: "Please select exactly two versions to compare",
+        variant: "destructive" 
       });
       return;
     }
 
-    const [v1, v2] = selectedVersions.map(id => filteredVersions.find(v => v.id === id));
+    const [v1, v2] = selectedVersions.map(id => 
+      filteredVersions.find(v => v.id === id)
+    );
 
     setLeftVersion(v1);
     setRightVersion(v2);
@@ -687,14 +575,12 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
   };
 
   // Handle version restore
-  const handleRestore = version => {
+  const handleRestore = (version) => {
     if (!version) return;
 
     // Show confirmation dialog
     const reason = window.prompt(
-      `Are you sure you want to restore Version ${
-        version.versionLabel || version.versionNumber
-      }?\n\nPlease provide a reason:`
+      `Are you sure you want to restore Version ${version.versionLabel || version.versionNumber}?\n\nPlease provide a reason:`
     );
 
     if (reason) {
@@ -708,23 +594,18 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl h-[90vh] p-0 overflow-hidden">
         {/* SharePoint-style header */}
-        <div className="bg-gradient-to-r from-stone-700 to-stone-700 dark:from-stone-800 dark:to-stone-900 p-6 text-white">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-800 dark:to-blue-900 p-6 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <SiMicrosoftsharepoint className="h-8 w-8" />
               <div>
                 <h2 className="text-2xl font-semibold">Version History</h2>
-                <p className="text-stone-200">
+                <p className="text-blue-100">
                   {component?.name || component?.udi || 'Document Component'}
                 </p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="text-white hover:bg-white/20"
-            >
+            <Button variant="ghost" size="icon" onClick={onClose} className="text-white hover:bg-white/20">
               <X className="h-5 w-5" />
             </Button>
           </div>
@@ -776,7 +657,7 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
                   size="sm"
                   variant="outline"
                   onClick={() => setCompareMode(!compareMode)}
-                  className={compareMode ? 'bg-stone-50' : ''}
+                  className={compareMode ? 'bg-blue-50 dark:bg-blue-950' : ''}
                 >
                   <GitCompare className="h-3 w-3 mr-1" />
                   {compareMode ? 'Exit Compare' : 'Compare'}
@@ -796,27 +677,27 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
                   </PopoverTrigger>
                   <PopoverContent className="w-48 p-2" align="end">
                     <div className="space-y-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
                         className="w-full justify-start"
                         onClick={() => exportHistory('pdf')}
                       >
                         <FileText className="h-3 w-3 mr-2" />
                         Export as PDF
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
                         className="w-full justify-start"
                         onClick={() => exportHistory('html')}
                       >
                         <FileText className="h-3 w-3 mr-2" />
                         Export as HTML
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
                         className="w-full justify-start"
                         onClick={() => exportHistory('csv')}
                       >
@@ -839,13 +720,13 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
                 <Input
                   placeholder="Search version comments..."
                   value={filters.searchTerm}
-                  onChange={e => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
+                  onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
                   className="pl-10"
                 />
               </div>
               <Select
                 value={filters.changeType}
-                onValueChange={value => setFilters(prev => ({ ...prev, changeType: value }))}
+                onValueChange={(value) => setFilters(prev => ({ ...prev, changeType: value }))}
               >
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="Change type" />
@@ -858,18 +739,12 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
                   <SelectItem value="formatting">Formatting</SelectItem>
                 </SelectContent>
               </Select>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() =>
-                  setFilters({
-                    dateRange: null,
-                    user: '',
-                    changeType: 'all',
-                    searchTerm: '',
-                  })
-                }
-              >
+              <Button size="sm" variant="ghost" onClick={() => setFilters({
+                dateRange: null,
+                user: '',
+                changeType: 'all',
+                searchTerm: ''
+              })}>
                 Clear Filters
               </Button>
             </div>
@@ -878,17 +753,17 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
           {/* Timeline */}
           {filteredVersions.length > 1 && (
             <div className="p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-              <VersionTimeline
+              <VersionTimeline 
                 versions={filteredVersions}
                 currentVersion={filteredVersions[0]}
-                onVersionSelect={v => setExpandedVersion(v.id === expandedVersion ? null : v.id)}
+                onVersionSelect={(v) => setExpandedVersion(v.id === expandedVersion ? null : v.id)}
               />
             </div>
           )}
 
           {/* Version list or comparison view */}
           {showComparison ? (
-            <VersionComparisonView
+            <VersionComparisonView 
               leftVersion={leftVersion}
               rightVersion={rightVersion}
               onClose={() => setShowComparison(false)}
@@ -918,13 +793,12 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
                     const isLocked = version.metadata?.locked;
 
                     return (
-                      <Card
-                        key={version.id}
+                      <Card 
+                        key={version.id} 
                         className={cn(
-                          'transition-all duration-200',
-                          compareMode && 'cursor-pointer',
-                          selectedVersions.includes(version.id) &&
-                            'ring-2 ring-stone-400 dark:ring-stone-400'
+                          "transition-all duration-200",
+                          compareMode && "cursor-pointer",
+                          selectedVersions.includes(version.id) && "ring-2 ring-blue-500 dark:ring-blue-400"
                         )}
                         onClick={() => {
                           if (compareMode) {
@@ -940,14 +814,11 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               {compareMode && (
-                                <Checkbox
+                                <Checkbox 
                                   checked={selectedVersions.includes(version.id)}
                                   onCheckedChange={() => {}}
-                                  onClick={e => e.stopPropagation()}
-                                  disabled={
-                                    !selectedVersions.includes(version.id) &&
-                                    selectedVersions.length >= 2
-                                  }
+                                  onClick={(e) => e.stopPropagation()}
+                                  disabled={!selectedVersions.includes(version.id) && selectedVersions.length >= 2}
                                 />
                               )}
                               <Avatar className="h-10 w-10">
@@ -960,28 +831,18 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
                                   <span className="font-semibold text-base">
                                     {version.versionLabel || `Version ${version.versionNumber}`}
                                   </span>
-                                  <Badge
-                                    className={statusConfig.className}
-                                    variant={statusConfig.variant}
-                                  >
+                                  <Badge className={statusConfig.className} variant={statusConfig.variant}>
                                     <statusConfig.icon className="h-3 w-3 mr-1" />
-                                    {index === 0
-                                      ? 'Current'
-                                      : version.metadata?.status || 'Published'}
+                                    {index === 0 ? 'Current' : version.metadata?.status || 'Published'}
                                   </Badge>
                                   {isLocked && (
-                                    <Badge
-                                      variant="outline"
-                                      className="border-red-300 text-red-600"
-                                    >
+                                    <Badge variant="outline" className="border-red-300 text-red-600">
                                       <Lock className="h-3 w-3 mr-1" />
                                       Locked
                                     </Badge>
                                   )}
                                   <Badge variant="outline" className="flex items-center gap-1">
-                                    <changeConfig.icon
-                                      className={cn('h-3 w-3', changeConfig.color)}
-                                    />
+                                    <changeConfig.icon className={cn("h-3 w-3", changeConfig.color)} />
                                     <span className="text-xs">{changeConfig.label}</span>
                                   </Badge>
                                 </div>
@@ -992,9 +853,7 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
                                   </span>
                                   <span className="flex items-center gap-1">
                                     <Clock className="h-3 w-3" />
-                                    {formatDistanceToNow(parseISO(version.createdAt), {
-                                      addSuffix: true,
-                                    })}
+                                    {formatDistanceToNow(parseISO(version.createdAt), { addSuffix: true })}
                                   </span>
                                   <span className="flex items-center gap-1">
                                     <CalendarIcon className="h-3 w-3" />
@@ -1009,17 +868,14 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
                                 </div>
                               </div>
                             </div>
-
+                            
                             <div className="flex items-center gap-2">
                               {/* Compliance indicators */}
                               {version.complianceStatus === 'compliant' && (
                                 <TooltipProvider>
                                   <Tooltip>
                                     <TooltipTrigger>
-                                      <Badge
-                                        variant="outline"
-                                        className="border-green-300 text-green-600"
-                                      >
+                                      <Badge variant="outline" className="border-green-300 text-green-600">
                                         <ShieldCheck className="h-3 w-3 mr-1" />
                                         21 CFR Part 11
                                       </Badge>
@@ -1030,22 +886,16 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
                                   </Tooltip>
                                 </TooltipProvider>
                               )}
-
+                              
                               {/* Action buttons */}
                               {!compareMode && (
                                 <div className="flex items-center gap-1">
-                                  <Button
-                                    size="sm"
+                                  <Button 
+                                    size="sm" 
                                     variant="ghost"
-                                    onClick={() =>
-                                      setExpandedVersion(isExpanded ? null : version.id)
-                                    }
+                                    onClick={() => setExpandedVersion(isExpanded ? null : version.id)}
                                   >
-                                    {isExpanded ? (
-                                      <ChevronDown className="h-4 w-4" />
-                                    ) : (
-                                      <ChevronRight className="h-4 w-4" />
-                                    )}
+                                    {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                                   </Button>
                                   <Popover>
                                     <PopoverTrigger asChild>
@@ -1055,9 +905,9 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
                                     </PopoverTrigger>
                                     <PopoverContent className="w-48 p-2" align="end">
                                       <div className="space-y-1">
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
+                                        <Button 
+                                          size="sm" 
+                                          variant="ghost" 
                                           className="w-full justify-start"
                                           onClick={() => {
                                             // View version
@@ -1067,9 +917,9 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
                                           View
                                         </Button>
                                         {index > 0 && !isLocked && (
-                                          <Button
-                                            size="sm"
-                                            variant="ghost"
+                                          <Button 
+                                            size="sm" 
+                                            variant="ghost" 
                                             className="w-full justify-start"
                                             onClick={() => handleRestore(version)}
                                           >
@@ -1077,9 +927,9 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
                                             Restore
                                           </Button>
                                         )}
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
+                                        <Button 
+                                          size="sm" 
+                                          variant="ghost" 
                                           className="w-full justify-start"
                                           onClick={() => {
                                             // Download version
@@ -1091,9 +941,9 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
                                         {index > 0 && !isLocked && (
                                           <>
                                             <Separator />
-                                            <Button
-                                              size="sm"
-                                              variant="ghost"
+                                            <Button 
+                                              size="sm" 
+                                              variant="ghost" 
                                               className="w-full justify-start text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950"
                                               onClick={() => {
                                                 // Delete version
@@ -1133,45 +983,28 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
                                 </h4>
                                 <div className="space-y-2 text-sm">
                                   <div className="flex items-center justify-between">
-                                    <span className="text-gray-500 dark:text-gray-400">
-                                      Created By:
-                                    </span>
+                                    <span className="text-gray-500 dark:text-gray-400">Created By:</span>
                                     <span>{version.createdByName}</span>
                                   </div>
                                   <div className="flex items-center justify-between">
-                                    <span className="text-gray-500 dark:text-gray-400">
-                                      Created At:
-                                    </span>
-                                    <span>
-                                      {format(parseISO(version.createdAt), 'MMM d, yyyy HH:mm:ss')}
-                                    </span>
+                                    <span className="text-gray-500 dark:text-gray-400">Created At:</span>
+                                    <span>{format(parseISO(version.createdAt), 'MMM d, yyyy HH:mm:ss')}</span>
                                   </div>
                                   {version.approvedById && (
                                     <>
                                       <div className="flex items-center justify-between">
-                                        <span className="text-gray-500 dark:text-gray-400">
-                                          Approved By:
-                                        </span>
+                                        <span className="text-gray-500 dark:text-gray-400">Approved By:</span>
                                         <span>{version.metadata?.approvedByName}</span>
                                       </div>
                                       <div className="flex items-center justify-between">
-                                        <span className="text-gray-500 dark:text-gray-400">
-                                          Approved At:
-                                        </span>
-                                        <span>
-                                          {format(
-                                            parseISO(version.approvedAt),
-                                            'MMM d, yyyy HH:mm:ss'
-                                          )}
-                                        </span>
+                                        <span className="text-gray-500 dark:text-gray-400">Approved At:</span>
+                                        <span>{format(parseISO(version.approvedAt), 'MMM d, yyyy HH:mm:ss')}</span>
                                       </div>
                                     </>
                                   )}
                                   {version.metadata?.signature && (
                                     <div className="flex items-center justify-between">
-                                      <span className="text-gray-500 dark:text-gray-400">
-                                        E-Signature:
-                                      </span>
+                                      <span className="text-gray-500 dark:text-gray-400">E-Signature:</span>
                                       <Badge variant="outline" className="text-xs">
                                         <ShieldCheck className="h-3 w-3 mr-1" />
                                         Verified
@@ -1229,13 +1062,8 @@ export default function VersionHistory({ componentId, documentId, isOpen, onClos
                                 </h4>
                                 <div className="space-y-2">
                                   {version.metadata.changeRequests.map((cr, idx) => (
-                                    <div
-                                      key={idx}
-                                      className="flex items-center justify-between text-sm p-2 bg-gray-50 dark:bg-gray-800 rounded"
-                                    >
-                                      <span className="font-mono text-stone-600 dark:text-stone-400">
-                                        #{cr.id}
-                                      </span>
+                                    <div key={idx} className="flex items-center justify-between text-sm p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                                      <span className="font-mono text-blue-600 dark:text-blue-400">#{cr.id}</span>
                                       <span>{cr.title}</span>
                                       <Badge variant="outline" className="text-xs">
                                         {cr.status}

@@ -228,7 +228,7 @@ export function MissionCard({ mission, completed, completionTime, onStart }: Mis
         ) : (
           <button
             onClick={onStart}
-            className="text-sm text-stone-600 hover:underline"
+            className="text-sm text-blue-600 hover:underline"
           >
             Start &rarr;
           </button>
@@ -390,7 +390,7 @@ export function MissionRunner({ mission, onComplete, onCancel }: MissionRunnerPr
               </p>
               <button
                 onClick={handleFinish}
-                className="text-sm text-stone-600 hover:underline"
+                className="text-sm text-blue-600 hover:underline"
               >
                 Continue &rarr;
               </button>
@@ -564,7 +564,7 @@ export function MissionBrowser({
               <p className="text-sm text-stone-500">No missions match your filters</p>
               <button
                 onClick={clearFilters}
-                className="text-xs text-stone-600 hover:underline mt-1"
+                className="text-xs text-blue-600 hover:underline mt-1"
               >
                 Clear all filters
               </button>

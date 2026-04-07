@@ -58,22 +58,22 @@ export default function ChangesBoard({ productId }: { productId: string }) {
 
   const getRiskBadge = (score: number) => {
     if (score >= 70) return <Badge variant="destructive">High Risk</Badge>;
-    if (score >= 40) return <Badge className="bg-stone-900">Medium Risk</Badge>;
-    return <Badge className="bg-stone-700">Low Risk</Badge>;
+    if (score >= 40) return <Badge className="bg-orange-500">Medium Risk</Badge>;
+    return <Badge className="bg-green-600">Low Risk</Badge>;
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'DRAFT':
-        return <Clock className="w-4 h-4 text-stone-500" />;
+        return <Clock className="w-4 h-4 text-gray-500" />;
       case 'CLASSIFIED':
-        return <Brain className="w-4 h-4 text-stone-900" />;
+        return <Brain className="w-4 h-4 text-blue-500" />;
       case 'IMPACTED':
-        return <Target className="w-4 h-4 text-stone-900" />;
+        return <Target className="w-4 h-4 text-purple-500" />;
       case 'SUBMITTED':
-        return <CheckCircle className="w-4 h-4 text-stone-900" />;
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
       default:
-        return <AlertTriangle className="w-4 h-4 text-stone-900" />;
+        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
     }
   };
 
@@ -82,7 +82,7 @@ export default function ChangesBoard({ productId }: { productId: string }) {
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-xl font-semibold">Q12 Change Control</h3>
-          <p className="text-stone-600">
+          <p className="text-gray-600">
             AI-powered regulatory change classification and impact analysis
           </p>
         </div>
@@ -148,7 +148,7 @@ export default function ChangesBoard({ productId }: { productId: string }) {
                   {getStatusIcon(change.status)}
                   <div>
                     <CardTitle className="text-lg">{change.title}</CardTitle>
-                    <p className="text-sm text-stone-600">
+                    <p className="text-sm text-gray-600">
                       {change.change_json?.scope} • Created{' '}
                       {new Date(change.created_at).toLocaleDateString()}
                     </p>
@@ -174,7 +174,7 @@ export default function ChangesBoard({ productId }: { productId: string }) {
                       ))}
                     </div>
                     {change.eta_weeks && (
-                      <p className="text-sm text-stone-600 mt-2">
+                      <p className="text-sm text-gray-600 mt-2">
                         Estimated timeline: {change.eta_weeks} weeks
                       </p>
                     )}
@@ -201,7 +201,7 @@ export default function ChangesBoard({ productId }: { productId: string }) {
                     <h4 className="font-medium mb-2">Checklist Items</h4>
                     <div className="space-y-1">
                       {change.checklist_json.map((item: any, idx: number) => (
-                        <div key={idx} className="text-sm text-stone-600">
+                        <div key={idx} className="text-sm text-gray-600">
                           • {item.title} ({item.owner})
                         </div>
                       ))}
@@ -254,8 +254,8 @@ export default function ChangesBoard({ productId }: { productId: string }) {
       {changes.length === 0 && (
         <Card>
           <CardContent className="text-center py-8">
-            <FileText className="w-12 h-12 mx-auto text-stone-400 mb-4" />
-            <p className="text-stone-600">
+            <FileText className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+            <p className="text-gray-600">
               No changes created yet. Create your first change request above.
             </p>
           </CardContent>

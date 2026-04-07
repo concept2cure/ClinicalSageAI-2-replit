@@ -150,20 +150,20 @@ export function IndEvidenceAskPanel({
 
   return (
     <div
-      className="rounded-lg border border-stone-200 bg-stone-100/40 p-3 space-y-3"
+      className="rounded-lg border border-blue-200 bg-blue-50/40 p-3 space-y-3"
       data-testid="ind-evidence-ask-panel"
     >
       <div className="flex items-center gap-2">
         <Database className="w-4 h-4 text-stone-700" />
-        <h3 className="text-sm font-semibold text-stone-900">Evidence & Ask</h3>
-        <Badge variant="outline" className="ml-auto text-[10px] border-stone-200 text-stone-700">
+        <h3 className="text-sm font-semibold text-blue-900">Evidence & Ask</h3>
+        <Badge variant="outline" className="ml-auto text-[10px] border-blue-200 text-stone-700">
           Grounded answers
         </Badge>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <div className="space-y-2">
-          <label className="text-xs font-medium text-stone-900">Add evidence note</label>
+          <label className="text-xs font-medium text-blue-900">Add evidence note</label>
           <Input
             value={evidenceTitle}
             onChange={e => setEvidenceTitle(e.target.value)}
@@ -179,7 +179,7 @@ export function IndEvidenceAskPanel({
           <Button
             size="sm"
             variant="outline"
-            className="border-stone-300 text-stone-700"
+            className="border-blue-300 text-stone-700"
             onClick={addEvidence}
             disabled={addingEvidence || !evidenceTitle.trim() || !evidenceExcerpt.trim()}
           >
@@ -203,14 +203,14 @@ export function IndEvidenceAskPanel({
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-medium text-stone-900">Ask over project evidence</label>
+          <label className="text-xs font-medium text-blue-900">Ask over project evidence</label>
           <div className="flex flex-wrap gap-1">
             {suggestedQuestions.map(sq => (
               <button
                 key={sq}
                 type="button"
                 onClick={() => setQuestion(sq)}
-                className="rounded border border-stone-200 bg-white px-2 py-1 text-[10px] text-stone-700 hover:bg-stone-100"
+                className="rounded border border-blue-200 bg-white px-2 py-1 text-[10px] text-stone-700 hover:bg-blue-100"
               >
                 {sq}
               </button>
@@ -231,7 +231,7 @@ export function IndEvidenceAskPanel({
             Ask evidence
           </Button>
           {answer && (
-            <div className="rounded border border-stone-100 bg-white p-2">
+            <div className="rounded border border-blue-100 bg-white p-2">
               <p className="text-xs text-zinc-800 whitespace-pre-wrap">{answer}</p>
             </div>
           )}
@@ -240,11 +240,11 @@ export function IndEvidenceAskPanel({
 
       {sources.length > 0 && (
         <div className="space-y-1">
-          <div className="text-[11px] font-semibold text-stone-900">Sources</div>
+          <div className="text-[11px] font-semibold text-blue-900">Sources</div>
           {sources.slice(0, 3).map((source, idx) => (
             <div
               key={`${source.docTitle || 'source'}-${idx}`}
-              className="rounded border border-stone-100 bg-white p-2"
+              className="rounded border border-blue-100 bg-white p-2"
             >
               <div className="flex items-center gap-1 text-xs font-medium text-zinc-800">
                 <FileText className="w-3 h-3" />
@@ -259,7 +259,7 @@ export function IndEvidenceAskPanel({
       )}
       {projectDocs.length > 0 && (
         <div className="space-y-1">
-          <div className="text-[11px] font-semibold text-stone-900">Project documents</div>
+          <div className="text-[11px] font-semibold text-blue-900">Project documents</div>
           <div className="flex flex-wrap gap-1">
             {projectDocs.slice(0, 6).map((doc, idx) => (
               <Badge

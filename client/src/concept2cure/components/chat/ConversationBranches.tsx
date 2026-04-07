@@ -127,8 +127,8 @@ export const ForkIndicator: React.FC<ForkIndicatorProps> = ({
             className={cn(
               'absolute -right-3 top-1/2 -translate-y-1/2',
               'flex items-center gap-1 px-1.5 py-0.5 rounded-full',
-              'bg-stone-100 border border-stone-200 text-stone-700',
-              'text-xs font-medium hover:bg-stone-100 transition-colors duration-150'
+              'bg-amber-50 border border-amber-200 text-amber-700',
+              'text-xs font-medium hover:bg-amber-100 transition-colors duration-150'
             )}
           >
             <GitBranch className="h-3 w-3" />
@@ -180,7 +180,7 @@ const BranchNode: React.FC<BranchNodeProps> = ({
         className={cn(
           'group relative flex items-start gap-2 p-2 rounded-lg transition-colors cursor-pointer',
           isActive
-            ? 'bg-stone-100 ring-1 ring-stone-300'
+            ? 'bg-blue-50 ring-1 ring-stone-300'
             : 'hover:bg-stone-50'
         )}
         style={{ marginLeft: `${depth * 16}px` }}
@@ -189,7 +189,7 @@ const BranchNode: React.FC<BranchNodeProps> = ({
         {/* Branch icon */}
         <div className={cn(
           'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0',
-          isActive ? 'bg-stone-100 text-stone-700' : 'bg-stone-100 text-stone-500'
+          isActive ? 'bg-blue-100 text-stone-700' : 'bg-stone-100 text-stone-500'
         )}>
           {depth === 0 ? (
             <GitCommit className="h-3.5 w-3.5" />
@@ -203,7 +203,7 @@ const BranchNode: React.FC<BranchNodeProps> = ({
           <div className="flex items-center gap-2">
             <span className={cn(
               'text-sm font-medium truncate',
-              isActive ? 'text-stone-900' : 'text-stone-900'
+              isActive ? 'text-blue-900' : 'text-stone-900'
             )}>
               {branch.title}
             </span>
@@ -256,7 +256,7 @@ const BranchNode: React.FC<BranchNodeProps> = ({
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                className="text-stone-700"
+                className="text-red-600"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete branch
@@ -348,7 +348,7 @@ export const ConversationBranches: React.FC<ConversationBranchesProps> = ({
           className={cn(
             'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors duration-150',
             'text-sm text-stone-600 hover:bg-stone-100 hover:text-stone-900',
-            totalBranches > 1 && 'text-stone-700 bg-stone-100 hover:bg-stone-100',
+            totalBranches > 1 && 'text-amber-700 bg-amber-50 hover:bg-amber-100',
             className
           )}
         >
@@ -364,7 +364,7 @@ export const ConversationBranches: React.FC<ConversationBranchesProps> = ({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <GitBranch className="h-5 w-5 text-stone-600" />
+            <GitBranch className="h-5 w-5 text-amber-600" />
             Conversation Branches
           </DialogTitle>
           <DialogDescription>
@@ -376,13 +376,13 @@ export const ConversationBranches: React.FC<ConversationBranchesProps> = ({
         <div className="mt-4">
           {/* Active branch indicator */}
           {activeBranch && (
-            <div className="flex items-center gap-2 p-3 bg-stone-100 rounded-lg mb-4">
-              <Sparkles className="h-4 w-4 text-stone-600" />
+            <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg mb-4">
+              <Sparkles className="h-4 w-4 text-blue-600" />
               <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium text-stone-900">
+                <span className="text-sm font-medium text-blue-900">
                   Currently on: {activeBranch.title}
                 </span>
-                <p className="text-xs text-stone-600 mt-0.5">
+                <p className="text-xs text-blue-600 mt-0.5">
                   {activeBranch.messageCount} messages · {formatRelativeTime(activeBranch.updatedAt)}
                 </p>
               </div>
@@ -443,7 +443,7 @@ export const ForkActionButton: React.FC<ForkActionButtonProps> = ({
             onClick={() => onFork(messageId)}
             className={cn(
               'p-1.5 rounded-md transition-colors duration-150',
-              'text-stone-400 hover:text-stone-600 hover:bg-stone-100'
+              'text-stone-400 hover:text-amber-600 hover:bg-amber-50'
             )}
           >
             <GitBranch className="h-4 w-4" />

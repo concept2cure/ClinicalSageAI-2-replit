@@ -84,7 +84,7 @@ export default function RegulatoryPanel({ batchId }: { batchId: string }) {
             <div className="space-y-2">
               <div className="font-medium">Requirements ({compliance.checks?.length || 0}):</div>
               {(compliance.checks || []).map((check: any, i: number) => (
-                <div key={i} className="flex justify-between items-center p-2 bg-stone-50 rounded">
+                <div key={i} className="flex justify-between items-center p-2 bg-slate-50 rounded">
                   <span>{check.requirement}</span>
                   <Badge variant={check.status === 'PASS' ? 'default' : 'destructive'}>
                     {check.status}
@@ -94,10 +94,10 @@ export default function RegulatoryPanel({ batchId }: { batchId: string }) {
             </div>
 
             {compliance.warnings?.length > 0 && (
-              <div className="p-2 bg-stone-100 border border-stone-200 rounded">
-                <div className="font-medium text-stone-800 mb-1">Warnings:</div>
+              <div className="p-2 bg-orange-50 border border-orange-200 rounded">
+                <div className="font-medium text-orange-800 mb-1">Warnings:</div>
                 {compliance.warnings.map((w: string, i: number) => (
-                  <div key={i} className="text-xs text-stone-700">
+                  <div key={i} className="text-xs text-orange-700">
                     • {w}
                   </div>
                 ))}
@@ -110,7 +110,7 @@ export default function RegulatoryPanel({ batchId }: { batchId: string }) {
           Generate Compliance Report
         </Button>
 
-        <div className="text-xs text-stone-600">
+        <div className="text-xs text-slate-600">
           Real-time compliance monitoring across global regulatory requirements.
         </div>
       </CardContent>

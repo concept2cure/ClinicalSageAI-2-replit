@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { getAuthToken, getOrgId, clearAuthToken } from '@/utils/authToken';
+import { getAuthToken, getOrgId } from '@/utils/authToken';
 
 export type ApiRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -30,11 +30,8 @@ export const apiRequest = async (
   const organizationId = getCachedOrgId();
   const authToken = getCachedAuthToken();
 
-  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
-
   const headers: HeadersInit = {
-    // Let the browser set Content-Type (with multipart boundary) for FormData
-    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+    'Content-Type': 'application/json',
     'x-organization-id': organizationId,
     ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
     ...customHeaders,
@@ -47,7 +44,7 @@ export const apiRequest = async (
   };
 
   if (body && method !== 'GET') {
-    options.body = isFormData ? body : JSON.stringify(body);
+    options.body = JSON.stringify(body);
   }
 
   const response = await fetch(url, options);
@@ -76,11 +73,6 @@ export const getQueryFn = (options: GetQueryFnOptions = {}) => {
     if (response.status === 401) {
       if (options.on401 === 'returnNull') {
         return null;
-      }
-      // Clear auth state and redirect to login (unless already there)
-      clearAuthToken();
-      if (!window.location.pathname.startsWith('/login')) {
-        window.location.href = '/login';
       }
       throw new Error('Unauthorized');
     }

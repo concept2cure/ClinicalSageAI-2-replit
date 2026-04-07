@@ -21,9 +21,9 @@ import { ChevronRight, Check, Clock, AlertTriangle, Lock, Sparkles } from 'lucid
 const STATUS_STYLE: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
   not_started: { label: 'Not started', color: 'text-stone-400', icon: Clock },
   draft: { label: 'Draft', color: 'text-stone-500', icon: Clock },
-  review: { label: 'In Review', color: 'text-stone-600', icon: AlertTriangle },
-  approved: { label: 'Approved', color: 'text-stone-700', icon: Check },
-  locked: { label: 'Ready', color: 'text-stone-600', icon: Lock },
+  review: { label: 'In Review', color: 'text-amber-600', icon: AlertTriangle },
+  approved: { label: 'Approved', color: 'text-emerald-600', icon: Check },
+  locked: { label: 'Ready', color: 'text-blue-600', icon: Lock },
 };
 
 const MODULE_NAMES: Record<number, string> = {

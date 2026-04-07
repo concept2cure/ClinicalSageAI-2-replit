@@ -227,13 +227,13 @@ export const ReportCenter: React.FC<ReportCenterProps> = ({ projectId }) => {
       </div>
 
       {errorMessage && (
-        <div className="flex items-center gap-2 rounded-lg border border-stone-200 bg-stone-100 px-3 py-2 text-xs text-stone-800">
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
           <AlertTriangle className="h-4 w-4" />
           <span>{errorMessage}</span>
         </div>
       )}
       {captureMessage && (
-        <div className="flex items-center gap-2 rounded-lg border border-stone-200 bg-stone-100 px-3 py-2 text-xs text-stone-800">
+        <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
           <CheckCircle2 className="h-4 w-4" />
           <span>{captureMessage}</span>
         </div>
