@@ -199,7 +199,7 @@ export const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
   cmc: 'section-workspace',
   'clinical-module5': 'section-workspace',
   verify: 'review-readiness',
-  vault: 'vault-workspace',
+  vault: 'vault',
   review: 'review',
   publish: 'submissions',
   haq: 'report-engine',

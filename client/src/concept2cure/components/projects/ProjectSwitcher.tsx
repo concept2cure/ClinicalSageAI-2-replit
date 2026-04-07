@@ -30,6 +30,7 @@ import {
   Trash2,
   Clock,
   Globe,
+  X,
 } from 'lucide-react';
 import { RegulatoryApplicationPicker } from './RegulatoryApplicationPicker';
 import { RegulatoryApplicationSummaryCard } from './RegulatoryApplicationSummaryCard';
@@ -778,13 +779,23 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
             <h2 id="project-switcher-title" className="text-sm font-semibold text-stone-900">
               Switch Project
             </h2>
-            <Button
-              size="sm"
-              onClick={onCreateProject}
-            >
-              <Plus className="w-3 h-3" />
-              New
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                onClick={onCreateProject}
+              >
+                <Plus className="w-3 h-3" />
+                New
+              </Button>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                className="ml-1 inline-flex items-center justify-center w-7 h-7 rounded-md text-stone-500 hover:text-stone-800 hover:bg-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-300"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Search */}
