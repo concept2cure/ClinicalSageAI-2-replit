@@ -4410,14 +4410,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             <div className="max-w-2xl w-full text-center">
               {/* Greeting */}
               <div className="mb-8">
-                <div className="w-10 h-10 rounded-full bg-[#D97757] flex items-center justify-center mx-auto mb-3">
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
-                <p className="text-[10px] font-semibold tracking-wider text-[#B0AEA5] uppercase mb-3">
-                  AnA 1.0 Regulatory Intelligence
+                <h2 className="text-2xl font-medium text-[#141413]">{defaultGreeting}</h2>
+                <p className="text-sm text-[#B0AEA5] mt-2">
+                  Ask me anything — draft a section, check readiness, or find regulatory precedents.
                 </p>
-                <h2 className="text-xl font-semibold text-[#141413]">{defaultGreeting}</h2>
-                {screenLabel && <p className="text-sm text-[#B0AEA5] mt-1">{screenLabel}</p>}
                 {/* Project context badge */}
                 {contextProfile?.activeProject && !messages?.length && (
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F5F4EF] rounded-full text-[11px] border border-[#E8E6DC] mb-2">
@@ -4467,7 +4463,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
               {/* Suggested actions — up to 6 chips (authoring + intelligence + parent) */}
               {effectiveSuggestedActions && effectiveSuggestedActions.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
+                <div className="flex flex-wrap justify-center gap-2.5 max-w-2xl mx-auto">
                   {effectiveSuggestedActions.slice(0, 6).map(action => (
                     <button
                       key={action.id}
