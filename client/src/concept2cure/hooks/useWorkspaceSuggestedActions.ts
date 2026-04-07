@@ -154,17 +154,62 @@ const STARTERS: Record<string, SuggestedAction[]> = {
   ],
 };
 
+const HOME_STARTERS: SuggestedAction[] = [
+  {
+    id: 'home-start-ind',
+    label: 'Start an IND program',
+    intent: 'start-ind-program',
+    description: 'Plan a 21 CFR 312.23 IND from scratch — outline, CMC, nonclinical, clinical.',
+  },
+  {
+    id: 'home-start-510k',
+    label: 'Start a 510(k) submission',
+    intent: 'start-510k-submission',
+    description: 'Predicate search, device description, performance testing, eSTAR readiness.',
+  },
+  {
+    id: 'home-start-cer',
+    label: 'Start an EU MDR CER',
+    intent: 'start-cer-project',
+    description: 'Build a Clinical Evaluation Report per MEDDEV 2.7/1 Rev 4.',
+  },
+  {
+    id: 'home-start-nda',
+    label: 'Start an NDA',
+    intent: 'start-nda-program',
+    description: 'Outline an NDA per 21 CFR 314 with ISS/ISE planning.',
+  },
+  {
+    id: 'home-find-precedents',
+    label: 'Find regulatory precedents',
+    intent: 'search-regulatory-precedents',
+    description: 'Search FDA, EMA, PMDA, and Health Canada precedent decisions.',
+  },
+  {
+    id: 'home-readiness-check',
+    label: 'Run a readiness check',
+    intent: 'run-readiness-check',
+    description: 'Audit submission readiness across modules and identify gaps.',
+  },
+];
+
 export function useWorkspaceSuggestedActions(
   projectType: string | undefined,
   workspaceSummary: WorkspaceSummaryShape | undefined
 ): SuggestedAction[] {
   return useMemo(() => {
+    // Global home (no active project): show offering-aligned pathway chips,
+    // not project-scoped IND fallback actions.
+    if (!projectType) {
+      return HOME_STARTERS.slice(0, 6);
+    }
+
     const base = workspaceSummary?.nextActions ?? [];
     if (base.length > 0) {
       return withCoreActions(base);
     }
 
-    const t = (projectType || 'IND').toUpperCase();
+    const t = projectType.toUpperCase();
     const fallback = STARTERS[t] ?? STARTERS['IND'];
     return withCoreActions(fallback);
   }, [projectType, workspaceSummary?.nextActions]);
