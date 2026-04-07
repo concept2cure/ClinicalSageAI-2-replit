@@ -3332,8 +3332,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           )}
         </div>
 
-        {/* ── Project Cards Grid — Simplified entry ── */}
-        {layoutMode === 'projects' &&
+        {/* ── Project Cards Grid — DEMOTED 2026-04-07 ──
+            Removed dashboard-style projects directory from the Intelligence/projects
+            surface to honor chat-first design. Project list lives in the left sidebar;
+            the AnA panel below now owns this surface in full mode. ── */}
+        {false && layoutMode === 'projects' &&
           !embeddedModule &&
           (() => {
             const sortedProjects = projects
