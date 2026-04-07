@@ -2006,6 +2006,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             'apps',
             'artifacts-center',
             'setup',
+            'vault',
           ]);
           switch (id) {
             // ── Global destinations + project tabs (mapped via SIDEBAR_NAV_TO_LAYOUT) ──
@@ -3824,20 +3825,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           )}
       </GlobalOperatingShell>
 
-      {/* Global right-drawer Vault presence across the app shell */}
-      {!embeddedModule && !activeToolPanel && (
-        <button
-          onClick={() => setActiveToolPanel('vault')}
-          className="fixed right-0 top-1/2 -translate-y-1/2 z-40 h-36 w-10 border border-stone-200 border-r-0 rounded-l-xl bg-white/95 hover:bg-stone-50 shadow-sm flex flex-col items-center justify-center gap-1"
-          title="Open Vault drawer"
-          aria-label="Open Vault drawer"
-        >
-          <FileText className="w-4 h-4 text-stone-600" />
-          <span className="text-[10px] tracking-wide text-stone-600 [writing-mode:vertical-rl] rotate-180">
-            Vault
-          </span>
-        </button>
-      )}
+      {/* Global right-drawer Vault tab — REMOVED 2026-04-07
+          Vault is reachable from the left sidebar Vault nav item. */}
 
       {!embeddedModule && activeToolPanel && (
         <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-96 lg:w-[620px] shadow-sm">

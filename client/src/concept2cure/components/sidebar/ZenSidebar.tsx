@@ -916,9 +916,9 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <Sparkles className="w-4 h-4" />
         </IconBtn>
         <IconBtn
-          label="Documents"
-          active={activeNavId === 'submission-builder'}
-          onClick={nav['submission-builder']}
+          label="Vault"
+          active={activeNavId === 'vault'}
+          onClick={nav.vault}
         >
           <FileStack className="w-4 h-4" />
         </IconBtn>
@@ -1027,9 +1027,9 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           />
           <NavItem
             icon={<FileStack className="w-3.5 h-3.5" />}
-            label="Documents"
-            active={activeNavId === 'submission-builder'}
-            onClick={nav['submission-builder']}
+            label="Vault"
+            active={activeNavId === 'vault'}
+            onClick={nav.vault}
           />
           <NavItem
             icon={<Settings className="w-3.5 h-3.5" />}
