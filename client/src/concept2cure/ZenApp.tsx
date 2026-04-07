@@ -651,6 +651,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<string | undefined>(undefined);
   const [projectSwitcherOpen, setProjectSwitcherOpen] = useState(false);
+  const [pendingLayoutAfterSelect, setPendingLayoutAfterSelect] = useState<LayoutMode | null>(null);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [editProjectOpen, setEditProjectOpen] = useState(false);
   const [projectsSearchQuery, setProjectsSearchQuery] = useState('');
@@ -1067,12 +1068,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         setLayoutMode(targetLayout);
         return true;
       }
-      setLayoutMode('projects');
+      // Stay on the current screen — open the project picker overlay and
+      // remember the destination so we can route once a project is chosen.
+      setPendingLayoutAfterSelect(targetLayout);
       setProjectSwitcherOpen(true);
       toast({
-        title: 'No project selected',
-        description: options?.reason ?? 'Open or create a project first.',
-        variant: 'destructive',
+        title: 'Pick a project',
+        description: options?.reason ?? 'Choose a project to continue.',
       });
       return false;
     },
@@ -3941,14 +3943,22 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       {/* Project switcher - Connected to data layer */}
       <ProjectSwitcher
         isOpen={projectSwitcherOpen}
-        onClose={() => setProjectSwitcherOpen(false)}
+        onClose={() => {
+          setProjectSwitcherOpen(false);
+          setPendingLayoutAfterSelect(null);
+        }}
         projects={projects}
         activeProjectId={activeProjectId}
         onSelectProject={id => {
           setActiveProjectId(id);
           setProjectSwitcherOpen(false);
-          setLayoutMode('project-home');
-          navigate(`/concept2cure/project/${id}`);
+          if (pendingLayoutAfterSelect) {
+            setLayoutMode(pendingLayoutAfterSelect);
+            setPendingLayoutAfterSelect(null);
+          } else {
+            setLayoutMode('project-home');
+            navigate(`/concept2cure/project/${id}`);
+          }
         }}
         onCreateProject={() => {
           setProjectSwitcherOpen(false);
