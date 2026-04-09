@@ -4131,31 +4131,52 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             <aside className="w-[260px] shrink-0 border-r border-[#E5E5E5] bg-[#F2F2F3] px-4 py-5 flex flex-col">
               <div className="mb-6">
                 <h3 className="text-sm font-semibold text-[#141413]">AnA 1.0</h3>
-                <button className="mt-3 w-full rounded-lg border border-[#D8D5CA] bg-white px-3 py-2 text-left text-sm font-medium text-[#2D2C28] hover:bg-[#FAF9F5]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMessages([]);
+                    threadIdRef.current = null;
+                    onThreadChange?.(undefined);
+                  }}
+                  className="mt-3 w-full rounded-lg border border-[#D8D5CA] bg-white px-3 py-2 text-left text-sm font-medium text-[#2D2C28] hover:bg-[#FAF9F5]"
+                >
                   New Chat
                 </button>
               </div>
 
               <nav className="space-y-1 text-sm text-[#2D2C28]">
-                <button className="w-full rounded-md px-2.5 py-2 text-left hover:bg-white/80">
-                  Projects
-                </button>
-                <button className="w-full rounded-md px-2.5 py-2 text-left hover:bg-white/80">
-                  AnA Vault
-                </button>
-                <button className="w-full rounded-md px-2.5 py-2 text-left hover:bg-white/80">
-                  Collaboration Center
-                </button>
-                <button className="w-full rounded-md px-2.5 py-2 text-left hover:bg-white/80">
-                  Apps
-                </button>
-                <button className="w-full rounded-md px-2.5 py-2 text-left hover:bg-white/80">
-                  Past conversations
-                </button>
+                {[
+                  { label: 'Projects', path: 'projects' },
+                  { label: 'AnA Vault (Documents & Folders)', path: 'vault' },
+                  {
+                    label:
+                      'Collaboration Center (tasks, messaging, submission center)',
+                    path: 'collaboration',
+                  },
+                  {
+                    label:
+                      'Apps (Document Editor, Biostatistics, CMC, Study Planning, Predictions)',
+                    path: 'apps',
+                  },
+                  { label: 'Past conversations', path: 'past-conversations' },
+                ].map(item => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => onNavigate?.(item.path)}
+                    className="w-full rounded-md px-2.5 py-2 text-left hover:bg-white/80"
+                  >
+                    {item.label}
+                  </button>
+                ))}
               </nav>
 
               <div className="mt-auto pt-6">
-                <button className="w-full rounded-md px-2.5 py-2 text-left text-sm text-[#6B6962] hover:bg-white/80 inline-flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => onNavigate?.('settings')}
+                  className="w-full rounded-md px-2.5 py-2 text-left text-sm text-[#6B6962] hover:bg-white/80 inline-flex items-center gap-2"
+                >
                   <User className="w-4 h-4" />
                   User Account
                 </button>
@@ -4169,6 +4190,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   Share
                 </button>
                 <button
+                  type="button"
+                  onClick={() => onNavigate?.('branches')}
                   className="inline-flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-[#2D2C28] hover:bg-white"
                   title="Conversation branches"
                 >
