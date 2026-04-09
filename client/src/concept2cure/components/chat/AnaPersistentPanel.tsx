@@ -38,6 +38,7 @@ interface ConversationQueueItem {
 import {
   Sparkles,
   ArrowUp,
+  ArrowDown,
   Copy,
   Check,
   RotateCcw,
@@ -140,6 +141,12 @@ interface VerdictSignal {
   bgColor: string;
 }
 
+interface FollowUpChip {
+  id: string;
+  label: string;
+  prompt: string;
+}
+
 /**
  * Detects AnA 1.0 RI seniority signals in response text and returns
  * badges to render beneath the message. Matches the verdict vocabulary,
@@ -240,6 +247,60 @@ function detectVerdictSignals(content: string): VerdictSignal[] {
   return signals;
 }
 
+function buildAssistantPreview(content: string): { bottomLine: string; details: string } {
+  const normalized = content.trim();
+  if (!normalized) return { bottomLine: '', details: '' };
+
+  const paragraphs = normalized.split(/\n\s*\n/).filter(Boolean);
+  const firstParagraph = paragraphs[0] || normalized;
+  const firstSentence = firstParagraph
+    .split(/(?<=[.!?])\s+/)
+    .find(sentence => sentence.trim().length > 0);
+
+  const bottomLine = (firstSentence || firstParagraph).trim();
+  const details = normalized.startsWith(bottomLine)
+    ? normalized.slice(bottomLine.length).trim()
+    : normalized;
+
+  return { bottomLine, details };
+}
+
+function buildFollowUpChips(args: {
+  intentLens: IntentLens;
+  hasProject: boolean;
+  assistantContent: string;
+}): FollowUpChip[] {
+  const { intentLens, hasProject, assistantContent } = args;
+  const chips: FollowUpChip[] = [];
+  const lc = assistantContent.toLowerCase();
+
+  const pushChip = (id: string, label: string, prompt: string) => {
+    if (chips.some(c => c.id === id)) return;
+    chips.push({ id, label, prompt });
+  };
+
+  pushChip('next-step', 'Give me next steps', 'Give me the top 3 next steps from your answer.');
+  pushChip('risk-gaps', 'Identify risk gaps', 'Identify the biggest risk gaps from this answer.');
+
+  if (hasProject) {
+    pushChip('draft-artifact', 'Turn into draft', 'Turn this into a draft artifact I can review.');
+  }
+
+  if (intentLens === 'compare' || /\bcompare|versus|vs\.\b/.test(lc)) {
+    pushChip('compare-options', 'Compare options', 'Compare the best two options with pros/cons.');
+  }
+
+  if (intentLens === 'audit' || /\bcompliance|audit|readiness\b/.test(lc)) {
+    pushChip('readiness-check', 'Run readiness check', 'Run a readiness check based on this guidance.');
+  }
+
+  if (intentLens === 'strategy' || /\bstrategy|pathway|plan\b/.test(lc)) {
+    pushChip('timeline', 'Build a timeline', 'Build a practical execution timeline from this strategy.');
+  }
+
+  return chips.slice(0, 3);
+}
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface AnaMessage {
@@ -316,6 +377,12 @@ type IntentLens = 'auto' | 'audit' | 'improve' | 'risk' | 'strategy' | 'compare'
 // ─── AI Provider / Model Selection ───────────────────────────────────────────
 
 type AIProviderChoice = 'auto' | 'anthropic' | 'openai' | 'moonshot';
+
+const THINKING_STATUS_PHASES = [
+  'Reading project context',
+  'Checking prior thread memory',
+  'Drafting recommendation',
+] as const;
 
 interface AIProviderOption {
   id: AIProviderChoice;
@@ -627,11 +694,6 @@ const SLASH_CATEGORY_COLORS: Record<string, string> = {
 
 // ─── Authoring context import ────────────────────────────────────────────────
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
-import {
-  hasSectionContext,
-  hasArtifactContext,
-  hasVersionContext,
-} from '../../../../../shared/types/authoring-context';
 import { serializeContextForChat } from '../../services/authoring-context-resolver';
 
 interface AnaPersistentPanelProps {
@@ -681,7 +743,7 @@ interface AnaPersistentPanelProps {
   /** Notify parent when active thread context changes */
   onThreadChange?: (threadId?: string) => void;
   /**
-   * "full" = fills all available space, shows greeting + suggested actions (Claude.ai style)
+   * "full" = fills all available space with full conversation + composer
    * "compact" = just the input bar at bottom, conversation expands as overlay
    */
   mode?: 'full' | 'compact';
@@ -726,8 +788,6 @@ const SCREEN_LABELS: Record<string, string> = {
 const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   contextProfile,
   authoringContext,
-  suggestedActions,
-  greeting,
   initialMessage,
   onActionRun,
   onNavigate,
@@ -781,7 +841,18 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [firecrawlDisabledReason, setFirecrawlDisabledReason] = useState<
     'admin_disabled' | 'quota_exhausted' | null
   >(null);
+  const [statusPhaseIndex, setStatusPhaseIndex] = useState(0);
+  const [expandedAssistantMessages, setExpandedAssistantMessages] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
+  const previousMessageSnapshotRef = useRef<{ count: number; lastId: string | null }>({
+    count: 0,
+    lastId: null,
+  });
   const toolsDropdownRef = useRef<HTMLDivElement>(null);
+  const conversationViewportRef = useRef<HTMLDivElement>(null);
+  const shouldAutoScrollRef = useRef(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   // Slash command autocomplete
@@ -932,387 +1003,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
   }, [input]);
 
-  // ── Authoring-aware suggested actions (Wave 1) ─────────────────────────────
-  const authoringSuggestedActions = useMemo<SuggestedAction[]>(() => {
-    if (!authoringContext) return [];
-    const actions: SuggestedAction[] = [];
-    const stage = authoringContext.workflowStage;
-
-    // Action 1: Resume last section — always available when in project context
-    actions.push({
-      id: 'resume-last-section',
-      label: 'Resume last section',
-      intent: 'resume_last_section',
-      description: 'Open the most recently edited section',
-    });
-
-    // Action 2: Draft this section — available when section context exists
-    if (hasSectionContext(authoringContext)) {
-      actions.push({
-        id: 'draft-section',
-        label: `Draft ${authoringContext.sectionCode}: ${
-          authoringContext.sectionTitle || 'this section'
-        }`,
-        intent: 'draft_section_from_context',
-        description: 'Generate a compliant first draft for this section',
-      });
-    }
-
-    // Action 3: Explain blockers — available when in section-workspace or review
-    if (stage === 'section-workspace' || stage === 'review') {
-      actions.push({
-        id: 'explain-blockers',
-        label: 'What blocks promotion?',
-        intent: 'explain_promotion_blockers',
-        description: 'Show readiness issues and contradictions blocking this section',
-      });
-    }
-
-    // Action 4: Compare against approved — available when artifact exists
-    if (hasArtifactContext(authoringContext)) {
-      actions.push({
-        id: 'compare-approved',
-        label: 'Compare to last approved',
-        intent: 'compare_against_approved',
-        description: 'Show changes since the last approved version',
-      });
-    }
-
-    // Action 5: Promote to review — available when drafting and not blocked
-    // Action: Section preflight — always available in section workspace
-    if (hasSectionContext(authoringContext)) {
-      actions.push({
-        id: 'section-preflight',
-        label: 'Run section preflight',
-        intent: 'section_preflight',
-        description: 'Check body, consistency, contradictions, and readiness before promotion',
-      });
-    }
-
-    // Action: Module preflight — available when module context exists
-    if (authoringContext.moduleCode) {
-      actions.push({
-        id: 'module-preflight',
-        label: `Run ${authoringContext.moduleCode.toUpperCase()} preflight`,
-        intent: 'module_preflight',
-        description: 'Check all sections in this module before promotion',
-      });
-    }
-
-    // Action: Dossier preflight — available at project level
-    if (
-      authoringContext.workflowStage === 'dossier' ||
-      authoringContext.workflowStage === 'submissions' ||
-      authoringContext.workflowStage === 'review'
-    ) {
-      actions.push({
-        id: 'dossier-preflight',
-        label: 'Run dossier preflight',
-        intent: 'dossier_preflight',
-        description: 'Check all modules and sections for submission readiness',
-      });
-    }
-
-    if (
-      hasArtifactContext(authoringContext) &&
-      authoringContext.artifactStatus === 'drafting' &&
-      !authoringContext.readiness?.blocked
-    ) {
-      actions.push({
-        id: 'promote-to-review',
-        label: 'Promote to review',
-        intent: 'promote_to_review',
-        description: 'Run preflight then promote if all checks pass',
-      });
-    }
-
-    // Promotion lifecycle: approve (review → approved)
-    if (hasArtifactContext(authoringContext) && authoringContext.artifactStatus === 'review') {
-      actions.push({
-        id: 'approve-artifact',
-        label: 'Approve artifact',
-        intent: 'approve_artifact',
-        description: 'Approve after reviewer sign-off (all gates checked)',
-      });
-    }
-
-    // Promotion lifecycle: lock (approved → locked)
-    if (hasArtifactContext(authoringContext) && authoringContext.artifactStatus === 'approved') {
-      actions.push({
-        id: 'lock-artifact',
-        label: 'Lock for submission',
-        intent: 'lock_artifact',
-        description: 'Lock content — no further edits allowed',
-      });
-    }
-
-    // Promotion lifecycle: mark submission-ready (locked → submission_ready)
-    if (hasArtifactContext(authoringContext) && authoringContext.artifactStatus === 'locked') {
-      actions.push({
-        id: 'mark-submission-ready',
-        label: 'Mark submission-ready',
-        intent: 'mark_submission_ready',
-        description: 'Confirm readiness for regulatory submission (requires RA lead)',
-      });
-    }
-
-    // Wave 2 actions — available in deeper authoring contexts
-
-    // Action 6: Correction draft — available when section has issues
-    if (
-      hasSectionContext(authoringContext) &&
-      (authoringContext.contradictions?.length || authoringContext.readiness?.blocked)
-    ) {
-      actions.push({
-        id: 'correction-draft',
-        label: 'Prepare correction draft',
-        intent: 'correction_draft',
-        description: 'Fix issues based on contradictions or readiness blockers',
-      });
-    }
-
-    // Action 7: Harmonize — available when section context exists
-    if (hasSectionContext(authoringContext)) {
-      actions.push({
-        id: 'harmonize-sections',
-        label: 'Harmonize with related sections',
-        intent: 'harmonize_sections',
-        description: 'Check consistency across linked CTD sections',
-      });
-    }
-
-    // Action 8: Resolution changelog
-    if (
-      authoringContext.workflowStage === 'section-workspace' ||
-      authoringContext.workflowStage === 'review'
-    ) {
-      actions.push({
-        id: 'resolution-changelog',
-        label: 'What changed after resolution?',
-        intent: 'resolution_changelog',
-        description: 'Explain recent resolution changes and their impact',
-      });
-    }
-
-    // Action 9: Module readiness
-    if (authoringContext.moduleCode || hasSectionContext(authoringContext)) {
-      actions.push({
-        id: 'module-readiness',
-        label: `Module readiness`,
-        intent: 'module_readiness',
-        description: 'Check submission readiness for this module',
-      });
-    }
-
-    // Action 10: Gather evidence
-    if (hasSectionContext(authoringContext)) {
-      actions.push({
-        id: 'section-evidence',
-        label: 'Gather evidence for this section',
-        intent: 'section_evidence',
-        description: 'Find linked evidence, studies, and regulatory support',
-      });
-    }
-
-    // ── Wave 3: Body-aware + cross-section consistency actions ──
-
-    // Action 11: Body-aware expectations
-    if (
-      hasSectionContext(authoringContext) &&
-      (authoringContext.regulatorBody || authoringContext.submissionType)
-    ) {
-      actions.push({
-        id: 'body-expectations',
-        label: `What does ${authoringContext.regulatorBody || 'this body'} expect here?`,
-        intent: 'body_expectations',
-        description: 'Show body-specific section requirements and common gaps',
-      });
-    }
-
-    // Action 12: Cross-section consistency
-    if (hasSectionContext(authoringContext) && authoringContext.linkedSectionCodes?.length) {
-      actions.push({
-        id: 'cross-section-consistency',
-        label: 'Check cross-section consistency',
-        intent: 'cross_section_consistency',
-        description: 'Detect inconsistencies with linked CTD sections',
-      });
-    }
-
-    // Action 13: Body-aware gap detection
-    if (
-      hasSectionContext(authoringContext) &&
-      (authoringContext.regulatorBody || authoringContext.submissionType)
-    ) {
-      actions.push({
-        id: 'body-aware-gaps',
-        label: 'What is missing for this body?',
-        intent: 'body_aware_gaps',
-        description: 'Detect body-specific content gaps in this section',
-      });
-    }
-
-    // ── Wave 3: Contradiction → Resolution actions ──
-
-    // Action 14: Explain contradiction resolution (always available when contradictions exist)
-    if (authoringContext.contradictions && authoringContext.contradictions.length > 0) {
-      actions.push({
-        id: 'explain-contradiction-resolution',
-        label: `Explain ${authoringContext.contradictions.length} contradiction(s)`,
-        intent: 'explain_contradiction_resolution',
-        description: 'Structured explanation of contradictions and resolution paths',
-      });
-    }
-
-    // Action 15: Plan contradiction resolution
-    if (authoringContext.contradictions && authoringContext.contradictions.length > 0) {
-      const blockingCount = authoringContext.contradictions.filter(
-        (c: any) => c.severity === 'critical' || c.severity === 'high'
-      ).length;
-      if (blockingCount > 0) {
-        actions.push({
-          id: 'plan-contradiction-resolution',
-          label: `Plan resolution for ${blockingCount} blocker(s)`,
-          intent: 'plan_contradiction_resolution',
-          description: 'Create resolution plan with authority check and affected objects',
-        });
-      }
-    }
-
-    // Action 16: Project resolution status
-    actions.push({
-      id: 'project-resolution-status',
-      label: 'Resolution status',
-      intent: 'project_resolution_status',
-      description: 'View resolution plans, bundles, and progress',
-    });
-
-    return actions;
-  }, [authoringContext]);
-
-  // Intelligence-driven suggested actions from recommendations + nextActions + riskFactors + openQuestions
-  const intelligenceSuggestedActions = useMemo<SuggestedAction[]>(() => {
-    if (!projectIntelligence) return [];
-    const actions: SuggestedAction[] = [];
-
-    // Surface critical/high recommendations as priority action chips
-    if (projectIntelligence.recommendations?.length) {
-      const urgent = projectIntelligence.recommendations.filter(
-        r => r.severity === 'critical' || r.severity === 'high'
-      );
-      for (const rec of urgent.slice(0, 2)) {
-        actions.push({
-          id: `intel-rec-${rec.id}`,
-          label: rec.title.length > 55 ? rec.title.slice(0, 52) + '...' : rec.title,
-          intent: 'recommendation',
-          description: `${rec.severity} ${rec.category} recommendation`,
-        });
-      }
-    }
-
-    // Surface next best actions as suggested action chips
-    if (projectIntelligence.nextActions?.length) {
-      for (const na of projectIntelligence.nextActions) {
-        actions.push({
-          id: `intel-nba-${na.id}`,
-          label: na.title,
-          intent: 'next-action',
-          description: na.reason,
-        });
-      }
-    }
-
-    // Surface high-priority risk factors as prompts
-    if (projectIntelligence.riskFactors?.length) {
-      const highRisks = projectIntelligence.riskFactors.filter(
-        rf => rf.likelihood === 'high' || rf.impact === 'high'
-      );
-      for (const rf of highRisks.slice(0, 2)) {
-        actions.push({
-          id: `intel-risk-${rf.description.slice(0, 20).replace(/\s+/g, '-')}`,
-          label: `Assess risk: ${
-            rf.description.length > 50 ? rf.description.slice(0, 47) + '...' : rf.description
-          }`,
-          intent: 'risk-assessment',
-          description: `${rf.likelihood} likelihood, ${rf.impact} impact`,
-        });
-      }
-    }
-
-    // Surface top open question as a prompt
-    if (projectIntelligence.openQuestions?.length) {
-      const topQ = projectIntelligence.openQuestions[0];
-      actions.push({
-        id: `intel-oq-${topQ.question.slice(0, 20).replace(/\s+/g, '-')}`,
-        label: topQ.question.length > 60 ? topQ.question.slice(0, 57) + '...' : topQ.question,
-        intent: 'open-question',
-        description: topQ.context || `Priority: ${topQ.priority}`,
-      });
-    }
-
-    return actions;
-  }, [projectIntelligence]);
-
-  // Default project-scoped suggested actions (shown when no other actions available)
-  const defaultProjectActions: SuggestedAction[] = useMemo(() => {
-    if (!contextProfile?.activeProject) return [];
-    return [
-      {
-        id: 'default-ctd-map',
-        label: 'Map my CTD structure',
-        intent: 'ctd_map',
-        description: 'Build your dossier map based on submission type',
-      },
-      {
-        id: 'default-find-predicates',
-        label: 'Find predicates',
-        intent: 'find_predicates',
-        description: 'Search for predicate devices and comparisons',
-      },
-      {
-        id: 'default-check-readiness',
-        label: 'Check readiness',
-        intent: 'check_readiness',
-        description: 'Assess your submission readiness score',
-      },
-      {
-        id: 'default-draft-section',
-        label: 'Draft a section',
-        intent: 'draft_section',
-        description: 'Start drafting a submission section',
-      },
-    ];
-  }, [contextProfile?.activeProject]);
-
-  // Merge parent-provided actions with authoring-aware + intelligence actions
-  const effectiveSuggestedActions = useMemo(() => {
-    const parent = suggestedActions || [];
-    if (authoringSuggestedActions.length > 0) {
-      // Show up to 5 authoring actions, rotate based on context richness
-      const limit = authoringSuggestedActions.length > 5 ? 5 : authoringSuggestedActions.length;
-      const base = [...authoringSuggestedActions.slice(0, limit), ...parent.slice(0, 1)];
-      // Append intelligence actions if there's room (up to 6 total)
-      const remaining = 6 - base.length;
-      if (remaining > 0 && intelligenceSuggestedActions.length > 0) {
-        return [...base, ...intelligenceSuggestedActions.slice(0, remaining)];
-      }
-      return base;
-    }
-    // No authoring context — lead with intelligence actions, then parent
-    if (intelligenceSuggestedActions.length > 0) {
-      return [...intelligenceSuggestedActions.slice(0, 4), ...parent.slice(0, 2)];
-    }
-    // Fall back to parent actions if available
-    if (parent.length > 0) return parent;
-    // Fall back to default project actions when project is active but no other actions
-    return defaultProjectActions;
-  }, [
-    suggestedActions,
-    authoringSuggestedActions,
-    intelligenceSuggestedActions,
-    defaultProjectActions,
-  ]);
-
   // Close mode dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -1367,7 +1057,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   // AnA personality — rotating thinking messages
   const [thinkingMsg, setThinkingMsg] = useState('');
   useEffect(() => {
-    if (!isThinking) return;
+    if (!isThinking) {
+      setStatusPhaseIndex(0);
+      return;
+    }
     const STANDARD_THINKING = [
       'Analyzing regulatory requirements...',
       'Cross-referencing guidance documents...',
@@ -1402,13 +1095,15 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     const ANA_THINKING_MESSAGES =
       chatMode === 'deep-research' ? DEEP_RESEARCH_THINKING : STANDARD_THINKING;
     setThinkingMsg(ANA_THINKING_MESSAGES[Math.floor(Math.random() * ANA_THINKING_MESSAGES.length)]);
+    setStatusPhaseIndex(0);
     const interval = setInterval(() => {
       setThinkingMsg(
         ANA_THINKING_MESSAGES[Math.floor(Math.random() * ANA_THINKING_MESSAGES.length)]
       );
+      setStatusPhaseIndex(prev => (prev + 1) % THINKING_STATUS_PHASES.length);
     }, 3000);
     return () => clearInterval(interval);
-  }, [isThinking]);
+  }, [isThinking, chatMode]);
 
   // Deterministic resume: when parent selects a specific thread, hydrate that thread here.
   useEffect(() => {
@@ -1453,62 +1148,55 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     };
   }, [contextProfile?.threadId, onThreadChange]);
 
-  const defaultGreeting = useMemo(() => {
-    if (greeting) return greeting;
-    const hour = new Date().getHours();
-    const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-    if (contextProfile?.activeProject) {
-      const stats = projectIntelligence;
-      if (
-        stats &&
-        (stats.documentCount > 0 || stats.memoryAtomCount > 0 || stats.signalCount > 0)
-      ) {
-        const parts = [`${timeGreeting}. You're working on **${contextProfile.activeProject}**.`];
-        const statParts: string[] = [];
-        if (stats.documentCount > 0)
-          statParts.push(
-            `${stats.documentCount} indexed document${stats.documentCount !== 1 ? 's' : ''}`
-          );
-        if (stats.signalCount > 0)
-          statParts.push(
-            `${stats.signalCount} intelligence signal${stats.signalCount !== 1 ? 's' : ''}`
-          );
-        if (statParts.length > 0)
-          parts.push(`I have your regulatory strategy, ${statParts.join(', and ')}.`);
-        if (stats.readinessScore != null)
-          parts.push(`Current readiness: ${stats.readinessScore}%.`);
-        // Surface recommendation + risk factor counts when available
-        const criticalRecs =
-          stats.recommendations?.filter(r => r.severity === 'critical' || r.severity === 'high') ??
-          [];
-        const highRisks =
-          stats.riskFactors?.filter(rf => rf.likelihood === 'high' || rf.impact === 'high') ?? [];
-        if (criticalRecs.length > 0 || highRisks.length > 0) {
-          const alertParts: string[] = [];
-          if (criticalRecs.length > 0)
-            alertParts.push(
-              `${criticalRecs.length} priority recommendation${
-                criticalRecs.length !== 1 ? 's' : ''
-              }`
-            );
-          if (highRisks.length > 0)
-            alertParts.push(
-              `${highRisks.length} high-impact risk${highRisks.length !== 1 ? 's' : ''}`
-            );
-          parts.push(`I've identified ${alertParts.join(' and ')} to review.`);
-        }
-        parts.push('What would you like to work on?');
-        return parts.join(' ');
-      }
-      return `${timeGreeting}. Ready to work on **${contextProfile.activeProject}**. I have your project context loaded. What would you like to tackle?`;
-    }
-    return `${timeGreeting}. I'm AnA — your regulatory intelligence partner. What are you working on?`;
-  }, [greeting, contextProfile?.activeProject, projectIntelligence]);
+  const handleConversationScroll = useCallback(() => {
+    const el = conversationViewportRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const isNearBottom = distanceFromBottom < 140;
+    shouldAutoScrollRef.current = isNearBottom;
+    setShowJumpToLatest(!isNearBottom);
+  }, []);
 
-  // Auto-scroll when new messages
+  // Auto-scroll when new messages/chunks arrive, but only if user is near the bottom.
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!shouldAutoScrollRef.current) return;
+    const lastId = messages[messages.length - 1]?.id ?? null;
+    const previous = previousMessageSnapshotRef.current;
+    const hasNewMessage = messages.length > previous.count || lastId !== previous.lastId;
+    const behavior: ScrollBehavior = hasNewMessage ? 'smooth' : 'auto';
+
+    messagesEndRef.current?.scrollIntoView({
+      behavior,
+      block: 'end',
+    });
+    setShowJumpToLatest(false);
+    previousMessageSnapshotRef.current = { count: messages.length, lastId };
   }, [messages, isThinking]);
+
+  const scrollToLatest = useCallback(() => {
+    shouldAutoScrollRef.current = true;
+    setShowJumpToLatest(false);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    inputRef.current?.focus();
+  }, []);
+
+  const focusComposerFromCanvas = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.closest('button, a, input, textarea, [role="button"], [contenteditable="true"]'))
+      return;
+    inputRef.current?.focus();
+  }, []);
+
+  const summarizeRecentTurns = useCallback(() => {
+    const recent = messages.slice(-10);
+    if (recent.length === 0) return;
+    const transcript = recent
+      .map((m, idx) => `${idx + 1}. ${m.role.toUpperCase()}: ${m.content}`)
+      .join('\n');
+    const prompt = `Summarize the last 10 turns into:\n- Bottom line\n- Decisions made\n- Open risks\n- Next 3 actions\n\nConversation:\n${transcript}`;
+    setInput(prompt);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, [messages]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -4057,7 +3745,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         {/* Expanded conversation overlay (slides up from bottom) */}
         {hasMessages && (
           <div
+            ref={conversationViewportRef}
             className="max-h-[50vh] overflow-y-auto zen-scroll border-t border-[#F5F4EF]"
+            onClick={focusComposerFromCanvas}
+            onScroll={handleConversationScroll}
             style={{ scrollbarWidth: 'thin' }}
           >
             {messages.map(msg => {
@@ -4066,40 +3757,40 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               return (
                 <div
                   key={msg.id}
-                  className={cn('group px-4 py-3', isUser ? 'bg-[#FAF9F5]/60' : 'bg-white')}
+                  className={cn('group px-4 py-3', 'bg-white')}
                 >
-                  <div className="flex gap-2.5 max-w-3xl mx-auto">
+                  <div
+                    className={cn(
+                      'flex gap-2.5 max-w-3xl mx-auto',
+                      isUser && 'justify-end pl-8 sm:pl-14'
+                    )}
+                  >
                     <div
                       className={cn(
                         'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5',
-                        isUser ? 'bg-[#4D4B45] text-white' : 'bg-[#D97757]'
+                        isUser ? 'hidden' : 'bg-[#141413]'
                       )}
                     >
-                      {isUser ? (
-                        <span className="text-[9px] font-bold">
-                          {(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}
-                        </span>
-                      ) : (
+                      {!isUser && (
                         <Sparkles className="w-3 h-3 text-white" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="text-xs font-semibold text-[#2D2C28]">
-                        {isUser ? 'You' : 'AnA'}
-                      </span>
                       {isUser ? (
-                        <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">
-                          {msg.content}
-                        </p>
+                        <div className="flex justify-end">
+                          <p className="inline-block max-w-[min(94%,640px)] text-[15px] text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5 bg-[#F1F1F1] px-4 py-3 rounded-[22px]">
+                            {msg.content}
+                          </p>
+                        </div>
                       ) : (
                         <div
-                          className="prose prose-sm prose-stone max-w-none mt-0.5
-                            prose-p:text-[#4D4B45] prose-p:leading-relaxed prose-p:my-2
-                            prose-strong:text-[#141413]
+                          className="prose prose-sm prose-zinc max-w-none mt-0.5
+                            prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-2
+                            prose-strong:text-zinc-900
                             prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
                             prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3.5 prose-pre:text-xs
-                            prose-blockquote:border-l-stone-300 prose-blockquote:text-[#6B6962] prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
-                            prose-ul:text-[#4D4B45] prose-ol:text-[#4D4B45] prose-ul:my-2 prose-ol:my-2 prose-li:my-1
+                            prose-blockquote:border-l-stone-300 prose-blockquote:text-zinc-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
+                            prose-ul:text-zinc-700 prose-ol:text-zinc-700 prose-ul:my-2 prose-ol:my-2 prose-li:my-1
                             prose-a:text-[#D97757] prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
                             [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                           dangerouslySetInnerHTML={{ __html: htmlContent }}
@@ -4110,6 +3801,27 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 </div>
               );
             })}
+            {showJumpToLatest && (
+              <div className="flex justify-center py-2">
+                <button
+                  type="button"
+                  onClick={scrollToLatest}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-[#4D4B45] bg-[#F5F4EF] border border-[#E8E6DC] hover:bg-[#ECEADF] transition-colors"
+                >
+                  <ArrowDown className="w-3.5 h-3.5" />
+                  Jump to latest
+                </button>
+              </div>
+            )}
+            <div className="flex justify-center pb-2">
+              <button
+                type="button"
+                onClick={summarizeRecentTurns}
+                className="inline-flex items-center rounded-full border border-[#E8E6DC] bg-white px-3 py-1 text-[11px] font-medium text-[#6B6962] hover:bg-[#F5F4EF]"
+              >
+                Summarize last 10 turns
+              </button>
+            </div>
             {isThinking && (
               <div className="px-4 py-3 bg-white">
                 <div className="flex gap-2.5 max-w-3xl mx-auto">
@@ -4123,6 +3835,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
                       <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
                     </div>
+                    <p className="mt-1 text-[11px] text-[#8A8880]">
+                      {THINKING_STATUS_PHASES[statusPhaseIndex]}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -4261,7 +3976,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-white">
       {/* ── E3: Persistent project context banner ── */}
-      {contextProfile?.activeProject && (
+      {contextProfile?.activeProject && hasMessages && (
         <div
           className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800 px-4 py-2 shrink-0 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-900/70 transition-colors"
           onClick={() => onNavigate?.('project-config')}
@@ -4308,7 +4023,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           </span>
         </div>
       )}
-      {contextProfile?.activeProject && (
+      {contextProfile?.activeProject && hasMessages && (
         <div className="shrink-0 border-b border-zinc-200 bg-white px-4 py-2">
           <button
             type="button"
@@ -4398,90 +4113,20 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       )}
       {/* ── Conversation area — fills available space ── */}
       <div
+        ref={conversationViewportRef}
         className="flex-1 overflow-y-auto zen-scroll"
+        onClick={focusComposerFromCanvas}
+        onScroll={handleConversationScroll}
         role="log"
         aria-live="polite"
         aria-label="Conversation with AnA"
         style={{ scrollbarWidth: 'thin' }}
       >
         {!hasMessages && !isThinking ? (
-          /* ── Empty state: greeting + suggested actions ── */
+          /* ── Empty state: clean ChatGPT-style canvas ── */
           <div className="flex flex-col items-center justify-center h-full px-6">
             <div className="max-w-2xl w-full text-center">
-              {/* Greeting */}
-              <div className="mb-8">
-                <h2 className="text-2xl font-medium text-[#141413]">{defaultGreeting}</h2>
-                <p className="text-sm text-[#B0AEA5] mt-2">
-                  Ask me anything — draft a section, check readiness, or find regulatory precedents.
-                </p>
-                {/* Project context badge */}
-                {contextProfile?.activeProject && !messages?.length && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F5F4EF] rounded-full text-[11px] border border-[#E8E6DC] mb-2">
-                    <FolderOpen className="w-3 h-3 text-[#6D6B63]" />
-                    <span className="font-medium text-[#4D4B45]">
-                      {contextProfile.activeProject}
-                    </span>
-                    {contextProfile.productType && (
-                      <>
-                        <span className="text-[#B0AEA5]">·</span>
-                        <span
-                          className="font-medium text-[#6D6B63] uppercase tracking-wider"
-                          style={{ fontSize: '9px' }}
-                        >
-                          {contextProfile.productType}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                )}
-                {/* Authoring context indicator strip */}
-                {authoringContext &&
-                  (authoringContext.sectionCode || authoringContext.artifactId) && (
-                    <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#F5F4EF] rounded-full text-[10px] text-[#6D6B63] border border-[#E8E6DC]">
-                      <FileSearch className="w-3 h-3" />
-                      <span className="font-medium">{authoringContext.workflowStage}</span>
-                      {authoringContext.sectionCode && (
-                        <>
-                          <span className="text-[#B0AEA5]">·</span>
-                          <span>§{authoringContext.sectionCode}</span>
-                        </>
-                      )}
-                      {authoringContext.sectionTitle && (
-                        <span className="text-[#B0AEA5] truncate max-w-[120px]">
-                          {authoringContext.sectionTitle}
-                        </span>
-                      )}
-                      {authoringContext.artifactStatus && (
-                        <>
-                          <span className="text-[#B0AEA5]">·</span>
-                          <span className="capitalize">{authoringContext.artifactStatus}</span>
-                        </>
-                      )}
-                    </div>
-                  )}
-              </div>
-
-              {/* Suggested actions — up to 6 chips (authoring + intelligence + parent) */}
-              {effectiveSuggestedActions && effectiveSuggestedActions.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-2.5 max-w-2xl mx-auto">
-                  {effectiveSuggestedActions.slice(0, 6).map(action => (
-                    <button
-                      key={action.id}
-                      onClick={() => handleSuggestedAction(action)}
-                      className="text-left px-4 py-3 rounded-xl border border-[#E8E6DC] hover:border-[#D8D5CA] hover:bg-[#FAF9F5] transition-colors group"
-                    >
-                      <p className="text-sm font-medium text-[#4D4B45] group-hover:text-[#141413]">
-                        {action.label}
-                      </p>
-                      {action.description && (
-                        <p className="text-xs text-[#B0AEA5] mt-0.5 line-clamp-1">
-                          {action.description}
-                        </p>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <h2 className="text-[36px] leading-tight font-medium text-[#141413]">AnA 1.0</h2>
             </div>
           </div>
         ) : (
@@ -4489,39 +4134,51 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           <div className="pb-2">
             {messages.map(msg => {
               const isUser = msg.role === 'user';
-              const htmlContent = !isUser ? renderMarkdown(msg.content) : '';
+              const assistantPreview = !isUser ? buildAssistantPreview(msg.content) : null;
+              const isExpanded =
+                !isUser &&
+                (expandedAssistantMessages[msg.id] ||
+                  (assistantPreview?.details?.length || 0) < 180);
+              const followUpChips =
+                !isUser && msg.id === messages[messages.length - 1]?.id
+                  ? buildFollowUpChips({
+                      intentLens,
+                      hasProject: Boolean(contextProfile?.activeProject),
+                      assistantContent: msg.content,
+                    })
+                  : [];
 
               return (
                 <div
                   key={msg.id}
-                  className={cn('group px-4 py-3', isUser ? 'bg-[#FAF9F5]/60' : 'bg-white')}
+                  className={cn('group px-4 py-3', 'bg-white')}
                   onMouseEnter={() => !isUser && setShowActions(msg.id)}
                   onMouseLeave={() => setShowActions(null)}
                 >
-                  <div className="flex gap-2.5 max-w-3xl mx-auto">
+                  <div
+                    className={cn(
+                      'flex gap-2.5 max-w-3xl mx-auto',
+                      isUser && 'justify-end pl-10 sm:pl-16'
+                    )}
+                  >
                     <div
                       className={cn(
                         'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5',
-                        isUser ? 'bg-[#4D4B45] text-white' : 'bg-[#D97757]'
+                        isUser ? 'hidden' : 'bg-[#141413]'
                       )}
                     >
-                      {isUser ? (
-                        <span className="text-[9px] font-bold">
-                          {(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}
-                        </span>
-                      ) : (
+                      {!isUser && (
                         <Sparkles className="w-3 h-3 text-white" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="text-xs font-semibold text-[#2D2C28]">
-                        {isUser ? 'You' : 'AnA'}
-                      </span>
                       {isUser ? (
                         <>
-                          <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">
-                            {msg.content}
-                          </p>
+                          <div className="flex justify-end">
+                            <p className="inline-block max-w-[min(92%,680px)] text-[15px] text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5 bg-[#F1F1F1] px-4 py-3 rounded-[22px]">
+                              {msg.content}
+                            </p>
+                          </div>
                           {(msg as any).recalledToInput && (
                             <p className="mt-1 text-[10px] font-medium text-[#D97757]">
                               Editing prompt in composer
@@ -4530,6 +4187,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         </>
                       ) : (
                         <>
+                          {assistantPreview?.bottomLine && (
+                            <div className="mb-2 rounded-xl border border-[#ECEADF] bg-[#F8F7F3] px-3 py-2">
+                              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8A8880]">
+                                Bottom line
+                              </p>
+                              <p className="mt-1 text-sm text-[#2D2C28] leading-relaxed">
+                                {assistantPreview.bottomLine}
+                              </p>
+                            </div>
+                          )}
                           <div
                             className="prose prose-sm prose-zinc max-w-none mt-0.5
                               prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-2
@@ -4540,8 +4207,42 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               prose-ul:text-zinc-700 prose-ol:text-zinc-700 prose-ul:my-2 prose-ol:my-2 prose-li:my-1
                               prose-a:text-[#D97757] prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
                               [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
-                            dangerouslySetInnerHTML={{ __html: htmlContent }}
+                            dangerouslySetInnerHTML={{
+                              __html: renderMarkdown(
+                                isExpanded && assistantPreview?.details
+                                  ? assistantPreview.details
+                                  : msg.content
+                              ),
+                            }}
                           />
+                          {!isExpanded && assistantPreview?.details && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setExpandedAssistantMessages(prev => ({ ...prev, [msg.id]: true }))
+                              }
+                              className="mt-1 text-xs font-medium text-[#6B6962] hover:text-[#2D2C28]"
+                            >
+                              Show details
+                            </button>
+                          )}
+                          {followUpChips.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {followUpChips.map(chip => (
+                                <button
+                                  key={chip.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setInput(chip.prompt);
+                                    requestAnimationFrame(() => inputRef.current?.focus());
+                                  }}
+                                  className="inline-flex items-center rounded-full border border-[#E8E6DC] bg-white px-2.5 py-1 text-[11px] font-medium text-[#4D4B45] hover:bg-[#F5F4EF]"
+                                >
+                                  {chip.label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                           {/* Nano Banana generated images */}
                           {msg.images && msg.images.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-2">
@@ -5060,6 +4761,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         {thinkingMsg || 'Thinking...'}
                       </span>
                     </div>
+                    <p className="mt-1 text-[11px] text-[#8A8880]">
+                      {THINKING_STATUS_PHASES[statusPhaseIndex]}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -5068,6 +4772,28 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           </div>
         )}
       </div>
+
+      {showJumpToLatest && hasMessages && (
+        <div className="flex justify-center py-2 border-t border-[#F5F4EF] bg-white/95 backdrop-blur-sm">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={summarizeRecentTurns}
+              className="inline-flex items-center rounded-full border border-[#E8E6DC] bg-white px-3 py-1.5 text-xs font-medium text-[#6B6962] hover:bg-[#F5F4EF]"
+            >
+              Summarize last 10 turns
+            </button>
+            <button
+              type="button"
+              onClick={scrollToLatest}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-[#4D4B45] bg-[#F5F4EF] border border-[#E8E6DC] hover:bg-[#ECEADF] transition-colors"
+            >
+              <ArrowDown className="w-3.5 h-3.5" />
+              Jump to latest
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Bottom input bar — always visible ── */}
       <div className="flex-shrink-0 px-4 py-3 border-t border-[#F5F4EF] bg-white">
@@ -5133,9 +4859,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
           <div
             className={cn(
-              'flex items-end gap-2 px-3.5 py-2.5 bg-[#FAF9F5] border rounded-2xl transition-colors duration-150',
+              'flex items-end gap-2 px-4 py-3 bg-white border rounded-[28px] transition-colors duration-150 shadow-sm',
               isFocused
-                ? 'border-[#D8D5CA] ring-2 ring-[#F5F4EF] bg-white shadow-sm'
+                ? 'border-[#D8D5CA] ring-2 ring-[#F5F4EF] bg-white'
                 : 'border-[#E8E6DC] hover:border-[#D8D5CA]'
             )}
           >
@@ -5387,7 +5113,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   ? 'Describe an image, infographic, or presentation...'
                   : intentLens !== 'auto'
                   ? `Message AnA (${intentLens} lens)...`
-                  : 'Message AnA — type / for commands...'
+                  : 'Message AnA'
               }
               rows={1}
               className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
@@ -5423,7 +5149,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           )}
 
           {/* ── Intent lens strip — subtle pills below input (Claude.ai clean) ── */}
-          {chatMode === 'standard' && (
+          {chatMode === 'standard' && hasMessages && (
             <div className="flex items-center gap-1.5 mt-1.5 pl-1" ref={lensDropdownRef}>
               {INTENT_LENSES.map(lens => (
                 <button
@@ -5444,24 +5170,26 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               ))}
             </div>
           )}
-          <p className="mt-1.5 pl-1 text-[11px] text-[#B0AEA5]">
-            Type <span className="font-semibold text-[#6B6962]">/</span> for commands. Use{' '}
-            <span className="font-semibold text-[#6B6962]">↑</span> on an empty input to recall your
-            last prompt.
-            {onNavigate ? (
-              <>
-                {' '}
-                <button
-                  type="button"
-                  onClick={() => onNavigate('apps')}
-                  className="font-semibold text-[#6B6962] underline decoration-[#D8D5CA] underline-offset-2 hover:text-[#4D4B45]"
-                >
-                  Browse all capabilities
-                </button>
-                .
-              </>
-            ) : null}
-          </p>
+          {hasMessages && (
+            <p className="mt-1.5 pl-1 text-[11px] text-[#B0AEA5]">
+              Type <span className="font-semibold text-[#6B6962]">/</span> for commands. Use{' '}
+              <span className="font-semibold text-[#6B6962]">↑</span> on an empty input to recall your
+              last prompt.
+              {onNavigate ? (
+                <>
+                  {' '}
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('apps')}
+                    className="font-semibold text-[#6B6962] underline decoration-[#D8D5CA] underline-offset-2 hover:text-[#4D4B45]"
+                  >
+                    Browse all capabilities
+                  </button>
+                  .
+                </>
+              ) : null}
+            </p>
+          )}
         </div>
       </div>
     </div>
