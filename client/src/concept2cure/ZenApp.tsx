@@ -52,7 +52,7 @@ import { useWorkspaceSuggestedActions } from './hooks/useWorkspaceSuggestedActio
 const ZenSettings = React.lazy(() =>
   import('./components/settings/ZenSettings').then(m => ({ default: m.ZenSettings }))
 );
-import { ProjectSwitcher, NewProjectModal } from './components/projects/ProjectSwitcher';
+import { NewProjectModal } from './components/projects/ProjectSwitcher';
 import ProjectConfigPanel from './components/workspace/ProjectConfigPanel';
 // [BATCH 3] WorkflowTimeline — renderer removed, import kept for type compatibility
 // [BATCH 3] ProjectFilesCompact — unused, import removed
@@ -650,7 +650,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<string | undefined>(undefined);
-  const [projectSwitcherOpen, setProjectSwitcherOpen] = useState(false);
   const [pendingLayoutAfterSelect, setPendingLayoutAfterSelect] = useState<LayoutMode | null>(null);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [editProjectOpen, setEditProjectOpen] = useState(false);
@@ -1073,7 +1072,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       setPendingLayoutAfterSelect(targetLayout);
       setLayoutMode('projects');
       navigate('/concept2cure');
-      setProjectSwitcherOpen(false);
       toast({
         title: 'Pick a project',
         description: options?.reason ?? 'Choose a project to continue.',
@@ -1654,7 +1652,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         case 'projects':
           setLayoutMode('projects');
           navigate('/concept2cure');
-          setProjectSwitcherOpen(false);
           setCommandPaletteOpen(false);
           return;
         default:
@@ -1927,7 +1924,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   const openProjectsDirectory = () => {
     setLayoutMode('projects');
     navigate('/concept2cure');
-    setProjectSwitcherOpen(false);
   };
 
   const openProjectWorkspace = (projectId: string) => {
@@ -1938,7 +1934,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     setLayoutMode(targetLayout);
     setPendingLayoutAfterSelect(null);
     navigate(`/concept2cure/project/${projectId}`);
-    setProjectSwitcherOpen(false);
   };
 
   // userProfile sync moved to useUserProfileFromStorage hook
@@ -3959,35 +3954,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           />
         </React.Suspense>
       )}
-
-      {/* Project switcher - Connected to data layer */}
-      <ProjectSwitcher
-        isOpen={false && projectSwitcherOpen}
-        onClose={() => {
-          setProjectSwitcherOpen(false);
-          setPendingLayoutAfterSelect(null);
-        }}
-        projects={projects}
-        activeProjectId={activeProjectId}
-        onSelectProject={id => {
-          setActiveProjectId(id);
-          setProjectSwitcherOpen(false);
-          if (pendingLayoutAfterSelect) {
-            setLayoutMode(pendingLayoutAfterSelect);
-            setPendingLayoutAfterSelect(null);
-          } else {
-            setLayoutMode('project-home');
-            navigate(`/concept2cure/project/${id}`);
-          }
-        }}
-        onCreateProject={() => {
-          setProjectSwitcherOpen(false);
-          setNewProjectOpen(true);
-        }}
-        onArchiveProject={handleArchiveProject}
-        onDeleteProject={handleDeleteProject}
-        onToggleStar={handleToggleProjectStar}
-      />
 
       {/* New project modal */}
       <NewProjectModal
