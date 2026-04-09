@@ -16,6 +16,7 @@ import {
   Beaker,
   Heart,
   Microscope,
+  Layers,
   ArrowRight,
 } from 'lucide-react';
 
@@ -44,6 +45,7 @@ const STRATEGY_APPS: AppCard[] = [
 ];
 
 const BUILDER_APPS: AppCard[] = [
+  { id: 'device-diagnostics-workbench', label: 'Device & Diagnostics Workbench', description: 'Unified 510(k), PMA, CER, project, collaboration, and eSTAR submission journey', icon: <Layers className="w-5 h-5" />, tracks: [...DEVICE_TYPES] },
   { id: '510k-workspace', label: '510(k) Workspace', description: 'Predicate comparison, SE testing, submission package', icon: <FileText className="w-5 h-5" />, tracks: ['510K', 'DE_NOVO'] },
   { id: 'pma-workspace', label: 'PMA Workspace', description: 'Premarket approval application workspace', icon: <Heart className="w-5 h-5" />, tracks: ['PMA'] },
   { id: 'cer-generator', label: 'CER Generator', description: 'Clinical evaluation report for EU MDR/IVDR', icon: <Microscope className="w-5 h-5" />, tracks: ['IVDR', ...DEVICE_TYPES] },

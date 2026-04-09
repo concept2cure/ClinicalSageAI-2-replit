@@ -340,6 +340,7 @@ const AnaBiostatsPanel = lazy(() => import('@/concept2cure/components/biostats/A
 
 // ─── New global destination pages (Phase 1 OS restructure) ──────────────────
 const AppsPage = lazy(() => import('./pages/AppsPage'));
+const DeviceDiagnosticsWorkbenchPage = lazy(() => import('./pages/DeviceDiagnosticsWorkbenchPage'));
 const ArtifactsPage = lazy(() => import('./pages/ArtifactsPage'));
 const VaultPage = lazy(() => import('./pages/VaultPage'));
 const SetupPage = lazy(() => import('./pages/SetupPage'));
@@ -403,6 +404,7 @@ const PROJECT_SCOPED_LAYOUTS: ReadonlySet<LayoutMode> = new Set([
   'review-readiness',
   'report-engine',
   'safety-narrative',
+  'device-diagnostics-workbench',
   'vault-workspace',
   'task-board',
 ]);
@@ -1343,6 +1345,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     'review-readiness',
     'report-engine',
     'safety-narrative',
+    'device-diagnostics-workbench',
     'vault',
     'vault-workspace',
   ]);
@@ -2087,6 +2090,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 setLayoutMode('projects');
               }
               break;
+            case 'device-diagnostics-workbench':
+              requireActiveProject('device-diagnostics-workbench');
+              break;
             // ── Core submission workflow ──
             case 'regulatory-workspace':
             case 'section-workspace':
@@ -2292,6 +2298,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                             navigate(`/concept2cure/project/${activeProjectId}/cer`);
                           else setLayoutMode('projects');
                           break;
+                        case 'device-diagnostics-workbench':
+                          requireActiveProject('device-diagnostics-workbench');
+                          break;
                         default:
                           // All apps in the catalog have explicit routes above.
                           // If somehow an unknown app ID arrives, go to projects.
@@ -2444,6 +2453,37 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 }
               >
                 <SafetyNarrativePage projectId={activeProjectId ? Number(activeProjectId) : null} />
+              </Suspense>
+            </div>
+          )}
+
+          {!embeddedModule && layoutMode === 'device-diagnostics-workbench' && (
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-device-diagnostics-workbench">
+              <Suspense fallback={<ModuleLoadingFallback />}>
+                <DeviceDiagnosticsWorkbenchPage
+                  projectId={activeProjectId || undefined}
+                  projectName={activeProject?.name}
+                  submissionType={activeProject?.type}
+                  artifacts={projectArtifacts.map((a: any) => ({
+                    id: String(a.id),
+                    title: a.title || 'Untitled',
+                    ctdSection: a.ctdSection || a.ctd_section,
+                    status: a.status || 'draft',
+                    version: a.version || 1,
+                  }))}
+                  onOpen510kWorkspace={() => {
+                    if (activeProjectId) navigate(`/concept2cure/project/${activeProjectId}/510k`);
+                  }}
+                  onOpenPmaWorkspace={() => {
+                    if (activeProjectId) navigate(`/concept2cure/project/${activeProjectId}/pma`);
+                  }}
+                  onOpenCerWorkspace={() => {
+                    if (activeProjectId) navigate(`/concept2cure/project/${activeProjectId}/cer`);
+                  }}
+                  onOpenProjectModule={() => requireActiveProject('project-home')}
+                  onOpenCollaboration={() => requireActiveProject('review')}
+                  onOpenSubmissionCenter={() => requireActiveProject('submissions')}
+                />
               </Suspense>
             </div>
           )}
