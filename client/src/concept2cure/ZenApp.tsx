@@ -1071,14 +1071,16 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       // Stay on the current screen — open the project picker overlay and
       // remember the destination so we can route once a project is chosen.
       setPendingLayoutAfterSelect(targetLayout);
-      setProjectSwitcherOpen(true);
+      setLayoutMode('projects');
+      navigate('/concept2cure');
+      setProjectSwitcherOpen(false);
       toast({
         title: 'Pick a project',
         description: options?.reason ?? 'Choose a project to continue.',
       });
       return false;
     },
-    [activeProjectId, toast]
+    [activeProjectId, navigate, toast]
   );
 
   useEffect(() => {
@@ -1650,7 +1652,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           setCommandPaletteOpen(false);
           return;
         case 'projects':
-          setProjectSwitcherOpen(true);
+          setLayoutMode('projects');
+          navigate('/concept2cure');
+          setProjectSwitcherOpen(false);
           setCommandPaletteOpen(false);
           return;
         default:
@@ -1920,6 +1924,23 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     'User';
   const userEmail = userIntelligence?.identity?.email ?? undefined;
 
+  const openProjectsDirectory = () => {
+    setLayoutMode('projects');
+    navigate('/concept2cure');
+    setProjectSwitcherOpen(false);
+  };
+
+  const openProjectWorkspace = (projectId: string) => {
+    setActiveProjectId(projectId);
+    setActiveConversationId(undefined);
+    setActiveThreadId(undefined);
+    const targetLayout = pendingLayoutAfterSelect ?? 'project-home';
+    setLayoutMode(targetLayout);
+    setPendingLayoutAfterSelect(null);
+    navigate(`/concept2cure/project/${projectId}`);
+    setProjectSwitcherOpen(false);
+  };
+
   // userProfile sync moved to useUserProfileFromStorage hook
 
   return (
@@ -1984,13 +2005,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           setLayoutMode('project-home');
         }}
         onSelectProject={id => {
-          setActiveProjectId(id);
-          setActiveConversationId(undefined);
-          setActiveThreadId(undefined);
-          setLayoutMode('project-home');
+          openProjectWorkspace(id);
         }}
         onNewChat={handleNewChat}
-        onOpenProjects={() => setProjectSwitcherOpen(true)}
+        onOpenProjects={openProjectsDirectory}
         onOpenSearch={() => setCommandPaletteOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
         onDeleteConversation={handleDeleteConversation}
@@ -2536,7 +2554,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         setRiViewMode('editor');
                       }}
                       onOpenEditor={() => setRiViewMode('editor')}
-                      onSelectProject={() => setProjectSwitcherOpen(true)}
+                      onSelectProject={openProjectsDirectory}
                     />
                   </Suspense>
                 </ErrorBoundary>
@@ -2549,7 +2567,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 submissionType={activeProject?.type}
                 industryMode={industryMode}
                 onBackToProjects={() => setLayoutMode('projects')}
-                onSelectProject={() => setProjectSwitcherOpen(true)}
+                onSelectProject={openProjectsDirectory}
                 onSwitchToIntelligence={() => setRiViewMode('intelligence')}
                 initialContent={pendingEditorContent?.content}
                 initialTitle={pendingEditorContent?.title}
@@ -3209,7 +3227,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 targetAgency={activeProject?.targetAgency}
                 readinessScore={projectReadinessScore}
                 onOpenConfig={() => setEditProjectOpen(true)}
-                onSwitchProject={() => setProjectSwitcherOpen(true)}
+                onSwitchProject={openProjectsDirectory}
               />
 
               {/* ── Workspace body: AnA chat + right panel ───────────── */}
@@ -3339,7 +3357,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             Removed dashboard-style projects directory from the Intelligence/projects
             surface to honor chat-first design. Project list lives in the left sidebar;
             the AnA panel below now owns this surface in full mode. ── */}
-        {false && layoutMode === 'projects' &&
+        {layoutMode === 'projects' &&
           !embeddedModule &&
           (() => {
             const sortedProjects = projects
@@ -3414,8 +3432,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               }
             };
             const openProjectHome = (projectId: string) => {
-              setActiveProjectId(projectId);
-              setLayoutMode('project-home');
+              openProjectWorkspace(projectId);
             };
             const openProjectHomeWithLastConversation = (
               projectId: string,
@@ -3438,7 +3455,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 setActiveConversationId(undefined);
                 setActiveThreadId(undefined);
               }
-              setLayoutMode('project-home');
+              const targetLayout = pendingLayoutAfterSelect ?? 'project-home';
+              setLayoutMode(targetLayout);
+              setPendingLayoutAfterSelect(null);
+              navigate(`/concept2cure/project/${projectId}`);
             };
             const renderProjectSection = (
               title: string,
@@ -3942,7 +3962,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
       {/* Project switcher - Connected to data layer */}
       <ProjectSwitcher
-        isOpen={projectSwitcherOpen}
+        isOpen={false && projectSwitcherOpen}
         onClose={() => {
           setProjectSwitcherOpen(false);
           setPendingLayoutAfterSelect(null);
