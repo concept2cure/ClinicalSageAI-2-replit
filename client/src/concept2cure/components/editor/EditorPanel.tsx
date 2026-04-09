@@ -3447,7 +3447,6 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           data-testid="claim-validation-badge"
         >
           {claimValidation.running ? (
-            <>
             <div className="flex items-center gap-2 flex-wrap">
               {aiSourceCount > 0 && (
                 <span className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-700">
@@ -3458,7 +3457,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               <span className="text-[13px] text-stone-500">
                 Validating claims against Data Room...
               </span>
-            </>
+            </div>
           ) : claimValidation.result ? (
             <>
               <ShieldCheck
