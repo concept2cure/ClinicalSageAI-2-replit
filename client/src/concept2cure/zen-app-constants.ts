@@ -51,6 +51,7 @@ export type LayoutMode =
   | 'review-readiness'
   | 'report-engine'
   | 'safety-narrative'
+  | 'device-diagnostics-workbench'
   | 'vault-workspace'
   // ── Compatibility redirects (redirect on mount, no renderer) ──
   | 'workspace'
@@ -176,6 +177,7 @@ export const LEGACY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
   'precedent-intelligence': 'documents',
   'deep-research': 'documents',
   'safety-narrative': 'documents',
+  'device-diagnostics-workbench': 'documents',
   'ana-dashboard': 'projects',
   'ana-platform-control': 'projects',
   'platform-admin': 'projects',

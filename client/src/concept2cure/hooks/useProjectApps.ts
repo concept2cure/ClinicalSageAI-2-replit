@@ -56,6 +56,15 @@ export const APP_CATALOG: AppDefinition[] = [
     memoryRole: 'Precedent Intelligence is connected. It provides regulatory precedent analysis including Complete Response Letter patterns, Refuse-to-File signals, approval history for similar products, and reviewer tendencies.',
   },
   {
+    id: 'device-diagnostics-workbench',
+    name: 'Device & Diagnostics Workbench',
+    description: 'Unified medical device + diagnostics lane for 510(k), PMA, CER, collaboration, and eSTAR submission',
+    category: 'builder',
+    icon: 'Layers',
+    tracks: ['510K', 'PMA', 'DE_NOVO', 'EUA', 'IVDR'],
+    memoryRole: 'Device & Diagnostics Workbench is connected. It orchestrates end-to-end device and diagnostics pathways including 510(k), PMA, CER/IVDR, cross-functional collaboration, task routing, and submission center operations with eSTAR readiness.',
+  },
+  {
     id: '510k-workspace',
     name: '510(k) Workspace',
     description: 'Predicate comparison, substantial equivalence testing, submission package',
