@@ -180,7 +180,7 @@
     "@tiptap/extension-underline": "3.21.0",
     "@tiptap/pm": "3.21.0",
     "@tiptap/react": "3.22.3",
-    "@tiptap/starter-kit": "3.21.0",
+    "@tiptap/starter-kit": "3.22.3",
     "@tiptap/suggestion": "3.22.0",
     "@tiptap/y-tiptap": "3.0.2",
     "@types/compression": "1.8.1",
