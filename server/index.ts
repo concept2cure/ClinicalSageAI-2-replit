@@ -1,5 +1,5 @@
 import { config as dotenvConfig } from 'dotenv';
-dotenvConfig({ override: false });
+dotenvConfig({ override: false, quiet: true });
 import { initializeOpenTelemetry } from './services/telemetry/opentelemetry';
 
 // Initialize Sentry error monitoring early, before other imports

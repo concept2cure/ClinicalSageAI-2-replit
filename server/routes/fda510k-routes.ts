@@ -30,7 +30,7 @@ import { createScopedLogger } from '../utils/logger.js';
 const log = createScopedLogger('fda510k-routes');
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ quiet: true });
 
 // Production-ready cache configuration
 const CACHE_TTL = {

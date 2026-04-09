@@ -11,7 +11,7 @@
  * NOTE: override: false so shell-exported DATABASE_URL takes precedence.
  */
 import { config as dotenvConfig } from 'dotenv';
-dotenvConfig({ override: false });
+dotenvConfig({ override: false, quiet: true });
 
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';

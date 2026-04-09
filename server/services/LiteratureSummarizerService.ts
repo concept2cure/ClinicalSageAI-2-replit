@@ -13,7 +13,7 @@ import dotenv from 'dotenv';
 import { ai } from '../lib/unified-ai-client';
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ quiet: true });
 
 // Initialize OpenAI client
 
