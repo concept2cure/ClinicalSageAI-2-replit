@@ -327,7 +327,7 @@
     "@babel/preset-react": "^7.24.7",
     "@babel/preset-typescript": "^7.24.7",
     "@figma/code-connect": "^1.2.3",
-    "@replit/vite-plugin-cartographer": "^0.0.11",
+    "@replit/vite-plugin-cartographer": "^0.5.1",
     "@replit/vite-plugin-runtime-error-modal": "^0.0.3",
     "@storybook/react": "^8.5.3",
     "@tailwindcss/typography": "^0.5.15",
