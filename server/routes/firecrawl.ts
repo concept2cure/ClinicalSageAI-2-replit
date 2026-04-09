@@ -15,10 +15,15 @@ const router = Router();
 router.use(authMiddleware);
 
 router.get('/quota-status', async (req, res) => {
-  const tenantId = Number((req as any).tenantId || req.query.tenantId || 0);
-  if (!tenantId) return res.status(400).json({ success: false, error: { code: 'INVALID_INPUT' } });
-  const quota = await getFirecrawlQuotaStatus(tenantId);
-  return res.json({ success: true, data: quota });
+  try {
+    const tenantId = Number((req as any).tenantId || req.query.tenantId || 0);
+    if (!tenantId) return res.status(400).json({ success: false, error: { code: 'INVALID_INPUT' } });
+    const quota = await getFirecrawlQuotaStatus(tenantId);
+    return res.json({ success: true, data: quota });
+  } catch (err: any) {
+    console.error('[firecrawl] quota-status error:', err?.message || err);
+    return res.status(500).json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Firecrawl quota check failed' } });
+  }
 });
 
 router.post('/scrape', async (req, res) => {

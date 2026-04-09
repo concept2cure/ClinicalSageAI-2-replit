@@ -15,18 +15,26 @@ export function usageDateForTenant(now = new Date()) {
 export async function getFirecrawlDailySettings(tenantId: number) {
   const pool = getPool();
   const defaultLimit = Number(process.env.DEFAULT_FIRECRAWL_DAILY_FREE_SCRAPES || 5);
-  const settingsRes = await pool.query(
-    `SELECT firecrawl_enabled, firecrawl_daily_free_scrapes
-       FROM external_tool_settings
-      WHERE tenant_id = $1`,
-    [tenantId]
-  );
-  const row = settingsRes.rows[0];
-  return {
-    enabled:
-      process.env.FEATURE_FIRECRAWL_ENABLED === 'true' && (row?.firecrawl_enabled ?? true) === true,
-    limit: Number(row?.firecrawl_daily_free_scrapes ?? defaultLimit),
-  };
+  try {
+    const settingsRes = await pool.query(
+      `SELECT firecrawl_enabled, firecrawl_daily_free_scrapes
+         FROM external_tool_settings
+        WHERE tenant_id = $1`,
+      [tenantId]
+    );
+    const row = settingsRes.rows[0];
+    return {
+      enabled:
+        process.env.FEATURE_FIRECRAWL_ENABLED === 'true' && (row?.firecrawl_enabled ?? true) === true,
+      limit: Number(row?.firecrawl_daily_free_scrapes ?? defaultLimit),
+    };
+  } catch (err: any) {
+    // Table may not exist yet — degrade gracefully
+    if (err?.code === '42P01') {
+      return { enabled: false, limit: defaultLimit };
+    }
+    throw err;
+  }
 }
 
 export async function checkAndReserveFirecrawlQuota(tenantId: number, requestedOps = 1) {

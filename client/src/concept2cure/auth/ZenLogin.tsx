@@ -179,7 +179,47 @@ export const ZenLogin: React.FC = () => {
     setError(null);
   }, [email, password, mfaCode, newPassword, confirmPassword]);
 
-  const validateEmail = useCallback((value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value), []);
+  const validateEmail = useCallback(
+    (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+    []
+  );
+
+  const isDev = import.meta.env.DEV || import.meta.env.MODE === 'development';
+
+  const handleDemoAccess = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/auth/dev-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'jm.smith@concept2cure.pro' }),
+      });
+      const data = await res.json();
+      if (data.success && data.accessToken) {
+        // Compute expiry matching the JWT (24h from now)
+        const expiry = new Date(Date.now() + (data.expiresIn || 86400) * 1000).toISOString();
+        // Store in both storages — authService.loadStoredAuth requires all 4 keys
+        localStorage.setItem('trialsage_access_token', data.accessToken);
+        localStorage.setItem('trialsage_refresh_token', data.refreshToken || '');
+        localStorage.setItem('trialsage_token_expiry', expiry);
+        localStorage.setItem('trialsage_user', JSON.stringify(data.user || {}));
+        sessionStorage.setItem('trialsage_access_token', data.accessToken);
+        sessionStorage.setItem('trialsage_refresh_token', data.refreshToken || '');
+        sessionStorage.setItem('trialsage_token_expiry', expiry);
+        sessionStorage.setItem('trialsage_user', JSON.stringify(data.user || {}));
+        // Hard navigate so the app shell reinitializes auth from storage
+        window.location.href = '/concept2cure';
+        return;
+      } else {
+        setError({ message: data.error?.message || 'Demo login failed.' });
+      }
+    } catch {
+      setError({ message: 'Demo login request failed.' });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [rememberMe, setLocation]);
 
   const handleLogin = useCallback(async () => {
     if (!validateEmail(email)) {
@@ -205,13 +245,16 @@ export const ZenLogin: React.FC = () => {
       if (!result.success) {
         setError({
           field: 'password',
-          message: result.error?.message || 'Unable to sign in. Check your credentials and try again.',
+          message:
+            result.error?.message || 'Unable to sign in. Check your credentials and try again.',
         });
         return;
       }
 
       if (result.data?.mfaRequired) {
-        const methods = result.data.methods || [{ type: 'email', isEnabled: true, isPrimary: true }];
+        const methods = result.data.methods || [
+          { type: 'email', isEnabled: true, isPrimary: true },
+        ];
         setAvailableMfaMethods(methods);
         setMfaMethod(methods[0]?.type || 'email');
         setMaskedEmail(result.data.maskedEmail || '');
@@ -429,7 +472,10 @@ export const ZenLogin: React.FC = () => {
 
                   <div className="flex items-center justify-between gap-3">
                     <label className="flex items-center gap-2 text-[13px] text-stone-600">
-                      <Checkbox checked={rememberMe} onCheckedChange={checked => setRememberMe(checked === true)} />
+                      <Checkbox
+                        checked={rememberMe}
+                        onCheckedChange={checked => setRememberMe(checked === true)}
+                      />
                       Keep me signed in
                     </label>
 
@@ -443,10 +489,28 @@ export const ZenLogin: React.FC = () => {
                     </Button>
                   </div>
 
-                  <Button type="submit" className="h-10 w-full rounded-xl text-[13px] font-medium" disabled={isLoading}>
+                  <Button
+                    type="submit"
+                    className="h-10 w-full rounded-xl text-[13px] font-medium"
+                    disabled={isLoading}
+                  >
                     {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
                     Sign in
                   </Button>
+
+                  {isDev && (
+                    <div className="pt-2 border-t border-stone-100">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-10 w-full rounded-xl text-[13px] font-medium border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100"
+                        onClick={handleDemoAccess}
+                        disabled={isLoading}
+                      >
+                        Demo Access
+                      </Button>
+                    </div>
+                  )}
                 </form>
               )}
 
@@ -491,7 +555,11 @@ export const ZenLogin: React.FC = () => {
                     <MfaCodeInput value={mfaCode} onChange={setMfaCode} disabled={isLoading} />
                   )}
 
-                  <Button className="h-10 w-full rounded-xl text-[13px] font-medium" onClick={handleVerifyMfa} disabled={isLoading}>
+                  <Button
+                    className="h-10 w-full rounded-xl text-[13px] font-medium"
+                    onClick={handleVerifyMfa}
+                    disabled={isLoading}
+                  >
                     {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
                     Verify
                   </Button>
@@ -561,12 +629,20 @@ export const ZenLogin: React.FC = () => {
                     </div>
                   </div>
 
-                  <Button className="h-10 w-full rounded-xl text-[13px] font-medium" onClick={handleForgotPassword} disabled={isLoading}>
+                  <Button
+                    className="h-10 w-full rounded-xl text-[13px] font-medium"
+                    onClick={handleForgotPassword}
+                    disabled={isLoading}
+                  >
                     {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
                     Send reset link
                   </Button>
 
-                  <Button variant="ghost" className="h-9 w-full text-[12px]" onClick={() => setView('sign-in')}>
+                  <Button
+                    variant="ghost"
+                    className="h-9 w-full text-[12px]"
+                    onClick={() => setView('sign-in')}
+                  >
                     Back to sign in
                   </Button>
                 </div>
@@ -578,10 +654,15 @@ export const ZenLogin: React.FC = () => {
                     <CheckCircle2 className="h-6 w-6" />
                   </div>
                   <p className="text-[14px] leading-6 text-stone-600">
-                    If an account exists for <span className="font-medium text-stone-900">{email}</span>, a reset
-                    link is on its way.
+                    If an account exists for{' '}
+                    <span className="font-medium text-stone-900">{email}</span>, a reset link is on
+                    its way.
                   </p>
-                  <Button variant="outline" className="h-10 w-full rounded-xl text-[13px]" onClick={() => setView('sign-in')}>
+                  <Button
+                    variant="outline"
+                    className="h-10 w-full rounded-xl text-[13px]"
+                    onClick={() => setView('sign-in')}
+                  >
                     Return to sign in
                   </Button>
                 </div>
@@ -608,11 +689,19 @@ export const ZenLogin: React.FC = () => {
                     autoComplete="new-password"
                     disabled={isLoading}
                   />
-                  <Button className="h-10 w-full rounded-xl text-[13px] font-medium" onClick={handleResetPassword} disabled={isLoading}>
+                  <Button
+                    className="h-10 w-full rounded-xl text-[13px] font-medium"
+                    onClick={handleResetPassword}
+                    disabled={isLoading}
+                  >
                     {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
                     Update password
                   </Button>
-                  <Button variant="ghost" className="h-9 w-full text-[12px]" onClick={() => setLocation('/concept2cure/login')}>
+                  <Button
+                    variant="ghost"
+                    className="h-9 w-full text-[12px]"
+                    onClick={() => setLocation('/concept2cure/login')}
+                  >
                     Back to sign in
                   </Button>
                 </div>
@@ -624,7 +713,10 @@ export const ZenLogin: React.FC = () => {
                     <CheckCircle2 className="h-6 w-6" />
                   </div>
                   <p className="text-[14px] leading-6 text-stone-600">{successMessage}</p>
-                  <Button className="h-10 w-full rounded-xl text-[13px] font-medium" onClick={() => setLocation('/concept2cure')}>
+                  <Button
+                    className="h-10 w-full rounded-xl text-[13px] font-medium"
+                    onClick={() => setLocation('/concept2cure')}
+                  >
                     Continue
                   </Button>
                 </div>

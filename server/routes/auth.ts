@@ -400,6 +400,50 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     const mfaMethod = (userData as any).mfaMethod || 'email';
     const hasTotpSetup = userData.mfaEnabled === true && mfaMethod === 'totp';
 
+    // In development mode, skip MFA entirely and issue tokens directly
+    const isDev = process.env.NODE_ENV !== 'production';
+    if (isDev) {
+      const accessToken = jwt.sign(
+        {
+          userId: userData.id.toString(),
+          email: userData.email,
+          organizationId: organizationId.toString(),
+          organizationUuid: organization?.uuid || null,
+          role: jwtRole,
+        },
+        config.jwt.secret,
+        { expiresIn: JWT_EXPIRES_IN }
+      );
+      const refreshToken = jwt.sign(
+        { userId: userData.id.toString(), email: userData.email, type: 'refresh' },
+        getRefreshTokenSecret(),
+        { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
+      );
+      console.log(`[auth] Dev mode — MFA skipped for user ${userData.id}`);
+      return res.json({
+        success: true,
+        accessToken,
+        refreshToken,
+        expiresIn: 86400,
+        mfaRequired: false,
+        user: {
+          id: userData.id.toString(),
+          email: userData.email,
+          firstName,
+          lastName,
+          displayName,
+          roles,
+          permissions: [],
+          organizationId: organizationId.toString(),
+          organizationName: organization?.name || 'Organization',
+          organizationUuid: organization?.uuid || null,
+          mfaEnabled: false,
+          mfaMethods: [],
+          mustChangePassword: false,
+        },
+      });
+    }
+
     // Always require 2FA — issue challenge token
     const challengeToken = mfaService.createMfaChallengeToken(
       userData.id,
@@ -457,7 +501,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
  * Only works when NODE_ENV !== 'production'.
  * Accepts { email } for any existing user.
  */
-router.post('/dev-login', loginLimiter, async (req: Request, res: Response) => {
+router.post('/dev-login', async (req: Request, res: Response) => {
   if (process.env.NODE_ENV === 'production') {
     return res
       .status(404)
