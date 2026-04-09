@@ -361,7 +361,7 @@ router.patch('/me/notifications', async (req: Request, res: Response) => {
  * Get user by ID (only matches numeric IDs)
  * Requires authentication — user can only fetch users within their own org
  */
-router.get('/:id(\\d+)', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader?.replace('Bearer ', '');

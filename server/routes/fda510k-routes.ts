@@ -146,11 +146,7 @@ router.get('/predicates', async (req: Request, res: Response) => {
 class SimpleRateLimiter {
   private requests = new Map<string, { count: number; windowStart: number }>();
 
-  constructor(
-    private windowMs: number,
-    private maxRequests: number,
-    private name: string
-  ) {}
+  constructor(private windowMs: number, private maxRequests: number, private name: string) {}
 
   isAllowed(key: string): boolean {
     const now = Date.now();
@@ -1149,7 +1145,9 @@ router.post('/predicate-search', async (req: Request, res: Response, next: NextF
         .filter((k: string) => k);
       keywordTerms.forEach((keyword: string) => {
         searchParams.push(
-          `(device_name:"${encodeURIComponent(keyword)}"+OR+statement_or_summary:"${encodeURIComponent(keyword)}")`
+          `(device_name:"${encodeURIComponent(
+            keyword
+          )}"+OR+statement_or_summary:"${encodeURIComponent(keyword)}")`
         );
       });
     }
@@ -1158,8 +1156,8 @@ router.post('/predicate-search', async (req: Request, res: Response, next: NextF
       searchParams.length > 0
         ? searchParams.join('+AND+')
         : deviceClass
-          ? `openfda.device_class:${deviceClass}`
-          : 'openfda.device_class:2';
+        ? `openfda.device_class:${deviceClass}`
+        : 'openfda.device_class:2';
 
     const offset = (page - 1) * limit;
     const fdaUrl = `https://api.fda.gov/device/510k.json?search=${searchQuery}&limit=${limit}&skip=${offset}`;
@@ -1308,7 +1306,8 @@ router.post(
       // This endpoint requires AI gateway configuration for real regulatory pathway analysis
       return res.status(503).json({
         error: 'Service not configured',
-        message: 'This endpoint requires AI gateway configuration for regulatory pathway analysis. Rule-based fallback has been removed.',
+        message:
+          'This endpoint requires AI gateway configuration for regulatory pathway analysis. Rule-based fallback has been removed.',
       });
     } catch (error) {
       next(error);
@@ -1659,11 +1658,14 @@ router.delete('/cache/clear', async (req: Request, res: Response, next: NextFunc
  * POST /search-predicates-literature
  * Alias for /predicate-search — consumed by client FDA510kService.searchPredicateDevices()
  */
-router.post('/search-predicates-literature', async (req: Request, res: Response, next: NextFunction) => {
-  // Forward to predicate-search by rewriting the URL internally
-  req.url = '/predicate-search';
-  router.handle(req, res, next);
-});
+router.post(
+  '/search-predicates-literature',
+  async (req: Request, res: Response, next: NextFunction) => {
+    // Forward to predicate-search by rewriting the URL internally
+    req.url = '/predicate-search';
+    router.handle(req, res, next);
+  }
+);
 
 // Apply error handler to all routes
 router.use(errorHandler);

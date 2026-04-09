@@ -16,7 +16,6 @@ dotenv.config({ quiet: true });
 
 // Initialize OpenAI client for embeddings
 
-
 // Define available literature sources with configuration
 export const LITERATURE_SOURCES = [
   {
@@ -248,8 +247,8 @@ class LiteratureAggregatorService {
           `SELECT dc.*, le.title, le.authors, le.journal, le.publication_date, le.source_name
           FROM document_citations dc
           JOIN literature_entries le ON dc.literature_id = le.id
-          WHERE dc.document_id = $1 
-          AND dc.document_type = $2 
+          WHERE dc.document_id = $1
+          AND dc.document_type = $2
           AND dc.organization_id = $3`,
           [documentId, documentType, organizationId]
         );
@@ -290,7 +289,7 @@ class LiteratureAggregatorService {
         const citationId = uuidv4();
         const result = await client.query(
           `INSERT INTO document_citations (
-            id, literature_id, document_id, document_type, 
+            id, literature_id, document_id, document_type,
             section_id, section_name, citation_text, organization_id
           )
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -360,7 +359,7 @@ class LiteratureAggregatorService {
         // Semantic search with vector embeddings
         if (queryEmbedding && params.useSemanticSearch) {
           query = `
-            SELECT *, 
+            SELECT *,
             1 - (embedding <=> $1) as relevance_score
             FROM literature_entries
             WHERE organization_id = $2
@@ -447,7 +446,9 @@ class LiteratureAggregatorService {
       const encodedSearchTerm = encodeURIComponent(searchTerm);
 
       // Step 1: Search for PMIDs
-      const searchUrl = `${baseUrl}/esearch.fcgi?db=pubmed&term=${encodedSearchTerm}&retmax=${params.limit || 20}&retmode=json${apiKeyParam}`;
+      const searchUrl = `${baseUrl}/esearch.fcgi?db=pubmed&term=${encodedSearchTerm}&retmax=${
+        params.limit || 20
+      }&retmode=json${apiKeyParam}`;
       const searchResponse = await axios.get(searchUrl);
 
       const pmids = searchResponse.data.esearchresult.idlist || [];
@@ -655,7 +656,7 @@ class LiteratureAggregatorService {
         for (const entry of entries) {
           // Check if entry already exists
           const existingResult = await client.query(
-            `SELECT id FROM literature_entries 
+            `SELECT id FROM literature_entries
             WHERE source_name = $1 AND source_id = $2 AND organization_id = $3`,
             [entry.source_name, entry.source_id, entry.organization_id]
           );

@@ -717,11 +717,15 @@ app.get('/api/shadow/health', async (_req: Request, res: Response) => {
     const response = await fetch(`${shadowBase}/health`);
     const payload = await response.json();
     if (!response.ok) {
-      return res.status(response.status).json({ error: 'Shadow service health check failed', details: payload });
+      return res
+        .status(response.status)
+        .json({ error: 'Shadow service health check failed', details: payload });
     }
     return res.json(payload);
   } catch (error: any) {
-    return res.status(502).json({ error: 'Shadow service unavailable', message: error?.message || 'Unknown error' });
+    return res
+      .status(502)
+      .json({ error: 'Shadow service unavailable', message: error?.message || 'Unknown error' });
   }
 });
 
@@ -755,7 +759,14 @@ app.use('/api', createAuditTrailRoutes(pool));
 
 // AnA 1.0 RI endpoint + compatibility facades (search vector, endpoint recommend, retention stubs)
 import { createAnaRiInlineRoutes } from './routes/ana-ri-inline-routes';
-app.use('/api', createAnaRiInlineRoutes(pool, { csrSearchService, getEndpointRecommenderService, sanitizeAskAnaInput }));
+app.use(
+  '/api',
+  createAnaRiInlineRoutes(pool, {
+    csrSearchService,
+    getEndpointRecommenderService,
+    sanitizeAskAnaInput,
+  })
+);
 console.log('✅ AnA 1.0 RI + compatibility facade routes mounted');
 
 debugLog('Debug mode enabled - enhanced logging active');
@@ -881,7 +892,6 @@ console.log('✅ Dynamic Content Assembly API routes mounted successfully');
 import { createMiscInlineRoutes } from './routes/misc-inline-routes';
 app.use('/api', createMiscInlineRoutes(pool, authMiddleware));
 
-
 // Basic starter server function
 async function startServer() {
   debugLog('Starting server initialization...');
@@ -956,7 +966,12 @@ async function startServer() {
   await registerTenantRoutes({ app, pool });
   await registerProjectRoutes({ app, pool });
   await registerClinicalIntelRoutes({ app, pool });
-  await registerAdvancedPlatformRoutes({ app, pool, isStaticDataEnabled, mountStaticBusinessDataGuard });
+  await registerAdvancedPlatformRoutes({
+    app,
+    pool,
+    isStaticDataEnabled,
+    mountStaticBusinessDataGuard,
+  });
 
   debugLog('All startup route families mounted');
 

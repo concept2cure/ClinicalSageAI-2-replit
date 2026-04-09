@@ -228,7 +228,7 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
  * GET /api/programs/:id
  * Get a single program by ID
  */
-router.get('/:id(\\d+)', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
     const tenantId = (req as any).tenantContext?.tenantId;
@@ -347,7 +347,7 @@ router.post('/', validateBody(createProgramSchema), async (req: Request, res: Re
  * PATCH /api/programs/:id
  * Update a program
  */
-router.patch('/:id(\\d+)', validateBody(updateProgramSchema), async (req: Request, res: Response) => {
+router.patch('/:id', validateBody(updateProgramSchema), async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
     const updates = req.body;
@@ -394,7 +394,7 @@ router.patch('/:id(\\d+)', validateBody(updateProgramSchema), async (req: Reques
  * DELETE /api/programs/:id
  * Delete (archive) a program
  */
-router.delete('/:id(\\d+)', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
     const tenantId = (req as any).tenantContext?.tenantId;

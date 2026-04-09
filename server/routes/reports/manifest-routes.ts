@@ -9,7 +9,7 @@ const LAUNCH_CONFIG_PATH = 'attached_assets/launch_config.json';
 /**
  * Get the root report index with all personas
  */
-reportsManifestRoutes.get('/personas(\\.json)?', async (_req: Request, res: Response) => {
+reportsManifestRoutes.get(['/personas', '/personas.json'], async (_req: Request, res: Response) => {
   try {
     const indexPath = path.join('attached_assets', 'report_index.json');
 
@@ -71,7 +71,7 @@ reportsManifestRoutes.get('/persona/:personaId', async (req: Request, res: Respo
 /**
  * Get launch configuration for example reports
  */
-reportsManifestRoutes.get('/launch-config(\\.json)?', async (_req: Request, res: Response) => {
+reportsManifestRoutes.get(['/launch-config', '/launch-config.json'], async (_req: Request, res: Response) => {
   try {
     const configPath = path.join(process.cwd(), LAUNCH_CONFIG_PATH);
 
@@ -96,7 +96,7 @@ reportsManifestRoutes.get('/launch-config(\\.json)?', async (_req: Request, res:
 /**
  * Get report index for example reports
  */
-reportsManifestRoutes.get('/index(\\.json)?', async (_req: Request, res: Response) => {
+reportsManifestRoutes.get(['/index', '/index.json'], async (_req: Request, res: Response) => {
   try {
     const indexPath = path.join(process.cwd(), 'attached_assets', 'report_index.json');
 

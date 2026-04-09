@@ -17,7 +17,6 @@ dotenv.config({ quiet: true });
 
 // Initialize OpenAI client
 
-
 // Summary types and their descriptions
 const SUMMARY_TYPES = {
   standard: 'Generate a concise summary of the key points from the literature',
@@ -122,7 +121,7 @@ class LiteratureSummarizerService {
 
       try {
         const result = await client.query(
-          `SELECT s.*, 
+          `SELECT s.*,
             (SELECT jsonb_agg(jsonb_build_object(
               'id', le.id,
               'title', le.title,
@@ -158,7 +157,7 @@ class LiteratureSummarizerService {
 
       try {
         const result = await client.query(
-          `SELECT s.*, 
+          `SELECT s.*,
             (SELECT jsonb_agg(jsonb_build_object(
               'id', le.id,
               'title', le.title,

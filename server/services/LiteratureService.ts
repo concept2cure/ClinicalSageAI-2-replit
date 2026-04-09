@@ -87,7 +87,9 @@ class LiteratureService {
       const limit = params.limit || 5;
 
       // Step 1: Search for articles using esearch
-      const searchUrl = `${this.PUBMED_BASE_URL}/esearch.fcgi?db=pubmed&term=${encodeURIComponent(searchQuery)}&retmax=${limit}&sort=relevance&retmode=json`;
+      const searchUrl = `${this.PUBMED_BASE_URL}/esearch.fcgi?db=pubmed&term=${encodeURIComponent(
+        searchQuery
+      )}&retmax=${limit}&sort=relevance&retmode=json`;
       const searchResponse = await this.fetchWithApiKey(searchUrl);
 
       if (
@@ -105,7 +107,9 @@ class LiteratureService {
       }
 
       // Step 2: Fetch article details using efetch
-      const detailsUrl = `${this.PUBMED_BASE_URL}/efetch.fcgi?db=pubmed&id=${pmids.join(',')}&retmode=xml`;
+      const detailsUrl = `${this.PUBMED_BASE_URL}/efetch.fcgi?db=pubmed&id=${pmids.join(
+        ','
+      )}&retmode=xml`;
       const detailsResponse = await this.fetchWithApiKey(detailsUrl);
 
       if (!detailsResponse.data) {
@@ -167,7 +171,9 @@ class LiteratureService {
   ): Promise<PubMedArticle[]> {
     try {
       const searchQuery = `"${deviceName}" AND ("${startDate}"[Date - Publication] : "${endDate}"[Date - Publication])`;
-      const searchUrl = `${this.PUBMED_BASE_URL}/esearch.fcgi?db=pubmed&term=${encodeURIComponent(searchQuery)}&retmax=${limit}&retmode=json`;
+      const searchUrl = `${this.PUBMED_BASE_URL}/esearch.fcgi?db=pubmed&term=${encodeURIComponent(
+        searchQuery
+      )}&retmax=${limit}&retmode=json`;
 
       const searchResponse = await this.fetchWithApiKey(searchUrl);
 
@@ -185,7 +191,9 @@ class LiteratureService {
         return [];
       }
 
-      const detailsUrl = `${this.PUBMED_BASE_URL}/efetch.fcgi?db=pubmed&id=${pmids.join(',')}&retmode=xml`;
+      const detailsUrl = `${this.PUBMED_BASE_URL}/efetch.fcgi?db=pubmed&id=${pmids.join(
+        ','
+      )}&retmode=xml`;
       const detailsResponse = await this.fetchWithApiKey(detailsUrl);
 
       if (!detailsResponse.data) {
