@@ -10,7 +10,7 @@ websockets>=11.0.0
 
 # Database dependencies
 psycopg2-binary==2.9.7
-sqlalchemy==2.0.23
+sqlalchemy==2.0.49
 alembic==1.18.4
 
 # Machine Learning dependencies
