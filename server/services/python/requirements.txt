@@ -62,7 +62,7 @@ jsonschema==4.19.1
 pyyaml==6.0.3
 
 # Image processing (for document analysis)
-Pillow==10.3.0
+Pillow==12.2.0
 pytesseract==0.3.10
 
 # Async and concurrency
