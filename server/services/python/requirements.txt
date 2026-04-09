@@ -4,7 +4,7 @@ fastapi==0.108.0
 uvicorn[standard]==0.25.0
 pydantic[email]==2.5.2
 pydantic-settings>=2.0.0
-python-multipart==0.0.22
+python-multipart==0.0.24
 starlette>=0.26.1
 websockets>=11.0.0
 
