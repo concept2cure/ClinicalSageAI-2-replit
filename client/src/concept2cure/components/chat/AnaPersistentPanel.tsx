@@ -61,6 +61,9 @@ import {
   FolderPlus,
   Bot,
   FolderOpen,
+  Share2,
+  GitBranch,
+  User,
 } from 'lucide-react';
 
 marked.setOptions({ breaks: true, gfm: true });
@@ -4123,10 +4126,59 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         style={{ scrollbarWidth: 'thin' }}
       >
         {!hasMessages && !isThinking ? (
-          /* ── Empty state: clean ChatGPT-style canvas ── */
-          <div className="flex flex-col items-center justify-center h-full px-6">
-            <div className="max-w-2xl w-full text-center">
-              <h2 className="text-[36px] leading-tight font-medium text-[#141413]">AnA 1.0</h2>
+          /* ── Empty state: ChatGPT-style clean shell ── */
+          <div className="h-full flex bg-[#F7F7F8]">
+            <aside className="w-[260px] shrink-0 border-r border-[#E5E5E5] bg-[#F2F2F3] px-4 py-5 flex flex-col">
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-[#141413]">AnA 1.0</h3>
+                <button className="mt-3 w-full rounded-lg border border-[#D8D5CA] bg-white px-3 py-2 text-left text-sm font-medium text-[#2D2C28] hover:bg-[#FAF9F5]">
+                  New Chat
+                </button>
+              </div>
+
+              <nav className="space-y-1 text-sm text-[#2D2C28]">
+                <button className="w-full rounded-md px-2.5 py-2 text-left hover:bg-white/80">
+                  Projects
+                </button>
+                <button className="w-full rounded-md px-2.5 py-2 text-left hover:bg-white/80">
+                  AnA Vault
+                </button>
+                <button className="w-full rounded-md px-2.5 py-2 text-left hover:bg-white/80">
+                  Collaboration Center
+                </button>
+                <button className="w-full rounded-md px-2.5 py-2 text-left hover:bg-white/80">
+                  Apps
+                </button>
+                <button className="w-full rounded-md px-2.5 py-2 text-left hover:bg-white/80">
+                  Past conversations
+                </button>
+              </nav>
+
+              <div className="mt-auto pt-6">
+                <button className="w-full rounded-md px-2.5 py-2 text-left text-sm text-[#6B6962] hover:bg-white/80 inline-flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  User Account
+                </button>
+              </div>
+            </aside>
+
+            <div className="flex-1 relative">
+              <div className="absolute top-5 right-6 flex items-center gap-2">
+                <button className="inline-flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-[#2D2C28] hover:bg-white">
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </button>
+                <button
+                  className="inline-flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-[#2D2C28] hover:bg-white"
+                  title="Conversation branches"
+                >
+                  <GitBranch className="w-4 h-4" />
+                  Branches
+                </button>
+              </div>
+              <div className="h-full flex items-center justify-center px-6">
+                <h2 className="text-[38px] leading-tight font-medium text-[#141413]">AnA 1.0</h2>
+              </div>
             </div>
           </div>
         ) : (
@@ -4797,7 +4849,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
       {/* ── Bottom input bar — always visible ── */}
       <div className="flex-shrink-0 px-4 py-3 border-t border-[#F5F4EF] bg-white">
-        <div className="max-w-3xl mx-auto relative">
+        <div
+          className={cn(
+            'max-w-3xl mx-auto relative',
+            !hasMessages && 'ml-[280px] mr-6 max-w-4xl'
+          )}
+        >
           {/* Clear conversation button */}
           {hasMessages && (
             <div className="flex justify-center mb-2">
