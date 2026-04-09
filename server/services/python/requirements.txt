@@ -59,7 +59,7 @@ jinja2==3.1.6
 # Data processing
 xmltodict==0.13.0
 jsonschema==4.19.1
-pyyaml==6.0.1
+pyyaml==6.0.3
 
 # Image processing (for document analysis)
 Pillow==10.3.0
