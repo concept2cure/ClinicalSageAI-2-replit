@@ -2478,6 +2478,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   // ── Cross-panel navigation callbacks ─────────────────────────────────
   const openCompare = useCallback(() => setActiveInspector('compare'), []);
   const openProvenance = useCallback(() => setActiveInspector('provenance'), []);
+  const aiSourceCount = aiProvenance?.sourcesRetrieved ?? aiProvenance?.sources?.length ?? 0;
+  const aiClaimCount = aiProvenance?.claims?.length ?? 0;
   const openAudit = useCallback(() => setActiveInspector('audit'), []);
 
   // ── No project selected ─────────────────────────────────────────────────
@@ -3446,7 +3448,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         >
           {claimValidation.running ? (
             <>
-              <Loader2 className="h-3.5 w-3.5 text-stone-400 animate-spin" />
+            <div className="flex items-center gap-2 flex-wrap">
+              {aiSourceCount > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-700">
+                  {aiSourceCount} Sources Identified
+                  {aiClaimCount > 0 ? ` · ${aiClaimCount} claims` : ''}
+                </span>
+              )}
               <span className="text-[13px] text-stone-500">
                 Validating claims against Data Room...
               </span>
