@@ -1,7 +1,7 @@
 {
   "$schema": "UI Surface Registry — tracks status of every shell surface in convergence",
-  "lastUpdated": "2026-04-06T23:00:00Z",
-  "convergencePhase": "WO-1 through WO-6 complete — ChatGPT/Claude.ai parity convergence done",
+  "lastUpdated": "2026-04-14T00:00:00Z",
+  "convergencePhase": "WO-1 through WO-6 complete + WO-7 Claude.ai home convergence (projects-grid deleted, AnA empty-state sub-sidebar deleted, single centered greeting)",
   "auditFile": "docs/audits/ANA_UI_FORENSIC_AUDIT_2026-04-05.md",
   "workOrderFile": "docs/plans/ANA_UI_CONVERGENCE_WORK_ORDER_2026-04-05.md",
   "allowedDestinations": ["chats", "projects", "reports", "communication-center", "apps", "settings"],
@@ -11,9 +11,9 @@
         "path": "client/src/concept2cure/ZenApp.tsx",
         "status": "active",
         "action": "canonical",
-        "lines": 3580,
+        "lines": 3718,
         "role": "Primary application shell — single canonical shell owner",
-        "projectsView": "2026-04-06 WO-2: Rebuilt as Claude.ai-style projects grid. Clean 2-column cards, search, + New project. Black and white only.",
+        "projectsView": "2026-04-14 WO-7: Projects grid DELETED from layoutMode==='projects'. Right pane is now exclusively AnaPersistentPanel in full mode (Claude.ai home layout). Project directory lives in left ZenSidebar. Zero capability loss — project continuity + start-new remain one click away via sidebar and via AnA slash commands.",
         "projectLanding": "2026-04-06 WO-2: ProjectHomeDashboard rewritten — back link, hero title, description only. Right rail (ProjectKnowledgePanel) preserved."
       },
       "ZenRouter.tsx": {
@@ -111,9 +111,10 @@
         "path": "client/src/concept2cure/components/chat/AnaPersistentPanel.tsx",
         "status": "active",
         "action": "keep",
-        "lines": 5794,
+        "lines": 5729,
         "modeResolution": "full for all 5 primary destinations; compact for project-workspace (editor context — intentional)",
         "chatModes": ["standard", "deep-research", "nano-banana"],
+        "emptyState": "2026-04-14 WO-7: Duplicate ChatGPT-style inner sub-sidebar (AnA 1.0 / New Chat / Projects / Vault / Collaboration / Apps / Past conversations / User Account) DELETED. Replaced with clean Claude.ai-style centered greeting: Sparkles icon + large headline (text-[38px]) wired to the `greeting` prop. No duplicate nav, no share/branches header, no 280px input offset. The main ZenSidebar is the sole navigation authority.",
         "features": {
           "slashCommands": "43 slash commands + 39 operational commands",
           "appMentionAutocomplete": "10 @app mentions (deep-research, precedent, 510k, pma, cer, safety, biostats, vault, ectd, protocol)",
