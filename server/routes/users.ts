@@ -37,7 +37,10 @@ const registerLimiter = rateLimit({
   legacyHeaders: false,
   message: {
     success: false,
-    error: { code: 'RATE_LIMIT', message: 'Too many registration attempts. Please try again later.' },
+    error: {
+      code: 'RATE_LIMIT',
+      message: 'Too many registration attempts. Please try again later.',
+    },
   },
   validate: { xForwardedForHeader: false },
 });
@@ -253,7 +256,9 @@ router.patch('/me', async (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     console.error('[users] Update profile error:', error);
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to update profile' } });
+    res
+      .status(500)
+      .json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to update profile' } });
   }
 });
 
@@ -267,7 +272,14 @@ router.get('/me/notifications', async (req: Request, res: Response) => {
     const token = authHeader?.replace('Bearer ', '');
 
     if (isDev && !token) {
-      return res.json({ emailMentions: true, emailApprovals: true, inAppMentions: true, inAppApprovals: true, toastEnabled: true, soundEnabled: false });
+      return res.json({
+        emailMentions: true,
+        emailApprovals: true,
+        inAppMentions: true,
+        inAppApprovals: true,
+        toastEnabled: true,
+        soundEnabled: false,
+      });
     }
 
     if (!token) {
@@ -304,7 +316,11 @@ router.get('/me/notifications', async (req: Request, res: Response) => {
     res.json(prefs[0]);
   } catch (error: unknown) {
     console.error('[users] Get notifications error:', error);
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to get notification preferences' } });
+    res
+      .status(500)
+      .json({
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to get notification preferences' },
+      });
   }
 });
 
@@ -344,15 +360,17 @@ router.patch('/me/notifications', async (req: Request, res: Response) => {
         .set(updates)
         .where(eq(notificationPreferences.userId, userId));
     } else {
-      await db
-        .insert(notificationPreferences)
-        .values({ userId, ...updates });
+      await db.insert(notificationPreferences).values({ userId, ...updates });
     }
 
     res.json({ success: true, message: 'Notification preferences updated' });
   } catch (error: unknown) {
     console.error('[users] Update notifications error:', error);
-    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to update notification preferences' } });
+    res
+      .status(500)
+      .json({
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to update notification preferences' },
+      });
   }
 });
 
@@ -425,7 +443,6 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
     console.error('[users] Get user by ID error:', error);
     if (isDev) return res.json(devUserResponse);
-
 
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to get user' },
@@ -563,9 +580,10 @@ router.post('/register', registerLimiter, async (req: Request, res: Response) =>
     const passwordHash = await bcrypt.hash(password, 12);
 
     // Build display name
-    const displayName = [firstName, lastName].filter(Boolean).join(' ')
-      || username
-      || registrationEmail.split('@')[0];
+    const displayName =
+      [firstName, lastName].filter(Boolean).join(' ') ||
+      username ||
+      registrationEmail.split('@')[0];
 
     // Insert new user
     const [newUser] = await db

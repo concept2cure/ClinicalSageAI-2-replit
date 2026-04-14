@@ -978,7 +978,7 @@ async function startServer() {
   // ──────────────────────────────────────────────────────────────────────────
   // CATCH-ALL FOR UNMATCHED API ROUTES - MUST RETURN JSON, NOT HTML
   // ──────────────────────────────────────────────────────────────────────────
-  app.all('/api/*', (req, res) => {
+  app.all('/api/{*path}', (req, res) => {
     console.log(`[API 404] Unhandled API route: ${req.method} ${req.path}`);
     res.status(404).json({
       error: 'API endpoint not found',

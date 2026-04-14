@@ -71,27 +71,30 @@ reportsManifestRoutes.get('/persona/:personaId', async (req: Request, res: Respo
 /**
  * Get launch configuration for example reports
  */
-reportsManifestRoutes.get(['/launch-config', '/launch-config.json'], async (_req: Request, res: Response) => {
-  try {
-    const configPath = path.join(process.cwd(), LAUNCH_CONFIG_PATH);
+reportsManifestRoutes.get(
+  ['/launch-config', '/launch-config.json'],
+  async (_req: Request, res: Response) => {
+    try {
+      const configPath = path.join(process.cwd(), LAUNCH_CONFIG_PATH);
 
-    if (!fs.existsSync(configPath)) {
-      return res.status(404).json({
+      if (!fs.existsSync(configPath)) {
+        return res.status(404).json({
+          success: false,
+          message: 'Launch configuration not found',
+        });
+      }
+
+      const launchConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      res.json(launchConfig);
+    } catch (error: any) {
+      console.error('Error fetching launch configuration:', error);
+      res.status(500).json({
         success: false,
-        message: 'Launch configuration not found',
+        message: `Error fetching launch configuration: ${error.message}`,
       });
     }
-
-    const launchConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-    res.json(launchConfig);
-  } catch (error: any) {
-    console.error('Error fetching launch configuration:', error);
-    res.status(500).json({
-      success: false,
-      message: `Error fetching launch configuration: ${error.message}`,
-    });
   }
-});
+);
 
 /**
  * Get report index for example reports

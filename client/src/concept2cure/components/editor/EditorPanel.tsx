@@ -444,7 +444,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     }>
   >([]);
   const [traceabilitySources, setTraceabilitySources] = useState<
-    Array<{ id: string; title: string; type?: string; version?: string; hash?: string; confidence?: number }>
+    Array<{
+      id: string;
+      title: string;
+      type?: string;
+      version?: string;
+      hash?: string;
+      confidence?: number;
+    }>
   >([]);
 
   // Prevent stale traceability side-panel data when switching documents.
@@ -827,9 +834,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const lastSavedContentRef = useRef<string>('');
-  const activeLineLockRef = useRef<{ documentId: string; sectionId: string; lineNumber: number } | null>(
-    null
-  );
+  const activeLineLockRef = useRef<{
+    documentId: string;
+    sectionId: string;
+    lineNumber: number;
+  } | null>(null);
   const lockHeartbeatTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lockPollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const blockedLineToastRef = useRef<{ line: number; timestamp: number } | null>(null);
@@ -1478,10 +1487,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     const lock = activeLineLockRef.current;
     if (!lock) return;
     try {
-      await apiRequest('DELETE', `/api/realtime-collab/locks/${encodeURIComponent(lock.documentId)}`, {
-        userId: currentUser.id,
-        sectionId: lock.sectionId,
-      });
+      await apiRequest(
+        'DELETE',
+        `/api/realtime-collab/locks/${encodeURIComponent(lock.documentId)}`,
+        {
+          userId: currentUser.id,
+          sectionId: lock.sectionId,
+        }
+      );
     } catch {
       // Non-blocking cleanup
     } finally {
@@ -1501,7 +1514,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         durationMs: 30 * 1000,
         reason: 'active line editing',
       };
-      const res = await apiRequest('POST', '/api/realtime-collab/locks', lockBody).catch(() => null);
+      const res = await apiRequest('POST', '/api/realtime-collab/locks', lockBody).catch(
+        () => null
+      );
       if (!res?.ok) return;
       activeLineLockRef.current = {
         documentId: String(activeArtifact.id),
@@ -1518,7 +1533,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       return;
     }
     try {
-      const res = await apiRequest('GET', `/api/realtime-collab/locks/${encodeURIComponent(activeArtifact.id)}`);
+      const res = await apiRequest(
+        'GET',
+        `/api/realtime-collab/locks/${encodeURIComponent(activeArtifact.id)}`
+      );
       if (!res.ok) return;
       const payload = await res.json();
       const locks = Array.isArray(payload?.data) ? payload.data : [];
@@ -1560,7 +1578,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       );
       setTimeout(() => setLockRejection(null), 4000);
       pushToast(
-        `Line ${lineNumber} is locked by ${lockedBy || 'another collaborator'} — choose another line.`,
+        `Line ${lineNumber} is locked by ${
+          lockedBy || 'another collaborator'
+        } — choose another line.`,
         'error'
       );
     },
@@ -1798,7 +1818,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             const claimCount = provenance?.claims?.length || 0;
             const msg =
               srcCount > 0
-                ? `AI suggestion ready — ${srcCount} source${srcCount !== 1 ? 's' : ''} cited, ${claimCount} claim${claimCount !== 1 ? 's' : ''} traced`
+                ? `AI suggestion ready — ${srcCount} source${
+                    srcCount !== 1 ? 's' : ''
+                  } cited, ${claimCount} claim${claimCount !== 1 ? 's' : ''} traced`
                 : 'AI suggestion ready — review below';
             pushToast(msg, 'success');
           } else {
@@ -2002,17 +2024,24 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 html = (data.pages as any[])
                   .map(
                     (p: any, i: number) =>
-                      `<h2>Page ${i + 1}</h2><p>${(p.text || p.content || '').replace(/\n/g, '</p><p>')}</p>`
+                      `<h2>Page ${i + 1}</h2><p>${(p.text || p.content || '').replace(
+                        /\n/g,
+                        '</p><p>'
+                      )}</p>`
                   )
                   .join('');
               }
             } else {
               // Fallback: read as binary and extract text client-side
               pushToast('PDF extraction via server unavailable — uploading as attachment', 'info');
-              html = `<p><em>[PDF imported: ${file.name} — ${(file.size / 1024).toFixed(1)} KB]</em></p>`;
+              html = `<p><em>[PDF imported: ${file.name} — ${(file.size / 1024).toFixed(
+                1
+              )} KB]</em></p>`;
             }
           } catch {
-            html = `<p><em>[PDF imported: ${file.name} — ${(file.size / 1024).toFixed(1)} KB]</em></p>`;
+            html = `<p><em>[PDF imported: ${file.name} — ${(file.size / 1024).toFixed(
+              1
+            )} KB]</em></p>`;
           }
         }
         // ── Images — Embed as base64 with OCR annotation ──
@@ -2040,7 +2069,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               const ocrData = await ocrRes.json();
               const ocrText = ocrData.text || ocrData.content || '';
               if (ocrText.trim()) {
-                html += `<blockquote><p><strong>OCR Extracted Text:</strong></p><p>${ocrText.replace(/\n/g, '</p><p>')}</p></blockquote>`;
+                html += `<blockquote><p><strong>OCR Extracted Text:</strong></p><p>${ocrText.replace(
+                  /\n/g,
+                  '</p><p>'
+                )}</p></blockquote>`;
               }
             }
           } catch {
@@ -2082,7 +2114,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             const headerRow = rows[0];
             const bodyRows = rows.slice(1);
             html = `<table><thead><tr>${headerRow.map(h => `<th>${h}</th>`).join('')}</tr></thead>`;
-            html += `<tbody>${bodyRows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+            html += `<tbody>${bodyRows
+              .map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`)
+              .join('')}</tbody></table>`;
           }
         }
         // ── HTML/HTM — Direct import ──
@@ -2113,7 +2147,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             const text = await file.text();
             html = `<p>${text.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`;
           } catch {
-            html = `<p><em>[Imported file: ${file.name} — ${(file.size / 1024).toFixed(1)} KB]</em></p>`;
+            html = `<p><em>[Imported file: ${file.name} — ${(file.size / 1024).toFixed(
+              1
+            )} KB]</em></p>`;
           }
         }
 
@@ -2253,14 +2289,20 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       '## Competitive Capability Snapshot',
       ...competitiveCapabilities.map(
         cap =>
-          `- **${cap.capability}**\n  - Concept2Cure: ${cap.c2c}\n  - Weave Bio baseline: ${cap.weaveBio}\n  - Artos baseline: ${cap.artos}${cap.gapSummary ? `\n  - Gap: ${cap.gapSummary}` : ''}`
+          `- **${cap.capability}**\n  - Concept2Cure: ${cap.c2c}\n  - Weave Bio baseline: ${
+            cap.weaveBio
+          }\n  - Artos baseline: ${cap.artos}${
+            cap.gapSummary ? `\n  - Gap: ${cap.gapSummary}` : ''
+          }`
       ),
       '',
       '## Remediation Queue',
       ...(gaRemediationQueue.length
         ? gaRemediationQueue.map(
             item =>
-              `- [${item.severity === 'high' ? 'HIGH' : 'MED'}] ${item.title}\n  - ${item.detail}\n  - Workflow: ${item.inspectorTarget}`
+              `- [${item.severity === 'high' ? 'HIGH' : 'MED'}] ${item.title}\n  - ${
+                item.detail
+              }\n  - Workflow: ${item.inspectorTarget}`
           )
         : ['- No remediation items.']),
       '',
@@ -2752,7 +2794,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               <p className="text-xs text-stone-500 max-w-[260px] leading-relaxed">
                 {artifacts.length === 0
                   ? 'Create your first regulatory document above, or use Intelligence to generate one from precedent data.'
-                  : `${artifacts.length} document${artifacts.length !== 1 ? 's' : ''} hidden by filters.`}
+                  : `${artifacts.length} document${
+                      artifacts.length !== 1 ? 's' : ''
+                    } hidden by filters.`}
               </p>
               {artifacts.length > 0 && (
                 <Button
@@ -2802,10 +2846,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                           a.status === 'approved'
                             ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
                             : a.status === 'locked'
-                              ? 'bg-red-50 text-red-700 ring-1 ring-red-200'
-                              : a.status === 'review'
-                                ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
-                                : 'bg-stone-100 text-stone-500 ring-1 ring-stone-200'
+                            ? 'bg-red-50 text-red-700 ring-1 ring-red-200'
+                            : a.status === 'review'
+                            ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
+                            : 'bg-stone-100 text-stone-500 ring-1 ring-stone-200'
                         )}
                       >
                         {a.status === 'approved' && <CheckCircle className="w-2.5 h-2.5" />}
@@ -3088,8 +3132,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                       current === 'approved'
                         ? 'locked'
                         : current === 'review'
-                          ? 'approved'
-                          : 'review';
+                        ? 'approved'
+                        : 'review';
                     handleStatusChange(next);
                     setOverflowOpen(false);
                   }}
@@ -3100,8 +3144,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   {activeArtifact?.status === 'approved'
                     ? 'Lock'
                     : activeArtifact?.status === 'review'
-                      ? 'Approve'
-                      : 'Submit for Review'}
+                    ? 'Approve'
+                    : 'Submit for Review'}
                 </Button>
               )}
               <div className="border-t border-stone-200 my-1" />
@@ -3466,8 +3510,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   claimValidation.result.hallucinationRisk === 'low'
                     ? 'text-emerald-500'
                     : claimValidation.result.hallucinationRisk === 'medium'
-                      ? 'text-amber-500'
-                      : 'text-red-500'
+                    ? 'text-amber-500'
+                    : 'text-red-500'
                 )}
               />
               <span className="text-[13px] text-stone-600">
@@ -3506,7 +3550,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
       {signResult && (
         <div
-          className={`border-b px-3 py-1.5 text-xs flex items-center gap-2 ${signResult.success ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}
+          className={`border-b px-3 py-1.5 text-xs flex items-center gap-2 ${
+            signResult.success
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+              : 'bg-red-50 border-red-200 text-red-700'
+          }`}
         >
           {signResult.success ? (
             <CheckCircle className="w-3.5 h-3.5" />
@@ -3533,7 +3581,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
       {claimResult && (
         <div
-          className={`border-b px-3 py-1.5 text-xs flex items-center gap-2 ${claimResult.supported ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}
+          className={`border-b px-3 py-1.5 text-xs flex items-center gap-2 ${
+            claimResult.supported
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+              : 'bg-red-50 border-red-200 text-red-700'
+          }`}
         >
           {claimResult.supported ? (
             <CheckCircle className="w-3.5 h-3.5" />
@@ -3677,11 +3729,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 uType === '510K' || uType === 'PMA' || uType === 'DE_NOVO'
                   ? 'Device Outline'
                   : section.startsWith('2.') ||
-                      uType === 'IND' ||
-                      uType === 'NDA' ||
-                      uType === 'BLA'
-                    ? 'CTD Outline'
-                    : 'Standard Outline';
+                    uType === 'IND' ||
+                    uType === 'NDA' ||
+                    uType === 'BLA'
+                  ? 'CTD Outline'
+                  : 'Standard Outline';
 
               return (
                 <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-center pt-20 pointer-events-none">

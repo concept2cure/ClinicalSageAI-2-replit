@@ -168,10 +168,10 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
       sortBy === 'updatedAt'
         ? cerProjects.updatedAt
         : sortBy === 'name'
-          ? cerProjects.name
-          : sortBy === 'targetSubmissionDate'
-            ? cerProjects.dueDate
-            : cerProjects.createdAt;
+        ? cerProjects.name
+        : sortBy === 'targetSubmissionDate'
+        ? cerProjects.dueDate
+        : cerProjects.createdAt;
     const orderByExpr = sortOrder === 'asc' ? asc(sortColumn) : desc(sortColumn);
     const offset = (page - 1) * limit;
 
@@ -361,7 +361,9 @@ router.patch('/:id', validateBody(updateProgramSchema), async (req: Request, res
       .where(and(eq(cerProjects.id, id), eq(cerProjects.organizationId, Number(tenantId))))
       .limit(1);
     if (!existing) {
-      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Program not found' } });
+      return res
+        .status(404)
+        .json({ success: false, error: { code: 'NOT_FOUND', message: 'Program not found' } });
     }
 
     const [program] = await db
@@ -627,10 +629,7 @@ router.get('/stats/overview', async (req: Request, res: Response) => {
 
     const upcomingDeadlines = upcoming.map(item => {
       const daysRemaining = item.deadline
-        ? Math.max(
-            0,
-            Math.ceil((item.deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-          )
+        ? Math.max(0, Math.ceil((item.deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
         : null;
       return {
         programId: String(item.id),
