@@ -1,9 +1,13 @@
 /**
- * @fileoverview Zen Sidebar — Human-first OS navigation
+ * @fileoverview Zen Sidebar — Icon rail + expanded nav
  * @module concept2cure/components/sidebar/ZenSidebar
  *
- * Global shell (6 items):
- *   New → Search → Projects → Apps → Artifacts → Setup
+ * Global nav (Claude-style, 2026-04-14 WO-8):
+ *   Home → Search → New → Apps → Artifacts → Intelligence → Settings
+ *   Editor shortcut (project-scoped)
+ *
+ * Collapsed icon rail is the default on the home (`layoutMode === 'projects'`);
+ * expanded sidebar (w-260px) otherwise. Toggled via the brand/chevron button.
  *
  * Project shell (5 tabs, shown when project is active):
  *   Overview → Tools → Vault → Review → Submit
@@ -52,6 +56,7 @@ import {
   Pill,
   Heart,
   MoreHorizontal,
+  LayoutGrid,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -898,25 +903,31 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <span className="text-[10px] font-bold text-white">C2C</span>
         </div>
 
-        {/* ── Global nav (6 items) ── */}
-        <IconBtn label="New" onClick={onNewChat}>
-          <Plus className="w-4 h-4" />
+        {/* ── Icon rail (Claude-style) ──
+            Top group: quick actions (Home, Search, New)
+            Mid group: capability launchers (Apps, Artifacts, Intelligence)
+            Bottom group: Settings + Editor shortcut */}
+        <IconBtn label="Home" active={activeNavId === 'projects'} onClick={onOpenProjects}>
+          <Home className="w-4 h-4" />
         </IconBtn>
         <IconBtn label="Search" active={activeNavId === 'search'} onClick={onOpenSearch}>
           <Search className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="Projects" active={activeNavId === 'projects'} onClick={onOpenProjects}>
-          <FolderOpen className="w-4 h-4" />
+        <IconBtn label="New thread" onClick={onNewChat}>
+          <Plus className="w-4 h-4" />
         </IconBtn>
+
+        <div className="w-8 border-t border-stone-200 my-1" />
+
         <IconBtn
-          label="Workspace Home"
-          active={activeNavId === 'project-home'}
-          onClick={nav['project-home']}
+          label="Apps"
+          active={activeNavId === 'apps'}
+          onClick={nav.apps}
         >
-          <Sparkles className="w-4 h-4" />
+          <LayoutGrid className="w-4 h-4" />
         </IconBtn>
         <IconBtn
-          label="Vault"
+          label="Artifacts"
           active={activeNavId === 'vault'}
           onClick={nav.vault}
         >
@@ -927,14 +938,21 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           active={activeNavId === 'ri-copilot'}
           onClick={nav['ri-copilot']}
         >
-          <Settings className="w-4 h-4" />
+          <Brain className="w-4 h-4" />
         </IconBtn>
 
-        {/* Workflow shortcut — just one icon for the editor workspace */}
         <div className="w-8 border-t border-stone-200 my-1" />
+
+        <IconBtn
+          label="Settings"
+          active={activeNavId === 'setup'}
+          onClick={nav.setup}
+        >
+          <Settings className="w-4 h-4" />
+        </IconBtn>
         <IconBtn
           label="Editor"
-          active={['submission-builder', 'ri-copilot', 'verify', 'review', 'publish'].includes(
+          active={['submission-builder', 'verify', 'review', 'publish'].includes(
             activeNavId || ''
           )}
           onClick={nav['submission-builder']}
@@ -1012,30 +1030,36 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             onClick={onOpenSearch}
           />
           <NavItem
-            icon={<FolderOpen className="w-3.5 h-3.5" />}
-            label="Projects"
+            icon={<Home className="w-3.5 h-3.5" />}
+            label="Home"
             active={activeNavId === 'projects'}
             accentColor="blue"
             onClick={onOpenProjects}
           />
           <NavItem
-            icon={<Sparkles className="w-3.5 h-3.5" />}
-            label="Workspace Home"
-            active={activeNavId === 'project-home'}
-            accentColor="violet"
-            onClick={nav['project-home']}
+            icon={<LayoutGrid className="w-3.5 h-3.5" />}
+            label="Apps"
+            active={activeNavId === 'apps'}
+            onClick={nav.apps}
           />
           <NavItem
             icon={<FileStack className="w-3.5 h-3.5" />}
-            label="Vault"
+            label="Artifacts"
             active={activeNavId === 'vault'}
             onClick={nav.vault}
           />
           <NavItem
-            icon={<Settings className="w-3.5 h-3.5" />}
+            icon={<Brain className="w-3.5 h-3.5" />}
             label="Intelligence"
             active={activeNavId === 'ri-copilot'}
+            accentColor="violet"
             onClick={nav['ri-copilot']}
+          />
+          <NavItem
+            icon={<Settings className="w-3.5 h-3.5" />}
+            label="Settings"
+            active={activeNavId === 'setup'}
+            onClick={nav.setup}
           />
         </div>
 

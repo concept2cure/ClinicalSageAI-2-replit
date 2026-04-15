@@ -359,13 +359,34 @@ panels. Removing a widget without ensuring the user can still get that data is a
 **The chat IS the product.** ALL new features MUST be accessible through the AnA chat interface.
 No new screens, no new panels, no new modals, no new pages. Everything is inline in the conversation.
 
-- 43 slash commands + 39 operational commands — everything through chat
-- Features invoked by typing naturally, slash commands, or suggested actions
-- **Domain prompt buttons** — organized by capability area in "Browse all capabilities" (`config/domain-prompts.ts`)
+### Home layout (2026-04-14 WO-8, reference-parity)
+
+The home (`layoutMode === 'projects'`) renders exactly this shape:
+
+1. **Thin icon rail** on the left (`ZenSidebar` in its collapsed state, ~56 px). Icons: Home · Search · New · (divider) · Apps · Artifacts · Intelligence · (divider) · Settings · Editor · bottom: expand + avatar. The rail is the default; user expands to a 260 px sidebar via the chevron.
+2. **Thin top bar** on the right (~48 px): brand dropdown (Concept2Cure) on the left; Search chat input + Invite + `+ New Thread` primary button on the right. Rendered inline inside `ZenApp.tsx` for `layoutMode === 'projects'` — no new component.
+3. **Centered conversation empty state** inside `AnaPersistentPanel` (the existing component): glow orb → time-of-day greeting ("Good {morning|afternoon|evening}, {firstName}") → subtitle ("What's on your mind?") → section header ("Get started with an example below") → 4 example prompt cards (CTD section · 510(k) precedent · biostat SAP · submission readiness) wired to `setInput` + focus.
+4. **Bottom input bar** unchanged — AnA's existing composer with chat-mode dropdown, attach, and send.
+
+Rules for this surface:
+
+- Do NOT add a right rail on the home. The reference image does not show one; we do not add one.
+- Do NOT wrap the empty state in a duplicate sub-sidebar. The main `ZenSidebar` is the only nav authority.
+- Example cards are a sanctioned conversation-first surface (they seed the input; they do not navigate away).
+- New capabilities surface via: `config/domain-prompts.ts` (catalog), `AppsPage` (launcher), or the icon rail (Intelligence for engines). Do not build new home widgets.
+
+
+- **Capability invocation surfaces (current ground truth, audited 2026-04-14):**
+  - **Domain prompts** — 106 prompts in 19 domain groups (`config/domain-prompts.ts`). This is the canonical capability catalog. Surfaced as suggested action buttons wired to nav contexts; "Browse all capabilities" overlay is NOT currently rendered and is an open gap.
+  - **Apps catalog** — 8 apps visible in `AppsPage.tsx`; 24 canonical IDs wired in server `KNOWN_APP_IDS` (16 backend-ready apps not surfaced). Gap to close: expose the additional 16 through `AppsPage` and/or the home launcher.
+  - **Chat modes** — 3 modes in `AnaPersistentPanel.tsx`: `standard`, `deep-research`, `nano-banana`. Selected via the chat mode dropdown.
+  - **Editor slash commands** — 13 commands in `SlashCommandMenu.tsx` (AI actions + Insert + Format). **Editor-local only**, not available in the AnA chat composer.
+  - **@-mention autocomplete** — NOT CURRENTLY IMPLEMENTED. Prior CLAUDE.md referenced "10 @app mentions"; audit 2026-04-14 found no such system. Treat any @-mention work as new construction, not extension.
+- Features invoked by typing naturally, by suggested action buttons, by selecting a chat mode, or by choosing a domain prompt. There is no chat-side slash command system today; if you add one, build it deliberately.
 - Results render as rich markdown (tables, lists, structured data)
 - Action buttons appear on hover (save, insert, export, regenerate)
 - Intelligence surfaces naturally — AnA "knows" without being told
-- When adding a new capability: add prompts to domain-prompts.ts + map to nav contexts
+- When adding a new capability: add prompts to `config/domain-prompts.ts`, add the app ID to `KNOWN_APP_IDS` if it needs a launcher, and map it to the relevant nav contexts
 
 **ZERO CAPABILITY LOSS:** We still need to achieve all the results of each dashboard, no matter
 what. Removing chrome does NOT mean removing capability. Every metric, score, workflow step, and

@@ -1,7 +1,7 @@
 {
   "$schema": "UI Surface Registry — tracks status of every shell surface in convergence",
-  "lastUpdated": "2026-04-14T00:00:00Z",
-  "convergencePhase": "WO-1 through WO-6 complete + WO-7 Claude.ai home convergence (projects-grid deleted, AnA empty-state sub-sidebar deleted, single centered greeting)",
+  "lastUpdated": "2026-04-14T18:00:00Z",
+  "convergencePhase": "WO-1 through WO-6 complete + WO-7 Claude.ai home convergence + WO-8 reference-parity home (icon rail + top bar + centered orb/greeting/cards)",
   "auditFile": "docs/audits/ANA_UI_FORENSIC_AUDIT_2026-04-05.md",
   "workOrderFile": "docs/plans/ANA_UI_CONVERGENCE_WORK_ORDER_2026-04-05.md",
   "allowedDestinations": ["chats", "projects", "reports", "communication-center", "apps", "settings"],
@@ -11,9 +11,9 @@
         "path": "client/src/concept2cure/ZenApp.tsx",
         "status": "active",
         "action": "canonical",
-        "lines": 3718,
+        "lines": 3810,
         "role": "Primary application shell — single canonical shell owner",
-        "projectsView": "2026-04-14 WO-7: Projects grid DELETED from layoutMode==='projects'. Right pane is now exclusively AnaPersistentPanel in full mode (Claude.ai home layout). Project directory lives in left ZenSidebar. Zero capability loss — project continuity + start-new remain one click away via sidebar and via AnA slash commands.",
+        "projectsView": "2026-04-14 WO-8: Home matched to reference screenshot — thin icon rail (left), top bar (brand dropdown · Search chat · Invite · + New Thread), centered glow orb + time-of-day greeting (\"Good afternoon, {firstName}\") + subtitle (\"What's on your mind?\") + 4 example cards (Draft CTD · Find 510(k) precedent · Plan biostat SAP · Check submission readiness) wired to setInput via AnaPersistentPanel empty state. No new components; all edits in-place. Default sidebarCollapsed=true on mount so the rail is the default, matching Claude/ChatGPT pattern.",
         "projectLanding": "2026-04-06 WO-2: ProjectHomeDashboard rewritten — back link, hero title, description only. Right rail (ProjectKnowledgePanel) preserved."
       },
       "ZenRouter.tsx": {
@@ -67,11 +67,14 @@
         "path": "client/src/concept2cure/components/sidebar/ZenSidebar.tsx",
         "status": "active",
         "action": "canonical",
-        "lines": 1212,
-        "globalItems": 5,
-        "destinations": ["chats", "projects", "communication-center", "apps", "settings"],
-        "role": "Left sidebar — single canonical nav source with 5 destinations",
-        "workspaceSectionRemoved": "2026-04-06 — Removed Tools, Editor, Intelligence, Review & Verify, References, Submit & Export from global sidebar per ChatGPT parity design constitution"
+        "lines": 1297,
+        "globalItems": 7,
+        "destinations": ["home", "search", "new", "apps", "artifacts", "intelligence", "settings"],
+        "defaultState": "collapsed-icon-rail (WO-8, 2026-04-14) — thin ~56px rail is the default; user can expand to 260px via the chevron",
+        "iconRailOrder": ["C2C brand", "Home", "Search", "New thread", "(divider)", "Apps", "Artifacts", "Intelligence (Brain)", "(divider)", "Settings", "Editor"],
+        "role": "Left sidebar — single canonical nav source with 7 destinations (collapsed icon rail is default)",
+        "workspaceSectionRemoved": "2026-04-06 — Removed Tools, Editor, Intelligence, Review & Verify, References, Submit & Export from global sidebar per ChatGPT parity design constitution",
+        "wo8Changes": "2026-04-14 WO-8: Relabeled Workspace Home → Home, Vault → Artifacts. Added Apps (LayoutGrid) and Settings (gear) icons. Changed Intelligence icon from Settings-gear to Brain. Expanded nav mirrors the rail order."
       },
       "ProjectsSidebar.tsx": {
         "path": "client/src/concept2cure/components/sidebar/ProjectsSidebar.tsx",

@@ -61,6 +61,10 @@ import {
   FolderPlus,
   Bot,
   FolderOpen,
+  FileText,
+  BookOpen,
+  BarChart2,
+  CheckCircle,
 } from 'lucide-react';
 
 marked.setOptions({ breaks: true, gfm: true });
@@ -4124,20 +4128,87 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         style={{ scrollbarWidth: 'thin' }}
       >
         {!hasMessages && !isThinking ? (
-          /* ── Empty state: Claude.ai-style clean home ──
-              Zero chrome: no duplicate sidebar, no project grid, no action bar.
-              The main ZenSidebar owns navigation. The right pane is ONLY the
-              greeting + input (rendered below in the bottom input bar). */
-          <div className="h-full flex items-center justify-center px-6 bg-white">
-            <div className="max-w-2xl w-full -mt-24">
-              <div className="flex items-center justify-center gap-4">
-                <Sparkles
-                  className="w-8 h-8 text-[#D97757] flex-shrink-0"
-                  aria-hidden="true"
-                />
-                <h1 className="text-[38px] leading-[1.15] font-medium text-[#141413] tracking-tight">
-                  {greeting || 'How can I help today?'}
-                </h1>
+          /* ── Empty state: centered orb + greeting + 4 example cards ──
+              Reference parity (2026-04-14 WO-8): glow orb, time-of-day greeting
+              (passed in via the `greeting` prop from ZenApp), soft subtitle,
+              and a 4-card example row reusing existing composer + setInput. */
+          <div className="h-full flex flex-col items-center justify-center px-6 bg-white overflow-y-auto py-10">
+            <div className="max-w-3xl w-full">
+              {/* Orb */}
+              <div className="flex items-center justify-center mb-7">
+                <div className="relative">
+                  <div
+                    className="absolute inset-0 bg-gradient-to-br from-fuchsia-300/50 via-violet-400/50 to-indigo-400/40 blur-2xl rounded-full scale-150"
+                    aria-hidden="true"
+                  />
+                  <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-fuchsia-400 via-violet-500 to-indigo-500 flex items-center justify-center shadow-lg ring-1 ring-white/40">
+                    <Sparkles className="w-7 h-7 text-white" aria-hidden="true" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Greeting + subtitle */}
+              <h1 className="text-center text-[28px] sm:text-[32px] leading-[1.15] font-medium text-[#141413] tracking-tight mb-1">
+                {greeting || 'How can I help today?'}
+              </h1>
+              <p className="text-center text-[15px] text-stone-500 mb-10">
+                What&apos;s on your mind?
+              </p>
+
+              {/* Section header */}
+              <p className="text-center text-[10px] font-medium tracking-[0.18em] text-stone-400 uppercase mb-3">
+                Get started with an example below
+              </p>
+
+              {/* Example cards (4-up) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                {[
+                  {
+                    title: 'Draft a CTD section',
+                    prompt:
+                      'Draft a CTD Module 2.5 Clinical Overview section for my active project. Use our existing data and flag anything that needs decisions.',
+                    icon: FileText,
+                  },
+                  {
+                    title: 'Find a 510(k) precedent',
+                    prompt:
+                      'Find 510(k) predicate devices similar to my device and summarize the substantial equivalence paths.',
+                    icon: BookOpen,
+                  },
+                  {
+                    title: 'Plan my biostat SAP',
+                    prompt:
+                      'Help me draft a Statistical Analysis Plan (SAP) outline for my pivotal study, including endpoints, power, and interim analysis.',
+                    icon: BarChart2,
+                  },
+                  {
+                    title: 'Check submission readiness',
+                    prompt:
+                      'Give me a readiness assessment of my submission: what is missing, what is at risk, and what I should do next.',
+                    icon: CheckCircle,
+                  },
+                ].map(card => {
+                  const Icon = card.icon;
+                  return (
+                    <button
+                      key={card.title}
+                      type="button"
+                      onClick={() => {
+                        setInput(card.prompt);
+                        requestAnimationFrame(() => inputRef.current?.focus());
+                      }}
+                      className="group text-left rounded-xl border border-stone-200 bg-white p-4 hover:border-stone-300 hover:shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40"
+                    >
+                      <Icon
+                        className="w-4 h-4 text-stone-500 mb-2"
+                        aria-hidden="true"
+                      />
+                      <p className="text-[13px] font-medium text-stone-800 leading-snug group-hover:text-stone-900">
+                        {card.title}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -5130,7 +5201,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   ? 'Describe an image, infographic, or presentation...'
                   : intentLens !== 'auto'
                   ? `Message AnA (${intentLens} lens)...`
-                  : 'Message AnA'
+                  : 'Ask AnA a question or make a regulatory request...'
               }
               rows={1}
               className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"

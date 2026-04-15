@@ -107,6 +107,7 @@ import {
   Brain,
   Loader2,
   Search,
+  ChevronDown,
 } from 'lucide-react';
 import { LoadingState, ErrorState } from '@/components/ui/statesV2';
 import { Button } from '@/components/ui/button';
@@ -641,10 +642,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // LOCAL STATE
   // ─────────────────────────────────────────────────────────────────────────────
 
-  // Sidebar — auto-collapse on small screens
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth < 768
-  );
+  // Sidebar — default to the thin icon rail (Claude-style 2026-04-14 WO-8).
+  // Users can still expand via the chevron in the rail.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
   const [userProfile, setUserProfile] = useUserProfileFromStorage();
 
@@ -1922,6 +1922,16 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     userIntelligence?.identity?.name ||
     'User';
   const userEmail = userIntelligence?.identity?.email ?? undefined;
+
+  // Time-of-day greeting for the centered home (WO-8).
+  // Computed once per mount; no re-render cost.
+  const homeGreeting = useMemo(() => {
+    const firstName = (userName || 'there').split(/\s+/)[0] || 'there';
+    const hour = new Date().getHours();
+    const part =
+      hour < 5 ? 'evening' : hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+    return `Good ${part}, ${firstName}`;
+  }, [userName]);
 
   const openProjectsDirectory = () => {
     setLayoutMode('projects');
@@ -3468,14 +3478,97 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         {/* AnA — THE single chat surface (ChatGPT/Claude style)
             projects/deep-research: full screen — AnA IS the interface
             workspace/regulatory-workspace: rendered inline above (mode="full")
-            module pages (dossier, documents, etc.): compact input bar at bottom */}
+            module pages (dossier, documents, etc.): compact input bar at bottom
+
+            Home (layoutMode='projects'): rendered inside a flex-col with a
+            thin top bar above AnA (brand · search chat · invite · new thread). */}
+        {layoutMode === 'projects' && !embeddedModule && (
+          <div className="flex-1 flex flex-col min-w-0 min-h-0">
+            {/* ── Home top bar (WO-8 reference parity) ── */}
+            <div className="flex-shrink-0 h-12 px-4 flex items-center justify-between border-b border-stone-100 bg-white">
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed(c => !c)}
+                className="inline-flex items-center gap-1.5 text-[13px] font-medium text-stone-700 hover:text-stone-900 px-2 py-1 rounded-md hover:bg-stone-100"
+                aria-label="Toggle sidebar"
+              >
+                <span>Concept2Cure</span>
+                <ChevronDown className="w-3.5 h-3.5 text-stone-400" aria-hidden="true" />
+              </button>
+              <div className="flex items-center gap-2">
+                <div className="relative hidden sm:block">
+                  <Search
+                    className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-1/2 -translate-y-1/2"
+                    aria-hidden="true"
+                  />
+                  <Input
+                    placeholder="Search chat"
+                    onFocus={() => setCommandPaletteOpen(true)}
+                    className="h-8 w-56 pl-8 text-[12px] border-stone-200 bg-stone-50"
+                    aria-label="Search chat"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSettingsOpen(true)}
+                  className="h-8 px-3 text-[12px] text-stone-700 border-stone-200"
+                >
+                  Invite
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleNewChat}
+                  className="h-8 px-3 text-[12px] bg-stone-900 text-white hover:bg-stone-800"
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" />
+                  New Thread
+                </Button>
+              </div>
+            </div>
+            {/* AnA panel body */}
+            <div className="flex-1 min-h-0 flex">
+              <AnaPersistentPanel
+                mode="full"
+                defaultChatMode="standard"
+                authoringContext={authoringContext}
+                navContext={activeNavId}
+                contextProfile={{
+                  productType: activeProject?.type,
+                  userRole: userRole,
+                  screenName: layoutMode,
+                  activeProject: activeProject?.name,
+                  projectId: activeProjectId,
+                  threadId: activeThreadId || activeConversationId,
+                  moduleContext,
+                }}
+                projectIntelligence={projectIntelligenceStats}
+                greeting={homeGreeting}
+                suggestedActions={workspaceSuggestedActions}
+                onActionRun={handleActionRun}
+                onNavigate={handleAnaPanelNavigate}
+                onDraftInsert={handleDraftInsert}
+                onNavigateToSection={handleNavigateToSection}
+                onOpenArtifact={handleOpenArtifact}
+                onRequestPromotion={handleRequestPromotion}
+                onRefreshIntelligence={authoringIntelligence.refetch}
+                onThreadChange={threadId => {
+                  setActiveThreadId(threadId);
+                  setActiveConversationId(threadId);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
         {layoutMode !== 'workspace' &&
           layoutMode !== 'regulatory-workspace' &&
-          layoutMode !== 'project-home' && (
+          layoutMode !== 'project-home' &&
+          layoutMode !== 'projects' && (
             <AnaPersistentPanel
-              mode={
-                layoutMode === 'projects' || layoutMode === 'deep-research' ? 'full' : 'compact'
-              }
+              mode={layoutMode === 'deep-research' ? 'full' : 'compact'}
               defaultChatMode={layoutMode === 'deep-research' ? 'deep-research' : 'standard'}
               authoringContext={authoringContext}
               navContext={activeNavId}
@@ -3494,7 +3587,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   ? "What would you like to research? I'll search across ClinicalTrials.gov, PubMed, FDA, EMA, and more."
                   : platformGreeting?.text
               }
-              suggestedActions={layoutMode === 'projects' ? workspaceSuggestedActions : undefined}
+              suggestedActions={undefined}
               onActionRun={handleActionRun}
               onNavigate={handleAnaPanelNavigate}
               onDraftInsert={handleDraftInsert}
