@@ -67,6 +67,8 @@ import {
   CheckCircle,
 } from 'lucide-react';
 
+import { ALL_DOMAIN_GROUPS } from '../../config/domain-prompts';
+
 marked.setOptions({ breaks: true, gfm: true });
 
 // ─── Markdown render cache — avoids re-parsing on every React re-render ─────
@@ -3741,6 +3743,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   };
 
   const hasMessages = messages.length > 0;
+  // Toggle for the home empty-state — false shows the 4 example cards, true shows
+  // the full browse of 19 domain-prompt groups (106 prompts). WO-10 2026-04-14.
+  const [browseAll, setBrowseAll] = useState(false);
   const isCompact = mode === 'compact';
 
   // ── Compact mode: just input bar + expandable overlay ──
@@ -4155,60 +4160,112 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 What&apos;s on your mind?
               </p>
 
-              {/* Section header */}
-              <p className="text-center text-[10px] font-medium tracking-[0.18em] text-stone-400 uppercase mb-3">
-                Get started with an example below
-              </p>
+              {browseAll ? (
+                <>
+                  {/* Browse all capabilities — full catalog of 19 domain groups */}
+                  <p className="text-center text-[10px] font-medium tracking-[0.18em] text-stone-400 uppercase mb-4">
+                    AnA capabilities — {ALL_DOMAIN_GROUPS.reduce((sum, g) => sum + g.prompts.length, 0)} prompts in {ALL_DOMAIN_GROUPS.length} domains
+                  </p>
+                  <div className="max-h-[52vh] overflow-y-auto pr-2 space-y-5 border border-stone-100 rounded-xl p-4 bg-stone-50/40">
+                    {ALL_DOMAIN_GROUPS.map(group => (
+                      <section key={group.domain}>
+                        <h3 className="text-[11px] font-semibold tracking-[0.08em] text-stone-600 uppercase mb-1.5">
+                          {group.label}
+                          <span className="ml-2 text-[10px] font-normal tracking-normal text-stone-400">
+                            {group.prompts.length}
+                          </span>
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+                          {group.prompts.map(p => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => {
+                                setInput(p.label);
+                                setBrowseAll(false);
+                                requestAnimationFrame(() => inputRef.current?.focus());
+                              }}
+                              className="text-left rounded-lg border border-stone-200 bg-white px-3 py-2 hover:border-stone-300 hover:bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40"
+                            >
+                              <p className="text-[12px] text-stone-700 leading-snug">
+                                {p.label}
+                              </p>
+                            </button>
+                          ))}
+                        </div>
+                      </section>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Section header */}
+                  <p className="text-center text-[10px] font-medium tracking-[0.18em] text-stone-400 uppercase mb-3">
+                    Get started with an example below
+                  </p>
 
-              {/* Example cards (4-up) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                {[
-                  {
-                    title: 'Draft a CTD section',
-                    prompt:
-                      'Draft a CTD Module 2.5 Clinical Overview section for my active project. Use our existing data and flag anything that needs decisions.',
-                    icon: FileText,
-                  },
-                  {
-                    title: 'Find a 510(k) precedent',
-                    prompt:
-                      'Find 510(k) predicate devices similar to my device and summarize the substantial equivalence paths.',
-                    icon: BookOpen,
-                  },
-                  {
-                    title: 'Plan my biostat SAP',
-                    prompt:
-                      'Help me draft a Statistical Analysis Plan (SAP) outline for my pivotal study, including endpoints, power, and interim analysis.',
-                    icon: BarChart2,
-                  },
-                  {
-                    title: 'Check submission readiness',
-                    prompt:
-                      'Give me a readiness assessment of my submission: what is missing, what is at risk, and what I should do next.',
-                    icon: CheckCircle,
-                  },
-                ].map(card => {
-                  const Icon = card.icon;
-                  return (
-                    <button
-                      key={card.title}
-                      type="button"
-                      onClick={() => {
-                        setInput(card.prompt);
-                        requestAnimationFrame(() => inputRef.current?.focus());
-                      }}
-                      className="group text-left rounded-xl border border-stone-200 bg-white p-4 hover:border-stone-300 hover:shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40"
-                    >
-                      <Icon
-                        className="w-4 h-4 text-stone-500 mb-2"
-                        aria-hidden="true"
-                      />
-                      <p className="text-[13px] font-medium text-stone-800 leading-snug group-hover:text-stone-900">
-                        {card.title}
-                      </p>
-                    </button>
-                  );
-                })}
+                  {/* Example cards (4-up) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                    {[
+                      {
+                        title: 'Draft a CTD section',
+                        prompt:
+                          'Draft a CTD Module 2.5 Clinical Overview section for my active project. Use our existing data and flag anything that needs decisions.',
+                        icon: FileText,
+                      },
+                      {
+                        title: 'Find a 510(k) precedent',
+                        prompt:
+                          'Find 510(k) predicate devices similar to my device and summarize the substantial equivalence paths.',
+                        icon: BookOpen,
+                      },
+                      {
+                        title: 'Plan my biostat SAP',
+                        prompt:
+                          'Help me draft a Statistical Analysis Plan (SAP) outline for my pivotal study, including endpoints, power, and interim analysis.',
+                        icon: BarChart2,
+                      },
+                      {
+                        title: 'Check submission readiness',
+                        prompt:
+                          'Give me a readiness assessment of my submission: what is missing, what is at risk, and what I should do next.',
+                        icon: CheckCircle,
+                      },
+                    ].map(card => {
+                      const Icon = card.icon;
+                      return (
+                        <button
+                          key={card.title}
+                          type="button"
+                          onClick={() => {
+                            setInput(card.prompt);
+                            requestAnimationFrame(() => inputRef.current?.focus());
+                          }}
+                          className="group text-left rounded-xl border border-stone-200 bg-white p-4 hover:border-stone-300 hover:shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40"
+                        >
+                          <Icon
+                            className="w-4 h-4 text-stone-500 mb-2"
+                            aria-hidden="true"
+                          />
+                          <p className="text-[13px] font-medium text-stone-800 leading-snug group-hover:text-stone-900">
+                            {card.title}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {/* Browse toggle — single ghost link */}
+              <div className="mt-6 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setBrowseAll(b => !b)}
+                  className="text-[12px] text-stone-500 hover:text-stone-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 rounded px-2 py-1"
+                >
+                  {browseAll ? '\u2190 Back to examples' : 'Browse all capabilities \u2192'}
+                </button>
               </div>
             </div>
           </div>

@@ -1,7 +1,7 @@
 {
   "$schema": "UI Surface Registry — tracks status of every shell surface in convergence",
-  "lastUpdated": "2026-04-14T20:00:00Z",
-  "convergencePhase": "WO-1 through WO-6 complete + WO-7 Claude.ai home convergence + WO-8 reference-parity home + WO-9 apps expansion (AppsPage 8\u219225 matching server KNOWN_APP_IDS)",
+  "lastUpdated": "2026-04-14T22:00:00Z",
+  "convergencePhase": "WO-1 through WO-6 complete + WO-7 Claude.ai home convergence + WO-8 reference-parity home + WO-9 apps expansion + WO-10 Browse all capabilities toggle (106 prompts / 19 groups reachable from home)",
   "auditFile": "docs/audits/ANA_UI_FORENSIC_AUDIT_2026-04-05.md",
   "workOrderFile": "docs/plans/ANA_UI_CONVERGENCE_WORK_ORDER_2026-04-05.md",
   "allowedDestinations": ["chats", "projects", "reports", "communication-center", "apps", "settings"],
