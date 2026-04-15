@@ -3552,15 +3552,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     aria-label="Search chat"
                   />
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSettingsOpen(true)}
-                  className="h-8 px-3 text-[12px] text-stone-700 border-stone-200"
-                >
-                  Invite
-                </Button>
+                {/* Invite button hidden until a real invite flow ships.
+                    Reference screenshot shows "Invite" here but we don't fake
+                    launchers — re-enable when the invite handler exists. */}
                 <Button
                   type="button"
                   size="sm"
