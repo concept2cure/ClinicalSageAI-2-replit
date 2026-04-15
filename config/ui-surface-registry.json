@@ -1,7 +1,7 @@
 {
   "$schema": "UI Surface Registry — tracks status of every shell surface in convergence",
-  "lastUpdated": "2026-04-14T18:00:00Z",
-  "convergencePhase": "WO-1 through WO-6 complete + WO-7 Claude.ai home convergence + WO-8 reference-parity home (icon rail + top bar + centered orb/greeting/cards)",
+  "lastUpdated": "2026-04-14T20:00:00Z",
+  "convergencePhase": "WO-1 through WO-6 complete + WO-7 Claude.ai home convergence + WO-8 reference-parity home + WO-9 apps expansion (AppsPage 8\u219225 matching server KNOWN_APP_IDS)",
   "auditFile": "docs/audits/ANA_UI_FORENSIC_AUDIT_2026-04-05.md",
   "workOrderFile": "docs/plans/ANA_UI_CONVERGENCE_WORK_ORDER_2026-04-05.md",
   "allowedDestinations": ["chats", "projects", "reports", "communication-center", "apps", "settings"],
@@ -165,7 +165,9 @@
         "component": "AppsPage.tsx",
         "componentPath": "client/src/concept2cure/pages/AppsPage.tsx",
         "navId": "apps",
-        "notes": "2026-04-06 Apps Convergence (25\u219220): ChatGPT-style app directory consolidated by use case after SME code audit. 4 categories: Strategy & Research (3), Submission Authoring (5), Intelligence & Analysis (4), Quality & Lifecycle (8). Two new merged hubs use chat-first priming: 'device-strategy' (merges device-pathway + q-submission + predicate-finder) and 'device-engineering' (merges risk-management + samd-cybersecurity + human-factors + biocompatibility). All 17 backend-rich apps preserved (real services, tool panels, workspace views, embedded modules). 9 legacy IDs preserved as fallthrough cases for back-compat with stored nav targets, saved actions, and project app connections. Server KNOWN_APP_IDS, useProjectApps catalog, and @-mention list synced."
+        "catalogCount": 25,
+        "groups": ["Strategy & Research", "Submission Authoring", "Intelligence & Analysis", "Quality & Lifecycle"],
+        "notes": "2026-04-14 WO-9: AppsPage expanded from 8 cards in 3 categories to 25 cards in 4 categories matching server KNOWN_APP_IDS exactly. Previously-hidden apps surfaced: device-strategy, ind-authoring, cmc, report-engine, regulatory-intelligence (RIM), csr-intelligence, protocol-designer, device-engineering, dossier-navigator, ectd-navigator, document-vault, sop-management, capa-management, post-market, inspection-readiness, compliance-monitor, evidence-engine. Nav handler extended with two new resolver paths: (a) tool-panel mapping for apps that live as project-scoped drawers (ectd, protocol, sop, capa, pms, inspection, intelligence, vault); (b) seed-chat starters for apps that open project-home with an AnA-contextual prompt (device-strategy, ind-authoring, cmc, safety-narrative, report-engine, csr-intelligence, device-engineering, dossier-navigator, compliance-monitor, evidence-engine). All 25 cards visible (disabled if no active project). No new component files."
       },
       "settings": {
         "status": "active",

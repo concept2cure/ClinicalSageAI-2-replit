@@ -18,6 +18,23 @@ import {
   Microscope,
   Layers,
   ArrowRight,
+  Brain,
+  Activity,
+  FileSearch,
+  BookOpen,
+  Shield,
+  ShieldCheck,
+  ClipboardList,
+  ClipboardCheck,
+  FolderOpen,
+  TrendingUp,
+  Cog,
+  Wrench,
+  Map as MapIcon,
+  BarChart2,
+  Compass,
+  FileStack,
+  GitBranch,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -30,7 +47,7 @@ interface AppCard {
   tracks: string[];
 }
 
-type GroupKey = 'strategy' | 'builders' | 'studios';
+type GroupKey = 'strategy' | 'authoring' | 'intelligence' | 'lifecycle';
 
 // ─── Track definitions ────────────────────────────────────────────────────────
 
@@ -39,27 +56,52 @@ const DEVICE_TYPES = ['510K', 'PMA', 'DE_NOVO', 'EUA', 'IVDR'];
 
 // ─── App definitions (no color per-app — group color only) ────────────────────
 
+// ── Strategy & Research ──
 const STRATEGY_APPS: AppCard[] = [
   { id: 'deep-research', label: 'Deep Research', description: 'Search ClinicalTrials.gov, PubMed, FDA, EMA and more', icon: <SearchIcon className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
   { id: 'precedent-intelligence', label: 'Precedent Intelligence', description: 'Regulatory precedent analysis and comparison', icon: <Scale className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
+  { id: 'device-strategy', label: 'Device Strategy', description: 'Device pathway, Q-submissions, and predicate finding', icon: <Compass className="w-5 h-5" />, tracks: [...DEVICE_TYPES] },
 ];
 
-const BUILDER_APPS: AppCard[] = [
-  { id: 'device-diagnostics-workbench', label: 'Device & Diagnostics Workbench', description: 'Unified 510(k), PMA, CER, project, collaboration, and eSTAR submission journey', icon: <Layers className="w-5 h-5" />, tracks: [...DEVICE_TYPES] },
+// ── Submission Authoring ──
+const AUTHORING_APPS: AppCard[] = [
+  { id: 'device-diagnostics-workbench', label: 'Device & Diagnostics Workbench', description: 'Unified 510(k), PMA, CER, and eSTAR submission journey', icon: <Layers className="w-5 h-5" />, tracks: [...DEVICE_TYPES] },
   { id: '510k-workspace', label: '510(k) Workspace', description: 'Predicate comparison, SE testing, submission package', icon: <FileText className="w-5 h-5" />, tracks: ['510K', 'DE_NOVO'] },
   { id: 'pma-workspace', label: 'PMA Workspace', description: 'Premarket approval application workspace', icon: <Heart className="w-5 h-5" />, tracks: ['PMA'] },
   { id: 'cer-generator', label: 'CER Generator', description: 'Clinical evaluation report for EU MDR/IVDR', icon: <Microscope className="w-5 h-5" />, tracks: ['IVDR', ...DEVICE_TYPES] },
+  { id: 'ind-authoring', label: 'IND Authoring', description: 'Investigational New Drug application authoring', icon: <Beaker className="w-5 h-5" />, tracks: ['IND'] },
+  { id: 'cmc', label: 'CMC', description: 'Chemistry, Manufacturing, and Controls module 3 authoring', icon: <Cog className="w-5 h-5" />, tracks: [...PHARMA_TYPES] },
   { id: 'safety-narrative', label: 'Safety Narrative', description: 'Safety narrative builder for submissions', icon: <Stethoscope className="w-5 h-5" />, tracks: [...PHARMA_TYPES, 'PMA'] },
+  { id: 'report-engine', label: 'Report Engine', description: 'Generate intelligent regulatory reports and exports', icon: <FileStack className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
 ];
 
-const STUDIO_APPS: AppCard[] = [
-  { id: 'biostatistics', label: 'Biostatistics', description: 'Statistical analysis, power calculations, endpoints', icon: <Beaker className="w-5 h-5" />, tracks: [...PHARMA_TYPES, 'PMA'] },
+// ── Intelligence & Analysis ──
+const INTELLIGENCE_APPS: AppCard[] = [
+  { id: 'regulatory-intelligence', label: 'Regulatory Intelligence (RIM)', description: 'Reviewer deficiency pattern learning and submission risk signals', icon: <Brain className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
+  { id: 'csr-intelligence', label: 'CSR Intelligence', description: 'Clinical Study Report analysis and auto-completion', icon: <FileSearch className="w-5 h-5" />, tracks: [...PHARMA_TYPES, 'PMA'] },
+  { id: 'biostatistics', label: 'Biostatistics', description: 'Statistical analysis, power calculations, endpoints', icon: <BarChart2 className="w-5 h-5" />, tracks: [...PHARMA_TYPES, 'PMA'] },
+  { id: 'protocol-designer', label: 'Protocol Designer', description: 'Clinical trial protocol authoring and endpoint design', icon: <BookOpen className="w-5 h-5" />, tracks: [...PHARMA_TYPES, 'PMA'] },
+];
+
+// ── Quality & Lifecycle ──
+const LIFECYCLE_APPS: AppCard[] = [
+  { id: 'device-engineering', label: 'Device Engineering', description: 'Risk management, SaMD cybersecurity, human factors, biocompatibility', icon: <Wrench className="w-5 h-5" />, tracks: [...DEVICE_TYPES] },
+  { id: 'dossier-navigator', label: 'Dossier Navigator', description: 'Navigate the full submission dossier and gap-map', icon: <MapIcon className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
+  { id: 'ectd-navigator', label: 'eCTD Navigator', description: 'eCTD structure, leaf assignment, and sequencing', icon: <GitBranch className="w-5 h-5" />, tracks: [...PHARMA_TYPES] },
+  { id: 'document-vault', label: 'Document Vault', description: 'Governed document storage and retrieval', icon: <FolderOpen className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
+  { id: 'sop-management', label: 'SOP Management', description: 'Standard Operating Procedure authoring and governance', icon: <ClipboardList className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
+  { id: 'capa-management', label: 'CAPA Management', description: 'Corrective & Preventive Action workflow', icon: <ShieldCheck className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
+  { id: 'post-market', label: 'Post-Market Surveillance', description: 'Pharmacovigilance and safety signal tracking', icon: <TrendingUp className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
+  { id: 'inspection-readiness', label: 'Inspection Readiness', description: 'FDA/EMA inspection preparedness assessment', icon: <ClipboardCheck className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
+  { id: 'compliance-monitor', label: 'Compliance Monitor', description: 'Continuous compliance checks across projects and SOPs', icon: <Shield className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
+  { id: 'evidence-engine', label: 'Evidence Engine', description: 'Aggregate evidence base and defensibility scoring', icon: <Activity className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
 ];
 
 const GROUPS: { key: GroupKey; label: string; apps: AppCard[] }[] = [
-  { key: 'strategy', label: 'Strategy & Evidence', apps: STRATEGY_APPS },
-  { key: 'builders', label: 'Builders', apps: BUILDER_APPS },
-  { key: 'studios', label: 'Specialist Studios', apps: STUDIO_APPS },
+  { key: 'strategy', label: 'Strategy & Research', apps: STRATEGY_APPS },
+  { key: 'authoring', label: 'Submission Authoring', apps: AUTHORING_APPS },
+  { key: 'intelligence', label: 'Intelligence & Analysis', apps: INTELLIGENCE_APPS },
+  { key: 'lifecycle', label: 'Quality & Lifecycle', apps: LIFECYCLE_APPS },
 ];
 
 // ─── Components ───────────────────────────────────────────────────────────────

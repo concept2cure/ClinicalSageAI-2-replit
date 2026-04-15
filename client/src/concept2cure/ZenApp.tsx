@@ -2290,45 +2290,89 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   <AppsPage
                     submissionType={activeProject?.type}
                     onNavigate={id => {
+                      // Tool-panel mapping for apps that live as a project-scoped
+                      // tool panel (eCTD Navigator, Protocol Designer, SOP, etc.)
+                      const TOOL_PANEL_MAP: Record<
+                        string,
+                        'ectd' | 'protocol' | 'sop' | 'capa' | 'pms' | 'inspection' | 'intelligence' | 'vault' | 'ana-biostats'
+                      > = {
+                        'ectd-navigator': 'ectd',
+                        'protocol-designer': 'protocol',
+                        'sop-management': 'sop',
+                        'capa-management': 'capa',
+                        'post-market': 'pms',
+                        'inspection-readiness': 'inspection',
+                        'regulatory-intelligence': 'intelligence',
+                        'document-vault': 'vault',
+                      };
+
+                      // Starter messages for apps that seed an AnA conversation.
+                      const SEED_MESSAGE: Record<string, string> = {
+                        'device-strategy': 'Help me plan the device pathway for my project — 510(k) vs De Novo vs PMA, Q-submission readiness, and predicate strategy.',
+                        'ind-authoring': 'Help me author my IND application — Modules 1, 2, and 3 priorities, gap analysis, and next steps.',
+                        'cmc': 'Walk me through a CMC Module 3 evaluation for my project — what we have, what\u2019s missing, and risks.',
+                        'safety-narrative': 'Draft a safety narrative using the current project data and flag decisions that need to be made.',
+                        'report-engine': 'Generate an intelligent regulatory report for my project — scope, template, and the data I need.',
+                        'csr-intelligence': 'Analyse my Clinical Study Report draft — integrity, consistency, and auto-complete what you can.',
+                        'device-engineering': 'Help me plan device engineering deliverables — risk management (ISO 14971), SaMD cybersecurity, human factors, biocompatibility.',
+                        'dossier-navigator': 'Show me my submission dossier map — sections, status, gaps, and priorities.',
+                        'compliance-monitor': 'Run continuous compliance checks across my project, SOPs, and artifacts. What\u2019s out of policy?',
+                        'evidence-engine': 'Aggregate my evidence base and score defensibility — what\u2019s strong, what\u2019s weak, what else should I gather?',
+                      };
+
+                      // Explicit routes that already exist
                       switch (id) {
                         case 'deep-research':
                           requireActiveProject('deep-research');
-                          break;
+                          return;
                         case 'precedent-intelligence':
                           requireActiveProject('precedent-intelligence');
-                          break;
-                        case 'safety-narrative':
-                          requireActiveProject('safety-narrative');
-                          break;
+                          return;
                         case 'biostatistics':
                           if (requireActiveProject('regulatory-workspace')) {
                             setActiveToolPanel('ana-biostats');
                           }
-                          break;
+                          return;
                         case '510k-workspace':
                           if (activeProjectId)
                             navigate(`/concept2cure/project/${activeProjectId}/510k`);
                           else setLayoutMode('projects');
-                          break;
+                          return;
                         case 'pma-workspace':
                           if (activeProjectId)
                             navigate(`/concept2cure/project/${activeProjectId}/pma`);
                           else setLayoutMode('projects');
-                          break;
+                          return;
                         case 'cer-generator':
                           if (activeProjectId)
                             navigate(`/concept2cure/project/${activeProjectId}/cer`);
                           else setLayoutMode('projects');
-                          break;
+                          return;
                         case 'device-diagnostics-workbench':
                           requireActiveProject('device-diagnostics-workbench');
-                          break;
-                        default:
-                          // All apps in the catalog have explicit routes above.
-                          // If somehow an unknown app ID arrives, go to projects.
-                          setLayoutMode('projects');
-                          break;
+                          return;
                       }
+
+                      // Tool-panel apps: open project-home + set the active tool panel
+                      const toolPanel = TOOL_PANEL_MAP[id];
+                      if (toolPanel) {
+                        if (requireActiveProject('regulatory-workspace')) {
+                          setActiveToolPanel(toolPanel);
+                        }
+                        return;
+                      }
+
+                      // Seed-chat apps: route to project and queue an AnA starter
+                      const seed = SEED_MESSAGE[id];
+                      if (seed) {
+                        if (requireActiveProject('regulatory-workspace')) {
+                          setExternalChatMessage({ text: seed, ts: Date.now() });
+                        }
+                        return;
+                      }
+
+                      // Unknown app ID — fall back to projects
+                      setLayoutMode('projects');
                     }}
                     activeProjectId={activeProjectId}
                     activeProjectName={activeProject?.name}
