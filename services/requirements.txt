@@ -1,6 +1,6 @@
 # Requirements for service-level scripts and tests
 python-docx==0.8.11
-pytest==9.0.2
+pytest==9.0.3
 
 # Queue and Broker
 celery==5.6.3
