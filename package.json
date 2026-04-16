@@ -290,7 +290,7 @@
     "react-pdf": "^9.2.1",
     "react-resizable-panels": "^2.1.4",
     "react-router-dom": "^6.28.2",
-    "react-window": "^1.8.10",
+    "react-window": "^2.2.7",
     "reactflow": "11.11.4",
     "recharts": "^2.13.0",
     "remark-parse": "^11.0.0",
