@@ -313,27 +313,27 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
       {/* Header with generate button */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Document Generation</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-base font-semibold text-stone-900">Document generation</h2>
+          <p className="text-sm text-stone-500">
             Generate and manage 510(k) documents and FDA forms
           </p>
         </div>
         <Button
           onClick={handleGenerateDocuments}
           disabled={loading}
-          size="lg"
+          size="sm"
           className="gap-2"
           data-testid="generate-documents"
         >
           {loading ? (
             <>
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
               Generating...
             </>
           ) : (
             <>
-              <FileCheck className="h-5 w-5" />
-              Generate All Documents
+              <FileCheck className="h-4 w-4" />
+              Generate all documents
             </>
           )}
         </Button>
@@ -400,21 +400,24 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
 
       {/* Empty state */}
       {!mainDocument && forms.length === 0 && !loading && (
-        <Card className="border-dashed">
+        <Card className="border-dashed border-stone-300 bg-stone-50/50">
           <CardContent className="pt-6">
             <div className="text-center space-y-3">
-              <FileText className="h-12 w-12 mx-auto text-muted-foreground" />
-              <h3 className="text-lg font-medium">No Documents Yet</h3>
-              <p className="text-sm text-muted-foreground">
-                Generate your 510(k) documents and FDA forms from your workflow data.
+              <FileText className="h-10 w-10 mx-auto text-stone-300" />
+              <h3 className="text-sm font-medium text-stone-700">No documents yet</h3>
+              <p className="text-xs text-stone-500 max-w-md mx-auto">
+                Generate your 510(k) submission documents and FDA forms (3514, 3601, 3881, 3674)
+                from the workflow data you have entered so far. You can edit and version them
+                after generation.
               </p>
               <Button
                 onClick={handleGenerateDocuments}
+                size="sm"
                 className="mt-4"
                 data-testid="generate-documents-empty"
               >
                 <FileCheck className="h-4 w-4 mr-2" />
-                Generate Documents Now
+                Generate documents
               </Button>
             </div>
           </CardContent>

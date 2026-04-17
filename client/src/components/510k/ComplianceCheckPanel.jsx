@@ -611,7 +611,7 @@ const ComplianceCheckPanel = ({
                         ) : (
                           <>
                             <Gauge className="mr-2 h-4 w-4" />
-                            <span>Run Risk Assessment</span>
+                            <span>Run risk assessment</span>
                           </>
                         )}
                       </Button>

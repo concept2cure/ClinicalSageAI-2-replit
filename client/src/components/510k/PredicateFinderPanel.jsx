@@ -902,7 +902,7 @@ const PredicateFinderPanel = ({
                   ) : (
                     <Search className="h-4 w-4" />
                   )}
-                  <span>{isSearching ? 'Searching...' : 'Search FDA Database'}</span>
+                  <span>{isSearching ? 'Searching...' : 'Search FDA database'}</span>
                 </Button>
 
                 {selectedPredicates.length > 0 && (
