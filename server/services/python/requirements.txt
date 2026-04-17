@@ -1,7 +1,7 @@
 # Python Backend Service - Unified dependencies for all Python services
 # FastAPI and web framework dependencies
 fastapi==0.135.3
-uvicorn[standard]==0.25.0
+uvicorn[standard]==0.44.0
 pydantic[email]==2.13.1
 pydantic-settings>=2.0.0
 python-multipart==0.0.26
@@ -29,7 +29,7 @@ openpyxl==3.1.5
 # AI/NLP dependencies
 # AI/NLP dependencies
 openai==2.32.0
-transformers==5.4.0
+transformers==5.5.4
 torch==2.11.0
 sentence-transformers==2.2.2
 
