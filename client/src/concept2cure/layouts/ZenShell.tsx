@@ -148,7 +148,14 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
 
     {/* Right section */}
     <div className="flex items-center gap-1">
-      <Button type="button" variant="ghost" size="icon" onClick={onSearchClick} className="h-8 w-8" aria-label="Search">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={onSearchClick}
+        className="h-8 w-8"
+        aria-label="Search"
+      >
         <Search className="w-4 h-4" />
       </Button>
       <Button
@@ -171,7 +178,14 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
       >
         <Settings className="w-4 h-4" />
       </Button>
-      <Button type="button" variant="ghost" size="icon" onClick={onProfileClick} className="h-8 w-8" aria-label="Profile">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={onProfileClick}
+        className="h-8 w-8"
+        aria-label="Profile"
+      >
         <div className="w-6 h-6 rounded-full bg-stone-800 flex items-center justify-center">
           <span className="text-xs font-medium text-white">U</span>
         </div>
@@ -191,7 +205,9 @@ const ContextHeader: React.FC<ContextHeaderProps> = ({ projectName, projectType 
       <p className="text-xs uppercase tracking-wide text-stone-500">Context Header</p>
       <p className="text-sm font-medium text-stone-900">
         {projectName || 'No active project'}
-        {projectType ? <span className="ml-2 rounded bg-stone-100 px-1.5 py-0.5 text-xs">{projectType}</span> : null}
+        {projectType ? (
+          <span className="ml-2 rounded bg-stone-100 px-1.5 py-0.5 text-xs">{projectType}</span>
+        ) : null}
       </p>
     </div>
     <div className="hidden md:flex items-center gap-2 text-xs text-stone-500">
@@ -219,7 +235,9 @@ const CommandBar: React.FC<CommandBarProps> = ({ onOpenCommandPalette }) => (
       aria-label="Open command bar"
     >
       <Search className="w-4 h-4 text-stone-400" />
-      <span className="flex-1 text-sm text-stone-500">Command Bar: Search actions, projects, and workflows…</span>
+      <span className="flex-1 text-sm text-stone-500">
+        Command Bar: Search actions, projects, and workflows…
+      </span>
       <kbd className="rounded border bg-stone-50 px-1.5 py-0.5 text-xs text-stone-500">⌘K</kbd>
     </Button>
   </div>
@@ -241,7 +259,9 @@ const RightDrawer: React.FC<RightDrawerProps> = ({ isOpen }) => {
       <div className="p-4 space-y-3">
         <div className="rounded-lg border border-stone-200 p-3">
           <p className="text-xs text-stone-500 mb-1">Active workflow</p>
-          <p className="text-sm font-medium text-stone-900 inline-flex items-center gap-2"><Workflow className="w-4 h-4 text-stone-700" /> Draft to Submission</p>
+          <p className="text-sm font-medium text-stone-900 inline-flex items-center gap-2">
+            <Workflow className="w-4 h-4 text-stone-700" /> Draft to Submission
+          </p>
         </div>
         <div className="rounded-lg border border-stone-200 p-3">
           <p className="text-xs text-stone-500 mb-1">AnA focus</p>
@@ -731,34 +751,34 @@ export const ZenShell: React.FC<ZenShellProps> = ({ children }) => {
         projects={mockProjects}
         activeProjectId={activeProjectId}
         onSelectProject={setActiveProjectId}
-        onNewProject={() => window.location.href = '/concept2cure/projects/new'}
-        onNewChat={() => window.location.href = '/concept2cure/chat'}
+        onNewProject={() => (window.location.href = '/concept2cure/projects/new')}
+        onNewChat={() => (window.location.href = '/concept2cure/chat')}
       />
 
       {/* Main area */}
       <div className="flex-1 flex min-w-0">
         <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <ZenHeader
-          projects={mockProjects}
-          activeProjectId={activeProjectId}
-          onProjectChange={setActiveProjectId}
-          projectName={activeProject?.name}
-          onMenuClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-          onSearchClick={() => setCommandPaletteOpen(true)}
-          onSettingsClick={() => window.location.href = '/concept2cure/settings'}
-          onProfileClick={() => window.location.href = '/concept2cure/profile'}
-          onToggleRightDrawer={() => setRightDrawerOpen(prev => !prev)}
-          isSidebarOpen={mobileSidebarOpen}
-          rightDrawerOpen={rightDrawerOpen}
-        />
+          {/* Header */}
+          <ZenHeader
+            projects={mockProjects}
+            activeProjectId={activeProjectId}
+            onProjectChange={setActiveProjectId}
+            projectName={activeProject?.name}
+            onMenuClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+            onSearchClick={() => setCommandPaletteOpen(true)}
+            onSettingsClick={() => (window.location.href = '/concept2cure/settings')}
+            onProfileClick={() => (window.location.href = '/concept2cure/profile')}
+            onToggleRightDrawer={() => setRightDrawerOpen(prev => !prev)}
+            isSidebarOpen={mobileSidebarOpen}
+            rightDrawerOpen={rightDrawerOpen}
+          />
 
-        <ContextHeader projectName={activeProject?.name} projectType={activeProject?.type} />
+          <ContextHeader projectName={activeProject?.name} projectType={activeProject?.type} />
 
-        <CommandBar onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
+          <CommandBar onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
 
-        {/* Content */}
-        <main className="flex-1 overflow-hidden">{children}</main>
+          {/* Content */}
+          <main className="flex-1 overflow-hidden">{children}</main>
         </div>
 
         <RightDrawer isOpen={rightDrawerOpen} />

@@ -59,7 +59,11 @@ const AppHeader = () => {
                   <Link href="/dashboard">
                     <a
                       onClick={handleNavigation}
-                      className={`px-3 py-2 rounded-md text-sm font-medium ${location === '/dashboard' ? 'text-pink-600' : 'text-gray-700 hover:text-gray-900'}`}
+                      className={`px-3 py-2 rounded-md text-sm font-medium ${
+                        location === '/dashboard'
+                          ? 'text-pink-600'
+                          : 'text-gray-700 hover:text-gray-900'
+                      }`}
                     >
                       Dashboard
                     </a>
@@ -67,7 +71,11 @@ const AppHeader = () => {
                   <Link href="/vault">
                     <a
                       onClick={handleNavigation}
-                      className={`px-3 py-2 rounded-md text-sm font-medium ${location === '/vault' ? 'text-pink-600' : 'text-gray-700 hover:text-gray-900'}`}
+                      className={`px-3 py-2 rounded-md text-sm font-medium ${
+                        location === '/vault'
+                          ? 'text-pink-600'
+                          : 'text-gray-700 hover:text-gray-900'
+                      }`}
                     >
                       Vault
                     </a>
@@ -75,7 +83,11 @@ const AppHeader = () => {
                   <Link href="/csr-intelligence">
                     <a
                       onClick={handleNavigation}
-                      className={`px-3 py-2 rounded-md text-sm font-medium ${location === '/csr-intelligence' ? 'text-pink-600' : 'text-gray-700 hover:text-gray-900'}`}
+                      className={`px-3 py-2 rounded-md text-sm font-medium ${
+                        location === '/csr-intelligence'
+                          ? 'text-pink-600'
+                          : 'text-gray-700 hover:text-gray-900'
+                      }`}
                     >
                       CSR Intelligence
                     </a>
@@ -83,7 +95,11 @@ const AppHeader = () => {
                   <Link href="/study-architect">
                     <a
                       onClick={handleNavigation}
-                      className={`px-3 py-2 rounded-md text-sm font-medium ${location === '/study-architect' ? 'text-pink-600' : 'text-gray-700 hover:text-gray-900'}`}
+                      className={`px-3 py-2 rounded-md text-sm font-medium ${
+                        location === '/study-architect'
+                          ? 'text-pink-600'
+                          : 'text-gray-700 hover:text-gray-900'
+                      }`}
                     >
                       Study Architect
                     </a>
@@ -139,7 +155,7 @@ const AppHeader = () => {
                       <button
                         type="button"
                         className="block w-full text-left px-4 py-3 hover:bg-gray-50 border-l-2 border-pink-500"
-                        onClick={() => window.location.href = '/csr-intelligence'}
+                        onClick={() => (window.location.href = '/csr-intelligence')}
                       >
                         <div className="flex">
                           <div className="flex-shrink-0">
@@ -156,7 +172,11 @@ const AppHeader = () => {
                         </div>
                       </button>
 
-                      <button type="button" className="block w-full text-left px-4 py-3 hover:bg-gray-50" onClick={() => window.location.href = '/vault'}>
+                      <button
+                        type="button"
+                        className="block w-full text-left px-4 py-3 hover:bg-gray-50"
+                        onClick={() => (window.location.href = '/vault')}
+                      >
                         <div className="flex">
                           <div className="flex-shrink-0">
                             <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">
@@ -172,7 +192,11 @@ const AppHeader = () => {
                         </div>
                       </button>
 
-                      <button type="button" className="block w-full text-left px-4 py-3 hover:bg-gray-50" onClick={() => window.location.href = '/study-architect'}>
+                      <button
+                        type="button"
+                        className="block w-full text-left px-4 py-3 hover:bg-gray-50"
+                        onClick={() => (window.location.href = '/study-architect')}
+                      >
                         <div className="flex">
                           <div className="flex-shrink-0">
                             <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-500">
@@ -193,7 +217,7 @@ const AppHeader = () => {
                       <button
                         type="button"
                         className="text-xs text-center text-pink-600 hover:text-pink-800 block w-full"
-                        onClick={() => window.location.href = '/notifications'}
+                        onClick={() => (window.location.href = '/notifications')}
                       >
                         View all notifications
                       </button>
@@ -223,17 +247,33 @@ const AppHeader = () => {
               {showUserMenu && (
                 <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
                   <div className="py-1">
-                    <button type="button" className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => window.location.href = '/profile'}>
+                    <button
+                      type="button"
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => (window.location.href = '/profile')}
+                    >
                       Your Profile
                     </button>
-                    <button type="button" className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => window.location.href = '/settings'}>
+                    <button
+                      type="button"
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => (window.location.href = '/settings')}
+                    >
                       Settings
                     </button>
-                    <button type="button" className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => window.location.href = '/client-settings'}>
+                    <button
+                      type="button"
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => (window.location.href = '/client-settings')}
+                    >
                       Client Settings
                     </button>
                     <div className="border-t border-gray-100"></div>
-                    <button type="button" className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100" onClick={() => window.location.href = '/logout'}>
+                    <button
+                      type="button"
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      onClick={() => (window.location.href = '/logout')}
+                    >
                       Sign out
                     </button>
                   </div>
@@ -274,7 +314,11 @@ const AppHeader = () => {
             <Link href="/dashboard">
               <a
                 onClick={handleNavigation}
-                className={`block px-3 py-2 rounded-md text-base font-medium ${location === '/dashboard' ? 'text-pink-600 bg-pink-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                  location === '/dashboard'
+                    ? 'text-pink-600 bg-pink-50'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
               >
                 Dashboard
               </a>
@@ -282,7 +326,11 @@ const AppHeader = () => {
             <Link href="/vault">
               <a
                 onClick={handleNavigation}
-                className={`block px-3 py-2 rounded-md text-base font-medium ${location === '/vault' ? 'text-pink-600 bg-pink-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                  location === '/vault'
+                    ? 'text-pink-600 bg-pink-50'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
               >
                 Vault
               </a>
@@ -290,7 +338,11 @@ const AppHeader = () => {
             <Link href="/csr-intelligence">
               <a
                 onClick={handleNavigation}
-                className={`block px-3 py-2 rounded-md text-base font-medium ${location === '/csr-intelligence' ? 'text-pink-600 bg-pink-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                  location === '/csr-intelligence'
+                    ? 'text-pink-600 bg-pink-50'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
               >
                 CSR Intelligence
               </a>
@@ -298,7 +350,11 @@ const AppHeader = () => {
             <Link href="/study-architect">
               <a
                 onClick={handleNavigation}
-                className={`block px-3 py-2 rounded-md text-base font-medium ${location === '/study-architect' ? 'text-pink-600 bg-pink-50' : 'text-gray-600 hover:bg-gray-50'}`}
+                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                  location === '/study-architect'
+                    ? 'text-pink-600 bg-pink-50'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
               >
                 Study Architect
               </a>
@@ -332,28 +388,28 @@ const AppHeader = () => {
               <button
                 type="button"
                 className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50"
-                onClick={() => window.location.href = '/profile'}
+                onClick={() => (window.location.href = '/profile')}
               >
                 Your Profile
               </button>
               <button
                 type="button"
                 className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50"
-                onClick={() => window.location.href = '/settings'}
+                onClick={() => (window.location.href = '/settings')}
               >
                 Settings
               </button>
               <button
                 type="button"
                 className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50"
-                onClick={() => window.location.href = '/client-settings'}
+                onClick={() => (window.location.href = '/client-settings')}
               >
                 Client Settings
               </button>
               <button
                 type="button"
                 className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-gray-50"
-                onClick={() => window.location.href = '/logout'}
+                onClick={() => (window.location.href = '/logout')}
               >
                 Sign out
               </button>

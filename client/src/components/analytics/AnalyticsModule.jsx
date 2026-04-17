@@ -185,7 +185,11 @@ const AnalyticsModule = () => {
                     <div className="text-sm text-gray-500">John Smith</div>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button type="button" className="text-primary hover:text-primary-dark" aria-label="Download Enrollment Analytics report">
+                    <button
+                      type="button"
+                      className="text-primary hover:text-primary-dark"
+                      aria-label="Download Enrollment Analytics report"
+                    >
                       <Download className="h-4 w-4" />
                     </button>
                   </td>
@@ -206,7 +210,11 @@ const AnalyticsModule = () => {
                     <div className="text-sm text-gray-500">Jane Doe</div>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button type="button" className="text-primary hover:text-primary-dark" aria-label="Download Protocol Change Analysis report">
+                    <button
+                      type="button"
+                      className="text-primary hover:text-primary-dark"
+                      aria-label="Download Protocol Change Analysis report"
+                    >
                       <Download className="h-4 w-4" />
                     </button>
                   </td>
@@ -225,7 +233,11 @@ const AnalyticsModule = () => {
                     <div className="text-sm text-gray-500">Robert Chen</div>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button type="button" className="text-primary hover:text-primary-dark" aria-label="Download FDA Submission Tracking report">
+                    <button
+                      type="button"
+                      className="text-primary hover:text-primary-dark"
+                      aria-label="Download FDA Submission Tracking report"
+                    >
                       <Download className="h-4 w-4" />
                     </button>
                   </td>

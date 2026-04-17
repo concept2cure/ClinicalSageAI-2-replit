@@ -207,7 +207,7 @@ const AppSidebar = () => {
               <button
                 type="button"
                 className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
-                onClick={() => window.location.href = '/admin/team'}
+                onClick={() => (window.location.href = '/admin/team')}
               >
                 <Users className="mr-3 flex-shrink-0 h-5 w-5 text-gray-500" />
                 <span>Team Management</span>
@@ -215,7 +215,7 @@ const AppSidebar = () => {
               <button
                 type="button"
                 className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
-                onClick={() => window.location.href = '/settings'}
+                onClick={() => (window.location.href = '/settings')}
               >
                 <Settings className="mr-3 flex-shrink-0 h-5 w-5 text-gray-500" />
                 <span>Settings</span>
@@ -223,7 +223,7 @@ const AppSidebar = () => {
               <button
                 type="button"
                 className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
-                onClick={() => window.location.href = '/admin/audit-logs'}
+                onClick={() => (window.location.href = '/admin/audit-logs')}
               >
                 <Activity className="mr-3 flex-shrink-0 h-5 w-5 text-gray-500" />
                 <span>Audit Logs</span>
@@ -243,7 +243,7 @@ const AppSidebar = () => {
               <button
                 type="button"
                 className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
-                onClick={() => window.location.href = '/docs'}
+                onClick={() => (window.location.href = '/docs')}
               >
                 <HelpCircle className="mr-3 flex-shrink-0 h-5 w-5 text-gray-500" />
                 <span>Documentation</span>
@@ -251,7 +251,7 @@ const AppSidebar = () => {
               <button
                 type="button"
                 className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
-                onClick={() => window.location.href = '/resources'}
+                onClick={() => (window.location.href = '/resources')}
               >
                 <Bookmark className="mr-3 flex-shrink-0 h-5 w-5 text-gray-500" />
                 <span>Resources</span>

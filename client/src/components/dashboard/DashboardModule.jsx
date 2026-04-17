@@ -312,7 +312,10 @@ const DashboardModule = () => {
           <div className="bg-white p-5 rounded-lg border border-gray-200">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-medium">Recent Activity</h2>
-              <Link href="/activity" className="text-sm text-pink-600 hover:underline flex items-center">
+              <Link
+                href="/activity"
+                className="text-sm text-pink-600 hover:underline flex items-center"
+              >
                 View All <ArrowRight size={14} className="ml-1" />
               </Link>
             </div>
@@ -349,7 +352,9 @@ const DashboardModule = () => {
                     </div>
                     <div className="mt-1">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getModuleColor(activity.module)}`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getModuleColor(
+                          activity.module
+                        )}`}
                       >
                         {activity.module}
                       </span>
@@ -410,7 +415,9 @@ const DashboardModule = () => {
                   <div className="flex items-start justify-between">
                     <h3 className="font-medium text-sm">{task.title}</h3>
                     <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getPriorityColor(task.priority)}`}
+                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getPriorityColor(
+                        task.priority
+                      )}`}
                     >
                       {task.priority}
                     </span>
