@@ -503,28 +503,52 @@ const EquivalenceBuilderPanel = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    // Auto-fill predicate device details from the database
-                    toast({
-                      title: 'Auto-filling Predicate Details',
-                      description:
-                        'Fetching and populating predicate device information from FDA database.',
-                    });
-
-                    // Simulate fetching data
-                    setTimeout(() => {
-                      setComparisonFeatures(features =>
-                        features.map(feature => ({
-                          ...feature,
-                          predicateDevice:
-                            feature.predicateDevice || `Predicate data for ${feature.name}`,
-                        }))
+                  onClick={async () => {
+                    // Fetch real predicate feature data from the FDA device API.
+                    // Never fabricate feature values — they drive substantial
+                    // equivalence analysis in an FDA submission.
+                    const selected = predicateDevices?.find(p => p.id === selectedPredicateDevice);
+                    if (!selected?.k_number) {
+                      toast({
+                        title: 'No predicate selected',
+                        description: 'Select a predicate device first.',
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
+                    try {
+                      const response = await fetch(
+                        `/api/medical-device/predicate/${selected.k_number}/features`,
+                        { credentials: 'include' }
                       );
-                    }, 1000);
+                      if (!response.ok) throw new Error(`${response.status}`);
+                      const data = await response.json();
+                      if (!Array.isArray(data?.features)) {
+                        throw new Error('No feature data returned');
+                      }
+                      setComparisonFeatures(features =>
+                        features.map(feature => {
+                          const match = data.features.find(f => f.name === feature.name);
+                          return match
+                            ? { ...feature, predicateDevice: match.value || feature.predicateDevice }
+                            : feature;
+                        })
+                      );
+                      toast({
+                        title: 'Predicate features loaded',
+                        description: `Pulled feature data for ${selected.k_number}.`,
+                      });
+                    } catch {
+                      toast({
+                        title: 'Predicate feature data unavailable',
+                        description: 'Fill the comparison manually using the FDA 510(k) summary document.',
+                        variant: 'destructive',
+                      });
+                    }
                   }}
                 >
                   <FileCheck className="h-4 w-4 mr-1" />
-                  Auto-fill Predicate
+                  Auto-fill from FDA summary
                 </Button>
               </div>
             </div>

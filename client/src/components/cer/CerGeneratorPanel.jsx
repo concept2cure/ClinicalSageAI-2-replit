@@ -125,30 +125,19 @@ const CerGeneratorPanel = ({ documentId }) => {
     }
   }, [documentId]);
 
-  // Fetch device data from the database if available
+  // Fetch device data from the backend. Never fabricate a device profile —
+  // regulatory clients must only see their own data.
   const fetchDeviceData = async id => {
     try {
-      // In a real implementation, this would fetch from an API
-      // For this demo, we'll use mock data
-      setTimeout(() => {
-        setDeviceData({
-          name: 'CardioFlex Stent System',
-          manufacturer: 'MedInnovate Technologies',
-          type: 'Coronary Stent',
-          model: 'CFX-100',
-          description:
-            'The CardioFlex Stent System is a flexible, self-expanding nitinol stent designed for improving coronary blood flow in patients with atherosclerotic disease.',
-          indications: ['Coronary artery disease', 'Atherosclerotic lesions', 'Stenotic vessels'],
-          riskClass: 'III',
-          intendedUse:
-            'Treatment of coronary artery disease through minimally invasive stent placement to maintain vessel patency.',
-        });
-
-        toast({
-          title: 'Device data loaded',
-          description: 'Successfully loaded device profile information',
-        });
-      }, 800);
+      const response = await fetch(`/api/device-projects/${id}`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        setDeviceData(null);
+        return;
+      }
+      const data = await response.json();
+      setDeviceData(data?.deviceProfile || data?.project || null);
     } catch (error) {
       console.error('Error fetching device data:', error);
       toast({
@@ -643,37 +632,23 @@ const CerGeneratorPanel = ({ documentId }) => {
           { temperature: 0.2, maxRetries: 2 }
         );
       } catch (complianceError) {
-        console.error('Error in compliance analysis:', complianceError);
-
-        // Create a fallback compliance result
+        // Compliance analysis failed. Never fabricate a compliance score or
+        // compliant/non-compliant lists. Surface the error honestly so the
+        // user knows the check did not run.
         complianceResult = {
-          complianceScore: 65, // Conservative estimate
-          compliance: {
-            compliant: ['Basic device information', 'Intended use description'],
-            nonCompliant: [
-              'Missing technical specifications',
-              'Incomplete clinical evidence',
-              'Limited literature review',
-            ],
-          },
-          gaps: [
-            { issue: 'Compliance analysis error', details: complianceError.message },
-            {
-              issue: 'Manual review required',
-              details: 'Please review the report manually for regulatory compliance',
-            },
-          ],
+          complianceScore: null,
+          compliance: null,
+          error: complianceError?.message || 'Compliance analysis failed',
+          gaps: [],
           recommendations: [
-            'Regenerate report with complete data',
-            'Perform manual compliance check with regulatory expert',
+            'The automated compliance analysis did not complete. Retry the generation or ask the AI assistant to run a compliance review.',
           ],
         };
 
         toast({
-          title: 'Compliance Analysis Issue',
-          description:
-            'There was a problem with the compliance analysis. Using conservative estimates.',
-          variant: 'default',
+          title: 'Compliance analysis unavailable',
+          description: 'The compliance check did not complete. The report will not include a compliance score until you re-run the analysis.',
+          variant: 'destructive',
         });
       }
 
@@ -725,29 +700,17 @@ const CerGeneratorPanel = ({ documentId }) => {
           generatedAt: new Date().toISOString(),
         }));
 
+        const scoreText =
+          typeof complianceResult.complianceScore === 'number'
+            ? ` (compliance score: ${complianceResult.complianceScore}%)`
+            : '';
         toast({
-          title: 'CER Report Generated',
-          description: `Report generated successfully with compliance score: ${complianceResult.complianceScore}%`,
+          title: 'CER report generated',
+          description: `Report generated${scoreText}.`,
           variant: 'default',
         });
 
-        // Auto-switch to the results tab
         setActiveTab('results');
-
-        // Offer to save the report for later
-        setTimeout(() => {
-          const shouldSave = window.confirm(
-            'Would you like to save this report to your document vault for later access?'
-          );
-          if (shouldSave) {
-            // This would connect to a real API in production
-            toast({
-              title: 'Report Saved',
-              description: 'Your report has been saved to the document vault',
-              variant: 'default',
-            });
-          }
-        }, 1000);
       }, 1500);
     } catch (error) {
       console.error('Error in overall report generation process:', error);

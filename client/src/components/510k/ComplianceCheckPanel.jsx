@@ -195,55 +195,39 @@ const ComplianceCheckPanel = ({
     }
 
     actualSetIsAssessingRisks(true);
-    actualSetRiskAssessmentProgress(5);
+    // Indeterminate progress — we do not fabricate progress increments.
+    // The UI shows a spinner until the real backend returns results.
+    actualSetRiskAssessmentProgress(0);
 
     try {
-      // Create simulation of the assessment process since the demo needs to
-      // show real-time progress to investors
-      const simulateProgress = () => {
-        let progress = 5;
-        const intervalId = setInterval(() => {
-          progress += Math.floor(Math.random() * 10) + 5;
-          if (progress > 95) {
-            progress = 95;
-            clearInterval(intervalId);
-          }
-          actualSetRiskAssessmentProgress(progress);
-        }, 1000);
-        return intervalId;
-      };
-
-      const progressInterval = simulateProgress();
-
-      // Call the FDA510kService to get the risk assessment using the predictFdaSubmissionRisks method
-      // which connects to the OpenAI-powered backend
       const results = await FDA510kService.predictFdaSubmissionRisks(
         deviceProfile,
         predicateDevices,
         equivalenceData
       );
 
-      // Clear the progress simulation
-      clearInterval(progressInterval);
+      // Reject responses without a real clearance signal. We never
+      // fabricate a default likelihood for regulatory output.
+      if (!results || typeof results.approvalLikelihood !== 'number') {
+        throw new Error('Backend did not return a clearance likelihood');
+      }
+
       actualSetRiskAssessmentProgress(100);
 
-      // Process the results and convert them to the expected format
-      // The API returns approvalLikelihood but we use clearanceLikelihood in the UI
       const processedResults = {
         ...results,
-        clearanceLikelihood: results.approvalLikelihood || 0.75, // Default to 0.75 if not provided
+        clearanceLikelihood: results.approvalLikelihood,
         assessmentDate: new Date().toISOString(),
         deviceName: deviceProfile.deviceName,
         deviceId: deviceProfile.id,
       };
 
-      // Update state with the assessment results
       actualSetRiskAssessmentData(processedResults);
       actualSetIsAssessingRisks(false);
       actualSetShowRiskDialog(true);
 
       toast({
-        title: 'Risk Assessment Complete',
+        title: 'Risk assessment complete',
         description: `FDA clearance likelihood: ${Math.round(processedResults.clearanceLikelihood * 100)}%`,
         variant: 'default',
       });
