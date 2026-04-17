@@ -147,51 +147,16 @@ const EquivalenceBuilderPanel = ({
   const [activeFeatureForEvidence, setActiveFeatureForEvidence] = useState(null);
   const { toast } = useToast();
 
-  // Verification effect runs first to ensure equivalence analysis is ready
-  useEffect(() => {
-    const verifyEquivalenceReady = async () => {
-      if (deviceProfile?.id) {
-        try {
-          if (predicateDevices && predicateDevices.length > 0) {
-            toast({
-              title: 'Equivalence Analysis Ready',
-              description: 'Found predicate devices for equivalence analysis',
-              duration: 2000,
-            });
-          } else {
-            console.warn('[EquivalenceBuilderPanel] No predicate devices available');
-            toast({
-              title: 'Equivalence Analysis Warning',
-              description: 'No predicate devices available for equivalence analysis',
-              variant: 'destructive',
-              duration: 3000,
-            });
-          }
-        } catch (error) {
-          console.error('[EquivalenceBuilderPanel] Equivalence verification failed:', error);
-        }
-      }
-    };
-
-    verifyEquivalenceReady();
-  }, [deviceProfile, predicateDevices]);
+  // Silently verify predicate devices are present. No toast on mount — the
+  // UI itself surfaces the state (predicate selector or empty state).
 
   useEffect(() => {
     if (predicateDevices?.length > 0) {
       // Force selection of first predicate device regardless of current state
       setSelectedPredicateDevice(predicateDevices[0].id);
-    } else {
-      console.warn('[EquivalenceBuilderPanel] No predicate devices available');
-
-      // Show user-friendly error message
-      toast({
-        title: 'Missing Predicate Devices',
-        description:
-          'No predicate devices are available. Please return to the previous step and select predicates.',
-        variant: 'destructive',
-        duration: 5000,
-      });
     }
+    // No predicates? The UI empty state already tells the user what to do.
+    // We don't spam a destructive toast on mount.
 
     // Pre-populate device-specific data in comparison features
     if (deviceProfile) {
@@ -714,21 +679,21 @@ const EquivalenceBuilderPanel = ({
               <div className="grid grid-cols-3 gap-4">
                 <div className="bg-emerald-50 border border-green-100 rounded-md p-3">
                   <p className="text-sm text-emerald-600 mb-1">Substantially Equivalent</p>
-                  <p className="text-2xl font-bold text-emerald-700">
+                  <p className="text-lg font-semibold text-emerald-700">
                     {comparisonFeatures.filter(f => f.substantial === true).length}
                     <span className="text-sm font-normal text-green-500 ml-1">features</span>
                   </p>
                 </div>
                 <div className="bg-red-50 border border-red-100 rounded-md p-3">
                   <p className="text-sm text-red-600 mb-1">Not Equivalent</p>
-                  <p className="text-2xl font-bold text-red-700">
+                  <p className="text-lg font-semibold text-red-700">
                     {comparisonFeatures.filter(f => f.substantial === false).length}
                     <span className="text-sm font-normal text-red-500 ml-1">features</span>
                   </p>
                 </div>
                 <div className="bg-stone-50 border border-stone-100 rounded-md p-3">
                   <p className="text-sm text-stone-600 mb-1">Not Determined</p>
-                  <p className="text-2xl font-bold text-stone-700">
+                  <p className="text-lg font-semibold text-stone-700">
                     {comparisonFeatures.filter(f => f.substantial === null).length}
                     <span className="text-sm font-normal text-stone-500 ml-1">features</span>
                   </p>
@@ -742,7 +707,7 @@ const EquivalenceBuilderPanel = ({
                 <div className="bg-stone-50 border border-blue-100 rounded-md p-3">
                   <p className="text-sm text-stone-600 mb-1">Literature Support</p>
                   <div className="flex items-baseline">
-                    <p className="text-2xl font-bold text-stone-700">
+                    <p className="text-lg font-semibold text-stone-700">
                       {Object.keys(literatureEvidence).length}
                       <span className="text-sm font-normal text-blue-500 ml-1">features</span>
                     </p>

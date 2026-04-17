@@ -367,7 +367,7 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
               className="flex items-center gap-1 text-xs text-stone-500 hover:text-stone-700 mb-3"
             >
               <ArrowLeft className="w-3 h-3" />
-              Back to Project
+              Back to project
             </button>
           )}
           <div className="flex items-center gap-3 mb-3">
@@ -473,8 +473,8 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
                             {task.name}
                           </span>
                           {task.critical && (
-                            <span className="px-1 py-0.5 text-[8px] font-bold bg-amber-50 text-amber-700 rounded">
-                              CRITICAL
+                            <span className="px-1 py-0.5 text-[8px] font-medium bg-amber-50 text-amber-700 rounded">
+                              Critical
                             </span>
                           )}
                         </div>
@@ -548,8 +548,8 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
                           {task.name}
                         </span>
                         {task.critical && (
-                          <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-stone-900 rounded">
-                            CRITICAL PATH
+                          <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200 rounded">
+                            Critical path
                           </span>
                         )}
                       </div>

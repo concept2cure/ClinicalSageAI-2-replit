@@ -524,12 +524,12 @@ const ESTARBuilderPanel = ({
   ]);
 
   return (
-    <Card className="w-full shadow-md border-stone-200">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b pb-4">
+    <Card className="w-full border-stone-200">
+      <CardHeader className="bg-stone-50 border-b pb-4">
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="text-lg font-semibold text-stone-800 flex items-center">
-              <FileCheck className="h-5 w-5 mr-2 text-stone-600" />
+            <CardTitle className="text-base font-semibold text-stone-800 flex items-center">
+              <FileCheck className="h-4 w-4 mr-2 text-stone-600" />
               eSTAR Builder
               <span className="ml-2 text-xs bg-stone-100 text-stone-700 px-2 py-0.5 rounded-full font-normal">
                 FDA 510(k)
@@ -540,19 +540,19 @@ const ESTARBuilderPanel = ({
             </CardDescription>
           </div>
           {complianceScore > 80 ? (
-            <div className="flex items-center bg-emerald-50 py-1 px-3 rounded-full border border-green-100">
+            <div className="flex items-center bg-emerald-50 py-1 px-3 rounded-full border border-emerald-200">
               <Shield className="h-4 w-4 text-emerald-600 mr-1" />
-              <span className="text-sm font-medium text-emerald-700">Ready for Submission</span>
+              <span className="text-sm font-medium text-emerald-700">Ready to submit</span>
             </div>
           ) : complianceScore > 60 ? (
-            <div className="flex items-center bg-amber-50 py-1 px-3 rounded-full border border-amber-100">
+            <div className="flex items-center bg-amber-50 py-1 px-3 rounded-full border border-amber-200">
               <AlertCircle className="h-4 w-4 text-amber-500 mr-1" />
-              <span className="text-sm font-medium text-amber-700">Minor Issues to Resolve</span>
+              <span className="text-sm font-medium text-amber-700">Minor issues to resolve</span>
             </div>
           ) : (
-            <div className="flex items-center bg-red-50 py-1 px-3 rounded-full border border-red-100">
+            <div className="flex items-center bg-red-50 py-1 px-3 rounded-full border border-red-200">
               <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
-              <span className="text-sm font-medium text-red-700">Critical Issues to Resolve</span>
+              <span className="text-sm font-medium text-red-700">Critical issues to resolve</span>
             </div>
           )}
         </div>
@@ -575,16 +575,16 @@ const ESTARBuilderPanel = ({
             {complianceScore < 70 && (
               <Alert variant="warning" className="mb-4">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Compliance Score Low</AlertTitle>
+                <AlertTitle>Compliance score is low</AlertTitle>
                 <AlertDescription>
-                  We recommend improving your compliance score before submitting your eSTAR package.
+                  Consider improving the compliance score before submitting the eSTAR package.
                 </AlertDescription>
               </Alert>
             )}
 
             <div className="space-y-4">
               <div className="flex flex-col space-y-2">
-                <label className="text-sm font-medium">Validation Options</label>
+                <label className="text-sm font-medium">Validation options</label>
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="strict-validation"
@@ -592,7 +592,7 @@ const ESTARBuilderPanel = ({
                     onCheckedChange={setStrictValidation}
                   />
                   <label htmlFor="strict-validation" className="text-sm">
-                    Strict FDA Validation
+                    Strict FDA validation
                   </label>
                 </div>
               </div>
@@ -600,7 +600,7 @@ const ESTARBuilderPanel = ({
               {validationInProgress && (
                 <div className="space-y-2 my-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-stone-600">Validating eSTAR Package...</span>
+                    <span className="text-sm text-stone-600">Validating eSTAR package...</span>
                     <span className="text-sm font-medium">{validationProgress}%</span>
                   </div>
                   <Progress value={validationProgress} className="h-2" />

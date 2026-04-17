@@ -313,7 +313,7 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
       {/* Header with generate button */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Document Generation</h2>
+          <h2 className="text-lg font-semibold">Document Generation</h2>
           <p className="text-muted-foreground">
             Generate and manage 510(k) documents and FDA forms
           </p>

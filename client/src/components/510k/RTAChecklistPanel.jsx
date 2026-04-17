@@ -505,8 +505,8 @@ export default function RTAChecklistPanel({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Overall Progress</p>
-                <p className="text-2xl font-bold">{progress}% Complete</p>
+                <p className="text-sm font-medium text-stone-700">Overall progress</p>
+                <p className="text-lg font-semibold text-stone-900">{progress}% complete</p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-stone-600">

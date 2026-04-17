@@ -944,7 +944,7 @@ const Enhanced510kIntakeWorkflow = ({
           </div>
           <div className="text-right">
             <div className="text-sm text-stone-600">Overall Progress</div>
-            <div className="text-2xl font-bold text-stone-800">{calculateOverallProgress()}%</div>
+            <div className="text-lg font-semibold text-stone-800">{calculateOverallProgress()}%</div>
           </div>
         </div>
         

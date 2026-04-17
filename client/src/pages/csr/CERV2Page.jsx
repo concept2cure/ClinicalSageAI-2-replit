@@ -8063,7 +8063,7 @@ export default function CERV2Page({
             data-testid="back-to-project"
           >
             <ChevronLeft className="w-4 h-4" />
-            Back to Project
+            Back to project
           </button>
           <span className="text-stone-300">|</span>
           <span className="text-sm font-medium text-stone-700">
