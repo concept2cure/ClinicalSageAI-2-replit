@@ -3596,6 +3596,9 @@ const KNOWN_APP_IDS = new Set([
   'csr-intelligence',
   'biostatistics',
   'protocol-designer',
+  'cortex-prime',
+  'foresight-ai',
+  'predicate-intelligence',
   // ── Quality & Lifecycle ──
   'device-engineering',
   'dossier-navigator',

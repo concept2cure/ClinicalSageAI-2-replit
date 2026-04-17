@@ -344,7 +344,7 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
         <Alert
           className={
             generationStatus === 'success'
-              ? 'border-green-500'
+              ? 'border-emerald-500'
               : generationStatus === 'error'
                 ? 'border-red-500'
                 : ''

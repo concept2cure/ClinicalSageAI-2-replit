@@ -150,10 +150,10 @@ const submissionTypes: SubmissionTypeOption[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 const TARGET_AGENCIES = [
-  { value: 'FDA', label: 'FDA', flag: '🇺🇸' },
-  { value: 'EMA', label: 'EMA', flag: '🇪🇺' },
-  { value: 'PMDA', label: 'PMDA', flag: '🇯🇵' },
-  { value: 'Health Canada', label: 'Health Canada', flag: '🇨🇦' },
+  { value: 'FDA', label: 'FDA', region: 'United States' },
+  { value: 'EMA', label: 'EMA', region: 'European Union' },
+  { value: 'PMDA', label: 'PMDA', region: 'Japan' },
+  { value: 'Health Canada', label: 'Health Canada', region: 'Canada' },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -407,7 +407,6 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                         : 'bg-white text-stone-700 border-stone-200 hover:border-stone-300 hover:bg-stone-50'
                     )}
                   >
-                    <span className="text-xs">{agency.flag}</span>
                     {agency.label}
                   </button>
                 ))}

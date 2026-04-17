@@ -86,6 +86,8 @@ import { Embedded510kHost, EmbeddedPMAHost, EmbeddedCERHost } from './components
 const EmbeddedCERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 // Lazy-load PMA Workspace for embedded module rendering
 const EmbeddedPMAWorkspace = lazy(() => import('./components/pma/PMAWorkspace'));
+// Lazy-load FDA 510(k) Workspace — real 7-stage workflow (replaces CERV2 misrouting)
+const FDA510kWorkspacePage = lazy(() => import('./pages/FDA510kWorkspacePage'));
 // [BATCH 1 DELETED] LandingPage, CommandCenterHub, IntelligenceHub, AnaDashboard,
 // AboutTrainingCenter, LegalCenter, IntegrationsPage, SubmissionOpsCommandCenter, INDWorkspace, PricingPage
 // Full Document Builder wizard (CSR + CTD across global agencies)
@@ -1681,7 +1683,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       dossierStandard?: string;
     }) => {
       try {
-        await createProjectMutation({
+        const created = await createProjectMutation({
           name: data.name,
           submissionType: data.type as any,
           description: data.description,
@@ -1702,6 +1704,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           title: 'Project created',
           description: `${data.name} is ready.`,
         });
+
+        const newId = (created as any)?.id ?? (created as any)?.project?.id;
+        if (newId) {
+          setActiveProjectId(String(newId));
+          setLayoutMode('project-home');
+          navigate(`/concept2cure/project/${newId}`);
+        }
       } catch (error) {
         console.error('Failed to create project:', error);
         toast({
@@ -2232,7 +2241,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               onNavigate={handleAnaPanelNavigate}
               onNewProject={() => setNewProjectOpen(true)}
               onThreadChange={handleThreadChange}
-              EmbeddedCERV2Page={EmbeddedCERV2Page}
+              FDA510kWorkspacePage={FDA510kWorkspacePage}
               ModuleLoadingFallback={ModuleLoadingFallback}
               onBackToProject={() => navigate(`/concept2cure/project/${urlProjectId}`)}
             />
@@ -2302,7 +2311,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         'capa-management': 'capa',
                         'post-market': 'pms',
                         'inspection-readiness': 'inspection',
-                        'regulatory-intelligence': 'intelligence',
                         'document-vault': 'vault',
                       };
 
@@ -2318,6 +2326,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         'dossier-navigator': 'Show me my submission dossier map — sections, status, gaps, and priorities.',
                         'compliance-monitor': 'Run continuous compliance checks across my project, SOPs, and artifacts. What\u2019s out of policy?',
                         'evidence-engine': 'Aggregate my evidence base and score defensibility — what\u2019s strong, what\u2019s weak, what else should I gather?',
+                        'regulatory-intelligence': 'Run a full regulatory intelligence analysis on my project. I want: reviewer deficiency pattern signals (RIM), multi-expert synthesis (CORTEX), submission outcome prediction (Foresight), CSR analysis if applicable, and predicate comparison if device. Summarize the key risks, strengths, and recommended next actions.',
+                        'cortex-prime': 'Run a full regulatory intelligence analysis on my project — multi-expert synthesis, risk signals, and recommended actions.',
+                        'foresight-ai': 'Run a full regulatory intelligence analysis on my project — submission outcome prediction, deficiency risk, and approval probability.',
+                        'predicate-intelligence': 'Run a full regulatory intelligence analysis on my project — predicate devices, substantial equivalence, and comparison analysis.',
                       };
 
                       // Explicit routes that already exist

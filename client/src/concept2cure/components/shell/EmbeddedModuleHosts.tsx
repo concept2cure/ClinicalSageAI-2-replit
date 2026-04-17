@@ -1,9 +1,43 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useMemo } from 'react';
 import { MessageSquare, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ZenChat } from '../chat/ZenChat';
 import { ErrorBoundary } from '../ErrorBoundary';
+import type { ActionCardDef } from '../chat/ActionCard';
+
+const DEVICE_SUGGESTED_ACTIONS: Record<string, ActionCardDef[]> = {
+  '510K': [
+    { id: 'sa-predicate', label: 'Find predicate devices', intent: 'chat.new', description: 'Search FDA database for comparable 510(k) cleared devices' },
+    { id: 'sa-se', label: 'Draft SE comparison', intent: 'chat.new', description: 'Build substantial equivalence comparison table' },
+    { id: 'sa-compliance', label: 'Check compliance', intent: 'chat.new', description: 'Run compliance checks against FDA 510(k) requirements' },
+    { id: 'sa-estar', label: 'Prepare eSTAR package', intent: 'chat.new', description: 'Assemble eSTAR submission package for FDA gateway' },
+  ],
+  PMA: [
+    { id: 'sa-pma-strategy', label: 'Plan PMA strategy', intent: 'chat.new', description: 'Define PMA submission strategy and timeline' },
+    { id: 'sa-pma-clinical', label: 'Clinical evidence plan', intent: 'chat.new', description: 'Plan clinical investigation and IDE requirements' },
+    { id: 'sa-pma-ssed', label: 'Draft SSED outline', intent: 'chat.new', description: 'Outline the Summary of Safety and Effectiveness Data' },
+    { id: 'sa-pma-risk', label: 'Risk management review', intent: 'chat.new', description: 'Review ISO 14971 risk management file completeness' },
+  ],
+  CER: [
+    { id: 'sa-cer-faers', label: 'Pull FAERS data', intent: 'chat.new', description: 'Retrieve FDA adverse event data for clinical evaluation' },
+    { id: 'sa-cer-literature', label: 'Literature search', intent: 'chat.new', description: 'Search PubMed for relevant clinical evidence' },
+    { id: 'sa-cer-draft', label: 'Draft CER section', intent: 'chat.new', description: 'AI-assisted CER narrative drafting per MEDDEV 2.7/1' },
+    { id: 'sa-cer-export', label: 'Export CER report', intent: 'chat.new', description: 'Generate governed PDF/Word export of the CER' },
+  ],
+  DE_NOVO: [
+    { id: 'sa-denovo-classify', label: 'De Novo classification', intent: 'chat.new', description: 'Verify De Novo eligibility and risk-based classification' },
+    { id: 'sa-denovo-predicate', label: 'Search similar devices', intent: 'chat.new', description: 'Find comparable legally marketed devices' },
+    { id: 'sa-denovo-risk', label: 'Risk analysis (ISO 14971)', intent: 'chat.new', description: 'Review risk management file for De Novo submission' },
+    { id: 'sa-denovo-summary', label: 'Draft De Novo summary', intent: 'chat.new', description: 'Draft the De Novo request summary for FDA submission' },
+  ],
+  IVDR: [
+    { id: 'sa-ivdr-cer', label: 'Start IVDR clinical evaluation', intent: 'chat.new', description: 'Begin clinical evaluation per EU IVDR requirements' },
+    { id: 'sa-ivdr-perf', label: 'Performance evaluation plan', intent: 'chat.new', description: 'Design analytical and clinical performance studies' },
+    { id: 'sa-ivdr-literature', label: 'Literature search', intent: 'chat.new', description: 'Search for clinical evidence supporting device claims' },
+    { id: 'sa-ivdr-class', label: 'IVDR classification', intent: 'chat.new', description: 'Verify device classification under EU IVDR Annex VIII' },
+  ],
+};
 
 interface EmbeddedModulePageProps {
   embedded?: boolean;
@@ -26,7 +60,7 @@ interface BaseEmbeddedHostProps {
 }
 
 interface Embedded510kHostProps extends BaseEmbeddedHostProps {
-  EmbeddedCERV2Page: React.ComponentType<EmbeddedModulePageProps>;
+  FDA510kWorkspacePage: React.ComponentType<EmbeddedModulePageProps>;
   ModuleLoadingFallback: React.ComponentType;
   onBackToProject: () => void;
 }
@@ -41,7 +75,7 @@ export const Embedded510kHost: React.FC<Embedded510kHostProps> = ({
   onNavigate,
   onNewProject,
   onThreadChange,
-  EmbeddedCERV2Page,
+  FDA510kWorkspacePage,
   ModuleLoadingFallback,
   onBackToProject,
 }) => (
@@ -49,7 +83,7 @@ export const Embedded510kHost: React.FC<Embedded510kHostProps> = ({
     <div className={cn('flex-1 flex flex-col min-h-0 overflow-hidden', moduleAssistantOpen && 'mr-0')}>
       <ErrorBoundary>
         <Suspense fallback={<ModuleLoadingFallback />}>
-          <EmbeddedCERV2Page embedded={true} projectId={projectId} onBackToProject={onBackToProject} />
+          <FDA510kWorkspacePage embedded={true} projectId={projectId} projectName={projectName} onBackToProject={onBackToProject} />
         </Suspense>
       </ErrorBoundary>
     </div>
@@ -176,6 +210,10 @@ const EmbeddedAssistantRail: React.FC<EmbeddedAssistantRailProps> = ({
   toggleTestId,
   panelTestId,
 }) => {
+  const suggestedActions = useMemo(
+    () => DEVICE_SUGGESTED_ACTIONS[submissionType] || [],
+    [submissionType]
+  );
   if (!open) {
     return (
       <Button
@@ -211,6 +249,7 @@ const EmbeddedAssistantRail: React.FC<EmbeddedAssistantRailProps> = ({
           submissionType={submissionType}
           threadId={activeThreadId}
           greeting={{ text: greeting }}
+          suggestedActions={suggestedActions}
           onNavigate={onNavigate}
           onNewProject={onNewProject}
           onThreadChange={onThreadChange}

@@ -4149,11 +4149,13 @@ export default function CERV2Page({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <ClipboardCheck className="h-12 w-12 mx-auto mb-3 text-indigo-300" />
-                <p className="mb-2">Standards Matrix Editor</p>
-                <p className="text-sm">
-                  Coming soon - Select and document consensus standards compliance
+              <div className="text-center py-8 text-stone-500">
+                <ClipboardCheck className="h-12 w-12 mx-auto mb-3 text-stone-300" />
+                <p className="mb-2 text-stone-700">Standards Matrix</p>
+                <p className="text-sm max-w-md mx-auto">
+                  Map each performance requirement to a consensus standard (IEC 60601, ISO 14971,
+                  ISO 10993, IEC 62304). Ask the AI assistant to draft the standards matrix from
+                  your device profile.
                 </p>
               </div>
             </CardContent>
@@ -4191,11 +4193,13 @@ export default function CERV2Page({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <Activity className="h-12 w-12 mx-auto mb-3 text-purple-300" />
-                <p className="mb-2">Test Plan Editor</p>
-                <p className="text-sm">
-                  Coming soon - Create detailed test protocols and acceptance criteria
+              <div className="text-center py-8 text-stone-500">
+                <Activity className="h-12 w-12 mx-auto mb-3 text-stone-300" />
+                <p className="mb-2 text-stone-700">Integrated Test Plan</p>
+                <p className="text-sm max-w-md mx-auto">
+                  Define test protocols, acceptance criteria, and report deliverables across
+                  bench testing, biocompatibility, EMC/ES, software, and cybersecurity. Ask the
+                  AI assistant to generate a test plan from the standards matrix.
                 </p>
               </div>
             </CardContent>

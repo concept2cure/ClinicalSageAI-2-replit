@@ -91,7 +91,6 @@ const ESTARBuilderPanel = ({
         };
 
         localStorage.setItem('510k_estarState', JSON.stringify(estarState));
-        console.log('[ESTARBuilderPanel] State backed up to localStorage');
       }
     } catch (error) {
       console.error('[ESTARBuilderPanel] Error saving state to localStorage:', error);
@@ -112,7 +111,6 @@ const ESTARBuilderPanel = ({
         const hoursSinceSave = (currentTime - savedTime) / (1000 * 60 * 60);
 
         if (state.projectId === projectId && hoursSinceSave < 24) {
-          console.log('[ESTARBuilderPanel] Restoring saved state from localStorage');
 
           // Only restore what we have and what makes sense
           if (state.validationResults && !validationResults) {
@@ -526,25 +524,25 @@ const ESTARBuilderPanel = ({
   ]);
 
   return (
-    <Card className="w-full shadow-md border-blue-200">
+    <Card className="w-full shadow-md border-stone-200">
       <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b pb-4">
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="text-lg font-semibold text-gray-800 flex items-center">
-              <FileCheck className="h-5 w-5 mr-2 text-blue-600" />
+            <CardTitle className="text-lg font-semibold text-stone-800 flex items-center">
+              <FileCheck className="h-5 w-5 mr-2 text-stone-600" />
               eSTAR Builder
-              <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-normal">
+              <span className="ml-2 text-xs bg-stone-100 text-stone-700 px-2 py-0.5 rounded-full font-normal">
                 FDA 510(k)
               </span>
             </CardTitle>
-            <CardDescription className="text-sm text-gray-600 mt-1">
+            <CardDescription className="text-sm text-stone-600 mt-1">
               Generate FDA-compliant eSTAR packages for your 510(k) submission
             </CardDescription>
           </div>
           {complianceScore > 80 ? (
-            <div className="flex items-center bg-green-50 py-1 px-3 rounded-full border border-green-100">
-              <Shield className="h-4 w-4 text-green-600 mr-1" />
-              <span className="text-sm font-medium text-green-700">Ready for Submission</span>
+            <div className="flex items-center bg-emerald-50 py-1 px-3 rounded-full border border-green-100">
+              <Shield className="h-4 w-4 text-emerald-600 mr-1" />
+              <span className="text-sm font-medium text-emerald-700">Ready for Submission</span>
             </div>
           ) : complianceScore > 60 ? (
             <div className="flex items-center bg-amber-50 py-1 px-3 rounded-full border border-amber-100">
@@ -602,7 +600,7 @@ const ESTARBuilderPanel = ({
               {validationInProgress && (
                 <div className="space-y-2 my-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Validating eSTAR Package...</span>
+                    <span className="text-sm text-stone-600">Validating eSTAR Package...</span>
                     <span className="text-sm font-medium">{validationProgress}%</span>
                   </div>
                   <Progress value={validationProgress} className="h-2" />
@@ -635,7 +633,7 @@ const ESTARBuilderPanel = ({
                 <div
                   className={`mt-4 p-4 rounded-md border ${
                     validationResults.valid
-                      ? 'bg-green-50/70 border-green-200'
+                      ? 'bg-emerald-50/70 border-emerald-200'
                       : 'bg-amber-50/70 border-amber-200'
                   }`}
                 >
@@ -658,7 +656,7 @@ const ESTARBuilderPanel = ({
                         <span
                           className={`px-2 py-0.5 rounded text-xs font-medium ${
                             validationResults.score >= 90
-                              ? 'bg-green-100 text-green-800'
+                              ? 'bg-emerald-100 text-emerald-800'
                               : validationResults.score >= 70
                                 ? 'bg-amber-100 text-amber-800'
                                 : 'bg-red-100 text-red-800'
@@ -678,11 +676,11 @@ const ESTARBuilderPanel = ({
                         <span className="font-medium">FDA Compliance Threshold: 70%</span>
                         <span>100%</span>
                       </div>
-                      <div className="h-3 w-full bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-3 w-full bg-stone-200 rounded-full overflow-hidden">
                         <div
                           className={`h-full ${
                             validationResults.score >= 90
-                              ? 'bg-green-500'
+                              ? 'bg-emerald-500'
                               : validationResults.score >= 70
                                 ? 'bg-amber-500'
                                 : 'bg-red-500'
@@ -695,7 +693,7 @@ const ESTARBuilderPanel = ({
 
                   {validationResults.issues && validationResults.issues.length > 0 && (
                     <div className="bg-white rounded border p-2 mt-3">
-                      <h5 className="font-medium text-sm mb-2 text-gray-700 flex items-center">
+                      <h5 className="font-medium text-sm mb-2 text-stone-700 flex items-center">
                         <AlertCircle className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
                         FDA Compliance Issues:
                       </h5>
@@ -708,7 +706,7 @@ const ESTARBuilderPanel = ({
                                 ? 'bg-red-50 border-l-2 border-red-400'
                                 : issue.severity === 'warning'
                                   ? 'bg-amber-50 border-l-2 border-amber-400'
-                                  : 'bg-blue-50 border-l-2 border-blue-400'
+                                  : 'bg-stone-50 border-l-2 border-blue-400'
                             }`}
                           >
                             <span
@@ -733,7 +731,7 @@ const ESTARBuilderPanel = ({
                           </li>
                         ))}
                         {validationResults.issues.length > 5 && (
-                          <li className="text-center text-xs italic text-gray-500 pt-1">
+                          <li className="text-center text-xs italic text-stone-500 pt-1">
                             ...and {validationResults.issues.length - 5} more issues
                           </li>
                         )}
@@ -743,14 +741,14 @@ const ESTARBuilderPanel = ({
 
                   {validationResults.recommendations &&
                     validationResults.recommendations.length > 0 && (
-                      <div className="mt-3 p-3 bg-blue-50 rounded border border-blue-100">
-                        <h5 className="text-sm font-medium mb-2 flex items-center text-blue-700">
+                      <div className="mt-3 p-3 bg-stone-50 rounded border border-blue-100">
+                        <h5 className="text-sm font-medium mb-2 flex items-center text-stone-700">
                           <CheckSquare className="h-3.5 w-3.5 mr-1.5" />
                           FDA Recommendations:
                         </h5>
                         <ul className="space-y-1.5">
                           {validationResults.recommendations.map((rec, idx) => (
-                            <li key={idx} className="flex items-start text-xs text-blue-800">
+                            <li key={idx} className="flex items-start text-xs text-stone-800">
                               <span className="mr-1.5 text-blue-500 mt-0.5">•</span>
                               <span>{rec}</span>
                             </li>
@@ -768,10 +766,10 @@ const ESTARBuilderPanel = ({
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="w-full md:w-1/2">
                   <label className="text-sm font-medium flex items-center">
-                    <FileCheck className="h-4 w-4 mr-1.5 text-blue-600" />
+                    <FileCheck className="h-4 w-4 mr-1.5 text-stone-600" />
                     Package Format
                   </label>
-                  <p className="text-xs text-gray-500 mb-1.5">
+                  <p className="text-xs text-stone-500 mb-1.5">
                     Select the best format for FDA submission
                   </p>
                   <Select value={estarFormat} onValueChange={setEstarFormat}>
@@ -782,7 +780,7 @@ const ESTARBuilderPanel = ({
                       <SelectItem value="zip">
                         <div className="flex items-center">
                           <span>ZIP Archive</span>
-                          <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                          <span className="ml-2 text-xs bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded">
                             Recommended
                           </span>
                         </div>
@@ -795,13 +793,13 @@ const ESTARBuilderPanel = ({
 
                 <div className="w-full md:w-1/2">
                   <label className="text-sm font-medium flex items-center">
-                    <CheckSquare className="h-4 w-4 mr-1.5 text-blue-600" />
+                    <CheckSquare className="h-4 w-4 mr-1.5 text-stone-600" />
                     Package Options
                   </label>
-                  <p className="text-xs text-gray-500 mb-1.5">
+                  <p className="text-xs text-stone-500 mb-1.5">
                     Configure additional packaging options
                   </p>
-                  <div className="flex flex-col space-y-2 p-2 bg-gray-50 rounded border">
+                  <div className="flex flex-col space-y-2 p-2 bg-stone-50 rounded border">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="include-attachments"
@@ -823,8 +821,8 @@ const ESTARBuilderPanel = ({
               </div>
 
               {/* FDA submission readiness indicator */}
-              <div className="bg-blue-50 p-3 rounded-md border border-blue-100">
-                <h3 className="text-sm font-medium text-blue-800 mb-1.5 flex items-center">
+              <div className="bg-stone-50 p-3 rounded-md border border-blue-100">
+                <h3 className="text-sm font-medium text-stone-800 mb-1.5 flex items-center">
                   <Shield className="h-4 w-4 mr-1.5" />
                   FDA Submission Readiness
                 </h3>
@@ -832,24 +830,24 @@ const ESTARBuilderPanel = ({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs">
                     <span>Device Description</span>
-                    <span className="font-medium text-green-600">✓ Complete</span>
+                    <span className="font-medium text-emerald-600">✓ Complete</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span>Predicate Device Comparison</span>
-                    <span className="font-medium text-green-600">✓ Complete</span>
+                    <span className="font-medium text-emerald-600">✓ Complete</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span>Substantial Equivalence</span>
-                    <span className="font-medium text-green-600">✓ Complete</span>
+                    <span className="font-medium text-emerald-600">✓ Complete</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span>Performance Data</span>
-                    <span className="font-medium text-green-600">✓ Complete</span>
+                    <span className="font-medium text-emerald-600">✓ Complete</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span>Validation Status</span>
                     {validationResults?.valid ? (
-                      <span className="font-medium text-green-600">✓ Validated</span>
+                      <span className="font-medium text-emerald-600">✓ Validated</span>
                     ) : (
                       <span className="font-medium text-amber-600">⚠ Needs Validation</span>
                     )}
@@ -891,7 +889,7 @@ const ESTARBuilderPanel = ({
                 {generatedUrl && (
                   <Button
                     variant="outline"
-                    className="flex items-center border-green-600 text-green-700 hover:bg-green-50"
+                    className="flex items-center border-green-600 text-emerald-700 hover:bg-emerald-50"
                     as="a"
                     href={generatedUrl}
                     target="_blank"
@@ -904,32 +902,32 @@ const ESTARBuilderPanel = ({
               </div>
 
               {generatedUrl && (
-                <div className="mt-4 p-4 bg-green-50 rounded-md border border-green-200">
-                  <div className="flex items-center text-green-700 mb-2">
-                    <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
+                <div className="mt-4 p-4 bg-emerald-50 rounded-md border border-emerald-200">
+                  <div className="flex items-center text-emerald-700 mb-2">
+                    <CheckCircle className="h-5 w-5 mr-2 text-emerald-600" />
                     <span className="font-medium">
                       FDA-Ready eSTAR Package Generated Successfully
                     </span>
                   </div>
                   <div className="bg-white p-3 rounded border border-green-100 text-sm space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Package Format:</span>
+                      <span className="text-stone-600">Package Format:</span>
                       <span className="font-medium">{estarFormat.toUpperCase()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Generated On:</span>
+                      <span className="text-stone-600">Generated On:</span>
                       <span className="font-medium">{new Date().toLocaleDateString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">FDA Compliance:</span>
-                      <span className="font-medium text-green-600">✓ Verified</span>
+                      <span className="text-stone-600">FDA Compliance:</span>
+                      <span className="font-medium text-emerald-600">✓ Verified</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Digital Signature:</span>
-                      <span className="font-medium text-green-600">✓ Signed</span>
+                      <span className="text-stone-600">Digital Signature:</span>
+                      <span className="font-medium text-emerald-600">✓ Signed</span>
                     </div>
                   </div>
-                  <p className="mt-3 text-sm text-green-600 italic">
+                  <p className="mt-3 text-sm text-emerald-600 italic">
                     Your 510(k) submission package is ready for FDA submission.
                   </p>
                 </div>
@@ -939,8 +937,8 @@ const ESTARBuilderPanel = ({
         </Tabs>
       </CardContent>
 
-      <CardFooter className="bg-gray-50 border-t flex justify-between py-3">
-        <div className="text-xs text-gray-500">
+      <CardFooter className="bg-stone-50 border-t flex justify-between py-3">
+        <div className="text-xs text-stone-500">
           {validationResults?.valid ? (
             <span className="flex items-center">
               <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
@@ -953,12 +951,12 @@ const ESTARBuilderPanel = ({
 
         {complianceScore !== null && (
           <div className="flex items-center">
-            <span className="text-xs text-gray-500 mr-2">Compliance Score:</span>
-            <div className="bg-gray-200 rounded-full h-2 w-20">
+            <span className="text-xs text-stone-500 mr-2">Compliance Score:</span>
+            <div className="bg-stone-200 rounded-full h-2 w-20">
               <div
                 className={`h-2 rounded-full ${
                   complianceScore >= 80
-                    ? 'bg-green-500'
+                    ? 'bg-emerald-500'
                     : complianceScore >= 60
                       ? 'bg-yellow-500'
                       : 'bg-red-500'

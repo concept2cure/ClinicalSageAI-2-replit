@@ -1,10 +1,10 @@
 # Python Backend Service - Unified dependencies for all Python services
 # FastAPI and web framework dependencies
-fastapi==0.108.0
+fastapi==0.135.3
 uvicorn[standard]==0.25.0
-pydantic[email]==2.5.2
+pydantic[email]==2.13.1
 pydantic-settings>=2.0.0
-python-multipart==0.0.24
+python-multipart==0.0.26
 starlette>=0.26.1
 websockets>=11.0.0
 
@@ -28,7 +28,7 @@ openpyxl==3.1.5
 
 # AI/NLP dependencies
 # AI/NLP dependencies
-openai==2.30.0
+openai==2.32.0
 transformers==5.4.0
 torch==2.11.0
 sentence-transformers==2.2.2
@@ -39,7 +39,7 @@ pinecone-client==2.2.4
 
 # API and HTTP
 requests==2.33.1
-httpx==0.25.0
+httpx==0.28.1
 aiohttp==3.13.5
 
 # Utilities
@@ -48,7 +48,7 @@ click==8.3.2
 email-validator==2.3.0
 
 # Testing
-pytest==9.0.2
+pytest==9.0.3
 pytest-asyncio==1.3.0
 
 # Regulatory and compliance specific
@@ -63,7 +63,7 @@ pyyaml==6.0.3
 
 # Image processing (for document analysis)
 Pillow==12.2.0
-pytesseract==0.3.10
+pytesseract==0.3.13
 
 # Async and concurrency
 celery==5.6.3
@@ -75,6 +75,6 @@ cryptography==46.0.7
 bcrypt==5.0.0
 
 # Monitoring and logging
-structlog==23.1.0
+structlog==25.5.0
 prometheus-client>=0.16.0
 prometheus-fastapi-instrumentator>=6.0.0

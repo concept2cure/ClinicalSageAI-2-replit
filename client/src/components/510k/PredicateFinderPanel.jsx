@@ -64,7 +64,6 @@ const recoverPredicateSearch = (deviceProfile, setSearchResults, toast) => {
   const cachedPredicates = loadState('predicateDevices', null);
 
   if (cachedPredicates && cachedPredicates.length > 0) {
-    console.log('🛟 Recovery successful: Found cached predicate devices', cachedPredicates.length);
     setSearchResults(cachedPredicates);
 
     toast({
@@ -82,7 +81,6 @@ const recoverPredicateSearch = (deviceProfile, setSearchResults, toast) => {
     if (savedResults) {
       const parsedResults = JSON.parse(savedResults);
       if (parsedResults && parsedResults.length > 0) {
-        console.log('🛟 Recovery successful: Found results in localStorage', parsedResults.length);
         setSearchResults(parsedResults);
         // Also save to our stability system
         saveState('predicateDevices', parsedResults);
@@ -192,11 +190,6 @@ const PredicateFinderPanel = ({
   // Initialize form data from device profile when component mounts or profile changes
   useEffect(() => {
     if (deviceProfile && typeof deviceProfile === 'object') {
-      console.log(
-        'PredicateFinderPanel: Loading device profile:',
-        deviceProfile.deviceName || 'unnamed device'
-      );
-
       // Use safe accessors with fallback defaults
       setFormData({
         deviceName: deviceProfile?.deviceName || '',
@@ -209,12 +202,6 @@ const PredicateFinderPanel = ({
         regulatoryClass: deviceProfile?.regulatoryClass || 'Class II',
       });
 
-      // Log successful profile loading
-      if (deviceProfile.deviceName) {
-        console.log(
-          `PredicateFinderPanel: Successfully loaded profile for "${deviceProfile.deviceName}"`
-        );
-      }
 
       // Check for saved predicate selections
       const savedPredicates = localStorage.getItem('510k_selectedPredicates');
@@ -222,7 +209,6 @@ const PredicateFinderPanel = ({
         try {
           const parsedPredicates = JSON.parse(savedPredicates);
           if (parsedPredicates && parsedPredicates.length > 0) {
-            console.log('Restoring saved predicate selections:', parsedPredicates.length);
             setSelectedPredicates(parsedPredicates);
           }
         } catch (error) {
@@ -236,7 +222,6 @@ const PredicateFinderPanel = ({
         try {
           const parsedResults = JSON.parse(savedResults);
           if (parsedResults && parsedResults.length > 0) {
-            console.log('Restoring saved search results:', parsedResults.length);
             setSearchResults(parsedResults);
           }
         } catch (error) {
@@ -250,7 +235,6 @@ const PredicateFinderPanel = ({
         try {
           const parsedLiterature = JSON.parse(savedLiterature);
           if (parsedLiterature && parsedLiterature.length > 0) {
-            console.log('Restoring saved literature results:', parsedLiterature.length);
             setLiteratureResults(parsedLiterature);
           }
         } catch (error) {
@@ -318,15 +302,9 @@ const PredicateFinderPanel = ({
     // Ensure the profile has all required fields and proper structure
     const updatedProfile = ensureProfileIntegrity(baseProfile);
 
-    // Log profile update for debugging
-    console.log(
-      `[510k] Updating device profile: ${updatedProfile.deviceName} (${updatedProfile.id})`
-    );
-
     // Save to localStorage for persistence
     try {
       localStorage.setItem('510k_deviceProfile', JSON.stringify(updatedProfile));
-      console.log(`[510k] Saved device profile to localStorage: ${updatedProfile.deviceName}`);
     } catch (storageError) {
       console.error('[510k] Failed to save device profile to localStorage:', storageError);
     }
@@ -369,7 +347,6 @@ const PredicateFinderPanel = ({
       const savedResults = localStorage.getItem('510k_searchResults');
       if (savedResults) {
         previousResults = JSON.parse(savedResults);
-        console.log(`[510k] Found ${previousResults.length} previously saved predicate devices`);
 
         // Immediately set these results to prevent blank screens
         if (previousResults.length > 0) {
@@ -386,12 +363,6 @@ const PredicateFinderPanel = ({
     setIsSearching(true);
 
     try {
-      console.log('[510k] Searching for predicate devices with profile:', {
-        deviceName: deviceProfile.deviceName,
-        productCode: deviceProfile.productCode,
-        manufacturer: deviceProfile.manufacturer,
-      });
-
       // Prevent navigation away from page during search
       window.onbeforeunload = function () {
         return "Please don't navigate away while searching...";
@@ -406,11 +377,9 @@ const PredicateFinderPanel = ({
       // Search complete, remove navigation blocker
       window.onbeforeunload = null;
 
-      console.log(`[510k] Found ${results.length} potential predicate devices from API`);
 
       // If no results from API but we have previous results, keep using previous
       if (results.length === 0 && previousResults.length > 0) {
-        console.log('[510k] Using previous results as API returned empty results');
 
         toast({
           title: 'Using Previous Results',
@@ -420,11 +389,6 @@ const PredicateFinderPanel = ({
 
         // CRITICAL FIX: Notify parent component of successful predicate search with previous results
         if (onPredicatesFound) {
-          console.log(
-            '[510k] Notifying parent of successful predicate search with',
-            previousResults.length,
-            'previous devices'
-          );
           onPredicatesFound(previousResults, null);
         }
 
@@ -446,11 +410,6 @@ const PredicateFinderPanel = ({
 
         // CRITICAL FIX: Notify parent component of successful predicate search
         if (onPredicatesFound) {
-          console.log(
-            '[510k] Notifying parent of successful predicate search with',
-            results.length,
-            'devices'
-          );
           onPredicatesFound(results, null);
         }
 
@@ -494,7 +453,6 @@ const PredicateFinderPanel = ({
 
       // First try to use previously loaded results if available
       if (previousResults.length > 0) {
-        console.log('[510k] Using previous results during error recovery');
 
         toast({
           title: 'Using Previous Results',
@@ -504,7 +462,6 @@ const PredicateFinderPanel = ({
 
         // Notify parent component about found devices but mention they're from cache
         if (onPredicatesFound) {
-          console.log('[510k] Notifying parent of cached results:', previousResults.length);
           onPredicatesFound(previousResults, 'Cached results used due to search error');
         }
 
@@ -525,7 +482,6 @@ const PredicateFinderPanel = ({
 
           // Notify parent component about the error but stay on current page
           if (onPredicatesFound) {
-            console.log('[510k] Notifying parent component of search error');
             onPredicatesFound([], 'No predicate devices found');
           }
 
@@ -540,7 +496,6 @@ const PredicateFinderPanel = ({
           setShowRecoveryUI(false);
 
           if (onPredicatesFound) {
-            console.log('[510k] Notifying parent of recovery results');
             onPredicatesFound(searchResults, 'Recovery successful');
           }
         }
@@ -560,56 +515,6 @@ const PredicateFinderPanel = ({
     }
   };
 
-  // Generate reliable predicate devices based on device profile
-  const generateReliablePredicateDevices = profile => {
-    const deviceName = profile?.deviceName || 'Medical Device';
-    const productCode = profile?.productCode || 'ABC';
-    const timestamp = Date.now();
-
-    // Generate at least 3 predicate devices for a good user experience
-    return [
-      {
-        id: `pred-${timestamp}-1`,
-        k_number: 'K210001',
-        device_name: `${deviceName} Model X`,
-        applicant_100: 'Medical Industries Inc.',
-        decision_date: new Date(new Date().getFullYear() - 1, 0, 1).toISOString(),
-        product_code: productCode,
-        decision_description: 'SUBSTANTIALLY EQUIVALENT',
-        device_class: 'II',
-        review_advisory_committee: 'General Hospital',
-        submission_type_id: 'Traditional',
-        relevance_score: 0.98,
-      },
-      {
-        id: `pred-${timestamp}-2`,
-        k_number: 'K200045',
-        device_name: `Premium ${deviceName}`,
-        applicant_100: 'Advanced Healthcare Solutions',
-        decision_date: new Date(new Date().getFullYear() - 2, 3, 15).toISOString(),
-        product_code: productCode,
-        decision_description: 'SUBSTANTIALLY EQUIVALENT',
-        device_class: 'II',
-        review_advisory_committee: 'General Hospital',
-        submission_type_id: 'Traditional',
-        relevance_score: 0.95,
-      },
-      {
-        id: `pred-${timestamp}-3`,
-        k_number: 'K190078',
-        device_name: `${deviceName} Professional`,
-        applicant_100: 'Medical Systems Corporation',
-        decision_date: new Date(new Date().getFullYear() - 3, 6, 22).toISOString(),
-        product_code: productCode,
-        decision_description: 'SUBSTANTIALLY EQUIVALENT',
-        device_class: 'II',
-        review_advisory_committee: 'General Hospital',
-        submission_type_id: 'Traditional',
-        relevance_score: 0.92,
-      },
-    ];
-  };
-
   // Select/deselect a predicate device
   const togglePredicateSelection = device => {
     const isSelected = selectedPredicates.some(p => p.k_number === device.k_number);
@@ -620,13 +525,6 @@ const PredicateFinderPanel = ({
     } else {
       updatedPredicates = [...selectedPredicates, device];
     }
-
-    console.log('[PredicateFinder] Toggle selection:', {
-      device: device.k_number,
-      isSelected,
-      newCount: updatedPredicates.length,
-      updatedPredicates,
-    });
 
     // Update state
     setSelectedPredicates(updatedPredicates);
@@ -657,7 +555,6 @@ const PredicateFinderPanel = ({
       return;
     }
 
-    console.log('[510k] Completing predicate selection with', selectedPredicates.length, 'devices');
 
     // Prevent React suspension errors by ensuring synchronous work completes before any async actions
     try {
@@ -686,7 +583,6 @@ const PredicateFinderPanel = ({
         localStorage.setItem('510k_deviceProfile', JSON.stringify(updatedProfile));
         saveState('deviceProfile', updatedProfile);
 
-        console.log('[510k] Saved predicate selections and profile');
       } catch (storageError) {
         console.error('[510k] Storage error:', storageError);
         // Continue despite storage errors, we still have state
@@ -694,7 +590,6 @@ const PredicateFinderPanel = ({
 
       // Safely perform the callback notification synchronously
       if (onPredicatesFound) {
-        console.log('[510k] Notifying parent component of predicates');
 
         // CRITICAL FIX: Move this notification outside of setTimeout to avoid suspensions
         onPredicatesFound(selectedPredicates, null);
@@ -757,7 +652,6 @@ const PredicateFinderPanel = ({
         limit: 20,
       });
 
-      console.log(`[510k] Found ${results.length} relevant literature items`);
 
       // Save literature results to localStorage for persistence
       try {
@@ -1010,7 +904,7 @@ const PredicateFinderPanel = ({
                   <Button
                     variant="default"
                     onClick={completePredicateSelection}
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    className="bg-stone-800 hover:bg-stone-900 text-white"
                     data-testid="button-complete-predicate-selection"
                   >
                     <Check className="h-4 w-4 mr-2" />
@@ -1028,7 +922,7 @@ const PredicateFinderPanel = ({
                 </div>
                 <div className="flex items-center space-x-3">
                   <button
-                    className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+                    className="text-sm text-stone-600 hover:text-stone-800 flex items-center"
                     onClick={() => {
                       toast({
                         title: 'Sorting Results',
@@ -1041,7 +935,7 @@ const PredicateFinderPanel = ({
                   </button>
 
                   <button
-                    className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+                    className="text-sm text-stone-600 hover:text-stone-800 flex items-center"
                     onClick={() => {
                       toast({
                         title: 'Sorting Results',
@@ -1058,20 +952,20 @@ const PredicateFinderPanel = ({
           </div>
 
           {/* Quick summary of the current device */}
-          <div className="bg-blue-50 p-3 rounded-md">
-            <h4 className="font-medium text-blue-800 mb-1">Current Device</h4>
-            <p className="text-sm text-blue-700">
+          <div className="bg-stone-50 p-3 rounded-md">
+            <h4 className="font-medium text-stone-800 mb-1">Current Device</h4>
+            <p className="text-sm text-stone-700">
               {deviceProfile.deviceName} by {deviceProfile.manufacturer}
             </p>
-            <p className="text-xs text-blue-600 mt-1">
+            <p className="text-xs text-stone-600 mt-1">
               {deviceProfile.intendedUse?.substring(0, 150)}...
             </p>
           </div>
 
           {/* Display Selected Predicates */}
           {selectedPredicates.length > 0 && (
-            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <h4 className="font-medium text-green-800 mb-2 flex items-center gap-2">
+            <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+              <h4 className="font-medium text-emerald-800 mb-2 flex items-center gap-2">
                 <Check className="h-5 w-5" />
                 Selected Predicates ({selectedPredicates.length})
               </h4>
@@ -1079,11 +973,11 @@ const PredicateFinderPanel = ({
                 {selectedPredicates.map(predicate => (
                   <div
                     key={predicate.k_number}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-green-300 text-green-800 rounded-full text-sm"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-emerald-200 text-emerald-800 rounded-full text-sm"
                     data-testid={`selected-predicate-${predicate.k_number}`}
                   >
                     <span className="font-medium">{predicate.k_number}</span>
-                    <span className="text-green-600">
+                    <span className="text-emerald-600">
                       {predicate.device_name?.substring(0, 30)}
                     </span>
                     <button
@@ -1111,7 +1005,7 @@ const PredicateFinderPanel = ({
                     return (
                       <div
                         key={device.k_number}
-                        className={`p-3 rounded-md border ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                        className={`p-3 rounded-md border ${isSelected ? 'border-stone-400 bg-stone-50' : 'border-stone-200'}`}
                       >
                         <div className="flex justify-between items-start">
                           <div>
@@ -1386,7 +1280,7 @@ const PredicateFinderPanel = ({
                     return (
                       <div
                         key={item.id}
-                        className={`p-3 rounded-md border ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                        className={`p-3 rounded-md border ${isSelected ? 'border-stone-400 bg-stone-50' : 'border-stone-200'}`}
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
@@ -1538,14 +1432,6 @@ const PredicateFinderPanel = ({
     </Card>
   );
 
-  // Main component render
-  console.log('[PredicateFinderPanel] Rendering:', {
-    profileEditing,
-    deviceProfile,
-    formData,
-    hasRenderDeviceProfileForm: !!renderDeviceProfileForm,
-  });
-
   return (
     <div className="space-y-4">
       {/* Display device profile form when in editing mode */}
@@ -1578,7 +1464,7 @@ const PredicateFinderPanel = ({
 
           {isGeneratingComparison && (
             <div className="py-12 flex flex-col items-center justify-center">
-              <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
+              <Loader2 className="h-12 w-12 animate-spin text-stone-600 mb-4" />
               <p className="text-lg font-medium">Analyzing substantial equivalence...</p>
               <p className="text-sm text-gray-500 mt-2">
                 Using AI to compare device characteristics and regulatory requirements
@@ -1592,7 +1478,7 @@ const PredicateFinderPanel = ({
               <div
                 className={`p-4 rounded-md flex items-center justify-between ${
                   equivalenceReport.overallStatus === 'SUBSTANTIALLY EQUIVALENT'
-                    ? 'bg-green-50 border border-green-200'
+                    ? 'bg-emerald-50 border border-emerald-200'
                     : 'bg-red-50 border border-red-200'
                 }`}
               >
@@ -1600,7 +1486,7 @@ const PredicateFinderPanel = ({
                   <h3
                     className={`text-lg font-medium ${
                       equivalenceReport.overallStatus === 'SUBSTANTIALLY EQUIVALENT'
-                        ? 'text-green-800'
+                        ? 'text-emerald-800'
                         : 'text-red-800'
                     }`}
                   >
@@ -1617,7 +1503,7 @@ const PredicateFinderPanel = ({
                   }
                   className={
                     equivalenceReport.riskAssessment === 'LOW RISK'
-                      ? 'border-green-500 text-green-700 bg-green-50'
+                      ? 'border-emerald-500 text-emerald-700 bg-emerald-50'
                       : ''
                   }
                 >
@@ -1679,7 +1565,7 @@ const PredicateFinderPanel = ({
                         <td className="p-3 text-sm font-medium text-gray-700">Regulatory Status</td>
                         <td className="p-3 text-sm">Pending</td>
                         <td className="p-3 text-sm">
-                          <Badge className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100">
+                          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
                             Cleared
                           </Badge>
                           <span className="ml-2 text-xs text-gray-500">
@@ -1709,7 +1595,7 @@ const PredicateFinderPanel = ({
                             <div
                               className={`h-2.5 rounded-full ${
                                 category.similarity > 0.8
-                                  ? 'bg-green-500'
+                                  ? 'bg-emerald-500'
                                   : category.similarity > 0.6
                                     ? 'bg-yellow-500'
                                     : 'bg-red-500'
@@ -1727,7 +1613,7 @@ const PredicateFinderPanel = ({
                           variant="outline"
                           className={
                             category.status === 'SUBSTANTIALLY EQUIVALENT'
-                              ? 'border-green-500 text-green-700'
+                              ? 'border-emerald-500 text-emerald-700'
                               : 'border-red-500 text-red-700'
                           }
                         >

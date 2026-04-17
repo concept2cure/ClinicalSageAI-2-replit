@@ -113,8 +113,8 @@ const PackagePreview = ({ projectId = 'demo-project-id' }) => {
   // Submit package to FDA ESG
   const handleSubmitToFDA = async () => {
     toast({
-      title: 'Feature coming soon',
-      description: 'Direct FDA ESG submission will be available in a future update',
+      title: 'Direct ESG submission requires enrollment',
+      description: 'Export the submission package from the eSTAR builder and upload through the FDA ESG portal with your WebTrader account.',
       variant: 'default',
     });
   };
