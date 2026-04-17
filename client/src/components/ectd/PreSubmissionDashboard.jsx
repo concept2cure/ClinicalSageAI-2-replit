@@ -160,26 +160,37 @@ export default function PreSubmissionDashboard({ submissionId, moduleType = 'ful
     },
   ];
 
-  // Run comprehensive validation
+  // Run comprehensive validation against the real backend validator.
+  // Never fabricate per-category scores or pass/fail counts — they would
+  // misrepresent submission readiness.
   const runFullValidation = async () => {
     setIsValidating(true);
     const results = {};
 
     try {
-      // Simulate validation for each category
       for (const category of validationCategories) {
-        // In production, these would be actual API calls
-        const score = Math.floor(Math.random() * 30) + 70; // 70-100 score
-        const passed = Math.floor(score / 10);
-        const failed = 10 - passed;
-
-        results[category.id] = {
-          score,
-          passed,
-          failed,
-          status: score >= 95 ? 'success' : score >= 80 ? 'warning' : 'error',
-          issues: failed > 0 ? generateIssues(category, failed) : [],
-        };
+        try {
+          const response = await fetch(`/api/ectd/validate/${category.id}`, {
+            credentials: 'include',
+          });
+          if (!response.ok) throw new Error(`${response.status}`);
+          const data = await response.json();
+          results[category.id] = {
+            score: typeof data?.score === 'number' ? data.score : null,
+            passed: typeof data?.passed === 'number' ? data.passed : null,
+            failed: typeof data?.failed === 'number' ? data.failed : null,
+            status: data?.status || 'unavailable',
+            issues: Array.isArray(data?.issues) ? data.issues : [],
+          };
+        } catch {
+          results[category.id] = {
+            score: null,
+            passed: null,
+            failed: null,
+            status: 'unavailable',
+            issues: [],
+          };
+        }
       }
 
       // Calculate overall score

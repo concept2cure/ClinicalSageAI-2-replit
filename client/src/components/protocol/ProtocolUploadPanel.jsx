@@ -123,20 +123,15 @@ export default function ProtocolUploadPanel() {
       const formData = new FormData();
       formData.append('file', file);
 
-      // Simulate progress updates
-      const progressInterval = setInterval(() => {
-        setProgress(prev => {
-          const newProgress = prev + Math.random() * 10;
-          return newProgress >= 90 ? 90 : newProgress;
-        });
-      }, 500);
+      // Indeterminate progress — never fabricate upload percentages.
+      const progressInterval = null;
 
       const response = await fetch('/api/analytics/upload-protocol', {
         method: 'POST',
         body: formData,
       });
 
-      clearInterval(progressInterval);
+      if (progressInterval) clearInterval(progressInterval);
       setProgress(100);
 
       if (!response.ok) {

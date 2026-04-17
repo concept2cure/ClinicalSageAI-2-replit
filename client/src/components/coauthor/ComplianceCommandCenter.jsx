@@ -61,60 +61,11 @@ import {
 } from 'lucide-react';
 
 /**
- * Mock FDA compliance data generator
+ * Compliance data must come from the real compliance backend. Never
+ * fabricate 21 CFR non-compliance findings — a fake "critical" issue
+ * pinned against a real regulation could trigger unnecessary remediation.
  */
-const generateMockComplianceData = () => {
-  const regulations = [
-    { ref: '21 CFR Part 11', description: 'Electronic Records and Signatures' },
-    { ref: '21 CFR 314.50', description: 'Content and format of an NDA' },
-    { ref: '21 CFR 314.70', description: 'Supplements and other changes to an approved NDA' },
-    { ref: '21 CFR 312.23', description: 'IND content and format' },
-    { ref: '21 CFR 820.30', description: 'Design Controls' },
-    { ref: '21 CFR 58', description: 'Good Laboratory Practice' },
-    { ref: '21 CFR 211', description: 'Current Good Manufacturing Practice' },
-    { ref: '21 CFR 201.56', description: 'Labeling requirements' },
-    { ref: '21 CFR 312.32', description: 'IND safety reporting' },
-    { ref: '21 CFR 814.20', description: 'PMA application' }
-  ];
-
-  const severities = ['critical', 'major', 'minor', 'info'];
-  const statuses = ['open', 'in_progress', 'resolved', 'pending_review'];
-
-  const issues = [];
-  for (let i = 0; i < 15; i++) {
-    const regulation = regulations[Math.floor(Math.random() * regulations.length)];
-    const severity = severities[Math.floor(Math.random() * severities.length)];
-    
-    issues.push({
-      id: `COMP-${1000 + i}`,
-      severity,
-      status: statuses[Math.floor(Math.random() * statuses.length)],
-      cfr: regulation.ref,
-      title: regulation.description,
-      description: `Non-compliance detected in ${regulation.description} requirements`,
-      impact: severity === 'critical' 
-        ? 'High - May delay regulatory approval'
-        : severity === 'major'
-        ? 'Medium - Requires immediate attention'
-        : severity === 'minor'
-        ? 'Low - Should be addressed before submission'
-        : 'Informational - Best practice recommendation',
-      remediation: [
-        'Review and update documentation',
-        'Implement required controls',
-        'Validate changes per SOP',
-        'Document rationale for approach'
-      ],
-      detectedAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-      assignedTo: Math.random() > 0.5 ? 'John Doe' : null,
-      moduleContext: ['Module 3', 'Module 2', 'Module 5'][Math.floor(Math.random() * 3)],
-      documentCount: Math.floor(Math.random() * 10) + 1,
-      estimatedEffort: `${Math.floor(Math.random() * 8) + 1} hours`
-    });
-  }
-  
-  return issues;
-};
+const generateMockComplianceData = () => [];
 
 /**
  * Compliance Score Gauge Component

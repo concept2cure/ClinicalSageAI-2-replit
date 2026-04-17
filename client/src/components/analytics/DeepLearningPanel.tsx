@@ -50,18 +50,9 @@ export function DeepLearningPanel({ csrs = [], onAnalysisComplete }: DeepLearnin
   }, []);
 
   useEffect(() => {
-    if (isLoading) {
-      const interval = setInterval(() => {
-        setProgressValue(prev => {
-          const increment = Math.random() * 15;
-          return Math.min(prev + increment, 95); // Cap at 95% until complete
-        });
-      }, 1000);
-      
-      return () => clearInterval(interval);
-    } else {
-      setProgressValue(0);
-    }
+    // Indeterminate loading — never fabricate a completion percentage for
+    // analytical work. The UI shows a spinner/pulse instead.
+    setProgressValue(isLoading ? 0 : 0);
   }, [isLoading]);
 
   const runClusterAnalysis = async () => {

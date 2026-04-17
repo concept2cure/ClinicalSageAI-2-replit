@@ -92,32 +92,42 @@ export default function CSRIngest() {
     }
 
     setIsUploading(true);
+    setUploadProgress(0);
 
-    // Simulate upload progress
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 15;
-      if (progress > 100) {
-        progress = 100;
-        clearInterval(interval);
+    try {
+      const formData = new FormData();
+      files.forEach(f => formData.append('files', f));
+      if (sponsor) formData.append('sponsor', sponsor);
+      if (indication) formData.append('indication', indication);
 
-        // Simulate processing delay
-        setTimeout(() => {
-          setIsUploading(false);
-          setUploadProgress(0);
-          setFiles([]);
-          setSponsor('');
-          setIndication('');
+      const response = await fetch('/api/csr/ingest', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
 
-          // Success notification
-          toast({
-            title: 'Upload successful',
-            description: `${files.length} document${files.length > 1 ? 's' : ''} uploaded and processed successfully.`,
-          });
-        }, 1500);
+      if (!response.ok) {
+        throw new Error(`Upload failed with status ${response.status}`);
       }
-      setUploadProgress(progress);
-    }, 500);
+
+      setUploadProgress(100);
+      setFiles([]);
+      setSponsor('');
+      setIndication('');
+      toast({
+        title: 'Upload successful',
+        description: `${files.length} document${files.length > 1 ? 's' : ''} uploaded for processing.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Upload failed',
+        description: 'The CSR ingestion service is unavailable. Try again shortly.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
   };
 
   return (

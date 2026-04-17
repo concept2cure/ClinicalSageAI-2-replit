@@ -2564,7 +2564,7 @@ export default function ComponentManagementSystem({ documentId, documentContent,
                                 
                                 {/* Size Column */}
                                 <td className="px-4 py-3 border-b border-[#f4f3ee] text-[#6b6963] font-['Segoe_UI'] text-sm">
-                                  {Math.floor(Math.random() * 500) + 10} KB
+                                  {component.sizeKb != null ? `${component.sizeKb} KB` : '—'}
                                 </td>
                                 
                                 {/* Actions Column with Context Menu */}
