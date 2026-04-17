@@ -126,7 +126,12 @@ const PredicateFinderPanel = ({
   }, [isSearching, onSearchStateChange]);
   const [searchResults, setSearchResults] = useState([]);
   const [selectedPredicates, setSelectedPredicates] = useState([]);
-  const [profileEditing, setProfileEditing] = useState(true);
+  // Start in search mode if device profile is already populated (from Stage 0
+  // intake). Otherwise show the device profile form. Users should not have to
+  // re-enter data they just typed.
+  const [profileEditing, setProfileEditing] = useState(
+    !(deviceProfile?.deviceName && deviceProfile?.productCode)
+  );
   const [activeTab, setActiveTab] = useState('predicates');
   const [searched, setSearched] = useState(false);
   const [literatureResults, setLiteratureResults] = useState([]);

@@ -616,7 +616,9 @@ const Enhanced510kIntakeWorkflow = ({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="device-name">Device Name</Label>
+              <Label htmlFor="device-name">
+                Device Name <span className="text-stone-400" aria-label="required">*</span>
+              </Label>
               <Input
                 id="device-name"
                 value={workflowData.deviceName}
@@ -626,7 +628,9 @@ const Enhanced510kIntakeWorkflow = ({
               />
             </div>
             <div>
-              <Label htmlFor="product-code">Product Code</Label>
+              <Label htmlFor="product-code">
+                Product Code <span className="text-stone-400" aria-label="required">*</span>
+              </Label>
               <div className="flex gap-2">
                 <Input
                   id="product-code"
@@ -843,7 +847,9 @@ const Enhanced510kIntakeWorkflow = ({
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="intended-use">Intended Use Statement</Label>
+            <Label htmlFor="intended-use">
+              Intended Use Statement <span className="text-stone-400" aria-label="required">*</span>
+            </Label>
             <Textarea
               id="intended-use"
               value={workflowData.intendedUse}
@@ -856,7 +862,7 @@ const Enhanced510kIntakeWorkflow = ({
               The general purpose or function of the device
             </p>
           </div>
-          
+
           <div>
             <Label htmlFor="indications">Indications for Use</Label>
             <Textarea
@@ -875,35 +881,40 @@ const Enhanced510kIntakeWorkflow = ({
       </Card>
       
       {/* Save & Continue */}
-      <div className="flex justify-between">
-        <Button 
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <Button
           variant="outline"
           onClick={() => {
-            // Save to backend (connected to document generation)
             if (projectId) {
               saveWorkflowMutation.mutate();
             }
-            // Also call the provided onSave callback
             if (onSave) onSave(workflowData);
           }}
           disabled={saveWorkflowMutation.isPending}
           data-testid="button-save-intake"
         >
-          {saveWorkflowMutation.isPending ? "Saving..." : "Save Progress"}
+          {saveWorkflowMutation.isPending ? 'Saving...' : 'Save progress'}
         </Button>
-        
-        <Button
-          onClick={() => {
-            updateWorkflowData('stageProgress.setup.gates.device_intake', true);
-            setActiveSection('predicate_search');
-            toast({ title: 'Device intake saved', description: 'Proceeding to predicate search.' });
-          }}
-          disabled={!workflowData.deviceName || !workflowData.productCode || !workflowData.intendedUse}
-          data-testid="button-continue-to-predicate"
-        >
-          Continue to Predicate Search
-          <ChevronRight className="h-4 w-4 ml-2" />
-        </Button>
+
+        <div className="flex items-center gap-3">
+          {(!workflowData.deviceName || !workflowData.productCode || !workflowData.intendedUse) && (
+            <span className="text-xs text-stone-500">
+              Fill device name, product code, and intended use to continue
+            </span>
+          )}
+          <Button
+            onClick={() => {
+              updateWorkflowData('stageProgress.setup.gates.device_intake', true);
+              setActiveSection('predicate_search');
+              toast({ title: 'Device intake saved', description: 'Proceeding to predicate search.' });
+            }}
+            disabled={!workflowData.deviceName || !workflowData.productCode || !workflowData.intendedUse}
+            data-testid="button-continue-to-predicate"
+          >
+            Continue to predicate search
+            <ChevronRight className="h-4 w-4 ml-2" />
+          </Button>
+        </div>
       </div>
     </div>
   );
