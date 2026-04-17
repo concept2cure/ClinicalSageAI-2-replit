@@ -152,18 +152,7 @@ const EquivalenceBuilderPanel = ({
     const verifyEquivalenceReady = async () => {
       if (deviceProfile?.id) {
         try {
-          console.log(
-            '[EquivalenceBuilderPanel] Checking equivalence readiness for device:',
-            deviceProfile.id
-          );
-
-          // Mock verification since API endpoint is not working
-          // This allows development to proceed while the backend issue is fixed
           if (predicateDevices && predicateDevices.length > 0) {
-            console.log(
-              '[EquivalenceBuilderPanel] Found predicate devices:',
-              predicateDevices.length
-            );
             toast({
               title: 'Equivalence Analysis Ready',
               description: 'Found predicate devices for equivalence analysis',
@@ -187,17 +176,8 @@ const EquivalenceBuilderPanel = ({
     verifyEquivalenceReady();
   }, [deviceProfile, predicateDevices]);
 
-  // Initialize with predicate devices data and log component mounting
   useEffect(() => {
-    console.log('[EquivalenceBuilderPanel] Component mounted with:', {
-      deviceProfile: deviceProfile?.id || 'No device profile',
-      documentId: documentId || 'No document ID',
-      predicateDevicesCount: predicateDevices?.length || 0,
-      selectedLiteratureCount: selectedLiterature?.length || 0,
-    });
-
     if (predicateDevices?.length > 0) {
-      console.log('[EquivalenceBuilderPanel] Setting predicate device:', predicateDevices[0].id);
       // Force selection of first predicate device regardless of current state
       setSelectedPredicateDevice(predicateDevices[0].id);
     } else {

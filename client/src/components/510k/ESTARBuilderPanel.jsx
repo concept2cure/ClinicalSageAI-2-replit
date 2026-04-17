@@ -91,7 +91,6 @@ const ESTARBuilderPanel = ({
         };
 
         localStorage.setItem('510k_estarState', JSON.stringify(estarState));
-        console.log('[ESTARBuilderPanel] State backed up to localStorage');
       }
     } catch (error) {
       console.error('[ESTARBuilderPanel] Error saving state to localStorage:', error);
@@ -112,7 +111,6 @@ const ESTARBuilderPanel = ({
         const hoursSinceSave = (currentTime - savedTime) / (1000 * 60 * 60);
 
         if (state.projectId === projectId && hoursSinceSave < 24) {
-          console.log('[ESTARBuilderPanel] Restoring saved state from localStorage');
 
           // Only restore what we have and what makes sense
           if (state.validationResults && !validationResults) {
