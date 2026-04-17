@@ -1,12 +1,9 @@
 import React from 'react';
 import {
-  Activity,
   ArrowRight,
-  CheckCircle2,
   ClipboardCheck,
   FileCheck2,
   FlaskConical,
-  FolderKanban,
   Layers,
   Microscope,
   ShieldCheck,
@@ -48,57 +45,43 @@ interface InventoryItem {
 
 const INVENTORY: InventoryItem[] = [
   {
-    title: 'FDA 510(k) and De Novo builders',
-    description: 'Predicate strategy, substantial equivalence content, and eSTAR-aligned package preparation.',
-    icon: <ClipboardCheck className="h-4 w-4 text-blue-600" />,
+    title: 'FDA 510(k) and De Novo',
+    description: 'Predicate search, substantial equivalence analysis, compliance checks, and eSTAR package assembly.',
+    icon: <ClipboardCheck className="h-4 w-4 text-stone-600" />,
     status: 'ready',
   },
   {
-    title: 'PMA and high-risk device workflows',
-    description: 'Structured PMA workspace with clinical, quality, and manufacturing handoff points.',
-    icon: <ShieldCheck className="h-4 w-4 text-violet-600" />,
+    title: 'PMA (Class III)',
+    description: '10-phase workflow from program planning through post-submission, with role-based task tracking.',
+    icon: <ShieldCheck className="h-4 w-4 text-stone-600" />,
     status: 'ready',
   },
   {
-    title: 'CER / IVDR evidence generation',
-    description: 'Clinical evaluation report drafting, literature-backed evidence synthesis, and EU alignment.',
-    icon: <Microscope className="h-4 w-4 text-emerald-600" />,
+    title: 'Clinical Evaluation Reports',
+    description: 'EU MDR/IVDR CER generation with FAERS integration, literature search, and governed export.',
+    icon: <Microscope className="h-4 w-4 text-stone-600" />,
     status: 'ready',
   },
   {
-    title: 'Project-aware app orchestration',
-    description: 'Connected-app memory and project context activation through the project apps module.',
-    icon: <Layers className="h-4 w-4 text-indigo-600" />,
+    title: 'Regulatory intelligence',
+    description: 'Reviewer deficiency patterns, submission risk signals, and outcome prediction across all device pathways.',
+    icon: <Layers className="h-4 w-4 text-stone-600" />,
     status: 'ready',
   },
   {
-    title: 'Collaboration, tasks, and submission control room',
-    description: 'Unified Communication Center with task board, thread lanes, and submission/agency tabs.',
-    icon: <Users className="h-4 w-4 text-amber-600" />,
+    title: 'Collaboration and submission',
+    description: 'Cross-functional task board, review workflows, and submission package dispatch.',
+    icon: <Users className="h-4 w-4 text-stone-600" />,
     status: 'ready',
-  },
-  {
-    title: 'Diagnostics beta-readiness instrumentation',
-    description: 'Cross-pathway checklist and controlled pilot gates for medical device and diagnostics clients.',
-    icon: <Activity className="h-4 w-4 text-cyan-600" />,
-    status: 'partial',
   },
 ];
 
 const JOURNEY = [
-  'Intake the device/diagnostic profile and classify pathway fit (510(k), PMA, CER, De Novo, IVDR).',
-  'Build core submission artifacts in the connected workspace while preserving evidence provenance.',
-  'Route cross-functional review through collaboration threads and task board assignments.',
-  'Assemble submission package and dispatch through Submission & Agency Portal / eSTAR lane.',
-  'Run beta acceptance checks with pilot clients and expand entitlement after KPI pass criteria.',
-];
-
-const BETA_CHECKLIST = [
-  'Project module linkage verified (apps connected + project context hydrated).',
-  'Collaboration lane active (tasks, threads, approvals, escalation paths).',
-  'Submission center wired (package assembly + agency response workflow).',
-  'Pathway templates validated for 510(k), PMA, CER/IVDR, and diagnostics evidence bundles.',
-  'Pilot instrumentation defined (cycle time, unresolved issues, package defects, reviewer turnaround).',
+  'Define your device profile and classify the regulatory pathway — 510(k), PMA, CER, De Novo, or IVDR.',
+  'Build submission artifacts with AI-assisted drafting and evidence provenance tracking.',
+  'Run predicate analysis, substantial equivalence comparisons, and compliance checks.',
+  'Review cross-functionally with role-based task assignments and governed approvals.',
+  'Assemble the final submission package (eSTAR, eCTD, or agency-specific format) and export.',
 ];
 
 export const DeviceDiagnosticsWorkbenchPage: React.FC<DeviceDiagnosticsWorkbenchPageProps> = ({
@@ -186,21 +169,14 @@ export const DeviceDiagnosticsWorkbenchPage: React.FC<DeviceDiagnosticsWorkbench
         </section>
       </div>
 
-      <section className="mt-3 rounded-xl border border-stone-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-stone-900">Beta launch checklist</h2>
-        <ul className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-          {BETA_CHECKLIST.map(item => (
-            <li key={item} className="flex items-start gap-2 rounded-lg border border-stone-200 bg-stone-50 px-3 py-2">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" />
-              <span className="text-xs text-stone-700">{item}</span>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-3 text-[11px] text-stone-500">
-          Active project artifacts: <strong>{artifacts.length}</strong>
-          {submissionType ? ` · Submission type: ${submissionType}` : ''}
-        </p>
-      </section>
+      {projectId && (
+        <div className="mt-3 rounded-xl border border-stone-100 bg-stone-50/40 px-4 py-3">
+          <p className="text-[11px] text-stone-500">
+            Active project artifacts: <strong>{artifacts.length}</strong>
+            {submissionType ? ` · Submission type: ${submissionType}` : ''}
+          </p>
+        </div>
+      )}
 
       {!noProject && (
         <section className="mt-4">
@@ -262,7 +238,7 @@ function SecondaryAction({ label, onClick, disabled }: { label: string; onClick:
           : 'border-stone-300 bg-white text-stone-700 hover:bg-stone-50'
       )}
     >
-      <FolderKanban className="mr-1 h-3.5 w-3.5" />
+      <ArrowRight className="mr-1 h-3.5 w-3.5" />
       {label}
     </button>
   );

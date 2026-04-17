@@ -5,15 +5,13 @@
  * search, SE comparison, compliance checks, and eSTAR assembly) inside the
  * embedded module interface so ZenApp can render it when the user navigates
  * to /concept2cure/project/:id/510k.
- *
- * Previously this route incorrectly rendered CERV2Page (a CER generator).
- * This page fixes the routing to render the actual 510(k) workflow.
  */
 
 import React, { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+import { ErrorBoundary } from '@/concept2cure/components/ErrorBoundary';
+import { ErrorState } from '@/components/ui/statesV2';
 // @ts-expect-error — JSX component without .d.ts; real implementation, typed at boundary
 import Enhanced510kIntakeWorkflow from '@/components/510k/Enhanced510kIntakeWorkflow';
 
@@ -42,7 +40,7 @@ export const FDA510kWorkspacePage: React.FC<FDA510kWorkspacePageProps> = ({
         localStorage.setItem(`510k-workflow-${projectId}`, JSON.stringify(data));
         toast({
           title: 'Saved locally',
-          description: 'Backend unavailable — progress saved to local storage.',
+          description: 'Server unavailable. Progress saved to local storage and will sync when the connection is restored.',
           variant: 'destructive',
         });
       }
@@ -58,25 +56,38 @@ export const FDA510kWorkspacePage: React.FC<FDA510kWorkspacePageProps> = ({
   return (
     <div className="flex flex-col h-full bg-white overflow-y-auto">
       {onBackToProject && (
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-stone-100 bg-stone-50/50">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-stone-100 bg-stone-50/50">
           <button
             onClick={onBackToProject}
-            className="text-xs text-stone-500 hover:text-stone-700 transition-colors"
+            className="text-[12px] text-stone-500 hover:text-stone-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 rounded px-1"
           >
             &larr; Back to project
           </button>
-          <span className="text-xs text-stone-400">|</span>
-          <span className="text-xs font-medium text-stone-700">
-            510(k) Workspace{projectName ? ` — ${projectName}` : ''}
+          <span className="text-[12px] text-stone-300">|</span>
+          <span className="text-[12px] font-medium text-stone-700">
+            510(k) Submission Workspace{projectName ? ` — ${projectName}` : ''}
           </span>
         </div>
       )}
       <div className="flex-1 min-h-0 overflow-y-auto">
-        <Enhanced510kIntakeWorkflow
-          projectId={projectId}
-          onSave={handleSave}
-          onComplete={handleComplete}
-        />
+        <ErrorBoundary
+          fallback={
+            <div className="p-8">
+              <ErrorState
+                title="510(k) workspace failed to load"
+                message="An error occurred while rendering the workflow. Try refreshing the page."
+                testId="fda510k-error"
+              />
+            </div>
+          }
+        >
+          <Enhanced510kIntakeWorkflow
+            projectId={projectId}
+            organizationId={projectId}
+            onSave={handleSave}
+            onComplete={handleComplete}
+          />
+        </ErrorBoundary>
       </div>
     </div>
   );

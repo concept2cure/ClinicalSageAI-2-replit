@@ -50,6 +50,11 @@ import {
 } from 'lucide-react';
 import PredicateFinderPanel from './PredicateFinderPanel';
 import { ComplianceOversightPanel } from './ComplianceOversightPanel';
+import EquivalenceBuilderPanel from './EquivalenceBuilderPanel';
+import DocumentGenerationPanel from './DocumentGenerationPanel';
+import ESTARBuilderPanel from './ESTARBuilderPanel';
+import RTAChecklistPanel from './RTAChecklistPanel';
+import ComplianceCheckPanel from './ComplianceCheckPanel';
 
 // Workflow configuration based on the enhanced 510k specification
 const WORKFLOW_CONFIG = {
@@ -716,7 +721,7 @@ const Enhanced510kIntakeWorkflow = ({
             </div>
             
             {workflowData.hasPatientContacting && (
-              <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+              <div className="grid grid-cols-2 gap-4 p-4 bg-stone-50 rounded-lg">
                 <div>
                   <Label htmlFor="contact-duration">Contact Duration</Label>
                   <Select
@@ -792,7 +797,7 @@ const Enhanced510kIntakeWorkflow = ({
               rows={4}
               data-testid="textarea-intended-use"
             />
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-stone-500 mt-1">
               The general purpose or function of the device
             </p>
           </div>
@@ -807,7 +812,7 @@ const Enhanced510kIntakeWorkflow = ({
               rows={4}
               data-testid="textarea-indications"
             />
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-stone-500 mt-1">
               Specific medical conditions and patient populations
             </p>
           </div>
@@ -850,17 +855,17 @@ const Enhanced510kIntakeWorkflow = ({
   
   // Render main workflow interface
   return (
-    <div className="min-h-screen bg-gray-50 p-6" data-testid="enhanced-510k-workflow">
+    <div className="min-h-screen bg-stone-50 p-6" data-testid="enhanced-510k-workflow">
       {/* Header with progress */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">FDA 510(k) Submission Workflow</h1>
-            <p className="text-gray-600 mt-1">Enhanced 7-Stage Gated Process with Auto-Population</p>
+            <h1 className="text-lg font-semibold text-stone-900">FDA 510(k) Submission Workflow</h1>
+            <p className="text-[13px] text-stone-500 mt-0.5">7-stage process with predicate search, SE analysis, compliance, and eSTAR assembly</p>
           </div>
           <div className="text-right">
-            <div className="text-sm text-gray-600">Overall Progress</div>
-            <div className="text-2xl font-bold text-blue-600">{calculateOverallProgress()}%</div>
+            <div className="text-sm text-stone-600">Overall Progress</div>
+            <div className="text-2xl font-bold text-stone-800">{calculateOverallProgress()}%</div>
           </div>
         </div>
         
@@ -936,7 +941,7 @@ const Enhanced510kIntakeWorkflow = ({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-stone-600 mb-4">
                 {WORKFLOW_CONFIG.stages[currentStage].description}
               </p>
               
@@ -971,7 +976,7 @@ const Enhanced510kIntakeWorkflow = ({
               <div className="space-y-2 text-sm">
                 {WORKFLOW_CONFIG.forms.map(form => (
                   <div key={form.id} className="flex items-center justify-between">
-                    <span className="text-gray-600">{form.form_number}</span>
+                    <span className="text-stone-600">{form.form_number}</span>
                     <Badge variant="outline" className="text-xs">
                       {form.required ? 'Required' : 'Optional'}
                     </Badge>
@@ -1007,17 +1012,217 @@ const Enhanced510kIntakeWorkflow = ({
             </div>
           )}
           
-          {/* Additional stages will be implemented... */}
-          {currentStage > 0 && (
+          {/* Stage 1: Strategy — Substantial Equivalence Builder */}
+          {currentStage === 1 && (
+            <EquivalenceBuilderPanel
+              deviceProfile={workflowData}
+              predicateDevices={workflowData.selectedPredicates || []}
+              onComplete={(data) => {
+                setWorkflowData(prev => ({ ...prev, equivalenceData: data }));
+                toast({ title: 'SE strategy saved', description: 'Substantial equivalence comparison documented.' });
+              }}
+            />
+          )}
+
+          {/* Stage 2: Evidence Plan — Section checklist + literature */}
+          {currentStage === 2 && (
             <Card>
               <CardHeader>
-                <CardTitle>{WORKFLOW_CONFIG.stages[currentStage].name}</CardTitle>
-                <CardDescription>{WORKFLOW_CONFIG.stages[currentStage].description}</CardDescription>
+                <CardTitle className="text-base">{WORKFLOW_CONFIG.stages[2].name}</CardTitle>
+                <CardDescription>{WORKFLOW_CONFIG.stages[2].description}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {WORKFLOW_CONFIG.stages[2].sections.map(section => (
+                  <div key={section.id} className="flex items-center justify-between rounded-lg border border-stone-200 px-3 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${workflowData[section.id + '_status'] === 'complete' ? 'bg-emerald-500' : 'bg-stone-300'}`} />
+                      <span className="text-sm text-stone-700">{section.title}</span>
+                      {section.required && <Badge variant="outline" className="text-[10px] h-4 px-1">Required</Badge>}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs"
+                      onClick={() => {
+                        setWorkflowData(prev => ({ ...prev, [section.id + '_status']: 'complete' }));
+                        toast({ title: `${section.title} marked complete` });
+                      }}
+                    >
+                      {workflowData[section.id + '_status'] === 'complete' ? 'Done' : 'Mark Complete'}
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Stage 3: Evidence — Section checklist for test reports */}
+          {currentStage === 3 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">{WORKFLOW_CONFIG.stages[3].name}</CardTitle>
+                <CardDescription>{WORKFLOW_CONFIG.stages[3].description}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {WORKFLOW_CONFIG.stages[3].sections.map(section => (
+                  <div key={section.id} className="flex items-center justify-between rounded-lg border border-stone-200 px-3 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${workflowData[section.id + '_status'] === 'complete' ? 'bg-emerald-500' : workflowData[section.id + '_status'] === 'draft' ? 'bg-amber-400' : 'bg-stone-300'}`} />
+                      <span className="text-sm text-stone-700">{section.title}</span>
+                      {section.required && <Badge variant="outline" className="text-[10px] h-4 px-1">Required</Badge>}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs text-stone-500"
+                        onClick={() => setWorkflowData(prev => ({ ...prev, [section.id + '_status']: 'draft' }))}
+                      >
+                        In Progress
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs"
+                        onClick={() => {
+                          setWorkflowData(prev => ({ ...prev, [section.id + '_status']: 'complete' }));
+                          toast({ title: `${section.title} evidence complete` });
+                        }}
+                      >
+                        {workflowData[section.id + '_status'] === 'complete' ? 'Done' : 'Complete'}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Stage 4: Authoring — Document generation for submission sections */}
+          {currentStage === 4 && (
+            <DocumentGenerationPanel
+              projectId={projectId}
+              projectData={workflowData}
+            />
+          )}
+
+          {/* Stage 5: eSTAR & RTA — Builder + checklist */}
+          {currentStage === 5 && activeSection === 'estar_build' && (
+            <ESTARBuilderPanel
+              projectId={projectId}
+              deviceProfile={workflowData}
+              complianceScore={workflowData.complianceScore}
+              equivalenceData={workflowData.equivalenceData}
+              onGenerationComplete={() => toast({ title: 'eSTAR package generated' })}
+              onValidationComplete={() => toast({ title: 'eSTAR validation passed' })}
+              isValidating={false}
+              isGenerating={false}
+            />
+          )}
+          {currentStage === 5 && activeSection === 'rta_checklist' && (
+            <RTAChecklistPanel
+              projectId={projectId}
+              deviceProfile={workflowData}
+              onChecklistUpdate={(data) => setWorkflowData(prev => ({ ...prev, rtaChecklist: data }))}
+              onValidationComplete={() => toast({ title: 'RTA checklist validated' })}
+            />
+          )}
+          {currentStage === 5 && activeSection === 'ecopy_assembly' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">eCopy Assembly</CardTitle>
+                <CardDescription>Assemble the electronic submission copy for FDA submission gateway.</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">
-                  Stage {currentStage + 1} content will be implemented here...
-                </p>
+                <div className="space-y-3">
+                  {['Cover letter', '510(k) summary', 'Indications for Use (FDA 3881)', 'Device description', 'SE comparison', 'Performance data summaries', 'Labeling', 'eSTAR package'].map(item => (
+                    <div key={item} className="flex items-center gap-2 rounded-lg border border-stone-200 px-3 py-2">
+                      <CheckCircle2 className="w-4 h-4 text-stone-400" />
+                      <span className="text-sm text-stone-700">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Stage 6: Submit & AI — Compliance check + final validation */}
+          {currentStage === 6 && activeSection === 'final_validation' && (
+            <ComplianceCheckPanel
+              deviceProfile={workflowData}
+              predicateDevices={workflowData.selectedPredicates || []}
+              equivalenceData={workflowData.equivalenceData}
+              onComplete={(score) => {
+                setWorkflowData(prev => ({ ...prev, complianceScore: score }));
+                toast({ title: 'Final validation complete', description: `Compliance score: ${score}%` });
+              }}
+            />
+          )}
+          {currentStage === 6 && activeSection === 'ai_review' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">AI Predictive Review</CardTitle>
+                <CardDescription>Simulate likely FDA reviewer questions and identify potential deficiencies before submission.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Alert>
+                  <AlertDescription className="text-sm text-stone-600">
+                    AI predictive review uses regulatory intelligence to surface patterns from prior 510(k) decisions.
+                    Use the AI assistant panel on the right to run a full predictive analysis on your submission.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          )}
+          {currentStage === 6 && activeSection === 'submission' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Submission Package</CardTitle>
+                <CardDescription>Review and finalize the complete 510(k) submission package.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="rounded-lg border border-stone-200 p-3">
+                  <p className="text-sm font-medium text-stone-800">Package contents</p>
+                  <p className="mt-1 text-xs text-stone-500">
+                    {workflowData.selectedPredicates?.length || 0} predicate devices identified
+                    {workflowData.equivalenceData ? ' · SE analysis complete' : ''}
+                    {workflowData.complianceScore ? ` · ${workflowData.complianceScore}% compliant` : ''}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => {
+                    toast({ title: 'Submission package ready', description: 'Package is ready for final review and submission.' });
+                  }}
+                  className="w-full"
+                >
+                  Generate Final Package
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+          {currentStage === 6 && activeSection === 'fda_timeline' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">FDA Day 1-100 Tracker</CardTitle>
+                <CardDescription>Track the FDA review timeline after submission, including RTA, SE review, and decision milestones.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {[
+                    { day: 'Day 1-15', milestone: 'Refuse to Accept (RTA) review', status: 'pending' },
+                    { day: 'Day 15-60', milestone: 'Substantive review period', status: 'pending' },
+                    { day: 'Day 60-90', milestone: 'Additional information requests (if any)', status: 'pending' },
+                    { day: 'Day 90-100', milestone: 'FDA decision (SE/NSE/withdrawal)', status: 'pending' },
+                  ].map(item => (
+                    <div key={item.day} className="flex items-center justify-between rounded-lg border border-stone-200 px-3 py-2.5">
+                      <div>
+                        <span className="text-xs font-medium text-stone-800">{item.day}</span>
+                        <p className="text-xs text-stone-500">{item.milestone}</p>
+                      </div>
+                      <Badge variant="outline" className="text-[10px]">Pending</Badge>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           )}

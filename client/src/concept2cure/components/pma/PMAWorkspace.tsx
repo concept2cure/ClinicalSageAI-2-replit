@@ -223,9 +223,9 @@ function buildDefaultPhases(): PMAPhase[] {
 
 const STATUS_CONFIG = {
   not_started: { label: 'Not Started', color: 'text-stone-400', bg: 'bg-stone-100', icon: <Circle className="w-3.5 h-3.5" /> },
-  in_progress: { label: 'In Progress', color: 'text-blue-600', bg: 'bg-blue-100', icon: <Clock className="w-3.5 h-3.5 animate-pulse" /> },
-  completed: { label: 'Completed', color: 'text-green-600', bg: 'bg-green-100', icon: <CheckCircle className="w-3.5 h-3.5" /> },
-  blocked: { label: 'Blocked', color: 'text-red-600', bg: 'bg-red-100', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
+  in_progress: { label: 'In Progress', color: 'text-stone-700', bg: 'bg-stone-100', icon: <Clock className="w-3.5 h-3.5 animate-pulse" /> },
+  completed: { label: 'Completed', color: 'text-emerald-700', bg: 'bg-emerald-50', icon: <CheckCircle className="w-3.5 h-3.5" /> },
+  blocked: { label: 'Blocked', color: 'text-amber-700', bg: 'bg-amber-50', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
 };
 
 function getPhaseProgress(phase: PMAPhase): number {
@@ -342,7 +342,7 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
             </button>
           )}
           <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-red-600 rounded-lg">
+            <div className="p-2 bg-stone-800 rounded-lg">
               <ShieldCheck className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -359,7 +359,7 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
             </div>
             <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-red-500 rounded-full transition-all duration-300"
+                className="h-full bg-stone-700 rounded-full transition-all duration-300"
                 style={{ width: `${overallProgress}%` }}
               />
             </div>
@@ -385,13 +385,13 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
                   className={cn(
                     'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors',
                     'hover:bg-stone-100',
-                    isSelected && 'bg-red-50 ring-1 ring-red-200'
+                    isSelected && 'bg-stone-100 ring-1 ring-stone-300'
                   )}
                 >
                   <div className={cn(
                     'p-1 rounded',
-                    phaseStatus === 'completed' ? 'text-green-600' :
-                    phaseStatus === 'in_progress' ? 'text-blue-600' : 'text-stone-400'
+                    phaseStatus === 'completed' ? 'text-emerald-600' :
+                    phaseStatus === 'in_progress' ? 'text-stone-600' : 'text-stone-400'
                   )}>
                     {phase.icon}
                   </div>
@@ -401,7 +401,7 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
                       <span className="text-[10px] font-mono text-stone-400">P{phase.order}</span>
                       <span className={cn(
                         'text-xs truncate',
-                        isSelected ? 'font-medium text-red-700' : 'text-stone-700'
+                        isSelected ? 'font-medium text-stone-900' : 'text-stone-700'
                       )}>
                         {phase.name}
                       </span>
@@ -410,7 +410,7 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
                       <div
                         className={cn(
                           'h-full rounded-full transition-all',
-                          phaseStatus === 'completed' ? 'bg-green-500' : 'bg-stone-600'
+                          phaseStatus === 'completed' ? 'bg-emerald-500' : 'bg-stone-600'
                         )}
                         style={{ width: `${progress}%` }}
                       />
@@ -444,7 +444,7 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
                             {task.name}
                           </span>
                           {task.critical && (
-                            <span className="px-1 py-0.5 text-[8px] font-bold bg-red-100 text-red-600 rounded">
+                            <span className="px-1 py-0.5 text-[8px] font-bold bg-amber-50 text-amber-700 rounded">
                               CRITICAL
                             </span>
                           )}
@@ -468,8 +468,8 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
               <div className="flex items-center gap-3">
                 <div className={cn(
                   'p-2 rounded-lg',
-                  getPhaseStatus(selectedPhase) === 'completed' ? 'bg-green-100 text-green-700' :
-                  getPhaseStatus(selectedPhase) === 'in_progress' ? 'bg-blue-100 text-stone-700' :
+                  getPhaseStatus(selectedPhase) === 'completed' ? 'bg-emerald-50 text-emerald-700' :
+                  getPhaseStatus(selectedPhase) === 'in_progress' ? 'bg-stone-100 text-stone-700' :
                   'bg-stone-100 text-stone-500'
                 )}>
                   {selectedPhase.icon}
@@ -502,7 +502,7 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
                     key={task.id}
                     className={cn(
                       'flex items-center gap-4 p-4 hover:bg-stone-50 transition-colors cursor-pointer',
-                      task.status === 'completed' && 'bg-green-50/30'
+                      task.status === 'completed' && 'bg-emerald-50/30'
                     )}
                     onClick={() => toggleTaskStatus(selectedPhase.id, task.id)}
                   >
@@ -519,7 +519,7 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
                           {task.name}
                         </span>
                         {task.critical && (
-                          <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 rounded">
+                          <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-stone-900 rounded">
                             CRITICAL PATH
                           </span>
                         )}
@@ -531,7 +531,7 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
                         {task.role && <span>{task.role}</span>}
                         <span>{task.estimatedHours}h estimated</span>
                         {task.completedAt && (
-                          <span className="text-green-600">
+                          <span className="text-emerald-600">
                             Completed {new Date(task.completedAt).toLocaleDateString()}
                           </span>
                         )}
