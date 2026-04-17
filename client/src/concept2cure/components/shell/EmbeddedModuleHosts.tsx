@@ -25,6 +25,18 @@ const DEVICE_SUGGESTED_ACTIONS: Record<string, ActionCardDef[]> = {
     { id: 'sa-cer-draft', label: 'Draft CER section', intent: 'chat.new', description: 'AI-assisted CER narrative drafting per MEDDEV 2.7/1' },
     { id: 'sa-cer-export', label: 'Export CER report', intent: 'chat.new', description: 'Generate governed PDF/Word export of the CER' },
   ],
+  DE_NOVO: [
+    { id: 'sa-denovo-classify', label: 'De Novo classification', intent: 'chat.new', description: 'Verify De Novo eligibility and risk-based classification' },
+    { id: 'sa-denovo-predicate', label: 'Search similar devices', intent: 'chat.new', description: 'Find comparable legally marketed devices' },
+    { id: 'sa-denovo-risk', label: 'Risk analysis (ISO 14971)', intent: 'chat.new', description: 'Review risk management file for De Novo submission' },
+    { id: 'sa-denovo-summary', label: 'Draft De Novo summary', intent: 'chat.new', description: 'Draft the De Novo request summary for FDA submission' },
+  ],
+  IVDR: [
+    { id: 'sa-ivdr-cer', label: 'Start IVDR clinical evaluation', intent: 'chat.new', description: 'Begin clinical evaluation per EU IVDR requirements' },
+    { id: 'sa-ivdr-perf', label: 'Performance evaluation plan', intent: 'chat.new', description: 'Design analytical and clinical performance studies' },
+    { id: 'sa-ivdr-literature', label: 'Literature search', intent: 'chat.new', description: 'Search for clinical evidence supporting device claims' },
+    { id: 'sa-ivdr-class', label: 'IVDR classification', intent: 'chat.new', description: 'Verify device classification under EU IVDR Annex VIII' },
+  ],
 };
 
 interface EmbeddedModulePageProps {

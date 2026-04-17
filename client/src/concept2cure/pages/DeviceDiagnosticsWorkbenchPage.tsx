@@ -114,7 +114,7 @@ export const DeviceDiagnosticsWorkbenchPage: React.FC<DeviceDiagnosticsWorkbench
     <WorkspaceCanvas maxWidth="4xl" testId="device-diagnostics-workbench-page">
       <PageTitleHeader
         title="Medical Device & Diagnostics Workbench"
-        subtitle={projectId ? `Unified beta lane for ${projectName || 'active project'}` : 'Select a project to enable full orchestration'}
+        subtitle={projectId ? `${projectName || 'Active project'}${submissionType ? ` · ${submissionType}` : ''}` : 'Select a project to begin'}
       />
 
       <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
