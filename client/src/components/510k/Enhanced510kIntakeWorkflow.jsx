@@ -366,6 +366,67 @@ const Enhanced510kIntakeWorkflow = ({
       }));
     }
   }, [existingWorkflowData, existingProject]);
+
+  // Auto-compute each stage's completion % from filled fields so gates open
+  // as the user progresses. Without this, stages stay at 0% and the user
+  // cannot advance past Stage 0.
+  useEffect(() => {
+    setWorkflowData(prev => {
+      const setupGates = {
+        deviceName: !!prev.deviceName,
+        manufacturer: !!prev.manufacturer,
+        deviceClass: !!prev.deviceClass,
+        productCode: !!prev.productCode,
+        intendedUse: !!(prev.intendedUse || prev.indicationsForUse),
+        predicatesSelected: Array.isArray(prev.selectedPredicates) && prev.selectedPredicates.length > 0,
+      };
+      const setupComplete = Object.values(setupGates).filter(Boolean).length;
+      const setupTotal = Object.keys(setupGates).length;
+      const setupPct = setupTotal > 0 ? Math.round((setupComplete / setupTotal) * 100) : 0;
+
+      const strategyPct = prev.equivalenceData ? 100 : 0;
+
+      const evidencePlanPct = ['standards_matrix', 'test_plan'].filter(k => prev[k + '_status'] === 'complete').length * 50;
+
+      const evidenceSections = ['bench_testing', 'biocompatibility', 'sterility', 'emc_es', 'software', 'cybersecurity', 'usability', 'clinical_data'];
+      const evidenceComplete = evidenceSections.filter(k => prev[k + '_status'] === 'complete').length;
+      const evidencePct = Math.round((evidenceComplete / evidenceSections.length) * 100);
+
+      const nextStageProgress = {
+        ...prev.stageProgress,
+        setup: { ...prev.stageProgress.setup, completion: setupPct, status: setupPct >= 80 ? 'complete' : 'draft', gates: setupGates },
+        strategy: { ...prev.stageProgress.strategy, completion: strategyPct, status: strategyPct >= 80 ? 'complete' : (strategyPct > 0 ? 'draft' : 'todo') },
+        evidence_plan: { ...prev.stageProgress.evidence_plan, completion: evidencePlanPct, status: evidencePlanPct >= 80 ? 'complete' : (evidencePlanPct > 0 ? 'draft' : 'todo') },
+        evidence: { ...prev.stageProgress.evidence, completion: evidencePct, status: evidencePct >= 80 ? 'complete' : (evidencePct > 0 ? 'draft' : 'todo') },
+      };
+
+      const same = Object.keys(nextStageProgress).every(k =>
+        nextStageProgress[k].completion === prev.stageProgress[k].completion &&
+        nextStageProgress[k].status === prev.stageProgress[k].status
+      );
+      if (same) return prev;
+      return { ...prev, stageProgress: nextStageProgress };
+    });
+  }, [
+    workflowData.deviceName,
+    workflowData.manufacturer,
+    workflowData.deviceClass,
+    workflowData.productCode,
+    workflowData.intendedUse,
+    workflowData.indicationsForUse,
+    workflowData.selectedPredicates,
+    workflowData.equivalenceData,
+    workflowData.standards_matrix_status,
+    workflowData.test_plan_status,
+    workflowData.bench_testing_status,
+    workflowData.biocompatibility_status,
+    workflowData.sterility_status,
+    workflowData.emc_es_status,
+    workflowData.software_status,
+    workflowData.cybersecurity_status,
+    workflowData.usability_status,
+    workflowData.clinical_data_status,
+  ]);
   
   // Calculate overall progress
   const calculateOverallProgress = () => {
