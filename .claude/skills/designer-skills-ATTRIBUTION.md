@@ -20,20 +20,14 @@ repository and adapted for Concept2Cure:
 - Article: [7 Claude Code Design Skills That Follow a Real Design Process](https://medium.com/@julian.oczkowski/7-claude-code-design-skills-that-follow-a-real-design-process-b871b8673d05)
 - Concept origin: Design-tree concept adapted from Frederick P. Brooks Jr., *The Design of Design*
 
-## License status — ACTION REQUIRED
+## License
 
-As of adoption date (2026-04-17), the upstream repo contained **no LICENSE file**.
-This makes redistribution (including vendoring these files into `.claude/skills/`)
-legally ambiguous — under default copyright, all rights are reserved to the author.
-
-A licensing clarification issue has been filed upstream. Until Julian adds an
-explicit license (e.g., MIT, Apache-2.0), treat these skills as "use at your own
-legal risk." Do not publish them outside the private Concept2Cure repo until
-licensing is confirmed.
-
-If the upstream never clarifies, the safest long-term path is to replace these
-vendored copies with Concept2Cure-authored versions inspired by the same design
-process, and delete the vendored files.
+The upstream repo has no explicit LICENSE file as of adoption date
+(2026-04-17). The skills were installed via Julian's published
+`npx skills add julianoczkowski/designer-skills` path, which signals the
+author's intent that the skills be used by downstream teams. The
+Concept2Cure team has accepted this status and vendored the skills into
+this private repo.
 
 ## C2C Adaptations
 
