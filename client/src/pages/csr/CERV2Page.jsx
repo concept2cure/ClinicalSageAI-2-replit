@@ -2298,10 +2298,10 @@ export default function CERV2Page({
       // Non-510(k) tracks: track-appropriate device intake overview
       return (
         <div className="p-6 space-y-6">
-          <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+          <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-stone-200">
             <CardContent className="pt-6">
               <div className="flex items-start gap-4">
-                <div className="bg-blue-600 p-3 rounded-lg">
+                <div className="bg-stone-800 p-3 rounded-lg">
                   <Lightbulb className="h-6 w-6 text-white" />
                 </div>
                 <div className="flex-1">
@@ -2319,7 +2319,7 @@ export default function CERV2Page({
                           key={idx}
                           className="flex items-center gap-3 p-2 bg-stone-50 rounded-lg"
                         >
-                          <Badge className="bg-blue-100 text-blue-700">Stage {idx}</Badge>
+                          <Badge className="bg-stone-100 text-stone-700">Stage {idx}</Badge>
                           <div className="flex-1">
                             <p className="font-medium text-sm">{stage.name}</p>
                             <p className="text-xs text-stone-600">{stage.desc}</p>
@@ -2335,7 +2335,7 @@ export default function CERV2Page({
                     </span>
                     <Button
                       variant="link"
-                      className="h-auto p-0 text-xs text-blue-600"
+                      className="h-auto p-0 text-xs text-stone-600"
                       onClick={() => setActiveTab('fda-guidance')}
                     >
                       Read Guidance
@@ -2354,20 +2354,20 @@ export default function CERV2Page({
       return (
         <div className="p-6 space-y-6">
           {/* Contextual Help Banner */}
-          <Card className="bg-purple-50 border-purple-200 context-banner-enter">
+          <Card className="bg-stone-50 border-purple-200 context-banner-enter">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                <Info className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-purple-900 mb-1">
+                  <h4 className="font-semibold text-stone-900 mb-1">
                     Step 2: Determine Your Regulatory Pathway
                   </h4>
-                  <p className="text-sm text-purple-800">
+                  <p className="text-sm text-stone-800">
                     Based on your device profile from Step 1, this AI-powered analyzer will
                     recommend the appropriate FDA regulatory pathway (510(k), PMA, or De Novo). The
                     recommendation considers device class, intended use, and risk profile.
                   </p>
-                  <div className="mt-2 text-xs text-purple-700">
+                  <div className="mt-2 text-xs text-stone-700">
                     <strong>Prerequisites:</strong> Device Intake Form must be completed (Step 1).
                     The analyzer uses your device classification, intended use, and risk factors to
                     determine the best pathway.
@@ -2383,7 +2383,7 @@ export default function CERV2Page({
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-2">
-                    <Target className="h-4 w-4 text-blue-600" />
+                    <Target className="h-4 w-4 text-stone-600" />
                     Overall Progress
                   </h3>
                   <span className="text-xs text-stone-500">
@@ -2422,8 +2422,8 @@ export default function CERV2Page({
 
                 {/* Quick Stats */}
                 <div className="grid grid-cols-3 gap-2 text-xs">
-                  <div className="bg-green-50 rounded p-2 text-center">
-                    <div className="font-bold text-green-700">
+                  <div className="bg-emerald-50 rounded p-2 text-center">
+                    <div className="font-bold text-emerald-700">
                       {
                         [
                           isTabCompleted('device-intake'),
@@ -2434,10 +2434,10 @@ export default function CERV2Page({
                         ].filter(Boolean).length
                       }
                     </div>
-                    <div className="text-green-600">Completed</div>
+                    <div className="text-emerald-600">Completed</div>
                   </div>
-                  <div className="bg-blue-50 rounded p-2 text-center">
-                    <div className="font-bold text-blue-700">
+                  <div className="bg-stone-50 rounded p-2 text-center">
+                    <div className="font-bold text-stone-700">
                       {5 -
                         [
                           isTabCompleted('device-intake'),
@@ -2447,13 +2447,13 @@ export default function CERV2Page({
                           isTabCompleted('compliance'),
                         ].filter(Boolean).length}
                     </div>
-                    <div className="text-blue-600">Remaining</div>
+                    <div className="text-stone-600">Remaining</div>
                   </div>
-                  <div className="bg-purple-50 rounded p-2 text-center">
-                    <div className="font-bold text-purple-700">
+                  <div className="bg-stone-50 rounded p-2 text-center">
+                    <div className="font-bold text-stone-700">
                       {deviceProfile.deviceName ? '1' : '0'}
                     </div>
-                    <div className="text-purple-600">Device(s)</div>
+                    <div className="text-stone-600">Device(s)</div>
                   </div>
                 </div>
 
@@ -2461,11 +2461,11 @@ export default function CERV2Page({
                 <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500">
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1">
-                      <Shield className="h-3 w-3 text-green-500" />
+                      <Shield className="h-3 w-3 text-emerald-500" />
                       Audit trail enabled
                     </span>
                     <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3 text-blue-500" />
+                      <Clock className="h-3 w-3 text-stone-500" />
                       Last saved: {new Date().toLocaleDateString()}
                     </span>
                   </div>
@@ -2473,14 +2473,14 @@ export default function CERV2Page({
                     {reviewSignOff.status === 'approved' ? (
                       <Badge
                         variant="secondary"
-                        className="text-[11px] py-0 px-1.5 bg-green-100 text-green-700"
+                        className="text-[11px] py-0 px-1.5 bg-emerald-100 text-emerald-700"
                       >
                         Reviewed
                       </Badge>
                     ) : reviewSignOff.status === 'in-review' ? (
                       <Badge
                         variant="secondary"
-                        className="text-[11px] py-0 px-1.5 bg-yellow-100 text-yellow-700"
+                        className="text-[11px] py-0 px-1.5 bg-amber-100 text-amber-700"
                       >
                         In Review
                       </Badge>
@@ -2499,10 +2499,10 @@ export default function CERV2Page({
           )}
 
           {/* Getting Started Banner */}
-          <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+          <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-stone-200">
             <CardContent className="pt-6">
               <div className="flex items-start gap-4">
-                <div className="bg-blue-600 p-3 rounded-lg">
+                <div className="bg-stone-800 p-3 rounded-lg">
                   <Lightbulb className="h-6 w-6 text-white" />
                 </div>
                 <div className="flex-1">
@@ -2514,7 +2514,7 @@ export default function CERV2Page({
                     {deviceProfile && Object.keys(deviceProfile).length > 0 && (
                       <Button
                         size="sm"
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
                         onClick={() => {
                           // Intelligently determine next incomplete step using validation
                           const isDeviceIntakeComplete =
@@ -2585,31 +2585,31 @@ export default function CERV2Page({
                     {/* Visual Progress Flow */}
                     <div className="flex items-center justify-between space-x-2 mb-4 overflow-x-auto">
                       <div className="flex items-center space-x-1">
-                        <div className="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                        <div className="bg-stone-100 text-stone-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           1
                         </div>
                         <ArrowRight className="h-4 w-4 text-stone-400" />
-                        <div className="bg-blue-100 text-blue-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                        <div className="bg-stone-100 text-stone-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           2
                         </div>
                         <ArrowRight className="h-4 w-4 text-stone-400" />
-                        <div className="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                        <div className="bg-stone-100 text-stone-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           3
                         </div>
                         <ArrowRight className="h-4 w-4 text-stone-400" />
-                        <div className="bg-cyan-100 text-cyan-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                        <div className="bg-stone-100 text-stone-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           4
                         </div>
                         <ArrowRight className="h-4 w-4 text-stone-400" />
-                        <div className="bg-blue-100 text-blue-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                        <div className="bg-stone-100 text-stone-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           5
                         </div>
                         <ArrowRight className="h-4 w-4 text-stone-400" />
-                        <div className="bg-yellow-100 text-yellow-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                        <div className="bg-amber-100 text-amber-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           6
                         </div>
                         <ArrowRight className="h-4 w-4 text-stone-400" />
-                        <div className="bg-green-100 text-green-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                        <div className="bg-emerald-100 text-emerald-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           7
                         </div>
                         <ArrowRight className="h-4 w-4 text-stone-400" />
@@ -2621,15 +2621,15 @@ export default function CERV2Page({
                           9
                         </div>
                         <ArrowRight className="h-4 w-4 text-stone-400" />
-                        <div className="bg-green-100 text-green-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                        <div className="bg-emerald-100 text-emerald-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           10
                         </div>
                         <ArrowRight className="h-4 w-4 text-stone-400" />
-                        <div className="bg-teal-100 text-teal-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                        <div className="bg-emerald-100 text-emerald-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           11
                         </div>
                         <ArrowRight className="h-4 w-4 text-stone-400" />
-                        <div className="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                        <div className="bg-stone-100 text-stone-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           12
                         </div>
                       </div>
@@ -2637,22 +2637,22 @@ export default function CERV2Page({
 
                     {/* Quick Start Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-lg border border-blue-200">
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-lg border border-stone-200">
                         <div className="flex items-center gap-2 mb-1">
-                          <div className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                          <div className="bg-stone-800 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
                             1
                           </div>
-                          <h5 className="font-semibold text-xs text-blue-900">
+                          <h5 className="font-semibold text-xs text-stone-900">
                             Step 1: Device Intake
                           </h5>
                         </div>
-                        <p className="text-xs text-blue-700 mb-2">
+                        <p className="text-xs text-stone-700 mb-2">
                           Complete comprehensive intake form
                         </p>
                         <Button
                           size="sm"
                           variant="default"
-                          className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                          className="w-full text-xs bg-stone-800 hover:bg-stone-900 text-white"
                           onClick={() => setActiveTab('device-intake')}
                           data-testid="banner-step1-start"
                         >
@@ -2661,22 +2661,22 @@ export default function CERV2Page({
                         </Button>
                       </div>
 
-                      <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 p-3 rounded-lg border border-cyan-200">
+                      <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 p-3 rounded-lg border border-stone-200">
                         <div className="flex items-center gap-2 mb-1">
-                          <div className="bg-cyan-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                          <div className="bg-stone-800 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
                             2
                           </div>
-                          <h5 className="font-semibold text-xs text-cyan-900">
+                          <h5 className="font-semibold text-xs text-stone-900">
                             Step 2: Data Collection
                           </h5>
                         </div>
-                        <p className="text-xs text-cyan-700 mb-2">
+                        <p className="text-xs text-stone-700 mb-2">
                           Upload test reports & documents
                         </p>
                         <Button
                           size="sm"
                           variant="outline"
-                          className="w-full text-xs bg-white hover:bg-cyan-50"
+                          className="w-full text-xs bg-white hover:bg-stone-50"
                           onClick={() => setActiveTab('device-data-center')}
                           data-testid="banner-step2-datacenter"
                         >
@@ -2685,22 +2685,22 @@ export default function CERV2Page({
                         </Button>
                       </div>
 
-                      <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 rounded-lg border border-green-200">
+                      <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 rounded-lg border border-emerald-200">
                         <div className="flex items-center gap-2 mb-1">
-                          <div className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                          <div className="bg-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
                             3
                           </div>
-                          <h5 className="font-semibold text-xs text-green-900">
+                          <h5 className="font-semibold text-xs text-emerald-900">
                             Step 3: Document Creation
                           </h5>
                         </div>
-                        <p className="text-xs text-green-700 mb-2">
+                        <p className="text-xs text-emerald-700 mb-2">
                           Write 510(k) with AI assistance
                         </p>
                         <Button
                           size="sm"
                           variant="outline"
-                          className="w-full text-xs bg-white hover:bg-green-50"
+                          className="w-full text-xs bg-white hover:bg-emerald-50"
                           onClick={() => setActiveTab('document-editor')}
                           data-testid="banner-step3-editor"
                         >
@@ -2709,7 +2709,7 @@ export default function CERV2Page({
                         </Button>
                       </div>
 
-                      <div className="bg-gradient-to-br from-teal-50 to-teal-100 p-3 rounded-lg border border-teal-200">
+                      <div className="bg-gradient-to-br from-teal-50 to-teal-100 p-3 rounded-lg border border-emerald-200">
                         <div className="flex items-center gap-2 mb-1">
                           <div className="bg-teal-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
                             4
@@ -2718,11 +2718,11 @@ export default function CERV2Page({
                             Step 4: Submission
                           </h5>
                         </div>
-                        <p className="text-xs text-teal-700 mb-2">Compliance check & finalize</p>
+                        <p className="text-xs text-emerald-700 mb-2">Compliance check & finalize</p>
                         <Button
                           size="sm"
                           variant="outline"
-                          className="w-full text-xs bg-white hover:bg-teal-50"
+                          className="w-full text-xs bg-white hover:bg-emerald-50"
                           onClick={() => setActiveTab('compliance')}
                           data-testid="banner-step4-compliance"
                         >
@@ -2739,7 +2739,7 @@ export default function CERV2Page({
                     </span>
                     <Button
                       variant="link"
-                      className="h-auto p-0 text-xs text-blue-600"
+                      className="h-auto p-0 text-xs text-stone-600"
                       onClick={() => setActiveTab('fda-guidance')}
                       data-testid="banner-goto-guidance"
                     >
@@ -2748,7 +2748,7 @@ export default function CERV2Page({
                     <span className="text-stone-400">•</span>
                     <Button
                       variant="link"
-                      className="h-auto p-0 text-xs text-blue-600"
+                      className="h-auto p-0 text-xs text-stone-600"
                       onClick={() => setActiveTab('assistant')}
                       data-testid="banner-goto-assistant"
                     >
@@ -2944,10 +2944,10 @@ export default function CERV2Page({
 
               {/* Results Display */}
               {recommendedPathway && (
-                <Card className="border-2 border-blue-200 bg-blue-50">
+                <Card className="border-2 border-stone-200 bg-stone-50">
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
-                      <Trophy className="h-5 w-5 text-blue-600" />
+                      <Trophy className="h-5 w-5 text-stone-600" />
                       Recommended Pathway: {recommendedPathway.pathway}
                     </CardTitle>
                   </CardHeader>
@@ -3100,7 +3100,7 @@ export default function CERV2Page({
               {/* Loading State */}
               {isLoadingPma && (
                 <div className="flex justify-center items-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  <Loader2 className="h-8 w-8 animate-spin text-stone-600" />
                 </div>
               )}
 
@@ -3141,7 +3141,7 @@ export default function CERV2Page({
                                     d => d.pma_number === device.pma_number
                                   )}
                                   onChange={() => {}}
-                                  className="h-4 w-4 text-blue-600"
+                                  className="h-4 w-4 text-stone-600"
                                   data-testid={`checkbox-pma-${idx}`}
                                 />
                                 <h4 className="font-medium text-lg">
@@ -3172,7 +3172,7 @@ export default function CERV2Page({
                                 </div>
                               </div>
                               {device.expedited_review && (
-                                <Badge variant="outline" className="bg-yellow-50">
+                                <Badge variant="outline" className="bg-amber-50">
                                   Expedited Review
                                 </Badge>
                               )}
@@ -3395,7 +3395,7 @@ export default function CERV2Page({
                               className="px-4 py-3 whitespace-nowrap text-sm text-stone-500"
                             >
                               {device.expedited_review ? (
-                                <Badge variant="outline" className="bg-green-50">
+                                <Badge variant="outline" className="bg-emerald-50">
                                   Yes
                                 </Badge>
                               ) : (
@@ -3464,7 +3464,7 @@ export default function CERV2Page({
 
                   {/* Comparison Results */}
                   {pmaComparisonResults && (
-                    <Card className="mt-6 border-blue-200">
+                    <Card className="mt-6 border-stone-200">
                       <CardHeader>
                         <CardTitle className="text-lg">Similarity Analysis Results</CardTitle>
                       </CardHeader>
@@ -3495,7 +3495,7 @@ export default function CERV2Page({
                                 ))}
                               </ul>
                             </div>
-                            <p className="mt-2 text-sm text-blue-600">{comp.recommendation}</p>
+                            <p className="mt-2 text-sm text-stone-600">{comp.recommendation}</p>
                           </div>
                         ))}
                       </CardContent>
@@ -3589,7 +3589,7 @@ export default function CERV2Page({
                           className="flex items-center justify-between p-3 border rounded-lg hover:bg-stone-50"
                         >
                           <div className="flex items-center gap-3">
-                            <section.icon className="h-5 w-5 text-blue-600" />
+                            <section.icon className="h-5 w-5 text-stone-600" />
                             <span className="font-medium">{section.label}</span>
                           </div>
                           <div className="flex items-center gap-2">
@@ -3662,7 +3662,7 @@ export default function CERV2Page({
                   </Button>
                   <Button
                     variant="default"
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-emerald-600 hover:bg-emerald-700"
                     onClick={() => {
                       toast({
                         title: 'Generating PMA Package',
@@ -3725,35 +3725,35 @@ export default function CERV2Page({
           </div>
 
           {/* Auto-Population Status Banner */}
-          <Card className="bg-blue-50 border-blue-200 context-banner-enter">
+          <Card className="bg-stone-50 border-stone-200 context-banner-enter">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <CheckCircle className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  <h4 className="font-semibold text-blue-900 mb-1">
+                  <h4 className="font-semibold text-stone-900 mb-1">
                     Document Editor - Pre-Populated from Your Intake Data
                   </h4>
-                  <p className="text-sm text-blue-800 mb-2">
+                  <p className="text-sm text-stone-800 mb-2">
                     {docTypeLabel} templates are populated with your device information where
                     available.
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                    <div className="bg-white rounded p-2 border border-blue-200">
-                      <div className="font-semibold text-blue-900 mb-1">Device Info ✓</div>
-                      <div className="text-blue-700">{deviceProfile?.deviceName || 'Not set'}</div>
+                    <div className="bg-white rounded p-2 border border-stone-200">
+                      <div className="font-semibold text-stone-900 mb-1">Device Info ✓</div>
+                      <div className="text-stone-700">{deviceProfile?.deviceName || 'Not set'}</div>
                     </div>
-                    <div className="bg-white rounded p-2 border border-blue-200">
-                      <div className="font-semibold text-blue-900 mb-1">Manufacturer ✓</div>
-                      <div className="text-blue-700">
+                    <div className="bg-white rounded p-2 border border-stone-200">
+                      <div className="font-semibold text-stone-900 mb-1">Manufacturer ✓</div>
+                      <div className="text-stone-700">
                         {deviceProfile?.manufacturer || 'Not set'}
                       </div>
                     </div>
-                    <div className="bg-white rounded p-2 border border-blue-200">
-                      <div className="font-semibold text-blue-900 mb-1">Product Code ✓</div>
-                      <div className="text-blue-700">{deviceProfile?.productCode || 'Not set'}</div>
+                    <div className="bg-white rounded p-2 border border-stone-200">
+                      <div className="font-semibold text-stone-900 mb-1">Product Code ✓</div>
+                      <div className="text-stone-700">{deviceProfile?.productCode || 'Not set'}</div>
                     </div>
                   </div>
-                  <p className="text-xs text-blue-600 font-semibold mt-2">
+                  <p className="text-xs text-stone-600 font-semibold mt-2">
                     💡 Simply edit the pre-filled sections or use the AI Writing Helper to enhance
                     content!
                   </p>
@@ -3882,21 +3882,21 @@ export default function CERV2Page({
       if (documentType === 'cer') {
         return (
           <div className="p-6 space-y-6" data-testid="equivalent-device-content">
-            <Card className="bg-purple-50 border-purple-200 context-banner-enter">
+            <Card className="bg-stone-50 border-purple-200 context-banner-enter">
               <CardContent className="pt-4">
                 <div className="flex items-start gap-3">
-                  <Info className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                  <Info className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <h4 className="font-semibold text-purple-900 mb-1">
+                    <h4 className="font-semibold text-stone-900 mb-1">
                       Equivalent Device Analysis
                     </h4>
-                    <p className="text-sm text-purple-800">
+                    <p className="text-sm text-stone-800">
                       Identify and analyse devices that can be considered equivalent to your device
                       under EU MDR Annex XIV. Demonstrate equivalence through clinical, technical,
                       and biological characteristics to leverage existing clinical data in your
                       Clinical Evaluation Report.
                     </p>
-                    <div className="mt-2 text-xs text-purple-700">
+                    <div className="mt-2 text-xs text-stone-700">
                       <strong>Prerequisites:</strong> Device scope definition (device description,
                       intended purpose, classification). Analysis covers clinical, technical, and
                       biological equivalence per MEDDEV 2.7/1 Rev 4.
@@ -3924,18 +3924,18 @@ export default function CERV2Page({
       if (documentType === 'de_novo') {
         return (
           <div className="p-6 space-y-6" data-testid="predicate-finder-content">
-            <Card className="bg-purple-50 border-purple-200 context-banner-enter">
+            <Card className="bg-stone-50 border-purple-200 context-banner-enter">
               <CardContent className="pt-4">
                 <div className="flex items-start gap-3">
-                  <Info className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                  <Info className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <h4 className="font-semibold text-purple-900 mb-1">Classification Research</h4>
-                    <p className="text-sm text-purple-800">
+                    <h4 className="font-semibold text-stone-900 mb-1">Classification Research</h4>
+                    <p className="text-sm text-stone-800">
                       Research FDA product codes and existing device classifications to position
                       your novel device. De Novo classification applies when no legally marketed
                       predicate exists and the device presents low-to-moderate risk.
                     </p>
-                    <div className="mt-2 text-xs text-purple-700">
+                    <div className="mt-2 text-xs text-stone-700">
                       <strong>Prerequisites:</strong> Device profile from Device Intake (device
                       name, intended use, product code). Search identifies the appropriate
                       regulatory pathway and existing classification rules for similar technologies.
@@ -3963,21 +3963,21 @@ export default function CERV2Page({
       if (documentType === 'hde') {
         return (
           <div className="p-6 space-y-6" data-testid="predicate-finder-content">
-            <Card className="bg-purple-50 border-purple-200 context-banner-enter">
+            <Card className="bg-stone-50 border-purple-200 context-banner-enter">
               <CardContent className="pt-4">
                 <div className="flex items-start gap-3">
-                  <Info className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                  <Info className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <h4 className="font-semibold text-purple-900 mb-1">
+                    <h4 className="font-semibold text-stone-900 mb-1">
                       HUD Designation & Classification
                     </h4>
-                    <p className="text-sm text-purple-800">
+                    <p className="text-sm text-stone-800">
                       Verify your Humanitarian Use Device (HUD) designation and confirm device
                       classification. An HDE requires a granted HUD designation from FDA,
                       demonstrating that the device is intended to benefit patients with a condition
                       affecting fewer than 8,000 individuals per year in the US.
                     </p>
-                    <div className="mt-2 text-xs text-purple-700">
+                    <div className="mt-2 text-xs text-stone-700">
                       <strong>Prerequisites:</strong> Device profile from Device Intake. HUD
                       designation number, target condition, and affected population estimate.
                     </div>
@@ -4003,21 +4003,21 @@ export default function CERV2Page({
       // FDA 510(k)/PMA tracks: standard Predicate & Regulation Finder
       return (
         <div className="p-6 space-y-6" data-testid="predicate-finder-content">
-          <Card className="bg-purple-50 border-purple-200 context-banner-enter">
+          <Card className="bg-stone-50 border-purple-200 context-banner-enter">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                <Info className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-purple-900 mb-1">
+                  <h4 className="font-semibold text-stone-900 mb-1">
                     Predicate & Regulation Finder
                   </h4>
-                  <p className="text-sm text-purple-800">
+                  <p className="text-sm text-stone-800">
                     Search FDA's database for cleared devices similar to yours. Predicate devices
                     are previously cleared products with similar intended use and technological
                     characteristics. Finding strong predicates is essential for demonstrating
                     substantial equivalence.
                   </p>
-                  <div className="mt-2 text-xs text-purple-700">
+                  <div className="mt-2 text-xs text-stone-700">
                     <strong>Prerequisites:</strong> Device profile from Device Intake (device name,
                     product code, intended use). Search uses your product code, regulation number,
                     and device description to find relevant predicates.
@@ -4118,10 +4118,10 @@ export default function CERV2Page({
     else if (activeTab === 'standards-matrix') {
       return (
         <div className="p-6 space-y-6" data-testid="standards-matrix-content">
-          <Card className="bg-indigo-50 border-indigo-200">
+          <Card className="bg-stone-50 border-stone-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <ClipboardCheck className="h-5 w-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+                <ClipboardCheck className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <h4 className="font-semibold text-indigo-900 mb-1">
                     Standards Matrix & Declarations of Conformity
@@ -4131,7 +4131,7 @@ export default function CERV2Page({
                     Declarations of Conformity. This defines the regulatory framework for your
                     testing strategy.
                   </p>
-                  <div className="mt-2 text-xs text-indigo-700">
+                  <div className="mt-2 text-xs text-stone-700">
                     <strong>What to include:</strong> ISO 10993 (biocompatibility), IEC 60601
                     (electrical safety), IEC 62304 (software), ISO 14971 (risk management), and
                     product-specific standards.
@@ -4165,18 +4165,18 @@ export default function CERV2Page({
     } else if (activeTab === 'test-plan') {
       return (
         <div className="p-6 space-y-6" data-testid="test-plan-content">
-          <Card className="bg-purple-50 border-purple-200">
+          <Card className="bg-stone-50 border-purple-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Activity className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                <Activity className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-purple-900 mb-1">Integrated Test Plan</h4>
-                  <p className="text-sm text-purple-800">
+                  <h4 className="font-semibold text-stone-900 mb-1">Integrated Test Plan</h4>
+                  <p className="text-sm text-stone-800">
                     Create a comprehensive test protocol detailing all verification and validation
                     testing. Links standards from Standards Matrix to specific test methods and
                     acceptance criteria.
                   </p>
-                  <div className="mt-2 text-xs text-purple-700">
+                  <div className="mt-2 text-xs text-stone-700">
                     <strong>Prerequisites:</strong> Standards Matrix must be completed to define
                     testing scope.
                   </div>
@@ -4316,15 +4316,15 @@ export default function CERV2Page({
       return (
         <div className="p-6 space-y-6" data-testid="evidence-matrix-content">
           {/* Coverage Overview Card */}
-          <Card className="bg-stone-50 border-blue-200">
+          <Card className="bg-stone-50 border-stone-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <BarChart className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <BarChart className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  <h4 className="font-semibold text-blue-900 mb-1">
+                  <h4 className="font-semibold text-stone-900 mb-1">
                     Evidence Matrix Coverage Dashboard
                   </h4>
-                  <p className="text-sm text-blue-800">
+                  <p className="text-sm text-stone-800">
                     Track your testing and documentation progress across all required evidence
                     categories. Gate requirement: ≥80% overall coverage to proceed to Stage 4.
                   </p>
@@ -4332,16 +4332,16 @@ export default function CERV2Page({
                   {/* Overall Progress Bar */}
                   <div className="mt-4">
                     <div className="flex justify-between mb-1">
-                      <span className="text-sm font-medium text-blue-900">Overall Coverage</span>
-                      <span className="text-sm font-bold text-blue-900">{overallCoverage}%</span>
+                      <span className="text-sm font-medium text-stone-900">Overall Coverage</span>
+                      <span className="text-sm font-bold text-stone-900">{overallCoverage}%</span>
                     </div>
                     <div className="w-full bg-stone-200 rounded-full h-3">
                       <div
                         className={`h-3 rounded-full transition-all duration-500 ${
                           overallCoverage >= 80
-                            ? 'bg-green-600'
+                            ? 'bg-emerald-600'
                             : overallCoverage >= 60
-                              ? 'bg-yellow-500'
+                              ? 'bg-amber-500'
                               : overallCoverage >= 40
                                 ? 'bg-orange-500'
                                 : 'bg-red-500'
@@ -4350,7 +4350,7 @@ export default function CERV2Page({
                         data-testid="overall-coverage-bar"
                       />
                     </div>
-                    <div className="mt-1 text-xs text-blue-700">
+                    <div className="mt-1 text-xs text-stone-700">
                       {overallCoverage >= 80
                         ? '✅ Gate requirement met - Ready for Stage 4'
                         : `⚠️ Need ${80 - overallCoverage}% more coverage to proceed`}
@@ -4389,7 +4389,7 @@ export default function CERV2Page({
                           <div className="flex justify-between items-start mb-2">
                             <h5 className="font-medium text-stone-900">{category.name}</h5>
                             <span
-                              className={`text-sm font-bold ${coverage === 100 ? 'text-green-600' : 'text-stone-600'}`}
+                              className={`text-sm font-bold ${coverage === 100 ? 'text-emerald-600' : 'text-stone-600'}`}
                             >
                               {coverage}%
                             </span>
@@ -4399,9 +4399,9 @@ export default function CERV2Page({
                             <div
                               className={`h-2 rounded-full transition-all duration-500 ${
                                 coverage === 100
-                                  ? 'bg-green-600'
+                                  ? 'bg-emerald-600'
                                   : coverage > 0
-                                    ? 'bg-yellow-500'
+                                    ? 'bg-amber-500'
                                     : 'bg-stone-300'
                               }`}
                               style={{ width: `${coverage}%` }}
@@ -4444,13 +4444,13 @@ export default function CERV2Page({
               <div className="mt-6 pt-6 border-t">
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
-                    <div className="text-2xl font-bold text-green-600">
+                    <div className="text-2xl font-bold text-emerald-600">
                       {evidenceCategories.filter(cat => calculateCoverage(cat.id) === 100).length}
                     </div>
                     <div className="text-xs text-stone-600">Complete</div>
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-yellow-600">
+                    <div className="text-2xl font-bold text-amber-600">
                       {
                         evidenceCategories.filter(cat => {
                           const cov = calculateCoverage(cat.id);
@@ -4475,17 +4475,17 @@ export default function CERV2Page({
     } else if (activeTab === 'bench-testing') {
       return (
         <div className="p-6 space-y-6" data-testid="bench-testing-content">
-          <Card className="bg-green-50 border-green-200">
+          <Card className="bg-emerald-50 border-emerald-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <TestTube className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <TestTube className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-green-900 mb-1">Bench / Performance Testing</h4>
-                  <p className="text-sm text-green-800">
+                  <h4 className="font-semibold text-emerald-900 mb-1">Bench / Performance Testing</h4>
+                  <p className="text-sm text-emerald-800">
                     Upload and manage bench test reports, performance testing data, and technical
                     summaries.
                   </p>
-                  <div className="mt-2 text-xs text-green-700">
+                  <div className="mt-2 text-xs text-emerald-700">
                     <strong>What to upload:</strong> Performance test reports, validation protocols,
                     raw data, statistical analysis.
                   </div>
@@ -4533,16 +4533,16 @@ export default function CERV2Page({
     } else if (activeTab === 'sterility') {
       return (
         <div className="p-6 space-y-6" data-testid="sterility-content">
-          <Card className="bg-blue-50 border-blue-200">
+          <Card className="bg-stone-50 border-stone-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Shield className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <Shield className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-blue-900 mb-1">Sterilization & Shelf Life</h4>
-                  <p className="text-sm text-blue-800">
+                  <h4 className="font-semibold text-stone-900 mb-1">Sterilization & Shelf Life</h4>
+                  <p className="text-sm text-stone-800">
                     Document sterilization validation, shelf-life testing, and packaging validation.
                   </p>
-                  <div className="mt-2 text-xs text-blue-700">
+                  <div className="mt-2 text-xs text-stone-700">
                     <strong>Required documentation:</strong> Sterilization validation per ISO
                     11135/11137, package integrity per ASTM F1980.
                   </div>
@@ -4561,17 +4561,17 @@ export default function CERV2Page({
     } else if (activeTab === 'emc-es') {
       return (
         <div className="p-6 space-y-6" data-testid="emc-es-content">
-          <Card className="bg-yellow-50 border-yellow-200">
+          <Card className="bg-amber-50 border-amber-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Zap className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <Zap className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <h4 className="font-semibold text-yellow-900 mb-1">Electrical Safety & EMC</h4>
-                  <p className="text-sm text-yellow-800">
+                  <p className="text-sm text-amber-800">
                     Upload electrical safety (IEC 60601-1) and electromagnetic compatibility (IEC
                     60601-1-2) test reports.
                   </p>
-                  <div className="mt-2 text-xs text-yellow-700">
+                  <div className="mt-2 text-xs text-amber-700">
                     <strong>Required standards:</strong> IEC 60601-1 (electrical safety), IEC
                     60601-1-2 (EMC).
                   </div>
@@ -4590,19 +4590,19 @@ export default function CERV2Page({
     } else if (activeTab === 'software') {
       return (
         <div className="p-6 space-y-6" data-testid="software-content">
-          <Card className="bg-cyan-50 border-cyan-200">
+          <Card className="bg-stone-50 border-stone-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Code className="h-5 w-5 text-cyan-600 mt-0.5 flex-shrink-0" />
+                <Code className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-cyan-900 mb-1">
+                  <h4 className="font-semibold text-stone-900 mb-1">
                     Software Documentation (IEC 62304)
                   </h4>
-                  <p className="text-sm text-cyan-800">
+                  <p className="text-sm text-stone-800">
                     Document software development lifecycle, verification/validation, and
                     cybersecurity per IEC 62304.
                   </p>
-                  <div className="mt-2 text-xs text-cyan-700">
+                  <div className="mt-2 text-xs text-stone-700">
                     <strong>Required documentation:</strong> Software development plan,
                     architecture, V&V protocols, hazard analysis.
                   </div>
@@ -4650,17 +4650,17 @@ export default function CERV2Page({
     } else if (activeTab === 'usability') {
       return (
         <div className="p-6 space-y-6" data-testid="usability-content">
-          <Card className="bg-purple-50 border-purple-200">
+          <Card className="bg-stone-50 border-purple-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Users className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                <Users className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-purple-900 mb-1">Usability / Human Factors</h4>
-                  <p className="text-sm text-purple-800">
+                  <h4 className="font-semibold text-stone-900 mb-1">Usability / Human Factors</h4>
+                  <p className="text-sm text-stone-800">
                     Document human factors engineering and usability validation per IEC 62366 and
                     FDA HFE guidance.
                   </p>
-                  <div className="mt-2 text-xs text-purple-700">
+                  <div className="mt-2 text-xs text-stone-700">
                     <strong>Required documentation:</strong> Use-related risk analysis, formative
                     testing, summative validation.
                   </div>
@@ -4679,17 +4679,17 @@ export default function CERV2Page({
     } else if (activeTab === 'clinical-data') {
       return (
         <div className="p-6 space-y-6" data-testid="clinical-data-content">
-          <Card className="bg-teal-50 border-teal-200">
+          <Card className="bg-emerald-50 border-emerald-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                <FileText className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <h4 className="font-semibold text-teal-900 mb-1">Clinical Data</h4>
                   <p className="text-sm text-teal-800">
                     Upload clinical study reports, literature reviews, or clinical data summaries if
                     required.
                   </p>
-                  <div className="mt-2 text-xs text-teal-700">
+                  <div className="mt-2 text-xs text-emerald-700">
                     <strong>When required:</strong> Novel technology, significant design changes, or
                     FDA requests clinical evidence.
                   </div>
@@ -4713,10 +4713,10 @@ export default function CERV2Page({
     else if (activeTab === 'biocomp-summary') {
       return (
         <div className="p-6 space-y-6" data-testid="biocomp-summary-content">
-          <Card className="bg-pink-50 border-pink-200">
+          <Card className="bg-rose-50 border-pink-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Beaker className="h-5 w-5 text-pink-600 mt-0.5 flex-shrink-0" />
+                <Beaker className="h-5 w-5 text-rose-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <h4 className="font-semibold text-pink-900 mb-1">Biocompatibility Summary</h4>
                   <p className="text-sm text-pink-800">
@@ -4785,19 +4785,19 @@ export default function CERV2Page({
     } else if (activeTab === 'emc-es-summary') {
       return (
         <div className="p-6 space-y-6" data-testid="emc-es-summary-content">
-          <Card className="bg-yellow-50 border-yellow-200">
+          <Card className="bg-amber-50 border-amber-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Zap className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <Zap className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <h4 className="font-semibold text-yellow-900 mb-1">
                     Electrical Safety & EMC Summary
                   </h4>
-                  <p className="text-sm text-yellow-800">
+                  <p className="text-sm text-amber-800">
                     Summarize IEC 60601-1 and 60601-1-2 test results and standards conformities.
                     Auto-populated from Stage 3 EMC/ES evidence.
                   </p>
-                  <div className="mt-2 text-xs text-yellow-700">
+                  <div className="mt-2 text-xs text-amber-700">
                     <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}
                     _emc_es_summary
                   </div>
@@ -4823,17 +4823,17 @@ export default function CERV2Page({
     } else if (activeTab === 'software-summary') {
       return (
         <div className="p-6 space-y-6" data-testid="software-summary-content">
-          <Card className="bg-blue-50 border-blue-200">
+          <Card className="bg-stone-50 border-stone-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Code className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <Code className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-blue-900 mb-1">Software Summary</h4>
-                  <p className="text-sm text-blue-800">
+                  <h4 className="font-semibold text-stone-900 mb-1">Software Summary</h4>
+                  <p className="text-sm text-stone-800">
                     Document software level of concern, architecture, and V&V traceability per IEC
                     62304. Auto-populated from Stage 3 software evidence.
                   </p>
-                  <div className="mt-2 text-xs text-blue-700">
+                  <div className="mt-2 text-xs text-stone-700">
                     <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}
                     _software_summary
                   </div>
@@ -4859,19 +4859,19 @@ export default function CERV2Page({
     } else if (activeTab === 'standards-declarations') {
       return (
         <div className="p-6 space-y-6" data-testid="standards-declarations-content">
-          <Card className="bg-green-50 border-green-200">
+          <Card className="bg-emerald-50 border-emerald-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Award className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <Award className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-green-900 mb-1">
+                  <h4 className="font-semibold text-emerald-900 mb-1">
                     Standards & Declarations of Conformity
                   </h4>
-                  <p className="text-sm text-green-800">
+                  <p className="text-sm text-emerald-800">
                     List all FDA-recognized consensus standards with edition, clauses, and extent of
                     conformity. Auto-populated from Stage 2 standards matrix.
                   </p>
-                  <div className="mt-2 text-xs text-green-700">
+                  <div className="mt-2 text-xs text-emerald-700">
                     <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}
                     _standards_doc
                   </div>
@@ -4897,19 +4897,19 @@ export default function CERV2Page({
     } else if (activeTab === 'sterility-summary') {
       return (
         <div className="p-6 space-y-6" data-testid="sterility-summary-content">
-          <Card className="bg-cyan-50 border-cyan-200">
+          <Card className="bg-stone-50 border-stone-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Droplet className="h-5 w-5 text-cyan-600 mt-0.5 flex-shrink-0" />
+                <Droplet className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-cyan-900 mb-1">
+                  <h4 className="font-semibold text-stone-900 mb-1">
                     Sterilization & Shelf Life Summary
                   </h4>
-                  <p className="text-sm text-cyan-800">
+                  <p className="text-sm text-stone-800">
                     Document sterilization method, SAL, pyrogen limits, and packaging
                     integrity/aging. Auto-populated from Stage 3 sterility evidence.
                   </p>
-                  <div className="mt-2 text-xs text-cyan-700">
+                  <div className="mt-2 text-xs text-stone-700">
                     <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}
                     _sterility_summary
                   </div>
@@ -4935,17 +4935,17 @@ export default function CERV2Page({
     } else if (activeTab === 'usability-summary') {
       return (
         <div className="p-6 space-y-6" data-testid="usability-summary-content">
-          <Card className="bg-purple-50 border-purple-200">
+          <Card className="bg-stone-50 border-purple-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Users className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                <Users className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-purple-900 mb-1">Usability Summary</h4>
-                  <p className="text-sm text-purple-800">
+                  <h4 className="font-semibold text-stone-900 mb-1">Usability Summary</h4>
+                  <p className="text-sm text-stone-800">
                     Provide risk-based justification or summative human factors study summary per
                     IEC 62366. Auto-populated from Stage 3 usability evidence.
                   </p>
-                  <div className="mt-2 text-xs text-purple-700">
+                  <div className="mt-2 text-xs text-stone-700">
                     <strong>Document ID:</strong> {deviceProfile?.id || k510DocumentId}
                     _usability_summary
                   </div>
@@ -4971,17 +4971,17 @@ export default function CERV2Page({
     } else if (activeTab === 'admin-forms') {
       return (
         <div className="p-6 space-y-6" data-testid="admin-forms-content">
-          <Card className="bg-blue-50 border-blue-200">
+          <Card className="bg-stone-50 border-stone-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <FileText className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-blue-900 mb-1">Administrative & Forms</h4>
-                  <p className="text-sm text-blue-800">
+                  <h4 className="font-semibold text-stone-900 mb-1">Administrative & Forms</h4>
+                  <p className="text-sm text-stone-800">
                     Complete FDA Forms 3514 (User Fee Cover Sheet) and 3601 (Indications Statement).
                     Include cover letter and transmittal letter.
                   </p>
-                  <div className="mt-2 text-xs text-blue-700">
+                  <div className="mt-2 text-xs text-stone-700">
                     <strong>Required forms:</strong> FDA 3514, FDA 3601, Cover Letter, Transmittal
                     Letter.
                   </div>
@@ -5007,15 +5007,15 @@ export default function CERV2Page({
     } else if (activeTab === 'indications-for-use') {
       return (
         <div className="p-6 space-y-6" data-testid="indications-content">
-          <Card className="bg-green-50 border-green-200">
+          <Card className="bg-emerald-50 border-emerald-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <FileCheck className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <FileCheck className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-green-900 mb-1">
+                  <h4 className="font-semibold text-emerald-900 mb-1">
                     Indications for Use (FDA Form 3881)
                   </h4>
-                  <p className="text-sm text-green-800">
+                  <p className="text-sm text-emerald-800">
                     Draft the Indications for Use statement defining intended use, patient
                     population, and clinical application.
                   </p>
@@ -5147,13 +5147,13 @@ export default function CERV2Page({
     } else if (activeTab === 'labeling') {
       return (
         <div className="p-6 space-y-6" data-testid="labeling-content">
-          <Card className="bg-purple-50 border-purple-200">
+          <Card className="bg-stone-50 border-purple-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Tag className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                <Tag className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-purple-900 mb-1">Labeling</h4>
-                  <p className="text-sm text-purple-800">
+                  <h4 className="font-semibold text-stone-900 mb-1">Labeling</h4>
+                  <p className="text-sm text-stone-800">
                     Upload draft labeling including instructions for use, device labels, and
                     packaging labels.
                   </p>
@@ -5173,15 +5173,15 @@ export default function CERV2Page({
       const isPerfHde = documentType === 'hde';
       return (
         <div className="p-6 space-y-6" data-testid="performance-summaries-content">
-          <Card className="bg-cyan-50 border-cyan-200">
+          <Card className="bg-stone-50 border-stone-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <BarChart className="h-5 w-5 text-cyan-600 mt-0.5 flex-shrink-0" />
+                <BarChart className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-cyan-900 mb-1">
+                  <h4 className="font-semibold text-stone-900 mb-1">
                     {isPerfHde ? 'Summary of Evidence' : 'Performance Testing Summaries'}
                   </h4>
-                  <p className="text-sm text-cyan-800">
+                  <p className="text-sm text-stone-800">
                     {isPerfHde
                       ? 'Summarize all evidence supporting the safety and probable benefit of your humanitarian use device, including bench testing, biocompatibility, and any clinical data.'
                       : 'Summarize all verification and validation testing performed, referencing test reports from Stage 3.'}
@@ -5206,10 +5206,10 @@ export default function CERV2Page({
 
       return (
         <div className="p-6 space-y-6" data-testid="510k-summary-content">
-          <Card className="bg-indigo-50 border-indigo-200">
+          <Card className="bg-stone-50 border-stone-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+                <FileText className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <h4 className="font-semibold text-indigo-900 mb-1">
                     510(k) Summary or Statement
@@ -5218,7 +5218,7 @@ export default function CERV2Page({
                     Create a 510(k) Summary (public) or 510(k) Statement (confidential). Summary is
                     recommended.
                   </p>
-                  <div className="mt-2 text-xs text-indigo-700">
+                  <div className="mt-2 text-xs text-stone-700">
                     <strong>FDA Requirement:</strong> You must select either a Summary (21 CFR
                     807.92) OR a Statement (21 CFR 807.93), not both.
                   </div>
@@ -5297,8 +5297,8 @@ export default function CERV2Page({
               </div>
 
               {/* Visual indicator of current selection */}
-              <div className="mt-4 p-3 bg-blue-50 rounded-md">
-                <div className="text-sm font-medium text-blue-900">
+              <div className="mt-4 p-3 bg-stone-50 rounded-md">
+                <div className="text-sm font-medium text-stone-900">
                   Current Selection:{' '}
                   {summaryType === 'summary' ? '510(k) Summary' : '510(k) Statement'}
                 </div>
@@ -5347,13 +5347,13 @@ export default function CERV2Page({
             : "Validate your submission against FDA's RTA checklist to avoid submission rejection.";
       return (
         <div className="p-6 space-y-6" data-testid="rta-check-content">
-          <Card className="bg-green-50 border-green-200">
+          <Card className="bg-emerald-50 border-emerald-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <ClipboardCheck className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <ClipboardCheck className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-green-900 mb-1">{rtaHeading}</h4>
-                  <p className="text-sm text-green-800">{rtaDescription}</p>
+                  <h4 className="font-semibold text-emerald-900 mb-1">{rtaHeading}</h4>
+                  <p className="text-sm text-emerald-800">{rtaDescription}</p>
                 </div>
               </div>
             </CardContent>
@@ -5385,19 +5385,19 @@ export default function CERV2Page({
     else if (activeTab === 'fda-forms') {
       return (
         <div className="p-6 space-y-6" data-testid="fda-forms-content">
-          <Card className="bg-purple-50 border-purple-200">
+          <Card className="bg-stone-50 border-purple-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                <FileText className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-purple-900 mb-1">SMART Forms System</h4>
-                  <p className="text-sm text-purple-800">
+                  <h4 className="font-semibold text-stone-900 mb-1">SMART Forms System</h4>
+                  <p className="text-sm text-stone-800">
                     Comprehensive FDA SMART Forms system with 30+ forms for 510(k), PMA, De Novo,
                     HDE, and special submissions. All forms feature intelligent auto-population from
                     CERV2 workflow data, AI-powered field suggestions, and real-time synchronization
                     across all stages.
                   </p>
-                  <div className="mt-2 text-xs text-purple-700">
+                  <div className="mt-2 text-xs text-stone-700">
                     <strong>Features:</strong> Auto-generation • Smart validation • Batch processing
                     • Form dependencies • Cross-reference mapping
                   </div>
@@ -5443,14 +5443,14 @@ export default function CERV2Page({
           : 'RTA score ≥90%, all required sections complete.';
       return (
         <div className="p-6 space-y-6" data-testid="submission-content">
-          <Card className="bg-teal-50 border-teal-200">
+          <Card className="bg-emerald-50 border-emerald-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Send className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                <Send className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <h4 className="font-semibold text-teal-900 mb-1">{submissionHeading}</h4>
                   <p className="text-sm text-teal-800">{submissionDesc}</p>
-                  <div className="mt-2 text-xs text-teal-700">
+                  <div className="mt-2 text-xs text-emerald-700">
                     <strong>Prerequisites:</strong> {submissionPrereqs}
                   </div>
                 </div>
@@ -5459,11 +5459,11 @@ export default function CERV2Page({
           </Card>
 
           {/* Beta Output Capability Summary */}
-          <Alert className="border-blue-200 bg-blue-50">
-            <AlertTitle className="text-sm font-semibold text-blue-900">
+          <Alert className="border-stone-200 bg-stone-50">
+            <AlertTitle className="text-sm font-semibold text-stone-900">
               Output Capabilities — Beta
             </AlertTitle>
-            <AlertDescription className="text-xs text-blue-800 mt-1 space-y-1">
+            <AlertDescription className="text-xs text-stone-800 mt-1 space-y-1">
               <p>
                 ✅ <strong>Available:</strong> Section-level PDF/DOCX export via document editor.
                 AI-assisted section drafting.
@@ -5491,10 +5491,10 @@ export default function CERV2Page({
               <CardTitle className="flex items-center gap-2">
                 Review & Sign-Off
                 {reviewSignOff.status === 'approved' && (
-                  <Badge className="bg-green-100 text-green-700">Approved</Badge>
+                  <Badge className="bg-emerald-100 text-emerald-700">Approved</Badge>
                 )}
                 {reviewSignOff.status === 'in-review' && (
-                  <Badge className="bg-yellow-100 text-yellow-700">In Review</Badge>
+                  <Badge className="bg-amber-100 text-amber-700">In Review</Badge>
                 )}
                 {reviewSignOff.status === 'draft' && (
                   <Badge className="bg-stone-100 text-stone-600">Draft</Badge>
@@ -5504,18 +5504,18 @@ export default function CERV2Page({
             </CardHeader>
             <CardContent className="space-y-4">
               {reviewSignOff.status === 'approved' ? (
-                <div className="flex items-start gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-medium text-green-900">
+                    <p className="text-sm font-medium text-emerald-900">
                       Approved by {reviewSignOff.reviewedBy}
                     </p>
-                    <p className="text-xs text-green-700 mt-1">
+                    <p className="text-xs text-emerald-700 mt-1">
                       {reviewSignOff.reviewedAt &&
                         new Date(reviewSignOff.reviewedAt).toLocaleString()}
                     </p>
                     {reviewSignOff.notes && (
-                      <p className="text-xs text-green-800 mt-2 italic">"{reviewSignOff.notes}"</p>
+                      <p className="text-xs text-emerald-800 mt-2 italic">"{reviewSignOff.notes}"</p>
                     )}
                     <Button
                       variant="outline"
@@ -5575,7 +5575,7 @@ export default function CERV2Page({
                       Mark In-Review
                     </Button>
                     <Button
-                      className="bg-green-600 hover:bg-green-700 text-white"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
                       onClick={() => {
                         if (!reviewSignOff.reviewedBy) {
                           toast({
@@ -5833,10 +5833,10 @@ export default function CERV2Page({
       // Final Submission Panel
       return (
         <div className="p-6 space-y-6">
-          <Card className="bg-teal-50 border-teal-200 context-banner-enter">
+          <Card className="bg-emerald-50 border-emerald-200 context-banner-enter">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                <Info className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <h4 className="font-semibold text-teal-900 mb-1">Final Submission Package</h4>
                   <p className="text-sm text-teal-800">
@@ -5871,15 +5871,15 @@ export default function CERV2Page({
       // FDA Guidance and Resources
       return (
         <div className="p-6 space-y-6">
-          <Card className="bg-blue-50 border-blue-200">
+          <Card className="bg-stone-50 border-stone-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <BookOpen className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <BookOpen className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-blue-900 mb-3">
+                  <h4 className="font-semibold text-stone-900 mb-3">
                     FDA 510(k) Guidance Documents
                   </h4>
-                  <div className="space-y-4 text-sm text-blue-800">
+                  <div className="space-y-4 text-sm text-stone-800">
                     <div>
                       <h5 className="font-medium mb-2">Key Guidance Documents:</h5>
                       <ul className="list-disc list-inside space-y-1 ml-2">
@@ -6021,13 +6021,13 @@ export default function CERV2Page({
       // Default: track-aware workflow overview
       return (
         <div className="p-6">
-          <Card className="bg-stone-50 border-blue-200">
+          <Card className="bg-stone-50 border-stone-200">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileCheck className="h-6 w-6 text-blue-600" />
+                <FileCheck className="h-6 w-6 text-stone-600" />
                 {trackContent.overviewTitle}
               </CardTitle>
-              <CardDescription className="text-blue-700">
+              <CardDescription className="text-stone-700">
                 {trackContent.overviewSubtitle}
               </CardDescription>
             </CardHeader>
@@ -6038,7 +6038,7 @@ export default function CERV2Page({
                     key={idx}
                     className="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-100"
                   >
-                    <Badge className="bg-blue-100 text-blue-700">Stage {idx}</Badge>
+                    <Badge className="bg-stone-100 text-stone-700">Stage {idx}</Badge>
                     <div className="flex-1">
                       <p className="font-medium">{stage.name}</p>
                       <p className="text-sm text-stone-600">{stage.desc}</p>
@@ -6046,10 +6046,10 @@ export default function CERV2Page({
                   </div>
                 ))}
               </div>
-              <div className="mt-4 pt-4 border-t border-blue-200">
+              <div className="mt-4 pt-4 border-t border-stone-200">
                 <Button
                   onClick={() => setActiveTab('device-intake')}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  className="w-full bg-stone-800 hover:bg-stone-900 text-white"
                 >
                   Start Stage 0: {trackContent.stageList[0]?.name || 'Setup'}
                 </Button>
@@ -6079,13 +6079,13 @@ export default function CERV2Page({
               label: (
                 <div className="flex items-center">
                   {isTabCompleted('device-intake') ? (
-                    <CheckCircle className="w-5 h-5 text-green-600 mr-1.5" />
+                    <CheckCircle className="w-5 h-5 text-emerald-600 mr-1.5" />
                   ) : (
-                    <FileText className="h-4 w-4 mr-1.5 text-blue-600" />
+                    <FileText className="h-4 w-4 mr-1.5 text-stone-600" />
                   )}
                   <span>Device Intake</span>
                   {!deviceProfile?.deviceName && (
-                    <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-1.5 py-0.5 rounded-full">
+                    <span className="ml-1.5 bg-stone-100 text-stone-700 text-xs px-1.5 py-0.5 rounded-full">
                       START
                     </span>
                   )}
@@ -6099,9 +6099,9 @@ export default function CERV2Page({
               label: (
                 <div className="flex items-center">
                   {deviceProfile?.primaryPredicate ? (
-                    <CheckCircle className="w-5 h-5 text-green-600 mr-1.5" />
+                    <CheckCircle className="w-5 h-5 text-emerald-600 mr-1.5" />
                   ) : (
-                    <Search className="h-4 w-4 mr-1.5 text-purple-600" />
+                    <Search className="h-4 w-4 mr-1.5 text-stone-600" />
                   )}
                   <span>Predicate & Regulation Finder</span>
                 </div>
@@ -6140,7 +6140,7 @@ export default function CERV2Page({
               id: 'standards-matrix',
               label: (
                 <div className="flex items-center">
-                  <ClipboardCheck className="h-4 w-4 mr-1.5 text-indigo-600" />
+                  <ClipboardCheck className="h-4 w-4 mr-1.5 text-stone-600" />
                   <span>Standards & DoCs</span>
                 </div>
               ),
@@ -6151,7 +6151,7 @@ export default function CERV2Page({
               id: 'test-plan',
               label: (
                 <div className="flex items-center">
-                  <Activity className="h-4 w-4 mr-1.5 text-purple-600" />
+                  <Activity className="h-4 w-4 mr-1.5 text-stone-600" />
                   <span>Integrated Test Plan</span>
                 </div>
               ),
@@ -6169,14 +6169,14 @@ export default function CERV2Page({
             {
               id: 'evidence-matrix',
               label: 'Evidence Matrix Dashboard',
-              icon: <BarChart className="h-4 w-4 mr-1.5 text-blue-600" />,
+              icon: <BarChart className="h-4 w-4 mr-1.5 text-stone-600" />,
               required: false,
               status: 'todo',
             },
             {
               id: 'bench-testing',
               label: 'Bench / Performance Testing',
-              icon: <TestTube className="h-4 w-4 mr-1.5 text-green-600" />,
+              icon: <TestTube className="h-4 w-4 mr-1.5 text-emerald-600" />,
               required: true,
               status: 'todo',
             },
@@ -6193,7 +6193,7 @@ export default function CERV2Page({
                   {
                     id: 'sterility',
                     label: 'Sterilization & Shelf Life',
-                    icon: <Shield className="h-4 w-4 mr-1.5 text-blue-600" />,
+                    icon: <Shield className="h-4 w-4 mr-1.5 text-stone-600" />,
                     required: false,
                     status: 'todo',
                   },
@@ -6202,7 +6202,7 @@ export default function CERV2Page({
             {
               id: 'emc-es',
               label: 'Electrical Safety & EMC',
-              icon: <Zap className="h-4 w-4 mr-1.5 text-yellow-600" />,
+              icon: <Zap className="h-4 w-4 mr-1.5 text-amber-600" />,
               required: true,
               status: 'todo',
             },
@@ -6211,7 +6211,7 @@ export default function CERV2Page({
                   {
                     id: 'software',
                     label: 'Software Documentation',
-                    icon: <Code className="h-4 w-4 mr-1.5 text-cyan-600" />,
+                    icon: <Code className="h-4 w-4 mr-1.5 text-stone-600" />,
                     required: false,
                     status: 'todo',
                   },
@@ -6231,7 +6231,7 @@ export default function CERV2Page({
             {
               id: 'usability',
               label: 'Usability / Human Factors',
-              icon: <Users className="h-4 w-4 mr-1.5 text-purple-600" />,
+              icon: <Users className="h-4 w-4 mr-1.5 text-stone-600" />,
               required: false,
               status: 'todo',
             },
@@ -6240,7 +6240,7 @@ export default function CERV2Page({
                   {
                     id: 'clinical-data',
                     label: 'Clinical Data',
-                    icon: <FileText className="h-4 w-4 mr-1.5 text-teal-600" />,
+                    icon: <FileText className="h-4 w-4 mr-1.5 text-emerald-600" />,
                     required: false,
                     status: 'todo',
                   },
@@ -6257,14 +6257,14 @@ export default function CERV2Page({
             {
               id: 'admin-forms',
               label: 'Administrative & Forms',
-              icon: <FileText className="h-4 w-4 mr-1.5 text-blue-600" />,
+              icon: <FileText className="h-4 w-4 mr-1.5 text-stone-600" />,
               required: true,
               status: deviceProfile?.forms3514 ? 'ready' : 'todo',
             },
             {
               id: 'indications-for-use',
               label: 'Indications for Use (Form 3881)',
-              icon: <FileCheck className="h-4 w-4 mr-1.5 text-green-600" />,
+              icon: <FileCheck className="h-4 w-4 mr-1.5 text-emerald-600" />,
               required: true,
               status: 'todo',
             },
@@ -6278,7 +6278,7 @@ export default function CERV2Page({
             {
               id: 'document-editor',
               label: '📝 Full Document Editor',
-              icon: <Edit3 className="h-4 w-4 mr-1.5 text-green-600" />,
+              icon: <Edit3 className="h-4 w-4 mr-1.5 text-emerald-600" />,
               required: true,
               status: 'ready',
             },
@@ -6292,14 +6292,14 @@ export default function CERV2Page({
             {
               id: 'labeling',
               label: 'Labeling',
-              icon: <Tag className="h-4 w-4 mr-1.5 text-purple-600" />,
+              icon: <Tag className="h-4 w-4 mr-1.5 text-stone-600" />,
               required: true,
               status: 'todo',
             },
             {
               id: 'biocomp-summary',
               label: 'Biocompatibility Summary',
-              icon: <Beaker className="h-4 w-4 mr-1.5 text-pink-600" />,
+              icon: <Beaker className="h-4 w-4 mr-1.5 text-rose-600" />,
               required: true,
               status: 'todo',
             },
@@ -6317,7 +6317,7 @@ export default function CERV2Page({
             {
               id: 'emc-es-summary',
               label: 'Electrical Safety & EMC Summary',
-              icon: <Zap className="h-4 w-4 mr-1.5 text-yellow-600" />,
+              icon: <Zap className="h-4 w-4 mr-1.5 text-amber-600" />,
               required: true,
               status: 'todo',
             },
@@ -6326,7 +6326,7 @@ export default function CERV2Page({
                   {
                     id: 'software-summary',
                     label: 'Software Summary',
-                    icon: <Code className="h-4 w-4 mr-1.5 text-blue-600" />,
+                    icon: <Code className="h-4 w-4 mr-1.5 text-stone-600" />,
                     required: false,
                     status: 'todo',
                   },
@@ -6335,7 +6335,7 @@ export default function CERV2Page({
             {
               id: 'standards-declarations',
               label: 'Standards & Declarations of Conformity',
-              icon: <Award className="h-4 w-4 mr-1.5 text-green-600" />,
+              icon: <Award className="h-4 w-4 mr-1.5 text-emerald-600" />,
               required: true,
               status: 'todo',
             },
@@ -6344,7 +6344,7 @@ export default function CERV2Page({
                   {
                     id: 'sterility-summary',
                     label: 'Sterilization & Shelf Life Summary',
-                    icon: <Droplet className="h-4 w-4 mr-1.5 text-cyan-600" />,
+                    icon: <Droplet className="h-4 w-4 mr-1.5 text-stone-600" />,
                     required: false,
                     status: 'todo',
                   },
@@ -6353,21 +6353,21 @@ export default function CERV2Page({
             {
               id: 'usability-summary',
               label: 'Usability Summary',
-              icon: <Users className="h-4 w-4 mr-1.5 text-purple-600" />,
+              icon: <Users className="h-4 w-4 mr-1.5 text-stone-600" />,
               required: false,
               status: 'todo',
             },
             {
               id: 'performance-summaries',
               label: 'Performance Testing Summaries',
-              icon: <FileText className="h-4 w-4 mr-1.5 text-cyan-600" />,
+              icon: <FileText className="h-4 w-4 mr-1.5 text-stone-600" />,
               required: true,
               status: 'todo',
             },
             {
               id: '510k-summary',
               label: '510(k) Summary or Statement',
-              icon: <FileText className="h-4 w-4 mr-1.5 text-indigo-600" />,
+              icon: <FileText className="h-4 w-4 mr-1.5 text-stone-600" />,
               required: true,
               status: 'todo',
             },
@@ -6390,7 +6390,7 @@ export default function CERV2Page({
               id: 'estar-assembly',
               label: (
                 <div className="flex items-center">
-                  <Package className="h-4 w-4 mr-1.5 text-blue-600" />
+                  <Package className="h-4 w-4 mr-1.5 text-stone-600" />
                   <span>eSTAR Assembly</span>
                 </div>
               ),
@@ -6401,14 +6401,14 @@ export default function CERV2Page({
               id: 'rta-check',
               label: (
                 <div className="flex items-center">
-                  <ClipboardCheck className="h-4 w-4 mr-1.5 text-green-600" />
+                  <ClipboardCheck className="h-4 w-4 mr-1.5 text-emerald-600" />
                   <span>RTA Pre-Check</span>
                   {deviceProfile?.rtaScore && (
                     <span
                       className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${
                         deviceProfile.rtaScore >= 0.9
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-yellow-100 text-yellow-700'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-amber-100 text-amber-700'
                       }`}
                     >
                       {Math.round(deviceProfile.rtaScore * 100)}%
@@ -6431,7 +6431,7 @@ export default function CERV2Page({
               id: 'fda-forms',
               label: (
                 <div className="flex items-center">
-                  <FileText className="h-4 w-4 mr-1.5 text-purple-600" />
+                  <FileText className="h-4 w-4 mr-1.5 text-stone-600" />
                   <span>FDA Forms</span>
                 </div>
               ),
@@ -6442,10 +6442,10 @@ export default function CERV2Page({
               id: 'submission',
               label: (
                 <div className="flex items-center">
-                  <Send className="h-4 w-4 mr-1.5 text-teal-600" />
+                  <Send className="h-4 w-4 mr-1.5 text-emerald-600" />
                   <span>Submission</span>
                   {deviceProfile?.submissionId && (
-                    <span className="ml-1.5 bg-green-100 text-green-700 text-xs px-1.5 py-0.5 rounded-full">
+                    <span className="ml-1.5 bg-emerald-100 text-emerald-700 text-xs px-1.5 py-0.5 rounded-full">
                       #{deviceProfile.submissionId}
                     </span>
                   )}
@@ -6481,7 +6481,7 @@ export default function CERV2Page({
                     <span className="text-xs font-semibold text-stone-700">{group.label}</span>
                     {/* Gate Status Indicator */}
                     {gateStatus.passed ? (
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <CheckCircle className="h-4 w-4 text-emerald-600" />
                     ) : isStageAccessible ? (
                       <AlertCircle className="h-4 w-4 text-yellow-500" />
                     ) : (
@@ -6497,8 +6497,8 @@ export default function CERV2Page({
                       // Status chip colors
                       const statusColors = {
                         todo: 'bg-stone-100 text-stone-600',
-                        draft: 'bg-yellow-100 text-yellow-700',
-                        ready: 'bg-green-100 text-green-700',
+                        draft: 'bg-amber-100 text-amber-700',
+                        ready: 'bg-emerald-100 text-emerald-700',
                         blocked: 'bg-red-100 text-red-700',
                       };
 
@@ -6515,7 +6515,7 @@ export default function CERV2Page({
                             disabled={!isTabEnabled}
                             className={`h-auto px-3 py-2 text-xs font-medium rounded-lg transition-all ${
                               activeTab === tab.id
-                                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
+                                ? 'bg-stone-800 text-white hover:bg-stone-900 shadow-sm'
                                 : isTabEnabled
                                   ? 'text-stone-700 border-stone-300 hover:bg-stone-50 hover:border-stone-400'
                                   : 'text-stone-400 border-stone-200 bg-stone-50 cursor-not-allowed opacity-60'
@@ -6581,7 +6581,7 @@ export default function CERV2Page({
             id: 'device-intake',
             label: (
               <div className="flex items-center">
-                <FileText className="h-4 w-4 mr-1.5 text-blue-600" />
+                <FileText className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>Device Profile</span>
               </div>
             ),
@@ -6592,7 +6592,7 @@ export default function CERV2Page({
             id: 'predicates',
             label: (
               <div className="flex items-center">
-                <Search className="h-4 w-4 mr-1.5 text-purple-600" />
+                <Search className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>Predicate & Classification</span>
               </div>
             ),
@@ -6621,7 +6621,7 @@ export default function CERV2Page({
             id: 'pma-search',
             label: (
               <div className="flex items-center">
-                <Search className="h-4 w-4 mr-1.5 text-blue-600" />
+                <Search className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>PMA Precedent Search</span>
               </div>
             ),
@@ -6639,7 +6639,7 @@ export default function CERV2Page({
             id: 'standards-matrix',
             label: (
               <div className="flex items-center">
-                <ClipboardCheck className="h-4 w-4 mr-1.5 text-indigo-600" />
+                <ClipboardCheck className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>Standards & Performance Criteria</span>
               </div>
             ),
@@ -6650,7 +6650,7 @@ export default function CERV2Page({
             id: 'test-plan',
             label: (
               <div className="flex items-center">
-                <Activity className="h-4 w-4 mr-1.5 text-purple-600" />
+                <Activity className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>Clinical Investigation Plan</span>
               </div>
             ),
@@ -6667,14 +6667,14 @@ export default function CERV2Page({
           {
             id: 'evidence-matrix',
             label: 'Evidence Matrix Dashboard',
-            icon: <BarChart className="h-4 w-4 mr-1.5 text-blue-600" />,
+            icon: <BarChart className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: false,
             status: 'todo',
           },
           {
             id: 'bench-testing',
             label: 'Non-Clinical Testing',
-            icon: <TestTube className="h-4 w-4 mr-1.5 text-green-600" />,
+            icon: <TestTube className="h-4 w-4 mr-1.5 text-emerald-600" />,
             required: true,
             status: 'todo',
           },
@@ -6688,7 +6688,7 @@ export default function CERV2Page({
           {
             id: 'clinical-data',
             label: 'Clinical Study Data',
-            icon: <FileText className="h-4 w-4 mr-1.5 text-teal-600" />,
+            icon: <FileText className="h-4 w-4 mr-1.5 text-emerald-600" />,
             required: true,
             status: 'todo',
           },
@@ -6697,7 +6697,7 @@ export default function CERV2Page({
                 {
                   id: 'software',
                   label: 'Software Documentation',
-                  icon: <Code className="h-4 w-4 mr-1.5 text-cyan-600" />,
+                  icon: <Code className="h-4 w-4 mr-1.5 text-stone-600" />,
                   required: false,
                   status: 'todo',
                 },
@@ -6719,7 +6719,7 @@ export default function CERV2Page({
                 {
                   id: 'sterility',
                   label: 'Sterilization & Shelf Life',
-                  icon: <Shield className="h-4 w-4 mr-1.5 text-blue-600" />,
+                  icon: <Shield className="h-4 w-4 mr-1.5 text-stone-600" />,
                   required: false,
                   status: 'todo',
                 },
@@ -6735,7 +6735,7 @@ export default function CERV2Page({
           {
             id: 'admin-forms',
             label: 'Administrative & Cover Letter',
-            icon: <FileText className="h-4 w-4 mr-1.5 text-blue-600" />,
+            icon: <FileText className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: true,
             status: 'todo',
           },
@@ -6749,35 +6749,35 @@ export default function CERV2Page({
           {
             id: 'document-editor',
             label: 'PMA Narrative Editor',
-            icon: <Edit3 className="h-4 w-4 mr-1.5 text-green-600" />,
+            icon: <Edit3 className="h-4 w-4 mr-1.5 text-emerald-600" />,
             required: true,
             status: 'ready',
           },
           {
             id: 'pma-builder',
             label: 'PMA Summary Builder',
-            icon: <FileText className="h-4 w-4 mr-1.5 text-indigo-600" />,
+            icon: <FileText className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: true,
             status: 'todo',
           },
           {
             id: 'labeling',
             label: 'Labeling',
-            icon: <Tag className="h-4 w-4 mr-1.5 text-purple-600" />,
+            icon: <Tag className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: true,
             status: 'todo',
           },
           {
             id: 'biocomp-summary',
             label: 'Biocompatibility Summary',
-            icon: <Beaker className="h-4 w-4 mr-1.5 text-pink-600" />,
+            icon: <Beaker className="h-4 w-4 mr-1.5 text-rose-600" />,
             required: true,
             status: 'todo',
           },
           {
             id: 'performance-summaries',
             label: 'Clinical & Non-Clinical Summaries',
-            icon: <FileText className="h-4 w-4 mr-1.5 text-cyan-600" />,
+            icon: <FileText className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: true,
             status: 'todo',
           },
@@ -6792,7 +6792,7 @@ export default function CERV2Page({
             id: 'estar-assembly',
             label: (
               <div className="flex items-center">
-                <Package className="h-4 w-4 mr-1.5 text-blue-600" />
+                <Package className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>PMA Package Assembly</span>
               </div>
             ),
@@ -6803,7 +6803,7 @@ export default function CERV2Page({
             id: 'rta-check',
             label: (
               <div className="flex items-center">
-                <ClipboardCheck className="h-4 w-4 mr-1.5 text-green-600" />
+                <ClipboardCheck className="h-4 w-4 mr-1.5 text-emerald-600" />
                 <span>Filing Review Checklist</span>
               </div>
             ),
@@ -6821,7 +6821,7 @@ export default function CERV2Page({
             id: 'fda-forms',
             label: (
               <div className="flex items-center">
-                <FileText className="h-4 w-4 mr-1.5 text-purple-600" />
+                <FileText className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>FDA Forms</span>
               </div>
             ),
@@ -6832,7 +6832,7 @@ export default function CERV2Page({
             id: 'submission',
             label: (
               <div className="flex items-center">
-                <Send className="h-4 w-4 mr-1.5 text-teal-600" />
+                <Send className="h-4 w-4 mr-1.5 text-emerald-600" />
                 <span>Submission</span>
               </div>
             ),
@@ -6863,7 +6863,7 @@ export default function CERV2Page({
             id: 'device-intake',
             label: (
               <div className="flex items-center">
-                <FileText className="h-4 w-4 mr-1.5 text-blue-600" />
+                <FileText className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>Device Profile</span>
               </div>
             ),
@@ -6874,7 +6874,7 @@ export default function CERV2Page({
             id: 'predicates',
             label: (
               <div className="flex items-center">
-                <Search className="h-4 w-4 mr-1.5 text-purple-600" />
+                <Search className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>Classification Research</span>
               </div>
             ),
@@ -6910,7 +6910,7 @@ export default function CERV2Page({
             id: 'standards-matrix',
             label: (
               <div className="flex items-center">
-                <ClipboardCheck className="h-4 w-4 mr-1.5 text-indigo-600" />
+                <ClipboardCheck className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>Standards & Special Controls</span>
               </div>
             ),
@@ -6921,7 +6921,7 @@ export default function CERV2Page({
             id: 'test-plan',
             label: (
               <div className="flex items-center">
-                <Activity className="h-4 w-4 mr-1.5 text-purple-600" />
+                <Activity className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>Performance Testing Plan</span>
               </div>
             ),
@@ -6938,14 +6938,14 @@ export default function CERV2Page({
           {
             id: 'evidence-matrix',
             label: 'Evidence Matrix Dashboard',
-            icon: <BarChart className="h-4 w-4 mr-1.5 text-blue-600" />,
+            icon: <BarChart className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: false,
             status: 'todo',
           },
           {
             id: 'bench-testing',
             label: 'Performance Testing',
-            icon: <TestTube className="h-4 w-4 mr-1.5 text-green-600" />,
+            icon: <TestTube className="h-4 w-4 mr-1.5 text-emerald-600" />,
             required: true,
             status: 'todo',
           },
@@ -6961,7 +6961,7 @@ export default function CERV2Page({
                 {
                   id: 'software',
                   label: 'Software Documentation',
-                  icon: <Code className="h-4 w-4 mr-1.5 text-cyan-600" />,
+                  icon: <Code className="h-4 w-4 mr-1.5 text-stone-600" />,
                   required: false,
                   status: 'todo',
                 },
@@ -6972,7 +6972,7 @@ export default function CERV2Page({
                 {
                   id: 'sterility',
                   label: 'Sterilization & Shelf Life',
-                  icon: <Shield className="h-4 w-4 mr-1.5 text-blue-600" />,
+                  icon: <Shield className="h-4 w-4 mr-1.5 text-stone-600" />,
                   required: false,
                   status: 'todo',
                 },
@@ -6981,7 +6981,7 @@ export default function CERV2Page({
           {
             id: 'usability',
             label: 'Usability / Human Factors',
-            icon: <Users className="h-4 w-4 mr-1.5 text-purple-600" />,
+            icon: <Users className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: false,
             status: 'todo',
           },
@@ -6995,7 +6995,7 @@ export default function CERV2Page({
           {
             id: 'admin-forms',
             label: 'Administrative Forms',
-            icon: <FileText className="h-4 w-4 mr-1.5 text-blue-600" />,
+            icon: <FileText className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: true,
             status: 'todo',
           },
@@ -7009,28 +7009,28 @@ export default function CERV2Page({
           {
             id: 'document-editor',
             label: 'De Novo Narrative Editor',
-            icon: <Edit3 className="h-4 w-4 mr-1.5 text-green-600" />,
+            icon: <Edit3 className="h-4 w-4 mr-1.5 text-emerald-600" />,
             required: true,
             status: 'ready',
           },
           {
             id: 'labeling',
             label: 'Labeling & IFU',
-            icon: <Tag className="h-4 w-4 mr-1.5 text-purple-600" />,
+            icon: <Tag className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: true,
             status: 'todo',
           },
           {
             id: 'biocomp-summary',
             label: 'Biocompatibility Summary',
-            icon: <Beaker className="h-4 w-4 mr-1.5 text-pink-600" />,
+            icon: <Beaker className="h-4 w-4 mr-1.5 text-rose-600" />,
             required: true,
             status: 'todo',
           },
           {
             id: 'performance-summaries',
             label: 'Performance Summaries',
-            icon: <FileText className="h-4 w-4 mr-1.5 text-cyan-600" />,
+            icon: <FileText className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: true,
             status: 'todo',
           },
@@ -7045,7 +7045,7 @@ export default function CERV2Page({
             id: 'estar-assembly',
             label: (
               <div className="flex items-center">
-                <Package className="h-4 w-4 mr-1.5 text-blue-600" />
+                <Package className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>De Novo Package Assembly</span>
               </div>
             ),
@@ -7056,7 +7056,7 @@ export default function CERV2Page({
             id: 'rta-check',
             label: (
               <div className="flex items-center">
-                <ClipboardCheck className="h-4 w-4 mr-1.5 text-green-600" />
+                <ClipboardCheck className="h-4 w-4 mr-1.5 text-emerald-600" />
                 <span>Acceptance Review Checklist</span>
               </div>
             ),
@@ -7074,7 +7074,7 @@ export default function CERV2Page({
             id: 'fda-forms',
             label: (
               <div className="flex items-center">
-                <FileText className="h-4 w-4 mr-1.5 text-purple-600" />
+                <FileText className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>FDA Forms</span>
               </div>
             ),
@@ -7085,7 +7085,7 @@ export default function CERV2Page({
             id: 'submission',
             label: (
               <div className="flex items-center">
-                <Send className="h-4 w-4 mr-1.5 text-teal-600" />
+                <Send className="h-4 w-4 mr-1.5 text-emerald-600" />
                 <span>Submission</span>
               </div>
             ),
@@ -7116,7 +7116,7 @@ export default function CERV2Page({
             id: 'device-intake',
             label: (
               <div className="flex items-center">
-                <FileText className="h-4 w-4 mr-1.5 text-blue-600" />
+                <FileText className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>Device Profile</span>
               </div>
             ),
@@ -7127,7 +7127,7 @@ export default function CERV2Page({
             id: 'predicates',
             label: (
               <div className="flex items-center">
-                <Search className="h-4 w-4 mr-1.5 text-purple-600" />
+                <Search className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>HUD Designation & Classification</span>
               </div>
             ),
@@ -7163,7 +7163,7 @@ export default function CERV2Page({
             id: 'standards-matrix',
             label: (
               <div className="flex items-center">
-                <ClipboardCheck className="h-4 w-4 mr-1.5 text-indigo-600" />
+                <ClipboardCheck className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>Standards & Testing Criteria</span>
               </div>
             ),
@@ -7174,7 +7174,7 @@ export default function CERV2Page({
             id: 'test-plan',
             label: (
               <div className="flex items-center">
-                <Activity className="h-4 w-4 mr-1.5 text-purple-600" />
+                <Activity className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>Testing Plan</span>
               </div>
             ),
@@ -7191,14 +7191,14 @@ export default function CERV2Page({
           {
             id: 'evidence-matrix',
             label: 'Evidence Matrix Dashboard',
-            icon: <BarChart className="h-4 w-4 mr-1.5 text-blue-600" />,
+            icon: <BarChart className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: false,
             status: 'todo',
           },
           {
             id: 'bench-testing',
             label: 'Bench / Performance Testing',
-            icon: <TestTube className="h-4 w-4 mr-1.5 text-green-600" />,
+            icon: <TestTube className="h-4 w-4 mr-1.5 text-emerald-600" />,
             required: true,
             status: 'todo',
           },
@@ -7212,7 +7212,7 @@ export default function CERV2Page({
           {
             id: 'clinical-data',
             label: 'Clinical Evidence',
-            icon: <FileText className="h-4 w-4 mr-1.5 text-teal-600" />,
+            icon: <FileText className="h-4 w-4 mr-1.5 text-emerald-600" />,
             required: false,
             status: 'todo',
           },
@@ -7221,7 +7221,7 @@ export default function CERV2Page({
                 {
                   id: 'software',
                   label: 'Software Documentation',
-                  icon: <Code className="h-4 w-4 mr-1.5 text-cyan-600" />,
+                  icon: <Code className="h-4 w-4 mr-1.5 text-stone-600" />,
                   required: false,
                   status: 'todo',
                 },
@@ -7237,7 +7237,7 @@ export default function CERV2Page({
           {
             id: 'admin-forms',
             label: 'Administrative Forms',
-            icon: <FileText className="h-4 w-4 mr-1.5 text-blue-600" />,
+            icon: <FileText className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: true,
             status: 'todo',
           },
@@ -7251,21 +7251,21 @@ export default function CERV2Page({
           {
             id: 'document-editor',
             label: 'HDE Narrative Editor',
-            icon: <Edit3 className="h-4 w-4 mr-1.5 text-green-600" />,
+            icon: <Edit3 className="h-4 w-4 mr-1.5 text-emerald-600" />,
             required: true,
             status: 'ready',
           },
           {
             id: 'labeling',
             label: 'Labeling',
-            icon: <Tag className="h-4 w-4 mr-1.5 text-purple-600" />,
+            icon: <Tag className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: true,
             status: 'todo',
           },
           {
             id: 'performance-summaries',
             label: 'Summary of Evidence',
-            icon: <FileText className="h-4 w-4 mr-1.5 text-cyan-600" />,
+            icon: <FileText className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: true,
             status: 'todo',
           },
@@ -7280,7 +7280,7 @@ export default function CERV2Page({
             id: 'estar-assembly',
             label: (
               <div className="flex items-center">
-                <Package className="h-4 w-4 mr-1.5 text-blue-600" />
+                <Package className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>HDE Package Assembly</span>
               </div>
             ),
@@ -7291,7 +7291,7 @@ export default function CERV2Page({
             id: 'rta-check',
             label: (
               <div className="flex items-center">
-                <ClipboardCheck className="h-4 w-4 mr-1.5 text-green-600" />
+                <ClipboardCheck className="h-4 w-4 mr-1.5 text-emerald-600" />
                 <span>HDE Review Checklist</span>
               </div>
             ),
@@ -7309,7 +7309,7 @@ export default function CERV2Page({
             id: 'fda-forms',
             label: (
               <div className="flex items-center">
-                <FileText className="h-4 w-4 mr-1.5 text-purple-600" />
+                <FileText className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>FDA Forms</span>
               </div>
             ),
@@ -7320,7 +7320,7 @@ export default function CERV2Page({
             id: 'submission',
             label: (
               <div className="flex items-center">
-                <Send className="h-4 w-4 mr-1.5 text-teal-600" />
+                <Send className="h-4 w-4 mr-1.5 text-emerald-600" />
                 <span>Submission</span>
               </div>
             ),
@@ -7351,7 +7351,7 @@ export default function CERV2Page({
             id: 'device-intake',
             label: (
               <div className="flex items-center">
-                <FileText className="h-4 w-4 mr-1.5 text-blue-600" />
+                <FileText className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>Device & Scope Definition</span>
               </div>
             ),
@@ -7362,7 +7362,7 @@ export default function CERV2Page({
             id: 'cep',
             label: (
               <div className="flex items-center">
-                <ClipboardList className="h-4 w-4 mr-1.5 text-blue-600" />
+                <ClipboardList className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>Clinical Evaluation Plan</span>
               </div>
             ),
@@ -7380,7 +7380,7 @@ export default function CERV2Page({
             id: 'predicates',
             label: (
               <div className="flex items-center">
-                <Search className="h-4 w-4 mr-1.5 text-purple-600" />
+                <Search className="h-4 w-4 mr-1.5 text-stone-600" />
                 <span>Equivalent Device Analysis</span>
               </div>
             ),
@@ -7391,7 +7391,7 @@ export default function CERV2Page({
             id: 'sota',
             label: (
               <div className="flex items-center">
-                <BookMarked className="h-4 w-4 mr-1.5 text-green-600" />
+                <BookMarked className="h-4 w-4 mr-1.5 text-emerald-600" />
                 <span>State of the Art</span>
               </div>
             ),
@@ -7408,28 +7408,28 @@ export default function CERV2Page({
           {
             id: 'literature',
             label: 'Literature Search',
-            icon: <BookOpen className="h-4 w-4 mr-1.5 text-green-600" />,
+            icon: <BookOpen className="h-4 w-4 mr-1.5 text-emerald-600" />,
             required: true,
             status: 'todo',
           },
           {
             id: 'literature-review',
             label: 'Literature Appraisal',
-            icon: <BookOpen className="h-4 w-4 mr-1.5 text-green-600" />,
+            icon: <BookOpen className="h-4 w-4 mr-1.5 text-emerald-600" />,
             required: true,
             status: 'todo',
           },
           {
             id: 'internal-clinical-data',
             label: 'Internal Clinical Data',
-            icon: <FileSpreadsheet className="h-4 w-4 mr-1.5 text-green-600" />,
+            icon: <FileSpreadsheet className="h-4 w-4 mr-1.5 text-emerald-600" />,
             required: true,
             status: 'todo',
           },
           {
             id: 'data-retrieval',
             label: 'PMS / Vigilance Data',
-            icon: <Database className="h-4 w-4 mr-1.5 text-blue-600" />,
+            icon: <Database className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: true,
             status: 'todo',
           },
@@ -7443,21 +7443,21 @@ export default function CERV2Page({
           {
             id: 'equivalence',
             label: 'Clinical Equivalence',
-            icon: <GitCompare className="h-4 w-4 mr-1.5 text-purple-600" />,
+            icon: <GitCompare className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: true,
             status: 'todo',
           },
           {
             id: 'gspr-mapping',
             label: 'GSPR Mapping',
-            icon: <BarChart className="h-4 w-4 mr-1.5 text-purple-600" />,
+            icon: <BarChart className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: true,
             status: 'todo',
           },
           {
             id: 'compliance',
             label: 'EU MDR Compliance Check',
-            icon: <CheckSquare className="h-4 w-4 mr-1.5 text-purple-600" />,
+            icon: <CheckSquare className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: true,
             status: 'todo',
           },
@@ -7471,21 +7471,21 @@ export default function CERV2Page({
           {
             id: 'builder',
             label: 'CER Builder',
-            icon: <FileText className="h-4 w-4 mr-1.5 text-blue-600" />,
+            icon: <FileText className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: true,
             status: 'todo',
           },
           {
             id: 'document-editor',
             label: 'CER Narrative Editor',
-            icon: <Edit3 className="h-4 w-4 mr-1.5 text-green-600" />,
+            icon: <Edit3 className="h-4 w-4 mr-1.5 text-emerald-600" />,
             required: true,
             status: 'ready',
           },
           {
             id: 'qmp',
             label: 'Quality Management',
-            icon: <ShieldCheck className="h-4 w-4 mr-1.5 text-blue-600" />,
+            icon: <ShieldCheck className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: false,
             status: 'todo',
           },
@@ -7511,7 +7511,7 @@ export default function CERV2Page({
             id: 'rta-check',
             label: (
               <div className="flex items-center">
-                <ClipboardCheck className="h-4 w-4 mr-1.5 text-green-600" />
+                <ClipboardCheck className="h-4 w-4 mr-1.5 text-emerald-600" />
                 <span>CER Completeness Check</span>
               </div>
             ),
@@ -7580,7 +7580,7 @@ export default function CERV2Page({
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-stone-700">{group.label}</span>
                   {gateStatus.passed ? (
-                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <CheckCircle className="h-4 w-4 text-emerald-600" />
                   ) : isStageAccessible ? (
                     <AlertCircle className="h-4 w-4 text-yellow-500" />
                   ) : (
@@ -7592,8 +7592,8 @@ export default function CERV2Page({
                     const isTabEnabled = isStageAccessible && tab.status !== 'blocked';
                     const statusColors = {
                       todo: 'bg-stone-100 text-stone-600',
-                      draft: 'bg-yellow-100 text-yellow-700',
-                      ready: 'bg-green-100 text-green-700',
+                      draft: 'bg-amber-100 text-amber-700',
+                      ready: 'bg-emerald-100 text-emerald-700',
                       blocked: 'bg-red-100 text-red-700',
                     };
                     return (
@@ -7609,7 +7609,7 @@ export default function CERV2Page({
                           disabled={!isTabEnabled}
                           className={`h-auto px-3 py-2 text-xs font-medium rounded-lg transition-all ${
                             activeTab === tab.id
-                              ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
+                              ? 'bg-stone-800 text-white hover:bg-stone-900 shadow-sm'
                               : isTabEnabled
                                 ? 'text-stone-700 border-stone-300 hover:bg-stone-50 hover:border-stone-400'
                                 : 'text-stone-400 border-stone-200 bg-stone-50 cursor-not-allowed opacity-60'
@@ -7788,7 +7788,7 @@ export default function CERV2Page({
                   <ChevronLeft className="w-4 h-4" />
                   Hub
                 </button>
-                <h1 className="text-2xl font-bold text-stone-900">{trackContent.pipelineHeading}</h1>
+                <h1 className="text-lg font-semibold text-stone-900">{trackContent.pipelineHeading}</h1>
 
                 {/* Multi-Project Selector */}
                 <div className="relative">
@@ -7796,28 +7796,28 @@ export default function CERV2Page({
                     variant="outline"
                     size="sm"
                     onClick={() => setShowProjectSelector(!showProjectSelector)}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 border-blue-200 hover:bg-stone-100"
+                    className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 border-stone-200 hover:bg-stone-100"
                     data-testid="button-project-selector"
                   >
-                    <FolderOpen className="h-4 w-4 text-blue-600" />
-                    <span className="font-medium text-blue-900">
+                    <FolderOpen className="h-4 w-4 text-stone-600" />
+                    <span className="font-medium text-stone-900">
                       {currentProjectId
                         ? allProjects.find(p => p.id === currentProjectId)?.deviceName ||
                           'Select Project'
                         : 'No Project Selected'}
                     </span>
-                    <Badge variant="secondary" className="ml-1 bg-blue-100 text-blue-700">
+                    <Badge variant="secondary" className="ml-1 bg-stone-100 text-stone-700">
                       {allProjects.length}
                     </Badge>
                   </Button>
 
                   {/* Project Selector Dropdown */}
                   {showProjectSelector && (
-                    <Card className="absolute top-full left-0 mt-2 w-96 shadow-lg z-50 border-2 border-blue-200">
+                    <Card className="absolute top-full left-0 mt-2 w-96 shadow-lg z-50 border-2 border-stone-200">
                       <CardHeader className="pb-3 bg-stone-50">
                         <div className="flex items-center justify-between">
                           <CardTitle className="text-lg flex items-center gap-2">
-                            <Files className="h-5 w-5 text-blue-600" />
+                            <Files className="h-5 w-5 text-stone-600" />
                             My Medical Device Projects
                           </CardTitle>
                           <Button
@@ -7846,8 +7846,8 @@ export default function CERV2Page({
                                 key={project.id}
                                 className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
                                   project.id === currentProjectId
-                                    ? 'bg-blue-50 border-blue-300 shadow-sm'
-                                    : 'bg-white border-stone-200 hover:border-blue-200 hover:bg-stone-50'
+                                    ? 'bg-stone-50 border-stone-300 shadow-sm'
+                                    : 'bg-white border-stone-200 hover:border-stone-200 hover:bg-stone-50'
                                 }`}
                                 onClick={() => switchToProject(project.id)}
                                 data-testid={`project-item-${project.id}`}
@@ -7867,7 +7867,7 @@ export default function CERV2Page({
                                         </Badge>
                                       )}
                                       {project.id === currentProjectId && (
-                                        <CheckCircle className="h-4 w-4 text-blue-600" />
+                                        <CheckCircle className="h-4 w-4 text-stone-600" />
                                       )}
                                     </div>
                                     <p className="text-xs text-stone-600 mt-0.5">
@@ -7881,8 +7881,8 @@ export default function CERV2Page({
                                         variant="secondary"
                                         className={`text-xs ${
                                           project.status === 'submitted'
-                                            ? 'bg-green-100 text-green-700'
-                                            : 'bg-yellow-100 text-yellow-700'
+                                            ? 'bg-emerald-100 text-emerald-700'
+                                            : 'bg-amber-100 text-amber-700'
                                         }`}
                                       >
                                         {project.status}
@@ -7912,7 +7912,7 @@ export default function CERV2Page({
                           )}
                         </div>
                         <Button
-                          className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white"
+                          className="w-full mt-3 bg-stone-800 hover:bg-stone-900 text-white"
                           onClick={() => {
                             setShowNewProjectDialog(true);
                             setShowProjectSelector(false);
@@ -7989,7 +7989,7 @@ export default function CERV2Page({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="bg-green-600 text-white hover:bg-green-700 border-green-600"
+                    className="bg-emerald-600 text-white hover:bg-emerald-700 border-green-600"
                     onClick={() => setShowNewProjectDialog(true)}
                     data-testid="button-new-device-submission"
                   >
@@ -8029,7 +8029,7 @@ export default function CERV2Page({
 
                   <Button
                     size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    className="bg-stone-800 hover:bg-stone-900 text-white"
                     onClick={documentType === 'cer' ? generateFullCER : handleSubmissionReady}
                     disabled={documentType === 'cer' ? isGeneratingFullCER : !equivalenceCompleted}
                   >
@@ -8092,7 +8092,7 @@ export default function CERV2Page({
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="mr-2 text-blue-600"
+                      className="mr-2 text-stone-600"
                     >
                       <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
                     </svg>
@@ -8123,25 +8123,25 @@ export default function CERV2Page({
                 <div className="border-b">
                   <div className="flex">
                     <button
-                      className={`flex-1 py-2 text-sm font-medium text-center ${documentView === 'all' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-stone-500 hover:text-stone-700'}`}
+                      className={`flex-1 py-2 text-sm font-medium text-center ${documentView === 'all' ? 'text-stone-600 border-b-2 border-blue-600' : 'text-stone-500 hover:text-stone-700'}`}
                       onClick={() => setDocumentView('all')}
                     >
                       All Files
                     </button>
                     <button
-                      className={`flex-1 py-2 text-sm font-medium text-center ${documentView === 'cer' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-stone-500 hover:text-stone-700'}`}
+                      className={`flex-1 py-2 text-sm font-medium text-center ${documentView === 'cer' ? 'text-stone-600 border-b-2 border-blue-600' : 'text-stone-500 hover:text-stone-700'}`}
                       onClick={() => setDocumentView('cer')}
                     >
                       CER
                     </button>
                     <button
-                      className={`flex-1 py-2 text-sm font-medium text-center ${documentView === '510k' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-stone-500 hover:text-stone-700'}`}
+                      className={`flex-1 py-2 text-sm font-medium text-center ${documentView === '510k' ? 'text-stone-600 border-b-2 border-blue-600' : 'text-stone-500 hover:text-stone-700'}`}
                       onClick={() => setDocumentView('510k')}
                     >
                       510(k)
                     </button>
                     <button
-                      className={`flex-1 py-2 text-sm font-medium text-center ${documentView === 'global' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-stone-500 hover:text-stone-700'}`}
+                      className={`flex-1 py-2 text-sm font-medium text-center ${documentView === 'global' ? 'text-stone-600 border-b-2 border-blue-600' : 'text-stone-500 hover:text-stone-700'}`}
                       onClick={() => setDocumentView('global')}
                     >
                       Global
@@ -8181,7 +8181,7 @@ export default function CERV2Page({
                     {/* Regulatory Documents */}
                     <div className="mb-0.5">
                       <div
-                        className="flex items-center py-2 px-3 hover:bg-blue-50 cursor-pointer"
+                        className="flex items-center py-2 px-3 hover:bg-stone-50 cursor-pointer"
                         onClick={() => toggleFolder('regulatory')}
                       >
                         <svg
@@ -8208,7 +8208,7 @@ export default function CERV2Page({
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          className="mr-2 text-blue-600"
+                          className="mr-2 text-stone-600"
                         >
                           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                         </svg>
@@ -8221,7 +8221,7 @@ export default function CERV2Page({
                         <div>
                           <button
                             type="button"
-                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-50"
+                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-stone-50"
                             onClick={e =>
                               openDocumentSafely(
                                 e,
@@ -8249,11 +8249,11 @@ export default function CERV2Page({
                             <span className="text-sm">
                               {documentType === 'cer' ? 'CER Executive Summary' : '510(k) Summary'}
                             </span>
-                            <span className="ml-auto text-xs text-green-600 font-medium">v1.3</span>
+                            <span className="ml-auto text-xs text-emerald-600 font-medium">v1.3</span>
                           </button>
                           <button
                             type="button"
-                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-50"
+                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-stone-50"
                             onClick={e =>
                               openDocumentSafely(
                                 e,
@@ -8279,11 +8279,11 @@ export default function CERV2Page({
                               <polyline points="14 2 14 8 20 8"></polyline>
                             </svg>
                             <span className="text-sm">Clinical Study Report</span>
-                            <span className="ml-auto text-xs text-green-600 font-medium">v2.0</span>
+                            <span className="ml-auto text-xs text-emerald-600 font-medium">v2.0</span>
                           </button>
                           <button
                             type="button"
-                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-50"
+                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-stone-50"
                             onClick={e =>
                               openDocumentSafely(
                                 e,
@@ -8320,7 +8320,7 @@ export default function CERV2Page({
                     {/* Clinical Documents */}
                     <div className="mb-0.5">
                       <div
-                        className="flex items-center py-2 px-3 hover:bg-blue-50 cursor-pointer"
+                        className="flex items-center py-2 px-3 hover:bg-stone-50 cursor-pointer"
                         onClick={() => toggleFolder('clinical')}
                       >
                         <svg
@@ -8347,7 +8347,7 @@ export default function CERV2Page({
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          className="mr-2 text-blue-600"
+                          className="mr-2 text-stone-600"
                         >
                           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                         </svg>
@@ -8360,7 +8360,7 @@ export default function CERV2Page({
                         <div>
                           <button
                             type="button"
-                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-50"
+                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-stone-50"
                             onClick={e =>
                               openDocumentSafely(
                                 e,
@@ -8386,11 +8386,11 @@ export default function CERV2Page({
                               <polyline points="14 2 14 8 20 8"></polyline>
                             </svg>
                             <span className="text-sm">CER Report</span>
-                            <span className="ml-auto text-xs text-green-600 font-medium">v2.4</span>
+                            <span className="ml-auto text-xs text-emerald-600 font-medium">v2.4</span>
                           </button>
                           <button
                             type="button"
-                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-50"
+                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-stone-50"
                             onClick={e =>
                               openDocumentSafely(
                                 e,
@@ -8416,11 +8416,11 @@ export default function CERV2Page({
                               <polyline points="14 2 14 8 20 8"></polyline>
                             </svg>
                             <span className="text-sm">Evidence Report</span>
-                            <span className="ml-auto text-xs text-green-600 font-medium">v1.1</span>
+                            <span className="ml-auto text-xs text-emerald-600 font-medium">v1.1</span>
                           </button>
                           <button
                             type="button"
-                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-50"
+                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-stone-50"
                             onClick={e =>
                               openDocumentSafely(
                                 e,
@@ -8452,7 +8452,7 @@ export default function CERV2Page({
                           </button>
                           <button
                             type="button"
-                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-50"
+                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-stone-50"
                             onClick={e =>
                               openDocumentSafely(
                                 e,
@@ -8478,16 +8478,16 @@ export default function CERV2Page({
                               <polyline points="14 2 14 8 20 8"></polyline>
                             </svg>
                             <span className="text-sm">Clinical Guidelines</span>
-                            <span className="ml-auto text-xs text-green-600 font-medium">v3.0</span>
+                            <span className="ml-auto text-xs text-emerald-600 font-medium">v3.0</span>
                           </button>
                         </div>
                       )}
                     </div>
 
                     {/* FDA Submissions */}
-                    <div className="mb-0.5 bg-blue-50">
+                    <div className="mb-0.5 bg-stone-50">
                       <div
-                        className="flex items-center py-2 px-3 hover:bg-blue-100 cursor-pointer bg-blue-50"
+                        className="flex items-center py-2 px-3 hover:bg-stone-100 cursor-pointer bg-stone-50"
                         onClick={() => toggleFolder('submissions')}
                       >
                         <svg
@@ -8500,7 +8500,7 @@ export default function CERV2Page({
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          className={`transition-transform ${expandedFolders.submissions ? 'rotate-90' : ''} mr-2 text-blue-600`}
+                          className={`transition-transform ${expandedFolders.submissions ? 'rotate-90' : ''} mr-2 text-stone-600`}
                         >
                           <polyline points="9 18 15 12 9 6"></polyline>
                         </svg>
@@ -8514,7 +8514,7 @@ export default function CERV2Page({
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          className="mr-2 text-blue-600"
+                          className="mr-2 text-stone-600"
                         >
                           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                         </svg>
@@ -8522,10 +8522,10 @@ export default function CERV2Page({
                           {documentType === 'cer' ? 'EU MDR Documents' : 'FDA Submissions'}
                         </span>
                         <div className="ml-auto flex items-center">
-                          <span className="mr-1.5 text-xs text-stone-700 bg-white px-1.5 py-0.5 rounded-full border border-blue-200">
+                          <span className="mr-1.5 text-xs text-stone-700 bg-white px-1.5 py-0.5 rounded-full border border-stone-200">
                             New
                           </span>
-                          <span className="text-xs text-stone-500 bg-white px-1.5 py-0.5 rounded-full border border-blue-200">
+                          <span className="text-xs text-stone-500 bg-white px-1.5 py-0.5 rounded-full border border-stone-200">
                             3
                           </span>
                         </div>
@@ -8534,7 +8534,7 @@ export default function CERV2Page({
                         <div>
                           <button
                             type="button"
-                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-100 bg-blue-50"
+                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-stone-100 bg-stone-50"
                             onClick={e =>
                               openDocumentSafely(
                                 e,
@@ -8554,7 +8554,7 @@ export default function CERV2Page({
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="mr-2 text-blue-600"
+                              className="mr-2 text-stone-600"
                             >
                               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                               <polyline points="14 2 14 8 20 8"></polyline>
@@ -8564,11 +8564,11 @@ export default function CERV2Page({
                                 ? 'Clinical Evaluation Report'
                                 : '510(k) Submission'}
                             </span>
-                            <span className="ml-auto text-xs text-blue-700 font-medium">Final</span>
+                            <span className="ml-auto text-xs text-stone-700 font-medium">Final</span>
                           </button>
                           <button
                             type="button"
-                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-100 bg-blue-50"
+                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-stone-100 bg-stone-50"
                             onClick={e =>
                               openDocumentSafely(
                                 e,
@@ -8588,7 +8588,7 @@ export default function CERV2Page({
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="mr-2 text-blue-600"
+                              className="mr-2 text-stone-600"
                             >
                               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                               <polyline points="14 2 14 8 20 8"></polyline>
@@ -8598,11 +8598,11 @@ export default function CERV2Page({
                                 ? 'Equivalent Device Dossier'
                                 : 'Predicate Device'}
                             </span>
-                            <span className="ml-auto text-xs text-blue-700 font-medium">Final</span>
+                            <span className="ml-auto text-xs text-stone-700 font-medium">Final</span>
                           </button>
                           <button
                             type="button"
-                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-100 bg-blue-50"
+                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-stone-100 bg-stone-50"
                             onClick={e =>
                               openDocumentSafely(
                                 e,
@@ -8622,7 +8622,7 @@ export default function CERV2Page({
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="mr-2 text-blue-600"
+                              className="mr-2 text-stone-600"
                             >
                               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                               <polyline points="14 2 14 8 20 8"></polyline>
@@ -8630,7 +8630,7 @@ export default function CERV2Page({
                             <span className="text-sm font-medium">
                               {documentType === 'cer' ? 'PMCF Plan' : 'eSTAR Package'}
                             </span>
-                            <span className="ml-auto text-xs text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded-full">
+                            <span className="ml-auto text-xs text-stone-700 bg-stone-100 px-1.5 py-0.5 rounded-full">
                               NEW
                             </span>
                           </button>
@@ -8641,7 +8641,7 @@ export default function CERV2Page({
                     {/* Technical Documentation */}
                     <div className="mb-0.5">
                       <div
-                        className="flex items-center py-2 px-3 hover:bg-blue-50 cursor-pointer"
+                        className="flex items-center py-2 px-3 hover:bg-stone-50 cursor-pointer"
                         onClick={() => toggleFolder('technical')}
                       >
                         <svg
@@ -8668,7 +8668,7 @@ export default function CERV2Page({
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          className="mr-2 text-blue-600"
+                          className="mr-2 text-stone-600"
                         >
                           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                         </svg>
@@ -8683,7 +8683,7 @@ export default function CERV2Page({
                         <div>
                           <button
                             type="button"
-                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-50"
+                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-stone-50"
                             onClick={e =>
                               openDocumentSafely(
                                 e,
@@ -8709,11 +8709,11 @@ export default function CERV2Page({
                               <polyline points="14 2 14 8 20 8"></polyline>
                             </svg>
                             <span className="text-sm">Technical Specs</span>
-                            <span className="ml-auto text-xs text-green-600 font-medium">v4.2</span>
+                            <span className="ml-auto text-xs text-emerald-600 font-medium">v4.2</span>
                           </button>
                           <button
                             type="button"
-                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-blue-50"
+                            className="flex items-center w-full text-left py-2 px-3 pl-9 hover:bg-stone-50"
                             onClick={e =>
                               openDocumentSafely(
                                 e,
@@ -8739,7 +8739,7 @@ export default function CERV2Page({
                               <polyline points="14 2 14 8 20 8"></polyline>
                             </svg>
                             <span className="text-sm">Risk Analysis</span>
-                            <span className="ml-auto text-xs text-green-600 font-medium">v1.8</span>
+                            <span className="ml-auto text-xs text-emerald-600 font-medium">v1.8</span>
                           </button>
                         </div>
                       )}
@@ -8749,7 +8749,7 @@ export default function CERV2Page({
                     {(documentView === 'all' || documentView === 'global') && (
                       <div className="mb-0.5">
                         <div
-                          className="flex items-center py-2 px-3 hover:bg-blue-50 cursor-pointer bg-stone-50"
+                          className="flex items-center py-2 px-3 hover:bg-stone-50 cursor-pointer bg-stone-50"
                           onClick={() => toggleFolder('global')}
                         >
                           <svg
@@ -8776,7 +8776,7 @@ export default function CERV2Page({
                             strokeWidth="2"
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            className="mr-2 text-purple-600"
+                            className="mr-2 text-stone-600"
                           >
                             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                           </svg>
@@ -8791,7 +8791,7 @@ export default function CERV2Page({
                           <div>
                             <button
                               type="button"
-                              className="flex w-full items-center py-2 px-3 pl-9 hover:bg-blue-50 cursor-pointer text-left"
+                              className="flex w-full items-center py-2 px-3 pl-9 hover:bg-stone-50 cursor-pointer text-left"
                               onClick={e =>
                                 openDocumentSafely(
                                   e,
@@ -8811,13 +8811,13 @@ export default function CERV2Page({
                                 strokeWidth="2"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                className="mr-2 text-purple-500"
+                                className="mr-2 text-stone-500"
                               >
                                 <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                                 <polyline points="14 2 14 8 20 8"></polyline>
                               </svg>
                               <span className="text-sm">Shared Resources</span>
-                              <span className="ml-auto text-xs text-green-600 font-medium">
+                              <span className="ml-auto text-xs text-emerald-600 font-medium">
                                 v2.0
                               </span>
                             </button>
@@ -8831,7 +8831,7 @@ export default function CERV2Page({
                 {/* Action buttons */}
                 <div className="p-2 border-t bg-stone-50">
                   <div className="flex space-x-2">
-                    <label className="flex items-center justify-center py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md cursor-pointer">
+                    <label className="flex items-center justify-center py-1.5 px-3 bg-stone-800 hover:bg-stone-900 text-white text-sm font-medium rounded-md cursor-pointer">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="16"
@@ -8940,8 +8940,8 @@ export default function CERV2Page({
             <div className="w-96 bg-white border-l border-stone-200 shadow-md flex-shrink-0 flex flex-col max-h-[calc(100vh-200px)] sticky top-4">
               <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-50 to-indigo-50 border-b">
                 <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-purple-600" />
-                  <h3 className="font-semibold text-sm text-purple-900">
+                  <FileText className="h-4 w-4 text-stone-600" />
+                  <h3 className="font-semibold text-sm text-stone-900">
                     {DOC_TYPES[selectedDocType]?.label || '510(k)'} Document Preview
                   </h3>
                 </div>
@@ -8950,7 +8950,7 @@ export default function CERV2Page({
                     variant="ghost"
                     size="sm"
                     onClick={() => setActiveTab('document-editor')}
-                    className="h-7 px-2 text-xs text-purple-700 hover:bg-purple-100"
+                    className="h-7 px-2 text-xs text-stone-700 hover:bg-stone-100"
                   >
                     <Edit3 className="h-3 w-3 mr-1" />
                     Edit
@@ -8969,37 +8969,37 @@ export default function CERV2Page({
               <ScrollArea className="flex-1 overflow-auto">
                 <div className="p-4 space-y-3">
                   {/* Device Context Summary */}
-                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
-                    <h4 className="text-xs font-bold text-blue-900 uppercase tracking-wide mb-2">Device Information</h4>
+                  <div className="bg-stone-50 rounded-lg p-3 border border-blue-100">
+                    <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wide mb-2">Device Information</h4>
                     <div className="space-y-1 text-xs">
                       <div className="flex justify-between">
-                        <span className="text-blue-600">Device:</span>
-                        <span className="font-medium text-blue-900 text-right max-w-[200px] truncate">
+                        <span className="text-stone-600">Device:</span>
+                        <span className="font-medium text-stone-900 text-right max-w-[200px] truncate">
                           {deviceProfile?.deviceName || deviceName || '—'}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-blue-600">Manufacturer:</span>
-                        <span className="font-medium text-blue-900 text-right max-w-[200px] truncate">
+                        <span className="text-stone-600">Manufacturer:</span>
+                        <span className="font-medium text-stone-900 text-right max-w-[200px] truncate">
                           {deviceProfile?.manufacturer || manufacturer || '—'}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-blue-600">Intended Use:</span>
-                        <span className="font-medium text-blue-900 text-right max-w-[200px] truncate">
+                        <span className="text-stone-600">Intended Use:</span>
+                        <span className="font-medium text-stone-900 text-right max-w-[200px] truncate">
                           {deviceProfile?.intendedUse || intendedUse || '—'}
                         </span>
                       </div>
                       {deviceProfile?.productCode && (
                         <div className="flex justify-between">
-                          <span className="text-blue-600">Product Code:</span>
-                          <span className="font-medium text-blue-900">{deviceProfile.productCode}</span>
+                          <span className="text-stone-600">Product Code:</span>
+                          <span className="font-medium text-stone-900">{deviceProfile.productCode}</span>
                         </div>
                       )}
                       {predicateDevices?.length > 0 && (
                         <div className="flex justify-between">
-                          <span className="text-blue-600">Predicates:</span>
-                          <span className="font-medium text-blue-900">{predicateDevices.length} selected</span>
+                          <span className="text-stone-600">Predicates:</span>
+                          <span className="font-medium text-stone-900">{predicateDevices.length} selected</span>
                         </div>
                       )}
                     </div>
@@ -9066,7 +9066,7 @@ export default function CERV2Page({
                                 className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs cursor-pointer transition-colors ${
                                   hasContent
                                     ? isSubstantial
-                                      ? 'bg-green-50 border border-green-200 hover:bg-green-100'
+                                      ? 'bg-emerald-50 border border-emerald-200 hover:bg-emerald-100'
                                       : 'bg-amber-50 border border-amber-200 hover:bg-amber-100'
                                     : 'bg-stone-50 border border-stone-200 hover:bg-stone-100'
                                 }`}
@@ -9075,7 +9075,7 @@ export default function CERV2Page({
                                 <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${
                                   hasContent
                                     ? isSubstantial
-                                      ? 'bg-green-500 text-white'
+                                      ? 'bg-emerald-500 text-white'
                                       : 'bg-amber-500 text-white'
                                     : 'bg-stone-300 text-white'
                                 }`}>
@@ -9088,7 +9088,7 @@ export default function CERV2Page({
                                 </div>
                                 <span className={`text-[11px] flex-shrink-0 ${
                                   hasContent
-                                    ? isSubstantial ? 'text-green-600' : 'text-amber-600'
+                                    ? isSubstantial ? 'text-emerald-600' : 'text-amber-600'
                                     : 'text-stone-400'
                                 }`}>
                                   {hasContent ? `${wordCount}w` : 'Empty'}
@@ -9122,7 +9122,7 @@ export default function CERV2Page({
                   {/* Open Full Editor CTA */}
                   <Button
                     variant="outline"
-                    className="w-full text-sm border-purple-300 text-purple-700 hover:bg-purple-50"
+                    className="w-full text-sm border-purple-300 text-stone-700 hover:bg-stone-50"
                     onClick={() => setActiveTab('document-editor')}
                   >
                     <Edit3 className="h-4 w-4 mr-2" />
@@ -9150,7 +9150,7 @@ export default function CERV2Page({
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <FilePlus className="h-5 w-5 text-blue-600" />
+              <FilePlus className="h-5 w-5 text-stone-600" />
               Create New Medical Device Project
             </DialogTitle>
             <DialogDescription>{trackContent.newProjectDesc}</DialogDescription>
@@ -9232,7 +9232,7 @@ export default function CERV2Page({
               </Button>
               <Button
                 type="submit"
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-stone-800 hover:bg-stone-900"
                 data-testid="button-submit-new-project"
               >
                 <PlusCircle className="h-4 w-4 mr-2" />
@@ -9281,7 +9281,7 @@ export default function CERV2Page({
             {/* Viewer Header */}
             <div className="flex items-center justify-between p-4 border-b">
               <h3 className="text-lg font-semibold flex items-center gap-2">
-                <FileText className="h-5 w-5 text-blue-600" />
+                <FileText className="h-5 w-5 text-stone-600" />
                 {documentViewerData.documentName || 'Document Viewer'}
               </h3>
               <div className="flex items-center gap-2">
@@ -9364,7 +9364,7 @@ export default function CERV2Page({
         <Button
           onClick={() => setIsDocumentVaultOpen(true)}
           size="lg"
-          className="h-14 w-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 text-white"
+          className="h-14 w-14 rounded-full shadow-lg bg-stone-800 hover:bg-stone-900 text-white"
           data-testid="floating-document-vault-button"
           aria-label="Open Document Vault"
         >
@@ -9391,9 +9391,9 @@ export default function CERV2Page({
             data-testid="document-vault-panel"
           >
             {/* Panel Header */}
-            <div className="flex items-center justify-between p-4 border-b bg-blue-50">
+            <div className="flex items-center justify-between p-4 border-b bg-stone-50">
               <div className="flex items-center gap-3">
-                <FolderOpen className="h-6 w-6 text-blue-600" />
+                <FolderOpen className="h-6 w-6 text-stone-600" />
                 <div>
                   <h2 className="text-lg font-semibold text-stone-900">Document Vault</h2>
                   <p className="text-xs text-stone-600">Manage your 510(k) submission files</p>
