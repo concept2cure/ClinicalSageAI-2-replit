@@ -148,10 +148,6 @@ const PredicateFinderPanel = ({
 
   // Enhanced 510(k) Predicate Finder state
   const [predicateFilterType, setPredicateFilterType] = useState('all');
-  const [showComparisonDialog, setShowComparisonDialog] = useState(false);
-  const [comparisonDevice, setComparisonDevice] = useState(null);
-  const [isGeneratingComparison, setIsGeneratingComparison] = useState(false);
-  const [equivalenceReport, setEquivalenceReport] = useState(null);
 
   // Stability and recovery state
   const [recoveryAttempted, setRecoveryAttempted] = useState(false);
@@ -1031,84 +1027,24 @@ const PredicateFinderPanel = ({
                                     variant="outline"
                                     size="sm"
                                     onClick={() => {
-                                      // Set the device for comparison and show dialog
-                                      setComparisonDevice(device);
-                                      setIsGeneratingComparison(true);
-
+                                      // Select this predicate and guide the user to the
+                                      // Substantial Equivalence builder (Stage 1) where the
+                                      // real side-by-side comparison is authored against
+                                      // FDA requirements. Never fabricate similarity scores.
+                                      if (!selectedPredicates.some(p => p.k_number === device.k_number)) {
+                                        togglePredicateSelection(device);
+                                      }
                                       toast({
-                                        title: 'Generating Comparison',
-                                        description: 'Analyzing substantial equivalence...',
+                                        title: 'Predicate selected',
+                                        description: 'Continue to the Strategy stage to author the substantial equivalence comparison.',
                                       });
-
-                                      // Simulate AI analysis of substantial equivalence
-                                      setTimeout(() => {
-                                        setIsGeneratingComparison(false);
-                                        setShowComparisonDialog(true);
-
-                                        // Generate mock equivalence report data
-                                        setEquivalenceReport({
-                                          timestamp: new Date().toISOString(),
-                                          yourDevice: deviceProfile,
-                                          predicateDevice: device,
-                                          categories: [
-                                            {
-                                              name: 'Intended Use',
-                                              similarity: 0.85,
-                                              notes:
-                                                'Similar intended use patterns with minor variations in specificity',
-                                              status: 'SUBSTANTIALLY EQUIVALENT',
-                                            },
-                                            {
-                                              name: 'Technological Characteristics',
-                                              similarity: 0.78,
-                                              notes:
-                                                'Common core technology with some differences in implementation details',
-                                              status: 'SUBSTANTIALLY EQUIVALENT',
-                                            },
-                                            {
-                                              name: 'Performance Data',
-                                              similarity: 0.92,
-                                              notes:
-                                                'Performance metrics closely aligned with predicate device',
-                                              status: 'SUBSTANTIALLY EQUIVALENT',
-                                            },
-                                            {
-                                              name: 'Materials',
-                                              similarity: 0.88,
-                                              notes:
-                                                'Similar biocompatible materials used in both devices',
-                                              status: 'SUBSTANTIALLY EQUIVALENT',
-                                            },
-                                            {
-                                              name: 'Safety Considerations',
-                                              similarity: 0.95,
-                                              notes:
-                                                'Safety profile consistent with predicate device',
-                                              status: 'SUBSTANTIALLY EQUIVALENT',
-                                            },
-                                          ],
-                                          overallSimilarity: 0.87,
-                                          overallStatus: 'SUBSTANTIALLY EQUIVALENT',
-                                          riskAssessment: 'LOW RISK',
-                                          recommendations: [
-                                            'Include comparative performance testing in submission',
-                                            'Highlight similarities in materials and safety profile',
-                                            'Address minor differences in technological characteristics',
-                                          ],
-                                        });
-
-                                        toast({
-                                          title: 'Comparison Ready',
-                                          description: 'Substantial equivalence analysis complete',
-                                        });
-                                      }, 1500);
                                     }}
                                   >
                                     <GitCompare className="h-4 w-4" />
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Compare with your device</p>
+                                  <p>Select and take to SE builder</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -1468,227 +1404,6 @@ const PredicateFinderPanel = ({
         </div>
       )}
 
-      {/* Substantial Equivalence Comparison Dialog */}
-      <Dialog open={showComparisonDialog} onOpenChange={setShowComparisonDialog}>
-        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Substantial Equivalence Analysis</DialogTitle>
-            <DialogDescription>
-              Comparison between your device and potential predicate device
-            </DialogDescription>
-          </DialogHeader>
-
-          {isGeneratingComparison && (
-            <div className="py-12 flex flex-col items-center justify-center">
-              <Loader2 className="h-12 w-12 animate-spin text-stone-600 mb-4" />
-              <p className="text-lg font-medium">Analyzing substantial equivalence...</p>
-              <p className="text-sm text-stone-500 mt-2">
-                Using AI to compare device characteristics and regulatory requirements
-              </p>
-            </div>
-          )}
-
-          {!isGeneratingComparison && equivalenceReport && (
-            <div className="space-y-6">
-              {/* Header with overall status */}
-              <div
-                className={`p-4 rounded-md flex items-center justify-between ${
-                  equivalenceReport.overallStatus === 'SUBSTANTIALLY EQUIVALENT'
-                    ? 'bg-emerald-50 border border-emerald-200'
-                    : 'bg-red-50 border border-red-200'
-                }`}
-              >
-                <div>
-                  <h3
-                    className={`text-lg font-medium ${
-                      equivalenceReport.overallStatus === 'SUBSTANTIALLY EQUIVALENT'
-                        ? 'text-emerald-800'
-                        : 'text-red-800'
-                    }`}
-                  >
-                    {equivalenceReport.overallStatus}
-                  </h3>
-                  <p className="text-sm mt-1">
-                    Overall Similarity Score:{' '}
-                    {(equivalenceReport.overallSimilarity * 100).toFixed(0)}%
-                  </p>
-                </div>
-                <Badge
-                  variant={
-                    equivalenceReport.riskAssessment === 'LOW RISK' ? 'outline' : 'secondary'
-                  }
-                  className={
-                    equivalenceReport.riskAssessment === 'LOW RISK'
-                      ? 'border-emerald-500 text-emerald-700 bg-emerald-50'
-                      : ''
-                  }
-                >
-                  {equivalenceReport.riskAssessment}
-                </Badge>
-              </div>
-
-              {/* Device comparison table */}
-              <div>
-                <h3 className="text-base font-medium mb-2">Device Comparison</h3>
-                <div className="border rounded-md overflow-hidden">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-stone-50 border-b">
-                        <th className="text-left p-3 text-sm font-medium text-stone-500 w-1/4">
-                          Attribute
-                        </th>
-                        <th className="text-left p-3 text-sm font-medium text-stone-500">
-                          Your Device
-                        </th>
-                        <th className="text-left p-3 text-sm font-medium text-stone-500">
-                          Predicate Device
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b">
-                        <td className="p-3 text-sm font-medium text-stone-700">Device Name</td>
-                        <td className="p-3 text-sm">{equivalenceReport.yourDevice.deviceName}</td>
-                        <td className="p-3 text-sm">
-                          {equivalenceReport.predicateDevice.device_name}
-                        </td>
-                      </tr>
-                      <tr className="border-b">
-                        <td className="p-3 text-sm font-medium text-stone-700">Manufacturer</td>
-                        <td className="p-3 text-sm">{equivalenceReport.yourDevice.manufacturer}</td>
-                        <td className="p-3 text-sm">
-                          {equivalenceReport.predicateDevice.applicant}
-                        </td>
-                      </tr>
-                      <tr className="border-b">
-                        <td className="p-3 text-sm font-medium text-stone-700">Device Class</td>
-                        <td className="p-3 text-sm">
-                          Class {equivalenceReport.yourDevice.deviceClass}
-                        </td>
-                        <td className="p-3 text-sm">
-                          {equivalenceReport.predicateDevice.device_class || 'Class II'}
-                        </td>
-                      </tr>
-                      <tr className="border-b">
-                        <td className="p-3 text-sm font-medium text-stone-700">Intended Use</td>
-                        <td className="p-3 text-sm">{equivalenceReport.yourDevice.intendedUse}</td>
-                        <td className="p-3 text-sm text-stone-600">
-                          {equivalenceReport.predicateDevice.intended_use ||
-                            'Similar diagnostic/therapeutic indications'}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="p-3 text-sm font-medium text-stone-700">Regulatory Status</td>
-                        <td className="p-3 text-sm">Pending</td>
-                        <td className="p-3 text-sm">
-                          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
-                            Cleared
-                          </Badge>
-                          <span className="ml-2 text-xs text-stone-500">
-                            {equivalenceReport.predicateDevice.decision_date
-                              ? new Date(
-                                  equivalenceReport.predicateDevice.decision_date
-                                ).toLocaleDateString()
-                              : 'Unknown Date'}
-                          </span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Substantial equivalence categories */}
-              <div>
-                <h3 className="text-base font-medium mb-2">Equivalence Analysis by Category</h3>
-                <div className="space-y-3">
-                  {equivalenceReport.categories.map((category, index) => (
-                    <div key={index} className="border rounded-md p-3">
-                      <div className="flex justify-between items-center mb-2">
-                        <h4 className="font-medium">{category.name}</h4>
-                        <div className="flex items-center">
-                          <div className="w-24 bg-stone-200 rounded-full h-2.5 mr-2">
-                            <div
-                              className={`h-2.5 rounded-full ${
-                                category.similarity > 0.8
-                                  ? 'bg-emerald-500'
-                                  : category.similarity > 0.6
-                                    ? 'bg-yellow-500'
-                                    : 'bg-red-500'
-                              }`}
-                              style={{ width: `${category.similarity * 100}%` }}
-                            ></div>
-                          </div>
-                          <span className="text-sm">{(category.similarity * 100).toFixed(0)}%</span>
-                        </div>
-                      </div>
-                      <p className="text-sm text-stone-700">{category.notes}</p>
-
-                      <div className="flex justify-end mt-2">
-                        <Badge
-                          variant="outline"
-                          className={
-                            category.status === 'SUBSTANTIALLY EQUIVALENT'
-                              ? 'border-emerald-500 text-emerald-700'
-                              : 'border-red-500 text-red-700'
-                          }
-                        >
-                          {category.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Recommendations */}
-              <div className="border-t pt-4">
-                <h3 className="text-base font-medium mb-2">
-                  Recommendations for 510(k) Submission
-                </h3>
-                <ul className="space-y-2">
-                  {equivalenceReport.recommendations.map((rec, index) => (
-                    <li key={index} className="flex items-start">
-                      <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 shrink-0" />
-                      <span className="text-sm">{rec}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <DialogFooter className="flex justify-between items-center">
-                <div className="text-xs text-stone-500">
-                  Generated on {new Date(equivalenceReport.timestamp).toLocaleString()}
-                </div>
-                <div className="space-x-2">
-                  <Button variant="outline" onClick={() => setShowComparisonDialog(false)}>
-                    Close
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      toast({
-                        title: 'Report Saved',
-                        description:
-                          'Substantial equivalence analysis has been saved to your device profile',
-                      });
-
-                      // In a real implementation, this would save the report
-                      setShowComparisonDialog(false);
-
-                      // Select this device as a predicate if it's not already selected
-                      if (!selectedPredicates.some(p => p.k_number === comparisonDevice.k_number)) {
-                        togglePredicateSelection(comparisonDevice);
-                      }
-                    }}
-                  >
-                    Save Analysis & Select as Predicate
-                  </Button>
-                </div>
-              </DialogFooter>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
