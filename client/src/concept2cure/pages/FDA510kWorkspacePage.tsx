@@ -10,6 +10,7 @@
 import React, { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { useTenantContext } from '@/contexts/TenantContext';
 import { ErrorBoundary } from '@/concept2cure/components/ErrorBoundary';
 import { ErrorState } from '@/components/ui/statesV2';
 // @ts-expect-error — JSX component without .d.ts; real implementation, typed at boundary
@@ -29,6 +30,8 @@ export const FDA510kWorkspacePage: React.FC<FDA510kWorkspacePageProps> = ({
   onBackToProject,
 }) => {
   const { toast } = useToast();
+  const { currentOrganization } = useTenantContext();
+  const organizationId = currentOrganization?.id ? String(currentOrganization.id) : undefined;
 
   const handleSave = useCallback(
     async (data: Record<string, unknown>) => {
@@ -83,7 +86,7 @@ export const FDA510kWorkspacePage: React.FC<FDA510kWorkspacePageProps> = ({
         >
           <Enhanced510kIntakeWorkflow
             projectId={projectId}
-            organizationId={projectId}
+            organizationId={organizationId}
             onSave={handleSave}
             onComplete={handleComplete}
           />
