@@ -1,9 +1,31 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useMemo } from 'react';
 import { MessageSquare, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ZenChat } from '../chat/ZenChat';
 import { ErrorBoundary } from '../ErrorBoundary';
+import type { ActionCardDef } from '../chat/ActionCard';
+
+const DEVICE_SUGGESTED_ACTIONS: Record<string, ActionCardDef[]> = {
+  '510K': [
+    { id: 'sa-predicate', label: 'Find predicate devices', intent: 'chat.new', description: 'Search FDA database for comparable 510(k) cleared devices' },
+    { id: 'sa-se', label: 'Draft SE comparison', intent: 'chat.new', description: 'Build substantial equivalence comparison table' },
+    { id: 'sa-compliance', label: 'Check compliance', intent: 'chat.new', description: 'Run compliance checks against FDA 510(k) requirements' },
+    { id: 'sa-estar', label: 'Prepare eSTAR package', intent: 'chat.new', description: 'Assemble eSTAR submission package for FDA gateway' },
+  ],
+  PMA: [
+    { id: 'sa-pma-strategy', label: 'Plan PMA strategy', intent: 'chat.new', description: 'Define PMA submission strategy and timeline' },
+    { id: 'sa-pma-clinical', label: 'Clinical evidence plan', intent: 'chat.new', description: 'Plan clinical investigation and IDE requirements' },
+    { id: 'sa-pma-ssed', label: 'Draft SSED outline', intent: 'chat.new', description: 'Outline the Summary of Safety and Effectiveness Data' },
+    { id: 'sa-pma-risk', label: 'Risk management review', intent: 'chat.new', description: 'Review ISO 14971 risk management file completeness' },
+  ],
+  CER: [
+    { id: 'sa-cer-faers', label: 'Pull FAERS data', intent: 'chat.new', description: 'Retrieve FDA adverse event data for clinical evaluation' },
+    { id: 'sa-cer-literature', label: 'Literature search', intent: 'chat.new', description: 'Search PubMed for relevant clinical evidence' },
+    { id: 'sa-cer-draft', label: 'Draft CER section', intent: 'chat.new', description: 'AI-assisted CER narrative drafting per MEDDEV 2.7/1' },
+    { id: 'sa-cer-export', label: 'Export CER report', intent: 'chat.new', description: 'Generate governed PDF/Word export of the CER' },
+  ],
+};
 
 interface EmbeddedModulePageProps {
   embedded?: boolean;
@@ -176,6 +198,10 @@ const EmbeddedAssistantRail: React.FC<EmbeddedAssistantRailProps> = ({
   toggleTestId,
   panelTestId,
 }) => {
+  const suggestedActions = useMemo(
+    () => DEVICE_SUGGESTED_ACTIONS[submissionType] || [],
+    [submissionType]
+  );
   if (!open) {
     return (
       <Button
@@ -211,6 +237,7 @@ const EmbeddedAssistantRail: React.FC<EmbeddedAssistantRailProps> = ({
           submissionType={submissionType}
           threadId={activeThreadId}
           greeting={{ text: greeting }}
+          suggestedActions={suggestedActions}
           onNavigate={onNavigate}
           onNewProject={onNewProject}
           onThreadChange={onThreadChange}
