@@ -935,22 +935,20 @@ const Enhanced510kIntakeWorkflow = ({
   // Render main workflow interface
   return (
     <div className="min-h-screen bg-stone-50 p-6" data-testid="enhanced-510k-workflow">
-      {/* Header with progress */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-lg font-semibold text-stone-900">FDA 510(k) Submission Workflow</h1>
-            <p className="text-[13px] text-stone-500 mt-0.5">7-stage process with predicate search, SE analysis, compliance, and eSTAR assembly</p>
-          </div>
-          <div className="text-right">
-            <div className="text-sm text-stone-600">Overall Progress</div>
-            <div className="text-lg font-semibold text-stone-800">{calculateOverallProgress()}%</div>
+      {/* Progress header — compact, no duplicate title (the wrapper shows it) */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[12px] text-stone-500">
+            7-stage workflow: predicate search, SE analysis, compliance, and eSTAR assembly
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] text-stone-500">Overall progress</span>
+            <span className="text-sm font-semibold text-stone-800">{calculateOverallProgress()}%</span>
           </div>
         </div>
-        
-        <Progress value={calculateOverallProgress()} className="h-3" />
-        
-        {/* No Project Warning */}
+
+        <Progress value={calculateOverallProgress()} className="h-2" />
+
         {!projectId && (
           <Alert className="mt-4 bg-amber-50 border-amber-200">
             <AlertTriangle className="h-4 w-4 text-amber-600" />
