@@ -20,7 +20,6 @@ import {
   ArrowRight,
   Brain,
   Activity,
-  FileSearch,
   BookOpen,
   Shield,
   ShieldCheck,
@@ -77,8 +76,7 @@ const AUTHORING_APPS: AppCard[] = [
 
 // ── Intelligence & Analysis ──
 const INTELLIGENCE_APPS: AppCard[] = [
-  { id: 'regulatory-intelligence', label: 'Regulatory Intelligence (RIM)', description: 'Reviewer deficiency pattern learning and submission risk signals', icon: <Brain className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
-  { id: 'csr-intelligence', label: 'CSR Intelligence', description: 'Clinical Study Report analysis and auto-completion', icon: <FileSearch className="w-5 h-5" />, tracks: [...PHARMA_TYPES, 'PMA'] },
+  { id: 'regulatory-intelligence', label: 'Regulatory Intelligence', description: 'Full-spectrum analysis — risk signals, reviewer patterns, outcome prediction, expert synthesis, CSR review, and predicate comparison', icon: <Brain className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
   { id: 'biostatistics', label: 'Biostatistics', description: 'Statistical analysis, power calculations, endpoints', icon: <BarChart2 className="w-5 h-5" />, tracks: [...PHARMA_TYPES, 'PMA'] },
   { id: 'protocol-designer', label: 'Protocol Designer', description: 'Clinical trial protocol authoring and endpoint design', icon: <BookOpen className="w-5 h-5" />, tracks: [...PHARMA_TYPES, 'PMA'] },
 ];

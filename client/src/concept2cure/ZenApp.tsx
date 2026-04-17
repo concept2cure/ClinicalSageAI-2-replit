@@ -2302,7 +2302,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         'capa-management': 'capa',
                         'post-market': 'pms',
                         'inspection-readiness': 'inspection',
-                        'regulatory-intelligence': 'intelligence',
                         'document-vault': 'vault',
                       };
 
@@ -2318,6 +2317,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         'dossier-navigator': 'Show me my submission dossier map — sections, status, gaps, and priorities.',
                         'compliance-monitor': 'Run continuous compliance checks across my project, SOPs, and artifacts. What\u2019s out of policy?',
                         'evidence-engine': 'Aggregate my evidence base and score defensibility — what\u2019s strong, what\u2019s weak, what else should I gather?',
+                        'regulatory-intelligence': 'Run a full regulatory intelligence analysis on my project. I want: reviewer deficiency pattern signals (RIM), multi-expert synthesis (CORTEX), submission outcome prediction (Foresight), CSR analysis if applicable, and predicate comparison if device. Summarize the key risks, strengths, and recommended next actions.',
+                        'cortex-prime': 'Run a full regulatory intelligence analysis on my project — multi-expert synthesis, risk signals, and recommended actions.',
+                        'foresight-ai': 'Run a full regulatory intelligence analysis on my project — submission outcome prediction, deficiency risk, and approval probability.',
+                        'predicate-intelligence': 'Run a full regulatory intelligence analysis on my project — predicate devices, substantial equivalence, and comparison analysis.',
                       };
 
                       // Explicit routes that already exist
