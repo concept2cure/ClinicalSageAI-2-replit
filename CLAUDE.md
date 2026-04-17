@@ -377,6 +377,14 @@ Define success criteria. Loop until verified.
 
 For multi-step tasks, state a brief plan:
 
+## Designer Skills (Adapted — Julian Oczkowski)
+
+> Skill dirs: `.claude/skills/grill-me/`, `design-brief/`, `information-architecture/`, `design-tokens/`, `brief-to-tasks/`, `frontend-design/`, `design-review/`, `design-flow/`
+> Attribution: `.claude/skills/designer-skills-ATTRIBUTION.md`
+> Upstream: [julianoczkowski/designer-skills](https://github.com/julianoczkowski/designer-skills)
+
+Eight design-process skills vendored from Julian Oczkowski's repo. `grill-me`, `design-brief`, `information-architecture`, `brief-to-tasks`, `design-review`, and `design-flow` are used as-is. `frontend-design` and `design-tokens` carry **C2C OVERRIDE** blocks at the top of their SKILL.md files — the Anthropic Claude philosophy and existing stone-palette Tailwind tokens are locked; do NOT select a different named aesthetic, and do NOT generate a new token system. Licensing status is open until upstream clarifies — see attribution file.
+
 ## Claude UI Design Principles (NON-NEGOTIABLE)
 
 > Skill file: `.claude/skills/claude-ui-design-principles.md`
