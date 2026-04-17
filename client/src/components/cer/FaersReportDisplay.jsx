@@ -280,13 +280,14 @@ export function FaersReportDisplay({ cerId }) {
               </div>
             </TabsContent>
 
-            {/* Demographics tab (placeholder) */}
+            {/* Demographics tab */}
             <TabsContent value="demographics">
-              <div className="p-4 border rounded-md bg-gray-50">
-                <h3 className="font-medium text-gray-900 mb-2">Demographic Analysis</h3>
-                <p className="text-gray-600">
-                  Demographic data charts would be displayed here, showing age and gender
-                  distributions of affected patients in the FAERS reports.
+              <div className="p-4 border border-stone-200 rounded-md bg-stone-50">
+                <h3 className="text-sm font-medium text-stone-900 mb-2">Demographic analysis</h3>
+                <p className="text-xs text-stone-500">
+                  Age and gender distributions for affected patients appear here once FAERS data
+                  is loaded for this device class. Ask the AI assistant to summarize demographic
+                  signals from the available reports.
                 </p>
               </div>
             </TabsContent>

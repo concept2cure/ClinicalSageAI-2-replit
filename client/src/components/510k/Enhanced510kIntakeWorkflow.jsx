@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -307,6 +307,9 @@ const Enhanced510kIntakeWorkflow = ({
   });
 
   // Mutation to save workflow data
+  // Track whether a save is manual (show toast) or auto (silent).
+  const manualSaveRef = useRef(false);
+
   const saveWorkflowMutation = useMutation({
     mutationFn: async () => {
       if (!projectId) {
@@ -324,11 +327,16 @@ const Enhanced510kIntakeWorkflow = ({
       });
       return await response.json();
     },
-    onSuccess: (response) => {
-      toast({
-        title: 'Workflow saved',
-        description: 'Your 510(k) data has been saved.',
-      });
+    onSuccess: () => {
+      // Only show toast on explicit Save button click, not on every keystroke
+      // auto-save. Auto-save runs silently to avoid toast spam.
+      if (manualSaveRef.current) {
+        toast({
+          title: 'Workflow saved',
+          description: 'Your 510(k) data has been saved.',
+        });
+        manualSaveRef.current = false;
+      }
       queryClient.invalidateQueries(['/api/510k-workflow', projectId]);
     },
     onError: (error) => {
@@ -444,31 +452,35 @@ const Enhanced510kIntakeWorkflow = ({
     return previousProgress.status === 'complete' || previousProgress.completion >= 80;
   };
   
+  // Auto-save debounce — a single timer that resets on each keystroke so
+  // we only save after the user pauses for 1.5s, not on every keystroke.
+  const autoSaveTimerRef = useRef(null);
+
   // Update workflow data
   const updateWorkflowData = (path, value) => {
     setWorkflowData(prev => {
       const newData = { ...prev };
       const keys = path.split('.');
       let current = newData;
-      
+
       for (let i = 0; i < keys.length - 1; i++) {
         if (!current[keys[i]]) current[keys[i]] = {};
         current = current[keys[i]];
       }
-      
+
       current[keys[keys.length - 1]] = value;
-      
-      // Auto-save to backend and trigger document generation mapping
+
+      // Debounced auto-save: reset timer on every change so only one save
+      // fires per 1.5s of idle time. No toast spam.
       if (projectId) {
-        // Save to backend API (linked to document generation)
-        setTimeout(() => autoSaveWorkflow(), 500); // Debounce saves
+        if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = setTimeout(() => autoSaveWorkflow(), 1500);
       }
-      
-      // Also call the provided onSave callback
+
       if (onSave) {
         onSave(newData);
       }
-      
+
       return newData;
     });
   };
@@ -616,7 +628,9 @@ const Enhanced510kIntakeWorkflow = ({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="device-name">Device Name</Label>
+              <Label htmlFor="device-name">
+                Device Name <span className="text-stone-400" aria-label="required">*</span>
+              </Label>
               <Input
                 id="device-name"
                 value={workflowData.deviceName}
@@ -626,7 +640,9 @@ const Enhanced510kIntakeWorkflow = ({
               />
             </div>
             <div>
-              <Label htmlFor="product-code">Product Code</Label>
+              <Label htmlFor="product-code">
+                Product Code <span className="text-stone-400" aria-label="required">*</span>
+              </Label>
               <div className="flex gap-2">
                 <Input
                   id="product-code"
@@ -843,7 +859,9 @@ const Enhanced510kIntakeWorkflow = ({
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="intended-use">Intended Use Statement</Label>
+            <Label htmlFor="intended-use">
+              Intended Use Statement <span className="text-stone-400" aria-label="required">*</span>
+            </Label>
             <Textarea
               id="intended-use"
               value={workflowData.intendedUse}
@@ -856,7 +874,7 @@ const Enhanced510kIntakeWorkflow = ({
               The general purpose or function of the device
             </p>
           </div>
-          
+
           <div>
             <Label htmlFor="indications">Indications for Use</Label>
             <Textarea
@@ -875,35 +893,41 @@ const Enhanced510kIntakeWorkflow = ({
       </Card>
       
       {/* Save & Continue */}
-      <div className="flex justify-between">
-        <Button 
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <Button
           variant="outline"
           onClick={() => {
-            // Save to backend (connected to document generation)
             if (projectId) {
+              manualSaveRef.current = true;
               saveWorkflowMutation.mutate();
             }
-            // Also call the provided onSave callback
             if (onSave) onSave(workflowData);
           }}
           disabled={saveWorkflowMutation.isPending}
           data-testid="button-save-intake"
         >
-          {saveWorkflowMutation.isPending ? "Saving..." : "Save Progress"}
+          {saveWorkflowMutation.isPending ? 'Saving...' : 'Save progress'}
         </Button>
-        
-        <Button
-          onClick={() => {
-            updateWorkflowData('stageProgress.setup.gates.device_intake', true);
-            setActiveSection('predicate_search');
-            toast({ title: 'Device intake saved', description: 'Proceeding to predicate search.' });
-          }}
-          disabled={!workflowData.deviceName || !workflowData.productCode || !workflowData.intendedUse}
-          data-testid="button-continue-to-predicate"
-        >
-          Continue to Predicate Search
-          <ChevronRight className="h-4 w-4 ml-2" />
-        </Button>
+
+        <div className="flex items-center gap-3">
+          {(!workflowData.deviceName || !workflowData.productCode || !workflowData.intendedUse) && (
+            <span className="text-xs text-stone-500">
+              Fill device name, product code, and intended use to continue
+            </span>
+          )}
+          <Button
+            onClick={() => {
+              updateWorkflowData('stageProgress.setup.gates.device_intake', true);
+              setActiveSection('predicate_search');
+              toast({ title: 'Device intake saved', description: 'Proceeding to predicate search.' });
+            }}
+            disabled={!workflowData.deviceName || !workflowData.productCode || !workflowData.intendedUse}
+            data-testid="button-continue-to-predicate"
+          >
+            Continue to predicate search
+            <ChevronRight className="h-4 w-4 ml-2" />
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -911,22 +935,20 @@ const Enhanced510kIntakeWorkflow = ({
   // Render main workflow interface
   return (
     <div className="min-h-screen bg-stone-50 p-6" data-testid="enhanced-510k-workflow">
-      {/* Header with progress */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-lg font-semibold text-stone-900">FDA 510(k) Submission Workflow</h1>
-            <p className="text-[13px] text-stone-500 mt-0.5">7-stage process with predicate search, SE analysis, compliance, and eSTAR assembly</p>
-          </div>
-          <div className="text-right">
-            <div className="text-sm text-stone-600">Overall Progress</div>
-            <div className="text-2xl font-bold text-stone-800">{calculateOverallProgress()}%</div>
+      {/* Progress header — compact, no duplicate title (the wrapper shows it) */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[12px] text-stone-500">
+            7-stage workflow: predicate search, SE analysis, compliance, and eSTAR assembly
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] text-stone-500">Overall progress</span>
+            <span className="text-sm font-semibold text-stone-800">{calculateOverallProgress()}%</span>
           </div>
         </div>
-        
-        <Progress value={calculateOverallProgress()} className="h-3" />
-        
-        {/* No Project Warning */}
+
+        <Progress value={calculateOverallProgress()} className="h-2" />
+
         {!projectId && (
           <Alert className="mt-4 bg-amber-50 border-amber-200">
             <AlertTriangle className="h-4 w-4 text-amber-600" />

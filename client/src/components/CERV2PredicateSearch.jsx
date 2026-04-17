@@ -3,8 +3,9 @@
  *
  * Searches the openFDA 510(k) database for predicate devices.
  * Real API: api.fda.gov/device/510k.json
- * Falls back to mock data on timeout/error.
- * "Use as Predicate" auto-fills device context.
+ * On error/timeout: fails visibly. NEVER falls back to fabricated
+ * K-numbers or device records — this is a regulatory product and
+ * fake predicate identifiers could end up in real submissions.
  */
 import React, { useState, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
@@ -14,36 +15,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, ExternalLink, ArrowRight, Loader2, AlertCircle, Database } from 'lucide-react';
 
 const FDA_API = 'https://api.fda.gov/device/510k.json';
-
-const MOCK_RESULTS = [
-  {
-    k_number: 'K210456',
-    device_name: 'CardioFlow Classic Monitor',
-    applicant: 'CardioFlow Medical Inc.',
-    decision_date: '2021-08-15',
-    decision_description: 'Substantially Equivalent',
-    product_code: 'DQA',
-    review_advisory_committee: 'Cardiovascular',
-  },
-  {
-    k_number: 'K192345',
-    device_name: 'HemoTrack Vital Signs Monitor',
-    applicant: 'HemoTrack Systems LLC',
-    decision_date: '2020-03-22',
-    decision_description: 'Substantially Equivalent',
-    product_code: 'DQA',
-    review_advisory_committee: 'Cardiovascular',
-  },
-  {
-    k_number: 'K183456',
-    device_name: 'MediSense Patient Monitor Pro',
-    applicant: 'MediSense Technologies',
-    decision_date: '2019-11-10',
-    decision_description: 'Substantially Equivalent',
-    product_code: 'DQA',
-    review_advisory_committee: 'Cardiovascular',
-  },
-];
 
 /**
  * Props:
@@ -92,25 +63,14 @@ export default function CERV2PredicateSearch({ onSelectPredicate, visible, onTog
       setResults(results);
     } catch (err) {
       clearTimeout(timeoutId);
+      setResults([]);
       if (err.name === 'AbortError') {
-        // Distinguish user abort from timeout
         if (!abortRef.current || controller === abortRef.current) {
-          setError('FDA API request timed out (10s). Showing sample data — these are NOT real FDA records.');
-          const q = query.toLowerCase();
-          const filtered = MOCK_RESULTS.filter(
-            r => r.device_name.toLowerCase().includes(q) || r.applicant.toLowerCase().includes(q)
-          );
-          setResults(filtered.length > 0 ? filtered : MOCK_RESULTS);
+          setError('FDA API request timed out. Try a more specific search term or retry in a moment.');
         }
         return;
       }
-      console.warn('[CERV2PredicateSearch] FDA API error:', err.message);
-      setError('FDA API unavailable. Showing sample data — these are NOT real FDA records.');
-      const q = query.toLowerCase();
-      const filtered = MOCK_RESULTS.filter(
-        r => r.device_name.toLowerCase().includes(q) || r.applicant.toLowerCase().includes(q)
-      );
-      setResults(filtered.length > 0 ? filtered : MOCK_RESULTS);
+      setError('FDA API is unavailable. Retry in a moment, or ask the AI assistant to search via an alternate source.');
     } finally {
       setLoading(false);
     }

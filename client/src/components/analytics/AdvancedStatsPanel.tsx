@@ -59,6 +59,10 @@ export function AdvancedStatsPanel({ trials = [], onAnalysisComplete }: Advanced
     return acc;
   }, []);
 
+  // Only include trials that have a real endpoint with an effect size and
+  // confidence interval. Trials without those fields are excluded rather
+  // than padded with synthetic statistics — meta-analysis on fake stats
+  // produces meaningless forest plots.
   const prepareTrialsForMetaAnalysis = () => {
     return trials
       .filter((trial: any) => selectedTrials.includes(trial.id.toString()))
@@ -66,18 +70,22 @@ export function AdvancedStatsPanel({ trials = [], onAnalysisComplete }: Advanced
         const endpoint = trial.results?.endpoints?.find(
           (e: any) => e.name === selectedEndpoint
         );
-        
+        if (
+          !endpoint ||
+          typeof endpoint.effectSize !== 'number' ||
+          !Array.isArray(endpoint.confidenceInterval)
+        ) {
+          return null;
+        }
         return {
           studyName: trial.title || `Trial ${trial.id}`,
-          effectSize: endpoint?.effectSize || Math.random() * 0.5, // Fallback to random data for demo
-          sampleSize: endpoint?.sampleSize || 100,
-          weight: Math.random() * 0.8 + 0.2, // Random weight between 0.2 and 1.0
-          confidenceInterval: endpoint?.confidenceInterval || [
-            Math.random() * 0.2,
-            Math.random() * 0.2 + 0.3,
-          ],
+          effectSize: endpoint.effectSize,
+          sampleSize: endpoint.sampleSize,
+          weight: typeof endpoint.weight === 'number' ? endpoint.weight : null,
+          confidenceInterval: endpoint.confidenceInterval,
         };
-      });
+      })
+      .filter(Boolean);
   };
 
   const runMetaAnalysis = async () => {

@@ -1620,12 +1620,15 @@ const CommitmentIntelligenceHub = ({ open, onOpenChange }) => {
                       <Card className="border-blue-200 bg-blue-50">
                         <CardContent className="p-4">
                           <div className="flex items-center space-x-3">
-                            <RefreshCw className="h-5 w-5 animate-spin text-blue-600" />
+                            <RefreshCw className="h-5 w-5 animate-spin text-stone-600" />
                             <div className="flex-1">
-                              <div className="text-sm font-medium text-blue-900">
+                              <div className="text-sm font-medium text-stone-800">
                                 {processingStatus}
                               </div>
-                              <Progress value={Math.random() * 100} className="mt-2" />
+                              {/* Indeterminate loader — do not fabricate a completion percentage */}
+                              <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-stone-100">
+                                <div className="h-full w-1/3 animate-pulse bg-stone-500 rounded-full" />
+                              </div>
                             </div>
                           </div>
                         </CardContent>

@@ -82,34 +82,41 @@ const EnhancedEquivalenceComparison = ({
   const [autoSuggestMitigations, setAutoSuggestMitigations] = useState(true);
   const [highlightCriticalParameters, setHighlightCriticalParameters] = useState(true);
 
-  // Calculate equivalence scores when devices change
+  // Calculate equivalence scores from the parameters actually provided by
+  // subject and predicate devices. Categories without data remain null —
+  // we never synthesize a score for a category that has no underlying data.
   useEffect(() => {
     if (!subjectDevice || !predicateDevices.length) return;
 
-    // Simple heuristic for demo purposes - in production this would be more sophisticated
     const selectedPredicateDevice = predicateDevices.find(p => p.id === selectedPredicate);
     if (!selectedPredicateDevice) return;
 
-    const technicalScore = calculateCategoryScore(
-      subjectDevice.technicalCharacteristics || [],
-      selectedPredicateDevice.technicalCharacteristics || []
+    const categoryScore = (subjectParams, predicateParams) => {
+      if (!subjectParams?.length || !predicateParams?.length) return null;
+      return calculateCategoryScore(subjectParams, predicateParams);
+    };
+
+    const technicalScore = categoryScore(
+      subjectDevice.technicalCharacteristics,
+      selectedPredicateDevice.technicalCharacteristics
+    );
+    const performanceScore = categoryScore(
+      subjectDevice.performanceData,
+      selectedPredicateDevice.performanceData
+    );
+    const safetyScore = categoryScore(
+      subjectDevice.safetyFeatures,
+      selectedPredicateDevice.safetyFeatures
+    );
+    const clinicalScore = categoryScore(
+      subjectDevice.clinicalData,
+      selectedPredicateDevice.clinicalData
     );
 
-    const performanceScore = calculateCategoryScore(
-      subjectDevice.performanceData || [],
-      selectedPredicateDevice.performanceData || []
+    const scored = [technicalScore, performanceScore, safetyScore, clinicalScore].filter(
+      s => typeof s === 'number'
     );
-
-    const safetyScore = calculateCategoryScore(
-      subjectDevice.safetyFeatures || [],
-      selectedPredicateDevice.safetyFeatures || []
-    );
-
-    const clinicalScore = 75; // Placeholder - would be calculated in production version
-
-    const overall = Math.round(
-      (technicalScore + performanceScore + safetyScore + clinicalScore) / 4
-    );
+    const overall = scored.length ? Math.round(scored.reduce((a, b) => a + b, 0) / scored.length) : null;
 
     setEquivalenceScores({
       overall,

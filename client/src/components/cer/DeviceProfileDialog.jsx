@@ -37,14 +37,12 @@ const DeviceProfileDialog = ({
       // This will filter out fields that aren't in the database schema
       const filteredData = FDA510kService.DeviceProfileAPI.validateDeviceProfile(data);
 
-      // Add any additional processing needed for UI-specific fields
+      // projectId comes from the real project record when available. Never
+      // synthesize a 510K-#### identifier client-side — IDs are assigned
+      // server-side to preserve audit-trail integrity.
       if (data.projectId) {
         filteredData.projectId = data.projectId;
-      } else if (isStartingPoint) {
-        filteredData.projectId = `510K-${Math.floor(100000 + Math.random() * 900000)}`;
       }
-
-      console.log('Submitting filtered device profile data:', filteredData);
 
       let result;
 

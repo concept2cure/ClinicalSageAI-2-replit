@@ -147,51 +147,16 @@ const EquivalenceBuilderPanel = ({
   const [activeFeatureForEvidence, setActiveFeatureForEvidence] = useState(null);
   const { toast } = useToast();
 
-  // Verification effect runs first to ensure equivalence analysis is ready
-  useEffect(() => {
-    const verifyEquivalenceReady = async () => {
-      if (deviceProfile?.id) {
-        try {
-          if (predicateDevices && predicateDevices.length > 0) {
-            toast({
-              title: 'Equivalence Analysis Ready',
-              description: 'Found predicate devices for equivalence analysis',
-              duration: 2000,
-            });
-          } else {
-            console.warn('[EquivalenceBuilderPanel] No predicate devices available');
-            toast({
-              title: 'Equivalence Analysis Warning',
-              description: 'No predicate devices available for equivalence analysis',
-              variant: 'destructive',
-              duration: 3000,
-            });
-          }
-        } catch (error) {
-          console.error('[EquivalenceBuilderPanel] Equivalence verification failed:', error);
-        }
-      }
-    };
-
-    verifyEquivalenceReady();
-  }, [deviceProfile, predicateDevices]);
+  // Silently verify predicate devices are present. No toast on mount — the
+  // UI itself surfaces the state (predicate selector or empty state).
 
   useEffect(() => {
     if (predicateDevices?.length > 0) {
       // Force selection of first predicate device regardless of current state
       setSelectedPredicateDevice(predicateDevices[0].id);
-    } else {
-      console.warn('[EquivalenceBuilderPanel] No predicate devices available');
-
-      // Show user-friendly error message
-      toast({
-        title: 'Missing Predicate Devices',
-        description:
-          'No predicate devices are available. Please return to the previous step and select predicates.',
-        variant: 'destructive',
-        duration: 5000,
-      });
     }
+    // No predicates? The UI empty state already tells the user what to do.
+    // We don't spam a destructive toast on mount.
 
     // Pre-populate device-specific data in comparison features
     if (deviceProfile) {
@@ -351,7 +316,7 @@ const EquivalenceBuilderPanel = ({
           variant={selectedTab === 'overview' ? 'subtle' : 'ghost'}
           className={`rounded-none border-b-2 ${
             selectedTab === 'overview'
-              ? 'border-blue-600 text-stone-600'
+              ? 'border-stone-700 text-stone-600'
               : 'border-transparent text-stone-600'
           }`}
           onClick={() => setSelectedTab('overview')}
@@ -362,7 +327,7 @@ const EquivalenceBuilderPanel = ({
           variant={selectedTab === 'comparison' ? 'subtle' : 'ghost'}
           className={`rounded-none border-b-2 ${
             selectedTab === 'comparison'
-              ? 'border-blue-600 text-stone-600'
+              ? 'border-stone-700 text-stone-600'
               : 'border-transparent text-stone-600'
           }`}
           onClick={() => setSelectedTab('comparison')}
@@ -374,7 +339,7 @@ const EquivalenceBuilderPanel = ({
           variant={selectedTab === 'literature' ? 'subtle' : 'ghost'}
           className={`rounded-none border-b-2 ${
             selectedTab === 'literature'
-              ? 'border-blue-600 text-stone-600'
+              ? 'border-stone-700 text-stone-600'
               : 'border-transparent text-stone-600'
           }`}
           onClick={() => setSelectedTab('literature')}
@@ -386,7 +351,7 @@ const EquivalenceBuilderPanel = ({
           variant={selectedTab === 'summary' ? 'subtle' : 'ghost'}
           className={`rounded-none border-b-2 ${
             selectedTab === 'summary'
-              ? 'border-blue-600 text-stone-600'
+              ? 'border-stone-700 text-stone-600'
               : 'border-transparent text-stone-600'
           }`}
           onClick={() => {
@@ -538,28 +503,52 @@ const EquivalenceBuilderPanel = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    // Auto-fill predicate device details from the database
-                    toast({
-                      title: 'Auto-filling Predicate Details',
-                      description:
-                        'Fetching and populating predicate device information from FDA database.',
-                    });
-
-                    // Simulate fetching data
-                    setTimeout(() => {
-                      setComparisonFeatures(features =>
-                        features.map(feature => ({
-                          ...feature,
-                          predicateDevice:
-                            feature.predicateDevice || `Predicate data for ${feature.name}`,
-                        }))
+                  onClick={async () => {
+                    // Fetch real predicate feature data from the FDA device API.
+                    // Never fabricate feature values — they drive substantial
+                    // equivalence analysis in an FDA submission.
+                    const selected = predicateDevices?.find(p => p.id === selectedPredicateDevice);
+                    if (!selected?.k_number) {
+                      toast({
+                        title: 'No predicate selected',
+                        description: 'Select a predicate device first.',
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
+                    try {
+                      const response = await fetch(
+                        `/api/medical-device/predicate/${selected.k_number}/features`,
+                        { credentials: 'include' }
                       );
-                    }, 1000);
+                      if (!response.ok) throw new Error(`${response.status}`);
+                      const data = await response.json();
+                      if (!Array.isArray(data?.features)) {
+                        throw new Error('No feature data returned');
+                      }
+                      setComparisonFeatures(features =>
+                        features.map(feature => {
+                          const match = data.features.find(f => f.name === feature.name);
+                          return match
+                            ? { ...feature, predicateDevice: match.value || feature.predicateDevice }
+                            : feature;
+                        })
+                      );
+                      toast({
+                        title: 'Predicate features loaded',
+                        description: `Pulled feature data for ${selected.k_number}.`,
+                      });
+                    } catch {
+                      toast({
+                        title: 'Predicate feature data unavailable',
+                        description: 'Fill the comparison manually using the FDA 510(k) summary document.',
+                        variant: 'destructive',
+                      });
+                    }
                   }}
                 >
                   <FileCheck className="h-4 w-4 mr-1" />
-                  Auto-fill Predicate
+                  Auto-fill from FDA summary
                 </Button>
               </div>
             </div>
@@ -714,21 +703,21 @@ const EquivalenceBuilderPanel = ({
               <div className="grid grid-cols-3 gap-4">
                 <div className="bg-emerald-50 border border-green-100 rounded-md p-3">
                   <p className="text-sm text-emerald-600 mb-1">Substantially Equivalent</p>
-                  <p className="text-2xl font-bold text-emerald-700">
+                  <p className="text-lg font-semibold text-emerald-700">
                     {comparisonFeatures.filter(f => f.substantial === true).length}
                     <span className="text-sm font-normal text-green-500 ml-1">features</span>
                   </p>
                 </div>
                 <div className="bg-red-50 border border-red-100 rounded-md p-3">
                   <p className="text-sm text-red-600 mb-1">Not Equivalent</p>
-                  <p className="text-2xl font-bold text-red-700">
+                  <p className="text-lg font-semibold text-red-700">
                     {comparisonFeatures.filter(f => f.substantial === false).length}
                     <span className="text-sm font-normal text-red-500 ml-1">features</span>
                   </p>
                 </div>
                 <div className="bg-stone-50 border border-stone-100 rounded-md p-3">
                   <p className="text-sm text-stone-600 mb-1">Not Determined</p>
-                  <p className="text-2xl font-bold text-stone-700">
+                  <p className="text-lg font-semibold text-stone-700">
                     {comparisonFeatures.filter(f => f.substantial === null).length}
                     <span className="text-sm font-normal text-stone-500 ml-1">features</span>
                   </p>
@@ -742,11 +731,11 @@ const EquivalenceBuilderPanel = ({
                 <div className="bg-stone-50 border border-blue-100 rounded-md p-3">
                   <p className="text-sm text-stone-600 mb-1">Literature Support</p>
                   <div className="flex items-baseline">
-                    <p className="text-2xl font-bold text-stone-700">
+                    <p className="text-lg font-semibold text-stone-700">
                       {Object.keys(literatureEvidence).length}
-                      <span className="text-sm font-normal text-blue-500 ml-1">features</span>
+                      <span className="text-sm font-normal text-stone-500 ml-1">features</span>
                     </p>
-                    <p className="text-sm text-blue-500 ml-3">
+                    <p className="text-sm text-stone-500 ml-3">
                       with {selectedLiterature.length} papers
                     </p>
                   </div>

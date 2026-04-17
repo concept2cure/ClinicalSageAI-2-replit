@@ -195,55 +195,39 @@ const ComplianceCheckPanel = ({
     }
 
     actualSetIsAssessingRisks(true);
-    actualSetRiskAssessmentProgress(5);
+    // Indeterminate progress — we do not fabricate progress increments.
+    // The UI shows a spinner until the real backend returns results.
+    actualSetRiskAssessmentProgress(0);
 
     try {
-      // Create simulation of the assessment process since the demo needs to
-      // show real-time progress to investors
-      const simulateProgress = () => {
-        let progress = 5;
-        const intervalId = setInterval(() => {
-          progress += Math.floor(Math.random() * 10) + 5;
-          if (progress > 95) {
-            progress = 95;
-            clearInterval(intervalId);
-          }
-          actualSetRiskAssessmentProgress(progress);
-        }, 1000);
-        return intervalId;
-      };
-
-      const progressInterval = simulateProgress();
-
-      // Call the FDA510kService to get the risk assessment using the predictFdaSubmissionRisks method
-      // which connects to the OpenAI-powered backend
       const results = await FDA510kService.predictFdaSubmissionRisks(
         deviceProfile,
         predicateDevices,
         equivalenceData
       );
 
-      // Clear the progress simulation
-      clearInterval(progressInterval);
+      // Reject responses without a real clearance signal. We never
+      // fabricate a default likelihood for regulatory output.
+      if (!results || typeof results.approvalLikelihood !== 'number') {
+        throw new Error('Backend did not return a clearance likelihood');
+      }
+
       actualSetRiskAssessmentProgress(100);
 
-      // Process the results and convert them to the expected format
-      // The API returns approvalLikelihood but we use clearanceLikelihood in the UI
       const processedResults = {
         ...results,
-        clearanceLikelihood: results.approvalLikelihood || 0.75, // Default to 0.75 if not provided
+        clearanceLikelihood: results.approvalLikelihood,
         assessmentDate: new Date().toISOString(),
         deviceName: deviceProfile.deviceName,
         deviceId: deviceProfile.id,
       };
 
-      // Update state with the assessment results
       actualSetRiskAssessmentData(processedResults);
       actualSetIsAssessingRisks(false);
       actualSetShowRiskDialog(true);
 
       toast({
-        title: 'Risk Assessment Complete',
+        title: 'Risk assessment complete',
         description: `FDA clearance likelihood: ${Math.round(processedResults.clearanceLikelihood * 100)}%`,
         variant: 'default',
       });
@@ -400,31 +384,30 @@ const ComplianceCheckPanel = ({
   // If we're still checking, show a loading card
   if (isChecking && !actualComplianceData) {
     return (
-      <Card className="w-full shadow-md border-blue-100">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b pb-4">
-          <CardTitle className="text-xl flex items-center text-stone-800">
-            <ClipboardCheck className="mr-2 h-5 w-5 text-stone-600" />
-            Running 510(k) Compliance Check
+      <Card className="w-full border-stone-200">
+        <CardHeader className="bg-stone-50 border-b pb-4">
+          <CardTitle className="text-base font-semibold flex items-center text-stone-800">
+            <ClipboardCheck className="mr-2 h-4 w-4 text-stone-600" />
+            Running compliance check
           </CardTitle>
-          <CardDescription className="text-stone-600">
+          <CardDescription className="text-stone-600 text-sm">
             Analyzing your device against FDA 510(k) requirements
           </CardDescription>
         </CardHeader>
         <CardContent className="pb-6 pt-8">
           <div className="flex flex-col items-center justify-center py-8">
-            <div className="relative h-24 w-24 mb-6">
-              <div className="absolute inset-0 rounded-full border-4 border-blue-100"></div>
-              <div className="absolute inset-0 rounded-full border-4 border-stone-400 border-t-transparent animate-spin"></div>
+            <div className="relative h-16 w-16 mb-4">
+              <div className="absolute inset-0 rounded-full border-2 border-stone-100"></div>
+              <div className="absolute inset-0 rounded-full border-2 border-stone-500 border-t-transparent animate-spin"></div>
               <div className="absolute inset-0 flex items-center justify-center">
-                <ClipboardCheck className="h-10 w-10 text-blue-500" />
+                <ClipboardCheck className="h-6 w-6 text-stone-500" />
               </div>
             </div>
-            <p className="text-center text-lg font-medium text-stone-700 mb-1">
-              Analyzing Submission
+            <p className="text-center text-sm font-medium text-stone-700 mb-1">
+              Analyzing submission
             </p>
-            <p className="text-center text-stone-600 max-w-md">
-              Please wait while we analyze your submission against FDA 510(k) requirements and
-              regulatory guidance...
+            <p className="text-center text-xs text-stone-500 max-w-md">
+              Checking your submission against FDA 510(k) requirements and regulatory guidance.
             </p>
           </div>
         </CardContent>
@@ -433,24 +416,24 @@ const ComplianceCheckPanel = ({
   }
 
   return (
-    <Card className="w-full shadow-md border-blue-100">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b pb-4">
+    <Card className="w-full border-stone-200">
+      <CardHeader className="bg-stone-50 border-b pb-4">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-xl flex items-center text-stone-800">
-              <ClipboardCheck className="mr-2 h-5 w-5 text-stone-600" />
-              FDA 510(k) Compliance Check
+            <CardTitle className="text-base font-semibold flex items-center text-stone-800">
+              <ClipboardCheck className="mr-2 h-4 w-4 text-stone-600" />
+              FDA 510(k) compliance check
             </CardTitle>
-            <CardDescription className="text-stone-600">
-              Comprehensive analysis of your submission against FDA 510(k) requirements
+            <CardDescription className="text-stone-600 text-sm">
+              Analysis of your submission against FDA 510(k) requirements
             </CardDescription>
           </div>
 
           {actualComplianceData && (
-            <div className="flex items-center bg-white rounded-full px-3 py-1 shadow-sm border">
-              <span className="text-sm font-medium mr-2">Score:</span>
+            <div className="flex items-center bg-white rounded-full px-3 py-1 border border-stone-200">
+              <span className="text-xs font-medium mr-2 text-stone-600">Score</span>
               <span
-                className={`text-lg font-bold ${
+                className={`text-sm font-semibold ${
                   actualComplianceData.score >= 0.75
                     ? 'text-emerald-600'
                     : actualComplianceData.score >= 0.5
@@ -611,7 +594,7 @@ const ComplianceCheckPanel = ({
                         ) : (
                           <>
                             <Gauge className="mr-2 h-4 w-4" />
-                            <span>Run Risk Assessment</span>
+                            <span>Run risk assessment</span>
                           </>
                         )}
                       </Button>
@@ -828,7 +811,7 @@ const ComplianceCheckPanel = ({
                             <CardContent className="p-4">
                               <div className="flex items-start">
                                 <div className="flex-shrink-0 mr-3">
-                                  <WandSparkles className="h-5 w-5 text-purple-600" />
+                                  <WandSparkles className="h-5 w-5 text-stone-600" />
                                 </div>
                                 <div className="flex-1">
                                   <h4 className="font-medium">{fix.title}</h4>
@@ -973,7 +956,7 @@ const ComplianceCheckPanel = ({
                     }
                   }}
                   disabled={actualIsChecking || actualIsAssessingRisks}
-                  className="bg-blue-600 hover:bg-blue-700 shadow-sm"
+                  className="bg-stone-800 hover:bg-stone-900 shadow-sm"
                   size="sm"
                 >
                   <FileCheck className="mr-2 h-4 w-4" />
@@ -987,7 +970,7 @@ const ComplianceCheckPanel = ({
                 variant="default"
                 onClick={generateFixSuggestions}
                 disabled={actualIsChecking || actualIsGeneratingFixes || actualIsAssessingRisks}
-                className="bg-purple-600 hover:bg-purple-700 shadow-sm"
+                className="bg-stone-800 hover:bg-stone-900 shadow-sm"
                 size="sm"
               >
                 {actualIsGeneratingFixes ? (
@@ -1129,7 +1112,7 @@ const ComplianceCheckPanel = ({
                               ? 'border-l-red-500 bg-red-50'
                               : risk.severity === 'medium'
                                 ? 'border-l-amber-500 bg-amber-50'
-                                : 'border-l-blue-500 bg-stone-50';
+                                : 'border-l-stone-400 bg-stone-50';
 
                           const SeverityIcon =
                             risk.severity === 'high'

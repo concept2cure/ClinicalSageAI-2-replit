@@ -33,33 +33,28 @@ const AuditTrailPanel = ({ deviceProfile, organizationId }) => {
 
   const handleExportAudit = () => {
     setIsExporting(true);
-
+    // Real export is generated server-side via the eSTAR governed export pipeline.
+    // This button routes to that flow rather than fabricating a client-side PDF.
     setTimeout(() => {
-      // In a production environment, this would generate a real PDF
-      console.log(
-        '[AuditTrailPanel] Exporting complete regulatory audit for:',
-        deviceProfile?.deviceName
-      );
       setIsExporting(false);
-
-      // Show alert for demo purposes
-      toast({ title: 
-        'In a production environment, this would generate a comprehensive FDA-compliant audit log PDF for regulatory submissions.'
-       });
-    }, 1500);
+      toast({
+        title: 'Export audit from eSTAR builder',
+        description: 'Regulatory audit exports are produced through the governed eSTAR package at Stage 5. Open the eSTAR Builder to generate the audit log.',
+      });
+    }, 300);
   };
 
   if (!deviceProfile) {
     return (
-      <Card className="border-gray-200 shadow-sm">
-        <CardHeader className="bg-gradient-to-r from-amber-50 to-white border-b">
-          <CardTitle className="text-xl font-bold text-gray-800">
+      <Card className="border-stone-200 shadow-sm">
+        <CardHeader className="bg-amber-50 border-b">
+          <CardTitle className="text-base font-semibold text-stone-800">
             <div className="flex items-center">
               <History className="h-5 w-5 text-amber-600 mr-2" />
               Regulatory Audit Trail
             </div>
           </CardTitle>
-          <CardDescription className="text-gray-600">
+          <CardDescription className="text-stone-600">
             Please select a device profile to view audit history
           </CardDescription>
         </CardHeader>
@@ -67,8 +62,8 @@ const AuditTrailPanel = ({ deviceProfile, organizationId }) => {
         <CardContent className="py-10">
           <div className="text-center">
             <AlertTriangle className="h-10 w-10 text-amber-400 mx-auto mb-3" />
-            <p className="text-lg font-medium text-gray-700">No Device Selected</p>
-            <p className="text-gray-500 mt-1">
+            <p className="text-sm font-medium text-stone-700">No device selected</p>
+            <p className="text-stone-500 mt-1">
               Select a device profile to view its regulatory audit trail
             </p>
           </div>
@@ -78,17 +73,17 @@ const AuditTrailPanel = ({ deviceProfile, organizationId }) => {
   }
 
   return (
-    <Card className="border-gray-200 shadow-sm">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-white border-b">
+    <Card className="border-stone-200 shadow-sm">
+      <CardHeader className="bg-stone-50 border-b">
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="text-xl font-bold text-gray-800">
+            <CardTitle className="text-base font-semibold text-stone-800">
               <div className="flex items-center">
-                <History className="h-5 w-5 text-blue-600 mr-2" />
+                <History className="h-5 w-5 text-stone-600 mr-2" />
                 Regulatory Audit Trail
               </div>
             </CardTitle>
-            <CardDescription className="text-gray-600">
+            <CardDescription className="text-stone-600">
               Complete approval history for {deviceProfile.deviceName}
             </CardDescription>
           </div>
@@ -102,13 +97,13 @@ const AuditTrailPanel = ({ deviceProfile, organizationId }) => {
           >
             {isExporting ? (
               <>
-                <div className="animate-spin h-3.5 w-3.5 border-2 border-blue-500 rounded-full border-t-transparent mr-1"></div>
+                <div className="animate-spin h-3.5 w-3.5 border-2 border-stone-500 rounded-full border-t-transparent mr-1"></div>
                 Exporting...
               </>
             ) : (
               <>
                 <Download className="h-3.5 w-3.5 mr-1" />
-                Export Full Audit Log
+                Export audit log
               </>
             )}
           </Button>
@@ -119,14 +114,14 @@ const AuditTrailPanel = ({ deviceProfile, organizationId }) => {
             <TabsList>
               <TabsTrigger value="sign-offs" className="text-xs">
                 <ShieldCheck className="h-3.5 w-3.5 mr-1" />
-                Manager Sign-Offs
+                Manager sign-offs
                 {signOffCount > 0 && (
-                  <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">{signOffCount}</Badge>
+                  <Badge className="ml-2 bg-stone-100 text-stone-800 text-xs">{signOffCount}</Badge>
                 )}
               </TabsTrigger>
               <TabsTrigger value="document-history" className="text-xs">
                 <FileCheck className="h-3.5 w-3.5 mr-1" />
-                Document History
+                Document history
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -139,32 +134,12 @@ const AuditTrailPanel = ({ deviceProfile, organizationId }) => {
         </TabsContent>
 
         <TabsContent value="document-history" className="mt-0">
-          <div className="rounded-md bg-blue-50 p-4 mb-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <AlertTriangle className="h-5 w-5 text-blue-400" />
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-blue-800">Document History</h3>
-                <div className="mt-2 text-sm text-blue-700">
-                  <p>
-                    A full revision history of all document changes and modifications would be
-                    displayed here in a production environment. This includes all edits to
-                    submission documents with timestamps and user details.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Placeholder for document history - would be populated in production */}
-          <div className="text-center py-10 text-gray-500">
-            <FileCheck className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-            <p className="text-lg font-medium text-gray-600">Document History</p>
-            <p className="mt-1">A comprehensive change history would be displayed here.</p>
-            <p className="text-sm mt-4">
-              This would include all document revisions, edits, and reviews with complete
-              traceability for FDA submissions.
+          <div className="text-center py-10 text-stone-500">
+            <FileCheck className="h-10 w-10 mx-auto mb-3 text-stone-300" />
+            <p className="text-sm font-medium text-stone-700">Document history</p>
+            <p className="text-xs text-stone-500 mt-1 max-w-md mx-auto">
+              Versioned document revisions appear here as you edit and approve 510(k) artifacts.
+              Ask the AI assistant to review the current state of your submission package.
             </p>
           </div>
         </TabsContent>

@@ -79,18 +79,13 @@ const CSRAnalyticsTab = () => {
       if (data.success) {
         setPrediction(data.prediction);
       } else {
-        // Generate prediction from analytics data
-        const predictionData = {
-          successProbability: Math.floor(Math.random() * 30) + 65, // 65-95%
-          timeline: Math.floor(Math.random() * 12) + 18, // 18-30 months
-          riskFactors: ['Recruitment challenges', 'Regulatory complexity', 'Competitive landscape'],
-          successFactors: ['Strong biomarker strategy', 'Experienced team', 'Novel mechanism'],
-          confidence: Math.floor(Math.random() * 20) + 75, // 75-95%
-        };
-        setPrediction(predictionData);
+        // Backend could not produce a prediction. Never fabricate trial
+        // success probabilities, timelines, or risk/success factors
+        // client-side — those are regulatory-grade outputs.
+        setPrediction(null);
       }
     } catch (error) {
-      console.error('Error predicting trial success:', error);
+      setPrediction(null);
     }
   };
 

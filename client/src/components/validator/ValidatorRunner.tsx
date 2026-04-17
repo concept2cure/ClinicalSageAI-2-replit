@@ -512,55 +512,10 @@ const ValidatorRunner: React.FC = () => {
     } catch (error) {
       console.error('Validation error:', error);
 
-      // For development, use mock data if the API fails
-      if (process.env.NODE_ENV === 'development') {
-        // Generate mock validation results
-        const mockResults: ValidationResult = {
-          validations: [
-            {
-              id: `val-${Date.now()}-1`,
-              rule: 'Document Structure Check',
-              status: Math.random() > 0.7 ? 'error' : 'success',
-              message: 'Document structure follows CTD format.',
-              path: file.file.name,
-              lineNumber: Math.floor(Math.random() * 100) + 1,
-            },
-            {
-              id: `val-${Date.now()}-2`,
-              rule: 'Required Sections',
-              status: Math.random() > 0.6 ? 'success' : 'warning',
-              message: 'All required sections are present.',
-              path: file.file.name,
-              lineNumber: Math.floor(Math.random() * 100) + 1,
-            },
-            {
-              id: `val-${Date.now()}-3`,
-              rule: 'Metadata Validation',
-              status: Math.random() > 0.5 ? 'success' : 'error',
-              message: 'Some required metadata fields are missing or invalid.',
-              path: file.file.name,
-              lineNumber: Math.floor(Math.random() * 100) + 1,
-            },
-          ],
-          summary: {
-            success: 0,
-            warning: 0,
-            error: 0,
-          },
-          timestamp: Date.now(),
-        };
-
-        // Calculate summary counts
-        mockResults.validations.forEach(v => {
-          mockResults.summary[v.status]++;
-        });
-
-        // Update file with mock results
-        setFiles(prev =>
-          prev.map(f => (f.id === file.id ? { ...f, status: 'completed', result: mockResults } : f))
-        );
-        toast.success('Validation completed (mock)');
-      } else {
+      // Validation is a regulatory check. Never fabricate a result, even
+      // in development. If the backend validator is unavailable, mark the
+      // file as failed so the user knows it was not actually validated.
+      {
         setFiles(prev => prev.map(f => (f.id === file.id ? { ...f, status: 'failed' } : f)));
         toast.error('Validation failed');
       }

@@ -58,7 +58,7 @@ export function CommunicationCenter({ projectId, projectName, submissionType = '
       <div className="rounded-xl border border-stone-200 bg-white p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-sm font-semibold text-stone-900">Communication Center</h2>
+            <h2 className="text-sm font-semibold text-stone-900">Communication center</h2>
             <p className="text-xs text-stone-500">
               Operational control room for tasks, collaboration, correspondence, final-mile submission, and C2C PublishOps.
             </p>
@@ -67,7 +67,7 @@ export function CommunicationCenter({ projectId, projectName, submissionType = '
             )}
           </div>
           <div className="flex items-center gap-2 text-xs">
-            <Badge variant="outline" className="border-blue-200 text-blue-700">{openEvents} unresolved agency events</Badge>
+            <Badge variant="outline" className="border-stone-200 text-stone-700">{openEvents} unresolved agency events</Badge>
             <Badge variant="outline" className="border-amber-200 text-amber-700">{responseDueSoon} response items due</Badge>
             <Badge variant="outline" className="border-emerald-200 text-emerald-700">Authority-aware lane active</Badge>
           </div>
@@ -86,9 +86,9 @@ export function CommunicationCenter({ projectId, projectName, submissionType = '
 
         <TabsContent value="overview" className="mt-3">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <OverviewCard icon={<Workflow className="h-4 w-4 text-blue-600" />} title="Operational Graph" body="Tasks, threads, and correspondence map into one project timeline with linked artifacts and submissions." />
-            <OverviewCard icon={<BellRing className="h-4 w-4 text-amber-600" />} title="Notification Routing" body="Assignments, approvals, validation failures, acknowledgments, and PublishOps changes route to source objects." />
-            <OverviewCard icon={<ShieldCheck className="h-4 w-4 text-emerald-600" />} title="Visibility and Audit" body={`Visibility tiers in use: ${visibilityTierLabel}. Collaboration and agency events are auditable.`} />
+            <OverviewCard icon={<Workflow className="h-4 w-4 text-stone-600" />} title="Operational graph" body="Tasks, threads, and correspondence map into one project timeline with linked artifacts and submissions." />
+            <OverviewCard icon={<BellRing className="h-4 w-4 text-amber-600" />} title="Notification routing" body="Assignments, approvals, validation failures, acknowledgments, and PublishOps changes route to source objects." />
+            <OverviewCard icon={<ShieldCheck className="h-4 w-4 text-emerald-600" />} title="Visibility and audit" body={`Visibility tiers in use: ${visibilityTierLabel}. Collaboration and agency events are auditable.`} />
           </div>
         </TabsContent>
 
@@ -129,7 +129,7 @@ export function CommunicationCenter({ projectId, projectName, submissionType = '
 
         <TabsContent value="correspondence" className="mt-3">
           <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-stone-900">Agency Communication Events</h3>
+            <h3 className="text-sm font-semibold text-stone-900">Agency communication events</h3>
             {agencyEvents.length === 0 ? (
               <EmptyState
                 icon={<Inbox className="h-10 w-10" />}

@@ -16,56 +16,28 @@ const EvidenceGapDetector = ({ section, onCitationNeeded }) => {
   const [gaps, setGaps] = useState([]);
   const { toast } = useToast();
 
-  // Example gap analysis function (in a real implementation, this would call an API)
+  // Evidence gap analysis is performed by the backend AI pipeline, not by
+  // client-side keyword heuristics. Never fabricate regulatory findings.
   const analyzeForGaps = async () => {
     setIsAnalyzing(true);
 
     try {
-      // Simulate API call with timeout
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const response = await fetch('/api/cer/evidence-gaps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ content: section?.content || '', sectionId: section?.id }),
+      });
 
-      // This is where we would call the API to analyze the text
-      // For demonstration, we'll generate some sample gaps
-      const content = section?.content || '';
-
-      // Simple analysis based on keywords (would be much more sophisticated in production)
-      const sampleGaps = [];
-
-      if (
-        content.includes('improved outcomes') &&
-        !content.includes('according to') &&
-        !content.includes('study showed')
-      ) {
-        sampleGaps.push({
-          claim: 'Improved outcomes for patients',
-          suggestion: 'Consider citing clinical study results or real-world evidence',
-          dataType: 'literature',
-        });
+      if (!response.ok) {
+        throw new Error(`Evidence gap service returned ${response.status}`);
       }
 
-      if (
-        content.includes('safe') &&
-        !content.includes('adverse events') &&
-        !content.includes('FAERS')
-      ) {
-        sampleGaps.push({
-          claim: 'Safety statements without adverse event data',
-          suggestion: 'Include FAERS data analysis to support safety claims',
-          dataType: 'faers',
-        });
-      }
+      const data = await response.json();
+      const detected = Array.isArray(data?.gaps) ? data.gaps : [];
+      setGaps(detected);
 
-      if (content.includes('comparable to') && !content.includes('equivalence assessment')) {
-        sampleGaps.push({
-          claim: 'Equivalence claims without formal comparison',
-          suggestion: 'Add device equivalence data to support comparison claims',
-          dataType: 'equivalence',
-        });
-      }
-
-      setGaps(sampleGaps);
-
-      if (sampleGaps.length === 0) {
+      if (detected.length === 0) {
         toast({
           title: 'No evidence gaps detected',
           description: 'All claims appear to be properly supported by evidence.',
@@ -73,10 +45,9 @@ const EvidenceGapDetector = ({ section, onCitationNeeded }) => {
         });
       }
     } catch (error) {
-      console.error('Error analyzing for evidence gaps:', error);
       toast({
-        title: 'Analysis failed',
-        description: 'Failed to analyze section for evidence gaps.',
+        title: 'Evidence gap analysis unavailable',
+        description: 'The evidence gap analyzer is offline. Ask the AI assistant to review your claims manually.',
         variant: 'destructive',
       });
     } finally {

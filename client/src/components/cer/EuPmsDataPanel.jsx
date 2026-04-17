@@ -85,58 +85,44 @@ const EuPmsDataPanel = ({ jobId, deviceName, manufacturer, onAddToCER }) => {
     if (selectedFiles.length === 0) return;
 
     setUploadingFile(true);
+    setUploadProgress(0);
 
     try {
-      // Simulate upload progress
-      const interval = setInterval(() => {
-        setUploadProgress(prev => {
-          const newProgress = prev + 10;
-          if (newProgress >= 100) {
-            clearInterval(interval);
-            return 100;
-          }
-          return newProgress;
-        });
-      }, 300);
-
-      // Create FormData for file upload
       const formData = new FormData();
-
-      // Add each file to the form data
       selectedFiles.forEach(file => {
         formData.append('files', file);
       });
-
-      // Add metadata to the form data
       formData.append('deviceName', deviceName || '');
       formData.append('manufacturer', manufacturer || '');
       formData.append('category', activeTab);
-      formData.append('jobId', jobId);
+      formData.append('jobId', jobId || '');
 
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      const response = await fetch('/api/cer/eu-pms/upload', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
 
-      // Handle the upload response
+      if (!response.ok) {
+        throw new Error(`Upload failed with status ${response.status}`);
+      }
+
+      const result = await response.json();
+
       setEuPmsData({
         category: activeTab,
         files: selectedFiles.map(file => file.name),
         importDate: new Date().toISOString(),
-        status: 'processed',
-        records: selectedFiles.length,
+        status: result?.status || 'uploaded',
+        records: result?.records ?? selectedFiles.length,
       });
 
-      clearInterval(interval);
       setUploadProgress(100);
-
-      setTimeout(() => {
-        setUploadingFile(false);
-        setUploadProgress(0);
-        setSelectedFiles([]);
-      }, 1000);
+      setSelectedFiles([]);
     } catch (error) {
-      console.error('Error uploading files:', error);
-      setUploadingFile(false);
       setUploadProgress(0);
+    } finally {
+      setUploadingFile(false);
     }
   };
 

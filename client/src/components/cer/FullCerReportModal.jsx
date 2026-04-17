@@ -59,52 +59,32 @@ export function FullCerReportModal({ isOpen, onClose, faersData }) {
     }));
   };
 
-  // Generate the CER report
+  // Generate the CER report via the real backend. Never fabricate a
+  // completed report or fake section-completion statuses.
   const handleGenerateReport = async () => {
     try {
       setIsGenerating(true);
-      setActiveTab('preview'); // Switch to preview tab
+      setActiveTab('preview');
 
-      // Simulate API request
-      setTimeout(() => {
-        setGeneratedReport({
-          id: `CER-${Date.now()}`,
-          title: `${deviceInfo.name} - Clinical Evaluation Report`,
-          sections: [
-            { id: 'executive-summary', title: 'Executive Summary', completionStatus: 'completed' },
-            { id: 'scope', title: 'Scope', completionStatus: 'completed' },
-            {
-              id: 'device-description',
-              title: 'Device Description',
-              completionStatus: 'completed',
-            },
-            { id: 'intended-use', title: 'Intended Use/Purpose', completionStatus: 'completed' },
-            {
-              id: 'regulatory-context',
-              title: 'Regulatory Context',
-              completionStatus: 'completed',
-            },
-            { id: 'literature-search', title: 'Literature Search', completionStatus: 'completed' },
-            { id: 'device-safety', title: 'Device Safety Analysis', completionStatus: 'completed' },
-            {
-              id: 'device-performance',
-              title: 'Device Performance Analysis',
-              completionStatus: 'completed',
-            },
-            { id: 'risk-benefit', title: 'Risk-Benefit Analysis', completionStatus: 'completed' },
-            { id: 'pmcf', title: 'PMCF Plan', completionStatus: 'completed' },
-            { id: 'conclusion', title: 'Conclusion', completionStatus: 'completed' },
-            { id: 'references', title: 'References', completionStatus: 'completed' },
-          ],
-          formats: ['PDF', 'DOCX', 'HTML'],
-          generatedAt: new Date().toISOString(),
-          status: 'completed',
-          downloadUrl: '#',
-        });
-        setIsGenerating(false);
-      }, 3000);
+      const response = await fetch('/api/cer/full-report/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          deviceInfo,
+          options: additionalOptions,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`CER generation failed with status ${response.status}`);
+      }
+
+      const result = await response.json();
+      setGeneratedReport(result);
     } catch (error) {
-      console.error('Error generating CER report:', error);
+      setGeneratedReport(null);
+    } finally {
       setIsGenerating(false);
     }
   };
