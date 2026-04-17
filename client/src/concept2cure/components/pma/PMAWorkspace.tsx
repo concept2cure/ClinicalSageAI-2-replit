@@ -20,7 +20,7 @@
  * @compliance FDA 21 CFR 814, ISO 14971, IEC 62304
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import {
   Shield,
@@ -69,10 +69,11 @@ export interface PMAPhase {
 }
 
 interface PMAWorkspaceProps {
-  projectId: string;
+  projectId?: string;
   projectName?: string;
   embedded?: boolean;
   onBackToProject?: () => void;
+  initialDocumentType?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -250,9 +251,42 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
   embedded = false,
   onBackToProject,
 }) => {
-  const [phases, setPhases] = useState<PMAPhase[]>(buildDefaultPhases);
+  const storageKey = projectId ? `pma-workspace-${projectId}` : null;
+
+  const [phases, setPhases] = useState<PMAPhase[]>(() => {
+    if (storageKey) {
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsed = JSON.parse(saved) as Array<{ id: string; tasks: Array<{ id: string; status: string; completedAt?: string; completedBy?: string }> }>;
+          const defaults = buildDefaultPhases();
+          return defaults.map(phase => {
+            const savedPhase = parsed.find(p => p.id === phase.id);
+            if (!savedPhase) return phase;
+            return {
+              ...phase,
+              tasks: phase.tasks.map(task => {
+                const savedTask = savedPhase.tasks.find(t => t.id === task.id);
+                if (!savedTask) return task;
+                return { ...task, status: savedTask.status as PMATask['status'], completedAt: savedTask.completedAt, completedBy: savedTask.completedBy };
+              }),
+            };
+          });
+        }
+      } catch { /* corrupt storage — use defaults */ }
+    }
+    return buildDefaultPhases();
+  });
   const [selectedPhaseId, setSelectedPhaseId] = useState<string>('phase1');
   const [expandedPhases, setExpandedPhases] = useState<Record<string, boolean>>({ phase1: true });
+
+  const persistPhases = useCallback((updated: PMAPhase[]) => {
+    if (!storageKey) return;
+    const slim = updated.map(p => ({ id: p.id, tasks: p.tasks.map(t => ({ id: t.id, status: t.status, completedAt: t.completedAt, completedBy: t.completedBy })) }));
+    localStorage.setItem(storageKey, JSON.stringify(slim));
+  }, [storageKey]);
+
+  useEffect(() => { persistPhases(phases); }, [phases, persistPhases]);
 
   const selectedPhase = phases.find(p => p.id === selectedPhaseId);
 

@@ -86,6 +86,8 @@ import { Embedded510kHost, EmbeddedPMAHost, EmbeddedCERHost } from './components
 const EmbeddedCERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 // Lazy-load PMA Workspace for embedded module rendering
 const EmbeddedPMAWorkspace = lazy(() => import('./components/pma/PMAWorkspace'));
+// Lazy-load FDA 510(k) Workspace — real 7-stage workflow (replaces CERV2 misrouting)
+const FDA510kWorkspacePage = lazy(() => import('./pages/FDA510kWorkspacePage'));
 // [BATCH 1 DELETED] LandingPage, CommandCenterHub, IntelligenceHub, AnaDashboard,
 // AboutTrainingCenter, LegalCenter, IntegrationsPage, SubmissionOpsCommandCenter, INDWorkspace, PricingPage
 // Full Document Builder wizard (CSR + CTD across global agencies)
@@ -2232,7 +2234,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               onNavigate={handleAnaPanelNavigate}
               onNewProject={() => setNewProjectOpen(true)}
               onThreadChange={handleThreadChange}
-              EmbeddedCERV2Page={EmbeddedCERV2Page}
+              FDA510kWorkspacePage={FDA510kWorkspacePage}
               ModuleLoadingFallback={ModuleLoadingFallback}
               onBackToProject={() => navigate(`/concept2cure/project/${urlProjectId}`)}
             />

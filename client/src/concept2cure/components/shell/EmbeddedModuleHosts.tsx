@@ -26,7 +26,7 @@ interface BaseEmbeddedHostProps {
 }
 
 interface Embedded510kHostProps extends BaseEmbeddedHostProps {
-  EmbeddedCERV2Page: React.ComponentType<EmbeddedModulePageProps>;
+  FDA510kWorkspacePage: React.ComponentType<EmbeddedModulePageProps>;
   ModuleLoadingFallback: React.ComponentType;
   onBackToProject: () => void;
 }
@@ -41,7 +41,7 @@ export const Embedded510kHost: React.FC<Embedded510kHostProps> = ({
   onNavigate,
   onNewProject,
   onThreadChange,
-  EmbeddedCERV2Page,
+  FDA510kWorkspacePage,
   ModuleLoadingFallback,
   onBackToProject,
 }) => (
@@ -49,7 +49,7 @@ export const Embedded510kHost: React.FC<Embedded510kHostProps> = ({
     <div className={cn('flex-1 flex flex-col min-h-0 overflow-hidden', moduleAssistantOpen && 'mr-0')}>
       <ErrorBoundary>
         <Suspense fallback={<ModuleLoadingFallback />}>
-          <EmbeddedCERV2Page embedded={true} projectId={projectId} onBackToProject={onBackToProject} />
+          <FDA510kWorkspacePage embedded={true} projectId={projectId} projectName={projectName} onBackToProject={onBackToProject} />
         </Suspense>
       </ErrorBoundary>
     </div>
