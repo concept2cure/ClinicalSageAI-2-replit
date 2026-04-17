@@ -96,7 +96,12 @@ export default function RegulatoryChecklist({ submissionId }) {
           </div>
           <div className="text-sm font-normal text-gray-500 flex items-center">
             <span className="mr-2">FDA 21 CFR 312</span>
-            <a href="https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-312" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center">
+            <a
+              href="https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-312"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 flex items-center"
+            >
               <ExternalLink className="h-4 w-4" />
             </a>
           </div>
@@ -124,7 +129,9 @@ export default function RegulatoryChecklist({ submissionId }) {
                 )}
                 {criticalIssues.length === 0
                   ? 'All critical items addressed'
-                  : `${criticalIssues.length} critical ${criticalIssues.length === 1 ? 'issue' : 'issues'}`}
+                  : `${criticalIssues.length} critical ${
+                      criticalIssues.length === 1 ? 'issue' : 'issues'
+                    }`}
               </span>
             </div>
           </div>
@@ -151,8 +158,8 @@ export default function RegulatoryChecklist({ submissionId }) {
                           item.status === 'complete'
                             ? 'bg-green-50 border-green-200'
                             : item.priority === 'critical'
-                              ? 'bg-red-50 border-red-200'
-                              : 'bg-amber-50 border-amber-200'
+                            ? 'bg-red-50 border-red-200'
+                            : 'bg-amber-50 border-amber-200'
                         }`}
                       >
                         <div className="flex items-start justify-between">

@@ -204,27 +204,30 @@ const AppSidebar = () => {
                 </h3>
               </div>
 
-              <a
-                href="#"
-                className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
+              <button
+                type="button"
+                className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
+                onClick={() => window.location.href = '/admin/team'}
               >
                 <Users className="mr-3 flex-shrink-0 h-5 w-5 text-gray-500" />
                 <span>Team Management</span>
-              </a>
-              <a
-                href="#"
-                className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
+              </button>
+              <button
+                type="button"
+                className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
+                onClick={() => window.location.href = '/settings'}
               >
                 <Settings className="mr-3 flex-shrink-0 h-5 w-5 text-gray-500" />
                 <span>Settings</span>
-              </a>
-              <a
-                href="#"
-                className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
+              </button>
+              <button
+                type="button"
+                className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
+                onClick={() => window.location.href = '/admin/audit-logs'}
               >
                 <Activity className="mr-3 flex-shrink-0 h-5 w-5 text-gray-500" />
                 <span>Audit Logs</span>
-              </a>
+              </button>
             </div>
           )}
 
@@ -237,20 +240,22 @@ const AppSidebar = () => {
                 </h3>
               </div>
 
-              <a
-                href="#"
-                className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
+              <button
+                type="button"
+                className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
+                onClick={() => window.location.href = '/docs'}
               >
                 <HelpCircle className="mr-3 flex-shrink-0 h-5 w-5 text-gray-500" />
                 <span>Documentation</span>
-              </a>
-              <a
-                href="#"
-                className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
+              </button>
+              <button
+                type="button"
+                className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
+                onClick={() => window.location.href = '/resources'}
               >
                 <Bookmark className="mr-3 flex-shrink-0 h-5 w-5 text-gray-500" />
                 <span>Resources</span>
-              </a>
+              </button>
 
               <div className="px-3 py-2">
                 <HelpButton

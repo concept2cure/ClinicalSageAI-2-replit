@@ -676,13 +676,15 @@ function Footer() {
           <div>
             <h4 className={headingClass}>Company</h4>
             <ul className="mt-4 space-y-3">
-              {([
-                ['About', '/about'],
-                ['Careers', '/careers'],
-                ['Blog', '/blog'],
-                ['Contact', '/contact'],
-                ['Partners', '/partners'],
-              ] as const).map(([label, path]) => (
+              {(
+                [
+                  ['About', '/about'],
+                  ['Careers', '/careers'],
+                  ['Blog', '/blog'],
+                  ['Contact', '/contact'],
+                  ['Partners', '/partners'],
+                ] as const
+              ).map(([label, path]) => (
                 <li key={label}>
                   <a href={path} className={linkClass}>
                     {label}
@@ -696,13 +698,15 @@ function Footer() {
           <div>
             <h4 className={headingClass}>Legal</h4>
             <ul className="mt-4 space-y-3">
-              {([
-                ['Privacy Policy', '/legal/privacy'],
-                ['Terms of Service', '/legal/terms'],
-                ['Security', '/legal/security'],
-                ['HIPAA Compliance', '/legal/hipaa'],
-                ['Data Processing Agreement', '/legal/data-processing'],
-              ] as const).map(([label, path]) => (
+              {(
+                [
+                  ['Privacy Policy', '/legal/privacy'],
+                  ['Terms of Service', '/legal/terms'],
+                  ['Security', '/legal/security'],
+                  ['HIPAA Compliance', '/legal/hipaa'],
+                  ['Data Processing Agreement', '/legal/data-processing'],
+                ] as const
+              ).map(([label, path]) => (
                 <li key={label}>
                   <a href={path} className={linkClass}>
                     {label}

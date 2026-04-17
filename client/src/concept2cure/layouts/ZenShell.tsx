@@ -731,8 +731,8 @@ export const ZenShell: React.FC<ZenShellProps> = ({ children }) => {
         projects={mockProjects}
         activeProjectId={activeProjectId}
         onSelectProject={setActiveProjectId}
-        onNewProject={() => console.log('New project')}
-        onNewChat={() => console.log('New chat')}
+        onNewProject={() => window.location.href = '/concept2cure/projects/new'}
+        onNewChat={() => window.location.href = '/concept2cure/chat'}
       />
 
       {/* Main area */}
@@ -746,8 +746,8 @@ export const ZenShell: React.FC<ZenShellProps> = ({ children }) => {
           projectName={activeProject?.name}
           onMenuClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
           onSearchClick={() => setCommandPaletteOpen(true)}
-          onSettingsClick={() => console.log('Settings')}
-          onProfileClick={() => console.log('Profile')}
+          onSettingsClick={() => window.location.href = '/concept2cure/settings'}
+          onProfileClick={() => window.location.href = '/concept2cure/profile'}
           onToggleRightDrawer={() => setRightDrawerOpen(prev => !prev)}
           isSidebarOpen={mobileSidebarOpen}
           rightDrawerOpen={rightDrawerOpen}

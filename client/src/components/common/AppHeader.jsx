@@ -136,9 +136,10 @@ const AppHeader = () => {
                     </div>
 
                     <div className="max-h-60 overflow-y-auto">
-                      <a
-                        href="#"
-                        className="block px-4 py-3 hover:bg-gray-50 border-l-2 border-pink-500"
+                      <button
+                        type="button"
+                        className="block w-full text-left px-4 py-3 hover:bg-gray-50 border-l-2 border-pink-500"
+                        onClick={() => window.location.href = '/csr-intelligence'}
                       >
                         <div className="flex">
                           <div className="flex-shrink-0">
@@ -153,9 +154,9 @@ const AppHeader = () => {
                             <p className="text-xs text-gray-500 mt-1">5 minutes ago</p>
                           </div>
                         </div>
-                      </a>
+                      </button>
 
-                      <a href="#" className="block px-4 py-3 hover:bg-gray-50">
+                      <button type="button" className="block w-full text-left px-4 py-3 hover:bg-gray-50" onClick={() => window.location.href = '/vault'}>
                         <div className="flex">
                           <div className="flex-shrink-0">
                             <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">
@@ -169,9 +170,9 @@ const AppHeader = () => {
                             <p className="text-xs text-gray-500 mt-1">2 hours ago</p>
                           </div>
                         </div>
-                      </a>
+                      </button>
 
-                      <a href="#" className="block px-4 py-3 hover:bg-gray-50">
+                      <button type="button" className="block w-full text-left px-4 py-3 hover:bg-gray-50" onClick={() => window.location.href = '/study-architect'}>
                         <div className="flex">
                           <div className="flex-shrink-0">
                             <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-500">
@@ -185,16 +186,17 @@ const AppHeader = () => {
                             <p className="text-xs text-gray-500 mt-1">Yesterday</p>
                           </div>
                         </div>
-                      </a>
+                      </button>
                     </div>
 
                     <div className="px-4 py-2 border-t border-gray-100">
-                      <a
-                        href="#"
-                        className="text-xs text-center text-pink-600 hover:text-pink-800 block"
+                      <button
+                        type="button"
+                        className="text-xs text-center text-pink-600 hover:text-pink-800 block w-full"
+                        onClick={() => window.location.href = '/notifications'}
                       >
                         View all notifications
-                      </a>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -221,19 +223,19 @@ const AppHeader = () => {
               {showUserMenu && (
                 <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
                   <div className="py-1">
-                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <button type="button" className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => window.location.href = '/profile'}>
                       Your Profile
-                    </a>
-                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    </button>
+                    <button type="button" className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => window.location.href = '/settings'}>
                       Settings
-                    </a>
-                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    </button>
+                    <button type="button" className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => window.location.href = '/client-settings'}>
                       Client Settings
-                    </a>
+                    </button>
                     <div className="border-t border-gray-100"></div>
-                    <a href="#" className="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                    <button type="button" className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100" onClick={() => window.location.href = '/logout'}>
                       Sign out
-                    </a>
+                    </button>
                   </div>
                 </div>
               )}
@@ -327,30 +329,34 @@ const AppHeader = () => {
               </button>
             </div>
             <div className="mt-3 space-y-1 px-4">
-              <a
-                href="#"
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50"
+              <button
+                type="button"
+                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50"
+                onClick={() => window.location.href = '/profile'}
               >
                 Your Profile
-              </a>
-              <a
-                href="#"
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50"
+              </button>
+              <button
+                type="button"
+                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50"
+                onClick={() => window.location.href = '/settings'}
               >
                 Settings
-              </a>
-              <a
-                href="#"
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50"
+              </button>
+              <button
+                type="button"
+                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50"
+                onClick={() => window.location.href = '/client-settings'}
               >
                 Client Settings
-              </a>
-              <a
-                href="#"
-                className="block px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-gray-50"
+              </button>
+              <button
+                type="button"
+                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-gray-50"
+                onClick={() => window.location.href = '/logout'}
               >
                 Sign out
-              </a>
+              </button>
             </div>
           </div>
         </div>

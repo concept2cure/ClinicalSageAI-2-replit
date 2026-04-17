@@ -325,7 +325,7 @@ const StandaloneDocumentIntelligence = ({
                 system is currently in beta. Results may vary depending on document quality and
                 format. Always review extracted data carefully before applying it to your device
                 profile.
-                <a href="#" className="text-primary inline-flex items-center ml-2 hover:underline">
+                <a href="/docs/document-intelligence" className="text-primary inline-flex items-center ml-2 hover:underline">
                   Learn more
                   <ExternalLink className="h-3 w-3 ml-1" />
                 </a>

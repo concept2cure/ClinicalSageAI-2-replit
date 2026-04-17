@@ -312,7 +312,7 @@ const DashboardModule = () => {
           <div className="bg-white p-5 rounded-lg border border-gray-200">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-medium">Recent Activity</h2>
-              <Link href="#" className="text-sm text-pink-600 hover:underline flex items-center">
+              <Link href="/activity" className="text-sm text-pink-600 hover:underline flex items-center">
                 View All <ArrowRight size={14} className="ml-1" />
               </Link>
             </div>
