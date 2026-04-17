@@ -34,7 +34,7 @@ export const FDA510kWorkspacePage: React.FC<FDA510kWorkspacePageProps> = ({
     async (data: Record<string, unknown>) => {
       if (!projectId) return;
       try {
-        await apiRequest('PUT', `/api/fda510k-unified/${projectId}/workflow`, data);
+        await apiRequest('POST', `/api/510k-workflow/${projectId}`, data);
         toast({ title: 'Progress saved', description: '510(k) workflow data saved.' });
       } catch {
         localStorage.setItem(`510k-workflow-${projectId}`, JSON.stringify(data));

@@ -297,10 +297,9 @@ const Enhanced510kIntakeWorkflow = ({
     queryFn: async () => {
       if (!projectId) return null;
       try {
-        const response = await apiRequest(`/api/510k-workflow/${projectId}?organizationId=${organizationId}`);
-        return response;
+        const response = await apiRequest('GET', `/api/510k-workflow/${projectId}?organizationId=${organizationId}`);
+        return await response.json();
       } catch (error) {
-        console.error('[510k] Failed to load workflow data:', error);
         return null;
       }
     },
@@ -311,22 +310,19 @@ const Enhanced510kIntakeWorkflow = ({
   const saveWorkflowMutation = useMutation({
     mutationFn: async () => {
       if (!projectId) {
-        console.warn('Cannot save workflow: No project ID available');
         throw new Error('Please create or select a project first');
       }
-      return apiRequest(`/api/510k-workflow/${projectId}`, {
-        method: 'POST',
-        data: {
-          organizationId,
-          stage: WORKFLOW_CONFIG.stages[currentStage].id,
-          section: activeSection,
-          data: workflowData,
-          completedSteps: Object.keys(workflowData.stageProgress).filter(
-            key => workflowData.stageProgress[key].status === 'complete'
-          ),
-          validationCheckpoints: {}
-        }
+      const response = await apiRequest('POST', `/api/510k-workflow/${projectId}`, {
+        organizationId,
+        stage: WORKFLOW_CONFIG.stages[currentStage].id,
+        section: activeSection,
+        data: workflowData,
+        completedSteps: Object.keys(workflowData.stageProgress || {}).filter(
+          key => workflowData.stageProgress[key]?.status === 'complete'
+        ),
+        validationCheckpoints: {}
       });
+      return await response.json();
     },
     onSuccess: (response) => {
       toast({ 
