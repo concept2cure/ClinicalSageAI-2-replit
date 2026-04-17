@@ -1146,10 +1146,10 @@ function SharePointHubNavigation() {
       <Layers className="sp-hub-nav-logo" />
       <span className="font-semibold">Regulatory Affairs</span>
       <div className="sp-hub-nav-links">
-        <a href="#" className="sp-hub-nav-link">Sites</a>
-        <a href="#" className="sp-hub-nav-link">eCTD Co-Author</a>
-        <a href="#" className="sp-hub-nav-link">Documents</a>
-        <a href="#" className="sp-hub-nav-link">Workflows</a>
+        <button className="sp-hub-nav-link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Sites</button>
+        <button className="sp-hub-nav-link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>eCTD Co-Author</button>
+        <button className="sp-hub-nav-link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Documents</button>
+        <button className="sp-hub-nav-link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Workflows</button>
       </div>
       {/* SharePoint-style Global Search Component */}
       <div className="flex-1 max-w-2xl mx-4">

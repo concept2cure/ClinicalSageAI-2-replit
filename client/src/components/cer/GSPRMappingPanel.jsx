@@ -653,9 +653,19 @@ ${Object.entries(mappingData)
 ## ${gspr.title}
 **Description:** ${gspr.description}
 
-**Compliance Status:** ${data.complianceStatus === 'compliant' ? 'Compliant' : data.complianceStatus === 'partial' ? 'Partially Compliant' : 'Pending Evaluation'}
+**Compliance Status:** ${
+      data.complianceStatus === 'compliant'
+        ? 'Compliant'
+        : data.complianceStatus === 'partial'
+        ? 'Partially Compliant'
+        : 'Pending Evaluation'
+    }
 
-${data.regulatoryInterpretation ? `**Regulatory Interpretation:**\n${data.regulatoryInterpretation}\n` : ''}
+${
+  data.regulatoryInterpretation
+    ? `**Regulatory Interpretation:**\n${data.regulatoryInterpretation}\n`
+    : ''
+}
 
 ${data.complianceStatement ? `**Compliance Statement:**\n${data.complianceStatement}\n` : ''}
 
@@ -663,7 +673,17 @@ ${data.acceptanceCriteria ? `**Acceptance Criteria:**\n${data.acceptanceCriteria
 
 ${data.clinicalRelevance ? `**Clinical Relevance:**\n${data.clinicalRelevance}\n` : ''}
 
-${data.evidenceStrength !== 'unrated' ? `**Evidence Strength Assessment:** ${data.evidenceStrength === 'high' ? 'High' : data.evidenceStrength === 'medium' ? 'Medium' : 'Low'}\n` : ''}
+${
+  data.evidenceStrength !== 'unrated'
+    ? `**Evidence Strength Assessment:** ${
+        data.evidenceStrength === 'high'
+          ? 'High'
+          : data.evidenceStrength === 'medium'
+          ? 'Medium'
+          : 'Low'
+      }\n`
+    : ''
+}
 
 ${
   data.evidenceSources.length > 0
@@ -861,7 +881,9 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                         return (
                           <li
                             key={gsprId}
-                            className={`p-3 cursor-pointer hover:bg-[#f4f3ee] ${isActive ? 'bg-[#faf0ec] border-l-2 border-[#d97757]' : ''}`}
+                            className={`p-3 cursor-pointer hover:bg-[#f4f3ee] ${
+                              isActive ? 'bg-[#faf0ec] border-l-2 border-[#d97757]' : ''
+                            }`}
                             onClick={() => handleSetActiveGspr(gsprId)}
                           >
                             <div className="flex items-center justify-between mb-1">
@@ -869,15 +891,17 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                                 {gspr.title}
                               </span>
                               <Badge
-                                className={`text-xs ${getStatusColor(mappingData.complianceStatus)}`}
+                                className={`text-xs ${getStatusColor(
+                                  mappingData.complianceStatus
+                                )}`}
                               >
                                 {getStatusIcon(mappingData.complianceStatus)}
                                 <span>
                                   {mappingData.complianceStatus === 'compliant'
                                     ? 'Compliant'
                                     : mappingData.complianceStatus === 'partial'
-                                      ? 'Partial'
-                                      : 'Pending'}
+                                    ? 'Partial'
+                                    : 'Pending'}
                                 </span>
                               </Badge>
                             </div>
@@ -908,15 +932,17 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                       </p>
                     </div>
                     <Badge
-                      className={`text-xs ${getStatusColor(mapping[activeGspr]?.complianceStatus || 'pending')}`}
+                      className={`text-xs ${getStatusColor(
+                        mapping[activeGspr]?.complianceStatus || 'pending'
+                      )}`}
                     >
                       {getStatusIcon(mapping[activeGspr]?.complianceStatus || 'pending')}
                       <span>
                         {mapping[activeGspr]?.complianceStatus === 'compliant'
                           ? 'Compliant'
                           : mapping[activeGspr]?.complianceStatus === 'partial'
-                            ? 'Partial'
-                            : 'Pending'}
+                          ? 'Partial'
+                          : 'Pending'}
                       </span>
                     </Badge>
                   </div>
@@ -1125,7 +1151,8 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                           handleAddEvidence(activeGspr, newEvidence);
                           toast({
                             title: 'Evidence added',
-                            description: 'A new evidence source has been linked to this GSPR requirement.',
+                            description:
+                              'A new evidence source has been linked to this GSPR requirement.',
                           });
                         }}
                       >

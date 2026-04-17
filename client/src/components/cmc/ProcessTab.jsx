@@ -169,12 +169,38 @@ const ProcessTab = () => {
           const data = await valRes.value.json();
           const items = Array.isArray(data) ? data : data.data || [];
           const stage1 = items.filter(p => p.stage === 'design' || p.stage === 'Stage 1').length;
-          const stage2 = items.filter(p => p.stage === 'qualification' || p.stage === 'Stage 2' || p.stage === 'PPQ').length;
-          const stage3 = items.filter(p => p.stage === 'verification' || p.stage === 'Stage 3' || p.stage === 'CPV').length;
+          const stage2 = items.filter(
+            p => p.stage === 'qualification' || p.stage === 'Stage 2' || p.stage === 'PPQ'
+          ).length;
+          const stage3 = items.filter(
+            p => p.stage === 'verification' || p.stage === 'Stage 3' || p.stage === 'CPV'
+          ).length;
           setValidationData(prev => ({
             ...prev,
-            overview: { totalProcesses: items.length, stage1, stage2, stage3, complianceScore: items.length > 0 ? Math.round(items.filter(p => p.status === 'Completed' || p.status === 'Approved').length / items.length * 100) : 0 },
-            ppqBatches: items.filter(p => p.stage === 'qualification' || p.stage === 'PPQ').map(p => ({ id: p.id || p.processName, date: p.created_at || p.completionDate, status: p.status, cpk: p.cpk || '--', yield: p.yield || '--' })),
+            overview: {
+              totalProcesses: items.length,
+              stage1,
+              stage2,
+              stage3,
+              complianceScore:
+                items.length > 0
+                  ? Math.round(
+                      (items.filter(p => p.status === 'Completed' || p.status === 'Approved')
+                        .length /
+                        items.length) *
+                        100
+                    )
+                  : 0,
+            },
+            ppqBatches: items
+              .filter(p => p.stage === 'qualification' || p.stage === 'PPQ')
+              .map(p => ({
+                id: p.id || p.processName,
+                date: p.created_at || p.completionDate,
+                status: p.status,
+                cpk: p.cpk || '--',
+                yield: p.yield || '--',
+              })),
           }));
         }
 
@@ -206,14 +232,20 @@ const ProcessTab = () => {
       } catch (error) {
         console.error('Failed to load process validation data:', error);
         if (alive) {
-          toast({ title: 'Data Load Error', description: 'Could not load process validation data from server.', variant: 'destructive' });
+          toast({
+            title: 'Data Load Error',
+            description: 'Could not load process validation data from server.',
+            variant: 'destructive',
+          });
         }
       } finally {
         if (alive) setDataLoading(false);
       }
     };
     loadData();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [toast]);
 
   // Generate PPQ protocol via API
@@ -227,13 +259,20 @@ const ProcessTab = () => {
         body: JSON.stringify({ parameters: validationData.cpps }),
       });
       if (response.ok) {
-        toast({ title: 'PPQ Protocol Generated', description: 'Process Performance Qualification protocol created successfully.' });
+        toast({
+          title: 'PPQ Protocol Generated',
+          description: 'Process Performance Qualification protocol created successfully.',
+        });
       } else {
         throw new Error('Server error');
       }
     } catch (error) {
       console.error('Protocol generation failed:', error);
-      toast({ title: 'Generation Failed', description: 'Could not generate PPQ protocol. Please try again.', variant: 'destructive' });
+      toast({
+        title: 'Generation Failed',
+        description: 'Could not generate PPQ protocol. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
       setShowProtocolDialog(false);
@@ -258,7 +297,11 @@ const ProcessTab = () => {
       }
     } catch (error) {
       console.error('FMEA analysis failed:', error);
-      toast({ title: 'Analysis Failed', description: 'Could not complete FMEA analysis.', variant: 'destructive' });
+      toast({
+        title: 'Analysis Failed',
+        description: 'Could not complete FMEA analysis.',
+        variant: 'destructive',
+      });
     }
     setShowFMEADialog(false);
   };
@@ -273,19 +316,26 @@ const ProcessTab = () => {
         body: JSON.stringify({ parameters: validationData.cpps }),
       });
       if (response.ok) {
-        toast({ title: 'DoE Study Scheduled', description: 'Design of Experiments study has been scheduled.' });
+        toast({
+          title: 'DoE Study Scheduled',
+          description: 'Design of Experiments study has been scheduled.',
+        });
       } else {
         throw new Error('Server error');
       }
     } catch (error) {
       console.error('DoE scheduling failed:', error);
-      toast({ title: 'Scheduling Failed', description: 'Could not schedule DoE study.', variant: 'destructive' });
+      toast({
+        title: 'Scheduling Failed',
+        description: 'Could not schedule DoE study.',
+        variant: 'destructive',
+      });
     }
     setShowDoEDialog(false);
   };
 
   // Start equipment qualification via API
-  const handleEquipmentQualification = async (type) => {
+  const handleEquipmentQualification = async type => {
     try {
       const response = await fetch('/api/cmc/equipment/qualification', {
         method: 'POST',
@@ -294,13 +344,20 @@ const ProcessTab = () => {
         body: JSON.stringify({ qualificationType: type }),
       });
       if (response.ok) {
-        toast({ title: `${type} Qualification Started`, description: `${type} protocol initiated for selected equipment.` });
+        toast({
+          title: `${type} Qualification Started`,
+          description: `${type} protocol initiated for selected equipment.`,
+        });
       } else {
         throw new Error('Server error');
       }
     } catch (error) {
       console.error('Equipment qualification failed:', error);
-      toast({ title: 'Qualification Failed', description: `Could not start ${type} qualification.`, variant: 'destructive' });
+      toast({
+        title: 'Qualification Failed',
+        description: `Could not start ${type} qualification.`,
+        variant: 'destructive',
+      });
     }
     setShowEquipmentDialog(false);
   };
@@ -317,13 +374,16 @@ const ProcessTab = () => {
           <CardContent>
             <div className="text-2xl font-bold text-blue-900">{validationData.overview.stage1}</div>
             <p className="text-xs text-blue-600 mt-1">Active processes</p>
-            <Button 
-              size="sm" 
-              variant="ghost" 
+            <Button
+              size="sm"
+              variant="ghost"
               className="mt-2 w-full text-blue-700 hover:bg-blue-200"
               onClick={() => {
                 setActiveTab('stage1');
-                toast({ title: '📋 Navigating to Process Design', description: 'Loading Stage 1 validation data...' });
+                toast({
+                  title: '📋 Navigating to Process Design',
+                  description: 'Loading Stage 1 validation data...',
+                });
               }}
               data-testid="button-view-stage1"
             >
@@ -337,15 +397,20 @@ const ProcessTab = () => {
             <CardTitle className="text-sm font-medium text-purple-700">Stage 2: PPQ</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-900">{validationData.overview.stage2}</div>
+            <div className="text-2xl font-bold text-purple-900">
+              {validationData.overview.stage2}
+            </div>
             <p className="text-xs text-purple-600 mt-1">In qualification</p>
-            <Button 
-              size="sm" 
-              variant="ghost" 
+            <Button
+              size="sm"
+              variant="ghost"
               className="mt-2 w-full text-purple-700 hover:bg-purple-200"
               onClick={() => {
                 setActiveTab('stage2');
-                toast({ title: '🔬 Navigating to PPQ', description: 'Loading Performance Qualification data...' });
+                toast({
+                  title: '🔬 Navigating to PPQ',
+                  description: 'Loading Performance Qualification data...',
+                });
               }}
               data-testid="button-view-stage2"
             >
@@ -359,15 +424,20 @@ const ProcessTab = () => {
             <CardTitle className="text-sm font-medium text-green-700">Stage 3: CPV</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-900">{validationData.overview.stage3}</div>
+            <div className="text-2xl font-bold text-green-900">
+              {validationData.overview.stage3}
+            </div>
             <p className="text-xs text-green-600 mt-1">Monitoring</p>
-            <Button 
-              size="sm" 
-              variant="ghost" 
+            <Button
+              size="sm"
+              variant="ghost"
               className="mt-2 w-full text-green-700 hover:bg-green-200"
               onClick={() => {
                 setActiveTab('stage3');
-                toast({ title: '📊 Navigating to CPV', description: 'Loading Continued Process Verification data...' });
+                toast({
+                  title: '📊 Navigating to CPV',
+                  description: 'Loading Continued Process Verification data...',
+                });
               }}
               data-testid="button-view-stage3"
             >
@@ -381,7 +451,9 @@ const ProcessTab = () => {
             <CardTitle className="text-sm font-medium text-amber-700">Compliance Score</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-amber-900">{validationData.overview.complianceScore}%</div>
+            <div className="text-2xl font-bold text-amber-900">
+              {validationData.overview.complianceScore}%
+            </div>
             <Progress value={validationData.overview.complianceScore} className="mt-2" />
             <p className="text-xs text-amber-600 mt-1">FDA/ICH compliant</p>
           </CardContent>
@@ -397,10 +469,15 @@ const ProcessTab = () => {
                 <Target className="h-5 w-5 text-blue-600" />
                 Critical Process Parameters (CPP)
               </span>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="outline"
-                onClick={() => toast({ title: '📈 CPP Analysis', description: 'Generating CPP trend analysis report...' })}
+                onClick={() =>
+                  toast({
+                    title: '📈 CPP Analysis',
+                    description: 'Generating CPP trend analysis report...',
+                  })
+                }
                 data-testid="button-cpp-analysis"
               >
                 <BarChart4 className="h-3 w-3 mr-1" /> Analysis
@@ -410,14 +487,17 @@ const ProcessTab = () => {
           <CardContent>
             <div className="space-y-3">
               {validationData.cpps.map(cpp => (
-                <div key={cpp.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div
+                  key={cpp.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
                   <div className="flex-1">
                     <div className="font-medium text-sm">{cpp.name}</div>
                     <div className="text-xs text-gray-600">Target: {cpp.target}</div>
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-medium">{cpp.current}</div>
-                    <Badge 
+                    <Badge
                       variant={cpp.status === 'In Control' ? 'default' : 'secondary'}
                       className="text-xs mt-1"
                     >
@@ -437,10 +517,15 @@ const ProcessTab = () => {
                 <Shield className="h-5 w-5 text-green-600" />
                 Critical Quality Attributes (CQA)
               </span>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="outline"
-                onClick={() => toast({ title: '📊 CQA Report', description: 'Generating CQA compliance report...' })}
+                onClick={() =>
+                  toast({
+                    title: '📊 CQA Report',
+                    description: 'Generating CQA compliance report...',
+                  })
+                }
                 data-testid="button-cqa-report"
               >
                 <FileText className="h-3 w-3 mr-1" /> Report
@@ -450,14 +535,17 @@ const ProcessTab = () => {
           <CardContent>
             <div className="space-y-3">
               {validationData.cqas.map(cqa => (
-                <div key={cqa.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div
+                  key={cqa.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
                   <div className="flex-1">
                     <div className="font-medium text-sm">{cqa.name}</div>
                     <div className="text-xs text-gray-600">Spec: {cqa.spec}</div>
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-medium">{cqa.result}</div>
-                    <Badge 
+                    <Badge
                       variant={cqa.status === 'Pass' ? 'default' : 'destructive'}
                       className="text-xs mt-1"
                     >
@@ -480,18 +568,25 @@ const ProcessTab = () => {
               Process Control Chart
             </span>
             <div className="flex gap-2">
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="outline"
-                onClick={() => toast({ title: '🎯 Control Limits Updated', description: 'Statistical control limits recalculated based on recent data.' })}
+                onClick={() =>
+                  toast({
+                    title: '🎯 Control Limits Updated',
+                    description: 'Statistical control limits recalculated based on recent data.',
+                  })
+                }
                 data-testid="button-update-limits"
               >
                 <RefreshCw className="h-3 w-3 mr-1" /> Update Limits
               </Button>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="outline"
-                onClick={() => toast({ title: '📥 Chart Exported', description: 'Control chart saved as PDF.' })}
+                onClick={() =>
+                  toast({ title: '📥 Chart Exported', description: 'Control chart saved as PDF.' })
+                }
                 data-testid="button-export-chart"
               >
                 <Download className="h-3 w-3 mr-1" /> Export
@@ -507,10 +602,34 @@ const ProcessTab = () => {
               <YAxis domain={[90, 110]} />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="value" stroke="#6a9bcc" name="Measured Value" strokeWidth={2} />
-              <Line type="monotone" dataKey="ucl" stroke="#ff0000" name="UCL" strokeDasharray="5 5" />
-              <Line type="monotone" dataKey="lcl" stroke="#ff0000" name="LCL" strokeDasharray="5 5" />
-              <Line type="monotone" dataKey="target" stroke="#00ff00" name="Target" strokeDasharray="3 3" />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="#6a9bcc"
+                name="Measured Value"
+                strokeWidth={2}
+              />
+              <Line
+                type="monotone"
+                dataKey="ucl"
+                stroke="#ff0000"
+                name="UCL"
+                strokeDasharray="5 5"
+              />
+              <Line
+                type="monotone"
+                dataKey="lcl"
+                stroke="#ff0000"
+                name="LCL"
+                strokeDasharray="5 5"
+              />
+              <Line
+                type="monotone"
+                dataKey="target"
+                stroke="#00ff00"
+                name="Target"
+                strokeDasharray="3 3"
+              />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>
@@ -527,7 +646,7 @@ const ProcessTab = () => {
           Stage 1: Process Design
         </h2>
         <div className="flex gap-2">
-          <Button 
+          <Button
             onClick={() => setShowFMEADialog(true)}
             className="bg-blue-600 hover:bg-blue-700"
             data-testid="button-new-fmea"
@@ -535,7 +654,7 @@ const ProcessTab = () => {
             <AlertTriangle className="h-4 w-4 mr-2" />
             New FMEA
           </Button>
-          <Button 
+          <Button
             onClick={() => setShowDoEDialog(true)}
             className="bg-purple-600 hover:bg-purple-700"
             data-testid="button-new-doe"
@@ -573,15 +692,19 @@ const ProcessTab = () => {
                   <TableCell className="text-center">{item.occurrence}</TableCell>
                   <TableCell className="text-center">{item.detection}</TableCell>
                   <TableCell className="text-center">
-                    <Badge variant={item.rpn > 80 ? 'destructive' : 'secondary'}>
-                      {item.rpn}
-                    </Badge>
+                    <Badge variant={item.rpn > 80 ? 'destructive' : 'secondary'}>{item.rpn}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="ghost"
-                      onClick={() => toast({ title: '✏️ Edit Risk', description: `Editing risk assessment for ${item.step}` })}
+                      onClick={() => {
+                        setShowFMEADialog(true);
+                        toast({
+                          title: 'Risk Assessment',
+                          description: `Opening risk assessment for ${item.step} (RPN: ${item.rpn})`,
+                        });
+                      }}
                       data-testid={`button-edit-risk-${index}`}
                     >
                       <Edit className="h-3 w-3" />
@@ -599,10 +722,15 @@ const ProcessTab = () => {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Design of Experiments (DoE) Results</span>
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               variant="outline"
-              onClick={() => toast({ title: '📊 DoE Analysis', description: 'Generating statistical analysis of DoE results...' })}
+              onClick={() =>
+                toast({
+                  title: '📊 DoE Analysis',
+                  description: 'Generating statistical analysis of DoE results...',
+                })
+              }
               data-testid="button-doe-analysis"
             >
               <BarChart4 className="h-3 w-3 mr-1" /> Analyze
@@ -624,7 +752,9 @@ const ProcessTab = () => {
                 </div>
                 <div className="flex justify-between p-2 bg-yellow-50 rounded">
                   <span className="text-sm">Granulation Temp</span>
-                  <Badge variant="secondary" className="text-xs">p=0.082</Badge>
+                  <Badge variant="secondary" className="text-xs">
+                    p=0.082
+                  </Badge>
                 </div>
               </div>
             </div>
@@ -679,8 +809,13 @@ const ProcessTab = () => {
                 </Select>
               </div>
             </div>
-            <Button 
-              onClick={() => toast({ title: '✅ Parameter Added', description: 'Process parameter range has been defined.' })}
+            <Button
+              onClick={() =>
+                toast({
+                  title: '✅ Parameter Added',
+                  description: 'Process parameter range has been defined.',
+                })
+              }
               data-testid="button-add-parameter"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -700,7 +835,7 @@ const ProcessTab = () => {
           <FlaskConical className="h-6 w-6 text-purple-600" />
           Stage 2: Process Performance Qualification (PPQ)
         </h2>
-        <Button 
+        <Button
           onClick={() => setShowProtocolDialog(true)}
           className="bg-purple-600 hover:bg-purple-700"
           data-testid="button-generate-protocol"
@@ -733,9 +868,7 @@ const ProcessTab = () => {
                   <TableCell className="font-medium">{batch.id}</TableCell>
                   <TableCell>{batch.date}</TableCell>
                   <TableCell>
-                    <Badge 
-                      variant={batch.status === 'Completed' ? 'default' : 'secondary'}
-                    >
+                    <Badge variant={batch.status === 'Completed' ? 'default' : 'secondary'}>
                       {batch.status}
                     </Badge>
                   </TableCell>
@@ -747,18 +880,28 @@ const ProcessTab = () => {
                   <TableCell>{batch.yield}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant="ghost"
-                        onClick={() => toast({ title: '👁️ View Details', description: `Loading batch ${batch.id} details...` })}
+                        onClick={() =>
+                          toast({
+                            title: '👁️ View Details',
+                            description: `Loading batch ${batch.id} details...`,
+                          })
+                        }
                         data-testid={`button-view-batch-${batch.id}`}
                       >
                         <Eye className="h-3 w-3" />
                       </Button>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant="ghost"
-                        onClick={() => toast({ title: '📄 Generate Report', description: `Generating report for ${batch.id}...` })}
+                        onClick={() =>
+                          toast({
+                            title: '📄 Generate Report',
+                            description: `Generating report for ${batch.id}...`,
+                          })
+                        }
                         data-testid={`button-report-batch-${batch.id}`}
                       >
                         <FileText className="h-3 w-3" />
@@ -833,10 +976,15 @@ const ProcessTab = () => {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>In-Process Control (IPC) Data</span>
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               variant="outline"
-              onClick={() => toast({ title: '📊 IPC Trend Analysis', description: 'Analyzing in-process control trends...' })}
+              onClick={() =>
+                toast({
+                  title: '📊 IPC Trend Analysis',
+                  description: 'Analyzing in-process control trends...',
+                })
+              }
               data-testid="button-ipc-analysis"
             >
               <TrendingUp className="h-3 w-3 mr-1" /> Trend Analysis
@@ -861,7 +1009,9 @@ const ProcessTab = () => {
                 <div className="text-sm">{item.point}</div>
                 <div className="text-sm">{item.param}</div>
                 <div className="text-sm font-medium">{item.result}</div>
-                <Badge variant="default" className="text-xs">{item.status}</Badge>
+                <Badge variant="default" className="text-xs">
+                  {item.status}
+                </Badge>
               </div>
             ))}
           </div>
@@ -879,17 +1029,27 @@ const ProcessTab = () => {
           Stage 3: Continued Process Verification (CPV)
         </h2>
         <div className="flex gap-2">
-          <Button 
-            onClick={() => toast({ title: '📈 APR Generated', description: 'Annual Product Review report has been generated.' })}
+          <Button
+            onClick={() =>
+              toast({
+                title: '📈 APR Generated',
+                description: 'Annual Product Review report has been generated.',
+              })
+            }
             className="bg-green-600 hover:bg-green-700"
             data-testid="button-generate-apr"
           >
             <FileText className="h-4 w-4 mr-2" />
             Generate APR
           </Button>
-          <Button 
+          <Button
             variant="outline"
-            onClick={() => toast({ title: '🔔 Alert Settings', description: 'Process drift alert thresholds updated.' })}
+            onClick={() =>
+              toast({
+                title: '🔔 Alert Settings',
+                description: 'Process drift alert thresholds updated.',
+              })
+            }
             data-testid="button-alert-settings"
           >
             <Bell className="h-4 w-4 mr-2" />
@@ -918,7 +1078,9 @@ const ProcessTab = () => {
           <CardContent>
             <div className="text-2xl font-bold">3</div>
             <p className="text-xs text-gray-600">0.012% rate</p>
-            <Badge variant="secondary" className="mt-2">Low Risk</Badge>
+            <Badge variant="secondary" className="mt-2">
+              Low Risk
+            </Badge>
           </CardContent>
         </Card>
 
@@ -1001,8 +1163,8 @@ const ProcessTab = () => {
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                <strong>Trend Alert:</strong> Slight upward drift detected in compression force parameter. 
-                Current mean: 12.8 kN (Target: 12.5±0.5 kN)
+                <strong>Trend Alert:</strong> Slight upward drift detected in compression force
+                parameter. Current mean: 12.8 kN (Target: 12.5±0.5 kN)
               </AlertDescription>
             </Alert>
             <div className="grid grid-cols-2 gap-4">
@@ -1035,8 +1197,13 @@ const ProcessTab = () => {
                 </Select>
               </div>
             </div>
-            <Button 
-              onClick={() => toast({ title: '📊 Analysis Complete', description: 'Process trend analysis report generated.' })}
+            <Button
+              onClick={() =>
+                toast({
+                  title: '📊 Analysis Complete',
+                  description: 'Process trend analysis report generated.',
+                })
+              }
               className="w-full"
               data-testid="button-run-analysis"
             >
@@ -1057,7 +1224,7 @@ const ProcessTab = () => {
           <Wrench className="h-6 w-6 text-orange-600" />
           Equipment Qualification
         </h2>
-        <Button 
+        <Button
           onClick={() => setShowEquipmentDialog(true)}
           className="bg-orange-600 hover:bg-orange-700"
           data-testid="button-new-qualification"
@@ -1132,25 +1299,43 @@ const ProcessTab = () => {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center">
-                    <Badge variant={equip.pq === 'Complete' ? 'default' : equip.pq === 'In Progress' ? 'secondary' : 'outline'}>
+                    <Badge
+                      variant={
+                        equip.pq === 'Complete'
+                          ? 'default'
+                          : equip.pq === 'In Progress'
+                          ? 'secondary'
+                          : 'outline'
+                      }
+                    >
                       {equip.pq}
                     </Badge>
                   </TableCell>
                   <TableCell>{equip.nextCal}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant="ghost"
-                        onClick={() => toast({ title: '📋 View Protocol', description: `Loading qualification protocol for ${equip.name}...` })}
+                        onClick={() =>
+                          toast({
+                            title: '📋 View Protocol',
+                            description: `Loading qualification protocol for ${equip.name}...`,
+                          })
+                        }
                         data-testid={`button-view-protocol-${equip.id}`}
                       >
                         <Eye className="h-3 w-3" />
                       </Button>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant="ghost"
-                        onClick={() => toast({ title: '📅 Schedule Calibration', description: `Calibration scheduled for ${equip.name}` })}
+                        onClick={() =>
+                          toast({
+                            title: '📅 Schedule Calibration',
+                            description: `Calibration scheduled for ${equip.name}`,
+                          })
+                        }
                         data-testid={`button-schedule-cal-${equip.id}`}
                       >
                         <Calendar className="h-3 w-3" />
@@ -1169,10 +1354,15 @@ const ProcessTab = () => {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Preventive Maintenance Schedule</span>
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               variant="outline"
-              onClick={() => toast({ title: '📅 Schedule Updated', description: 'Preventive maintenance schedule has been updated.' })}
+              onClick={() =>
+                toast({
+                  title: '📅 Schedule Updated',
+                  description: 'Preventive maintenance schedule has been updated.',
+                })
+              }
               data-testid="button-update-schedule"
             >
               <RefreshCw className="h-3 w-3 mr-1" /> Update Schedule
@@ -1182,9 +1372,24 @@ const ProcessTab = () => {
         <CardContent>
           <div className="space-y-3">
             {[
-              { equip: 'Tablet Press X200', task: 'Monthly cleaning', due: '2025-02-01', status: 'Scheduled' },
-              { equip: 'Blender V50', task: 'Quarterly inspection', due: '2025-03-15', status: 'Scheduled' },
-              { equip: 'Coater C100', task: 'Annual overhaul', due: '2025-06-01', status: 'Planning' },
+              {
+                equip: 'Tablet Press X200',
+                task: 'Monthly cleaning',
+                due: '2025-02-01',
+                status: 'Scheduled',
+              },
+              {
+                equip: 'Blender V50',
+                task: 'Quarterly inspection',
+                due: '2025-03-15',
+                status: 'Scheduled',
+              },
+              {
+                equip: 'Coater C100',
+                task: 'Annual overhaul',
+                due: '2025-06-01',
+                status: 'Planning',
+              },
             ].map((item, idx) => (
               <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded">
                 <div className="flex-1">
@@ -1193,7 +1398,9 @@ const ProcessTab = () => {
                 </div>
                 <div className="text-right">
                   <div className="text-sm">{item.due}</div>
-                  <Badge variant="outline" className="text-xs mt-1">{item.status}</Badge>
+                  <Badge variant="outline" className="text-xs mt-1">
+                    {item.status}
+                  </Badge>
                 </div>
               </div>
             ))}
@@ -1212,8 +1419,13 @@ const ProcessTab = () => {
           Process Analytics
         </h2>
         <div className="flex gap-2">
-          <Button 
-            onClick={() => toast({ title: '📊 Report Generated', description: 'Comprehensive analytics report has been generated.' })}
+          <Button
+            onClick={() =>
+              toast({
+                title: '📊 Report Generated',
+                description: 'Comprehensive analytics report has been generated.',
+              })
+            }
             className="bg-indigo-600 hover:bg-indigo-700"
             data-testid="button-generate-analytics"
           >
@@ -1269,13 +1481,15 @@ const ProcessTab = () => {
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
-            <RadarChart data={[
-              { subject: 'Compression', A: 85, B: 90, fullMark: 100 },
-              { subject: 'Blending', A: 92, B: 88, fullMark: 100 },
-              { subject: 'Granulation', A: 78, B: 85, fullMark: 100 },
-              { subject: 'Coating', A: 88, B: 82, fullMark: 100 },
-              { subject: 'Packaging', A: 95, B: 92, fullMark: 100 },
-            ]}>
+            <RadarChart
+              data={[
+                { subject: 'Compression', A: 85, B: 90, fullMark: 100 },
+                { subject: 'Blending', A: 92, B: 88, fullMark: 100 },
+                { subject: 'Granulation', A: 78, B: 85, fullMark: 100 },
+                { subject: 'Coating', A: 88, B: 82, fullMark: 100 },
+                { subject: 'Packaging', A: 95, B: 92, fullMark: 100 },
+              ]}
+            >
               <PolarGrid />
               <PolarAngleAxis dataKey="subject" />
               <PolarRadiusAxis angle={90} domain={[0, 100]} />
@@ -1292,10 +1506,15 @@ const ProcessTab = () => {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Process Comparison Studies</span>
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               variant="outline"
-              onClick={() => toast({ title: '🔄 Comparison Updated', description: 'Process comparison analysis refreshed with latest data.' })}
+              onClick={() =>
+                toast({
+                  title: '🔄 Comparison Updated',
+                  description: 'Process comparison analysis refreshed with latest data.',
+                })
+              }
               data-testid="button-refresh-comparison"
             >
               <RefreshCw className="h-3 w-3 mr-1" /> Refresh
@@ -1361,10 +1580,15 @@ const ProcessTab = () => {
                   <div className="text-xs text-gray-600">Updated: 2025-01-15</div>
                 </div>
               </div>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="ghost"
-                onClick={() => toast({ title: '📄 Document Opened', description: 'Technology transfer protocol opened in new window.' })}
+                onClick={() =>
+                  toast({
+                    title: '📄 Document Opened',
+                    description: 'Technology transfer protocol opened in new window.',
+                  })
+                }
                 data-testid="button-open-protocol"
               >
                 <ExternalLink className="h-3 w-3" />
@@ -1378,10 +1602,15 @@ const ProcessTab = () => {
                   <div className="text-xs text-gray-600">Approved: 2025-01-20</div>
                 </div>
               </div>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="ghost"
-                onClick={() => toast({ title: '📄 Report Downloaded', description: 'Site qualification report downloaded successfully.' })}
+                onClick={() =>
+                  toast({
+                    title: '📄 Report Downloaded',
+                    description: 'Site qualification report downloaded successfully.',
+                  })
+                }
                 data-testid="button-download-report"
               >
                 <Download className="h-3 w-3" />
@@ -1439,7 +1668,8 @@ const ProcessTab = () => {
                 Enhanced Critical Path Analysis & Dependency Mapping
               </CardTitle>
               <CardDescription>
-                AI-powered critical path identification, dependency mapping, and real-time bottleneck analysis for process validation workflows
+                AI-powered critical path identification, dependency mapping, and real-time
+                bottleneck analysis for process validation workflows
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1449,7 +1679,10 @@ const ProcessTab = () => {
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-600">28 days</div>
                     <p className="text-sm text-blue-700">Critical Path Duration</p>
-                    <Badge variant="outline" className="mt-1 bg-blue-100 text-blue-800 border-blue-300">
+                    <Badge
+                      variant="outline"
+                      className="mt-1 bg-blue-100 text-blue-800 border-blue-300"
+                    >
                       <GitBranch className="w-3 h-3 mr-1" />
                       Optimized Path
                     </Badge>
@@ -1457,7 +1690,12 @@ const ProcessTab = () => {
                   <div className="text-center">
                     <div className="text-2xl font-bold text-orange-600">3</div>
                     <p className="text-sm text-orange-700">Active Bottlenecks</p>
-                    <Button size="sm" variant="outline" className="mt-1 border-orange-300 text-orange-700 hover:bg-orange-50" data-testid="button-resolve-bottlenecks">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-1 border-orange-300 text-orange-700 hover:bg-orange-50"
+                      data-testid="button-resolve-bottlenecks"
+                    >
                       <Zap className="w-3 h-3 mr-1" />
                       Auto-Resolve
                     </Button>
@@ -1486,7 +1724,9 @@ const ProcessTab = () => {
                         <GitBranch className="w-5 h-5" />
                         Process Dependencies
                       </CardTitle>
-                      <CardDescription>Real-time dependency tracking and impact analysis</CardDescription>
+                      <CardDescription>
+                        Real-time dependency tracking and impact analysis
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
@@ -1496,52 +1736,72 @@ const ProcessTab = () => {
                             depends_on: 'Equipment Qualification',
                             status: 'completed',
                             impact: 'None - on track',
-                            completion: 100
+                            completion: 100,
                           },
                           {
                             process: 'Stage 2: Process Qualification',
                             depends_on: 'Stage 1 + Method Validation',
                             status: 'in_progress',
                             impact: 'Method validation 2 days behind',
-                            completion: 65
+                            completion: 65,
                           },
                           {
                             process: 'Stage 3: Continued Verification',
                             depends_on: 'Stage 2 + Initial Batches',
                             status: 'blocked',
                             impact: 'Waiting for Stage 2 completion',
-                            completion: 0
+                            completion: 0,
                           },
                           {
                             process: 'Tech Transfer',
                             depends_on: 'Stage 2 + Documentation',
                             status: 'at_risk',
                             impact: 'Documentation review delayed',
-                            completion: 25
-                          }
+                            completion: 25,
+                          },
                         ].map((dep, index) => (
-                          <div key={index} className={`p-4 border rounded-lg ${
-                            dep.status === 'completed' ? 'bg-green-50 border-green-200' :
-                            dep.status === 'in_progress' ? 'bg-blue-50 border-blue-200' :
-                            dep.status === 'blocked' ? 'bg-red-50 border-red-200' :
-                            'bg-yellow-50 border-yellow-200'
-                          }`}>
+                          <div
+                            key={index}
+                            className={`p-4 border rounded-lg ${
+                              dep.status === 'completed'
+                                ? 'bg-green-50 border-green-200'
+                                : dep.status === 'in_progress'
+                                ? 'bg-blue-50 border-blue-200'
+                                : dep.status === 'blocked'
+                                ? 'bg-red-50 border-red-200'
+                                : 'bg-yellow-50 border-yellow-200'
+                            }`}
+                          >
                             <div className="flex justify-between items-start mb-3">
                               <div className="flex-1">
                                 <h5 className="font-medium text-sm">{dep.process}</h5>
-                                <p className="text-xs text-gray-600 mt-1">Depends on: {dep.depends_on}</p>
-                                <p className={`text-xs mt-1 ${
-                                  dep.status === 'completed' ? 'text-green-600' :
-                                  dep.status === 'blocked' ? 'text-red-600' : 'text-yellow-600'
-                                }`}>
+                                <p className="text-xs text-gray-600 mt-1">
+                                  Depends on: {dep.depends_on}
+                                </p>
+                                <p
+                                  className={`text-xs mt-1 ${
+                                    dep.status === 'completed'
+                                      ? 'text-green-600'
+                                      : dep.status === 'blocked'
+                                      ? 'text-red-600'
+                                      : 'text-yellow-600'
+                                  }`}
+                                >
                                   Impact: {dep.impact}
                                 </p>
                               </div>
-                              <Badge variant={
-                                dep.status === 'completed' ? 'default' :
-                                dep.status === 'in_progress' ? 'secondary' :
-                                dep.status === 'blocked' ? 'destructive' : 'outline'
-                              } className="text-xs">
+                              <Badge
+                                variant={
+                                  dep.status === 'completed'
+                                    ? 'default'
+                                    : dep.status === 'in_progress'
+                                    ? 'secondary'
+                                    : dep.status === 'blocked'
+                                    ? 'destructive'
+                                    : 'outline'
+                                }
+                                className="text-xs"
+                              >
                                 {dep.status.replace('_', ' ')}
                               </Badge>
                             </div>
@@ -1553,7 +1813,11 @@ const ProcessTab = () => {
                               <Progress value={dep.completion} className="h-2" />
                             </div>
                             {dep.status === 'blocked' && (
-                              <Button size="sm" variant="outline" className="mt-2 w-full border-red-300 text-red-700 hover:bg-red-50">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="mt-2 w-full border-red-300 text-red-700 hover:bg-red-50"
+                              >
                                 <AlertTriangle className="w-3 h-3 mr-1" />
                                 Resolve Dependency
                               </Button>
@@ -1570,7 +1834,9 @@ const ProcessTab = () => {
                         <AlertTriangle className="w-5 h-5" />
                         Bottleneck Detection
                       </CardTitle>
-                      <CardDescription>AI-powered bottleneck identification and resolution recommendations</CardDescription>
+                      <CardDescription>
+                        AI-powered bottleneck identification and resolution recommendations
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
@@ -1581,7 +1847,7 @@ const ProcessTab = () => {
                             delay: '3-5 days',
                             cause: 'Reviewer backlog in analytical department',
                             solution: 'Escalate to backup reviewer or external consultant',
-                            confidence: 85
+                            confidence: 85,
                           },
                           {
                             bottleneck: 'Equipment Maintenance Window',
@@ -1589,7 +1855,7 @@ const ProcessTab = () => {
                             delay: '1-2 days',
                             cause: 'Scheduled maintenance overlap with testing',
                             solution: 'Reschedule maintenance or use backup equipment',
-                            confidence: 92
+                            confidence: 92,
                           },
                           {
                             bottleneck: 'Raw Material Supply',
@@ -1597,36 +1863,55 @@ const ProcessTab = () => {
                             delay: '0-1 days',
                             cause: 'Supplier lead time variance',
                             solution: 'Pre-order critical materials for next batch',
-                            confidence: 78
-                          }
+                            confidence: 78,
+                          },
                         ].map((bottleneck, index) => (
-                          <div key={index} className={`p-4 border rounded-lg ${
-                            bottleneck.severity === 'high' ? 'bg-red-50 border-red-200' :
-                            bottleneck.severity === 'medium' ? 'bg-yellow-50 border-yellow-200' :
-                            'bg-gray-50 border-gray-200'
-                          }`}>
+                          <div
+                            key={index}
+                            className={`p-4 border rounded-lg ${
+                              bottleneck.severity === 'high'
+                                ? 'bg-red-50 border-red-200'
+                                : bottleneck.severity === 'medium'
+                                ? 'bg-yellow-50 border-yellow-200'
+                                : 'bg-gray-50 border-gray-200'
+                            }`}
+                          >
                             <div className="flex justify-between items-start mb-3">
                               <div className="flex-1">
                                 <h5 className="font-medium text-sm">{bottleneck.bottleneck}</h5>
-                                <p className="text-xs text-gray-600 mt-1">Delay Risk: {bottleneck.delay}</p>
-                                <p className="text-xs text-gray-600">Root Cause: {bottleneck.cause}</p>
+                                <p className="text-xs text-gray-600 mt-1">
+                                  Delay Risk: {bottleneck.delay}
+                                </p>
+                                <p className="text-xs text-gray-600">
+                                  Root Cause: {bottleneck.cause}
+                                </p>
                               </div>
-                              <Badge variant={
-                                bottleneck.severity === 'high' ? 'destructive' :
-                                bottleneck.severity === 'medium' ? 'secondary' : 'outline'
-                              } className="text-xs">
+                              <Badge
+                                variant={
+                                  bottleneck.severity === 'high'
+                                    ? 'destructive'
+                                    : bottleneck.severity === 'medium'
+                                    ? 'secondary'
+                                    : 'outline'
+                                }
+                                className="text-xs"
+                              >
                                 {bottleneck.severity} risk
                               </Badge>
                             </div>
                             <div className="bg-purple-100 p-3 rounded text-xs text-purple-800 mb-3">
-                              <span className="font-medium">AI Recommendation:</span> {bottleneck.solution}
+                              <span className="font-medium">AI Recommendation:</span>{' '}
+                              {bottleneck.solution}
                               <div className="flex items-center mt-1">
                                 <Brain className="w-3 h-3 mr-1" />
                                 <span>{bottleneck.confidence}% confidence</span>
                               </div>
                             </div>
                             <div className="flex gap-2">
-                              <Button size="sm" className="bg-purple-600 hover:bg-purple-700 flex-1">
+                              <Button
+                                size="sm"
+                                className="bg-purple-600 hover:bg-purple-700 flex-1"
+                              >
                                 <Zap className="w-3 h-3 mr-1" />
                                 Apply Solution
                               </Button>
@@ -1676,7 +1961,8 @@ const ProcessTab = () => {
           <DialogHeader>
             <DialogTitle>Generate PPQ Protocol</DialogTitle>
             <DialogDescription>
-              Create a comprehensive Process Performance Qualification protocol based on FDA guidance
+              Create a comprehensive Process Performance Qualification protocol based on FDA
+              guidance
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -1720,14 +2006,14 @@ const ProcessTab = () => {
             </div>
             <div>
               <Label>Critical Process Parameters to Monitor</Label>
-              <Textarea 
+              <Textarea
                 placeholder="List all CPPs to be monitored during PPQ batches..."
                 className="h-20"
               />
             </div>
             <div>
               <Label>Acceptance Criteria</Label>
-              <Textarea 
+              <Textarea
                 placeholder="Define acceptance criteria for PPQ success..."
                 className="h-20"
               />
@@ -1834,14 +2120,14 @@ const ProcessTab = () => {
             </div>
             <div>
               <Label>Factors</Label>
-              <Textarea 
+              <Textarea
                 placeholder="List factors and their levels (e.g., Compression Force: 8-12 kN)"
                 className="h-20"
               />
             </div>
             <div>
               <Label>Response Variables</Label>
-              <Textarea 
+              <Textarea
                 placeholder="List response variables to measure (e.g., Tablet Hardness, Dissolution)"
                 className="h-20"
               />
@@ -1892,14 +2178,11 @@ const ProcessTab = () => {
             </div>
             <div>
               <Label>Qualification Scope</Label>
-              <Textarea 
-                placeholder="Describe the scope of qualification..."
-                className="h-20"
-              />
+              <Textarea placeholder="Describe the scope of qualification..." className="h-20" />
             </div>
             <div>
               <Label>Acceptance Criteria</Label>
-              <Textarea 
+              <Textarea
                 placeholder="Define acceptance criteria for successful qualification..."
                 className="h-20"
               />

@@ -96,7 +96,7 @@ export default function RegulatoryChecklist({ submissionId }) {
           </div>
           <div className="text-sm font-normal text-gray-500 flex items-center">
             <span className="mr-2">FDA 21 CFR 312</span>
-            <a href="#" className="text-blue-600 hover:text-blue-800 flex items-center">
+            <a href="https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-312" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center">
               <ExternalLink className="h-4 w-4" />
             </a>
           </div>

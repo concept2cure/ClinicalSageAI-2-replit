@@ -15036,7 +15036,8 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                   setShowTemplateManager(false);
                   toast({
                     title: 'Custom Template',
-                    description: 'Select a base template above, then customize it in the editor to create your own template.',
+                    description:
+                      'Select a base template above, then customize it in the editor to create your own template.',
                   });
                 }}
               >

@@ -676,9 +676,15 @@ function Footer() {
           <div>
             <h4 className={headingClass}>Company</h4>
             <ul className="mt-4 space-y-3">
-              {['About', 'Careers', 'Blog', 'Contact', 'Partners'].map(label => (
+              {([
+                ['About', '/about'],
+                ['Careers', '/careers'],
+                ['Blog', '/blog'],
+                ['Contact', '/contact'],
+                ['Partners', '/partners'],
+              ] as const).map(([label, path]) => (
                 <li key={label}>
-                  <a href="#" className={linkClass}>
+                  <a href={path} className={linkClass}>
                     {label}
                   </a>
                 </li>
@@ -690,15 +696,15 @@ function Footer() {
           <div>
             <h4 className={headingClass}>Legal</h4>
             <ul className="mt-4 space-y-3">
-              {[
-                'Privacy Policy',
-                'Terms of Service',
-                'Security',
-                'HIPAA Compliance',
-                'Data Processing Agreement',
-              ].map(label => (
+              {([
+                ['Privacy Policy', '/legal/privacy'],
+                ['Terms of Service', '/legal/terms'],
+                ['Security', '/legal/security'],
+                ['HIPAA Compliance', '/legal/hipaa'],
+                ['Data Processing Agreement', '/legal/data-processing'],
+              ] as const).map(([label, path]) => (
                 <li key={label}>
-                  <a href="#" className={linkClass}>
+                  <a href={path} className={linkClass}>
                     {label}
                   </a>
                 </li>

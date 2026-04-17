@@ -101,7 +101,9 @@ export default function DocumentBrowser({ onDocumentSelect, moduleContext, heigh
     // Apply module context filter if provided
     if (moduleContext) {
       docsToDisplay = docsToDisplay.filter(
-        doc => (doc.moduleContext || doc.moduleLinked || '').toLowerCase() === moduleContext.toLowerCase()
+        doc =>
+          (doc.moduleContext || doc.moduleLinked || '').toLowerCase() ===
+          moduleContext.toLowerCase()
       );
     }
 
@@ -366,7 +368,9 @@ export default function DocumentBrowser({ onDocumentSelect, moduleContext, heigh
                     Document Name
                     {sortConfig.key === 'name' && (
                       <ArrowUpDown
-                        className={`ml-1 h-3 w-3 ${sortConfig.direction === 'asc' ? 'rotate-180' : ''}`}
+                        className={`ml-1 h-3 w-3 ${
+                          sortConfig.direction === 'asc' ? 'rotate-180' : ''
+                        }`}
                       />
                     )}
                   </div>
@@ -376,7 +380,9 @@ export default function DocumentBrowser({ onDocumentSelect, moduleContext, heigh
                     Type
                     {sortConfig.key === 'documentType' && (
                       <ArrowUpDown
-                        className={`ml-1 h-3 w-3 ${sortConfig.direction === 'asc' ? 'rotate-180' : ''}`}
+                        className={`ml-1 h-3 w-3 ${
+                          sortConfig.direction === 'asc' ? 'rotate-180' : ''
+                        }`}
                       />
                     )}
                   </div>
@@ -386,7 +392,9 @@ export default function DocumentBrowser({ onDocumentSelect, moduleContext, heigh
                     Author
                     {sortConfig.key === 'author' && (
                       <ArrowUpDown
-                        className={`ml-1 h-3 w-3 ${sortConfig.direction === 'asc' ? 'rotate-180' : ''}`}
+                        className={`ml-1 h-3 w-3 ${
+                          sortConfig.direction === 'asc' ? 'rotate-180' : ''
+                        }`}
                       />
                     )}
                   </div>
@@ -396,7 +404,9 @@ export default function DocumentBrowser({ onDocumentSelect, moduleContext, heigh
                     Last Modified
                     {sortConfig.key === 'lastModified' && (
                       <ArrowUpDown
-                        className={`ml-1 h-3 w-3 ${sortConfig.direction === 'asc' ? 'rotate-180' : ''}`}
+                        className={`ml-1 h-3 w-3 ${
+                          sortConfig.direction === 'asc' ? 'rotate-180' : ''
+                        }`}
                       />
                     )}
                   </div>
@@ -406,7 +416,9 @@ export default function DocumentBrowser({ onDocumentSelect, moduleContext, heigh
                     Version
                     {sortConfig.key === 'version' && (
                       <ArrowUpDown
-                        className={`ml-1 h-3 w-3 ${sortConfig.direction === 'asc' ? 'rotate-180' : ''}`}
+                        className={`ml-1 h-3 w-3 ${
+                          sortConfig.direction === 'asc' ? 'rotate-180' : ''
+                        }`}
                       />
                     )}
                   </div>
@@ -416,7 +428,9 @@ export default function DocumentBrowser({ onDocumentSelect, moduleContext, heigh
                     Size
                     {sortConfig.key === 'size' && (
                       <ArrowUpDown
-                        className={`ml-1 h-3 w-3 ${sortConfig.direction === 'asc' ? 'rotate-180' : ''}`}
+                        className={`ml-1 h-3 w-3 ${
+                          sortConfig.direction === 'asc' ? 'rotate-180' : ''
+                        }`}
                       />
                     )}
                   </div>
@@ -448,7 +462,9 @@ export default function DocumentBrowser({ onDocumentSelect, moduleContext, heigh
                 filteredDocuments.map(doc => (
                   <TableRow
                     key={doc.id}
-                    className={`cursor-pointer ${selectedDocuments.includes(doc.id) ? 'bg-blue-50' : ''}`}
+                    className={`cursor-pointer ${
+                      selectedDocuments.includes(doc.id) ? 'bg-blue-50' : ''
+                    }`}
                     onClick={() => handleDocumentClick(doc)}
                   >
                     <TableCell className="py-2" onClick={e => e.stopPropagation()}>
@@ -507,14 +523,25 @@ export default function DocumentBrowser({ onDocumentSelect, moduleContext, heigh
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="cursor-pointer"
-                            onClick={() => toast({ title: 'Version history', description: 'Version history is not yet available for this document.' })}
+                            onClick={() =>
+                              toast({
+                                title: `Version History — ${doc.title || doc.name}`,
+                                description: `Current version: ${
+                                  doc.version || '1.0'
+                                }. Last modified: ${
+                                  doc.lastModified
+                                    ? new Date(doc.lastModified).toLocaleDateString()
+                                    : 'Unknown'
+                                }.`,
+                              })
+                            }
                           >
                             <History className="h-4 w-4 mr-2" />
                             Version History
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="cursor-pointer"
-                            onClick={() => toast({ title: 'Edit properties', description: 'Document property editing is not yet available.' })}
+                            onClick={() => handleDocumentClick(doc)}
                           >
                             <Edit className="h-4 w-4 mr-2" />
                             Edit Properties
@@ -522,7 +549,15 @@ export default function DocumentBrowser({ onDocumentSelect, moduleContext, heigh
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="cursor-pointer text-red-600"
-                            onClick={() => toast({ title: 'Delete', description: 'Document deletion requires admin approval and is not yet available.', variant: 'destructive' })}
+                            onClick={() =>
+                              toast({
+                                title: 'Deletion restricted',
+                                description: `"${
+                                  doc.title || doc.name
+                                }" is under document control. Contact a Document Administrator to request deletion.`,
+                                variant: 'destructive',
+                              })
+                            }
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete

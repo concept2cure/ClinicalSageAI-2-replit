@@ -71,6 +71,7 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
     dateFrom: '',
     dateTo: '',
   });
+  const [showFilters, setShowFilters] = useState(false);
 
   const { data: predicates, isLoading } = usePredicateSearch(
     {
@@ -92,19 +93,22 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
             <h3 className="font-semibold text-stone-900">Predicate Pathfinder</h3>
             <p className="text-sm text-stone-500">Search FDA 510(k) database for predicates</p>
           </div>
-          <button className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1">
+          <button
+            className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1"
+            onClick={() => setShowFilters(f => !f)}
+          >
             <Filter className="w-4 h-4" />
             Filters
           </button>
         </div>
-        
+
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" />
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search by device name, product code, or K number..."
             className="w-full pl-10 pr-4 py-2.5 border border-stone-200 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-stone-400 outline-none focus:border-transparent"
           />
@@ -120,7 +124,7 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
           </div>
         ) : predicates && predicates.length > 0 ? (
           <div className="divide-y divide-stone-100">
-            {predicates.map((predicate) => (
+            {predicates.map(predicate => (
               <button
                 key={predicate.kNumber}
                 onClick={() => onSelectPredicate(predicate.kNumber)}
@@ -130,12 +134,14 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-medium text-blue-600">{predicate.kNumber}</span>
-                      <span className={cn(
-                        "px-1.5 py-0.5 rounded text-xs font-medium",
-                        predicate.decisionType === 'SE' 
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-red-100 text-red-700"
-                      )}>
+                      <span
+                        className={cn(
+                          'px-1.5 py-0.5 rounded text-xs font-medium',
+                          predicate.decisionType === 'SE'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-red-100 text-red-700'
+                        )}
+                      >
                         {predicate.decisionType}
                       </span>
                       {predicate.similarityScore && (
@@ -148,7 +154,8 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
                       {predicate.deviceName}
                     </h4>
                     <p className="text-xs text-stone-500">
-                      {predicate.applicant} • {predicate.productCode} • Class {predicate.deviceClass}
+                      {predicate.applicant} • {predicate.productCode} • Class{' '}
+                      {predicate.deviceClass}
                     </p>
                   </div>
                   <ChevronRight className="w-5 h-5 text-stone-400 group-hover:text-stone-500 transition-colors duration-150" />
@@ -202,19 +209,27 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
 
   const getRiskColor = (level: string) => {
     switch (level) {
-      case 'CRITICAL': return 'bg-red-100 text-red-700 border-red-200';
-      case 'HIGH': return 'bg-orange-100 text-orange-700 border-orange-200';
-      case 'MEDIUM': return 'bg-amber-100 text-amber-700 border-amber-200';
-      case 'LOW': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-      default: return 'bg-stone-100 text-stone-700 border-stone-200';
+      case 'CRITICAL':
+        return 'bg-red-100 text-red-700 border-red-200';
+      case 'HIGH':
+        return 'bg-orange-100 text-orange-700 border-orange-200';
+      case 'MEDIUM':
+        return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'LOW':
+        return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      default:
+        return 'bg-stone-100 text-stone-700 border-stone-200';
     }
   };
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
-      case 'UP': return <TrendingUp className="w-4 h-4 text-red-500" />;
-      case 'DOWN': return <TrendingDown className="w-4 h-4 text-emerald-500" />;
-      default: return <Activity className="w-4 h-4 text-stone-400" />;
+      case 'UP':
+        return <TrendingUp className="w-4 h-4 text-red-500" />;
+      case 'DOWN':
+        return <TrendingDown className="w-4 h-4 text-emerald-500" />;
+      default:
+        return <Activity className="w-4 h-4 text-stone-400" />;
     }
   };
 
@@ -227,10 +242,12 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
             <h3 className="font-semibold text-stone-900">MAUDE Hazard Monitor</h3>
             <p className="text-sm text-stone-500">Product Code: {productCode}</p>
           </div>
-          <div className={cn(
-            "px-3 py-1 rounded-full text-sm font-medium border",
-            getRiskColor(hazardAnalysis.summary.riskLevel)
-          )}>
+          <div
+            className={cn(
+              'px-3 py-1 rounded-full text-sm font-medium border',
+              getRiskColor(hazardAnalysis.summary.riskLevel)
+            )}
+          >
             {hazardAnalysis.summary.riskLevel} Risk
           </div>
         </div>
@@ -316,15 +333,24 @@ const SubmissionTracker: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'DRAFT': return 'bg-stone-100 text-stone-600';
-      case 'INTERNAL_REVIEW': return 'bg-blue-100 text-blue-600';
-      case 'READY_FOR_SUBMISSION': return 'bg-emerald-100 text-emerald-600';
-      case 'SUBMITTED': return 'bg-purple-100 text-purple-600';
-      case 'RTA_HOLD': return 'bg-amber-100 text-amber-600';
-      case 'SUBSTANTIVE_REVIEW': return 'bg-blue-100 text-blue-600';
-      case 'AI_REQUEST': return 'bg-orange-100 text-orange-600';
-      case 'SE_DETERMINATION': return 'bg-emerald-100 text-emerald-600';
-      default: return 'bg-stone-100 text-stone-600';
+      case 'DRAFT':
+        return 'bg-stone-100 text-stone-600';
+      case 'INTERNAL_REVIEW':
+        return 'bg-blue-100 text-blue-600';
+      case 'READY_FOR_SUBMISSION':
+        return 'bg-emerald-100 text-emerald-600';
+      case 'SUBMITTED':
+        return 'bg-purple-100 text-purple-600';
+      case 'RTA_HOLD':
+        return 'bg-amber-100 text-amber-600';
+      case 'SUBSTANTIVE_REVIEW':
+        return 'bg-blue-100 text-blue-600';
+      case 'AI_REQUEST':
+        return 'bg-orange-100 text-orange-600';
+      case 'SE_DETERMINATION':
+        return 'bg-emerald-100 text-emerald-600';
+      default:
+        return 'bg-stone-100 text-stone-600';
     }
   };
 
@@ -335,7 +361,10 @@ const SubmissionTracker: React.FC = () => {
           <h3 className="font-semibold text-stone-900">Active Submissions</h3>
           <p className="text-sm text-stone-500">{submissions.length} total</p>
         </div>
-        <button className="flex items-center gap-2 px-3 py-1.5 bg-stone-900 text-white rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors duration-150">
+        <button
+          className="flex items-center gap-2 px-3 py-1.5 bg-stone-900 text-white rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors duration-150"
+          onClick={() => onNavigate?.('510k')}
+        >
           <Plus className="w-4 h-4" />
           New 510(k)
         </button>
@@ -347,7 +376,7 @@ const SubmissionTracker: React.FC = () => {
         </div>
       ) : submissions.length > 0 ? (
         <div className="divide-y divide-stone-100">
-          {submissions.map((submission) => (
+          {submissions.map(submission => (
             <div
               key={submission.id}
               className="p-4 hover:bg-stone-50 transition-colors cursor-pointer"
@@ -357,10 +386,12 @@ const SubmissionTracker: React.FC = () => {
                   <h4 className="font-medium text-stone-900">{submission.deviceName}</h4>
                   <p className="text-sm text-stone-500">{submission.applicant}</p>
                 </div>
-                <span className={cn(
-                  "px-2 py-1 rounded text-xs font-medium",
-                  getStatusColor(submission.status)
-                )}>
+                <span
+                  className={cn(
+                    'px-2 py-1 rounded text-xs font-medium',
+                    getStatusColor(submission.status)
+                  )}
+                >
                   {submission.status.replace(/_/g, ' ')}
                 </span>
               </div>
@@ -395,7 +426,11 @@ export const MedTechWorkspace: React.FC<MedTechWorkspaceProps> = ({
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('overview');
   const [selectedProductCode, setSelectedProductCode] = useState<string>('DRC');
 
-  const tabs: Array<{ id: WorkspaceTab; label: string; icon: React.ComponentType<{ className?: string }> }> = [
+  const tabs: Array<{
+    id: WorkspaceTab;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }> = [
     { id: 'overview', label: 'Overview', icon: BarChart2 },
     { id: 'predicates', label: 'Predicates', icon: Search },
     { id: 'maude', label: 'MAUDE', icon: AlertTriangle },
@@ -413,26 +448,27 @@ export const MedTechWorkspace: React.FC<MedTechWorkspaceProps> = ({
             <p className="text-sm text-stone-500">510(k), PMA, De Novo & EU MDR Tools</p>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 rounded-lg hover:bg-stone-100 transition-colors text-stone-400">
+            <button
+              className="p-2 rounded-lg hover:bg-stone-100 transition-colors text-stone-400"
+              onClick={() => window.location.reload()}
+              aria-label="Refresh workspace"
+            >
               <RefreshCw className="w-5 h-5" />
-            </button>
-            <button className="p-2 rounded-lg hover:bg-stone-100 transition-colors text-stone-400">
-              <MoreHorizontal className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* Tabs */}
         <div className="flex items-center gap-1">
-          {tabs.map((tab) => (
+          {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150",
+                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150',
                 activeTab === tab.id
-                  ? "bg-stone-900 text-white"
-                  : "text-stone-600 hover:bg-stone-100"
+                  ? 'bg-stone-900 text-white'
+                  : 'text-stone-600 hover:bg-stone-100'
               )}
             >
               <tab.icon className="w-4 h-4" />
@@ -449,25 +485,26 @@ export const MedTechWorkspace: React.FC<MedTechWorkspaceProps> = ({
             <SubmissionTracker />
             <MAUDEHazardMonitor productCode={selectedProductCode} />
             <div className="col-span-2">
-              <PredicatePathfinder onSelectPredicate={(k) => console.log('Selected:', k)} />
+              <PredicatePathfinder onSelectPredicate={k => onNavigate?.(`predicate-${k}`)} />
             </div>
           </div>
         )}
 
         {activeTab === 'predicates' && (
-          <PredicatePathfinder onSelectPredicate={(k) => console.log('Selected:', k)} />
+          <PredicatePathfinder onSelectPredicate={k => onNavigate?.(`predicate-${k}`)} />
         )}
 
-        {activeTab === 'maude' && (
-          <MAUDEHazardMonitor productCode={selectedProductCode} />
-        )}
+        {activeTab === 'maude' && <MAUDEHazardMonitor productCode={selectedProductCode} />}
 
         {activeTab === 'estar' && (
           <div className="bg-white rounded-xl border border-stone-200 p-8 text-center">
             <ClipboardList className="w-16 h-16 mx-auto mb-4 text-stone-400" />
             <h3 className="text-lg font-semibold text-stone-900 mb-2">eSTAR Package Manager</h3>
             <p className="text-stone-500 mb-4">FDA eSTAR template management and validation</p>
-            <button className="px-4 py-2 bg-stone-900 text-white rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors duration-150">
+            <button
+              className="px-4 py-2 bg-stone-900 text-white rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors duration-150"
+              onClick={() => onNavigate?.('estar')}
+            >
               Create eSTAR Package
             </button>
           </div>
@@ -476,9 +513,14 @@ export const MedTechWorkspace: React.FC<MedTechWorkspaceProps> = ({
         {activeTab === 'cer' && (
           <div className="bg-white rounded-xl border border-stone-200 p-8 text-center">
             <Globe className="w-16 h-16 mx-auto mb-4 text-stone-400" />
-            <h3 className="text-lg font-semibold text-stone-900 mb-2">Clinical Evaluation Report</h3>
+            <h3 className="text-lg font-semibold text-stone-900 mb-2">
+              Clinical Evaluation Report
+            </h3>
             <p className="text-stone-500 mb-4">EU MDR CER and PMCF planning</p>
-            <button className="px-4 py-2 bg-stone-900 text-white rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors duration-150">
+            <button
+              className="px-4 py-2 bg-stone-900 text-white rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors duration-150"
+              onClick={() => onNavigate?.('cer')}
+            >
               Start New CER
             </button>
           </div>

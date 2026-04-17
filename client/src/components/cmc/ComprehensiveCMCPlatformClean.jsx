@@ -265,7 +265,11 @@ function NewStudyWizard({ onClose, onStudyCreated }) {
       }
     } catch (error) {
       console.error('Failed to save draft:', error);
-      toast({ title: 'Save Failed', description: 'Could not save draft. Please try again.', variant: 'destructive' });
+      toast({
+        title: 'Save Failed',
+        description: 'Could not save draft. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -291,7 +295,11 @@ function NewStudyWizard({ onClose, onStudyCreated }) {
       }
     } catch (error) {
       console.error('Failed to create study:', error);
-      toast({ title: 'Study Creation Failed', description: 'Could not create study. Please try again.', variant: 'destructive' });
+      toast({
+        title: 'Study Creation Failed',
+        description: 'Could not create study. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -1410,7 +1418,11 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
       setTasks(tasksData);
     } catch (error) {
       console.error('Failed to refresh tasks:', error);
-      toast({ title: 'Refresh Failed', description: 'Could not load latest tasks.', variant: 'destructive' });
+      toast({
+        title: 'Refresh Failed',
+        description: 'Could not load latest tasks.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -1421,7 +1433,11 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
       setRisks(risksData);
     } catch (error) {
       console.error('Failed to refresh risks:', error);
-      toast({ title: 'Refresh Failed', description: 'Could not load latest risks.', variant: 'destructive' });
+      toast({
+        title: 'Refresh Failed',
+        description: 'Could not load latest risks.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -1652,38 +1668,68 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
       // Fetch analytical methods
       try {
         const res = await fetch('/api/analytical/methods', { headers, credentials: 'include' });
-        if (res.ok) { const data = await res.json(); setAnalyticalMethods(Array.isArray(data) ? data : data.data || []); }
-      } catch (e) { console.error('Failed to load analytical methods:', e); }
+        if (res.ok) {
+          const data = await res.json();
+          setAnalyticalMethods(Array.isArray(data) ? data : data.data || []);
+        }
+      } catch (e) {
+        console.error('Failed to load analytical methods:', e);
+      }
 
       // Fetch process validations
       try {
         const res = await fetch('/api/cmc/process-validation', { headers, credentials: 'include' });
-        if (res.ok) { const data = await res.json(); setProcessValidations(Array.isArray(data) ? data : data.data || []); }
-      } catch (e) { console.error('Failed to load process validations:', e); }
+        if (res.ok) {
+          const data = await res.json();
+          setProcessValidations(Array.isArray(data) ? data : data.data || []);
+        }
+      } catch (e) {
+        console.error('Failed to load process validations:', e);
+      }
 
       // Fetch stability studies
       try {
         const res = await fetch('/api/stability/studies', { headers, credentials: 'include' });
-        if (res.ok) { const data = await res.json(); setStabilityStudies(Array.isArray(data) ? data : data.data || []); }
-      } catch (e) { console.error('Failed to load stability studies:', e); }
+        if (res.ok) {
+          const data = await res.json();
+          setStabilityStudies(Array.isArray(data) ? data : data.data || []);
+        }
+      } catch (e) {
+        console.error('Failed to load stability studies:', e);
+      }
 
       // Fetch QC testing data
       try {
         const res = await fetch('/api/qc/batch-releases', { headers, credentials: 'include' });
-        if (res.ok) { const data = await res.json(); setQcTesting(Array.isArray(data) ? data : data.data || []); }
-      } catch (e) { console.error('Failed to load QC data:', e); }
+        if (res.ok) {
+          const data = await res.json();
+          setQcTesting(Array.isArray(data) ? data : data.data || []);
+        }
+      } catch (e) {
+        console.error('Failed to load QC data:', e);
+      }
 
       // Fetch risk assessments
       try {
         const res = await fetch('/api/cmc/risks', { headers, credentials: 'include' });
-        if (res.ok) { const data = await res.json(); setRiskAssessments(Array.isArray(data) ? data : data.data || []); }
-      } catch (e) { console.error('Failed to load risk assessments:', e); }
+        if (res.ok) {
+          const data = await res.json();
+          setRiskAssessments(Array.isArray(data) ? data : data.data || []);
+        }
+      } catch (e) {
+        console.error('Failed to load risk assessments:', e);
+      }
 
       // Fetch audit trail
       try {
         const res = await fetch('/api/cmc/audit/trail', { headers, credentials: 'include' });
-        if (res.ok) { const data = await res.json(); setAuditData(Array.isArray(data) ? data : data.data || []); }
-      } catch (e) { console.error('Failed to load audit data:', e); }
+        if (res.ok) {
+          const data = await res.json();
+          setAuditData(Array.isArray(data) ? data : data.data || []);
+        }
+      } catch (e) {
+        console.error('Failed to load audit data:', e);
+      }
 
       // Load real submission data from database
       const loadSubmissionData = async () => {
@@ -1943,7 +1989,11 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
 
     toast({
       title: 'Success',
-      description: `${modalType.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} saved successfully. AI Assistant has been updated with contextual guidance.`,
+      description: `${modalType
+        .replace('-', ' ')
+        .replace(/\b\w/g, l =>
+          l.toUpperCase()
+        )} saved successfully. AI Assistant has been updated with contextual guidance.`,
     });
     closeModal();
   };
@@ -2403,7 +2453,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
       );
       toast({
         title: 'Edit suggestion',
-        description: `Review the preview for "${suggestion.title || 'this suggestion'}" and apply or dismiss it.`,
+        description: `Review the preview for "${
+          suggestion.title || 'this suggestion'
+        }" and apply or dismiss it.`,
       });
     }
   };
@@ -2549,16 +2601,16 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                       (dashboardData.criticalGaps || 0) === 0
                         ? 'bg-green-500'
                         : (dashboardData.criticalGaps || 0) <= 2
-                          ? 'bg-yellow-500'
-                          : 'bg-red-500'
+                        ? 'bg-yellow-500'
+                        : 'bg-red-500'
                     }`}
                   ></div>
                   <span className="text-xs text-gray-600">
                     {(dashboardData.criticalGaps || 0) === 0
                       ? 'All Clear'
                       : (dashboardData.criticalGaps || 0) <= 2
-                        ? 'Manageable'
-                        : 'Action Required'}
+                      ? 'Manageable'
+                      : 'Action Required'}
                   </span>
                 </div>
                 <Button
@@ -2592,16 +2644,16 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                       dashboardData.qualityScore >= 95
                         ? 'default'
                         : dashboardData.qualityScore >= 85
-                          ? 'secondary'
-                          : 'destructive'
+                        ? 'secondary'
+                        : 'destructive'
                     }
                     className="text-xs"
                   >
                     {dashboardData.qualityScore >= 95
                       ? 'Excellent'
                       : dashboardData.qualityScore >= 85
-                        ? 'Good'
-                        : 'Needs Work'}
+                      ? 'Good'
+                      : 'Needs Work'}
                   </Badge>
                 </div>
               </CardContent>
@@ -2650,8 +2702,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                       insight.confidence >= 0.9
                                         ? 'bg-green-50 text-green-700 border-green-300'
                                         : insight.confidence >= 0.8
-                                          ? 'bg-yellow-50 text-yellow-700 border-yellow-300'
-                                          : 'bg-gray-50 text-gray-700 border-gray-300'
+                                        ? 'bg-yellow-50 text-yellow-700 border-yellow-300'
+                                        : 'bg-gray-50 text-gray-700 border-gray-300'
                                     }`}
                                   >
                                     {Math.round(insight.confidence * 100)}% confidence
@@ -2666,14 +2718,14 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                     insight.type === 'predictive'
                                       ? 'bg-blue-50 text-blue-700 border-blue-300'
                                       : insight.type === 'compliance'
-                                        ? 'bg-red-50 text-red-700 border-red-300'
-                                        : insight.type === 'opportunity'
-                                          ? 'bg-green-50 text-green-700 border-green-300'
-                                          : insight.type === 'risk_assessment'
-                                            ? 'bg-orange-50 text-orange-700 border-orange-300'
-                                            : insight.type === 'multi_agency'
-                                              ? 'bg-indigo-50 text-indigo-700 border-indigo-300'
-                                              : 'bg-gray-50 text-gray-700 border-gray-300'
+                                      ? 'bg-red-50 text-red-700 border-red-300'
+                                      : insight.type === 'opportunity'
+                                      ? 'bg-green-50 text-green-700 border-green-300'
+                                      : insight.type === 'risk_assessment'
+                                      ? 'bg-orange-50 text-orange-700 border-orange-300'
+                                      : insight.type === 'multi_agency'
+                                      ? 'bg-indigo-50 text-indigo-700 border-indigo-300'
+                                      : 'bg-gray-50 text-gray-700 border-gray-300'
                                   }`}
                                 >
                                   {insight.type?.replace('_', ' ') || 'analysis'}
@@ -2683,8 +2735,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                     insight.impactLevel === 'HIGH'
                                       ? 'destructive'
                                       : insight.impactLevel === 'MEDIUM'
-                                        ? 'secondary'
-                                        : 'outline'
+                                      ? 'secondary'
+                                      : 'outline'
                                   }
                                   className="text-xs"
                                 >
@@ -2841,8 +2893,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                         dep.status === 'blocking'
                           ? 'bg-red-50 border-red-200'
                           : dep.status === 'at-risk'
-                            ? 'bg-yellow-50 border-yellow-200'
-                            : 'bg-green-50 border-green-200'
+                          ? 'bg-yellow-50 border-yellow-200'
+                          : 'bg-green-50 border-green-200'
                       }`}
                     >
                       <div className="flex justify-between items-start mb-2">
@@ -2855,8 +2907,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                             dep.priority === 'critical'
                               ? 'destructive'
                               : dep.priority === 'high'
-                                ? 'secondary'
-                                : 'outline'
+                              ? 'secondary'
+                              : 'outline'
                           }
                           className="text-xs"
                         >
@@ -2915,10 +2967,10 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                   stage.status === 'APPROVED'
                                     ? 'default'
                                     : stage.status === 'READY_FOR_QA'
-                                      ? 'secondary'
-                                      : stage.status === 'IN_PROGRESS'
-                                        ? 'outline'
-                                        : 'destructive'
+                                    ? 'secondary'
+                                    : stage.status === 'IN_PROGRESS'
+                                    ? 'outline'
+                                    : 'destructive'
                                 }
                               >
                                 {stage.status.replace('_', ' ')}
@@ -3714,8 +3766,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                   region.status === 'Ready'
                                     ? 'default'
                                     : region.status === 'In Progress'
-                                      ? 'secondary'
-                                      : 'outline'
+                                    ? 'secondary'
+                                    : 'outline'
                                 }
                                 className="text-xs"
                               >
@@ -5294,8 +5346,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                             item.risk === 'high'
                               ? 'bg-red-100 text-red-700'
                               : item.risk === 'medium'
-                                ? 'bg-yellow-100 text-yellow-700'
-                                : 'bg-green-100 text-green-700'
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : 'bg-green-100 text-green-700'
                           }`}
                         >
                           {item.area}
@@ -5762,8 +5814,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                   report.status === 'Approved'
                                     ? 'default'
                                     : report.status === 'Under Review'
-                                      ? 'secondary'
-                                      : 'outline'
+                                    ? 'secondary'
+                                    : 'outline'
                                 }
                                 className="text-xs"
                               >
@@ -5926,16 +5978,21 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
 
   const renderAnalyticalMethods = () => {
     // Derive performance metrics from actual analytical methods data
-    const analyticalPerformanceMetrics = analyticalMethods.length > 0
-      ? {
-          precision: analyticalMethods.reduce((sum, m) => sum + (parseFloat(m.precision) || 0), 0) / analyticalMethods.length || 0,
-          accuracy: analyticalMethods.reduce((sum, m) => sum + (parseFloat(m.accuracy) || 0), 0) / analyticalMethods.length || 0,
-          lod: analyticalMethods[0]?.lod || '--',
-          loq: analyticalMethods[0]?.loq || '--',
-          cpk: '--',
-          cp: '--',
-        }
-      : { precision: 0, accuracy: 0, lod: '--', loq: '--', cpk: '--', cp: '--' };
+    const analyticalPerformanceMetrics =
+      analyticalMethods.length > 0
+        ? {
+            precision:
+              analyticalMethods.reduce((sum, m) => sum + (parseFloat(m.precision) || 0), 0) /
+                analyticalMethods.length || 0,
+            accuracy:
+              analyticalMethods.reduce((sum, m) => sum + (parseFloat(m.accuracy) || 0), 0) /
+                analyticalMethods.length || 0,
+            lod: analyticalMethods[0]?.lod || '--',
+            loq: analyticalMethods[0]?.loq || '--',
+            cpk: '--',
+            cp: '--',
+          }
+        : { precision: 0, accuracy: 0, lod: '--', loq: '--', cpk: '--', cp: '--' };
 
     const { toast } = useToast();
 
@@ -6167,10 +6224,10 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                           method.status === 'Validated'
                             ? 'success'
                             : method.status === 'In Validation'
-                              ? 'warning'
-                              : method.status === 'Transfer'
-                                ? 'secondary'
-                                : 'default'
+                            ? 'warning'
+                            : method.status === 'Transfer'
+                            ? 'secondary'
+                            : 'default'
                         }
                       >
                         {method.status}
@@ -6296,8 +6353,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                               data.status === 'complete'
                                 ? 'success'
                                 : data.status === 'in-progress'
-                                  ? 'warning'
-                                  : 'default'
+                                ? 'warning'
+                                : 'default'
                             }
                           >
                             {data.status}
@@ -7938,8 +7995,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                             result.status === 'Pass'
                               ? 'default'
                               : result.status === 'Warning'
-                                ? 'secondary'
-                                : 'destructive'
+                              ? 'secondary'
+                              : 'destructive'
                           }
                         >
                           {result.status}
@@ -7954,8 +8011,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                 result.trend === 'increasing'
                                   ? '#92a87a'
                                   : result.trend === 'decreasing'
-                                    ? '#ef4444'
-                                    : '#8a8880'
+                                  ? '#ef4444'
+                                  : '#8a8880'
                               }
                               strokeWidth="1.5"
                               points="0,20 20,18 40,16 60,14"
@@ -7968,8 +8025,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                 result.trend === 'increasing'
                                   ? '#92a87a'
                                   : result.trend === 'decreasing'
-                                    ? '#ef4444'
-                                    : '#8a8880'
+                                  ? '#ef4444'
+                                  : '#8a8880'
                               }
                             />
                             <circle
@@ -7980,8 +8037,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                 result.trend === 'increasing'
                                   ? '#92a87a'
                                   : result.trend === 'decreasing'
-                                    ? '#ef4444'
-                                    : '#8a8880'
+                                  ? '#ef4444'
+                                  : '#8a8880'
                               }
                             />
                             <circle
@@ -7992,8 +8049,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                 result.trend === 'increasing'
                                   ? '#92a87a'
                                   : result.trend === 'decreasing'
-                                    ? '#ef4444'
-                                    : '#8a8880'
+                                  ? '#ef4444'
+                                  : '#8a8880'
                               }
                             />
                             <circle
@@ -8004,8 +8061,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                 result.trend === 'increasing'
                                   ? '#92a87a'
                                   : result.trend === 'decreasing'
-                                    ? '#ef4444'
-                                    : '#8a8880'
+                                  ? '#ef4444'
+                                  : '#8a8880'
                               }
                             />
                           </svg>
@@ -8246,7 +8303,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                           className="px-3 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
                           onClick={e => {
                             e.stopPropagation();
-                            window.location.href = `/stability/${study.study_id || study.id}#compliance`;
+                            window.location.href = `/stability/${
+                              study.study_id || study.id
+                            }#compliance`;
                           }}
                         >
                           Request Sign-off
@@ -8544,7 +8603,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
       const handleExportTemplate = (template, format) => {
         toast({
           title: `Template Exported`,
-          description: `${template.name} exported as ${format.toUpperCase()} with all protocol details`,
+          description: `${
+            template.name
+          } exported as ${format.toUpperCase()} with all protocol details`,
         });
       };
 
@@ -8918,7 +8979,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
           await new Promise(resolve => setTimeout(resolve, 2000));
           toast({
             title: 'AI Analysis Complete',
-            description: `Root cause identified: ${oot.rootCause || 'Analytical method drift with 78% confidence'}`,
+            description: `Root cause identified: ${
+              oot.rootCause || 'Analytical method drift with 78% confidence'
+            }`,
           });
         } finally {
           setAiAnalyzing(false);
@@ -9025,8 +9088,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                           oot.severity === 'high'
                             ? 'border-red-300 bg-red-50'
                             : oot.severity === 'medium'
-                              ? 'border-yellow-300 bg-yellow-50'
-                              : 'border-gray-200'
+                            ? 'border-yellow-300 bg-yellow-50'
+                            : 'border-gray-200'
                         }`}
                       >
                         <div className="flex justify-between items-start mb-3">
@@ -9038,8 +9101,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                   oot.status === 'confirmed'
                                     ? 'destructive'
                                     : oot.status === 'investigating'
-                                      ? 'secondary'
-                                      : 'outline'
+                                    ? 'secondary'
+                                    : 'outline'
                                 }
                               >
                                 {oot.status}
@@ -9070,8 +9133,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                 oot.trend === 'declining'
                                   ? 'text-red-600'
                                   : oot.trend === 'increasing'
-                                    ? 'text-orange-600'
-                                    : 'text-gray-600'
+                                  ? 'text-orange-600'
+                                  : 'text-gray-600'
                               }`}
                             >
                               {oot.trend === 'declining' ? '↓' : '↑'} {oot.trend}
@@ -9700,7 +9763,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                 <body style="font-family: Arial, sans-serif; margin: 40px;">
                   <h1>3.2.P.8 Stability Preview</h1>
                   <h2>Executive Summary</h2>
-                  <p>This report contains stability data for ${stabilityData?.length || 3} studies...</p>
+                  <p>This report contains stability data for ${
+                    stabilityData?.length || 3
+                  } studies...</p>
                   <h2>Study Overview</h2>
                   <p>Primary stability studies conducted according to ICH Q1A(R2) guidelines.</p>
                   <p><em>Full report will be generated upon export.</em></p>
@@ -10136,8 +10201,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                       event.type === 'modification'
                         ? 'bg-yellow-500'
                         : event.type === 'creation'
-                          ? 'bg-green-500'
-                          : 'bg-blue-500'
+                        ? 'bg-green-500'
+                        : 'bg-blue-500'
                     }`}
                   />
                   <div className="flex-1">
@@ -10366,8 +10431,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                           cqa.criticality === 'Critical'
                             ? 'destructive'
                             : cqa.criticality === 'Key'
-                              ? 'default'
-                              : 'secondary'
+                            ? 'default'
+                            : 'secondary'
                         }
                       >
                         {cqa.criticality}
@@ -10896,15 +10961,15 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                               {tp === '0M'
                                 ? 'Assay: 99.2%'
                                 : tp === '3M'
-                                  ? 'Assay: 98.8%'
-                                  : 'Pending'}
+                                ? 'Assay: 98.8%'
+                                : 'Pending'}
                             </td>
                             <td className="border border-gray-300 p-3">
                               {tp === '0M'
                                 ? 'Assay: 99.1%'
                                 : tp === '3M'
-                                  ? 'Assay: 97.9%'
-                                  : 'Pending'}
+                                ? 'Assay: 97.9%'
+                                : 'Pending'}
                             </td>
                             <td className="border border-gray-300 p-3">
                               <Badge variant={tp === '0M' || tp === '3M' ? 'default' : 'secondary'}>
@@ -11360,7 +11425,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                       if (data.title) {
                         toast({
                           title: 'AI CAPA Generated',
-                          description: `${data.title} - ${data.actions?.length || 0} actions assigned to ${data.owner || 'QA Lead'}`,
+                          description: `${data.title} - ${
+                            data.actions?.length || 0
+                          } actions assigned to ${data.owner || 'QA Lead'}`,
                         });
                       } else {
                         toast({
@@ -11760,7 +11827,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
       if (response.ok) {
         toast({
           title: 'Success',
-          description: `Specification ${selectedSpecification ? 'updated' : 'created'} successfully`,
+          description: `Specification ${
+            selectedSpecification ? 'updated' : 'created'
+          } successfully`,
         });
         fetchQcSpecifications();
         setShowSpecificationModal(false);
@@ -11908,7 +11977,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
       if (response.ok) {
         toast({
           title: 'Success',
-          description: `Microbiological test ${selectedMicroTest ? 'updated' : 'created'} successfully`,
+          description: `Microbiological test ${
+            selectedMicroTest ? 'updated' : 'created'
+          } successfully`,
         });
         fetchMicrobiologicalTests();
         setShowMicroTestModal(false);
@@ -11945,7 +12016,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
       if (response.ok) {
         toast({
           title: 'Success',
-          description: `Reference standard ${selectedReferenceStandard ? 'updated' : 'created'} successfully`,
+          description: `Reference standard ${
+            selectedReferenceStandard ? 'updated' : 'created'
+          } successfully`,
         });
         fetchReferenceStandards();
         setShowReferenceStandardModal(false);
@@ -12086,7 +12159,10 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
               id: `BT-${String(index + 1).padStart(3, '0')}`,
               batchNumber:
                 study.batchNumber ||
-                `${study.study_id}-${new Date().getFullYear()}-${String(index + 1).padStart(3, '0')}`,
+                `${study.study_id}-${new Date().getFullYear()}-${String(index + 1).padStart(
+                  3,
+                  '0'
+                )}`,
               product: study.product || study.productName || 'Drug Product A 10mg Tablets',
               mfgDate: study.startDate || '2025-02-15',
               expDate: study.projectedEnd || '2027-02-14',
@@ -12095,8 +12171,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                 study.status === 'Active'
                   ? 'Released'
                   : study.status === 'Ongoing'
-                    ? 'Under Investigation'
-                    : 'Pending',
+                  ? 'Under Investigation'
+                  : 'Pending',
               releaseDate:
                 study.status === 'Active'
                   ? new Date(study.startDate).toLocaleDateString()
@@ -12490,7 +12566,12 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                   </div>
                   <p className="text-xs text-gray-600">
                     {integratedQualityData.batches.length > 0
-                      ? `${Math.round((integratedQualityData.batches.filter(b => b.status === 'Released').length / integratedQualityData.batches.length) * 100)}% success rate`
+                      ? `${Math.round(
+                          (integratedQualityData.batches.filter(b => b.status === 'Released')
+                            .length /
+                            integratedQualityData.batches.length) *
+                            100
+                        )}% success rate`
                       : '0% success rate'}
                   </p>
                 </CardContent>
@@ -12566,10 +12647,10 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                             batch.status === 'released'
                               ? 'default'
                               : batch.status === 'rejected'
-                                ? 'destructive'
-                                : batch.status === 'in-review'
-                                  ? 'secondary'
-                                  : 'outline'
+                              ? 'destructive'
+                              : batch.status === 'in-review'
+                              ? 'secondary'
+                              : 'outline'
                           }
                         >
                           {batch.status}
@@ -12809,7 +12890,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                           <div>
                             <span className="text-gray-600">Status:</span>
                             <div
-                              className={`font-medium ${chart.trend === 'Stable' ? 'text-green-600' : 'text-orange-600'}`}
+                              className={`font-medium ${
+                                chart.trend === 'Stable' ? 'text-green-600' : 'text-orange-600'
+                              }`}
                             >
                               {chart.trend === 'Stable' ? '✓ In Control' : '⚠ Monitor'}
                             </div>
@@ -13120,8 +13203,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                     investigation.priority === 'critical'
                                       ? 'destructive'
                                       : investigation.priority === 'high'
-                                        ? 'default'
-                                        : 'secondary'
+                                      ? 'default'
+                                      : 'secondary'
                                   }
                                 >
                                   {investigation.status}
@@ -13662,7 +13745,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                       <span className="text-gray-600">{param.parameterName}:</span>
                                       <span className="font-medium">
                                         {param.specification ||
-                                          `${param.lowerLimit || ''}-${param.upperLimit || ''} ${param.units || ''}`}
+                                          `${param.lowerLimit || ''}-${param.upperLimit || ''} ${
+                                            param.units || ''
+                                          }`}
                                       </span>
                                     </div>
                                   ))}
@@ -14185,8 +14270,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                   test.result === 'Pass'
                                     ? 'default'
                                     : test.result === 'Fail'
-                                      ? 'destructive'
-                                      : 'secondary'
+                                    ? 'destructive'
+                                    : 'secondary'
                                 }
                               >
                                 {test.result || 'Pending'}
@@ -14226,8 +14311,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                   test.alertLevel === 'action'
                                     ? 'bg-orange-50 text-orange-800'
                                     : test.alertLevel === 'alert'
-                                      ? 'bg-yellow-50 text-yellow-800'
-                                      : 'bg-gray-50 text-gray-800'
+                                    ? 'bg-yellow-50 text-yellow-800'
+                                    : 'bg-gray-50 text-gray-800'
                                 }`}
                               >
                                 <span className="font-medium">
@@ -14236,8 +14321,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                 {test.alertLevel === 'action'
                                   ? 'Immediate action required'
                                   : test.alertLevel === 'alert'
-                                    ? 'Monitor closely'
-                                    : 'Within limits'}
+                                  ? 'Monitor closely'
+                                  : 'Within limits'}
                               </div>
                             )}
 
@@ -14613,10 +14698,10 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                   deviation.status === 'closed'
                                     ? 'default'
                                     : deviation.severity === 'critical'
-                                      ? 'destructive'
-                                      : deviation.severity === 'major'
-                                        ? 'secondary'
-                                        : 'outline'
+                                    ? 'destructive'
+                                    : deviation.severity === 'major'
+                                    ? 'secondary'
+                                    : 'outline'
                                 }
                               >
                                 {deviation.status}
@@ -15381,8 +15466,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                       item.priority === 'Critical'
                                         ? 'destructive'
                                         : item.priority === 'High'
-                                          ? 'default'
-                                          : 'secondary'
+                                        ? 'default'
+                                        : 'secondary'
                                     }
                                   >
                                     {item.priority}
@@ -15618,7 +15703,10 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
 
                       toast({
                         title: 'Package Created',
-                        description: `eCTD package created successfully. Size: ${(packageData.size / (1024 * 1024)).toFixed(2)} MB`,
+                        description: `eCTD package created successfully. Size: ${(
+                          packageData.size /
+                          (1024 * 1024)
+                        ).toFixed(2)} MB`,
                       });
 
                       // 3. Trigger download
@@ -15719,7 +15807,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                             const result = await validationResponse.json();
                             toast({
                               title: 'Structure Validated',
-                              description: `eCTD structure validation completed. ${result.errors?.length || 0} errors found.`,
+                              description: `eCTD structure validation completed. ${
+                                result.errors?.length || 0
+                              } errors found.`,
                             });
                           } catch (error) {
                             toast({
@@ -15850,7 +15940,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                             const latestSeq = sequences[sequences.length - 1];
                             toast({
                               title: 'Preview Ready',
-                              description: `Sequence ${latestSeq.seq_no} - ${latestSeq.title || 'eCTD Package'}`,
+                              description: `Sequence ${latestSeq.seq_no} - ${
+                                latestSeq.title || 'eCTD Package'
+                              }`,
                             });
                           } catch (error) {
                             console.error('Preview error:', error);
@@ -15922,7 +16014,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                             const validationResult = await validationResponse.json();
                             toast({
                               title: 'Validation Complete',
-                              description: `Package validated successfully. ${validationResult.errors?.length || 0} errors found.`,
+                              description: `Package validated successfully. ${
+                                validationResult.errors?.length || 0
+                              } errors found.`,
                             });
                           } catch (error) {
                             console.error('Validation error:', error);
@@ -16344,8 +16438,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                       task.priority === 'Critical'
                                         ? 'destructive'
                                         : task.priority === 'High'
-                                          ? 'default'
-                                          : 'secondary'
+                                        ? 'default'
+                                        : 'secondary'
                                     }
                                   >
                                     {task.priority}
@@ -16915,10 +17009,10 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                   insight.type === 'critical'
                                     ? 'border-red-500 bg-red-50'
                                     : insight.type === 'warning'
-                                      ? 'border-yellow-500 bg-yellow-50'
-                                      : insight.type === 'optimization'
-                                        ? 'border-blue-500 bg-blue-50'
-                                        : 'border-green-500 bg-green-50'
+                                    ? 'border-yellow-500 bg-yellow-50'
+                                    : insight.type === 'optimization'
+                                    ? 'border-blue-500 bg-blue-50'
+                                    : 'border-green-500 bg-green-50'
                                 }`}
                               >
                                 <div className="font-medium text-sm">{insight.title}</div>
@@ -17021,7 +17115,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                       Violations
                                     </span>
                                     <p
-                                      className={`font-bold ${policy.violations > 0 ? 'text-red-600' : 'text-green-600'}`}
+                                      className={`font-bold ${
+                                        policy.violations > 0 ? 'text-red-600' : 'text-green-600'
+                                      }`}
                                     >
                                       {policy.violations}
                                     </p>
@@ -17085,10 +17181,10 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                               insight.type === 'critical'
                                 ? 'border-red-500'
                                 : insight.type === 'warning'
-                                  ? 'border-yellow-500'
-                                  : insight.type === 'optimization'
-                                    ? 'border-blue-500'
-                                    : 'border-green-500'
+                                ? 'border-yellow-500'
+                                : insight.type === 'optimization'
+                                ? 'border-blue-500'
+                                : 'border-green-500'
                             }`}
                           >
                             <CardHeader className="pb-3">
@@ -17114,8 +17210,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                       insight.impact === 'High'
                                         ? 'destructive'
                                         : insight.impact === 'Medium'
-                                          ? 'default'
-                                          : 'secondary'
+                                        ? 'default'
+                                        : 'secondary'
                                     }
                                   >
                                     {insight.impact} Impact
@@ -17262,7 +17358,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                     onClick={() => {
                                       toast({
                                         title: 'Automation',
-                                        description: `${check.name} automation ${check.status === 'active' ? 'paused' : 'activated'}.`,
+                                        description: `${check.name} automation ${
+                                          check.status === 'active' ? 'paused' : 'activated'
+                                        }.`,
                                       });
                                     }}
                                   >
@@ -17325,8 +17423,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                       workflow.status === 'active'
                                         ? 'default'
                                         : workflow.status === 'beta'
-                                          ? 'secondary'
-                                          : 'outline'
+                                        ? 'secondary'
+                                        : 'outline'
                                     }
                                   >
                                     {workflow.status}
@@ -17500,17 +17598,39 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
               const [biotechIntegrations, setBiotechIntegrations] = React.useState([]);
               React.useEffect(() => {
                 fetch('/api/integrations/status', { credentials: 'include' })
-                  .then(r => r.ok ? r.json() : [])
-                  .then(data => setBiotechIntegrations(Array.isArray(data) ? data : data.data || []))
+                  .then(r => (r.ok ? r.json() : []))
+                  .then(data =>
+                    setBiotechIntegrations(Array.isArray(data) ? data : data.data || [])
+                  )
                   .catch(() => {});
               }, []);
 
               // AI tools — capabilities list (no fabricated metrics)
               const aiAutomationTools = [
-                { name: 'Analytical Method AI', description: 'AI-powered method development and optimization', status: 'active', icon: '🤖' },
-                { name: 'Stability Prediction', description: 'ML-based stability trending and shelf-life prediction', status: 'active', icon: '📈' },
-                { name: 'Batch Release AI', description: 'Automated batch disposition recommendations', status: 'active', icon: '🚀' },
-                { name: 'Regulatory Writing Assistant', description: 'AI-powered CMC document generation', status: 'active', icon: '✍️' },
+                {
+                  name: 'Analytical Method AI',
+                  description: 'AI-powered method development and optimization',
+                  status: 'active',
+                  icon: '🤖',
+                },
+                {
+                  name: 'Stability Prediction',
+                  description: 'ML-based stability trending and shelf-life prediction',
+                  status: 'active',
+                  icon: '📈',
+                },
+                {
+                  name: 'Batch Release AI',
+                  description: 'Automated batch disposition recommendations',
+                  status: 'active',
+                  icon: '🚀',
+                },
+                {
+                  name: 'Regulatory Writing Assistant',
+                  description: 'AI-powered CMC document generation',
+                  status: 'active',
+                  icon: '✍️',
+                },
               ];
 
               return (
@@ -17656,8 +17776,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                   integration.status === 'connected'
                                     ? 'default'
                                     : integration.status === 'pending'
-                                      ? 'secondary'
-                                      : 'destructive'
+                                    ? 'secondary'
+                                    : 'destructive'
                                 }
                               >
                                 {integration.status}
@@ -18567,8 +18687,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                       cmd.complexity === 'Critical'
                                         ? 'destructive'
                                         : cmd.complexity === 'High'
-                                          ? 'default'
-                                          : 'secondary'
+                                        ? 'default'
+                                        : 'secondary'
                                     }
                                   >
                                     {cmd.complexity}
@@ -19424,12 +19544,21 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
           <TabsContent value="lineage" className="mt-6">
             {(() => {
               // Manufacturing Genealogy — loaded from API
-              const [batchGenealogy, setBatchGenealogy] = React.useState({ batchId: '', productName: '', mfgDate: '', status: '', parents: [], children: [] });
+              const [batchGenealogy, setBatchGenealogy] = React.useState({
+                batchId: '',
+                productName: '',
+                mfgDate: '',
+                status: '',
+                parents: [],
+                children: [],
+              });
               const [lineageLoading, setLineageLoading] = React.useState(true);
               React.useEffect(() => {
                 fetch('/api/cmc/batch/genealogy', { credentials: 'include' })
-                  .then(r => r.ok ? r.json() : {})
-                  .then(data => { if (data && data.batchId) setBatchGenealogy(data); })
+                  .then(r => (r.ok ? r.json() : {}))
+                  .then(data => {
+                    if (data && data.batchId) setBatchGenealogy(data);
+                  })
                   .catch(() => {})
                   .finally(() => setLineageLoading(false));
               }, []);
@@ -19440,19 +19569,36 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
               const [environmentalConditions, setEnvironmentalConditions] = React.useState([]);
               React.useEffect(() => {
                 Promise.allSettled([
-                  fetch('/api/cmc/batch/lineage', { credentials: 'include' }).then(r => r.ok ? r.json() : []),
-                  fetch('/api/cmc/supply/materials', { credentials: 'include' }).then(r => r.ok ? r.json() : []),
-                  fetch('/api/cmc/facility/environmental-conditions', { credentials: 'include' }).then(r => r.ok ? r.json() : []),
+                  fetch('/api/cmc/batch/lineage', { credentials: 'include' }).then(r =>
+                    r.ok ? r.json() : []
+                  ),
+                  fetch('/api/cmc/supply/materials', { credentials: 'include' }).then(r =>
+                    r.ok ? r.json() : []
+                  ),
+                  fetch('/api/cmc/facility/environmental-conditions', {
+                    credentials: 'include',
+                  }).then(r => (r.ok ? r.json() : [])),
                 ]).then(([lineageRes, supplierRes, envRes]) => {
-                  if (lineageRes.status === 'fulfilled') setLineageTraceability(Array.isArray(lineageRes.value) ? lineageRes.value : lineageRes.value?.data || []);
-                  if (supplierRes.status === 'fulfilled') setSupplierLineage(Array.isArray(supplierRes.value) ? supplierRes.value : supplierRes.value?.data || []);
-                  if (envRes.status === 'fulfilled') setEnvironmentalConditions(Array.isArray(envRes.value) ? envRes.value : envRes.value?.data || []);
+                  if (lineageRes.status === 'fulfilled')
+                    setLineageTraceability(
+                      Array.isArray(lineageRes.value)
+                        ? lineageRes.value
+                        : lineageRes.value?.data || []
+                    );
+                  if (supplierRes.status === 'fulfilled')
+                    setSupplierLineage(
+                      Array.isArray(supplierRes.value)
+                        ? supplierRes.value
+                        : supplierRes.value?.data || []
+                    );
+                  if (envRes.status === 'fulfilled')
+                    setEnvironmentalConditions(
+                      Array.isArray(envRes.value) ? envRes.value : envRes.value?.data || []
+                    );
                 });
               }, []);
 
               // Legacy data removed — the arrays below were hardcoded fake data
-
-
 
               return (
                 <div className="space-y-6">
@@ -19653,12 +19799,12 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                       step.level === 1
                                         ? 'bg-green-500'
                                         : step.level === 2
-                                          ? 'bg-blue-500'
-                                          : step.level === 3
-                                            ? 'bg-purple-500'
-                                            : step.level === 4
-                                              ? 'bg-orange-500'
-                                              : 'bg-gray-500'
+                                        ? 'bg-blue-500'
+                                        : step.level === 3
+                                        ? 'bg-purple-500'
+                                        : step.level === 4
+                                        ? 'bg-orange-500'
+                                        : 'bg-gray-500'
                                     }`}
                                   >
                                     {step.level}
@@ -19694,8 +19840,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                           step.status === 'Released'
                                             ? 'default'
                                             : step.status === 'Qualified'
-                                              ? 'secondary'
-                                              : 'outline'
+                                            ? 'secondary'
+                                            : 'outline'
                                         }
                                       >
                                         {step.status}
@@ -19795,10 +19941,10 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                                       {condition.parameter === 'Temperature'
                                         ? '🌡️'
                                         : condition.parameter === 'Relative Humidity'
-                                          ? '💧'
-                                          : condition.parameter === 'Pressure Differential'
-                                            ? '🌀'
-                                            : '🔬'}
+                                        ? '💧'
+                                        : condition.parameter === 'Pressure Differential'
+                                        ? '🌀'
+                                        : '🔬'}
                                     </span>
                                     {condition.parameter}
                                   </CardTitle>
@@ -20836,7 +20982,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                 variant={activeFormats.bold ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => execCommand('bold')}
-                className={`transition-all ${activeFormats.bold ? 'bg-blue-100 text-blue-800 border-blue-300' : ''}`}
+                className={`transition-all ${
+                  activeFormats.bold ? 'bg-blue-100 text-blue-800 border-blue-300' : ''
+                }`}
                 title="Bold (Ctrl+B)"
               >
                 <Bold className="w-4 h-4" />
@@ -20845,7 +20993,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                 variant={activeFormats.italic ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => execCommand('italic')}
-                className={`transition-all ${activeFormats.italic ? 'bg-blue-100 text-blue-800 border-blue-300' : ''}`}
+                className={`transition-all ${
+                  activeFormats.italic ? 'bg-blue-100 text-blue-800 border-blue-300' : ''
+                }`}
                 title="Italic (Ctrl+I)"
               >
                 <Italic className="w-4 h-4" />
@@ -20854,7 +21004,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                 variant={activeFormats.underline ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => execCommand('underline')}
-                className={`transition-all ${activeFormats.underline ? 'bg-blue-100 text-blue-800 border-blue-300' : ''}`}
+                className={`transition-all ${
+                  activeFormats.underline ? 'bg-blue-100 text-blue-800 border-blue-300' : ''
+                }`}
                 title="Underline (Ctrl+U)"
               >
                 <Underline className="w-4 h-4" />
@@ -20869,7 +21021,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                 variant={activeFormats.justifyLeft ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => execCommand('justifyLeft')}
-                className={`transition-all ${activeFormats.justifyLeft ? 'bg-blue-100 text-blue-800 border-blue-300' : ''}`}
+                className={`transition-all ${
+                  activeFormats.justifyLeft ? 'bg-blue-100 text-blue-800 border-blue-300' : ''
+                }`}
                 title="Align Left"
               >
                 <AlignLeft className="w-4 h-4" />
@@ -20878,7 +21032,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                 variant={activeFormats.justifyCenter ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => execCommand('justifyCenter')}
-                className={`transition-all ${activeFormats.justifyCenter ? 'bg-blue-100 text-blue-800 border-blue-300' : ''}`}
+                className={`transition-all ${
+                  activeFormats.justifyCenter ? 'bg-blue-100 text-blue-800 border-blue-300' : ''
+                }`}
                 title="Center Align"
               >
                 <AlignCenter className="w-4 h-4" />
@@ -20887,7 +21043,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                 variant={activeFormats.justifyRight ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => execCommand('justifyRight')}
-                className={`transition-all ${activeFormats.justifyRight ? 'bg-blue-100 text-blue-800 border-blue-300' : ''}`}
+                className={`transition-all ${
+                  activeFormats.justifyRight ? 'bg-blue-100 text-blue-800 border-blue-300' : ''
+                }`}
                 title="Align Right"
               >
                 <AlignRight className="w-4 h-4" />
@@ -20902,7 +21060,11 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                 variant={activeFormats.insertUnorderedList ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => execCommand('insertUnorderedList')}
-                className={`transition-all ${activeFormats.insertUnorderedList ? 'bg-blue-100 text-blue-800 border-blue-300' : ''}`}
+                className={`transition-all ${
+                  activeFormats.insertUnorderedList
+                    ? 'bg-blue-100 text-blue-800 border-blue-300'
+                    : ''
+                }`}
                 title="Bullet List"
               >
                 <List className="w-4 h-4" />
@@ -20911,7 +21073,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                 variant={activeFormats.insertOrderedList ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => execCommand('insertOrderedList')}
-                className={`transition-all ${activeFormats.insertOrderedList ? 'bg-blue-100 text-blue-800 border-blue-300' : ''}`}
+                className={`transition-all ${
+                  activeFormats.insertOrderedList ? 'bg-blue-100 text-blue-800 border-blue-300' : ''
+                }`}
                 title="Numbered List"
               >
                 <ListOrdered className="w-4 h-4" />
@@ -20980,7 +21144,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                 variant={suggestionsEnabled ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setSuggestionsEnabled(!suggestionsEnabled)}
-                className={`transition-all ${suggestionsEnabled ? 'bg-green-100 text-green-800 border-green-300' : ''}`}
+                className={`transition-all ${
+                  suggestionsEnabled ? 'bg-green-100 text-green-800 border-green-300' : ''
+                }`}
                 title="Toggle Regulatory Suggestions"
               >
                 <Brain className="w-4 h-4" />
@@ -21527,8 +21693,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                               suggestion.severity === 'high'
                                 ? 'bg-red-500'
                                 : suggestion.severity === 'medium'
-                                  ? 'bg-yellow-500'
-                                  : 'bg-blue-500'
+                                ? 'bg-yellow-500'
+                                : 'bg-blue-500'
                             }`}
                           />
                           <Badge variant="outline" className="text-xs">
@@ -21539,8 +21705,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                               suggestion.severity === 'high'
                                 ? 'destructive'
                                 : suggestion.severity === 'medium'
-                                  ? 'secondary'
-                                  : 'default'
+                                ? 'secondary'
+                                : 'default'
                             }
                             className="text-xs"
                           >
@@ -21900,13 +22066,51 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
         <CardContent>
           <div className="space-y-3">
             {[
-              { id: 'B-2025-051', product: 'Lisinopril 10mg Tablets', stage: 'Released', yield: '97.1%', date: '2025-08-14', status: 'approved' },
-              { id: 'B-2025-050', product: 'Lisinopril 10mg Tablets', stage: 'QC Testing', yield: '95.8%', date: '2025-08-12', status: 'pending' },
-              { id: 'B-2025-049', product: 'Lisinopril 20mg Tablets', stage: 'Released', yield: '96.5%', date: '2025-08-10', status: 'approved' },
-              { id: 'B-2025-048', product: 'Lisinopril 5mg Tablets', stage: 'Packaging', yield: '94.2%', date: '2025-08-08', status: 'pending' },
-              { id: 'B-2025-047', product: 'Lisinopril 10mg Tablets', stage: 'Under Investigation', yield: '89.3%', date: '2025-08-05', status: 'flagged' },
+              {
+                id: 'B-2025-051',
+                product: 'Lisinopril 10mg Tablets',
+                stage: 'Released',
+                yield: '97.1%',
+                date: '2025-08-14',
+                status: 'approved',
+              },
+              {
+                id: 'B-2025-050',
+                product: 'Lisinopril 10mg Tablets',
+                stage: 'QC Testing',
+                yield: '95.8%',
+                date: '2025-08-12',
+                status: 'pending',
+              },
+              {
+                id: 'B-2025-049',
+                product: 'Lisinopril 20mg Tablets',
+                stage: 'Released',
+                yield: '96.5%',
+                date: '2025-08-10',
+                status: 'approved',
+              },
+              {
+                id: 'B-2025-048',
+                product: 'Lisinopril 5mg Tablets',
+                stage: 'Packaging',
+                yield: '94.2%',
+                date: '2025-08-08',
+                status: 'pending',
+              },
+              {
+                id: 'B-2025-047',
+                product: 'Lisinopril 10mg Tablets',
+                stage: 'Under Investigation',
+                yield: '89.3%',
+                date: '2025-08-05',
+                status: 'flagged',
+              },
             ].map(batch => (
-              <div key={batch.id} className="border rounded-lg p-4 flex items-center justify-between">
+              <div
+                key={batch.id}
+                className="border rounded-lg p-4 flex items-center justify-between"
+              >
                 <div className="flex items-center gap-4">
                   <div>
                     <div className="font-medium text-sm">{batch.id}</div>
@@ -21922,7 +22126,15 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                     <div className="text-xs text-gray-500">Date</div>
                     <div>{batch.date}</div>
                   </div>
-                  <Badge variant={batch.status === 'approved' ? 'default' : batch.status === 'flagged' ? 'destructive' : 'secondary'}>
+                  <Badge
+                    variant={
+                      batch.status === 'approved'
+                        ? 'default'
+                        : batch.status === 'flagged'
+                        ? 'destructive'
+                        : 'secondary'
+                    }
+                  >
                     {batch.stage}
                   </Badge>
                 </div>
@@ -22186,116 +22398,119 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
     // Gate definitions are structural; scores/status loaded from API at mount
     // ============================================================================
 
-    const baseReadinessGates = supplyGates.length > 0 ? supplyGates : [
-      {
-        id: 'po_received',
-        label: 'PO Received',
-        description: 'Purchase order processed and validated',
-        icon: ShoppingCart,
-        status: 'pending',
-        score: 0,
-        critical_multiplier: 1.2,
-        blocking: true,
-        category: 'procurement',
-        lastUpdate: Date.now() - 7200000, // 2 hours ago
-        details: 'PO #SC-2025-001 validated with 95% confidence',
-        metadata: { po_number: 'SC-2025-001', supplier: 'PharmaCorp', amount: '$45K' },
-      },
-      {
-        id: 'coa_validated',
-        label: 'CoA Validated',
-        description: 'Certificate of Analysis within specifications',
-        icon: FileCheck,
-        status: 'pass',
-        score: 92,
-        critical_multiplier: 1.5,
-        blocking: true,
-        category: 'quality',
-        lastUpdate: Date.now() - 14400000, // 4 hours ago
-        details: 'All 12 parameters within acceptance limits',
-        metadata: { parameters_passed: 12, parameters_total: 12, confidence: 0.96 },
-      },
-      {
-        id: 'qc_release',
-        label: 'QC Release',
-        description: 'Quality control testing completed',
-        icon: TestTube,
-        status: 'warn',
-        score: 73,
-        critical_multiplier: 1.8,
-        blocking: true,
-        category: 'quality',
-        lastUpdate: Date.now() - 86400000, // 1 day ago
-        details: '2 lots pending final chromatography review',
-        metadata: { lots_released: 3, lots_pending: 2, avg_cycle_time: '4.2d' },
-      },
-      {
-        id: 'import_clearance',
-        label: 'Import Cleared',
-        description: 'Customs and regulatory clearance',
-        icon: Plane,
-        status: 'pass',
-        score: 98,
-        critical_multiplier: 1.0,
-        blocking: false,
-        category: 'logistics',
-        lastUpdate: Date.now() - 10800000, // 3 hours ago
-        details: 'FDA import alert cleared, goods released',
-        metadata: { customs_ref: 'US-2025-0451', clearance_time: '2.1h' },
-      },
-      {
-        id: 'cold_chain',
-        label: 'Cold Chain',
-        description: 'Temperature integrity maintained',
-        icon: Thermometer,
-        status: featureFlags.sc_enableMKT
-          ? temperatureData.length > 0
-            ? 'warn'
-            : 'unknown'
-          : 'pass',
-        score: featureFlags.sc_enableMKT ? (temperatureData.length > 0 ? 78 : 85) : 85,
-        critical_multiplier: 2.0,
-        blocking: true,
-        category: 'cold_chain',
-        lastUpdate: Date.now() - 1800000, // 30 min ago
-        details: featureFlags.sc_enableMKT
-          ? 'MKT analysis shows 1 excursion event'
-          : 'Temperature monitoring active',
-        metadata: { mkt_calculated: true, excursions: 1, compliance: 'INVESTIGATION' },
-      },
-      {
-        id: 'serialization',
-        label: 'Serialization',
-        description: 'DSCSA compliance verified',
-        icon: Scan,
-        status: 'pass',
-        score: 94,
-        critical_multiplier: 1.3,
-        blocking: false,
-        category: 'regulatory',
-        lastUpdate: Date.now() - 3600000, // 1 hour ago
-        details: 'All serial numbers validated in EPCIS network',
-        metadata: { serial_count: 50000, epcis_confirmed: true, compliance_score: 0.94 },
-      },
-      {
-        id: 'alternate_supplier',
-        label: 'Alternate Qualified',
-        description: 'Backup supply source available',
-        icon: GitBranch,
-        status: 'warn',
-        score: 72,
-        critical_multiplier: 0.8,
-        blocking: false,
-        category: 'risk_management',
-        lastUpdate: Date.now() - 172800000, // 2 days ago
-        details: 'Secondary supplier qualification 85% complete - on track',
-        metadata: {
-          qualification_progress: 0.85,
-          projected_completion: '7d',
-          risk_level: 'medium',
-        },
-      },
-    ];
+    const baseReadinessGates =
+      supplyGates.length > 0
+        ? supplyGates
+        : [
+            {
+              id: 'po_received',
+              label: 'PO Received',
+              description: 'Purchase order processed and validated',
+              icon: ShoppingCart,
+              status: 'pending',
+              score: 0,
+              critical_multiplier: 1.2,
+              blocking: true,
+              category: 'procurement',
+              lastUpdate: Date.now() - 7200000, // 2 hours ago
+              details: 'PO #SC-2025-001 validated with 95% confidence',
+              metadata: { po_number: 'SC-2025-001', supplier: 'PharmaCorp', amount: '$45K' },
+            },
+            {
+              id: 'coa_validated',
+              label: 'CoA Validated',
+              description: 'Certificate of Analysis within specifications',
+              icon: FileCheck,
+              status: 'pass',
+              score: 92,
+              critical_multiplier: 1.5,
+              blocking: true,
+              category: 'quality',
+              lastUpdate: Date.now() - 14400000, // 4 hours ago
+              details: 'All 12 parameters within acceptance limits',
+              metadata: { parameters_passed: 12, parameters_total: 12, confidence: 0.96 },
+            },
+            {
+              id: 'qc_release',
+              label: 'QC Release',
+              description: 'Quality control testing completed',
+              icon: TestTube,
+              status: 'warn',
+              score: 73,
+              critical_multiplier: 1.8,
+              blocking: true,
+              category: 'quality',
+              lastUpdate: Date.now() - 86400000, // 1 day ago
+              details: '2 lots pending final chromatography review',
+              metadata: { lots_released: 3, lots_pending: 2, avg_cycle_time: '4.2d' },
+            },
+            {
+              id: 'import_clearance',
+              label: 'Import Cleared',
+              description: 'Customs and regulatory clearance',
+              icon: Plane,
+              status: 'pass',
+              score: 98,
+              critical_multiplier: 1.0,
+              blocking: false,
+              category: 'logistics',
+              lastUpdate: Date.now() - 10800000, // 3 hours ago
+              details: 'FDA import alert cleared, goods released',
+              metadata: { customs_ref: 'US-2025-0451', clearance_time: '2.1h' },
+            },
+            {
+              id: 'cold_chain',
+              label: 'Cold Chain',
+              description: 'Temperature integrity maintained',
+              icon: Thermometer,
+              status: featureFlags.sc_enableMKT
+                ? temperatureData.length > 0
+                  ? 'warn'
+                  : 'unknown'
+                : 'pass',
+              score: featureFlags.sc_enableMKT ? (temperatureData.length > 0 ? 78 : 85) : 85,
+              critical_multiplier: 2.0,
+              blocking: true,
+              category: 'cold_chain',
+              lastUpdate: Date.now() - 1800000, // 30 min ago
+              details: featureFlags.sc_enableMKT
+                ? 'MKT analysis shows 1 excursion event'
+                : 'Temperature monitoring active',
+              metadata: { mkt_calculated: true, excursions: 1, compliance: 'INVESTIGATION' },
+            },
+            {
+              id: 'serialization',
+              label: 'Serialization',
+              description: 'DSCSA compliance verified',
+              icon: Scan,
+              status: 'pass',
+              score: 94,
+              critical_multiplier: 1.3,
+              blocking: false,
+              category: 'regulatory',
+              lastUpdate: Date.now() - 3600000, // 1 hour ago
+              details: 'All serial numbers validated in EPCIS network',
+              metadata: { serial_count: 50000, epcis_confirmed: true, compliance_score: 0.94 },
+            },
+            {
+              id: 'alternate_supplier',
+              label: 'Alternate Qualified',
+              description: 'Backup supply source available',
+              icon: GitBranch,
+              status: 'warn',
+              score: 72,
+              critical_multiplier: 0.8,
+              blocking: false,
+              category: 'risk_management',
+              lastUpdate: Date.now() - 172800000, // 2 days ago
+              details: 'Secondary supplier qualification 85% complete - on track',
+              metadata: {
+                qualification_progress: 0.85,
+                projected_completion: '7d',
+                risk_level: 'medium',
+              },
+            },
+          ];
 
     // ============================================================================
     // ADVANCED COMPUTED VALUES (with useMemo for performance optimization)
@@ -22327,8 +22542,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
           classification === 'COMPLIANT'
             ? 'low'
             : classification === 'INVESTIGATION'
-              ? 'medium'
-              : 'high',
+            ? 'medium'
+            : 'high',
       };
 
       // Telemetry tracking
@@ -22373,8 +22588,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
         risk_level: alerts.some(a => a.severity === 'critical')
           ? 'high'
           : alerts.length > 0
-            ? 'medium'
-            : 'low',
+          ? 'medium'
+          : 'low',
         outlier_detected: Math.abs(zscore) > 2,
       };
 
@@ -22442,10 +22657,16 @@ ${
 Supply Risk Assessment:
 - EWS Risk Level: ${ewsAnalysis.risk_level}
 - Trend Analysis: ${ewsAnalysis.trend}
-${ewsAnalysis.alerts.length > 0 ? `- Active Alerts: ${ewsAnalysis.alerts.length}` : '- No active alerts'}
+${
+  ewsAnalysis.alerts.length > 0
+    ? `- Active Alerts: ${ewsAnalysis.alerts.length}`
+    : '- No active alerts'
+}
 
 Quality Gates Status:
-${gates.map(gate => `- ${gate.label}: ${gate.status.toUpperCase()} (Score: ${gate.score}%)`).join('\n')}
+${gates
+  .map(gate => `- ${gate.label}: ${gate.status.toUpperCase()} (Score: ${gate.score}%)`)
+  .join('\n')}
 
 This assessment confirms supply chain readiness for pharmaceutical manufacturing operations.
       `.trim();
@@ -22462,7 +22683,11 @@ Date: ${date}
 1. PROPOSED CHANGE DESCRIPTION:
 Supply chain modifications identified through automated readiness assessment:
 
-${failingGates.length > 0 ? failingGates.map(gate => `- ${gate.label}: ${gate.details}`).join('\n') : 'No critical supply chain changes identified.'}
+${
+  failingGates.length > 0
+    ? failingGates.map(gate => `- ${gate.label}: ${gate.details}`).join('\n')
+    : 'No critical supply chain changes identified.'
+}
 
 2. RATIONALE:
 Continuous monitoring has identified supply chain optimization opportunities:
@@ -22471,10 +22696,19 @@ Continuous monitoring has identified supply chain optimization opportunities:
 ${coldChainAnalysis.mkt ? `- Cold chain performance: ${coldChainAnalysis.classification}` : ''}
 
 3. IMPACT ASSESSMENT:
-${failingGates.length > 0 ? 'MEDIUM - Supply chain reliability improvements required' : 'LOW - Routine optimization maintenance'}
+${
+  failingGates.length > 0
+    ? 'MEDIUM - Supply chain reliability improvements required'
+    : 'LOW - Routine optimization maintenance'
+}
 
 4. PROPOSED IMPLEMENTATION:
-${failingGates.map(gate => `- Address ${gate.label} findings within ${gate.metadata?.projected_completion || 'TBD'}`).join('\n')}
+${failingGates
+  .map(
+    gate =>
+      `- Address ${gate.label} findings within ${gate.metadata?.projected_completion || 'TBD'}`
+  )
+  .join('\n')}
 
 5. RISK MITIGATION:
 - Continuous real-time monitoring maintained
@@ -22501,7 +22735,9 @@ Generated: ${timestamp}
 ${supplyGates
   .map(gate => {
     if (gate.category === 'regulatory' || gate.category === 'quality') {
-      return `- ${gate.label}: ${gate.status} (Last verified: ${new Date(gate.lastUpdate).toLocaleString()})`;
+      return `- ${gate.label}: ${gate.status} (Last verified: ${new Date(
+        gate.lastUpdate
+      ).toLocaleString()})`;
     }
     return null;
   })
@@ -22510,8 +22746,12 @@ ${supplyGates
 
 3. TRACEABILITY DATA:
 - Serialization gate status: ${supplyGates.find(g => g.id === 'serialization')?.status || 'unknown'}
-- EPCIS network confirmed: ${supplyGates.find(g => g.id === 'serialization')?.metadata?.epcis_confirmed || false}
-- Serial count affected: ${supplyGates.find(g => g.id === 'serialization')?.metadata?.serial_count || 'TBD'}
+- EPCIS network confirmed: ${
+        supplyGates.find(g => g.id === 'serialization')?.metadata?.epcis_confirmed || false
+      }
+- Serial count affected: ${
+        supplyGates.find(g => g.id === 'serialization')?.metadata?.serial_count || 'TBD'
+      }
 
 4. NOTIFICATION REQUIREMENTS:
 - FDA notification: Required within 24 hours
@@ -22642,7 +22882,11 @@ Current supply readiness score: ${readinessScore}% - maintained during withdrawa
                 severity: gate.status === 'fail' ? 'major' : 'minor',
                 impact: 'delivery',
                 title: `Investigation Required: ${gate.label}`,
-                description: `Supply gate "${gate.label}" requires investigation. Status: ${gate.status.toUpperCase()}, Score: ${gate.score}%`,
+                description: `Supply gate "${
+                  gate.label
+                }" requires investigation. Status: ${gate.status.toUpperCase()}, Score: ${
+                  gate.score
+                }%`,
                 discoveredBy: 'System Alert',
                 priority: gate.status === 'fail' ? 'high' : 'medium',
               }),
@@ -22671,7 +22915,9 @@ Current supply readiness score: ${readinessScore}% - maintained during withdrawa
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
-                    correctiveActions: `Immediate correction required for ${gate.label}. Gate score: ${gate.score}%, Status: ${gate.status.toUpperCase()}.`,
+                    correctiveActions: `Immediate correction required for ${
+                      gate.label
+                    }. Gate score: ${gate.score}%, Status: ${gate.status.toUpperCase()}.`,
                     preventiveActions: `Implement systematic controls to prevent recurrence of ${gate.label} failures. Review and enhance monitoring protocols.`,
                     implementationPlan: `1. Immediate investigation of root cause\n2. Implement corrective measures\n3. Verify effectiveness\n4. Update procedures to prevent recurrence`,
                     responsiblePerson: 'QA Manager',
@@ -22693,7 +22939,9 @@ Current supply readiness score: ${readinessScore}% - maintained during withdrawa
             let toastMessage;
 
             if (action === 'investigate') {
-              toastMessage = `🔍 Investigation initiated for ${gate.label}. Deviation #${result.data?.id || result.data?.deviationNumber || 'DEV-SC-001'} created with GxP audit trail.`;
+              toastMessage = `🔍 Investigation initiated for ${gate.label}. Deviation #${
+                result.data?.id || result.data?.deviationNumber || 'DEV-SC-001'
+              } created with GxP audit trail.`;
             } else if (action === 'remediate') {
               const deviationId =
                 result.data?.deviation?.id ||
@@ -22757,7 +23005,9 @@ Current supply readiness score: ${readinessScore}% - maintained during withdrawa
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             qpUserId: 'QP-User-Supply-Chain',
-            notes: `Batch released via Supply Chain Management. Readiness: ${readinessScore}%, Confidence: ${confidenceLevel}%. All ${supplyGates.filter(g => g.status === 'pass').length} gates passing.`,
+            notes: `Batch released via Supply Chain Management. Readiness: ${readinessScore}%, Confidence: ${confidenceLevel}%. All ${
+              supplyGates.filter(g => g.status === 'pass').length
+            } gates passing.`,
           }),
         });
 
@@ -22776,7 +23026,9 @@ Current supply readiness score: ${readinessScore}% - maintained during withdrawa
           // IMMEDIATE TOAST - ALWAYS WORKS
           toast({
             title: '🎉 QP RELEASE AUTHORIZED',
-            description: `✅ Material OFFICIALLY RELEASED by Qualified Person | 📋 Batch: ${result.data?.batchNumber || 'API-001-2024-001'} | 📈 Readiness: ${readinessScore}%, Confidence: ${confidenceLevel}% | 🔗 Backend API: CONNECTED & WORKING`,
+            description: `✅ Material OFFICIALLY RELEASED by Qualified Person | 📋 Batch: ${
+              result.data?.batchNumber || 'API-001-2024-001'
+            } | 📈 Readiness: ${readinessScore}%, Confidence: ${confidenceLevel}% | 🔗 Backend API: CONNECTED & WORKING`,
           });
 
           if (featureFlags.sc_enableTelemetry) {
@@ -22795,7 +23047,8 @@ Current supply readiness score: ${readinessScore}% - maintained during withdrawa
         console.error('Release API call failed:', error);
         toast({
           title: 'Release Failed',
-          description: 'Could not authorize release. The server did not confirm the action. Please retry or contact your system administrator.',
+          description:
+            'Could not authorize release. The server did not confirm the action. Please retry or contact your system administrator.',
           variant: 'destructive',
         });
       }
@@ -22870,7 +23123,9 @@ ${
 ${
   ewsAnalysis.alerts.length > 0
     ? `Early Warning Alerts:
-${ewsAnalysis.alerts.map(alert => `- ${alert.severity.toUpperCase()}: ${alert.message}`).join('\n')}`
+${ewsAnalysis.alerts
+  .map(alert => `- ${alert.severity.toUpperCase()}: ${alert.message}`)
+  .join('\n')}`
     : 'No active early warning alerts.'
 }
 
@@ -23008,7 +23263,11 @@ This report confirms current supply chain operational status for regulatory and 
                 <span>Confidence: {confidenceLevel}%</span>
                 <span>•</span>
                 <span
-                  className={`px-2 py-1 rounded text-xs ${connectionStatus === 'connected' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}
+                  className={`px-2 py-1 rounded text-xs ${
+                    connectionStatus === 'connected'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-yellow-100 text-yellow-700'
+                  }`}
                 >
                   {connectionStatus}
                 </span>
@@ -23240,8 +23499,8 @@ This report confirms current supply chain operational status for regulatory and 
                             coldChainAnalysis.classification === 'COMPLIANT'
                               ? '#788c5d'
                               : coldChainAnalysis.classification === 'INVESTIGATION'
-                                ? '#f59e0b'
-                                : '#ef4444',
+                              ? '#f59e0b'
+                              : '#ef4444',
                         }}
                       >
                         {coldChainAnalysis.mkt}°C
@@ -23254,8 +23513,8 @@ This report confirms current supply chain operational status for regulatory and 
                         coldChainAnalysis.classification === 'COMPLIANT'
                           ? 'bg-green-100 text-green-800'
                           : coldChainAnalysis.classification === 'INVESTIGATION'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
                       }`}
                     >
                       {coldChainAnalysis.classification}
@@ -23329,8 +23588,8 @@ This report confirms current supply chain operational status for regulatory and 
                         ewsAnalysis.trend === 'improving'
                           ? 'bg-green-100 text-green-800'
                           : ewsAnalysis.trend === 'deteriorating'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-blue-100 text-blue-800'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-blue-100 text-blue-800'
                       }`}
                     >
                       {ewsAnalysis.trend}
@@ -23463,8 +23722,8 @@ This report confirms current supply chain operational status for regulatory and 
                     gate.status === 'pass'
                       ? 'border-green-200 bg-green-50/30'
                       : gate.status === 'warn'
-                        ? 'border-yellow-200 bg-yellow-50/30'
-                        : 'border-red-200 bg-red-50/30'
+                      ? 'border-yellow-200 bg-yellow-50/30'
+                      : 'border-red-200 bg-red-50/30'
                   }`}
                 >
                   <CardHeader className="pb-3">
@@ -23475,8 +23734,8 @@ This report confirms current supply chain operational status for regulatory and 
                             gate.status === 'pass'
                               ? 'text-green-600'
                               : gate.status === 'warn'
-                                ? 'text-yellow-600'
-                                : 'text-red-600'
+                              ? 'text-yellow-600'
+                              : 'text-red-600'
                           }`}
                         />
                         <CardTitle className="text-sm font-medium">{gate.label}</CardTitle>
@@ -23486,8 +23745,8 @@ This report confirms current supply chain operational status for regulatory and 
                           gate.status === 'pass'
                             ? 'default'
                             : gate.status === 'warn'
-                              ? 'secondary'
-                              : 'destructive'
+                            ? 'secondary'
+                            : 'destructive'
                         }
                         className="text-xs"
                       >
@@ -23507,8 +23766,8 @@ This report confirms current supply chain operational status for regulatory and 
                               gate.status === 'pass'
                                 ? 'text-green-500'
                                 : gate.status === 'warn'
-                                  ? 'text-yellow-500'
-                                  : 'text-red-500'
+                                ? 'text-yellow-500'
+                                : 'text-red-500'
                             }`}
                           />
                           <span className="uppercase font-medium">{gate.status}</span>
@@ -23740,7 +23999,9 @@ This report confirms current supply chain operational status for regulatory and 
                   {Object.entries(featureFlags).map(([flag, enabled]) => (
                     <div
                       key={flag}
-                      className={`px-2 py-1 rounded ${enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}
+                      className={`px-2 py-1 rounded ${
+                        enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+                      }`}
                     >
                       {flag.replace('sc_', '')}
                     </div>
@@ -23812,7 +24073,9 @@ This report confirms current supply chain operational status for regulatory and 
           const result = await response.json();
           toast({
             title: '✅ Supplier Saved',
-            description: `${supplierForm.name} has been ${editingSupplier ? 'updated' : 'added'} successfully.`,
+            description: `${supplierForm.name} has been ${
+              editingSupplier ? 'updated' : 'added'
+            } successfully.`,
           });
 
           resetSupplierForm();
@@ -24112,7 +24375,9 @@ This report confirms current supply chain operational status for regulatory and 
         if (response.ok) {
           toast({
             title: '✅ Material Saved',
-            description: `${materialForm.name} has been ${editingMaterial ? 'updated' : 'added'} successfully.`,
+            description: `${materialForm.name} has been ${
+              editingMaterial ? 'updated' : 'added'
+            } successfully.`,
           });
 
           resetMaterialForm();
@@ -24424,7 +24689,9 @@ This report confirms current supply chain operational status for regulatory and 
         if (response.ok) {
           toast({
             title: '✅ Shipment Saved',
-            description: `Shipment ${shipmentForm.shipmentNumber} has been ${editingShipment ? 'updated' : 'added'} successfully.`,
+            description: `Shipment ${shipmentForm.shipmentNumber} has been ${
+              editingShipment ? 'updated' : 'added'
+            } successfully.`,
           });
 
           resetShipmentForm();
@@ -24664,8 +24931,8 @@ This report confirms current supply chain operational status for regulatory and 
                             shipment.shipmentStatus === 'delivered'
                               ? 'default'
                               : shipment.shipmentStatus === 'delayed'
-                                ? 'destructive'
-                                : 'secondary'
+                              ? 'destructive'
+                              : 'secondary'
                           }
                         >
                           {shipment.shipmentStatus}
@@ -24759,7 +25026,9 @@ This report confirms current supply chain operational status for regulatory and 
         if (response.ok) {
           toast({
             title: '✅ Inventory Updated',
-            description: `Inventory record has been ${editingInventory ? 'updated' : 'added'} successfully.`,
+            description: `Inventory record has been ${
+              editingInventory ? 'updated' : 'added'
+            } successfully.`,
           });
 
           resetInventoryForm();
@@ -24978,8 +25247,8 @@ This report confirms current supply chain operational status for regulatory and 
                             item.status === 'available'
                               ? 'default'
                               : item.status === 'quarantine'
-                                ? 'destructive'
-                                : 'secondary'
+                              ? 'destructive'
+                              : 'secondary'
                           }
                         >
                           {item.status}
@@ -25092,8 +25361,8 @@ This report confirms current supply chain operational status for regulatory and 
                     risk.riskLevel === 'High'
                       ? 'destructive'
                       : risk.riskLevel === 'Medium'
-                        ? 'secondary'
-                        : 'outline'
+                      ? 'secondary'
+                      : 'outline'
                   }
                 >
                   {risk.riskLevel} Risk
@@ -25184,21 +25453,27 @@ This report confirms current supply chain operational status for regulatory and 
         <Card>
           <CardContent className="p-6 text-center">
             <Database className="w-8 h-8 mx-auto text-blue-600 mb-2" />
-            <div className="text-2xl font-bold">{auditData.length > 0 ? (auditData.length * 569).toLocaleString() : '—'}</div>
+            <div className="text-2xl font-bold">
+              {auditData.length > 0 ? (auditData.length * 569).toLocaleString() : '—'}
+            </div>
             <p className="text-sm text-gray-600">Audit Entries</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6 text-center">
             <FileText className="w-8 h-8 mx-auto text-green-600 mb-2" />
-            <div className="text-2xl font-bold">{auditData.length > 0 ? (auditData.length * 249).toLocaleString() : '—'}</div>
+            <div className="text-2xl font-bold">
+              {auditData.length > 0 ? (auditData.length * 249).toLocaleString() : '—'}
+            </div>
             <p className="text-sm text-gray-600">Documents Managed</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6 text-center">
             <FileCheck className="w-8 h-8 mx-auto text-purple-600 mb-2" />
-            <div className="text-2xl font-bold">{auditData.length > 0 ? Math.round(auditData.length * 25.4) : '—'}</div>
+            <div className="text-2xl font-bold">
+              {auditData.length > 0 ? Math.round(auditData.length * 25.4) : '—'}
+            </div>
             <p className="text-sm text-gray-600">Reports Generated</p>
           </CardContent>
         </Card>
@@ -25373,7 +25648,9 @@ This report confirms current supply chain operational status for regulatory and 
       lowerQuery.includes('validation') ||
       lowerQuery.includes('method')
     ) {
-      return `For analytical method development in ${context.projectContext.includes('FDA') ? 'FDA' : 'EMA'} submissions:
+      return `For analytical method development in ${
+        context.projectContext.includes('FDA') ? 'FDA' : 'EMA'
+      } submissions:
 
 • Method Validation: Follow ICH Q2(R1) guidelines for specificity, linearity, accuracy, precision, detection limits, and robustness
 • HPLC Methods: Ensure gradient stability, column specifications, and system suitability parameters
@@ -25381,7 +25658,11 @@ This report confirms current supply chain operational status for regulatory and 
 • Impurity Testing: Related substances method with 0.1% reporting threshold for new drug substances
 • Stability-Indicating: Validate degradation conditions (acid, base, oxidation, thermal, photolytic)
 
-${context.projectContext.includes('Tablets') ? 'For immediate release tablets, focus on dissolution profile consistency across manufacturing batches.' : 'Consider dosage form-specific analytical requirements.'}`;
+${
+  context.projectContext.includes('Tablets')
+    ? 'For immediate release tablets, focus on dissolution profile consistency across manufacturing batches.'
+    : 'Consider dosage form-specific analytical requirements.'
+}`;
     }
 
     // Process validation guidance
@@ -25399,7 +25680,11 @@ ${context.projectContext.includes('Tablets') ? 'For immediate release tablets, f
 • Critical Process Parameters: Temperature, mixing time, compression force, coating parameters
 • Process Capability: Cpk ≥ 1.33 for critical quality attributes
 
-${context.projectContext.includes('Phase III') ? 'For Phase III commercial preparation, establish process capability studies and technology transfer protocols.' : 'Align validation scope with development stage requirements.'}`;
+${
+  context.projectContext.includes('Phase III')
+    ? 'For Phase III commercial preparation, establish process capability studies and technology transfer protocols.'
+    : 'Align validation scope with development stage requirements.'
+}`;
     }
 
     // Stability studies guidance
@@ -25417,7 +25702,11 @@ ${context.projectContext.includes('Phase III') ? 'For Phase III commercial prepa
 • Container Closure: Test in proposed commercial packaging
 • Analytical Methods: Stability-indicating with validated methods
 
-${context.projectContext.includes('Tablets') ? 'Solid dosage forms typically demonstrate 24-36 month shelf life with appropriate packaging.' : 'Consider dosage form-specific storage requirements and testing intervals.'}`;
+${
+  context.projectContext.includes('Tablets')
+    ? 'Solid dosage forms typically demonstrate 24-36 month shelf life with appropriate packaging.'
+    : 'Consider dosage form-specific storage requirements and testing intervals.'
+}`;
     }
 
     // Quality control guidance
@@ -25451,7 +25740,11 @@ Release vs. shelf-life specifications should account for stability degradation p
 • Module 3.2.P (Drug Product): Description, pharmaceutical development, manufacture, control of excipients, controls of drug product
 • Module 3.2.A (Appendices): Facilities and equipment, adventitious agents safety, excipients, novel excipients
 
-${context.projectContext.includes('FDA') ? 'FDA submissions require eCTD format with comprehensive pharmaceutical development data (QbD approach recommended).' : 'EMA submissions emphasize Quality by Design principles and lifecycle maintenance.'}`;
+${
+  context.projectContext.includes('FDA')
+    ? 'FDA submissions require eCTD format with comprehensive pharmaceutical development data (QbD approach recommended).'
+    : 'EMA submissions emphasize Quality by Design principles and lifecycle maintenance.'
+}`;
     }
 
     // Default comprehensive guidance
@@ -25473,7 +25766,11 @@ What specific aspect would you like to explore further? I can provide detailed g
 
     setAiLoading(true);
     try {
-      const contextualQuery = `${query}\n\nProject Context: ${aiContext.projectContext}\nCompleted Steps: ${aiContext.completedSteps.join(', ')}\nCurrent Form Data: ${JSON.stringify(aiContext.currentFormData)}`;
+      const contextualQuery = `${query}\n\nProject Context: ${
+        aiContext.projectContext
+      }\nCompleted Steps: ${aiContext.completedSteps.join(
+        ', '
+      )}\nCurrent Form Data: ${JSON.stringify(aiContext.currentFormData)}`;
 
       const response = await fetch('/api/ai/regulatory-guidance', {
         method: 'POST',
@@ -25544,7 +25841,9 @@ What specific aspect would you like to explore further? I can provide detailed g
 
   const renderAIAssistantPanel = () => (
     <div
-      className={`fixed top-0 right-0 h-screen bg-white shadow-2xl border-l transition-transform duration-300 ease-in-out ${showAiAssistant ? 'translate-x-0' : 'translate-x-full'}`}
+      className={`fixed top-0 right-0 h-screen bg-white shadow-2xl border-l transition-transform duration-300 ease-in-out ${
+        showAiAssistant ? 'translate-x-0' : 'translate-x-full'
+      }`}
       style={{ width: '480px', zIndex: 9999 }}
     >
       <div className="flex flex-col h-full">
@@ -25600,8 +25899,8 @@ What specific aspect would you like to explore further? I can provide detailed g
                           suggestion.priority === 'high'
                             ? 'destructive'
                             : suggestion.priority === 'medium'
-                              ? 'default'
-                              : 'secondary'
+                            ? 'default'
+                            : 'secondary'
                         }
                         className="text-xs"
                       >
@@ -25750,7 +26049,10 @@ What specific aspect would you like to explore further? I can provide detailed g
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `Module3_CMC_${(payload.drug_name || 'Drug').replace(/[^a-zA-Z0-9_-]/g, '_')}.docx`;
+                a.download = `Module3_CMC_${(payload.drug_name || 'Drug').replace(
+                  /[^a-zA-Z0-9_-]/g,
+                  '_'
+                )}.docx`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -25989,7 +26291,9 @@ const CMCModal = ({ isOpen, onClose, type, item, onSubmit }) => {
       );
 
       if (missingFields.length > 0) {
-        toast({ title: `Please fill in the following required fields: ${missingFields.join(', ')}` });
+        toast({
+          title: `Please fill in the following required fields: ${missingFields.join(', ')}`,
+        });
         return;
       }
 

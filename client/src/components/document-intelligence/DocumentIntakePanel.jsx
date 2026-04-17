@@ -177,7 +177,9 @@ const DocumentIntakePanel = ({
                             onClick={() => {
                               toast({
                                 title: 'Document Preview',
-                                description: `${doc.name || 'Document'} — processed and ready for extraction. Use the Extract Data button to proceed.`,
+                                description: `${
+                                  doc.name || 'Document'
+                                } — processed and ready for extraction. Use the Extract Data button to proceed.`,
                               });
                             }}
                           >

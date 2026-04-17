@@ -14,11 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Select,
   SelectContent,
@@ -63,11 +59,11 @@ import {
   X,
 } from 'lucide-react';
 
-export default function AskDataRoomPanel({ 
-  onContentInsert, 
+export default function AskDataRoomPanel({
+  onContentInsert,
   selectedDocumentId,
   isOpen = true,
-  onClose 
+  onClose,
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [askQuestion, setAskQuestion] = useState('');
@@ -83,7 +79,11 @@ export default function AskDataRoomPanel({
   const projectId = localStorage.getItem('currentProjectId');
 
   // Fetch Data Room documents/evidence
-  const { data: dataRoomItems = [], isLoading: loadingDataRoom, refetch: refetchDataRoom } = useQuery({
+  const {
+    data: dataRoomItems = [],
+    isLoading: loadingDataRoom,
+    refetch: refetchDataRoom,
+  } = useQuery({
     queryKey: ['/api/evidence', { projectId, organizationId }],
     queryFn: async () => {
       const response = await fetch(
@@ -97,7 +97,7 @@ export default function AskDataRoomPanel({
 
   // Search Data Room mutation
   const searchDataRoomMutation = useMutation({
-    mutationFn: async (query) => {
+    mutationFn: async query => {
       return apiRequest('/api/evidence/search', {
         method: 'POST',
         body: JSON.stringify({
@@ -108,14 +108,14 @@ export default function AskDataRoomPanel({
         }),
       });
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       console.log('Search results:', data);
     },
   });
 
   // Ask AI about Data Room content — wired to POST /api/evidence/ask
   const askDataRoomMutation = useMutation({
-    mutationFn: async (question) => {
+    mutationFn: async question => {
       setIsAskingAI(true);
       const res = await apiRequest('POST', '/api/evidence/ask', {
         question,
@@ -126,11 +126,11 @@ export default function AskDataRoomPanel({
       const json = await res.json();
       return json.data || json;
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       // Normalize source field names for display
       setAiResponse({
         answer: data?.answer || '',
-        sources: (data?.sources || []).map((s) => ({
+        sources: (data?.sources || []).map(s => ({
           title: s.docTitle || s.title || 'Unknown source',
           excerpt: s.excerpt || '',
           relevanceScore: s.relevanceScore,
@@ -138,7 +138,7 @@ export default function AskDataRoomPanel({
       });
       setIsAskingAI(false);
     },
-    onError: (error) => {
+    onError: error => {
       setIsAskingAI(false);
       toast({
         title: 'Error',
@@ -150,17 +150,19 @@ export default function AskDataRoomPanel({
 
   // Filter data room items based on search
   const filteredItems = dataRoomItems.filter(item => {
-    const matchesSearch = !searchQuery || 
+    const matchesSearch =
+      !searchQuery ||
       item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesFilter = selectedFilter === 'all' || 
+
+    const matchesFilter =
+      selectedFilter === 'all' ||
       (selectedFilter === 'documents' && item.type === 'document') ||
       (selectedFilter === 'data' && (item.type === 'table' || item.type === 'dataset')) ||
       (selectedFilter === 'figures' && (item.type === 'figure' || item.type === 'image')) ||
       (selectedFilter === 'references' && item.type === 'reference');
-    
+
     return matchesSearch && matchesFilter;
   });
 
@@ -172,10 +174,10 @@ export default function AskDataRoomPanel({
     return acc;
   }, {});
 
-  const toggleExpanded = (itemId) => {
+  const toggleExpanded = itemId => {
     setExpandedItems(prev => ({
       ...prev,
-      [itemId]: !prev[itemId]
+      [itemId]: !prev[itemId],
     }));
   };
 
@@ -223,14 +225,17 @@ export default function AskDataRoomPanel({
     }
   };
 
-  const formatTableAsMarkdown = (tableData) => {
+  const formatTableAsMarkdown = tableData => {
     if (!tableData || !tableData.headers || !tableData.rows) return '';
-    
+
     const headers = tableData.headers.join(' | ');
     const separator = tableData.headers.map(() => '---').join(' | ');
     const rows = tableData.rows.map(row => row.join(' | ')).join('\n');
-    
-    return `| ${headers} |\n| ${separator} |\n${rows.split('\n').map(row => `| ${row} |`).join('\n')}`;
+
+    return `| ${headers} |\n| ${separator} |\n${rows
+      .split('\n')
+      .map(row => `| ${row} |`)
+      .join('\n')}`;
   };
 
   const handleAskQuestion = () => {
@@ -239,15 +244,20 @@ export default function AskDataRoomPanel({
     }
   };
 
-  const getItemIcon = (type) => {
+  const getItemIcon = type => {
     switch (type) {
-      case 'document': return FileText;
-      case 'table': 
-      case 'dataset': return Table;
+      case 'document':
+        return FileText;
+      case 'table':
+      case 'dataset':
+        return Table;
       case 'figure':
-      case 'image': return Image;
-      case 'reference': return Link;
-      default: return Database;
+      case 'image':
+        return Image;
+      case 'reference':
+        return Link;
+      default:
+        return Database;
     }
   };
 
@@ -279,7 +289,10 @@ export default function AskDataRoomPanel({
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <TabsList className="grid w-full grid-cols-2 mx-4 mt-3" style={{ width: 'calc(100% - 32px)' }}>
+        <TabsList
+          className="grid w-full grid-cols-2 mx-4 mt-3"
+          style={{ width: 'calc(100% - 32px)' }}
+        >
           <TabsTrigger value="search">
             <Search className="h-3 w-3 mr-1" />
             Search
@@ -299,7 +312,7 @@ export default function AskDataRoomPanel({
               <Input
                 placeholder="Search Data Room..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={e => setSearchQuery(e.target.value)}
                 className="pl-9 text-sm"
                 data-testid="input-search-dataroom"
               />
@@ -335,7 +348,7 @@ export default function AskDataRoomPanel({
                     {items.map(item => {
                       const Icon = getItemIcon(item.type);
                       const isExpanded = expandedItems[item.id];
-                      
+
                       return (
                         <Card key={item.id} className="overflow-hidden">
                           <div
@@ -354,9 +367,7 @@ export default function AskDataRoomPanel({
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="flex-1">
-                                    <h4 className="text-sm font-medium truncate">
-                                      {item.title}
-                                    </h4>
+                                    <h4 className="text-sm font-medium truncate">{item.title}</h4>
                                     {item.description && (
                                       <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">
                                         {item.description}
@@ -397,7 +408,7 @@ export default function AskDataRoomPanel({
                                     size="sm"
                                     variant="outline"
                                     className="text-xs h-7"
-                                    onClick={(e) => {
+                                    onClick={e => {
                                       e.stopPropagation();
                                       handleInsertContent(item, 'full');
                                     }}
@@ -409,7 +420,7 @@ export default function AskDataRoomPanel({
                                     size="sm"
                                     variant="outline"
                                     className="text-xs h-7"
-                                    onClick={(e) => {
+                                    onClick={e => {
                                       e.stopPropagation();
                                       handleInsertContent(item, 'reference');
                                     }}
@@ -422,7 +433,7 @@ export default function AskDataRoomPanel({
                                       size="sm"
                                       variant="outline"
                                       className="text-xs h-7"
-                                      onClick={(e) => {
+                                      onClick={e => {
                                         e.stopPropagation();
                                         handleInsertContent(item, 'table');
                                       }}
@@ -436,7 +447,7 @@ export default function AskDataRoomPanel({
                                       size="sm"
                                       variant="outline"
                                       className="text-xs h-7"
-                                      onClick={(e) => {
+                                      onClick={e => {
                                         e.stopPropagation();
                                         handleInsertContent(item, 'figure');
                                       }}
@@ -449,11 +460,13 @@ export default function AskDataRoomPanel({
                                     size="sm"
                                     variant="ghost"
                                     className="text-xs h-7"
-                                    onClick={(e) => {
+                                    onClick={e => {
                                       e.stopPropagation();
                                       toast({
                                         title: item.title || 'Document',
-                                        description: `${item.type || 'Document'} — ${item.source || 'Data Room'}. Click "Insert" to add to your document.`,
+                                        description: `${item.type || 'Document'} — ${
+                                          item.source || 'Data Room'
+                                        }. Click "Insert" to add to your document.`,
                                       });
                                     }}
                                   >
@@ -504,7 +517,7 @@ export default function AskDataRoomPanel({
               <Textarea
                 placeholder="E.g., What are the key findings from the stability studies? What is the MRSD based on our toxicology data?"
                 value={askQuestion}
-                onChange={(e) => setAskQuestion(e.target.value)}
+                onChange={e => setAskQuestion(e.target.value)}
                 className="text-sm min-h-[80px]"
                 data-testid="textarea-ask-question"
               />
@@ -536,9 +549,7 @@ export default function AskDataRoomPanel({
                     <Brain className="h-4 w-4 text-blue-600 mt-0.5" />
                     <div className="flex-1">
                       <h4 className="text-sm font-medium">AI Response</h4>
-                      <p className="text-xs text-gray-600 mt-1">
-                        Based on your Data Room evidence
-                      </p>
+                      <p className="text-xs text-gray-600 mt-1">Based on your Data Room evidence</p>
                     </div>
                   </div>
                 </CardHeader>
@@ -546,7 +557,8 @@ export default function AskDataRoomPanel({
                   <div className="space-y-3">
                     {/* Answer */}
                     <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                      {aiResponse.answer || 'No specific answer found. Try rephrasing your question.'}
+                      {aiResponse.answer ||
+                        'No specific answer found. Try rephrasing your question.'}
                     </div>
 
                     {/* Sources */}
@@ -562,9 +574,7 @@ export default function AskDataRoomPanel({
                             <div className="flex-1">
                               <div className="font-medium">{source.title}</div>
                               {source.excerpt && (
-                                <div className="text-gray-600 mt-0.5">
-                                  "{source.excerpt}"
-                                </div>
+                                <div className="text-gray-600 mt-0.5">"{source.excerpt}"</div>
                               )}
                               <Button
                                 size="sm"

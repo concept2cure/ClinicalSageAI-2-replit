@@ -555,8 +555,8 @@ export function OnboardingWizard({
                     step.id === currentStep
                       ? 'bg-primary-100 text-primary-700'
                       : index < currentStepIndex
-                        ? 'text-primary-600 hover:bg-primary-50 cursor-pointer'
-                        : 'text-gray-400 cursor-not-allowed'
+                      ? 'text-primary-600 hover:bg-primary-50 cursor-pointer'
+                      : 'text-gray-400 cursor-not-allowed'
                   }`}
                 >
                   <div
@@ -564,8 +564,8 @@ export function OnboardingWizard({
                       index < currentStepIndex
                         ? 'bg-primary-600 text-white'
                         : step.id === currentStep
-                          ? 'bg-primary-600 text-white'
-                          : 'bg-gray-200 text-gray-500'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-gray-200 text-gray-500'
                     }`}
                   >
                     {index < currentStepIndex ? <Check className="h-5 w-5" /> : step.icon}
@@ -849,7 +849,9 @@ function BusinessModelStep({ data, updateData }: StepProps) {
             }`}
           >
             <div
-              className={`${data.businessModel === model.id ? 'text-primary-600' : 'text-gray-400'}`}
+              className={`${
+                data.businessModel === model.id ? 'text-primary-600' : 'text-gray-400'
+              }`}
             >
               {model.icon}
             </div>
@@ -1504,11 +1506,21 @@ function ReviewStep({ data, updateData }: StepProps) {
           />
           <span className="text-sm text-gray-700">
             I agree to the{' '}
-            <a href="#" className="text-primary-600 hover:underline">
+            <a
+              href="/legal/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary-600 hover:underline"
+            >
               Terms of Service
             </a>{' '}
             and{' '}
-            <a href="#" className="text-primary-600 hover:underline">
+            <a
+              href="/legal/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary-600 hover:underline"
+            >
               Privacy Policy
             </a>
           </span>
@@ -1523,7 +1535,12 @@ function ReviewStep({ data, updateData }: StepProps) {
           />
           <span className="text-sm text-gray-700">
             I agree to the{' '}
-            <a href="#" className="text-primary-600 hover:underline">
+            <a
+              href="/legal/data-processing"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary-600 hover:underline"
+            >
               Data Processing Agreement
             </a>{' '}
             and understand that my organization's data will be processed in accordance with
