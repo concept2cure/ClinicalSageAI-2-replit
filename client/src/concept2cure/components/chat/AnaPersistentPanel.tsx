@@ -1069,34 +1069,15 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       return;
     }
     const STANDARD_THINKING = [
-      'Analyzing regulatory requirements...',
-      'Cross-referencing guidance documents...',
-      'Evaluating submission readiness...',
-      'Reviewing CTD module structure...',
-      'Assessing regulatory pathway options...',
-      'Running compliance analysis...',
-      'Checking ICH guideline alignment...',
-      'Reviewing 21 CFR Part 11 requirements...',
-      'Analyzing evidence strength...',
-      'Evaluating deficiency risk profile...',
-      'Assessing endpoint defensibility...',
-      'Reviewing regulatory precedent...',
-      'Checking predicate devices and precedents...',
-      'Cross-referencing FDA guidance database...',
-      'Analyzing submission strategy...',
+      'Thinking...',
+      'Working on it...',
+      'Preparing response...',
     ];
     const DEEP_RESEARCH_THINKING = [
-      'Searching ClinicalTrials.gov for matching studies...',
-      'Pulling from PubMed — casting a wide net...',
-      'Checking FDA approval histories for similar products...',
-      'Scanning EMA assessment reports...',
-      'Aggregating results across all data sources...',
-      'Cross-referencing regulatory precedents...',
-      'Building the competitive landscape...',
-      'Synthesizing findings into a briefing...',
-      'Analyzing evidence coverage gaps...',
-      'Ranking results by regulatory relevance...',
-      'This is substantive research — give me a moment...',
+      'Searching external databases...',
+      'Pulling from ClinicalTrials.gov, PubMed, FDA...',
+      'Aggregating results...',
+      'Synthesizing findings...',
       'Found some interesting precedents — pulling them together...',
     ];
     const ANA_THINKING_MESSAGES =
