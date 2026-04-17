@@ -1,6 +1,6 @@
 # Python Backend Service - Unified dependencies for all Python services
 # FastAPI and web framework dependencies
-fastapi==0.108.0
+fastapi==0.135.3
 uvicorn[standard]==0.25.0
 pydantic[email]==2.13.1
 pydantic-settings>=2.0.0
