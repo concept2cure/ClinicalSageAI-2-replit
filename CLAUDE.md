@@ -323,6 +323,9 @@ If duplicate authority remains, Claude must say so explicitly and keep the task 
 ## PART A — Karpathy Coding Discipline
 
 > Skill file: `.claude/skills/karpathy-coding-discipline.md`
+> Worked examples: `docs/karpathy-guidelines-examples.md`
+> Upstream: [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills)
+> (MIT License, © 2026 Forrest Chang), derived from [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876).
 
 Behavioral guidelines to reduce common LLM coding mistakes.
 Tradeoff: These guidelines bias toward caution over speed. For trivial tasks, use judgment.
