@@ -4133,140 +4133,106 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         style={{ scrollbarWidth: 'thin' }}
       >
         {!hasMessages && !isThinking ? (
-          /* ── Empty state: centered orb + greeting + 4 example cards ──
-              Reference parity (2026-04-14 WO-8): glow orb, time-of-day greeting
-              (passed in via the `greeting` prop from ZenApp), soft subtitle,
-              and a 4-card example row reusing existing composer + setInput. */
-          <div className="h-full flex flex-col items-center justify-center px-6 bg-white overflow-y-auto py-10">
-            <div className="max-w-3xl w-full">
-              {/* Orb */}
-              <div className="flex items-center justify-center mb-7">
-                <div className="relative">
-                  <div
-                    className="absolute inset-0 bg-gradient-to-br from-fuchsia-300/50 via-violet-400/50 to-indigo-400/40 blur-2xl rounded-full scale-150"
-                    aria-hidden="true"
-                  />
-                  <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-fuchsia-400 via-violet-500 to-indigo-500 flex items-center justify-center shadow-lg ring-1 ring-white/40">
-                    <Sparkles className="w-7 h-7 text-white" aria-hidden="true" />
-                  </div>
+          /* ── Home empty state — product-oriented, above the fold ── */
+          <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
+            <div className="max-w-2xl w-full space-y-8">
+              {/* Product identity */}
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-stone-900 mb-4">
+                  <Sparkles className="w-5 h-5 text-white" aria-hidden="true" />
                 </div>
+                <h1 className="text-lg font-semibold text-stone-900 mb-1">
+                  {greeting || 'ClinicalSageAI'}
+                </h1>
+                <p className="text-[13px] text-stone-500 max-w-md mx-auto">
+                  Regulatory intelligence for medical devices, diagnostics, and life sciences.
+                  Create a project to start a 510(k), PMA, IND, NDA, or CER submission.
+                </p>
               </div>
 
-              {/* Greeting + subtitle */}
-              <h1 className="text-center text-[28px] sm:text-[32px] leading-[1.15] font-medium text-[#141413] tracking-tight mb-1">
-                {greeting || 'How can I help today?'}
-              </h1>
-              <p className="text-center text-[15px] text-stone-500 mb-10">
-                What&apos;s on your mind?
-              </p>
+              {/* Quick-start pathways */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInput('Help me start a 510(k) submission for my medical device. Walk me through what I need.');
+                    requestAnimationFrame(() => inputRef.current?.focus());
+                  }}
+                  className="group text-left rounded-xl border border-stone-200 bg-white p-4 hover:border-stone-300 hover:shadow-sm transition-all"
+                >
+                  <FileText className="w-4 h-4 text-stone-400 mb-2" aria-hidden="true" />
+                  <p className="text-[13px] font-medium text-stone-800">Medical device</p>
+                  <p className="text-[11px] text-stone-500 mt-0.5">510(k), PMA, De Novo, CER</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInput('Help me plan an IND or NDA submission for my drug product. What should I prepare first?');
+                    requestAnimationFrame(() => inputRef.current?.focus());
+                  }}
+                  className="group text-left rounded-xl border border-stone-200 bg-white p-4 hover:border-stone-300 hover:shadow-sm transition-all"
+                >
+                  <BookOpen className="w-4 h-4 text-stone-400 mb-2" aria-hidden="true" />
+                  <p className="text-[13px] font-medium text-stone-800">Pharma / biotech</p>
+                  <p className="text-[11px] text-stone-500 mt-0.5">IND, NDA, BLA, MAA</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInput('Help me design a clinical trial protocol for my study. I need endpoint strategy and statistical design.');
+                    requestAnimationFrame(() => inputRef.current?.focus());
+                  }}
+                  className="group text-left rounded-xl border border-stone-200 bg-white p-4 hover:border-stone-300 hover:shadow-sm transition-all"
+                >
+                  <BarChart2 className="w-4 h-4 text-stone-400 mb-2" aria-hidden="true" />
+                  <p className="text-[13px] font-medium text-stone-800">Clinical trials</p>
+                  <p className="text-[11px] text-stone-500 mt-0.5">Protocol, SAP, endpoints</p>
+                </button>
+              </div>
 
-              {browseAll ? (
-                <>
-                  {/* Browse all capabilities — full catalog of 19 domain groups */}
-                  <p className="text-center text-[10px] font-medium tracking-[0.18em] text-stone-400 uppercase mb-4">
-                    AnA capabilities — {ALL_DOMAIN_GROUPS.reduce((sum, g) => sum + g.prompts.length, 0)} prompts in {ALL_DOMAIN_GROUPS.length} domains
-                  </p>
-                  <div className="max-h-[52vh] overflow-y-auto pr-2 space-y-5 border border-stone-100 rounded-xl p-4 bg-stone-50/40">
-                    {ALL_DOMAIN_GROUPS.map(group => (
-                      <section key={group.domain}>
-                        <h3 className="text-[11px] font-semibold tracking-[0.08em] text-stone-600 uppercase mb-1.5">
-                          {group.label}
-                          <span className="ml-2 text-[10px] font-normal tracking-normal text-stone-400">
-                            {group.prompts.length}
-                          </span>
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
-                          {group.prompts.map(p => (
-                            <button
-                              key={p.id}
-                              type="button"
-                              onClick={() => {
-                                setInput(p.label);
-                                setBrowseAll(false);
-                                requestAnimationFrame(() => inputRef.current?.focus());
-                              }}
-                              className="text-left rounded-lg border border-stone-200 bg-white px-3 py-2 hover:border-stone-300 hover:bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40"
-                            >
-                              <p className="text-[12px] text-stone-700 leading-snug">
-                                {p.label}
-                              </p>
-                            </button>
-                          ))}
-                        </div>
-                      </section>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Section header */}
-                  <p className="text-center text-[10px] font-medium tracking-[0.18em] text-stone-400 uppercase mb-3">
-                    Get started with an example below
-                  </p>
-
-                  {/* Example cards (4-up) */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                    {[
-                      {
-                        title: 'Draft a CTD section',
-                        prompt:
-                          'Draft a CTD Module 2.5 Clinical Overview section for my active project. Use our existing data and flag anything that needs decisions.',
-                        icon: FileText,
-                      },
-                      {
-                        title: 'Find a 510(k) precedent',
-                        prompt:
-                          'Find 510(k) predicate devices similar to my device and summarize the substantial equivalence paths.',
-                        icon: BookOpen,
-                      },
-                      {
-                        title: 'Plan my biostat SAP',
-                        prompt:
-                          'Help me draft a Statistical Analysis Plan (SAP) outline for my pivotal study, including endpoints, power, and interim analysis.',
-                        icon: BarChart2,
-                      },
-                      {
-                        title: 'Check submission readiness',
-                        prompt:
-                          'Give me a readiness assessment of my submission: what is missing, what is at risk, and what I should do next.',
-                        icon: CheckCircle,
-                      },
-                    ].map(card => {
-                      const Icon = card.icon;
-                      return (
-                        <button
-                          key={card.title}
-                          type="button"
-                          onClick={() => {
-                            setInput(card.prompt);
-                            requestAnimationFrame(() => inputRef.current?.focus());
-                          }}
-                          className="group text-left rounded-xl border border-stone-200 bg-white p-4 hover:border-stone-300 hover:shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40"
-                        >
-                          <Icon
-                            className="w-4 h-4 text-stone-500 mb-2"
-                            aria-hidden="true"
-                          />
-                          <p className="text-[13px] font-medium text-stone-800 leading-snug group-hover:text-stone-900">
-                            {card.title}
-                          </p>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-
-              {/* Browse toggle — single ghost link */}
-              <div className="mt-6 flex justify-center">
+              {/* Browse link */}
+              <div className="flex justify-center">
                 <button
                   type="button"
                   onClick={() => setBrowseAll(b => !b)}
-                  className="text-[12px] text-stone-500 hover:text-stone-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 rounded px-2 py-1"
+                  className="text-[12px] text-stone-500 hover:text-stone-800 transition-colors rounded px-2 py-1"
                 >
-                  {browseAll ? '\u2190 Back to examples' : 'Browse all capabilities \u2192'}
+                  {browseAll ? '\u2190 Back' : 'Browse all 106 capabilities \u2192'}
                 </button>
               </div>
+
+              {browseAll && (
+                <div className="max-h-[40vh] overflow-y-auto pr-2 space-y-5 border border-stone-100 rounded-xl p-4 bg-stone-50/40">
+                  {ALL_DOMAIN_GROUPS.map(group => (
+                    <section key={group.domain}>
+                      <h3 className="text-[11px] font-semibold tracking-[0.08em] text-stone-600 uppercase mb-1.5">
+                        {group.label}
+                        <span className="ml-2 text-[10px] font-normal tracking-normal text-stone-400">
+                          {group.prompts.length}
+                        </span>
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+                        {group.prompts.map(p => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => {
+                              setInput(p.label);
+                              setBrowseAll(false);
+                              requestAnimationFrame(() => inputRef.current?.focus());
+                            }}
+                            className="text-left rounded-lg border border-stone-200 bg-white px-3 py-2 hover:border-stone-300 hover:bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40"
+                          >
+                            <p className="text-[12px] text-stone-700 leading-snug">
+                              {p.label}
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ) : (
