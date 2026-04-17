@@ -118,9 +118,30 @@ export const DeviceDiagnosticsWorkbenchPage: React.FC<DeviceDiagnosticsWorkbench
       />
 
       <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-        <LaunchCard title="510(k) Workspace" description="Predicate + eSTAR package build" icon={<ClipboardCheck className="h-4 w-4" />} onClick={onOpen510kWorkspace} disabled={noProject} />
-        <LaunchCard title="PMA Workspace" description="High-risk dossier assembly" icon={<FlaskConical className="h-4 w-4" />} onClick={onOpenPmaWorkspace} disabled={noProject} />
-        <LaunchCard title="CER Generator" description="EU MDR/IVDR evaluation workflow" icon={<FileCheck2 className="h-4 w-4" />} onClick={onOpenCerWorkspace} disabled={noProject} />
+        <LaunchCard
+          title="510(k) Workspace"
+          description="510(k) and De Novo pathways. Predicate search, substantial equivalence, compliance, and eSTAR assembly."
+          icon={<ClipboardCheck className="h-4 w-4" />}
+          onClick={onOpen510kWorkspace}
+          disabled={noProject}
+          highlighted={submissionType === '510K' || submissionType === 'DE_NOVO'}
+        />
+        <LaunchCard
+          title="PMA Workspace"
+          description="Class III premarket approval. 10-phase workflow with clinical, quality, and manufacturing handoffs."
+          icon={<FlaskConical className="h-4 w-4" />}
+          onClick={onOpenPmaWorkspace}
+          disabled={noProject}
+          highlighted={submissionType === 'PMA'}
+        />
+        <LaunchCard
+          title="CER Generator"
+          description="EU MDR and IVDR clinical evaluation. FAERS integration, literature search, and governed export."
+          icon={<FileCheck2 className="h-4 w-4" />}
+          onClick={onOpenCerWorkspace}
+          disabled={noProject}
+          highlighted={submissionType === 'IVDR' || submissionType === 'CER'}
+        />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -198,12 +219,14 @@ function LaunchCard({
   icon,
   onClick,
   disabled,
+  highlighted,
 }: {
   title: string;
   description: string;
   icon: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
+  highlighted?: boolean;
 }) {
   return (
     <button
@@ -211,14 +234,19 @@ function LaunchCard({
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
       className={cn(
-        'flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-3.5 py-3 text-left transition-colors',
-        disabled ? 'cursor-not-allowed opacity-40' : 'hover:bg-stone-50'
+        'flex items-center gap-2 rounded-xl border px-3.5 py-3 text-left transition-colors',
+        disabled ? 'border-stone-200 bg-white cursor-not-allowed opacity-40' :
+        highlighted ? 'border-stone-400 bg-stone-50 hover:bg-stone-100 ring-1 ring-stone-300' :
+        'border-stone-200 bg-white hover:bg-stone-50'
       )}
     >
-      <span className="rounded-lg bg-stone-100 p-2 text-stone-700">{icon}</span>
+      <span className={cn('rounded-lg p-2', highlighted ? 'bg-stone-200 text-stone-800' : 'bg-stone-100 text-stone-700')}>{icon}</span>
       <span className="min-w-0 flex-1">
-        <span className="block text-xs font-semibold text-stone-900">{title}</span>
-        <span className="block text-[11px] text-stone-500">{description}</span>
+        <span className="block text-xs font-semibold text-stone-900">
+          {title}
+          {highlighted && <span className="ml-1.5 text-[9px] font-medium tracking-wide text-stone-600 uppercase">Recommended</span>}
+        </span>
+        <span className="block text-[11px] text-stone-500 leading-tight">{description}</span>
       </span>
       <ArrowRight className="h-4 w-4 text-stone-400" />
     </button>

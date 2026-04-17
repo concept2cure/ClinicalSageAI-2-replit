@@ -30,26 +30,26 @@ export function ComplianceOversightPanel({ projectId, currentData, stage, sectio
   
   // Fetch compliance report
   const { data: complianceReport } = useQuery({
-    queryKey: ['/api/510k-workflow', projectId, 'compliance-report'],
+    queryKey: [`/api/510k-workflow/${projectId}/compliance-report`],
     refetchInterval: 30000, // Refresh every 30 seconds
     enabled: !!projectId
   });
-  
+
   // Fetch audit trail
   const { data: auditTrail } = useQuery({
-    queryKey: ['/api/510k-workflow', projectId, 'audit-trail'],
+    queryKey: [`/api/510k-workflow/${projectId}/audit-trail`],
     enabled: !!projectId && activeTab === 'audit'
   });
-  
+
   // Fetch version history
   const { data: versionHistory } = useQuery({
-    queryKey: ['/api/510k-workflow', projectId, 'versions'],
+    queryKey: [`/api/510k-workflow/${projectId}/versions`],
     enabled: !!projectId && activeTab === 'versions'
   });
-  
+
   // Fetch data lineage
   const { data: dataLineage } = useQuery({
-    queryKey: ['/api/510k-workflow', projectId, 'data-lineage'],
+    queryKey: [`/api/510k-workflow/${projectId}/data-lineage`],
     enabled: !!projectId && activeTab === 'lineage'
   });
   
