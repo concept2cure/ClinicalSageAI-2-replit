@@ -99,7 +99,7 @@ export function ComplianceOversightPanel({ projectId, currentData, stage, sectio
                      complianceScore >= 60 ? 'text-yellow-500' : 'text-red-500';
   
   return (
-    <Card className="w-full h-full border-l-4 border-l-blue-500">
+    <Card className="w-full h-full border-l-4 border-l-stone-400">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
