@@ -999,7 +999,6 @@ const Enhanced510kIntakeWorkflow = ({
                 setDeviceProfile={(newProfile) => setWorkflowData(newProfile)}
                 organizationId={organizationId}
                 onPredicatesFound={(predicates) => {
-                  console.log('Predicates found:', predicates);
                   // Store selected predicates in workflow data
                   setWorkflowData(prev => ({
                     ...prev,
