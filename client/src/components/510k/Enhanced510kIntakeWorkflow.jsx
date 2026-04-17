@@ -325,11 +325,9 @@ const Enhanced510kIntakeWorkflow = ({
       return await response.json();
     },
     onSuccess: (response) => {
-      toast({ 
-        title: "Workflow saved",
-        description: response?.autoPopulated 
-          ? "Your data has been saved and documents have been automatically populated with collected information"
-          : "Your 510(k) workflow data has been saved and linked to document generation" 
+      toast({
+        title: 'Workflow saved',
+        description: 'Your 510(k) data has been saved.',
       });
       queryClient.invalidateQueries(['/api/510k-workflow', projectId]);
     },
@@ -898,7 +896,7 @@ const Enhanced510kIntakeWorkflow = ({
           onClick={() => {
             updateWorkflowData('stageProgress.setup.gates.device_intake', true);
             setActiveSection('predicate_search');
-            toast({ title: "Device Intake Complete", description: "Moving to Predicate Search" });
+            toast({ title: 'Device intake saved', description: 'Proceeding to predicate search.' });
           }}
           disabled={!workflowData.deviceName || !workflowData.productCode || !workflowData.intendedUse}
           data-testid="button-continue-to-predicate"
@@ -930,20 +928,10 @@ const Enhanced510kIntakeWorkflow = ({
         
         {/* No Project Warning */}
         {!projectId && (
-          <Alert className="mt-4 bg-yellow-50 border-yellow-200">
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
-            <AlertDescription className="text-yellow-800">
-              <strong>No Project Selected</strong> - Please create or select a project to save your workflow data. Click "New Project" to get started.
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {/* Auto-Population Status Banner */}
-        {projectId && (
-          <Alert className="mt-4 bg-green-50 border-green-200">
-            <Activity className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800">
-              <strong>Automatic Document Population Active</strong> - Your 510(k) documents are automatically populated with data as you complete workflow stages. No manual document generation step needed - everything flows seamlessly from forms to documents.
+          <Alert className="mt-4 bg-amber-50 border-amber-200">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              No project selected. Create or select a project to save your workflow data.
             </AlertDescription>
           </Alert>
         )}
@@ -988,8 +976,8 @@ const Enhanced510kIntakeWorkflow = ({
       
       {/* Current Stage Content */}
       <div className="grid grid-cols-12 gap-4">
-        {/* Left Sidebar - Stage Info */}
-        <div className="col-span-2">
+        {/* Left Sidebar - Stage Info (hidden on small viewports) */}
+        <div className="hidden lg:block col-span-3">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -1045,7 +1033,7 @@ const Enhanced510kIntakeWorkflow = ({
         </div>
         
         {/* Main Content Area */}
-        <div className="col-span-6">
+        <div className="col-span-12 lg:col-span-9">
           {/* Render appropriate section based on current stage and section */}
           {currentStage === 0 && activeSection === 'device_intake' && renderDeviceIntakeForm()}
           
@@ -1284,15 +1272,6 @@ const Enhanced510kIntakeWorkflow = ({
           )}
         </div>
         
-        {/* Right Sidebar - Compliance Oversight */}
-        <div className="col-span-4">
-          <ComplianceOversightPanel
-            projectId={projectId}
-            currentData={workflowData}
-            stage={WORKFLOW_CONFIG.stages[currentStage].id}
-            section={activeSection}
-          />
-        </div>
       </div>
     </div>
   );
