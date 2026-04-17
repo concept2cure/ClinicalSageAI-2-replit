@@ -2305,30 +2305,30 @@ export default function CERV2Page({
                   <Lightbulb className="h-6 w-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <h3 className="text-lg font-semibold text-stone-900 mb-2">
                     {trackContent.welcomeHeading}
                   </h3>
-                  <p className="text-sm text-gray-700 mb-4">{trackContent.welcomeSubtext}</p>
-                  <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
-                    <h4 className="font-semibold text-sm text-gray-900 mb-3">
+                  <p className="text-sm text-stone-700 mb-4">{trackContent.welcomeSubtext}</p>
+                  <div className="bg-white rounded-lg border border-stone-200 p-4 mb-4">
+                    <h4 className="font-semibold text-sm text-stone-900 mb-3">
                       {trackContent.workflowTitle}
                     </h4>
                     <div className="grid gap-2">
                       {trackContent.stageList.map((stage, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg"
+                          className="flex items-center gap-3 p-2 bg-stone-50 rounded-lg"
                         >
                           <Badge className="bg-blue-100 text-blue-700">Stage {idx}</Badge>
                           <div className="flex-1">
                             <p className="font-medium text-sm">{stage.name}</p>
-                            <p className="text-xs text-gray-600">{stage.desc}</p>
+                            <p className="text-xs text-stone-600">{stage.desc}</p>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-gray-600">
+                  <div className="flex items-center gap-3 text-xs text-stone-600">
                     <span className="flex items-center gap-1">
                       <BookOpen className="h-3 w-3" />
                       {trackContent.newToTrack}
@@ -2379,14 +2379,14 @@ export default function CERV2Page({
 
           {/* Progress Summary Widget - Only show if user has started */}
           {deviceProfile && Object.keys(deviceProfile).length > 0 && (
-            <Card className="bg-white border-gray-200 shadow-sm context-banner-enter">
+            <Card className="bg-white border-stone-200 shadow-sm context-banner-enter">
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-2">
                     <Target className="h-4 w-4 text-blue-600" />
                     Overall Progress
                   </h3>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-stone-500">
                     {
                       [
                         isTabCompleted('device-intake'),
@@ -2401,7 +2401,7 @@ export default function CERV2Page({
                 </div>
 
                 {/* Progress Bar */}
-                <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                <div className="w-full bg-stone-200 rounded-full h-2 mb-3">
                   <div
                     className="bg-gradient-to-r from-blue-600 to-green-600 h-2 rounded-full transition-all duration-500"
                     style={{
@@ -2458,7 +2458,7 @@ export default function CERV2Page({
                 </div>
 
                 {/* Audit & Trust Signals */}
-                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500">
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1">
                       <Shield className="h-3 w-3 text-green-500" />
@@ -2487,7 +2487,7 @@ export default function CERV2Page({
                     ) : (
                       <Badge
                         variant="secondary"
-                        className="text-[11px] py-0 px-1.5 bg-gray-100 text-gray-500"
+                        className="text-[11px] py-0 px-1.5 bg-stone-100 text-stone-500"
                       >
                         Draft
                       </Badge>
@@ -2507,7 +2507,7 @@ export default function CERV2Page({
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-stone-900">
                       Welcome to CERV2 - Your 510(k) Submission Builder
                     </h3>
                     {/* Resume Button for returning users */}
@@ -2568,18 +2568,18 @@ export default function CERV2Page({
                       </Button>
                     )}
                   </div>
-                  <p className="text-sm text-gray-700 mb-4">
+                  <p className="text-sm text-stone-700 mb-4">
                     Follow this step-by-step workflow to build your complete FDA 510(k) submission
                     package:
                   </p>
 
                   {/* Step Progress Indicator */}
-                  <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
+                  <div className="bg-white rounded-lg border border-stone-200 p-4 mb-4">
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-semibold text-sm text-gray-900">
+                      <h4 className="font-semibold text-sm text-stone-900">
                         Your 510(k) Submission Workflow
                       </h4>
-                      <span className="text-xs text-gray-500">Follow steps 1-12 in order</span>
+                      <span className="text-xs text-stone-500">Follow steps 1-12 in order</span>
                     </div>
 
                     {/* Visual Progress Flow */}
@@ -2588,47 +2588,47 @@ export default function CERV2Page({
                         <div className="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           1
                         </div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
+                        <ArrowRight className="h-4 w-4 text-stone-400" />
                         <div className="bg-blue-100 text-blue-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           2
                         </div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
+                        <ArrowRight className="h-4 w-4 text-stone-400" />
                         <div className="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           3
                         </div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
+                        <ArrowRight className="h-4 w-4 text-stone-400" />
                         <div className="bg-cyan-100 text-cyan-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           4
                         </div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
+                        <ArrowRight className="h-4 w-4 text-stone-400" />
                         <div className="bg-blue-100 text-blue-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           5
                         </div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
+                        <ArrowRight className="h-4 w-4 text-stone-400" />
                         <div className="bg-yellow-100 text-yellow-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           6
                         </div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
+                        <ArrowRight className="h-4 w-4 text-stone-400" />
                         <div className="bg-green-100 text-green-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           7
                         </div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
+                        <ArrowRight className="h-4 w-4 text-stone-400" />
                         <div className="bg-orange-100 text-orange-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           8
                         </div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
+                        <ArrowRight className="h-4 w-4 text-stone-400" />
                         <div className="bg-red-100 text-red-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           9
                         </div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
+                        <ArrowRight className="h-4 w-4 text-stone-400" />
                         <div className="bg-green-100 text-green-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           10
                         </div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
+                        <ArrowRight className="h-4 w-4 text-stone-400" />
                         <div className="bg-teal-100 text-teal-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           11
                         </div>
-                        <ArrowRight className="h-4 w-4 text-gray-400" />
+                        <ArrowRight className="h-4 w-4 text-stone-400" />
                         <div className="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
                           12
                         </div>
@@ -2732,7 +2732,7 @@ export default function CERV2Page({
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-gray-600">
+                  <div className="flex items-center gap-3 text-xs text-stone-600">
                     <span className="flex items-center gap-1">
                       <BookOpen className="h-3 w-3" />
                       New to 510(k)?
@@ -2745,7 +2745,7 @@ export default function CERV2Page({
                     >
                       Read FDA Guidance
                     </Button>
-                    <span className="text-gray-400">•</span>
+                    <span className="text-stone-400">•</span>
                     <Button
                       variant="link"
                       className="h-auto p-0 text-xs text-blue-600"
@@ -2762,7 +2762,7 @@ export default function CERV2Page({
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl font-bold text-gray-800">
+              <CardTitle className="text-2xl font-bold text-stone-800">
                 FDA Regulatory Pathway Analyzer
               </CardTitle>
               <CardDescription>
@@ -2961,7 +2961,7 @@ export default function CERV2Page({
                       <h4 className="font-medium mb-2">Key Factors:</h4>
                       <ul className="list-disc pl-5 space-y-1">
                         {recommendedPathway.reasons.map((reason, idx) => (
-                          <li key={idx} className="text-sm text-gray-700">
+                          <li key={idx} className="text-sm text-stone-700">
                             {reason}
                           </li>
                         ))}
@@ -3011,7 +3011,7 @@ export default function CERV2Page({
         <div className="p-6 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl font-bold text-gray-800">PMA Device Search</CardTitle>
+              <CardTitle className="text-2xl font-bold text-stone-800">PMA Device Search</CardTitle>
               <CardDescription>
                 Search FDA Pre-Market Approval database for Class III medical devices
               </CardDescription>
@@ -3153,21 +3153,21 @@ export default function CERV2Page({
                               </div>
                               <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
-                                  <span className="text-gray-500">Applicant:</span>
+                                  <span className="text-stone-500">Applicant:</span>
                                   <p className="font-medium">{device.applicant}</p>
                                 </div>
                                 <div>
-                                  <span className="text-gray-500">Approval Date:</span>
+                                  <span className="text-stone-500">Approval Date:</span>
                                   <p className="font-medium">
                                     {new Date(device.decision_date).toLocaleDateString()}
                                   </p>
                                 </div>
                                 <div>
-                                  <span className="text-gray-500">Product Code:</span>
+                                  <span className="text-stone-500">Product Code:</span>
                                   <p className="font-medium">{device.product_code}</p>
                                 </div>
                                 <div>
-                                  <span className="text-gray-500">Advisory Committee:</span>
+                                  <span className="text-stone-500">Advisory Committee:</span>
                                   <p className="font-medium">{device.advisory_committee}</p>
                                 </div>
                               </div>
@@ -3266,7 +3266,7 @@ export default function CERV2Page({
         <div className="p-6 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl font-bold text-gray-800">
+              <CardTitle className="text-2xl font-bold text-stone-800">
                 PMA Device Comparison
               </CardTitle>
               <CardDescription>
@@ -3287,15 +3287,15 @@ export default function CERV2Page({
                   {/* Comparison Table */}
                   <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
+                      <thead className="bg-stone-50">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">
                             Attribute
                           </th>
                           {selectedPmaDevices.map((device, idx) => (
                             <th
                               key={idx}
-                              className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                              className="px-4 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider"
                               data-testid={`header-device-${idx}`}
                             >
                               Device {idx + 1}
@@ -3305,101 +3305,101 @@ export default function CERV2Page({
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         <tr>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-stone-900">
                             PMA Number
                           </td>
                           {selectedPmaDevices.map((device, idx) => (
                             <td
                               key={idx}
-                              className="px-4 py-3 whitespace-nowrap text-sm text-gray-500"
+                              className="px-4 py-3 whitespace-nowrap text-sm text-stone-500"
                             >
                               <Badge variant="outline">{device.pma_number}</Badge>
                             </td>
                           ))}
                         </tr>
-                        <tr className="bg-gray-50">
-                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <tr className="bg-stone-50">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-stone-900">
                             Trade Name
                           </td>
                           {selectedPmaDevices.map((device, idx) => (
-                            <td key={idx} className="px-4 py-3 text-sm text-gray-900 font-medium">
+                            <td key={idx} className="px-4 py-3 text-sm text-stone-900 font-medium">
                               {device.trade_name}
                             </td>
                           ))}
                         </tr>
                         <tr>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-stone-900">
                             Generic Name
                           </td>
                           {selectedPmaDevices.map((device, idx) => (
-                            <td key={idx} className="px-4 py-3 text-sm text-gray-500">
+                            <td key={idx} className="px-4 py-3 text-sm text-stone-500">
                               {device.generic_name}
                             </td>
                           ))}
                         </tr>
-                        <tr className="bg-gray-50">
-                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <tr className="bg-stone-50">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-stone-900">
                             Applicant
                           </td>
                           {selectedPmaDevices.map((device, idx) => (
-                            <td key={idx} className="px-4 py-3 text-sm text-gray-500">
+                            <td key={idx} className="px-4 py-3 text-sm text-stone-500">
                               {device.applicant}
                             </td>
                           ))}
                         </tr>
                         <tr>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-stone-900">
                             Approval Date
                           </td>
                           {selectedPmaDevices.map((device, idx) => (
                             <td
                               key={idx}
-                              className="px-4 py-3 whitespace-nowrap text-sm text-gray-500"
+                              className="px-4 py-3 whitespace-nowrap text-sm text-stone-500"
                             >
                               {new Date(device.decision_date).toLocaleDateString()}
                             </td>
                           ))}
                         </tr>
-                        <tr className="bg-gray-50">
-                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <tr className="bg-stone-50">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-stone-900">
                             Product Code
                           </td>
                           {selectedPmaDevices.map((device, idx) => (
                             <td
                               key={idx}
-                              className="px-4 py-3 whitespace-nowrap text-sm text-gray-500"
+                              className="px-4 py-3 whitespace-nowrap text-sm text-stone-500"
                             >
-                              <code className="bg-gray-100 px-2 py-1 rounded">
+                              <code className="bg-stone-100 px-2 py-1 rounded">
                                 {device.product_code}
                               </code>
                             </td>
                           ))}
                         </tr>
                         <tr>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-stone-900">
                             Advisory Committee
                           </td>
                           {selectedPmaDevices.map((device, idx) => (
-                            <td key={idx} className="px-4 py-3 text-sm text-gray-500">
+                            <td key={idx} className="px-4 py-3 text-sm text-stone-500">
                               {device.advisory_committee}
                             </td>
                           ))}
                         </tr>
-                        <tr className="bg-gray-50">
-                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <tr className="bg-stone-50">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-stone-900">
                             Expedited Review
                           </td>
                           {selectedPmaDevices.map((device, idx) => (
                             <td
                               key={idx}
-                              className="px-4 py-3 whitespace-nowrap text-sm text-gray-500"
+                              className="px-4 py-3 whitespace-nowrap text-sm text-stone-500"
                             >
                               {device.expedited_review ? (
                                 <Badge variant="outline" className="bg-green-50">
                                   Yes
                                 </Badge>
                               ) : (
-                                <Badge variant="outline" className="bg-gray-50">
+                                <Badge variant="outline" className="bg-stone-50">
                                   No
                                 </Badge>
                               )}
@@ -3469,7 +3469,7 @@ export default function CERV2Page({
                         <CardTitle className="text-lg">Similarity Analysis Results</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-stone-600">
                           Analyzing: <strong>{pmaComparisonResults.device_profile}</strong>
                         </p>
                         {pmaComparisonResults.comparisons.map((comp, idx) => (
@@ -3477,7 +3477,7 @@ export default function CERV2Page({
                             <div className="flex justify-between items-start">
                               <div>
                                 <h4 className="font-medium">{comp.pma_device.trade_name}</h4>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-stone-600">
                                   PMA: {comp.pma_device.pma_number}
                                 </p>
                               </div>
@@ -3489,7 +3489,7 @@ export default function CERV2Page({
                             </div>
                             <div className="mt-2">
                               <p className="text-sm font-medium">Matching Factors:</p>
-                              <ul className="list-disc pl-5 text-sm text-gray-600">
+                              <ul className="list-disc pl-5 text-sm text-stone-600">
                                 {comp.matching_factors.map((factor, fidx) => (
                                   <li key={fidx}>{factor}</li>
                                 ))}
@@ -3515,7 +3515,7 @@ export default function CERV2Page({
         <div className="p-6 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl font-bold text-gray-800">
+              <CardTitle className="text-2xl font-bold text-stone-800">
                 PMA Submission Builder
               </CardTitle>
               <CardDescription>
@@ -3586,7 +3586,7 @@ export default function CERV2Page({
                       ].map(section => (
                         <div
                           key={section.id}
-                          className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                          className="flex items-center justify-between p-3 border rounded-lg hover:bg-stone-50"
                         >
                           <div className="flex items-center gap-3">
                             <section.icon className="h-5 w-5 text-blue-600" />
@@ -4316,7 +4316,7 @@ export default function CERV2Page({
       return (
         <div className="p-6 space-y-6" data-testid="evidence-matrix-content">
           {/* Coverage Overview Card */}
-          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <Card className="bg-stone-50 border-blue-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
                 <BarChart className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -4335,7 +4335,7 @@ export default function CERV2Page({
                       <span className="text-sm font-medium text-blue-900">Overall Coverage</span>
                       <span className="text-sm font-bold text-blue-900">{overallCoverage}%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div className="w-full bg-stone-200 rounded-full h-3">
                       <div
                         className={`h-3 rounded-full transition-all duration-500 ${
                           overallCoverage >= 80
@@ -4387,28 +4387,28 @@ export default function CERV2Page({
                         <IconComponent className={`h-5 w-5 ${colorClass} mt-0.5`} />
                         <div className="flex-1">
                           <div className="flex justify-between items-start mb-2">
-                            <h5 className="font-medium text-gray-900">{category.name}</h5>
+                            <h5 className="font-medium text-stone-900">{category.name}</h5>
                             <span
-                              className={`text-sm font-bold ${coverage === 100 ? 'text-green-600' : 'text-gray-600'}`}
+                              className={`text-sm font-bold ${coverage === 100 ? 'text-green-600' : 'text-stone-600'}`}
                             >
                               {coverage}%
                             </span>
                           </div>
 
-                          <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="w-full bg-stone-200 rounded-full h-2">
                             <div
                               className={`h-2 rounded-full transition-all duration-500 ${
                                 coverage === 100
                                   ? 'bg-green-600'
                                   : coverage > 0
                                     ? 'bg-yellow-500'
-                                    : 'bg-gray-300'
+                                    : 'bg-stone-300'
                               }`}
                               style={{ width: `${coverage}%` }}
                             />
                           </div>
 
-                          <div className="mt-2 text-xs text-gray-600">
+                          <div className="mt-2 text-xs text-stone-600">
                             {coverage === 100
                               ? '✅ Complete'
                               : coverage > 0
@@ -4447,7 +4447,7 @@ export default function CERV2Page({
                     <div className="text-2xl font-bold text-green-600">
                       {evidenceCategories.filter(cat => calculateCoverage(cat.id) === 100).length}
                     </div>
-                    <div className="text-xs text-gray-600">Complete</div>
+                    <div className="text-xs text-stone-600">Complete</div>
                   </div>
                   <div>
                     <div className="text-2xl font-bold text-yellow-600">
@@ -4458,13 +4458,13 @@ export default function CERV2Page({
                         }).length
                       }
                     </div>
-                    <div className="text-xs text-gray-600">In Progress</div>
+                    <div className="text-xs text-stone-600">In Progress</div>
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-gray-600">
+                    <div className="text-2xl font-bold text-stone-600">
                       {evidenceCategories.filter(cat => calculateCoverage(cat.id) === 0).length}
                     </div>
-                    <div className="text-xs text-gray-600">Not Started</div>
+                    <div className="text-xs text-stone-600">Not Started</div>
                   </div>
                 </div>
               </div>
@@ -4621,17 +4621,17 @@ export default function CERV2Page({
     } else if (activeTab === 'cybersecurity') {
       return (
         <div className="p-6 space-y-6" data-testid="cybersecurity-content">
-          <Card className="bg-gray-50 border-gray-200">
+          <Card className="bg-stone-50 border-stone-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Lock className="h-5 w-5 text-gray-600 mt-0.5 flex-shrink-0" />
+                <Lock className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-1">Cybersecurity Documentation</h4>
-                  <p className="text-sm text-gray-800">
+                  <h4 className="font-semibold text-stone-900 mb-1">Cybersecurity Documentation</h4>
+                  <p className="text-sm text-stone-800">
                     Document cybersecurity risk management, threat modeling, and secure design per
                     FDA guidance.
                   </p>
-                  <div className="mt-2 text-xs text-gray-700">
+                  <div className="mt-2 text-xs text-stone-700">
                     <strong>Required documentation:</strong> Cybersecurity management plan, threat
                     analysis, SBOM, secure development.
                   </div>
@@ -5036,13 +5036,13 @@ export default function CERV2Page({
     } else if (activeTab === 'device-description') {
       return (
         <div className="p-6 space-y-6" data-testid="device-description-content">
-          <Card className="bg-gray-50 border-gray-200">
+          <Card className="bg-stone-50 border-stone-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-gray-600 mt-0.5 flex-shrink-0" />
+                <FileText className="h-5 w-5 text-stone-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-1">Device Description</h4>
-                  <p className="text-sm text-gray-800">
+                  <h4 className="font-semibold text-stone-900 mb-1">Device Description</h4>
+                  <p className="text-sm text-stone-800">
                     Comprehensive technical description of device components, materials,
                     specifications, and principles of operation.
                   </p>
@@ -5258,7 +5258,7 @@ export default function CERV2Page({
                   <label htmlFor="summary-option" className="cursor-pointer">
                     <div>
                       <div className="font-medium">510(k) Summary (21 CFR 807.92)</div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-stone-600">
                         Public document summarizing safety and effectiveness. Recommended for
                         transparency. Released to public after clearance.
                       </div>
@@ -5287,7 +5287,7 @@ export default function CERV2Page({
                   <label htmlFor="statement-option" className="cursor-pointer">
                     <div>
                       <div className="font-medium">510(k) Statement (21 CFR 807.93)</div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-stone-600">
                         Certifies that a summary will be provided upon request. Keeps information
                         confidential. Protects proprietary information.
                       </div>
@@ -5411,8 +5411,8 @@ export default function CERV2Page({
           ) : (
             <Card>
               <CardContent className="pt-6">
-                <div className="text-center py-8 text-gray-500">
-                  <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                <div className="text-center py-8 text-stone-500">
+                  <FileText className="h-12 w-12 mx-auto mb-3 text-stone-300" />
                   <p className="mb-2">No Project Selected</p>
                   <p className="text-sm">
                     Complete the Device Intake Form to start generating FDA forms
@@ -5497,7 +5497,7 @@ export default function CERV2Page({
                   <Badge className="bg-yellow-100 text-yellow-700">In Review</Badge>
                 )}
                 {reviewSignOff.status === 'draft' && (
-                  <Badge className="bg-gray-100 text-gray-600">Draft</Badge>
+                  <Badge className="bg-stone-100 text-stone-600">Draft</Badge>
                 )}
               </CardTitle>
               <CardDescription>Internal review gate before FDA submission</CardDescription>
@@ -5538,7 +5538,7 @@ export default function CERV2Page({
               ) : (
                 <>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Reviewer Name</label>
+                    <label className="text-sm font-medium text-stone-700">Reviewer Name</label>
                     <input
                       type="text"
                       className="w-full px-3 py-2 border rounded-md text-sm"
@@ -5550,7 +5550,7 @@ export default function CERV2Page({
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Review Notes</label>
+                    <label className="text-sm font-medium text-stone-700">Review Notes</label>
                     <textarea
                       className="w-full px-3 py-2 border rounded-md text-sm"
                       rows={3}
@@ -5860,7 +5860,7 @@ export default function CERV2Page({
             />
           ) : (
             <div className="text-center p-8">
-              <p className="text-gray-600">
+              <p className="text-stone-600">
                 Please complete device profile before generating submission package.
               </p>
             </div>
@@ -6021,7 +6021,7 @@ export default function CERV2Page({
       // Default: track-aware workflow overview
       return (
         <div className="p-6">
-          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <Card className="bg-stone-50 border-blue-200">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileCheck className="h-6 w-6 text-blue-600" />
@@ -6041,7 +6041,7 @@ export default function CERV2Page({
                     <Badge className="bg-blue-100 text-blue-700">Stage {idx}</Badge>
                     <div className="flex-1">
                       <p className="font-medium">{stage.name}</p>
-                      <p className="text-sm text-gray-600">{stage.desc}</p>
+                      <p className="text-sm text-stone-600">{stage.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -6222,7 +6222,7 @@ export default function CERV2Page({
                   {
                     id: 'cybersecurity',
                     label: 'Cybersecurity',
-                    icon: <Lock className="h-4 w-4 mr-1.5 text-gray-600" />,
+                    icon: <Lock className="h-4 w-4 mr-1.5 text-stone-600" />,
                     required: false,
                     status: 'todo',
                   },
@@ -6271,7 +6271,7 @@ export default function CERV2Page({
             {
               id: 'device-description',
               label: 'Device Description',
-              icon: <FileText className="h-4 w-4 mr-1.5 text-gray-600" />,
+              icon: <FileText className="h-4 w-4 mr-1.5 text-stone-600" />,
               required: true,
               status: 'todo',
             },
@@ -6467,7 +6467,7 @@ export default function CERV2Page({
 
       // Return FDA 7-stage workflow with gate indicators
       return (
-        <div className="mt-2 mb-4 border-b border-gray-200 bg-gray-50">
+        <div className="mt-2 mb-4 border-b border-stone-200 bg-stone-50">
           <div className="flex overflow-x-auto pb-3 px-6 space-x-8">
             {k510TabGroups.map((group, groupIndex) => {
               const gateStatus = group.gateStatus || { passed: false };
@@ -6478,14 +6478,14 @@ export default function CERV2Page({
               return (
                 <div key={groupIndex} className="space-y-2 min-w-fit">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-gray-700">{group.label}</span>
+                    <span className="text-xs font-semibold text-stone-700">{group.label}</span>
                     {/* Gate Status Indicator */}
                     {gateStatus.passed ? (
                       <CheckCircle className="h-4 w-4 text-green-600" />
                     ) : isStageAccessible ? (
                       <AlertCircle className="h-4 w-4 text-yellow-500" />
                     ) : (
-                      <Lock className="h-4 w-4 text-gray-400" />
+                      <Lock className="h-4 w-4 text-stone-400" />
                     )}
                   </div>
                   <div className="flex flex-wrap gap-1" role="tablist">
@@ -6496,7 +6496,7 @@ export default function CERV2Page({
 
                       // Status chip colors
                       const statusColors = {
-                        todo: 'bg-gray-100 text-gray-600',
+                        todo: 'bg-stone-100 text-stone-600',
                         draft: 'bg-yellow-100 text-yellow-700',
                         ready: 'bg-green-100 text-green-700',
                         blocked: 'bg-red-100 text-red-700',
@@ -6517,8 +6517,8 @@ export default function CERV2Page({
                               activeTab === tab.id
                                 ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
                                 : isTabEnabled
-                                  ? 'text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                                  : 'text-gray-400 border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
+                                  ? 'text-stone-700 border-stone-300 hover:bg-stone-50 hover:border-stone-400'
+                                  : 'text-stone-400 border-stone-200 bg-stone-50 cursor-not-allowed opacity-60'
                             }`}
                             onClick={() => {
                               if (!isTabEnabled) {
@@ -6708,7 +6708,7 @@ export default function CERV2Page({
                 {
                   id: 'cybersecurity',
                   label: 'Cybersecurity',
-                  icon: <Lock className="h-4 w-4 mr-1.5 text-gray-600" />,
+                  icon: <Lock className="h-4 w-4 mr-1.5 text-stone-600" />,
                   required: false,
                   status: 'todo',
                 },
@@ -6742,7 +6742,7 @@ export default function CERV2Page({
           {
             id: 'device-description',
             label: 'Device Description',
-            icon: <FileText className="h-4 w-4 mr-1.5 text-gray-600" />,
+            icon: <FileText className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: true,
             status: 'todo',
           },
@@ -7002,7 +7002,7 @@ export default function CERV2Page({
           {
             id: 'device-description',
             label: 'Device Description',
-            icon: <FileText className="h-4 w-4 mr-1.5 text-gray-600" />,
+            icon: <FileText className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: true,
             status: 'todo',
           },
@@ -7244,7 +7244,7 @@ export default function CERV2Page({
           {
             id: 'device-description',
             label: 'Device Description',
-            icon: <FileText className="h-4 w-4 mr-1.5 text-gray-600" />,
+            icon: <FileText className="h-4 w-4 mr-1.5 text-stone-600" />,
             required: true,
             status: 'todo',
           },
@@ -7567,7 +7567,7 @@ export default function CERV2Page({
 
     // Render using the same gated stage layout as 510(k)
     return (
-      <div className="mt-2 mb-4 border-b border-gray-200 bg-gray-50">
+      <div className="mt-2 mb-4 border-b border-stone-200 bg-stone-50">
         <div className="flex overflow-x-auto pb-3 px-6 space-x-8">
           {activeGroups.map((group, groupIndex) => {
             const gateStatus = group.gateStatus || { passed: false };
@@ -7578,20 +7578,20 @@ export default function CERV2Page({
             return (
               <div key={groupIndex} className="space-y-2 min-w-fit">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-gray-700">{group.label}</span>
+                  <span className="text-xs font-semibold text-stone-700">{group.label}</span>
                   {gateStatus.passed ? (
                     <CheckCircle className="h-4 w-4 text-green-600" />
                   ) : isStageAccessible ? (
                     <AlertCircle className="h-4 w-4 text-yellow-500" />
                   ) : (
-                    <Lock className="h-4 w-4 text-gray-400" />
+                    <Lock className="h-4 w-4 text-stone-400" />
                   )}
                 </div>
                 <div className="flex flex-wrap gap-1" role="tablist">
                   {group.tabs.map(tab => {
                     const isTabEnabled = isStageAccessible && tab.status !== 'blocked';
                     const statusColors = {
-                      todo: 'bg-gray-100 text-gray-600',
+                      todo: 'bg-stone-100 text-stone-600',
                       draft: 'bg-yellow-100 text-yellow-700',
                       ready: 'bg-green-100 text-green-700',
                       blocked: 'bg-red-100 text-red-700',
@@ -7611,8 +7611,8 @@ export default function CERV2Page({
                             activeTab === tab.id
                               ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
                               : isTabEnabled
-                                ? 'text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                                : 'text-gray-400 border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
+                                ? 'text-stone-700 border-stone-300 hover:bg-stone-50 hover:border-stone-400'
+                                : 'text-stone-400 border-stone-200 bg-stone-50 cursor-not-allowed opacity-60'
                           }`}
                           onClick={() => {
                             if (!isTabEnabled) {
@@ -7771,7 +7771,7 @@ export default function CERV2Page({
   // Render page
   return (
     <div
-      className={embedded ? 'h-full overflow-y-auto bg-gray-50' : 'min-h-screen bg-gray-50 pb-8'}
+      className={embedded ? 'h-full overflow-y-auto bg-stone-50' : 'min-h-screen bg-stone-50 pb-8'}
     >
       {!embedded && (
         <header className="bg-white border-b">
@@ -7783,12 +7783,12 @@ export default function CERV2Page({
                   onClick={() => {
                     window.location.href = '/concept2cure';
                   }}
-                  className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 transition-colors mr-2 border-r border-gray-200 pr-4"
+                  className="flex items-center gap-1 text-sm text-stone-500 hover:text-stone-900 transition-colors mr-2 border-r border-stone-200 pr-4"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   Hub
                 </button>
-                <h1 className="text-2xl font-bold text-gray-900">{trackContent.pipelineHeading}</h1>
+                <h1 className="text-2xl font-bold text-stone-900">{trackContent.pipelineHeading}</h1>
 
                 {/* Multi-Project Selector */}
                 <div className="relative">
@@ -7796,7 +7796,7 @@ export default function CERV2Page({
                     variant="outline"
                     size="sm"
                     onClick={() => setShowProjectSelector(!showProjectSelector)}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 hover:from-blue-100 hover:to-indigo-100"
+                    className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 border-blue-200 hover:bg-stone-100"
                     data-testid="button-project-selector"
                   >
                     <FolderOpen className="h-4 w-4 text-blue-600" />
@@ -7814,7 +7814,7 @@ export default function CERV2Page({
                   {/* Project Selector Dropdown */}
                   {showProjectSelector && (
                     <Card className="absolute top-full left-0 mt-2 w-96 shadow-lg z-50 border-2 border-blue-200">
-                      <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-indigo-50">
+                      <CardHeader className="pb-3 bg-stone-50">
                         <div className="flex items-center justify-between">
                           <CardTitle className="text-lg flex items-center gap-2">
                             <Files className="h-5 w-5 text-blue-600" />
@@ -7833,8 +7833,8 @@ export default function CERV2Page({
                       <CardContent className="p-3">
                         <div className="space-y-2 max-h-96 overflow-y-auto">
                           {allProjects.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500">
-                              <FolderPlus className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                            <div className="text-center py-8 text-stone-500">
+                              <FolderPlus className="h-12 w-12 mx-auto mb-2 text-stone-300" />
                               <p className="text-sm">No projects yet</p>
                               <p className="text-xs mt-1">
                                 Create your first medical device project
@@ -7847,7 +7847,7 @@ export default function CERV2Page({
                                 className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
                                   project.id === currentProjectId
                                     ? 'bg-blue-50 border-blue-300 shadow-sm'
-                                    : 'bg-white border-gray-200 hover:border-blue-200 hover:bg-gray-50'
+                                    : 'bg-white border-stone-200 hover:border-blue-200 hover:bg-stone-50'
                                 }`}
                                 onClick={() => switchToProject(project.id)}
                                 data-testid={`project-item-${project.id}`}
@@ -7855,7 +7855,7 @@ export default function CERV2Page({
                                 <div className="flex items-start justify-between">
                                   <div className="flex-1">
                                     <div className="flex items-center gap-2">
-                                      <h4 className="font-semibold text-gray-900">
+                                      <h4 className="font-semibold text-stone-900">
                                         {project.deviceName}
                                       </h4>
                                       {String(project.id).startsWith('local-') && (
@@ -7870,7 +7870,7 @@ export default function CERV2Page({
                                         <CheckCircle className="h-4 w-4 text-blue-600" />
                                       )}
                                     </div>
-                                    <p className="text-xs text-gray-600 mt-0.5">
+                                    <p className="text-xs text-stone-600 mt-0.5">
                                       {project.manufacturer}
                                     </p>
                                     <div className="flex items-center gap-2 mt-2">
@@ -7887,7 +7887,7 @@ export default function CERV2Page({
                                       >
                                         {project.status}
                                       </Badge>
-                                      <span className="text-xs text-gray-500">
+                                      <span className="text-xs text-stone-500">
                                         Updated {new Date(project.updatedAt).toLocaleDateString()}
                                       </span>
                                     </div>
@@ -7928,67 +7928,64 @@ export default function CERV2Page({
                 </div>
               </div>
 
-              {/* PROMINENT CORE FEATURES - Primary Work Areas */}
+              {/* Core workspace areas */}
               <div className="flex items-center space-x-2">
-                {/* Device Data Center - PRIMARY DATA ROOM */}
                 <Button
-                  variant="default"
-                  size="lg"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setActiveTab('device-data-center')}
-                  className={`flex items-center gap-2 px-5 py-2.5 font-bold shadow-lg transition-all ${
+                  className={`flex items-center gap-2 px-3 py-2 font-medium transition-colors ${
                     activeTab === 'device-data-center'
-                      ? 'bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white ring-2 ring-cyan-400 ring-offset-2'
-                      : 'bg-gradient-to-r from-cyan-50 to-cyan-100 text-cyan-800 border-2 border-cyan-300 hover:from-cyan-100 hover:to-cyan-200'
+                      ? 'bg-stone-800 text-white hover:bg-stone-900'
+                      : 'text-stone-700 hover:bg-stone-100'
                   }`}
                   data-testid="quick-access-data-center"
                 >
-                  <HardDrive className="h-5 w-5" />
+                  <HardDrive className="h-4 w-4" />
                   <div className="flex flex-col items-start">
-                    <span className="text-sm leading-tight">Data Center</span>
-                    <span className="text-xs opacity-90 leading-tight">File Repository</span>
+                    <span className="text-[13px] leading-tight">Data Center</span>
+                    <span className="text-[10px] opacity-80 leading-tight">File repository</span>
                   </div>
                 </Button>
 
-                {/* Document Editor - PRIMARY WRITING TOOL */}
                 <Button
-                  variant="default"
-                  size="lg"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setActiveTab('document-editor')}
-                  className={`flex items-center gap-2 px-5 py-2.5 font-bold shadow-lg transition-all ${
+                  className={`flex items-center gap-2 px-3 py-2 font-medium transition-colors ${
                     activeTab === 'document-editor'
-                      ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white ring-2 ring-green-400 ring-offset-2'
-                      : 'bg-gradient-to-r from-green-50 to-green-100 text-green-800 border-2 border-green-300 hover:from-green-100 hover:to-green-200'
+                      ? 'bg-stone-800 text-white hover:bg-stone-900'
+                      : 'text-stone-700 hover:bg-stone-100'
                   }`}
                   data-testid="quick-access-document-editor"
                 >
-                  <Edit3 className="h-5 w-5" />
+                  <Edit3 className="h-4 w-4" />
                   <div className="flex flex-col items-start">
-                    <span className="text-sm leading-tight">Document Editor</span>
-                    <span className="text-xs opacity-90 leading-tight">Write & Edit</span>
+                    <span className="text-[13px] leading-tight">Document Editor</span>
+                    <span className="text-[10px] opacity-80 leading-tight">Write and edit</span>
                   </div>
                 </Button>
 
-                {/* Document Vault - PRIMARY FILE MANAGER */}
                 <Button
-                  variant="default"
-                  size="lg"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setIsDocumentVaultOpen(true)}
-                  className={`flex items-center gap-2 px-5 py-2.5 font-bold shadow-lg transition-all ${
+                  className={`flex items-center gap-2 px-3 py-2 font-medium transition-colors ${
                     isDocumentVaultOpen
-                      ? 'bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-white ring-2 ring-yellow-400 ring-offset-2'
-                      : 'bg-gradient-to-r from-yellow-50 to-amber-50 text-yellow-800 border-2 border-yellow-300 hover:from-yellow-100 hover:to-amber-100'
+                      ? 'bg-stone-800 text-white hover:bg-stone-900'
+                      : 'text-stone-700 hover:bg-stone-100'
                   }`}
                   data-testid="quick-access-document-vault"
                 >
                   <FolderOpen className="h-5 w-5" />
                   <div className="flex flex-col items-start">
-                    <span className="text-sm leading-tight">Document Vault</span>
-                    <span className="text-xs opacity-90 leading-tight">Manage Files</span>
+                    <span className="text-[13px] leading-tight">Document Vault</span>
+                    <span className="text-[10px] opacity-80 leading-tight">Manage files</span>
                   </div>
                 </Button>
 
                 {/* Secondary Actions */}
-                <div className="ml-4 pl-4 border-l-2 border-gray-200 flex items-center space-x-2">
+                <div className="ml-3 pl-3 border-l border-stone-200 flex items-center space-x-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -8005,7 +8002,7 @@ export default function CERV2Page({
                       variant="outline"
                       size="sm"
                       onClick={() => openAssistant()}
-                      className="flex items-center text-gray-600"
+                      className="flex items-center text-stone-600"
                     >
                       <MessageSquare className="mr-1.5 h-4 w-4" />
                       AI Assistant
@@ -8059,17 +8056,17 @@ export default function CERV2Page({
 
       {/* Embedded mode: compact back bar */}
       {embedded && onBackToProject && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-white border-b border-gray-200">
+        <div className="flex items-center gap-2 px-4 py-2 bg-white border-b border-stone-200">
           <button
             onClick={onBackToProject}
-            className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors px-2 py-1 rounded-md hover:bg-gray-100"
+            className="flex items-center gap-1.5 text-sm text-stone-600 hover:text-stone-900 transition-colors px-2 py-1 rounded-md hover:bg-stone-100"
             data-testid="back-to-project"
           >
             <ChevronLeft className="w-4 h-4" />
             Back to Project
           </button>
-          <span className="text-gray-300">|</span>
-          <span className="text-sm font-medium text-gray-700">
+          <span className="text-stone-300">|</span>
+          <span className="text-sm font-medium text-stone-700">
             {TRACK_META[documentType]?.workspaceLabel || 'Device Workspace'}
           </span>
         </div>
@@ -8081,9 +8078,9 @@ export default function CERV2Page({
         <div className="flex">
           {/* Document Vault Sidebar */}
           {showDocumentTree && (
-            <div className="w-64 bg-gray-50 border-r border-gray-200 shadow-md h-full overflow-auto">
+            <div className="w-64 bg-stone-50 border-r border-stone-200 shadow-md h-full overflow-auto">
               <div className="h-full flex flex-col">
-                <div className="flex justify-between items-center p-3 border-b bg-gray-100">
+                <div className="flex justify-between items-center p-3 border-b bg-stone-100">
                   <h2 className="text-base font-semibold flex items-center">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -8103,7 +8100,7 @@ export default function CERV2Page({
                   </h2>
                   <button
                     onClick={() => setShowDocumentTree(false)}
-                    className="h-7 w-7 p-0 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-200"
+                    className="h-7 w-7 p-0 text-stone-500 hover:text-stone-700 rounded-full hover:bg-stone-200"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -8126,25 +8123,25 @@ export default function CERV2Page({
                 <div className="border-b">
                   <div className="flex">
                     <button
-                      className={`flex-1 py-2 text-sm font-medium text-center ${documentView === 'all' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                      className={`flex-1 py-2 text-sm font-medium text-center ${documentView === 'all' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-stone-500 hover:text-stone-700'}`}
                       onClick={() => setDocumentView('all')}
                     >
                       All Files
                     </button>
                     <button
-                      className={`flex-1 py-2 text-sm font-medium text-center ${documentView === 'cer' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                      className={`flex-1 py-2 text-sm font-medium text-center ${documentView === 'cer' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-stone-500 hover:text-stone-700'}`}
                       onClick={() => setDocumentView('cer')}
                     >
                       CER
                     </button>
                     <button
-                      className={`flex-1 py-2 text-sm font-medium text-center ${documentView === '510k' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                      className={`flex-1 py-2 text-sm font-medium text-center ${documentView === '510k' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-stone-500 hover:text-stone-700'}`}
                       onClick={() => setDocumentView('510k')}
                     >
                       510(k)
                     </button>
                     <button
-                      className={`flex-1 py-2 text-sm font-medium text-center ${documentView === 'global' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                      className={`flex-1 py-2 text-sm font-medium text-center ${documentView === 'global' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-stone-500 hover:text-stone-700'}`}
                       onClick={() => setDocumentView('global')}
                     >
                       Global
@@ -8165,7 +8162,7 @@ export default function CERV2Page({
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="absolute left-2 top-2.5 h-4 w-4 text-gray-400"
+                      className="absolute left-2 top-2.5 h-4 w-4 text-stone-400"
                     >
                       <circle cx="11" cy="11" r="8"></circle>
                       <path d="m21 21-4.3-4.3"></path>
@@ -8173,7 +8170,7 @@ export default function CERV2Page({
                     <input
                       type="text"
                       placeholder="Search documents..."
-                      className="pl-8 pr-2 py-2 w-full text-sm border border-gray-300 rounded-md"
+                      className="pl-8 pr-2 py-2 w-full text-sm border border-stone-300 rounded-md"
                     />
                   </div>
                 </div>
@@ -8197,7 +8194,7 @@ export default function CERV2Page({
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          className={`transition-transform ${expandedFolders.regulatory ? 'rotate-90' : ''} mr-2 text-gray-500`}
+                          className={`transition-transform ${expandedFolders.regulatory ? 'rotate-90' : ''} mr-2 text-stone-500`}
                         >
                           <polyline points="9 18 15 12 9 6"></polyline>
                         </svg>
@@ -8216,7 +8213,7 @@ export default function CERV2Page({
                           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                         </svg>
                         <span className="text-sm font-medium">Regulatory</span>
-                        <span className="ml-auto text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                        <span className="ml-auto text-xs text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded-full">
                           3
                         </span>
                       </div>
@@ -8244,7 +8241,7 @@ export default function CERV2Page({
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="mr-2 text-gray-500"
+                              className="mr-2 text-stone-500"
                             >
                               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                               <polyline points="14 2 14 8 20 8"></polyline>
@@ -8276,7 +8273,7 @@ export default function CERV2Page({
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="mr-2 text-gray-500"
+                              className="mr-2 text-stone-500"
                             >
                               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                               <polyline points="14 2 14 8 20 8"></polyline>
@@ -8306,7 +8303,7 @@ export default function CERV2Page({
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="mr-2 text-gray-500"
+                              className="mr-2 text-stone-500"
                             >
                               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                               <polyline points="14 2 14 8 20 8"></polyline>
@@ -8336,7 +8333,7 @@ export default function CERV2Page({
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          className={`transition-transform ${expandedFolders.clinical ? 'rotate-90' : ''} mr-2 text-gray-500`}
+                          className={`transition-transform ${expandedFolders.clinical ? 'rotate-90' : ''} mr-2 text-stone-500`}
                         >
                           <polyline points="9 18 15 12 9 6"></polyline>
                         </svg>
@@ -8355,7 +8352,7 @@ export default function CERV2Page({
                           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                         </svg>
                         <span className="text-sm font-medium">Clinical</span>
-                        <span className="ml-auto text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                        <span className="ml-auto text-xs text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded-full">
                           4
                         </span>
                       </div>
@@ -8383,7 +8380,7 @@ export default function CERV2Page({
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="mr-2 text-gray-500"
+                              className="mr-2 text-stone-500"
                             >
                               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                               <polyline points="14 2 14 8 20 8"></polyline>
@@ -8413,7 +8410,7 @@ export default function CERV2Page({
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="mr-2 text-gray-500"
+                              className="mr-2 text-stone-500"
                             >
                               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                               <polyline points="14 2 14 8 20 8"></polyline>
@@ -8443,7 +8440,7 @@ export default function CERV2Page({
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="mr-2 text-gray-500"
+                              className="mr-2 text-stone-500"
                             >
                               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                               <polyline points="14 2 14 8 20 8"></polyline>
@@ -8475,7 +8472,7 @@ export default function CERV2Page({
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="mr-2 text-gray-500"
+                              className="mr-2 text-stone-500"
                             >
                               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                               <polyline points="14 2 14 8 20 8"></polyline>
@@ -8525,10 +8522,10 @@ export default function CERV2Page({
                           {documentType === 'cer' ? 'EU MDR Documents' : 'FDA Submissions'}
                         </span>
                         <div className="ml-auto flex items-center">
-                          <span className="mr-1.5 text-xs text-gray-700 bg-white px-1.5 py-0.5 rounded-full border border-blue-200">
+                          <span className="mr-1.5 text-xs text-stone-700 bg-white px-1.5 py-0.5 rounded-full border border-blue-200">
                             New
                           </span>
-                          <span className="text-xs text-gray-500 bg-white px-1.5 py-0.5 rounded-full border border-blue-200">
+                          <span className="text-xs text-stone-500 bg-white px-1.5 py-0.5 rounded-full border border-blue-200">
                             3
                           </span>
                         </div>
@@ -8657,7 +8654,7 @@ export default function CERV2Page({
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          className={`transition-transform ${expandedFolders.technical ? 'rotate-90' : ''} mr-2 text-gray-500`}
+                          className={`transition-transform ${expandedFolders.technical ? 'rotate-90' : ''} mr-2 text-stone-500`}
                         >
                           <polyline points="9 18 15 12 9 6"></polyline>
                         </svg>
@@ -8677,7 +8674,7 @@ export default function CERV2Page({
                         </svg>
                         <span className="text-sm font-medium">Technical</span>
                         <div className="ml-auto flex items-center">
-                          <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                          <span className="text-xs text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded-full">
                             2
                           </span>
                         </div>
@@ -8706,7 +8703,7 @@ export default function CERV2Page({
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="mr-2 text-gray-500"
+                              className="mr-2 text-stone-500"
                             >
                               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                               <polyline points="14 2 14 8 20 8"></polyline>
@@ -8736,7 +8733,7 @@ export default function CERV2Page({
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="mr-2 text-gray-500"
+                              className="mr-2 text-stone-500"
                             >
                               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                               <polyline points="14 2 14 8 20 8"></polyline>
@@ -8752,7 +8749,7 @@ export default function CERV2Page({
                     {(documentView === 'all' || documentView === 'global') && (
                       <div className="mb-0.5">
                         <div
-                          className="flex items-center py-2 px-3 hover:bg-blue-50 cursor-pointer bg-gray-50"
+                          className="flex items-center py-2 px-3 hover:bg-blue-50 cursor-pointer bg-stone-50"
                           onClick={() => toggleFolder('global')}
                         >
                           <svg
@@ -8765,7 +8762,7 @@ export default function CERV2Page({
                             strokeWidth="2"
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            className={`transition-transform ${expandedFolders.global ? 'rotate-90' : ''} mr-2 text-gray-500`}
+                            className={`transition-transform ${expandedFolders.global ? 'rotate-90' : ''} mr-2 text-stone-500`}
                           >
                             <polyline points="9 18 15 12 9 6"></polyline>
                           </svg>
@@ -8785,7 +8782,7 @@ export default function CERV2Page({
                           </svg>
                           <span className="text-sm font-medium">Global Documents</span>
                           <div className="ml-auto flex items-center">
-                            <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                            <span className="text-xs text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded-full">
                               1
                             </span>
                           </div>
@@ -8832,7 +8829,7 @@ export default function CERV2Page({
                 </div>
 
                 {/* Action buttons */}
-                <div className="p-2 border-t bg-gray-50">
+                <div className="p-2 border-t bg-stone-50">
                   <div className="flex space-x-2">
                     <label className="flex items-center justify-center py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md cursor-pointer">
                       <svg
@@ -8854,7 +8851,7 @@ export default function CERV2Page({
                       Upload to Vault
                     </label>
                     <button
-                      className="flex items-center justify-center py-1.5 px-3 border border-gray-300 hover:bg-gray-100 text-sm font-medium rounded-md"
+                      className="flex items-center justify-center py-1.5 px-3 border border-stone-300 hover:bg-stone-100 text-sm font-medium rounded-md"
                       onClick={() => {
                         toast({
                           title: 'Document Export',
@@ -8893,7 +8890,7 @@ export default function CERV2Page({
                   {/* Create new folder button */}
                   <div className="mt-2">
                     <button
-                      className="w-full flex items-center justify-center py-1.5 px-3 border border-gray-300 bg-white hover:bg-gray-50 text-sm font-medium rounded-md"
+                      className="w-full flex items-center justify-center py-1.5 px-3 border border-stone-300 bg-white hover:bg-stone-50 text-sm font-medium rounded-md"
                       onClick={() => {
                         // Create a new folder functionality
                         toast({
@@ -8940,7 +8937,7 @@ export default function CERV2Page({
 
           {/* Live Document Preview Panel — visible across ALL workflow stages */}
           {showLivePreview && activeTab !== 'document-editor' && (
-            <div className="w-96 bg-white border-l border-gray-200 shadow-md flex-shrink-0 flex flex-col max-h-[calc(100vh-200px)] sticky top-4">
+            <div className="w-96 bg-white border-l border-stone-200 shadow-md flex-shrink-0 flex flex-col max-h-[calc(100vh-200px)] sticky top-4">
               <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-50 to-indigo-50 border-b">
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-purple-600" />
@@ -8962,7 +8959,7 @@ export default function CERV2Page({
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowLivePreview(false)}
-                    className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600"
+                    className="h-7 w-7 p-0 text-stone-400 hover:text-stone-600"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -9010,7 +9007,7 @@ export default function CERV2Page({
 
                   {/* Document Sections with Live Status */}
                   <div>
-                    <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Document Sections</h4>
+                    <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wide mb-2">Document Sections</h4>
                     {(() => {
                       const sectionDefs = selectedDocType === 'cerv2_510k' ? [
                         { id: 'cover_letter', title: 'Cover Letter', num: '1' },
@@ -9071,7 +9068,7 @@ export default function CERV2Page({
                                     ? isSubstantial
                                       ? 'bg-green-50 border border-green-200 hover:bg-green-100'
                                       : 'bg-amber-50 border border-amber-200 hover:bg-amber-100'
-                                    : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
+                                    : 'bg-stone-50 border border-stone-200 hover:bg-stone-100'
                                 }`}
                                 onClick={() => setActiveTab('document-editor')}
                               >
@@ -9080,19 +9077,19 @@ export default function CERV2Page({
                                     ? isSubstantial
                                       ? 'bg-green-500 text-white'
                                       : 'bg-amber-500 text-white'
-                                    : 'bg-gray-300 text-white'
+                                    : 'bg-stone-300 text-white'
                                 }`}>
                                   {isSubstantial ? '✓' : section.num}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <span className={`font-medium ${hasContent ? 'text-gray-900' : 'text-gray-500'}`}>
+                                  <span className={`font-medium ${hasContent ? 'text-stone-900' : 'text-stone-500'}`}>
                                     {section.title}
                                   </span>
                                 </div>
                                 <span className={`text-[11px] flex-shrink-0 ${
                                   hasContent
                                     ? isSubstantial ? 'text-green-600' : 'text-amber-600'
-                                    : 'text-gray-400'
+                                    : 'text-stone-400'
                                 }`}>
                                   {hasContent ? `${wordCount}w` : 'Empty'}
                                 </span>
@@ -9105,19 +9102,19 @@ export default function CERV2Page({
                   </div>
 
                   {/* Quick stats */}
-                  <div className="bg-gray-50 rounded-lg p-3 border">
+                  <div className="bg-stone-50 rounded-lg p-3 border">
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div className="text-center">
-                        <div className="font-bold text-gray-900">
+                        <div className="font-bold text-stone-900">
                           {predicateDevices?.length || 0}
                         </div>
-                        <div className="text-gray-500">Predicates</div>
+                        <div className="text-stone-500">Predicates</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-bold text-gray-900">
+                        <div className="font-bold text-stone-900">
                           {literatureResults?.length || 0}
                         </div>
-                        <div className="text-gray-500">Literature</div>
+                        <div className="text-stone-500">Literature</div>
                       </div>
                     </div>
                   </div>
@@ -9321,7 +9318,7 @@ export default function CERV2Page({
             </div>
 
             {/* Document Display Area */}
-            <div className="flex-1 overflow-hidden p-4 bg-gray-50">
+            <div className="flex-1 overflow-hidden p-4 bg-stone-50">
               {documentViewerData.type === 'pdf' ? (
                 <iframe
                   src={documentViewerData.url}
@@ -9331,11 +9328,11 @@ export default function CERV2Page({
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
-                    <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-lg font-medium text-gray-700 mb-2">
+                    <FileText className="h-16 w-16 text-stone-400 mx-auto mb-4" />
+                    <p className="text-lg font-medium text-stone-700 mb-2">
                       Document Preview Not Available
                     </p>
-                    <p className="text-sm text-gray-500 mb-4">
+                    <p className="text-sm text-stone-500 mb-4">
                       This document type cannot be displayed inline
                     </p>
                     <Button
@@ -9374,7 +9371,7 @@ export default function CERV2Page({
           <FolderOpen className="h-6 w-6" />
         </Button>
         {!isDocumentVaultOpen && (
-          <div className="absolute bottom-full right-0 mb-2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded shadow-lg whitespace-nowrap pointer-events-none">
+          <div className="absolute bottom-full right-0 mb-2 bg-stone-900 text-white text-xs px-3 py-1.5 rounded shadow-lg whitespace-nowrap pointer-events-none">
             Document Vault
           </div>
         )}
@@ -9398,8 +9395,8 @@ export default function CERV2Page({
               <div className="flex items-center gap-3">
                 <FolderOpen className="h-6 w-6 text-blue-600" />
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Document Vault</h2>
-                  <p className="text-xs text-gray-600">Manage your 510(k) submission files</p>
+                  <h2 className="text-lg font-semibold text-stone-900">Document Vault</h2>
+                  <p className="text-xs text-stone-600">Manage your 510(k) submission files</p>
                 </div>
               </div>
               <Button
