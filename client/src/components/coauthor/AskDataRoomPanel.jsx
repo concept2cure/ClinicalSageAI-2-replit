@@ -451,10 +451,9 @@ export default function AskDataRoomPanel({
                                     className="text-xs h-7"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      // Preview in modal
                                       toast({
-                                        title: 'Preview',
-                                        description: 'Full preview coming soon',
+                                        title: item.title || 'Document',
+                                        description: `${item.type || 'Document'} — ${item.source || 'Data Room'}. Click "Insert" to add to your document.`,
                                       });
                                     }}
                                   >

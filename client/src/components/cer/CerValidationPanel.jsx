@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/card';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -775,13 +776,14 @@ const CerValidationPanel = ({
                                       </div>
 
                                       <DialogFooter>
-                                        <Button
-                                          type="button"
-                                          variant="secondary"
-                                          onClick={() => {}}
-                                        >
-                                          Cancel
-                                        </Button>
+                                        <DialogClose asChild>
+                                          <Button
+                                            type="button"
+                                            variant="secondary"
+                                          >
+                                            Cancel
+                                          </Button>
+                                        </DialogClose>
                                         <Button
                                           type="button"
                                           onClick={() => {
@@ -971,13 +973,14 @@ const CerValidationPanel = ({
                                       </div>
 
                                       <DialogFooter>
-                                        <Button
-                                          type="button"
-                                          variant="secondary"
-                                          onClick={() => {}}
-                                        >
-                                          Cancel
-                                        </Button>
+                                        <DialogClose asChild>
+                                          <Button
+                                            type="button"
+                                            variant="secondary"
+                                          >
+                                            Cancel
+                                          </Button>
+                                        </DialogClose>
                                         <Button
                                           type="button"
                                           onClick={() => {

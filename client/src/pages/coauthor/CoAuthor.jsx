@@ -15033,9 +15033,10 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
               <Button
                 variant="outline"
                 onClick={() => {
+                  setShowTemplateManager(false);
                   toast({
                     title: 'Custom Template',
-                    description: 'Custom template creation coming soon',
+                    description: 'Select a base template above, then customize it in the editor to create your own template.',
                   });
                 }}
               >

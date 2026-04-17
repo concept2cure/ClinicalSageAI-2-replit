@@ -1115,7 +1115,19 @@ Compliance is determined based on evidence strength, quality, and clinical relev
                         variant="ghost"
                         size="sm"
                         className="text-xs text-[#d97757] hover:bg-[#faf0ec]"
-                        onClick={() => {}}
+                        onClick={() => {
+                          const newEvidence = {
+                            id: `ev-${Date.now()}`,
+                            title: 'New Evidence Source',
+                            type: 'clinical_data',
+                            description: '',
+                          };
+                          handleAddEvidence(activeGspr, newEvidence);
+                          toast({
+                            title: 'Evidence added',
+                            description: 'A new evidence source has been linked to this GSPR requirement.',
+                          });
+                        }}
                       >
                         <Plus className="h-3.5 w-3.5 mr-1" />
                         Add Evidence

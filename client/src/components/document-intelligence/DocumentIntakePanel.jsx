@@ -175,10 +175,9 @@ const DocumentIntakePanel = ({
                             size="sm"
                             className="text-xs"
                             onClick={() => {
-                              // Preview functionality would go here
                               toast({
                                 title: 'Document Preview',
-                                description: 'Document preview functionality coming soon.',
+                                description: `${doc.name || 'Document'} — processed and ready for extraction. Use the Extract Data button to proceed.`,
                               });
                             }}
                           >

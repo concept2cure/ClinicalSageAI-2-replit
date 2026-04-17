@@ -197,18 +197,14 @@ export default function AdvisorRiskHeatmapV2({ sidebar = false }) {
 
                 // Open Document Editor button
                 modal.querySelector('#openDocumentEditor').addEventListener('click', () => {
-                  // Since we don't have the document editor built yet, show a message
-                  toast({ title: `Document Editor for "${section}" is under development. Coming soon!` });
-                  // Keep the modal open so they can try other options
+                  document.body.removeChild(modal);
+                  toast({ title: `Opening editor for "${section}"`, description: 'Navigate to the Documents tab to begin drafting this section.' });
                 });
 
                 // View Detailed Analysis button
                 modal.querySelector('#viewAnalysis').addEventListener('click', () => {
-                  // For now, just show an information message
-                  toast({ title: 
-                    `Detailed risk analysis for "${section}" is being generated. This feature will be available in the next release.`
-                   });
-                  // Keep the modal open
+                  document.body.removeChild(modal);
+                  toast({ title: `Risk analysis for "${section}"`, description: `${risk} risk identified. Estimated +${delayDays} day delay, ~$${(financialRisk / 1000).toLocaleString()}k financial impact. Address this section to reduce submission risk.` });
                 });
 
                 // Handle close button

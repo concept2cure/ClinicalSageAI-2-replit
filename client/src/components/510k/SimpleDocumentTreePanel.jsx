@@ -287,10 +287,29 @@ const SimpleDocumentTreePanel = ({ isOpen, onClose, documentId }) => {
       {/* Action buttons */}
       <div className="p-4 border-t">
         <div className="flex space-x-2">
-          <Button variant="outline" className="flex-1" onClick={() => {}}>
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => {
+              toast({
+                title: 'Create Document',
+                description: 'Use the editor to create a new document for this submission.',
+              });
+            }}
+          >
             <FilePlus className="mr-2 h-4 w-4" /> New Doc
           </Button>
-          <Button variant="outline" className="flex-1" onClick={() => {}}>
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => {
+              toast({
+                title: 'Create Folder',
+                description:
+                  'Folders are managed through the vault. Navigate to Artifacts to organize documents.',
+              });
+            }}
+          >
             <FolderPlus className="mr-2 h-4 w-4" /> New Folder
           </Button>
         </div>

@@ -2396,11 +2396,16 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
   };
 
   const editSuggestion = suggestionId => {
-    // Implementation for editing suggestions
-    toast({
-      title: 'Edit Suggestion',
-      description: 'Suggestion editing feature coming soon',
-    });
+    const suggestion = regulatorySuggestions.find(s => s.id === suggestionId);
+    if (suggestion) {
+      setRegulatorySuggestions(prev =>
+        prev.map(s => (s.id === suggestionId ? { ...s, showPreview: true } : s))
+      );
+      toast({
+        title: 'Edit suggestion',
+        description: `Review the preview for "${suggestion.title || 'this suggestion'}" and apply or dismiss it.`,
+      });
+    }
   };
 
   const applyAllSuggestions = async () => {
