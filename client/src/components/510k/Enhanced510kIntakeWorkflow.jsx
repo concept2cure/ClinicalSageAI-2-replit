@@ -326,7 +326,7 @@ const Enhanced510kIntakeWorkflow = ({
     },
     onSuccess: (response) => {
       toast({ 
-        title: "✅ Workflow Saved & Documents Auto-Updated", 
+        title: "Workflow saved",
         description: response?.autoPopulated 
           ? "Your data has been saved and documents have been automatically populated with collected information"
           : "Your 510(k) workflow data has been saved and linked to document generation" 
