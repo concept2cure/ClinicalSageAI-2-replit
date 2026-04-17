@@ -647,6 +647,7 @@ const IconBtn: React.FC<{
       size="icon"
       onClick={onClick}
       aria-label={label}
+      title={label}
       className={cn(
         'w-9 h-9 rounded-xl transition-colors',
         active ? `${accentBg} ${accentText}` : 'text-stone-500 hover:bg-stone-200'

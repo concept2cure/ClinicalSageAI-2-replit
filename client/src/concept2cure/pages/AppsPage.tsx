@@ -106,6 +106,7 @@ const GROUPS: { key: GroupKey; label: string; apps: AppCard[] }[] = [
 
 interface AppsPageProps {
   onNavigate: (id: string) => void;
+  onCreateProject?: () => void;
   activeProjectId?: string;
   activeProjectName?: string;
   submissionType?: string;
@@ -123,6 +124,7 @@ function sortByRelevance(apps: AppCard[], submissionType?: string): AppCard[] {
 
 export const AppsPage: React.FC<AppsPageProps> = ({
   onNavigate,
+  onCreateProject,
   activeProjectId,
   activeProjectName,
   submissionType,
@@ -143,9 +145,21 @@ export const AppsPage: React.FC<AppsPageProps> = ({
       />
 
       {noProject && (
-        <p className="mt-3 text-sm text-stone-400">
-          Select a project to launch apps.
-        </p>
+        <div className="mt-4 flex flex-col items-center gap-3 py-6 rounded-xl border border-dashed border-stone-300 bg-stone-50/50">
+          <p className="text-sm text-stone-600">
+            Create a project to unlock all apps and workflows.
+          </p>
+          {onCreateProject && (
+            <button
+              type="button"
+              onClick={onCreateProject}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-stone-900 text-white text-[13px] font-medium hover:bg-stone-800 transition-colors"
+            >
+              <ArrowRight className="w-4 h-4" />
+              Create project
+            </button>
+          )}
+        </div>
       )}
 
       {/* ── Group tabs ─────────────────────────────────────────────── */}

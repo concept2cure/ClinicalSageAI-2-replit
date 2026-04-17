@@ -2298,6 +2298,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 <Suspense fallback={<ModuleLoadingFallback />}>
                   <AppsPage
                     submissionType={activeProject?.type}
+                    onCreateProject={() => setNewProjectOpen(true)}
                     onNavigate={id => {
                       // Tool-panel mapping for apps that live as a project-scoped
                       // tool panel (eCTD Navigator, Protocol Designer, SOP, etc.)
@@ -3542,15 +3543,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           <div className="flex-1 flex flex-col min-w-0 min-h-0">
             {/* ── Home top bar (WO-8 reference parity) ── */}
             <div className="flex-shrink-0 h-12 px-4 flex items-center justify-between border-b border-stone-100 bg-white">
-              <button
-                type="button"
-                onClick={() => setSidebarCollapsed(c => !c)}
-                className="inline-flex items-center gap-1.5 text-[13px] font-medium text-stone-700 hover:text-stone-900 px-2 py-1 rounded-md hover:bg-stone-100"
-                aria-label="Toggle sidebar"
-              >
-                <span>Concept2Cure</span>
-                <ChevronDown className="w-3.5 h-3.5 text-stone-400" aria-hidden="true" />
-              </button>
+              <span className="text-[13px] font-semibold text-stone-800">ClinicalSageAI</span>
               <div className="flex items-center gap-2">
                 <div className="relative hidden sm:block">
                   <Search
@@ -3558,23 +3551,29 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     aria-hidden="true"
                   />
                   <Input
-                    placeholder="Search chat"
+                    placeholder="Search"
                     onFocus={() => setCommandPaletteOpen(true)}
-                    className="h-8 w-56 pl-8 text-[12px] border-stone-200 bg-stone-50"
-                    aria-label="Search chat"
+                    className="h-8 w-44 pl-8 text-[12px] border-stone-200 bg-stone-50"
+                    aria-label="Search"
                   />
                 </div>
-                {/* Invite button hidden until a real invite flow ships.
-                    Reference screenshot shows "Invite" here but we don't fake
-                    launchers — re-enable when the invite handler exists. */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNewProjectOpen(true)}
+                  className="h-8 px-3 text-[12px] border-stone-200"
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" />
+                  New project
+                </Button>
                 <Button
                   type="button"
                   size="sm"
                   onClick={handleNewChat}
                   className="h-8 px-3 text-[12px] bg-stone-900 text-white hover:bg-stone-800"
                 >
-                  <Plus className="w-3.5 h-3.5 mr-1" />
-                  New Thread
+                  New thread
                 </Button>
               </div>
             </div>
@@ -3599,6 +3598,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 suggestedActions={workspaceSuggestedActions}
                 onActionRun={handleActionRun}
                 onNavigate={handleAnaPanelNavigate}
+                onCreateProject={() => setNewProjectOpen(true)}
                 onDraftInsert={handleDraftInsert}
                 onNavigateToSection={handleNavigateToSection}
                 onOpenArtifact={handleOpenArtifact}

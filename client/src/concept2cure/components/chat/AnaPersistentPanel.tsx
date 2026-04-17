@@ -734,6 +734,8 @@ interface AnaPersistentPanelProps {
   }) => void;
   /** Navigate to a layout mode or path */
   onNavigate?: (path: string) => void;
+  /** Open the new-project modal */
+  onCreateProject?: () => void;
   /** Insert draft content into the governed editor (P1) */
   onDraftInsert?: (content: string, title: string, ctdSection?: string) => void;
   /** Navigate to a specific section (P2) */
@@ -797,6 +799,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   initialMessage,
   onActionRun,
   onNavigate,
+  onCreateProject,
   onDraftInsert,
   onNavigateToSection,
   onOpenArtifact,
@@ -4130,6 +4133,20 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   Create a project to start a 510(k), PMA, IND, NDA, or CER submission.
                 </p>
               </div>
+
+              {/* Create Project CTA — shown when no project exists */}
+              {!contextProfile?.projectId && onCreateProject && (
+                <div className="flex justify-center mb-2">
+                  <button
+                    type="button"
+                    onClick={onCreateProject}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-stone-900 text-white text-[13px] font-medium hover:bg-stone-800 transition-colors shadow-sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Create your first project
+                  </button>
+                </div>
+              )}
 
               {/* Quick-start pathways */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
