@@ -646,7 +646,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   // Sidebar — default to the thin icon rail (Claude-style 2026-04-14 WO-8).
   // Users can still expand via the chevron in the rail.
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const [userProfile, setUserProfile] = useUserProfileFromStorage();
 
