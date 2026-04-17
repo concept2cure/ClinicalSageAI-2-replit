@@ -194,13 +194,10 @@ export function AiCerGenerator({ onSectionGenerated, onFullReportGenerated }) {
     setCurrentSection(sectionName);
 
     try {
-      // Real progress updates based on API call stages
-      const progressInterval = setInterval(() => {
-        setGenerationProgress(prev => {
-          const next = prev + Math.random() * 10;
-          return next > 90 ? 90 : next;
-        });
-      }, 800);
+      // Indeterminate visual progress — we never fabricate a completion
+      // percentage for a regulatory generation call.
+      setGenerationProgress(0);
+      const progressInterval = null;
 
       // Call the real API endpoint with GPT-4o
       const response = await fetch('/api/cer/generate-section', {
@@ -224,7 +221,7 @@ export function AiCerGenerator({ onSectionGenerated, onFullReportGenerated }) {
 
       const data = await response.json();
 
-      clearInterval(progressInterval);
+      if (progressInterval) clearInterval(progressInterval);
       setGenerationProgress(100);
 
       // Use the actual generated content from GPT-4o
@@ -288,12 +285,9 @@ export function AiCerGenerator({ onSectionGenerated, onFullReportGenerated }) {
     setIsGenerating(true);
 
     try {
-      // Real progress updates for the full report
-      let progress = 0;
-      const progressInterval = setInterval(() => {
-        progress += Math.random() * 3; // Slower progress to match the comprehensive generation
-        setGenerationProgress(progress > 95 ? 95 : progress);
-      }, 1000);
+      // Indeterminate visual progress — never fabricate completion percentage.
+      setGenerationProgress(0);
+      const progressInterval = null;
 
       // Call the real API endpoint with full context for GPT-4o
       const response = await fetch('/api/cer/generate-full', {
@@ -334,7 +328,7 @@ export function AiCerGenerator({ onSectionGenerated, onFullReportGenerated }) {
       }
 
       const data = await response.json();
-      clearInterval(progressInterval);
+      if (progressInterval) clearInterval(progressInterval);
       setGenerationProgress(100);
 
       // Convert API response to sections

@@ -268,8 +268,8 @@ const CerProgressDashboard = ({ report }) => {
                     )}
                   </div>
                   {step.status === 'processing' && (
-                    <div className="mt-1">
-                      <Progress value={Math.random() * 100} className="h-1" />
+                    <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-stone-100">
+                      <div className="h-full w-1/3 animate-pulse bg-stone-500 rounded-full" />
                     </div>
                   )}
                 </div>

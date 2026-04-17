@@ -1702,9 +1702,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                 ? new Date(sub.created_at).toISOString().split('T')[0]
                 : null,
               targetDate: sub.target_date || null,
-              priority: 'Standard',
-              reviewDivision: 'DPARP',
-              progress: Math.floor(Math.random() * 100),
+              priority: sub.priority || 'Standard',
+              reviewDivision: sub.review_division || null,
+              progress: typeof sub.progress === 'number' ? sub.progress : null,
             }));
             setSubmissionData(formattedSubmissions);
           } else {
@@ -2897,10 +2897,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                               {/* AI-powered timeline prediction */}
                               {stage.status === 'IN_PROGRESS' && (
                                 <div className="flex items-center gap-1 mt-1">
-                                  <Brain className="w-3 h-3 text-blue-500" />
-                                  <span className="text-xs text-blue-600">
-                                    AI Prediction:{' '}
-                                    {Math.random() > 0.5 ? 'On track' : '2 days ahead of schedule'}
+                                  <Brain className="w-3 h-3 text-stone-500" />
+                                  <span className="text-xs text-stone-500">
+                                    Schedule prediction: available via AI assistant
                                   </span>
                                 </div>
                               )}
@@ -22037,23 +22036,9 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
       data_hash: btoa(JSON.stringify({ gates, metrics, alerts })).slice(0, 8),
     });
 
-    const deriveEtaVarianceSeries = (baseData, days = 30) => {
-      const series = [];
-      for (let i = 0; i < days; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        series.unshift({
-          date: date.toISOString().split('T')[0],
-          variance: Math.random() * 20 - 10, // ±10% variance
-          confidence: 0.8 + Math.random() * 0.2,
-          factors: ['demand_shift', 'supply_risk', 'transport_delay'].slice(
-            0,
-            Math.floor(Math.random() * 3) + 1
-          ),
-        });
-      }
-      return series;
-    };
+    // ETA variance series must come from the real supply analytics backend.
+    // Never synthesize variance, confidence, or risk factors locally.
+    const deriveEtaVarianceSeries = (_baseData, _days = 30) => [];
 
     // Visualization helpers
     const sparklinePath = (data, width = 100, height = 20) => {
@@ -22150,32 +22135,10 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
     // REAL-TIME DATA STREAMS & DATA GENERATION
     // ============================================================================
 
-    // Generate realistic temperature data with patterns
-    const generateTemperatureData = useCallback(() => {
-      const now = new Date();
-      const data = [];
-
-      for (let i = 168; i >= 0; i--) {
-        // 7 days of hourly data
-        const timestamp = new Date(now.getTime() - i * 3600000);
-        const baseTemp = 5; // 5°C target
-        const dailyVariation = Math.sin((timestamp.getHours() / 24) * 2 * Math.PI) * 1.5;
-        const noise = (Math.random() - 0.5) * 0.8;
-        const excursion = Math.random() < 0.02 ? (Math.random() - 0.5) * 8 : 0; // 2% chance of excursion
-
-        data.push({
-          timestamp: timestamp.toISOString(),
-          temp: Math.round((baseTemp + dailyVariation + noise + excursion) * 10) / 10,
-          humidity:
-            60 +
-            Math.sin((timestamp.getTime() / 86400000) * 2 * Math.PI) * 15 +
-            (Math.random() - 0.5) * 10,
-          location: Math.random() < 0.1 ? 'warehouse_B' : 'warehouse_A',
-        });
-      }
-
-      return data;
-    }, []);
+    // Cold-chain temperature and humidity data must come from the real IoT
+    // telemetry backend. Never synthesize cold-chain readings client-side —
+    // excursion values drive GxP quality decisions.
+    const generateTemperatureData = useCallback(() => [], []);
 
     // Real-time data update interval (30 seconds)
     useEffect(() => {

@@ -26,114 +26,36 @@ const QmpTraceabilityHeatmap = ({ deviceName, cerData }) => {
   const [viewMode, setViewMode] = useState('coverage');
   const [filterLevel, setFilterLevel] = useState('all');
 
-  // Mock data for demonstration purposes
+  // Fetch real QMP traceability data from the backend. Never fabricate
+  // requirement/section coverage values — those drive MDR compliance
+  // findings and must come from real analysis.
   useEffect(() => {
-    // In a real implementation, this would be fetched from an API
-    const mockSections = [
-      { id: 'scope', name: 'Scope' },
-      { id: 'device-desc', name: 'Device Description' },
-      { id: 'clinical-background', name: 'Clinical Background' },
-      { id: 'intended-use', name: 'Intended Use/Purpose' },
-      { id: 'literature', name: 'Literature Review' },
-      { id: 'clinical-data', name: 'Clinical Data Analysis' },
-      { id: 'risk', name: 'Risk Analysis' },
-      { id: 'risk-benefit', name: 'Benefit-Risk Analysis' },
-      { id: 'pms', name: 'Post-Market Surveillance' },
-      { id: 'conclusion', name: 'Conclusion' },
-    ];
-
-    const mockRequirements = [
-      { id: 'req1', name: 'Device Classification Documentation', level: 'high' },
-      { id: 'req2', name: 'Quality Verified Literature Data', level: 'high' },
-      { id: 'req3', name: 'Verified Clinical Data', level: 'high' },
-      { id: 'req4', name: 'Risk Assessment Completeness', level: 'high' },
-      { id: 'req5', name: 'Regulatory Standard Adherence', level: 'high' },
-      { id: 'req6', name: 'Clinical Performance Evidence', level: 'medium' },
-      { id: 'req7', name: 'Equivalence Methodology', level: 'medium' },
-      { id: 'req8', name: 'State of Art Analysis', level: 'medium' },
-      { id: 'req9', name: 'Usability Considerations', level: 'medium' },
-      { id: 'req10', name: 'Post-Market Data Inclusion', level: 'medium' },
-      { id: 'req11', name: 'Rationale Documentation', level: 'low' },
-      { id: 'req12', name: 'Terminology Consistency', level: 'low' },
-      { id: 'req13', name: 'Data Integrity Controls', level: 'low' },
-    ];
-
-    // Generate mock coverage data
-    // Values: 0 = not applicable, 1 = missing, 2 = partial, 3 = complete
-    const mockCoverage = [];
-
-    // Loop through each requirement
-    mockRequirements.forEach(req => {
-      const reqCoverage = {};
-      reqCoverage.requirementId = req.id;
-
-      // For each section, assign a coverage value
-      mockSections.forEach(section => {
-        let value = 0;
-
-        // Some logical rules to create a realistic pattern
-        if (req.id === 'req1' && ['scope', 'device-desc', 'intended-use'].includes(section.id)) {
-          value = 3; // Complete coverage for device classification in these sections
-        } else if (req.id === 'req2' && ['literature'].includes(section.id)) {
-          value = 3; // Complete coverage for literature data quality in literature section
-        } else if (req.id === 'req3' && ['clinical-data'].includes(section.id)) {
-          value = 2; // Partial coverage for verified clinical data
-        } else if (req.id === 'req4' && ['risk'].includes(section.id)) {
-          value = 3; // Complete for risk assessment in risk section
-        } else if (req.id === 'req5') {
-          // Regulatory adherence across multiple sections
-          value = ['device-desc', 'intended-use', 'conclusion'].includes(section.id)
-            ? 3
-            : ['clinical-background', 'literature'].includes(section.id)
-              ? 2
-              : ['risk-benefit'].includes(section.id)
-                ? 1
-                : 0;
-        } else if (req.id === 'req6' && ['clinical-data', 'conclusion'].includes(section.id)) {
-          value = section.id === 'clinical-data' ? 3 : 2;
-        } else if (req.id === 'req7' && ['clinical-data', 'literature'].includes(section.id)) {
-          value = section.id === 'clinical-data' ? 2 : 1;
-        } else if (
-          req.id === 'req8' &&
-          ['clinical-background', 'literature'].includes(section.id)
-        ) {
-          value = section.id === 'literature' ? 3 : 2;
-        } else if (req.id === 'req9' && ['device-desc', 'clinical-data'].includes(section.id)) {
-          value = section.id === 'device-desc' ? 2 : 1;
-        } else if (req.id === 'req10' && ['pms', 'conclusion'].includes(section.id)) {
-          value = section.id === 'pms' ? 3 : 1;
-        } else if (req.id === 'req11') {
-          // Rationale documentation across all sections
-          value = ['device-desc', 'intended-use', 'conclusion', 'risk-benefit'].includes(section.id)
-            ? 3
-            : ['clinical-background', 'literature', 'clinical-data'].includes(section.id)
-              ? 2
-              : 1;
-        } else if (req.id === 'req12') {
-          // Terminology consistency across all sections
-          value = Math.floor(Math.random() * 3) + 1; // Random values 1-3 for all sections
-        } else if (
-          req.id === 'req13' &&
-          ['clinical-data', 'literature', 'pms'].includes(section.id)
-        ) {
-          value = section.id === 'clinical-data' ? 3 : 2;
-        } else if (['scope', 'conclusion'].includes(section.id)) {
-          // Most requirements have some relation to scope and conclusion
-          value = Math.random() > 0.7 ? 0 : Math.floor(Math.random() * 2) + 1;
-        }
-
-        reqCoverage[section.id] = value;
-      });
-
-      mockCoverage.push(reqCoverage);
-    });
-
-    setMapData({
-      sections: mockSections,
-      requirements: mockRequirements,
-      coverage: mockCoverage,
-    });
-  }, []);
+    let cancelled = false;
+    const load = async () => {
+      if (!deviceName && !cerData?.id) return;
+      try {
+        const params = new URLSearchParams();
+        if (cerData?.id) params.set('cerId', String(cerData.id));
+        if (deviceName) params.set('deviceName', deviceName);
+        const response = await fetch(`/api/cer/qmp/traceability?${params.toString()}`, {
+          credentials: 'include',
+        });
+        if (!response.ok) throw new Error(`QMP traceability API returned ${response.status}`);
+        const data = await response.json();
+        if (cancelled) return;
+        setMapData({
+          sections: Array.isArray(data?.sections) ? data.sections : [],
+          requirements: Array.isArray(data?.requirements) ? data.requirements : [],
+          coverage: Array.isArray(data?.coverage) ? data.coverage : [],
+        });
+      } catch {
+        if (cancelled) return;
+        setMapData({ sections: [], requirements: [], coverage: [] });
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [deviceName, cerData?.id]);
 
   // Get the color for a cell based on its coverage value and view mode
   const getCellColor = (value, requirementLevel) => {

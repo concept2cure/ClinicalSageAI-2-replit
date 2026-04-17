@@ -846,8 +846,8 @@ export default function KAutomationPanel() {
                             <dt className="text-gray-500">Submission Type:</dt>
                             <dd className="font-medium">Traditional 510(k)</dd>
 
-                            <dt className="text-gray-500">eCopy ID:</dt>
-                            <dd className="font-medium">{`K${Math.floor(Math.random() * 900000) + 100000}`}</dd>
+                            <dt className="text-stone-500">eCopy ID:</dt>
+                            <dd className="font-medium text-stone-700">Pending FDA assignment</dd>
 
                             <dt className="text-gray-500">Status:</dt>
                             <dd>
@@ -1004,16 +1004,21 @@ export default function KAutomationPanel() {
                                       </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                      <div className="text-sm text-gray-500">
-                                        {device.k510Number ||
-                                          `K${Math.floor(Math.random() * 900000) + 100000}`}
+                                      <div className="text-sm text-stone-500">
+                                        {device.k510Number || <span className="text-stone-400">&mdash;</span>}
                                       </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                       <div className="flex items-center">
                                         <div
-                                          className="w-16 bg-gray-200 rounded-full h-2.5 mr-2"
-                                          title={`${device.matchScore || Math.floor(device.relevance * 100) || 85}%`}
+                                          className="w-16 bg-stone-200 rounded-full h-2.5 mr-2"
+                                          title={
+                                            device.matchScore !== undefined
+                                              ? `${device.matchScore}%`
+                                              : typeof device.relevance === 'number'
+                                                ? `${Math.floor(device.relevance * 100)}%`
+                                                : 'Match score unavailable'
+                                          }
                                         >
                                           <div
                                             className="bg-blue-600 h-2.5 rounded-full"

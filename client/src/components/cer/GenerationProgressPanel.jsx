@@ -17,38 +17,40 @@ export default function GenerationProgressPanel({ jobId, onComplete }) {
     conclusions: 'pending',
   });
 
-  // In a real implementation, this would use WebSockets or SSE to get updates
+  // Poll the real job status endpoint. Never fabricate section statuses —
+  // an incorrect "error" shown for a regulatory section could mislead the
+  // user into believing their generation failed.
   useEffect(() => {
     if (!jobId) return;
+    let cancelled = false;
 
-    // Simulate generation progress
-    const sections = Object.keys(sectionStatuses);
-    let currentSectionIndex = 0;
-
-    const simulateProgress = setInterval(() => {
-      if (currentSectionIndex >= sections.length) {
-        clearInterval(simulateProgress);
-        setProgress(100);
-        onComplete && onComplete();
-        return;
+    const pollStatus = async () => {
+      try {
+        const response = await fetch(`/api/cer/jobs/${jobId}/status`, {
+          credentials: 'include',
+        });
+        if (!response.ok) throw new Error(`${response.status}`);
+        const data = await response.json();
+        if (cancelled) return;
+        if (typeof data?.progress === 'number') setProgress(data.progress);
+        if (data?.sectionStatuses && typeof data.sectionStatuses === 'object') {
+          setSectionStatuses(prev => ({ ...prev, ...data.sectionStatuses }));
+        }
+        if (data?.status === 'complete' || data?.progress >= 100) {
+          onComplete && onComplete();
+        }
+      } catch {
+        // Leave the last known state in place; do not invent a status.
       }
+    };
 
-      // Update progress percentage
-      const newProgress = Math.round(((currentSectionIndex + 1) / sections.length) * 100);
-      setProgress(newProgress);
-
-      // Update section statuses
-      const currentSection = sections[currentSectionIndex];
-      setSectionStatuses(prev => ({
-        ...prev,
-        [currentSection]: Math.random() > 0.9 ? 'error' : 'complete',
-      }));
-
-      currentSectionIndex++;
-    }, 1500);
-
-    return () => clearInterval(simulateProgress);
-  }, [jobId]);
+    pollStatus();
+    const intervalId = setInterval(pollStatus, 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [jobId, onComplete]);
 
   const getStatusIcon = status => {
     switch (status) {
