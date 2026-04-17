@@ -834,9 +834,9 @@ const PredicateFinderPanel = ({
         <div className="space-y-4">
           {/* Advanced search and filter controls */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between border p-3 rounded-md bg-gray-50">
+            <div className="flex items-center justify-between border p-3 rounded-md bg-stone-50">
               <div className="flex flex-col space-y-2 flex-grow mr-4">
-                <Label htmlFor="searchFilter" className="text-xs text-gray-500">
+                <Label htmlFor="searchFilter" className="text-xs text-stone-500">
                   Advanced Search Filters
                 </Label>
                 <div className="grid grid-cols-2 gap-2">
@@ -921,7 +921,7 @@ const PredicateFinderPanel = ({
 
             {searchResults.length > 0 && (
               <div className="flex items-center justify-between border-b pb-2">
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-stone-500">
                   <span className="font-medium">{searchResults.length}</span> potential predicate
                   devices found
                 </div>
@@ -1015,7 +1015,7 @@ const PredicateFinderPanel = ({
                         <div className="flex justify-between items-start">
                           <div>
                             <h5 className="font-medium">{device.device_name}</h5>
-                            <p className="text-sm text-gray-600">{device.applicant}</p>
+                            <p className="text-sm text-stone-600">{device.applicant}</p>
                             <div className="flex items-center space-x-2 mt-1">
                               <Badge variant="outline">{device.k_number}</Badge>
                               <Badge variant="outline">
@@ -1130,13 +1130,24 @@ const PredicateFinderPanel = ({
             </div>
           )}
 
-          {/* No results message */}
-          {searchResults.length === 0 && !isSearching && (
+          {/* Empty state — distinguish pre-search from no-results */}
+          {searchResults.length === 0 && !isSearching && !searched && (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Search className="h-12 w-12 text-gray-400 mb-4" />
-              <h4 className="text-xl font-medium text-gray-700">No predicate devices found</h4>
-              <p className="text-gray-500 mt-2 max-w-md">
-                Try searching the FDA database to find predicate devices for your 510(k) submission.
+              <Search className="h-10 w-10 text-stone-300 mb-3" />
+              <h4 className="text-sm font-medium text-stone-700">Ready to search</h4>
+              <p className="text-xs text-stone-500 mt-1 max-w-md">
+                Use the search above to find predicate devices in the FDA 510(k) database.
+                You can also ask the AI assistant to draft a predicate strategy.
+              </p>
+            </div>
+          )}
+          {searchResults.length === 0 && !isSearching && searched && (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Search className="h-10 w-10 text-stone-300 mb-3" />
+              <h4 className="text-sm font-medium text-stone-700">No predicates found</h4>
+              <p className="text-xs text-stone-500 mt-1 max-w-md">
+                Try broadening your product code or device description, or ask the AI assistant
+                to suggest alternative search terms.
               </p>
             </div>
           )}
@@ -1178,10 +1189,10 @@ const PredicateFinderPanel = ({
           </div>
 
           {/* Literature search filters */}
-          <div className="bg-gray-50 p-3 rounded-md">
+          <div className="bg-stone-50 p-3 rounded-md">
             <div className="flex items-center space-x-2 mb-2">
-              <Filter className="h-4 w-4 text-gray-600" />
-              <h4 className="font-medium text-gray-800">Search Filters</h4>
+              <Filter className="h-4 w-4 text-stone-600" />
+              <h4 className="font-medium text-stone-800">Search Filters</h4>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-2">
@@ -1290,8 +1301,8 @@ const PredicateFinderPanel = ({
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
                             <h5 className="font-medium">{item.title}</h5>
-                            <p className="text-sm text-gray-600 mt-1">{item.authors}</p>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-sm text-stone-600 mt-1">{item.authors}</p>
+                            <p className="text-xs text-stone-500 mt-1">
                               {item.journal}, {item.year}
                             </p>
                             <div className="flex items-center space-x-2 mt-2">
@@ -1355,9 +1366,9 @@ const PredicateFinderPanel = ({
           {/* No literature results message */}
           {literatureResults.length === 0 && !isSearchingLiterature && (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <BookOpen className="h-12 w-12 text-gray-400 mb-4" />
-              <h4 className="text-xl font-medium text-gray-700">No literature found</h4>
-              <p className="text-gray-500 mt-2 max-w-md">
+              <BookOpen className="h-12 w-12 text-stone-400 mb-4" />
+              <h4 className="text-xl font-medium text-stone-700">No literature found</h4>
+              <p className="text-stone-500 mt-2 max-w-md">
                 Search for relevant scientific literature to support your substantial equivalence
                 claims.
               </p>
@@ -1380,21 +1391,21 @@ const PredicateFinderPanel = ({
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <h4 className="text-sm font-medium text-gray-500">Publication Type</h4>
+                <h4 className="text-sm font-medium text-stone-500">Publication Type</h4>
                 <p>{selectedLiteratureItem?.type || 'Article'}</p>
               </div>
               <div>
-                <h4 className="text-sm font-medium text-gray-500">Published Date</h4>
+                <h4 className="text-sm font-medium text-stone-500">Published Date</h4>
                 <p>{selectedLiteratureItem?.date || `${selectedLiteratureItem?.year}`}</p>
               </div>
               <div>
-                <h4 className="text-sm font-medium text-gray-500">DOI</h4>
+                <h4 className="text-sm font-medium text-stone-500">DOI</h4>
                 <p>{selectedLiteratureItem?.doi || 'N/A'}</p>
               </div>
             </div>
 
             <div>
-              <h4 className="text-sm font-medium text-gray-500">Abstract</h4>
+              <h4 className="text-sm font-medium text-stone-500">Abstract</h4>
               <p className="text-sm mt-1">
                 {selectedLiteratureItem?.abstract || 'No abstract available'}
               </p>
@@ -1402,7 +1413,7 @@ const PredicateFinderPanel = ({
 
             {selectedLiteratureItem?.keywords && (
               <div>
-                <h4 className="text-sm font-medium text-gray-500">Keywords</h4>
+                <h4 className="text-sm font-medium text-stone-500">Keywords</h4>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {selectedLiteratureItem.keywords.split(',').map((keyword, idx) => (
                     <Badge key={idx} variant="secondary">
@@ -1415,7 +1426,7 @@ const PredicateFinderPanel = ({
 
             {selectedLiteratureItem?.relevance && (
               <div>
-                <h4 className="text-sm font-medium text-gray-500">Relevance to Your Device</h4>
+                <h4 className="text-sm font-medium text-stone-500">Relevance to Your Device</h4>
                 <p className="text-sm mt-1">{selectedLiteratureItem.relevance}</p>
               </div>
             )}
@@ -1471,7 +1482,7 @@ const PredicateFinderPanel = ({
             <div className="py-12 flex flex-col items-center justify-center">
               <Loader2 className="h-12 w-12 animate-spin text-stone-600 mb-4" />
               <p className="text-lg font-medium">Analyzing substantial equivalence...</p>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-stone-500 mt-2">
                 Using AI to compare device characteristics and regulatory requirements
               </p>
             </div>
@@ -1522,35 +1533,35 @@ const PredicateFinderPanel = ({
                 <div className="border rounded-md overflow-hidden">
                   <table className="w-full">
                     <thead>
-                      <tr className="bg-gray-50 border-b">
-                        <th className="text-left p-3 text-sm font-medium text-gray-500 w-1/4">
+                      <tr className="bg-stone-50 border-b">
+                        <th className="text-left p-3 text-sm font-medium text-stone-500 w-1/4">
                           Attribute
                         </th>
-                        <th className="text-left p-3 text-sm font-medium text-gray-500">
+                        <th className="text-left p-3 text-sm font-medium text-stone-500">
                           Your Device
                         </th>
-                        <th className="text-left p-3 text-sm font-medium text-gray-500">
+                        <th className="text-left p-3 text-sm font-medium text-stone-500">
                           Predicate Device
                         </th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr className="border-b">
-                        <td className="p-3 text-sm font-medium text-gray-700">Device Name</td>
+                        <td className="p-3 text-sm font-medium text-stone-700">Device Name</td>
                         <td className="p-3 text-sm">{equivalenceReport.yourDevice.deviceName}</td>
                         <td className="p-3 text-sm">
                           {equivalenceReport.predicateDevice.device_name}
                         </td>
                       </tr>
                       <tr className="border-b">
-                        <td className="p-3 text-sm font-medium text-gray-700">Manufacturer</td>
+                        <td className="p-3 text-sm font-medium text-stone-700">Manufacturer</td>
                         <td className="p-3 text-sm">{equivalenceReport.yourDevice.manufacturer}</td>
                         <td className="p-3 text-sm">
                           {equivalenceReport.predicateDevice.applicant}
                         </td>
                       </tr>
                       <tr className="border-b">
-                        <td className="p-3 text-sm font-medium text-gray-700">Device Class</td>
+                        <td className="p-3 text-sm font-medium text-stone-700">Device Class</td>
                         <td className="p-3 text-sm">
                           Class {equivalenceReport.yourDevice.deviceClass}
                         </td>
@@ -1559,21 +1570,21 @@ const PredicateFinderPanel = ({
                         </td>
                       </tr>
                       <tr className="border-b">
-                        <td className="p-3 text-sm font-medium text-gray-700">Intended Use</td>
+                        <td className="p-3 text-sm font-medium text-stone-700">Intended Use</td>
                         <td className="p-3 text-sm">{equivalenceReport.yourDevice.intendedUse}</td>
-                        <td className="p-3 text-sm text-gray-600">
+                        <td className="p-3 text-sm text-stone-600">
                           {equivalenceReport.predicateDevice.intended_use ||
                             'Similar diagnostic/therapeutic indications'}
                         </td>
                       </tr>
                       <tr>
-                        <td className="p-3 text-sm font-medium text-gray-700">Regulatory Status</td>
+                        <td className="p-3 text-sm font-medium text-stone-700">Regulatory Status</td>
                         <td className="p-3 text-sm">Pending</td>
                         <td className="p-3 text-sm">
                           <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
                             Cleared
                           </Badge>
-                          <span className="ml-2 text-xs text-gray-500">
+                          <span className="ml-2 text-xs text-stone-500">
                             {equivalenceReport.predicateDevice.decision_date
                               ? new Date(
                                   equivalenceReport.predicateDevice.decision_date
@@ -1596,7 +1607,7 @@ const PredicateFinderPanel = ({
                       <div className="flex justify-between items-center mb-2">
                         <h4 className="font-medium">{category.name}</h4>
                         <div className="flex items-center">
-                          <div className="w-24 bg-gray-200 rounded-full h-2.5 mr-2">
+                          <div className="w-24 bg-stone-200 rounded-full h-2.5 mr-2">
                             <div
                               className={`h-2.5 rounded-full ${
                                 category.similarity > 0.8
@@ -1611,7 +1622,7 @@ const PredicateFinderPanel = ({
                           <span className="text-sm">{(category.similarity * 100).toFixed(0)}%</span>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-700">{category.notes}</p>
+                      <p className="text-sm text-stone-700">{category.notes}</p>
 
                       <div className="flex justify-end mt-2">
                         <Badge
@@ -1646,7 +1657,7 @@ const PredicateFinderPanel = ({
               </div>
 
               <DialogFooter className="flex justify-between items-center">
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-stone-500">
                   Generated on {new Date(equivalenceReport.timestamp).toLocaleString()}
                 </div>
                 <div className="space-x-2">
