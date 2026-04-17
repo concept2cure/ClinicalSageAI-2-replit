@@ -22,6 +22,7 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 import {
   Shield,
   ShieldCheck,
@@ -280,10 +281,38 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
   const [selectedPhaseId, setSelectedPhaseId] = useState<string>('phase1');
   const [expandedPhases, setExpandedPhases] = useState<Record<string, boolean>>({ phase1: true });
 
-  const persistPhases = useCallback((updated: PMAPhase[]) => {
-    if (!storageKey) return;
+  useEffect(() => {
+    if (!projectId) return;
+    let cancelled = false;
+    const loadFromServer = async () => {
+      try {
+        const res = await apiRequest('GET', `/api/pma-workflow/${projectId}`);
+        const data = await res.json();
+        if (!cancelled && data?.phases && Array.isArray(data.phases)) {
+          const defaults = buildDefaultPhases();
+          setPhases(defaults.map(phase => {
+            const saved = data.phases.find((p: { id: string }) => p.id === phase.id);
+            if (!saved) return phase;
+            return { ...phase, tasks: phase.tasks.map(task => {
+              const st = saved.tasks?.find((t: { id: string }) => t.id === task.id);
+              return st ? { ...task, status: st.status as PMATask['status'], completedAt: st.completedAt, completedBy: st.completedBy } : task;
+            }) };
+          }));
+        }
+      } catch { /* server unavailable — keep localStorage-initialized state */ }
+    };
+    loadFromServer();
+    return () => { cancelled = true; };
+  }, [projectId]);
+
+  const persistPhases = useCallback(async (updated: PMAPhase[]) => {
     const slim = updated.map(p => ({ id: p.id, tasks: p.tasks.map(t => ({ id: t.id, status: t.status, completedAt: t.completedAt, completedBy: t.completedBy })) }));
-    localStorage.setItem(storageKey, JSON.stringify(slim));
+    if (storageKey) localStorage.setItem(storageKey, JSON.stringify(slim));
+    if (projectId) {
+      try {
+        await apiRequest('POST', `/api/pma-workflow/${projectId}`, { phases: slim });
+      } catch { /* server unavailable — localStorage persists */ }
+    }
   }, [storageKey]);
 
   useEffect(() => { persistPhases(phases); }, [phases, persistPhases]);

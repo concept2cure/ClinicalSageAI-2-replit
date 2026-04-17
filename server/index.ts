@@ -869,6 +869,11 @@ import { create510kWorkflowRoutes } from './routes/510k-workflow-routes';
 app.use('/api/510k-workflow', create510kWorkflowRoutes(pool));
 console.log('✅ 510k-workflow API routes mounted successfully');
 
+// PMA Workflow routes (task state persistence for PMA workspace)
+import { createPMAWorkflowRoutes } from './routes/pma-workflow-routes';
+app.use('/api/pma-workflow', createPMAWorkflowRoutes(pool));
+console.log('✅ PMA-workflow API routes mounted successfully');
+
 // Mount beta-safe route manifest (510(k) + tester telemetry)
 mountBetaSafeRoutes(app);
 console.log('✅ Beta-safe routes mounted successfully');
