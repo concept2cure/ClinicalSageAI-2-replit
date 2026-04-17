@@ -108,7 +108,7 @@ export function ComplianceOversightPanel({ projectId, currentData, stage, sectio
           </CardTitle>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <div className="text-sm text-gray-500">Compliance Score</div>
+              <div className="text-sm text-stone-500">Compliance Score</div>
               <div className={`text-2xl font-bold ${scoreColor}`}>
                 {complianceScore}%
               </div>
@@ -153,7 +153,7 @@ export function ComplianceOversightPanel({ projectId, currentData, stage, sectio
                     <Alert
                       key={index}
                       className={`cursor-pointer transition-all ${
-                        expandedIssue === index ? 'border-blue-500' : ''
+                        expandedIssue === index ? 'border-stone-400' : ''
                       }`}
                       onClick={() => setExpandedIssue(expandedIssue === index ? null : index)}
                     >
@@ -167,20 +167,20 @@ export function ComplianceOversightPanel({ projectId, currentData, stage, sectio
                             </Badge>
                           </AlertTitle>
                           <AlertDescription className="mt-1">
-                            <div className="text-sm text-gray-600">{issue.issue}</div>
+                            <div className="text-sm text-stone-600">{issue.issue}</div>
                             {expandedIssue === index && (
                               <div className="mt-3 space-y-2 border-t pt-2">
                                 <div>
                                   <span className="font-medium text-xs">FDA Requirement:</span>
-                                  <p className="text-xs text-gray-600 mt-1">{issue.fdaRequirement}</p>
+                                  <p className="text-xs text-stone-600 mt-1">{issue.fdaRequirement}</p>
                                 </div>
                                 <div>
                                   <span className="font-medium text-xs">Suggested Fix:</span>
-                                  <p className="text-xs text-green-600 mt-1">{issue.suggestedFix}</p>
+                                  <p className="text-xs text-emerald-600 mt-1">{issue.suggestedFix}</p>
                                 </div>
                                 <div>
                                   <span className="font-medium text-xs">Reference:</span>
-                                  <p className="text-xs text-blue-600 mt-1">{issue.regulatoryReference}</p>
+                                  <p className="text-xs text-stone-600 mt-1">{issue.regulatoryReference}</p>
                                 </div>
                               </div>
                             )}
@@ -192,14 +192,14 @@ export function ComplianceOversightPanel({ projectId, currentData, stage, sectio
                   
                   {/* Recommendations Section */}
                   {complianceReport?.report?.recommendations?.length > 0 && (
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                    <div className="mt-4 p-3 bg-stone-50 rounded-lg">
                       <div className="font-medium text-sm mb-2 flex items-center gap-1">
                         <TrendingUp className="h-4 w-4" />
                         AI Recommendations
                       </div>
                       <ul className="space-y-1">
                         {complianceReport.report.recommendations.map((rec, index) => (
-                          <li key={index} className="text-xs text-gray-700 flex items-start gap-1">
+                          <li key={index} className="text-xs text-stone-700 flex items-start gap-1">
                             <span className="text-blue-500 mt-0.5">•</span>
                             {rec}
                           </li>
@@ -212,7 +212,7 @@ export function ComplianceOversightPanel({ projectId, currentData, stage, sectio
                 <div className="flex flex-col items-center justify-center h-full text-center py-8">
                   <CheckCircle className="h-12 w-12 text-green-500 mb-3" />
                   <p className="text-sm font-medium">No Compliance Issues Found</p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-stone-500 mt-1">
                     Your submission meets FDA requirements
                   </p>
                 </div>
@@ -225,11 +225,11 @@ export function ComplianceOversightPanel({ projectId, currentData, stage, sectio
             <ScrollArea className="h-[400px] w-full">
               <div className="space-y-2">
                 {auditTrail?.entries?.map((entry, index) => (
-                  <div key={index} className="border-l-2 border-gray-200 pl-3 pb-2">
+                  <div key={index} className="border-l-2 border-stone-200 pl-3 pb-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Clock className="h-3 w-3 text-gray-400" />
-                        <span className="text-xs text-gray-500">
+                        <Clock className="h-3 w-3 text-stone-400" />
+                        <span className="text-xs text-stone-500">
                           {formatTimestamp(entry.timestamp)}
                         </span>
                       </div>
@@ -240,7 +240,7 @@ export function ComplianceOversightPanel({ projectId, currentData, stage, sectio
                     <div className="mt-1">
                       <p className="text-sm">{entry.details?.section || entry.entityId}</p>
                       {entry.details?.completeness && (
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-stone-500 mt-1">
                           Completeness: {entry.details.completeness}%
                         </div>
                       )}
@@ -259,17 +259,17 @@ export function ComplianceOversightPanel({ projectId, currentData, stage, sectio
                   <div key={index} className="border rounded-lg p-3">
                     <div className="flex items-center justify-between mb-2">
                       <Badge variant="outline">Version {version.versionNumber}</Badge>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-stone-500">
                         {formatTimestamp(version.createdAt)}
                       </span>
                     </div>
                     <p className="text-sm font-medium">{version.changeDescription}</p>
-                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                    <div className="flex items-center gap-3 mt-2 text-xs text-stone-500">
                       <span className="flex items-center gap-1">
                         <FileText className="h-3 w-3" />
                         {version.changesCount} changes
                       </span>
-                      <span className="text-xs font-mono bg-gray-100 px-1 rounded">
+                      <span className="text-xs font-mono bg-stone-100 px-1 rounded">
                         {version.hash.substring(0, 8)}...
                       </span>
                     </div>
@@ -292,8 +292,8 @@ export function ComplianceOversightPanel({ projectId, currentData, stage, sectio
                     <div className="space-y-1">
                       {item.mappings.map((mapping, mapIndex) => (
                         <div key={mapIndex} className="flex items-center gap-2 text-xs">
-                          <span className="text-gray-500">→</span>
-                          <span className="font-mono bg-gray-100 px-1 rounded">
+                          <span className="text-stone-500">→</span>
+                          <span className="font-mono bg-stone-100 px-1 rounded">
                             {mapping.target}
                           </span>
                           <Badge variant="outline" className="text-xs">
@@ -304,7 +304,7 @@ export function ComplianceOversightPanel({ projectId, currentData, stage, sectio
                     </div>
                   </div>
                 ))}
-                <div className="text-center text-xs text-gray-500 mt-3">
+                <div className="text-center text-xs text-stone-500 mt-3">
                   Total Mappings: {dataLineage?.totalMappings || 0}
                 </div>
               </div>
@@ -315,25 +315,25 @@ export function ComplianceOversightPanel({ projectId, currentData, stage, sectio
         {/* Status Summary */}
         <div className="mt-4 pt-3 border-t grid grid-cols-4 gap-2">
           <div className="text-center">
-            <div className="text-xs text-gray-500">Critical</div>
+            <div className="text-xs text-stone-500">Critical</div>
             <div className="text-lg font-bold text-red-500">
               {complianceReport?.report?.issues?.critical || 0}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-xs text-gray-500">Major</div>
+            <div className="text-xs text-stone-500">Major</div>
             <div className="text-lg font-bold text-orange-500">
               {complianceReport?.report?.issues?.major || 0}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-xs text-gray-500">Minor</div>
+            <div className="text-xs text-stone-500">Minor</div>
             <div className="text-lg font-bold text-yellow-500">
               {complianceReport?.report?.issues?.minor || 0}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-xs text-gray-500">Suggestions</div>
+            <div className="text-xs text-stone-500">Suggestions</div>
             <div className="text-lg font-bold text-blue-500">
               {complianceReport?.report?.issues?.suggestions || 0}
             </div>

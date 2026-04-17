@@ -457,12 +457,12 @@ export default function RTAChecklistPanel({
   return (
     <div className="w-full max-w-7xl mx-auto p-6 space-y-6">
       {/* Header Card */}
-      <Card className="border-2 border-blue-200 bg-blue-50/50">
+      <Card className="border-2 border-stone-200 bg-stone-50/50">
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="text-2xl flex items-center gap-2">
-                <ClipboardCheck className="h-6 w-6 text-blue-600" />
+                <ClipboardCheck className="h-6 w-6 text-stone-600" />
                 FDA 510(k) RTA Checklist
               </CardTitle>
               <CardDescription className="mt-2">
@@ -509,9 +509,9 @@ export default function RTAChecklistPanel({
                 <p className="text-2xl font-bold">{progress}% Complete</p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-stone-600">
                   {requiredIncomplete === 0 ? (
-                    <span className="text-green-600 flex items-center gap-1">
+                    <span className="text-emerald-600 flex items-center gap-1">
                       <CheckCircle2 className="h-4 w-4" />
                       All required items complete
                     </span>
@@ -523,7 +523,7 @@ export default function RTAChecklistPanel({
                   )}
                 </p>
                 {lastSaved && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-stone-500 mt-1">
                     Last saved: {lastSaved.toLocaleTimeString()}
                   </p>
                 )}
@@ -608,10 +608,10 @@ export default function RTAChecklistPanel({
                       key={item.id}
                       className={`border ${
                         isComplete
-                          ? 'border-green-200 bg-green-50/30'
+                          ? 'border-emerald-200 bg-emerald-50/30'
                           : item.required
                             ? 'border-amber-200 bg-amber-50/30'
-                            : 'border-gray-200'
+                            : 'border-stone-200'
                       }`}
                     >
                       <CardContent className="p-4">
@@ -644,14 +644,14 @@ export default function RTAChecklistPanel({
                                     </Badge>
                                   )}
                                 </label>
-                                <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                <p className="text-sm text-stone-600 mt-1">{item.description}</p>
                                 {item.conditional && (
                                   <p className="text-xs text-amber-600 mt-1">
                                     <AlertCircle className="h-3 w-3 inline mr-1" />
                                     Required if: {item.conditional}
                                   </p>
                                 )}
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-xs text-stone-500 mt-1">
                                   Reference: {item.fdaReference}
                                 </p>
                               </div>
@@ -681,7 +681,7 @@ export default function RTAChecklistPanel({
                           {/* Input Fields Row */}
                           <div className="grid grid-cols-3 gap-3 pl-9">
                             <div>
-                              <label className="text-xs font-medium text-gray-700">
+                              <label className="text-xs font-medium text-stone-700">
                                 Page Numbers
                               </label>
                               <Input
@@ -694,7 +694,7 @@ export default function RTAChecklistPanel({
                               />
                             </div>
                             <div className="col-span-2">
-                              <label className="text-xs font-medium text-gray-700">Notes</label>
+                              <label className="text-xs font-medium text-stone-700">Notes</label>
                               <Input
                                 placeholder="Additional notes or comments"
                                 value={itemData.notes || ''}
@@ -709,7 +709,7 @@ export default function RTAChecklistPanel({
                           {/* Tips */}
                           {item.tips && (
                             <div className="pl-9">
-                              <p className="text-xs text-blue-600 flex items-start gap-1">
+                              <p className="text-xs text-stone-600 flex items-start gap-1">
                                 <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
                                 {item.tips}
                               </p>

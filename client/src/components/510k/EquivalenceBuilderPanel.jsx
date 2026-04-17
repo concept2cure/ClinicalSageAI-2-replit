@@ -371,8 +371,8 @@ const EquivalenceBuilderPanel = ({
           variant={selectedTab === 'overview' ? 'subtle' : 'ghost'}
           className={`rounded-none border-b-2 ${
             selectedTab === 'overview'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-600'
+              ? 'border-blue-600 text-stone-600'
+              : 'border-transparent text-stone-600'
           }`}
           onClick={() => setSelectedTab('overview')}
         >
@@ -382,8 +382,8 @@ const EquivalenceBuilderPanel = ({
           variant={selectedTab === 'comparison' ? 'subtle' : 'ghost'}
           className={`rounded-none border-b-2 ${
             selectedTab === 'comparison'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-600'
+              ? 'border-blue-600 text-stone-600'
+              : 'border-transparent text-stone-600'
           }`}
           onClick={() => setSelectedTab('comparison')}
           disabled={predicateDevices.length === 0 || !selectedPredicateDevice}
@@ -394,8 +394,8 @@ const EquivalenceBuilderPanel = ({
           variant={selectedTab === 'literature' ? 'subtle' : 'ghost'}
           className={`rounded-none border-b-2 ${
             selectedTab === 'literature'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-600'
+              ? 'border-blue-600 text-stone-600'
+              : 'border-transparent text-stone-600'
           }`}
           onClick={() => setSelectedTab('literature')}
           disabled={predicateDevices.length === 0 || !selectedPredicateDevice}
@@ -406,8 +406,8 @@ const EquivalenceBuilderPanel = ({
           variant={selectedTab === 'summary' ? 'subtle' : 'ghost'}
           className={`rounded-none border-b-2 ${
             selectedTab === 'summary'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-600'
+              ? 'border-blue-600 text-stone-600'
+              : 'border-transparent text-stone-600'
           }`}
           onClick={() => {
             setSummaryStatement(generateSummaryStatement());
@@ -463,9 +463,9 @@ const EquivalenceBuilderPanel = ({
 
   return (
     <Card className="shadow-sm">
-      <CardHeader className="bg-blue-50 border-b">
-        <CardTitle className="text-blue-800 flex items-center">
-          <GitCompare className="mr-2 h-5 w-5 text-blue-600" />
+      <CardHeader className="bg-stone-50 border-b">
+        <CardTitle className="text-stone-800 flex items-center">
+          <GitCompare className="mr-2 h-5 w-5 text-stone-600" />
           Substantial Equivalence Analysis
         </CardTitle>
         <CardDescription>
@@ -479,7 +479,7 @@ const EquivalenceBuilderPanel = ({
           <div className="space-y-4">
             <div>
               <h3 className="text-lg font-medium">Predicate Device Selection</h3>
-              <p className="text-sm text-gray-500 mb-2">
+              <p className="text-sm text-stone-500 mb-2">
                 Select the primary predicate device for your substantial equivalence comparison.
               </p>
 
@@ -514,7 +514,7 @@ const EquivalenceBuilderPanel = ({
 
             {selectedPredicateDevice && (
               <div className="border rounded-md mt-4">
-                <div className="bg-gray-50 p-3 rounded-t-md border-b">
+                <div className="bg-stone-50 p-3 rounded-t-md border-b">
                   <h4 className="font-medium">Selected Predicate Device</h4>
                 </div>
                 <div className="p-3">
@@ -525,19 +525,19 @@ const EquivalenceBuilderPanel = ({
                     return (
                       <div className="space-y-3">
                         <div>
-                          <p className="text-sm font-medium text-gray-500">Device Name</p>
+                          <p className="text-sm font-medium text-stone-500">Device Name</p>
                           <p>{selectedDevice?.name}</p>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-500">K Number</p>
+                          <p className="text-sm font-medium text-stone-500">K Number</p>
                           <p>{selectedDevice?.k_number}</p>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-500">Manufacturer</p>
+                          <p className="text-sm font-medium text-stone-500">Manufacturer</p>
                           <p>{selectedDevice?.manufacturer}</p>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-500">Decision Date</p>
+                          <p className="text-sm font-medium text-stone-500">Decision Date</p>
                           <p>{selectedDevice?.decision_date}</p>
                         </div>
                       </div>
@@ -586,7 +586,7 @@ const EquivalenceBuilderPanel = ({
 
             <Table>
               <TableHeader>
-                <TableRow className="bg-blue-50">
+                <TableRow className="bg-stone-50">
                   <TableHead className="w-[200px]">Feature</TableHead>
                   <TableHead>Subject Device</TableHead>
                   <TableHead>Predicate Device</TableHead>
@@ -660,12 +660,12 @@ const EquivalenceBuilderPanel = ({
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           {literatureEvidence[feature.id] ? (
-                            <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+                            <Badge className="bg-stone-100 text-stone-800 hover:bg-stone-100">
                               {literatureEvidence[feature.id].length}{' '}
                               {literatureEvidence[feature.id].length === 1 ? 'Paper' : 'Papers'}
                             </Badge>
                           ) : (
-                            <span className="text-gray-500 text-sm">None</span>
+                            <span className="text-stone-500 text-sm">None</span>
                           )}
                           <Button
                             variant="ghost"
@@ -673,7 +673,7 @@ const EquivalenceBuilderPanel = ({
                             className="h-7 px-2"
                             onClick={() => setActiveFeatureForEvidence(feature.id)}
                           >
-                            <Link className="h-4 w-4 text-blue-600" />
+                            <Link className="h-4 w-4 text-stone-600" />
                           </Button>
                         </div>
                       </TableCell>
@@ -732,9 +732,9 @@ const EquivalenceBuilderPanel = ({
             <div className="mt-2">
               <h4 className="font-medium mb-2">Equivalence Overview</h4>
               <div className="grid grid-cols-3 gap-4">
-                <div className="bg-green-50 border border-green-100 rounded-md p-3">
-                  <p className="text-sm text-green-600 mb-1">Substantially Equivalent</p>
-                  <p className="text-2xl font-bold text-green-700">
+                <div className="bg-emerald-50 border border-green-100 rounded-md p-3">
+                  <p className="text-sm text-emerald-600 mb-1">Substantially Equivalent</p>
+                  <p className="text-2xl font-bold text-emerald-700">
                     {comparisonFeatures.filter(f => f.substantial === true).length}
                     <span className="text-sm font-normal text-green-500 ml-1">features</span>
                   </p>
@@ -746,11 +746,11 @@ const EquivalenceBuilderPanel = ({
                     <span className="text-sm font-normal text-red-500 ml-1">features</span>
                   </p>
                 </div>
-                <div className="bg-gray-50 border border-gray-100 rounded-md p-3">
-                  <p className="text-sm text-gray-600 mb-1">Not Determined</p>
-                  <p className="text-2xl font-bold text-gray-700">
+                <div className="bg-stone-50 border border-stone-100 rounded-md p-3">
+                  <p className="text-sm text-stone-600 mb-1">Not Determined</p>
+                  <p className="text-2xl font-bold text-stone-700">
                     {comparisonFeatures.filter(f => f.substantial === null).length}
-                    <span className="text-sm font-normal text-gray-500 ml-1">features</span>
+                    <span className="text-sm font-normal text-stone-500 ml-1">features</span>
                   </p>
                 </div>
               </div>
@@ -759,10 +759,10 @@ const EquivalenceBuilderPanel = ({
             {Object.keys(literatureEvidence).length > 0 && (
               <div className="mt-2">
                 <h4 className="font-medium mb-2">Supporting Literature</h4>
-                <div className="bg-blue-50 border border-blue-100 rounded-md p-3">
-                  <p className="text-sm text-blue-600 mb-1">Literature Support</p>
+                <div className="bg-stone-50 border border-blue-100 rounded-md p-3">
+                  <p className="text-sm text-stone-600 mb-1">Literature Support</p>
                   <div className="flex items-baseline">
-                    <p className="text-2xl font-bold text-blue-700">
+                    <p className="text-2xl font-bold text-stone-700">
                       {Object.keys(literatureEvidence).length}
                       <span className="text-sm font-normal text-blue-500 ml-1">features</span>
                     </p>
@@ -777,12 +777,12 @@ const EquivalenceBuilderPanel = ({
         )}
       </CardContent>
 
-      <CardFooter className="bg-gray-50 border-t p-4">
+      <CardFooter className="bg-stone-50 border-t p-4">
         <div className="w-full flex items-center justify-end gap-4">
           {isAnalyzing && (
             <div className="flex-1 max-w-md">
               <Progress value={progress} className="h-2" />
-              <p className="text-xs text-gray-500 mt-1">Analyzing equivalence...</p>
+              <p className="text-xs text-stone-500 mt-1">Analyzing equivalence...</p>
             </div>
           )}
           <Button
@@ -825,8 +825,8 @@ const EquivalenceBuilderPanel = ({
 
           <div className="py-4">
             {activeFeatureForEvidence && (
-              <div className="mb-4 p-3 bg-blue-50 rounded-md border border-blue-100">
-                <h3 className="font-medium text-blue-800">Feature</h3>
+              <div className="mb-4 p-3 bg-stone-50 rounded-md border border-blue-100">
+                <h3 className="font-medium text-stone-800">Feature</h3>
                 <p>{comparisonFeatures.find(f => f.id === activeFeatureForEvidence)?.name}</p>
               </div>
             )}
@@ -855,7 +855,7 @@ const EquivalenceBuilderPanel = ({
                         >
                           {paper.title}
                         </label>
-                        <div className="text-xs text-gray-500 flex items-center gap-2 mt-1">
+                        <div className="text-xs text-stone-500 flex items-center gap-2 mt-1">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             {new Date(paper.publicationDate || Date.now()).getFullYear()}

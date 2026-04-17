@@ -389,7 +389,7 @@ const ComplianceCheckPanel = ({
   // Get clearance likelihood assessment label and color
   const getClearanceLikelihoodAssessment = likelihood => {
     if (likelihood >= 0.75) {
-      return { label: 'Favorable', color: 'text-green-700', bgColor: 'bg-green-100' };
+      return { label: 'Favorable', color: 'text-emerald-700', bgColor: 'bg-emerald-100' };
     } else if (likelihood >= 0.5) {
       return { label: 'Moderate', color: 'text-amber-700', bgColor: 'bg-amber-100' };
     } else {
@@ -402,11 +402,11 @@ const ComplianceCheckPanel = ({
     return (
       <Card className="w-full shadow-md border-blue-100">
         <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b pb-4">
-          <CardTitle className="text-xl flex items-center text-blue-800">
-            <ClipboardCheck className="mr-2 h-5 w-5 text-blue-600" />
+          <CardTitle className="text-xl flex items-center text-stone-800">
+            <ClipboardCheck className="mr-2 h-5 w-5 text-stone-600" />
             Running 510(k) Compliance Check
           </CardTitle>
-          <CardDescription className="text-blue-600">
+          <CardDescription className="text-stone-600">
             Analyzing your device against FDA 510(k) requirements
           </CardDescription>
         </CardHeader>
@@ -414,15 +414,15 @@ const ComplianceCheckPanel = ({
           <div className="flex flex-col items-center justify-center py-8">
             <div className="relative h-24 w-24 mb-6">
               <div className="absolute inset-0 rounded-full border-4 border-blue-100"></div>
-              <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-stone-400 border-t-transparent animate-spin"></div>
               <div className="absolute inset-0 flex items-center justify-center">
                 <ClipboardCheck className="h-10 w-10 text-blue-500" />
               </div>
             </div>
-            <p className="text-center text-lg font-medium text-blue-700 mb-1">
+            <p className="text-center text-lg font-medium text-stone-700 mb-1">
               Analyzing Submission
             </p>
-            <p className="text-center text-gray-600 max-w-md">
+            <p className="text-center text-stone-600 max-w-md">
               Please wait while we analyze your submission against FDA 510(k) requirements and
               regulatory guidance...
             </p>
@@ -437,11 +437,11 @@ const ComplianceCheckPanel = ({
       <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b pb-4">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-xl flex items-center text-blue-800">
-              <ClipboardCheck className="mr-2 h-5 w-5 text-blue-600" />
+            <CardTitle className="text-xl flex items-center text-stone-800">
+              <ClipboardCheck className="mr-2 h-5 w-5 text-stone-600" />
               FDA 510(k) Compliance Check
             </CardTitle>
-            <CardDescription className="text-blue-600">
+            <CardDescription className="text-stone-600">
               Comprehensive analysis of your submission against FDA 510(k) requirements
             </CardDescription>
           </div>
@@ -452,7 +452,7 @@ const ComplianceCheckPanel = ({
               <span
                 className={`text-lg font-bold ${
                   actualComplianceData.score >= 0.75
-                    ? 'text-green-600'
+                    ? 'text-emerald-600'
                     : actualComplianceData.score >= 0.5
                       ? 'text-amber-600'
                       : 'text-red-600'
@@ -480,7 +480,7 @@ const ComplianceCheckPanel = ({
                         variant={actualComplianceData.score >= 0.75 ? 'default' : 'outline'}
                         className={
                           actualComplianceData.score >= 0.75
-                            ? 'bg-green-100 text-green-800 hover:bg-green-100'
+                            ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-100'
                             : ''
                         }
                       >
@@ -491,14 +491,14 @@ const ComplianceCheckPanel = ({
                       value={actualComplianceData.score * 100}
                       className={`h-2 ${
                         actualComplianceData.score >= 0.75
-                          ? 'bg-green-100'
+                          ? 'bg-emerald-100'
                           : actualComplianceData.score >= 0.5
                             ? 'bg-amber-100'
                             : 'bg-red-100'
                       }`}
                       indicatorClassName={
                         actualComplianceData.score >= 0.75
-                          ? 'bg-green-500'
+                          ? 'bg-emerald-500'
                           : actualComplianceData.score >= 0.5
                             ? 'bg-amber-500'
                             : 'bg-red-500'
@@ -506,7 +506,7 @@ const ComplianceCheckPanel = ({
                     />
                     <p className="text-sm text-muted-foreground mt-2">
                       {actualComplianceData.score >= 0.75 ? (
-                        <span className="text-green-700">
+                        <span className="text-emerald-700">
                           Your submission meets most FDA requirements
                         </span>
                       ) : actualComplianceData.score >= 0.5 ? (
@@ -553,14 +553,14 @@ const ComplianceCheckPanel = ({
                         value={actualRiskAssessmentData.clearanceLikelihood * 100}
                         className={`h-2 ${
                           actualRiskAssessmentData.clearanceLikelihood >= 0.75
-                            ? 'bg-green-100'
+                            ? 'bg-emerald-100'
                             : actualRiskAssessmentData.clearanceLikelihood >= 0.5
                               ? 'bg-amber-100'
                               : 'bg-red-100'
                         }`}
                         indicatorClassName={
                           actualRiskAssessmentData.clearanceLikelihood >= 0.75
-                            ? 'bg-green-500'
+                            ? 'bg-emerald-500'
                             : actualRiskAssessmentData.clearanceLikelihood >= 0.5
                               ? 'bg-amber-500'
                               : 'bg-red-500'
@@ -568,7 +568,7 @@ const ComplianceCheckPanel = ({
                       />
                       <p className="text-sm text-muted-foreground mt-2">
                         {actualRiskAssessmentData.clearanceLikelihood >= 0.75 ? (
-                          <span className="text-green-700">
+                          <span className="text-emerald-700">
                             Your device has a favorable outlook for FDA clearance
                           </span>
                         ) : actualRiskAssessmentData.clearanceLikelihood >= 0.5 ? (
@@ -592,7 +592,7 @@ const ComplianceCheckPanel = ({
                         <div className="text-sm font-medium">FDA Clearance Likelihood</div>
                         <Badge variant="outline">Not assessed</Badge>
                       </div>
-                      <div className="h-2 bg-gray-100 rounded-full mb-2"></div>
+                      <div className="h-2 bg-stone-100 rounded-full mb-2"></div>
                       <p className="text-sm text-muted-foreground">
                         Run the FDA Risk Assessment to predict clearance likelihood
                       </p>
@@ -669,7 +669,7 @@ const ComplianceCheckPanel = ({
                           </span>
                           <div className="flex items-center">
                             <Badge
-                              className={`mr-2 ${actualComplianceData.technicalScore >= 0.75 ? 'bg-green-100 text-green-800' : actualComplianceData.technicalScore >= 0.5 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}
+                              className={`mr-2 ${actualComplianceData.technicalScore >= 0.75 ? 'bg-emerald-100 text-emerald-800' : actualComplianceData.technicalScore >= 0.5 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}
                             >
                               {Math.round(actualComplianceData.technicalScore * 100)}%
                             </Badge>
@@ -687,7 +687,7 @@ const ComplianceCheckPanel = ({
                           </span>
                           <div className="flex items-center">
                             <Badge
-                              className={`mr-2 ${actualComplianceData.regulatoryScore >= 0.75 ? 'bg-green-100 text-green-800' : actualComplianceData.regulatoryScore >= 0.5 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}
+                              className={`mr-2 ${actualComplianceData.regulatoryScore >= 0.75 ? 'bg-emerald-100 text-emerald-800' : actualComplianceData.regulatoryScore >= 0.5 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}
                             >
                               {Math.round(actualComplianceData.regulatoryScore * 100)}%
                             </Badge>
@@ -705,7 +705,7 @@ const ComplianceCheckPanel = ({
                           </span>
                           <div className="flex items-center">
                             <Badge
-                              className={`mr-2 ${actualComplianceData.documentationScore >= 0.75 ? 'bg-green-100 text-green-800' : actualComplianceData.documentationScore >= 0.5 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}
+                              className={`mr-2 ${actualComplianceData.documentationScore >= 0.75 ? 'bg-emerald-100 text-emerald-800' : actualComplianceData.documentationScore >= 0.5 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}
                             >
                               {Math.round(actualComplianceData.documentationScore * 100)}%
                             </Badge>
@@ -762,7 +762,7 @@ const ComplianceCheckPanel = ({
                                 ) : issue.severity === 'major' ? (
                                   <AlertTriangle className="h-5 w-5 text-amber-600" />
                                 ) : (
-                                  <AlertCircle className="h-5 w-5 text-blue-600" />
+                                  <AlertCircle className="h-5 w-5 text-stone-600" />
                                 )}
                               </div>
                               <div className="flex-1">
@@ -774,7 +774,7 @@ const ComplianceCheckPanel = ({
                                         ? 'bg-red-100 text-red-800'
                                         : issue.severity === 'major'
                                           ? 'bg-amber-100 text-amber-800'
-                                          : 'bg-blue-100 text-blue-800'
+                                          : 'bg-stone-100 text-stone-800'
                                     }
                                   >
                                     {issue.severity === 'critical'
@@ -784,13 +784,13 @@ const ComplianceCheckPanel = ({
                                         : 'Minor'}
                                   </Badge>
                                 </div>
-                                <p className="text-sm mt-1 text-gray-700">{issue.description}</p>
+                                <p className="text-sm mt-1 text-stone-700">{issue.description}</p>
                                 {issue.recommendation && (
-                                  <div className="mt-2 pt-2 border-t border-gray-100">
-                                    <span className="text-xs font-medium text-gray-600">
+                                  <div className="mt-2 pt-2 border-t border-stone-100">
+                                    <span className="text-xs font-medium text-stone-600">
                                       Recommendation:
                                     </span>
-                                    <p className="text-sm text-gray-700">{issue.recommendation}</p>
+                                    <p className="text-sm text-stone-700">{issue.recommendation}</p>
                                   </div>
                                 )}
                               </div>
@@ -802,8 +802,8 @@ const ComplianceCheckPanel = ({
                   ) : (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
                       <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900">No issues found</h3>
-                      <p className="mt-2 text-sm text-gray-600 max-w-md">
+                      <h3 className="text-lg font-medium text-stone-900">No issues found</h3>
+                      <p className="mt-2 text-sm text-stone-600 max-w-md">
                         Your submission meets all the FDA requirements we checked.
                       </p>
                     </div>
@@ -832,7 +832,7 @@ const ComplianceCheckPanel = ({
                                 </div>
                                 <div className="flex-1">
                                   <h4 className="font-medium">{fix.title}</h4>
-                                  <p className="text-sm mt-1 text-gray-700">{fix.description}</p>
+                                  <p className="text-sm mt-1 text-stone-700">{fix.description}</p>
                                   <div className="mt-3">
                                     <Button
                                       variant="outline"
@@ -864,8 +864,8 @@ const ComplianceCheckPanel = ({
                       <div className="bg-muted p-6 rounded-full mb-4">
                         <WandSparkles className="h-10 w-10 text-muted-foreground" />
                       </div>
-                      <h3 className="text-lg font-medium text-gray-900">No fix suggestions yet</h3>
-                      <p className="mt-2 text-sm text-gray-600 max-w-md">
+                      <h3 className="text-lg font-medium text-stone-900">No fix suggestions yet</h3>
+                      <p className="mt-2 text-sm text-stone-600 max-w-md">
                         Generate AI-powered suggestions to help improve your submission's compliance
                         score.
                       </p>
@@ -915,7 +915,7 @@ const ComplianceCheckPanel = ({
                 onClick={runComplianceCheck}
                 disabled={actualIsChecking || actualIsAssessingRisks}
                 size="sm"
-                className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 shadow-sm"
+                className="border-stone-200 bg-stone-50 text-stone-700 hover:bg-stone-100 shadow-sm"
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Run Check Again
@@ -928,7 +928,7 @@ const ComplianceCheckPanel = ({
                 onClick={saveComplianceReport}
                 disabled={actualIsChecking || actualIsAssessingRisks}
                 size="sm"
-                className="border-green-200 bg-green-50 text-green-700 hover:bg-green-100 shadow-sm"
+                className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 shadow-sm"
               >
                 <Save className="mr-2 h-4 w-4" />
                 Save Report to Document Vault
@@ -1050,14 +1050,14 @@ const ComplianceCheckPanel = ({
                   value={actualRiskAssessmentData.clearanceLikelihood * 100}
                   className={`h-3 ${
                     actualRiskAssessmentData.clearanceLikelihood >= 0.75
-                      ? 'bg-green-100'
+                      ? 'bg-emerald-100'
                       : actualRiskAssessmentData.clearanceLikelihood >= 0.5
                         ? 'bg-amber-100'
                         : 'bg-red-100'
                   }`}
                   indicatorClassName={
                     actualRiskAssessmentData.clearanceLikelihood >= 0.75
-                      ? 'bg-green-500'
+                      ? 'bg-emerald-500'
                       : actualRiskAssessmentData.clearanceLikelihood >= 0.5
                         ? 'bg-amber-500'
                         : 'bg-red-500'
@@ -1066,7 +1066,7 @@ const ComplianceCheckPanel = ({
 
                 <div className="mt-4">
                   <h4 className="text-sm font-medium mb-2">Assessment Summary</h4>
-                  <p className="text-sm text-gray-700">
+                  <p className="text-sm text-stone-700">
                     {actualRiskAssessmentData.summary ||
                       "Based on our analysis of your device specifications, predicate devices, and compliance data, we've calculated your FDA clearance likelihood."}
                   </p>
@@ -1091,7 +1091,7 @@ const ComplianceCheckPanel = ({
                     <div className="flex space-x-2">
                       <div className="flex items-center">
                         <div className="w-3 h-3 rounded-full bg-red-500 mr-1"></div>
-                        <span className="text-xs text-gray-600">
+                        <span className="text-xs text-stone-600">
                           High (
                           {actualRiskAssessmentData.riskFactors?.filter(r => r.severity === 'high')
                             .length || 0}
@@ -1100,7 +1100,7 @@ const ComplianceCheckPanel = ({
                       </div>
                       <div className="flex items-center">
                         <div className="w-3 h-3 rounded-full bg-amber-500 mr-1"></div>
-                        <span className="text-xs text-gray-600">
+                        <span className="text-xs text-stone-600">
                           Medium (
                           {actualRiskAssessmentData.riskFactors?.filter(
                             r => r.severity === 'medium'
@@ -1109,8 +1109,8 @@ const ComplianceCheckPanel = ({
                         </span>
                       </div>
                       <div className="flex items-center">
-                        <div className="w-3 h-3 rounded-full bg-blue-500 mr-1"></div>
-                        <span className="text-xs text-gray-600">
+                        <div className="w-3 h-3 rounded-full bg-stone-500 mr-1"></div>
+                        <span className="text-xs text-stone-600">
                           Low (
                           {actualRiskAssessmentData.riskFactors?.filter(r => r.severity === 'low')
                             .length || 0}
@@ -1129,7 +1129,7 @@ const ComplianceCheckPanel = ({
                               ? 'border-l-red-500 bg-red-50'
                               : risk.severity === 'medium'
                                 ? 'border-l-amber-500 bg-amber-50'
-                                : 'border-l-blue-500 bg-blue-50';
+                                : 'border-l-blue-500 bg-stone-50';
 
                           const SeverityIcon =
                             risk.severity === 'high'
@@ -1143,14 +1143,14 @@ const ComplianceCheckPanel = ({
                               ? 'text-red-600'
                               : risk.severity === 'medium'
                                 ? 'text-amber-600'
-                                : 'text-blue-600';
+                                : 'text-stone-600';
 
                           const badgeClass =
                             risk.severity === 'high'
                               ? 'bg-red-100 text-red-800'
                               : risk.severity === 'medium'
                                 ? 'bg-amber-100 text-amber-800'
-                                : 'bg-blue-100 text-blue-800';
+                                : 'bg-stone-100 text-stone-800';
 
                           const severityText =
                             risk.severity === 'high'
@@ -1171,13 +1171,13 @@ const ComplianceCheckPanel = ({
                                   </div>
                                   <div className="flex-1">
                                     <h4 className="font-medium">{risk.title}</h4>
-                                    <p className="text-sm mt-1 text-gray-700">{risk.description}</p>
+                                    <p className="text-sm mt-1 text-stone-700">{risk.description}</p>
                                     {risk.impact && (
                                       <div className="mt-2">
-                                        <span className="text-xs font-medium text-gray-600">
+                                        <span className="text-xs font-medium text-stone-600">
                                           Potential Impact:
                                         </span>
-                                        <p className="text-sm text-gray-700">{risk.impact}</p>
+                                        <p className="text-sm text-stone-700">{risk.impact}</p>
                                       </div>
                                     )}
                                   </div>
@@ -1194,10 +1194,10 @@ const ComplianceCheckPanel = ({
                   ) : (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
                       <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900">
+                      <h3 className="text-lg font-medium text-stone-900">
                         No significant risks identified
                       </h3>
-                      <p className="mt-2 text-sm text-gray-600 max-w-md">
+                      <p className="mt-2 text-sm text-stone-600 max-w-md">
                         Based on our analysis, your submission has a strong foundation with minimal
                         risk factors.
                       </p>
@@ -1209,7 +1209,7 @@ const ComplianceCheckPanel = ({
               <TabsContent value="strengths" className="mt-0 p-1">
                 <div className="space-y-4 p-4">
                   <h3 className="text-base font-medium mb-2 flex items-center">
-                    <Award className="mr-2 h-4 w-4 text-green-600" />
+                    <Award className="mr-2 h-4 w-4 text-emerald-600" />
                     Submission Strengths
                   </h3>
 
@@ -1219,15 +1219,15 @@ const ComplianceCheckPanel = ({
                         {actualRiskAssessmentData.strengths.map((strength, index) => (
                           <Card
                             key={index}
-                            className="p-4 border-l-4 border-l-green-500 bg-green-50"
+                            className="p-4 border-l-4 border-l-green-500 bg-emerald-50"
                           >
                             <div className="flex items-start">
                               <div className="flex-shrink-0 mr-3">
-                                <CheckCircle className="h-5 w-5 text-green-600" />
+                                <CheckCircle className="h-5 w-5 text-emerald-600" />
                               </div>
                               <div>
                                 <h4 className="font-medium">{strength.title}</h4>
-                                <p className="text-sm mt-1 text-gray-700">{strength.description}</p>
+                                <p className="text-sm mt-1 text-stone-700">{strength.description}</p>
                               </div>
                             </div>
                           </Card>
@@ -1237,10 +1237,10 @@ const ComplianceCheckPanel = ({
                   ) : (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
                       <AlertCircle className="h-12 w-12 text-amber-500 mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900">
+                      <h3 className="text-lg font-medium text-stone-900">
                         No specific strengths identified
                       </h3>
-                      <p className="mt-2 text-sm text-gray-600 max-w-md">
+                      <p className="mt-2 text-sm text-stone-600 max-w-md">
                         We couldn't identify specific strengths in your submission. Consider
                         addressing the risk factors to improve your clearance likelihood.
                       </p>
