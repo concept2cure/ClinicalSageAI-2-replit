@@ -715,7 +715,7 @@ const ESTARBuilderPanel = ({
                                   ? 'text-red-500'
                                   : issue.severity === 'warning'
                                     ? 'text-amber-500'
-                                    : 'text-blue-500'
+                                    : 'text-stone-500'
                               }`}
                             >
                               {issue.severity === 'error'
@@ -749,7 +749,7 @@ const ESTARBuilderPanel = ({
                         <ul className="space-y-1.5">
                           {validationResults.recommendations.map((rec, idx) => (
                             <li key={idx} className="flex items-start text-xs text-stone-800">
-                              <span className="mr-1.5 text-blue-500 mt-0.5">•</span>
+                              <span className="mr-1.5 text-stone-500 mt-0.5">•</span>
                               <span>{rec}</span>
                             </li>
                           ))}
@@ -869,7 +869,7 @@ const ESTARBuilderPanel = ({
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   variant="default"
-                  className="flex items-center bg-blue-600 hover:bg-blue-700"
+                  className="flex items-center bg-stone-800 hover:bg-stone-900"
                   onClick={handleGenerate}
                   disabled={isGenerating || (complianceScore < 60 && !validationResults?.valid)}
                 >

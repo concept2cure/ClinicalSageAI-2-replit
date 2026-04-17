@@ -316,7 +316,7 @@ const EquivalenceBuilderPanel = ({
           variant={selectedTab === 'overview' ? 'subtle' : 'ghost'}
           className={`rounded-none border-b-2 ${
             selectedTab === 'overview'
-              ? 'border-blue-600 text-stone-600'
+              ? 'border-stone-700 text-stone-600'
               : 'border-transparent text-stone-600'
           }`}
           onClick={() => setSelectedTab('overview')}
@@ -327,7 +327,7 @@ const EquivalenceBuilderPanel = ({
           variant={selectedTab === 'comparison' ? 'subtle' : 'ghost'}
           className={`rounded-none border-b-2 ${
             selectedTab === 'comparison'
-              ? 'border-blue-600 text-stone-600'
+              ? 'border-stone-700 text-stone-600'
               : 'border-transparent text-stone-600'
           }`}
           onClick={() => setSelectedTab('comparison')}
@@ -339,7 +339,7 @@ const EquivalenceBuilderPanel = ({
           variant={selectedTab === 'literature' ? 'subtle' : 'ghost'}
           className={`rounded-none border-b-2 ${
             selectedTab === 'literature'
-              ? 'border-blue-600 text-stone-600'
+              ? 'border-stone-700 text-stone-600'
               : 'border-transparent text-stone-600'
           }`}
           onClick={() => setSelectedTab('literature')}
@@ -351,7 +351,7 @@ const EquivalenceBuilderPanel = ({
           variant={selectedTab === 'summary' ? 'subtle' : 'ghost'}
           className={`rounded-none border-b-2 ${
             selectedTab === 'summary'
-              ? 'border-blue-600 text-stone-600'
+              ? 'border-stone-700 text-stone-600'
               : 'border-transparent text-stone-600'
           }`}
           onClick={() => {
@@ -709,9 +709,9 @@ const EquivalenceBuilderPanel = ({
                   <div className="flex items-baseline">
                     <p className="text-lg font-semibold text-stone-700">
                       {Object.keys(literatureEvidence).length}
-                      <span className="text-sm font-normal text-blue-500 ml-1">features</span>
+                      <span className="text-sm font-normal text-stone-500 ml-1">features</span>
                     </p>
-                    <p className="text-sm text-blue-500 ml-3">
+                    <p className="text-sm text-stone-500 ml-3">
                       with {selectedLiterature.length} papers
                     </p>
                   </div>
