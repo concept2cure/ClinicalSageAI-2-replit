@@ -377,6 +377,17 @@ Define success criteria. Loop until verified.
 
 For multi-step tasks, state a brief plan:
 
+## Premium UI/UX Enforcement Skills
+
+Four Concept2Cure-authored skills enforce premium UI/UX standards on every change. Each is NON-NEGOTIABLE in its scope.
+
+- **`.claude/skills/accessibility-enforcement/`** — WCAG 2.2 AA on every component. Focus order, contrast, ARIA, keyboard traps, color-never-alone.
+- **`.claude/skills/regulatory-compliance-ux/`** — 21 CFR Part 11 / GxP patterns. Visible audit trails, reason-for-change capture, e-signature flows, role-scoped visibility, reviewer-grade copy.
+- **`.claude/skills/microcopy-tone/`** — reviewer-grade voice on every string. Factual, specific, active, no exclamations, no emoji, no cheerleading. Pairs with Claude UI Design Principle 9 (Trust Through Restraint).
+- **`.claude/skills/motion-discipline/`** — calm-motion rule. 200ms ease-out default, no spring/bounce/overshoot, `prefers-reduced-motion` respected. Pairs with Claude UI Design Principle 5.
+
+Consult these before building or reviewing UI. They are read by `design-review` as part of the structured critique pass.
+
 ## Designer Skills (Adapted — Julian Oczkowski)
 
 > Skill dirs: `.claude/skills/grill-me/`, `design-brief/`, `information-architecture/`, `design-tokens/`, `brief-to-tasks/`, `frontend-design/`, `design-review/`, `design-flow/`
