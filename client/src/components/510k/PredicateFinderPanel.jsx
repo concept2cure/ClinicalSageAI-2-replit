@@ -363,11 +363,6 @@ const PredicateFinderPanel = ({
     setIsSearching(true);
 
     try {
-        deviceName: deviceProfile.deviceName,
-        productCode: deviceProfile.productCode,
-        manufacturer: deviceProfile.manufacturer,
-      });
-
       // Prevent navigation away from page during search
       window.onbeforeunload = function () {
         return "Please don't navigate away while searching...";
@@ -530,12 +525,6 @@ const PredicateFinderPanel = ({
     } else {
       updatedPredicates = [...selectedPredicates, device];
     }
-
-      device: device.k_number,
-      isSelected,
-      newCount: updatedPredicates.length,
-      updatedPredicates,
-    });
 
     // Update state
     setSelectedPredicates(updatedPredicates);
@@ -1442,13 +1431,6 @@ const PredicateFinderPanel = ({
       </Dialog>
     </Card>
   );
-
-  // Main component render
-    profileEditing,
-    deviceProfile,
-    formData,
-    hasRenderDeviceProfileForm: !!renderDeviceProfileForm,
-  });
 
   return (
     <div className="space-y-4">
