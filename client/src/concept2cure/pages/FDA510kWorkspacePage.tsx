@@ -87,6 +87,7 @@ export const FDA510kWorkspacePage: React.FC<FDA510kWorkspacePageProps> = ({
           <Enhanced510kIntakeWorkflow
             projectId={projectId}
             organizationId={organizationId}
+            existingProject={projectName ? { name: projectName } : undefined}
             onSave={handleSave}
             onComplete={handleComplete}
           />

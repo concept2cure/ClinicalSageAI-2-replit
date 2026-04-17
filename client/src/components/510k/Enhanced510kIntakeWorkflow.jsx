@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -307,6 +307,9 @@ const Enhanced510kIntakeWorkflow = ({
   });
 
   // Mutation to save workflow data
+  // Track whether a save is manual (show toast) or auto (silent).
+  const manualSaveRef = useRef(false);
+
   const saveWorkflowMutation = useMutation({
     mutationFn: async () => {
       if (!projectId) {
@@ -324,11 +327,16 @@ const Enhanced510kIntakeWorkflow = ({
       });
       return await response.json();
     },
-    onSuccess: (response) => {
-      toast({
-        title: 'Workflow saved',
-        description: 'Your 510(k) data has been saved.',
-      });
+    onSuccess: () => {
+      // Only show toast on explicit Save button click, not on every keystroke
+      // auto-save. Auto-save runs silently to avoid toast spam.
+      if (manualSaveRef.current) {
+        toast({
+          title: 'Workflow saved',
+          description: 'Your 510(k) data has been saved.',
+        });
+        manualSaveRef.current = false;
+      }
       queryClient.invalidateQueries(['/api/510k-workflow', projectId]);
     },
     onError: (error) => {
@@ -444,31 +452,35 @@ const Enhanced510kIntakeWorkflow = ({
     return previousProgress.status === 'complete' || previousProgress.completion >= 80;
   };
   
+  // Auto-save debounce — a single timer that resets on each keystroke so
+  // we only save after the user pauses for 1.5s, not on every keystroke.
+  const autoSaveTimerRef = useRef(null);
+
   // Update workflow data
   const updateWorkflowData = (path, value) => {
     setWorkflowData(prev => {
       const newData = { ...prev };
       const keys = path.split('.');
       let current = newData;
-      
+
       for (let i = 0; i < keys.length - 1; i++) {
         if (!current[keys[i]]) current[keys[i]] = {};
         current = current[keys[i]];
       }
-      
+
       current[keys[keys.length - 1]] = value;
-      
-      // Auto-save to backend and trigger document generation mapping
+
+      // Debounced auto-save: reset timer on every change so only one save
+      // fires per 1.5s of idle time. No toast spam.
       if (projectId) {
-        // Save to backend API (linked to document generation)
-        setTimeout(() => autoSaveWorkflow(), 500); // Debounce saves
+        if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = setTimeout(() => autoSaveWorkflow(), 1500);
       }
-      
-      // Also call the provided onSave callback
+
       if (onSave) {
         onSave(newData);
       }
-      
+
       return newData;
     });
   };
@@ -886,6 +898,7 @@ const Enhanced510kIntakeWorkflow = ({
           variant="outline"
           onClick={() => {
             if (projectId) {
+              manualSaveRef.current = true;
               saveWorkflowMutation.mutate();
             }
             if (onSave) onSave(workflowData);
