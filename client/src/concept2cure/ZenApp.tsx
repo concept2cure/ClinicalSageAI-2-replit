@@ -1683,7 +1683,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       dossierStandard?: string;
     }) => {
       try {
-        await createProjectMutation({
+        const created = await createProjectMutation({
           name: data.name,
           submissionType: data.type as any,
           description: data.description,
@@ -1704,6 +1704,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           title: 'Project created',
           description: `${data.name} is ready.`,
         });
+
+        const newId = (created as any)?.id ?? (created as any)?.project?.id;
+        if (newId) {
+          setActiveProjectId(String(newId));
+          setLayoutMode('project-home');
+          navigate(`/concept2cure/project/${newId}`);
+        }
       } catch (error) {
         console.error('Failed to create project:', error);
         toast({
