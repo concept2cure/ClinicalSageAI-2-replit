@@ -736,6 +736,10 @@ interface AnaPersistentPanelProps {
   onNavigate?: (path: string) => void;
   /** Open the new-project modal */
   onCreateProject?: () => void;
+  /** Projects list for home display */
+  projects?: Array<{ id: string; name: string; type: string; updatedAt?: string | Date }>;
+  /** Navigate to a specific project */
+  onSelectProject?: (projectId: string) => void;
   /** Insert draft content into the governed editor (P1) */
   onDraftInsert?: (content: string, title: string, ctdSection?: string) => void;
   /** Navigate to a specific section (P2) */
@@ -800,6 +804,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   onActionRun,
   onNavigate,
   onCreateProject,
+  projects,
+  onSelectProject,
   onDraftInsert,
   onNavigateToSection,
   onOpenArtifact,
@@ -4134,9 +4140,40 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 </p>
               </div>
 
-              {/* Create Project CTA — shown when no project exists */}
-              {!contextProfile?.projectId && onCreateProject && (
-                <div className="flex justify-center mb-2">
+              {/* Projects section */}
+              {projects && projects.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-medium tracking-wide text-stone-500 uppercase">Your projects</p>
+                    {onCreateProject && (
+                      <button
+                        type="button"
+                        onClick={onCreateProject}
+                        className="text-[11px] text-stone-500 hover:text-stone-800 transition-colors"
+                      >
+                        + New project
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {projects.slice(0, 6).map(proj => (
+                      <button
+                        key={proj.id}
+                        type="button"
+                        onClick={() => onSelectProject?.(proj.id)}
+                        className="flex items-center gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 text-left hover:border-stone-300 hover:shadow-sm transition-all"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-medium text-stone-800 truncate">{proj.name}</p>
+                          <p className="text-[11px] text-stone-500 mt-0.5">{proj.type}</p>
+                        </div>
+                        <ArrowRight className="w-3.5 h-3.5 text-stone-400 flex-shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : onCreateProject ? (
+                <div className="flex justify-center">
                   <button
                     type="button"
                     onClick={onCreateProject}
@@ -4146,7 +4183,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     Create your first project
                   </button>
                 </div>
-              )}
+              ) : null}
 
               {/* Quick-start pathways */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">

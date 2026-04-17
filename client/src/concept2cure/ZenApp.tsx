@@ -3599,6 +3599,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 onActionRun={handleActionRun}
                 onNavigate={handleAnaPanelNavigate}
                 onCreateProject={() => setNewProjectOpen(true)}
+                projects={projects.map(p => ({ id: p.id, name: p.name, type: p.type, updatedAt: p.updatedAt }))}
+                onSelectProject={(id) => {
+                  setActiveProjectId(id);
+                  setLayoutMode('project-home');
+                  navigate(`/concept2cure/project/${id}`);
+                }}
                 onDraftInsert={handleDraftInsert}
                 onNavigateToSection={handleNavigateToSection}
                 onOpenArtifact={handleOpenArtifact}
