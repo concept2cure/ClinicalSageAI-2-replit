@@ -496,6 +496,13 @@ const ProjectRow: React.FC<{
           {project.name}
         </span>
 
+        {/* Submission type badge */}
+        {project.type && (
+          <span className="text-[9px] font-semibold tracking-wide text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded flex-shrink-0 uppercase">
+            {project.type}
+          </span>
+        )}
+
         {/* Conversation count badge (when not expanded) */}
         {!isExpanded && conversations.length > 0 && (
           <span className="text-[10px] text-stone-400 tabular-nums flex-shrink-0">
