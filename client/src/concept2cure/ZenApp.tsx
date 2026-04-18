@@ -2025,6 +2025,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         }}
         onNewChat={handleNewChat}
         onOpenProjects={openProjectsDirectory}
+        onCreateProject={() => setNewProjectOpen(true)}
         onOpenSearch={() => setCommandPaletteOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
         onDeleteConversation={handleDeleteConversation}

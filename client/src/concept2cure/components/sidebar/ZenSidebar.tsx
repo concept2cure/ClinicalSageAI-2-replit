@@ -118,6 +118,7 @@ export interface ZenSidebarProps {
   onSelectProject?: (id: string) => void;
   onNewChat: () => void;
   onOpenProjects: () => void;
+  onCreateProject?: () => void;
   onOpenSearch: () => void;
   onOpenSettings: () => void;
   onDeleteConversation: (id: string) => void;
@@ -784,6 +785,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   onSelectProject,
   onNewChat,
   onOpenProjects,
+  onCreateProject,
   onOpenSearch,
   onOpenSettings,
   onDeleteConversation,
@@ -1027,7 +1029,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           {/* New — dropdown with 3 options */}
           <NewDropdown
             onNewChat={onNewChat}
-            onNewProject={onOpenProjects}
+            onNewProject={onCreateProject ?? onOpenProjects}
             onNewArtifact={() => onNavigate?.('artifacts-center')}
           />
 
@@ -1188,7 +1190,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
                 description="Create your first project to start working with AnA on your submission."
                 action={{
                   label: '+ Create your first project',
-                  onClick: onOpenProjects,
+                  onClick: onCreateProject ?? onOpenProjects,
                   icon: Plus,
                 }}
                 size="sm"
