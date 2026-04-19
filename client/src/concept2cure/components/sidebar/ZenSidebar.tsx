@@ -953,7 +953,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <IconBtn label="Prediction & Digital Twins" active={activeNavId === 'ri-copilot'} onClick={nav['ri-copilot']}>
           <Brain className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="Reporting & Analytics" onClick={() => onNavigate?.('reports')}>
+        <IconBtn label="Reporting & Analytics" onClick={nav['ri-copilot']}>
           <BarChart2 className="w-4 h-4" />
         </IconBtn>
         <IconBtn
@@ -1048,13 +1048,13 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             icon={<FlaskConical className="w-3.5 h-3.5" />}
             label="Biotech"
             active={false}
-            onClick={() => onNavigate?.('projects')}
+            onClick={onOpenProjects}
           />
           <NavItem
             icon={<Pill className="w-3.5 h-3.5" />}
             label="Pharma"
             active={false}
-            onClick={() => onNavigate?.('projects')}
+            onClick={onOpenProjects}
           />
 
           {/* ── Workspace ── */}
@@ -1108,8 +1108,8 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <NavItem
             icon={<BarChart2 className="w-3.5 h-3.5" />}
             label="Reporting & Analytics"
-            active={activeNavId === 'reports'}
-            onClick={() => onNavigate?.('reports')}
+            active={false}
+            onClick={nav['ri-copilot']}
           />
           <NavItem
             icon={<Settings className="w-3.5 h-3.5" />}
@@ -1293,49 +1293,6 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             </>
           )}
 
-          {/* ── SUBMISSION WORKSPACE — secondary nav ────────────────── */}
-          <div className="mx-2 my-1 border-t border-stone-100" />
-          <WorkspaceGroup label="Workspace" defaultOpen={true}>
-            <NavItem
-              icon={<Wrench className="w-3.5 h-3.5" />}
-              label="Tools"
-              active={activeNavId === 'documents' || activeNavId === 'tools'}
-              onClick={nav.documents}
-            />
-            <NavItem
-              icon={<PenLine className="w-3.5 h-3.5" />}
-              label="Editor"
-              active={activeNavId === 'submission-builder'}
-              onClick={nav['submission-builder']}
-            />
-            <NavItem
-              icon={<Brain className="w-3.5 h-3.5" />}
-              label="Intelligence"
-              active={activeNavId === 'ri-copilot'}
-              accentColor="blue"
-              onClick={nav['ri-copilot']}
-            />
-            <NavItem
-              icon={<ShieldCheck className="w-3.5 h-3.5" />}
-              label="Review & Verify"
-              active={activeNavId === 'review' || activeNavId === 'verify'}
-              accentColor="emerald"
-              onClick={nav.review}
-            />
-            <NavItem
-              icon={<Archive className="w-3.5 h-3.5" />}
-              label="References"
-              active={activeNavId === 'vault'}
-              onClick={nav.vault}
-            />
-            <NavItem
-              icon={<Send className="w-3.5 h-3.5" />}
-              label="Submit & Export"
-              active={activeNavId === 'submit'}
-              accentColor="blue"
-              onClick={nav.submit}
-            />
-          </WorkspaceGroup>
         </div>
 
         {/* User / account footer */}
