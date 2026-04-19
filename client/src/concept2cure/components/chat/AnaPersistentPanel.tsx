@@ -4123,114 +4123,127 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         style={{ scrollbarWidth: 'thin' }}
       >
         {!hasMessages && !isThinking ? (
-          /* ── Home empty state — product-oriented, above the fold ── */
-          <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
-            <div className="max-w-2xl w-full space-y-8">
-              {/* Product identity */}
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-stone-900 mb-4">
-                  <Sparkles className="w-5 h-5 text-white" aria-hidden="true" />
+          /* ── Home — premium landing ── */
+          <div className="flex-1 flex flex-col items-center justify-center px-8 py-12 bg-gradient-to-b from-stone-50/80 to-white">
+            <div className="max-w-2xl w-full space-y-10">
+
+              {/* Hero */}
+              <div className="text-center space-y-3">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-stone-900 shadow-md mb-2">
+                  <Sparkles className="w-6 h-6 text-white" aria-hidden="true" />
                 </div>
-                <h1 className="text-lg font-semibold text-stone-900 mb-1">
-                  {greeting || 'ClinicalSageAI'}
+                <h1 className="text-[22px] font-semibold text-stone-900 tracking-tight leading-tight">
+                  {greeting || 'Welcome to ClinicalSageAI'}
                 </h1>
-                <p className="text-[13px] text-stone-500 max-w-md mx-auto">
-                  Regulatory intelligence for medical devices, diagnostics, and life sciences.
-                  Create a project to start a 510(k), PMA, IND, NDA, or CER submission.
+                <p className="text-[14px] text-stone-500 leading-relaxed max-w-lg mx-auto">
+                  Regulatory intelligence platform for medical devices, diagnostics,
+                  pharma, and biotech. From first submission to market approval.
                 </p>
               </div>
 
-              {/* Projects section */}
+              {/* Projects or Create CTA */}
               {projects && projects.length > 0 ? (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[11px] font-medium tracking-wide text-stone-500 uppercase">Your projects</p>
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-[13px] font-semibold text-stone-700">Your projects</h2>
                     {onCreateProject && (
                       <button
                         type="button"
                         onClick={onCreateProject}
-                        className="text-[11px] text-stone-500 hover:text-stone-800 transition-colors"
+                        className="text-[12px] font-medium text-stone-500 hover:text-stone-900 transition-colors"
                       >
                         + New project
                       </button>
                     )}
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {projects.slice(0, 6).map(proj => (
                       <button
                         key={proj.id}
                         type="button"
                         onClick={() => onSelectProject?.(proj.id)}
-                        className="flex items-center gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 text-left hover:border-stone-300 hover:shadow-sm transition-all"
+                        className="flex items-center gap-3 rounded-xl border border-stone-200/80 bg-white px-4 py-3.5 text-left hover:border-stone-300 hover:shadow-md transition-all duration-200"
                       >
+                        <div className="w-9 h-9 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0">
+                          <FileText className="w-4 h-4 text-stone-500" />
+                        </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[13px] font-medium text-stone-800 truncate">{proj.name}</p>
-                          <p className="text-[11px] text-stone-500 mt-0.5">{proj.type}</p>
+                          <p className="text-[11px] text-stone-400 mt-0.5 uppercase tracking-wide font-medium">{proj.type}</p>
                         </div>
-                        <ArrowRight className="w-3.5 h-3.5 text-stone-400 flex-shrink-0" />
+                        <ChevronRight className="w-4 h-4 text-stone-300 flex-shrink-0" />
                       </button>
                     ))}
                   </div>
                 </div>
               ) : onCreateProject ? (
-                <div className="flex justify-center">
+                <div className="text-center py-4">
                   <button
                     type="button"
                     onClick={onCreateProject}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-stone-900 text-white text-[13px] font-medium hover:bg-stone-800 transition-colors shadow-sm"
+                    className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-stone-900 text-white text-[14px] font-medium hover:bg-stone-800 transition-all duration-200 shadow-md hover:shadow-lg"
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-4.5 h-4.5" />
                     Create your first project
                   </button>
+                  <p className="text-[12px] text-stone-400 mt-3">
+                    510(k), PMA, De Novo, IND, NDA, BLA, CER, and more
+                  </p>
                 </div>
               ) : null}
 
-              {/* Quick-start pathways */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setInput('Help me start a 510(k) submission for my medical device. Walk me through what I need.');
-                    requestAnimationFrame(() => inputRef.current?.focus());
-                  }}
-                  className="group text-left rounded-xl border border-stone-200 bg-white p-4 hover:border-stone-300 hover:shadow-sm transition-all"
-                >
-                  <FileText className="w-4 h-4 text-stone-400 mb-2" aria-hidden="true" />
-                  <p className="text-[13px] font-medium text-stone-800">Medical device</p>
-                  <p className="text-[11px] text-stone-500 mt-0.5">510(k), PMA, De Novo, CER</p>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setInput('Help me plan an IND or NDA submission for my drug product. What should I prepare first?');
-                    requestAnimationFrame(() => inputRef.current?.focus());
-                  }}
-                  className="group text-left rounded-xl border border-stone-200 bg-white p-4 hover:border-stone-300 hover:shadow-sm transition-all"
-                >
-                  <BookOpen className="w-4 h-4 text-stone-400 mb-2" aria-hidden="true" />
-                  <p className="text-[13px] font-medium text-stone-800">Pharma / biotech</p>
-                  <p className="text-[11px] text-stone-500 mt-0.5">IND, NDA, BLA, MAA</p>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setInput('Help me design a clinical trial protocol for my study. I need endpoint strategy and statistical design.');
-                    requestAnimationFrame(() => inputRef.current?.focus());
-                  }}
-                  className="group text-left rounded-xl border border-stone-200 bg-white p-4 hover:border-stone-300 hover:shadow-sm transition-all"
-                >
-                  <BarChart2 className="w-4 h-4 text-stone-400 mb-2" aria-hidden="true" />
-                  <p className="text-[13px] font-medium text-stone-800">Clinical trials</p>
-                  <p className="text-[11px] text-stone-500 mt-0.5">Protocol, SAP, endpoints</p>
-                </button>
+              {/* Industry pathways */}
+              <div>
+                <h2 className="text-[13px] font-semibold text-stone-700 mb-3">Start with a question</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    {
+                      icon: FileText,
+                      title: 'Medical devices',
+                      sub: '510(k), PMA, De Novo, CER',
+                      prompt: 'Help me start a 510(k) submission for my medical device. Walk me through what I need.',
+                    },
+                    {
+                      icon: BookOpen,
+                      title: 'Pharma & biotech',
+                      sub: 'IND, NDA, BLA, MAA',
+                      prompt: 'Help me plan an IND or NDA submission for my drug product. What should I prepare first?',
+                    },
+                    {
+                      icon: BarChart2,
+                      title: 'Clinical trials',
+                      sub: 'Protocol, SAP, endpoints',
+                      prompt: 'Help me design a clinical trial protocol for my study. I need endpoint strategy and statistical design.',
+                    },
+                  ].map(card => {
+                    const Icon = card.icon;
+                    return (
+                      <button
+                        key={card.title}
+                        type="button"
+                        onClick={() => {
+                          setInput(card.prompt);
+                          requestAnimationFrame(() => inputRef.current?.focus());
+                        }}
+                        className="group text-left rounded-xl border border-stone-200/80 bg-white p-5 hover:border-stone-300 hover:shadow-md transition-all duration-200"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center mb-3 group-hover:bg-stone-200 transition-colors">
+                          <Icon className="w-4 h-4 text-stone-500" aria-hidden="true" />
+                        </div>
+                        <p className="text-[13px] font-semibold text-stone-800">{card.title}</p>
+                        <p className="text-[11px] text-stone-400 mt-1">{card.sub}</p>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Browse link */}
-              <div className="flex justify-center">
+              {/* Browse capabilities */}
+              <div className="text-center">
                 <button
                   type="button"
                   onClick={() => setBrowseAll(b => !b)}
-                  className="text-[12px] text-stone-500 hover:text-stone-800 transition-colors rounded px-2 py-1"
+                  className="text-[12px] text-stone-400 hover:text-stone-700 transition-colors rounded px-3 py-1.5"
                 >
                   {browseAll ? '\u2190 Back' : 'Browse all 106 capabilities \u2192'}
                 </button>
