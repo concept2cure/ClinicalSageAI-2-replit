@@ -57,6 +57,9 @@ import {
   Heart,
   MoreHorizontal,
   LayoutGrid,
+  Cpu,
+  Users,
+  BarChart2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -913,46 +916,46 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <span className="text-[10px] font-bold text-white">C2C</span>
         </div>
 
-        {/* ── Icon rail (Claude-style) ──
-            Top group: quick actions (Home, Search, New)
-            Mid group: capability launchers (Apps, Artifacts, Intelligence)
-            Bottom group: Settings + Editor shortcut */}
-        <IconBtn label="Home" active={activeNavId === 'projects'} onClick={onOpenProjects}>
-          <Home className="w-4 h-4" />
+        {/* ── Icon rail — matches expanded sidebar sections ── */}
+        <IconBtn label="Medical Device & Diagnostics" onClick={() => onNavigate?.('device-diagnostics-workbench')}>
+          <Cpu className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="Search" active={activeNavId === 'search'} onClick={onOpenSearch}>
-          <Search className="w-4 h-4" />
+        <IconBtn label="Biotech" onClick={() => onNavigate?.('projects')}>
+          <FlaskConical className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="New thread" onClick={onNewChat}>
-          <Plus className="w-4 h-4" />
+        <IconBtn label="Pharma" onClick={() => onNavigate?.('projects')}>
+          <Pill className="w-4 h-4" />
         </IconBtn>
 
         <div className="w-8 border-t border-stone-200 my-1" />
 
-        <IconBtn
-          label="Apps"
-          active={activeNavId === 'apps'}
-          onClick={nav.apps}
-        >
+        <IconBtn label="Collaboration" active={activeNavId === 'review'} onClick={() => onNavigate?.('review')}>
+          <Users className="w-4 h-4" />
+        </IconBtn>
+        <IconBtn label="Submission Center" active={activeNavId === 'submissions'} onClick={() => onNavigate?.('submissions')}>
+          <Send className="w-4 h-4" />
+        </IconBtn>
+        <IconBtn label="Projects" active={activeNavId === 'projects'} onClick={onOpenProjects}>
+          <FolderOpen className="w-4 h-4" />
+        </IconBtn>
+        <IconBtn label="Chats" onClick={onOpenProjects}>
+          <MessageSquare className="w-4 h-4" />
+        </IconBtn>
+        <IconBtn label="App Catalogue" active={activeNavId === 'apps'} onClick={nav.apps}>
           <LayoutGrid className="w-4 h-4" />
         </IconBtn>
-        <IconBtn
-          label="Artifacts"
-          active={activeNavId === 'vault'}
-          onClick={nav.vault}
-        >
+        <IconBtn label="Vault" active={activeNavId === 'vault'} onClick={nav.vault}>
           <FileStack className="w-4 h-4" />
-        </IconBtn>
-        <IconBtn
-          label="Intelligence"
-          active={activeNavId === 'ri-copilot'}
-          onClick={nav['ri-copilot']}
-        >
-          <Brain className="w-4 h-4" />
         </IconBtn>
 
         <div className="w-8 border-t border-stone-200 my-1" />
 
+        <IconBtn label="Prediction & Digital Twins" active={activeNavId === 'ri-copilot'} onClick={nav['ri-copilot']}>
+          <Brain className="w-4 h-4" />
+        </IconBtn>
+        <IconBtn label="Reporting & Analytics" onClick={() => onNavigate?.('reports')}>
+          <BarChart2 className="w-4 h-4" />
+        </IconBtn>
         <IconBtn
           label="Settings"
           active={activeNavId === 'setup'}
@@ -1024,7 +1027,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           </Button>
         </div>
 
-        {/* ── Global Navigation (6 items) ──────────────────────────────── */}
+        {/* ── Product Navigation ──────────────────────────────────────── */}
         <div className="px-1 pb-1 flex-shrink-0 space-y-0.5">
           {/* New — dropdown with 3 options */}
           <NewDropdown
@@ -1033,41 +1036,84 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             onNewArtifact={() => onNavigate?.('artifacts-center')}
           />
 
+          {/* ── Industry Solutions ── */}
+          <p className="text-[9px] font-semibold tracking-[0.12em] text-stone-400 uppercase px-5 pt-3 pb-1">Solutions</p>
           <NavItem
-            icon={<Search className="w-3.5 h-3.5" />}
-            label="Search"
-            active={activeNavId === 'search'}
-            onClick={onOpenSearch}
+            icon={<Cpu className="w-3.5 h-3.5" />}
+            label="Medical Device & Diagnostics"
+            active={activeNavId === 'device-diagnostics-workbench'}
+            onClick={() => onNavigate?.('device-diagnostics-workbench')}
           />
           <NavItem
-            icon={<Home className="w-3.5 h-3.5" />}
-            label="Home"
+            icon={<FlaskConical className="w-3.5 h-3.5" />}
+            label="Biotech"
+            active={false}
+            onClick={() => onNavigate?.('projects')}
+          />
+          <NavItem
+            icon={<Pill className="w-3.5 h-3.5" />}
+            label="Pharma"
+            active={false}
+            onClick={() => onNavigate?.('projects')}
+          />
+
+          {/* ── Workspace ── */}
+          <p className="text-[9px] font-semibold tracking-[0.12em] text-stone-400 uppercase px-5 pt-3 pb-1">Workspace</p>
+          <NavItem
+            icon={<Users className="w-3.5 h-3.5" />}
+            label="Collaboration & Tasking"
+            active={activeNavId === 'review'}
+            onClick={() => onNavigate?.('review')}
+          />
+          <NavItem
+            icon={<Send className="w-3.5 h-3.5" />}
+            label="Submission Center"
+            active={activeNavId === 'submissions'}
+            onClick={() => onNavigate?.('submissions')}
+          />
+          <NavItem
+            icon={<FolderOpen className="w-3.5 h-3.5" />}
+            label="Projects"
             active={activeNavId === 'projects'}
-            accentColor="blue"
+            onClick={onOpenProjects}
+          />
+          <NavItem
+            icon={<MessageSquare className="w-3.5 h-3.5" />}
+            label="Chats"
+            active={activeNavId === 'home'}
             onClick={onOpenProjects}
           />
           <NavItem
             icon={<LayoutGrid className="w-3.5 h-3.5" />}
-            label="Apps"
+            label="App Catalogue"
+            subtitle="Biostatistics, Protocol, Study Design"
             active={activeNavId === 'apps'}
             onClick={nav.apps}
           />
           <NavItem
             icon={<FileStack className="w-3.5 h-3.5" />}
-            label="Artifacts"
+            label="Vault"
             active={activeNavId === 'vault'}
             onClick={nav.vault}
           />
+
+          {/* ── Intelligence ── */}
+          <p className="text-[9px] font-semibold tracking-[0.12em] text-stone-400 uppercase px-5 pt-3 pb-1">Intelligence</p>
           <NavItem
             icon={<Brain className="w-3.5 h-3.5" />}
-            label="Intelligence"
+            label="Prediction Modeling & Digital Twins"
             active={activeNavId === 'ri-copilot'}
-            accentColor="violet"
             onClick={nav['ri-copilot']}
           />
           <NavItem
+            icon={<BarChart2 className="w-3.5 h-3.5" />}
+            label="Reporting & Analytics"
+            active={activeNavId === 'reports'}
+            onClick={() => onNavigate?.('reports')}
+          />
+          <NavItem
             icon={<Settings className="w-3.5 h-3.5" />}
-            label="Settings"
+            label="Settings & Administration"
             active={activeNavId === 'setup'}
             onClick={nav.setup}
           />
