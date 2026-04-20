@@ -65,44 +65,30 @@ interface Embedded510kHostProps extends BaseEmbeddedHostProps {
   onBackToProject: () => void;
 }
 
+// Note: the legacy right-rail ZenChat assistant was removed for 510(k) during
+// the AnA-first convergence. FDA510kWorkspacePage now hosts AnaPersistentPanel
+// inline as the primary surface, so a second chat would violate the "ONE chat"
+// rule in AnaPersistentPanel. PMA and CER hosts still use the rail pending
+// their own conversions.
 export const Embedded510kHost: React.FC<Embedded510kHostProps> = ({
-  moduleAssistantOpen,
-  setModuleAssistantOpen,
-  activeProjectId,
   projectId,
   projectName,
-  activeThreadId,
-  onNavigate,
-  onNewProject,
-  onThreadChange,
   FDA510kWorkspacePage,
   ModuleLoadingFallback,
   onBackToProject,
 }) => (
-  <>
-    <div className={cn('flex-1 flex flex-col min-h-0 overflow-hidden', moduleAssistantOpen && 'mr-0')}>
-      <ErrorBoundary>
-        <Suspense fallback={<ModuleLoadingFallback />}>
-          <FDA510kWorkspacePage embedded={true} projectId={projectId} projectName={projectName} onBackToProject={onBackToProject} />
-        </Suspense>
-      </ErrorBoundary>
-    </div>
-    <EmbeddedAssistantRail
-      open={moduleAssistantOpen}
-      onOpen={() => setModuleAssistantOpen(true)}
-      onClose={() => setModuleAssistantOpen(false)}
-      projectId={activeProjectId || projectId}
-      projectName={projectName}
-      submissionType="510K"
-      activeThreadId={activeThreadId}
-      onNavigate={onNavigate}
-      onNewProject={onNewProject}
-      onThreadChange={onThreadChange}
-      greeting="How can I help with your 510(k) submission?"
-      toggleTestId="module-assistant-toggle"
-      panelTestId="module-assistant-panel"
-    />
-  </>
+  <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+    <ErrorBoundary>
+      <Suspense fallback={<ModuleLoadingFallback />}>
+        <FDA510kWorkspacePage
+          embedded={true}
+          projectId={projectId}
+          projectName={projectName}
+          onBackToProject={onBackToProject}
+        />
+      </Suspense>
+    </ErrorBoundary>
+  </div>
 );
 
 interface EmbeddedPMAHostProps extends BaseEmbeddedHostProps {
