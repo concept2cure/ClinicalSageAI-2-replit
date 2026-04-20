@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   ArrowRight,
+  ChevronRight,
   ClipboardCheck,
   FileCheck2,
   FlaskConical,
@@ -234,21 +235,26 @@ function LaunchCard({
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
       className={cn(
-        'flex items-center gap-2 rounded-xl border px-3.5 py-3 text-left transition-colors',
+        'flex items-start gap-3 rounded-xl border px-4 py-4 text-left transition-all duration-200',
         disabled ? 'border-stone-200 bg-white cursor-not-allowed opacity-40' :
-        highlighted ? 'border-stone-400 bg-stone-50 hover:bg-stone-100 ring-1 ring-stone-300' :
-        'border-stone-200 bg-white hover:bg-stone-50'
+        highlighted ? 'border-stone-300 bg-stone-50 hover:shadow-md ring-1 ring-stone-300' :
+        'border-stone-200/80 bg-white hover:border-stone-300 hover:shadow-md'
       )}
     >
-      <span className={cn('rounded-lg p-2', highlighted ? 'bg-stone-200 text-stone-800' : 'bg-stone-100 text-stone-700')}>{icon}</span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-xs font-semibold text-stone-900">
+      <div className={cn(
+        'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5',
+        highlighted ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600'
+      )}>
+        {icon}
+      </div>
+      <div className="min-w-0 flex-1">
+        <span className="block text-[13px] font-semibold text-stone-900">
           {title}
-          {highlighted && <span className="ml-1.5 text-[9px] font-medium tracking-wide text-stone-600 uppercase">Recommended</span>}
+          {highlighted && <span className="ml-1.5 text-[9px] font-medium tracking-wide text-stone-500 uppercase">Recommended</span>}
         </span>
-        <span className="block text-[11px] text-stone-500 leading-tight">{description}</span>
-      </span>
-      <ArrowRight className="h-4 w-4 text-stone-400" />
+        <span className="block text-[11px] text-stone-500 leading-relaxed mt-1">{description}</span>
+      </div>
+      {!disabled && <ChevronRight className="h-4 w-4 text-stone-300 flex-shrink-0 mt-1" />}
     </button>
   );
 }

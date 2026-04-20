@@ -2123,7 +2123,16 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               }
               break;
             case 'device-diagnostics-workbench':
-              requireActiveProject('device-diagnostics-workbench');
+              if (activeProjectId) {
+                setLayoutMode('device-diagnostics-workbench');
+              } else {
+                // No project — open create modal so user can make one
+                setNewProjectOpen(true);
+                toast({
+                  title: 'Create a project first',
+                  description: 'Select 510(k), PMA, or De Novo to open the device workspace.',
+                });
+              }
               break;
             // ── Core submission workflow ──
             case 'regulatory-workspace':
