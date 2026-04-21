@@ -34,6 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
 import { ZenCommandPalette } from './components/command/ZenCommandPalette';
+import { ClaudeHome } from './components/claude-home';
 
 // Stage 10 extracted modules
 import {
@@ -1958,6 +1959,33 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   };
 
   // userProfile sync moved to useUserProfileFromStorage hook
+
+  // Claude Design home — single canonical home surface.
+  // Spec: docs/design/concept2cure-design-system/project/ui_kits/home/
+  // When layoutMode === 'projects' and no embedded module is active, the entire
+  // viewport is owned by ClaudeHome (its own rail + topbar + page body). This
+  // supersedes the prior ZenSidebar + top-bar + AnaPersistentPanel home layout.
+  if (layoutMode === 'projects' && !embeddedModule) {
+    const firstName = (userName || 'there').split(/\s+/)[0] || 'there';
+    const initials = (userName || 'User')
+      .split(/\s+/)
+      .map(w => w[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || 'U';
+    return (
+      <ClaudeHome
+        user={{ name: firstName, initials, role: userRole }}
+        onSendPrompt={() => {
+          // TODO: seed the prompt into AnaPersistentPanel when the full chat
+          // wiring lands. For now transition to the deep-research layout so the
+          // user reaches a full-screen chat surface.
+          setLayoutMode('deep-research');
+        }}
+      />
+    );
+  }
 
   return (
     <div className="zen flex h-screen w-full overflow-hidden bg-white">

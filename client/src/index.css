@@ -1,7 +1,10 @@
-/* Zen Design System — enterprise UI foundation */
+/* Zen Design System — enterprise UI foundation (legacy, superseded by claude-design.css) */
 @import './concept2cure/design/zen.css';
 
 @import "tailwindcss";
+
+/* Claude Design handoff bundle tokens — the sole UI authority (loaded last so it wins). */
+@import './concept2cure/design/claude-design.css';
 
 @media (prefers-reduced-motion: reduce) {
   * {

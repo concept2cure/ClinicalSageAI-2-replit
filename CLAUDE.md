@@ -68,9 +68,36 @@ git push origin concept2cure-v2
 
 ## UI Source of Truth (NON-NEGOTIABLE)
 
-**The ONLY UI authority is the Claude Design handoff bundle at `docs/design/concept2cure-design-system/` plus direct instructions from the user.**
+**The designer of record is the Claude Design canvas bundle at `docs/design/concept2cure-design-system/`. The user is the second authority. Claude Code is the implementer — nothing else.**
+
+- The designer owns every UI decision for Concept2Cure.RI going forward (layout, tokens, motion, copy, iconography, nav structure, component anatomy, interaction model).
+- Claude Code mirrors the bundle into production React + TypeScript code **exactly** — pixel, token, copy, ordering. No interpretation, no "improvement", no adjacent refactor.
+- The bundle is delivered in phases. Each phase has a contract (read the bundle's own `HANDOFF.md` when present, or treat `ui_kits/<surface>/` as the contract). Claude Code implements the current phase, wires it into the app, and deletes the legacy surfaces it replaces.
+- Legacy UI under `client/src/concept2cure/` is gradually deleted and replaced as phases roll out. Do not extend legacy surfaces. Do not build new features against them — if a feature belongs in a surface the designer hasn't shipped yet, stop and wait.
+- Ambiguity is not Claude Code's to resolve. If the bundle is silent or two parts contradict, **stop and ask the user** (who routes to the designer). Do not invent.
 
 Everything else — prior CLAUDE.md UI sections, `.claude/skills/` design-related files, legacy design docs, `ANA_CHATGPT_PARITY_UI_DESIGN.md`, `tokens.ts` / `zen.css` older variants — is **SUPERSEDED**. Do not cite them as authority. Do not pattern-match against them. If you find a conflict between an older document and the bundle, the bundle wins.
+
+### Phase status
+
+| Phase | Surface | Bundle source | Production state |
+| --- | --- | --- | --- |
+| 1 | Home | `ui_kits/home/` | **Implemented** · `client/src/concept2cure/components/claude-home/` · rendered via `ZenApp.tsx` early return when `layoutMode === 'projects' && !embeddedModule` |
+| 2 | Chat shell (AnA RI) | `ui_kits/ana_ri/` | Not yet implemented — wait for designer sign-off |
+| 3 | eCTD co-authoring workbench | `ui_kits/ectd_coauthor/` | Not yet implemented — wait for designer sign-off |
+
+**Do not implement a surface the designer has not shipped.** When a new phase lands in the bundle (via `HANDOFF.md` or a README update), mirror it, wire it, and delete its legacy equivalent.
+
+### Phase 1 — Home contract (currently live)
+
+The rail has exactly **15 items in 4 tiers** (Precedent Intelligence belongs to the MDX workstream, not the rail):
+
+- **Domain (2):** Medical Device and Diagnostics · Biotech and Pharma
+- **Work (4):** Projects · Vault DMS · Tasking and Collaboration · Submission Center
+- **Intelligence (5):** Protocol and Study Design · CMC Module · Biostatistics · Quality and Lifecycle · Reports
+- **System (4):** AnA Memory · User Artifacts · Audit and Compliance · Admin Settings
+
+Canonical source: `docs/design/concept2cure-design-system/project/ui_kits/home/data.jsx`. The React mirror in `data.ts` must stay byte-for-byte consistent with the canvas (ids, labels, icons, groups, ordering).
 
 ### Where to look
 

@@ -1,0 +1,95 @@
+import {
+  Stethoscope,
+  Atom,
+  Folder,
+  Vault,
+  CheckCircle2,
+  Send,
+  Microscope,
+  BarChart3,
+  Sparkles,
+  Beaker,
+  Sigma,
+  ShieldCheck,
+  Brain,
+  Scroll,
+  Settings,
+  Search,
+  PanelLeft,
+  Plus,
+  Bell,
+  HelpCircle,
+  ChevronDown,
+  ChevronRight,
+  ArrowRight,
+  ArrowUp,
+  Paperclip,
+  Wrench,
+  MoreHorizontal,
+  X,
+  SlidersHorizontal,
+  FileText,
+  FlaskConical,
+  Globe,
+  ClipboardList,
+  MessageSquare,
+  Pencil,
+  Clock,
+  TrendingUp,
+  AlertCircle,
+  type LucideIcon,
+} from 'lucide-react';
+
+export type IconName =
+  | 'stethoscope' | 'atom' | 'folder' | 'vault' | 'checkCircle' | 'send'
+  | 'microscope' | 'barChart' | 'sparkles' | 'beaker' | 'sigma' | 'shieldCheck'
+  | 'brain' | 'scroll' | 'settings' | 'search' | 'panelLeft' | 'plus'
+  | 'bell' | 'help' | 'down' | 'right' | 'arrowRight' | 'arrowUp'
+  | 'attach' | 'tools' | 'dots' | 'close' | 'sliders' | 'file' | 'flask'
+  | 'globe' | 'clip' | 'chat' | 'pencil' | 'clock' | 'trendingUp' | 'alertCircle';
+
+const MAP: Record<IconName, LucideIcon> = {
+  stethoscope: Stethoscope,
+  atom: Atom,
+  folder: Folder,
+  vault: Vault,
+  checkCircle: CheckCircle2,
+  send: Send,
+  microscope: Microscope,
+  barChart: BarChart3,
+  sparkles: Sparkles,
+  beaker: Beaker,
+  sigma: Sigma,
+  shieldCheck: ShieldCheck,
+  brain: Brain,
+  scroll: Scroll,
+  settings: Settings,
+  search: Search,
+  panelLeft: PanelLeft,
+  plus: Plus,
+  bell: Bell,
+  help: HelpCircle,
+  down: ChevronDown,
+  right: ChevronRight,
+  arrowRight: ArrowRight,
+  arrowUp: ArrowUp,
+  attach: Paperclip,
+  tools: Wrench,
+  dots: MoreHorizontal,
+  close: X,
+  sliders: SlidersHorizontal,
+  file: FileText,
+  flask: FlaskConical,
+  globe: Globe,
+  clip: ClipboardList,
+  chat: MessageSquare,
+  pencil: Pencil,
+  clock: Clock,
+  trendingUp: TrendingUp,
+  alertCircle: AlertCircle,
+};
+
+export function HomeIcon({ name, size = 16 }: { name: IconName; size?: number }) {
+  const C = MAP[name];
+  return <C size={size} strokeWidth={1.75} />;
+}

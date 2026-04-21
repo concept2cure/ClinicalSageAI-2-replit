@@ -1,19 +1,28 @@
 {
   "$schema": "UI Surface Registry — tracks status of every shell surface in convergence",
-  "lastUpdated": "2026-04-14T22:00:00Z",
-  "convergencePhase": "WO-1 through WO-6 complete + WO-7 Claude.ai home convergence + WO-8 reference-parity home + WO-9 apps expansion + WO-10 Browse all capabilities toggle (106 prompts / 19 groups reachable from home)",
+  "lastUpdated": "2026-04-21T00:00:00Z",
+  "convergencePhase": "Claude Design bundle adoption — Phase 1 Home surface live (ClaudeHome) · tokens ported from docs/design/concept2cure-design-system/project/colors_and_type.css",
+  "designAuthority": "docs/design/concept2cure-design-system/ (Claude Design handoff bundle) + direct user instructions (per CLAUDE.md UI Source of Truth section)",
   "auditFile": "docs/audits/ANA_UI_FORENSIC_AUDIT_2026-04-05.md",
   "workOrderFile": "docs/plans/ANA_UI_CONVERGENCE_WORK_ORDER_2026-04-05.md",
   "allowedDestinations": ["chats", "projects", "reports", "communication-center", "apps", "settings"],
   "surfaces": {
     "shells": {
+      "ClaudeHome.tsx": {
+        "path": "client/src/concept2cure/components/claude-home/ClaudeHome.tsx",
+        "status": "active",
+        "action": "canonical",
+        "role": "Canonical home surface — owns the entire viewport when layoutMode === 'projects' && !embeddedModule. Full shell: rail (15 nav items, 4 groups: domain/work/intelligence/system) · topbar (crumbs + scope switcher + workspace pill + tb actions) · page body (greeting + composer + suggestion pills + AnA briefing card + dashboard strip + module launcher + recents) · ⌘K command palette. Spec: docs/design/concept2cure-design-system/project/ui_kits/home/. Rendered from ZenApp.tsx via early return.",
+        "introducedIn": "Claude Design bundle adoption, 2026-04-21",
+        "supersedes": "Prior ZenApp.tsx projects-layout home (ZenSidebar + thin top bar + AnaPersistentPanel full mode) — superseded, render branch unreachable"
+      },
       "ZenApp.tsx": {
         "path": "client/src/concept2cure/ZenApp.tsx",
         "status": "active",
         "action": "canonical",
         "lines": 3810,
-        "role": "Primary application shell — single canonical shell owner",
-        "projectsView": "2026-04-14 WO-8: Home matched to reference screenshot — thin icon rail (left), top bar (brand dropdown · Search chat · Invite · + New Thread), centered glow orb + time-of-day greeting (\"Good afternoon, {firstName}\") + subtitle (\"What's on your mind?\") + 4 example cards (Draft CTD · Find 510(k) precedent · Plan biostat SAP · Check submission readiness) wired to setInput via AnaPersistentPanel empty state. No new components; all edits in-place. Default sidebarCollapsed=true on mount so the rail is the default, matching Claude/ChatGPT pattern.",
+        "role": "Primary application shell — owns all non-home layouts (workspace, editor, project-home, etc.). Home layout (layoutMode === 'projects') now short-circuits to ClaudeHome via early return.",
+        "projectsViewSuperseded": "Claude Design bundle adoption, 2026-04-21 — prior home render (thin icon rail · top bar · AnA full-mode empty state) is now unreachable. Dead code lives at approx lines 3552-3630 pending a later cleanup PR.",
         "projectLanding": "2026-04-06 WO-2: ProjectHomeDashboard rewritten — back link, hero title, description only. Right rail (ProjectKnowledgePanel) preserved."
       },
       "ZenRouter.tsx": {
