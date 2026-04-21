@@ -20,6 +20,13 @@
 }
 .shell[data-collapsed="true"] { grid-template-columns: var(--sidebar-collapsed, 56px) 1fr; }
 
+/* Bundle-wide button focus ring — scoped to this surface via :global(). */
+.shell :global(button:focus-visible) {
+  outline: 2px solid var(--accent-main-100);
+  outline-offset: 2px;
+  border-radius: var(--radius-md, 6px);
+}
+
 /* ════════════════════════════════════════════════════════════
    Rail
    ──────────────────────────────────────────────────────────── */

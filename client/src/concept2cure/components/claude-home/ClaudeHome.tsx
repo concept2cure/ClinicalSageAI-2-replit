@@ -14,7 +14,7 @@
  *  - Icons render via lucide-react rather than inline SVG (same Lucide glyphs).
  *  - CSS is CSS Modules to avoid collisions with the rest of the app.
  */
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { HomeIcon } from './icons';
 import {
   NAV_ITEMS, NAV_SUB, DASH, MODULES, RECENTS, SUGGESTIONS, SCOPE_OPTIONS,
@@ -92,7 +92,7 @@ function Rail({
           const isActive = activeNav === item.id;
           const sub = NAV_SUB[item.id];
           return (
-            <div key={item.id}>
+            <Fragment key={item.id}>
               <button
                 type="button"
                 className={styles.navItem}
@@ -113,7 +113,7 @@ function Rail({
                   ))}
                 </div>
               )}
-            </div>
+            </Fragment>
           );
         })}
       </div>
