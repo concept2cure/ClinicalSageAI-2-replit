@@ -1,15 +1,18 @@
+/**
+ * Mirror of docs/design/concept2cure-design-system/project/ui_kits/home/Extras.jsx
+ * (AnaCard section). "See all tasks" opens the command palette, matching bundle.
+ */
+import { useState } from 'react';
 import { HomeIcon } from './icons';
 import { BRIEFING_BY_SCOPE, type Scope } from './data';
-import { useState } from 'react';
 import styles from './styles.module.css';
 
 interface Props {
   scope: Scope;
-  onStart?: () => void;
-  onSeeAll?: () => void;
+  onOpenPalette?: () => void;
 }
 
-export function AnaCard({ scope, onStart, onSeeAll }: Props) {
+export function AnaCard({ scope, onOpenPalette }: Props) {
   const [dismissed, setDismissed] = useState(false);
   if (dismissed) return null;
 
@@ -26,18 +29,17 @@ export function AnaCard({ scope, onStart, onSeeAll }: Props) {
           type="button"
           className={styles.anaDismiss}
           onClick={() => setDismissed(true)}
-          aria-label="Dismiss briefing"
+          title="Dismiss"
         >
           <HomeIcon name="close" size={14} />
         </button>
       </div>
       <div className={styles.anaBody}>
-        <strong>{items.length} things need you today.</strong> I've scanned your projects,
-        reviews and agency feeds — here's what's time-sensitive, ordered by impact.
+        <strong>{items.length} things need you today.</strong> I've scanned your projects, reviews and agency feeds — here's what's time-sensitive, ordered by impact.
       </div>
       <div className={styles.anaItems}>
-        {items.map(it => (
-          <button type="button" key={it.num} className={styles.anaItem}>
+        {items.map((it, i) => (
+          <button type="button" key={i} className={styles.anaItem}>
             <span className={styles.anaNum}>{it.num}</span>
             <span>{it.t}</span>
             <span className={styles.anaMeta}>{it.meta}</span>
@@ -45,17 +47,13 @@ export function AnaCard({ scope, onStart, onSeeAll }: Props) {
         ))}
       </div>
       <div className={styles.anaActions}>
-        <button
-          type="button"
-          className={`${styles.anaBtn} ${styles.primary}`}
-          onClick={onStart}
-        >
+        <button type="button" className={`${styles.anaBtn} ${styles.primary}`}>
           Start with #1 <HomeIcon name="arrowRight" size={14} />
         </button>
         <button
           type="button"
           className={`${styles.anaBtn} ${styles.ghost}`}
-          onClick={onSeeAll}
+          onClick={onOpenPalette}
         >
           See all tasks
         </button>

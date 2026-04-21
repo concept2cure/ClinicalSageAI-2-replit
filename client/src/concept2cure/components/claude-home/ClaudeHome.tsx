@@ -1,5 +1,21 @@
-import { useEffect, useMemo, useState } from 'react';
-import { HomeIcon, type IconName } from './icons';
+/**
+ * ClaudeHome — Phase 1 Home surface.
+ *
+ * Mirror of docs/design/concept2cure-design-system/project/ui_kits/home/App.jsx.
+ * Claude Code is implementer, not designer — do not diverge. If behavior
+ * needs to change, the change belongs in the Claude Design canvas first,
+ * then lands here as a follow-up phase.
+ *
+ * Deviations from the bundle (by explicit user direction):
+ *  - user name / initials / role come from real auth (bundle hardcodes Jordan / JC).
+ *  - TweaksPanel and the canvas postMessage protocol are omitted — those exist
+ *    only to let the Claude Design canvas drive tweaks via an iframe parent;
+ *    production has no parent, so the panel and protocol would be dead weight.
+ *  - Icons render via lucide-react rather than inline SVG (same Lucide glyphs).
+ *  - CSS is CSS Modules to avoid collisions with the rest of the app.
+ */
+import { useEffect, useState } from 'react';
+import { HomeIcon } from './icons';
 import {
   NAV_ITEMS, NAV_SUB, DASH, MODULES, RECENTS, SUGGESTIONS, SCOPE_OPTIONS,
   type Scope, type NavItem, type ModuleCard,
@@ -17,13 +33,17 @@ interface User {
 
 export interface ClaudeHomeProps {
   user?: Partial<User>;
-  onNavigate?: (navId: string) => void;
-  onSendPrompt?: (prompt: string) => void;
-  initialActiveNav?: string;
-  initialCollapsed?: boolean;
 }
 
-function timeOfDayGreeting(): string {
+// Bundle App.jsx DEFAULTS — used as production fallbacks when user is unset.
+const DEFAULT_USER: User = {
+  name: 'Jordan',
+  initials: 'JC',
+  role: 'Enterprise · Reg Affairs',
+};
+const DEFAULT_ACTIVE_NAV = 'projects';
+
+function timeOfDay(): string {
   const h = new Date().getHours();
   if (h < 5) return 'Working late';
   if (h < 12) return 'Good morning';
@@ -31,6 +51,7 @@ function timeOfDayGreeting(): string {
   return 'Good evening';
 }
 
+/* ─── Rail ─── */
 function Rail({
   activeNav, setActiveNav, collapsed, setCollapsed, user,
 }: {
@@ -53,7 +74,7 @@ function Rail({
           type="button"
           className={styles.railCollapse}
           onClick={() => setCollapsed(!collapsed)}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? 'Expand' : 'Collapse'}
         >
           <HomeIcon name="panelLeft" size={16} />
         </button>
@@ -77,6 +98,7 @@ function Rail({
                 className={styles.navItem}
                 aria-current={isActive || undefined}
                 data-label={item.label}
+                title={collapsed ? item.label : undefined}
                 onClick={() => setActiveNav(item.id)}
               >
                 <span className={styles.ico}><HomeIcon name={item.icon} size={16} /></span>
@@ -98,7 +120,7 @@ function Rail({
 
       <div className={styles.railSpacer} />
 
-      <button type="button" className={styles.railAccount} aria-label={user.name}>
+      <button type="button" className={styles.railAccount} title={user.name}>
         <div className={styles.avatar}>{user.initials}</div>
         <div className={styles.who}>
           <div className={styles.name}>{user.name}</div>
@@ -110,6 +132,7 @@ function Rail({
   );
 }
 
+/* ─── Scope switcher ─── */
 function ScopeSwitcher({ scope, setScope }: { scope: Scope; setScope: (s: Scope) => void }) {
   return (
     <div className={styles.scope} role="tablist" aria-label="Domain scope">
@@ -131,6 +154,7 @@ function ScopeSwitcher({ scope, setScope }: { scope: Scope; setScope: (s: Scope)
   );
 }
 
+/* ─── TopBar ─── */
 function TopBar({
   activeNavLabel, scope, setScope, onOpenPalette,
 }: {
@@ -144,25 +168,25 @@ function TopBar({
       <div className={styles.crumbs}>
         <span>Concept2Cure.RI</span>
         <span className={styles.sep}>›</span>
-        <span className={styles.here}>{activeNavLabel}</span>
+        <span className={styles.here}>{activeNavLabel || 'Home'}</span>
       </div>
       <ScopeSwitcher scope={scope} setScope={setScope} />
       <div className={styles.tbDivider} />
-      <button type="button" className={styles.workspacePill} aria-label="Switch workspace">
+      <button type="button" className={styles.workspacePill} title="Switch workspace">
         <span className={styles.sqr} aria-hidden="true" />
         <span>BioNova Therapeutics</span>
         <span className={styles.chev}><HomeIcon name="down" size={14} /></span>
       </button>
       <div className={styles.tbDivider} />
       <div className={styles.tbActions}>
-        <button type="button" className={styles.tbBtn} onClick={onOpenPalette} aria-label="Search (Command-K)">
+        <button type="button" className={styles.tbBtn} title="Search (⌘K)" onClick={onOpenPalette}>
           <HomeIcon name="search" size={16} />
         </button>
-        <button type="button" className={styles.tbBtn} aria-label="Notifications">
+        <button type="button" className={styles.tbBtn} title="Notifications">
           <HomeIcon name="bell" size={16} />
           <span className={styles.badge} aria-hidden="true" />
         </button>
-        <button type="button" className={styles.tbBtn} aria-label="Help">
+        <button type="button" className={styles.tbBtn} title="Help">
           <HomeIcon name="help" size={16} />
         </button>
       </div>
@@ -170,25 +194,20 @@ function TopBar({
   );
 }
 
-function GreetAndCompose({
-  userName, onSend,
-}: {
-  userName: string;
-  onSend?: (text: string) => void;
-}) {
+/* ─── GreetAndCompose — send is a no-op demo per bundle App.jsx ─── */
+function GreetAndCompose({ userName }: { userName: string }) {
   const [draft, setDraft] = useState('');
-
   const send = () => {
-    const t = draft.trim();
-    if (!t) return;
-    onSend?.(t);
+    if (!draft.trim()) return;
+    // Bundle: /* no-op demo */ — clears draft.
     setDraft('');
   };
+  const tod = timeOfDay();
 
   return (
     <div className={styles.greetBlock}>
       <span className={styles.greetStar} aria-hidden="true">✻</span>
-      <h1 className={styles.greetH1}>{timeOfDayGreeting()}, {userName}</h1>
+      <h1 className={styles.greetH1}>{tod}, {userName}</h1>
       <div className={styles.greetSub}>
         What would you like to work on? Ask AnA, or jump into a module below.
       </div>
@@ -198,19 +217,16 @@ function GreetAndCompose({
           value={draft}
           onChange={e => setDraft(e.target.value)}
           onKeyDown={e => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              send();
-            }
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
           }}
           placeholder="Ask AnA — draft a section, pull a precedent, review a SAP…"
           rows={1}
         />
         <div className={styles.composerActions}>
-          <button type="button" className={styles.composerIcon} aria-label="Attach">
+          <button type="button" className={styles.composerIcon} title="Attach">
             <HomeIcon name="attach" size={16} />
           </button>
-          <button type="button" className={styles.composerIcon} aria-label="Tools">
+          <button type="button" className={styles.composerIcon} title="Tools">
             <HomeIcon name="tools" size={16} />
           </button>
           <button type="button" className={styles.composerChip}>
@@ -221,7 +237,7 @@ function GreetAndCompose({
             className={styles.composerSend}
             onClick={send}
             disabled={!draft.trim()}
-            aria-label="Send"
+            title="Send"
           >
             <HomeIcon name="arrowUp" size={16} />
           </button>
@@ -229,12 +245,12 @@ function GreetAndCompose({
       </div>
 
       <div className={styles.suggest}>
-        {SUGGESTIONS.map(s => (
+        {SUGGESTIONS.map((s, i) => (
           <button
             type="button"
-            key={s.label}
+            key={i}
             className={styles.suggestPill}
-            onClick={() => { onSend?.(s.label); }}
+            onClick={() => setDraft(s.label)}
           >
             <span className={styles.ico}><HomeIcon name={s.ico} size={14} /></span>
             {s.label}
@@ -245,6 +261,7 @@ function GreetAndCompose({
   );
 }
 
+/* ─── Dashboard ─── */
 function Dashboard() {
   return (
     <>
@@ -255,8 +272,8 @@ function Dashboard() {
         </button>
       </div>
       <div className={styles.dash}>
-        {DASH.map(d => (
-          <button type="button" key={d.label} className={styles.dashCard}>
+        {DASH.map((d, i) => (
+          <button type="button" key={i} className={styles.dashCard}>
             <div className={styles.dashLabel}>{d.label}</div>
             <div className={styles.dashMetric}>
               {d.metric}{d.unit && <span className={styles.unit}>{d.unit}</span>}
@@ -277,6 +294,7 @@ function Dashboard() {
   );
 }
 
+/* ─── Module launcher — <a href> to match bundle App.jsx ─── */
 function Launcher({
   activeNav, setActiveNav,
 }: {
@@ -292,7 +310,7 @@ function Launcher({
         </button>
       </div>
       <div className={styles.modules}>
-        {MODULES.map((m: ModuleCard) => {
+        {MODULES.map((m: ModuleCard, i) => {
           const nav = NAV_ITEMS.find(n => n.id === m.navId);
           const isPinned = nav?.group === 'domain';
           const isActive = activeNav === m.navId;
@@ -301,12 +319,13 @@ function Launcher({
             isPinned && styles.isPinned,
             isPinned && isActive && styles.isActive,
           ].filter(Boolean).join(' ');
+          const href = nav?.href ?? null;
           return (
-            <button
-              type="button"
-              key={m.navId}
+            <a
+              key={i}
               className={cls}
-              onClick={() => setActiveNav(m.navId)}
+              href={href ?? '#'}
+              onClick={e => { if (!href) e.preventDefault(); setActiveNav(m.navId); }}
             >
               <div className={styles.mcHead}>
                 <div className={styles.mcIco}><HomeIcon name={m.icon} size={16} /></div>
@@ -317,7 +336,7 @@ function Launcher({
               <div className={styles.mcFoot}>
                 <span className={styles.dot} />{m.foot}
               </div>
-            </button>
+            </a>
           );
         })}
       </div>
@@ -325,6 +344,7 @@ function Launcher({
   );
 }
 
+/* ─── Recents ─── */
 function Recents() {
   return (
     <>
@@ -352,30 +372,20 @@ function Recents() {
   );
 }
 
-const DEFAULT_USER: User = {
-  name: 'Jordan',
-  initials: 'JC',
-  role: 'Enterprise · Reg Affairs',
-};
+/* ─── App ─── */
+export function ClaudeHome({ user }: ClaudeHomeProps) {
+  const resolvedUser: User = {
+    name: user?.name ?? DEFAULT_USER.name,
+    initials: user?.initials ?? DEFAULT_USER.initials,
+    role: user?.role ?? DEFAULT_USER.role,
+  };
 
-export function ClaudeHome({
-  user,
-  onNavigate,
-  onSendPrompt,
-  initialActiveNav = 'biopharma',
-  initialCollapsed = false,
-}: ClaudeHomeProps) {
-  const resolvedUser: User = useMemo(
-    () => ({ ...DEFAULT_USER, ...user }),
-    [user],
-  );
-
-  const [activeNav, setActiveNav] = useState(initialActiveNav);
-  const [collapsed, setCollapsed] = useState(initialCollapsed);
+  const [activeNav, setActiveNav] = useState(DEFAULT_ACTIVE_NAV);
+  const [collapsed, setCollapsed] = useState(false);
   const [scope, setScope] = useState<Scope>('all');
   const [paletteOpen, setPaletteOpen] = useState(false);
 
-  // ⌘K / Ctrl-K opens the palette
+  // ⌘K / Ctrl-K palette
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -387,14 +397,9 @@ export function ClaudeHome({
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const handleNav = (id: string) => {
-    setActiveNav(id);
-    onNavigate?.(id);
-  };
-
-  const handlePaletteNavigate = (it: PaletteItem) => {
-    if (it.kind === 'Module') handleNav(it.id);
-    if (it.kind === 'Ask AnA') onSendPrompt?.(it.label);
+  // Palette navigation — only Module selects a rail item (matches bundle onPaletteNav).
+  const onPaletteNav = (it: PaletteItem) => {
+    if (it.kind === 'Module') setActiveNav(it.id);
   };
 
   const activeNavLabel = NAV_ITEMS.find(n => n.id === activeNav)?.label ?? 'Home';
@@ -403,7 +408,7 @@ export function ClaudeHome({
     <div className={styles.shell} data-collapsed={collapsed || undefined}>
       <Rail
         activeNav={activeNav}
-        setActiveNav={handleNav}
+        setActiveNav={setActiveNav}
         collapsed={collapsed}
         setCollapsed={setCollapsed}
         user={resolvedUser}
@@ -417,11 +422,11 @@ export function ClaudeHome({
         />
         <div className={styles.page}>
           <div className={styles.pageInner}>
-            <GreetAndCompose userName={resolvedUser.name} onSend={onSendPrompt} />
-            <AnaCard scope={scope} />
+            <GreetAndCompose userName={resolvedUser.name} />
+            <AnaCard scope={scope} onOpenPalette={() => setPaletteOpen(true)} />
             <Dashboard />
             <div style={{ height: 24 }} />
-            <Launcher activeNav={activeNav} setActiveNav={handleNav} />
+            <Launcher activeNav={activeNav} setActiveNav={setActiveNav} />
             <div style={{ height: 24 }} />
             <Recents />
           </div>
@@ -431,7 +436,7 @@ export function ClaudeHome({
       <CommandPalette
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}
-        onNavigate={handlePaletteNavigate}
+        onNavigate={onPaletteNav}
       />
     </div>
   );

@@ -1960,11 +1960,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   // userProfile sync moved to useUserProfileFromStorage hook
 
-  // Claude Design home — single canonical home surface.
-  // Spec: docs/design/concept2cure-design-system/project/ui_kits/home/
-  // When layoutMode === 'projects' and no embedded module is active, the entire
-  // viewport is owned by ClaudeHome (its own rail + topbar + page body). This
-  // supersedes the prior ZenSidebar + top-bar + AnaPersistentPanel home layout.
+  // Claude Design home — the canonical home surface. ClaudeHome owns the
+  // entire viewport when the user is on the home route. The behavior is an
+  // exact mirror of docs/design/concept2cure-design-system/project/ui_kits/home/;
+  // Claude Code is implementer, not designer — do not extend this.
   if (layoutMode === 'projects' && !embeddedModule) {
     const firstName = (userName || 'there').split(/\s+/)[0] || 'there';
     const initials = (userName || 'User')
@@ -1974,17 +1973,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       .slice(0, 2)
       .join('')
       .toUpperCase() || 'U';
-    return (
-      <ClaudeHome
-        user={{ name: firstName, initials, role: userRole }}
-        onSendPrompt={() => {
-          // TODO: seed the prompt into AnaPersistentPanel when the full chat
-          // wiring lands. For now transition to the deep-research layout so the
-          // user reaches a full-screen chat surface.
-          setLayoutMode('deep-research');
-        }}
-      />
-    );
+    return <ClaudeHome user={{ name: firstName, initials, role: userRole }} />;
   }
 
   return (
@@ -3570,92 +3559,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           </div>
         )}
 
-        {/* AnA — THE single chat surface (ChatGPT/Claude style)
-            projects/deep-research: full screen — AnA IS the interface
-            workspace/regulatory-workspace: rendered inline above (mode="full")
-            module pages (dossier, documents, etc.): compact input bar at bottom
-
-            Home (layoutMode='projects'): rendered inside a flex-col with a
-            thin top bar above AnA (brand · search chat · invite · new thread). */}
-        {layoutMode === 'projects' && !embeddedModule && (
-          <div className="flex-1 flex flex-col min-w-0 min-h-0">
-            {/* ── Home top bar (WO-8 reference parity) ── */}
-            <div className="flex-shrink-0 h-12 px-4 flex items-center justify-between border-b border-stone-100 bg-white">
-              <span className="text-[13px] font-semibold text-stone-800">ClinicalSageAI</span>
-              <div className="flex items-center gap-2">
-                <div className="relative hidden sm:block">
-                  <Search
-                    className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-1/2 -translate-y-1/2"
-                    aria-hidden="true"
-                  />
-                  <Input
-                    placeholder="Search"
-                    onFocus={() => setCommandPaletteOpen(true)}
-                    className="h-8 w-44 pl-8 text-[12px] border-stone-200 bg-stone-50"
-                    aria-label="Search"
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setNewProjectOpen(true)}
-                  className="h-8 px-3 text-[12px] border-stone-200"
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1" />
-                  New project
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={handleNewChat}
-                  className="h-8 px-3 text-[12px] bg-stone-900 text-white hover:bg-stone-800"
-                >
-                  New thread
-                </Button>
-              </div>
-            </div>
-            {/* AnA panel body */}
-            <div className="flex-1 min-h-0 flex">
-              <AnaPersistentPanel
-                mode="full"
-                defaultChatMode="standard"
-                authoringContext={authoringContext}
-                navContext={activeNavId}
-                contextProfile={{
-                  productType: activeProject?.type,
-                  userRole: userRole,
-                  screenName: layoutMode,
-                  activeProject: activeProject?.name,
-                  projectId: activeProjectId,
-                  threadId: activeThreadId || activeConversationId,
-                  moduleContext,
-                }}
-                projectIntelligence={projectIntelligenceStats}
-                greeting={homeGreeting}
-                suggestedActions={workspaceSuggestedActions}
-                onActionRun={handleActionRun}
-                onNavigate={handleAnaPanelNavigate}
-                onCreateProject={() => setNewProjectOpen(true)}
-                projects={projects.map(p => ({ id: p.id, name: p.name, type: p.type, updatedAt: p.updatedAt }))}
-                onSelectProject={(id) => {
-                  setActiveProjectId(id);
-                  setLayoutMode('project-home');
-                  navigate(`/concept2cure/project/${id}`);
-                }}
-                onDraftInsert={handleDraftInsert}
-                onNavigateToSection={handleNavigateToSection}
-                onOpenArtifact={handleOpenArtifact}
-                onRequestPromotion={handleRequestPromotion}
-                onRefreshIntelligence={authoringIntelligence.refetch}
-                onThreadChange={threadId => {
-                  setActiveThreadId(threadId);
-                  setActiveConversationId(threadId);
-                }}
-              />
-            </div>
-          </div>
-        )}
+        {/* Home (layoutMode === 'projects') is handled by ClaudeHome via an
+            early return higher up in this component. The previous home render
+            (ZenSidebar + thin top bar + AnaPersistentPanel full mode) has been
+            deleted. Non-home layouts fall through to the AnaPersistentPanel
+            render below. */}
 
         {layoutMode !== 'workspace' &&
           layoutMode !== 'regulatory-workspace' &&

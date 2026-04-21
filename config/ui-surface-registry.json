@@ -12,17 +12,16 @@
         "path": "client/src/concept2cure/components/claude-home/ClaudeHome.tsx",
         "status": "active",
         "action": "canonical",
-        "role": "Canonical home surface — owns the entire viewport when layoutMode === 'projects' && !embeddedModule. Full shell: rail (15 nav items, 4 groups: domain/work/intelligence/system) · topbar (crumbs + scope switcher + workspace pill + tb actions) · page body (greeting + composer + suggestion pills + AnA briefing card + dashboard strip + module launcher + recents) · ⌘K command palette. Spec: docs/design/concept2cure-design-system/project/ui_kits/home/. Rendered from ZenApp.tsx via early return.",
+        "role": "Canonical home surface — exact mirror of docs/design/concept2cure-design-system/project/ui_kits/home/App.jsx. Owns the entire viewport when layoutMode === 'projects' && !embeddedModule. Full shell: rail (15 nav items, 4 groups) · topbar (crumbs + scope switcher + workspace pill + tb actions) · page body (greeting + composer + suggestion pills + AnA briefing card + dashboard strip + module launcher + recents) · ⌘K command palette. Rendered from ZenApp.tsx via early return.",
         "introducedIn": "Claude Design bundle adoption, 2026-04-21",
-        "supersedes": "Prior ZenApp.tsx projects-layout home (ZenSidebar + thin top bar + AnaPersistentPanel full mode) — superseded, render branch unreachable"
+        "bundleDeviations": "TweaksPanel + canvas postMessage protocol omitted (canvas-only, not product). User data from real auth instead of hardcoded Jordan/JC/Enterprise. Icons via lucide-react. CSS via CSS Modules.",
+        "supersedes": "Prior ZenApp.tsx projects-layout home (ZenSidebar + thin top bar + AnaPersistentPanel full mode). Render branch DELETED."
       },
       "ZenApp.tsx": {
         "path": "client/src/concept2cure/ZenApp.tsx",
         "status": "active",
         "action": "canonical",
-        "lines": 3810,
-        "role": "Primary application shell — owns all non-home layouts (workspace, editor, project-home, etc.). Home layout (layoutMode === 'projects') now short-circuits to ClaudeHome via early return.",
-        "projectsViewSuperseded": "Claude Design bundle adoption, 2026-04-21 — prior home render (thin icon rail · top bar · AnA full-mode empty state) is now unreachable. Dead code lives at approx lines 3552-3630 pending a later cleanup PR.",
+        "role": "Primary application shell — owns all non-home layouts (workspace, editor, project-home, etc.). Home layout (layoutMode === 'projects') short-circuits to ClaudeHome via early return. The prior home render branch (old thin top bar + AnaPersistentPanel full mode) has been deleted.",
         "projectLanding": "2026-04-06 WO-2: ProjectHomeDashboard rewritten — back link, hero title, description only. Right rail (ProjectKnowledgePanel) preserved."
       },
       "ZenRouter.tsx": {
