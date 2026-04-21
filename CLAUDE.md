@@ -2,7 +2,7 @@
 
 > This file is automatically read by Claude Code at the start of every session.
 > These rules are NON-NEGOTIABLE and must be followed in every session.
-> Last consolidated: 2026-03-24
+> Last consolidated: 2026-04-21 (UI authority collapsed to Claude Design bundle)
 
 ## Branch Rules (NON-NEGOTIABLE)
 
@@ -63,6 +63,47 @@ git push origin concept2cure-v2
 
 `concept2cure-v2` is the core and only product branch. All previous branching strategies
 (`main`, `claude/*`, `feature/*`) caused work to go missing. One branch, one truth.
+
+---
+
+## UI Source of Truth (NON-NEGOTIABLE)
+
+**The ONLY UI authority is the Claude Design handoff bundle at `docs/design/concept2cure-design-system/` plus direct instructions from the user.**
+
+Everything else — prior CLAUDE.md UI sections, `.claude/skills/` design-related files, legacy design docs, `ANA_CHATGPT_PARITY_UI_DESIGN.md`, `tokens.ts` / `zen.css` older variants — is **SUPERSEDED**. Do not cite them as authority. Do not pattern-match against them. If you find a conflict between an older document and the bundle, the bundle wins.
+
+### Where to look
+
+- `docs/design/concept2cure-design-system/README.md` — "read this first" agent notes
+- `docs/design/concept2cure-design-system/project/README.md` — voice & tone, visual foundations, iconography, content examples, System-Aware Artifact Architecture
+- `docs/design/concept2cure-design-system/project/SKILL.md` — agent invocation notes
+- `docs/design/concept2cure-design-system/project/colors_and_type.css` — token surface (OKLCH, shadcn-compatible semantic layer, Claude-faithful scales)
+- `docs/design/concept2cure-design-system/project/preview/*.html` — specimen cards (colors, type, spacing, components)
+- `docs/design/concept2cure-design-system/project/ui_kits/home/` — canonical Home surface (rail + greeting + composer + AnA briefing + launcher + ⌘K palette)
+- `docs/design/concept2cure-design-system/project/ui_kits/ana_ri/` — canonical chat-first product shell
+- `docs/design/concept2cure-design-system/project/ui_kits/ectd_coauthor/` — canonical 3-pane artifact workbench (tree · intelligence · artifact)
+- `docs/design/concept2cure-design-system/project/assets/` — brand icon + agency / compliance logos
+
+### Rules
+
+1. **Match the visual output, not the prototype's internal structure.** The bundle is HTML/CSS/JS prototypes. Recreate them in React + TypeScript to match the visual output pixel-for-pixel. Don't copy the prototype's file structure unless it fits.
+2. **Do not render the bundle in a browser or screenshot it unless the user asks.** Everything (dimensions, colors, layout rules) is in the source. Read HTML/CSS directly.
+3. **Ambiguity → ask the user.** If the bundle is silent or contradictory on something, ask. Do not invent design decisions.
+4. **User instructions override the bundle** when they conflict. The user is the second authority.
+5. **The four open questions in `project/README.md` ("Caveats")** are open until the user answers them: stone/terracotta/olive vs blue/purple palette; marketing site existence; font licensing (Styrene B / Tiempos vs Inter / Source Serif Pro); slide template.
+6. **Component-registry.ts and `ui-surface-registry.json` remain as infrastructure.** They track which React components and which shell surfaces exist today. They are NOT aesthetic authorities — the bundle is. When the bundle requires a new component or a surface change, update the registries to match.
+7. **UI Convergence process rules (below) still apply** — they govern how old surfaces get migrated/deleted when replaced. They do not dictate what the new surface looks like; the bundle does.
+
+### What this supersedes
+
+- Figma–Code Governed Component Contract (aesthetic authority claim)
+- Premium UI/UX Enforcement Skills (accessibility-enforcement, regulatory-compliance-ux, microcopy-tone, motion-discipline) as authorities — the bundle covers these
+- Designer Skills (grill-me, design-brief, information-architecture, design-tokens, brief-to-tasks, frontend-design, design-review, design-flow) as authorities
+- Claude UI Design Principles (12 principles) — the bundle IS the re-codification
+- Chat-First Design home-layout spec — the bundle's `ui_kits/home/` is the canonical home
+- UI State Standards as an aesthetic authority — engineering patterns like DataStateWrapper / apiRequest / react-hook-form still apply as implementation conventions, but not as design authorities
+
+Those files may remain on disk for historical context; they are not authorities.
 
 ---
 
@@ -168,46 +209,11 @@ If you think something needs rebuilding, **ask the user first**.
 
 ---
 
-## Figma–Code Governed Component Contract (NON-NEGOTIABLE)
+## React Component Infrastructure (implementation, not aesthetic authority)
 
-> Skill file: `.claude/skills/figma-component-contract.md`
+`client/src/component-registry.ts` tracks the React components that exist today (28 entries across Primitives, Layout, State wrappers, Patterns). It is an inventory, not a design authority. When the Claude Design bundle calls for a surface that needs a new component, add the entry to the registry so it's discoverable, then build to match the bundle.
 
-**All UI implementation MUST use components from the governed registry.**
-The single source of truth is `client/src/component-registry.ts` — 28 mapped components.
-
-### Before Writing Any UI Code:
-
-1. Check `component-registry.ts` for an existing mapped component
-2. If a match exists → import from its `importPath`
-3. If no match → add an entry to the registry + create a Code Connect mapping
-
-### Component Categories:
-
-- **Primitives** (16): Button, Badge, Input, Textarea, Card, Dialog, Tabs, Select, Alert, Table, Progress, Tooltip, DropdownMenu, Switch, Checkbox, Skeleton
-- **Layout** (6): WorkspaceHeader, WorkspaceHeaderRich, PageTitleHeader, WorkspaceCanvas, WorkspaceStatusBadge, SectionPanel
-- **State** (3): DataStateWrapper, LoadingState, ErrorState
-- **Patterns** (4): ConversationBubble, MetricCard, ActionBar, EmptyState
-
-### Forbidden Patterns (will be rejected in review):
-
-| Forbidden                              | Use Instead                                          |
-| -------------------------------------- | ---------------------------------------------------- |
-| Raw `<button>`                         | `<Button variant="..." size="...">`                  |
-| Raw `<input>` / `<select>`             | `<Input>`, `<Select>` inside `<FormField>`           |
-| Custom status pill                     | `<WorkspaceStatusBadge status="...">`                |
-| `{isLoading && <div>Loading...</div>}` | `<DataStateWrapper>` or `<LoadingState>`             |
-| Ad-hoc layout wrapper                  | `<WorkspaceHeader>` + `<WorkspaceCanvas>`            |
-| Local empty state component            | `EmptyState` from statesV2 or design-system/patterns |
-
-### Code Connect Files:
-
-- `client/src/primitives.figma.tsx` — 15 shadcn/Radix primitives
-- `client/src/domain.figma.tsx` — 9 workspace layout + domain patterns
-
-### Figma MCP:
-
-MCP config at `.vscode/mcp.json` connects Codex to Figma Dev Mode.
-Set `FIGMA_ACCESS_TOKEN` environment variable before use.
+Raw `<button>` / `<input>` / `<select>` are still inappropriate in production code — use the registered primitives because they carry accessibility, focus, and state wiring. But "which components exist" is an engineering question; "what they should look like" is answered by `docs/design/concept2cure-design-system/`.
 
 ---
 
@@ -392,98 +398,21 @@ Define success criteria. Loop until verified.
 
 For multi-step tasks, state a brief plan:
 
-## Premium UI/UX Enforcement Skills
+## Capability Invocation Surfaces (engineering ground truth, 2026-04-14)
 
-Four Concept2Cure-authored skills enforce premium UI/UX standards on every change. Each is NON-NEGOTIABLE in its scope.
+These are the real invocation points today. The Claude Design bundle's `ui_kits/home/` and `ui_kits/ana_ri/` prescribe how they're presented; this list records what is wired:
 
-- **`.claude/skills/accessibility-enforcement/`** — WCAG 2.2 AA on every component. Focus order, contrast, ARIA, keyboard traps, color-never-alone.
-- **`.claude/skills/regulatory-compliance-ux/`** — 21 CFR Part 11 / GxP patterns. Visible audit trails, reason-for-change capture, e-signature flows, role-scoped visibility, reviewer-grade copy.
-- **`.claude/skills/microcopy-tone/`** — reviewer-grade voice on every string. Factual, specific, active, no exclamations, no emoji, no cheerleading. Pairs with Claude UI Design Principle 9 (Trust Through Restraint).
-- **`.claude/skills/motion-discipline/`** — calm-motion rule. 200ms ease-out default, no spring/bounce/overshoot, `prefers-reduced-motion` respected. Pairs with Claude UI Design Principle 5.
+- **Domain prompts** — 106 prompts in 19 domain groups (`config/domain-prompts.ts`). Canonical capability catalog. Surfaced as suggested action buttons wired to nav contexts.
+- **Apps catalog** — 8 apps visible in `AppsPage.tsx`; 24 canonical IDs wired in server `KNOWN_APP_IDS` (16 backend-ready apps not yet surfaced).
+- **Chat modes** — 3 modes in `AnaPersistentPanel.tsx`: `standard`, `deep-research`, `nano-banana`.
+- **Editor slash commands** — 13 commands in `SlashCommandMenu.tsx` (AI actions + Insert + Format). Editor-local only.
+- **@-mention autocomplete** — not currently implemented. Any @-mention work is new construction.
 
-Consult these before building or reviewing UI. They are read by `design-review` as part of the structured critique pass.
+When a new capability is added: register prompts in `config/domain-prompts.ts`, add an app ID to `KNOWN_APP_IDS` if it needs a launcher, and map it to nav contexts.
 
-## Designer Skills (Adapted — Julian Oczkowski)
+## Zero Capability Loss (NON-NEGOTIABLE)
 
-> Skill dirs: `.claude/skills/grill-me/`, `design-brief/`, `information-architecture/`, `design-tokens/`, `brief-to-tasks/`, `frontend-design/`, `design-review/`, `design-flow/`
-> Attribution: `.claude/skills/designer-skills-ATTRIBUTION.md`
-> Upstream: [julianoczkowski/designer-skills](https://github.com/julianoczkowski/designer-skills)
-
-Eight design-process skills vendored from Julian Oczkowski's repo. `grill-me`, `design-brief`, `information-architecture`, `brief-to-tasks`, `design-review`, and `design-flow` are used as-is. `frontend-design` and `design-tokens` carry **C2C OVERRIDE** blocks at the top of their SKILL.md files — the Anthropic Claude philosophy and existing stone-palette Tailwind tokens are locked; do NOT select a different named aesthetic, and do NOT generate a new token system. Licensing status is open until upstream clarifies — see attribution file.
-
-## Claude UI Design Principles (NON-NEGOTIABLE)
-
-> Skill file: `.claude/skills/claude-ui-design-principles.md`
-
-**CORE LESSON (learned the hard way):** The default instinct is to build dashboard-first, not
-conversation-first. Every surface will accumulate analytics widgets, scorecards, and control
-density that violate the principles below. Fight this instinct relentlessly. If data can surface
-through the conversation, it MUST NOT be plastered on a dashboard. Intelligence informs the
-conversation — it does not replace it.
-
-**Every UI element must embody the Anthropic Claude design philosophy: calm, intelligent, restrained.**
-All UI work — new components, modifications, layouts — MUST follow these 12 principles:
-
-1. **Calm Over Loud** — muted stone palette, color reserved for meaning, white space as feature
-2. **Typography Hierarchy** — never shout; `text-lg` max for titles, `text-[13px]` for body, `text-[10px]` for metadata
-3. **Progressive Disclosure** — show what matters now, reveal detail on interaction
-4. **Content-Shaped Loading** — skeleton blocks matching layout geometry, never bare spinners
-5. **Animation: Brief & Purposeful** — 200ms ease-out, no bounce, no spring, no overshoot
-6. **Density Without Clutter** — compact rows for professionals, every element earns its space
-7. **Inline Intelligence** — surface insights where user is working, not behind navigation
-8. **Conversation-First** — chat is the primary interface, everything else supports it
-9. **Trust Through Restraint** — no celebrations, no "are you sure?", factual status language
-10. **No Chrome** — minimize frame, borders barely visible (`stone-100`), content IS the interface
-11. **Mobile as Overlay** — panels become fixed overlays on small screens
-12. **Accessibility as Default** — ARIA on everything, focus rings, color never alone
-
-Read the full skill file for visual language reference, component sizing, and anti-pattern list.
-
-**ZERO CAPABILITY LOSS:** Conversation-first does NOT mean capability-second. Every result a
-dashboard once delivered must still be achievable via conversation, slash commands, or on-demand
-panels. Removing a widget without ensuring the user can still get that data is a regression.
-
-## Chat-First Design (NON-NEGOTIABLE)
-
-> Skill file: `.claude/skills/chat-first-design.md`
-
-**The chat IS the product.** ALL new features MUST be accessible through the AnA chat interface.
-No new screens, no new panels, no new modals, no new pages. Everything is inline in the conversation.
-
-### Home layout (2026-04-14 WO-8, reference-parity)
-
-The home (`layoutMode === 'projects'`) renders exactly this shape:
-
-1. **Thin icon rail** on the left (`ZenSidebar` in its collapsed state, ~56 px). Icons: Home · Search · New · (divider) · Apps · Artifacts · Intelligence · (divider) · Settings · Editor · bottom: expand + avatar. The rail is the default; user expands to a 260 px sidebar via the chevron.
-2. **Thin top bar** on the right (~48 px): brand dropdown (Concept2Cure) on the left; Search chat input + Invite + `+ New Thread` primary button on the right. Rendered inline inside `ZenApp.tsx` for `layoutMode === 'projects'` — no new component.
-3. **Centered conversation empty state** inside `AnaPersistentPanel` (the existing component): glow orb → time-of-day greeting ("Good {morning|afternoon|evening}, {firstName}") → subtitle ("What's on your mind?") → section header ("Get started with an example below") → 4 example prompt cards (CTD section · 510(k) precedent · biostat SAP · submission readiness) wired to `setInput` + focus → below the cards, a single ghost link "Browse all capabilities →" toggles between the 4 example cards and the full catalog of 19 domain-prompt groups (106 prompts) sourced from `config/domain-prompts.ts` ALL_DOMAIN_GROUPS. Clicking any prompt drops it into the composer and returns to the example view. WO-10 (2026-04-14).
-4. **Bottom input bar** unchanged — AnA's existing composer with chat-mode dropdown, attach, and send.
-
-Rules for this surface:
-
-- Do NOT add a right rail on the home. The reference image does not show one; we do not add one.
-- Do NOT wrap the empty state in a duplicate sub-sidebar. The main `ZenSidebar` is the only nav authority.
-- Example cards are a sanctioned conversation-first surface (they seed the input; they do not navigate away).
-- New capabilities surface via: `config/domain-prompts.ts` (catalog), `AppsPage` (launcher), or the icon rail (Intelligence for engines). Do not build new home widgets.
-
-
-- **Capability invocation surfaces (current ground truth, audited 2026-04-14):**
-  - **Domain prompts** — 106 prompts in 19 domain groups (`config/domain-prompts.ts`). This is the canonical capability catalog. Surfaced as suggested action buttons wired to nav contexts; "Browse all capabilities" overlay is NOT currently rendered and is an open gap.
-  - **Apps catalog** — 8 apps visible in `AppsPage.tsx`; 24 canonical IDs wired in server `KNOWN_APP_IDS` (16 backend-ready apps not surfaced). Gap to close: expose the additional 16 through `AppsPage` and/or the home launcher.
-  - **Chat modes** — 3 modes in `AnaPersistentPanel.tsx`: `standard`, `deep-research`, `nano-banana`. Selected via the chat mode dropdown.
-  - **Editor slash commands** — 13 commands in `SlashCommandMenu.tsx` (AI actions + Insert + Format). **Editor-local only**, not available in the AnA chat composer.
-  - **@-mention autocomplete** — NOT CURRENTLY IMPLEMENTED. Prior CLAUDE.md referenced "10 @app mentions"; audit 2026-04-14 found no such system. Treat any @-mention work as new construction, not extension.
-- Features invoked by typing naturally, by suggested action buttons, by selecting a chat mode, or by choosing a domain prompt. There is no chat-side slash command system today; if you add one, build it deliberately.
-- Results render as rich markdown (tables, lists, structured data)
-- Action buttons appear on hover (save, insert, export, regenerate)
-- Intelligence surfaces naturally — AnA "knows" without being told
-- When adding a new capability: add prompts to `config/domain-prompts.ts`, add the app ID to `KNOWN_APP_IDS` if it needs a launcher, and map it to the relevant nav contexts
-
-**ZERO CAPABILITY LOSS:** We still need to achieve all the results of each dashboard, no matter
-what. Removing chrome does NOT mean removing capability. Every metric, score, workflow step, and
-action that a dashboard provided MUST still be achievable — through conversation, slash commands,
-inspector panels, or inline results. Before removing any permanent UI element, verify the same
-outcome is reachable via an alternative path. A cleaner UI that does less is a regression.
+Replacing a surface with a cleaner one does NOT remove what it could do. Every metric, score, workflow step, and action that an old surface provided MUST remain reachable — via conversation, inspector panels, on-demand overlays, or inline results. A cleaner UI that does less is a regression. Before deleting any permanent UI element, verify the same outcome is reachable through an alternative path.
 
 ## AnA 1.0 RI Operating System (NON-NEGOTIABLE)
 
@@ -496,55 +425,21 @@ AnA is a complete regulatory intelligence operating function. When modifying AnA
 - Run the AnA-specific audit checklist before shipping
 - Never bypass the chat-first rule — no new screens for AnA features
 
-## UI State Standards (NON-NEGOTIABLE)
+## UI Engineering Patterns (implementation, not aesthetic authority)
 
-> Full reference: `docs/standards/ui-state-standards.md`
-> Skill file: `.claude/skills/ui-standards.md`
+These are engineering conventions for implementing the surfaces the Claude Design bundle defines. They govern HOW state is wired; they do NOT override the bundle's visual or behavioral rules.
 
-These rules apply to **every React component that fetches data, mutates data, or renders forms**.
+- **Data display** → `DataStateWrapper<T>` from `@/components/ui/statesV2` (loading, error, empty, success, background refresh)
+- **Skeletons** → `SkeletonTable` / `SkeletonCard` / `SkeletonText` from `@/components/ui/statesV2`
+- **Mutations** → TanStack Query v5: use `.isPending` (not `.isLoading`), disable buttons, toast on success AND error
+- **Query keys** → registered in `queryKeys.ts` (no ad-hoc string arrays)
+- **API calls** → `apiRequest()` from `@/lib/queryClient` (no raw `fetch()`, no per-file `getAuthHeaders()`, no `axios`)
+- **Forms** → `useForm()` + `<FormField>` from `react-hook-form` + `@/components/ui/form` (no `useState` per field)
+- **Backend responses** → `sendSuccess()` / `sendError()` envelope from `concept2cure.ts`
+- **Route code splitting** → `React.lazy()` + `Suspense` + `ErrorBoundary`
+- **No silent failures** — every error produces user-visible feedback (toast or `ErrorState`)
 
-### Mandatory Components
-
-| Scenario                              | Use This                                          | Import From                                |
-| ------------------------------------- | ------------------------------------------------- | ------------------------------------------ |
-| Data display with loading/error/empty | `DataStateWrapper<T>`                             | `@/components/ui/statesV2`                 |
-| Content-shaped loading                | `SkeletonTable` / `SkeletonCard` / `SkeletonText` | `@/components/ui/statesV2`                 |
-| Page-level loading                    | `LoadingState`                                    | `@/components/ui/statesV2`                 |
-| Error with retry                      | `ErrorState`                                      | `@/components/ui/statesV2`                 |
-| Button loading indicator              | `InlineLoading` or `Spinner`                      | `@/components/ui/statesV2` or `spinner`    |
-| Toast feedback                        | `useToast` → `toast()`                            | `@/hooks/use-toast`                        |
-| Form state                            | `useForm` + `FormField`                           | `react-hook-form` + `@/components/ui/form` |
-| API calls                             | `apiRequest()`                                    | `@/lib/queryClient`                        |
-| Query keys                            | `queryKeys.domain.method()`                       | `@/concept2cure/hooks/queryKeys`           |
-| Route code splitting                  | `React.lazy()` + `Suspense` + `ErrorBoundary`     | React + `@/components/ui/error-boundary`   |
-
-### Hard Rules
-
-1. **Every async component** must handle all 5 states: loading, error, empty, success, background refresh
-2. **`DataStateWrapper<T>`** is the default — use it unless you have a specific reason not to
-3. **Mutations** use `.isPending` (not `.isLoading`), disable buttons, toast on both success AND error
-4. **Query keys** MUST be registered in `queryKeys.ts` — no ad-hoc string arrays
-5. **API calls** MUST use `apiRequest()` — no raw `fetch()`, no per-file `getAuthHeaders()`, no `axios`
-6. **Forms** MUST use `react-hook-form` + `<FormField>` — no `useState` per field
-7. **Backend routes** MUST use `sendSuccess()` / `sendError()` envelope from `concept2cure.ts`
-8. **Accessibility**: All state UI requires ARIA roles, live regions, `data-testid` — `statesV2.tsx` components provide these automatically
-9. **Dashboard sections** each get their own `DataStateWrapper` — they load/fail independently
-10. **No silent failures** — every error must produce user-visible feedback (toast or ErrorState)
-
-### Forbidden in New Code
-
-| Forbidden                              | Use Instead                                         |
-| -------------------------------------- | --------------------------------------------------- |
-| `{isLoading && <div>Loading...</div>}` | `<DataStateWrapper>` or `<LoadingState>`            |
-| `mutation.isLoading`                   | `mutation.isPending` (TanStack v5)                  |
-| `useState` per form field              | `useForm()` from react-hook-form                    |
-| Ad-hoc query keys `['tasks', id]`      | `queryKeys.domain.method(id)`                       |
-| Raw `fetch()` with manual headers      | `apiRequest()` from `queryClient.ts`                |
-| `axios` in new code                    | `apiRequest()` (native fetch)                       |
-| Per-file `getAuthHeaders()`            | `apiRequest()` handles auth automatically           |
-| `res.json({ error: '...' })`           | `sendError(res, status, message)`                   |
-| `alert()` / `console.log` for errors   | `toast()` or `<ErrorState>`                         |
-| Custom spinner HTML                    | `<Spinner>`, `<InlineLoading>`, or `<LoadingState>` |
+If the bundle requires a state pattern that these conventions don't cover, match the bundle and extend `statesV2` to make it reusable.
 
 ## Schema Changes
 

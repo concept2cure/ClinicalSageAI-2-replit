@@ -1,0 +1,15 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="_base.css"><style>
+.wrap { display:grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.rc { background:white; padding: 16px; border: 1px solid var(--border-subtle); display:flex; flex-direction:column; align-items:center; gap: 10px; }
+.shape { width: 64px; height: 64px; background: var(--accent-muted); border: 1px solid var(--accent); }
+.lbl { font-size: 10px; font-family: var(--font-mono); color: var(--ink-muted); }
+.val { font-size: 11px; color: var(--ink); font-weight:500; }
+</style></head><body><div class="card">
+  <div class="wrap">
+    <div class="rc"><div class="shape" style="border-radius: 6px"></div><div class="val">sm</div><div class="lbl">6px · chips</div></div>
+    <div class="rc"><div class="shape" style="border-radius: 8px"></div><div class="val">md</div><div class="lbl">8px · btn, input</div></div>
+    <div class="rc"><div class="shape" style="border-radius: 12px"></div><div class="val">lg</div><div class="lbl">12px · card</div></div>
+    <div class="rc"><div class="shape" style="border-radius: 16px"></div><div class="val">xl</div><div class="lbl">16px · composer</div></div>
+    <div class="rc"><div class="shape" style="border-radius: 9999px"></div><div class="val">full</div><div class="lbl">avatar · pill</div></div>
+  </div>
+</div></body></html>

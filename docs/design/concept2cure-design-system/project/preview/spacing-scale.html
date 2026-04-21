@@ -1,0 +1,16 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="_base.css"><style>
+.wrap { display:grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.sq { background:white; border:1px solid var(--border); border-radius: var(--radius-md); padding: 10px; display:flex; flex-direction:column; gap: 8px; align-items: stretch; }
+.box { background: var(--accent-subtle); border-radius: 4px; flex: 1; }
+.ttl { font-size: 10px; font-family: var(--font-mono); color: var(--ink-muted); }
+.val { font-size: 10px; font-family: var(--font-mono); color: var(--ink-subtle); }
+.vi { height: 72px; display: flex; align-items: center; justify-content: center; }
+</style></head><body><div class="card">
+  <div class="wrap">
+    <div class="sq"><div class="ttl">space-1</div><div class="vi"><div style="width: 4px; height: 4px; background: var(--accent);"></div></div><div class="val">4px</div></div>
+    <div class="sq"><div class="ttl">space-2</div><div class="vi"><div style="width: 8px; height: 8px; background: var(--accent);"></div></div><div class="val">8px</div></div>
+    <div class="sq"><div class="ttl">space-4</div><div class="vi"><div style="width: 16px; height: 16px; background: var(--accent);"></div></div><div class="val">16px</div></div>
+    <div class="sq"><div class="ttl">space-6</div><div class="vi"><div style="width: 24px; height: 24px; background: var(--accent);"></div></div><div class="val">24px</div></div>
+    <div class="sq"><div class="ttl">space-8</div><div class="vi"><div style="width: 32px; height: 32px; background: var(--accent);"></div></div><div class="val">32px</div></div>
+  </div>
+</div></body></html>
