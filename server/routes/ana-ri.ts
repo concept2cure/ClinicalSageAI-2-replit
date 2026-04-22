@@ -40,6 +40,7 @@ import {
 } from '../services/ana-ri/enforcement.js';
 import { validateEvidence } from '../services/ana-ri/evidence-validation.js';
 import { buildQueueMeta } from '../services/ana-ri/response-contract.js';
+import { recordAnaTurn } from '../services/ana-ri-metrics.js';
 import {
   getOrCreateThread,
   getThreadMessages,
@@ -523,6 +524,10 @@ router.post('/chat', async (req: Request, res: Response) => {
         ? (preferred_provider as (typeof VALID_PROVIDERS)[number])
         : undefined;
 
+    const chatThinkingConfig =
+      routingPlan.riskTier === 'high'
+        ? { enabled: true, budgetTokens: 10_000 }
+        : undefined;
     const response = await gw.route({
       taskType: routingPlan.taskType,
       messages,
@@ -530,12 +535,22 @@ router.post('/chat', async (req: Request, res: Response) => {
       temperature: routingPlan.temperature,
       strategy: selectedStrategy,
       promptCache: { enabled: true, type: 'ephemeral' },
+      ...(chatThinkingConfig ? { thinking: chatThinkingConfig } : {}),
       ...(validatedProvider ? { provider: validatedProvider } : {}),
     });
 
     if (!response.content) {
       return sendError(res, 502, 'No response from AI provider', null, 'EMPTY_RESPONSE');
     }
+
+    // Metrics: /chat doesn't have the same per-phase instrumentation as
+    // /stream (it's the firecrawl-only path), but we still record turns,
+    // cache hits, and thinking opt-in for cross-route comparison.
+    recordAnaTurn({
+      route: 'chat',
+      cache: { hit: (response as any)?.cacheHit },
+      thinkingEnabled: !!chatThinkingConfig,
+    });
 
     // Evaluate response quality (async, non-blocking)
     const evaluation = evaluateResponse(response.content, {
@@ -1106,6 +1121,14 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     // Stream via gateway
     const streamGatewayStart = Date.now();
+    // Extended thinking opt-in: kernel router flags genuinely high-stakes turns
+    // (audit/risk lens, critical contradictions). Use Claude's thinking budget
+    // to deepen reasoning on those without imposing latency on conversational
+    // turns. Gateway will force temperature=1 when thinking is enabled.
+    const streamThinkingConfig =
+      routingPlan.riskTier === 'high'
+        ? { enabled: true, budgetTokens: 10_000 }
+        : undefined;
     const gwResponse = await gw.route({
       taskType: routingPlan.taskType,
       messages,
@@ -1113,6 +1136,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       temperature: routingPlan.temperature,
       strategy: selectedStrategy,
       promptCache: { enabled: true, type: 'ephemeral' },
+      ...(streamThinkingConfig ? { thinking: streamThinkingConfig } : {}),
       stream: true,
       onStream: (chunk: string, metadata?: any) => {
         fullContent += chunk;
@@ -1165,6 +1189,20 @@ router.post('/stream', async (req: Request, res: Response) => {
           }
         : undefined,
     };
+
+    // Record into in-memory metrics so /api/metrics surfaces aggregates.
+    recordAnaTurn({
+      route: 'stream',
+      phases: streamTelemetry.phases,
+      cache: { hit: (gwResponse as any)?.cacheHit },
+      memory: streamMemoryDiag
+        ? {
+            layerOutcomes: streamMemoryDiag.layerOutcomes,
+            semanticSearchMs: streamMemoryDiag.semanticSearchMs,
+          }
+        : undefined,
+      thinkingEnabled: !!streamThinkingConfig,
+    });
 
     // Emit `done` as soon as the last token is out. Carries the minimal
     // metadata the client needs to close the assistant turn. Heavier

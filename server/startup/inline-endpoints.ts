@@ -84,6 +84,14 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         }
       } catch {}
 
+      // AnA RI metrics — counters + histograms for per-turn telemetry.
+      try {
+        const { renderAnaRiMetrics } = await import('../services/ana-ri-metrics.js');
+        lines.push(...renderAnaRiMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       res.set('Content-Type', 'text/plain; version=0.0.4');
       res.send(lines.join('\n') + '\n');
     } catch (_err: any) {
