@@ -339,6 +339,18 @@ interface AnaMessage {
   fallback?: boolean;
   /** Set when the user aborted the stream before completion */
   stopped?: boolean;
+  /** Executed guidance/command actions attached to the assistant reply */
+  executedActions?: Array<{
+    actionType?: string;
+    executed?: boolean;
+    error?: string;
+    artifactId?: string;
+    sectionCode?: string;
+    title?: string;
+    confidence?: string;
+    threadId?: string;
+    [key: string]: unknown;
+  }>;
 }
 
 interface DecisionStatusRailState {
