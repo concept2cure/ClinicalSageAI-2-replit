@@ -799,8 +799,23 @@ router.post('/stream', async (req: Request, res: Response) => {
       return sendError(res, 503, 'No AI providers available.', null, 'GATEWAY_UNAVAILABLE');
     }
 
-    // SSE headers deferred until after context building (M-5 fix)
-    // This allows pre-stream failures to return proper HTTP error codes.
+    // Pre-stream validation is done. Open SSE now so the client sees progress
+    // during context assembly (orchestration + intelligence/memory/enrichment).
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+
+    // Status: orchestrating (planning the response, running route prefetch)
+    res.write(
+      `data: ${JSON.stringify({
+        type: 'status',
+        phase: 'orchestrating',
+        message: 'Planning response…',
+      })}\n\n`
+    );
 
     // Resolve context
     const { orgId, userId } = extractRequestContext(req);
@@ -878,6 +893,15 @@ router.post('/stream', async (req: Request, res: Response) => {
         orchestration.systemPrompt += `\n\n${sectionGuide}`;
       }
     }
+
+    // Status: loading_context (about to fetch intelligence prefix, memory atoms, enrichment)
+    res.write(
+      `data: ${JSON.stringify({
+        type: 'status',
+        phase: 'loading_context',
+        message: 'Loading project memory…',
+      })}\n\n`
+    );
 
     // Intelligence + memory + enrichment — run in PARALLEL for speed
     const [intelligencePrefix, memoryResult, enrichment] = await Promise.all([
@@ -989,15 +1013,16 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     messages.push({ role: 'user', content: effectiveMessage });
 
-    // Set SSE headers NOW (after all context building, before first write)
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-      'X-Accel-Buffering': 'no',
-    });
+    // Status: generating (context is built, about to stream tokens from the model)
+    res.write(
+      `data: ${JSON.stringify({
+        type: 'status',
+        phase: 'generating',
+        message: 'Generating response…',
+      })}\n\n`
+    );
 
-    // Send thread_id immediately so client can track
+    // Send thread_id so client can track (headers were written before context assembly)
     res.write(`data: ${JSON.stringify({ type: 'thread_id', thread_id: threadId })}\n\n`);
 
     // Send orchestration metadata
@@ -1069,106 +1094,10 @@ router.post('/stream', async (req: Request, res: Response) => {
       }).catch(() => {});
     }
 
-    // Guidance executor — auto-create artifacts if response contains action signals
-    let executedActions: any[] = [];
-    let contentForCommandProcessing = fullContent;
-    if (fullContent && streamProjectId && orgId) {
-      try {
-        const guidance = await processResponseActions(fullContent, {
-          projectId:
-            typeof streamProjectId === 'string'
-              ? Number.parseInt(streamProjectId, 10)
-              : streamProjectId,
-          organizationId: Number(orgId),
-          userId: typeof userId === 'number' ? userId : 0,
-          userName: 'AnA',
-          threadId: threadId || undefined,
-        });
-        executedActions = guidance.actions;
-        contentForCommandProcessing = guidance.cleanedText || fullContent;
-      } catch (e: any) {
-        console.warn('[AnA RI Stream] Guidance executor failed:', e?.message);
-      }
-    }
-
-    // Command executor — execute operational commands (create project, artifact, task, etc.)
-    let executedCommands: any[] = [];
-    if (contentForCommandProcessing && orgId) {
-      try {
-        const cmdCtx: CommandContext = {
-          userId: typeof userId === 'number' ? userId : 0,
-          organizationId: Number(orgId),
-          activeProjectId: streamProjectId
-            ? typeof streamProjectId === 'string'
-              ? Number.parseInt(streamProjectId, 10)
-              : streamProjectId
-            : undefined,
-          userName: (req as any).user?.name,
-          userRole: effectiveRole,
-        };
-        const { processCommandsInResponse } =
-          await import('../services/ana-ri/command-executor.js');
-        const cmdResult = await processCommandsInResponse(contentForCommandProcessing, cmdCtx);
-        executedCommands = cmdResult.executedCommands;
-        cleanedFullContent = cmdResult.cleanedText ? cmdResult.cleanedText : contentForCommandProcessing;
-        if (executedCommands.length > 0) {
-          console.log(`[AnA RI Stream] Executed ${executedCommands.length} command(s)`);
-        }
-      } catch (e: any) {
-        console.warn('[AnA RI Stream] Command executor failed:', e?.message);
-      }
-    }
-
-    const finalAssistantContent =
-      cleanedFullContent && cleanedFullContent.trim().length > 0
-        ? cleanedFullContent
-        : executedActions.length > 0 || executedCommands.length > 0
-          ? 'Action executed successfully.'
-          : contentForCommandProcessing || fullContent;
-
-    // Persist assistant response using cleaned text when command blocks were present.
-    if (orgId && threadId && fullContent) {
-      try {
-        await saveMessage(threadId, 'assistant', finalAssistantContent);
-      } catch (e: any) {
-        console.error('[AnA RI Stream] Assistant persist failed:', e?.message);
-        persistenceFailed = true;
-      }
-    }
-
-    // Warn client if thread persistence failed
-    if (persistenceFailed) {
-      res.write(
-        `data: ${JSON.stringify({ type: 'warning', message: 'Thread persistence failed' })}\n\n`
-      );
-    }
-
-    // Evidence discipline + structure checks (parity with /chat)
-    const streamEvidenceCheck = finalAssistantContent ? checkEvidenceDiscipline(finalAssistantContent) : null;
-    const streamStructureCheck = finalAssistantContent ? validateResponseStructure(finalAssistantContent) : null;
-
-    // Evidence validation — semantic grounding check (non-blocking)
-    const streamEvidenceVerdict = finalAssistantContent
-      ? validateEvidence(finalAssistantContent, 'ana-ri')
-      : null;
-
-    // Build queue metadata
-    const streamQueueMeta = buildQueueMeta({
-      threadId,
-      persistenceFailed,
-    });
-
-    // Send grounding strip (evidence verdict summary for client UI)
-    if (streamEvidenceVerdict) {
-      res.write(
-        `data: ${JSON.stringify({
-          type: 'grounding_strip',
-          evidence: streamEvidenceVerdict,
-        })}\n\n`
-      );
-    }
-
-    // Send done event
+    // Emit `done` as soon as the last token is out. Carries the minimal
+    // metadata the client needs to close the assistant turn. Heavier
+    // post-processing (guidance + command executors, persistence, evidence,
+    // grounding strip) runs in the background and arrives later via `post_done`.
     res.write(
       `data: ${JSON.stringify({
         type: 'done',
@@ -1176,31 +1105,164 @@ router.post('/stream', async (req: Request, res: Response) => {
         provider: gwResponse.provider,
         usage: gwResponse.usage,
         latencyMs: gwResponse.latencyMs,
-        executedActions: executedActions.length > 0 ? executedActions : undefined,
-        executedCommands: executedCommands.length > 0 ? executedCommands : undefined,
-        enrichmentSources: enrichment.sources.length > 0 ? enrichment.sources : undefined,
-        enrichmentMeta: enrichment.enrichmentMeta || undefined,
-        cleanedResponse: finalAssistantContent || undefined,
-        evidence: streamEvidenceVerdict || undefined,
-        evidenceDiscipline: streamEvidenceCheck
-          ? {
-              compliant: streamEvidenceCheck.compliant,
-              labels: streamEvidenceCheck.totalLabels,
-              hasOverclaims: streamEvidenceCheck.hasOverclaims,
-            }
-          : undefined,
-        structure: streamStructureCheck
-          ? {
-              valid: streamStructureCheck.valid,
-              score: streamStructureCheck.score,
-              maxScore: streamStructureCheck.maxScore,
-            }
-          : undefined,
-        queueMeta: streamQueueMeta,
+        response: fullContent || undefined,
       })}\n\n`
     );
 
-    res.end();
+    // Background post-processing. We intentionally do NOT await this at the
+    // top level — the client already has `done`. When the executors finish
+    // (or fail) we emit `post_done` with cleanedResponse + executed actions/
+    // commands + evidence, then close the stream.
+    (async () => {
+      let executedActions: any[] = [];
+      let contentForCommandProcessing = fullContent;
+      let executedCommands: any[] = [];
+
+      // Guidance executor — auto-create artifacts if response contains action signals
+      if (fullContent && streamProjectId && orgId) {
+        try {
+          const guidance = await processResponseActions(fullContent, {
+            projectId:
+              typeof streamProjectId === 'string'
+                ? Number.parseInt(streamProjectId, 10)
+                : streamProjectId,
+            organizationId: Number(orgId),
+            userId: typeof userId === 'number' ? userId : 0,
+            userName: 'AnA',
+            threadId: threadId || undefined,
+          });
+          executedActions = guidance.actions;
+          contentForCommandProcessing = guidance.cleanedText || fullContent;
+        } catch (e: any) {
+          console.warn('[AnA RI Stream] Guidance executor failed:', e?.message);
+        }
+      }
+
+      // Command executor — execute operational commands (create project, artifact, task, etc.)
+      if (contentForCommandProcessing && orgId) {
+        try {
+          const cmdCtx: CommandContext = {
+            userId: typeof userId === 'number' ? userId : 0,
+            organizationId: Number(orgId),
+            activeProjectId: streamProjectId
+              ? typeof streamProjectId === 'string'
+                ? Number.parseInt(streamProjectId, 10)
+                : streamProjectId
+              : undefined,
+            userName: (req as any).user?.name,
+            userRole: effectiveRole,
+          };
+          const { processCommandsInResponse } =
+            await import('../services/ana-ri/command-executor.js');
+          const cmdResult = await processCommandsInResponse(contentForCommandProcessing, cmdCtx);
+          executedCommands = cmdResult.executedCommands;
+          cleanedFullContent = cmdResult.cleanedText ? cmdResult.cleanedText : contentForCommandProcessing;
+          if (executedCommands.length > 0) {
+            console.log(`[AnA RI Stream] Executed ${executedCommands.length} command(s)`);
+          }
+        } catch (e: any) {
+          console.warn('[AnA RI Stream] Command executor failed:', e?.message);
+        }
+      }
+
+      const finalAssistantContent =
+        cleanedFullContent && cleanedFullContent.trim().length > 0
+          ? cleanedFullContent
+          : executedActions.length > 0 || executedCommands.length > 0
+            ? 'Action executed successfully.'
+            : contentForCommandProcessing || fullContent;
+
+      // Persist assistant response using cleaned text when command blocks were present.
+      // This happens inside the background flow so persistence waits on executors
+      // (so we store the cleaned text) but does not block the `done` event.
+      if (orgId && threadId && fullContent) {
+        try {
+          await saveMessage(threadId, 'assistant', finalAssistantContent);
+        } catch (e: any) {
+          console.error('[AnA RI Stream] Assistant persist failed:', e?.message);
+          persistenceFailed = true;
+        }
+      }
+
+      // Warn client if thread persistence failed
+      if (persistenceFailed) {
+        res.write(
+          `data: ${JSON.stringify({ type: 'warning', message: 'Thread persistence failed' })}\n\n`
+        );
+      }
+
+      // Evidence discipline + structure checks (parity with /chat)
+      const streamEvidenceCheck = finalAssistantContent ? checkEvidenceDiscipline(finalAssistantContent) : null;
+      const streamStructureCheck = finalAssistantContent ? validateResponseStructure(finalAssistantContent) : null;
+
+      // Evidence validation — semantic grounding check (non-blocking)
+      const streamEvidenceVerdict = finalAssistantContent
+        ? validateEvidence(finalAssistantContent, 'ana-ri')
+        : null;
+
+      // Build queue metadata
+      const streamQueueMeta = buildQueueMeta({
+        threadId,
+        persistenceFailed,
+      });
+
+      // Send grounding strip (evidence verdict summary for client UI)
+      if (streamEvidenceVerdict) {
+        res.write(
+          `data: ${JSON.stringify({
+            type: 'grounding_strip',
+            evidence: streamEvidenceVerdict,
+          })}\n\n`
+        );
+      }
+
+      // Send post_done event — deferred metadata from background post-processing
+      res.write(
+        `data: ${JSON.stringify({
+          type: 'post_done',
+          cleanedResponse: finalAssistantContent || undefined,
+          executedActions: executedActions.length > 0 ? executedActions : undefined,
+          executedCommands: executedCommands.length > 0 ? executedCommands : undefined,
+          enrichmentSources: enrichment.sources.length > 0 ? enrichment.sources : undefined,
+          enrichmentMeta: enrichment.enrichmentMeta || undefined,
+          evidence: streamEvidenceVerdict || undefined,
+          evidenceDiscipline: streamEvidenceCheck
+            ? {
+                compliant: streamEvidenceCheck.compliant,
+                labels: streamEvidenceCheck.totalLabels,
+                hasOverclaims: streamEvidenceCheck.hasOverclaims,
+              }
+            : undefined,
+          structure: streamStructureCheck
+            ? {
+                valid: streamStructureCheck.valid,
+                score: streamStructureCheck.score,
+                maxScore: streamStructureCheck.maxScore,
+              }
+            : undefined,
+          queueMeta: streamQueueMeta,
+        })}\n\n`
+      );
+
+      res.end();
+    })().catch((postErr: any) => {
+      // If the background flow itself blows up, fall back to a post_done
+      // carrying the raw content so the client turn still closes cleanly.
+      console.error('[AnA RI Stream] Post-processing failed:', postErr?.message);
+      try {
+        res.write(
+          `data: ${JSON.stringify({
+            type: 'post_done',
+            cleanedResponse: fullContent || undefined,
+            executedActions: undefined,
+            executedCommands: undefined,
+          })}\n\n`
+        );
+        res.end();
+      } catch {
+        /* connection already gone */
+      }
+    });
   } catch (error: any) {
     console.error('[AnA RI Stream] Error:', error.message);
     if (res.headersSent) {
