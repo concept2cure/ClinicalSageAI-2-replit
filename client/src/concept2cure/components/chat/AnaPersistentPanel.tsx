@@ -1555,18 +1555,29 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             })),
           });
 
-          // ── Attempt 1: AnA RI endpoint ──
+          // ── Attempt 1: AnA RI streaming endpoint (SSE) ──
+          // Tokens render incrementally so the user sees progress instead of a spinner.
+          // Firecrawl evidence pre-routing only runs on /chat, so fall back to the
+          // non-streaming endpoint when the user has firecrawl enabled.
+          const streamPlaceholderId = `a-${Date.now()}`;
+          let streamedSuccessfully = false;
+          let streamStarted = false;
+          let streamContent = '';
+          let streamDoneMeta: any = null;
+          const useStreamingEndpoint = !useFirecrawl;
+
           try {
-            const anaRes = await fetch('/api/ana-ri/chat', {
-              method: 'POST',
-              headers: chatHeaders,
-              credentials: 'include',
-              body: chatBody,
-            });
-            if (anaRes.ok) {
-              rawData = await anaRes.json();
-              chatSucceeded = true;
-            } else {
+            const anaRes = await fetch(
+              useStreamingEndpoint ? '/api/ana-ri/stream' : '/api/ana-ri/chat',
+              {
+                method: 'POST',
+                headers: chatHeaders,
+                credentials: 'include',
+                body: chatBody,
+              }
+            );
+
+            if (!anaRes.ok) {
               const errBody = await anaRes.text().catch(() => '');
               try {
                 const parsed = JSON.parse(errBody);
@@ -1575,9 +1586,123 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 // ignore parse failures
               }
               console.warn(`[AnA RI] ${anaRes.status}: ${errBody.slice(0, 200)}`);
+            } else if (!useStreamingEndpoint) {
+              // Non-streaming path: parse the full JSON envelope and fall through
+              // to the existing rawData/data handling below.
+              rawData = await anaRes.json();
+              chatSucceeded = true;
+            } else if (!anaRes.body) {
+              console.warn('[AnA RI Stream] No response body');
+            } else {
+              const reader = anaRes.body.getReader();
+              const decoder = new TextDecoder();
+              let buffer = '';
+
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || '';
+
+                for (const line of lines) {
+                  if (!line.startsWith('data: ')) continue;
+                  const jsonStr = line.slice(6).trim();
+                  if (!jsonStr) continue;
+
+                  let event: any;
+                  try {
+                    event = JSON.parse(jsonStr);
+                  } catch {
+                    continue;
+                  }
+
+                  if (event.type === 'thread_id') {
+                    if (event.thread_id) {
+                      threadIdRef.current = event.thread_id;
+                      onThreadChange?.(event.thread_id);
+                    }
+                  } else if (event.type === 'orchestration') {
+                    const normalizedOrchestration = normalizeOrchestrationPayload(
+                      event.orchestration || event
+                    );
+                    if (normalizedOrchestration) {
+                      setLastOrchestration(normalizedOrchestration);
+                    }
+                  } else if (event.type === 'text') {
+                    const chunk = event.content || '';
+                    if (!chunk) continue;
+                    streamContent += chunk;
+                    if (!streamStarted) {
+                      streamStarted = true;
+                      queue.markStreaming(threadIdRef.current || null);
+                      setMessages(prev => [
+                        ...prev,
+                        {
+                          id: streamPlaceholderId,
+                          role: 'assistant',
+                          content: streamContent,
+                          timestamp: new Date(),
+                        },
+                      ]);
+                    } else {
+                      const next = streamContent;
+                      setMessages(prev =>
+                        prev.map(m =>
+                          m.id === streamPlaceholderId ? { ...m, content: next } : m
+                        )
+                      );
+                    }
+                  } else if (event.type === 'done') {
+                    streamDoneMeta = event;
+                  } else if (event.type === 'error') {
+                    throw new Error(event.error || 'Stream error');
+                  }
+                  // warning / grounding_strip events are tolerated but not yet surfaced
+                }
+              }
+
+              if (streamStarted) {
+                const finalContent =
+                  (streamDoneMeta?.cleanedResponse &&
+                    String(streamDoneMeta.cleanedResponse).trim().length > 0)
+                    ? streamDoneMeta.cleanedResponse
+                    : streamContent;
+
+                setMessages(prev =>
+                  prev.map(m =>
+                    m.id === streamPlaceholderId
+                      ? {
+                          ...m,
+                          content: finalContent,
+                          executedActions: streamDoneMeta?.executedActions || undefined,
+                          modelProvider: streamDoneMeta?.provider || undefined,
+                          modelName: streamDoneMeta?.model || undefined,
+                        }
+                      : m
+                  )
+                );
+                streamedSuccessfully = true;
+              }
             }
           } catch (anaErr: any) {
-            console.warn('[AnA RI] Network error:', anaErr?.message);
+            console.warn('[AnA RI Stream] Error:', anaErr?.message);
+          }
+
+          // If streaming produced a response, synthesize rawData so downstream
+          // artifact-persist logic still runs.
+          if (streamedSuccessfully) {
+            const synthesized = {
+              response: streamDoneMeta?.cleanedResponse || streamContent,
+              thread_id: threadIdRef.current,
+              executedActions: streamDoneMeta?.executedActions,
+              model: streamDoneMeta?.model,
+              provider: streamDoneMeta?.provider,
+              evidence: streamDoneMeta?.evidence,
+            };
+            rawData = { success: true, data: synthesized };
+            chatSucceeded = true;
           }
 
           // ── Attempt 2: Cortex fallback (degraded — no orchestration/memory/RIM) ──
@@ -1614,7 +1739,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   rawData.data._fallback = {
                     active: true,
                     reason: 'ana_ri_unavailable',
-                    original_path: '/api/ana-ri/chat',
+                    original_path: '/api/ana-ri/stream',
                     degraded_capabilities: [
                       'orchestration',
                       'memory_injection',
@@ -1651,15 +1776,17 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           // Unwrap sendSuccess envelope: {success, data: {...}} → inner data
           data = rawData?.data && rawData.success ? rawData.data : rawData;
 
-          const normalizedOrchestration = normalizeOrchestrationPayload(data);
-          if (normalizedOrchestration) {
-            setLastOrchestration(normalizedOrchestration);
-          }
-
-          // Capture thread_id for conversation continuity
-          if (data.thread_id) {
-            threadIdRef.current = data.thread_id;
-            onThreadChange?.(data.thread_id);
+          // For non-streamed responses, apply orchestration/thread updates that
+          // streaming already applied inline.
+          if (!streamedSuccessfully) {
+            const normalizedOrchestration = normalizeOrchestrationPayload(data);
+            if (normalizedOrchestration) {
+              setLastOrchestration(normalizedOrchestration);
+            }
+            if (data.thread_id) {
+              threadIdRef.current = data.thread_id;
+              onThreadChange?.(data.thread_id);
+            }
           }
 
           const assistantContent =
@@ -1673,19 +1800,23 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             }
           }
 
-          setMessages(prev => [
-            ...prev,
-            {
-              id: `a-${Date.now()}`,
-              role: 'assistant',
-              content: assistantContent,
-              timestamp: new Date(),
-              executedActions: data.executedActions || undefined,
-              modelProvider: data.provider || data.modelProvider || undefined,
-              modelName: data.model || data.modelName || undefined,
-              evidenceUsage: data.evidenceUsage || undefined,
-            },
-          ]);
+          // Streaming already rendered the assistant message in-place; only append
+          // when we came in via the Cortex fallback.
+          if (!streamedSuccessfully) {
+            setMessages(prev => [
+              ...prev,
+              {
+                id: `a-${Date.now()}`,
+                role: 'assistant',
+                content: assistantContent,
+                timestamp: new Date(),
+                executedActions: data.executedActions || undefined,
+                modelProvider: data.provider || data.modelProvider || undefined,
+                modelName: data.model || data.modelName || undefined,
+                evidenceUsage: data.evidenceUsage || undefined,
+              },
+            ]);
+          }
 
           // Auto-persist substantial AI responses as artifacts when project context exists
           if (contextProfile?.projectId && assistantContent.length > 500) {

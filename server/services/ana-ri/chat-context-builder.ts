@@ -58,6 +58,41 @@ export interface PrefetchedRouteIntelligenceContext {
 
 // ─── Authoring context builder ───────────────────────────────────────────────
 
+/**
+ * Build a compact XML block describing the user's current UI route / screen.
+ * This is what lets AnA answer "this section", "this project", "here" when the
+ * user hasn't explicitly attached artifact context. Produces an empty string
+ * when nothing useful is known.
+ */
+export function buildRouteContextBlock(context: any): string {
+  if (!context || typeof context !== 'object') return '';
+
+  const screen = context.screenName || context.screen;
+  const projectName = context.project || context.activeProject;
+  const projectId = context.projectId;
+  const productType = context.productType;
+  const userRole = context.userRole;
+  const sectionCode = context.sectionCode;
+
+  const parts: string[] = [];
+  if (screen) parts.push(`  <screen>${screen}</screen>`);
+  if (projectName || projectId) {
+    const attrs = [
+      projectId ? `id="${projectId}"` : '',
+      projectName ? `name="${String(projectName).replace(/"/g, '&quot;')}"` : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+    parts.push(`  <project ${attrs}/>`);
+  }
+  if (productType) parts.push(`  <submission_type>${productType}</submission_type>`);
+  if (userRole) parts.push(`  <user_role>${userRole}</user_role>`);
+  if (sectionCode) parts.push(`  <section_code>${sectionCode}</section_code>`);
+
+  if (parts.length === 0) return '';
+  return ['<current_route>', ...parts, '</current_route>'].join('\n');
+}
+
 export function buildAuthoringContextBlock(authoring_context: any): string {
   if (!authoring_context || typeof authoring_context !== 'object') return '';
 

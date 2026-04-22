@@ -82,6 +82,7 @@ import {
 import {
   buildAuthoringContextBlock,
   buildOrchestratorAuthoringContext,
+  buildRouteContextBlock,
   prefetchRouteIntelligenceContext,
   resolveProjectIdFromBody,
 } from '../services/ana-ri/chat-context-builder.js';
@@ -384,6 +385,13 @@ router.post('/chat', async (req: Request, res: Response) => {
     const routingPlan = executionCtx.routingPlan;
     const selectedStrategy = executionCtx.selectedStrategy;
     let goalPlan = executionCtx.goalPlan;
+
+    // Inject UI route context so AnA knows which screen/project the user is on
+    // even when no specific artifact is attached (Home, list views, etc.).
+    const chatRouteBlock = buildRouteContextBlock(req.body.context);
+    if (chatRouteBlock) {
+      orchestration.systemPrompt += `\n\n## Current UI Route\n\nThis is where the user is right now in the app. Use it to resolve "this project", "here", "this screen":\n\n${chatRouteBlock}`;
+    }
 
     // Inject authoring context into system prompt if available
     if (authoringContextBlock) {
@@ -852,6 +860,11 @@ router.post('/stream', async (req: Request, res: Response) => {
       _feedbackContext: streamFeedbackContext,
       _projectIntelligenceProfile: streamProjectProfile,
     });
+
+    const streamRouteBlock = buildRouteContextBlock(req.body.context);
+    if (streamRouteBlock) {
+      orchestration.systemPrompt += `\n\n## Current UI Route\n${streamRouteBlock}`;
+    }
 
     if (authoringContextBlock) {
       orchestration.systemPrompt += `\n\n## Current Authoring Context\n${authoringContextBlock}`;
