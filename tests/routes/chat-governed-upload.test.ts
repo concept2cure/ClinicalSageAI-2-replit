@@ -10,11 +10,28 @@ vi.mock('../../server/services/concept2cure/governedDocumentContractService.js',
   resolveGovernedContext: mockResolveGovernedContext,
 }));
 
-vi.mock('../../server/db.js', () => ({
-  pool: {
+vi.mock('../../server/db.js', () => {
+  const poolStub = {
     query: mockPoolQuery,
-  },
-}));
+  };
+  return {
+    pool: poolStub,
+    getPool: () => poolStub,
+  };
+});
+
+// Some services import the module with an explicit `.ts` extension
+// (e.g. server/services/ana-ri/command-executor.ts); vitest treats that
+// as a distinct path, so mock it separately with the same stubs.
+vi.mock('../../server/db.ts', () => {
+  const poolStub = {
+    query: mockPoolQuery,
+  };
+  return {
+    pool: poolStub,
+    getPool: () => poolStub,
+  };
+});
 
 vi.mock('../../server/services/chat-thread-helpers.js', () => ({
   getOrCreateThread: vi.fn(),
