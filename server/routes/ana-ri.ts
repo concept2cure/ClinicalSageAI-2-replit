@@ -1207,17 +1207,34 @@ router.post('/stream', async (req: Request, res: Response) => {
             ? 'Action executed successfully.'
             : contentForCommandProcessing || fullContent;
 
-      // Persist assistant response using cleaned text when command blocks were present.
-      // This happens inside the background flow so persistence waits on executors
-      // (so we store the cleaned text) but does not block the `done` event.
-      if (orgId && threadId && fullContent) {
-        try {
-          await saveMessage(threadId, 'assistant', finalAssistantContent);
-        } catch (e: any) {
-          console.error('[AnA RI Stream] Assistant persist failed:', e?.message);
-          persistenceFailed = true;
-        }
-      }
+      // Run persistence concurrent with the synchronous evidence / structure
+      // checks. saveMessage is a DB roundtrip (tens to hundreds of ms); the
+      // checks are CPU-only and finish instantly. Awaiting them together
+      // collapses the tail to max(db, cpu) instead of db + cpu.
+      const persistPromise: Promise<void> =
+        orgId && threadId && fullContent
+          ? saveMessage(threadId, 'assistant', finalAssistantContent)
+              .then(() => undefined)
+              .catch((e: any) => {
+                console.error('[AnA RI Stream] Assistant persist failed:', e?.message);
+                persistenceFailed = true;
+              })
+          : Promise.resolve();
+
+      // Evidence discipline + structure checks are synchronous — run inline.
+      const streamEvidenceCheck = finalAssistantContent
+        ? checkEvidenceDiscipline(finalAssistantContent)
+        : null;
+      const streamStructureCheck = finalAssistantContent
+        ? validateResponseStructure(finalAssistantContent)
+        : null;
+      const streamEvidenceVerdict = finalAssistantContent
+        ? validateEvidence(finalAssistantContent, 'ana-ri')
+        : null;
+
+      // Wait for persistence to settle before emitting warning/post_done so
+      // `persistenceFailed` reflects the actual DB outcome.
+      await persistPromise;
 
       // Warn client if thread persistence failed
       if (persistenceFailed) {
@@ -1225,15 +1242,6 @@ router.post('/stream', async (req: Request, res: Response) => {
           `data: ${JSON.stringify({ type: 'warning', message: 'Thread persistence failed' })}\n\n`
         );
       }
-
-      // Evidence discipline + structure checks (parity with /chat)
-      const streamEvidenceCheck = finalAssistantContent ? checkEvidenceDiscipline(finalAssistantContent) : null;
-      const streamStructureCheck = finalAssistantContent ? validateResponseStructure(finalAssistantContent) : null;
-
-      // Evidence validation — semantic grounding check (non-blocking)
-      const streamEvidenceVerdict = finalAssistantContent
-        ? validateEvidence(finalAssistantContent, 'ana-ri')
-        : null;
 
       // Build queue metadata
       const streamQueueMeta = buildQueueMeta({

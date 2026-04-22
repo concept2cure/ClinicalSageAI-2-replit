@@ -1939,6 +1939,35 @@ Reference ICH E-series guidelines for study design and reporting.`,
  * @param projectId - Optional active project ID
  * @returns Intelligence context string to prepend to system prompt, or empty string
  */
+/**
+ * Small in-memory TTL cache for assembled intelligence prefix.
+ * Intelligence context (client + project + wisdom) changes slowly relative to
+ * chat-turn cadence — without this, every conversational turn re-runs the
+ * 3-query Promise.all. A 60s TTL keeps responses fresh enough for the
+ * regulatory domain while making back-to-back turns hit a warm cache.
+ */
+interface IntelligencePrefixCacheEntry {
+  value: string;
+  expiresAt: number;
+}
+const INTELLIGENCE_PREFIX_TTL_MS = 60_000;
+const INTELLIGENCE_PREFIX_CACHE_LIMIT = 200;
+const intelligencePrefixCache = new Map<string, IntelligencePrefixCacheEntry>();
+
+function intelligencePrefixCacheKey(orgId: number, projectId: number | null): string {
+  return `${orgId}:${projectId ?? ''}`;
+}
+
+/** Invalidate cached intelligence prefix for a project (e.g., after a write). */
+export function invalidateIntelligencePrefix(
+  organizationId?: number,
+  projectId?: number | string
+): void {
+  if (!organizationId) return;
+  const parsed = projectId ? parseInt(String(projectId), 10) : null;
+  intelligencePrefixCache.delete(intelligencePrefixCacheKey(organizationId, parsed));
+}
+
 export async function getIntelligencePrefix(
   organizationId?: number,
   projectId?: number | string
@@ -1946,6 +1975,17 @@ export async function getIntelligencePrefix(
   if (!organizationId) return '';
 
   const parsedProjectId = projectId ? parseInt(String(projectId), 10) : null;
+
+  // Serve from cache when fresh. Cache misses populate on the way out.
+  const cacheKey = intelligencePrefixCacheKey(organizationId, parsedProjectId);
+  const cached = intelligencePrefixCache.get(cacheKey);
+  const now = Date.now();
+  if (cached && cached.expiresAt > now) {
+    return cached.value;
+  }
+  if (cached) {
+    intelligencePrefixCache.delete(cacheKey);
+  }
 
   try {
     const [clientCtx, projectCtx, wisdomBlock] = await Promise.all([
@@ -2027,7 +2067,18 @@ ${wisdomLines.join('\n')}
       }
     }
 
-    return parts.join('\n');
+    const assembled = parts.join('\n');
+    // Write through to the TTL cache. Cap size to keep memory bounded in
+    // multi-tenant workloads; evict oldest on overflow.
+    if (intelligencePrefixCache.size >= INTELLIGENCE_PREFIX_CACHE_LIMIT) {
+      const firstKey = intelligencePrefixCache.keys().next().value;
+      if (firstKey) intelligencePrefixCache.delete(firstKey);
+    }
+    intelligencePrefixCache.set(cacheKey, {
+      value: assembled,
+      expiresAt: Date.now() + INTELLIGENCE_PREFIX_TTL_MS,
+    });
+    return assembled;
   } catch (err) {
     console.warn('[IntelligencePrefix] Failed to load intelligence context:', err);
     return '';
