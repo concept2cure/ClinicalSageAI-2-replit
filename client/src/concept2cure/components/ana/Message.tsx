@@ -15,11 +15,15 @@
  *
  * No new tokens or selectors — every style used is already in the bundle.
  */
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { marked, setOptions } from 'marked';
 
 import { I } from './icons';
 import { Composer } from './Composer';
 import styles from './styles.module.css';
+
+// Configure marked once: GitHub-flavoured markdown, no line-break collapsing.
+setOptions({ gfm: true, breaks: false });
 
 export interface ExecutedActionChip {
   label: string;
@@ -75,6 +79,18 @@ export function Message({
 }: MessageProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(text);
+
+  // Render markdown to HTML only once the stream is complete — partial
+  // markdown mid-stream produces broken tags. While streaming, the plain
+  // paragraph split is used instead.
+  const renderedHtml = useMemo(() => {
+    if (role !== 'assistant' || streaming || !text) return undefined;
+    try {
+      return marked.parse(text) as string;
+    } catch {
+      return undefined;
+    }
+  }, [role, text, streaming]);
 
   const CopyIco = I.copy;
   const RedoIco = I.redo;
@@ -159,7 +175,10 @@ export function Message({
           )}
         </div>
 
-        {html ? (
+        {renderedHtml ? (
+          /* Completed assistant reply — full markdown rendering */
+          <div className={styles.aiProse} dangerouslySetInnerHTML={{ __html: renderedHtml }} />
+        ) : html ? (
           <div className={styles.aiProse} dangerouslySetInnerHTML={{ __html: html }} />
         ) : streaming && text === '' ? (
           /* Show progress phase label before the first token arrives */
@@ -174,6 +193,7 @@ export function Message({
             </span>
           </div>
         ) : (
+          /* Streaming — plain paragraph split to avoid partial-markdown artifacts */
           <div className={styles.aiProse}>
             {text.split('\n\n').map((p, i) => (
               <p key={i}>{p}</p>

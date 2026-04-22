@@ -278,12 +278,59 @@
 }
 .aiProse p { margin: 0 0 14px; }
 .aiProse ul { padding-left: 20px; margin: 0 0 14px; }
+.aiProse ol { padding-left: 20px; margin: 0 0 14px; }
 .aiProse li { margin-bottom: 6px; }
 .aiProse strong { font-weight: 600; }
+.aiProse em { font-style: italic; }
+.aiProse h1, .aiProse h2, .aiProse h3, .aiProse h4 {
+  font-family: var(--font-sans, inherit);
+  font-weight: 600; line-height: 1.3;
+  margin: 1.4em 0 0.5em;
+  color: var(--ink, var(--text-100));
+}
+.aiProse h1 { font-size: 1.35em; }
+.aiProse h2 { font-size: 1.2em; }
+.aiProse h3 { font-size: 1.05em; }
+.aiProse h4 { font-size: 0.95em; letter-spacing: 0.02em; text-transform: uppercase; }
+.aiProse blockquote {
+  border-left: 3px solid var(--accent-main-100, #6366f1);
+  margin: 0 0 14px; padding: 8px 16px;
+  background: var(--bg-100, rgba(0,0,0,0.03));
+  border-radius: 0 6px 6px 0;
+  color: var(--ink-body, var(--text-200));
+}
+.aiProse blockquote p { margin-bottom: 0; }
+.aiProse hr {
+  border: none; border-top: 1px solid var(--border-light, var(--bg-200));
+  margin: 20px 0;
+}
+.aiProse a { color: var(--accent-main-100); text-decoration: underline; }
+.aiProse a:hover { opacity: 0.8; }
+.aiProse pre {
+  background: var(--bg-100); border-radius: 10px;
+  padding: 14px 18px; margin: 0 0 14px; overflow-x: auto;
+}
+.aiProse pre code {
+  font-family: var(--font-mono); font-size: 13px;
+  background: transparent; padding: 0; border-radius: 0;
+  color: var(--ink, var(--text-100));
+}
 .aiProse code {
   font-family: var(--font-mono); font-size: 13px;
   background: var(--muted); padding: 1px 6px; border-radius: 4px;
   color: var(--ink, var(--text-100));
+}
+.aiProse table {
+  width: 100%; border-collapse: collapse; margin: 0 0 14px;
+  font-size: 14px;
+}
+.aiProse th, .aiProse td {
+  padding: 8px 12px; text-align: left;
+  border-bottom: 1px solid var(--border-light, var(--bg-200));
+}
+.aiProse th {
+  font-weight: 600; font-family: var(--font-sans, inherit);
+  background: var(--bg-100);
 }
 .aiActions {
   display: flex; gap: 2px; margin-top: 8px;
