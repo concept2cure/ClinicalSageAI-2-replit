@@ -21,6 +21,7 @@ import React, { useEffect, lazy, Suspense } from 'react';
 import { Switch, Route, useLocation, useRoute, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZenLogin, ZenSignup, ZenAuthLayout } from '../auth';
+import { ClaudeLogin } from '../components/claude-auth';
 import { ZenApp } from '../ZenApp';
 import { ProjectProvider } from '../context/ProjectContext';
 import ProofCertificatePage from '../pages/ProofCertificatePage';
@@ -245,12 +246,12 @@ export const ZenRouter: React.FC = () => {
             )}
           </Route>
 
-          {/* Login page */}
+          {/* Login page — restyled per Claude Design home aesthetic. */}
           <Route path="/concept2cure/login">
             {() => (
               <PageTransition>
                 <AuthRoute>
-                  <ZenLogin />
+                  <ClaudeLogin />
                 </AuthRoute>
               </PageTransition>
             )}
@@ -291,12 +292,13 @@ export const ZenRouter: React.FC = () => {
           {/* Alias: /billing redirects to /concept2cure/billing */}
           <Route path="/billing">{() => <Redirect to="/concept2cure/billing" />}</Route>
 
-          {/* Password reset (linked from email) */}
+          {/* Password reset (linked from email) — same restyled component
+              picks up the ?token= param and switches to the reset view. */}
           <Route path="/concept2cure/password-reset">
             {() => (
               <PageTransition>
                 <AuthRoute>
-                  <ZenLogin />
+                  <ClaudeLogin />
                 </AuthRoute>
               </PageTransition>
             )}

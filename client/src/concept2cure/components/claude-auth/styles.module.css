@@ -1,0 +1,385 @@
+/* ════════════════════════════════════════════════════════════
+   Claude Auth — visual layer for ZenLogin's behaviors.
+   Tokens come from client/src/concept2cure/design/claude-design.css.
+   Bundle-local --border override lifted from ui_kits/home/styles.css.
+   This is implementer-built (no auth kit shipped yet by Claude Design);
+   tokens, fonts, and motion match the home surface verbatim.
+   ════════════════════════════════════════════════════════════ */
+
+.page {
+  /* Bundle-local override matching ui_kits/home/styles.css. */
+  --border: #e3e1d7;
+
+  min-height: 100vh;
+  width: 100%;
+  background: var(--bg-000);
+  color: var(--text-100);
+  font-family: var(--font-sans);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.page :global(button:focus-visible),
+.page :global(input:focus-visible) {
+  outline: 2px solid var(--accent-main-100);
+  outline-offset: 2px;
+  border-radius: var(--radius-md, 6px);
+}
+
+.column {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* ─── Brand strip ─── */
+.brand {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-bottom: 32px;
+}
+.brandIcon { width: 28px; height: 28px; border-radius: 5px; }
+.brandText {
+  font-size: 14px; font-weight: 600; color: var(--text-100);
+  letter-spacing: -0.01em;
+}
+.brandText span { color: var(--accent-main-100); font-weight: 600; }
+
+/* ─── Card ─── */
+.card {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl, 16px);
+  box-shadow: var(--shadow-xs);
+  padding: 32px 32px 28px;
+  position: relative;
+}
+
+.star {
+  display: block;
+  text-align: center;
+  color: var(--accent-main-100);
+  font-size: 18px;
+  margin-bottom: 12px;
+  animation: chAuthStarPulse 4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .star { animation: none; }
+}
+@keyframes chAuthStarPulse {
+  0%, 100% { opacity: 0.7; transform: rotate(0deg); }
+  50% { opacity: 1; transform: rotate(180deg); }
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: var(--text-100);
+  margin: 0 0 6px;
+  text-align: center;
+}
+.subtitle {
+  font-size: 13px;
+  color: var(--text-400);
+  line-height: 1.5;
+  text-align: center;
+  margin: 0 0 24px;
+}
+
+/* ─── Alert ─── */
+.alert {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-md, 6px);
+  background: var(--error-muted);
+  border: 1px solid color-mix(in oklab, var(--error) 25%, transparent);
+  color: var(--error);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.alert svg { flex: 0 0 auto; margin-top: 1px; }
+
+/* ─── Form fields ─── */
+.form {
+  display: flex; flex-direction: column;
+  gap: 16px;
+}
+.field { display: flex; flex-direction: column; gap: 6px; }
+.fieldLabelRow {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px;
+}
+.label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-200);
+}
+.input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 8px);
+  color: var(--text-100);
+  font-family: inherit;
+  font-size: 14px;
+  outline: 0;
+  transition: border-color var(--dur-normal, 200ms) var(--ease, cubic-bezier(0.4, 0, 0.2, 1)),
+              box-shadow var(--dur-normal, 200ms) var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+}
+.input::placeholder { color: var(--text-400); }
+.input:hover { border-color: var(--border-strong); }
+.input:focus {
+  border-color: var(--accent-main-100);
+  box-shadow: 0 0 0 3px var(--accent-main-000);
+}
+.inputCode {
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+.inputWithIcon {
+  position: relative;
+}
+.inputWithIcon .input { padding-left: 36px; }
+.inputIcon {
+  position: absolute;
+  left: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--text-400);
+  pointer-events: none;
+}
+
+/* ─── Show / hide password toggle ─── */
+.toggle {
+  font-size: 11px;
+  color: var(--text-400);
+  background: none; border: 0; cursor: pointer; padding: 0;
+  font-family: inherit;
+  transition: color var(--dur-normal) var(--ease);
+}
+.toggle:hover { color: var(--text-200); }
+
+/* ─── Row (e.g. remember me + forgot password) ─── */
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+.remember {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: var(--text-300);
+  cursor: pointer;
+  user-select: none;
+}
+.checkbox {
+  appearance: none;
+  width: 14px; height: 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  background: #ffffff;
+  cursor: pointer;
+  display: grid; place-items: center;
+  transition: background var(--dur-normal) var(--ease), border-color var(--dur-normal) var(--ease);
+}
+.checkbox:checked {
+  background: var(--accent-main-100);
+  border-color: var(--accent-main-100);
+}
+.checkbox:checked::after {
+  content: "";
+  width: 8px; height: 4px;
+  border: 1.5px solid #ffffff;
+  border-top: 0;
+  border-right: 0;
+  transform: rotate(-45deg) translateY(-1px);
+}
+
+.ghost {
+  background: none; border: 0; cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-400);
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: background var(--dur-normal) var(--ease), color var(--dur-normal) var(--ease);
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.ghost:hover { background: var(--bg-100); color: var(--text-100); }
+
+/* ─── Primary button ─── */
+.primary {
+  width: 100%;
+  height: 40px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--accent-main-100);
+  color: #ffffff;
+  border: 0;
+  border-radius: var(--radius-lg, 8px);
+  font-family: inherit;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background var(--dur-normal) var(--ease), opacity var(--dur-normal) var(--ease);
+}
+.primary:hover { background: var(--accent-main-200); }
+.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.spin {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: chAuthSpin 0.7s linear infinite;
+}
+@keyframes chAuthSpin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spin { animation-duration: 1.5s; }
+}
+
+/* ─── Secondary / outline button (for "Return" actions) ─── */
+.secondary {
+  width: 100%;
+  height: 40px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: #ffffff;
+  color: var(--text-200);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 8px);
+  font-family: inherit;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  transition: background var(--dur-normal) var(--ease), border-color var(--dur-normal) var(--ease);
+}
+.secondary:hover { background: var(--bg-050); border-color: var(--border-strong); color: var(--text-100); }
+
+/* ─── Dev-only demo button ─── */
+.demo {
+  width: 100%;
+  height: 38px;
+  margin-top: 16px;
+  background: var(--bg-050);
+  color: var(--text-300);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg, 8px);
+  font-family: inherit;
+  font-size: 12px; font-weight: 500;
+  cursor: pointer;
+  transition: background var(--dur-normal) var(--ease), color var(--dur-normal) var(--ease);
+}
+.demo:hover { background: var(--bg-100); color: var(--text-100); }
+.demoDivider {
+  border-top: 1px solid var(--border);
+  margin-top: 20px;
+  padding-top: 4px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-400);
+}
+
+/* ─── MFA 6-digit input ─── */
+.mfaInputs {
+  display: flex; justify-content: center; gap: 8px;
+}
+.mfaDigit {
+  width: 40px; height: 44px;
+  text-align: center;
+  font-size: 16px;
+  font-family: var(--font-mono);
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 8px);
+  color: var(--text-100);
+  outline: 0;
+  transition: border-color var(--dur-normal) var(--ease), box-shadow var(--dur-normal) var(--ease);
+}
+.mfaDigit:focus {
+  border-color: var(--accent-main-100);
+  box-shadow: 0 0 0 3px var(--accent-main-000);
+}
+
+/* ─── MFA method chip row ─── */
+.methodRow {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-bottom: 8px;
+  justify-content: center;
+}
+.methodChip {
+  display: inline-flex; align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--bg-100);
+  border: 1px solid var(--border);
+  color: var(--text-300);
+  font-family: inherit;
+  font-size: 11.5px; font-weight: 500;
+  cursor: pointer;
+  transition: background var(--dur-normal) var(--ease), color var(--dur-normal) var(--ease);
+}
+.methodChip:hover { background: var(--bg-200); color: var(--text-200); }
+.methodChip[data-on="true"] {
+  background: var(--accent-main-000);
+  border-color: var(--accent-muted);
+  color: var(--accent-main-200);
+}
+
+/* ─── Footer row beneath card ─── */
+.footerRow {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 24px;
+  font-size: 12px;
+  color: var(--text-400);
+}
+.footerRow a, .footerRow .link {
+  background: none; border: 0; cursor: pointer; padding: 0;
+  font-family: inherit; font-size: 12px;
+  color: var(--text-200);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--dur-normal) var(--ease);
+}
+.footerRow a:hover, .footerRow .link:hover { color: var(--accent-main-100); }
+
+/* ─── Trust strip — agency word marks ─── */
+.trust {
+  margin-top: 28px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-400);
+}
+.trust span + span { margin-left: 14px; }
+
+/* ─── Success state ─── */
+.successIcon {
+  width: 40px; height: 40px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  background: var(--success-muted);
+  color: var(--success);
+  display: grid; place-items: center;
+}
+
+/* ─── Resend countdown / hint text ─── */
+.hint {
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--text-400);
+  margin-top: 4px;
+}
