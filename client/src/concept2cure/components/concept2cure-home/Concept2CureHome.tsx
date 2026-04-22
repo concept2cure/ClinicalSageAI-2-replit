@@ -22,6 +22,7 @@ import {
 } from './data';
 import { AnaCard } from './AnaCard';
 import { CommandPalette, type PaletteItem } from './CommandPalette';
+import { useHomeData } from './useHomeData';
 import brandIcon from '../../../assets/concept2cure-icon.svg';
 import styles from './styles.module.css';
 
@@ -284,7 +285,14 @@ function GreetAndCompose({
 }
 
 /* ─── Dashboard ─── */
-function Dashboard() {
+function Dashboard({ projectCount, artifactTotal }: { projectCount: number | null; artifactTotal: number | null }) {
+  // Overlay real counts on top of the static demo metrics where we have them.
+  const cards = DASH.map(d => {
+    if (d.label === 'Active projects' && projectCount !== null) {
+      return { ...d, metric: String(projectCount), meta: `${projectCount} project${projectCount !== 1 ? 's' : ''} in this workspace` };
+    }
+    return d;
+  });
   return (
     <>
       <div className={styles.secHdr}>
@@ -294,7 +302,7 @@ function Dashboard() {
         </button>
       </div>
       <div className={styles.dash}>
-        {DASH.map((d, i) => (
+        {cards.map((d, i) => (
           <button type="button" key={i} className={styles.dashCard}>
             <div className={styles.dashLabel}>{d.label}</div>
             <div className={styles.dashMetric}>
@@ -367,7 +375,20 @@ function Launcher({
 }
 
 /* ─── Recents ─── */
-function Recents() {
+function Recents({ threads }: { threads: Array<{ id: string; title: string; updatedAt: string }> }) {
+  // Use real threads when available, otherwise fall back to static demo data.
+  const showReal = threads.length > 0;
+
+  function relTime(iso: string): string {
+    const diff = Date.now() - new Date(iso).getTime();
+    const m = Math.floor(diff / 60_000);
+    if (m < 2) return 'just now';
+    if (m < 60) return `${m} min ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
+  }
+
   return (
     <>
       <div className={styles.secHdr}>
@@ -377,18 +398,32 @@ function Recents() {
         </button>
       </div>
       <div className={styles.recents}>
-        {RECENTS.map((r, i) => (
-          <button type="button" key={i} className={styles.recentRow}>
-            <span className={styles.rIco}><HomeIcon name={r.icon} size={14} /></span>
-            <span className={styles.rTtl}>
-              <span className={styles.rMod}>{r.mod}</span>{r.ttl}
-            </span>
-            <span className={`${styles.pill} ${styles[r.pill.kind]}`}>
-              <span className={styles.pd} />{r.pill.label}
-            </span>
-            <span className={styles.rWhen}>{r.when}</span>
-          </button>
-        ))}
+        {showReal
+          ? threads.map(t => (
+              <button type="button" key={t.id} className={styles.recentRow}>
+                <span className={styles.rIco}><HomeIcon name="chat" size={14} /></span>
+                <span className={styles.rTtl}>
+                  <span className={styles.rMod}>AnA · </span>
+                  {t.title.length > 60 ? t.title.slice(0, 60) + '…' : t.title}
+                </span>
+                <span className={`${styles.pill} ${styles.info}`}>
+                  <span className={styles.pd} />Chat
+                </span>
+                <span className={styles.rWhen}>{relTime(t.updatedAt)}</span>
+              </button>
+            ))
+          : RECENTS.map((r, i) => (
+              <button type="button" key={i} className={styles.recentRow}>
+                <span className={styles.rIco}><HomeIcon name={r.icon} size={14} /></span>
+                <span className={styles.rTtl}>
+                  <span className={styles.rMod}>{r.mod}</span>{r.ttl}
+                </span>
+                <span className={`${styles.pill} ${styles[r.pill.kind]}`}>
+                  <span className={styles.pd} />{r.pill.label}
+                </span>
+                <span className={styles.rWhen}>{r.when}</span>
+              </button>
+            ))}
       </div>
     </>
   );
@@ -410,6 +445,8 @@ export function Concept2CureHome({
   const [collapsed, setCollapsed] = useState(false);
   const [scope, setScope] = useState<Scope>('all');
   const [paletteOpen, setPaletteOpen] = useState(false);
+
+  const { metrics, recentThreads } = useHomeData();
 
   // Rail + palette + module-card click handler. Calls the host's onNavigate
   // first so ZenApp can route to a real LayoutMode; the local active-nav
@@ -458,11 +495,11 @@ export function Concept2CureHome({
           <div className={styles.pageInner}>
             <GreetAndCompose userName={resolvedUser.name} onLaunchChat={onLaunchChat} />
             <AnaCard scope={scope} onOpenPalette={() => setPaletteOpen(true)} />
-            <Dashboard />
+            <Dashboard projectCount={metrics.projectCount} artifactTotal={metrics.artifactTotal} />
             <div style={{ height: 24 }} />
             <Launcher activeNav={activeNav} setActiveNav={handleSelectNav} />
             <div style={{ height: 24 }} />
-            <Recents />
+            <Recents threads={recentThreads} />
           </div>
         </div>
       </main>
