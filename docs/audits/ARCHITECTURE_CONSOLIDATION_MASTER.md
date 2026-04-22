@@ -2,7 +2,7 @@
 
 **Branch:** `concept2cure-v2` (per CLAUDE.md; harness-directed `claude/architecture-consolidation-c2c-v2-ZxSbD` is overridden)
 **Start date:** 2026-04-22
-**Status:** Phase 1 complete.
+**Status:** Phases 1–4 complete.
 
 ## Purpose
 
@@ -33,7 +33,7 @@ doc links them and records the non-negotiables that apply across all phases.
 | 1 | Composition root split (`server/index.ts`) | ✅ Complete | [PHASE_1_BOOTSTRAP_REPORT.md](PHASE_1_BOOTSTRAP_REPORT.md) |
 | 2 | Converge retrieval to one active path | ✅ Complete | [PHASE_2_RETRIEVAL_REPORT.md](PHASE_2_RETRIEVAL_REPORT.md) · truth table: [RETRIEVAL_ENTRYPOINTS.md](RETRIEVAL_ENTRYPOINTS.md) |
 | 3 | Separate DB runtime from DB bootstrap/install | ✅ Complete | [PHASE_3_DB_BOOTSTRAP_REPORT.md](PHASE_3_DB_BOOTSTRAP_REPORT.md) |
-| 4 | Decompose chat route | ⏳ Pending | _not yet written_ |
+| 4 | Decompose chat route | ✅ Complete | [PHASE_4_CHAT_ROUTE_REPORT.md](PHASE_4_CHAT_ROUTE_REPORT.md) |
 | 5 | Decompose `ProjectWorkspaceShell.tsx` | ⏳ Pending | _not yet written_ |
 | 6 | Route ownership normalization | ⏳ Pending | _not yet written_ |
 | 7 | Tests + truth tables to prevent regression | ⏳ Pending | _not yet written_ |

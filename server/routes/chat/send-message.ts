@@ -1,0 +1,853 @@
+/**
+ * Send-message handler — the 9-step provenance-tracked RAG pipeline.
+ *
+ * Steps: RESOLVE_ORG → THREAD → USER_MSG → RETRIEVE → PROMPT → GENERATE →
+ * PERSIST → CLAIMS → CITATIONS.
+ *
+ * Extracted from the monolithic server/routes/chat.ts as part of Phase 4
+ * architecture consolidation. Behavior is byte-for-byte preserved.
+ *
+ * @module server/routes/chat/send-message
+ */
+
+import type { Request, Response } from 'express';
+import { pool } from '../../db.js';
+import {
+  getOrCreateThread,
+  getThreadMessages,
+  saveChatMessage as saveMessage,
+} from '../../services/chat-thread-helpers.js';
+import { getEmbeddingService } from '../../services/enhancedEmbeddingService.js';
+import { getIntelligencePrefix } from '../../services/lumen-context-builder.js';
+import { processResponseActions } from '../../services/ana-guidance-executor.js';
+import { logKernelDecision } from '../../services/kernel-decision-record.js';
+import { planKernelExecution } from '../../services/kernel-router.js';
+import {
+  getKernelPolicyHint,
+  recordKernelPolicyOutcome,
+} from '../../services/kernel-adaptive-policy.js';
+import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
+import { ALL_CLAUDE_TOOLS } from '../../services/claude/ClaudeToolDefinitions.js';
+import { executeAgenticLoop } from '../../services/claude/ClaudeToolExecutor.js';
+import type { ClaudeEnhancedResponse } from '../../services/ai-gateway/types.js';
+import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
+import { orchestrate } from '../../services/ana-ri/orchestrator.js';
+import { ensureGateway, normalizeBody } from './shared.js';
+import { sha256, stableStringify } from './provenance.js';
+import { verifyClaim, type VerifierFlag } from './verifier.js';
+
+// ── Retrieval + generation tuning (externalized for runtime changes) ────────
+const RETRIEVAL_TOP_K = parseInt(process.env.ANA_RETRIEVAL_TOP_K ?? '5', 10);
+const RETRIEVAL_THRESHOLD = parseFloat(process.env.ANA_RETRIEVAL_THRESHOLD ?? '0.7');
+const GENERATION_MAX_TOKENS = parseInt(process.env.ANA_GENERATION_MAX_TOKENS ?? '4096', 10);
+
+/**
+ * POST /api/chat/send-message  (and POST /api/chat via root alias)
+ * Main chat endpoint — 9-step provenance-tracked RAG pipeline.
+ */
+export const sendMessageHandler = async (req: Request, res: Response) => {
+  normalizeBody(req);
+  try {
+    const { message, thread_id, file_id, system_prompt, project_id, preferred_provider } = req.body;
+
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({
+        error: 'Message is required',
+        code: 'INVALID_MESSAGE',
+      });
+    }
+
+    // ── STEP 1: RESOLVE ORG (from session only — no header fallback for org) ──
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    const rawUserId = (req as any).userId || (req as any).user?.id;
+    const userId: number | string = rawUserId ?? 'anonymous';
+    const numericOrgId = orgId ? (typeof orgId === 'string' ? Number(orgId) : orgId) : null;
+    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) || 0 : userId;
+
+    // ── STEP 2: CREATE / VALIDATE THREAD ─────────────────────────────────────────
+    const requestedThreadId = Array.isArray(thread_id) ? thread_id[0] : thread_id;
+    const threadId = await getOrCreateThread(requestedThreadId ?? null, (req as any).user?.id);
+
+    // Fix B: Enforce thread ownership — if thread_id was supplied, verify org match
+    if (requestedThreadId && numericOrgId) {
+      try {
+        const ownerCheck = await pool.query(
+          `SELECT organization_id FROM ai_threads WHERE id = $1`,
+          [threadId]
+        );
+        if (ownerCheck.rows.length > 0) {
+          const threadOrg = Number(ownerCheck.rows[0].organization_id);
+          if (threadOrg !== numericOrgId) {
+            return res.status(403).json({
+              error: 'Thread does not belong to this organization',
+              code: 'THREAD_ORG_MISMATCH',
+            });
+          }
+        }
+      } catch (e: any) {
+        // ai_threads table might not exist yet — skip check
+        if (e?.code !== '42P01') console.warn('[AnA] Thread ownership check failed:', e.message);
+      }
+    }
+
+    // Upsert provenance thread (org-scoped)
+    if (numericOrgId) {
+      try {
+        await pool.query(
+          `INSERT INTO ai_threads (id, organization_id, project_id, created_by)
+           VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
+          [threadId, numericOrgId, project_id || null, userId]
+        );
+      } catch (e: any) {
+        if (e?.code !== '42P01') throw e;
+        console.warn('[AnA] ai_threads table missing — provenance disabled');
+      }
+    }
+
+    const previousMessages = await getThreadMessages(threadId);
+
+    // ── STEP 3: PERSIST USER MESSAGE (provenance chain) ─────────────────
+    if (numericOrgId) {
+      try {
+        await pool.query(
+          `INSERT INTO ai_messages (thread_id, role, content) VALUES ($1, 'user', $2)`,
+          [threadId, message]
+        );
+        // Update thread activity timestamp for sort ordering
+        await pool
+          .query(`UPDATE ai_threads SET updated_at = NOW() WHERE id = $1`, [threadId])
+          .catch(() => {}); // Non-blocking
+      } catch (e: any) {
+        if (e?.code !== '42P01') console.warn('[AnA] ai_messages insert failed:', e.message);
+      }
+    }
+
+    // ── STEP 3a: AUTO-GENERATE THREAD TITLE FROM FIRST MESSAGE ──────────
+    if (previousMessages.length === 0 && message) {
+      try {
+        // Generate a concise title from the first message (no AI call needed)
+        const rawTitle = message.replace(/^\/\w+\s*/, '').trim(); // Strip slash commands
+        const title =
+          rawTitle.length > 60
+            ? rawTitle.slice(0, 57).replace(/\s+\S*$/, '') + '...'
+            : rawTitle || 'New conversation';
+        await pool.query(`UPDATE ai_threads SET title = $1, updated_at = NOW() WHERE id = $2`, [
+          title,
+          threadId,
+        ]);
+      } catch (e: any) {
+        // Non-blocking — title generation failure doesn't break chat
+        if (e?.code !== '42P01') console.warn('[AnA] Thread title update failed:', e.message);
+      }
+    }
+
+    const normalizedProjectId = project_id
+      ? String(project_id).replace(/^proj_/, '')
+      : undefined;
+
+    // ── STEP 4: RETRIEVE (org-scoped + project-scoped when available) ───
+    let sources: Array<{ id: string; title: string; content: string; score: number }> = [];
+    let confidence: number | null = null;
+    let retrievalRunId: string | null = null;
+    let snapshotHashSha256: string | null = null;
+    const chunkRows: Array<{ id: string; rank: number; atomId: string; score: number }> = [];
+    const orgUuid =
+      (req as any).tenantContext?.organizationUuid ||
+      (req.headers['x-org-uuid'] as string | undefined);
+
+    try {
+      const embeddingService = getEmbeddingService(pool);
+      // Bail early if org UUID is provided but clearly invalid
+      if (orgUuid && !/^[0-9a-f-]{36}$/i.test(orgUuid)) {
+        console.warn('[AnA] Invalid org UUID, skipping retrieval');
+      } else {
+        const searchResults = await embeddingService.searchHybrid(
+          message,
+          RETRIEVAL_TOP_K,
+          RETRIEVAL_THRESHOLD,
+          orgUuid,
+          normalizedProjectId
+        );
+        sources = searchResults.map(r => ({
+          id: r.id,
+          title: r.title,
+          content: r.content.length > 500 ? r.content.substring(0, 500) + '…' : r.content,
+          score: r.score,
+        }));
+        if (sources.length > 0) {
+          confidence = Math.min(1, sources.reduce((sum, s) => sum + s.score, 0) / sources.length);
+        }
+
+        // Persist retrieval run + chunks (provenance chain)
+        if (numericOrgId) {
+          try {
+            const queryHash = sha256(message);
+            // Fix C: Snapshot hash includes sourceType + sourceRefId, sorted by rank
+            const snapshotData = sources.map((s, i) => ({
+              rank: i + 1,
+              sourceType: 'atom' as const,
+              sourceRefId: s.id,
+              score: s.score,
+            }));
+            snapshotHashSha256 = sha256(stableStringify(snapshotData));
+
+            const rrResult = await pool.query(
+              `INSERT INTO ai_retrieval_runs
+                 (organization_id, project_id, user_id, scope, embedding_model,
+                  query_text, query_hash_sha256, snapshot_hash_sha256, top_k, threshold, result_count)
+               VALUES ($1, $2, $3, $4, 'text-embedding-3-small', $5, $6, $7, $8, $9, $10)
+               RETURNING id`,
+              [
+                numericOrgId,
+                project_id || null,
+                numericUserId,
+                orgUuid ? 'org' : 'global',
+                message,
+                queryHash,
+                snapshotHashSha256,
+                RETRIEVAL_TOP_K,
+                RETRIEVAL_THRESHOLD,
+                sources.length,
+              ]
+            );
+            retrievalRunId = rrResult.rows[0].id;
+
+            for (let i = 0; i < sources.length; i++) {
+              const s = sources[i];
+              const excerptHash = sha256(s.content);
+              const crResult = await pool.query(
+                `INSERT INTO ai_retrieval_chunks
+                   (retrieval_run_id, rank, source_type, atom_id, title,
+                    excerpt_hash_sha256, excerpt_preview, score)
+                 VALUES ($1, $2, 'atom', $3, $4, $5, $6, $7)
+                 RETURNING id`,
+                [
+                  retrievalRunId,
+                  i + 1,
+                  s.id,
+                  s.title,
+                  excerptHash,
+                  s.content.substring(0, 500),
+                  s.score,
+                ]
+              );
+              chunkRows.push({
+                id: crResult.rows[0].id,
+                rank: i + 1,
+                atomId: s.id,
+                score: s.score,
+              });
+            }
+          } catch (e: any) {
+            if (e?.code !== '42P01') console.warn('[AnA] Retrieval persist failed:', e.message);
+          }
+        }
+      }
+    } catch (srcErr: any) {
+      // Non-fatal — chat still works, just without grounded evidence
+      console.warn('[AnA] Source retrieval failed:', srcErr.message);
+    }
+
+    // ── STEP 5: BUILD EVIDENCE-GROUNDED PROMPT ─────────────────────────
+    // If we have retrieved evidence, inject it into the system prompt so
+    // the model can ground its answer and cite by [SRC-n] reference.
+    let evidenceBlock = '';
+    let memoryAtomCount = 0;
+    let memoryBlockChars = 0;
+    let memoryDiagnostics: Record<string, unknown> | null = null;
+    if (sources.length > 0) {
+      evidenceBlock =
+        '\n\n--- RETRIEVED EVIDENCE (cite as [SRC-n]) ---\n' +
+        sources.map((s, i) => `[SRC-${i + 1}] "${s.title}"\n${s.content}`).join('\n\n') +
+        '\n--- END EVIDENCE ---\n\n' +
+        'When your answer relies on information from the evidence above, cite it inline using [SRC-n]. ' +
+        'If the evidence does not contain relevant information, answer from your training knowledge and state that no knowledge-base sources were found.';
+    }
+
+    let assistantMessage: string;
+    let model: string;
+    let provider = '';
+    let usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+    let latencyMs: number | null = null;
+
+    // ── STEP 6: GENERATE (no silent demo fallback) ─────────────────────
+    const gw = ensureGateway();
+    if (!gw || gw.getEnabledProviders().length === 0) {
+      return res.status(503).json({
+        error: 'No AI providers available. Configure ANTHROPIC_API_KEY or OPENAI_API_KEY.',
+        code: 'AI_PROVIDER_UNAVAILABLE',
+      });
+    }
+
+    try {
+      // Inject client/project intelligence so AnA reads SKILL/.MD context
+      const intelligencePrefix = await getIntelligencePrefix(
+        numericOrgId ?? undefined,
+        project_id
+      ).catch(() => '');
+
+      // Build conversation history for orchestrator continuity analysis
+      const conversationHistory = previousMessages
+        .filter((m: any) => m.role === 'user' || m.role === 'assistant')
+        .map((m: any) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+
+      // Pre-fetch decision context for AnA explanation grounding (non-blocking)
+      let decisionContext: any[] = [];
+      if (project_id) {
+        try {
+          const { decisionLifecycleService } =
+            await import('../../services/decision-lifecycle-service.js');
+          decisionContext = decisionLifecycleService.getDecisionContext(String(project_id), {
+            limit: 5,
+          });
+        } catch {
+          /* non-blocking */
+        }
+      }
+
+      // Run the orchestrator for intent detection, deficiency context, and continuity
+      const orchestratorResult = orchestrate({
+        message,
+        conversationHistory,
+        authoringContext: project_id
+          ? {
+              projectId: String(project_id),
+              _decisionContext: decisionContext,
+            }
+          : undefined,
+      });
+
+      console.log(
+        `[AnA] Orchestrator: intent=${orchestratorResult.detectedIntent.lens}, ` +
+          `submission=${orchestratorResult.detectedSubmissionType || 'none'}, ` +
+          `deficiency=${orchestratorResult.orchestrationMeta.deficiencyContextInjected}`
+      );
+
+      // Use the orchestrator's enriched system prompt instead of the basic one
+      const basePrompt = system_prompt || orchestratorResult.systemPrompt;
+
+      const { memoryBlock, atoms, diagnostics } = await buildMemoryContextForChat({
+        threadId,
+        organizationId: numericOrgId || undefined,
+        projectId: project_id || undefined,
+        query: message,
+        limitPerLayer: 4,
+        maxChars: 3500,
+      });
+      memoryAtomCount = atoms.length;
+      memoryBlockChars = memoryBlock.length;
+      memoryDiagnostics = diagnostics;
+
+      // ── IND Context Injection ──────────────────────────────────────────────────
+      // When the project is an IND submission, inject the complete CTD structure
+      // so AnA knows every section needed and can guide the user through it.
+      let indContextBlock = '';
+      const detectedType = (orchestratorResult.detectedSubmissionType || '').toUpperCase();
+      const contextType = (req.body.context?.productType || '').toUpperCase();
+      if (detectedType === 'IND' || contextType === 'IND' || contextType === 'NDA' || contextType === 'BLA') {
+        try {
+          const { IND_SECTIONS, getModuleStatus } = await import('../../services/ind/ind-section-registry.js');
+          const sectionList = IND_SECTIONS.map(s =>
+            `- ${s.code} ${s.title} (Module ${s.module}, ${s.required ? 'required' : 'optional'}) — ${s.guidance}`
+          ).join('\n');
+          // Include project context for generation prompts
+          const projectContext = req.body.context || {};
+          const projectCtx = [
+            projectContext.activeProject ? `Project: ${projectContext.activeProject}` : '',
+            projectContext.productType ? `Submission type: ${projectContext.productType}` : '',
+            projectContext.projectId ? `Project ID: ${projectContext.projectId}` : '',
+          ].filter(Boolean).join('\n');
+
+          indContextBlock = `\n\n## IND Submission Context\nThis is an IND (Investigational New Drug) project. You have AnA tools to generate any CTD section.\n${projectCtx}\n\nComplete IND structure (19 sections across 5 modules):\n${sectionList}\n\nWhen the user asks to draft or generate a section:\n1. Use ind_generate_section tool with the section code and project context\n2. The tool will generate regulatory-quality content and save it as a governed artifact\n3. Show the user a summary of what was generated\n\nUse ind_get_status to check which sections are done and which need work.\nGuide the user through the submission systematically — Module 1 first, then 2-5.\n`;
+        } catch {
+          // IND registry not available — skip
+        }
+      }
+
+      // ── Device Context Injection ────────────────────────────────────────────────
+      let deviceContextBlock = '';
+      const deviceTypes = ['510K', 'PMA', 'DE_NOVO', 'CER', 'IVDR'];
+      if (deviceTypes.includes(detectedType) || deviceTypes.includes(contextType)) {
+        try {
+          const { getDeviceSections } = await import('../../services/device/device-section-registry.js');
+          const deviceType = (deviceTypes.includes(contextType) ? contextType : detectedType) as '510K' | 'PMA' | 'DE_NOVO' | 'CER';
+          const sections = getDeviceSections(deviceType);
+          if (sections.length > 0) {
+            const sectionList = sections.map(s =>
+              `- ${s.code} ${s.title} (${s.required ? 'required' : 'optional'}) — ${s.guidance}`
+            ).join('\n');
+            const projectContext = req.body.context || {};
+            deviceContextBlock = `\n\n## ${deviceType} Submission Context\nThis is a ${deviceType} medical device submission project.\n${projectContext.activeProject ? `Project: ${projectContext.activeProject}` : ''}\n\nRequired sections (${sections.filter(s => s.required).length} required, ${sections.length} total):\n${sectionList}\n\nUse the generate_document tool to draft any section. Guide the user through the submission systematically.\n`;
+          }
+        } catch {
+          // Device registry not available
+        }
+      }
+
+      const systemPrompt = intelligencePrefix + basePrompt + indContextBlock + deviceContextBlock + memoryBlock + evidenceBlock;
+
+      const gwMessages = [
+        { role: 'system' as const, content: systemPrompt },
+        ...previousMessages
+          .filter((m: any) => m.role === 'user' || m.role === 'assistant')
+          .map((m: any) => ({
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+          })),
+        { role: 'user' as const, content: message },
+      ];
+
+      console.log(`[AnA] Sending through AI Gateway (${sources.length} sources retrieved)...`);
+      const routingPlan = planKernelExecution({
+        route: '/api/chat',
+        messageLength: message.length,
+        intentLens: orchestratorResult.detectedIntent.lens,
+        intentConfidence: orchestratorResult.detectedIntent.confidence,
+        submissionType: orchestratorResult.detectedSubmissionType,
+        hasEvidence: sources.length > 0,
+        requestedMaxTokens: GENERATION_MAX_TOKENS,
+      });
+      const policyHint = await getKernelPolicyHint({
+        organizationId: numericOrgId ?? null,
+        route: '/api/chat',
+        taskType: routingPlan.taskType,
+      });
+      const selectedStrategy = policyHint?.preferredStrategy || routingPlan.strategy;
+
+      // Validate preferred_provider if provided
+      const VALID_PROVIDERS = ['anthropic', 'openai', 'moonshot'] as const;
+      const validatedChatProvider =
+        preferred_provider && VALID_PROVIDERS.includes(preferred_provider)
+          ? (preferred_provider as (typeof VALID_PROVIDERS)[number])
+          : undefined;
+
+      // ── Agentic tool-use loop: AnA can search, check compliance, generate docs ──
+      const baseRequest = {
+        taskType: routingPlan.taskType,
+        messages: gwMessages,
+        temperature: routingPlan.temperature,
+        maxTokens: routingPlan.maxTokens,
+        callerModule: 'ana-ri-chat' as const,
+        organizationId: numericOrgId ?? undefined,
+        userId: numericUserId,
+        strategy: selectedStrategy,
+        tools: ALL_CLAUDE_TOOLS,
+        toolChoice: 'auto' as const,
+        ...(validatedChatProvider ? { provider: validatedChatProvider } : {}),
+      };
+
+      // Use agentic loop for multi-turn tool execution (max 5 rounds)
+      const gwResponse: ClaudeEnhancedResponse = await executeAgenticLoop(baseRequest, {
+        maxRounds: 5,
+        onToolExecution: (toolName, input, result) => {
+          // Log tool usage for audit trail
+          console.log(`[AnA Tool] ${toolName} called`);
+        },
+      });
+
+      assistantMessage =
+        gwResponse.content ||
+        'I apologize, but I was unable to generate a response. Please try again.';
+      model = `${gwResponse.provider}/${gwResponse.model}`;
+      provider = gwResponse.provider;
+      usage = {
+        prompt_tokens: gwResponse.usage.inputTokens,
+        completion_tokens: gwResponse.usage.outputTokens,
+        total_tokens: gwResponse.usage.totalTokens,
+      };
+      latencyMs = gwResponse.latencyMs;
+
+      console.log(
+        `[AnA] AI Gateway response via ${model} (${latencyMs}ms, req=${gwResponse.requestId})`
+      );
+      void logKernelDecision({
+        requestId: gwResponse.requestId,
+        threadId,
+        route: '/api/chat',
+        organizationId: numericOrgId ?? null,
+        userId: numericUserId,
+        projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id || null,
+        plannerVersion: routingPlan.plannerVersion,
+        orchestratorName: routingPlan.orchestratorName,
+        intentLens: orchestratorResult.detectedIntent.lens,
+        intentConfidence: orchestratorResult.detectedIntent.confidence,
+        submissionType: orchestratorResult.detectedSubmissionType || null,
+        selectedTaskType: routingPlan.taskType,
+        selectedProvider: gwResponse.provider,
+        selectedModel: gwResponse.model,
+        routingStrategy: selectedStrategy,
+        selectedTools: [],
+        constraints: {
+          ...routingPlan.constraints,
+          maxTokens: routingPlan.maxTokens,
+          temperature: routingPlan.temperature,
+          retrievedSources: sources.length,
+        },
+        decisionRationale: routingPlan.decisionRationale,
+        estimatedCostUsd: gwResponse.usage?.estimatedCostUsd ?? null,
+        latencyMs: gwResponse.latencyMs,
+        outcome: 'success',
+      });
+    } catch (gwError: any) {
+      console.error('[AnA] AI Gateway call failed:', gwError.message);
+      void logKernelDecision({
+        requestId: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+        threadId,
+        route: '/api/chat',
+        organizationId: numericOrgId ?? null,
+        userId: numericUserId,
+        projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id || null,
+        orchestratorName: 'kernel-router-v1',
+        selectedTaskType: 'chat',
+        routingStrategy: 'quality_optimized',
+        selectedTools: [],
+        decisionRationale: 'AnA chat failed during AI Gateway call.',
+        outcome: 'failed',
+        errorMessage: gwError?.message || 'AI Gateway call failed',
+      });
+      return res.status(503).json({
+        error: 'AI provider call failed',
+        code: 'AI_PROVIDER_UNAVAILABLE',
+      });
+    }
+
+    // ── STEP 6b: GUIDANCE-TO-ACTION EXECUTION ──────────────────────────
+    // Process AnA's response for action signals and execute governed actions.
+    // Only runs when project context is available (org + project scoped).
+    let executedActions: Array<{
+      actionType: string;
+      executed: boolean;
+      confidence: string;
+      artifactId: string | null;
+      threadId: string | null;
+      error: string | null;
+    }> = [];
+
+    if (numericOrgId && project_id) {
+      try {
+        const actionResult = await processResponseActions(assistantMessage, {
+          projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id,
+          organizationId: numericOrgId,
+          userId: numericUserId,
+          userName: (req as any).user?.name || (req as any).user?.email || 'System',
+          threadId,
+        });
+
+        // Replace message with cleaned text (action blocks stripped)
+        if (actionResult.actions.length > 0) {
+          assistantMessage = actionResult.cleanedText;
+          executedActions = actionResult.actions.map(a => ({
+            actionType: a.actionType,
+            executed: a.executed,
+            confidence: a.confidence,
+            artifactId: a.artifactId,
+            threadId: a.threadId,
+            error: a.error,
+          }));
+        }
+      } catch (actionErr: any) {
+        // Non-fatal — chat still works, actions just don't execute
+        console.warn('[AnA RI] Guidance action processing failed:', actionErr?.message);
+      }
+    }
+
+    // Save to legacy chat_messages for backward compat
+    await saveMessage(threadId, 'user', message, model);
+    await saveMessage(threadId, 'assistant', assistantMessage, model, usage.total_tokens);
+
+    // ── STEP 7: PERSIST GENERATION RUN (provenance chain) ──────────────
+    let generationRunId: string | null = null;
+    if (numericOrgId) {
+      try {
+        const answerHash = sha256(assistantMessage);
+        const genResult = await pool.query(
+          `INSERT INTO ai_generation_runs
+             (retrieval_run_id, thread_id, model, provider, answer_hash_sha256,
+              prompt_tokens, completion_tokens, total_tokens, latency_ms, is_demo)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, false)
+           RETURNING id`,
+          [
+            retrievalRunId,
+            threadId,
+            model,
+            provider,
+            answerHash,
+            usage.prompt_tokens,
+            usage.completion_tokens,
+            usage.total_tokens,
+            latencyMs,
+          ]
+        );
+        generationRunId = genResult.rows[0].id;
+
+        // Persist assistant ai_message with generation linkage
+        await pool.query(
+          `INSERT INTO ai_messages (thread_id, role, content, generation_run_id)
+           VALUES ($1, 'assistant', $2, $3)`,
+          [threadId, assistantMessage, generationRunId]
+        );
+      } catch (e: any) {
+        if (e?.code !== '42P01') console.warn('[AnA] Generation persist failed:', e.message);
+      }
+    }
+
+    // ── STEP 8: CLAIM SPLIT (paragraph-level) ─────────────────────────
+    const claimTexts = assistantMessage
+      .split(/\n\n+/)
+      .map(c => c.trim())
+      .filter(c => c.length > 0);
+
+    interface ClaimResponse {
+      claimId: string | null;
+      claimIndex: number;
+      claimText: string;
+      status: 'SUPPORTED' | 'WEAK' | 'UNSUPPORTED';
+      citations: Array<{ chunkId: string; sourceId: string; title: string; score: number }>;
+      verifierFlags: VerifierFlag[];
+    }
+    const claims: ClaimResponse[] = [];
+
+    // ── STEP 9: CITATION LINKAGE + VERIFIER (per-claim) ───────────────
+    for (let ci = 0; ci < claimTexts.length; ci++) {
+      const claimText = claimTexts[ci];
+      const claimHash = sha256(claimText);
+
+      // Find [SRC-n] refs in this specific claim
+      const claimRefPattern = /\[SRC-(\d+)\]/g;
+      const claimRefs = new Set<number>();
+      let refMatch;
+      while ((refMatch = claimRefPattern.exec(claimText)) !== null) {
+        const idx = parseInt(refMatch[1], 10) - 1;
+        if (idx >= 0 && idx < sources.length) claimRefs.add(idx);
+      }
+
+      // Initial status: SUPPORTED (≥1 citation), UNSUPPORTED (no citations)
+      let status: 'SUPPORTED' | 'WEAK' | 'UNSUPPORTED' =
+        claimRefs.size > 0 ? 'SUPPORTED' : 'UNSUPPORTED';
+
+      let claimId: string | null = null;
+      const citationLinks: ClaimResponse['citations'] = [];
+
+      if (numericOrgId && generationRunId) {
+        try {
+          // Collect citation links first (needed for verifier)
+          for (const refIdx of claimRefs) {
+            const chunk = chunkRows[refIdx];
+            if (chunk) {
+              citationLinks.push({
+                chunkId: chunk.id,
+                sourceId: chunk.atomId,
+                title: sources[refIdx]?.title || '',
+                score: chunk.score,
+              });
+            }
+          }
+
+          // ── STEP 9b: VERIFIER v1 (deterministic) ────────────────────
+          const citScores = citationLinks.map(c => c.score);
+          const citSnippets = Array.from(claimRefs).map(idx => sources[idx]?.content || '');
+          const { flags: verifierFlags, shouldDowngrade } = verifyClaim(
+            claimText,
+            citScores,
+            citSnippets
+          );
+
+          // Downgrade SUPPORTED → WEAK if verifier flags it
+          if (status === 'SUPPORTED' && shouldDowngrade) {
+            status = 'WEAK';
+          }
+
+          // Persist claim with final status + verifier flags
+          const claimResult = await pool.query(
+            `INSERT INTO ai_claims
+               (generation_run_id, claim_index, claim_text, claim_hash_sha256, confidence, status, verifier_flags)
+             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+            [
+              generationRunId,
+              ci,
+              claimText,
+              claimHash,
+              claimRefs.size > 0 ? confidence : null,
+              status,
+              JSON.stringify(verifierFlags),
+            ]
+          );
+          claimId = claimResult.rows[0].id;
+
+          // Persist citation linkages
+          for (const link of citationLinks) {
+            await pool.query(
+              `INSERT INTO ai_claim_citations (claim_id, retrieval_chunk_id, relevance_score)
+               VALUES ($1, $2, $3)`,
+              [claimId, link.chunkId, link.score]
+            );
+          }
+
+          claims.push({
+            claimId,
+            claimIndex: ci,
+            claimText,
+            status,
+            citations: citationLinks,
+            verifierFlags,
+          });
+          continue; // skip fallback below
+        } catch (e: any) {
+          if (e?.code !== '42P01') console.warn('[AnA] Claim persist failed:', e.message);
+        }
+      }
+
+      // Fallback: no org/generation — still run verifier for response
+      const fallbackScores = citationLinks.map(c => c.score);
+      const fallbackSnippets = Array.from(claimRefs).map(idx => sources[idx]?.content || '');
+      const { flags: fallbackFlags, shouldDowngrade: fallbackDown } = verifyClaim(
+        claimText,
+        fallbackScores,
+        fallbackSnippets
+      );
+      if (status === 'SUPPORTED' && fallbackDown) status = 'WEAK';
+
+      claims.push({
+        claimId,
+        claimIndex: ci,
+        claimText,
+        status,
+        citations: citationLinks,
+        verifierFlags: fallbackFlags,
+      });
+    }
+
+    // ── BUILD BACKWARD-COMPAT CITATIONS MAP ────────────────────────────
+    const citedRefs = new Set<number>();
+    const refPattern = /\[SRC-(\d+)\]/g;
+    let match;
+    while ((match = refPattern.exec(assistantMessage)) !== null) {
+      const idx = parseInt(match[1], 10) - 1;
+      if (idx >= 0 && idx < sources.length) citedRefs.add(idx);
+    }
+
+    const citations = sources.map((s, i) => ({
+      id: `SRC-${i + 1}`,
+      sourceAtomId: s.id,
+      sourceType: 'atom' as const, // Rule 5: explicit source type
+      title: s.title,
+      snippet: s.content?.length > 500 ? s.content.substring(0, 500) + '…' : s.content,
+      relevanceScore: s.score,
+      cited: citedRefs.has(i),
+    }));
+
+    // Fix D: coverage metrics
+    const supportedClaims = claims.filter(c => c.status === 'SUPPORTED').length;
+    const citationCoverage = sources.length > 0 ? citedRefs.size / sources.length : 0;
+    const supportedClaimRate = claims.length > 0 ? supportedClaims / claims.length : 0;
+    void recordKernelPolicyOutcome({
+      organizationId: numericOrgId ?? null,
+      route: '/api/chat',
+      taskType: 'chat',
+      strategy: 'quality_optimized',
+      threadId,
+      modelProvider: provider || null,
+      modelName: model || null,
+      qualityScore: supportedClaimRate,
+      latencyMs,
+      estimatedCostUsd: null,
+      success: true,
+      metadata: {
+        citationCoverage,
+        sourcesRetrieved: sources.length,
+        claims: claims.length,
+      },
+    });
+
+    // ── RIM: Intercept for regulatory pattern capture (non-blocking) ──
+    if (numericOrgId) {
+      interceptChatResponse({
+        organizationId: numericOrgId,
+        projectId: parseInt(String(normalizedProjectId || '0'), 10),
+        userId: (req as any).user?.id,
+        sectionCode: (req as any).body?.section_code,
+        assistantMessage,
+        claimCount: claims.length,
+        supportedClaimRate,
+        model,
+        provider,
+      });
+    }
+
+    // ── Data Lineage: record retrieval→generation chain (non-blocking) ──
+    if (numericOrgId && generationRunId && sources.length > 0) {
+      try {
+        const { recordLineageBatch } = await import('../../services/data-lineage-service');
+        const projectIdNum = parseInt(String(normalizedProjectId || '0'), 10);
+        const entries = sources.filter((_s, i) => citedRefs.has(i)).map((s, _i) => ({
+          organizationId: numericOrgId,
+          projectId: projectIdNum || undefined,
+          sourceObjectType: 'retrieval_chunk' as const,
+          sourceObjectId: s.id || `src-${_i}`,
+          sourceTitle: s.title,
+          sourceContent: s.content?.substring(0, 500),
+          targetObjectType: 'generation_run' as const,
+          targetObjectId: String(generationRunId),
+          targetField: threadId,
+          linkageType: 'cited_by' as const,
+          transformationType: 'ai_generation' as const,
+          confidenceScore: (s.score ?? 0) * 100,
+          confidenceBasis: 'ai_inferred' as const,
+          aiModelUsed: model,
+          retrievalRunId: retrievalRunId ? Number(retrievalRunId) : undefined,
+          generationRunId: Number(generationRunId),
+        }));
+        if (entries.length > 0) {
+          recordLineageBatch(entries).catch(() => {});
+        }
+      } catch { /* non-blocking */ }
+    }
+
+    // ── RESPONSE (backward compat + provenance chain) ──────────────────
+    res.json({
+      answer: assistantMessage,
+      response: assistantMessage,
+      thread_id: threadId,
+      usage,
+      model,
+      provider,
+      sources,
+      citations,
+      confidence,
+      retrievalMeta: {
+        retrievedCount: sources.length,
+        citedCount: citedRefs.size,
+        orgScoped: !!orgUuid,
+        citationCoverage,
+        supportedClaimRate,
+        memoryAtomCount,
+        memoryBlockChars,
+        memoryDiagnostics,
+      },
+      // Provenance chain
+      retrievalRunId,
+      snapshotHashSha256,
+      generationRunId,
+      claims,
+      orchestration: {
+        detectedIntent: orchestratorResult.detectedIntent,
+        detectedSubmissionType: orchestratorResult.detectedSubmissionType,
+        appliedRole: orchestratorResult.appliedRole,
+        activeWorkstream: orchestratorResult.activeWorkstream,
+        workstreamHandoff: orchestratorResult.workstreamHandoff,
+        suggestedActions: orchestratorResult.suggestedActions,
+        meta: orchestratorResult.orchestrationMeta,
+      },
+      // AnA 1.0 RI — Executed guidance actions
+      executedActions: executedActions.length > 0 ? executedActions : undefined,
+    });
+  } catch (error: any) {
+    console.error('[AnA] Chat error:', error);
+
+    // Rule 6: no raw error.message leak
+    res.status(500).json({
+      error: 'Failed to process message',
+      code: 'CHAT_ERROR',
+    });
+  }
+};
