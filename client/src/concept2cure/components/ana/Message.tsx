@@ -80,17 +80,18 @@ export function Message({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(text);
 
-  // Render markdown to HTML only once the stream is complete — partial
-  // markdown mid-stream produces broken tags. While streaming, the plain
-  // paragraph split is used instead.
+  // Render markdown to HTML on every text change — marked v17 handles
+  // partial input gracefully (open bold/code/table renders the content it
+  // has). This gives a live "document being drafted" feel rather than
+  // plain paragraph text during streaming.
   const renderedHtml = useMemo(() => {
-    if (role !== 'assistant' || streaming || !text) return undefined;
+    if (role !== 'assistant' || !text) return undefined;
     try {
       return marked.parse(text) as string;
     } catch {
       return undefined;
     }
-  }, [role, text, streaming]);
+  }, [role, text]);
 
   const CopyIco = I.copy;
   const RedoIco = I.redo;
@@ -176,8 +177,17 @@ export function Message({
         </div>
 
         {renderedHtml ? (
-          /* Completed assistant reply — full markdown rendering */
-          <div className={styles.aiProse} dangerouslySetInnerHTML={{ __html: renderedHtml }} />
+          /* Markdown-rendered assistant reply (live during streaming, final after) */
+          <div className={styles.aiProse}>
+            <div dangerouslySetInnerHTML={{ __html: renderedHtml }} />
+            {streaming && (
+              <span className={styles.typing} aria-label="AnA is typing">
+                <span />
+                <span />
+                <span />
+              </span>
+            )}
+          </div>
         ) : html ? (
           <div className={styles.aiProse} dangerouslySetInnerHTML={{ __html: html }} />
         ) : streaming && text === '' ? (
@@ -193,18 +203,10 @@ export function Message({
             </span>
           </div>
         ) : (
-          /* Streaming — plain paragraph split to avoid partial-markdown artifacts */
           <div className={styles.aiProse}>
             {text.split('\n\n').map((p, i) => (
               <p key={i}>{p}</p>
             ))}
-            {streaming && (
-              <span className={styles.typing} aria-label="AnA is typing">
-                <span />
-                <span />
-                <span />
-              </span>
-            )}
           </div>
         )}
 
