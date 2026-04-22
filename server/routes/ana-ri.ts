@@ -816,6 +816,13 @@ router.post('/stream', async (req: Request, res: Response) => {
       return sendError(res, 503, 'No AI providers available.', null, 'GATEWAY_UNAVAILABLE');
     }
 
+    // Phase-level wall clocks so /done can carry per-phase telemetry for
+    // observability. Clients can ignore these; ops can track regressions.
+    const streamPhaseStart = Date.now();
+    let streamOrchestrationMs = 0;
+    let streamContextMs = 0;
+    let streamGatewayMs = 0;
+
     // Pre-stream validation is done. Open SSE now so the client sees progress
     // during context assembly (orchestration + intelligence/memory/enrichment).
     res.writeHead(200, {
@@ -892,6 +899,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       _feedbackContext: streamFeedbackContext,
       _projectIntelligenceProfile: streamProjectProfile,
     });
+    streamOrchestrationMs = Date.now() - streamPhaseStart;
 
     const streamRouteBlock = buildRouteContextBlock(req.body.context);
     if (streamRouteBlock) {
@@ -921,6 +929,7 @@ router.post('/stream', async (req: Request, res: Response) => {
     );
 
     // Intelligence + memory + enrichment — run in PARALLEL for speed
+    const streamContextStart = Date.now();
     const [intelligencePrefix, memoryResult, enrichment] = await Promise.all([
       getIntelligencePrefix(orgId ? Number(orgId) : undefined, streamProjectId).catch(err => {
         console.warn('[AnA RI] Intelligence prefix failed:', err?.message);
@@ -947,6 +956,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         return { block: '', sources: [] as string[] };
       }),
     ]);
+    streamContextMs = Date.now() - streamContextStart;
 
     const memoryBlock = memoryResult.memoryBlock;
 
@@ -1095,6 +1105,7 @@ router.post('/stream', async (req: Request, res: Response) => {
     let cleanedFullContent = '';
 
     // Stream via gateway
+    const streamGatewayStart = Date.now();
     const gwResponse = await gw.route({
       taskType: routingPlan.taskType,
       messages,
@@ -1114,6 +1125,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       },
       callerModule: 'ana-ri-stream',
     });
+    streamGatewayMs = Date.now() - streamGatewayStart;
 
     // RIM interception — capture intelligence signals (non-blocking)
     if (fullContent && streamProjectId) {
@@ -1129,6 +1141,31 @@ router.post('/stream', async (req: Request, res: Response) => {
       }).catch(() => {});
     }
 
+    // Telemetry attached to the `done` event. Phase timings let ops spot
+    // regressions in orchestration / context assembly / generation; cache
+    // stats confirm prompt caching is actually hitting; memory diagnostics
+    // show degraded layers without scraping logs.
+    const streamMemoryDiag = (memoryResult as any)?.diagnostics || null;
+    const streamTelemetry = {
+      phases: {
+        orchestrationMs: streamOrchestrationMs,
+        contextMs: streamContextMs,
+        gatewayMs: streamGatewayMs,
+      },
+      cache: (gwResponse as any)?.cacheHit !== undefined
+        ? {
+            hit: (gwResponse as any).cacheHit,
+            stats: (gwResponse as any).cacheStats || undefined,
+          }
+        : undefined,
+      memory: streamMemoryDiag
+        ? {
+            layerOutcomes: streamMemoryDiag.layerOutcomes,
+            semanticSearchMs: streamMemoryDiag.semanticSearchMs,
+          }
+        : undefined,
+    };
+
     // Emit `done` as soon as the last token is out. Carries the minimal
     // metadata the client needs to close the assistant turn. Heavier
     // post-processing (guidance + command executors, persistence, evidence,
@@ -1141,6 +1178,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         usage: gwResponse.usage,
         latencyMs: gwResponse.latencyMs,
         response: fullContent || undefined,
+        telemetry: streamTelemetry,
       })}\n\n`
     );
 

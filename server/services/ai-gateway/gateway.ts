@@ -836,6 +836,8 @@ export class AIGateway {
     const toolUses: ClaudeToolUse[] = [];
     let inputTokens = 0;
     let outputTokens = 0;
+    let cacheCreationInputTokens = 0;
+    let cacheReadInputTokens = 0;
     let stopReason = 'unknown';
 
     // Per-chunk watchdog — detect stalled streams (no data for 30s)
@@ -890,6 +892,11 @@ export class AIGateway {
           outputTokens = event.usage?.output_tokens || outputTokens;
         } else if (event.type === 'message_start') {
           inputTokens = event.message?.usage?.input_tokens || 0;
+          // Prompt cache usage (Anthropic emits these on the message_start
+          // event alongside input_tokens). They stay 0 when caching is off.
+          cacheCreationInputTokens =
+            event.message?.usage?.cache_creation_input_tokens || 0;
+          cacheReadInputTokens = event.message?.usage?.cache_read_input_tokens || 0;
         }
       }
     } catch (streamErr: any) {
@@ -905,6 +912,14 @@ export class AIGateway {
       stopReason = 'chunk_timeout';
       log.warn(`[AI Gateway] Returning partial response (${content.length} chars) after stream stall`);
     }
+
+    const streamCacheStats =
+      cacheCreationInputTokens > 0 || cacheReadInputTokens > 0
+        ? {
+            cacheCreationInputTokens,
+            cacheReadInputTokens,
+          }
+        : undefined;
 
     return {
       content,
@@ -923,7 +938,9 @@ export class AIGateway {
       cached: false,
       deterministic: false,
       finishReason: stopReason,
-    };
+      cacheHit: streamCacheStats ? cacheReadInputTokens > 0 : undefined,
+      cacheStats: streamCacheStats,
+    } as ClaudeEnhancedResponse;
   }
 
   private async executeMoonshot(
