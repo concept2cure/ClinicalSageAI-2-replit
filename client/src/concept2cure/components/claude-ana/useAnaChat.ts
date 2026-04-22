@@ -58,13 +58,18 @@ export interface UseAnaChatReturn {
   send: (text: string) => Promise<void>;
   /** Reset the conversation (new thread). */
   reset: () => void;
+  /** Hydrate the panel with an existing thread's messages. */
+  loadThread: (threadId: string) => Promise<void>;
   /** Current thread id (from server once the first message is persisted). */
   threadId: string | null;
+  /** True while loadThread is fetching messages. */
+  isLoadingThread: boolean;
 }
 
 export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   const [messages, setMessages] = useState<AnaChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isLoadingThread, setIsLoadingThread] = useState(false);
   const threadIdRef = useRef<string | null>(options.initialThreadId || null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -73,6 +78,51 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     threadIdRef.current = null;
     setMessages([]);
     setIsStreaming(false);
+  }, []);
+
+  const loadThread = useCallback(async (threadId: string) => {
+    if (!threadId) return;
+    // Abort any in-flight stream — loading a prior thread discards the
+    // current turn's tokens regardless of where they are.
+    abortRef.current?.abort();
+    setIsStreaming(false);
+    setIsLoadingThread(true);
+    try {
+      const res = await fetch(
+        `/api/chat/threads/${encodeURIComponent(threadId)}/messages?limit=100`,
+        {
+          method: 'GET',
+          headers: getAuthHeaders(),
+          credentials: 'include',
+        }
+      );
+      if (!res.ok) {
+        console.warn('[useAnaChat] loadThread non-ok:', res.status);
+        return;
+      }
+      const body = (await res.json()) as {
+        messages?: Array<{ role?: string; content?: string }>;
+      };
+      const rows = Array.isArray(body.messages) ? body.messages : [];
+      const hydrated: AnaChatMessage[] = rows
+        .filter(
+          m =>
+            (m.role === 'user' || m.role === 'assistant') &&
+            typeof m.content === 'string' &&
+            m.content.length > 0
+        )
+        .map((m, idx) => ({
+          id: `t-${threadId}-${idx}`,
+          role: m.role as 'user' | 'assistant',
+          text: m.content as string,
+        }));
+      threadIdRef.current = threadId;
+      setMessages(hydrated);
+    } catch (err: any) {
+      console.warn('[useAnaChat] loadThread failed:', err?.message);
+    } finally {
+      setIsLoadingThread(false);
+    }
   }, []);
 
   const send = useCallback(
@@ -232,6 +282,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     isStreaming,
     send,
     reset,
+    loadThread,
     threadId: threadIdRef.current,
+    isLoadingThread,
   };
 }

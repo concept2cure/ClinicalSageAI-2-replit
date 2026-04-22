@@ -167,6 +167,17 @@ export function ClaudeAna({
     setView('home');
   }, [chat]);
 
+  // Clicking a Recents row hydrates that thread's messages and drops into
+  // chat view. Streaming gets aborted by loadThread itself.
+  const handleSelectRecent = useCallback(
+    (threadId: string) => {
+      setActiveRecentId(threadId);
+      setView('chat');
+      void chat.loadThread(threadId);
+    },
+    [chat]
+  );
+
   const handleCopy = useCallback((_id: string, text: string) => {
     void navigator.clipboard?.writeText(text).catch(() => {});
   }, []);
@@ -251,7 +262,7 @@ export function ClaudeAna({
         recents={recentsList}
         account={account}
         onNewChat={handleNewChat}
-        onSelectRecent={setActiveRecentId}
+        onSelectRecent={handleSelectRecent}
         activeRecentId={activeRecentId}
       />
       <main className={styles.main}>
