@@ -843,6 +843,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const isStreaming = queue.state.status === 'streaming';
   const isThinking = !queue.state.canSubmit;
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingDraft, setEditingDraft] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [chatMode, setChatMode] = useState<'standard' | 'deep-research' | 'nano-banana'>(
     defaultChatMode
@@ -1253,8 +1255,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   }, []);
 
   const handleSend = useCallback(
-    async (messageText?: string) => {
+    async (messageText?: string, options?: { skipUserAppend?: boolean }) => {
       const text = (messageText || input).trim();
+      const skipUserAppend = options?.skipUserAppend === true;
 
       // If already working, enqueue instead of dropping
       if ((isStreaming || isLoading) && text) {
@@ -1269,25 +1272,27 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           enqueuedAt: Date.now(),
         };
         setConversationQueue(prev => [...prev, queueItem]);
-        setInput('');
+        if (!skipUserAppend) setInput('');
         return;
       }
 
       if (!text || isThinking) return;
       lastSubmittedPromptRef.current = text;
 
-      const userMsg: AnaMessage = {
-        id: `u-${Date.now()}`,
-        role: 'user',
-        content: text,
-        timestamp: new Date(),
-      };
+      if (!skipUserAppend) {
+        const userMsg: AnaMessage = {
+          id: `u-${Date.now()}`,
+          role: 'user',
+          content: text,
+          timestamp: new Date(),
+        };
 
-      // Cap in-memory messages to prevent unbounded growth
-      setMessages(prev => [...prev.slice(-199), userMsg]);
-      setInput('');
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(draftStorageKey);
+        // Cap in-memory messages to prevent unbounded growth
+        setMessages(prev => [...prev.slice(-199), userMsg]);
+        setInput('');
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem(draftStorageKey);
+        }
       }
       queue.startTurn();
 
@@ -2359,6 +2364,38 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         inputEl.setSelectionRange(end, end);
       }
     }, 0);
+  };
+
+  const handleStartEditMessage = (messageId: string, content: string) => {
+    if (isThinking) return;
+    setEditingMessageId(messageId);
+    setEditingDraft(content);
+  };
+
+  const handleCancelEditMessage = () => {
+    setEditingMessageId(null);
+    setEditingDraft('');
+  };
+
+  const handleEditRegenerate = (messageId: string) => {
+    const trimmed = editingDraft.trim();
+    if (!trimmed || isThinking) return;
+    // Truncate messages: keep everything up to and including the edited user
+    // message, drop everything after (old assistant reply + subsequent turns).
+    // Update the edited message's content in-place.
+    setMessages(prev => {
+      const idx = prev.findIndex(m => m.id === messageId);
+      if (idx === -1) return prev;
+      const kept = prev.slice(0, idx + 1).map(m =>
+        m.id === messageId ? { ...m, content: trimmed, recalledToInput: false } : m
+      );
+      return kept;
+    });
+    setEditingMessageId(null);
+    setEditingDraft('');
+    // Regenerate AnA's reply using the same send-to-server flow, but without
+    // appending a second user message — the edited message is already in the array.
+    void handleSend(trimmed, { skipUserAppend: true });
   };
 
   const handleSuggestedAction = (action: SuggestedAction) => {
@@ -4645,12 +4682,63 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     <div className="flex-1 min-w-0">
                       {isUser ? (
                         <>
-                          <div className="flex justify-end">
-                            <p className="inline-block max-w-[min(92%,680px)] text-[15px] text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5 bg-[#F1F1F1] px-4 py-3 rounded-[22px]">
-                              {msg.content}
-                            </p>
-                          </div>
-                          {(msg as any).recalledToInput && (
+                          {editingMessageId === msg.id ? (
+                            <div className="flex justify-end">
+                              <div className="inline-block w-full max-w-[min(92%,680px)] bg-[#F1F1F1] px-4 py-3 rounded-[22px]">
+                                <textarea
+                                  autoFocus
+                                  value={editingDraft}
+                                  onChange={e => setEditingDraft(e.target.value)}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      handleEditRegenerate(msg.id);
+                                    } else if (e.key === 'Escape') {
+                                      e.preventDefault();
+                                      handleCancelEditMessage();
+                                    }
+                                  }}
+                                  rows={1}
+                                  className="w-full resize-none bg-transparent border-none outline-none text-[15px] text-[#2D2C28] leading-relaxed placeholder:text-[#B0AEA5] min-h-[24px] max-h-[240px]"
+                                  ref={el => {
+                                    if (el) {
+                                      el.style.height = 'auto';
+                                      el.style.height = `${Math.min(el.scrollHeight, 240)}px`;
+                                    }
+                                  }}
+                                />
+                                <div className="flex items-center justify-end gap-2 mt-2">
+                                  <button
+                                    type="button"
+                                    onClick={handleCancelEditMessage}
+                                    className="px-3 py-1 text-xs font-medium rounded-full text-[#4D4B45] hover:bg-[#E8E6DC] transition-colors"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleEditRegenerate(msg.id)}
+                                    disabled={!editingDraft.trim() || isThinking}
+                                    className={cn(
+                                      'px-3 py-1 text-xs font-medium rounded-full transition-colors',
+                                      editingDraft.trim() && !isThinking
+                                        ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
+                                        : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
+                                    )}
+                                  >
+                                    Send
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex justify-end">
+                              <p className="inline-block max-w-[min(92%,680px)] text-[15px] text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5 bg-[#F1F1F1] px-4 py-3 rounded-[22px]">
+                                {msg.content}
+                              </p>
+                            </div>
+                          )}
+                          {(msg as any).recalledToInput && editingMessageId !== msg.id && (
                             <p className="mt-1 text-[10px] font-medium text-[#D97757]">
                               Editing prompt in composer
                             </p>
@@ -4905,7 +4993,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           )}
                         </>
                       )}
-                      {isUser && (
+                      {isUser && editingMessageId !== msg.id && (
                         <div
                           className={cn(
                             'flex items-center gap-1 mt-1.5 transition-opacity duration-150',
@@ -4919,6 +5007,20 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             aria-label="Recall this prompt to edit"
                           >
                             <RotateCcw className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleStartEditMessage(msg.id, msg.content)}
+                            disabled={isThinking}
+                            className={cn(
+                              'p-1 rounded transition-colors',
+                              isThinking
+                                ? 'text-zinc-300 cursor-not-allowed'
+                                : 'text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100'
+                            )}
+                            title="Edit and regenerate"
+                            aria-label="Edit and regenerate"
+                          >
+                            <FileEdit className="w-3 h-3" />
                           </button>
                           <button
                             onClick={() => handleCopy(msg.id, msg.content)}
