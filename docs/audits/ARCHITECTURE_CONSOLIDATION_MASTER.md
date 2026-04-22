@@ -1,0 +1,57 @@
+# Architecture Consolidation Master Plan
+
+**Branch:** `concept2cure-v2` (per CLAUDE.md; harness-directed `claude/architecture-consolidation-c2c-v2-ZxSbD` is overridden)
+**Start date:** 2026-04-22
+**Status:** Phase 1 complete.
+
+## Purpose
+
+This document tracks the multi-phase architecture consolidation described in
+the Concept2Cure V2 Architecture Consolidation Work Order. Each phase has a
+dedicated proof report under `docs/audits/PHASE_N_*_REPORT.md`. This master
+doc links them and records the non-negotiables that apply across all phases.
+
+## Non-negotiables (apply to every phase)
+
+1. **No rewrite.** Surgical, scoped refactors only.
+2. **Governed document contract enforcement must not weaken.** The
+   `tests/routes/ai-entry-point-contract.test.ts` and
+   `tests/routes/chat-governed-upload.test.ts` suites are the tripwires.
+3. **AI gateway stays canonical.** `server/services/ai-gateway/` is the only
+   sanctioned LLM access layer.
+4. **Single retrieval truth.** By end of Phase 2, only one retrieval path is
+   active. Legacy is quarantined.
+5. **No silent public API breakage.** If a public contract changes, it is
+   documented and accompanied by a compatibility shim.
+6. **Concept2Cure naming in new code and docs**, even where legacy filenames
+   still use older names.
+
+## Phase index
+
+| Phase | Title | Status | Report |
+| --- | --- | --- | --- |
+| 1 | Composition root split (`server/index.ts`) | ✅ Complete | [PHASE_1_BOOTSTRAP_REPORT.md](PHASE_1_BOOTSTRAP_REPORT.md) |
+| 2 | Converge retrieval to one active path | ⏳ Pending | _not yet written_ |
+| 3 | Separate DB runtime from DB bootstrap/install | ⏳ Pending | _not yet written_ |
+| 4 | Decompose chat route | ⏳ Pending | _not yet written_ |
+| 5 | Decompose `ProjectWorkspaceShell.tsx` | ⏳ Pending | _not yet written_ |
+| 6 | Route ownership normalization | ⏳ Pending | _not yet written_ |
+| 7 | Tests + truth tables to prevent regression | ⏳ Pending | _not yet written_ |
+
+## Files preserved (must not regress across phases)
+
+- `server/services/concept2cure/governedDocumentContractService.ts`
+- `server/services/ai-gateway/gateway.ts`
+- `server/src/control-plane/kernel.ts`
+- `tests/routes/ai-entry-point-contract.test.ts`
+- `tests/routes/chat-governed-upload.test.ts`
+
+## Canonical retrieval layer (established in Phase 2)
+
+To be updated when Phase 2 completes.
+
+## Canonical AI provider layer
+
+`server/services/ai-gateway/` — verified as the single LLM access layer by
+`ai-entry-point-contract.test.ts`. Other providers (OpenAI direct, Anthropic
+direct) must route through the gateway.
