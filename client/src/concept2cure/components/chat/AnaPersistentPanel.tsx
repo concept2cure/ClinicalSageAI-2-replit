@@ -1583,6 +1583,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           let streamStarted = false;
           let streamContent = '';
           let streamDoneMeta: any = null;
+          let streamPostDoneMeta: any = null;
+          let placeholderCreated = false;
+          let doneCompletedTurn = false;
           let userAborted = false;
           const useStreamingEndpoint = !useFirecrawl;
 
@@ -1655,22 +1658,61 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     if (normalizedOrchestration) {
                       setLastOrchestration(normalizedOrchestration);
                     }
-                  } else if (event.type === 'text') {
-                    const chunk = event.content || '';
-                    if (!chunk) continue;
-                    streamContent += chunk;
-                    if (!streamStarted) {
-                      streamStarted = true;
+                  } else if (event.type === 'status') {
+                    // Ephemeral status update during context assembly, before any text.
+                    // Render as muted italic markdown inside the placeholder message.
+                    // Once real tokens arrive (streamStarted), later status events are
+                    // ignored — the streamed response has already begun.
+                    const msg = typeof event.message === 'string' ? event.message : '';
+                    if (!msg || streamStarted) continue;
+                    const italic = `_${msg}_`;
+                    if (!placeholderCreated) {
+                      placeholderCreated = true;
                       queue.markStreaming(threadIdRef.current || null);
                       setMessages(prev => [
                         ...prev,
                         {
                           id: streamPlaceholderId,
                           role: 'assistant',
-                          content: streamContent,
+                          content: italic,
                           timestamp: new Date(),
                         },
                       ]);
+                    } else {
+                      setMessages(prev =>
+                        prev.map(m =>
+                          m.id === streamPlaceholderId ? { ...m, content: italic } : m
+                        )
+                      );
+                    }
+                  } else if (event.type === 'text') {
+                    const chunk = event.content || '';
+                    if (!chunk) continue;
+                    streamContent += chunk;
+                    if (!streamStarted) {
+                      streamStarted = true;
+                      if (!placeholderCreated) {
+                        placeholderCreated = true;
+                        queue.markStreaming(threadIdRef.current || null);
+                        setMessages(prev => [
+                          ...prev,
+                          {
+                            id: streamPlaceholderId,
+                            role: 'assistant',
+                            content: streamContent,
+                            timestamp: new Date(),
+                          },
+                        ]);
+                      } else {
+                        // Placeholder was created by a status event — replace the
+                        // italic status line with the first chunk of real text.
+                        const next = streamContent;
+                        setMessages(prev =>
+                          prev.map(m =>
+                            m.id === streamPlaceholderId ? { ...m, content: next } : m
+                          )
+                        );
+                      }
                     } else {
                       const next = streamContent;
                       setMessages(prev =>
@@ -1680,7 +1722,43 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       );
                     }
                   } else if (event.type === 'done') {
+                    // Server signals the main response is complete (tokens finished).
+                    // Capture metadata but DO NOT finalize content yet — post_done may
+                    // replace it with a cleaned version and attach executed actions.
+                    // Unblock the input so the user can type while post-processing runs.
                     streamDoneMeta = event;
+                    if (streamStarted) {
+                      streamedSuccessfully = true;
+                      if (!doneCompletedTurn) {
+                        doneCompletedTurn = true;
+                        queue.completeTurn();
+                      }
+                    }
+                  } else if (event.type === 'post_done') {
+                    // Post-processing finished — cleaned response + executed actions
+                    // arrive here. Replace the streamed content if meaningfully different.
+                    streamPostDoneMeta = event;
+                    const cleaned =
+                      typeof event.cleanedResponse === 'string'
+                        ? event.cleanedResponse
+                        : '';
+                    const shouldReplace =
+                      cleaned.trim().length > 0 && cleaned !== streamContent;
+                    setMessages(prev =>
+                      prev.map(m =>
+                        m.id === streamPlaceholderId
+                          ? {
+                              ...m,
+                              content: shouldReplace ? cleaned : m.content,
+                              executedActions:
+                                event.executedActions || m.executedActions,
+                              modelProvider:
+                                streamDoneMeta?.provider || m.modelProvider,
+                              modelName: streamDoneMeta?.model || m.modelName,
+                            }
+                          : m
+                      )
+                    );
                   } else if (event.type === 'warning') {
                     // Server tells us something degraded (e.g., thread persistence failed)
                     toast({
@@ -1699,11 +1777,25 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               }
 
               if (streamStarted) {
-                const finalContent =
-                  (streamDoneMeta?.cleanedResponse &&
-                    String(streamDoneMeta.cleanedResponse).trim().length > 0)
+                // Prefer post_done.cleanedResponse when the server sent one.
+                // Otherwise the `post_done` branch already wrote the cleaned content
+                // inline. If no post_done arrived (older server), fall back to
+                // done.cleanedResponse, then to the streamed content, and attach
+                // whatever metadata `done` provided.
+                const postCleaned =
+                  typeof streamPostDoneMeta?.cleanedResponse === 'string'
+                    ? streamPostDoneMeta.cleanedResponse
+                    : '';
+                const doneCleaned =
+                  typeof streamDoneMeta?.cleanedResponse === 'string'
                     ? streamDoneMeta.cleanedResponse
-                    : streamContent;
+                    : '';
+                const finalContent =
+                  postCleaned.trim().length > 0
+                    ? postCleaned
+                    : doneCleaned.trim().length > 0
+                      ? doneCleaned
+                      : streamContent;
 
                 setMessages(prev =>
                   prev.map(m =>
@@ -1711,9 +1803,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       ? {
                           ...m,
                           content: finalContent,
-                          executedActions: streamDoneMeta?.executedActions || undefined,
-                          modelProvider: streamDoneMeta?.provider || undefined,
-                          modelName: streamDoneMeta?.model || undefined,
+                          executedActions:
+                            streamPostDoneMeta?.executedActions ||
+                            streamDoneMeta?.executedActions ||
+                            m.executedActions,
+                          modelProvider: streamDoneMeta?.provider || m.modelProvider,
+                          modelName: streamDoneMeta?.model || m.modelName,
                         }
                       : m
                   )
@@ -1724,8 +1819,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           } catch (anaErr: any) {
             if (anaErr?.name === 'AbortError' || abortCtl.signal.aborted) {
               userAborted = true;
-              if (streamStarted) {
-                // Keep whatever tokens we already rendered, mark the message as stopped.
+              if (streamStarted || placeholderCreated) {
+                // Keep whatever tokens we already rendered (or the status line if
+                // the user aborted before tokens arrived), mark the message stopped.
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === streamPlaceholderId
@@ -1733,7 +1829,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       : m
                   )
                 );
-                streamedSuccessfully = true;
+                streamedSuccessfully = streamStarted;
               }
             } else {
               console.warn('[AnA RI Stream] Error:', anaErr?.message);
@@ -1748,15 +1844,27 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           }
 
           // If streaming produced a response, synthesize rawData so downstream
-          // artifact-persist logic still runs.
+          // artifact-persist logic still runs. Prefer post_done payload (richer:
+          // cleanedResponse, executedActions, evidence) when present; otherwise
+          // fall back to done metadata, then to the raw streamed content.
           if (streamedSuccessfully) {
             const synthesized = {
-              response: streamDoneMeta?.cleanedResponse || streamContent,
+              response:
+                streamPostDoneMeta?.cleanedResponse ||
+                streamDoneMeta?.cleanedResponse ||
+                streamContent,
               thread_id: threadIdRef.current,
-              executedActions: streamDoneMeta?.executedActions,
+              executedActions:
+                streamPostDoneMeta?.executedActions ||
+                streamDoneMeta?.executedActions,
+              executedCommands: streamPostDoneMeta?.executedCommands,
+              enrichmentSources: streamPostDoneMeta?.enrichmentSources,
               model: streamDoneMeta?.model,
               provider: streamDoneMeta?.provider,
-              evidence: streamDoneMeta?.evidence,
+              evidence: streamPostDoneMeta?.evidence || streamDoneMeta?.evidence,
+              evidenceDiscipline: streamPostDoneMeta?.evidenceDiscipline,
+              structure: streamPostDoneMeta?.structure,
+              queueMeta: streamPostDoneMeta?.queueMeta,
             };
             rawData = { success: true, data: synthesized };
             chatSucceeded = true;
