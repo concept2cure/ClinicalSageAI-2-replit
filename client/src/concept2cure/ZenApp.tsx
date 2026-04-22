@@ -151,8 +151,12 @@ const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect 
 // [Phase A] Dr. Sage removed — AnA is the single guide identity
 // import DrSageGlobalLayer from './components/dr-sage/DrSagePanel';
 
-// AnA Persistent Panel — always-available AI conversation on every page
+// AnA Persistent Panel — legacy workspace chat. SUPERSEDED by ClaudeAna
+// (the Phase 2 AnA RI shell); kept only for surfaces that haven't been
+// migrated yet. Do not extend.
+// @deprecated Use ./components/claude-ana ClaudeAna instead.
 import AnaPersistentPanel from './components/chat/AnaPersistentPanel';
+import { ClaudeAna } from './components/claude-ana';
 import { GlobalOperatingShell } from './components/shell/GlobalOperatingShell';
 
 // Canonical authoring context resolver
@@ -3358,39 +3362,34 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 onSwitchProject={openProjectsDirectory}
               />
 
-              {/* ── Workspace body: AnA chat + right panel ───────────── */}
+              {/* ── Workspace body: AnA Claude Design shell + right panel ── */}
               <div className="flex-1 flex min-h-0">
-                {/* Center: AnA (the ONE chat — Claude.ai style) */}
-                <AnaPersistentPanel
-                  mode="full"
-                  authoringContext={authoringContext}
-                  navContext={activeNavId}
-                  contextProfile={{
-                    productType: activeProject?.type,
-                    userRole: userRole,
-                    screenName: 'regulatory-workspace',
-                    activeProject: activeProject?.name,
-                    projectId: activeProjectId,
-                  }}
-                  projectIntelligence={projectIntelligenceStats}
-                  greeting={
-                    platformGreeting?.text ||
-                    `How can I help with ${activeProject?.name || 'your project'}?`
-                  }
-                  suggestedActions={workspaceSuggestedActions}
-                  onActionRun={handleActionRun}
-                  onNavigate={handleAnaPanelNavigate}
-                  onDraftInsert={handleDraftInsert}
-                  onNavigateToSection={handleNavigateToSection}
-                  onOpenArtifact={handleOpenArtifact}
-                  onRequestPromotion={handleRequestPromotion}
-                  onRefreshIntelligence={authoringIntelligence.refetch}
-                  initialMessage={
-                    pendingDraftSection
-                      ? `Draft CTD section ${pendingDraftSection.code}: ${pendingDraftSection.title}. Generate a compliant first draft following ICH M4 guidelines and 21 CFR 312.23(a) requirements.`
-                      : null
-                  }
-                />
+                {/* Center: Claude Design AnA RI shell (Phase 2) */}
+                <div className="flex-1 min-w-0">
+                  <ClaudeAna
+                    user={{
+                      name: userName,
+                      initials:
+                        (userName || 'User')
+                          .split(/\s+/)
+                          .map(w => w[0])
+                          .filter(Boolean)
+                          .slice(0, 2)
+                          .join('')
+                          .toUpperCase() || 'U',
+                      plan: userRole,
+                    }}
+                    activeProjectId={activeProjectId}
+                    activeProjectName={activeProject?.name}
+                    submissionType={activeProject?.type}
+                    userRole={userRole}
+                    screenName="regulatory-workspace"
+                    onOpenArtifact={handleOpenArtifact}
+                    onNavigateToSection={handleNavigateToSection}
+                    onSelectProject={pid => setActiveProjectId(pid)}
+                    onCreateProject={() => setNewProjectOpen(true)}
+                  />
+                </div>
 
                 {/* Right sidebar: Claude.ai-style project knowledge */}
                 {/* Desktop: static panel */}
@@ -3484,40 +3483,32 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         {/* ── Project Home: AnA chat + Knowledge sidebar (Claude.ai layout) ── */}
         {layoutMode === 'project-home' && (
           <div className="flex-1 flex min-h-0">
-            {/* Center: AnA chat */}
-            <AnaPersistentPanel
-              mode="full"
-              authoringContext={authoringContext}
-              navContext="project-home"
-              contextProfile={{
-                productType: activeProject?.type,
-                userRole: userRole,
-                screenName: 'project-home',
-                activeProject: activeProject?.name,
-                projectId: activeProjectId,
-                threadId: activeThreadId || activeConversationId,
-                moduleContext,
-              }}
-              projectIntelligence={projectIntelligenceStats}
-              greeting={
-                activeProject
-                  ? `Working on ${activeProject.name}. What would you like to do?`
-                  : platformGreeting?.text
-              }
-              externalMessage={externalChatMessage}
-              suggestedActions={workspaceSuggestedActions}
-              onActionRun={handleActionRun}
-              onNavigate={handleAnaPanelNavigate}
-              onDraftInsert={handleDraftInsert}
-              onNavigateToSection={handleNavigateToSection}
-              onOpenArtifact={handleOpenArtifact}
-              onRequestPromotion={handleRequestPromotion}
-              onRefreshIntelligence={authoringIntelligence.refetch}
-              onThreadChange={threadId => {
-                setActiveThreadId(threadId);
-                setActiveConversationId(threadId);
-              }}
-            />
+            {/* Center: Claude Design AnA RI shell (Phase 2) */}
+            <div className="flex-1 min-w-0">
+              <ClaudeAna
+                user={{
+                  name: userName,
+                  initials:
+                    (userName || 'User')
+                      .split(/\s+/)
+                      .map(w => w[0])
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .join('')
+                      .toUpperCase() || 'U',
+                  plan: userRole,
+                }}
+                activeProjectId={activeProjectId}
+                activeProjectName={activeProject?.name}
+                submissionType={activeProject?.type}
+                userRole={userRole}
+                screenName="project-home"
+                onOpenArtifact={handleOpenArtifact}
+                onNavigateToSection={handleNavigateToSection}
+                onSelectProject={pid => setActiveProjectId(pid)}
+                onCreateProject={() => setNewProjectOpen(true)}
+              />
+            </div>
 
             {/* Right sidebar: Project Knowledge (Claude.ai style — always visible) */}
             {!activeArtifactId && (
@@ -3569,38 +3560,28 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           layoutMode !== 'regulatory-workspace' &&
           layoutMode !== 'project-home' &&
           layoutMode !== 'projects' && (
-            <AnaPersistentPanel
-              mode={layoutMode === 'deep-research' ? 'full' : 'compact'}
-              defaultChatMode={layoutMode === 'deep-research' ? 'deep-research' : 'standard'}
-              authoringContext={authoringContext}
-              navContext={activeNavId}
-              contextProfile={{
-                productType: activeProject?.type,
-                userRole: userRole,
-                screenName: layoutMode,
-                activeProject: activeProject?.name,
-                projectId: activeProjectId,
-                threadId: activeThreadId || activeConversationId,
-                moduleContext,
+            <ClaudeAna
+              user={{
+                name: userName,
+                initials:
+                  (userName || 'User')
+                    .split(/\s+/)
+                    .map(w => w[0])
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .join('')
+                    .toUpperCase() || 'U',
+                plan: userRole,
               }}
-              projectIntelligence={projectIntelligenceStats}
-              greeting={
-                layoutMode === 'deep-research'
-                  ? "What would you like to research? I'll search across ClinicalTrials.gov, PubMed, FDA, EMA, and more."
-                  : platformGreeting?.text
-              }
-              suggestedActions={undefined}
-              onActionRun={handleActionRun}
-              onNavigate={handleAnaPanelNavigate}
-              onDraftInsert={handleDraftInsert}
-              onNavigateToSection={handleNavigateToSection}
+              activeProjectId={activeProjectId}
+              activeProjectName={activeProject?.name}
+              submissionType={activeProject?.type}
+              userRole={userRole}
+              screenName={layoutMode}
               onOpenArtifact={handleOpenArtifact}
-              onRequestPromotion={handleRequestPromotion}
-              onRefreshIntelligence={authoringIntelligence.refetch}
-              onThreadChange={threadId => {
-                setActiveThreadId(threadId);
-                setActiveConversationId(threadId);
-              }}
+              onNavigateToSection={handleNavigateToSection}
+              onSelectProject={pid => setActiveProjectId(pid)}
+              onCreateProject={() => setNewProjectOpen(true)}
             />
           )}
       </GlobalOperatingShell>
