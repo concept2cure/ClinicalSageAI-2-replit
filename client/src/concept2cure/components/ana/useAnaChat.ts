@@ -1,25 +1,19 @@
 /**
  * useAnaChat — streaming-chat controller for the Claude Design AnA RI shell.
  *
- * Hidden implementation layer beneath the bundle-faithful UI. Wires the
- * composer + chat view to POST /api/ana-ri/stream with the SSE contract
- * defined in server/routes/ana-ri/stream.ts.
+ * Wires the composer + chat view to POST /api/ana-ri/stream with the SSE
+ * contract defined in server/routes/ana-ri/stream.ts.
  *
- * Events the server emits (handled here):
- *   status       — ephemeral context-assembly progress
+ * Events handled:
+ *   status       — progress phases during orchestration / context assembly
  *   thread_id    — captured for continuity across turns
  *   orchestration — metadata (noop at this layer)
  *   text         — token chunk appended to the streaming message
- *   done         — main response complete
- *   post_done    — cleaned response + executed actions
+ *   done         — captures latencyMs + provider (fallback detection)
+ *   post_done    — cleaned response + executedActions chips
  *   warning      — degraded-mode signal (noop for now)
  *   grounding_strip — evidence verdict (noop for now)
  *   error        — surface via console + last-message flag
- *
- * The bundle's chat UX intentionally exposes only copy / retry / thumbs-up /
- * thumbs-down. No stop button, no latency chip, no edit-in-place, no action
- * chips. This hook therefore omits public surface for those — it's a plain
- * send-and-stream controller.
  *
  * @module client/src/concept2cure/components/ana/useAnaChat
  */
@@ -28,12 +22,36 @@ import { useCallback, useRef, useState } from 'react';
 
 import { getAuthHeaders } from '@/utils/authToken';
 
+/** Shape of an action chip produced by the server's guidance/command executors. */
+export interface AnaChatAction {
+  label: string;
+  actionType?: string;
+  artifactId?: string;
+  sectionCode?: string;
+  executed?: boolean;
+  error?: string;
+}
+
 export interface AnaChatMessage {
   id: string;
   role: 'user' | 'assistant';
   text: string;
   /** True while tokens are still arriving for this message. */
   streaming?: boolean;
+  /**
+   * Progress phase label shown while streaming before the first token arrives
+   * (e.g. "Planning response…", "Loading project memory…", "Generating…").
+   * Cleared once the first text chunk lands.
+   */
+  statusPhase?: string;
+  /** Action chips produced by the server's guidance / command executors. */
+  executedActions?: AnaChatAction[];
+  /** Round-trip latency from the server's `done` event. */
+  latencyMs?: number;
+  /** True if the response came from a fallback provider (non-Anthropic). */
+  fallback?: boolean;
+  /** True if the user explicitly stopped the stream. */
+  stopped?: boolean;
 }
 
 export interface UseAnaChatOptions {
@@ -56,6 +74,8 @@ export interface UseAnaChatReturn {
   isStreaming: boolean;
   /** Send a user message and stream the assistant reply. */
   send: (text: string) => Promise<void>;
+  /** Abort the current stream. */
+  stop: () => void;
   /** Reset the conversation (new thread). */
   reset: () => void;
   /** Hydrate the panel with an existing thread's messages. */
@@ -73,6 +93,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   const threadIdRef = useRef<string | null>(options.initialThreadId || null);
   const abortRef = useRef<AbortController | null>(null);
 
+  const stop = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
+
   const reset = useCallback(() => {
     abortRef.current?.abort();
     threadIdRef.current = null;
@@ -82,8 +106,6 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
 
   const loadThread = useCallback(async (threadId: string) => {
     if (!threadId) return;
-    // Abort any in-flight stream — loading a prior thread discards the
-    // current turn's tokens regardless of where they are.
     abortRef.current?.abort();
     setIsStreaming(false);
     setIsLoadingThread(true);
@@ -136,11 +158,28 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         text,
       };
       const assistantId = `a-${Date.now()}`;
-      setMessages(prev => [...prev, userMsg]);
+
+      // Insert placeholder immediately so the user sees a progress indicator
+      // before the first token arrives (status phases fill in the label).
+      setMessages(prev => [
+        ...prev,
+        userMsg,
+        {
+          id: assistantId,
+          role: 'assistant',
+          text: '',
+          streaming: true,
+          statusPhase: 'Planning response…',
+        },
+      ]);
       setIsStreaming(true);
 
       const abortCtl = new AbortController();
       abortRef.current = abortCtl;
+
+      // Capture done-event fields before post_done arrives
+      let capturedLatencyMs: number | undefined;
+      let capturedProvider: string | undefined;
 
       const body = JSON.stringify({
         message: text,
@@ -161,7 +200,6 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         })),
       });
 
-      let placeholderInserted = false;
       let streamedText = '';
 
       try {
@@ -202,71 +240,91 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
 
             if (event.type === 'thread_id' && event.thread_id) {
               threadIdRef.current = event.thread_id;
+            } else if (event.type === 'status') {
+              // Update the progress label on the placeholder while no tokens
+              // have arrived yet (statusPhase is cleared on first text chunk).
+              const phase: string = event.message || event.phase || '';
+              if (phase) {
+                setMessages(prev =>
+                  prev.map(m =>
+                    m.id === assistantId && m.text === ''
+                      ? { ...m, statusPhase: phase }
+                      : m
+                  )
+                );
+              }
             } else if (event.type === 'text') {
               const chunk: string = event.content || '';
               if (!chunk) continue;
               streamedText += chunk;
-              if (!placeholderInserted) {
-                placeholderInserted = true;
-                setMessages(prev => [
-                  ...prev,
-                  {
-                    id: assistantId,
-                    role: 'assistant',
-                    text: streamedText,
-                    streaming: true,
-                  },
-                ]);
-              } else {
-                const next = streamedText;
-                setMessages(prev =>
-                  prev.map(m => (m.id === assistantId ? { ...m, text: next } : m))
-                );
-              }
+              const next = streamedText;
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === assistantId
+                    ? { ...m, text: next, statusPhase: undefined }
+                    : m
+                )
+              );
+            } else if (event.type === 'done') {
+              capturedLatencyMs = typeof event.latencyMs === 'number' ? event.latencyMs : undefined;
+              capturedProvider = typeof event.provider === 'string' ? event.provider : undefined;
             } else if (event.type === 'post_done') {
-              // Replace with cleaned response when the server provides one.
               const cleaned: string | undefined = event.cleanedResponse;
-              if (typeof cleaned === 'string' && cleaned.trim().length > 0) {
-                setMessages(prev =>
-                  prev.map(m =>
-                    m.id === assistantId ? { ...m, text: cleaned, streaming: false } : m
-                  )
-                );
-              } else {
-                setMessages(prev =>
-                  prev.map(m => (m.id === assistantId ? { ...m, streaming: false } : m))
-                );
-              }
+              const actions: AnaChatAction[] | undefined = Array.isArray(event.executedActions)
+                ? (event.executedActions as AnaChatAction[])
+                : undefined;
+              setMessages(prev =>
+                prev.map(m => {
+                  if (m.id !== assistantId) return m;
+                  return {
+                    ...m,
+                    text:
+                      typeof cleaned === 'string' && cleaned.trim().length > 0
+                        ? cleaned
+                        : m.text,
+                    streaming: false,
+                    statusPhase: undefined,
+                    executedActions: actions,
+                    latencyMs: capturedLatencyMs,
+                    fallback:
+                      capturedProvider !== undefined
+                        ? capturedProvider !== 'anthropic'
+                        : undefined,
+                  };
+                })
+              );
             } else if (event.type === 'error') {
               throw new Error(event.error || 'Stream error');
             }
-            // status / orchestration / warning / grounding_strip / done → noop for this shell
+            // orchestration / warning / grounding_strip / done → metadata captured above
           }
         }
       } catch (err: any) {
         if (err?.name === 'AbortError') {
-          // User aborted — leave whatever tokens rendered as-is.
+          // User stopped — mark stopped and seal whatever tokens rendered.
           setMessages(prev =>
-            prev.map(m => (m.id === assistantId ? { ...m, streaming: false } : m))
+            prev.map(m =>
+              m.id === assistantId
+                ? { ...m, streaming: false, statusPhase: undefined, stopped: true }
+                : m
+            )
           );
         } else {
           console.warn('[useAnaChat] stream failed:', err?.message);
-          if (!placeholderInserted) {
-            setMessages(prev => [
-              ...prev,
-              {
-                id: assistantId,
-                role: 'assistant',
+          setMessages(prev =>
+            prev.map(m => {
+              if (m.id !== assistantId) return m;
+              return {
+                ...m,
                 text:
-                  'Sorry — AnA is unreachable right now. Please try again.',
+                  m.text.length > 0
+                    ? m.text
+                    : 'Sorry — AnA is unreachable right now. Please try again.',
                 streaming: false,
-              },
-            ]);
-          } else {
-            setMessages(prev =>
-              prev.map(m => (m.id === assistantId ? { ...m, streaming: false } : m))
-            );
-          }
+                statusPhase: undefined,
+              };
+            })
+          );
         }
       } finally {
         abortRef.current = null;
@@ -281,6 +339,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     messages,
     isStreaming,
     send,
+    stop,
     reset,
     loadThread,
     threadId: threadIdRef.current,

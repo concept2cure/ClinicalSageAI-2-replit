@@ -36,6 +36,8 @@ export interface MessageProps {
   /** Markdown-rendered HTML. If unset, `text` renders as plain paragraph. */
   html?: string;
   streaming?: boolean;
+  /** Progress phase label shown while streaming before the first token. */
+  statusPhase?: string;
 
   // AnA metadata (shown in the AI-name meta row)
   latencyMs?: number;
@@ -60,6 +62,7 @@ export function Message({
   text,
   html,
   streaming,
+  statusPhase,
   latencyMs,
   fallback,
   stopped,
@@ -158,6 +161,18 @@ export function Message({
 
         {html ? (
           <div className={styles.aiProse} dangerouslySetInnerHTML={{ __html: html }} />
+        ) : streaming && text === '' ? (
+          /* Show progress phase label before the first token arrives */
+          <div className={styles.aiProse}>
+            <span className={styles.cite} style={{ fontStyle: 'italic' }}>
+              {statusPhase || 'Thinking…'}
+            </span>
+            <span className={styles.typing} aria-label="AnA is working" style={{ marginLeft: 8 }}>
+              <span />
+              <span />
+              <span />
+            </span>
+          </div>
         ) : (
           <div className={styles.aiProse}>
             {text.split('\n\n').map((p, i) => (

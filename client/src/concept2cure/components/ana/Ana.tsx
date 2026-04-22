@@ -24,7 +24,7 @@ import { TopBar } from './TopBar';
 import { EmptyState } from './EmptyState';
 import { ChatView, type ChatMessageView } from './ChatView';
 import { ProjectsView, type AnaProject } from './ProjectsView';
-import { useAnaChat, type AnaChatMessage } from './useAnaChat';
+import { useAnaChat, type AnaChatMessage, type AnaChatAction } from './useAnaChat';
 import { useRecents } from './useRecents';
 import styles from './styles.module.css';
 
@@ -270,6 +270,11 @@ export function Ana({
         role: m.role,
         text: m.text,
         streaming: m.streaming,
+        statusPhase: m.statusPhase,
+        executedActions: m.executedActions as any,
+        latencyMs: m.latencyMs,
+        fallback: m.fallback,
+        stopped: m.stopped,
       })),
     [chat.messages]
   );
@@ -295,6 +300,7 @@ export function Ana({
           <EmptyState
             greetingName={greetingName}
             onSend={handleSend}
+            onStop={chat.stop}
             isStreaming={chat.isStreaming}
           />
         )}
@@ -302,6 +308,7 @@ export function Ana({
           <ChatView
             messages={messagesForView}
             onSend={handleSend}
+            onStop={chat.stop}
             isStreaming={chat.isStreaming}
             onCopy={handleCopy}
             onRetry={handleRetry}

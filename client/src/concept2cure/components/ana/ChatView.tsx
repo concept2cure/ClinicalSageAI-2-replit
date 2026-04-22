@@ -17,6 +17,8 @@ export interface ChatMessageView {
   text: string;
   html?: string;
   streaming?: boolean;
+  /** Progress label shown before the first token arrives. */
+  statusPhase?: string;
   latencyMs?: number;
   fallback?: boolean;
   stopped?: boolean;
@@ -71,6 +73,7 @@ export function ChatView({
               text={m.text}
               html={m.html}
               streaming={m.streaming}
+              statusPhase={m.statusPhase}
               latencyMs={m.latencyMs}
               fallback={m.fallback}
               stopped={m.stopped}
