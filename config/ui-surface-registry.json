@@ -120,35 +120,48 @@
     "chat": {
       "AnaPersistentPanel.tsx": {
         "path": "client/src/concept2cure/components/chat/AnaPersistentPanel.tsx",
+        "status": "deleted",
+        "action": "deleted",
+        "deletedOn": "2026-04-22",
+        "supersededBy": "client/src/concept2cure/components/claude-ana/ClaudeAna.tsx",
+        "rationale": "Phase 2 Claude Design convergence. AnaPersistentPanel was the legacy chat surface; it is fully replaced by the Claude Design bundle-faithful ClaudeAna shell. Legacy features not represented in the bundle (slash-command menu, @-mention autocomplete, Save-to-Vault inline, chat-mode switcher, deep-research/nano-banana modes, drag-drop attach) are dropped with the legacy component per CLAUDE.md: the bundle is the design authority and the Claude Code implementer does not carry forward features the designer has not shipped.",
+        "supersedes": "None"
+      },
+      "ClaudeAna": {
+        "path": "client/src/concept2cure/components/claude-ana/",
         "status": "active",
         "action": "keep",
-        "lines": 5729,
-        "modeResolution": "full for all 5 primary destinations; compact for project-workspace (editor context — intentional)",
-        "chatModes": ["standard", "deep-research", "nano-banana"],
-        "emptyState": "2026-04-14 WO-7: Duplicate ChatGPT-style inner sub-sidebar (AnA 1.0 / New Chat / Projects / Vault / Collaboration / Apps / Past conversations / User Account) DELETED. Replaced with clean Claude.ai-style centered greeting: Sparkles icon + large headline (text-[38px]) wired to the `greeting` prop. No duplicate nav, no share/branches header, no 280px input offset. The main ZenSidebar is the sole navigation authority.",
-        "features": {
-          "slashCommands": "43 slash commands + 39 operational commands",
-          "appMentionAutocomplete": "10 @app mentions (deep-research, precedent, 510k, pma, cer, safety, biostats, vault, ectd, protocol)",
-          "dragDropAttach": "File drag-and-drop with visual overlay (compact mode wired)",
-          "domainPrompts": "Browse all capabilities via config/domain-prompts.ts"
-        },
-        "role": "Unified AI chat surface — primary content area, center of gravity"
+        "role": "Canonical AnA RI chat surface — Phase 2 Claude Design port. Mirror of docs/design/concept2cure-design-system/project/ui_kits/ana_ri/.",
+        "entry": "ClaudeAna.tsx",
+        "bundleSource": "docs/design/concept2cure-design-system/project/ui_kits/ana_ri/",
+        "mountedFrom": [
+          "client/src/concept2cure/ZenApp.tsx (regulatory-workspace, project-home, non-home fall-through)",
+          "client/src/concept2cure/pages/FDA510kWorkspacePage.tsx (AI guide view)"
+        ],
+        "streamingContract": "POST /api/ana-ri/stream (SSE: status / thread_id / orchestration / text / done / post_done / warning / grounding_strip / error)",
+        "functionalAdditions": {
+          "stopWhileStreaming": "Send button flips to stop icon (same 32×32, Square icon) — bundle's composer-send pattern reused",
+          "latencyChip": "Muted .cite pill next to AI name header",
+          "degradedBadge": "Muted .cite pill for Cortex fallback / persistence failure",
+          "executedActionChips": ".suggest-pill pattern below assistant reply, clickable when artifactId or sectionCode present",
+          "userEditRegenerate": "Hover-revealed pencil on user bubble → Composer for inline edit-and-resubmit"
+        }
       }
     },
     "destinations": {
       "chats": {
         "status": "active",
         "layoutMode": "projects",
-        "component": "AnaPersistentPanel (mode=full) + ProjectsSidebar",
+        "component": "ClaudeHome (Phase 1) for layoutMode=projects; ClaudeAna (Phase 2) inside workspace layouts",
         "navId": "projects",
-        "notes": "Conversation-first home. Projects layout mode serves as chats view."
+        "notes": "Home handled by ClaudeHome early return; workspace chat by ClaudeAna."
       },
       "projects": {
         "status": "active",
         "layoutMode": "projects",
-        "component": "Project cards grid in ZenApp + AnaPersistentPanel",
+        "component": "ClaudeHome (full-width home surface)",
         "navId": "projects",
-        "notes": "Currently shared with chats. Future: separate project browser."
+        "notes": "Phase 1 Claude Design home render. See components/claude-home/."
       },
       "communication-center": {
         "status": "active",

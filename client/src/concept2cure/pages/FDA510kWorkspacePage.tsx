@@ -5,7 +5,7 @@
  *   1. Slim back/title header with a view toggle (AI guide | Structured form)
  *   2. Seven-stage progress strip reading live from /api/510k-workflow
  *   3. Body:
- *        - Default: AnaPersistentPanel full-width with device-submission
+ *        - Default: ClaudeAna full-width with device-submission
  *          suggested actions. AnA guides the user through the submission.
  *        - On demand: Enhanced510kIntakeWorkflow (the original 7-stage
  *          wizard) — all existing capabilities remain reachable.
@@ -19,7 +19,7 @@ import { useTenantContext } from '@/contexts/TenantContext';
 import { ErrorBoundary } from '@/concept2cure/components/ErrorBoundary';
 import { ErrorState } from '@/components/ui/statesV2';
 import { cn } from '@/lib/utils';
-import AnaPersistentPanel from '@/concept2cure/components/chat/AnaPersistentPanel';
+import { ClaudeAna } from '@/concept2cure/components/claude-ana';
 // @ts-expect-error — JSX component without .d.ts; real implementation, typed at boundary
 import Enhanced510kIntakeWorkflow from '@/components/510k/Enhanced510kIntakeWorkflow';
 
@@ -239,22 +239,11 @@ export const FDA510kWorkspacePage: React.FC<FDA510kWorkspacePageProps> = ({
           }
         >
           {view === 'chat' ? (
-            <AnaPersistentPanel
-              mode="full"
-              contextProfile={{
-                productType: 'device',
-                screenName: '510k-workspace',
-                activeProject: projectName,
-                projectId,
-                organizationId,
-                moduleContext: {
-                  submissionType: '510K',
-                  currentStage: currentStageId,
-                  completedSteps: workflowResponse?.workflow?.completedSteps ?? [],
-                },
-              }}
-              greeting={`Ready to build the 510(k)${projectName ? ` for ${projectName}` : ''}. What would you like to work on?`}
-              suggestedActions={SUGGESTED_ACTIONS}
+            <ClaudeAna
+              activeProjectId={projectId}
+              activeProjectName={projectName}
+              submissionType="510K"
+              screenName="510k-workspace"
             />
           ) : (
             <div className="flex-1 min-h-0 overflow-y-auto">

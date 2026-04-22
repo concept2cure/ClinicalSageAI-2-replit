@@ -132,21 +132,18 @@ describe('Chat surfaces have artifact creation capability', () => {
     expect(content).toContain('artifacts');
   });
 
-  it('AnaPersistentPanel has Save to Vault button', () => {
-    const filePath = path.resolve('client/src/concept2cure/components/chat/AnaPersistentPanel.tsx');
+  // AnaPersistentPanel was deleted in the Phase 2 Claude Design convergence.
+  // The Claude Design bundle's chat does not expose a "Save to Vault" action
+  // inside the thread. Vault persistence lives at the project level now.
+  it.skip('AnaPersistentPanel has Save to Vault button — removed with AnaPersistentPanel', () => {});
+  it.skip('AnaPersistentPanel uses auth headers — moved to useAnaChat', () => {});
+
+  it('ClaudeAna useAnaChat hook uses auth headers', () => {
+    const filePath = path.resolve(
+      'client/src/concept2cure/components/claude-ana/useAnaChat.ts'
+    );
     const content = fs.readFileSync(filePath, 'utf-8');
-
-    expect(content).toContain('Save to Vault');
-    expect(content).toContain('/api/concept2cure/projects/');
-    expect(content).toContain('savedAsArtifact');
-  });
-
-  it('AnaPersistentPanel uses auth headers', () => {
-    const filePath = path.resolve('client/src/concept2cure/components/chat/AnaPersistentPanel.tsx');
-    const content = fs.readFileSync(filePath, 'utf-8');
-
     expect(content).toContain('getAuthHeaders()');
-    expect(content).toContain('trialsage_access_token');
   });
 
   it('ZenChat has Save to Vault via useDocumentActions', () => {
@@ -165,8 +162,8 @@ describe('Chat surfaces have artifact creation capability', () => {
 describe('Feedback persists to database, not console', () => {
   const chatFiles = [
     'client/src/concept2cure/components/chat/ChatPanel.tsx',
-    'client/src/concept2cure/components/chat/AnaPersistentPanel.tsx',
     'client/src/concept2cure/components/chat/ZenChat.tsx',
+    'client/src/concept2cure/components/claude-ana/useAnaChat.ts',
   ];
 
   chatFiles.forEach(file => {

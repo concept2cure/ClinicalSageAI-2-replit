@@ -939,31 +939,11 @@ describe('AnA RI Context Enrichment', () => {
     }
   });
 
-  it('ensures every frontend slash command is supported by backend detector', () => {
-    const panelPath = resolve(
-      process.cwd(),
-      'client/src/concept2cure/components/chat/AnaPersistentPanel.tsx',
-    );
-    const panelSource = readFileSync(panelPath, 'utf8');
-
-    const slashBlockMatch = panelSource.match(
-      /const SLASH_COMMANDS:\s*SlashCommand\[\]\s*=\s*\[([\s\S]*?)\];/,
-    );
-    expect(slashBlockMatch?.[1]).toBeTruthy();
-
-    const frontendCommands = new Set<string>();
-    const commandRegex = /command:\s*'\/([^']+)'/g;
-    for (const match of (slashBlockMatch?.[1] || '').matchAll(commandRegex)) {
-      frontendCommands.add(match[1]);
-    }
-
-    const backendCommands = new Set<string>(SUPPORTED_SLASH_COMMANDS);
-
-    expect(frontendCommands.size).toBeGreaterThan(0);
-    for (const frontendCommand of frontendCommands) {
-      expect(backendCommands.has(frontendCommand)).toBe(true);
-    }
-  });
+  // Frontend/backend slash-command parity test removed with AnaPersistentPanel.
+  // The Claude Design bundle does not surface a slash-command menu in the
+  // chat composer, so there is no frontend list to parse. The backend-side
+  // test below still guarantees each registered command has a handler.
+  it.skip('frontend/backend slash-command parity — removed with AnaPersistentPanel', () => {});
 
   it('ensures every backend slash command has a handler (no slash_unhandled)', async () => {
     for (const command of SUPPORTED_SLASH_COMMANDS) {

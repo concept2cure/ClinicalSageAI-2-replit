@@ -255,7 +255,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
     }
 
     // Build context-aware system prompt (with optional section-specific guidance)
-    // Augment with chatMode and client context when sent from AnaPersistentPanel
+    // Augment with chatMode and client context when sent from ClaudeAna
     let modePrefix = '';
     if (chatMode === 'standard' || !chatMode) {
       // Standard AnA co-pilot mode — inject screen context if available

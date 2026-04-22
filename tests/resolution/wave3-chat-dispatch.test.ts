@@ -12,7 +12,8 @@
 import { describe, it, expect } from 'vitest';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TYPES (matching the AnaPersistentPanel action interface)
+// TYPES (matching the legacy AnaPersistentPanel action interface — shape is
+// now produced by the Claude Design shell at claude-ana)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface SuggestedAction {

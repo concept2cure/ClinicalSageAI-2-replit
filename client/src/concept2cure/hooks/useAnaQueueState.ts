@@ -1,7 +1,7 @@
 /**
  * useAnaQueueState — Proper queue state machine for AnA conversation turns
  *
- * Replaces the `isThinking` boolean that was used in AnaPersistentPanel.
+ * Replaces the `isThinking` boolean that was used in ClaudeAna.
  * Provides a real state machine with the following states:
  *
  * - idle: Ready to accept a new message

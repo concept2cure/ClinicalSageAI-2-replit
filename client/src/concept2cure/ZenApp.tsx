@@ -151,11 +151,8 @@ const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect 
 // [Phase A] Dr. Sage removed — AnA is the single guide identity
 // import DrSageGlobalLayer from './components/dr-sage/DrSagePanel';
 
-// AnA Persistent Panel — legacy workspace chat. SUPERSEDED by ClaudeAna
-// (the Phase 2 AnA RI shell); kept only for surfaces that haven't been
-// migrated yet. Do not extend.
-// @deprecated Use ./components/claude-ana ClaudeAna instead.
-import AnaPersistentPanel from './components/chat/AnaPersistentPanel';
+// AnA chat surface — canonical Claude Design port of Phase 2 AnA RI shell.
+// Mirror of docs/design/concept2cure-design-system/project/ui_kits/ana_ri/.
 import { ClaudeAna } from './components/claude-ana';
 import { GlobalOperatingShell } from './components/shell/GlobalOperatingShell';
 
@@ -928,7 +925,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   );
   const projectReadinessScore = readinessData?.metrics?.readinessScore;
 
-  // Intelligence profile + next best actions for enriched AnaPersistentPanel
+  // Intelligence profile + next best actions for enriched ClaudeAna shell
   const { data: intelligenceProfile } = useProjectIntelligence(
     activeProjectId ? Number(activeProjectId) : null
   );
@@ -940,7 +937,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     activeProjectId ? Number(activeProjectId) : null
   );
 
-  // Project intelligence stats for AnaPersistentPanel greeting enrichment
+  // Project intelligence stats for ClaudeAna greeting enrichment
   const projectIntelligenceStats = useMemo(() => {
     if (!readinessData && !intelligenceProfile) return undefined;
     return {
@@ -1429,7 +1426,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         return;
       }
       console.warn(
-        `[AnaPersistentPanel] Unknown navigation target, falling back safely: ${normalizedPath}`
+        `[ClaudeAna] Unknown navigation target, falling back safely: ${normalizedPath}`
       );
       setLayoutMode(activeProjectId ? 'project-home' : 'projects');
     },
@@ -3551,10 +3548,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         )}
 
         {/* Home (layoutMode === 'projects') is handled by ClaudeHome via an
-            early return higher up in this component. The previous home render
-            (ZenSidebar + thin top bar + AnaPersistentPanel full mode) has been
-            deleted. Non-home layouts fall through to the AnaPersistentPanel
-            render below. */}
+            early return higher up in this component. Non-home layouts fall
+            through to the ClaudeAna (Phase 2 AnA RI shell) render below. */}
 
         {layoutMode !== 'workspace' &&
           layoutMode !== 'regulatory-workspace' &&

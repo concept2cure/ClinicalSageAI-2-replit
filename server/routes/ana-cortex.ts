@@ -332,7 +332,7 @@ router.get('/observation-terms', async (req, res) => {
   }
 });
 
-// ── Chat endpoint — connects AnaPersistentPanel to the AI gateway ───────────
+// ── Chat endpoint — connects ClaudeAna to the AI gateway ───────────
 router.post('/chat', async (req, res) => {
   try {
     const { message, chatMode, context, conversationHistory, preferred_provider, source_surface } = req.body || {};
