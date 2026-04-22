@@ -5,7 +5,13 @@
  * to the real Drizzle database via raw SQL through the pg pool.
  *
  * Tables that exist in the Drizzle schema: audit_logs, documents, electronic_signatures
- * Tables that do NOT exist yet: study_document (used by semanticSearch / bulk_import)
+ *
+ * NOTE (2026-04-22, Phase 2 retrieval convergence): the `study_document` stub
+ * and `$queryRaw` helper on the default export were previously consumed by
+ * server/services/semanticSearch.js and server/pipelines/bulk_import.js.
+ * Those files have been deleted. The stubs are preserved as no-ops for now
+ * but are effectively orphan — this whole module has no current importers.
+ * See docs/audits/PHASE_2_RETRIEVAL_REPORT.md.
  */
 
 import { pool } from '../db.js';
@@ -201,9 +207,10 @@ const signature = {
 };
 
 // ---------------------------------------------------------------------------
-// study_document  →  table does NOT exist in schema yet.
-//   Used by semanticSearch.js and bulk_import.js for pgvector embeddings.
-//   Provides no-op stubs that log warnings instead of returning fake data.
+// study_document  →  table does NOT exist in schema.
+//   Previously consumed by semanticSearch.js / bulk_import.js (deleted in
+//   Phase 2 retrieval convergence, 2026-04-22). Kept as warning-logging
+//   no-ops so any surviving caller surfaces loudly rather than silently.
 // ---------------------------------------------------------------------------
 const study_document = {
   async create({ data } = {}) {
@@ -223,7 +230,9 @@ const study_document = {
 };
 
 // ---------------------------------------------------------------------------
-// $queryRaw — used by semanticSearch.js for pgvector queries
+// $queryRaw — previously used by semanticSearch.js (deleted in Phase 2).
+//   Kept as a generic tagged-template passthrough in case another Prisma-
+//   style caller appears; has no active consumers today.
 // ---------------------------------------------------------------------------
 async function $queryRaw(strings, ...values) {
   if (!pool) {

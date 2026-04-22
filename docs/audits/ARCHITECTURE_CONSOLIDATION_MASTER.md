@@ -31,7 +31,7 @@ doc links them and records the non-negotiables that apply across all phases.
 | Phase | Title | Status | Report |
 | --- | --- | --- | --- |
 | 1 | Composition root split (`server/index.ts`) | ✅ Complete | [PHASE_1_BOOTSTRAP_REPORT.md](PHASE_1_BOOTSTRAP_REPORT.md) |
-| 2 | Converge retrieval to one active path | ⏳ Pending | _not yet written_ |
+| 2 | Converge retrieval to one active path | ✅ Complete | [PHASE_2_RETRIEVAL_REPORT.md](PHASE_2_RETRIEVAL_REPORT.md) · truth table: [RETRIEVAL_ENTRYPOINTS.md](RETRIEVAL_ENTRYPOINTS.md) |
 | 3 | Separate DB runtime from DB bootstrap/install | ⏳ Pending | _not yet written_ |
 | 4 | Decompose chat route | ⏳ Pending | _not yet written_ |
 | 5 | Decompose `ProjectWorkspaceShell.tsx` | ⏳ Pending | _not yet written_ |
@@ -48,7 +48,12 @@ doc links them and records the non-negotiables that apply across all phases.
 
 ## Canonical retrieval layer (established in Phase 2)
 
-To be updated when Phase 2 completes.
+`server/services/enhancedEmbeddingService.ts` + `server/services/advancedRAGPipeline.ts`,
+both backed by `lumen_data_atoms` + hybrid search. See the full surface-by-surface
+classification in [`RETRIEVAL_ENTRYPOINTS.md`](RETRIEVAL_ENTRYPOINTS.md). The legacy
+files named in the work order (`semanticSearch.js`, `vaultRetriever.js`) and their
+dead consumer chains were deleted in Phase 2 — no quarantine was needed because
+the entire chain was transitively dead.
 
 ## Canonical AI provider layer
 
