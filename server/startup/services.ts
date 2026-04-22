@@ -103,8 +103,10 @@ export async function initializeEarlyServices(): Promise<void> {
 
   // Ensure auth tables have the columns auth routes expect (idempotent).
   // Must complete before app.listen() since auth routes are already mounted.
+  // Imported from the explicit bootstrap path rather than the db facade so
+  // the "startup calls bootstrap intentionally" boundary is visible here.
   try {
-    const { ensureAuthTables } = await import('../db.js');
+    const { ensureAuthTables } = await import('../db/bootstrap/index.js');
     await ensureAuthTables();
     console.log('✅ Auth schema bootstrap complete');
   } catch (error: any) {

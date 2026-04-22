@@ -32,7 +32,7 @@ doc links them and records the non-negotiables that apply across all phases.
 | --- | --- | --- | --- |
 | 1 | Composition root split (`server/index.ts`) | ✅ Complete | [PHASE_1_BOOTSTRAP_REPORT.md](PHASE_1_BOOTSTRAP_REPORT.md) |
 | 2 | Converge retrieval to one active path | ✅ Complete | [PHASE_2_RETRIEVAL_REPORT.md](PHASE_2_RETRIEVAL_REPORT.md) · truth table: [RETRIEVAL_ENTRYPOINTS.md](RETRIEVAL_ENTRYPOINTS.md) |
-| 3 | Separate DB runtime from DB bootstrap/install | ⏳ Pending | _not yet written_ |
+| 3 | Separate DB runtime from DB bootstrap/install | ✅ Complete | [PHASE_3_DB_BOOTSTRAP_REPORT.md](PHASE_3_DB_BOOTSTRAP_REPORT.md) |
 | 4 | Decompose chat route | ⏳ Pending | _not yet written_ |
 | 5 | Decompose `ProjectWorkspaceShell.tsx` | ⏳ Pending | _not yet written_ |
 | 6 | Route ownership normalization | ⏳ Pending | _not yet written_ |
