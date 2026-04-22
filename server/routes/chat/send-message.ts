@@ -30,8 +30,8 @@ import { interceptChatResponse } from '../../services/intelligence/rim-intercept
 import { ALL_CLAUDE_TOOLS } from '../../services/claude/ClaudeToolDefinitions.js';
 import { executeAgenticLoop } from '../../services/claude/ClaudeToolExecutor.js';
 import type { ClaudeEnhancedResponse } from '../../services/ai-gateway/types.js';
-import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
-import { orchestrate } from '../../services/ana-ri/orchestrator.js';
+import { buildMemoryContextForChat, type MemoryAssemblyDiagnostics } from '../../services/memory-context-assembler.js';
+import { orchestrate, type OrchestratorOutput } from '../../services/ana-ri/orchestrator.js';
 import { ensureGateway, normalizeBody } from './shared.js';
 import { sha256, stableStringify } from './provenance.js';
 import { verifyClaim, type VerifierFlag } from './verifier.js';
@@ -254,7 +254,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     let evidenceBlock = '';
     let memoryAtomCount = 0;
     let memoryBlockChars = 0;
-    let memoryDiagnostics: Record<string, unknown> | null = null;
+    let memoryDiagnostics: MemoryAssemblyDiagnostics | null = null;
     if (sources.length > 0) {
       evidenceBlock =
         '\n\n--- RETRIEVED EVIDENCE (cite as [SRC-n]) ---\n' +
@@ -269,6 +269,10 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     let provider = '';
     let usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
     let latencyMs: number | null = null;
+    // Hoisted so the response serializer (after the try/catch) can read it.
+    // The catch block returns 503, so reaching the response site implies
+    // the assignment inside the try succeeded — hence non-null at use.
+    let orchestratorResult: OrchestratorOutput | null = null;
 
     // ── STEP 6: GENERATE (no silent demo fallback) ─────────────────────
     const gw = ensureGateway();
@@ -306,7 +310,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       }
 
       // Run the orchestrator for intent detection, deficiency context, and continuity
-      const orchestratorResult = orchestrate({
+      orchestratorResult = orchestrate({
         message,
         conversationHistory,
         authoringContext: project_id
@@ -830,13 +834,13 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       generationRunId,
       claims,
       orchestration: {
-        detectedIntent: orchestratorResult.detectedIntent,
-        detectedSubmissionType: orchestratorResult.detectedSubmissionType,
-        appliedRole: orchestratorResult.appliedRole,
-        activeWorkstream: orchestratorResult.activeWorkstream,
-        workstreamHandoff: orchestratorResult.workstreamHandoff,
-        suggestedActions: orchestratorResult.suggestedActions,
-        meta: orchestratorResult.orchestrationMeta,
+        detectedIntent: orchestratorResult!.detectedIntent,
+        detectedSubmissionType: orchestratorResult!.detectedSubmissionType,
+        appliedRole: orchestratorResult!.appliedRole,
+        activeWorkstream: orchestratorResult!.activeWorkstream,
+        workstreamHandoff: orchestratorResult!.workstreamHandoff,
+        suggestedActions: orchestratorResult!.suggestedActions,
+        meta: orchestratorResult!.orchestrationMeta,
       },
       // AnA 1.0 RI — Executed guidance actions
       executedActions: executedActions.length > 0 ? executedActions : undefined,

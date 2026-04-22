@@ -68,7 +68,7 @@ export async function listThreads(req: Request, res: Response) {
  */
 export async function listThreadMessages(req: Request, res: Response) {
   try {
-    const { threadId } = req.params;
+    const threadId = String(req.params.threadId);
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
 
     if (!orgId) {
@@ -100,7 +100,7 @@ export async function listThreadMessages(req: Request, res: Response) {
  */
 export async function getThread(req: Request, res: Response) {
   try {
-    const { threadId } = req.params;
+    const threadId = String(req.params.threadId);
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
 
     if (!orgId) {
@@ -144,7 +144,7 @@ export async function getThread(req: Request, res: Response) {
  */
 export async function patchThread(req: Request, res: Response) {
   try {
-    const { threadId } = req.params;
+    const threadId = String(req.params.threadId);
     const { project_id, title } = req.body;
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
 
@@ -197,7 +197,7 @@ export async function patchThread(req: Request, res: Response) {
  */
 export async function deleteThread(req: Request, res: Response) {
   try {
-    const { threadId } = req.params;
+    const threadId = String(req.params.threadId);
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
 
     if (!orgId) {

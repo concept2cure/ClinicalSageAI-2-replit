@@ -27,12 +27,10 @@ import type { Express } from 'express';
 import type { Pool } from 'pg';
 
 import { authMiddleware } from '../auth.js';
-import {
-  isStaticDataEnabled,
-  sendStaticDataDisabled,
-} from '../middleware/staticDataGuard';
+import { isStaticDataEnabled } from '../middleware/staticDataGuard';
 import { createCircuitBreakerMiddleware } from '../middleware/circuitBreaker';
 import type { CircuitBreakerMiddleware } from '../bootstrap/types';
+import { buildStaticBusinessDataGuard } from '../bootstrap/static-data-guard';
 
 import { registerCoreRoutes } from '../bootstrap/register-core-routes';
 import { registerConcept2CureRoutes } from '../bootstrap/register-concept2cure-routes';
@@ -73,25 +71,6 @@ export function createAiCircuitBreaker(): CircuitBreakerMiddleware {
     resetTimeout: 30_000,
     maxTimeout: 60_000, // AI calls can be slow
   });
-}
-
-/**
- * Fallback mount for static-data families that are disabled. Kept
- * identical to the pre-refactor helper, including the warning log.
- */
-function buildStaticBusinessDataGuard(app: Express) {
-  return function mountStaticBusinessDataGuard(
-    path: string,
-    routeName: string,
-    requiredFlag: string
-  ) {
-    app.use(path, (_req, res) => {
-      return sendStaticDataDisabled(res, routeName, requiredFlag);
-    });
-    console.warn(
-      `⚠️ ${routeName} mounted in fail-closed mode (set ${requiredFlag}=true to re-enable).`
-    );
-  };
 }
 
 /**
