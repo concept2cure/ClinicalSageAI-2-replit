@@ -65,9 +65,12 @@ import {
   BookOpen,
   BarChart2,
   CheckCircle,
+  Square,
+  AlertCircle,
 } from 'lucide-react';
 
 import { ALL_DOMAIN_GROUPS } from '../../config/domain-prompts';
+import { useToast } from '@/hooks/use-toast';
 
 marked.setOptions({ breaks: true, gfm: true });
 
@@ -332,6 +335,10 @@ interface AnaMessage {
   };
   /** Flag to highlight prompts restored for inline editing */
   recalledToInput?: boolean;
+  /** Set when this response was produced via Cortex fallback (no RIM/memory/orchestration) */
+  fallback?: boolean;
+  /** Set when the user aborted the stream before completion */
+  stopped?: boolean;
 }
 
 interface DecisionStatusRailState {
@@ -829,6 +836,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [input, setInput] = useState('');
   const lastSubmittedPromptRef = useRef<string | null>(null);
   const queue = useAnaQueueState();
+  const { toast } = useToast();
+  // AbortController for the in-flight streaming request, so the user can stop.
+  const abortControllerRef = useRef<AbortController | null>(null);
   const isLoading = queue.state.status === 'queued' || queue.state.status === 'post_processing';
   const isStreaming = queue.state.status === 'streaming';
   const isThinking = !queue.state.canSubmit;
@@ -1233,6 +1243,15 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMessage]);
 
+  /**
+   * Abort the in-flight streaming request. The AbortController was created
+   * inside handleSend for the current turn; this aborts it and lets the
+   * stream reader's catch block flip the placeholder to "stopped".
+   */
+  const handleStop = useCallback(() => {
+    abortControllerRef.current?.abort();
+  }, []);
+
   const handleSend = useCallback(
     async (messageText?: string) => {
       const text = (messageText || input).trim();
@@ -1564,7 +1583,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           let streamStarted = false;
           let streamContent = '';
           let streamDoneMeta: any = null;
+          let userAborted = false;
           const useStreamingEndpoint = !useFirecrawl;
+
+          // Fresh AbortController for this turn; handleStop calls .abort() on it.
+          const abortCtl = new AbortController();
+          abortControllerRef.current = abortCtl;
 
           try {
             const anaRes = await fetch(
@@ -1574,6 +1598,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 headers: chatHeaders,
                 credentials: 'include',
                 body: chatBody,
+                signal: abortCtl.signal,
               }
             );
 
@@ -1656,10 +1681,20 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     }
                   } else if (event.type === 'done') {
                     streamDoneMeta = event;
+                  } else if (event.type === 'warning') {
+                    // Server tells us something degraded (e.g., thread persistence failed)
+                    toast({
+                      title: 'Conversation not fully saved',
+                      description:
+                        typeof event.message === 'string'
+                          ? event.message
+                          : 'Your history may not persist across reloads.',
+                      variant: 'default',
+                    });
                   } else if (event.type === 'error') {
                     throw new Error(event.error || 'Stream error');
                   }
-                  // warning / grounding_strip events are tolerated but not yet surfaced
+                  // grounding_strip events are tolerated but not yet surfaced
                 }
               }
 
@@ -1687,7 +1722,29 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               }
             }
           } catch (anaErr: any) {
-            console.warn('[AnA RI Stream] Error:', anaErr?.message);
+            if (anaErr?.name === 'AbortError' || abortCtl.signal.aborted) {
+              userAborted = true;
+              if (streamStarted) {
+                // Keep whatever tokens we already rendered, mark the message as stopped.
+                setMessages(prev =>
+                  prev.map(m =>
+                    m.id === streamPlaceholderId
+                      ? { ...m, content: streamContent || '_(stopped)_', stopped: true }
+                      : m
+                  )
+                );
+                streamedSuccessfully = true;
+              }
+            } else {
+              console.warn('[AnA RI Stream] Error:', anaErr?.message);
+            }
+          } finally {
+            abortControllerRef.current = null;
+          }
+
+          // If the user aborted, skip Cortex fallback and the "unable to reach AI" throw.
+          if (userAborted) {
+            return;
           }
 
           // If streaming produced a response, synthesize rawData so downstream
@@ -1803,6 +1860,15 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           // Streaming already rendered the assistant message in-place; only append
           // when we came in via the Cortex fallback.
           if (!streamedSuccessfully) {
+            const cortexFallback = Boolean(data?._fallback?.active);
+            if (cortexFallback) {
+              toast({
+                title: 'Running in degraded mode',
+                description:
+                  'AnA RI is unavailable; this reply is from the fallback model without memory or RIM.',
+                variant: 'default',
+              });
+            }
             setMessages(prev => [
               ...prev,
               {
@@ -1814,6 +1880,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 modelProvider: data.provider || data.modelProvider || undefined,
                 modelName: data.model || data.modelName || undefined,
                 evidenceUsage: data.evidenceUsage || undefined,
+                fallback: cortexFallback || undefined,
               },
             ]);
           }
@@ -4083,19 +4150,30 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
               )}
-              <button
-                onClick={() => handleSend()}
-                disabled={!input.trim() || isThinking}
-                className={cn(
-                  'flex-shrink-0 p-2 rounded-full transition-colors duration-150',
-                  input.trim() && !isThinking
-                    ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
-                    : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
-                )}
-                aria-label="Send message"
-              >
-                <ArrowUp className="w-4 h-4" />
-              </button>
+              {isThinking ? (
+                <button
+                  onClick={handleStop}
+                  className="flex-shrink-0 p-2 rounded-full bg-[#141413] text-white hover:bg-[#2D2C28] transition-colors duration-150"
+                  aria-label="Stop generating"
+                  title="Stop generating"
+                >
+                  <Square className="w-3.5 h-3.5" fill="currentColor" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleSend()}
+                  disabled={!input.trim()}
+                  className={cn(
+                    'flex-shrink-0 p-2 rounded-full transition-colors duration-150',
+                    input.trim()
+                      ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
+                      : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
+                  )}
+                  aria-label="Send message"
+                >
+                  <ArrowUp className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -4682,6 +4760,26 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             showActions === msg.id ? 'opacity-100' : 'opacity-0'
                           )}
                         >
+                          {/* Degraded mode badge */}
+                          {msg.fallback && (
+                            <span
+                              className="inline-flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded mr-1 text-amber-700 bg-amber-50"
+                              title="AnA RI was unavailable; this reply used the fallback model without memory or RIM."
+                            >
+                              <AlertCircle className="w-3 h-3" />
+                              Degraded
+                            </span>
+                          )}
+                          {/* Stopped badge */}
+                          {msg.stopped && (
+                            <span
+                              className="inline-flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded mr-1 text-zinc-600 bg-zinc-100"
+                              title="You stopped generation before AnA finished."
+                            >
+                              <Square className="w-2.5 h-2.5" fill="currentColor" />
+                              Stopped
+                            </span>
+                          )}
                           {/* Model badge */}
                           {msg.modelProvider && (
                             <span
@@ -5409,20 +5507,31 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
             />
 
-            {/* Send */}
-            <button
-              onClick={() => handleSend()}
-              disabled={!input.trim() || isThinking}
-              className={cn(
-                'flex-shrink-0 p-2 rounded-full transition-colors duration-150',
-                input.trim() && !isThinking
-                  ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
-                  : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
-              )}
-              aria-label="Send message"
-            >
-              <ArrowUp className="w-4 h-4" />
-            </button>
+            {/* Send / Stop */}
+            {isThinking ? (
+              <button
+                onClick={handleStop}
+                className="flex-shrink-0 p-2 rounded-full bg-[#141413] text-white hover:bg-[#2D2C28] transition-colors duration-150"
+                aria-label="Stop generating"
+                title="Stop generating"
+              >
+                <Square className="w-3.5 h-3.5" fill="currentColor" />
+              </button>
+            ) : (
+              <button
+                onClick={() => handleSend()}
+                disabled={!input.trim()}
+                className={cn(
+                  'flex-shrink-0 p-2 rounded-full transition-colors duration-150',
+                  input.trim()
+                    ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
+                    : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
+                )}
+                aria-label="Send message"
+              >
+                <ArrowUp className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
           {useFirecrawl && (
