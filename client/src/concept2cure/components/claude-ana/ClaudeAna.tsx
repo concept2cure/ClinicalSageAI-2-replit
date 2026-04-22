@@ -17,12 +17,15 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 
+import { apiRequest } from '@/lib/queryClient';
+
 import { Sidebar, type AnaView, type AccountInfo, type Recent } from './Sidebar';
 import { TopBar } from './TopBar';
 import { EmptyState } from './EmptyState';
 import { ChatView, type ChatMessageView } from './ChatView';
 import { ProjectsView, type AnaProject } from './ProjectsView';
 import { useAnaChat, type AnaChatMessage } from './useAnaChat';
+import { useRecents } from './useRecents';
 import styles from './styles.module.css';
 
 export interface ClaudeAnaProps {
@@ -125,7 +128,17 @@ export function ClaudeAna({
     initials: user?.initials || DEFAULT_ACCOUNT.initials,
     plan: user?.plan || DEFAULT_ACCOUNT.plan,
   };
-  const recentsList = recents && recents.length > 0 ? recents : DEFAULT_RECENTS;
+
+  // Live recents from /api/chat/threads. Falls through to the bundle's demo
+  // list only when nothing has been fetched yet AND the caller did not pass
+  // an explicit `recents` prop.
+  const { recents: liveRecents } = useRecents({ projectId: activeProjectId });
+  const recentsList: Recent[] =
+    recents && recents.length > 0
+      ? recents
+      : liveRecents.length > 0
+        ? liveRecents
+        : DEFAULT_RECENTS;
   const projectList = projects && projects.length > 0 ? projects : DEFAULT_PROJECTS;
 
   const [view, setView] = useState<AnaView>('home');
@@ -188,6 +201,22 @@ export function ClaudeAna({
     [chat]
   );
 
+  const handleFeedback = useCallback(
+    (messageId: string, positive: boolean) => {
+      // Fire-and-forget — if the endpoint is down or the table hasn't been
+      // created yet the server logs and returns success; we don't block the UI.
+      const threadId = chat.threadId;
+      apiRequest('POST', '/api/concept2cure/feedback', {
+        messageId,
+        positive,
+        conversationId: threadId || undefined,
+      }).catch(err => {
+        console.warn('[ClaudeAna] feedback submit failed:', err?.message);
+      });
+    },
+    [chat.threadId]
+  );
+
   const handleActionClick = useCallback(
     (_messageId: string, action: { artifactId?: string; sectionCode?: string }) => {
       if (action.artifactId && onOpenArtifact) {
@@ -241,6 +270,7 @@ export function ClaudeAna({
             isStreaming={chat.isStreaming}
             onCopy={handleCopy}
             onRetry={handleRetry}
+            onFeedback={handleFeedback}
             onActionClick={handleActionClick}
             onEditRegenerate={handleEditRegenerate}
           />

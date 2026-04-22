@@ -980,6 +980,36 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     recommendationsData,
   ]);
 
+  // Real projects list mapped to the ClaudeAna ProjectsView shape. Memoized
+  // so each ClaudeAna mount gets a stable reference.
+  const anaProjects = useMemo(() => {
+    return projects
+      .filter(p => !p.archived)
+      .map(p => {
+        const convos = p.conversationCount ?? 0;
+        const updated = p.lastUpdated ? new Date(p.lastUpdated) : null;
+        const updatedAgo = updated
+          ? (() => {
+              const diffMs = Date.now() - updated.getTime();
+              const hours = Math.floor(diffMs / (1000 * 60 * 60));
+              if (hours < 1) return 'updated just now';
+              if (hours < 24) return `updated ${hours}h ago`;
+              const days = Math.floor(hours / 24);
+              if (days < 7) return `updated ${days}d ago`;
+              const weeks = Math.floor(days / 7);
+              return `updated ${weeks}w ago`;
+            })()
+          : 'updated recently';
+        return {
+          id: p.id,
+          title: p.name,
+          description:
+            p.description || `${p.type || 'Regulatory'} submission workspace.`,
+          meta: `${convos} chat${convos === 1 ? '' : 's'} · ${updatedAgo}`,
+        };
+      });
+  }, [projects]);
+
   // ── Canonical AuthoringContextPack — derived from all available state ──────
   const authoringContext = useMemo<AuthoringContextPack | null>(() => {
     return resolveAuthoringContext({
@@ -3381,6 +3411,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     submissionType={activeProject?.type}
                     userRole={userRole}
                     screenName="regulatory-workspace"
+                    projects={anaProjects}
                     onOpenArtifact={handleOpenArtifact}
                     onNavigateToSection={handleNavigateToSection}
                     onSelectProject={pid => setActiveProjectId(pid)}
@@ -3500,6 +3531,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 submissionType={activeProject?.type}
                 userRole={userRole}
                 screenName="project-home"
+                projects={anaProjects}
                 onOpenArtifact={handleOpenArtifact}
                 onNavigateToSection={handleNavigateToSection}
                 onSelectProject={pid => setActiveProjectId(pid)}
@@ -3573,6 +3605,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               submissionType={activeProject?.type}
               userRole={userRole}
               screenName={layoutMode}
+              projects={anaProjects}
               onOpenArtifact={handleOpenArtifact}
               onNavigateToSection={handleNavigateToSection}
               onSelectProject={pid => setActiveProjectId(pid)}
