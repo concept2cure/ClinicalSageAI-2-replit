@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 /**
- * ClaudeLogin — visual replacement for ZenLogin.
+ * Concept2CureLogin — visual replacement for ZenLogin.
  *
  * Restyles the auth surface to match the Claude Design home aesthetic
  * (warm cream canvas, serif headline, terracotta primary, composer-style
@@ -142,7 +142,7 @@ function MfaCodeInput({
 }
 
 /* ─── Main component ─── */
-export const ClaudeLogin: React.FC = () => {
+export const Concept2CureLogin: React.FC = () => {
   const [, setLocation] = useLocation();
   const { login, verifyMfa } = usePortalAuth();
 
@@ -698,4 +698,4 @@ export const ClaudeLogin: React.FC = () => {
   );
 };
 
-export default ClaudeLogin;
+export default Concept2CureLogin;

@@ -1,5 +1,5 @@
 /**
- * ClaudeAna — Phase 2 AnA RI chat shell.
+ * Ana — Phase 2 AnA RI chat shell.
  *
  * Mirror of docs/design/concept2cure-design-system/project/ui_kits/ana_ri/App.jsx.
  * The bundle is the design authority; Claude Code is the implementer.
@@ -28,7 +28,7 @@ import { useAnaChat, type AnaChatMessage } from './useAnaChat';
 import { useRecents } from './useRecents';
 import styles from './styles.module.css';
 
-export interface ClaudeAnaProps {
+export interface AnaProps {
   /** Signed-in user (fallbacks match the bundle demo). */
   user?: Partial<AccountInfo>;
   /** Real recents list from the thread DB. */
@@ -109,7 +109,7 @@ const DEFAULT_PROJECTS: AnaProject[] = [
   },
 ];
 
-export function ClaudeAna({
+export function Ana({
   user,
   recents,
   projects,
@@ -122,7 +122,7 @@ export function ClaudeAna({
   onNavigateToSection,
   onSelectProject,
   onCreateProject,
-}: ClaudeAnaProps) {
+}: AnaProps) {
   const account: AccountInfo = {
     name: user?.name || DEFAULT_ACCOUNT.name,
     initials: user?.initials || DEFAULT_ACCOUNT.initials,
@@ -222,7 +222,7 @@ export function ClaudeAna({
         positive,
         conversationId: threadId || undefined,
       }).catch(err => {
-        console.warn('[ClaudeAna] feedback submit failed:', err?.message);
+        console.warn('[Ana] feedback submit failed:', err?.message);
       });
     },
     [chat.threadId]

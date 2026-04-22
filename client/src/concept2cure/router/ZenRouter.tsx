@@ -21,7 +21,7 @@ import React, { useEffect, lazy, Suspense } from 'react';
 import { Switch, Route, useLocation, useRoute, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZenLogin, ZenSignup, ZenAuthLayout } from '../auth';
-import { ClaudeLogin } from '../components/claude-auth';
+import { Concept2CureLogin } from '../components/concept2cure-auth';
 import { ZenApp } from '../ZenApp';
 import { ProjectProvider } from '../context/ProjectContext';
 import ProofCertificatePage from '../pages/ProofCertificatePage';
@@ -251,7 +251,7 @@ export const ZenRouter: React.FC = () => {
             {() => (
               <PageTransition>
                 <AuthRoute>
-                  <ClaudeLogin />
+                  <Concept2CureLogin />
                 </AuthRoute>
               </PageTransition>
             )}
@@ -298,7 +298,7 @@ export const ZenRouter: React.FC = () => {
             {() => (
               <PageTransition>
                 <AuthRoute>
-                  <ClaudeLogin />
+                  <Concept2CureLogin />
                 </AuthRoute>
               </PageTransition>
             )}

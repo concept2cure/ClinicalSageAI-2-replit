@@ -423,7 +423,7 @@ export function getPromptsForContext(navContext: string | null | undefined): {
 /**
  * Get a flat list of suggested action prompts for the current context.
  * Returns the top N prompts from primary domains, suitable for the
- * suggested action chips in ClaudeAna.
+ * suggested action chips in Ana.
  *
  * @param navContext - The activeNavId or layoutMode
  * @param maxChips - Maximum number of prompts to return (default 4)

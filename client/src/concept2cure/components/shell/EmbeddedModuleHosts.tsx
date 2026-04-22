@@ -66,9 +66,9 @@ interface Embedded510kHostProps extends BaseEmbeddedHostProps {
 }
 
 // Note: the legacy right-rail ZenChat assistant was removed for 510(k) during
-// the AnA-first convergence. FDA510kWorkspacePage now hosts ClaudeAna
+// the AnA-first convergence. FDA510kWorkspacePage now hosts Ana
 // inline as the primary surface, so a second chat would violate the "ONE chat"
-// rule in ClaudeAna. PMA and CER hosts still use the rail pending
+// rule in Ana. PMA and CER hosts still use the rail pending
 // their own conversions.
 export const Embedded510kHost: React.FC<Embedded510kHostProps> = ({
   projectId,

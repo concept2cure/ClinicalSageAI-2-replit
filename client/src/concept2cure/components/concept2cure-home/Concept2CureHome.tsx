@@ -1,5 +1,5 @@
 /**
- * ClaudeHome — Phase 1 Home surface.
+ * Concept2CureHome — Phase 1 Home surface.
  *
  * Mirror of docs/design/concept2cure-design-system/project/ui_kits/home/App.jsx.
  * Claude Code is implementer, not designer — do not diverge. If behavior
@@ -31,7 +31,7 @@ interface User {
   role: string;
 }
 
-export interface ClaudeHomeProps {
+export interface Concept2CureHomeProps {
   user?: Partial<User>;
 }
 
@@ -373,7 +373,7 @@ function Recents() {
 }
 
 /* ─── App ─── */
-export function ClaudeHome({ user }: ClaudeHomeProps) {
+export function Concept2CureHome({ user }: Concept2CureHomeProps) {
   const resolvedUser: User = {
     name: user?.name ?? DEFAULT_USER.name,
     initials: user?.initials ?? DEFAULT_USER.initials,

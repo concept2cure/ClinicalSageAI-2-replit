@@ -39,7 +39,7 @@ describe('Guided Demo Path — End-to-End Contract', () => {
     });
 
     // Save-to-Vault was an AnaPersistentPanel capability. The Phase 2 Claude
-    // Design AnA RI shell (client/src/concept2cure/components/claude-ana/)
+    // Design AnA RI shell (client/src/concept2cure/components/ana/)
     // intentionally omits it — the bundle does not surface Save-to-Vault in
     // the chat thread. Vault persistence now happens at the project level.
     it.skip('AnaPersistentPanel has Save to Vault capability — removed with AnaPersistentPanel', () => {});
@@ -194,7 +194,7 @@ describe('Guided Demo Path — End-to-End Contract', () => {
         'client/src/concept2cure/components/chat/ChatPanel.tsx',
         'client/src/concept2cure/components/chat/ZenChat.tsx',
         // AnaPersistentPanel removed — Claude Design shell is canonical.
-        'client/src/concept2cure/components/claude-ana/useAnaChat.ts',
+        'client/src/concept2cure/components/ana/useAnaChat.ts',
       ];
       files.forEach(f => {
         const content = read(f);

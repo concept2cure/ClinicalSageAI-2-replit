@@ -55,7 +55,7 @@ CMC WORKSPACE  /concept2cure/project/:id/cmc  → section-workspace layout
 
 | Step | Component | Status |
 |------|-----------|--------|
-| Chat panel | ClaudeAna (claude-ana/) | Available — Phase 2 Claude Design port |
+| Chat panel | Ana (components/ana/) | Available — Concept2Cure.RI Phase 2 shell |
 | RI endpoints | ana-ri-inline-routes.ts | 773 lines, working |
 | Workspace integration | EmbeddedAssistantRail | Available in 510k |
 

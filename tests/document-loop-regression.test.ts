@@ -138,9 +138,9 @@ describe('Chat surfaces have artifact creation capability', () => {
   it.skip('AnaPersistentPanel has Save to Vault button — removed with AnaPersistentPanel', () => {});
   it.skip('AnaPersistentPanel uses auth headers — moved to useAnaChat', () => {});
 
-  it('ClaudeAna useAnaChat hook uses auth headers', () => {
+  it('Ana useAnaChat hook uses auth headers', () => {
     const filePath = path.resolve(
-      'client/src/concept2cure/components/claude-ana/useAnaChat.ts'
+      'client/src/concept2cure/components/ana/useAnaChat.ts'
     );
     const content = fs.readFileSync(filePath, 'utf-8');
     expect(content).toContain('getAuthHeaders()');
@@ -163,7 +163,7 @@ describe('Feedback persists to database, not console', () => {
   const chatFiles = [
     'client/src/concept2cure/components/chat/ChatPanel.tsx',
     'client/src/concept2cure/components/chat/ZenChat.tsx',
-    'client/src/concept2cure/components/claude-ana/useAnaChat.ts',
+    'client/src/concept2cure/components/ana/useAnaChat.ts',
   ];
 
   chatFiles.forEach(file => {

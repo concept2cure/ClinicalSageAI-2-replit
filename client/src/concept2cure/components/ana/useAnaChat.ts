@@ -21,7 +21,7 @@
  * chips. This hook therefore omits public surface for those — it's a plain
  * send-and-stream controller.
  *
- * @module client/src/concept2cure/components/claude-ana/useAnaChat
+ * @module client/src/concept2cure/components/ana/useAnaChat
  */
 
 import { useCallback, useRef, useState } from 'react';

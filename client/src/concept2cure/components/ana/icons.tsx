@@ -2,7 +2,7 @@
  * Icons — ported from docs/design/concept2cure-design-system/project/ui_kits/ana_ri/Icons.jsx
  *
  * Bundle uses inline SVG; production uses lucide-react (same glyphs, smaller
- * bundle) per the claude-home precedent. Each export maps 1:1 to a bundle icon.
+ * bundle) per the concept2cure-home precedent. Each export maps 1:1 to a bundle icon.
  */
 import {
   Plus,

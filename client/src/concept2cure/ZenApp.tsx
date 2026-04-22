@@ -34,7 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
 import { ZenCommandPalette } from './components/command/ZenCommandPalette';
-import { ClaudeHome } from './components/claude-home';
+import { Concept2CureHome } from './components/concept2cure-home';
 
 // Stage 10 extracted modules
 import {
@@ -153,7 +153,7 @@ const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect 
 
 // AnA chat surface — canonical Claude Design port of Phase 2 AnA RI shell.
 // Mirror of docs/design/concept2cure-design-system/project/ui_kits/ana_ri/.
-import { ClaudeAna } from './components/claude-ana';
+import { Ana } from './components/ana';
 import { GlobalOperatingShell } from './components/shell/GlobalOperatingShell';
 
 // Canonical authoring context resolver
@@ -925,7 +925,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   );
   const projectReadinessScore = readinessData?.metrics?.readinessScore;
 
-  // Intelligence profile + next best actions for enriched ClaudeAna shell
+  // Intelligence profile + next best actions for enriched Ana shell
   const { data: intelligenceProfile } = useProjectIntelligence(
     activeProjectId ? Number(activeProjectId) : null
   );
@@ -937,7 +937,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     activeProjectId ? Number(activeProjectId) : null
   );
 
-  // Project intelligence stats for ClaudeAna greeting enrichment
+  // Project intelligence stats for Ana greeting enrichment
   const projectIntelligenceStats = useMemo(() => {
     if (!readinessData && !intelligenceProfile) return undefined;
     return {
@@ -980,8 +980,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     recommendationsData,
   ]);
 
-  // Real projects list mapped to the ClaudeAna ProjectsView shape. Memoized
-  // so each ClaudeAna mount gets a stable reference.
+  // Real projects list mapped to the Ana ProjectsView shape. Memoized
+  // so each Ana mount gets a stable reference.
   const anaProjects = useMemo(() => {
     return projects
       .filter(p => !p.archived)
@@ -1456,7 +1456,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         return;
       }
       console.warn(
-        `[ClaudeAna] Unknown navigation target, falling back safely: ${normalizedPath}`
+        `[Ana] Unknown navigation target, falling back safely: ${normalizedPath}`
       );
       setLayoutMode(activeProjectId ? 'project-home' : 'projects');
     },
@@ -1991,7 +1991,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   // userProfile sync moved to useUserProfileFromStorage hook
 
-  // Claude Design home — the canonical home surface. ClaudeHome owns the
+  // Claude Design home — the canonical home surface. Concept2CureHome owns the
   // entire viewport when the user is on the home route. The behavior is an
   // exact mirror of docs/design/concept2cure-design-system/project/ui_kits/home/;
   // Claude Code is implementer, not designer — do not extend this.
@@ -2004,7 +2004,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       .slice(0, 2)
       .join('')
       .toUpperCase() || 'U';
-    return <ClaudeHome user={{ name: firstName, initials, role: userRole }} />;
+    return <Concept2CureHome user={{ name: firstName, initials, role: userRole }} />;
   }
 
   return (
@@ -3393,7 +3393,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               <div className="flex-1 flex min-h-0">
                 {/* Center: Claude Design AnA RI shell (Phase 2) */}
                 <div className="flex-1 min-w-0">
-                  <ClaudeAna
+                  <Ana
                     user={{
                       name: userName,
                       initials:
@@ -3513,7 +3513,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           <div className="flex-1 flex min-h-0">
             {/* Center: Claude Design AnA RI shell (Phase 2) */}
             <div className="flex-1 min-w-0">
-              <ClaudeAna
+              <Ana
                 user={{
                   name: userName,
                   initials:
@@ -3579,15 +3579,15 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           </div>
         )}
 
-        {/* Home (layoutMode === 'projects') is handled by ClaudeHome via an
+        {/* Home (layoutMode === 'projects') is handled by Concept2CureHome via an
             early return higher up in this component. Non-home layouts fall
-            through to the ClaudeAna (Phase 2 AnA RI shell) render below. */}
+            through to the Ana (Phase 2 AnA RI shell) render below. */}
 
         {layoutMode !== 'workspace' &&
           layoutMode !== 'regulatory-workspace' &&
           layoutMode !== 'project-home' &&
           layoutMode !== 'projects' && (
-            <ClaudeAna
+            <Ana
               user={{
                 name: userName,
                 initials:

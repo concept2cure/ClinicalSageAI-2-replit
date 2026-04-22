@@ -3,7 +3,7 @@
 **Date:** 2026-04-22
 **Workstream:** AnA chat shell
 **Old surface:** `client/src/concept2cure/components/chat/AnaPersistentPanel.tsx` (5 982 lines, @deprecated)
-**New surface:** `client/src/concept2cure/components/claude-ana/` (ClaudeAna + 10 sibling modules)
+**New surface:** `client/src/concept2cure/components/ana/` (Ana + 10 sibling modules)
 **Bundle authority:** `docs/design/concept2cure-design-system/project/ui_kits/ana_ri/`
 
 Per CLAUDE.md "UI Convergence and Legacy Surface Deletion — Replace-or-Delete Law".
@@ -12,7 +12,7 @@ Per CLAUDE.md "UI Convergence and Legacy Surface Deletion — Replace-or-Delete 
 
 ## 1. Canonical surface identified
 
-`ClaudeAna` (`components/claude-ana/ClaudeAna.tsx`) is the canonical AnA chat surface. It is a bundle-faithful port of the Phase 2 Claude Design UI kit at `docs/design/concept2cure-design-system/project/ui_kits/ana_ri/`.
+`Ana` (`components/ana/Ana.tsx`) is the canonical AnA chat surface. It is a bundle-faithful port of the Phase 2 Claude Design UI kit at `docs/design/concept2cure-design-system/project/ui_kits/ana_ri/`.
 
 ## 2. Competing surfaces identified
 
@@ -23,11 +23,11 @@ Per CLAUDE.md "UI Convergence and Legacy Surface Deletion — Replace-or-Delete 
 
 | Location | Before | After |
 |---|---|---|
-| `client/src/concept2cure/ZenApp.tsx` L158 | `import AnaPersistentPanel` | `import { ClaudeAna }` |
-| `client/src/concept2cure/ZenApp.tsx` regulatory-workspace mount (L3366) | `<AnaPersistentPanel mode="full" .../>` | `<ClaudeAna .../>` |
-| `client/src/concept2cure/ZenApp.tsx` project-home mount (L3488) | `<AnaPersistentPanel .../>` | `<ClaudeAna .../>` |
-| `client/src/concept2cure/ZenApp.tsx` non-home fall-through (L3563) | `<AnaPersistentPanel .../>` | `<ClaudeAna .../>` |
-| `client/src/concept2cure/pages/FDA510kWorkspacePage.tsx` L22 + L242 | `import AnaPersistentPanel` + `<AnaPersistentPanel ... />` | `import { ClaudeAna }` + `<ClaudeAna ... />` |
+| `client/src/concept2cure/ZenApp.tsx` L158 | `import AnaPersistentPanel` | `import { Ana }` |
+| `client/src/concept2cure/ZenApp.tsx` regulatory-workspace mount (L3366) | `<AnaPersistentPanel mode="full" .../>` | `<Ana .../>` |
+| `client/src/concept2cure/ZenApp.tsx` project-home mount (L3488) | `<AnaPersistentPanel .../>` | `<Ana .../>` |
+| `client/src/concept2cure/ZenApp.tsx` non-home fall-through (L3563) | `<AnaPersistentPanel .../>` | `<Ana .../>` |
+| `client/src/concept2cure/pages/FDA510kWorkspacePage.tsx` L22 + L242 | `import AnaPersistentPanel` + `<AnaPersistentPanel ... />` | `import { Ana }` + `<Ana ... />` |
 
 No routed entry point ever existed; AnaPersistentPanel was mounted only as a React component.
 
@@ -35,9 +35,9 @@ No routed entry point ever existed; AnaPersistentPanel was mounted only as a Rea
 
 `config/ui-surface-registry.json` now records:
 
-- `AnaPersistentPanel.tsx` — `status: "deleted"`, `action: "deleted"`, `deletedOn: "2026-04-22"`, `supersededBy: ClaudeAna`, with a rationale entry listing every feature intentionally dropped (slash-command menu, @-mention autocomplete, Save-to-Vault, chat-mode switcher, deep-research / nano-banana modes, drag-drop attach).
-- `ClaudeAna` — `status: "active"`, `bundleSource` pointing to `docs/design/concept2cure-design-system/project/ui_kits/ana_ri/`, `mountedFrom` listing every call site, `streamingContract` documenting the SSE protocol, `functionalAdditions` enumerating the five bundle-consistent additions (stop button, latency chip, degraded badge, executed-action chips, user edit-regenerate) and noting that each one reuses a pattern that already exists in the bundle rather than introducing new design tokens or selectors.
-- The "home" and "projects" destination entries now correctly reference `ClaudeHome` (Phase 1) and `ClaudeAna` (Phase 2) instead of the old `AnaPersistentPanel` combo.
+- `AnaPersistentPanel.tsx` — `status: "deleted"`, `action: "deleted"`, `deletedOn: "2026-04-22"`, `supersededBy: Ana`, with a rationale entry listing every feature intentionally dropped (slash-command menu, @-mention autocomplete, Save-to-Vault, chat-mode switcher, deep-research / nano-banana modes, drag-drop attach).
+- `Ana` — `status: "active"`, `bundleSource` pointing to `docs/design/concept2cure-design-system/project/ui_kits/ana_ri/`, `mountedFrom` listing every call site, `streamingContract` documenting the SSE protocol, `functionalAdditions` enumerating the five bundle-consistent additions (stop button, latency chip, degraded badge, executed-action chips, user edit-regenerate) and noting that each one reuses a pattern that already exists in the bundle rather than introducing new design tokens or selectors.
+- The "home" and "projects" destination entries now correctly reference `Concept2CureHome` (Phase 1) and `Ana` (Phase 2) instead of the old `AnaPersistentPanel` combo.
 
 ## 5. Superseded surface blocked / redirected / deleted
 
@@ -47,8 +47,8 @@ Deletion criteria (CLAUDE.md "Deletion Rule") verified:
 
 - ☑ No remaining imports (verified: `grep -rn "import.*AnaPersistentPanel" client server tests scripts config` returns zero results)
 - ☑ No remaining routed entry point (component was never on a route)
-- ☑ No remaining visible navigation path (all nav targets resolve to `ClaudeAna` or are gone)
-- ☑ No remaining canonical authority (`ui-surface-registry.json` moved the canonical flag to `ClaudeAna`)
+- ☑ No remaining visible navigation path (all nav targets resolve to `Ana` or are gone)
+- ☑ No remaining canonical authority (`ui-surface-registry.json` moved the canonical flag to `Ana`)
 
 Remaining AnA-named references in source tree:
 
@@ -62,11 +62,11 @@ CLAUDE.md "Zero Capability Loss": "A cleaner UI that does less is a regression. 
 
 | Legacy capability | Retained? | Where |
 |---|---|---|
-| Conversational chat | Yes | `ClaudeAna` + `useAnaChat` → `/api/ana-ri/stream` |
+| Conversational chat | Yes | `Ana` + `useAnaChat` → `/api/ana-ri/stream` |
 | Thread persistence | Yes | Identical contract: `thread_id` captured from SSE events, session-scoped continuity |
 | Streaming tokens | Yes | `useAnaChat` consumes `status`/`text`/`done`/`post_done` events, same server surface |
 | Stop generation | Yes | Composer send button flips to a stop icon mid-stream; AbortController wired in `useAnaChat` |
-| Retry response | Yes | `Message` action row exposes the bundle's retry icon; `ClaudeAna.handleRetry` walks back to the prior user prompt and re-sends |
+| Retry response | Yes | `Message` action row exposes the bundle's retry icon; `Ana.handleRetry` walks back to the prior user prompt and re-sends |
 | Edit previous prompt | Yes | Hover-reveal pencil on user bubble switches the row to the Composer; `handleEditRegenerate` restarts the thread from that point |
 | Copy response | Yes | Bundle's copy icon → `navigator.clipboard.writeText` |
 | Thumbs up/down feedback | Yes | Bundle's 4-icon action row; wire-through to existing `/api/concept2cure/feedback` endpoint is handled by the caller |
@@ -96,7 +96,7 @@ CLAUDE.md: "Claude may not mark a UI convergence task complete unless: one canon
 
 | Gate | Status |
 |---|---|
-| One canonical authority remains | ☑ `ClaudeAna` is the only AnA chat component |
+| One canonical authority remains | ☑ `Ana` is the only AnA chat component |
 | Registry updated | ☑ `ui-surface-registry.json` above |
 | Authority audit passes | ☑ no active competing surface |
 | Routes cleaned | ☑ N/A — never route-mounted |

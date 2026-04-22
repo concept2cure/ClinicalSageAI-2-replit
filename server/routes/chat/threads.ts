@@ -22,7 +22,7 @@ import { getThreadMessages } from '../../services/chat-thread-helpers.js';
 /**
  * GET /api/chat/threads
  * List threads, optionally filtered by project_id.
- * Used by ClaudeAna to restore previous conversations.
+ * Used by Ana to restore previous conversations.
  */
 export async function listThreads(req: Request, res: Response) {
   try {
@@ -64,7 +64,7 @@ export async function listThreads(req: Request, res: Response) {
 /**
  * GET /api/chat/threads/:threadId/messages
  * Retrieve messages for a specific thread.
- * Used by ClaudeAna to restore conversation content.
+ * Used by Ana to restore conversation content.
  */
 export async function listThreadMessages(req: Request, res: Response) {
   try {

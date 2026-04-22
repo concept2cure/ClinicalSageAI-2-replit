@@ -5,7 +5,7 @@
  * ?project_id= query). Returns a shape the Sidebar already understands
  * ({ id, label }). TanStack Query keeps the list fresh on project changes.
  *
- * @module client/src/concept2cure/components/claude-ana/useRecents
+ * @module client/src/concept2cure/components/ana/useRecents
  */
 import { useQuery } from '@tanstack/react-query';
 

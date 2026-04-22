@@ -1,15 +1,15 @@
 {
   "$schema": "UI Surface Registry — tracks status of every shell surface in convergence",
   "lastUpdated": "2026-04-21T00:00:00Z",
-  "convergencePhase": "Claude Design bundle adoption — Phase 1 Home surface live (ClaudeHome) · tokens ported from docs/design/concept2cure-design-system/project/colors_and_type.css",
+  "convergencePhase": "Claude Design bundle adoption — Phase 1 Home surface live (Concept2CureHome) · tokens ported from docs/design/concept2cure-design-system/project/colors_and_type.css",
   "designAuthority": "docs/design/concept2cure-design-system/ (Claude Design handoff bundle) + direct user instructions (per CLAUDE.md UI Source of Truth section)",
   "auditFile": "docs/audits/ANA_UI_FORENSIC_AUDIT_2026-04-05.md",
   "workOrderFile": "docs/plans/ANA_UI_CONVERGENCE_WORK_ORDER_2026-04-05.md",
   "allowedDestinations": ["chats", "projects", "reports", "communication-center", "apps", "settings"],
   "surfaces": {
     "shells": {
-      "ClaudeHome.tsx": {
-        "path": "client/src/concept2cure/components/claude-home/ClaudeHome.tsx",
+      "Concept2CureHome.tsx": {
+        "path": "client/src/concept2cure/components/concept2cure-home/Concept2CureHome.tsx",
         "status": "active",
         "action": "canonical",
         "role": "Canonical home surface — exact mirror of docs/design/concept2cure-design-system/project/ui_kits/home/App.jsx. Owns the entire viewport when layoutMode === 'projects' && !embeddedModule. Full shell: rail (15 nav items, 4 groups) · topbar (crumbs + scope switcher + workspace pill + tb actions) · page body (greeting + composer + suggestion pills + AnA briefing card + dashboard strip + module launcher + recents) · ⌘K command palette. Rendered from ZenApp.tsx via early return.",
@@ -21,7 +21,7 @@
         "path": "client/src/concept2cure/ZenApp.tsx",
         "status": "active",
         "action": "canonical",
-        "role": "Primary application shell — owns all non-home layouts (workspace, editor, project-home, etc.). Home layout (layoutMode === 'projects') short-circuits to ClaudeHome via early return. The prior home render branch (old thin top bar + AnaPersistentPanel full mode) has been deleted.",
+        "role": "Primary application shell — owns all non-home layouts (workspace, editor, project-home, etc.). Home layout (layoutMode === 'projects') short-circuits to Concept2CureHome via early return. The prior home render branch (old thin top bar + AnaPersistentPanel full mode) has been deleted.",
         "projectLanding": "2026-04-06 WO-2: ProjectHomeDashboard rewritten — back link, hero title, description only. Right rail (ProjectKnowledgePanel) preserved."
       },
       "ZenRouter.tsx": {
@@ -123,16 +123,16 @@
         "status": "deleted",
         "action": "deleted",
         "deletedOn": "2026-04-22",
-        "supersededBy": "client/src/concept2cure/components/claude-ana/ClaudeAna.tsx",
-        "rationale": "Phase 2 Claude Design convergence. AnaPersistentPanel was the legacy chat surface; it is fully replaced by the Claude Design bundle-faithful ClaudeAna shell. Legacy features not represented in the bundle (slash-command menu, @-mention autocomplete, Save-to-Vault inline, chat-mode switcher, deep-research/nano-banana modes, drag-drop attach) are dropped with the legacy component per CLAUDE.md: the bundle is the design authority and the Claude Code implementer does not carry forward features the designer has not shipped.",
+        "supersededBy": "client/src/concept2cure/components/ana/Ana.tsx",
+        "rationale": "Phase 2 Claude Design convergence. AnaPersistentPanel was the legacy chat surface; it is fully replaced by the Claude Design bundle-faithful Ana shell. Legacy features not represented in the bundle (slash-command menu, @-mention autocomplete, Save-to-Vault inline, chat-mode switcher, deep-research/nano-banana modes, drag-drop attach) are dropped with the legacy component per CLAUDE.md: the bundle is the design authority and the Claude Code implementer does not carry forward features the designer has not shipped.",
         "supersedes": "None"
       },
-      "ClaudeAna": {
-        "path": "client/src/concept2cure/components/claude-ana/",
+      "Ana": {
+        "path": "client/src/concept2cure/components/ana/",
         "status": "active",
         "action": "keep",
         "role": "Canonical AnA RI chat surface — Phase 2 Claude Design port. Mirror of docs/design/concept2cure-design-system/project/ui_kits/ana_ri/.",
-        "entry": "ClaudeAna.tsx",
+        "entry": "Ana.tsx",
         "bundleSource": "docs/design/concept2cure-design-system/project/ui_kits/ana_ri/",
         "mountedFrom": [
           "client/src/concept2cure/ZenApp.tsx (regulatory-workspace, project-home, non-home fall-through)",
@@ -152,16 +152,16 @@
       "chats": {
         "status": "active",
         "layoutMode": "projects",
-        "component": "ClaudeHome (Phase 1) for layoutMode=projects; ClaudeAna (Phase 2) inside workspace layouts",
+        "component": "Concept2CureHome (Phase 1) for layoutMode=projects; Ana (Phase 2) inside workspace layouts",
         "navId": "projects",
-        "notes": "Home handled by ClaudeHome early return; workspace chat by ClaudeAna."
+        "notes": "Home handled by Concept2CureHome early return; workspace chat by Ana."
       },
       "projects": {
         "status": "active",
         "layoutMode": "projects",
-        "component": "ClaudeHome (full-width home surface)",
+        "component": "Concept2CureHome (full-width home surface)",
         "navId": "projects",
-        "notes": "Phase 1 Claude Design home render. See components/claude-home/."
+        "notes": "Phase 1 Claude Design home render. See components/concept2cure-home/."
       },
       "communication-center": {
         "status": "active",
