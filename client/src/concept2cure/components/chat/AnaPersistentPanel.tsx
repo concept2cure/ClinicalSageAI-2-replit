@@ -339,6 +339,10 @@ interface AnaMessage {
   fallback?: boolean;
   /** Set when the user aborted the stream before completion */
   stopped?: boolean;
+  /** Round-trip latency in ms (from gateway `done` event) */
+  latencyMs?: number;
+  /** Flag set when a reply errored (network/server). Used to show Retry. */
+  isError?: boolean;
   /** Executed guidance/command actions attached to the assistant reply */
   executedActions?: Array<{
     actionType?: string;
@@ -1266,6 +1270,40 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     abortControllerRef.current?.abort();
   }, []);
 
+  /**
+   * Retry: drop this assistant message and regenerate it from the preceding
+   * user prompt. Used when a reply errored, was stopped, or came back via
+   * degraded Cortex fallback.
+   */
+  const handleRetryAssistant = useCallback(
+    (assistantMessageId: string) => {
+      if (isThinking) return;
+      // Compute truncation outside setMessages so we can read state and dispatch.
+      let priorUserContent: string | null = null;
+      setMessages(prev => {
+        const idx = prev.findIndex(m => m.id === assistantMessageId);
+        if (idx === -1) return prev;
+        let userIdx = -1;
+        for (let i = idx - 1; i >= 0; i--) {
+          if (prev[i].role === 'user') {
+            userIdx = i;
+            break;
+          }
+        }
+        if (userIdx === -1) return prev;
+        priorUserContent = prev[userIdx].content;
+        return prev.slice(0, userIdx + 1);
+      });
+      if (priorUserContent) {
+        void handleSend(priorUserContent, { skipUserAppend: true });
+      }
+    },
+    // handleSend is hoisted within the component's render scope; the closure is
+    // only invoked on user click, at which point the binding resolves.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isThinking]
+  );
+
   const handleSend = useCallback(
     async (messageText?: string, options?: { skipUserAppend?: boolean }) => {
       const text = (messageText || input).trim();
@@ -1746,6 +1784,20 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     streamDoneMeta = event;
                     if (streamStarted) {
                       streamedSuccessfully = true;
+                      const latencyMs =
+                        typeof event.latencyMs === 'number' ? event.latencyMs : undefined;
+                      setMessages(prev =>
+                        prev.map(m =>
+                          m.id === streamPlaceholderId
+                            ? {
+                                ...m,
+                                latencyMs: latencyMs ?? m.latencyMs,
+                                modelProvider: event.provider || m.modelProvider,
+                                modelName: event.model || m.modelName,
+                              }
+                            : m
+                        )
+                      );
                       if (!doneCompletedTurn) {
                         doneCompletedTurn = true;
                         queue.completeTurn();
@@ -2305,6 +2357,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Escape stops an in-flight stream (parity with Claude.ai / ChatGPT).
+    // Only when a turn is actually running — avoids swallowing Esc elsewhere.
+    if (e.key === 'Escape' && isThinking && !slashMenuOpen) {
+      e.preventDefault();
+      handleStop();
+      return;
+    }
     // Slash command navigation
     if (slashMenuOpen && filteredSlashCommands.length > 0) {
       if (e.key === 'ArrowDown') {
@@ -5102,6 +5161,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 : msg.modelProvider}
                             </span>
                           )}
+                          {typeof msg.latencyMs === 'number' && msg.latencyMs > 0 && (
+                            <span
+                              className="text-[11px] font-medium px-1.5 py-0.5 rounded mr-1 text-zinc-500 bg-zinc-50"
+                              title={`Gateway latency · ${msg.latencyMs} ms`}
+                            >
+                              {msg.latencyMs < 1000
+                                ? `${msg.latencyMs} ms`
+                                : `${(msg.latencyMs / 1000).toFixed(1)} s`}
+                            </span>
+                          )}
                           {msg.evidenceUsage?.firecrawlRequested && (
                             <span
                               className={cn(
@@ -5116,6 +5185,22 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 ? `Firecrawl used • -${msg.evidenceUsage.quotaConsumed ?? 0}`
                                 : 'Firecrawl requested'}
                             </span>
+                          )}
+                          {(msg.isError || msg.fallback || msg.stopped) && (
+                            <button
+                              onClick={() => handleRetryAssistant(msg.id)}
+                              disabled={isThinking}
+                              className={cn(
+                                'p-1 rounded transition-colors',
+                                isThinking
+                                  ? 'text-[#D8D5CA] cursor-not-allowed'
+                                  : 'text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF]'
+                              )}
+                              title="Retry this response"
+                              aria-label="Retry this response"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                            </button>
                           )}
                           <button
                             onClick={() => handleCopy(msg.id, msg.content)}
