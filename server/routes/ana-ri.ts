@@ -435,14 +435,20 @@ router.post('/chat', async (req: Request, res: Response) => {
       }),
     ]);
 
-    const enrichedSystemPrompt =
-      chatIntelligencePrefix +
-      orchestration.systemPrompt +
-      chatMemoryResult.memoryBlock +
-      chatEnrichment.block;
+    // Split into stable prefix (cached) + volatile suffix (per-turn) so the
+    // Claude API can reuse the prefix across turns on the same screen/project.
+    // Stable = intelligence + orchestration (incl route/authoring/section guide).
+    // Volatile = memory (query-dependent) + enrichment (message-dependent).
+    const chatStablePrefix = chatIntelligencePrefix + orchestration.systemPrompt;
+    const chatVolatileSuffix = chatMemoryResult.memoryBlock + chatEnrichment.block;
 
     // Build message history — prefer server thread history, fall back to client
-    const messages: GatewayMessage[] = [{ role: 'system', content: enrichedSystemPrompt }];
+    const messages: GatewayMessage[] = [
+      { role: 'system', content: chatStablePrefix, cacheControl: true },
+    ];
+    if (chatVolatileSuffix && chatVolatileSuffix.trim().length > 0) {
+      messages.push({ role: 'system', content: chatVolatileSuffix });
+    }
 
     let historyLoaded = false;
     if (thread_id) {
@@ -513,6 +519,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       maxTokens: routingPlan.maxTokens,
       temperature: routingPlan.temperature,
       strategy: selectedStrategy,
+      promptCache: { enabled: true, type: 'ephemeral' },
       ...(validatedProvider ? { provider: validatedProvider } : {}),
     });
 
@@ -940,8 +947,11 @@ router.post('/stream', async (req: Request, res: Response) => {
     // Use rewritten message if slash command or @app mention was detected
     const effectiveMessage = enrichment.rewrittenMessage || message;
 
-    const fullSystemPrompt =
-      intelligencePrefix + orchestration.systemPrompt + memoryBlock + enrichment.block;
+    // Split into stable prefix (cached) + volatile suffix (per-turn) — see /chat
+    // handler for rationale. The Claude gateway marks the stable block with
+    // cache_control so subsequent turns on the same screen/project hit cache.
+    const streamStablePrefix = intelligencePrefix + orchestration.systemPrompt;
+    const streamVolatileSuffix = memoryBlock + enrichment.block;
 
     // Thread resolution (before message building so we can load server history)
     let threadId = thread_id;
@@ -961,7 +971,12 @@ router.post('/stream', async (req: Request, res: Response) => {
     }
 
     // Build messages — prefer server thread history, fall back to client
-    const messages: GatewayMessage[] = [{ role: 'system', content: fullSystemPrompt }];
+    const messages: GatewayMessage[] = [
+      { role: 'system', content: streamStablePrefix, cacheControl: true },
+    ];
+    if (streamVolatileSuffix && streamVolatileSuffix.trim().length > 0) {
+      messages.push({ role: 'system', content: streamVolatileSuffix });
+    }
 
     let streamHistoryLoaded = false;
     if (threadId) {
@@ -1067,6 +1082,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       maxTokens: routingPlan.maxTokens,
       temperature: routingPlan.temperature,
       strategy: selectedStrategy,
+      promptCache: { enabled: true, type: 'ephemeral' },
       stream: true,
       onStream: (chunk: string, metadata?: any) => {
         fullContent += chunk;

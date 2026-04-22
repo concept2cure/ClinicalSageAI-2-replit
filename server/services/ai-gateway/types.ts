@@ -126,6 +126,15 @@ export interface GatewayMessage {
   content: string;
   /** Multi-modal content blocks (images + text) — Claude only */
   contentBlocks?: ContentBlock[];
+  /**
+   * Mark this message with a prompt-cache breakpoint (Claude only).
+   * When `promptCache.enabled` is set on the request, system messages
+   * with `cacheControl: true` will carry `cache_control` markers in the
+   * outgoing Anthropic request so the prefix up to and including that
+   * block is cached. If no message sets this, the gateway falls back to
+   * marking only the final system message.
+   */
+  cacheControl?: boolean;
 }
 
 export interface GatewayRequest {

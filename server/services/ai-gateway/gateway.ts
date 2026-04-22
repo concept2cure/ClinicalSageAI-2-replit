@@ -615,12 +615,15 @@ export class AIGateway {
     // System prompt with optional prompt caching
     if (systemMessages.length > 0) {
       if (request.promptCache?.enabled) {
-        // Use structured system blocks with cache_control
+        const cacheType = request.promptCache.type;
+        const flagged = systemMessages.some(m => m.cacheControl === true);
+        // Honor explicit per-message cacheControl flags when present;
+        // otherwise apply cache_control to the last system message.
         params.system = systemMessages.map((m, i) => ({
           type: 'text',
           text: m.content,
-          ...(i === systemMessages.length - 1
-            ? { cache_control: { type: request.promptCache!.type } }
+          ...((flagged ? m.cacheControl === true : i === systemMessages.length - 1)
+            ? { cache_control: { type: cacheType } }
             : {}),
         }));
       } else {
@@ -756,11 +759,13 @@ export class AIGateway {
 
     if (systemMessages.length > 0) {
       if (request.promptCache?.enabled) {
+        const cacheType = request.promptCache.type;
+        const flagged = systemMessages.some(m => m.cacheControl === true);
         params.system = systemMessages.map((m, i) => ({
           type: 'text',
           text: m.content,
-          ...(i === systemMessages.length - 1
-            ? { cache_control: { type: request.promptCache!.type } }
+          ...((flagged ? m.cacheControl === true : i === systemMessages.length - 1)
+            ? { cache_control: { type: cacheType } }
             : {}),
         }));
       } else {
