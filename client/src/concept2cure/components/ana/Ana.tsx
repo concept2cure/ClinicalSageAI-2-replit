@@ -15,7 +15,7 @@
  *
  * No new design tokens or selectors — every style used exists in the bundle.
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { apiRequest } from '@/lib/queryClient';
 
@@ -45,6 +45,16 @@ export interface AnaProps {
   userRole?: string | null;
   /** Screen name for the server-side context block. */
   screenName?: string | null;
+  /**
+   * Optional draft message to auto-send on mount. Used by Concept2CureHome
+   * to hand off the home-composer draft when the user clicks send from
+   * the home page. The caller should nil out the draft via
+   * onInitialMessageConsumed once Ana takes it to prevent re-send on
+   * remount.
+   */
+  initialMessage?: string | null;
+  /** Fired once when initialMessage has been consumed + sent. */
+  onInitialMessageConsumed?: () => void;
   /** Navigate to a specific artifact (from action chip clicks). */
   onOpenArtifact?: (artifactId: string) => void;
   /** Navigate to a specific CTD section. */
@@ -118,6 +128,8 @@ export function Ana({
   submissionType,
   userRole,
   screenName = 'ana-ri',
+  initialMessage,
+  onInitialMessageConsumed,
   onOpenArtifact,
   onNavigateToSection,
   onSelectProject,
@@ -160,6 +172,18 @@ export function Ana({
     },
     [chat]
   );
+
+  // Auto-send a handed-off draft from the home composer. Guarded with a ref
+  // so remounts (React strict-mode, router re-mount) can't fire it twice.
+  const initialMessageConsumedRef = useRef(false);
+  useEffect(() => {
+    const seed = typeof initialMessage === 'string' ? initialMessage.trim() : '';
+    if (!seed || initialMessageConsumedRef.current || chat.isStreaming) return;
+    initialMessageConsumedRef.current = true;
+    setView('chat');
+    void chat.send(seed);
+    onInitialMessageConsumed?.();
+  }, [initialMessage, chat, onInitialMessageConsumed]);
 
   const handleNewChat = useCallback(() => {
     chat.reset();

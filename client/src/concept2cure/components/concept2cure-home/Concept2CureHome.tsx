@@ -33,6 +33,19 @@ interface User {
 
 export interface Concept2CureHomeProps {
   user?: Partial<User>;
+  /**
+   * Called when a rail / palette item is clicked. Receives the NAV_ITEMS id
+   * (projects, vault, submission, biostat, ...). ZenApp decides whether the
+   * id maps to a real LayoutMode or just updates local active-nav state.
+   * Return true to suppress the default active-nav state change.
+   */
+  onNavigate?: (navId: string) => boolean | void;
+  /**
+   * Called when the user submits a draft from the home composer. ZenApp
+   * seeds Ana with the text, switches to a chat-hosting layout, and lets
+   * Ana auto-send on mount.
+   */
+  onLaunchChat?: (draft: string) => void;
 }
 
 // Bundle App.jsx DEFAULTS — used as production fallbacks when user is unset.
@@ -194,12 +207,21 @@ function TopBar({
   );
 }
 
-/* ─── GreetAndCompose — send is a no-op demo per bundle App.jsx ─── */
-function GreetAndCompose({ userName }: { userName: string }) {
+/* ─── GreetAndCompose — hands the draft off to ZenApp when onLaunchChat is wired ─── */
+function GreetAndCompose({
+  userName,
+  onLaunchChat,
+}: {
+  userName: string;
+  onLaunchChat?: (draft: string) => void;
+}) {
   const [draft, setDraft] = useState('');
   const send = () => {
-    if (!draft.trim()) return;
-    // Bundle: /* no-op demo */ — clears draft.
+    const text = draft.trim();
+    if (!text) return;
+    if (onLaunchChat) {
+      onLaunchChat(text);
+    }
     setDraft('');
   };
   const tod = timeOfDay();
@@ -373,7 +395,11 @@ function Recents() {
 }
 
 /* ─── App ─── */
-export function Concept2CureHome({ user }: Concept2CureHomeProps) {
+export function Concept2CureHome({
+  user,
+  onNavigate,
+  onLaunchChat,
+}: Concept2CureHomeProps) {
   const resolvedUser: User = {
     name: user?.name ?? DEFAULT_USER.name,
     initials: user?.initials ?? DEFAULT_USER.initials,
@@ -384,6 +410,14 @@ export function Concept2CureHome({ user }: Concept2CureHomeProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [scope, setScope] = useState<Scope>('all');
   const [paletteOpen, setPaletteOpen] = useState(false);
+
+  // Rail + palette + module-card click handler. Calls the host's onNavigate
+  // first so ZenApp can route to a real LayoutMode; the local active-nav
+  // state only updates when the host didn't suppress it.
+  const handleSelectNav = (id: string) => {
+    const suppressed = onNavigate?.(id);
+    if (!suppressed) setActiveNav(id);
+  };
 
   // ⌘K / Ctrl-K palette
   useEffect(() => {
@@ -399,7 +433,7 @@ export function Concept2CureHome({ user }: Concept2CureHomeProps) {
 
   // Palette navigation — only Module selects a rail item (matches bundle onPaletteNav).
   const onPaletteNav = (it: PaletteItem) => {
-    if (it.kind === 'Module') setActiveNav(it.id);
+    if (it.kind === 'Module') handleSelectNav(it.id);
   };
 
   const activeNavLabel = NAV_ITEMS.find(n => n.id === activeNav)?.label ?? 'Home';
@@ -408,7 +442,7 @@ export function Concept2CureHome({ user }: Concept2CureHomeProps) {
     <div className={styles.shell} data-collapsed={collapsed || undefined}>
       <Rail
         activeNav={activeNav}
-        setActiveNav={setActiveNav}
+        setActiveNav={handleSelectNav}
         collapsed={collapsed}
         setCollapsed={setCollapsed}
         user={resolvedUser}
@@ -422,11 +456,11 @@ export function Concept2CureHome({ user }: Concept2CureHomeProps) {
         />
         <div className={styles.page}>
           <div className={styles.pageInner}>
-            <GreetAndCompose userName={resolvedUser.name} />
+            <GreetAndCompose userName={resolvedUser.name} onLaunchChat={onLaunchChat} />
             <AnaCard scope={scope} onOpenPalette={() => setPaletteOpen(true)} />
             <Dashboard />
             <div style={{ height: 24 }} />
-            <Launcher activeNav={activeNav} setActiveNav={setActiveNav} />
+            <Launcher activeNav={activeNav} setActiveNav={handleSelectNav} />
             <div style={{ height: 24 }} />
             <Recents />
           </div>

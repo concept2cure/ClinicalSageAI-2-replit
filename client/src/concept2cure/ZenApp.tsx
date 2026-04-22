@@ -1207,6 +1207,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     title: string;
   } | null>(null);
 
+  // Home → Ana composer hand-off. When the user submits a draft from the
+  // Concept2CureHome composer, we seed this state and switch layoutMode so
+  // Ana can pick it up via its initialMessage prop, auto-send once, and
+  // clear it via onInitialMessageConsumed.
+  const [pendingAnaMessage, setPendingAnaMessage] = useState<string | null>(null);
+
   // External message to send into AnA chat (triggered by suggested prompts, dashboard actions)
   const [externalChatMessage, setExternalChatMessage] = useState<{
     text: string;
@@ -2004,7 +2010,45 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       .slice(0, 2)
       .join('')
       .toUpperCase() || 'U';
-    return <Concept2CureHome user={{ name: firstName, initials, role: userRole }} />;
+    // Map Concept2CureHome rail/palette nav ids → real LayoutMode values.
+    // Ids without a dedicated layout stay on the home page and just update
+    // the active-nav highlight (handleNavigate returns true to suppress).
+    const navIdToLayout: Record<string, LayoutMode | undefined> = {
+      projects: 'projects',
+      vault: 'vault',
+      submission: 'submissions',
+      biostat: 'biostatistics',
+      quality: 'review-readiness',
+      reporting: 'report-engine',
+      protocol: 'documents',
+      cmc: 'documents',
+      artifacts: 'artifacts-center',
+      audit: 'audit',
+      admin: 'setup',
+    };
+    const handleHomeNavigate = (navId: string): boolean | void => {
+      const target = navIdToLayout[navId];
+      if (target) {
+        setLayoutMode(target);
+        return true; // suppress local active-nav update since we're leaving the page
+      }
+      // No dedicated layout — let the home update its highlight only.
+      return false;
+    };
+    const handleHomeLaunchChat = (draft: string) => {
+      // Seed Ana with the draft and switch to a chat-hosting layout. If the
+      // user has an active project, the project-home shell owns the chat;
+      // otherwise the regulatory-workspace fall-through does.
+      setPendingAnaMessage(draft);
+      setLayoutMode(activeProjectId ? 'project-home' : 'regulatory-workspace');
+    };
+    return (
+      <Concept2CureHome
+        user={{ name: firstName, initials, role: userRole }}
+        onNavigate={handleHomeNavigate}
+        onLaunchChat={handleHomeLaunchChat}
+      />
+    );
   }
 
   return (
@@ -3412,6 +3456,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     userRole={userRole}
                     screenName="regulatory-workspace"
                     projects={anaProjects}
+                    initialMessage={pendingAnaMessage}
+                    onInitialMessageConsumed={() => setPendingAnaMessage(null)}
                     onOpenArtifact={handleOpenArtifact}
                     onNavigateToSection={handleNavigateToSection}
                     onSelectProject={pid => setActiveProjectId(pid)}
@@ -3532,6 +3578,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 userRole={userRole}
                 screenName="project-home"
                 projects={anaProjects}
+                initialMessage={pendingAnaMessage}
+                onInitialMessageConsumed={() => setPendingAnaMessage(null)}
                 onOpenArtifact={handleOpenArtifact}
                 onNavigateToSection={handleNavigateToSection}
                 onSelectProject={pid => setActiveProjectId(pid)}
@@ -3606,6 +3654,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               userRole={userRole}
               screenName={layoutMode}
               projects={anaProjects}
+              initialMessage={pendingAnaMessage}
+              onInitialMessageConsumed={() => setPendingAnaMessage(null)}
               onOpenArtifact={handleOpenArtifact}
               onNavigateToSection={handleNavigateToSection}
               onSelectProject={pid => setActiveProjectId(pid)}
