@@ -4650,51 +4650,128 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               </div>
                             );
                           })()}
-                          {/* AnA 1.0 RI — Executed Guidance Actions */}
+                          {/* AnA 1.0 RI — Executed Guidance Actions (rich clickable chips) */}
                           {msg.executedActions && msg.executedActions.length > 0 && (
-                            <div className="mt-2 space-y-1.5">
-                              {msg.executedActions.map((action: any, i: any) => (
-                                <div
-                                  key={i}
-                                  className={cn(
-                                    'flex items-center gap-2 px-3 py-2 rounded-lg border text-xs',
-                                    action.executed && !action.error
-                                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                                      : action.error
-                                      ? 'bg-red-50 border-red-200 text-red-800'
-                                      : 'bg-zinc-50 border-zinc-200 text-zinc-600'
-                                  )}
-                                >
-                                  {action.executed && !action.error ? (
-                                    <Check className="w-3.5 h-3.5 flex-shrink-0" />
-                                  ) : action.error ? (
-                                    <span className="w-3.5 h-3.5 flex-shrink-0 text-red-500">
-                                      !
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {msg.executedActions.map((action: any, i: any) => {
+                                // ── State classification ───────────────────────────────────────
+                                const isExecuted = action.executed && !action.error;
+                                const isFailed = Boolean(action.error);
+                                const isPending = !isExecuted && !isFailed;
+
+                                // ── Icon per action type (lucide, already imported) ──
+                                // Falls back gracefully for unknown action types.
+                                const ActionIcon = (() => {
+                                  const t = String(action.actionType || '').toLowerCase();
+                                  if (isFailed) return AlertTriangle;
+                                  if (t === 'review_thread') return CheckCircle;
+                                  if (t === 'risk_log') return Target;
+                                  if (t === 'rewrite' || t === 'draft_section') return FileEdit;
+                                  if (t === 'memo' || t === 'strategy_note' || t === 'reviewer_brief')
+                                    return FileText;
+                                  if (t.includes('task')) return CheckCircle;
+                                  if (t.includes('promot')) return Target;
+                                  if (t.includes('section')) return FileEdit;
+                                  if (t.includes('artifact') || t.includes('create') || t.includes('draft'))
+                                    return FileText;
+                                  return isExecuted ? Check : Zap;
+                                })();
+
+                                // ── Human title — prefer action.title when present ───
+                                const actionTypeLabel = String(action.actionType || 'action').replace(
+                                  /_/g,
+                                  ' '
+                                );
+                                const humanTitle: string = (() => {
+                                  if (isFailed) {
+                                    const errMsg = String(action.error || 'Action failed');
+                                    // Keep compact — trim to first clause.
+                                    const compact = errMsg.length > 60 ? `${errMsg.slice(0, 57)}…` : errMsg;
+                                    return `Failed: ${compact}`;
+                                  }
+                                  if (action.title) return String(action.title);
+                                  if (isExecuted) return `Created ${actionTypeLabel}`;
+                                  return `Prepared ${actionTypeLabel}${
+                                    action.confidence ? ` · ${action.confidence}` : ''
+                                  }`;
+                                })();
+
+                                // ── Click behavior (artifactId → open; sectionCode → navigate) ─
+                                const artifactId: string | undefined = action.artifactId ?? undefined;
+                                const sectionCode: string | undefined = action.sectionCode ?? undefined;
+                                const clickable =
+                                  (artifactId && onOpenArtifact) ||
+                                  (!artifactId && sectionCode && onNavigateToSection);
+                                const handleClick = clickable
+                                  ? () => {
+                                      if (artifactId && onOpenArtifact) {
+                                        onOpenArtifact(artifactId);
+                                      } else if (sectionCode && onNavigateToSection) {
+                                        onNavigateToSection(sectionCode);
+                                      }
+                                    }
+                                  : undefined;
+
+                                // ── Visual state styles ──────────────────────────────
+                                const stateClass = isExecuted
+                                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                                  : isFailed
+                                  ? 'bg-red-50 border-red-200 text-red-800'
+                                  : 'bg-zinc-50 border-zinc-200 text-zinc-600 opacity-80';
+                                const interactiveClass = clickable
+                                  ? isExecuted
+                                    ? 'cursor-pointer hover:bg-emerald-100 hover:border-emerald-300 transition-colors'
+                                    : isFailed
+                                    ? 'cursor-pointer hover:bg-red-100 hover:border-red-300 transition-colors'
+                                    : 'cursor-pointer hover:bg-zinc-100 hover:border-zinc-300 transition-colors'
+                                  : 'cursor-default';
+
+                                const chipTitle =
+                                  humanTitle +
+                                  (artifactId ? ` · ${artifactId}` : '') +
+                                  (sectionCode && !artifactId ? ` · §${sectionCode}` : '');
+
+                                const chipContent = (
+                                  <>
+                                    <ActionIcon
+                                      className={cn(
+                                        'w-3 h-3 flex-shrink-0',
+                                        isPending && 'opacity-60'
+                                      )}
+                                    />
+                                    <span className="font-medium truncate max-w-[240px]">
+                                      {humanTitle}
                                     </span>
-                                  ) : (
-                                    <Zap className="w-3.5 h-3.5 flex-shrink-0" />
-                                  )}
-                                  <span className="font-medium">
-                                    {action.executed
-                                      ? `Created ${action.actionType.replace(/_/g, ' ')}`
-                                      : action.error
-                                      ? `Failed: ${action.error}`
-                                      : `Prepared ${action.actionType.replace(/_/g, ' ')} (${
-                                          action.confidence
-                                        })`}
+                                    {sectionCode && (
+                                      <span className="font-mono text-[10px] opacity-70">
+                                        §{sectionCode}
+                                      </span>
+                                    )}
+                                  </>
+                                );
+
+                                const chipClass = cn(
+                                  'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs',
+                                  stateClass,
+                                  interactiveClass
+                                );
+
+                                return clickable ? (
+                                  <button
+                                    key={i}
+                                    type="button"
+                                    onClick={handleClick}
+                                    title={chipTitle}
+                                    className={chipClass}
+                                  >
+                                    {chipContent}
+                                  </button>
+                                ) : (
+                                  <span key={i} title={chipTitle} className={chipClass}>
+                                    {chipContent}
                                   </span>
-                                  {action.artifactId && (
-                                    <span className="text-emerald-600 font-mono text-[10px]">
-                                      {action.artifactId}
-                                    </span>
-                                  )}
-                                  {action.threadId && (
-                                    <span className="text-emerald-600 font-mono text-[10px]">
-                                      thread:{action.threadId.slice(0, 8)}
-                                    </span>
-                                  )}
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           )}
                           {/* Nano Banana PPTX download button */}
