@@ -474,6 +474,16 @@ router.post('/chat', async (req: Request, res: Response) => {
       }
     }
 
+    // Place a cache breakpoint on the last assistant message in history so
+    // conversational turns reuse the whole prefix (system + all prior turns).
+    // Each new turn extends the cached prefix by one user/assistant pair.
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'assistant') {
+        messages[i].cacheControl = true;
+        break;
+      }
+    }
+
     // Inject file context if file_ids provided
     const fileIds = req.body.file_ids;
     if (fileIds && Array.isArray(fileIds) && fileIds.length > 0) {
@@ -1001,6 +1011,15 @@ router.post('/stream', async (req: Request, res: Response) => {
         if (!msg.role || !['user', 'assistant'].includes(msg.role)) continue;
         if (typeof msg.content !== 'string' || msg.content.length > MAX_MSG_LENGTH) continue;
         messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
+      }
+    }
+
+    // Place a cache breakpoint on the last assistant message in history so
+    // conversational turns reuse the whole prefix (system + all prior turns).
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'assistant') {
+        messages[i].cacheControl = true;
+        break;
       }
     }
 

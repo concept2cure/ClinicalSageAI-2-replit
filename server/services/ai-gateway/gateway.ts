@@ -577,22 +577,25 @@ export class AIGateway {
     const systemMessages = request.messages.filter(m => m.role === 'system');
     const nonSystemMessages = request.messages.filter(m => m.role !== 'system');
 
-    // Build messages with multi-modal support (vision)
+    const cacheEnabled = !!request.promptCache?.enabled;
+    const cacheType = request.promptCache?.type;
+
+    // Build messages with multi-modal support (vision) + optional prompt-cache
+    // breakpoints on individual user/assistant turns.
     const messages = nonSystemMessages.map(m => {
+      const shouldCache = cacheEnabled && m.cacheControl === true;
       // If message has contentBlocks (images + text), use structured content
       if (m.contentBlocks && m.contentBlocks.length > 0) {
-        return {
-          role: m.role,
-          content: m.contentBlocks.map(block => {
-            if (block.type === 'image') {
-              return {
-                type: 'image' as const,
-                source: block.source,
-              };
-            }
-            return { type: 'text' as const, text: block.text };
-          }),
-        };
+        const blocks = m.contentBlocks.map(block => {
+          if (block.type === 'image') {
+            return { type: 'image' as const, source: block.source } as any;
+          }
+          return { type: 'text' as const, text: block.text } as any;
+        });
+        if (shouldCache && blocks.length > 0) {
+          blocks[blocks.length - 1].cache_control = { type: cacheType };
+        }
+        return { role: m.role, content: blocks };
       }
       // Also handle request-level imageContent (convenience API)
       if (m.role === 'user' && request.imageContent && request.imageContent.length > 0) {
@@ -601,7 +604,22 @@ export class AIGateway {
           source: img.source,
         }));
         content.push({ type: 'text' as const, text: m.content });
+        if (shouldCache) {
+          content[content.length - 1].cache_control = { type: cacheType };
+        }
         return { role: m.role, content };
+      }
+      if (shouldCache) {
+        return {
+          role: m.role,
+          content: [
+            {
+              type: 'text' as const,
+              text: m.content,
+              cache_control: { type: cacheType },
+            },
+          ],
+        };
       }
       return { role: m.role, content: m.content };
     });
@@ -736,15 +754,32 @@ export class AIGateway {
     const systemMessages = request.messages.filter(m => m.role === 'system');
     const nonSystemMessages = request.messages.filter(m => m.role !== 'system');
 
+    const streamCacheEnabled = !!request.promptCache?.enabled;
+    const streamCacheType = request.promptCache?.type;
+
     const messages = nonSystemMessages.map(m => {
+      const shouldCache = streamCacheEnabled && m.cacheControl === true;
       if (m.contentBlocks && m.contentBlocks.length > 0) {
+        const blocks: any[] = m.contentBlocks.map(block =>
+          block.type === 'image'
+            ? { type: 'image' as const, source: block.source }
+            : { type: 'text' as const, text: block.text }
+        );
+        if (shouldCache && blocks.length > 0) {
+          blocks[blocks.length - 1].cache_control = { type: streamCacheType };
+        }
+        return { role: m.role, content: blocks };
+      }
+      if (shouldCache) {
         return {
           role: m.role,
-          content: m.contentBlocks.map(block =>
-            block.type === 'image'
-              ? { type: 'image' as const, source: block.source }
-              : { type: 'text' as const, text: block.text }
-          ),
+          content: [
+            {
+              type: 'text' as const,
+              text: m.content,
+              cache_control: { type: streamCacheType },
+            },
+          ],
         };
       }
       return { role: m.role, content: m.content };
