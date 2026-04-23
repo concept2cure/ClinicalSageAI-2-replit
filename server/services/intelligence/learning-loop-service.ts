@@ -44,6 +44,20 @@ export interface RecommendationFeedback {
   readonly organizationId: number;
 }
 
+export interface SignalReliability {
+  readonly validated: number;
+  readonly partiallyValidated: number;
+  readonly disputed: number;
+  readonly totalValidations: number;
+  /**
+   * Aggregate reliability index in [0, 1]. Null when no validations exist
+   * (insufficient evidence to weight signals). Partially-validated counts
+   * as 0.5 — user edited so the signal was directionally right but not fully
+   * confirmed.
+   */
+  readonly reliabilityIndex: number | null;
+}
+
 export interface FeedbackSummary {
   readonly totalFeedback: number;
   readonly accepted: number;
@@ -54,6 +68,13 @@ export interface FeedbackSummary {
   readonly resolutionRate: number;
   readonly averageTimeToAction: number | null;
   readonly topDismissedTypes: Array<{ type: string; count: number }>;
+  /**
+   * Aggregate signal validation outcomes from the closed learning loop.
+   * Populated from `intelligence_signal_validation` entries written by
+   * {@link linkFeedbackToRecentSignals}. Lets future RIM runs weight
+   * prior signals by historical accuracy.
+   */
+  readonly signalReliability: SignalReliability;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -177,6 +198,8 @@ export async function getFeedbackSummary(
       .slice(0, 5)
       .map(([type, count]) => ({ type, count }));
 
+    const signalReliability = await getSignalReliability(projectId, organizationId);
+
     return {
       totalFeedback: total,
       accepted,
@@ -187,6 +210,7 @@ export async function getFeedbackSummary(
       resolutionRate: total > 0 ? Math.round((resolved / total) * 100) : 0,
       averageTimeToAction: timeCount > 0 ? Math.round(totalTime / timeCount) : null,
       topDismissedTypes,
+      signalReliability,
     };
   } catch {
     return {
@@ -199,7 +223,102 @@ export async function getFeedbackSummary(
       resolutionRate: 0,
       averageTimeToAction: null,
       topDismissedTypes: [],
+      signalReliability: {
+        validated: 0,
+        partiallyValidated: 0,
+        disputed: 0,
+        totalValidations: 0,
+        reliabilityIndex: null,
+      },
     };
+  }
+}
+
+/**
+ * Aggregate signal-validation outcomes written by
+ * {@link linkFeedbackToRecentSignals}. Each validation entry carries a verdict
+ * (`validated` / `partially_validated` / `disputed`) and the signal IDs it
+ * covered; this reader rolls them up into a single reliability index RIM can
+ * use to weight signal confidence.
+ *
+ * Returns zero-counts with `reliabilityIndex: null` when no validations exist
+ * — callers should treat `null` as "insufficient evidence", not "unreliable".
+ */
+export async function getSignalReliability(
+  projectId: number,
+  organizationId: number,
+): Promise<SignalReliability> {
+  const empty: SignalReliability = {
+    validated: 0,
+    partiallyValidated: 0,
+    disputed: 0,
+    totalValidations: 0,
+    reliabilityIndex: null,
+  };
+
+  try {
+    const rows = await db
+      .select({
+        subcategory: projectMemoryEntries.subcategory,
+        content: projectMemoryEntries.content,
+      })
+      .from(projectMemoryEntries)
+      .where(and(
+        eq(projectMemoryEntries.projectId, projectId),
+        eq(projectMemoryEntries.organizationId, organizationId),
+        eq(projectMemoryEntries.category, 'intelligence_signal_validation'),
+        eq(projectMemoryEntries.status, 'active'),
+      ))
+      .orderBy(desc(projectMemoryEntries.createdAt))
+      .limit(200);
+
+    if (rows.length === 0) return empty;
+
+    let validated = 0;
+    let partiallyValidated = 0;
+    let disputed = 0;
+    let signalCount = 0;
+
+    for (const row of rows) {
+      let verdict: string | undefined;
+      let linkedSignalCount = 1;
+      try {
+        const data = JSON.parse(row.content);
+        verdict = data.verdict;
+        if (Array.isArray(data.signalIds)) {
+          linkedSignalCount = Math.max(1, data.signalIds.length);
+        }
+      } catch {
+        continue;
+      }
+
+      // Weight by the number of signals each validation covers so a single
+      // feedback event that validated 10 signals counts more than one that
+      // validated a single signal.
+      switch (verdict) {
+        case 'validated': validated += linkedSignalCount; break;
+        case 'partially_validated': partiallyValidated += linkedSignalCount; break;
+        case 'disputed': disputed += linkedSignalCount; break;
+      }
+      signalCount += linkedSignalCount;
+    }
+
+    if (signalCount === 0) return empty;
+
+    const reliabilityIndex =
+      (validated + partiallyValidated * 0.5) / signalCount;
+
+    return {
+      validated,
+      partiallyValidated,
+      disputed,
+      totalValidations: signalCount,
+      reliabilityIndex: Number.isFinite(reliabilityIndex)
+        ? Math.max(0, Math.min(1, reliabilityIndex))
+        : null,
+    };
+  } catch {
+    return empty;
   }
 }
 
