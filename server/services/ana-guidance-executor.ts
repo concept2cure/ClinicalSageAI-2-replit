@@ -24,6 +24,7 @@ import {
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { executeGovernedAnaOperation } from './governed-ana-execution.js';
+import { validateArtifactQuality } from './ana-ri/enforcement.js';
 
 async function getDbClient() {
   const mod = await import('../db.js');
@@ -249,6 +250,23 @@ async function executeArtifactCreation(payload: AnaActionPayload): Promise<AnaAc
     return failResult(payload, 'Artifact title is empty');
   }
 
+  // Real content-quality grade — replaces the naive confidence-derived
+  // letter grade. Runs the existing validateArtifactQuality gate (length,
+  // filler patterns, structure, evidence labels, intent alignment,
+  // semantic depth) so the persisted qualityGate reflects the actual
+  // artifact content, not AnA's self-report of her own confidence.
+  const contentQuality = validateArtifactQuality(payload.content, payload.type);
+
+  // AnA grading herself hard: if her own output rates 'rejected', refuse
+  // to persist. Prevents low-quality AI artifacts from polluting the
+  // dossier even when AnA self-reports 'strong' confidence.
+  if (contentQuality.grade === 'rejected') {
+    return failResult(
+      payload,
+      `Artifact quality gate rejected (score ${contentQuality.score}/${contentQuality.maxScore}): ${contentQuality.issues.join('; ')}`,
+    );
+  }
+
   try {
     const execution = await executeGovernedAnaOperation({
       evaluationInput: {
@@ -300,9 +318,10 @@ async function executeArtifactCreation(payload: AnaActionPayload): Promise<AnaAc
         },
         structureSections: [],
         qualityGate: {
-          grade: payload.metadata.confidence === 'strong' ? 'A' : payload.metadata.confidence === 'moderate' ? 'B' : 'C',
-          pass: true,
-          issues: [],
+          grade: contentQuality.grade,
+          pass: contentQuality.pass,
+          issues: contentQuality.issues,
+          score: contentQuality.score,
         },
         versioningMode: 'create',
       },
