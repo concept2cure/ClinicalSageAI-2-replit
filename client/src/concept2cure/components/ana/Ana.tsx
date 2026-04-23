@@ -71,6 +71,20 @@ const DEFAULT_ACCOUNT: AccountInfo = {
   plan: 'Enterprise · Reg Affairs',
 };
 
+// Client-side display labels for server DocumentActionType values.
+// Server emits the raw type in `orchestration.suggestedActions`; we render
+// human labels and use the lowercased verb form to build the follow-up msg.
+const SUGGESTED_ACTION_LABELS: Record<string, string> = {
+  risk_memo: 'Create a risk memo',
+  deficiency_preemption_memo: 'Create a deficiency preemption memo',
+  evidence_memo: 'Create an evidence memo',
+  strategy_note: 'Draft a strategy note',
+  reviewer_question_brief: 'Prepare a reviewer question brief',
+  rewritten_section: 'Rewrite the section',
+  revised_artifact: 'Revise the artifact',
+  attach_to_dossier: 'Attach to the dossier',
+};
+
 const DEFAULT_RECENTS: Recent[] = [
   { id: 'r1', label: 'NDA 212345 · Module 2.5 draft' },
   { id: 'r2', label: '510(k) predicate search — Q1' },
@@ -263,6 +277,17 @@ export function Ana({
     [onOpenArtifact, onNavigateToSection]
   );
 
+  // A tap on a suggested action pill sends a follow-up user message that
+  // triggers the corresponding document action via the normal stream path
+  // (guidance executor picks up the intent and creates the artifact).
+  const handleSuggestedAction = useCallback(
+    (actionType: string) => {
+      const label = SUGGESTED_ACTION_LABELS[actionType] || actionType;
+      void chat.send(`Please ${label.toLowerCase()} based on our discussion.`);
+    },
+    [chat]
+  );
+
   const messagesForView = useMemo<ChatMessageView[]>(
     () =>
       chat.messages.map((m: AnaChatMessage) => ({
@@ -275,6 +300,8 @@ export function Ana({
         latencyMs: m.latencyMs,
         fallback: m.fallback,
         stopped: m.stopped,
+        detectedLens: m.detectedLens,
+        suggestedActions: m.suggestedActions,
       })),
     [chat.messages]
   );
@@ -315,6 +342,8 @@ export function Ana({
             onFeedback={handleFeedback}
             onActionClick={handleActionClick}
             onEditRegenerate={handleEditRegenerate}
+            onSuggestedAction={handleSuggestedAction}
+            suggestedActionLabels={SUGGESTED_ACTION_LABELS}
           />
         )}
         {view === 'projects' && (

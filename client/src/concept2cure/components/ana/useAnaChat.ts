@@ -52,6 +52,16 @@ export interface AnaChatMessage {
   fallback?: boolean;
   /** True if the user explicitly stopped the stream. */
   stopped?: boolean;
+  /**
+   * Intent lens AnA detected for this turn (audit / risk / strategy /
+   * improve / compare / auto). Rendered as a small meta chip.
+   */
+  detectedLens?: string;
+  /**
+   * Document-action suggestions from the orchestrator. Tapping one sends
+   * a follow-up message that triggers the action's generator.
+   */
+  suggestedActions?: string[];
 }
 
 export interface UseAnaChatOptions {
@@ -240,6 +250,25 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
 
             if (event.type === 'thread_id' && event.thread_id) {
               threadIdRef.current = event.thread_id;
+            } else if (event.type === 'orchestration') {
+              // Capture detected intent lens + suggested follow-up actions
+              // so the UI can show "Audit"/"Risk" chips and next-action pills.
+              const o = event.orchestration || {};
+              const lens: string | undefined = o?.detectedIntent?.lens;
+              const actions: string[] | undefined = Array.isArray(o?.suggestedActions)
+                ? o.suggestedActions.filter((s: any) => typeof s === 'string')
+                : undefined;
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === assistantId
+                    ? {
+                        ...m,
+                        detectedLens: lens && lens !== 'auto' ? lens : m.detectedLens,
+                        suggestedActions: actions && actions.length > 0 ? actions : m.suggestedActions,
+                      }
+                    : m
+                )
+              );
             } else if (event.type === 'status') {
               // Update the progress label on the placeholder while no tokens
               // have arrived yet (statusPhase is cleared on first text chunk).

@@ -48,13 +48,25 @@ export interface MessageProps {
   fallback?: boolean;
   stopped?: boolean;
   executedActions?: ExecutedActionChip[];
+  /** Detected intent lens (audit / risk / strategy / improve / compare). */
+  detectedLens?: string;
+  /** Raw DocumentActionType strings from the orchestrator. */
+  suggestedActions?: string[];
+  /** Label lookup for DocumentActionType strings. */
+  suggestedActionLabels?: Record<string, string>;
 
   // Handlers
   onCopy?: () => void;
   onRetry?: () => void;
   onFeedback?: (positive: boolean) => void;
   onActionClick?: (action: ExecutedActionChip) => void;
+  onSuggestedAction?: (actionType: string) => void;
   onEditRegenerate?: (newText: string) => void;
+}
+
+/** Capitalize the intent lens for the meta chip. */
+function formatLens(lens: string): string {
+  return lens.charAt(0).toUpperCase() + lens.slice(1);
 }
 
 function formatLatency(ms: number): string {
@@ -71,10 +83,14 @@ export function Message({
   fallback,
   stopped,
   executedActions,
+  detectedLens,
+  suggestedActions,
+  suggestedActionLabels,
   onCopy,
   onRetry,
   onFeedback,
   onActionClick,
+  onSuggestedAction,
   onEditRegenerate,
 }: MessageProps) {
   const [editing, setEditing] = useState(false);
@@ -159,6 +175,15 @@ export function Message({
       <div className={styles.aiBody}>
         <div className={styles.aiName}>
           AnA · Reg Intelligence
+          {detectedLens && (
+            <span
+              className={styles.cite}
+              style={{ marginLeft: 8 }}
+              title={`Detected intent lens: ${detectedLens}`}
+            >
+              {formatLens(detectedLens)}
+            </span>
+          )}
           {fallback && (
             <span className={styles.cite} style={{ marginLeft: 8 }} title="Running in degraded mode">
               Degraded
@@ -232,6 +257,28 @@ export function Message({
                     <Ico size={14} />
                   </span>
                   {action.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {!streaming && suggestedActions && suggestedActions.length > 0 && onSuggestedAction && (
+          <div className={styles.suggest} style={{ justifyContent: 'flex-start', marginTop: 4 }}>
+            {suggestedActions.map((actionType, i) => {
+              const label = suggestedActionLabels?.[actionType] || actionType.replace(/_/g, ' ');
+              return (
+                <button
+                  key={i}
+                  className={styles.suggestPill}
+                  onClick={() => onSuggestedAction(actionType)}
+                  type="button"
+                  title={`Suggested next action: ${label}`}
+                >
+                  <span className={styles.ico}>
+                    <I.sparkles size={14} />
+                  </span>
+                  {label}
                 </button>
               );
             })}

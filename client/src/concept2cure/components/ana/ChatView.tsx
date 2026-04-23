@@ -23,6 +23,10 @@ export interface ChatMessageView {
   fallback?: boolean;
   stopped?: boolean;
   executedActions?: ExecutedActionChip[];
+  /** Detected intent lens (e.g. "audit", "risk"). Rendered as a meta chip. */
+  detectedLens?: string;
+  /** Server-suggested follow-up document actions (raw type strings). */
+  suggestedActions?: string[];
 }
 
 export interface ChatViewProps {
@@ -35,6 +39,10 @@ export interface ChatViewProps {
   onFeedback?: (messageId: string, positive: boolean) => void;
   onActionClick?: (messageId: string, action: ExecutedActionChip) => void;
   onEditRegenerate?: (messageId: string, newText: string) => void;
+  /** Called when a server-suggested follow-up action chip is tapped. */
+  onSuggestedAction?: (actionType: string) => void;
+  /** Client-side label map for DocumentActionType strings. */
+  suggestedActionLabels?: Record<string, string>;
 }
 
 export function ChatView({
@@ -47,6 +55,8 @@ export function ChatView({
   onFeedback,
   onActionClick,
   onEditRegenerate,
+  onSuggestedAction,
+  suggestedActionLabels,
 }: ChatViewProps) {
   const [draft, setDraft] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
@@ -78,6 +88,10 @@ export function ChatView({
               fallback={m.fallback}
               stopped={m.stopped}
               executedActions={m.executedActions}
+              detectedLens={m.detectedLens}
+              suggestedActions={m.suggestedActions}
+              suggestedActionLabels={suggestedActionLabels}
+              onSuggestedAction={onSuggestedAction}
               onCopy={onCopy ? () => onCopy(m.id, m.text) : undefined}
               onRetry={onRetry ? () => onRetry(m.id) : undefined}
               onFeedback={onFeedback ? pos => onFeedback(m.id, pos) : undefined}
