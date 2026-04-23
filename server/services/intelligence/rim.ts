@@ -220,6 +220,11 @@ export async function runRIMAssessment(ctx: RIMContext): Promise<RIMAssessment> 
     gaps: readinessResult?.gaps ?? [],
     recommendations: recsResult,
     evidenceChains,
+    // Close the learning loop: feed historical signal reliability into the
+    // judgment models so confidence reflects how accurate our prior readings
+    // have been on this project. `feedbackResult` already rolls this up via
+    // getFeedbackSummary → getSignalReliability, so no extra fetch needed.
+    signalReliability: feedbackResult?.signalReliability,
   };
 
   const judgment = generateJudgmentReport(judgmentCtx, judgmentInput);

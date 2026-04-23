@@ -123,6 +123,86 @@ describe('JudgmentFramework', () => {
     expect(submissionRisk).toBeDefined();
     expect(submissionRisk!.factors.length).toBe(5); // one per component model
   });
+
+  it('signalReliability lowers confidence when historical accuracy is poor', () => {
+    const baseline = generateJudgmentReport(
+      { organizationId: 1, projectId: 1 },
+      { readiness: null, gaps: [], recommendations: [], evidenceChains: [] },
+    );
+
+    const lowReliability = generateJudgmentReport(
+      { organizationId: 1, projectId: 1 },
+      {
+        readiness: null,
+        gaps: [],
+        recommendations: [],
+        evidenceChains: [],
+        signalReliability: {
+          validated: 1,
+          partiallyValidated: 0,
+          disputed: 9,
+          totalValidations: 10,
+          reliabilityIndex: 0.1,
+        },
+      },
+    );
+
+    const highReliability = generateJudgmentReport(
+      { organizationId: 1, projectId: 1 },
+      {
+        readiness: null,
+        gaps: [],
+        recommendations: [],
+        evidenceChains: [],
+        signalReliability: {
+          validated: 10,
+          partiallyValidated: 0,
+          disputed: 0,
+          totalValidations: 10,
+          reliabilityIndex: 1.0,
+        },
+      },
+    );
+
+    // Every model's confidence should drop under low reliability, hold under high.
+    for (let i = 0; i < baseline.scores.length; i++) {
+      expect(lowReliability.scores[i].confidence).toBeLessThan(baseline.scores[i].confidence);
+      expect(highReliability.scores[i].confidence).toBe(baseline.scores[i].confidence);
+    }
+
+    // Scores themselves (the underlying verdict) must NOT shift based on
+    // reliability — only our confidence in them does.
+    for (let i = 0; i < baseline.scores.length; i++) {
+      expect(lowReliability.scores[i].score).toBe(baseline.scores[i].score);
+      expect(lowReliability.scores[i].verdict).toBe(baseline.scores[i].verdict);
+    }
+  });
+
+  it('signalReliability with null reliabilityIndex leaves confidence untouched', () => {
+    const baseline = generateJudgmentReport(
+      { organizationId: 1, projectId: 1 },
+      { readiness: null, gaps: [], recommendations: [], evidenceChains: [] },
+    );
+    const withNullReliability = generateJudgmentReport(
+      { organizationId: 1, projectId: 1 },
+      {
+        readiness: null,
+        gaps: [],
+        recommendations: [],
+        evidenceChains: [],
+        signalReliability: {
+          validated: 0,
+          partiallyValidated: 0,
+          disputed: 0,
+          totalValidations: 0,
+          reliabilityIndex: null,
+        },
+      },
+    );
+    for (let i = 0; i < baseline.scores.length; i++) {
+      expect(withNullReliability.scores[i].confidence).toBe(baseline.scores[i].confidence);
+    }
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

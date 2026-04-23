@@ -30,12 +30,13 @@ import type {
   ConfidenceBasis,
 } from './evidence-confidence-model.js';
 import type { Recommendation } from './recommendation-engine.js';
+import type { SignalReliability } from './learning-loop-service.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VERSION — bumped when scoring logic changes (enables provenance tracking)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const JUDGMENT_FRAMEWORK_VERSION = '1.1.0';
+export const JUDGMENT_FRAMEWORK_VERSION = '1.2.0';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -613,6 +614,41 @@ export interface JudgmentInput {
   readonly gaps: readonly ReadinessGap[];
   readonly recommendations: readonly Recommendation[];
   readonly evidenceChains: readonly EvidenceChain[];
+  /**
+   * Optional historical reliability of prior signals for this project,
+   * derived from the closed learning loop. When present with a non-null
+   * `reliabilityIndex`, it modulates per-model confidence so judgment
+   * outputs reflect how accurate our readings have been for this project
+   * in the past. Leaving it undefined preserves the pre-1.1 behavior —
+   * tests and callers that don't plumb feedback through see no change.
+   */
+  readonly signalReliability?: SignalReliability;
+}
+
+/**
+ * Compute the multiplier applied to model confidence based on historical
+ * signal reliability. Conservative floor of 0.7× ensures that a handful of
+ * disputed signals can't nullify confidence — reliability is informative,
+ * not determinative.
+ *
+ *   reliabilityIndex=0.0 → 0.70× confidence
+ *   reliabilityIndex=0.5 → 0.85× confidence
+ *   reliabilityIndex=1.0 → 1.00× confidence
+ */
+function reliabilityConfidenceMultiplier(reliabilityIndex: number): number {
+  const clamped = Math.max(0, Math.min(1, reliabilityIndex));
+  return 0.7 + 0.3 * clamped;
+}
+
+function adjustScoreConfidence(
+  score: JudgmentScore,
+  multiplier: number,
+): JudgmentScore {
+  const adjusted = Math.round(score.confidence * multiplier);
+  return {
+    ...score,
+    confidence: Math.max(0, Math.min(100, adjusted)),
+  };
 }
 
 /**
@@ -622,7 +658,7 @@ export function generateJudgmentReport(
   ctx: JudgmentContext,
   input: JudgmentInput,
 ): JudgmentReport {
-  const { readiness, gaps, recommendations, evidenceChains } = input;
+  const { readiness, gaps, recommendations, evidenceChains, signalReliability } = input;
 
   const evidenceSufficiency = evaluateEvidenceSufficiency(readiness, evidenceChains, recommendations);
   const defensibility = evaluateDefensibility(readiness, gaps, recommendations);
@@ -640,7 +676,18 @@ export function generateJudgmentReport(
 
   const submissionRisk = evaluateSubmissionRisk(componentScores);
 
-  const allScores = [...componentScores, submissionRisk];
+  // Apply reliability adjustment uniformly across all scores when historical
+  // signal accuracy is known. Scores themselves reflect the data; only our
+  // confidence in those readings is modulated.
+  let allScores: JudgmentScore[] = [...componentScores, submissionRisk];
+  if (
+    signalReliability &&
+    signalReliability.reliabilityIndex !== null &&
+    signalReliability.totalValidations > 0
+  ) {
+    const multiplier = reliabilityConfidenceMultiplier(signalReliability.reliabilityIndex);
+    allScores = allScores.map(s => adjustScoreConfidence(s, multiplier));
+  }
 
   // Collect top findings (critical first, then high)
   const allFindings = allScores.flatMap(s => s.findings);
