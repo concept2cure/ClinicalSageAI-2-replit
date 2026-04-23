@@ -23,7 +23,7 @@
 // VERSION — bumped when seed patterns change or matching logic changes
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const PATTERN_REGISTRY_VERSION = '1.2.0';
+export const PATTERN_REGISTRY_VERSION = '1.3.0';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -543,6 +543,35 @@ class PatternRegistryImpl {
   }
 
   /**
+   * Heuristically check whether text reads like a regulatory deficiency
+   * statement that *would* match a pattern, even though no registered pattern
+   * caught it. Used to nominate candidate patterns for the registry.
+   *
+   * Two-token check keeps false positives down: a deficiency trigger word
+   * ("incomplete", "missing", etc.) AND a regulatory anchor (CFR, ICH, Module,
+   * etc.). General phrases that mention only one of the two don't qualify.
+   */
+  looksLikeUnregisteredDeficiency(text: string): boolean {
+    if (!text || text.length < 60) return false;
+    const lower = text.toLowerCase();
+
+    const deficiencyTriggers = [
+      'incomplete', 'missing', 'insufficient', 'fail to', 'does not meet',
+      'lacking', 'absent', 'not provided', 'not addressed', 'inadequate',
+      'unsupported', 'unsubstantiated', 'no evidence', 'cannot be assessed',
+    ];
+    const regulatoryAnchors = [
+      'ich ', 'cfr', 'fda', 'ema', 'chmp', 'pmda', 'mhra', 'tga',
+      'module ', 'section ', 'annex', 'guideline', 'regulation',
+      '510(k)', 'pma', 'mdr', 'ivdr', 'gcp', 'glp', 'gmp',
+    ];
+
+    const hasDeficiency = deficiencyTriggers.some(t => lower.includes(t));
+    if (!hasDeficiency) return false;
+    return regulatoryAnchors.some(a => lower.includes(a));
+  }
+
+  /**
    * Record a hit against a pattern (for tracking which patterns fire most).
    */
   private recordHit(patternId: string): void {
@@ -734,6 +763,125 @@ export async function loadPatternRegistry(
     console.warn(`[RIM] Pattern registry load failed: ${errorMsg}`);
     return { loaded: false, learnedCount: 0, error: errorMsg };
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CANDIDATE PATTERN NOMINATION — auto-mining from intercepted text
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Persist a candidate pattern derived from intercepted text that looked like
+ * a regulatory deficiency but matched no registered pattern. Candidates land
+ * in `projectMemoryEntries` with category `candidate_learned_pattern` and
+ * await human curation before promotion to the live registry.
+ *
+ * Deduplicated by content hash within an org/project so a recurring phrase
+ * doesn't spam the candidate list.
+ *
+ * Fire-and-forget. Errors are logged and swallowed.
+ */
+export async function nominateCandidatePattern(params: {
+  organizationId: number;
+  projectId: number;
+  text: string;
+  sectionCode?: string;
+  sourceContext: string;
+}): Promise<void> {
+  const { organizationId, projectId, text, sectionCode, sourceContext } = params;
+  if (!Number.isFinite(organizationId) || organizationId <= 0) return;
+  if (!Number.isFinite(projectId) || projectId <= 0) return;
+  if (!patternRegistry.looksLikeUnregisteredDeficiency(text)) return;
+
+  try {
+    const { db } = await import('../../db.js');
+    const { projectIntelligenceProfiles, projectMemoryEntries } = await import(
+      '../../../shared/schema.js'
+    );
+    const { eq, and } = await import('drizzle-orm');
+
+    const [profile] = await db
+      .select({ id: projectIntelligenceProfiles.id })
+      .from(projectIntelligenceProfiles)
+      .where(and(
+        eq(projectIntelligenceProfiles.projectId, projectId),
+        eq(projectIntelligenceProfiles.organizationId, organizationId),
+      ))
+      .limit(1);
+
+    if (!profile) return;
+
+    // Snapshot a 240-char window centered on the strongest deficiency token
+    // — keeps the candidate human-reviewable without storing the entire chat.
+    const snippet = extractDeficiencySnippet(text);
+    const contentHash = hashSnippet(snippet);
+
+    // Dedup: skip if we already have a candidate with this content hash for
+    // this project. Cheap because category + project filter is indexed.
+    const existing = await db
+      .select({ id: projectMemoryEntries.id })
+      .from(projectMemoryEntries)
+      .where(and(
+        eq(projectMemoryEntries.projectId, projectId),
+        eq(projectMemoryEntries.organizationId, organizationId),
+        eq(projectMemoryEntries.category, 'candidate_learned_pattern'),
+        eq(projectMemoryEntries.subcategory, contentHash),
+      ))
+      .limit(1);
+
+    if (existing.length > 0) return;
+
+    await db.insert(projectMemoryEntries).values({
+      projectProfileId: profile.id,
+      projectId,
+      organizationId,
+      category: 'candidate_learned_pattern',
+      subcategory: contentHash,
+      title: `Candidate pattern: ${snippet.slice(0, 80)}${snippet.length > 80 ? '…' : ''}`,
+      content: JSON.stringify({
+        snippet,
+        sectionCode,
+        sourceContext,
+        registryVersion: patternRegistry.version,
+        nominatedAt: new Date().toISOString(),
+        status: 'pending_review',
+      }),
+      sourceDocumentName: 'rim-pattern-nomination',
+      sourceDocumentType: 'system',
+      confidenceScore: 0.5,
+      importanceLevel: 'medium',
+      extractedBy: 'system',
+    } as any);
+  } catch (err) {
+    console.warn(
+      '[RIM] nominateCandidatePattern failed (non-blocking):',
+      err instanceof Error ? err.message : err,
+    );
+  }
+}
+
+function extractDeficiencySnippet(text: string): string {
+  const lower = text.toLowerCase();
+  const triggers = ['incomplete', 'missing', 'insufficient', 'fail to', 'does not meet', 'inadequate', 'unsupported'];
+  let center = -1;
+  for (const t of triggers) {
+    const idx = lower.indexOf(t);
+    if (idx >= 0) { center = idx; break; }
+  }
+  if (center < 0) return text.slice(0, 240);
+  const start = Math.max(0, center - 80);
+  const end = Math.min(text.length, center + 160);
+  return text.slice(start, end).trim();
+}
+
+function hashSnippet(snippet: string): string {
+  // Cheap deterministic hash — collisions are fine here, we just need
+  // duplicate detection for nominations from the same project.
+  let h = 5381;
+  const normalized = snippet.toLowerCase().replace(/\s+/g, ' ').trim();
+  for (let i = 0; i < normalized.length; i++) {
+    h = ((h << 5) + h) ^ normalized.charCodeAt(i);
+  }
+  return `cand_${(h >>> 0).toString(16)}`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

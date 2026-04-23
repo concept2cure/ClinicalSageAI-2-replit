@@ -263,6 +263,35 @@ describe('PatternRegistry', () => {
     const deficiencies = patternRegistry.getPatterns({ category: 'deficiency' });
     expect(deficiencies.every(p => p.category === 'deficiency')).toBe(true);
   });
+
+  describe('looksLikeUnregisteredDeficiency heuristic', () => {
+    it('flags text with both deficiency trigger and regulatory anchor', () => {
+      expect(patternRegistry.looksLikeUnregisteredDeficiency(
+        'The stability data is incomplete and does not meet ICH Q1A(R2) requirements for the proposed shelf life of 24 months.'
+      )).toBe(true);
+      expect(patternRegistry.looksLikeUnregisteredDeficiency(
+        'The submission is missing the required Module 2.7.4 safety summary for the pivotal trial.'
+      )).toBe(true);
+      expect(patternRegistry.looksLikeUnregisteredDeficiency(
+        'The 510(k) substantial equivalence argument has insufficient performance data and lacks a current biocompatibility assessment.'
+      )).toBe(true);
+    });
+
+    it('rejects text with only one of the two signals', () => {
+      // Deficiency word but no regulatory anchor
+      expect(patternRegistry.looksLikeUnregisteredDeficiency(
+        'The cookie recipe is incomplete and missing some ingredients but the result tastes fine.'
+      )).toBe(false);
+      // Regulatory anchor but no deficiency word
+      expect(patternRegistry.looksLikeUnregisteredDeficiency(
+        'The submission complies with all requirements of ICH Q1A(R2) and Module 2.5 of the CTD.'
+      )).toBe(false);
+    });
+
+    it('rejects very short text regardless of content', () => {
+      expect(patternRegistry.looksLikeUnregisteredDeficiency('ICH missing')).toBe(false);
+    });
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

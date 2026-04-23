@@ -115,6 +115,31 @@ export function integratePatternScan(
         ctx.sectionCode, ctx.userId, ctx.artifactId, ctx.artifactVersionId,
       );
       signalsGenerated += matches.length;
+    } else if (
+      ctx.organizationId > 0 &&
+      ctx.projectId > 0 &&
+      patternRegistry.looksLikeUnregisteredDeficiency(text)
+    ) {
+      // Auto-mining: text reads like a regulatory deficiency but no registered
+      // pattern caught it. Nominate as a candidate for human review so the
+      // registry can grow from real project experience instead of static seeds.
+      void (async () => {
+        try {
+          const { nominateCandidatePattern } = await import('./pattern-registry.js');
+          await nominateCandidatePattern({
+            organizationId: ctx.organizationId,
+            projectId: ctx.projectId,
+            text,
+            sectionCode: ctx.sectionCode,
+            sourceContext: location,
+          });
+        } catch (nominateErr) {
+          console.warn(
+            '[RIM] candidate pattern nomination failed (non-blocking):',
+            nominateErr instanceof Error ? nominateErr.message : nominateErr,
+          );
+        }
+      })();
     }
 
     return {
