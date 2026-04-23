@@ -295,7 +295,7 @@
     "recharts": "^2.13.0",
     "remark-parse": "^11.0.0",
     "remark-stringify": "^11.0.0",
-    "remeda": "^2.21.2",
+    "remeda": "^2.33.7",
     "socket.io": "4.8.1",
     "socket.io-client": "4.8.3",
     "speakeasy": "2.0.0",
