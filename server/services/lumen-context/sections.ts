@@ -518,6 +518,72 @@ You are drafting a Clinical Study Protocol per ICH E6(R2).
 - Safety monitoring (DSMB/SMC charter reference)
 - Sentinel dosing requirements
 - Biomarker or PD endpoint rationale`,
+
+  // ── DEVICE: 510(k) Substantial Equivalence ────────────────────────────────
+
+  '510K-SE': `## Drafting: 510(k) Substantial Equivalence Comparison
+You are drafting the substantial equivalence (SE) discussion for a Traditional, Special, or Abbreviated 510(k) per FDA Form 3514 and the 510(k) Program guidance (Section 7).
+
+### Required Structure (per FDA Decision-Making Process):
+1. **Predicate identification** — Cite legally marketed predicate(s) by 510(k) number with clearance date
+2. **Intended use comparison** — Side-by-side, identical or with documented justification for any difference
+3. **Indications for use comparison** — Verbatim from predicate labeling vs. proposed; flag any expansion
+4. **Technological characteristics** — Component-level comparison: principle of operation, materials, energy source, design specifications, performance specifications
+5. **Performance data summary** — Bench, biocompatibility, sterilization, software, animal, and clinical data demonstrating equivalent performance
+6. **SE conclusion statement** — Affirmative declaration with the regulatory basis
+
+### What FDA Reviewers Verify:
+- The predicate is legally marketed and has not been removed from market
+- Different intended use → automatic NSE; the intended-use comparison must be airtight
+- "Same" technological characteristics or "different but does not raise different questions of safety and effectiveness"
+- Performance data demonstrates the differences do not affect safety or effectiveness
+- Each technological difference is paired with corresponding performance data
+
+### Common Deficiencies (Refuse-to-Accept Triggers):
+- Vague intended-use language that masks an indication expansion
+- Predicate selection that pre-dates current consensus standards (e.g., outdated biocompatibility per ISO 10993-1:2018)
+- Technology comparison that lists differences without explaining performance equivalence
+- Missing reference to any performance test that supports equivalence
+- Citing a predicate that itself was cleared via 510(k) reliance on a now-recalled device
+
+### SE Tone:
+The SE discussion is a regulatory argument, not a marketing pitch. State the comparison facts; let the equivalence conclusion follow from the data. Avoid "innovative," "novel," or "improved" anywhere in the SE narrative — those words invite NSE classification.`,
+
+  // ── DEVICE: Clinical Evaluation Report (EU MDR) ───────────────────────────
+
+  'CER-BODY': `## Drafting: Clinical Evaluation Report (CER) per EU MDR / MDCG 2020-13
+You are drafting the body of a Clinical Evaluation Report under Regulation (EU) 2017/745 (MDR), MEDDEV 2.7/1 Rev 4 framework, with current MDCG guidance (MDCG 2020-1, 2020-13, 2020-6).
+
+### Required Structure (MEDDEV 2.7/1 Rev 4 Stages):
+- **Stage 0 — Scope** — Device description, intended purpose, intended patient population, intended clinical benefit
+- **Stage 1 — Clinical evaluation plan** — Equivalence claim (if any), device classification, state-of-the-art definition, acceptance criteria
+- **Stage 2 — Data identification & appraisal** — Literature search protocol (PICO, databases, dates), included/excluded studies with rationale, GRADE-style appraisal of each
+- **Stage 3 — Data analysis** — Benefit-risk profile, residual risks per ISO 14971, comparison to state-of-the-art, conclusions on safety and performance
+- **Stage 4 — Conclusion** — Whether clinical evidence supports conformity with GSPRs 1, 6, 7, 8
+
+### Equivalence Claims (MDCG 2020-5):
+- Three pillars must ALL be demonstrated: clinical, technical, biological equivalence
+- For Class III and implantables, equivalence routes are highly restricted post-MDR
+- If using equivalence, you must have access to the comparator device's technical documentation (a contract is now required)
+- Most legacy CE-marked devices cannot rely on equivalence under MDR — generate own clinical data
+
+### Notified Body Scrutiny Patterns (MDCG 2020-13):
+- Literature search must be reproducible — protocol, dates, search strings, hit counts at each stage
+- Each included publication must be appraised for relevance AND methodological quality
+- State-of-the-art definition must be evidenced from current guidance, standards, and recent literature
+- Residual risks must trace from the risk management file (ISO 14971) into the CER
+- PMCF plan must be specific — "ongoing literature surveillance" alone is not sufficient
+
+### Common Deficiencies:
+- Equivalence claimed without access to comparator technical documentation
+- Literature appraisal that lists papers but does not weight them
+- State-of-the-art described in general terms without specific benchmarks
+- Benefit-risk conclusion that does not address each identified residual risk
+- PMCF plan that is generic rather than device-specific
+- Missing acceptance criteria — "favorable benefit-risk" without quantitative anchors
+
+### CER Voice:
+Notified body reviewers expect the register of a clinical assessment, not a marketing document. Every claim of safety or performance must be traceable to a specific data source cited in the appraisal table. Use "the available clinical evidence supports..." not "the device is proven to..."`,
 };
 
 /**
