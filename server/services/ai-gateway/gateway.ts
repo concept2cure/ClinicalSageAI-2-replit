@@ -95,6 +95,31 @@ const DEFAULT_MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
+    // Opus 4 legacy — dated snapshot from May 2025. Kept enabled as an
+    // intra-provider fallback if 4.7 is not yet GA for the tenant's tier
+    // or is temporarily unavailable (rate limit, overloaded). Same
+    // capabilities as 4.7, marginally lower quality score so the
+    // fallback chain prefers 4.7 when both are reachable.
+    id: 'claude-opus-4-legacy',
+    provider: 'anthropic',
+    model: 'claude-opus-4-20250514',
+    contextWindow: 200000,
+    qualityScore: 95,
+    costPer1kInput: 0.015,
+    costPer1kOutput: 0.075,
+    capabilities: [
+      'chat',
+      'document_analysis',
+      'document_drafting',
+      'structured_output',
+      'regulatory_review',
+      'code_generation',
+      'summarization',
+      'general',
+    ],
+    enabled: true,
+  },
+  {
     // Internal id kept stable for alias continuity; model field tracks
     // the current Sonnet release.
     id: 'claude-sonnet-4',
@@ -102,6 +127,28 @@ const DEFAULT_MODELS: ModelConfig[] = [
     model: 'claude-sonnet-4-6',
     contextWindow: 200000,
     qualityScore: 97,
+    costPer1kInput: 0.003,
+    costPer1kOutput: 0.015,
+    capabilities: [
+      'chat',
+      'document_analysis',
+      'document_drafting',
+      'structured_output',
+      'regulatory_review',
+      'code_generation',
+      'summarization',
+      'general',
+    ],
+    enabled: true,
+  },
+  {
+    // Sonnet 4 legacy — dated snapshot from May 2025. Same role as
+    // opus-4-legacy: intra-provider fallback when 4.6 is unavailable.
+    id: 'claude-sonnet-4-legacy',
+    provider: 'anthropic',
+    model: 'claude-sonnet-4-20250514',
+    contextWindow: 200000,
+    qualityScore: 93,
     costPer1kInput: 0.003,
     costPer1kOutput: 0.015,
     capabilities: [
@@ -327,9 +374,14 @@ export class AIGateway {
       return this.buildDeterministicResponse(request, requestId, startTime);
     }
 
-    // Execute with fallback
+    // Execute with fallback. Track tried MODELS (not just providers) so
+    // the fallback chain can exhaust Anthropic's quality ladder
+    // (Opus 4.7 → Opus 4 → Sonnet 4.6 → Sonnet 4 → Haiku 4.5) before
+    // crossing to a different provider. Previously a single Anthropic
+    // failure jumped straight to OpenAI, which wasted the intra-Anthropic
+    // fallback surface.
     let lastError: Error | null = null;
-    const triedProviders: ProviderName[] = [];
+    const triedModels: string[] = [];
 
     // Try primary model (with per-request retry: 2 attempts, 1s base delay)
     try {
@@ -341,15 +393,19 @@ export class AIGateway {
       return response;
     } catch (error: any) {
       lastError = error;
-      triedProviders.push(selectedModel.provider);
+      triedModels.push(selectedModel.id);
       this.recordFailure(selectedModel.provider, error);
       log.warn(
         `[AI Gateway] ${selectedModel.provider}/${selectedModel.model} failed: ${error.message}`
       );
     }
 
-    // Try fallback providers (with per-request retry: 2 attempts, 1s base delay)
-    const fallbacks = this.getFallbackModels(request.taskType, triedProviders);
+    // Try fallback models — same provider first (quality-desc), then cross-provider.
+    const fallbacks = this.getFallbackModels(
+      request.taskType,
+      triedModels,
+      selectedModel.provider,
+    );
     for (const fallback of fallbacks) {
       try {
         log.debug(`[AI Gateway] Falling back to ${fallback.provider}/${fallback.model}`);
@@ -361,7 +417,7 @@ export class AIGateway {
         return response;
       } catch (error: any) {
         lastError = error;
-        triedProviders.push(fallback.provider);
+        triedModels.push(fallback.id);
         this.recordFailure(fallback.provider, error);
         log.warn(
           `[AI Gateway] Fallback ${fallback.provider}/${fallback.model} failed: ${error.message}`
@@ -384,7 +440,7 @@ export class AIGateway {
     await this.logAudit(request, errorResponse, strategy, false, lastError?.message);
 
     throw new GatewayAllProvidersFailedError(
-      `All providers failed. Tried: ${triedProviders.join(', ')}. Last error: ${lastError?.message}`
+      `All models failed. Tried: ${triedModels.join(', ')}. Last error: ${lastError?.message}`
     );
   }
 
@@ -1073,12 +1129,35 @@ export class AIGateway {
     }
   }
 
-  private getFallbackModels(taskType: TaskType, triedProviders: ProviderName[]): ModelConfig[] {
-    return this.models
-      .filter(
-        m => m.enabled && m.capabilities.includes(taskType) && !triedProviders.includes(m.provider)
-      )
-      .sort((a, b) => b.qualityScore - a.qualityScore);
+  /**
+   * Build the fallback chain, exhausting the primary provider's quality
+   * ladder before crossing to a different provider. This means if Opus 4.7
+   * fails, the chain is:
+   *
+   *   Opus 4 legacy (same provider, lower quality)
+   *   → Sonnet 4.6 (same provider, lower quality)
+   *   → Sonnet 4 legacy (same provider, lower quality)
+   *   → Haiku 4.5 (same provider, lowest Anthropic quality)
+   *   → [cross-provider fallbacks in quality order]
+   *
+   * The same-provider-first ordering reflects operator preference — when
+   * the primary provider is reachable at all, staying within it preserves
+   * prompt-cache hits, tool-schema consistency, and telemetry continuity.
+   */
+  private getFallbackModels(
+    taskType: TaskType,
+    triedModels: string[],
+    primaryProvider: ProviderName,
+  ): ModelConfig[] {
+    const eligible = this.models.filter(
+      m => m.enabled && m.capabilities.includes(taskType) && !triedModels.includes(m.id),
+    );
+    const samePriority = eligible.filter(m => m.provider === primaryProvider);
+    const otherProviders = eligible.filter(m => m.provider !== primaryProvider);
+    // Within each bucket, sort by quality descending.
+    const sortByQuality = (list: ModelConfig[]) =>
+      [...list].sort((a, b) => b.qualityScore - a.qualityScore);
+    return [...sortByQuality(samePriority), ...sortByQuality(otherProviders)];
   }
 
   // ─────────────────────────────────────────────────────────────────────────
