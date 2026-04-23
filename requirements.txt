@@ -6,7 +6,7 @@ PyMuPDF>=1.27.0               # Strategy 1: best layout preservation for native 
 PyPDF2>=3.0.0                 # Strategy 2: native PDF fallback
 pdfminer.six>=20260107        # Strategy 3: layout-aware extraction with LAParams
 pytesseract>=0.3.13           # Strategy 4 & 5: OCR for scanned PDFs
-opencv-python-headless>=4.8.0 # Strategy 5: image preprocessing for enhanced OCR
+opencv-python-headless>=4.13.0.92 # Strategy 5: image preprocessing for enhanced OCR
 Pillow>=10.0.0                # Image handling for OCR
 pdf2image>=1.17.0             # Strategy 6: pdf->image via poppler (OCR fallback)
 
