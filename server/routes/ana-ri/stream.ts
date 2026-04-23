@@ -44,6 +44,7 @@ import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
 import { summarizeAndStoreWorkingMemoryForThread } from '../../services/working-memory.js';
 import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
+import { getEnabledServerTools } from '../../services/claude/ClaudeToolDefinitions.js';
 import {
   getIntelligencePrefix,
   buildSectionSpecificPrompt,
@@ -402,6 +403,13 @@ router.post('/stream', async (req: Request, res: Response) => {
       routingPlan.riskTier === 'high'
         ? { enabled: true, budgetTokens: 10_000 }
         : undefined;
+    // Server-side tools only on the streaming path — web_search /
+    // web_fetch / code_execution resolve inside Anthropic's infra and
+    // emit results as content blocks in the existing stream. Custom
+    // JSON-schema tools would require an agentic loop, which this path
+    // doesn't run, so they stay scoped to send-message.ts.
+    const streamServerTools = getEnabledServerTools();
+
     const gwResponse = await gw.route({
       taskType: routingPlan.taskType,
       messages,
@@ -410,6 +418,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       strategy: selectedStrategy,
       promptCache: { enabled: true, type: 'ephemeral' },
       ...(streamThinkingConfig ? { thinking: streamThinkingConfig } : {}),
+      ...(streamServerTools.length > 0 ? { tools: streamServerTools } : {}),
       stream: true,
       onStream: (chunk: string, metadata?: any) => {
         // Extended-thinking deltas arrive with chunk='' and the thinking

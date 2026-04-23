@@ -48,6 +48,7 @@ import {
 } from '../../services/lumen-context-builder.js';
 import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
 import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
+import { getEnabledServerTools } from '../../services/claude/ClaudeToolDefinitions.js';
 import { enrichContextForChat } from '../../services/ana-ri/context-enrichment.js';
 import { processResponseActions } from '../../services/ana-guidance-executor.js';
 import {
@@ -441,6 +442,13 @@ router.post('/chat', async (req: Request, res: Response) => {
       routingPlan.riskTier === 'high'
         ? { enabled: true, budgetTokens: 10_000 }
         : undefined;
+    // Server-side tools only on this path — web_search / web_fetch /
+    // code_execution resolve inside Anthropic's infrastructure and return
+    // their results as content blocks, so no agentic loop is required.
+    // Custom JSON-schema tools (which need local dispatch + tool_result
+    // roundtrips) stay scoped to send-message.ts which has executeAgenticLoop.
+    const chatServerTools = getEnabledServerTools();
+
     const response = await gw.route({
       taskType: routingPlan.taskType,
       messages,
@@ -450,6 +458,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       promptCache: { enabled: true, type: 'ephemeral' },
       ...(chatThinkingConfig ? { thinking: chatThinkingConfig } : {}),
       ...(validatedProvider ? { provider: validatedProvider } : {}),
+      ...(chatServerTools.length > 0 ? { tools: chatServerTools } : {}),
     });
 
     if (!response.content) {
