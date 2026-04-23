@@ -67,6 +67,19 @@ export interface AnaChatMessage {
    * in a collapsible "Reasoning" section for high-risk turns.
    */
   thinking?: string;
+  /**
+   * Evidence grounding summary from the server's validateEvidence pipeline.
+   * Surfaced as a small chip (e.g. "✓ 8 sources · 12 grounded claims").
+   */
+  evidence?: {
+    validated: boolean;
+    sourceCount: number;
+    groundedClaims: number;
+    weakClaims: number;
+    missingSupport: number;
+  };
+  /** Degraded-mode signals from server `warning` events (thread persistence etc.). */
+  warnings?: string[];
 }
 
 export interface UseAnaChatOptions {
@@ -342,10 +355,44 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   };
                 })
               );
+            } else if (event.type === 'grounding_strip') {
+              // Evidence verdict — store as a compact summary for chip rendering.
+              const ev = event.evidence || {};
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === assistantId
+                    ? {
+                        ...m,
+                        evidence: {
+                          validated: Boolean(ev.validated),
+                          sourceCount: typeof ev.source_count === 'number' ? ev.source_count : 0,
+                          groundedClaims:
+                            typeof ev.grounded_claim_count === 'number' ? ev.grounded_claim_count : 0,
+                          weakClaims:
+                            typeof ev.weak_or_ungrounded_claim_count === 'number'
+                              ? ev.weak_or_ungrounded_claim_count
+                              : 0,
+                          missingSupport:
+                            typeof ev.missing_support_count === 'number' ? ev.missing_support_count : 0,
+                        },
+                      }
+                    : m
+                )
+              );
+            } else if (event.type === 'warning') {
+              const msg: string = event.message || '';
+              if (msg) {
+                setMessages(prev =>
+                  prev.map(m =>
+                    m.id === assistantId
+                      ? { ...m, warnings: [...(m.warnings || []), msg] }
+                      : m
+                  )
+                );
+              }
             } else if (event.type === 'error') {
               throw new Error(event.error || 'Stream error');
             }
-            // orchestration / warning / grounding_strip / done → metadata captured above
           }
         }
       } catch (err: any) {

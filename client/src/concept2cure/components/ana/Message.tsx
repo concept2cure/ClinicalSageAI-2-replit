@@ -56,6 +56,16 @@ export interface MessageProps {
   suggestedActionLabels?: Record<string, string>;
   /** Extended-thinking reasoning content (collapsible). */
   thinking?: string;
+  /** Evidence grounding summary from the server. */
+  evidence?: {
+    validated: boolean;
+    sourceCount: number;
+    groundedClaims: number;
+    weakClaims: number;
+    missingSupport: number;
+  };
+  /** Server-side degraded-mode warnings. */
+  warnings?: string[];
 
   // Handlers
   onCopy?: () => void;
@@ -89,6 +99,8 @@ export function Message({
   suggestedActions,
   suggestedActionLabels,
   thinking,
+  evidence,
+  warnings,
   onCopy,
   onRetry,
   onFeedback,
@@ -202,6 +214,21 @@ export function Message({
           {stopped && (
             <span className={styles.cite} style={{ marginLeft: 8 }}>
               Stopped
+            </span>
+          )}
+          {evidence && (evidence.sourceCount > 0 || evidence.groundedClaims > 0 || evidence.weakClaims > 0) && (
+            <span
+              className={styles.cite}
+              style={{ marginLeft: 8 }}
+              title={
+                evidence.weakClaims > 0 || evidence.missingSupport > 0
+                  ? `${evidence.weakClaims} weak / ${evidence.missingSupport} unsupported claim(s)`
+                  : `${evidence.sourceCount} source${evidence.sourceCount !== 1 ? 's' : ''} · ${evidence.groundedClaims} grounded claim${evidence.groundedClaims !== 1 ? 's' : ''}`
+              }
+            >
+              {evidence.weakClaims > 0 || evidence.missingSupport > 0
+                ? `⚠ ${evidence.weakClaims + evidence.missingSupport} weak`
+                : `✓ ${evidence.sourceCount} source${evidence.sourceCount !== 1 ? 's' : ''}`}
             </span>
           )}
           {typeof latencyMs === 'number' && latencyMs > 0 && (
@@ -321,6 +348,17 @@ export function Message({
                 </button>
               );
             })}
+          </div>
+        )}
+
+        {warnings && warnings.length > 0 && (
+          <div className={styles.warnings}>
+            {warnings.map((w, i) => (
+              <div key={i} className={styles.warningRow} title={w}>
+                <span className={styles.ico}><I.dots size={12} /></span>
+                {w}
+              </div>
+            ))}
           </div>
         )}
 

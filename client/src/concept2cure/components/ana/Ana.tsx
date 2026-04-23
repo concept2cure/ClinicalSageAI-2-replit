@@ -303,6 +303,8 @@ export function Ana({
         detectedLens: m.detectedLens,
         suggestedActions: m.suggestedActions,
         thinking: m.thinking,
+        evidence: m.evidence,
+        warnings: m.warnings,
       })),
     [chat.messages]
   );

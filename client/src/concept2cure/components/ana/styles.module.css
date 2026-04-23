@@ -359,6 +359,19 @@
 .thinkingBody p { margin: 0 0 8px; }
 .thinkingBody p:last-child { margin-bottom: 0; }
 
+/* Degraded-mode / warning banners */
+.warnings {
+  margin: 6px 0 0;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.warningRow {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--ink-muted, var(--text-300));
+  font-family: var(--font-sans, inherit);
+  font-style: italic;
+}
+.warningRow .ico { color: var(--accent-main-100); display: inline-flex; }
+
 .aiActions {
   display: flex; gap: 2px; margin-top: 8px;
   opacity: 0; transition: opacity 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));

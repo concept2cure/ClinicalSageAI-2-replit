@@ -29,6 +29,16 @@ export interface ChatMessageView {
   suggestedActions?: string[];
   /** Extended-thinking reasoning content (collapsible section). */
   thinking?: string;
+  /** Evidence grounding summary. */
+  evidence?: {
+    validated: boolean;
+    sourceCount: number;
+    groundedClaims: number;
+    weakClaims: number;
+    missingSupport: number;
+  };
+  /** Degraded-mode warnings to surface as a chip. */
+  warnings?: string[];
 }
 
 export interface ChatViewProps {
@@ -94,6 +104,8 @@ export function ChatView({
               suggestedActions={m.suggestedActions}
               suggestedActionLabels={suggestedActionLabels}
               thinking={m.thinking}
+              evidence={m.evidence}
+              warnings={m.warnings}
               onSuggestedAction={onSuggestedAction}
               onCopy={onCopy ? () => onCopy(m.id, m.text) : undefined}
               onRetry={onRetry ? () => onRetry(m.id) : undefined}
