@@ -42,6 +42,7 @@ import {
 import { planKernelExecution } from '../../services/kernel-router.js';
 import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
+import { summarizeAndStoreWorkingMemoryForThread } from '../../services/working-memory.js';
 import {
   getIntelligencePrefix,
   buildSectionSpecificPrompt,
@@ -435,19 +436,10 @@ router.post('/stream', async (req: Request, res: Response) => {
     });
     streamGatewayMs = Date.now() - streamGatewayStart;
 
-    // RIM interception — capture intelligence signals (non-blocking)
-    if (fullContent && streamProjectId) {
-      interceptChatResponse({
-        organizationId: orgId ? Number(orgId) : 0,
-        projectId: streamProjectId ? Number(streamProjectId) : 0,
-        userId: typeof userId === 'number' ? userId : undefined,
-        assistantMessage: fullContent,
-        claimCount: 0,
-        supportedClaimRate: 0.5,
-        model: gwResponse.model || 'unknown',
-        provider: gwResponse.provider || 'unknown',
-      }).catch(() => {});
-    }
+    // RIM interception moved to the background post-processing block below,
+    // so it scans the *cleaned* content (guidance/command blocks stripped) and
+    // can ground its claim metrics on evidence + structure scores instead of a
+    // hardcoded 0.5. Keeps the `done` event on the critical path latency-free.
 
     // Telemetry attached to the `done` event. Phase timings let ops spot
     // regressions in orchestration / context assembly / generation; cache
@@ -591,6 +583,47 @@ router.post('/stream', async (req: Request, res: Response) => {
       const streamEvidenceVerdict = finalAssistantContent
         ? validateEvidence(finalAssistantContent, 'ana-ri')
         : null;
+
+      // RIM interception — fire sync, non-blocking, on the cleaned content.
+      // Claim metrics are grounded in the structure + evidence checks above so
+      // RIM receives an actual turn-quality signal instead of a flat 0.5.
+      if (finalAssistantContent && streamProjectId && orgId) {
+        const ratedClaimCount = Math.max(
+          streamEvidenceCheck?.totalLabels || 0,
+          streamStructureCheck && streamStructureCheck.score > 0 ? 1 : 0,
+        );
+        const qualityRate =
+          streamStructureCheck && streamStructureCheck.maxScore > 0
+            ? streamStructureCheck.score / streamStructureCheck.maxScore
+            : 0.5;
+        interceptChatResponse({
+          organizationId: Number(orgId),
+          projectId: Number(streamProjectId),
+          userId: typeof userId === 'number' ? userId : undefined,
+          sectionCode,
+          assistantMessage: finalAssistantContent,
+          claimCount: ratedClaimCount,
+          supportedClaimRate: qualityRate,
+          model: gwResponse.model || 'unknown',
+          provider: gwResponse.provider || 'unknown',
+        });
+      }
+
+      // Working-memory write-back — threshold-gated, non-blocking.
+      // Reuses the gateway message history already built for the turn and
+      // appends the cleaned assistant reply so the summarizer sees the full
+      // exchange, not just the prefix.
+      if (threadId && orgId && finalAssistantContent) {
+        const writebackMessages = messages
+          .filter(m => m.role === 'user' || m.role === 'assistant')
+          .map(m => ({ role: m.role, content: m.content }))
+          .concat({ role: 'assistant', content: finalAssistantContent });
+        void summarizeAndStoreWorkingMemoryForThread({
+          threadId,
+          organizationId: Number(orgId),
+          messages: writebackMessages,
+        });
+      }
 
       // Wait for persistence to settle before emitting warning/post_done so
       // `persistenceFailed` reflects the actual DB outcome.

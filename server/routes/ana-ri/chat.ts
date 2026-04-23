@@ -606,19 +606,30 @@ router.post('/chat', async (req: Request, res: Response) => {
           ? 'Action executed successfully.'
           : response.content;
 
-    // RIM interception — capture intelligence signals (non-blocking) using cleaned content
+    // RIM interception — capture intelligence signals (non-blocking, sync void).
+    // Grounded metrics: claimCount from structure check, supportedClaimRate from
+    // evaluation score so signals reflect the actual turn quality instead of a flat 0.5.
     const projectIdForRim = chatProjectId;
-    if (finalAssistantContent && projectIdForRim) {
+    if (finalAssistantContent && projectIdForRim && orgId) {
+      const ratedClaimCount = Math.max(
+        evidenceCheck.totalLabels || 0,
+        structureCheck.score > 0 ? 1 : 0,
+      );
+      const qualityRate =
+        evaluation.maxOverallScore > 0
+          ? evaluation.overallScore / evaluation.maxOverallScore
+          : 0.5;
       interceptChatResponse({
-        organizationId: orgId ? Number(orgId) : 0,
-        projectId: projectIdForRim ? Number(projectIdForRim) : 0,
+        organizationId: Number(orgId),
+        projectId: Number(projectIdForRim),
         userId: typeof userId === 'number' ? userId : undefined,
+        sectionCode: chatSectionCode,
         assistantMessage: finalAssistantContent,
-        claimCount: 0,
-        supportedClaimRate: 0.5,
+        claimCount: ratedClaimCount,
+        supportedClaimRate: qualityRate,
         model: response.model || 'unknown',
         provider: response.provider || 'unknown',
-      }).catch(() => {});
+      });
     }
 
     // Evidence validation — semantic grounding check (beyond regex-based enforcement)
