@@ -62,6 +62,11 @@ export interface AnaChatMessage {
    * a follow-up message that triggers the action's generator.
    */
   suggestedActions?: string[];
+  /**
+   * Extended-thinking tokens streamed separately from the answer. Shown
+   * in a collapsible "Reasoning" section for high-risk turns.
+   */
+  thinking?: string;
 }
 
 export interface UseAnaChatOptions {
@@ -190,6 +195,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       // Capture done-event fields before post_done arrives
       let capturedLatencyMs: number | undefined;
       let capturedProvider: string | undefined;
+      let streamedThinking = '';
 
       const body = JSON.stringify({
         message: text,
@@ -291,6 +297,20 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 prev.map(m =>
                   m.id === assistantId
                     ? { ...m, text: next, statusPhase: undefined }
+                    : m
+                )
+              );
+            } else if (event.type === 'thinking') {
+              // Extended-thinking delta — accumulate separately from answer
+              // text. Also clear the statusPhase since AnA has begun working.
+              const chunk: string = event.content || '';
+              if (!chunk) continue;
+              streamedThinking += chunk;
+              const thinkingNow = streamedThinking;
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === assistantId
+                    ? { ...m, thinking: thinkingNow, statusPhase: undefined }
                     : m
                 )
               );

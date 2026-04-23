@@ -409,10 +409,23 @@ router.post('/stream', async (req: Request, res: Response) => {
       ...(streamThinkingConfig ? { thinking: streamThinkingConfig } : {}),
       stream: true,
       onStream: (chunk: string, metadata?: any) => {
+        // Extended-thinking deltas arrive with chunk='' and the thinking
+        // text in metadata.thinkingContent. Forward them as a separate
+        // SSE event type so the client can render reasoning in a
+        // collapsible section and keep it out of the answer prose.
+        if (metadata?.type === 'thinking') {
+          const thinkingChunk: string = metadata?.thinkingContent || '';
+          if (thinkingChunk) {
+            res.write(
+              `data: ${JSON.stringify({ type: 'thinking', content: thinkingChunk })}\n\n`
+            );
+          }
+          return;
+        }
         fullContent += chunk;
         res.write(
           `data: ${JSON.stringify({
-            type: metadata?.type || 'text',
+            type: 'text',
             content: chunk,
           })}\n\n`
         );

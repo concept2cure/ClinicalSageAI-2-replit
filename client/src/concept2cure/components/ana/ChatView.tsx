@@ -27,6 +27,8 @@ export interface ChatMessageView {
   detectedLens?: string;
   /** Server-suggested follow-up document actions (raw type strings). */
   suggestedActions?: string[];
+  /** Extended-thinking reasoning content (collapsible section). */
+  thinking?: string;
 }
 
 export interface ChatViewProps {
@@ -91,6 +93,7 @@ export function ChatView({
               detectedLens={m.detectedLens}
               suggestedActions={m.suggestedActions}
               suggestedActionLabels={suggestedActionLabels}
+              thinking={m.thinking}
               onSuggestedAction={onSuggestedAction}
               onCopy={onCopy ? () => onCopy(m.id, m.text) : undefined}
               onRetry={onRetry ? () => onRetry(m.id) : undefined}

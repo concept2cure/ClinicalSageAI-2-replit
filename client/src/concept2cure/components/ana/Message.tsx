@@ -15,7 +15,7 @@
  *
  * No new tokens or selectors — every style used is already in the bundle.
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { marked, setOptions } from 'marked';
 
 import { I } from './icons';
@@ -54,6 +54,8 @@ export interface MessageProps {
   suggestedActions?: string[];
   /** Label lookup for DocumentActionType strings. */
   suggestedActionLabels?: Record<string, string>;
+  /** Extended-thinking reasoning content (collapsible). */
+  thinking?: string;
 
   // Handlers
   onCopy?: () => void;
@@ -86,6 +88,7 @@ export function Message({
   detectedLens,
   suggestedActions,
   suggestedActionLabels,
+  thinking,
   onCopy,
   onRetry,
   onFeedback,
@@ -95,6 +98,13 @@ export function Message({
 }: MessageProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(text);
+  // Reasoning section is open while thinking arrives so users see it form,
+  // auto-collapses once the answer starts flowing.
+  const [thinkingOpen, setThinkingOpen] = useState(true);
+  const hasText = text.length > 0;
+  useEffect(() => {
+    if (hasText) setThinkingOpen(false);
+  }, [hasText]);
 
   // Render markdown to HTML on every text change — marked v17 handles
   // partial input gracefully (open bold/code/table renders the content it
@@ -200,6 +210,35 @@ export function Message({
             </span>
           )}
         </div>
+
+        {thinking && thinking.length > 0 && (
+          <div className={styles.thinking}>
+            <button
+              type="button"
+              className={styles.thinkingToggle}
+              onClick={() => setThinkingOpen(v => !v)}
+              aria-expanded={thinkingOpen}
+              title={thinkingOpen ? 'Hide reasoning' : 'Show reasoning'}
+            >
+              <span className={styles.ico}>
+                <I.sparkles size={12} />
+              </span>
+              {thinkingOpen ? 'Hide reasoning' : 'Show reasoning'}
+              {!text && streaming && (
+                <span className={styles.cite} style={{ marginLeft: 8, fontStyle: 'italic' }}>
+                  thinking…
+                </span>
+              )}
+            </button>
+            {thinkingOpen && (
+              <div className={styles.thinkingBody}>
+                {thinking.split('\n\n').map((p, i) => (
+                  <p key={i}>{p}</p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {renderedHtml ? (
           /* Markdown-rendered assistant reply (live during streaming, final after) */
