@@ -437,6 +437,45 @@ registerToolHandler('extract_document_structure', async (input) => {
   });
 });
 
+// Check Numerical Integrity — within-document consistency of labelled numbers
+registerToolHandler('check_numerical_integrity', async (input: Record<string, unknown>) => {
+  const content = input.content as string;
+  if (!content || typeof content !== 'string') {
+    return JSON.stringify({
+      error: 'check_numerical_integrity requires a non-empty content string',
+    });
+  }
+
+  try {
+    const { checkInternalNumericalIntegrity } = await import(
+      '../intelligence/cross-artifact-consistency.js'
+    );
+    const report = checkInternalNumericalIntegrity(content);
+
+    return JSON.stringify({
+      verdict: report.verdict,
+      factsExtracted: report.factsExtracted,
+      candidateCount: report.candidateCount,
+      candidates: report.candidates.slice(0, 15).map(c => ({
+        label: c.humanLabel,
+        severity: c.severity,
+        distinctValues: c.distinctValues,
+        occurrences: c.occurrences.slice(0, 6),
+      })),
+      recommendation:
+        report.verdict === 'clean'
+          ? 'No numerical inconsistencies detected.'
+          : report.verdict === 'review_candidates'
+            ? 'Candidate inconsistencies detected — verify whether each is a real mismatch or documented multi-arm / multi-timepoint variance. Fix genuine mismatches; add disambiguating text for legitimate cases (e.g. "N=648 at Week 26; N=612 at Week 52").'
+            : 'LIKELY INCONSISTENCY — critical-severity labels (dose, NOAEL, MRSD, sample size) show multiple distinct values. Fix before finalizing — this is RTF territory.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({
+      error: `Numerical integrity check failed: ${err?.message || 'unknown error'}`,
+    });
+  }
+});
+
 // Check Dossier Consistency — cross-artifact divergence detection
 registerToolHandler('check_dossier_consistency', async (input: Record<string, unknown>) => {
   const draftContent = input.draft_content as string;
@@ -818,6 +857,7 @@ export function getAvailableTools(): Array<{ name: string; registered: boolean }
     'analyze_predicate_device',
     'extract_document_structure',
     'check_dossier_consistency',
+    'check_numerical_integrity',
   ];
 
   return allTools.map(name => ({

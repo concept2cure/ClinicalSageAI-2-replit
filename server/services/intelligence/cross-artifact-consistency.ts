@@ -365,3 +365,130 @@ function computeVerdict(divergences: ConsistencyDivergence[]): ConsistencyReport
   if (anyHigh) return 'needs_review';
   return 'minor_issues';
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WITHIN-DOCUMENT NUMERICAL INTEGRITY
+//
+// Regulatory prose and its accompanying tables must report the same numbers.
+// "N=648" in the narrative and "N=641" in Table 14.1 is a classic RTF trigger,
+// as is a p-value stated in text that differs from the value in the same
+// table. This check surfaces CANDIDATES — same labelled quantity stated with
+// multiple distinct values within the same draft — for Claude or the author
+// to adjudicate. Some multi-arm / multi-timepoint variation is legitimate
+// ("N=648 at Week 26, N=612 at Week 52"), so the checker deliberately does
+// NOT self-resolve; it reports the candidates and lets the author justify
+// or fix.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface InternalNumericalCandidate {
+  readonly label: string;
+  readonly humanLabel: string;
+  readonly severity: DivergenceSeverity;
+  readonly distinctValues: readonly string[];
+  readonly occurrences: ReadonlyArray<{
+    readonly value: string;
+    readonly unit?: string;
+    readonly context: string;
+  }>;
+}
+
+export interface NumericalIntegrityReport {
+  readonly contentLength: number;
+  readonly factsExtracted: number;
+  readonly candidateCount: number;
+  readonly candidates: readonly InternalNumericalCandidate[];
+  readonly verdict: 'clean' | 'review_candidates' | 'likely_inconsistency';
+  readonly generatedAt: string;
+}
+
+/**
+ * Scan a single drafted artifact for the same labelled quantity stated with
+ * multiple distinct values. Returns candidates, not divergences — a multi-arm
+ * study legitimately reports different N per arm, so the checker refuses to
+ * pretend it knows which case a given document is in.
+ *
+ * Deterministic, sync, no external calls — safe to run on every draft.
+ */
+export function checkInternalNumericalIntegrity(content: string): NumericalIntegrityReport {
+  const now = new Date().toISOString();
+  const facts = extractNumericalFacts(content);
+
+  if (facts.length === 0) {
+    return {
+      contentLength: content?.length ?? 0,
+      factsExtracted: 0,
+      candidateCount: 0,
+      candidates: [],
+      verdict: 'clean',
+      generatedAt: now,
+    };
+  }
+
+  // Group by label; canonicalize value (strip commas, normalize negative sign)
+  // so "1,000" and "1000" don't register as different.
+  const byLabel = new Map<string, NumericalFact[]>();
+  for (const fact of facts) {
+    const list = byLabel.get(fact.label) ?? [];
+    list.push(fact);
+    byLabel.set(fact.label, list);
+  }
+
+  const candidates: InternalNumericalCandidate[] = [];
+  for (const [label, group] of byLabel) {
+    if (group.length < 2) continue;
+    const distinctValuesSet = new Set<string>();
+    for (const f of group) {
+      const normalized = f.value.replace(/,/g, '').trim();
+      distinctValuesSet.add(normalized);
+    }
+    if (distinctValuesSet.size < 2) continue;
+
+    // Suppress if the values cluster within the tolerance bucket — avoids
+    // noise for things like "approximately 648" vs "648" that are effectively
+    // the same reading.
+    const numericDistincts = Array.from(distinctValuesSet)
+      .map(v => parseFloat(v))
+      .filter(n => Number.isFinite(n));
+    if (numericDistincts.length === distinctValuesSet.size && numericDistincts.length >= 2) {
+      const max = Math.max(...numericDistincts);
+      const min = Math.min(...numericDistincts);
+      const spread = max === 0 ? 0 : (max - min) / Math.max(Math.abs(max), Math.abs(min));
+      if (spread < 0.005) continue;
+    }
+
+    candidates.push({
+      label,
+      humanLabel: humanLabel(label),
+      severity: severityFor(label),
+      distinctValues: Array.from(distinctValuesSet),
+      occurrences: group.map(f => ({
+        value: f.value,
+        unit: f.unit,
+        context: f.context,
+      })),
+    });
+  }
+
+  const verdict = computeIntegrityVerdict(candidates);
+
+  return {
+    contentLength: content?.length ?? 0,
+    factsExtracted: facts.length,
+    candidateCount: candidates.length,
+    candidates,
+    verdict,
+    generatedAt: now,
+  };
+}
+
+function computeIntegrityVerdict(
+  candidates: InternalNumericalCandidate[],
+): NumericalIntegrityReport['verdict'] {
+  if (candidates.length === 0) return 'clean';
+  // Critical-severity labels with multiple distinct values are very likely
+  // real inconsistencies — dose, NOAEL, MRSD, sample size rarely have a
+  // legitimate "different value in different places" interpretation within
+  // a single drafted section.
+  if (candidates.some(c => c.severity === 'critical')) return 'likely_inconsistency';
+  return 'review_candidates';
+}

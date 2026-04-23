@@ -241,6 +241,22 @@ export const EXTRACT_DOCUMENT_STRUCTURE: ClaudeTool = {
   },
 };
 
+export const CHECK_NUMERICAL_INTEGRITY: ClaudeTool = {
+  name: 'check_numerical_integrity',
+  description:
+    "Scan a single drafted artifact for same labelled quantity stated with multiple distinct values. Surfaces candidates like: sample size N=648 in the narrative but N=641 in Table 14.1; p<0.001 in text but p<0.01 in the forest plot; 100 mg/kg NOAEL in one paragraph and 200 mg/kg two pages later. This is the classic 'numbers drift between text and table' failure that triggers FDA RTFs. The checker reports CANDIDATES — multi-arm studies legitimately report different N per arm or timepoint — so the author or model must adjudicate whether each candidate is a real inconsistency or documented variance. Call this AFTER drafting a regulatory artifact containing numerical claims and BEFORE finalizing. Returns verdict (clean | review_candidates | likely_inconsistency) with per-candidate severity and context snippets.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      content: {
+        type: 'string',
+        description: 'The drafted artifact content to scan for internal numerical inconsistency.',
+      },
+    },
+    required: ['content'],
+  },
+};
+
 export const CHECK_DOSSIER_CONSISTENCY: ClaudeTool = {
   name: 'check_dossier_consistency',
   description:
@@ -514,6 +530,7 @@ export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
   ANALYZE_PREDICATE_DEVICE,
   EXTRACT_DOCUMENT_STRUCTURE,
   CHECK_DOSSIER_CONSISTENCY,
+  CHECK_NUMERICAL_INTEGRITY,
   GENERATE_DOCUMENT,
   BUILD_FROM_TEMPLATE,
   IND_GENERATE_SECTION,
