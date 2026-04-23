@@ -44,7 +44,13 @@ import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
 import { summarizeAndStoreWorkingMemoryForThread } from '../../services/working-memory.js';
 import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
-import { getEnabledServerTools } from '../../services/claude/ClaudeToolDefinitions.js';
+import {
+  getEnabledServerTools,
+  getAllEnabledTools,
+  ALL_CLAUDE_TOOLS,
+} from '../../services/claude/ClaudeToolDefinitions.js';
+import { getToolHandler } from '../../services/claude/ClaudeToolExecutor.js';
+import type { ClaudeEnhancedResponse } from '../../services/ai-gateway/types.js';
 import {
   getIntelligencePrefix,
   buildSectionSpecificPrompt,
@@ -403,12 +409,12 @@ router.post('/stream', async (req: Request, res: Response) => {
       routingPlan.riskTier === 'high'
         ? { enabled: true, budgetTokens: 10_000 }
         : undefined;
-    // Server-side tools only on the streaming path — web_search /
-    // web_fetch / code_execution resolve inside Anthropic's infra and
-    // emit results as content blocks in the existing stream. Custom
-    // JSON-schema tools would require an agentic loop, which this path
-    // doesn't run, so they stay scoped to send-message.ts.
-    const streamServerTools = getEnabledServerTools();
+    // Full tool suite on the streaming path: custom JSON-schema tools
+    // (PubMed search, FDA guidance lookup, predicate device analysis, etc.)
+    // plus any env-enabled Anthropic server tools (web_search, web_fetch,
+    // code_execution). Server tools resolve in Anthropic's infra; custom
+    // tools dispatch locally via the single-round agentic block below.
+    const streamTools = getAllEnabledTools();
 
     const gwResponse = await gw.route({
       taskType: routingPlan.taskType,
@@ -418,7 +424,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       strategy: selectedStrategy,
       promptCache: { enabled: true, type: 'ephemeral' },
       ...(streamThinkingConfig ? { thinking: streamThinkingConfig } : {}),
-      ...(streamServerTools.length > 0 ? { tools: streamServerTools } : {}),
+      ...(streamTools.length > 0 ? { tools: streamTools } : {}),
       stream: true,
       onStream: (chunk: string, metadata?: any) => {
         // Extended-thinking deltas arrive with chunk='' and the thinking
@@ -445,6 +451,99 @@ router.post('/stream', async (req: Request, res: Response) => {
       callerModule: 'ana-ri-stream',
     });
     streamGatewayMs = Date.now() - streamGatewayStart;
+
+    // Single-round agentic tool execution. If Claude called custom tools,
+    // dispatch them locally, stream transparency events to the client, then
+    // make one non-streaming follow-up call with the tool results so Claude
+    // can deliver the final grounded answer. Multi-round is out of scope
+    // here — for regulatory lookups one round covers the common case, and
+    // the non-streaming send-message.ts path still handles multi-round.
+    const streamToolUses = (gwResponse as ClaudeEnhancedResponse).toolUses;
+    if (streamToolUses && streamToolUses.length > 0) {
+      const toolResultEntries: Array<{ tool_use_id: string; content: string; name: string }> = [];
+      for (const toolUse of streamToolUses) {
+        // Announce the tool invocation to the client so the UI can show
+        // "Checking FDA guidance…" affordances instead of an opaque pause.
+        res.write(
+          `data: ${JSON.stringify({
+            type: 'tool_use',
+            name: toolUse.name,
+            input: toolUse.input,
+          })}\n\n`
+        );
+
+        const handler = getToolHandler(toolUse.name);
+        let resultStr: string;
+        if (handler) {
+          try {
+            resultStr = await handler(toolUse.input);
+          } catch (toolErr: any) {
+            resultStr = JSON.stringify({
+              error: `Tool execution failed: ${toolErr?.message || 'unknown error'}`,
+              tool: toolUse.name,
+            });
+          }
+        } else {
+          // Unknown tool name — could be an Anthropic server tool that
+          // Anthropic resolved server-side (in which case the result is
+          // already in the content stream, nothing to do) or a schema drift.
+          // Either way we don't want to block the conversation.
+          resultStr = JSON.stringify({
+            note: `No local handler for ${toolUse.name}; may be a server-resolved tool.`,
+          });
+        }
+        toolResultEntries.push({
+          tool_use_id: toolUse.id,
+          content: resultStr,
+          name: toolUse.name,
+        });
+
+        res.write(
+          `data: ${JSON.stringify({
+            type: 'tool_result',
+            name: toolUse.name,
+            result: resultStr,
+          })}\n\n`
+        );
+      }
+
+      // Compose the follow-up turn: prior messages + Claude's partial text
+      // (which often narrates "let me check…") + a user message bundling
+      // the tool results. Force a text response by dropping tools on the
+      // follow-up call — we only want one round here.
+      const followupMessages: GatewayMessage[] = [
+        ...messages,
+        { role: 'assistant', content: fullContent || '' },
+        {
+          role: 'user',
+          content: toolResultEntries
+            .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${tr.content}`)
+            .join('\n\n'),
+        },
+      ];
+
+      const followupResponse = await gw.route({
+        taskType: routingPlan.taskType,
+        messages: followupMessages,
+        maxTokens: routingPlan.maxTokens,
+        temperature: routingPlan.temperature,
+        strategy: selectedStrategy,
+        promptCache: { enabled: true, type: 'ephemeral' },
+        callerModule: 'ana-ri-stream-followup',
+      });
+
+      const followupText = followupResponse.content || '';
+      if (followupText) {
+        // Emit the follow-up answer. Not true token-by-token streaming —
+        // the follow-up call was non-streaming — but the client receives
+        // it as a standard text chunk so the UI renders it the same way
+        // as normal streamed content.
+        fullContent += (fullContent ? '\n\n' : '') + followupText;
+        res.write(
+          `data: ${JSON.stringify({ type: 'text', content: followupText })}\n\n`
+        );
+      }
+    }
 
     // RIM interception moved to the background post-processing block below,
     // so it scans the *cleaned* content (guidance/command blocks stripped) and

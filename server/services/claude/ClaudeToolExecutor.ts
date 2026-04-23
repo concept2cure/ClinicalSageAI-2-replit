@@ -37,6 +37,11 @@ export function registerToolHandler(name: string, handler: ToolHandler): void {
   toolHandlers.set(name, handler);
 }
 
+/** Retrieve a registered tool handler, or undefined if the name is unknown. */
+export function getToolHandler(name: string): ToolHandler | undefined {
+  return toolHandlers.get(name);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Built-in Tool Handlers
 // ─────────────────────────────────────────────────────────────────────────────
