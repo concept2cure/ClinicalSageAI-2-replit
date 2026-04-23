@@ -8,7 +8,7 @@
  *   import { getAnthropicClient } from './anthropic-client';
  *   const anthropic = getAnthropicClient();
  *   const response = await anthropic.messages.create({
- *     model: 'claude-sonnet-4-20250514',
+ *     model: 'claude-sonnet-4-6',
  *     max_tokens: 2000,
  *     messages: [{ role: 'user', content: 'Hello' }],
  *   });
@@ -45,9 +45,9 @@ export function getAnthropicClient(): Anthropic {
 /** Default Claude models for different use cases */
 export const CLAUDE_MODELS = {
   /** Highest capability — regulatory review, complex document drafting */
-  opus: 'claude-opus-4-20250514',
+  opus: 'claude-opus-4-7',
   /** Best balance of quality and speed — primary workhorse */
-  sonnet: 'claude-sonnet-4-20250514',
+  sonnet: 'claude-sonnet-4-6',
   /** Fast and cost-effective — simple tasks, classification */
   haiku: 'claude-haiku-4-5-20251001',
 } as const;

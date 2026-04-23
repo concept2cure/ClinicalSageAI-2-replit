@@ -73,9 +73,11 @@ const DEFAULT_MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
+    // Internal id kept stable for alias continuity; the `model` field is the
+    // actual ID sent to Anthropic and tracks the current flagship release.
     id: 'claude-opus-4',
     provider: 'anthropic',
-    model: 'claude-opus-4-20250514',
+    model: 'claude-opus-4-7',
     contextWindow: 200000,
     qualityScore: 99,
     costPer1kInput: 0.015,
@@ -93,9 +95,11 @@ const DEFAULT_MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
+    // Internal id kept stable for alias continuity; model field tracks
+    // the current Sonnet release.
     id: 'claude-sonnet-4',
     provider: 'anthropic',
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-6',
     contextWindow: 200000,
     qualityScore: 97,
     costPer1kInput: 0.003,
@@ -1256,7 +1260,7 @@ export class AIGateway {
           name: 'anthropic',
           enabled: !!anthropicKey,
           apiKey: anthropicKey,
-          defaultModel: 'claude-sonnet-4-20250514',
+          defaultModel: 'claude-sonnet-4-6',
           models: [],
         },
         {
