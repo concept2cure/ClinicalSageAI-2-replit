@@ -234,8 +234,29 @@
   display: flex; flex-direction: column;
   gap: 28px; padding-bottom: 24px;
 }
-.chatFooter { padding: 12px 24px 18px; }
+.chatFooter { padding: 12px 24px 18px; position: relative; }
 .chatFooter .composer { margin: 0 auto; }
+
+/* Jump-to-latest pill — appears above the composer when new tokens
+   arrive while the user is scrolled up reading older content. */
+.jumpLatest {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--ink, var(--text-100));
+  color: var(--background, var(--bg-000));
+  border: 0; cursor: pointer;
+  font-size: 12px; font-weight: 500;
+  font-family: var(--font-sans, inherit);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  transition: transform 120ms ease;
+  z-index: 5;
+}
+.jumpLatest:hover { transform: translateX(-50%) translateY(-1px); }
 
 .msg { display: flex; gap: 16px; }
 .msgUser { justify-content: flex-end; align-items: flex-start; gap: 8px; }
@@ -308,8 +329,33 @@
 .aiProse a:hover { opacity: 0.8; }
 .aiProse pre {
   background: var(--bg-100); border-radius: 10px;
-  padding: 14px 18px; margin: 0 0 14px; overflow-x: auto;
+  padding: 14px 18px 14px 18px; margin: 0 0 14px; overflow-x: auto;
+  position: relative;
 }
+
+/* Hover-revealed code bar (language tag + copy button) on every <pre>. */
+.codeBar {
+  position: absolute; top: 8px; right: 8px;
+  display: inline-flex; align-items: center; gap: 6px;
+  opacity: 0; transition: opacity 150ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+}
+.aiProse pre:hover .codeBar { opacity: 1; }
+.codeLang {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--ink-subtle, var(--text-400));
+  background: var(--bg-200, rgba(0, 0, 0, 0.04));
+  padding: 2px 6px; border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+.codeCopy {
+  font-family: var(--font-sans, inherit); font-size: 11px;
+  color: var(--ink-muted, var(--text-300));
+  background: var(--bg-200, rgba(0, 0, 0, 0.04));
+  border: 0; padding: 3px 10px; border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+.codeCopy:hover { color: var(--ink, var(--text-100)); background: var(--bg-300, rgba(0, 0, 0, 0.08)); }
 .aiProse pre code {
   font-family: var(--font-mono); font-size: 13px;
   background: transparent; padding: 0; border-radius: 0;

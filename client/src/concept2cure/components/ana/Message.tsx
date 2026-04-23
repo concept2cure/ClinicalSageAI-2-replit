@@ -15,7 +15,7 @@
  *
  * No new tokens or selectors — every style used is already in the bundle.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { marked, setOptions } from 'marked';
 
 import { I } from './icons';
@@ -24,6 +24,13 @@ import styles from './styles.module.css';
 
 // Configure marked once: GitHub-flavoured markdown, no line-break collapsing.
 setOptions({ gfm: true, breaks: false });
+
+/** Decode HTML entities in a string (used for the code-block copy payload). */
+function decodeHtmlEntities(s: string): string {
+  const ta = document.createElement('textarea');
+  ta.innerHTML = s;
+  return ta.value;
+}
 
 export interface ExecutedActionChip {
   label: string;
@@ -130,6 +137,46 @@ export function Message({
       return undefined;
     }
   }, [role, text]);
+
+  // After the markdown HTML mounts, decorate each <pre> block with a copy
+  // button + language label. Anthropic shows these on every code block;
+  // it's essential for regulatory work that involves SAS/R/SQL/JSON.
+  const proseRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!renderedHtml || !proseRef.current) return;
+    const pres = proseRef.current.querySelectorAll('pre:not([data-decorated])');
+    pres.forEach(pre => {
+      pre.setAttribute('data-decorated', 'true');
+      (pre as HTMLElement).style.position = 'relative';
+      const code = pre.querySelector('code');
+      const langClass = code?.className.match(/language-([\w-]+)/);
+      const lang = langClass ? langClass[1] : '';
+
+      const bar = document.createElement('div');
+      bar.className = styles.codeBar;
+      if (lang) {
+        const tag = document.createElement('span');
+        tag.className = styles.codeLang;
+        tag.textContent = lang;
+        bar.appendChild(tag);
+      }
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = styles.codeCopy;
+      btn.title = 'Copy code';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', () => {
+        const raw = code ? decodeHtmlEntities(code.innerHTML.replace(/<[^>]+>/g, '')) : pre.textContent || '';
+        void navigator.clipboard?.writeText(raw).then(() => {
+          btn.textContent = 'Copied';
+          setTimeout(() => { btn.textContent = 'Copy'; }, 1400);
+        }).catch(() => {});
+      });
+      bar.appendChild(btn);
+      pre.appendChild(bar);
+    });
+  }, [renderedHtml]);
+
 
   const CopyIco = I.copy;
   const RedoIco = I.redo;
@@ -270,7 +317,7 @@ export function Message({
         {renderedHtml ? (
           /* Markdown-rendered assistant reply (live during streaming, final after) */
           <div className={styles.aiProse}>
-            <div dangerouslySetInnerHTML={{ __html: renderedHtml }} />
+            <div ref={proseRef} dangerouslySetInnerHTML={{ __html: renderedHtml }} />
             {streaming && (
               <span className={styles.typing} aria-label="AnA is typing">
                 <span />

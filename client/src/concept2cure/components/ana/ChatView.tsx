@@ -4,9 +4,15 @@
  * Scrolling thread of Message rows + a sticky composer footer.
  * docs/design/concept2cure-design-system/project/ui_kits/ana_ri/App.jsx
  * lines 125–157.
+ *
+ * Scroll behavior matches Anthropic's UX: auto-scroll while the user is
+ * near the bottom, but stop following when they scroll up to read older
+ * content. A "jump to latest" button appears when new tokens arrive while
+ * the user is scrolled away.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { I } from './icons';
 import { Composer } from './Composer';
 import { Message, type ExecutedActionChip } from './Message';
 import styles from './styles.module.css';
@@ -72,21 +78,49 @@ export function ChatView({
 }: ChatViewProps) {
   const [draft, setDraft] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [stickToBottom, setStickToBottom] = useState(true);
+  const [hasNewBelow, setHasNewBelow] = useState(false);
 
+  // User scroll → if they're within ~80px of the bottom, follow new tokens.
+  // If they scroll up, release the stick and surface a "jump to latest" pill.
+  const handleScroll = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const nearBottom = distanceFromBottom < 80;
+    setStickToBottom(nearBottom);
+    if (nearBottom) setHasNewBelow(false);
+  }, []);
+
+  // New content arrives → either follow (stick) or surface the pill.
   useEffect(() => {
+    if (stickToBottom) {
+      endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    } else {
+      setHasNewBelow(true);
+    }
+  }, [messages.length, messages[messages.length - 1]?.text, stickToBottom]);
+
+  const jumpToLatest = useCallback(() => {
+    setStickToBottom(true);
+    setHasNewBelow(false);
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages.length, messages[messages.length - 1]?.text]);
+  }, []);
 
   const send = () => {
     const out = draft.trim();
     if (!out) return;
     onSend(out);
     setDraft('');
+    // Sending a new message implies user wants to follow it.
+    setStickToBottom(true);
+    setHasNewBelow(false);
   };
 
   return (
     <div className={styles.chat}>
-      <div className={styles.chatScroll}>
+      <div className={styles.chatScroll} ref={scrollerRef} onScroll={handleScroll}>
         <div className={styles.chatThread}>
           {messages.map(m => (
             <Message
@@ -124,6 +158,18 @@ export function ChatView({
         </div>
       </div>
       <div className={styles.chatFooter}>
+        {hasNewBelow && !stickToBottom && (
+          <button
+            type="button"
+            className={styles.jumpLatest}
+            onClick={jumpToLatest}
+            title="Jump to latest"
+            aria-label="Jump to latest message"
+          >
+            <I.down size={14} />
+            New messages
+          </button>
+        )}
         <Composer
           value={draft}
           onChange={setDraft}
