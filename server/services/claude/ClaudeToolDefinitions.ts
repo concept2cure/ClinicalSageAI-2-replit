@@ -9,7 +9,7 @@
  * - Compliance checking
  */
 
-import type { ClaudeTool } from '../ai-gateway/types';
+import type { ClaudeTool, AnthropicServerTool, AnyClaudeTool } from '../ai-gateway/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -470,7 +470,7 @@ export const PDF_OVERLAY: ClaudeTool = {
   },
 };
 
-/** All tools combined */
+/** Custom JSON-schema tools dispatched by our local ClaudeToolExecutor. */
 export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
@@ -488,3 +488,89 @@ export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
   RASTERIZE_PAGE,
   PDF_OVERLAY,
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Anthropic server-side tools (executed by Anthropic's infrastructure)
+//
+// These are NOT dispatched by our local ClaudeToolExecutor. Claude invokes
+// them server-side; results arrive as content blocks in the response stream
+// (web_search_tool_result, web_fetch_tool_result, etc.). No local handler
+// needed — we just declare them in the tools array so Claude knows it can
+// reach for them.
+//
+// Gated by env flags so the rollout is controllable:
+//   ANA_ENABLE_WEB_SEARCH=true   — live regulatory search (fda.gov, ema.europa.eu, ich.org, ...)
+//   ANA_ENABLE_WEB_FETCH=true    — retrieve actual guidance/CFR/ICH text by URL
+//   ANA_ENABLE_CODE_EXECUTION=true — sandboxed Python for biostat checks and dynamic result filtering
+//
+// Note: web_search costs $10/1000 searches plus token costs, and must be
+// admin-enabled in the Anthropic Console before it will work. Leave flags
+// off by default; flip them per environment once the billing + admin
+// enablement is confirmed.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const WEB_SEARCH_TOOL: AnthropicServerTool = {
+  type: 'web_search_20250305',
+  name: 'web_search',
+  max_uses: 5,
+  // Keep the search surface tight to sources AnA actually cites. The allowlist
+  // prevents drift into low-quality web content during regulatory lookups.
+  allowed_domains: [
+    'fda.gov',
+    'www.fda.gov',
+    'accessdata.fda.gov',
+    'ema.europa.eu',
+    'www.ema.europa.eu',
+    'ich.org',
+    'www.ich.org',
+    'pmda.go.jp',
+    'www.pmda.go.jp',
+    'mhra.gov.uk',
+    'www.mhra.gov.uk',
+    'tga.gov.au',
+    'www.tga.gov.au',
+    'canada.ca',
+    'www.canada.ca',
+    'iso.org',
+    'www.iso.org',
+    'ecfr.gov',
+    'www.ecfr.gov',
+    'federalregister.gov',
+    'www.federalregister.gov',
+    'clinicaltrials.gov',
+    'pubmed.ncbi.nlm.nih.gov',
+    'ncbi.nlm.nih.gov',
+  ],
+};
+
+export const WEB_FETCH_TOOL: AnthropicServerTool = {
+  type: 'web_fetch_20260209',
+  name: 'web_fetch',
+};
+
+export const CODE_EXECUTION_TOOL: AnthropicServerTool = {
+  type: 'code_execution_20260120',
+  name: 'code_execution',
+};
+
+/**
+ * Returns the subset of Anthropic server tools that are enabled for this
+ * environment. Empty array when none are enabled — safe to spread into the
+ * tools array unconditionally.
+ */
+export function getEnabledServerTools(): AnthropicServerTool[] {
+  const enabled: AnthropicServerTool[] = [];
+  if (process.env.ANA_ENABLE_WEB_SEARCH === 'true') enabled.push(WEB_SEARCH_TOOL);
+  if (process.env.ANA_ENABLE_WEB_FETCH === 'true') enabled.push(WEB_FETCH_TOOL);
+  if (process.env.ANA_ENABLE_CODE_EXECUTION === 'true') enabled.push(CODE_EXECUTION_TOOL);
+  return enabled;
+}
+
+/**
+ * Full tool surface: custom tools + any enabled Anthropic server tools.
+ * Use this when building the `tools` array for a chat turn so AnA has
+ * access to both layers simultaneously.
+ */
+export function getAllEnabledTools(): AnyClaudeTool[] {
+  return [...ALL_CLAUDE_TOOLS, ...getEnabledServerTools()];
+}

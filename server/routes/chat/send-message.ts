@@ -27,7 +27,7 @@ import {
   recordKernelPolicyOutcome,
 } from '../../services/kernel-adaptive-policy.js';
 import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
-import { ALL_CLAUDE_TOOLS } from '../../services/claude/ClaudeToolDefinitions.js';
+import { getAllEnabledTools } from '../../services/claude/ClaudeToolDefinitions.js';
 import { executeAgenticLoop } from '../../services/claude/ClaudeToolExecutor.js';
 import type { ClaudeEnhancedResponse } from '../../services/ai-gateway/types.js';
 import { buildMemoryContextForChat, type MemoryAssemblyDiagnostics } from '../../services/memory-context-assembler.js';
@@ -438,7 +438,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         organizationId: numericOrgId ?? undefined,
         userId: numericUserId,
         strategy: selectedStrategy,
-        tools: ALL_CLAUDE_TOOLS,
+        tools: getAllEnabledTools(),
         toolChoice: 'auto' as const,
         ...(validatedChatProvider ? { provider: validatedChatProvider } : {}),
       };
