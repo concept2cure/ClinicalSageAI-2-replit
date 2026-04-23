@@ -43,6 +43,7 @@ import { planKernelExecution } from '../../services/kernel-router.js';
 import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
 import { summarizeAndStoreWorkingMemoryForThread } from '../../services/working-memory.js';
+import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import {
   getIntelligencePrefix,
   buildSectionSpecificPrompt,
@@ -652,6 +653,16 @@ router.post('/stream', async (req: Request, res: Response) => {
         );
       }
 
+      // Cached reliability lookup (5-min TTL) — included in post_done so
+      // client UI can render AnA's self-assessed accuracy on this project
+      // once the Phase 2 chat shell ships. Failure is silently null.
+      const streamReliability =
+        streamProjectId && orgId
+          ? await getCachedSignalReliability(Number(streamProjectId), Number(orgId)).catch(
+              () => null,
+            )
+          : null;
+
       // Send post_done event — deferred metadata from background post-processing
       res.write(
         `data: ${JSON.stringify({
@@ -676,6 +687,7 @@ router.post('/stream', async (req: Request, res: Response) => {
                 maxScore: streamStructureCheck.maxScore,
               }
             : undefined,
+          reliability: streamReliability || undefined,
           queueMeta: streamQueueMeta,
         })}\n\n`
       );

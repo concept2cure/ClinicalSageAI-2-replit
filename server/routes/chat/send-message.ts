@@ -32,6 +32,8 @@ import { executeAgenticLoop } from '../../services/claude/ClaudeToolExecutor.js'
 import type { ClaudeEnhancedResponse } from '../../services/ai-gateway/types.js';
 import { buildMemoryContextForChat, type MemoryAssemblyDiagnostics } from '../../services/memory-context-assembler.js';
 import { summarizeAndStoreWorkingMemoryForThread } from '../../services/working-memory.js';
+import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
+import type { SignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import { orchestrate, type OrchestratorOutput } from '../../services/ana-ri/orchestrator.js';
 import { ensureGateway, normalizeBody } from './shared.js';
 import { sha256, stableStringify } from './provenance.js';
@@ -779,6 +781,19 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       });
     }
 
+    // ── Cached reliability lookup (5-min TTL, surfaced in response) ─────
+    let reliability: SignalReliability | null = null;
+    if (numericOrgId && normalizedProjectId) {
+      const projectIdNum = parseInt(String(normalizedProjectId), 10);
+      if (Number.isFinite(projectIdNum) && projectIdNum > 0) {
+        try {
+          reliability = await getCachedSignalReliability(projectIdNum, numericOrgId);
+        } catch {
+          // Non-blocking — chat completes without the reliability badge.
+        }
+      }
+    }
+
     // ── Working-memory write-back (fire-and-forget) ────────────────────
     // Compress multi-turn history into structured working memory once the
     // conversation crosses WORKING_MEMORY_THRESHOLD messages. The helper
@@ -848,6 +863,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         memoryAtomCount,
         memoryBlockChars,
         memoryDiagnostics,
+        reliability,
       },
       // Provenance chain
       retrievalRunId,

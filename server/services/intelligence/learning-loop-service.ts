@@ -322,6 +322,62 @@ export async function getSignalReliability(
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// CACHED RELIABILITY READER — for per-turn use in chat paths
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface CachedReliabilityEntry {
+  value: SignalReliability;
+  cachedAt: number;
+}
+
+const reliabilityCache = new Map<string, CachedReliabilityEntry>();
+const RELIABILITY_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Cached variant of {@link getSignalReliability} suitable for per-turn use
+ * in chat handlers. The underlying query reads up to 200 validation entries
+ * per call — caching for 5 minutes keeps reliability fresh enough for live
+ * UX without paying that cost on every chat turn.
+ *
+ * Cache is invalidated naturally by TTL; call {@link invalidateReliabilityCache}
+ * explicitly after writing a new validation entry if you need immediate
+ * reflection (typically not necessary — the next 5-min window will pick it up).
+ */
+export async function getCachedSignalReliability(
+  projectId: number,
+  organizationId: number,
+): Promise<SignalReliability> {
+  if (!Number.isFinite(projectId) || projectId <= 0 ||
+      !Number.isFinite(organizationId) || organizationId <= 0) {
+    return {
+      validated: 0,
+      partiallyValidated: 0,
+      disputed: 0,
+      totalValidations: 0,
+      reliabilityIndex: null,
+    };
+  }
+
+  const key = `${organizationId}:${projectId}`;
+  const entry = reliabilityCache.get(key);
+  if (entry && Date.now() - entry.cachedAt < RELIABILITY_TTL_MS) {
+    return entry.value;
+  }
+
+  const value = await getSignalReliability(projectId, organizationId);
+  reliabilityCache.set(key, { value, cachedAt: Date.now() });
+  return value;
+}
+
+/** Invalidate the cached reliability for a specific org/project. */
+export function invalidateReliabilityCache(
+  projectId: number,
+  organizationId: number,
+): void {
+  reliabilityCache.delete(`${organizationId}:${projectId}`);
+}
+
 /**
  * Get dismissal patterns to suppress unhelpful recommendation types.
  */

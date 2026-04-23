@@ -47,6 +47,7 @@ import {
   buildSectionSpecificPrompt,
 } from '../../services/lumen-context-builder.js';
 import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
+import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import { enrichContextForChat } from '../../services/ana-ri/context-enrichment.js';
 import { processResponseActions } from '../../services/ana-guidance-executor.js';
 import {
@@ -652,6 +653,13 @@ router.post('/chat', async (req: Request, res: Response) => {
       persistenceFailed,
     });
 
+    // Cached reliability lookup (5-min TTL) — surfaced so future UI can show
+    // AnA's self-assessed accuracy on this project.
+    const chatReliability =
+      chatProjectId && orgId
+        ? await getCachedSignalReliability(Number(chatProjectId), Number(orgId)).catch(() => null)
+        : null;
+
     const responsePayload = {
       response: finalAssistantContent,
       thread_id: resolvedThreadId,
@@ -691,6 +699,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         diagnostics: chatMemoryResult.diagnostics || null,
         available: Boolean(chatMemoryResult.memoryBlock),
       },
+      reliability: chatReliability,
       queueMeta,
       enrichmentSources: chatEnrichment.sources?.length > 0 ? chatEnrichment.sources : undefined,
       enrichmentMeta: chatEnrichment.enrichmentMeta || undefined,
