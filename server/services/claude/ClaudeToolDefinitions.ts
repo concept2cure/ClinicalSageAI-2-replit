@@ -241,6 +241,38 @@ export const EXTRACT_DOCUMENT_STRUCTURE: ClaudeTool = {
   },
 };
 
+export const CHECK_DOSSIER_CONSISTENCY: ClaudeTool = {
+  name: 'check_dossier_consistency',
+  description:
+    "Cross-check a drafted artifact against other artifacts in the same project for factual consistency — sample sizes, p-values, dose levels, NOAEL, shelf life, endpoint definitions, and CTD section cross-references. Surfaces the class of divergences that cause FDA RTFs and EMA IRs: the same labelled quantity stated with different values across Module 2 and Module 5, section references that point to non-existent targets, dose mismatches between nonclinical and clinical sections. Call this AFTER drafting a CTD section or regulatory document but BEFORE recommending it for the dossier. Returns a verdict (clean | minor_issues | needs_review | blocker) with per-divergence severity, the conflicting values, and a pointer to the source artifact — so the author can resolve the inconsistency or justify it explicitly.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      draft_content: {
+        type: 'string',
+        description: 'The drafted artifact content to check against the project dossier.',
+      },
+      project_id: {
+        type: 'number',
+        description: 'The project the draft belongs to. Required so the check is scoped to the correct dossier.',
+      },
+      organization_id: {
+        type: 'number',
+        description: 'The organization that owns the project (for tenant scoping).',
+      },
+      ctd_section: {
+        type: 'string',
+        description: 'Optional CTD section code for this draft (e.g. "2.5", "3.2.P.8.1"). Used to skip self-reference cross-checks.',
+      },
+      exclude_artifact_id: {
+        type: 'number',
+        description: 'Optional numeric artifact id to exclude from comparison — used when re-checking a revision of an existing artifact so it does not compare against its prior version.',
+      },
+    },
+    required: ['draft_content', 'project_id', 'organization_id'],
+  },
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool Collections by Use Case
 // ─────────────────────────────────────────────────────────────────────────────
@@ -481,6 +513,7 @@ export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
   GENERATE_CITATION,
   ANALYZE_PREDICATE_DEVICE,
   EXTRACT_DOCUMENT_STRUCTURE,
+  CHECK_DOSSIER_CONSISTENCY,
   GENERATE_DOCUMENT,
   BUILD_FROM_TEMPLATE,
   IND_GENERATE_SECTION,

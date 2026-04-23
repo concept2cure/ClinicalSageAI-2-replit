@@ -437,6 +437,73 @@ registerToolHandler('extract_document_structure', async (input) => {
   });
 });
 
+// Check Dossier Consistency — cross-artifact divergence detection
+registerToolHandler('check_dossier_consistency', async (input: Record<string, unknown>) => {
+  const draftContent = input.draft_content as string;
+  const projectId = Number(input.project_id);
+  const organizationId = Number(input.organization_id);
+  const ctdSection = input.ctd_section as string | undefined;
+  const excludeArtifactId = input.exclude_artifact_id
+    ? Number(input.exclude_artifact_id)
+    : undefined;
+
+  if (!draftContent || !Number.isFinite(projectId) || !Number.isFinite(organizationId)) {
+    return JSON.stringify({
+      error: 'check_dossier_consistency requires draft_content, project_id, and organization_id',
+    });
+  }
+
+  try {
+    const { checkDossierConsistency } = await import(
+      '../intelligence/cross-artifact-consistency.js'
+    );
+    const report = await checkDossierConsistency({
+      projectId,
+      organizationId,
+      draftContent,
+      draftCtdSection: ctdSection,
+      excludeArtifactId,
+    });
+
+    // Summarize for Claude — keep the response compact. Full divergences
+    // stay in the structured report; the summary gives Claude enough to
+    // decide whether to recommend revisions.
+    return JSON.stringify({
+      verdict: report.verdict,
+      artifactsCompared: report.artifactsCompared,
+      draftFactsExtracted: report.draftFactsExtracted,
+      divergenceCount: report.divergences.length,
+      bySeverity: {
+        critical: report.divergences.filter(d => d.severity === 'critical').length,
+        high: report.divergences.filter(d => d.severity === 'high').length,
+        medium: report.divergences.filter(d => d.severity === 'medium').length,
+        low: report.divergences.filter(d => d.severity === 'low').length,
+      },
+      divergences: report.divergences.slice(0, 20).map(d => ({
+        kind: d.kind,
+        severity: d.severity,
+        description: d.description,
+        draftValue: d.draftValue,
+        existingValue: d.existingValue,
+        existingArtifact: d.existingArtifactTitle,
+        existingCtdSection: d.existingCtdSection,
+      })),
+      recommendation:
+        report.verdict === 'clean'
+          ? 'No consistency issues detected against the existing dossier.'
+          : report.verdict === 'minor_issues'
+            ? 'Minor consistency issues detected — review before finalizing.'
+            : report.verdict === 'needs_review'
+              ? 'Material consistency issues detected — resolve or justify before recommending for dossier.'
+              : 'BLOCKER — critical consistency divergences detected. Revise before proceeding.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({
+      error: `Consistency check failed: ${err?.message || 'unknown error'}`,
+    });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Document Generation Tools (Master Document Builder)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -750,6 +817,7 @@ export function getAvailableTools(): Array<{ name: string; registered: boolean }
     'generate_citation',
     'analyze_predicate_device',
     'extract_document_structure',
+    'check_dossier_consistency',
   ];
 
   return allTools.map(name => ({
