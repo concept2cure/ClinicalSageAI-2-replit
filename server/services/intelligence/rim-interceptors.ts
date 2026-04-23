@@ -317,6 +317,26 @@ export function interceptFeedback(input: FeedbackInterceptInput): void {
         editDelta,
       },
     });
+
+    // Close the learning loop: tag the N most recent signals for this artifact
+    // with a validation verdict so future RIM runs can weight signals by their
+    // historical accuracy instead of treating all signals as equally reliable.
+    if (artifactId) {
+      void (async () => {
+        try {
+          const { linkFeedbackToRecentSignals } = await import('./learning-loop-service.js');
+          await linkFeedbackToRecentSignals({
+            organizationId, projectId, artifactId,
+            feedbackType, userId,
+          });
+        } catch (linkErr) {
+          console.warn(
+            '[RIM] Feedback → signal link failed (non-blocking):',
+            linkErr instanceof Error ? linkErr.message : linkErr,
+          );
+        }
+      })();
+    }
   } catch (err) {
     console.warn('[RIM] Feedback interceptor failed (non-blocking):', err instanceof Error ? err.message : err);
   }
