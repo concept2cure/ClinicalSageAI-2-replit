@@ -54,7 +54,8 @@ async function ensureChatTables(): Promise<void> {
 export async function getOrCreateThread(
   threadId: string | null,
   userId?: number,
-  prefix: string = 'thread'
+  prefix: string = 'thread',
+  organizationId?: number | null
 ): Promise<string> {
   await ensureChatTables();
   if (threadId) {
@@ -63,8 +64,8 @@ export async function getOrCreateThread(
   }
   const newId = `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   await pool.query(
-    'INSERT INTO chat_threads (id, user_id, created_at, updated_at) VALUES ($1, $2, NOW(), NOW())',
-    [newId, userId || null]
+    'INSERT INTO chat_threads (id, user_id, organization_id, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())',
+    [newId, userId || null, organizationId || null]
   );
   return newId;
 }

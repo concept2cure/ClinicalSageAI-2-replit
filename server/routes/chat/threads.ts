@@ -48,8 +48,24 @@ export async function listThreads(req: Request, res: Response) {
         return res.json({ threads: [] });
       }
     } else {
-      query = `SELECT id, created_at, updated_at FROM chat_threads ORDER BY updated_at DESC LIMIT $1`;
-      params = [limit];
+      // Org scope is required for the global recents list — without it
+      // we'd leak threads across tenants.
+      if (!orgId) {
+        return res.json({ threads: [] });
+      }
+      // Derive title from the first user message so the recents list shows
+      // meaningful labels instead of "thread_1234567" ids.
+      query = `
+        SELECT t.id, t.created_at, t.updated_at,
+          (SELECT content FROM chat_messages
+            WHERE thread_id = t.id AND role = 'user'
+            ORDER BY created_at ASC LIMIT 1) AS title
+        FROM chat_threads t
+        WHERE t.organization_id = $1
+        ORDER BY t.updated_at DESC
+        LIMIT $2
+      `;
+      params = [orgId, limit];
     }
 
     const result = await pool.query(query, params);

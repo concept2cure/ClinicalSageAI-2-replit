@@ -305,6 +305,7 @@ export function Ana({
         thinking: m.thinking,
         evidence: m.evidence,
         warnings: m.warnings,
+        sentAt: m.sentAt,
       })),
     [chat.messages]
   );

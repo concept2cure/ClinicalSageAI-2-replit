@@ -45,6 +45,8 @@ export interface ChatMessageView {
   };
   /** Degraded-mode warnings to surface as a chip. */
   warnings?: string[];
+  /** When this turn was sent (ms epoch) — relative timestamp source. */
+  sentAt?: number;
 }
 
 export interface ChatViewProps {
@@ -140,6 +142,7 @@ export function ChatView({
               thinking={m.thinking}
               evidence={m.evidence}
               warnings={m.warnings}
+              sentAt={m.sentAt}
               onSuggestedAction={onSuggestedAction}
               onCopy={onCopy ? () => onCopy(m.id, m.text) : undefined}
               onRetry={onRetry ? () => onRetry(m.id) : undefined}

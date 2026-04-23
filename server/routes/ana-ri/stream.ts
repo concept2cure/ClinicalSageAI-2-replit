@@ -266,7 +266,8 @@ router.post('/stream', async (req: Request, res: Response) => {
         threadId = await getOrCreateThread(
           thread_id || null,
           typeof userId === 'number' ? userId : undefined,
-          'ana-ri'
+          'ana-ri',
+          Number(orgId)
         );
         await saveMessage(threadId, 'user', message);
       } catch (e: any) {

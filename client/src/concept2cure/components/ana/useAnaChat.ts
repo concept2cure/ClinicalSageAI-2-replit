@@ -80,6 +80,8 @@ export interface AnaChatMessage {
   };
   /** Degraded-mode signals from server `warning` events (thread persistence etc.). */
   warnings?: string[];
+  /** Timestamp (ms) when this turn was kicked off. Used for relative time chips. */
+  sentAt?: number;
 }
 
 export interface UseAnaChatOptions {
@@ -180,12 +182,14 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       const text = rawText.trim();
       if (!text || isStreaming) return;
 
+      const sentAt = Date.now();
       const userMsg: AnaChatMessage = {
-        id: `u-${Date.now()}`,
+        id: `u-${sentAt}`,
         role: 'user',
         text,
+        sentAt,
       };
-      const assistantId = `a-${Date.now()}`;
+      const assistantId = `a-${sentAt}`;
 
       // Insert placeholder immediately so the user sees a progress indicator
       // before the first token arrives (status phases fill in the label).
@@ -198,6 +202,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           text: '',
           streaming: true,
           statusPhase: 'Planning response…',
+          sentAt,
         },
       ]);
       setIsStreaming(true);

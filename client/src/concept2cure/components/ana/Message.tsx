@@ -73,6 +73,8 @@ export interface MessageProps {
   };
   /** Server-side degraded-mode warnings. */
   warnings?: string[];
+  /** When this turn was sent (ms epoch) — for relative timestamp chip. */
+  sentAt?: number;
 
   // Handlers
   onCopy?: () => void;
@@ -86,6 +88,15 @@ export interface MessageProps {
 /** Capitalize the intent lens for the meta chip. */
 function formatLens(lens: string): string {
   return lens.charAt(0).toUpperCase() + lens.slice(1);
+}
+
+/** Anthropic-style relative timestamp — "just now / 2m / 1h / 3d ago". */
+function formatRelative(ms: number): string {
+  const diff = Date.now() - ms;
+  if (diff < 60_000) return 'just now';
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
+  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
+  return `${Math.floor(diff / 86_400_000)}d ago`;
 }
 
 function formatLatency(ms: number): string {
@@ -108,6 +119,7 @@ export function Message({
   thinking,
   evidence,
   warnings,
+  sentAt,
   onCopy,
   onRetry,
   onFeedback,
@@ -281,6 +293,15 @@ export function Message({
           {typeof latencyMs === 'number' && latencyMs > 0 && (
             <span className={styles.cite} style={{ marginLeft: 8 }} title={`${latencyMs} ms`}>
               {formatLatency(latencyMs)}
+            </span>
+          )}
+          {typeof sentAt === 'number' && !streaming && (
+            <span
+              className={styles.cite}
+              style={{ marginLeft: 8 }}
+              title={new Date(sentAt).toLocaleString()}
+            >
+              {formatRelative(sentAt)}
             </span>
           )}
         </div>
