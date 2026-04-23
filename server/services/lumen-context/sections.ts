@@ -584,6 +584,119 @@ You are drafting the body of a Clinical Evaluation Report under Regulation (EU) 
 
 ### CER Voice:
 Notified body reviewers expect the register of a clinical assessment, not a marketing document. Every claim of safety or performance must be traceable to a specific data source cited in the appraisal table. Use "the available clinical evidence supports..." not "the device is proven to..."`,
+
+  // ── CLINICAL: Statistical Analysis Plan ───────────────────────────────────
+
+  'SAP': `## Drafting: Statistical Analysis Plan (SAP) per ICH E9(R1)
+You are drafting a Statistical Analysis Plan using the ICH E9(R1) Estimand framework. The SAP must be finalized and signed before database lock.
+
+### Required Structure:
+1. **Administrative information** — Protocol reference, SAP version, approval signatures, change-control procedure
+2. **Study objectives and endpoints** — Primary, key secondary, secondary, exploratory; each mapped to its estimand
+3. **Estimands** (ICH E9(R1) core) — For each key endpoint, specify the five attributes: treatment condition, population, variable, intercurrent event strategy, population-level summary
+4. **Study design and sample size** — Design description, randomization scheme, blinding, sample size with assumptions (effect size, variance, dropout, alpha, power)
+5. **Analysis populations** — ITT / mITT / PP / Safety / PK; definitions and rules for inclusion/exclusion
+6. **Statistical methods** — Primary analysis model (with covariates, fixed/random effects), handling of missing data, sensitivity analyses, supportive analyses
+7. **Multiple comparisons / Multiplicity control** — Hierarchical testing, graphical procedures, type I error preservation
+8. **Interim analyses** — Timing, stopping rules, alpha spending function (if group sequential), DSMB charter reference
+9. **Safety analyses** — Coding (MedDRA version), TEAE summaries, AE severity/relationship tabulations, death and SAE narratives
+10. **Data presentation** — TFL conventions (decimal precision, missing-value handling, population headers), shell references
+
+### ICH E9(R1) Estimand Discipline:
+- Every primary/key secondary endpoint MUST have a fully specified estimand — not just "change from baseline in HbA1c at Week 26," but the five attributes.
+- Intercurrent event strategies: Treatment Policy / Composite / While On Treatment / Hypothetical / Principal Stratum. Each handled event must name its strategy.
+- The estimator (analysis method) must align with the estimand — a hypothetical strategy requires a method that targets that estimand (e.g., MMRM with specific assumptions), not an ITT ANCOVA and a hope.
+
+### Common SAP Deficiencies:
+- Estimand present in name only — attributes not explicitly enumerated
+- Primary analysis specified without a sensitivity analysis that stresses the missing-data assumption
+- Subgroup analyses listed without pre-specification of which are confirmatory vs exploratory
+- Multiplicity control plan that doesn't close on the family of claims being made
+- Mismatch between protocol-defined endpoints and SAP endpoints (SAP must be the source of truth; protocol is directional)
+- MedDRA version not locked — must specify version at database lock
+- TFL shells referenced but not appended or not consistent with the analysis methods
+
+### SAP Voice:
+The SAP is a contract with the regulator about what the analysis will be — pre-specification is its core value. Use declarative, unambiguous language. "The primary analysis will use a mixed-effects model for repeated measures (MMRM) with fixed effects for treatment, visit, treatment-by-visit interaction, and stratification factors" — not "the analysis may consider MMRM." Avoid "if needed" and "as appropriate"; specify the trigger conditions.`,
+
+  // ── DEVICE: PMA Summary of Safety & Effectiveness Data (SSED) ─────────────
+
+  'PMA-SSED': `## Drafting: PMA Summary of Safety and Effectiveness Data (SSED)
+You are drafting the SSED that will be published on the FDA CDRH database after PMA approval. It becomes the public-facing description of the device, its trials, and the approval basis — plan accordingly.
+
+### Required Structure (per CDRH SSED guidance):
+1. **General information** — Device trade name, generic name, applicant, date of notice, PMA number, review classification
+2. **Indications for use** — Final cleared language (verify against the approval letter before finalizing)
+3. **Contraindications, warnings, precautions** — From the labeling
+4. **Device description** — Principle of operation, components, materials, dimensions, software version, accessories
+5. **Alternative practices and procedures** — Standard of care being replaced or supplemented
+6. **Marketing history** — Prior 510(k) clearances, international availability, recalls or field actions
+7. **Summary of studies** — Non-clinical (bench, biocompatibility, sterilization, software, animal) and clinical (design, enrollment, endpoints, results, adverse events)
+8. **Summary of nonclinical laboratory studies** — Testing to relevant consensus standards; discrepancies explained
+9. **Summary of clinical investigations** — Pivotal study design, populations, endpoints (primary/secondary), results vs pre-specified success criteria, subgroup analyses, adverse events
+10. **Conclusions drawn from the studies** — Safety conclusions and effectiveness conclusions separately
+11. **Panel recommendation** (if applicable) — Advisory committee position
+12. **FDA decision** — Approval basis
+
+### What FDA Reviewers (and the Public) Will Verify:
+- Indications for use match the final labeling verbatim
+- Pivotal study was pre-registered on ClinicalTrials.gov with consistent endpoints
+- Primary endpoint met with pre-specified success criterion (not met is fatal for PMA)
+- All adverse device effects (ADE), serious ADEs, and device-related deaths disclosed
+- Subgroup analyses disclosed even when unfavorable
+- Post-approval study commitments listed with enrollment and follow-up targets
+- Conflicts between study and labeling (e.g., exclusions in study not reflected in labeling) flagged
+
+### Common SSED Deficiencies:
+- Clinical effectiveness conclusions that over-reach the data (SSED is a public permanent record)
+- Missing disclosure of post-hoc analyses or protocol amendments that affected the primary endpoint
+- Adverse events summarized without rates — regulators and the public both need denominators
+- Inconsistency with the clinical study report submitted in the PMA module 5
+- Post-approval study (PAS) commitments described too loosely to be auditable
+- Device description that doesn't match the current design history file (DHF) / post-market changes
+
+### SSED Voice:
+The SSED is a public document. It will be read by plaintiffs' attorneys, journalists, competitors, and payers — not just regulators. Write accordingly: every claim of effectiveness must be traceable to a specific pre-specified endpoint result, every safety statement must be anchored to event rates from the pivotal study, and the language must be defensible ten years after publication. Avoid promotional language; report findings.`,
+
+  // ── MEETING: FDA Pre-IND / Type B Meeting Briefing Document ───────────────
+
+  'TYPE-B-MEETING': `## Drafting: FDA Type B Meeting Briefing Document (Pre-IND, EOP2, Pre-NDA/BLA)
+You are drafting a Type B meeting briefing document for FDA. The briefing package is submitted approximately 6 weeks before the meeting and sets the agenda for a ~60-minute discussion.
+
+### Required Structure (per FDA Formal Meetings guidance):
+1. **Product and application overview** — Drug, development stage, proposed indication, IND/NDA number, prior FDA interactions
+2. **Meeting background** — Purpose of the meeting (Type B1/B2/B3), prior correspondence with FDA, the specific decision points being brought
+3. **Specific questions for FDA** — Numbered, discrete, decision-oriented. Each question must be answerable with yes/no or a specific recommendation, not "please comment on our overall approach"
+4. **Sponsor's position on each question** — Your proposed answer and rationale, so FDA can agree/disagree/modify
+5. **Supporting data and rationale** — For each question, the data package and regulatory precedent that supports your position
+6. **Specific discussion topics** — If any topics require discussion but not FDA decision, called out separately
+7. **Proposed attendees** — Sponsor team with roles; FDA will match the relevant review division
+8. **Appendices** — Protocol, CMC updates, nonclinical summaries, prior minutes — as needed for the questions being asked
+
+### Question Discipline (the most important part):
+- **Bad question:** "Does FDA have any comments on our Phase 3 program?"
+- **Good question:** "Does FDA agree that a single confirmatory Phase 3 study using the endpoint and population described in Section 4.2 is sufficient to support an efficacy claim for [indication]?"
+- Every question must be:
+  - Answerable with a specific FDA position
+  - Supported by a proposed sponsor position in the briefing
+  - Bounded to one decision (compound questions dilute the answer)
+- Maximum useful: 5–7 well-framed questions. More than 10 and FDA will triage.
+
+### What FDA Prepares Before the Meeting:
+- Reviewers read the briefing and draft preliminary responses
+- Division leadership aligns on positions for key questions before the meeting
+- Written minutes will reflect the briefing's questions verbatim — so the questions you ask are the questions that get answered officially
+
+### Common Briefing Deficiencies:
+- Questions that are requests for coaching rather than decisions ("please comment on...")
+- Sponsor position that is weak or absent — FDA must then construct both sides
+- Data referenced but not included in the appendix, forcing reviewers to cross-reference prior submissions during their prep week
+- Meeting type mismatch (requesting Type B for what is actually a Type C scientific discussion, or vice versa)
+- Too many questions — the first 5 are discussed meaningfully; the rest get cursory responses
+- Failure to cite prior FDA feedback — divisions remember their positions and expect continuity
+
+### Briefing Voice:
+The briefing is a regulatory argument, not a marketing pitch. State your position with the confidence of someone who has done the work, and let the data support it. Use "the sponsor proposes..." framing, not "we believe..." or "we feel that..." Avoid enthusiasm; FDA reads briefings with a skeptical eye and marketing tone invites that skepticism.`,
 };
 
 /**
