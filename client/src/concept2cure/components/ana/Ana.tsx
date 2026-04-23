@@ -220,6 +220,40 @@ export function Ana({
     void navigator.clipboard?.writeText(text).catch(() => {});
   }, []);
 
+  // Export the entire chat as a markdown document — the regulatory audit
+  // trail use case. Filename includes the date for easy filing.
+  const handleExport = useCallback(() => {
+    if (chat.messages.length === 0) return;
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+    const lines: string[] = [
+      `# AnA · Reg Intelligence — ${activeProjectName || 'Conversation'}`,
+      ``,
+      `_Exported ${new Date().toLocaleString()}_`,
+      ``,
+    ];
+    for (const m of chat.messages) {
+      lines.push(m.role === 'user' ? `## User` : `## AnA`);
+      lines.push('');
+      lines.push(m.text);
+      lines.push('');
+      if (m.executedActions && m.executedActions.length > 0) {
+        lines.push(
+          `_Actions: ${m.executedActions.map(a => a.label).join(', ')}_`
+        );
+        lines.push('');
+      }
+    }
+    const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ana-conversation-${stamp}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [chat.messages, activeProjectName]);
+
   const handleRetry = useCallback(
     (messageId: string) => {
       // Walk back to the user prompt that produced this assistant reply and
@@ -326,7 +360,11 @@ export function Ana({
         activeRecentId={activeRecentId}
       />
       <main className={styles.main}>
-        <TopBar view={view} />
+        <TopBar
+          view={view}
+          canExport={view === 'chat' && chat.messages.length > 0}
+          onExport={handleExport}
+        />
         {view === 'home' && (
           <EmptyState
             greetingName={greetingName}
