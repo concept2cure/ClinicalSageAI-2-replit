@@ -37,6 +37,11 @@ export function registerToolHandler(name: string, handler: ToolHandler): void {
   toolHandlers.set(name, handler);
 }
 
+/** Retrieve a registered tool handler, or undefined if the name is unknown. */
+export function getToolHandler(name: string): ToolHandler | undefined {
+  return toolHandlers.get(name);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Built-in Tool Handlers
 // ─────────────────────────────────────────────────────────────────────────────
@@ -432,6 +437,154 @@ registerToolHandler('extract_document_structure', async (input) => {
   });
 });
 
+// Mine Precedents — structured precedent-search plan for a document type
+registerToolHandler('mine_precedents', async (input: Record<string, unknown>) => {
+  const documentType = input.document_type as string;
+  const searchContext = input.search_context as string;
+
+  if (!documentType || !searchContext) {
+    return JSON.stringify({
+      error: 'mine_precedents requires document_type and search_context',
+    });
+  }
+
+  try {
+    const { minePrecedents } = await import('../intelligence/precedent-mining.js');
+    const result = minePrecedents({
+      documentType: documentType as any,
+      searchContext,
+    });
+
+    return JSON.stringify({
+      documentType: result.documentType,
+      searchContext: result.searchContext,
+      guidance: result.guidance,
+      webSearchReady: result.webSearchReady,
+      searchCount: result.searches.length,
+      searches: result.searches.map(s => ({
+        database: s.databaseLabel,
+        baseUrl: s.baseUrl,
+        searchUrl: s.searchUrl,
+        webSearchQuery: s.webSearchQuery,
+        whatToLookFor: s.whatToLookFor,
+      })),
+      recommendation: result.webSearchReady
+        ? 'web_search is enabled — you can execute the listed queries directly against the allowlisted regulatory domains.'
+        : 'web_search is not enabled in this environment. Share the search URLs with the user, or enable ANA_ENABLE_WEB_SEARCH to execute the queries yourself.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({
+      error: `Precedent mining failed: ${err?.message || 'unknown error'}`,
+    });
+  }
+});
+
+// Check Numerical Integrity — within-document consistency of labelled numbers
+registerToolHandler('check_numerical_integrity', async (input: Record<string, unknown>) => {
+  const content = input.content as string;
+  if (!content || typeof content !== 'string') {
+    return JSON.stringify({
+      error: 'check_numerical_integrity requires a non-empty content string',
+    });
+  }
+
+  try {
+    const { checkInternalNumericalIntegrity } = await import(
+      '../intelligence/cross-artifact-consistency.js'
+    );
+    const report = checkInternalNumericalIntegrity(content);
+
+    return JSON.stringify({
+      verdict: report.verdict,
+      factsExtracted: report.factsExtracted,
+      candidateCount: report.candidateCount,
+      candidates: report.candidates.slice(0, 15).map(c => ({
+        label: c.humanLabel,
+        severity: c.severity,
+        distinctValues: c.distinctValues,
+        occurrences: c.occurrences.slice(0, 6),
+      })),
+      recommendation:
+        report.verdict === 'clean'
+          ? 'No numerical inconsistencies detected.'
+          : report.verdict === 'review_candidates'
+            ? 'Candidate inconsistencies detected — verify whether each is a real mismatch or documented multi-arm / multi-timepoint variance. Fix genuine mismatches; add disambiguating text for legitimate cases (e.g. "N=648 at Week 26; N=612 at Week 52").'
+            : 'LIKELY INCONSISTENCY — critical-severity labels (dose, NOAEL, MRSD, sample size) show multiple distinct values. Fix before finalizing — this is RTF territory.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({
+      error: `Numerical integrity check failed: ${err?.message || 'unknown error'}`,
+    });
+  }
+});
+
+// Check Dossier Consistency — cross-artifact divergence detection
+registerToolHandler('check_dossier_consistency', async (input: Record<string, unknown>) => {
+  const draftContent = input.draft_content as string;
+  const projectId = Number(input.project_id);
+  const organizationId = Number(input.organization_id);
+  const ctdSection = input.ctd_section as string | undefined;
+  const excludeArtifactId = input.exclude_artifact_id
+    ? Number(input.exclude_artifact_id)
+    : undefined;
+
+  if (!draftContent || !Number.isFinite(projectId) || !Number.isFinite(organizationId)) {
+    return JSON.stringify({
+      error: 'check_dossier_consistency requires draft_content, project_id, and organization_id',
+    });
+  }
+
+  try {
+    const { checkDossierConsistency } = await import(
+      '../intelligence/cross-artifact-consistency.js'
+    );
+    const report = await checkDossierConsistency({
+      projectId,
+      organizationId,
+      draftContent,
+      draftCtdSection: ctdSection,
+      excludeArtifactId,
+    });
+
+    // Summarize for Claude — keep the response compact. Full divergences
+    // stay in the structured report; the summary gives Claude enough to
+    // decide whether to recommend revisions.
+    return JSON.stringify({
+      verdict: report.verdict,
+      artifactsCompared: report.artifactsCompared,
+      draftFactsExtracted: report.draftFactsExtracted,
+      divergenceCount: report.divergences.length,
+      bySeverity: {
+        critical: report.divergences.filter(d => d.severity === 'critical').length,
+        high: report.divergences.filter(d => d.severity === 'high').length,
+        medium: report.divergences.filter(d => d.severity === 'medium').length,
+        low: report.divergences.filter(d => d.severity === 'low').length,
+      },
+      divergences: report.divergences.slice(0, 20).map(d => ({
+        kind: d.kind,
+        severity: d.severity,
+        description: d.description,
+        draftValue: d.draftValue,
+        existingValue: d.existingValue,
+        existingArtifact: d.existingArtifactTitle,
+        existingCtdSection: d.existingCtdSection,
+      })),
+      recommendation:
+        report.verdict === 'clean'
+          ? 'No consistency issues detected against the existing dossier.'
+          : report.verdict === 'minor_issues'
+            ? 'Minor consistency issues detected — review before finalizing.'
+            : report.verdict === 'needs_review'
+              ? 'Material consistency issues detected — resolve or justify before recommending for dossier.'
+              : 'BLOCKER — critical consistency divergences detected. Revise before proceeding.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({
+      error: `Consistency check failed: ${err?.message || 'unknown error'}`,
+    });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Document Generation Tools (Master Document Builder)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -745,6 +898,9 @@ export function getAvailableTools(): Array<{ name: string; registered: boolean }
     'generate_citation',
     'analyze_predicate_device',
     'extract_document_structure',
+    'check_dossier_consistency',
+    'check_numerical_integrity',
+    'mine_precedents',
   ];
 
   return allTools.map(name => ({

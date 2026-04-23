@@ -10,18 +10,34 @@ import type { ClientMemoryEntry, ProjectMemoryEntry } from 'shared/schema';
  * Race a promise against a timeout. If the promise doesn't resolve within `ms`
  * milliseconds the fallback value is returned instead, preventing indefinite
  * hangs when the embedding service or vector DB is slow/unreachable.
+ * The `onTimeout` callback lets callers surface timeouts in diagnostics
+ * instead of eating them silently.
  */
-function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  fallback: T,
+  onTimeout?: (ms: number) => void
+): Promise<T> {
   return Promise.race([
     promise,
     new Promise<T>(resolve =>
       setTimeout(() => {
         console.warn(`[memory-context] Semantic search timed out after ${ms}ms, using fallback`);
+        onTimeout?.(ms);
         resolve(fallback);
       }, ms)
     ),
   ]);
 }
+
+/**
+ * Per-layer deadline for semantic memory retrieval. Originally 10s, which
+ * meant cold vector-DB requests silently ate most of the context-assembly
+ * budget and returned zero atoms with no signal to the caller. 3s is still
+ * generous for a healthy embedding path and fails fast when it isn't.
+ */
+const MEMORY_LAYER_TIMEOUT_MS = 3000;
 
 export interface MemoryContextAssemblerInput {
   threadId: string;
@@ -60,6 +76,8 @@ export interface RetrievedMemoryAtom {
   metadata?: MemoryAtomMetadata;
 }
 
+export type LayerOutcome = 'ok' | 'empty' | 'timeout' | 'error' | 'skipped';
+
 export interface MemoryAssemblyDiagnostics {
   requestedLimitPerLayer: number;
   appliedMaxChars: number;
@@ -68,6 +86,14 @@ export interface MemoryAssemblyDiagnostics {
   droppedByForgetting: number;
   droppedByDeduplication: number;
   trimmed: boolean;
+  /** Per-layer outcome so callers can surface degraded memory assembly. */
+  layerOutcomes?: {
+    workingMemory: LayerOutcome;
+    clientMemory: LayerOutcome;
+    projectMemory: LayerOutcome;
+  };
+  /** Wall-clock milliseconds spent in semantic search (parallel across layers). */
+  semanticSearchMs?: number;
 }
 
 export interface MemoryContextAssemblerResult {
@@ -213,6 +239,15 @@ export async function buildMemoryContextForChat(
   const maxAgeDays = clampMaxAgeDays(input.maxAgeDays);
 
   const atoms: RetrievedMemoryAtom[] = [];
+  const layerOutcomes: {
+    workingMemory: LayerOutcome;
+    clientMemory: LayerOutcome;
+    projectMemory: LayerOutcome;
+  } = {
+    workingMemory: 'skipped',
+    clientMemory: 'skipped',
+    projectMemory: 'skipped',
+  };
 
   const workingSummary = await getLatestWorkingMemoryByThread(input.threadId).catch(() => null);
   if (workingSummary) {
@@ -225,49 +260,71 @@ export async function buildMemoryContextForChat(
         extractedBy: 'system',
       },
     });
+    layerOutcomes.workingMemory = 'ok';
+  } else {
+    layerOutcomes.workingMemory = 'empty';
   }
 
+  // Client + project semantic searches run in parallel — no reason to serialize
+  // two independent vector-DB queries. Tighter per-layer timeout so a slow
+  // embedding path fails fast instead of swallowing the whole context budget.
+  const semanticStart = Date.now();
+  let semanticSearchMs: number | undefined;
+
   if (input.organizationId && input.query?.trim()) {
-    try {
-      const clientResult = await withTimeout(
-        searchMemoryEntriesSemantic(null, input.organizationId, input.query, {
-          limit,
-          minSimilarity,
-        }).catch(() => ({ entries: [], totalCount: 0, query: input.query })),
-        10000,
-        {
-          entries: [] as Array<SemanticMemoryHit<ClientMemoryEntry>>,
-          totalCount: 0,
-          query: input.query,
-        }
-      );
+    const clientTask: Promise<LayerOutcome> = withTimeout(
+      searchMemoryEntriesSemantic(null, input.organizationId, input.query, {
+        limit,
+        minSimilarity,
+      })
+        .then(result => {
+          atoms.push(...result.entries.map(mapClientEntryToAtom));
+          return (result.entries.length > 0 ? 'ok' : 'empty') as LayerOutcome;
+        })
+        .catch((err: any) => {
+          if (err?.code !== '42P01') {
+            console.warn(
+              '[MemoryContextAssembler] Client semantic retrieval failed:',
+              err?.message
+            );
+          }
+          return 'error' as LayerOutcome;
+        }),
+      MEMORY_LAYER_TIMEOUT_MS,
+      'timeout' as LayerOutcome
+    );
 
-      atoms.push(...clientResult.entries.map(mapClientEntryToAtom));
-
-      if (input.projectId) {
-        const projectResult = await withTimeout(
+    const projectTask: Promise<LayerOutcome> = input.projectId
+      ? withTimeout(
           searchProjectMemoryEntriesSemantic(
             null,
             input.projectId,
             input.organizationId,
             input.query,
             { limit, minSimilarity }
-          ).catch(() => ({ entries: [], totalCount: 0, query: input.query })),
-          10000,
-          {
-            entries: [] as Array<SemanticMemoryHit<ProjectMemoryEntry>>,
-            totalCount: 0,
-            query: input.query,
-          }
-        );
+          )
+            .then(result => {
+              atoms.push(...result.entries.map(mapProjectEntryToAtom));
+              return (result.entries.length > 0 ? 'ok' : 'empty') as LayerOutcome;
+            })
+            .catch((err: any) => {
+              if (err?.code !== '42P01') {
+                console.warn(
+                  '[MemoryContextAssembler] Project semantic retrieval failed:',
+                  err?.message
+                );
+              }
+              return 'error' as LayerOutcome;
+            }),
+          MEMORY_LAYER_TIMEOUT_MS,
+          'timeout' as LayerOutcome
+        )
+      : Promise.resolve('skipped' as LayerOutcome);
 
-        atoms.push(...projectResult.entries.map(mapProjectEntryToAtom));
-      }
-    } catch (error: any) {
-      if (error?.code !== '42P01') {
-        console.warn('[MemoryContextAssembler] Semantic memory retrieval failed:', error?.message);
-      }
-    }
+    const [clientOutcome, projectOutcome] = await Promise.all([clientTask, projectTask]);
+    layerOutcomes.clientMemory = clientOutcome;
+    layerOutcomes.projectMemory = projectOutcome;
+    semanticSearchMs = Date.now() - semanticStart;
   }
 
   const rememberedAtoms = atoms.filter(atom => isFreshOrImportant(atom, maxAgeDays));
@@ -330,6 +387,8 @@ export async function buildMemoryContextForChat(
     droppedByForgetting,
     droppedByDeduplication,
     trimmed: memoryBlock.length < assembled.length,
+    layerOutcomes,
+    semanticSearchMs,
   };
 
   return { memoryBlock, atoms: sorted, diagnostics };

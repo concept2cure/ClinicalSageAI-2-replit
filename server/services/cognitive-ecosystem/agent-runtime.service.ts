@@ -58,7 +58,7 @@ export class AgentRuntimeService {
     this.config = {
       pool: config.pool,
       defaultModelProvider: config.defaultModelProvider || 'anthropic',
-      defaultModel: config.defaultModel || 'claude-sonnet-4-20250514',
+      defaultModel: config.defaultModel || 'claude-sonnet-4-6',
       maxCheckpointsPerThread: config.maxCheckpointsPerThread || 1000,
       enableReasoningCapture: config.enableReasoningCapture ?? true
     };

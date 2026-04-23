@@ -9,7 +9,7 @@
  * - Compliance checking
  */
 
-import type { ClaudeTool } from '../ai-gateway/types';
+import type { ClaudeTool, AnthropicServerTool, AnyClaudeTool } from '../ai-gateway/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -238,6 +238,74 @@ export const EXTRACT_DOCUMENT_STRUCTURE: ClaudeTool = {
       },
     },
     required: ['document_id'],
+  },
+};
+
+export const MINE_PRECEDENTS: ClaudeTool = {
+  name: 'mine_precedents',
+  description:
+    "Construct a precedent-mining plan for a regulatory document type: how did recently approved drugs/devices frame the same type of content? Returns structured search targets across Drugs@FDA, EMA EPARs, FDA 510(k), PMA/De Novo databases, EUDAMED, EMA guidelines, and relevant scientific repositories — with URL templates, web_search query strings, and 'what to look for' guidance specific to the document type. This is how senior regulatory consultants calibrate: read the last three approved NDAs in the indication, read the CHMP rapporteur comments, read the FDA medical review. When web_search is enabled, AnA can execute the returned queries directly; when not, the URLs serve as a handoff for the regulatory author. Use this BEFORE drafting a document type that has meaningful precedent (Module 2.5, 510(k) SE, CER, CRL response, PIP) — the time to learn from precedent is BEFORE the first draft, not during revision.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_type: {
+        type: 'string',
+        description: "Canonical document type. One of: clinical_overview (M2.5), clinical_summary (M2.7), quality_overall_summary (M2.3), nonclinical_overview (M2.4), ind_briefing_document, nda_response, labeling, 510k_substantial_equivalence, pma_ssed, de_novo_classification, clinical_evaluation_report (CER), ivdr_technical_file, risk_management_plan, pediatric_investigation_plan, breakthrough_designation_request, fast_track_request.",
+      },
+      search_context: {
+        type: 'string',
+        description: 'Therapeutic area, indication, device class, sponsor name, or other disambiguation to scope the precedent search (e.g. "SGLT2 inhibitor type 2 diabetes", "pulse oximeter pediatric", "GLP-1 receptor agonist obesity").',
+      },
+    },
+    required: ['document_type', 'search_context'],
+  },
+};
+
+export const CHECK_NUMERICAL_INTEGRITY: ClaudeTool = {
+  name: 'check_numerical_integrity',
+  description:
+    "Scan a single drafted artifact for same labelled quantity stated with multiple distinct values. Surfaces candidates like: sample size N=648 in the narrative but N=641 in Table 14.1; p<0.001 in text but p<0.01 in the forest plot; 100 mg/kg NOAEL in one paragraph and 200 mg/kg two pages later. This is the classic 'numbers drift between text and table' failure that triggers FDA RTFs. The checker reports CANDIDATES — multi-arm studies legitimately report different N per arm or timepoint — so the author or model must adjudicate whether each candidate is a real inconsistency or documented variance. Call this AFTER drafting a regulatory artifact containing numerical claims and BEFORE finalizing. Returns verdict (clean | review_candidates | likely_inconsistency) with per-candidate severity and context snippets.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      content: {
+        type: 'string',
+        description: 'The drafted artifact content to scan for internal numerical inconsistency.',
+      },
+    },
+    required: ['content'],
+  },
+};
+
+export const CHECK_DOSSIER_CONSISTENCY: ClaudeTool = {
+  name: 'check_dossier_consistency',
+  description:
+    "Cross-check a drafted artifact against other artifacts in the same project for factual consistency — sample sizes, p-values, dose levels, NOAEL, shelf life, endpoint definitions, and CTD section cross-references. Surfaces the class of divergences that cause FDA RTFs and EMA IRs: the same labelled quantity stated with different values across Module 2 and Module 5, section references that point to non-existent targets, dose mismatches between nonclinical and clinical sections. Call this AFTER drafting a CTD section or regulatory document but BEFORE recommending it for the dossier. Returns a verdict (clean | minor_issues | needs_review | blocker) with per-divergence severity, the conflicting values, and a pointer to the source artifact — so the author can resolve the inconsistency or justify it explicitly.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      draft_content: {
+        type: 'string',
+        description: 'The drafted artifact content to check against the project dossier.',
+      },
+      project_id: {
+        type: 'number',
+        description: 'The project the draft belongs to. Required so the check is scoped to the correct dossier.',
+      },
+      organization_id: {
+        type: 'number',
+        description: 'The organization that owns the project (for tenant scoping).',
+      },
+      ctd_section: {
+        type: 'string',
+        description: 'Optional CTD section code for this draft (e.g. "2.5", "3.2.P.8.1"). Used to skip self-reference cross-checks.',
+      },
+      exclude_artifact_id: {
+        type: 'number',
+        description: 'Optional numeric artifact id to exclude from comparison — used when re-checking a revision of an existing artifact so it does not compare against its prior version.',
+      },
+    },
+    required: ['draft_content', 'project_id', 'organization_id'],
   },
 };
 
@@ -470,7 +538,7 @@ export const PDF_OVERLAY: ClaudeTool = {
   },
 };
 
-/** All tools combined */
+/** Custom JSON-schema tools dispatched by our local ClaudeToolExecutor. */
 export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
@@ -481,6 +549,9 @@ export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
   GENERATE_CITATION,
   ANALYZE_PREDICATE_DEVICE,
   EXTRACT_DOCUMENT_STRUCTURE,
+  CHECK_DOSSIER_CONSISTENCY,
+  CHECK_NUMERICAL_INTEGRITY,
+  MINE_PRECEDENTS,
   GENERATE_DOCUMENT,
   BUILD_FROM_TEMPLATE,
   IND_GENERATE_SECTION,
@@ -488,3 +559,89 @@ export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
   RASTERIZE_PAGE,
   PDF_OVERLAY,
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Anthropic server-side tools (executed by Anthropic's infrastructure)
+//
+// These are NOT dispatched by our local ClaudeToolExecutor. Claude invokes
+// them server-side; results arrive as content blocks in the response stream
+// (web_search_tool_result, web_fetch_tool_result, etc.). No local handler
+// needed — we just declare them in the tools array so Claude knows it can
+// reach for them.
+//
+// Gated by env flags so the rollout is controllable:
+//   ANA_ENABLE_WEB_SEARCH=true   — live regulatory search (fda.gov, ema.europa.eu, ich.org, ...)
+//   ANA_ENABLE_WEB_FETCH=true    — retrieve actual guidance/CFR/ICH text by URL
+//   ANA_ENABLE_CODE_EXECUTION=true — sandboxed Python for biostat checks and dynamic result filtering
+//
+// Note: web_search costs $10/1000 searches plus token costs, and must be
+// admin-enabled in the Anthropic Console before it will work. Leave flags
+// off by default; flip them per environment once the billing + admin
+// enablement is confirmed.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const WEB_SEARCH_TOOL: AnthropicServerTool = {
+  type: 'web_search_20250305',
+  name: 'web_search',
+  max_uses: 5,
+  // Keep the search surface tight to sources AnA actually cites. The allowlist
+  // prevents drift into low-quality web content during regulatory lookups.
+  allowed_domains: [
+    'fda.gov',
+    'www.fda.gov',
+    'accessdata.fda.gov',
+    'ema.europa.eu',
+    'www.ema.europa.eu',
+    'ich.org',
+    'www.ich.org',
+    'pmda.go.jp',
+    'www.pmda.go.jp',
+    'mhra.gov.uk',
+    'www.mhra.gov.uk',
+    'tga.gov.au',
+    'www.tga.gov.au',
+    'canada.ca',
+    'www.canada.ca',
+    'iso.org',
+    'www.iso.org',
+    'ecfr.gov',
+    'www.ecfr.gov',
+    'federalregister.gov',
+    'www.federalregister.gov',
+    'clinicaltrials.gov',
+    'pubmed.ncbi.nlm.nih.gov',
+    'ncbi.nlm.nih.gov',
+  ],
+};
+
+export const WEB_FETCH_TOOL: AnthropicServerTool = {
+  type: 'web_fetch_20260209',
+  name: 'web_fetch',
+};
+
+export const CODE_EXECUTION_TOOL: AnthropicServerTool = {
+  type: 'code_execution_20260120',
+  name: 'code_execution',
+};
+
+/**
+ * Returns the subset of Anthropic server tools that are enabled for this
+ * environment. Empty array when none are enabled — safe to spread into the
+ * tools array unconditionally.
+ */
+export function getEnabledServerTools(): AnthropicServerTool[] {
+  const enabled: AnthropicServerTool[] = [];
+  if (process.env.ANA_ENABLE_WEB_SEARCH === 'true') enabled.push(WEB_SEARCH_TOOL);
+  if (process.env.ANA_ENABLE_WEB_FETCH === 'true') enabled.push(WEB_FETCH_TOOL);
+  if (process.env.ANA_ENABLE_CODE_EXECUTION === 'true') enabled.push(CODE_EXECUTION_TOOL);
+  return enabled;
+}
+
+/**
+ * Full tool surface: custom tools + any enabled Anthropic server tools.
+ * Use this when building the `tools` array for a chat turn so AnA has
+ * access to both layers simultaneously.
+ */
+export function getAllEnabledTools(): AnyClaudeTool[] {
+  return [...ALL_CLAUDE_TOOLS, ...getEnabledServerTools()];
+}

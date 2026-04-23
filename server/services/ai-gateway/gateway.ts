@@ -73,9 +73,11 @@ const DEFAULT_MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
+    // Internal id kept stable for alias continuity; the `model` field is the
+    // actual ID sent to Anthropic and tracks the current flagship release.
     id: 'claude-opus-4',
     provider: 'anthropic',
-    model: 'claude-opus-4-20250514',
+    model: 'claude-opus-4-7',
     contextWindow: 200000,
     qualityScore: 99,
     costPer1kInput: 0.015,
@@ -93,11 +95,60 @@ const DEFAULT_MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
+    // Opus 4 legacy — dated snapshot from May 2025. Kept enabled as an
+    // intra-provider fallback if 4.7 is not yet GA for the tenant's tier
+    // or is temporarily unavailable (rate limit, overloaded). Same
+    // capabilities as 4.7, marginally lower quality score so the
+    // fallback chain prefers 4.7 when both are reachable.
+    id: 'claude-opus-4-legacy',
+    provider: 'anthropic',
+    model: 'claude-opus-4-20250514',
+    contextWindow: 200000,
+    qualityScore: 95,
+    costPer1kInput: 0.015,
+    costPer1kOutput: 0.075,
+    capabilities: [
+      'chat',
+      'document_analysis',
+      'document_drafting',
+      'structured_output',
+      'regulatory_review',
+      'code_generation',
+      'summarization',
+      'general',
+    ],
+    enabled: true,
+  },
+  {
+    // Internal id kept stable for alias continuity; model field tracks
+    // the current Sonnet release.
     id: 'claude-sonnet-4',
+    provider: 'anthropic',
+    model: 'claude-sonnet-4-6',
+    contextWindow: 200000,
+    qualityScore: 97,
+    costPer1kInput: 0.003,
+    costPer1kOutput: 0.015,
+    capabilities: [
+      'chat',
+      'document_analysis',
+      'document_drafting',
+      'structured_output',
+      'regulatory_review',
+      'code_generation',
+      'summarization',
+      'general',
+    ],
+    enabled: true,
+  },
+  {
+    // Sonnet 4 legacy — dated snapshot from May 2025. Same role as
+    // opus-4-legacy: intra-provider fallback when 4.6 is unavailable.
+    id: 'claude-sonnet-4-legacy',
     provider: 'anthropic',
     model: 'claude-sonnet-4-20250514',
     contextWindow: 200000,
-    qualityScore: 97,
+    qualityScore: 93,
     costPer1kInput: 0.003,
     costPer1kOutput: 0.015,
     capabilities: [
@@ -323,9 +374,14 @@ export class AIGateway {
       return this.buildDeterministicResponse(request, requestId, startTime);
     }
 
-    // Execute with fallback
+    // Execute with fallback. Track tried MODELS (not just providers) so
+    // the fallback chain can exhaust Anthropic's quality ladder
+    // (Opus 4.7 → Opus 4 → Sonnet 4.6 → Sonnet 4 → Haiku 4.5) before
+    // crossing to a different provider. Previously a single Anthropic
+    // failure jumped straight to OpenAI, which wasted the intra-Anthropic
+    // fallback surface.
     let lastError: Error | null = null;
-    const triedProviders: ProviderName[] = [];
+    const triedModels: string[] = [];
 
     // Try primary model (with per-request retry: 2 attempts, 1s base delay)
     try {
@@ -337,15 +393,19 @@ export class AIGateway {
       return response;
     } catch (error: any) {
       lastError = error;
-      triedProviders.push(selectedModel.provider);
+      triedModels.push(selectedModel.id);
       this.recordFailure(selectedModel.provider, error);
       log.warn(
         `[AI Gateway] ${selectedModel.provider}/${selectedModel.model} failed: ${error.message}`
       );
     }
 
-    // Try fallback providers (with per-request retry: 2 attempts, 1s base delay)
-    const fallbacks = this.getFallbackModels(request.taskType, triedProviders);
+    // Try fallback models — same provider first (quality-desc), then cross-provider.
+    const fallbacks = this.getFallbackModels(
+      request.taskType,
+      triedModels,
+      selectedModel.provider,
+    );
     for (const fallback of fallbacks) {
       try {
         log.debug(`[AI Gateway] Falling back to ${fallback.provider}/${fallback.model}`);
@@ -357,7 +417,7 @@ export class AIGateway {
         return response;
       } catch (error: any) {
         lastError = error;
-        triedProviders.push(fallback.provider);
+        triedModels.push(fallback.id);
         this.recordFailure(fallback.provider, error);
         log.warn(
           `[AI Gateway] Fallback ${fallback.provider}/${fallback.model} failed: ${error.message}`
@@ -380,7 +440,7 @@ export class AIGateway {
     await this.logAudit(request, errorResponse, strategy, false, lastError?.message);
 
     throw new GatewayAllProvidersFailedError(
-      `All providers failed. Tried: ${triedProviders.join(', ')}. Last error: ${lastError?.message}`
+      `All models failed. Tried: ${triedModels.join(', ')}. Last error: ${lastError?.message}`
     );
   }
 
@@ -577,22 +637,25 @@ export class AIGateway {
     const systemMessages = request.messages.filter(m => m.role === 'system');
     const nonSystemMessages = request.messages.filter(m => m.role !== 'system');
 
-    // Build messages with multi-modal support (vision)
+    const cacheEnabled = !!request.promptCache?.enabled;
+    const cacheType = request.promptCache?.type;
+
+    // Build messages with multi-modal support (vision) + optional prompt-cache
+    // breakpoints on individual user/assistant turns.
     const messages = nonSystemMessages.map(m => {
+      const shouldCache = cacheEnabled && m.cacheControl === true;
       // If message has contentBlocks (images + text), use structured content
       if (m.contentBlocks && m.contentBlocks.length > 0) {
-        return {
-          role: m.role,
-          content: m.contentBlocks.map(block => {
-            if (block.type === 'image') {
-              return {
-                type: 'image' as const,
-                source: block.source,
-              };
-            }
-            return { type: 'text' as const, text: block.text };
-          }),
-        };
+        const blocks = m.contentBlocks.map(block => {
+          if (block.type === 'image') {
+            return { type: 'image' as const, source: block.source } as any;
+          }
+          return { type: 'text' as const, text: block.text } as any;
+        });
+        if (shouldCache && blocks.length > 0) {
+          blocks[blocks.length - 1].cache_control = { type: cacheType };
+        }
+        return { role: m.role, content: blocks };
       }
       // Also handle request-level imageContent (convenience API)
       if (m.role === 'user' && request.imageContent && request.imageContent.length > 0) {
@@ -601,7 +664,22 @@ export class AIGateway {
           source: img.source,
         }));
         content.push({ type: 'text' as const, text: m.content });
+        if (shouldCache) {
+          content[content.length - 1].cache_control = { type: cacheType };
+        }
         return { role: m.role, content };
+      }
+      if (shouldCache) {
+        return {
+          role: m.role,
+          content: [
+            {
+              type: 'text' as const,
+              text: m.content,
+              cache_control: { type: cacheType },
+            },
+          ],
+        };
       }
       return { role: m.role, content: m.content };
     });
@@ -615,12 +693,15 @@ export class AIGateway {
     // System prompt with optional prompt caching
     if (systemMessages.length > 0) {
       if (request.promptCache?.enabled) {
-        // Use structured system blocks with cache_control
+        const cacheType = request.promptCache.type;
+        const flagged = systemMessages.some(m => m.cacheControl === true);
+        // Honor explicit per-message cacheControl flags when present;
+        // otherwise apply cache_control to the last system message.
         params.system = systemMessages.map((m, i) => ({
           type: 'text',
           text: m.content,
-          ...(i === systemMessages.length - 1
-            ? { cache_control: { type: request.promptCache!.type } }
+          ...((flagged ? m.cacheControl === true : i === systemMessages.length - 1)
+            ? { cache_control: { type: cacheType } }
             : {}),
         }));
       } else {
@@ -733,15 +814,32 @@ export class AIGateway {
     const systemMessages = request.messages.filter(m => m.role === 'system');
     const nonSystemMessages = request.messages.filter(m => m.role !== 'system');
 
+    const streamCacheEnabled = !!request.promptCache?.enabled;
+    const streamCacheType = request.promptCache?.type;
+
     const messages = nonSystemMessages.map(m => {
+      const shouldCache = streamCacheEnabled && m.cacheControl === true;
       if (m.contentBlocks && m.contentBlocks.length > 0) {
+        const blocks: any[] = m.contentBlocks.map(block =>
+          block.type === 'image'
+            ? { type: 'image' as const, source: block.source }
+            : { type: 'text' as const, text: block.text }
+        );
+        if (shouldCache && blocks.length > 0) {
+          blocks[blocks.length - 1].cache_control = { type: streamCacheType };
+        }
+        return { role: m.role, content: blocks };
+      }
+      if (shouldCache) {
         return {
           role: m.role,
-          content: m.contentBlocks.map(block =>
-            block.type === 'image'
-              ? { type: 'image' as const, source: block.source }
-              : { type: 'text' as const, text: block.text }
-          ),
+          content: [
+            {
+              type: 'text' as const,
+              text: m.content,
+              cache_control: { type: streamCacheType },
+            },
+          ],
         };
       }
       return { role: m.role, content: m.content };
@@ -756,11 +854,13 @@ export class AIGateway {
 
     if (systemMessages.length > 0) {
       if (request.promptCache?.enabled) {
+        const cacheType = request.promptCache.type;
+        const flagged = systemMessages.some(m => m.cacheControl === true);
         params.system = systemMessages.map((m, i) => ({
           type: 'text',
           text: m.content,
-          ...(i === systemMessages.length - 1
-            ? { cache_control: { type: request.promptCache!.type } }
+          ...((flagged ? m.cacheControl === true : i === systemMessages.length - 1)
+            ? { cache_control: { type: cacheType } }
             : {}),
         }));
       } else {
@@ -796,6 +896,8 @@ export class AIGateway {
     const toolUses: ClaudeToolUse[] = [];
     let inputTokens = 0;
     let outputTokens = 0;
+    let cacheCreationInputTokens = 0;
+    let cacheReadInputTokens = 0;
     let stopReason = 'unknown';
 
     // Per-chunk watchdog — detect stalled streams (no data for 30s)
@@ -850,6 +952,11 @@ export class AIGateway {
           outputTokens = event.usage?.output_tokens || outputTokens;
         } else if (event.type === 'message_start') {
           inputTokens = event.message?.usage?.input_tokens || 0;
+          // Prompt cache usage (Anthropic emits these on the message_start
+          // event alongside input_tokens). They stay 0 when caching is off.
+          cacheCreationInputTokens =
+            event.message?.usage?.cache_creation_input_tokens || 0;
+          cacheReadInputTokens = event.message?.usage?.cache_read_input_tokens || 0;
         }
       }
     } catch (streamErr: any) {
@@ -865,6 +972,14 @@ export class AIGateway {
       stopReason = 'chunk_timeout';
       log.warn(`[AI Gateway] Returning partial response (${content.length} chars) after stream stall`);
     }
+
+    const streamCacheStats =
+      cacheCreationInputTokens > 0 || cacheReadInputTokens > 0
+        ? {
+            cacheCreationInputTokens,
+            cacheReadInputTokens,
+          }
+        : undefined;
 
     return {
       content,
@@ -883,7 +998,9 @@ export class AIGateway {
       cached: false,
       deterministic: false,
       finishReason: stopReason,
-    };
+      cacheHit: streamCacheStats ? cacheReadInputTokens > 0 : undefined,
+      cacheStats: streamCacheStats,
+    } as ClaudeEnhancedResponse;
   }
 
   private async executeMoonshot(
@@ -1012,12 +1129,35 @@ export class AIGateway {
     }
   }
 
-  private getFallbackModels(taskType: TaskType, triedProviders: ProviderName[]): ModelConfig[] {
-    return this.models
-      .filter(
-        m => m.enabled && m.capabilities.includes(taskType) && !triedProviders.includes(m.provider)
-      )
-      .sort((a, b) => b.qualityScore - a.qualityScore);
+  /**
+   * Build the fallback chain, exhausting the primary provider's quality
+   * ladder before crossing to a different provider. This means if Opus 4.7
+   * fails, the chain is:
+   *
+   *   Opus 4 legacy (same provider, lower quality)
+   *   → Sonnet 4.6 (same provider, lower quality)
+   *   → Sonnet 4 legacy (same provider, lower quality)
+   *   → Haiku 4.5 (same provider, lowest Anthropic quality)
+   *   → [cross-provider fallbacks in quality order]
+   *
+   * The same-provider-first ordering reflects operator preference — when
+   * the primary provider is reachable at all, staying within it preserves
+   * prompt-cache hits, tool-schema consistency, and telemetry continuity.
+   */
+  private getFallbackModels(
+    taskType: TaskType,
+    triedModels: string[],
+    primaryProvider: ProviderName,
+  ): ModelConfig[] {
+    const eligible = this.models.filter(
+      m => m.enabled && m.capabilities.includes(taskType) && !triedModels.includes(m.id),
+    );
+    const samePriority = eligible.filter(m => m.provider === primaryProvider);
+    const otherProviders = eligible.filter(m => m.provider !== primaryProvider);
+    // Within each bucket, sort by quality descending.
+    const sortByQuality = (list: ModelConfig[]) =>
+      [...list].sort((a, b) => b.qualityScore - a.qualityScore);
+    return [...sortByQuality(samePriority), ...sortByQuality(otherProviders)];
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1199,7 +1339,7 @@ export class AIGateway {
           name: 'anthropic',
           enabled: !!anthropicKey,
           apiKey: anthropicKey,
-          defaultModel: 'claude-sonnet-4-20250514',
+          defaultModel: 'claude-sonnet-4-6',
           models: [],
         },
         {

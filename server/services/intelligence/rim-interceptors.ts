@@ -40,6 +40,10 @@ export interface ChatInterceptInput {
  * Intercept AnA chat responses to:
  *   - scan for regulatory pattern matches in the generated text
  *   - capture claim quality as a signal
+ *
+ * Non-blocking. Malformed payloads are logged and dropped — RIM will never
+ * throw into the chat critical path, but it also refuses to record phantom
+ * signals with missing provenance (no org, no project, empty message).
  */
 export function interceptChatResponse(input: ChatInterceptInput): void {
   try {
@@ -48,6 +52,24 @@ export function interceptChatResponse(input: ChatInterceptInput): void {
       assistantMessage, claimCount, supportedClaimRate,
       model, provider,
     } = input;
+
+    if (!Number.isFinite(organizationId) || organizationId <= 0 ||
+        !Number.isFinite(projectId) || projectId <= 0) {
+      console.warn('[RIM] chat interceptor skipped — invalid provenance', {
+        organizationId, projectId, hasMessage: Boolean(assistantMessage),
+      });
+      return;
+    }
+    if (typeof assistantMessage !== 'string' || assistantMessage.trim().length === 0) {
+      console.warn('[RIM] chat interceptor skipped — empty assistant message', {
+        organizationId, projectId,
+      });
+      return;
+    }
+    const safeRate = Number.isFinite(supportedClaimRate)
+      ? Math.max(0, Math.min(1, supportedClaimRate))
+      : 0.5;
+    const safeClaimCount = Number.isFinite(claimCount) && claimCount >= 0 ? claimCount : 0;
 
     const ctx: RIMIntegrationContext = {
       organizationId, projectId, userId, sectionCode,
@@ -58,8 +80,8 @@ export function interceptChatResponse(input: ChatInterceptInput): void {
     integratePatternScan(ctx, assistantMessage, sectionCode ?? 'chat_response');
 
     // Capture claim quality as a signal
-    if (claimCount > 0) {
-      const qualityScore = Math.round(supportedClaimRate * 100);
+    if (safeClaimCount > 0) {
+      const qualityScore = Math.round(safeRate * 100);
       integrateSignal(ctx, {
         type: 'judgment',
         riskLevel: qualityScore >= 70 ? 'none' : qualityScore >= 40 ? 'medium' : 'high',
@@ -73,8 +95,8 @@ export function interceptChatResponse(input: ChatInterceptInput): void {
         patternIds: [],
         metadata: {
           source: 'chat_interceptor',
-          claimCount,
-          supportedClaimRate,
+          claimCount: safeClaimCount,
+          supportedClaimRate: safeRate,
           model,
           provider,
         },
@@ -295,6 +317,26 @@ export function interceptFeedback(input: FeedbackInterceptInput): void {
         editDelta,
       },
     });
+
+    // Close the learning loop: tag the N most recent signals for this artifact
+    // with a validation verdict so future RIM runs can weight signals by their
+    // historical accuracy instead of treating all signals as equally reliable.
+    if (artifactId) {
+      void (async () => {
+        try {
+          const { linkFeedbackToRecentSignals } = await import('./learning-loop-service.js');
+          await linkFeedbackToRecentSignals({
+            organizationId, projectId, artifactId,
+            feedbackType, userId,
+          });
+        } catch (linkErr) {
+          console.warn(
+            '[RIM] Feedback → signal link failed (non-blocking):',
+            linkErr instanceof Error ? linkErr.message : linkErr,
+          );
+        }
+      })();
+    }
   } catch (err) {
     console.warn('[RIM] Feedback interceptor failed (non-blocking):', err instanceof Error ? err.message : err);
   }

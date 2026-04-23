@@ -123,6 +123,86 @@ describe('JudgmentFramework', () => {
     expect(submissionRisk).toBeDefined();
     expect(submissionRisk!.factors.length).toBe(5); // one per component model
   });
+
+  it('signalReliability lowers confidence when historical accuracy is poor', () => {
+    const baseline = generateJudgmentReport(
+      { organizationId: 1, projectId: 1 },
+      { readiness: null, gaps: [], recommendations: [], evidenceChains: [] },
+    );
+
+    const lowReliability = generateJudgmentReport(
+      { organizationId: 1, projectId: 1 },
+      {
+        readiness: null,
+        gaps: [],
+        recommendations: [],
+        evidenceChains: [],
+        signalReliability: {
+          validated: 1,
+          partiallyValidated: 0,
+          disputed: 9,
+          totalValidations: 10,
+          reliabilityIndex: 0.1,
+        },
+      },
+    );
+
+    const highReliability = generateJudgmentReport(
+      { organizationId: 1, projectId: 1 },
+      {
+        readiness: null,
+        gaps: [],
+        recommendations: [],
+        evidenceChains: [],
+        signalReliability: {
+          validated: 10,
+          partiallyValidated: 0,
+          disputed: 0,
+          totalValidations: 10,
+          reliabilityIndex: 1.0,
+        },
+      },
+    );
+
+    // Every model's confidence should drop under low reliability, hold under high.
+    for (let i = 0; i < baseline.scores.length; i++) {
+      expect(lowReliability.scores[i].confidence).toBeLessThan(baseline.scores[i].confidence);
+      expect(highReliability.scores[i].confidence).toBe(baseline.scores[i].confidence);
+    }
+
+    // Scores themselves (the underlying verdict) must NOT shift based on
+    // reliability — only our confidence in them does.
+    for (let i = 0; i < baseline.scores.length; i++) {
+      expect(lowReliability.scores[i].score).toBe(baseline.scores[i].score);
+      expect(lowReliability.scores[i].verdict).toBe(baseline.scores[i].verdict);
+    }
+  });
+
+  it('signalReliability with null reliabilityIndex leaves confidence untouched', () => {
+    const baseline = generateJudgmentReport(
+      { organizationId: 1, projectId: 1 },
+      { readiness: null, gaps: [], recommendations: [], evidenceChains: [] },
+    );
+    const withNullReliability = generateJudgmentReport(
+      { organizationId: 1, projectId: 1 },
+      {
+        readiness: null,
+        gaps: [],
+        recommendations: [],
+        evidenceChains: [],
+        signalReliability: {
+          validated: 0,
+          partiallyValidated: 0,
+          disputed: 0,
+          totalValidations: 0,
+          reliabilityIndex: null,
+        },
+      },
+    );
+    for (let i = 0; i < baseline.scores.length; i++) {
+      expect(withNullReliability.scores[i].confidence).toBe(baseline.scores[i].confidence);
+    }
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -182,6 +262,35 @@ describe('PatternRegistry', () => {
   it('getPatterns filters by category', () => {
     const deficiencies = patternRegistry.getPatterns({ category: 'deficiency' });
     expect(deficiencies.every(p => p.category === 'deficiency')).toBe(true);
+  });
+
+  describe('looksLikeUnregisteredDeficiency heuristic', () => {
+    it('flags text with both deficiency trigger and regulatory anchor', () => {
+      expect(patternRegistry.looksLikeUnregisteredDeficiency(
+        'The stability data is incomplete and does not meet ICH Q1A(R2) requirements for the proposed shelf life of 24 months.'
+      )).toBe(true);
+      expect(patternRegistry.looksLikeUnregisteredDeficiency(
+        'The submission is missing the required Module 2.7.4 safety summary for the pivotal trial.'
+      )).toBe(true);
+      expect(patternRegistry.looksLikeUnregisteredDeficiency(
+        'The 510(k) substantial equivalence argument has insufficient performance data and lacks a current biocompatibility assessment.'
+      )).toBe(true);
+    });
+
+    it('rejects text with only one of the two signals', () => {
+      // Deficiency word but no regulatory anchor
+      expect(patternRegistry.looksLikeUnregisteredDeficiency(
+        'The cookie recipe is incomplete and missing some ingredients but the result tastes fine.'
+      )).toBe(false);
+      // Regulatory anchor but no deficiency word
+      expect(patternRegistry.looksLikeUnregisteredDeficiency(
+        'The submission complies with all requirements of ICH Q1A(R2) and Module 2.5 of the CTD.'
+      )).toBe(false);
+    });
+
+    it('rejects very short text regardless of content', () => {
+      expect(patternRegistry.looksLikeUnregisteredDeficiency('ICH missing')).toBe(false);
+    });
   });
 });
 

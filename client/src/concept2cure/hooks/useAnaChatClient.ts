@@ -2,7 +2,7 @@
  * useAnaChatClient — Canonical AnA runtime adapter
  *
  * Replaces the direct fetch + fallback chain that was embedded inside
- * AnaPersistentPanel. Provides a single hook that:
+ * Ana. Provides a single hook that:
  *
  * 1. Sends messages through the canonical /api/ana-ri/stream endpoint
  * 2. Falls back to /api/ana-ri/chat only when streaming fails (with fallback marker)

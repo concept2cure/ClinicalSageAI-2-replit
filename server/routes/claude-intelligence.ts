@@ -388,7 +388,7 @@ router.post('/agent', async (req: Request, res: Response) => {
           { role: 'user', content: prompt },
         ],
         provider: 'anthropic',
-        model: 'claude-opus-4-20250514',
+        model: 'claude-opus-4-7',
         maxTokens: 8192,
         tools: DOCUMENT_DRAFTING_TOOLS,
         toolChoice: 'auto',
@@ -470,7 +470,7 @@ router.get('/models', (_req: Request, res: Response) => {
       models: [
         {
           id: 'claude-opus-4',
-          model: 'claude-opus-4-20250514',
+          model: 'claude-opus-4-7',
           description: 'Most capable model — regulatory document drafting, complex analysis, extended thinking',
           contextWindow: 200000,
           maxOutput: 32768,
@@ -480,7 +480,7 @@ router.get('/models', (_req: Request, res: Response) => {
         },
         {
           id: 'claude-sonnet-4',
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           description: 'Best balance of speed and capability — chat, analysis, vision, code',
           contextWindow: 200000,
           maxOutput: 16384,

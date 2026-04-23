@@ -218,7 +218,7 @@ class UnifiedAIClient {
       ],
       {
         taskType: 'document_drafting',
-        model: 'claude-opus-4-20250514',
+        model: 'claude-opus-4-7',
         maxTokens: 8192,
         cache: true,
         thinking: { enabled: true, budgetTokens: 10000 },
@@ -242,7 +242,7 @@ class UnifiedAIClient {
       ],
       {
         taskType: 'regulatory_review',
-        model: 'claude-opus-4-20250514',
+        model: 'claude-opus-4-7',
         maxTokens: 8192,
         cache: true,
         ...options,
@@ -255,7 +255,7 @@ class UnifiedAIClient {
    */
   async quick(prompt: string, options?: AICompletionOptions): Promise<string> {
     return this.complete(prompt, {
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       maxTokens: 2048,
       ...options,
     });

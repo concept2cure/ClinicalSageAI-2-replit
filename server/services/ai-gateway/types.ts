@@ -68,6 +68,24 @@ export interface ClaudeTool {
   };
 }
 
+/**
+ * Anthropic server-side tool — executed by Anthropic's infrastructure,
+ * not by our local tool dispatcher. Distinguished from {@link ClaudeTool}
+ * by the required `type` field (e.g. `"web_search_20250305"`,
+ * `"web_fetch_20260209"`, `"code_execution_20260120"`).
+ *
+ * Tool-specific parameters (max_uses, allowed_domains, user_location, etc.)
+ * are keyed by the individual tool spec and passed through as-is.
+ */
+export interface AnthropicServerTool {
+  type: string;
+  name: string;
+  [key: string]: unknown;
+}
+
+/** Either a custom JSON-schema tool or an Anthropic server-side tool. */
+export type AnyClaudeTool = ClaudeTool | AnthropicServerTool;
+
 /** Tool use result from Claude */
 export interface ClaudeToolUse {
   id: string;
@@ -126,6 +144,15 @@ export interface GatewayMessage {
   content: string;
   /** Multi-modal content blocks (images + text) — Claude only */
   contentBlocks?: ContentBlock[];
+  /**
+   * Mark this message with a prompt-cache breakpoint (Claude only).
+   * When `promptCache.enabled` is set on the request, system messages
+   * with `cacheControl: true` will carry `cache_control` markers in the
+   * outgoing Anthropic request so the prefix up to and including that
+   * block is cached. If no message sets this, the gateway falls back to
+   * marking only the final system message.
+   */
+  cacheControl?: boolean;
 }
 
 export interface GatewayRequest {
@@ -181,8 +208,13 @@ export interface GatewayRequest {
   /** Enable extended thinking (Claude only) */
   thinking?: ExtendedThinkingConfig;
 
-  /** Tools for agentic workflows (Claude only) */
-  tools?: ClaudeTool[];
+  /**
+   * Tools for agentic workflows (Claude only). Accepts either custom
+   * JSON-schema tools or Anthropic server tools (web_search, web_fetch,
+   * code_execution) — the two shapes are distinguished by the presence of
+   * a top-level `type` field on server tools.
+   */
+  tools?: AnyClaudeTool[];
 
   /** Tool choice behavior */
   toolChoice?: 'auto' | 'any' | { type: 'tool'; name: string };

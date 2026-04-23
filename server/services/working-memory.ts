@@ -200,3 +200,163 @@ export async function needsWorkingMemoryRefresh(
   // Refresh thresholds: every N messages after first summary
   return messagesSinceSummary >= WORKING_MEMORY_THRESHOLD;
 }
+
+/**
+ * Thread-keyed variant of {@link needsWorkingMemoryRefresh} for chat paths
+ * that only have a string thread_id (ai_threads), not a numeric
+ * conversation_id (concept2cureConversations). Uses the same N-message
+ * threshold as the conversation-keyed variant.
+ */
+export async function needsWorkingMemoryRefreshByThread(
+  threadId: string,
+  currentMessageCount: number
+): Promise<boolean> {
+  if (!threadId) return false;
+  try {
+    const result = await pool.query(
+      `SELECT message_count_at_generation FROM conversation_working_memory
+       WHERE thread_id = $1 ORDER BY generated_at DESC LIMIT 1`,
+      [threadId]
+    );
+    if (result.rows.length === 0) {
+      return currentMessageCount >= WORKING_MEMORY_THRESHOLD;
+    }
+    const messagesSinceSummary =
+      currentMessageCount - (result.rows[0].message_count_at_generation || 0);
+    return messagesSinceSummary >= WORKING_MEMORY_THRESHOLD;
+  } catch {
+    // Table may be missing in sparse envs — skip refresh instead of crashing.
+    return false;
+  }
+}
+
+/**
+ * Thread-keyed write variant. The underlying table allows null
+ * conversation_id, so chat paths that only have an ai_threads.id can still
+ * persist working memory without synthesizing a concept2cure conversation.
+ */
+export async function storeWorkingMemoryForThread(
+  threadId: string,
+  organizationId: number,
+  summary: string,
+  structured: WorkingMemory['structured'],
+  messageCountAtGeneration: number
+): Promise<void> {
+  if (!threadId || !Number.isFinite(organizationId) || organizationId <= 0) return;
+  try {
+    await pool.query(
+      `INSERT INTO conversation_working_memory
+       (conversation_id, thread_id, organization_id, summary, structured_data, message_count_at_generation, generated_at)
+       VALUES (NULL, $1, $2, $3, $4, $5, NOW())`,
+      [threadId, organizationId, summary, JSON.stringify(structured), messageCountAtGeneration]
+    );
+  } catch (error) {
+    logger.warn(
+      `storeWorkingMemoryForThread failed for thread ${threadId}: ${
+        error instanceof Error ? error.message : 'unknown error'
+      }`
+    );
+  }
+}
+
+/**
+ * Summarize a chat thread's recent messages into a structured working-memory
+ * record and persist it. Thread-keyed, fire-and-forget, gated by
+ * {@link needsWorkingMemoryRefreshByThread} so callers can invoke this after
+ * every assistant turn without paying the summarization cost each time.
+ *
+ * Errors are logged and swallowed — working memory is best-effort context
+ * compression, not a correctness-critical write.
+ */
+export async function summarizeAndStoreWorkingMemoryForThread(params: {
+  threadId: string;
+  organizationId: number;
+  messages: Array<{ role: string; content: string }>;
+}): Promise<void> {
+  const { threadId, organizationId, messages } = params;
+  if (!threadId || !Number.isFinite(organizationId) || organizationId <= 0) return;
+  if (!Array.isArray(messages) || messages.length === 0) return;
+
+  try {
+    const shouldRefresh = await needsWorkingMemoryRefreshByThread(threadId, messages.length);
+    if (!shouldRefresh) return;
+
+    // Pull the previous summary for incremental refresh (keeps the model
+    // focused on the delta instead of re-deriving everything each time).
+    const previousSummary = (await getLatestWorkingMemoryByThread(threadId)) || undefined;
+    const prompt = buildWorkingMemoryPrompt(messages, previousSummary);
+
+    const { getGateway } = await import('./ai-gateway/gateway.js');
+    const gw = getGateway();
+    const aiResult = await gw.route({
+      taskType: 'summarization',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a regulatory affairs analyst. Produce concise, structured JSON summaries.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      maxTokens: 1500,
+      temperature: 0.3,
+      strategy: 'cost_optimized',
+      callerModule: 'working-memory-writeback',
+      organizationId,
+    });
+
+    const responseText = aiResult.content || '{}';
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    let structured: WorkingMemory['structured'];
+    try {
+      structured = jsonMatch
+        ? JSON.parse(jsonMatch[0])
+        : {
+            objective: 'Unable to parse summary',
+            lockedFacts: [],
+            decisions: [],
+            openQuestions: [],
+            nextActions: [],
+            createdArtifacts: [],
+            exclusions: [],
+          };
+    } catch {
+      structured = {
+        objective: `Conversation with ${messages.length} messages`,
+        lockedFacts: [],
+        decisions: [],
+        openQuestions: [],
+        nextActions: [],
+        createdArtifacts: [],
+        exclusions: [],
+      };
+    }
+
+    const formattedSummary = [
+      `**Objective**: ${structured.objective}`,
+      structured.lockedFacts?.length > 0
+        ? `**Key Facts**: ${structured.lockedFacts.join('; ')}`
+        : '',
+      structured.decisions?.length > 0 ? `**Decisions**: ${structured.decisions.join('; ')}` : '',
+      structured.openQuestions?.length > 0
+        ? `**Open Questions**: ${structured.openQuestions.join('; ')}`
+        : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    await storeWorkingMemoryForThread(
+      threadId,
+      organizationId,
+      formattedSummary,
+      structured,
+      messages.length,
+    );
+  } catch (error) {
+    logger.warn(
+      `summarizeAndStoreWorkingMemoryForThread failed for thread ${threadId}: ${
+        error instanceof Error ? error.message : 'unknown error'
+      }`
+    );
+  }
+}
