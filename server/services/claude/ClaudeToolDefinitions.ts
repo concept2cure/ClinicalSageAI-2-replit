@@ -241,6 +241,26 @@ export const EXTRACT_DOCUMENT_STRUCTURE: ClaudeTool = {
   },
 };
 
+export const MINE_PRECEDENTS: ClaudeTool = {
+  name: 'mine_precedents',
+  description:
+    "Construct a precedent-mining plan for a regulatory document type: how did recently approved drugs/devices frame the same type of content? Returns structured search targets across Drugs@FDA, EMA EPARs, FDA 510(k), PMA/De Novo databases, EUDAMED, EMA guidelines, and relevant scientific repositories — with URL templates, web_search query strings, and 'what to look for' guidance specific to the document type. This is how senior regulatory consultants calibrate: read the last three approved NDAs in the indication, read the CHMP rapporteur comments, read the FDA medical review. When web_search is enabled, AnA can execute the returned queries directly; when not, the URLs serve as a handoff for the regulatory author. Use this BEFORE drafting a document type that has meaningful precedent (Module 2.5, 510(k) SE, CER, CRL response, PIP) — the time to learn from precedent is BEFORE the first draft, not during revision.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_type: {
+        type: 'string',
+        description: "Canonical document type. One of: clinical_overview (M2.5), clinical_summary (M2.7), quality_overall_summary (M2.3), nonclinical_overview (M2.4), ind_briefing_document, nda_response, labeling, 510k_substantial_equivalence, pma_ssed, de_novo_classification, clinical_evaluation_report (CER), ivdr_technical_file, risk_management_plan, pediatric_investigation_plan, breakthrough_designation_request, fast_track_request.",
+      },
+      search_context: {
+        type: 'string',
+        description: 'Therapeutic area, indication, device class, sponsor name, or other disambiguation to scope the precedent search (e.g. "SGLT2 inhibitor type 2 diabetes", "pulse oximeter pediatric", "GLP-1 receptor agonist obesity").',
+      },
+    },
+    required: ['document_type', 'search_context'],
+  },
+};
+
 export const CHECK_NUMERICAL_INTEGRITY: ClaudeTool = {
   name: 'check_numerical_integrity',
   description:
@@ -531,6 +551,7 @@ export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
   EXTRACT_DOCUMENT_STRUCTURE,
   CHECK_DOSSIER_CONSISTENCY,
   CHECK_NUMERICAL_INTEGRITY,
+  MINE_PRECEDENTS,
   GENERATE_DOCUMENT,
   BUILD_FROM_TEMPLATE,
   IND_GENERATE_SECTION,

@@ -437,6 +437,48 @@ registerToolHandler('extract_document_structure', async (input) => {
   });
 });
 
+// Mine Precedents — structured precedent-search plan for a document type
+registerToolHandler('mine_precedents', async (input: Record<string, unknown>) => {
+  const documentType = input.document_type as string;
+  const searchContext = input.search_context as string;
+
+  if (!documentType || !searchContext) {
+    return JSON.stringify({
+      error: 'mine_precedents requires document_type and search_context',
+    });
+  }
+
+  try {
+    const { minePrecedents } = await import('../intelligence/precedent-mining.js');
+    const result = minePrecedents({
+      documentType: documentType as any,
+      searchContext,
+    });
+
+    return JSON.stringify({
+      documentType: result.documentType,
+      searchContext: result.searchContext,
+      guidance: result.guidance,
+      webSearchReady: result.webSearchReady,
+      searchCount: result.searches.length,
+      searches: result.searches.map(s => ({
+        database: s.databaseLabel,
+        baseUrl: s.baseUrl,
+        searchUrl: s.searchUrl,
+        webSearchQuery: s.webSearchQuery,
+        whatToLookFor: s.whatToLookFor,
+      })),
+      recommendation: result.webSearchReady
+        ? 'web_search is enabled — you can execute the listed queries directly against the allowlisted regulatory domains.'
+        : 'web_search is not enabled in this environment. Share the search URLs with the user, or enable ANA_ENABLE_WEB_SEARCH to execute the queries yourself.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({
+      error: `Precedent mining failed: ${err?.message || 'unknown error'}`,
+    });
+  }
+});
+
 // Check Numerical Integrity — within-document consistency of labelled numbers
 registerToolHandler('check_numerical_integrity', async (input: Record<string, unknown>) => {
   const content = input.content as string;
@@ -858,6 +900,7 @@ export function getAvailableTools(): Array<{ name: string; registered: boolean }
     'extract_document_structure',
     'check_dossier_consistency',
     'check_numerical_integrity',
+    'mine_precedents',
   ];
 
   return allTools.map(name => ({
