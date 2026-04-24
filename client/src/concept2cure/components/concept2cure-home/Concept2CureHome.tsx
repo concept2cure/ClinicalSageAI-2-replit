@@ -8,11 +8,11 @@
  *
  * Deviations from the bundle (by explicit user direction):
  *  - user name / initials / role come from real auth (bundle hardcodes Jordan / JC).
- *  - TweaksPanel and the canvas postMessage protocol are omitted — those exist
- *    only to let the Claude Design canvas drive tweaks via an iframe parent;
- *    production has no parent, so the panel and protocol would be dead weight.
+ *    Edit mode (see Tweaks) still lets the designer override the user for preview.
  *  - Icons render via lucide-react rather than inline SVG (same Lucide glyphs).
  *  - CSS is CSS Modules to avoid collisions with the rest of the app.
+ *  - Production activation of Tweaks: the canvas postMessage protocol is preserved
+ *    verbatim; outside a canvas iframe, append ?tweaks=1 to the URL to activate.
  */
 import { Fragment, useEffect, useState } from 'react';
 import { HomeIcon } from './icons';
@@ -49,13 +49,31 @@ export interface Concept2CureHomeProps {
   onLaunchChat?: (draft: string) => void;
 }
 
-// Bundle App.jsx DEFAULTS — used as production fallbacks when user is unset.
+// Bundle App.jsx DEFAULTS — verbatim from the canvas bundle. These are the
+// editable defaults the designer tweaks through the canvas, and the production
+// fallbacks when no user has been wired through onboarding yet.
+interface Tweaks {
+  dark: boolean;
+  collapsed: boolean;
+  activeNav: string;
+  userName: string;
+  userInitials: string;
+  userRole: string;
+}
+const DEFAULTS: Tweaks = /*EDITMODE-BEGIN*/{
+  dark: false,
+  collapsed: false,
+  activeNav: 'projects',
+  userName: 'Jordan',
+  userInitials: 'JC',
+  userRole: 'Enterprise · Reg Affairs',
+}/*EDITMODE-END*/;
+
 const DEFAULT_USER: User = {
-  name: 'Jordan',
-  initials: 'JC',
-  role: 'Enterprise · Reg Affairs',
+  name: DEFAULTS.userName,
+  initials: DEFAULTS.userInitials,
+  role: DEFAULTS.userRole,
 };
-const DEFAULT_ACTIVE_NAV = 'projects';
 
 function timeOfDay(): string {
   const h = new Date().getHours();
@@ -429,32 +447,144 @@ function Recents({ threads }: { threads: Array<{ id: string; title: string; upda
   );
 }
 
+/* ─── Tweaks Panel ─── */
+/* Ported verbatim from bundle App.jsx (TweaksPanel). JSX structure and copy
+   kept identical; only global class names are mapped to CSS Modules. */
+function TweaksPanel({
+  tweaks,
+  setTweak,
+  onClose,
+}: {
+  tweaks: Tweaks;
+  setTweak: <K extends keyof Tweaks>(key: K, val: Tweaks[K]) => void;
+  onClose: () => void;
+}) {
+  return (
+    <aside className={styles.tweaksPanel} role="dialog" aria-label="Tweaks">
+      <div className={styles.tweaksTitle}>
+        <span>Tweaks</span>
+        <button type="button" className={styles.close} onClick={onClose} title="Close">
+          <HomeIcon name="close" size={14} />
+        </button>
+      </div>
+
+      <div className={styles.tweakRow}>
+        <span className={styles.tweakLabel}>Dark mode</span>
+        <button
+          type="button"
+          className={styles.switch}
+          data-on={tweaks.dark}
+          onClick={() => setTweak('dark', !tweaks.dark)}
+          aria-label="Dark mode"
+        />
+      </div>
+
+      <div className={styles.tweakRow}>
+        <span className={styles.tweakLabel}>Rail collapsed</span>
+        <button
+          type="button"
+          className={styles.switch}
+          data-on={tweaks.collapsed}
+          onClick={() => setTweak('collapsed', !tweaks.collapsed)}
+          aria-label="Collapse rail"
+        />
+      </div>
+
+      <div className={styles.tweakRow}>
+        <span className={styles.tweakLabel}>Active module</span>
+        <div className={styles.seg}>
+          {[
+            { id: 'mdx', label: 'Device' },
+            { id: 'biopharma', label: 'Biopharma' },
+            { id: 'projects', label: 'Projects' },
+          ].map(o => (
+            <button
+              type="button"
+              key={o.id}
+              className={styles.segBtn}
+              data-on={tweaks.activeNav === o.id}
+              onClick={() => setTweak('activeNav', o.id)}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
 /* ─── App ─── */
 export function Concept2CureHome({
   user,
   onNavigate,
   onLaunchChat,
 }: Concept2CureHomeProps) {
-  const resolvedUser: User = {
+  const authUser: User = {
     name: user?.name ?? DEFAULT_USER.name,
     initials: user?.initials ?? DEFAULT_USER.initials,
     role: user?.role ?? DEFAULT_USER.role,
   };
 
-  const [activeNav, setActiveNav] = useState(DEFAULT_ACTIVE_NAV);
-  const [collapsed, setCollapsed] = useState(false);
+  // Bundle state — tweaks, tweaksOpen, editModeActive, scope, paletteOpen.
+  // Logic below is ported verbatim from bundle App.jsx (the App function).
+  const [tweaks, setTweaks] = useState<Tweaks>(DEFAULTS);
+  const [tweaksOpen, setTweaksOpen] = useState(false);
+  const [editModeActive, setEditModeActive] = useState(false);
   const [scope, setScope] = useState<Scope>('all');
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   const { metrics, recentThreads } = useHomeData();
 
-  // Rail + palette + module-card click handler. Calls the host's onNavigate
-  // first so ZenApp can route to a real LayoutMode; the local active-nav
-  // state only updates when the host didn't suppress it.
-  const handleSelectNav = (id: string) => {
-    const suppressed = onNavigate?.(id);
-    if (!suppressed) setActiveNav(id);
+  // Bundle App.jsx setTweak — mirrors the tweak into the parent canvas host
+  // so the designer surface stays in sync.
+  const setTweak = <K extends keyof Tweaks>(key: K, val: Tweaks[K]) => {
+    setTweaks(t => {
+      const next = { ...t, [key]: val };
+      try {
+        window.parent?.postMessage(
+          { type: '__edit_mode_set_keys', edits: { [key]: val } },
+          '*',
+        );
+      } catch {
+        /* no parent (standalone production tab) — ignore */
+      }
+      return next;
+    });
   };
+
+  // Bundle App.jsx — Tweaks host protocol. Register listener first, then
+  // announce availability so the canvas parent can activate edit mode.
+  // Production activation also honors ?tweaks=1 on the URL so designers can
+  // open the panel outside the canvas iframe without shipping a visible entry.
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (!e.data || typeof e.data !== 'object') return;
+      const data = e.data as { type?: string };
+      if (data.type === '__activate_edit_mode') {
+        setEditModeActive(true);
+        setTweaksOpen(true);
+      }
+      if (data.type === '__deactivate_edit_mode') {
+        setEditModeActive(false);
+        setTweaksOpen(false);
+      }
+    };
+    window.addEventListener('message', handler);
+    try {
+      window.parent?.postMessage({ type: '__edit_mode_available' }, '*');
+    } catch {
+      /* no parent — ignore */
+    }
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tweaks') === '1') {
+        setEditModeActive(true);
+        setTweaksOpen(true);
+      }
+    }
+    return () => window.removeEventListener('message', handler);
+  }, []);
 
   // ⌘K / Ctrl-K palette
   useEffect(() => {
@@ -468,20 +598,35 @@ export function Concept2CureHome({
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // Rail + palette + module-card click handler. Calls the host's onNavigate
+  // first so ZenApp can route to a real LayoutMode; the local active-nav
+  // state only updates when the host didn't suppress it.
+  const handleSelectNav = (id: string) => {
+    const suppressed = onNavigate?.(id);
+    if (!suppressed) setTweak('activeNav', id);
+  };
+
   // Palette navigation — only Module selects a rail item (matches bundle onPaletteNav).
   const onPaletteNav = (it: PaletteItem) => {
     if (it.kind === 'Module') handleSelectNav(it.id);
   };
 
-  const activeNavLabel = NAV_ITEMS.find(n => n.id === activeNav)?.label ?? 'Home';
+  // In edit mode the designer can override user identity for preview; in
+  // production we always show the real auth user.
+  const resolvedUser: User = editModeActive
+    ? { name: tweaks.userName, initials: tweaks.userInitials, role: tweaks.userRole }
+    : authUser;
+
+  const activeNavLabel = NAV_ITEMS.find(n => n.id === tweaks.activeNav)?.label ?? 'Home';
+  const shellClassName = `${styles.shell}${tweaks.dark ? ' ' + styles.dark : ''}`;
 
   return (
-    <div className={styles.shell} data-collapsed={collapsed || undefined}>
+    <div className={shellClassName} data-collapsed={tweaks.collapsed || undefined}>
       <Rail
-        activeNav={activeNav}
+        activeNav={tweaks.activeNav}
         setActiveNav={handleSelectNav}
-        collapsed={collapsed}
-        setCollapsed={setCollapsed}
+        collapsed={tweaks.collapsed}
+        setCollapsed={(v: boolean) => setTweak('collapsed', v)}
         user={resolvedUser}
       />
       <main className={styles.main}>
@@ -497,7 +642,7 @@ export function Concept2CureHome({
             <AnaCard scope={scope} onOpenPalette={() => setPaletteOpen(true)} />
             <Dashboard projectCount={metrics.projectCount} artifactTotal={metrics.artifactTotal} />
             <div style={{ height: 24 }} />
-            <Launcher activeNav={activeNav} setActiveNav={handleSelectNav} />
+            <Launcher activeNav={tweaks.activeNav} setActiveNav={handleSelectNav} />
             <div style={{ height: 24 }} />
             <Recents threads={recentThreads} />
           </div>
@@ -509,6 +654,24 @@ export function Concept2CureHome({
         onClose={() => setPaletteOpen(false)}
         onNavigate={onPaletteNav}
       />
+
+      {editModeActive && tweaksOpen && (
+        <TweaksPanel
+          tweaks={tweaks}
+          setTweak={setTweak}
+          onClose={() => setTweaksOpen(false)}
+        />
+      )}
+      {editModeActive && !tweaksOpen && (
+        <button
+          type="button"
+          className={styles.tweaksToggle}
+          onClick={() => setTweaksOpen(true)}
+          title="Tweaks"
+        >
+          <HomeIcon name="sliders" size={16} />
+        </button>
+      )}
     </div>
   );
 }
