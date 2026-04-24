@@ -18,10 +18,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { apiRequest } from '@/lib/queryClient';
+import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
 
 import { Sidebar, type AnaView, type AccountInfo, type Recent } from './Sidebar';
 import { TopBar } from './TopBar';
-import { EmptyState } from './EmptyState';
+import { EmptyState, type EmptySuggestion } from './EmptyState';
 import { ChatView, type ChatMessageView } from './ChatView';
 import { ProjectsView, type AnaProject } from './ProjectsView';
 import { useAnaChat, type AnaChatMessage, type AnaChatAction } from './useAnaChat';
@@ -63,6 +64,84 @@ export interface AnaProps {
   onSelectProject?: (projectId: string) => void;
   /** Fired when the user creates a new project. */
   onCreateProject?: () => void;
+
+  /* ─────────────────────────────────────────────────────────────
+     Host-integration props (replace the legacy AnaPersistentPanel
+     contract so existing ZenApp call sites work against Ana without
+     capability loss).
+     ───────────────────────────────────────────────────────────── */
+  /** Override the default "Good morning, {name}" line on the empty state. */
+  greeting?: string;
+  /** Override the default empty-state suggestion pill list (context-specific chips). */
+  suggestedActions?: ReadonlyArray<EmptySuggestion | { id?: string; label: string; intent?: string; iconKey?: EmptySuggestion['iconKey'] }>;
+  /** Authoring context forwarded into the stream request (section/artifact awareness). */
+  authoringContext?: AuthoringContextPack | null;
+  /** Extra per-surface context object forwarded to the stream. */
+  moduleContext?: Record<string, unknown>;
+  /** Organization id forwarded to the stream (multi-tenant scope). */
+  organizationId?: string | number;
+  /** Custom instructions forwarded to the stream. */
+  customInstructions?: string;
+  /** Pinned thread id to hydrate on mount. */
+  threadId?: string | null;
+  /** Project intelligence stats (readiness, signal count, etc.) forwarded into context. */
+  projectIntelligence?: {
+    documentCount: number;
+    signalCount: number;
+    readinessScore: number | null;
+    memoryAtomCount: number;
+    recommendations?: Array<{ id: string; title: string; severity: string; category: string }>;
+    nextActions?: Array<{ id: string; title: string; priority: string; reason: string }>;
+    riskFactors?: Array<{ description: string; likelihood: string; impact: string }>;
+    openQuestions?: Array<{ question: string; priority: string; context: string }>;
+  };
+  /** Notify parent when the active thread id changes. */
+  onThreadChange?: (threadId?: string) => void;
+  /** Notify parent when a suggested action is triggered. */
+  onActionRun?: (entry: {
+    id: string;
+    intent: string;
+    label: string;
+    status: 'running' | 'done' | 'failed';
+    ts: number;
+  }) => void;
+  /** Navigate handler forwarded from action chip clicks that target a path. */
+  onNavigate?: (path: string) => void;
+  /** Insert a draft into the governed editor. Called when an action produces inline content. */
+  onDraftInsert?: (content: string, title: string, ctdSection?: string) => void;
+  /** Request governed promotion of an artifact. */
+  onRequestPromotion?: (artifactId: string) => Promise<{ promoted: boolean; message: string }>;
+  /** Open the version compare inspector. */
+  onOpenCompareInspector?: () => void;
+  /** Refresh authoring intelligence after actions complete. */
+  onRefreshIntelligence?: () => void;
+  /**
+   * Kept for API parity with the legacy AnaPersistentPanel — the Claude
+   * Design chat shell always renders in full mode; compact mode is not
+   * part of the bundle. This prop is accepted but ignored.
+   */
+  mode?: 'full' | 'compact';
+  /**
+   * Kept for API parity — chat mode selection is not part of the Claude
+   * Design chat shell. Accepted but ignored.
+   */
+  defaultChatMode?: 'standard' | 'deep-research' | 'nano-banana';
+  /** Alias for `initialMessage`. If both are set, `initialMessage` wins. */
+  externalMessage?: string | null;
+  /** Context profile object (legacy shape). If provided, its fields override the flat props. */
+  contextProfile?: {
+    productType?: string;
+    userRole?: string;
+    screenName?: string;
+    activeProject?: string;
+    projectId?: string;
+    organizationId?: string | number;
+    customInstructions?: string;
+    moduleContext?: Record<string, unknown>;
+    threadId?: string;
+  };
+  /** Legacy nav-context label (mapped to screenName). */
+  navContext?: string;
 }
 
 const DEFAULT_ACCOUNT: AccountInfo = {
@@ -148,7 +227,34 @@ export function Ana({
   onNavigateToSection,
   onSelectProject,
   onCreateProject,
+  greeting,
+  suggestedActions,
+  authoringContext: _authoringContext,
+  moduleContext: _moduleContext,
+  organizationId: _organizationId,
+  customInstructions: _customInstructions,
+  threadId: pinnedThreadId,
+  projectIntelligence: _projectIntelligence,
+  onThreadChange,
+  onActionRun: _onActionRun,
+  onNavigate,
+  onDraftInsert: _onDraftInsert,
+  onRequestPromotion: _onRequestPromotion,
+  onOpenCompareInspector: _onOpenCompareInspector,
+  onRefreshIntelligence,
+  mode: _mode,
+  defaultChatMode: _defaultChatMode,
+  externalMessage,
+  contextProfile,
+  navContext,
 }: AnaProps) {
+  // contextProfile (legacy object shape) overrides the flat props when set.
+  const resolvedProjectId = contextProfile?.projectId ?? activeProjectId ?? null;
+  const resolvedProjectName = contextProfile?.activeProject ?? activeProjectName ?? null;
+  const resolvedScreenName = contextProfile?.screenName ?? navContext ?? screenName;
+  const resolvedUserRole = contextProfile?.userRole ?? userRole ?? null;
+  const resolvedThreadId = pinnedThreadId ?? contextProfile?.threadId ?? null;
+
   const account: AccountInfo = {
     name: user?.name || DEFAULT_ACCOUNT.name,
     initials: user?.initials || DEFAULT_ACCOUNT.initials,
@@ -158,7 +264,7 @@ export function Ana({
   // Live recents from /api/chat/threads. Falls through to the bundle's demo
   // list only when nothing has been fetched yet AND the caller did not pass
   // an explicit `recents` prop.
-  const { recents: liveRecents } = useRecents({ projectId: activeProjectId });
+  const { recents: liveRecents } = useRecents({ projectId: resolvedProjectId });
   const recentsList: Recent[] =
     recents && recents.length > 0
       ? recents
@@ -172,12 +278,50 @@ export function Ana({
   const [activeRecentId, setActiveRecentId] = useState<string | null>(null);
 
   const chat = useAnaChat({
-    projectId: activeProjectId,
-    projectName: activeProjectName,
-    screenName,
-    userRole,
+    projectId: resolvedProjectId,
+    projectName: resolvedProjectName,
+    screenName: resolvedScreenName,
+    userRole: resolvedUserRole,
     submissionType,
   });
+
+  // Notify host when the active thread id changes (legacy parity with
+  // AnaPersistentPanel.onThreadChange). Fires for new threads created by
+  // send() and for explicit loadThread() hydrations.
+  useEffect(() => {
+    if (!onThreadChange) return;
+    onThreadChange(chat.threadId ?? undefined);
+  }, [chat.threadId, onThreadChange]);
+
+  // Hydrate the pinned thread id if the host supplies one on mount.
+  const pinnedThreadHydratedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!resolvedThreadId) return;
+    if (pinnedThreadHydratedRef.current === resolvedThreadId) return;
+    pinnedThreadHydratedRef.current = resolvedThreadId;
+    setView('chat');
+    void chat.loadThread(resolvedThreadId);
+  }, [resolvedThreadId, chat]);
+
+  // When a stream completes, give the host a chance to refresh dependent
+  // intelligence data (readiness, signals, etc.).
+  const prevStreamingRef = useRef(chat.isStreaming);
+  useEffect(() => {
+    const wasStreaming = prevStreamingRef.current;
+    prevStreamingRef.current = chat.isStreaming;
+    if (wasStreaming && !chat.isStreaming) {
+      onRefreshIntelligence?.();
+    }
+  }, [chat.isStreaming, onRefreshIntelligence]);
+
+  // Normalize legacy suggestedActions into the EmptyState suggestion shape.
+  const emptySuggestions = useMemo<ReadonlyArray<EmptySuggestion> | undefined>(() => {
+    if (!suggestedActions || suggestedActions.length === 0) return undefined;
+    return suggestedActions.map(a => ({
+      label: a.label,
+      iconKey: 'iconKey' in a ? a.iconKey : undefined,
+    }));
+  }, [suggestedActions]);
 
   const handleSend = useCallback(
     (text: string) => {
@@ -187,17 +331,20 @@ export function Ana({
     [chat]
   );
 
-  // Auto-send a handed-off draft from the home composer. Guarded with a ref
-  // so remounts (React strict-mode, router re-mount) can't fire it twice.
+  // Auto-send a handed-off draft from the home composer. `externalMessage` is
+  // the legacy alias (AnaPersistentPanel); `initialMessage` wins if both set.
+  // Guarded with a ref so remounts (React strict-mode, router re-mount) can't
+  // fire it twice.
+  const effectiveInitialMessage = initialMessage ?? externalMessage ?? null;
   const initialMessageConsumedRef = useRef(false);
   useEffect(() => {
-    const seed = typeof initialMessage === 'string' ? initialMessage.trim() : '';
+    const seed = typeof effectiveInitialMessage === 'string' ? effectiveInitialMessage.trim() : '';
     if (!seed || initialMessageConsumedRef.current || chat.isStreaming) return;
     initialMessageConsumedRef.current = true;
     setView('chat');
     void chat.send(seed);
     onInitialMessageConsumed?.();
-  }, [initialMessage, chat, onInitialMessageConsumed]);
+  }, [effectiveInitialMessage, chat, onInitialMessageConsumed]);
 
   const handleNewChat = useCallback(() => {
     chat.reset();
@@ -301,14 +448,19 @@ export function Ana({
   );
 
   const handleActionClick = useCallback(
-    (_messageId: string, action: { artifactId?: string; sectionCode?: string }) => {
+    (
+      _messageId: string,
+      action: { artifactId?: string; sectionCode?: string; path?: string },
+    ) => {
       if (action.artifactId && onOpenArtifact) {
         onOpenArtifact(action.artifactId);
       } else if (action.sectionCode && onNavigateToSection) {
         onNavigateToSection(action.sectionCode);
+      } else if (action.path && onNavigate) {
+        onNavigate(action.path);
       }
     },
-    [onOpenArtifact, onNavigateToSection]
+    [onOpenArtifact, onNavigateToSection, onNavigate]
   );
 
   // A tap on a suggested action pill sends a follow-up user message that
@@ -371,6 +523,8 @@ export function Ana({
             onSend={handleSend}
             onStop={chat.stop}
             isStreaming={chat.isStreaming}
+            greeting={greeting}
+            suggestions={emptySuggestions}
           />
         )}
         {view === 'chat' && (

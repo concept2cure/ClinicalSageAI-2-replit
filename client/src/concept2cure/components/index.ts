@@ -13,8 +13,8 @@ export * from './common';
 // Sidebar components
 export * from './sidebar';
 
-// Chat components
-export * from './chat';
+// Chat components — legacy tree removed; the Claude Design chat shell lives
+// in ./ana and is re-exported there directly (import { Ana } from '.../ana').
 
 // Artifact components
 export * from './artifacts';
@@ -27,13 +27,10 @@ export * from './templates';
 // ─────────────────────────────────────────────────────────────────────────────
 
 export {
-  ConvergentCanvas,
   MorningBriefingPanel,
-  CouncilThreadPanel,
   IndustryWorkspace,
   SHERPA_PERSONAS,
   CANVAS_ZONES,
-  type CanvasZone,
   type IndustryMode,
   type IndustryWorkspaceProps,
   type SherpaPersonaId,

@@ -2,11 +2,18 @@ import React, { Suspense, useMemo } from 'react';
 import { MessageSquare, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { ZenChat } from '../chat/ZenChat';
+import { Ana } from '../ana';
 import { ErrorBoundary } from '../ErrorBoundary';
-import type { ActionCardDef } from '../chat/ActionCard';
 
-const DEVICE_SUGGESTED_ACTIONS: Record<string, ActionCardDef[]> = {
+/** Suggested-action shape forwarded into Ana's empty-state pill row. */
+interface DeviceSuggestedAction {
+  id: string;
+  label: string;
+  intent?: string;
+  description?: string;
+}
+
+const DEVICE_SUGGESTED_ACTIONS: Record<string, DeviceSuggestedAction[]> = {
   '510K': [
     { id: 'sa-predicate', label: 'Find predicate devices', intent: 'chat.new', description: 'Search FDA database for comparable 510(k) cleared devices' },
     { id: 'sa-se', label: 'Draft SE comparison', intent: 'chat.new', description: 'Build substantial equivalence comparison table' },
@@ -243,15 +250,15 @@ const EmbeddedAssistantRail: React.FC<EmbeddedAssistantRailProps> = ({
         </Button>
       </div>
       <div className="flex-1 min-h-0 overflow-hidden">
-        <ZenChat
-          projectId={projectId}
-          projectName={projectName}
+        <Ana
+          activeProjectId={projectId}
+          activeProjectName={projectName}
           submissionType={submissionType}
           threadId={activeThreadId}
-          greeting={{ text: greeting }}
+          greeting={greeting}
           suggestedActions={suggestedActions}
           onNavigate={onNavigate}
-          onNewProject={onNewProject}
+          onCreateProject={onNewProject}
           onThreadChange={onThreadChange}
         />
       </div>

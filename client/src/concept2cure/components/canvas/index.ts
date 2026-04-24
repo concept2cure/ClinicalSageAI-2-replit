@@ -9,18 +9,10 @@
  */
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MAIN CANVAS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export { ConvergentCanvas } from './ConvergentCanvas';
-export type { CanvasZone } from './ConvergentCanvas';
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // CANVAS PANELS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export { MorningBriefingPanel } from './MorningBriefingPanel';
-export { CouncilThreadPanel } from './CouncilThreadPanel';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // INDUSTRY WORKSPACES

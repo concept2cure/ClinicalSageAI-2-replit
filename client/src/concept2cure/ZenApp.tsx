@@ -32,7 +32,6 @@ import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { ZenSidebar } from './components/sidebar/ZenSidebar';
-import { ZenChat } from './components/chat/ZenChat';
 import { ZenCommandPalette } from './components/command/ZenCommandPalette';
 
 // Stage 10 extracted modules
@@ -151,7 +150,7 @@ const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect 
 // import DrSageGlobalLayer from './components/dr-sage/DrSagePanel';
 
 // AnA Persistent Panel — always-available AI conversation on every page
-import AnaPersistentPanel from './components/chat/AnaPersistentPanel';
+import { Ana } from './components/ana';
 import { GlobalOperatingShell } from './components/shell/GlobalOperatingShell';
 
 // Canonical authoring context resolver
@@ -923,7 +922,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   );
   const projectReadinessScore = readinessData?.metrics?.readinessScore;
 
-  // Intelligence profile + next best actions for enriched AnaPersistentPanel
+  // Intelligence profile + next best actions for enriched Ana chat
   const { data: intelligenceProfile } = useProjectIntelligence(
     activeProjectId ? Number(activeProjectId) : null
   );
@@ -935,7 +934,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     activeProjectId ? Number(activeProjectId) : null
   );
 
-  // Project intelligence stats for AnaPersistentPanel greeting enrichment
+  // Project intelligence stats for Ana greeting enrichment
   const projectIntelligenceStats = useMemo(() => {
     if (!readinessData && !intelligenceProfile) return undefined;
     return {
@@ -1424,7 +1423,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         return;
       }
       console.warn(
-        `[AnaPersistentPanel] Unknown navigation target, falling back safely: ${normalizedPath}`
+        `[Ana] Unknown navigation target, falling back safely: ${normalizedPath}`
       );
       setLayoutMode(activeProjectId ? 'project-home' : 'projects');
     },
@@ -3344,7 +3343,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               {/* ── Workspace body: AnA chat + right panel ───────────── */}
               <div className="flex-1 flex min-h-0">
                 {/* Center: AnA (the ONE chat — Claude.ai style) */}
-                <AnaPersistentPanel
+                <Ana
                   mode="full"
                   authoringContext={authoringContext}
                   navContext={activeNavId}
@@ -3468,7 +3467,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         {layoutMode === 'project-home' && (
           <div className="flex-1 flex min-h-0">
             {/* Center: AnA chat */}
-            <AnaPersistentPanel
+            <Ana
               mode="full"
               authoringContext={authoringContext}
               navContext="project-home"
@@ -3487,7 +3486,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   ? `Working on ${activeProject.name}. What would you like to do?`
                   : platformGreeting?.text
               }
-              externalMessage={externalChatMessage}
+              externalMessage={externalChatMessage?.text ?? null}
               suggestedActions={workspaceSuggestedActions}
               onActionRun={handleActionRun}
               onNavigate={handleAnaPanelNavigate}
@@ -3589,7 +3588,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             </div>
             {/* AnA panel body */}
             <div className="flex-1 min-h-0 flex">
-              <AnaPersistentPanel
+              <Ana
                 mode="full"
                 defaultChatMode="standard"
                 authoringContext={authoringContext}
@@ -3609,7 +3608,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 onActionRun={handleActionRun}
                 onNavigate={handleAnaPanelNavigate}
                 onCreateProject={() => setNewProjectOpen(true)}
-                projects={projects.map(p => ({ id: p.id, name: p.name, type: p.type, updatedAt: p.updatedAt }))}
+                projects={projects.map(p => ({
+                  id: p.id,
+                  title: p.name,
+                  description: p.type,
+                  meta: '',
+                }))}
                 onSelectProject={(id) => {
                   setActiveProjectId(id);
                   setLayoutMode('project-home');
@@ -3633,7 +3637,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           layoutMode !== 'regulatory-workspace' &&
           layoutMode !== 'project-home' &&
           layoutMode !== 'projects' && (
-            <AnaPersistentPanel
+            <Ana
               mode={layoutMode === 'deep-research' ? 'full' : 'compact'}
               defaultChatMode={layoutMode === 'deep-research' ? 'deep-research' : 'standard'}
               authoringContext={authoringContext}

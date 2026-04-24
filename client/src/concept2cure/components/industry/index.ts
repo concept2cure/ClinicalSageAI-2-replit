@@ -128,26 +128,12 @@ export {
 } from '../layout/ContextRibbon';
 
 export {
-  CouncilThread,
-  type AgentRole,
-  type CouncilMessage,
-  type MessageAction,
-  type Citation,
-  type Attachment,
-} from '../chat/CouncilThread';
-
-export {
   MorningBriefing,
   type AlertPriority,
   type AlertSource,
   type BriefingAlert,
   type TodaysPriority,
 } from '../dashboard/MorningBriefing';
-
-export {
-  ConvergentCanvas,
-  type WorkspaceView,
-} from '../layout/ConvergentCanvas';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // UNIFIED EXPORTS FOR CONVENIENCE
@@ -210,12 +196,12 @@ export const ROLE_WORKSPACE_MAP = {
 /**
  * THE SHERPA TEAM - Maps components to their Sherpa roles
  * [BATCH 5] eCTDCoAuthor → ClinicalDocAuthoringWorkspace
+ * Note: ConvergentCanvas + CouncilThread removed with the legacy chat tree;
+ * their roles now live inside the Claude Design Ana chat shell.
  */
 export const SHERPA_ROLES = {
-  ConvergentCanvas: 'The Expedition Leader (AnA RI)',
   ClinicalDocAuthoringWorkspace: 'The Heavy Lifter (Document Porter)',
   MedicalDeviceDashboard: 'The Pathfinder (CERV2 Scout)',
   ContextRibbon: 'The Compass & Altimeter',
   MorningBriefing: 'The Morning Weather Report',
-  CouncilThread: 'The Sherpa Council',
 } as const;
