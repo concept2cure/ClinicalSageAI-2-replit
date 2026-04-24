@@ -151,6 +151,7 @@ const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect 
 
 // AnA Persistent Panel — always-available AI conversation on every page
 import { Ana } from './components/ana';
+import { ClaudeEctdCoauthor } from './components/claude-ectd-coauthor';
 import { GlobalOperatingShell } from './components/shell/GlobalOperatingShell';
 
 // Canonical authoring context resolver
@@ -3450,6 +3451,21 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     onInitialContentConsumed={() => setPendingEditorContent(null)}
                   />
                 </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* Phase 3 — eCTD co-authoring workbench (Claude Design bundle).
+              Three-pane shell: tree · intelligence · artifact. Bundle fixtures
+              are the starting state; real eCTD structure + section content
+              wire in through ClaudeEctdCoauthorProps when the authoring API
+              is ready. */}
+          {!embeddedModule && layoutMode === 'ectd-coauthor' && (
+            <div className="flex-1 flex min-w-0 min-h-0" data-testid="workspace-ectd-coauthor">
+              <ErrorBoundary>
+                <ClaudeEctdCoauthor
+                  applicationLabel={activeProject?.name}
+                />
               </ErrorBoundary>
             </div>
           )}
