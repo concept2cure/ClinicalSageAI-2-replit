@@ -32,10 +32,13 @@ import { apiRequest } from '@/lib/queryClient';
 
 import type {
   ArtifactSection,
+  DocSpan,
   EctdStatus,
   EctdTreeChild,
   EctdTreeModule,
+  HeadingBlock,
   ParagraphBlock,
+  ProvenanceInfo,
 } from './data';
 
 interface AuthoringDocRow {
@@ -121,6 +124,91 @@ function relTime(iso?: string | null): string {
   }
 }
 
+/**
+ * Parse plain-text section content into Phase 3 block structure.
+ *   - Lines starting with `## ` or `# ` → h2 block
+ *   - Blank-line-separated chunks → paragraph blocks
+ *   - Inline `[citation]` patterns → citation spans alongside surrounding text
+ *
+ * authoring_sections.content is stored as plain text today (see
+ * server/routes/authoring.router.ts where it goes straight into a docx
+ * Paragraph as `{ text: section.content || '' }`). When the editor migrates
+ * to TipTap JSON or HTML, this parser is the single place to update.
+ */
+function parseContentToBlocks(
+  content: string,
+  baseId: string,
+  baseProv: ProvenanceInfo,
+): Array<HeadingBlock | ParagraphBlock> {
+  const text = (content || '').trim();
+  if (!text) {
+    return [
+      {
+        kind: 'p',
+        id: baseId,
+        confidence: 0.7,
+        prov: { ...baseProv, foot: 'No content yet' },
+        spans: [{ t: '(no content)' }],
+      },
+    ];
+  }
+
+  const chunks = text.split(/\n\s*\n/).map(c => c.trim()).filter(c => c.length > 0);
+  const blocks: Array<HeadingBlock | ParagraphBlock> = [];
+  let pIndex = 0;
+
+  for (const chunk of chunks) {
+    const headingMatch = chunk.match(/^#{1,3}\s+(.*)$/);
+    if (headingMatch && !chunk.includes('\n')) {
+      blocks.push({ kind: 'h2', text: headingMatch[1] });
+      continue;
+    }
+    pIndex += 1;
+    blocks.push({
+      kind: 'p',
+      id: `${baseId}-p${pIndex}`,
+      confidence: 0.85,
+      prov: baseProv,
+      spans: parseInlineSpans(chunk),
+    });
+  }
+
+  if (blocks.length === 0) {
+    blocks.push({
+      kind: 'p',
+      id: baseId,
+      confidence: 0.7,
+      prov: baseProv,
+      spans: [{ t: text }],
+    });
+  }
+  return blocks;
+}
+
+/** Convert inline `[label]` patterns to citation spans, preserving surrounding text. */
+function parseInlineSpans(text: string): DocSpan[] {
+  // Cite pattern: bracketed label that doesn't look like markdown link `[text](url)`.
+  // We match `[ ... ]` only when not immediately followed by `(`.
+  const spans: DocSpan[] = [];
+  const re = /\[([^\]]{1,80})\](?!\()/g;
+  let lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > lastIndex) {
+      spans.push({ t: text.slice(lastIndex, m.index) });
+    }
+    spans.push({ cite: m[1] });
+    lastIndex = m.index + m[0].length;
+  }
+  if (lastIndex < text.length) {
+    spans.push({ t: text.slice(lastIndex) });
+  }
+  if (spans.length === 0) {
+    return [{ t: text }];
+  }
+  return spans;
+}
+
 /** Build a single ArtifactSection from a section row + its parent doc. */
 function buildArtifact(section: AuthoringSectionRow, doc: AuthoringDocRow): ArtifactSection {
   const path = section.code || section.id;
@@ -129,18 +217,14 @@ function buildArtifact(section: AuthoringSectionRow, doc: AuthoringDocRow): Arti
   const editor = doc.created_by || 'authoring service';
   const lastEdited = relTime(section.updated_at || doc.updated_at);
 
-  const paragraph: ParagraphBlock = {
-    kind: 'p',
-    id: section.id,
-    confidence: 0.85,
-    prov: {
-      source: `${doc.title} · §${section.code}`,
-      model: editor,
-      audit: section.id.slice(0, 12),
-      foot: '21 CFR Part 11 · authoring_sections',
-    },
-    spans: [{ t: section.content || '(no content)' }],
+  const baseProv: ProvenanceInfo = {
+    source: `${doc.title} · §${section.code}`,
+    model: editor,
+    audit: section.id.slice(0, 12),
+    foot: '21 CFR Part 11 · authoring_sections',
   };
+
+  const blocks = parseContentToBlocks(section.content, section.id, baseProv);
 
   return {
     path,
@@ -153,9 +237,10 @@ function buildArtifact(section: AuthoringSectionRow, doc: AuthoringDocRow): Arti
       { lbl: 'Application', val: doc.product_code || doc.title },
       { lbl: 'Sponsor', val: 'Concept2Cure Bio' },
       { lbl: 'Module', val: `${section.code} ${section.title}` },
-      { lbl: 'Version', val: paragraph ? `${doc.status}` : '—' },
+      { lbl: 'Version', val: doc.status },
     ],
-    blocks: [paragraph],
+    blocks,
+    docId: doc.id,
   };
 }
 

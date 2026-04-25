@@ -3500,6 +3500,62 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       ? ectdAuthoring.artifacts
                       : undefined
                   }
+                  onSubmitForReview={async ({ docId, sectionPath }) => {
+                    if (!docId) {
+                      toast({
+                        title: 'No document linked',
+                        description: `Section ${sectionPath} is from a fixture; submit-for-review needs a real authoring document.`,
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
+                    try {
+                      const res = await apiRequest(
+                        'POST',
+                        `/api/authoring/docs/${docId}/submit`,
+                        {},
+                      );
+                      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                      toast({
+                        title: 'Submitted for review',
+                        description: `Section ${sectionPath} is now in the review workflow.`,
+                      });
+                    } catch (err) {
+                      toast({
+                        title: 'Submit failed',
+                        description: err instanceof Error ? err.message : 'Unknown error',
+                        variant: 'destructive',
+                      });
+                    }
+                  }}
+                  onExport={async ({ docId, sectionPath }) => {
+                    if (!docId) {
+                      toast({
+                        title: 'No document linked',
+                        description: `Section ${sectionPath} is from a fixture; export needs a real authoring document.`,
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
+                    try {
+                      const res = await apiRequest(
+                        'POST',
+                        `/api/authoring/docs/${docId}/export`,
+                        { format: 'docx' },
+                      );
+                      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                      toast({
+                        title: 'Export started',
+                        description: `Document export is being prepared. Check the export history.`,
+                      });
+                    } catch (err) {
+                      toast({
+                        title: 'Export failed',
+                        description: err instanceof Error ? err.message : 'Unknown error',
+                        variant: 'destructive',
+                      });
+                    }
+                  }}
                 />
               </ErrorBoundary>
             </div>

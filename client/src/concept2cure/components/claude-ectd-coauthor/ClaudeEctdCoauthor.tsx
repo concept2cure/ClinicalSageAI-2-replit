@@ -53,10 +53,14 @@ export interface ClaudeEctdCoauthorProps {
   readinessPct?: number;
   blockingCount?: number;
   lastRimSync?: string;
-  /** Top-bar action callbacks. */
-  onSubmitForReview?: () => void;
-  onShare?: () => void;
-  onExport?: () => void;
+  /**
+   * Top-bar action callbacks. Each receives the active section context so the
+   * host can route to the right document (`docId` is undefined when running
+   * against bundle fixtures).
+   */
+  onSubmitForReview?: (ctx: { docId?: string; sectionPath: string }) => void;
+  onShare?: (ctx: { docId?: string; sectionPath: string }) => void;
+  onExport?: (ctx: { docId?: string; sectionPath: string }) => void;
   /**
    * Live AnA chat controller (same hook Phase 2 uses). When supplied, the
    * Intelligence pane streams real responses through `/api/ana-ri/stream`
@@ -418,9 +422,21 @@ export function ClaudeEctdCoauthor({
         setFocus={setFocus}
         treeCollapsed={treeCollapsed}
         setTreeCollapsed={setTreeCollapsed}
-        onSubmitForReview={onSubmitForReview}
-        onShare={onShare}
-        onExport={onExport}
+        onSubmitForReview={
+          onSubmitForReview
+            ? () => onSubmitForReview({ docId: art.docId, sectionPath: activePath })
+            : undefined
+        }
+        onShare={
+          onShare
+            ? () => onShare({ docId: art.docId, sectionPath: activePath })
+            : undefined
+        }
+        onExport={
+          onExport
+            ? () => onExport({ docId: art.docId, sectionPath: activePath })
+            : undefined
+        }
       />
       <Tree
         activePath={activePath}

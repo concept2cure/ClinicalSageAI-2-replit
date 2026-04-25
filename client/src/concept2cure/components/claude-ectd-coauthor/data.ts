@@ -98,6 +98,12 @@ export interface ArtifactSection {
   lastEdited: string;
   masthead: Array<{ lbl: string; val: string }>;
   blocks: DocBlock[];
+  /**
+   * Backend document id. Populated when the section is loaded from
+   * /api/authoring/docs/:docId/sections; left undefined for the bundle
+   * fixtures. Used by Submit-for-review / Export top-bar actions.
+   */
+  docId?: string;
 }
 
 export const ARTIFACTS: Record<string, ArtifactSection> = {
