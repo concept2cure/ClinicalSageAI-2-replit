@@ -86,9 +86,9 @@ Everything else — prior CLAUDE.md UI sections, `.claude/skills/` design-relate
 
 | Phase | Surface | Bundle source | Production state |
 | --- | --- | --- | --- |
-| 1 | Home | `ui_kits/home/` | **Implemented** · `client/src/concept2cure/components/claude-home/` · rendered via `ZenApp.tsx` early return when `layoutMode === 'projects' && !embeddedModule` |
-| 2 | Chat shell (AnA RI) | `ui_kits/ana_ri/` | Not yet implemented — wait for designer sign-off |
-| 3 | eCTD co-authoring workbench | `ui_kits/ectd_coauthor/` | Not yet implemented — wait for designer sign-off |
+| 1 | Home | `ui_kits/home/` | **Implemented** · `client/src/concept2cure/components/concept2cure-home/` · rendered via `ZenApp.tsx` early return when `layoutMode === 'projects' && !embeddedModule`. Tweaks panel wired (`?tweaks=1` URL param + canvas postMessage protocol). |
+| 2 | Chat shell (AnA RI) | `ui_kits/ana_ri/` | **Implemented** · `client/src/concept2cure/components/ana/` · `<Ana>` replaces the legacy AnaPersistentPanel at all 4 ZenApp call sites and inside `EmbeddedModuleHosts`. Backend wiring: `useAnaChat` against `/api/ana-ri/stream`, `useRecents` against `/api/chat/threads`. Legacy `components/chat/**` (9 files, ~9,100 lines), `concept2cure/layouts/**`, and orphan `ConvergentCanvas` / `CouncilThreadPanel` deleted. |
+| 3 | eCTD co-authoring workbench | `ui_kits/ectd_coauthor/` | **Implemented (visual)** · `client/src/concept2cure/components/claude-ectd-coauthor/` · rendered when `layoutMode === 'ectd-coauthor'`. 3-pane shell (tree · intelligence · artifact) with provenance popovers, selection toolbar, streaming rewrite engine. Currently uses bundle fixtures (`TREE`, `ARTIFACTS`, `REWRITES`); host props (`artifacts`, `tree`, `rewrites`, `initialMessages`) accept live data when authoring API is wired. Legacy `components/editor/**` retained pending bundle equivalents for diff / comments / approvals / governance / compliance scanning. |
 
 **Do not implement a surface the designer has not shipped.** When a new phase lands in the bundle (via `HANDOFF.md` or a README update), mirror it, wire it, and delete its legacy equivalent.
 
