@@ -151,6 +151,7 @@ const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect 
 
 // AnA Persistent Panel — always-available AI conversation on every page
 import { Ana } from './components/ana';
+import { useAnaChat } from './components/ana/useAnaChat';
 import { ClaudeEctdCoauthor } from './components/claude-ectd-coauthor';
 import { GlobalOperatingShell } from './components/shell/GlobalOperatingShell';
 
@@ -1921,6 +1922,17 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   const userRole = userProfile?.role || 'Regulatory Lead';
   const canViewRouteDebugPanel = /founder|admin/i.test(userRole);
+
+  // Phase 3 (eCTD co-authoring) Intelligence pane streams against the same
+  // /api/ana-ri/stream endpoint Phase 2 uses. Hook lives here so it survives
+  // tab switches; ClaudeEctdCoauthor only consumes it when rendered.
+  const ectdChat = useAnaChat({
+    projectId: activeProjectId,
+    projectName: activeProject?.name,
+    screenName: 'ectd-coauthor',
+    userRole,
+    submissionType: activeProject?.type,
+  });
   const rawIndustry = userProfile?.preferences?.industryMode;
   const industryMode = normalizeIndustryMode(
     typeof rawIndustry === 'string' ? rawIndustry : orgIndustryMode
@@ -3456,15 +3468,16 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           )}
 
           {/* Phase 3 — eCTD co-authoring workbench (Claude Design bundle).
-              Three-pane shell: tree · intelligence · artifact. Bundle fixtures
-              are the starting state; real eCTD structure + section content
-              wire in through ClaudeEctdCoauthorProps when the authoring API
-              is ready. */}
+              Three-pane shell: tree · intelligence · artifact. The Intelligence
+              pane streams real responses through the same useAnaChat hook
+              Phase 2 uses; bundle fixtures still drive the tree + artifact
+              content until step 2 of the wiring (authoring.router.ts) lands. */}
           {!embeddedModule && layoutMode === 'ectd-coauthor' && (
             <div className="flex-1 flex min-w-0 min-h-0" data-testid="workspace-ectd-coauthor">
               <ErrorBoundary>
                 <ClaudeEctdCoauthor
                   applicationLabel={activeProject?.name}
+                  chat={ectdChat}
                 />
               </ErrorBoundary>
             </div>

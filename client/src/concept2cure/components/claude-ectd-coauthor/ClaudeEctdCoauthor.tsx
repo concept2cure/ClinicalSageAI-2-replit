@@ -12,18 +12,20 @@
  *   - Selection actions (Tighten / Strengthen) run through the same
  *     bundle rewrite engine so the streaming animation is faithful.
  *     A host prop can replace the rewrite source with a real backend.
- *   - Intelligence messages are kept local for a calm in-pane experience
- *     by default; callers can drive them via host props once ana-ri /
- *     authoring streaming is integrated.
+ *   - Intelligence messages can run on real streaming when the host
+ *     supplies a `chat` prop (UseAnaChatReturn-shaped). When omitted,
+ *     the bundle's deterministic mock thread is used so the component
+ *     still works standalone (canvas preview, storybook, tests).
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { TopBar } from './TopBar';
 import { Tree } from './Tree';
-import { Intelligence, type IntelligenceMessage } from './Intelligence';
+import { Intelligence, type IntelligenceBlock, type IntelligenceMessage } from './Intelligence';
 import { Artifact } from './Artifact';
 import { SelectionToolbar, type SelectionAction } from './SelectionToolbar';
 import type { SelectionInfo } from './ArtifactDoc';
+import type { AnaChatAction, AnaChatMessage, UseAnaChatReturn } from '../ana/useAnaChat';
 import {
   ARTIFACTS as DEFAULT_ARTIFACTS,
   REWRITES as DEFAULT_REWRITES,
@@ -55,6 +57,54 @@ export interface ClaudeEctdCoauthorProps {
   onSubmitForReview?: () => void;
   onShare?: () => void;
   onExport?: () => void;
+  /**
+   * Live AnA chat controller (same hook Phase 2 uses). When supplied, the
+   * Intelligence pane streams real responses through `/api/ana-ri/stream`
+   * and the local mock thread is bypassed. When omitted, the bundle's
+   * deterministic mock thread runs so the component still works standalone.
+   */
+  chat?: UseAnaChatReturn | null;
+}
+
+/* ─── AnA → Intelligence adapter ─────────────────────────────────────
+ * Convert an AnaChatMessage stream into the structured IntelligenceMessage
+ * shape the Phase 3 chat thread renders. Mapping:
+ *   user        → { role: 'user', text }
+ *   assistant   → { role: 'ai', blocks: [paragraph, ...action tool rows] }
+ *
+ * Streaming + thinking + warnings are not yet surfaced in the Phase 3
+ * intel UI (the bundle didn't include those affordances); they're
+ * preserved on the underlying chat object so a future UI update can
+ * render them without re-wiring.
+ */
+function actionsToTools(actions: AnaChatAction[] | undefined): IntelligenceBlock[] {
+  if (!actions || actions.length === 0) return [];
+  return actions.map(a => ({
+    kind: 'tool' as const,
+    label: a.executed ? 'Done' : a.error ? 'Failed' : 'Action',
+    value: a.label,
+  }));
+}
+
+function adaptAnaMessages(messages: AnaChatMessage[]): IntelligenceMessage[] {
+  const out: IntelligenceMessage[] = [];
+  for (const m of messages) {
+    if (m.role === 'user') {
+      out.push({ role: 'user', text: m.text });
+      continue;
+    }
+    const blocks: IntelligenceBlock[] = [];
+    if (m.statusPhase && (!m.text || m.text.length === 0)) {
+      blocks.push({ kind: 'p', text: m.statusPhase });
+    } else if (m.text) {
+      blocks.push({ kind: 'p', text: m.text });
+    }
+    blocks.push(...actionsToTools(m.executedActions));
+    if (blocks.length > 0) {
+      out.push({ role: 'ai', blocks });
+    }
+  }
+  return out;
 }
 
 const SEED_MESSAGES: IntelligenceMessage[] = [
@@ -96,7 +146,9 @@ export function ClaudeEctdCoauthor({
   onSubmitForReview,
   onShare,
   onExport,
+  chat,
 }: ClaudeEctdCoauthorProps) {
+  const useLiveChat = !!chat;
   const lib = artifacts ?? DEFAULT_ARTIFACTS;
   const treeData = tree ?? DEFAULT_TREE;
   const rewriteMap = rewrites ?? DEFAULT_REWRITES;
@@ -120,6 +172,15 @@ export function ClaudeEctdCoauthor({
   );
 
   const art = lib[activePath] ?? lib['2.5'];
+
+  // Pick which message stream the Intelligence pane displays. In live mode we
+  // adapt the AnA chat into the bundle's structured block shape; in mock mode
+  // the local seed thread + onAction/onSend appends are used as-is.
+  const liveMessages: IntelligenceMessage[] = useMemo(() => {
+    if (useLiveChat && chat) return adaptAnaMessages(chat.messages);
+    return messages;
+  }, [useLiveChat, chat, messages]);
+  const livePending = useLiveChat && chat ? chat.isStreaming : pending;
 
   // ───── Streaming rewrite engine (typed-out animation) ─────
   useEffect(() => {
@@ -175,6 +236,10 @@ export function ClaudeEctdCoauthor({
 
   // ───── User sends a free-form chat message ─────
   const onSend = (text: string) => {
+    if (useLiveChat && chat) {
+      void chat.send(text);
+      return;
+    }
     setMessages(m => [...m, { role: 'user', text }]);
     setPending(true);
     setTimeout(() => {
@@ -199,15 +264,29 @@ export function ClaudeEctdCoauthor({
     setSelection(null);
     window.getSelection?.()?.removeAllRanges();
 
+    const snippet = `"${text.slice(0, 60)}${text.length > 60 ? '…' : ''}"`;
+
     if (action === 'tighten' || action === 'ask') {
       const rewrite = rewriteMap[blockId];
       if (!rewrite) return;
       const label = action === 'tighten' ? 'Tighten' : 'Strengthen';
+
+      if (useLiveChat && chat) {
+        // Real chat — let AnA respond; still kick the local rewrite animation so
+        // the artifact text updates in place, faithful to the bundle's UX.
+        void chat.send(
+          `Selected · ${snippet}\n\n${label} this paragraph against the strongest regulatory precedent.`,
+        );
+        kickStream(blockId, rewrite);
+        return;
+      }
+
+      // Mock path
       setMessages(m => [
         ...m,
         {
           role: 'user',
-          pre: `Selected · "${text.slice(0, 60)}${text.length > 60 ? '…' : ''}"`,
+          pre: `Selected · ${snippet}`,
           text: `${label} this paragraph against the strongest regulatory precedent.`,
         },
       ]);
@@ -250,11 +329,17 @@ export function ClaudeEctdCoauthor({
     }
 
     if (action === 'precedent') {
+      if (useLiveChat && chat) {
+        void chat.send(
+          `Selected · ${snippet}\n\nFind regulatory precedent for this claim.`,
+        );
+        return;
+      }
       setMessages(m => [
         ...m,
         {
           role: 'user',
-          pre: `Selected · "${text.slice(0, 60)}${text.length > 60 ? '…' : ''}"`,
+          pre: `Selected · ${snippet}`,
           text: 'Find regulatory precedent for this claim.',
         },
       ]);
@@ -279,6 +364,12 @@ export function ClaudeEctdCoauthor({
     }
 
     if (action === 'flag') {
+      if (useLiveChat && chat) {
+        void chat.send(
+          `Selected · ${snippet}\n\nFlag this paragraph for reviewer attention.`,
+        );
+        return;
+      }
       setMessages(m => [
         ...m,
         {
@@ -290,17 +381,21 @@ export function ClaudeEctdCoauthor({
   };
 
   // ───── Tree navigation ─────
+  // In live-chat mode, swapping artifacts is silent — the artifact pane swap is
+  // its own visual feedback, no need to clutter the chat thread with breadcrumbs.
   const onTreeNav = (path: string) => {
     if (!lib[path]) return;
     setActivePath(path);
     setSelection(null);
-    setMessages(m => [
-      ...m,
-      {
-        role: 'ai',
-        blocks: [{ kind: 'tool', label: 'Loaded', value: `${path} · ${lib[path].title}` }],
-      },
-    ]);
+    if (!useLiveChat) {
+      setMessages(m => [
+        ...m,
+        {
+          role: 'ai',
+          blocks: [{ kind: 'tool', label: 'Loaded', value: `${path} · ${lib[path].title}` }],
+        },
+      ]);
+    }
   };
 
   // Clear selection on outside scroll
@@ -335,7 +430,11 @@ export function ClaudeEctdCoauthor({
         blockingCount={blockingCount}
         lastRimSync={lastRimSync}
       />
-      <Intelligence messages={messages} onSend={onSend} pending={pending} />
+      <Intelligence
+        messages={liveMessages}
+        onSend={onSend}
+        pending={livePending}
+      />
       <Artifact
         art={art}
         path={activePath}
