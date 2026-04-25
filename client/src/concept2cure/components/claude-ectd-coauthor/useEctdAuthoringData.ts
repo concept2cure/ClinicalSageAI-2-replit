@@ -241,6 +241,7 @@ function buildArtifact(section: AuthoringSectionRow, doc: AuthoringDocRow): Arti
     ],
     blocks,
     docId: doc.id,
+    sectionId: section.id,
   };
 }
 

@@ -104,6 +104,11 @@ export interface ArtifactSection {
    * fixtures. Used by Submit-for-review / Export top-bar actions.
    */
   docId?: string;
+  /**
+   * Backend section id (authoring_sections.id). Populated alongside docId
+   * for live data; used by section-level actions (revert, comment, cite).
+   */
+  sectionId?: string;
 }
 
 export const ARTIFACTS: Record<string, ArtifactSection> = {

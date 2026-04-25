@@ -54,13 +54,14 @@ export interface ClaudeEctdCoauthorProps {
   blockingCount?: number;
   lastRimSync?: string;
   /**
-   * Top-bar action callbacks. Each receives the active section context so the
-   * host can route to the right document (`docId` is undefined when running
-   * against bundle fixtures).
+   * Top-bar / artifact-bar action callbacks. Each receives the active
+   * section context so the host can route to the right document (`docId`
+   * and `sectionId` are undefined when running against bundle fixtures).
    */
   onSubmitForReview?: (ctx: { docId?: string; sectionPath: string }) => void;
   onShare?: (ctx: { docId?: string; sectionPath: string }) => void;
   onExport?: (ctx: { docId?: string; sectionPath: string }) => void;
+  onRevert?: (ctx: { docId?: string; sectionId?: string; sectionPath: string }) => void;
   /**
    * Live AnA chat controller (same hook Phase 2 uses). When supplied, the
    * Intelligence pane streams real responses through `/api/ana-ri/stream`
@@ -150,6 +151,7 @@ export function ClaudeEctdCoauthor({
   onSubmitForReview,
   onShare,
   onExport,
+  onRevert,
   chat,
 }: ClaudeEctdCoauthorProps) {
   const useLiveChat = !!chat;
@@ -458,6 +460,16 @@ export function ClaudeEctdCoauthor({
         streamText={streamText}
         onSelect={setSelection}
         artifacts={lib}
+        onRevert={
+          onRevert
+            ? () =>
+                onRevert({
+                  docId: art.docId,
+                  sectionId: art.sectionId,
+                  sectionPath: activePath,
+                })
+            : undefined
+        }
       />
       <SelectionToolbar selection={selection} onAction={onAction} />
     </div>

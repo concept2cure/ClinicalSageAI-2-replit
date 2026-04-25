@@ -155,6 +155,7 @@ import { useAnaChat } from './components/ana/useAnaChat';
 import {
   ClaudeEctdCoauthor,
   useEctdAuthoringData,
+  useEctdReadiness,
 } from './components/claude-ectd-coauthor';
 import { GlobalOperatingShell } from './components/shell/GlobalOperatingShell';
 
@@ -1945,6 +1946,14 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     productCode: activeProjectId ?? null,
     enabled: layoutMode === 'ectd-coauthor',
   });
+
+  // Phase 3 tree-footer stats: real readiness + blocker count + last
+  // assessed-at relative time. Falls through to bundle defaults when the
+  // assessment service has nothing yet for this project.
+  const ectdReadiness = useEctdReadiness({
+    projectId: activeProjectId ?? null,
+    enabled: layoutMode === 'ectd-coauthor',
+  });
   const rawIndustry = userProfile?.preferences?.industryMode;
   const industryMode = normalizeIndustryMode(
     typeof rawIndustry === 'string' ? rawIndustry : orgIndustryMode
@@ -3500,6 +3509,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       ? ectdAuthoring.artifacts
                       : undefined
                   }
+                  readinessPct={ectdReadiness.readinessPct ?? undefined}
+                  blockingCount={ectdReadiness.blockingCount ?? undefined}
+                  lastRimSync={ectdReadiness.lastRimSync ?? undefined}
                   onSubmitForReview={async ({ docId, sectionPath }) => {
                     if (!docId) {
                       toast({
@@ -3551,6 +3563,51 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     } catch (err) {
                       toast({
                         title: 'Export failed',
+                        description: err instanceof Error ? err.message : 'Unknown error',
+                        variant: 'destructive',
+                      });
+                    }
+                  }}
+                  onShare={({ docId, sectionPath }) => {
+                    // No backend share endpoint today — copy a deep link to the
+                    // active section so collaborators can paste it into chat or
+                    // email. Falls back to the project URL when no docId.
+                    const url = new URL(window.location.href);
+                    if (docId) {
+                      url.searchParams.set('doc', docId);
+                      url.searchParams.set('section', sectionPath);
+                    }
+                    void navigator.clipboard?.writeText(url.toString()).catch(() => {});
+                    toast({
+                      title: 'Link copied',
+                      description: docId
+                        ? `Shareable link to section ${sectionPath} is on your clipboard.`
+                        : 'Section is from a fixture; only the page link was copied.',
+                    });
+                  }}
+                  onRevert={async ({ sectionId, sectionPath }) => {
+                    if (!sectionId) {
+                      toast({
+                        title: 'No section linked',
+                        description: `Section ${sectionPath} is from a fixture; revert needs a real authoring section.`,
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
+                    try {
+                      const res = await apiRequest(
+                        'POST',
+                        `/api/authoring/sections/${sectionId}/revert`,
+                        {},
+                      );
+                      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                      toast({
+                        title: 'Section reverted',
+                        description: `Section ${sectionPath} restored to the previous revision.`,
+                      });
+                    } catch (err) {
+                      toast({
+                        title: 'Revert failed',
                         description: err instanceof Error ? err.message : 'Unknown error',
                         variant: 'destructive',
                       });
