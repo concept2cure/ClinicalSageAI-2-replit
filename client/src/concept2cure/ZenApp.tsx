@@ -152,7 +152,10 @@ const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect 
 // AnA Persistent Panel — always-available AI conversation on every page
 import { Ana } from './components/ana';
 import { useAnaChat } from './components/ana/useAnaChat';
-import { ClaudeEctdCoauthor } from './components/claude-ectd-coauthor';
+import {
+  ClaudeEctdCoauthor,
+  useEctdAuthoringData,
+} from './components/claude-ectd-coauthor';
 import { GlobalOperatingShell } from './components/shell/GlobalOperatingShell';
 
 // Canonical authoring context resolver
@@ -1933,6 +1936,15 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     userRole,
     submissionType: activeProject?.type,
   });
+
+  // Phase 3 backend wiring step 2: live tree + artifact content from
+  // /api/authoring/docs and /docs/:id/sections. Falls through to the bundle
+  // fixtures when the project has no authoring documents yet.
+  const ectdAuthoring = useEctdAuthoringData({
+    projectId: activeProjectId ?? null,
+    productCode: activeProjectId ?? null,
+    enabled: layoutMode === 'ectd-coauthor',
+  });
   const rawIndustry = userProfile?.preferences?.industryMode;
   const industryMode = normalizeIndustryMode(
     typeof rawIndustry === 'string' ? rawIndustry : orgIndustryMode
@@ -3478,6 +3490,16 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 <ClaudeEctdCoauthor
                   applicationLabel={activeProject?.name}
                   chat={ectdChat}
+                  tree={
+                    ectdAuthoring.tree && ectdAuthoring.tree.some(m => m.children.length > 0)
+                      ? ectdAuthoring.tree
+                      : undefined
+                  }
+                  artifacts={
+                    ectdAuthoring.artifacts && Object.keys(ectdAuthoring.artifacts).length > 0
+                      ? ectdAuthoring.artifacts
+                      : undefined
+                  }
                 />
               </ErrorBoundary>
             </div>

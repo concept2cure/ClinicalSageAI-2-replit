@@ -19,3 +19,8 @@ export type {
   ProvenanceInfo,
 } from './data';
 export type { IntelligenceMessage } from './Intelligence';
+export { useEctdAuthoringData } from './useEctdAuthoringData';
+export type {
+  UseEctdAuthoringDataOptions,
+  UseEctdAuthoringDataReturn,
+} from './useEctdAuthoringData';
