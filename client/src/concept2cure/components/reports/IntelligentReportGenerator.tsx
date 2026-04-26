@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { WorkspaceStatusBadge } from '@/components/ui/workspace-primitives';
 import {
   Card,
   CardContent,

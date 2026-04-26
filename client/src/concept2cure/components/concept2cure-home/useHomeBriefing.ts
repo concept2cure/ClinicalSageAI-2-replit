@@ -17,10 +17,13 @@
  * Returns null items when the chain fails or returns nothing — caller
  * falls back to BRIEFING_BY_SCOPE so the bundle visual stays intact.
  *
+ * Backed by TanStack Query for cache + refetch consistency with
+ * useEctdAuthoringData / useEctdReadiness / useRecents.
+ *
  * @module client/src/concept2cure/components/concept2cure-home/useHomeBriefing
  */
 
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 import { getAuthHeaders } from '@/utils/authToken';
 
@@ -115,22 +118,14 @@ export interface UseHomeBriefingReturn {
 
 export function useHomeBriefing(options: UseHomeBriefingOptions = {}): UseHomeBriefingReturn {
   const { limit = 5, projectFanout = 3 } = options;
-  const [items, setItems] = useState<BriefingItem[] | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const load = async () => {
+  const query = useQuery<BriefingItem[]>({
+    queryKey: ['home-briefing', limit, projectFanout],
+    staleTime: 60_000,
+    queryFn: async () => {
       const projectsBody = await jsonFetch<ProjectsResponse>('/api/concept2cure/projects');
-      if (cancelled) return;
-
       const projects = extractProjects(projectsBody);
-      if (projects.length === 0) {
-        setItems(null);
-        setLoading(false);
-        return;
-      }
+      if (projects.length === 0) return [];
 
       const ranked = [...projects]
         .sort((a, b) => projectUpdatedAt(b) - projectUpdatedAt(a))
@@ -144,9 +139,8 @@ export function useHomeBriefing(options: UseHomeBriefingOptions = {}): UseHomeBr
         ),
       );
 
-      if (cancelled) return;
-
-      const merged: BriefingItem[] = [];
+      type Ranked = BriefingItem & { __rank: number };
+      const merged: Ranked[] = [];
       for (const r of actionResults) {
         if (r.status !== 'fulfilled') continue;
         const projectName = r.value.project.name || r.value.project.title || 'Project';
@@ -163,33 +157,23 @@ export function useHomeBriefing(options: UseHomeBriefingOptions = {}): UseHomeBr
             num: '00',
             t: title,
             meta: meta || projectName,
+            __rank: PRIORITY_RANK[priority] ?? PRIORITY_RANK.medium,
           });
-          (merged[merged.length - 1] as any).__rank =
-            PRIORITY_RANK[priority] ?? PRIORITY_RANK.medium;
         }
       }
 
-      merged.sort(
-        (a, b) =>
-          ((a as any).__rank ?? PRIORITY_RANK.medium) -
-          ((b as any).__rank ?? PRIORITY_RANK.medium),
-      );
+      merged.sort((a, b) => a.__rank - b.__rank);
 
-      const top = merged.slice(0, limit).map((item, i) => ({
+      return merged.slice(0, limit).map((item, i) => ({
         num: String(i + 1).padStart(2, '0'),
         t: item.t,
         meta: item.meta,
       }));
+    },
+  });
 
-      setItems(top.length > 0 ? top : null);
-      setLoading(false);
-    };
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [limit, projectFanout]);
-
-  return { items, loading };
+  return {
+    items: query.data && query.data.length > 0 ? query.data : null,
+    loading: query.isLoading,
+  };
 }
