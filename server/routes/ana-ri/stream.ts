@@ -50,6 +50,7 @@ import {
   ALL_CLAUDE_TOOLS,
 } from '../../services/claude/ClaudeToolDefinitions.js';
 import { getToolHandler } from '../../services/claude/ClaudeToolExecutor.js';
+import { logToolRun } from '../../services/toolRegistry.js';
 import type { ClaudeEnhancedResponse } from '../../services/ai-gateway/types.js';
 import {
   getIntelligencePrefix,
@@ -473,7 +474,10 @@ router.post('/stream', async (req: Request, res: Response) => {
         );
 
         const handler = getToolHandler(toolUse.name);
+        const toolStart = Date.now();
         let resultStr: string;
+        let toolStatus: 'success' | 'error' | 'not_found' = 'success';
+        let toolErrorMessage: string | undefined;
         if (handler) {
           try {
             resultStr = await handler(toolUse.input);
@@ -482,6 +486,8 @@ router.post('/stream', async (req: Request, res: Response) => {
               error: `Tool execution failed: ${toolErr?.message || 'unknown error'}`,
               tool: toolUse.name,
             });
+            toolStatus = 'error';
+            toolErrorMessage = toolErr?.message || 'unknown error';
           }
         } else {
           // Unknown tool name — could be an Anthropic server tool that
@@ -491,7 +497,25 @@ router.post('/stream', async (req: Request, res: Response) => {
           resultStr = JSON.stringify({
             note: `No local handler for ${toolUse.name}; may be a server-resolved tool.`,
           });
+          toolStatus = 'not_found';
         }
+        // Telemetry: persist the tool invocation so we can measure how
+        // often each tool fires and decide whether eager schema loading
+        // (all 18 tool schemas on every turn) is worth keeping vs
+        // moving to a deferred / tool-search pattern. Fire-and-forget;
+        // logToolRun swallows its own errors.
+        void logToolRun({
+          threadId: thread_id,
+          projectId: streamProjectId ? Number(streamProjectId) || null : null,
+          userId: userId || null,
+          organizationId: orgId,
+          toolName: toolUse.name,
+          arguments: (toolUse.input ?? {}) as Record<string, unknown>,
+          result: { resultBytes: resultStr.length },
+          status: toolStatus,
+          errorMessage: toolErrorMessage,
+          latencyMs: Date.now() - toolStart,
+        });
         toolResultEntries.push({
           tool_use_id: toolUse.id,
           content: resultStr,
