@@ -16,6 +16,7 @@ import {
   foresightPredictions,
   clinicalFeedback,
   translationalPatterns,
+  csrReports,
   type BiomarkerEndpoint,
   type ClinicalOutcome,
   type TranslationalPattern,

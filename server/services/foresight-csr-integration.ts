@@ -13,6 +13,7 @@ import {
   biomarkerEndpoints,
   clinicalOutcomes,
   translationalPatterns,
+  csrReports,
   type InsertClinicalOutcome,
   type InsertBiomarkerEndpoint,
 } from '@shared/schema';

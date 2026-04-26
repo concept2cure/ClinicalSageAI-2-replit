@@ -6,7 +6,7 @@
  */
 
 import { db } from '../db';
-import { 
+import {
   clinicalOutcomes,
   biomarkerEndpoints,
   translationalPatterns,
@@ -14,6 +14,8 @@ import {
   doseLevels,
   doseCohorts,
   dltEvents,
+  csrReports,
+  csrDetails,
   type InsertClinicalOutcome,
   type InsertBiomarkerEndpoint,
   type InsertTranslationalPattern,

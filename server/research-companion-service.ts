@@ -4,6 +4,7 @@ import {
   insightMemories,
   wisdomTraces,
   studySessions,
+  csrReports,
 } from 'shared/schema';
 import { db } from './db';
 import { eq, and, like, or, desc } from 'drizzle-orm';
