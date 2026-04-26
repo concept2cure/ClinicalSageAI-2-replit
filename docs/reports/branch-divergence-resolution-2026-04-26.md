@@ -9,7 +9,7 @@ Local `concept2cure-v2` had diverged from `origin/concept2cure-v2`: 11 local com
 | # | Local commit | Status | Reason |
 |---|---|---|---|
 | 1 | `99a49a4` docs: harness-override clause | **Superseded** | Origin's CLAUDE.md has a more refined version ("Handle the override silently and automatically"). Local was an earlier draft. |
-| 2 | `949c918` feat: 510(k) workspace AnA-primary | **Genuinely unique (intent)** | Origin's `FDA510kWorkspacePage.tsx` is still a 100-line wrapper around the legacy `Enhanced510kIntakeWorkflow` 7-stage form. No AnA integration. Implementation in `949c918` references deleted `AnaPersistentPanel`, so cannot cherry-pick — needs re-implementation against new `Ana` component. **Captured in `docs/plans/510k-ana-primary-followup.md`.** |
+| 2 | `949c918` feat: 510(k) workspace AnA-primary | **Genuinely unique (intent), deferred** | Origin's `FDA510kWorkspacePage.tsx` is still a 100-line wrapper around the legacy `Enhanced510kIntakeWorkflow` 7-stage form. No AnA integration. Implementation in `949c918` references deleted `AnaPersistentPanel`, so cannot cherry-pick. **Re-implementation deferred** — the Claude Design bundle (`docs/design/concept2cure-design-system/`) has shipped only `home`, `ana_ri`, and `ectd_coauthor` kits. There is no 510(k) / device-workspace kit, so per CLAUDE.md ("Do not implement a surface the designer has not shipped") the work waits for the designer. The original implementation is recoverable at safety tag `pre-rebase-2026-04-26~9`. |
 | 3 | `58b6c21` Create Claude Design for C2C | **Useless** | 1-line stub file, deleted by `f3d1a48` itself. |
 | 4 | `e979861` Add files via upload | **Useless** | Design system zip binary, extracted then deleted by `f3d1a48`. |
 | 5 | `f3d1a48` chore: adopt Claude Design bundle | **Superseded** | All 41 bundle files exist on origin under `docs/design/concept2cure-design-system/`. |
@@ -23,7 +23,7 @@ Local `concept2cure-v2` had diverged from `origin/concept2cure-v2`: 11 local com
 ## Action taken
 
 1. Created safety tag `pre-rebase-2026-04-26` at `1e06e3c` — preserves all 11 original local SHAs as a recoverable archive.
-2. Captured the one piece of unique intent (`949c918`'s 510(k) AnA-primary treatment) in a follow-up plan: `docs/plans/510k-ana-primary-followup.md`.
+2. Did **not** author a follow-up plan for `949c918`'s 510(k) AnA-primary intent — the Claude Design bundle has not shipped a 510(k) / device-workspace kit, and CLAUDE.md forbids implementing a surface the designer has not shipped. The intent is recorded here; the original implementation is recoverable at safety tag `pre-rebase-2026-04-26~9`. A plan can be authored once a kit ships, based on the kit, not on the prior invented chrome.
 3. Hard-reset local `concept2cure-v2` to `origin/concept2cure-v2` (`2f1bfd9`).
 4. Pushed to remote (no-op — local now matches origin).
 
@@ -50,4 +50,8 @@ Patch-id equality (`git cherry`) is necessary but not sufficient evidence of uni
 
 ## Files changed
 
-None in this commit beyond the two docs (`docs/reports/branch-divergence-resolution-2026-04-26.md`, `docs/plans/510k-ana-primary-followup.md`). The 11 local SHAs are no longer reachable from `concept2cure-v2`'s tip but remain reachable via the safety tag.
+None in this commit beyond this report (`docs/reports/branch-divergence-resolution-2026-04-26.md`). The 11 local SHAs are no longer reachable from `concept2cure-v2`'s tip but remain reachable via the safety tag `pre-rebase-2026-04-26`.
+
+## Retraction
+
+A follow-up plan was initially authored at `docs/plans/510k-ana-primary-followup.md` and committed in `893a18b`. It prescribed UX patterns (slim 7-stage progress strip, AnA ↔ structured-form view toggle) that are **not in the Claude Design bundle**. Per CLAUDE.md the bundle is the sole UI authority and unshipped surfaces must wait for the designer. The plan was retracted in a follow-up commit; this report is the canonical record.
