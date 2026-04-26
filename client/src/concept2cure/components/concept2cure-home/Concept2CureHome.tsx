@@ -23,6 +23,7 @@ import {
 import { AnaCard } from './AnaCard';
 import { CommandPalette, type PaletteItem } from './CommandPalette';
 import { useHomeData } from './useHomeData';
+import { useHomeBriefing } from './useHomeBriefing';
 import brandIcon from '../../../assets/concept2cure-icon.svg';
 import styles from './styles.module.css';
 
@@ -535,6 +536,7 @@ export function Concept2CureHome({
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   const { metrics, recentThreads } = useHomeData();
+  const { items: briefingItems } = useHomeBriefing();
 
   // Bundle App.jsx setTweak — mirrors the tweak into the parent canvas host
   // so the designer surface stays in sync.
@@ -639,7 +641,12 @@ export function Concept2CureHome({
         <div className={styles.page}>
           <div className={styles.pageInner}>
             <GreetAndCompose userName={resolvedUser.name} onLaunchChat={onLaunchChat} />
-            <AnaCard scope={scope} onOpenPalette={() => setPaletteOpen(true)} />
+            <AnaCard
+              scope={scope}
+              onOpenPalette={() => setPaletteOpen(true)}
+              items={briefingItems ?? undefined}
+              lastSyncLabel={briefingItems ? 'just now' : undefined}
+            />
             <Dashboard projectCount={metrics.projectCount} artifactTotal={metrics.artifactTotal} />
             <div style={{ height: 24 }} />
             <Launcher activeNav={tweaks.activeNav} setActiveNav={handleSelectNav} />
