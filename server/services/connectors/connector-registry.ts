@@ -34,7 +34,23 @@ import { BoxConnector } from './box.js';
 // ENCRYPTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const ENCRYPTION_KEY = process.env.CONNECTOR_ENCRYPTION_KEY || process.env.JWT_SECRET || 'default-dev-key-change-in-prod';
+const ENCRYPTION_KEY_FROM_ENV =
+  process.env.CONNECTOR_ENCRYPTION_KEY || process.env.JWT_SECRET;
+
+// Production must supply a real key. Refuse to load with a hardcoded
+// fallback so encrypted connector credentials cannot be trivially
+// decrypted by anyone with code access. JWT_SECRET reuse is preserved
+// for backwards compatibility with already-encrypted records but is its
+// own hardening task — connectors should have a dedicated key.
+if (!ENCRYPTION_KEY_FROM_ENV && process.env.NODE_ENV === 'production') {
+  throw new Error(
+    'Connector credential encryption requires CONNECTOR_ENCRYPTION_KEY ' +
+      '(preferred) or JWT_SECRET in production. Refusing to start with a ' +
+      'hardcoded fallback.'
+  );
+}
+
+const ENCRYPTION_KEY = ENCRYPTION_KEY_FROM_ENV || 'default-dev-key-change-in-prod';
 
 function encrypt(text: string): string {
   const iv = crypto.randomBytes(16);
