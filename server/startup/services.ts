@@ -124,6 +124,22 @@ export async function initializeEarlyServices(): Promise<void> {
     console.error('⚠️ Feature toggle bootstrap warning:', error.message);
   }
 
+  // AnA fix F8: pre-warm the AI Gateway so the very first chat request
+  // doesn't pay the 200–500 ms provider-init penalty.
+  try {
+    const { getGateway } = await import('../services/ai-gateway/index.js');
+    const gw = getGateway();
+    const providers = gw.getEnabledProviders();
+    console.log(
+      `✅ AI Gateway pre-warmed (${providers.length} provider${providers.length === 1 ? '' : 's'} ready)`
+    );
+  } catch (error: any) {
+    console.warn(
+      '⚠️ AI Gateway pre-warm failed — first chat request will lazy-init:',
+      error?.message
+    );
+  }
+
   // Seed AnA Capability Registry (fire-and-forget — don't block startup).
   // Delay slightly to ensure DB pool is ready.
   setTimeout(() => {

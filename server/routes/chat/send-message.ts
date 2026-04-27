@@ -119,7 +119,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         // Update thread activity timestamp for sort ordering
         await pool
           .query(`UPDATE ai_threads SET updated_at = NOW() WHERE id = $1`, [threadId])
-          .catch(() => {}); // Non-blocking
+          .catch(err =>
+            console.warn('[AnA] thread updated_at touch failed (non-blocking):', err?.message)
+          );
       } catch (e: any) {
         if (e?.code !== '42P01') console.warn('[AnA] ai_messages insert failed:', e.message);
       }
@@ -215,31 +217,45 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
             );
             retrievalRunId = rrResult.rows[0].id;
 
-            for (let i = 0; i < sources.length; i++) {
-              const s = sources[i];
-              const excerptHash = sha256(s.content);
-              const crResult = await pool.query(
-                `INSERT INTO ai_retrieval_chunks
-                   (retrieval_run_id, rank, source_type, atom_id, title,
-                    excerpt_hash_sha256, excerpt_preview, score)
-                 VALUES ($1, $2, 'atom', $3, $4, $5, $6, $7)
-                 RETURNING id`,
-                [
+            // AnA fix F9: batch all retrieval chunks into one multi-row INSERT
+            // (replaces a sequential N+1 loop — RETRIEVAL_TOP_K queries became 1).
+            if (sources.length > 0) {
+              const valuesSql: string[] = [];
+              const params: unknown[] = [];
+              const paramsPerRow = 7;
+              for (let i = 0; i < sources.length; i++) {
+                const s = sources[i];
+                const o = i * paramsPerRow;
+                valuesSql.push(
+                  `($${o + 1}, $${o + 2}, 'atom', $${o + 3}, $${o + 4}, $${o + 5}, $${o + 6}, $${o + 7})`
+                );
+                params.push(
                   retrievalRunId,
                   i + 1,
                   s.id,
                   s.title,
-                  excerptHash,
+                  sha256(s.content),
                   s.content.substring(0, 500),
-                  s.score,
-                ]
+                  s.score
+                );
+              }
+              const crResult = await pool.query(
+                `INSERT INTO ai_retrieval_chunks
+                   (retrieval_run_id, rank, source_type, atom_id, title,
+                    excerpt_hash_sha256, excerpt_preview, score)
+                 VALUES ${valuesSql.join(', ')}
+                 RETURNING id, rank, atom_id, score`,
+                params
               );
-              chunkRows.push({
-                id: crResult.rows[0].id,
-                rank: i + 1,
-                atomId: s.id,
-                score: s.score,
-              });
+              for (const row of crResult.rows) {
+                chunkRows.push({
+                  id: row.id,
+                  rank: row.rank,
+                  atomId: row.atom_id,
+                  score: Number(row.score),
+                });
+              }
+              chunkRows.sort((a, b) => a.rank - b.rank);
             }
           } catch (e: any) {
             if (e?.code !== '42P01') console.warn('[AnA] Retrieval persist failed:', e.message);
@@ -287,12 +303,6 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     }
 
     try {
-      // Inject client/project intelligence so AnA reads SKILL/.MD context
-      const intelligencePrefix = await getIntelligencePrefix(
-        numericOrgId ?? undefined,
-        project_id
-      ).catch(() => '');
-
       // Build conversation history for orchestrator continuity analysis
       const conversationHistory = previousMessages
         .filter((m: any) => m.role === 'user' || m.role === 'assistant')
@@ -313,12 +323,40 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       }
 
       // Run the orchestrator for intent detection, deficiency context, and continuity
+      // AnA fix F1: forward project + document + role metadata into the
+      // orchestrator so AnA can ground responses on the active project /
+      // artifact instead of guessing from message text alone.
+      const clientCtx = (req.body.context ?? {}) as Record<string, any>;
+      const orchestratorProjectContext = project_id
+        ? {
+            productName: clientCtx.activeProject || clientCtx.productName,
+            therapeuticArea: clientCtx.therapeuticArea,
+            submissionType: clientCtx.productType || clientCtx.submissionType,
+            targetAgency: clientCtx.targetAgency,
+            phase: clientCtx.phase,
+          }
+        : undefined;
+      const orchestratorDocumentContext =
+        clientCtx.artifactId || clientCtx.sectionCode || clientCtx.module
+          ? {
+              documentType: clientCtx.documentType || clientCtx.artifactType,
+              section: clientCtx.sectionCode,
+              module: clientCtx.module || clientCtx.moduleCode,
+            }
+          : undefined;
+
       orchestratorResult = orchestrate({
         message,
         conversationHistory,
+        projectContext: orchestratorProjectContext,
+        documentContext: orchestratorDocumentContext,
+        userRole: clientCtx.userRole,
         authoringContext: project_id
           ? {
               projectId: String(project_id),
+              sectionCode: clientCtx.sectionCode,
+              moduleCode: clientCtx.module || clientCtx.moduleCode,
+              artifactStatus: clientCtx.artifactStatus,
               _decisionContext: decisionContext,
             }
           : undefined,
@@ -333,14 +371,28 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       // Use the orchestrator's enriched system prompt instead of the basic one
       const basePrompt = system_prompt || orchestratorResult.systemPrompt;
 
-      const { memoryBlock, atoms, diagnostics } = await buildMemoryContextForChat({
-        threadId,
-        organizationId: numericOrgId || undefined,
-        projectId: project_id || undefined,
-        query: message,
-        limitPerLayer: 4,
-        maxChars: 3500,
-      });
+      // AnA fix F6: fetch intelligence prefix and persistent-memory context
+      // in parallel — they're independent and were previously awaited
+      // sequentially, costing ~100–200 ms per chat. AnA fix F10: log silent
+      // intelligence-prefix failures instead of swallowing them.
+      const [intelligencePrefix, memoryResult] = await Promise.all([
+        getIntelligencePrefix(numericOrgId ?? undefined, project_id).catch(err => {
+          console.warn(
+            '[AnA] intelligence prefix load failed (continuing without):',
+            err?.message
+          );
+          return '';
+        }),
+        buildMemoryContextForChat({
+          threadId,
+          organizationId: numericOrgId || undefined,
+          projectId: project_id || undefined,
+          query: message,
+          limitPerLayer: 4,
+          maxChars: 3500,
+        }),
+      ]);
+      const { memoryBlock, atoms, diagnostics } = memoryResult;
       memoryAtomCount = atoms.length;
       memoryBlockChars = memoryBlock.length;
       memoryDiagnostics = diagnostics;
@@ -391,7 +443,41 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         }
       }
 
-      const systemPrompt = intelligencePrefix + basePrompt + indContextBlock + deviceContextBlock + memoryBlock + evidenceBlock;
+      // AnA fix F2: always prepend a CONTEXT SNAPSHOT block so AnA can see
+      // exactly what context is loaded right now — including explicit
+      // "NOT LOADED" / "NONE" markers when something is missing. The Context
+      // Clarity Protocol in the persona forbids inferring what isn't here.
+      const snapshotProductName = clientCtx.activeProject || clientCtx.productName;
+      const snapshotSubmission = clientCtx.productType || clientCtx.submissionType;
+      const snapshotArtifactTitle = clientCtx.artifactTitle;
+      const snapshotSection = clientCtx.sectionCode;
+      const snapshotUserRole = clientCtx.userRole || 'general';
+      const workingMemoryPresent = atoms.some(a => a.layer === 'working_memory');
+      const semanticMemoryCount = atoms.filter(a => a.layer !== 'working_memory').length;
+      const contextSnapshot =
+        '## CONTEXT SNAPSHOT\n' +
+        `- Project: ${
+          project_id
+            ? `${snapshotProductName || 'unnamed'} (${snapshotSubmission || 'submission type unknown'})`
+            : 'NOT LOADED'
+        }\n` +
+        `- Active artifact: ${
+          snapshotArtifactTitle
+            ? `${snapshotArtifactTitle}${snapshotSection ? ` — ${snapshotSection}` : ''}`
+            : 'NONE'
+        }\n` +
+        `- Memory: working=${workingMemoryPresent ? 'yes' : 'no'}, semantic atoms=${semanticMemoryCount}\n` +
+        `- Retrieved sources: ${sources.length}\n` +
+        `- User role: ${snapshotUserRole}\n\n`;
+
+      const systemPrompt =
+        contextSnapshot +
+        intelligencePrefix +
+        basePrompt +
+        indContextBlock +
+        deviceContextBlock +
+        memoryBlock +
+        evidenceBlock;
 
       const gwMessages = [
         { role: 'system' as const, content: systemPrompt },
@@ -681,12 +767,20 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           );
           claimId = claimResult.rows[0].id;
 
-          // Persist citation linkages
-          for (const link of citationLinks) {
+          // AnA fix F9: persist all citation linkages in one multi-row INSERT
+          // per claim (replaces a per-citation sequential loop).
+          if (citationLinks.length > 0) {
+            const valuesSql: string[] = [];
+            const params: unknown[] = [];
+            for (let li = 0; li < citationLinks.length; li++) {
+              const o = li * 3;
+              valuesSql.push(`($${o + 1}, $${o + 2}, $${o + 3})`);
+              params.push(claimId, citationLinks[li].chunkId, citationLinks[li].score);
+            }
             await pool.query(
               `INSERT INTO ai_claim_citations (claim_id, retrieval_chunk_id, relevance_score)
-               VALUES ($1, $2, $3)`,
-              [claimId, link.chunkId, link.score]
+               VALUES ${valuesSql.join(', ')}`,
+              params
             );
           }
 
@@ -838,7 +932,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           generationRunId: Number(generationRunId),
         }));
         if (entries.length > 0) {
-          recordLineageBatch(entries).catch(() => {});
+          recordLineageBatch(entries).catch(err =>
+            console.warn('[AnA] data lineage batch failed (non-blocking):', err?.message)
+          );
         }
       } catch { /* non-blocking */ }
     }
