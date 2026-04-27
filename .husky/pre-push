@@ -12,9 +12,16 @@ export PATH="$PATH:$(cd "$(dirname "$0")/.." && pwd)/node_modules/.bin"
 # ============================================
 
 # Git pipes one line per ref being pushed: "<local_ref> <local_sha> <remote_ref> <remote_sha>"
-while read -r local_ref _local_sha remote_ref _remote_sha; do
+zero_sha="0000000000000000000000000000000000000000"
+while read -r local_ref local_sha remote_ref _remote_sha; do
   # Skip the sentinel line git emits when there's nothing to push.
   [ -z "$remote_ref" ] && continue
+
+  # Branch deletions (local_sha = all zeros) are always allowed — that's how
+  # we clean up forbidden branches like claude/* and codex/* on origin.
+  if [ "$local_sha" = "$zero_sha" ] || [ "$local_ref" = "(delete)" ]; then
+    continue
+  fi
 
   if [ "$remote_ref" != "refs/heads/concept2cure-v2" ]; then
     if [ "${ALLOW_NON_CANONICAL_PUSH:-}" = "1" ]; then
