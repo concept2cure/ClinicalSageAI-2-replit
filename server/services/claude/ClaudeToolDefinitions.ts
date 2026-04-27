@@ -538,6 +538,188 @@ export const PDF_OVERLAY: ClaudeTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Precedent Engine — exposes the 60KB precedent-engine.ts service as tools.
+// search() and compare() are the two highest-value entry points: search lets
+// Claude pull approved-submission records by indication/class/therapeutic
+// area; compare lets Claude pit a user's draft submission against a specific
+// historical precedent and get back similarities, differences, and risk.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const LOOKUP_REGULATORY_PRECEDENTS: ClaudeTool = {
+  name: 'lookup_regulatory_precedents',
+  description:
+    "Find approved or rejected regulatory submissions that resemble the user's submission across indication, device class, therapeutic area, or free-text query. Returns structured records (clearance number, applicant, decision date and outcome, predicate device, primary endpoint, FDA questions, risk factors, similarity score) so the model can ground risk claims in actual decisions instead of guessing. This is a non-LLM lookup against the local precedent corpus — fast, deterministic, and tenant-scoped. Use BEFORE drafting strategy or risk sections, BEFORE responding to FDA questions, or whenever the user asks 'has anyone done this before?' Tools that compare-against-precedent or analyze-risk should be called AFTER this returns at least one promising match.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      submission_type: {
+        type: 'string',
+        description:
+          "Submission pathway. One of: 510(k), De Novo, PMA, NDA, BLA, IND, ANDA, CER, IVDR, MAA. Required.",
+      },
+      indication: {
+        type: 'string',
+        description: 'Target indication or intended use (e.g. "type 2 diabetes", "knee replacement").',
+      },
+      device_class: {
+        type: 'string',
+        description: 'FDA device class for device pathways: "1", "2", or "3".',
+      },
+      product_type: {
+        type: 'string',
+        description: 'Product type: "Device", "Drug", "Biologic", "Diagnostic".',
+      },
+      therapeutic_area: {
+        type: 'string',
+        description: 'Therapeutic area (e.g. "Oncology", "CNS", "Cardiovascular", "Endocrinology").',
+      },
+      query: {
+        type: 'string',
+        description: 'Free-text query for semantic search across precedent records.',
+      },
+      device_name: {
+        type: 'string',
+        description: 'Device or product trade/generic name.',
+      },
+      product_code: {
+        type: 'string',
+        description: 'FDA product code (e.g. "LRH" for cardiac monitor).',
+      },
+      limit: {
+        type: 'number',
+        description: 'Maximum number of records to return. Defaults to 10 if omitted.',
+      },
+    },
+    required: ['submission_type'],
+  },
+};
+
+export const COMPARE_SUBMISSION_AGAINST_PRECEDENT: ClaudeTool = {
+  name: 'compare_submission_against_precedent',
+  description:
+    "Pit the user's drafted submission against a specific approved/rejected precedent and get a structured similarity/difference/risk report. Returns per-dimension comparisons (indication, trial design, sample size, primary endpoint, testing approach, predicate device) with match flags, impact severity, an overall risk level (low/medium/high/critical), an overall numeric score, and concrete recommendations. Call this AFTER lookup_regulatory_precedents has returned a promising precedent_id — typically the closest similarity match. The output gives the user evidence-grounded talking points for why their submission is or is not aligned with how a comparable case was decided.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      precedent_id: {
+        type: 'string',
+        description: "ID of the precedent record to compare against, from lookup_regulatory_precedents results.",
+      },
+      submission_type: {
+        type: 'string',
+        description: "User's submission pathway. One of: 510(k), De Novo, PMA, NDA, BLA, IND, ANDA, CER, IVDR, MAA.",
+      },
+      device_name: {
+        type: 'string',
+        description: 'User device or product name.',
+      },
+      indication: {
+        type: 'string',
+        description: 'Target indication or intended use for the user submission.',
+      },
+      trial_design: {
+        type: 'string',
+        description: 'User trial design summary (e.g. "randomized double-blind placebo-controlled, 2:1 randomization, 52-week treatment").',
+      },
+      sample_size: {
+        type: 'number',
+        description: 'Planned or actual sample size (N).',
+      },
+      primary_endpoint: {
+        type: 'string',
+        description: 'Primary endpoint definition.',
+      },
+      testing_approach: {
+        type: 'string',
+        description: 'Testing/evidence approach summary.',
+      },
+      predicate_device: {
+        type: 'string',
+        description: 'Cited predicate device name (510(k)/De Novo only).',
+      },
+    },
+    required: ['precedent_id', 'submission_type'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Submission Twin — exposes the 51KB submission-twin-service.ts as tools.
+// All three require organizationId from request context (plumbed via
+// ToolContext); the LLM cannot pass tenant identifiers as tool inputs by
+// design.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const ASSESS_CLAIM_EVIDENCE_INTEGRITY: ClaudeTool = {
+  name: 'assess_claim_evidence_integrity',
+  description:
+    "Run the claim-to-evidence integrity check across a submission package. For each extracted claim (efficacy, safety, manufacturing, performance) the service returns whether the claim is supported, weak, unsupported, or contradicted by linked artifacts. Returns aggregate counts (total/supported/weak/unsupported/contradicted) plus the per-claim evidence link records. Call this BEFORE the user finalizes a section or hits Submit on a package — the failure mode it catches (claims that drift away from their evidence base during multi-author drafting) is one of the top causes of FDA Refuse-to-File and EMA major objections. Tenant context (organizationId) is injected from the request; the LLM does not pass it.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      package_id: {
+        type: 'number',
+        description: 'Submission package ID. Required.',
+      },
+    },
+    required: ['package_id'],
+  },
+};
+
+export const SIMULATE_REVIEWER_CHALLENGES: ClaudeTool = {
+  name: 'simulate_reviewer_challenges',
+  description:
+    "Generate the questions and objections a regulator would raise against a submission package. Runs the package through configurable reviewer lenses — skeptical reviewer, evidence sufficiency skeptic, CMC-heavy reviewer, clinical risk reviewer, biostatistics skeptic — and returns the challenges each lens surfaces (severity, lens, claim referenced, suggested response). Pre-empts the questions that arrive in FDA Information Requests, EMA Day-120 questions, and PMDA questioning rounds. Requires an existing assessment_id (run a full submission-twin assessment first if you don't have one); package_id is also required so the service can scope correctly. Tenant context is injected from the request.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      package_id: {
+        type: 'number',
+        description: 'Submission package ID.',
+      },
+      assessment_id: {
+        type: 'number',
+        description: 'Submission-twin assessment ID to attach challenges to. Run a full assessment first if you don\'t have one.',
+      },
+      lenses: {
+        type: 'array',
+        description:
+          'Reviewer lenses to run. Defaults to all five (skeptical_reviewer, evidence_sufficiency_skeptic, cmc_heavy_reviewer, clinical_risk_reviewer, biostatistics_skeptic). Pass a subset to scope the simulation.',
+        items: { type: 'string' },
+      },
+    },
+    required: ['package_id', 'assessment_id'],
+  },
+};
+
+export const PREDICT_CHANGE_IMPACT: ClaudeTool = {
+  name: 'predict_change_impact',
+  description:
+    "Predict the cascading impact of changing one artifact in a submission package — which downstream claims are affected, which sibling artifacts need updates to stay consistent, and what the regulatory risk is if the change ships unaddressed. Use BEFORE the user commits a substantive change to a section or document so they can see the blast radius first (e.g. updating the safety pool changes summary tables in M2.5 and M2.7, plus the SCS in M5). Returns ordered impact records with severity, affected_artifact, claim_dependencies, and suggested follow-up actions. Tenant context is injected from the request.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      package_id: {
+        type: 'number',
+        description: 'Submission package ID.',
+      },
+      changed_artifact_id: {
+        type: 'number',
+        description: 'Artifact ID being changed.',
+      },
+      change_description: {
+        type: 'string',
+        description: 'Plain-language description of what is changing (e.g. "added 12-month safety follow-up data").',
+      },
+      change_type: {
+        type: 'string',
+        description: 'Category of change. One of: content, scope, data_source, methodology, conclusion, scope_expansion, scope_reduction.',
+      },
+    },
+    required: ['package_id', 'changed_artifact_id', 'change_description', 'change_type'],
+  },
+};
+
 /** Custom JSON-schema tools dispatched by our local ClaudeToolExecutor. */
 export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
@@ -547,6 +729,11 @@ export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
   CHECK_REGULATORY_COMPLIANCE,
   VALIDATE_CROSS_REFERENCES,
   GENERATE_CITATION,
+  LOOKUP_REGULATORY_PRECEDENTS,
+  COMPARE_SUBMISSION_AGAINST_PRECEDENT,
+  ASSESS_CLAIM_EVIDENCE_INTEGRITY,
+  SIMULATE_REVIEWER_CHALLENGES,
+  PREDICT_CHANGE_IMPACT,
   ANALYZE_PREDICATE_DEVICE,
   EXTRACT_DOCUMENT_STRUCTURE,
   CHECK_DOSSIER_CONSISTENCY,

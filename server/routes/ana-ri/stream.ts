@@ -480,7 +480,11 @@ router.post('/stream', async (req: Request, res: Response) => {
         let toolErrorMessage: string | undefined;
         if (handler) {
           try {
-            resultStr = await handler(toolUse.input);
+            resultStr = await handler(toolUse.input, {
+              organizationId: orgId,
+              userId: userId || null,
+              projectId: streamProjectId ? Number(streamProjectId) || null : null,
+            });
           } catch (toolErr: any) {
             resultStr = JSON.stringify({
               error: `Tool execution failed: ${toolErr?.message || 'unknown error'}`,

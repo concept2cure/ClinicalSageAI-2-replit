@@ -28,7 +28,19 @@ import type {
 // Tool Handler Registry
 // ─────────────────────────────────────────────────────────────────────────────
 
-type ToolHandler = (input: Record<string, unknown>) => Promise<string>;
+/**
+ * Tenant + thread context plumbed from the route handler into the tool
+ * handler. Optional so existing handlers that don't read it stay
+ * source-compatible. New handlers that need org-scoped DB access (e.g.
+ * submission-twin, precedent-engine) read from this.
+ */
+export interface ToolContext {
+  organizationId?: number | null;
+  userId?: number | null;
+  projectId?: number | null;
+}
+
+type ToolHandler = (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>;
 
 const toolHandlers: Map<string, ToolHandler> = new Map();
 
@@ -774,6 +786,175 @@ registerToolHandler('pdf_overlay', async (input: Record<string, unknown>) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Precedent Engine handlers — exposes server/services/precedent-engine.ts.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('lookup_regulatory_precedents', async (input, ctx) => {
+  const submissionType = input.submission_type as string;
+  if (!submissionType) {
+    return JSON.stringify({
+      error: 'lookup_regulatory_precedents requires submission_type',
+    });
+  }
+  try {
+    const { precedentEngine } = await import('../precedent-engine.js');
+    const records = await precedentEngine.search(
+      {
+        submissionType,
+        indication: input.indication as string | undefined,
+        deviceClass: input.device_class as string | undefined,
+        productType: input.product_type as string | undefined,
+        therapeuticArea: input.therapeutic_area as string | undefined,
+        query: input.query as string | undefined,
+        deviceName: input.device_name as string | undefined,
+        productCode: input.product_code as string | undefined,
+        limit: typeof input.limit === 'number' ? input.limit : undefined,
+      },
+      ctx?.organizationId ?? undefined
+    );
+    // Cap at 25 to keep the tool result tractable when the corpus has many matches.
+    return JSON.stringify({
+      count: records.length,
+      records: records.slice(0, 25),
+    });
+  } catch (err: any) {
+    return JSON.stringify({
+      error: `Precedent lookup failed: ${err?.message || 'unknown error'}`,
+    });
+  }
+});
+
+registerToolHandler('compare_submission_against_precedent', async (input) => {
+  const precedentId = input.precedent_id as string;
+  const submissionType = input.submission_type as string;
+  if (!precedentId || !submissionType) {
+    return JSON.stringify({
+      error:
+        'compare_submission_against_precedent requires precedent_id and submission_type',
+    });
+  }
+  try {
+    const { precedentEngine } = await import('../precedent-engine.js');
+    const comparison = await precedentEngine.compare(
+      {
+        submissionType,
+        deviceName: input.device_name as string | undefined,
+        indication: input.indication as string | undefined,
+        trialDesign: input.trial_design as string | undefined,
+        sampleSize: typeof input.sample_size === 'number' ? input.sample_size : undefined,
+        primaryEndpoint: input.primary_endpoint as string | undefined,
+        testingApproach: input.testing_approach as string | undefined,
+        predicateDevice: input.predicate_device as string | undefined,
+      },
+      precedentId
+    );
+    return JSON.stringify(comparison);
+  } catch (err: any) {
+    return JSON.stringify({
+      error: `Precedent comparison failed: ${err?.message || 'unknown error'}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Submission Twin handlers — exposes server/services/submission-twin-service.ts.
+// All three require organizationId from the request-scoped ToolContext;
+// the LLM cannot pass tenant identifiers as tool inputs.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('assess_claim_evidence_integrity', async (input, ctx) => {
+  const packageId = typeof input.package_id === 'number' ? input.package_id : undefined;
+  if (!packageId) {
+    return JSON.stringify({
+      error: 'assess_claim_evidence_integrity requires package_id (number)',
+    });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({
+      error: 'assess_claim_evidence_integrity requires tenant context (organizationId)',
+    });
+  }
+  try {
+    const { submissionTwinService } = await import('../submission-twin-service.js');
+    const result = await submissionTwinService.assessEvidenceIntegrity(
+      packageId,
+      ctx.organizationId
+    );
+    return JSON.stringify(result);
+  } catch (err: any) {
+    return JSON.stringify({
+      error: `Evidence integrity check failed: ${err?.message || 'unknown error'}`,
+    });
+  }
+});
+
+registerToolHandler('simulate_reviewer_challenges', async (input, ctx) => {
+  const packageId = typeof input.package_id === 'number' ? input.package_id : undefined;
+  const assessmentId =
+    typeof input.assessment_id === 'number' ? input.assessment_id : undefined;
+  if (!packageId || !assessmentId) {
+    return JSON.stringify({
+      error:
+        'simulate_reviewer_challenges requires package_id and assessment_id (both numbers)',
+    });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({
+      error: 'simulate_reviewer_challenges requires tenant context (organizationId)',
+    });
+  }
+  try {
+    const { submissionTwinService } = await import('../submission-twin-service.js');
+    const lenses = Array.isArray(input.lenses) ? (input.lenses as string[]) : undefined;
+    const challenges = await submissionTwinService.simulateChallenges(
+      packageId,
+      ctx.organizationId,
+      assessmentId,
+      lenses
+    );
+    return JSON.stringify({ count: challenges.length, challenges });
+  } catch (err: any) {
+    return JSON.stringify({
+      error: `Challenge simulation failed: ${err?.message || 'unknown error'}`,
+    });
+  }
+});
+
+registerToolHandler('predict_change_impact', async (input, ctx) => {
+  const packageId = typeof input.package_id === 'number' ? input.package_id : undefined;
+  const changedArtifactId =
+    typeof input.changed_artifact_id === 'number' ? input.changed_artifact_id : undefined;
+  const changeDescription = input.change_description as string;
+  const changeType = input.change_type as string;
+  if (!packageId || !changedArtifactId || !changeDescription || !changeType) {
+    return JSON.stringify({
+      error:
+        'predict_change_impact requires package_id, changed_artifact_id, change_description, and change_type',
+    });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({
+      error: 'predict_change_impact requires tenant context (organizationId)',
+    });
+  }
+  try {
+    const { submissionTwinService } = await import('../submission-twin-service.js');
+    const impacts = await submissionTwinService.analyzeChangeImpact(
+      packageId,
+      changedArtifactId,
+      changeDescription,
+      changeType,
+      ctx.organizationId
+    );
+    return JSON.stringify({ count: impacts.length, impacts });
+  } catch (err: any) {
+    return JSON.stringify({
+      error: `Change impact analysis failed: ${err?.message || 'unknown error'}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Agentic Execution Loop
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -784,6 +965,8 @@ export interface AgenticOptions {
   onStream?: StreamCallback;
   /** Called when a tool is executed */
   onToolExecution?: (toolName: string, input: Record<string, unknown>, result: string) => void;
+  /** Tenant + thread context forwarded to each tool handler */
+  toolContext?: ToolContext;
 }
 
 /**
@@ -824,7 +1007,7 @@ export async function executeAgenticLoop(
 
       if (handler) {
         try {
-          result = await handler(toolUse.input);
+          result = await handler(toolUse.input, options?.toolContext);
           options?.onToolExecution?.(toolUse.name, toolUse.input, result);
         } catch (error: any) {
           result = JSON.stringify({
