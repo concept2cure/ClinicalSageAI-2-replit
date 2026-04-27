@@ -1362,6 +1362,43 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       const normalizedPath = String(path || '').trim();
       if (!normalizedPath) return;
 
+      // ── Bundle home rail ids (data.tsx NAV_ITEMS) ───────────────────────
+      // Per CLAUDE.md Replace-or-Delete Law: bundle rail items must never
+      // route to legacy panel layoutModes that would force the legacy
+      // ZenSidebar to render. Bundle ids that have a corresponding bundle
+      // surface route to that surface; bundle ids without a shipped phase
+      // route to Phase 2 Ana with an intent message so the user gets a
+      // bundle-faithful response instead of a legacy panel.
+      const BUNDLE_INTENTS: Record<string, string> = {
+        mdx: 'Show me the medical-device and diagnostics workspace — projects, predicates, regulatory submissions across this domain.',
+        biopharma: 'Show me the biotech and pharma workspace — projects, INDs, NDAs, BLAs across this domain.',
+        vault: 'Open the Vault DMS — show me source documents, controlled copies, and the audit log.',
+        tasking: 'Show me Tasking and Collaboration — assigned work, open reviews, and items due this week.',
+        submission: 'Show me the Submission Center — in-flight submissions and the archive.',
+        protocol: 'Show me Protocol and Study Design — active protocols, templates, and the endpoint library.',
+        cmc: 'Show me the CMC Module — drug substance §3.2.S, drug product §3.2.P, stability studies, and specifications.',
+        biostat: 'Show me Biostatistics — active SAPs, sample size calculations, interim analyses, and tables/listings/figures.',
+        quality: 'Show me Quality and Lifecycle — SOP management, CAPA, post-market surveillance, inspection readiness, and the compliance monitor.',
+        reporting: 'Show me Reports — readiness dashboards, timeline forecasting, and precedent models.',
+        memory: 'Show me AnA Memory — recent recalls, pinned facts, source traces, and the current RIM version.',
+        artifacts: 'Show me User Artifacts — recent drafts and pinned artifacts.',
+        audit: 'Show me Audit and Compliance — 21 CFR Part 11 trail, e-signatures, access log, and change history.',
+        admin: 'Show me Admin Settings — users and roles, integrations, agency credentials, and billing.',
+      };
+      if (normalizedPath === 'projects') {
+        setLayoutMode('projects');
+        return;
+      }
+      if (normalizedPath === 'ectd-coauthor') {
+        setLayoutMode('ectd-coauthor');
+        return;
+      }
+      if (normalizedPath in BUNDLE_INTENTS) {
+        setExternalChatMessage({ text: BUNDLE_INTENTS[normalizedPath], ts: Date.now() });
+        setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'deep-research');
+        return;
+      }
+
       if (normalizedPath === 'ana-intelligence') {
         setSettingsSection('ana-intelligence');
         setSettingsOpen(true);
@@ -2020,6 +2057,97 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             setNewProjectOpen(true);
           }
         }}
+      />
+    );
+  }
+
+  // Phase 3 — Claude Design eCTD co-authoring workbench. Renders standalone
+  // (no legacy ZenSidebar). Bundle source: docs/design/concept2cure-design-system/project/ui_kits/ectd_coauthor/.
+  if (layoutMode === 'ectd-coauthor' && !embeddedModule) {
+    return (
+      <ClaudeEctdCoauthor
+        applicationLabel={activeProject?.name}
+        chat={ectdChat}
+        tree={
+          ectdAuthoring.tree && ectdAuthoring.tree.some(m => m.children.length > 0)
+            ? ectdAuthoring.tree
+            : undefined
+        }
+        artifacts={
+          ectdAuthoring.artifacts && Object.keys(ectdAuthoring.artifacts).length > 0
+            ? ectdAuthoring.artifacts
+            : undefined
+        }
+        readinessPct={ectdReadiness.readinessPct ?? undefined}
+        blockingCount={ectdReadiness.blockingCount ?? undefined}
+        lastRimSync={ectdReadiness.lastRimSync ?? undefined}
+      />
+    );
+  }
+
+  // Phase 2 — Claude Design AnA RI chat shell. Renders standalone (no legacy
+  // ZenSidebar, no legacy ProjectKnowledgePanel, no project header bar) for
+  // every chat-shell layout mode. Bundle source: docs/design/concept2cure-design-system/project/ui_kits/ana_ri/.
+  // Replace-or-Delete Law (CLAUDE.md): the legacy shell that wrapped these
+  // mounts is now dead for these layoutModes; the inline mounts below in the
+  // legacy main return are unreachable for these modes.
+  if (
+    !embeddedModule &&
+    (layoutMode === 'project-home' ||
+      layoutMode === 'regulatory-workspace' ||
+      layoutMode === 'deep-research')
+  ) {
+    return (
+      <Ana
+        mode="full"
+        defaultChatMode={layoutMode === 'deep-research' ? 'deep-research' : 'standard'}
+        authoringContext={authoringContext}
+        navContext={activeNavId}
+        contextProfile={{
+          productType: activeProject?.type,
+          userRole: userRole,
+          screenName: layoutMode,
+          activeProject: activeProject?.name,
+          projectId: activeProjectId,
+          threadId: activeThreadId || activeConversationId,
+          moduleContext,
+        }}
+        projectIntelligence={projectIntelligenceStats}
+        greeting={
+          layoutMode === 'deep-research'
+            ? "What would you like to research? I'll search across ClinicalTrials.gov, PubMed, FDA, EMA, and more."
+            : platformGreeting?.text ||
+              `How can I help with ${activeProject?.name || 'your project'}?`
+        }
+        suggestedActions={workspaceSuggestedActions}
+        onActionRun={handleActionRun}
+        onNavigate={handleAnaPanelNavigate}
+        onCreateProject={() => setNewProjectOpen(true)}
+        projects={projects.map(p => ({
+          id: p.id,
+          title: p.name,
+          description: p.type,
+          meta: '',
+        }))}
+        onSelectProject={id => {
+          setActiveProjectId(id);
+          setLayoutMode('project-home');
+          navigate(`/concept2cure/project/${id}`);
+        }}
+        onDraftInsert={handleDraftInsert}
+        onNavigateToSection={handleNavigateToSection}
+        onOpenArtifact={handleOpenArtifact}
+        onRequestPromotion={handleRequestPromotion}
+        onRefreshIntelligence={authoringIntelligence.refetch}
+        onThreadChange={threadId => {
+          setActiveThreadId(threadId);
+          setActiveConversationId(threadId);
+        }}
+        initialMessage={
+          pendingDraftSection
+            ? `Draft CTD section ${pendingDraftSection.code}: ${pendingDraftSection.title}. Generate a compliant first draft following ICH M4 guidelines and 21 CFR 312.23(a) requirements.`
+            : null
+        }
       />
     );
   }
