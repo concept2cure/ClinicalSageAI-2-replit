@@ -152,6 +152,7 @@ const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect 
 // AnA Persistent Panel — always-available AI conversation on every page
 import { Ana } from './components/ana';
 import { useAnaChat } from './components/ana/useAnaChat';
+import { Concept2CureHome } from './components/concept2cure-home';
 import {
   ClaudeEctdCoauthor,
   useEctdAuthoringData,
@@ -1992,6 +1993,37 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   // userProfile sync moved to useUserProfileFromStorage hook
 
+  // Phase 1 — Claude Design home surface. Renders standalone (no legacy
+  // ZenSidebar) when the user is on the home destination and not viewing an
+  // embedded project module. Bundle source: docs/design/concept2cure-design-system/project/ui_kits/home/.
+  if (layoutMode === 'projects' && !embeddedModule) {
+    const initials = (userName || 'U')
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part[0]?.toUpperCase() ?? '')
+      .join('') || 'U';
+    return (
+      <Concept2CureHome
+        user={{ name: userName, initials, role: userRole }}
+        onNavigate={navId => {
+          handleAnaPanelNavigate(navId);
+          return true;
+        }}
+        onLaunchChat={draft => {
+          const text = draft.trim();
+          if (!text) return;
+          setExternalChatMessage({ text, ts: Date.now() });
+          if (activeProjectId) {
+            setLayoutMode('regulatory-workspace');
+          } else {
+            setNewProjectOpen(true);
+          }
+        }}
+      />
+    );
+  }
+
   return (
     <div className="zen flex h-screen w-full overflow-hidden bg-white">
       {/* CSS Variables */}
@@ -3705,97 +3737,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           </div>
         )}
 
-        {/* AnA — THE single chat surface (ChatGPT/Claude style)
-            projects/deep-research: full screen — AnA IS the interface
-            workspace/regulatory-workspace: rendered inline above (mode="full")
-            module pages (dossier, documents, etc.): compact input bar at bottom
-
-            Home (layoutMode='projects'): rendered inside a flex-col with a
-            thin top bar above AnA (brand · search chat · invite · new thread). */}
-        {layoutMode === 'projects' && !embeddedModule && (
-          <div className="flex-1 flex flex-col min-w-0 min-h-0">
-            {/* ── Home top bar (WO-8 reference parity) ── */}
-            <div className="flex-shrink-0 h-12 px-4 flex items-center justify-between border-b border-stone-100 bg-white">
-              <span className="text-[13px] font-semibold text-stone-800">ClinicalSageAI</span>
-              <div className="flex items-center gap-2">
-                <div className="relative hidden sm:block">
-                  <Search
-                    className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-1/2 -translate-y-1/2"
-                    aria-hidden="true"
-                  />
-                  <Input
-                    placeholder="Search"
-                    onFocus={() => setCommandPaletteOpen(true)}
-                    className="h-8 w-44 pl-8 text-[12px] border-stone-200 bg-stone-50"
-                    aria-label="Search"
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setNewProjectOpen(true)}
-                  className="h-8 px-3 text-[12px] border-stone-200"
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1" />
-                  New project
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={handleNewChat}
-                  className="h-8 px-3 text-[12px] bg-stone-900 text-white hover:bg-stone-800"
-                >
-                  New thread
-                </Button>
-              </div>
-            </div>
-            {/* AnA panel body */}
-            <div className="flex-1 min-h-0 flex">
-              <Ana
-                mode="full"
-                defaultChatMode="standard"
-                authoringContext={authoringContext}
-                navContext={activeNavId}
-                contextProfile={{
-                  productType: activeProject?.type,
-                  userRole: userRole,
-                  screenName: layoutMode,
-                  activeProject: activeProject?.name,
-                  projectId: activeProjectId,
-                  threadId: activeThreadId || activeConversationId,
-                  moduleContext,
-                }}
-                projectIntelligence={projectIntelligenceStats}
-                greeting={homeGreeting}
-                suggestedActions={workspaceSuggestedActions}
-                onActionRun={handleActionRun}
-                onNavigate={handleAnaPanelNavigate}
-                onCreateProject={() => setNewProjectOpen(true)}
-                projects={projects.map(p => ({
-                  id: p.id,
-                  title: p.name,
-                  description: p.type,
-                  meta: '',
-                }))}
-                onSelectProject={(id) => {
-                  setActiveProjectId(id);
-                  setLayoutMode('project-home');
-                  navigate(`/concept2cure/project/${id}`);
-                }}
-                onDraftInsert={handleDraftInsert}
-                onNavigateToSection={handleNavigateToSection}
-                onOpenArtifact={handleOpenArtifact}
-                onRequestPromotion={handleRequestPromotion}
-                onRefreshIntelligence={authoringIntelligence.refetch}
-                onThreadChange={threadId => {
-                  setActiveThreadId(threadId);
-                  setActiveConversationId(threadId);
-                }}
-              />
-            </div>
-          </div>
-        )}
+        {/* Home (layoutMode='projects' && !embeddedModule) is handled by the
+            Concept2CureHome early return above; this branch intentionally has
+            no rendering for that combination. */}
 
         {layoutMode !== 'workspace' &&
           layoutMode !== 'regulatory-workspace' &&
