@@ -70,6 +70,15 @@ export async function registerDocumentRoutes({
     console.error('❌ Failed to mount Biotech Artifact routes:', error);
   }
 
+  // ── Submission-Package Orchestrator (M2/M3 composition, CSR tabulation, hardened validation) ──
+  try {
+    const orchestratorModule = await import('../routes/submission-orchestrator');
+    app.use('/api/submission-orchestrator', orchestratorModule.default);
+    console.log('✅ Submission-Package Orchestrator routes mounted (M2/M3/CSR/hardened-validation)');
+  } catch (error) {
+    console.error('❌ Failed to mount Submission-Package Orchestrator routes:', error);
+  }
+
   // ── HAQ Response Manager (FDA IR, EMA D120, PMDA, HC question tracking) ──
   try {
     const haqModule = await import('../routes/haq-manager');
