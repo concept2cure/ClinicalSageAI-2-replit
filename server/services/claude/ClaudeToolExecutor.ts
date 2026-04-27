@@ -955,6 +955,94 @@ registerToolHandler('predict_change_impact', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Template Library handler — wires templateService + masterDocumentBuilder.
+// Discovery mode (no fill_data) returns metadata; fill mode returns a path
+// to a built DOCX with placeholder substitutions applied.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('fetch_template_and_fill', async (input, ctx) => {
+  const templateId = typeof input.template_id === 'number' ? input.template_id : undefined;
+  if (!templateId) {
+    return JSON.stringify({
+      error: 'fetch_template_and_fill requires template_id (number)',
+    });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({
+      error: 'fetch_template_and_fill requires tenant context (organizationId)',
+    });
+  }
+  try {
+    const { templateService } = await import('../templateService.js');
+    const template = await templateService.getTemplateById(templateId, ctx.organizationId);
+    if (!template) {
+      return JSON.stringify({
+        error: `Template ${templateId} not found in this organization's library`,
+      });
+    }
+
+    const fillData =
+      input.fill_data && typeof input.fill_data === 'object'
+        ? (input.fill_data as Record<string, string>)
+        : undefined;
+
+    // Discovery mode: no fill_data → return template metadata only so the
+    // model can decide which placeholders need values before filling.
+    if (!fillData || Object.keys(fillData).length === 0) {
+      const contentPreview =
+        typeof template.content === 'string' ? template.content.slice(0, 500) : null;
+      return JSON.stringify({
+        mode: 'discovery',
+        template: {
+          id: template.id,
+          name: template.name,
+          category: template.category,
+          module: template.module,
+          description: template.description,
+          content_preview: contentPreview,
+          has_word_template: !!template.fileUrl,
+        },
+        next_step:
+          'Inspect the content_preview to identify {{PLACEHOLDER}} tokens, then call again with fill_data populated to produce the filled DOCX.',
+      });
+    }
+
+    // Fill mode: must have a backing DOCX template on disk.
+    if (!template.fileUrl) {
+      return JSON.stringify({
+        error: `Template ${templateId} has no underlying DOCX file (only inline content). Use generate_document with the content directly instead.`,
+      });
+    }
+
+    const { getMasterDocumentBuilder } = await import('../docx/masterDocumentBuilder.js');
+    const builder = getMasterDocumentBuilder();
+    const outputFormat: 'docx' | 'pdf' = input.output_format === 'pdf' ? 'pdf' : 'docx';
+    const result = await builder.buildFromTemplate({
+      templatePath: template.fileUrl,
+      replacements: fillData,
+      outputFormat,
+      documentTitle: template.name,
+    });
+
+    return JSON.stringify({
+      mode: 'filled',
+      template: { id: template.id, name: template.name },
+      output: {
+        path: result.outputPath,
+        format: result.format,
+        size_bytes: result.sizeBytes,
+        replacements_applied: result.replacementsApplied,
+        build_duration_ms: result.buildDurationMs,
+      },
+    });
+  } catch (err: any) {
+    return JSON.stringify({
+      error: `Template fetch/fill failed: ${err?.message || 'unknown error'}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Agentic Execution Loop
 // ─────────────────────────────────────────────────────────────────────────────
 

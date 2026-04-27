@@ -720,6 +720,40 @@ export const PREDICT_CHANGE_IMPACT: ClaudeTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Template Library — exposes server/services/templateService.ts plus
+// server/services/docx/masterDocumentBuilder.ts as a single tool. Two
+// modes: discovery (returns template metadata + content preview) and
+// fill (returns a path to a filled DOCX with placeholder substitutions).
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const FETCH_TEMPLATE_AND_FILL: ClaudeTool = {
+  name: 'fetch_template_and_fill',
+  description:
+    "Fetch an eCTD/regulatory template from the project's template library and (when fill_data is supplied) emit a filled DOCX with placeholder substitutions applied. Use to assemble templated documents — cover letters, eCTD module sections, CSR shells, regulatory forms — without copy-pasting from spreadsheets. Two modes: (1) call without fill_data to retrieve the template's name, category, module, content preview, and whether a Word template is attached — useful for discovering placeholders before filling; (2) call with fill_data populated to perform string-placeholder replacement and return the filled DOCX path. Tenant-scoped via ToolContext.organizationId; templates are organization-private.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      template_id: {
+        type: 'number',
+        description: 'eCTD template ID from the library (ectdTemplates.id).',
+      },
+      fill_data: {
+        type: 'object',
+        description:
+          'Map of placeholder name → replacement value (e.g. {"PRODUCT_NAME": "Compound X", "SPONSOR": "Acme Pharma"}). Omit to fetch template metadata only (discovery mode).',
+        additionalProperties: { type: 'string' },
+      },
+      output_format: {
+        type: 'string',
+        enum: ['docx', 'pdf'],
+        description: 'Output format. Defaults to docx.',
+      },
+    },
+    required: ['template_id'],
+  },
+};
+
 /** Custom JSON-schema tools dispatched by our local ClaudeToolExecutor. */
 export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
@@ -734,6 +768,7 @@ export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
   ASSESS_CLAIM_EVIDENCE_INTEGRITY,
   SIMULATE_REVIEWER_CHALLENGES,
   PREDICT_CHANGE_IMPACT,
+  FETCH_TEMPLATE_AND_FILL,
   ANALYZE_PREDICATE_DEVICE,
   EXTRACT_DOCUMENT_STRUCTURE,
   CHECK_DOSSIER_CONSISTENCY,

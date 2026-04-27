@@ -26,6 +26,7 @@ const NEW_TOOLS = [
   'assess_claim_evidence_integrity',
   'simulate_reviewer_challenges',
   'predict_change_impact',
+  'fetch_template_and_fill',
 ] as const;
 
 describe('AnA new tool handlers — registration', () => {
@@ -85,6 +86,12 @@ describe('AnA new tool handlers — input validation (no DB needed)', () => {
     );
     expect(result.error).toMatch(/change_type/);
   });
+
+  it('fetch_template_and_fill rejects missing template_id', async () => {
+    const handler = getToolHandler('fetch_template_and_fill')!;
+    const result = JSON.parse(await handler({}, { organizationId: 1 }));
+    expect(result.error).toMatch(/template_id/);
+  });
 });
 
 describe('AnA new tool handlers — tenant context enforcement', () => {
@@ -119,6 +126,12 @@ describe('AnA new tool handlers — tenant context enforcement', () => {
         {} as ToolContext
       )
     );
+    expect(result.error).toMatch(/organizationId/);
+  });
+
+  it('fetch_template_and_fill refuses without organizationId', async () => {
+    const handler = getToolHandler('fetch_template_and_fill')!;
+    const result = JSON.parse(await handler({ template_id: 1 }, {} as ToolContext));
     expect(result.error).toMatch(/organizationId/);
   });
 
