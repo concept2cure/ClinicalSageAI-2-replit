@@ -623,7 +623,11 @@ export function Concept2CureHome({
   const shellClassName = `${styles.shell}${tweaks.dark ? ' ' + styles.dark : ''}`;
 
   return (
-    <div className={shellClassName} data-collapsed={tweaks.collapsed || undefined}>
+    <div
+      className={shellClassName}
+      data-c2c-phase="1-home"
+      data-collapsed={tweaks.collapsed || undefined}
+    >
       <Rail
         activeNav={tweaks.activeNav}
         setActiveNav={handleSelectNav}
