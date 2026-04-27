@@ -23,12 +23,7 @@ const router = express.Router();
 
 function getOrgId(req: express.Request): number {
   const orgId = parseInt(
-    String(
-      (req as any).tenantId ||
-        (req as any).tenantContext?.organizationId ||
-        req.headers['x-organization-id'] ||
-        0
-    ),
+    String((req as any).tenantId || (req as any).tenantContext?.organizationId || 0),
     10
   );
   if (!orgId || Number.isNaN(orgId)) throw new Error('Organization context required');

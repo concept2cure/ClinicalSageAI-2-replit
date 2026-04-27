@@ -17,7 +17,10 @@ export function createPMAWorkflowRoutes(pool: Pool): Router {
   // POST /:projectId — save PMA task state
   router.post('/:projectId', async (req: Request, res: Response) => {
     const { projectId } = req.params;
-    const organizationId = (req as any).user?.organizationId || req.headers['x-organization-id'];
+    const organizationId =
+      (req as any).tenantId ||
+      (req as any).tenantContext?.organizationId ||
+      (req as any).user?.organizationId;
     const { phases } = req.body;
 
     if (!projectId || !organizationId) {
@@ -54,7 +57,10 @@ export function createPMAWorkflowRoutes(pool: Pool): Router {
   // GET /:projectId — load PMA task state
   router.get('/:projectId', async (req: Request, res: Response) => {
     const { projectId } = req.params;
-    const organizationId = (req as any).user?.organizationId || req.headers['x-organization-id'];
+    const organizationId =
+      (req as any).tenantId ||
+      (req as any).tenantContext?.organizationId ||
+      (req as any).user?.organizationId;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organizationId' });
