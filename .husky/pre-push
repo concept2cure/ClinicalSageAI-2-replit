@@ -4,6 +4,40 @@
 export PATH="$PATH:$(cd "$(dirname "$0")/.." && pwd)/node_modules/.bin"
 
 # ============================================
+# PRE-PUSH HOOK - Branch Authority Enforcement (CLAUDE.md NON-NEGOTIABLE)
+# ============================================
+# concept2cure-v2 is the ONE AND ONLY branch. This gate refuses any push to
+# a different remote ref so divergence cannot be reintroduced. To override
+# (e.g. to push a dependabot/* PR branch), set ALLOW_NON_CANONICAL_PUSH=1.
+# ============================================
+
+# Git pipes one line per ref being pushed: "<local_ref> <local_sha> <remote_ref> <remote_sha>"
+while read -r local_ref _local_sha remote_ref _remote_sha; do
+  # Skip the sentinel line git emits when there's nothing to push.
+  [ -z "$remote_ref" ] && continue
+
+  if [ "$remote_ref" != "refs/heads/concept2cure-v2" ]; then
+    if [ "${ALLOW_NON_CANONICAL_PUSH:-}" = "1" ]; then
+      echo "⚠️  Pushing to non-canonical ref ${remote_ref} (ALLOW_NON_CANONICAL_PUSH=1)."
+    else
+      echo ""
+      echo "🚫 ERROR: Push refused — destination ref is ${remote_ref}."
+      echo "   concept2cure-v2 is the ONE AND ONLY branch (see CLAUDE.md)."
+      echo "   Local: ${local_ref}"
+      echo ""
+      echo "   To push, switch to concept2cure-v2:"
+      echo "     git checkout concept2cure-v2"
+      echo "     git push origin concept2cure-v2"
+      echo ""
+      echo "   To bypass intentionally (e.g. dependabot PR branch):"
+      echo "     ALLOW_NON_CANONICAL_PUSH=1 git push ..."
+      echo ""
+      exit 1
+    fi
+  fi
+done
+
+# ============================================
 # PRE-PUSH HOOK - eCTD Contract Enforcement (unconditional)
 # Added: Phase 6.6.H
 # ============================================
