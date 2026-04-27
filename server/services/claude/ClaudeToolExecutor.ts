@@ -1043,6 +1043,305 @@ registerToolHandler('fetch_template_and_fill', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// eCTD Module Assembly handler — pure assembly, no AI. Pulls every artifact
+// in the project whose ctd_section starts with the requested module prefix,
+// dedupes by section keeping highest version, and emits via masterDocumentBuilder.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('assemble_ectd_module_from_artifacts', async (input, ctx) => {
+  const projectId = typeof input.project_id === 'number' ? input.project_id : undefined;
+  const moduleNumber = typeof input.module_number === 'string' ? input.module_number : undefined;
+  if (!projectId || !moduleNumber) {
+    return JSON.stringify({
+      error:
+        'assemble_ectd_module_from_artifacts requires project_id (number) and module_number (string, e.g. "3.2.S")',
+    });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({
+      error: 'assemble_ectd_module_from_artifacts requires tenant context (organizationId)',
+    });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const pool = getPool();
+    const { rows } = await pool.query(
+      `SELECT id, artifact_id, title, content, ctd_section, type, status, version
+         FROM concept2cure_artifacts
+         WHERE project_id = $1
+           AND organization_id = $2
+           AND ctd_section LIKE $3 || '%'
+           AND status != 'archived'
+         ORDER BY ctd_section, version DESC`,
+      [projectId, ctx.organizationId, moduleNumber]
+    );
+    if (rows.length === 0) {
+      return JSON.stringify({
+        error: `No artifacts found for module ${moduleNumber} in project ${projectId}`,
+        suggestion:
+          'Verify the module_number prefix matches existing artifacts (e.g. "3.2.S" not "Module 3").',
+      });
+    }
+    // Dedupe by ctd_section, keeping highest version (rows already ordered by version DESC).
+    const sectionMap = new Map<string, typeof rows[number]>();
+    for (const r of rows) {
+      const key = r.ctd_section || r.artifact_id;
+      if (!sectionMap.has(key)) sectionMap.set(key, r);
+    }
+    const sections = Array.from(sectionMap.values())
+      .sort((a, b) => (a.ctd_section || '').localeCompare(b.ctd_section || ''))
+      .map(r => ({
+        number: r.ctd_section || '',
+        title: r.title,
+        content: r.content || '',
+      }));
+
+    const outputFormat: 'docx' | 'pdf' = input.output_format === 'pdf' ? 'pdf' : 'docx';
+    const { getMasterDocumentBuilder } = await import('../docx/masterDocumentBuilder.js');
+    const builder = getMasterDocumentBuilder();
+    const result = await builder.generateFromScratch({
+      documentType: 'ctd_module',
+      sections,
+      outputFormat,
+      documentTitle: `eCTD Module ${moduleNumber}`,
+    });
+    return JSON.stringify({
+      module_number: moduleNumber,
+      sections_assembled: sections.length,
+      sections_index: sections.map(s => ({ number: s.number, title: s.title })),
+      output: {
+        path: result.outputPath,
+        format: result.format,
+        size_bytes: result.sizeBytes,
+        build_duration_ms: result.buildDurationMs,
+      },
+    });
+  } catch (err: any) {
+    return JSON.stringify({
+      error: `Module assembly failed: ${err?.message || 'unknown error'}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Section-aware drafting scaffolds — return canonical regulatory structure
+// (outlines, table formats, citation hints). Tool does NOT draft prose;
+// model uses the returned structure to draft inline. Same pattern as
+// mine_precedents (structure + guidance, no AI inside the handler).
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('draft_510k_substantial_equivalence', async (input) => {
+  const predicateKNumber = input.predicate_510k_number as string;
+  const deviceName = input.device_name as string;
+  const intendedUse = input.intended_use as string;
+  const technologySummary = input.technology_summary as string | undefined;
+  if (!predicateKNumber || !deviceName || !intendedUse) {
+    return JSON.stringify({
+      error:
+        'draft_510k_substantial_equivalence requires predicate_510k_number, device_name, intended_use',
+    });
+  }
+  return JSON.stringify({
+    structure: {
+      title: `510(k) Substantial Equivalence Comparison — ${deviceName} vs ${predicateKNumber}`,
+      sections: [
+        {
+          number: '1',
+          title: 'Subject Device Description',
+          guidance:
+            'Device name, classification name and class, product code, intended use, technological characteristics, principles of operation. Cite 21 CFR product classification.',
+        },
+        {
+          number: '2',
+          title: 'Predicate Device Identification',
+          guidance: `Identify the primary predicate (${predicateKNumber}). Cite the 510(k) Decision Summary or Summary of Safety and Effectiveness. Note clearance date and applicant.`,
+        },
+        {
+          number: '3',
+          title: 'Indications for Use Comparison',
+          guidance:
+            'Side-by-side comparison of subject vs predicate Indications for Use. Highlight any differences and assess whether they raise different questions of safety/effectiveness — the FDA SE test pivots on this.',
+        },
+        {
+          number: '4',
+          title: 'Technological Characteristics Comparison',
+          guidance:
+            'Compare device design, materials, energy source, software, sensors, principles of operation. Use the SE table format below. Different technological characteristics require performance data demonstrating they do not raise different questions of S&E.',
+        },
+        {
+          number: '5',
+          title: 'Performance Testing Summary',
+          guidance:
+            'List performance tests conducted (bench, animal, clinical) supporting SE. For each: test name, recognized standard followed (ISO/ASTM/IEC), acceptance criteria, results, conclusion.',
+        },
+        {
+          number: '6',
+          title: 'Substantial Equivalence Conclusion',
+          guidance:
+            'Single paragraph stating subject is SE to predicate, with the rationale: same intended use AND (same OR different but not different questions of S&E) technological characteristics. This is the explicit FDA SE test from 21 USC 360c(i).',
+        },
+      ],
+    },
+    se_table_format: {
+      columns: ['Characteristic', 'Subject Device', 'Predicate Device', 'Comparison Notes'],
+      typical_rows: [
+        'Intended Use',
+        'Indications for Use',
+        'Target Population',
+        'Anatomical Site',
+        'Energy Source / Power',
+        'Materials in Patient Contact',
+        'Principle of Operation',
+        'Software Level of Concern',
+        'Sterility',
+        'Single-Use vs Reusable',
+        'Performance Standards',
+      ],
+    },
+    inputs_echo: {
+      device_name: deviceName,
+      intended_use: intendedUse,
+      predicate_510k_number: predicateKNumber,
+      technology_summary: technologySummary || null,
+    },
+    next_step:
+      'Use this structure to draft the SE narrative inline. Pay particular attention to section 4 — that is where most 510(k) RTAs are issued. If you need predicate technical details, call analyze_predicate_device with the predicate K-number first.',
+  });
+});
+
+registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
+  const productName = input.product_name as string;
+  const indication = input.indication as string;
+  const projectId = typeof input.project_id === 'number' ? input.project_id : undefined;
+  if (!productName || !indication) {
+    return JSON.stringify({
+      error: 'draft_clinical_overview_m2_5 requires product_name and indication',
+    });
+  }
+
+  // Best-effort: pull project artifacts to suggest citations. Skip silently if
+  // tenant context is missing or DB is unavailable — the structure response
+  // is still useful without it.
+  let projectArtifacts: any[] = [];
+  if (projectId && ctx?.organizationId) {
+    try {
+      const { getPool } = await import('../../db.js');
+      const pool = getPool();
+      const { rows } = await pool.query(
+        `SELECT artifact_id, title, ctd_section, type, status
+           FROM concept2cure_artifacts
+           WHERE project_id = $1 AND organization_id = $2 AND status != 'archived'
+           ORDER BY ctd_section
+           LIMIT 50`,
+        [projectId, ctx.organizationId]
+      );
+      projectArtifacts = rows;
+    } catch {
+      /* best-effort — structure response stands without artifact list */
+    }
+  }
+
+  return JSON.stringify({
+    structure: {
+      title: `Clinical Overview (Module 2.5) — ${productName} for ${indication}`,
+      ich_reference: 'ICH M4E(R2)',
+      sections: [
+        {
+          number: '2.5.1',
+          title: 'Product Development Rationale',
+          guidance:
+            'Background on the disease, current therapeutic options, unmet medical need, scientific rationale for this product. Cite key external references. Typically 2-3 pages.',
+        },
+        {
+          number: '2.5.2',
+          title: 'Overview of Biopharmaceutics',
+          guidance:
+            'Summary of biopharmaceutic studies — formulation development, bioavailability, food effect, in vitro/in vivo correlations.',
+          cite_from_module: '2.7.1',
+        },
+        {
+          number: '2.5.3',
+          title: 'Overview of Clinical Pharmacology',
+          guidance:
+            'PK/PD profile, dose-response, special populations (renal/hepatic/elderly/pediatric), drug-drug interactions.',
+          cite_from_module: '2.7.2',
+        },
+        {
+          number: '2.5.4',
+          title: 'Overview of Efficacy',
+          guidance:
+            'Efficacy across pivotal studies — primary/secondary endpoints, key subgroups, sensitivity analyses, robustness, durability of effect.',
+          cite_from_module: '2.7.3',
+        },
+        {
+          number: '2.5.5',
+          title: 'Overview of Safety',
+          guidance:
+            'Safety pool — exposure, AEs, SAEs, deaths, special-interest events, lab abnormalities, risk minimization measures, contraindications/warnings.',
+          cite_from_module: '2.7.4',
+        },
+        {
+          number: '2.5.6',
+          title: 'Benefits and Risks Conclusions',
+          guidance:
+            'Integrated benefit-risk assessment. State the conclusion explicitly. Address residual uncertainties and post-approval commitments. Typically 3-5 pages.',
+        },
+      ],
+    },
+    project_artifacts: projectArtifacts,
+    next_step:
+      'Use this outline to draft each subsection inline. The cite_from_module field in each section indicates which Module 2.7 summary should be referenced. If project_artifacts is populated, suggest specific artifact_ids to cite in each section based on their ctd_section values.',
+  });
+});
+
+registerToolHandler('draft_fda_ir_response', async (input) => {
+  const irText = typeof input.ir_text === 'string' ? input.ir_text : '';
+  if (!irText || irText.length < 50) {
+    return JSON.stringify({
+      error:
+        'draft_fda_ir_response requires ir_text (pasted Information Request content, min 50 chars)',
+    });
+  }
+
+  // Extract numbered questions: "N." or "N.M." or "Question N:" at line start.
+  const questions: { number: string; text: string }[] = [];
+  const lines = irText.split(/\r?\n/);
+  let current: { number: string; text: string } | null = null;
+  for (const line of lines) {
+    const m = line.match(/^\s*(?:Question\s+)?(\d+(?:\.\d+)*)[\.:)\s]+(.+)$/i);
+    if (m) {
+      if (current) questions.push(current);
+      current = { number: m[1], text: m[2].trim() };
+    } else if (current && line.trim()) {
+      // Continuation line — append to current question text.
+      current.text += ' ' + line.trim();
+      if (current.text.length > 1500) current.text = current.text.slice(0, 1500);
+    }
+  }
+  if (current) questions.push(current);
+
+  return JSON.stringify({
+    questions_extracted: questions.length,
+    questions: questions.slice(0, 50),
+    response_scaffold: {
+      cover_letter: {
+        guidance:
+          'Brief cover letter acknowledging receipt of the IR (with date received), confirming the response addresses each question, and listing the questions by number. Sign by responsible regulatory officer.',
+      },
+      per_question_format: {
+        sections: ['FDA Question (verbatim)', 'Sponsor Response', 'Supporting Data / Citation'],
+        guidance:
+          'Reproduce the FDA question verbatim. Provide a direct, concise response — do not over-explain. Cite the supporting artifact ID, table number, or section reference. If data is not available, explain why and propose a path forward (e.g., commitment to provide post-approval). FDA prefers responses that close the question vs responses that defer.',
+      },
+    },
+    next_step:
+      questions.length > 0
+        ? 'For each extracted question, draft the response inline using the per_question_format. Group related questions if FDA grouped them. The 14-day clock is firm — the response must be received by FDA, not just sent.'
+        : 'Could not auto-extract numbered questions from the IR text. Either paste a more structured version of the IR (with numbered questions) or treat the entire IR as a single open question and respond holistically.',
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Agentic Execution Loop
 // ─────────────────────────────────────────────────────────────────────────────
 

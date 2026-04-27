@@ -754,6 +754,116 @@ export const FETCH_TEMPLATE_AND_FILL: ClaudeTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// eCTD Module Assembly — collects existing artifacts in a project belonging
+// to a CTD module prefix (e.g. "3.2.S") and assembles them into a single DOCX
+// via masterDocumentBuilder.generateFromScratch. Pure assembly, no AI.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS: ClaudeTool = {
+  name: 'assemble_ectd_module_from_artifacts',
+  description:
+    "Collect every artifact in a project whose CTD section starts with a given module prefix (e.g. '3.2.S' for drug substance, '2.5' for clinical overview, '5.3.5' for clinical study reports), order them by section number, and assemble a single DOCX with proper headings. Use when the user has drafted several module sections as separate artifacts and wants the assembled module document for review or submission. Pulls the latest non-archived version of each artifact, dedupes by section, and emits the output to disk. Tenant-scoped via ToolContext.organizationId.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      project_id: {
+        type: 'number',
+        description: 'Project ID whose artifacts should be assembled.',
+      },
+      module_number: {
+        type: 'string',
+        description:
+          'CTD module prefix to match on artifact.ctd_section (e.g. "3.2.S", "3.2.P", "2.5", "2.7", "5.3.5"). Trailing dot/wildcard not required.',
+      },
+      output_format: {
+        type: 'string',
+        enum: ['docx', 'pdf'],
+        description: 'Output format. Defaults to docx.',
+      },
+    },
+    required: ['project_id', 'module_number'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Section-aware drafting scaffolds — return a structured outline + anchor
+// data that the model uses to draft prose inline in its own response.
+// Following the mine_precedents pattern: tool provides STRUCTURE, LLM
+// provides PROSE.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const DRAFT_510K_SUBSTANTIAL_EQUIVALENCE: ClaudeTool = {
+  name: 'draft_510k_substantial_equivalence',
+  description:
+    "Return the canonical FDA 510(k) Substantial Equivalence comparison structure for a subject-vs-predicate device pair, with per-section guidance and the SE table column format. Use when drafting the SE section of a 510(k) — the structure is what FDA reviewers expect, the table format is what the SE summary requires. The tool does NOT draft prose; the model uses the returned structure + the user's device data to draft each section inline. Pair with analyze_predicate_device first if predicate technical details are needed.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      predicate_510k_number: {
+        type: 'string',
+        description: 'Primary predicate K-number (e.g. "K223456").',
+      },
+      device_name: {
+        type: 'string',
+        description: 'Subject device name.',
+      },
+      intended_use: {
+        type: 'string',
+        description: 'Subject device intended use statement.',
+      },
+      technology_summary: {
+        type: 'string',
+        description:
+          'Brief summary of subject device technology (energy source, sensors, materials, software, principles of operation).',
+      },
+    },
+    required: ['predicate_510k_number', 'device_name', 'intended_use'],
+  },
+};
+
+export const DRAFT_CLINICAL_OVERVIEW_M2_5: ClaudeTool = {
+  name: 'draft_clinical_overview_m2_5',
+  description:
+    "Return the ICH M4E(R2) Clinical Overview (Module 2.5) outline with the six canonical subsections (2.5.1 Product Development Rationale through 2.5.6 Benefits and Risks Conclusions), per-section drafting guidance, and per-section citation hints showing which Module 2.7 summary should be referenced. When called with project_id, also returns the project's existing artifacts so the model can suggest which ones to cite where. Use when drafting the M2.5 — pair with draft_clinical_overview_m2_5 first, then draft each section inline using the returned outline.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      product_name: {
+        type: 'string',
+        description: 'Drug substance / product name.',
+      },
+      indication: {
+        type: 'string',
+        description: 'Target indication.',
+      },
+      project_id: {
+        type: 'number',
+        description:
+          'Project ID — when provided, the tool returns up to 50 existing artifacts so you can pick citations.',
+      },
+    },
+    required: ['product_name', 'indication'],
+  },
+};
+
+export const DRAFT_FDA_IR_RESPONSE: ClaudeTool = {
+  name: 'draft_fda_ir_response',
+  description:
+    "Parse a pasted FDA Information Request letter, extract the numbered questions, and return a per-question response scaffold with the canonical 3-section format (FDA Question verbatim · Sponsor Response · Supporting Data/Citation) plus cover-letter guidance. Use when the user has received an IR (typically Day 74 RTF or mid-cycle) and needs to draft a response within the 14-day window. The tool extracts questions heuristically (numbered '1.', '1.1', or 'Question N:'); if extraction fails, it tells you so you can paste a more structured version. The model drafts each response inline using the scaffold; the tool itself does not call any AI.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      ir_text: {
+        type: 'string',
+        description:
+          'The full text of the Information Request letter (pasted as plain text). PDF parsing is out of scope — paste the text manually.',
+      },
+    },
+    required: ['ir_text'],
+  },
+};
+
 /** Custom JSON-schema tools dispatched by our local ClaudeToolExecutor. */
 export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
@@ -769,6 +879,10 @@ export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
   SIMULATE_REVIEWER_CHALLENGES,
   PREDICT_CHANGE_IMPACT,
   FETCH_TEMPLATE_AND_FILL,
+  ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS,
+  DRAFT_510K_SUBSTANTIAL_EQUIVALENCE,
+  DRAFT_CLINICAL_OVERVIEW_M2_5,
+  DRAFT_FDA_IR_RESPONSE,
   ANALYZE_PREDICATE_DEVICE,
   EXTRACT_DOCUMENT_STRUCTURE,
   CHECK_DOSSIER_CONSISTENCY,

@@ -27,6 +27,10 @@ const NEW_TOOLS = [
   'simulate_reviewer_challenges',
   'predict_change_impact',
   'fetch_template_and_fill',
+  'assemble_ectd_module_from_artifacts',
+  'draft_510k_substantial_equivalence',
+  'draft_clinical_overview_m2_5',
+  'draft_fda_ir_response',
 ] as const;
 
 describe('AnA new tool handlers — registration', () => {
@@ -92,6 +96,87 @@ describe('AnA new tool handlers — input validation (no DB needed)', () => {
     const result = JSON.parse(await handler({}, { organizationId: 1 }));
     expect(result.error).toMatch(/template_id/);
   });
+
+  it('assemble_ectd_module_from_artifacts rejects missing module_number', async () => {
+    const handler = getToolHandler('assemble_ectd_module_from_artifacts')!;
+    const result = JSON.parse(
+      await handler({ project_id: 1 }, { organizationId: 1 })
+    );
+    expect(result.error).toMatch(/module_number/);
+  });
+
+  it('draft_510k_substantial_equivalence rejects missing intended_use', async () => {
+    const handler = getToolHandler('draft_510k_substantial_equivalence')!;
+    const result = JSON.parse(
+      await handler(
+        { predicate_510k_number: 'K223456', device_name: 'Acme Monitor' },
+        {}
+      )
+    );
+    expect(result.error).toMatch(/intended_use/);
+  });
+
+  it('draft_clinical_overview_m2_5 rejects missing indication', async () => {
+    const handler = getToolHandler('draft_clinical_overview_m2_5')!;
+    const result = JSON.parse(await handler({ product_name: 'Compound X' }, {}));
+    expect(result.error).toMatch(/indication/);
+  });
+
+  it('draft_fda_ir_response rejects empty / too-short ir_text', async () => {
+    const handler = getToolHandler('draft_fda_ir_response')!;
+    const result = JSON.parse(await handler({ ir_text: 'too short' }, {}));
+    expect(result.error).toMatch(/ir_text/);
+  });
+
+  it('draft_510k_substantial_equivalence returns structure when inputs are complete (no AI, no DB)', async () => {
+    const handler = getToolHandler('draft_510k_substantial_equivalence')!;
+    const result = JSON.parse(
+      await handler(
+        {
+          predicate_510k_number: 'K223456',
+          device_name: 'Acme Pulse Monitor',
+          intended_use: 'Continuous heart-rate monitoring in adult outpatient settings',
+        },
+        {}
+      )
+    );
+    expect(result.structure?.sections).toHaveLength(6);
+    expect(result.se_table_format?.columns).toEqual(
+      expect.arrayContaining(['Subject Device', 'Predicate Device'])
+    );
+  });
+
+  it('draft_clinical_overview_m2_5 returns ICH M4E(R2) outline (no DB needed)', async () => {
+    const handler = getToolHandler('draft_clinical_overview_m2_5')!;
+    const result = JSON.parse(
+      await handler(
+        { product_name: 'Compound X', indication: 'type 2 diabetes' },
+        {}
+      )
+    );
+    expect(result.structure?.ich_reference).toBe('ICH M4E(R2)');
+    expect(result.structure?.sections).toHaveLength(6);
+    const sectionNumbers = result.structure.sections.map((s: any) => s.number);
+    expect(sectionNumbers).toEqual(['2.5.1', '2.5.2', '2.5.3', '2.5.4', '2.5.5', '2.5.6']);
+  });
+
+  it('draft_fda_ir_response extracts numbered questions from realistic IR text', async () => {
+    const handler = getToolHandler('draft_fda_ir_response')!;
+    const irText = `
+Information Request from FDA, dated April 2026.
+
+1. Please provide additional information regarding the validation of analytical method M-001.
+2. Clarify the rationale for excluding 12 subjects from the per-protocol population in study C-201.
+3.1. Provide the audit trail for protocol deviation #47.
+3.2. Provide the source data for primary endpoint analysis in study C-301.
+`;
+    const result = JSON.parse(await handler({ ir_text: irText }, {}));
+    expect(result.questions_extracted).toBeGreaterThanOrEqual(4);
+    expect(result.questions[0].number).toBe('1');
+    expect(result.response_scaffold?.per_question_format?.sections).toEqual(
+      expect.arrayContaining(['FDA Question (verbatim)', 'Sponsor Response'])
+    );
+  });
 });
 
 describe('AnA new tool handlers — tenant context enforcement', () => {
@@ -132,6 +217,14 @@ describe('AnA new tool handlers — tenant context enforcement', () => {
   it('fetch_template_and_fill refuses without organizationId', async () => {
     const handler = getToolHandler('fetch_template_and_fill')!;
     const result = JSON.parse(await handler({ template_id: 1 }, {} as ToolContext));
+    expect(result.error).toMatch(/organizationId/);
+  });
+
+  it('assemble_ectd_module_from_artifacts refuses without organizationId', async () => {
+    const handler = getToolHandler('assemble_ectd_module_from_artifacts')!;
+    const result = JSON.parse(
+      await handler({ project_id: 1, module_number: '3.2.S' }, {} as ToolContext)
+    );
     expect(result.error).toMatch(/organizationId/);
   });
 
