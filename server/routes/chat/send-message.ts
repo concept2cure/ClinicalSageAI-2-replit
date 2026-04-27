@@ -29,6 +29,7 @@ import {
 import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
 import { getAllEnabledTools } from '../../services/claude/ClaudeToolDefinitions.js';
 import { executeAgenticLoop } from '../../services/claude/ClaudeToolExecutor.js';
+import { logToolRun } from '../../services/toolRegistry.js';
 import type { ClaudeEnhancedResponse } from '../../services/ai-gateway/types.js';
 import { buildMemoryContextForChat, type MemoryAssemblyDiagnostics } from '../../services/memory-context-assembler.js';
 import { summarizeAndStoreWorkingMemoryForThread } from '../../services/working-memory.js';
@@ -533,8 +534,22 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       const gwResponse: ClaudeEnhancedResponse = await executeAgenticLoop(baseRequest, {
         maxRounds: 5,
         onToolExecution: (toolName, input, result) => {
-          // Log tool usage for audit trail
-          console.log(`[AnA Tool] ${toolName} called`);
+          // Persist the invocation for usage analytics. Latency is 0 here
+          // because the agentic-loop hook fires post-success without a
+          // start timestamp; the streaming path captures real latency.
+          // Errors aren't surfaced through this hook either — see
+          // ClaudeToolExecutor.executeAgenticLoop's catch branch.
+          void logToolRun({
+            threadId,
+            projectId: typeof project_id === 'string' ? parseInt(project_id, 10) || null : project_id || null,
+            userId: numericUserId || null,
+            organizationId: numericOrgId,
+            toolName,
+            arguments: (input ?? {}) as Record<string, unknown>,
+            result: { resultBytes: result.length },
+            status: 'success',
+            latencyMs: 0,
+          });
         },
       });
 
