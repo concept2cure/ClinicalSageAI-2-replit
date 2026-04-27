@@ -3,6 +3,7 @@ import { templateService } from '../../services/templateService';
 // Document templates now use ectdTemplates table
 import multer from 'multer';
 import path from 'path';
+import crypto from 'node:crypto';
 import { db } from '../../db';
 import { ectdTemplates } from '../../../shared/schema';
 import { eq, and, or, like, sql } from 'drizzle-orm';
@@ -15,7 +16,7 @@ const storage = multer.diskStorage({
     cb(null, 'uploads/templates/'); // Make sure this directory exists
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const uniqueSuffix = Date.now() + '-' + crypto.randomBytes(8).toString('hex');
     cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
   },
 });
