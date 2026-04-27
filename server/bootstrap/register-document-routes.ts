@@ -132,7 +132,10 @@ export async function registerDocumentRoutes({
   {
     const evidenceConfig = [
       { path: '/api/evidence', mod: '../routes/evidence.js', name: 'Evidence' },
-      { path: '/api/evidence', mod: '../routes/evidence-ask.js', name: 'Evidence Ask' },
+      // /api/evidence/ask is owned by registerInlinePlatformFacadesRoutes
+      // (see docs/audits/ROUTE_OWNERSHIP.md). It was relocated out of this
+      // slot when the handler was rebuilt against the canonical retrieval +
+      // AI-gateway layer for Doc System Convergence Phase 4.
       { path: '/api/evidence-search', mod: '../routes/evidence-search.js', name: 'Evidence Search' },
       { path: '/api/content-plan', mod: '../routes/content-plan.js', name: 'Content Plan' },
       { path: '/api/smart-blocks', mod: '../routes/smart-blocks.js', name: 'Smart Blocks' },

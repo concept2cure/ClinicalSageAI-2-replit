@@ -441,3 +441,93 @@ declare module '@google/generative-ai' {
     };
   }
 }
+
+// ============================================================================
+// speakeasy — TOTP/HOTP one-time password library (no @types/speakeasy)
+// ============================================================================
+declare module 'speakeasy' {
+  export interface GeneratedSecret {
+    ascii: string;
+    hex: string;
+    base32: string;
+    otpauth_url?: string;
+  }
+
+  export function generateSecret(options?: {
+    length?: number;
+    name?: string;
+    issuer?: string;
+    symbols?: boolean;
+    otpauth_url?: boolean;
+  }): GeneratedSecret;
+
+  export namespace totp {
+    export function generate(options: {
+      secret: string;
+      encoding?: 'ascii' | 'hex' | 'base32' | 'base64';
+      algorithm?: 'sha1' | 'sha256' | 'sha512';
+      digits?: number;
+      step?: number;
+      time?: number;
+      counter?: number;
+    }): string;
+
+    export function verify(options: {
+      secret: string;
+      encoding?: 'ascii' | 'hex' | 'base32' | 'base64';
+      token: string;
+      algorithm?: 'sha1' | 'sha256' | 'sha512';
+      digits?: number;
+      step?: number;
+      time?: number;
+      counter?: number;
+      window?: number;
+    }): boolean;
+  }
+
+  export namespace hotp {
+    export function generate(options: {
+      secret: string;
+      counter: number;
+      encoding?: 'ascii' | 'hex' | 'base32' | 'base64';
+      digits?: number;
+    }): string;
+
+    export function verify(options: {
+      secret: string;
+      counter: number;
+      token: string;
+      encoding?: 'ascii' | 'hex' | 'base32' | 'base64';
+      digits?: number;
+      window?: number;
+    }): boolean;
+  }
+}
+
+// ============================================================================
+// qrcode — QR code generator (no @types/qrcode)
+// ============================================================================
+declare module 'qrcode' {
+  export interface QRCodeRenderersOptions {
+    margin?: number;
+    scale?: number;
+    width?: number;
+    color?: { dark?: string; light?: string };
+  }
+
+  export function toDataURL(
+    text: string,
+    options?: QRCodeRenderersOptions
+  ): Promise<string>;
+
+  export function toString(
+    text: string,
+    options?: { type?: 'svg' | 'utf8' | 'terminal' } & QRCodeRenderersOptions
+  ): Promise<string>;
+
+  export function toFile(
+    path: string,
+    text: string,
+    options?: { type?: 'png' | 'svg' } & QRCodeRenderersOptions
+  ): Promise<void>;
+}

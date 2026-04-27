@@ -229,8 +229,8 @@ export function Ana({
   onCreateProject,
   greeting,
   suggestedActions,
-  authoringContext: _authoringContext,
-  moduleContext: _moduleContext,
+  authoringContext,
+  moduleContext,
   organizationId: _organizationId,
   customInstructions: _customInstructions,
   threadId: pinnedThreadId,
@@ -283,6 +283,8 @@ export function Ana({
     screenName: resolvedScreenName,
     userRole: resolvedUserRole,
     submissionType,
+    authoringContext: authoringContext ?? undefined,
+    moduleContext: moduleContext ?? undefined,
   });
 
   // Notify host when the active thread id changes (legacy parity with

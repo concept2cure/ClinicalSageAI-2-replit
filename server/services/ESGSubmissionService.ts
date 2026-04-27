@@ -411,7 +411,25 @@ class ESGSubmissionService {
   }
 
   /**
-   * Download acknowledgment from FDA
+   * Download acknowledgment from FDA ESG.
+   *
+   * The FDA ESG returns three acknowledgements per submission:
+   *   - ack1: receipt-of-transmission (MDN, AS2 layer)
+   *   - ack2: received-by-CDER / center
+   *   - ack3: final acceptance / rejection
+   *
+   * In test/staging mode this method synthesises a deterministic mock
+   * acknowledgement so downstream code paths (routes, audit, UI) can be
+   * exercised end-to-end without real ESG credentials.
+   *
+   * In production this method requires a real ESG transport client
+   * (AS2 over HTTPS or the SFTP gateway) plus production credentials.
+   * Neither exists in this repo today — `transmitToESG` and the sibling
+   * `fdaIntegrationService.sendToESG` are themselves still mocks. Rather
+   * than ship a partial AS2/SFTP implementation here (>>100 LOC, mTLS,
+   * vendor-specific framing), this branch fails fast with an actionable
+   * error pointing at the runbook so the work is tracked and unblocked
+   * deliberately.
    */
   async downloadAcknowledgment(
     transactionId: string
@@ -421,20 +439,43 @@ class ESGSubmissionService {
       const mockAck = `
         FDA Electronic Submission Gateway
         Acknowledgment Receipt
-        
+
         Transaction ID: ${transactionId}
         Date: ${new Date().toISOString()}
         Status: RECEIVED
-        
+
         Your submission has been received and will be processed.
         You will receive additional notifications regarding the status of your submission.
       `;
-      
+
       return Buffer.from(mockAck, 'utf8');
     }
 
-    // In production, would download actual acknowledgment from FDA
-    throw new Error('Production acknowledgment download not implemented');
+    // Production path — credential preflight. The repo's existing prefix is
+    // FDA_ESG_* (see constructor). Reuse it; do not invent ESG_PROD_*.
+    const missing: string[] = [];
+    if (!process.env.FDA_ESG_URL) missing.push('FDA_ESG_URL');
+    if (!process.env.FDA_ESG_USERNAME) missing.push('FDA_ESG_USERNAME');
+    if (!process.env.FDA_ESG_CERT_PATH && !process.env.FDA_ESG_PASSWORD) {
+      // Either mTLS cert path or password auth must be present
+      missing.push('FDA_ESG_CERT_PATH or FDA_ESG_PASSWORD');
+    }
+    if (missing.length > 0) {
+      throw new Error(
+        `ESG production credentials not configured for tracking ${transactionId} ` +
+        `(error class: auth) — set FDA_ESG_* env vars (missing: ${missing.join(', ')}). ` +
+        `See docs/runbooks/esg-production-setup.md.`
+      );
+    }
+
+    // Production transport (AS2 / SFTP) is not implemented in this repo.
+    // Fail with a structured, actionable error instead of a bare "not implemented".
+    throw new Error(
+      `ESG production acknowledgement download requires the production ESG transport ` +
+      `client (AS2 over HTTPS or SFTP gateway) to be configured. ` +
+      `Tracking number: ${transactionId}. Error class: not-implemented. ` +
+      `See docs/runbooks/esg-production-setup.md.`
+    );
   }
 }
 

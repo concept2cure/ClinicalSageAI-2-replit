@@ -33,6 +33,9 @@ import { createCsrIntelligenceRoutes } from '../routes/csr-intelligence-routes';
 import csrAnalyticsRouter from '../routes/csr-analytics';
 import { createAuditTrailRoutes } from '../routes/audit-trail-routes';
 import { createAnaRiInlineRoutes } from '../routes/ana-ri-inline-routes';
+import evidenceAskRouter from '../routes/evidence-ask';
+import esignatureRouter from '../routes/esignature';
+import dossierReadinessRouter from '../routes/dossier-readiness';
 import regulatorySubmissionsRoutes from '../routes/regulatorySubmissions';
 import submissionOpsRoutes from '../routes/submission-ops';
 import regulatoryCorrespondenceRoutes from '../routes/regulatory-correspondence';
@@ -199,6 +202,21 @@ export function registerInlinePlatformFacadesRoutes({
 
   // Audit trail — append-only, signed exports, chain integrity (21 CFR Part 11).
   app.use('/api', createAuditTrailRoutes(pool));
+
+  // Evidence Ask — single-shot grounded Q&A over the Data Room
+  // (Doc System Convergence Phase 4 — Ask-Data-Room flow).
+  app.use('/api/evidence', evidenceAskRouter);
+  console.log('✅ Evidence Ask routes mounted (/api/evidence/ask)');
+
+  // Electronic-signature backend (21 CFR Part 11 — verify-password,
+  // verify-mfa, sign). The portal-v2 ElectronicSignature UI calls these.
+  app.use('/api/esignature', esignatureRouter);
+  console.log('✅ E-signature routes mounted (/api/esignature)');
+
+  // Dossier section readiness derived from live concept2cure_artifacts
+  // (Doc System Convergence Phase 5 — replaces hardcoded section status).
+  app.use('/api/dossier-readiness', dossierReadinessRouter);
+  console.log('✅ Dossier readiness routes mounted (/api/dossier-readiness)');
 
   // AnA 1.0 RI endpoint + compatibility facades.
   app.use(

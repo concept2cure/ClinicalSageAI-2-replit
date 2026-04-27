@@ -1,9 +1,6 @@
-import { queryHuggingFace, generateEmbeddings, HFModel } from './huggingface-service';
+import { queryHuggingFace, HFModel } from './huggingface-service';
 import * as fs from 'fs';
 import * as path from 'path';
-import { db } from './db';
-// Removed csrReports and csrDetails - these tables don't exist in the schema
-import { sql } from 'drizzle-orm';
 import { createScopedLogger } from './utils/logger.js';
 
 const log = createScopedLogger('agent-service');
@@ -164,34 +161,15 @@ export class StudyDesignAgentService {
     indication?: string,
     phase?: string
   ): Promise<any[]> {
-    try {
-      // Generate embedding for the query
-      const queryEmbedding = await generateEmbeddings(query);
-
-      // TODO: csrReports table doesn't exist in the current schema
-      // This function needs to be updated to use the actual tables
-      // Build database query
-      // let dbQuery = db.select().from(csrReports).limit(5);
-
-      // Add filters if provided
-      // if (indication) {
-      //   dbQuery = dbQuery.where(sql`${csrReports.indication} = ${indication}`);
-      // }
-
-      // if (phase) {
-      //   dbQuery = dbQuery.where(sql`${csrReports.phase} = ${phase}`);
-      // }
-
-      // Execute query
-      // const relevantReports = await dbQuery;
-
-      // TODO: Implement vector search once embeddings are available in the database
-      // For now, return empty array until the proper tables are available
-      return [];
-    } catch (error) {
-      log.error('Error finding relevant CSRs:', error);
-      return [];
-    }
+    // CSR vector search disabled — csrReports schema is not present in this deployment.
+    // Canonical retrieval lives in lumen_data_atoms via searchHybrid(), but that surface
+    // requires an organizationUuid for tenant isolation which this entry point does not
+    // receive. Returning [] keeps callers (which already handle empty results) intact.
+    log.warn(
+      '[AgentService] findRelevantCSRs disabled — csrReports schema not present; returning []',
+      { query, indication, phase }
+    );
+    return [];
   }
 
   /**
@@ -208,53 +186,17 @@ export class StudyDesignAgentService {
       return this.academicCitationsCache.get(cacheKey) || [];
     }
 
-    try {
-      // TODO: csrReports and csrDetails tables don't exist in the current schema
-      // This function needs to be updated to use the actual tables
-      // Query database for potential academic sources
-      // let dbQuery = db
-      //   .select()
-      //   .from(csrReports)
-      //   .innerJoin(csrDetails, sql`${csrReports.id} = ${csrDetails.reportId}`)
-      //   .limit(10);
+    // Academic evidence retrieval disabled — depended on the csrReports/csrDetails join
+    // which has no equivalent in the current schema. Canonical retrieval (searchHybrid
+    // over lumen_data_atoms) cannot be wired here without an organizationUuid.
+    log.warn(
+      '[AgentService] getAcademicEvidence disabled — csrReports/csrDetails schema not present; returning []',
+      { query, indication }
+    );
 
-      // Add indication filter if provided
-      // if (indication) {
-      //   dbQuery = dbQuery.where(sql`${csrReports.indication} = ${indication}`);
-      // }
-
-      // Execute query
-      // const potentialSources = await dbQuery;
-
-      // Process and rank the sources
-      // const academicSources = potentialSources.map(source => {
-      //   // Extract key information for citation
-      //   const report = source.csr_reports;
-      //   return {
-      //     id: report.id,
-      //     title: report.title,
-      //     sponsor: report.sponsor,
-      //     date: report.date,
-      //     indication: report.indication,
-      //     phase: report.phase,
-      //     relevanceScore: 0.85, // Default score, would be calculated based on similarity
-      //     citationKey: `[${report.id}]`,
-      //     source: 'CSR Database',
-      //   };
-      // });
-
-      // Sort by relevance score
-      // const sortedSources = academicSources.sort((a, b) => b.relevanceScore - a.relevanceScore);
-      const sortedSources: any[] = [];
-
-      // Cache the results
-      this.academicCitationsCache.set(cacheKey, sortedSources);
-
-      return sortedSources;
-    } catch (error) {
-      log.error('Error retrieving academic evidence:', error);
-      return [];
-    }
+    const sortedSources: any[] = [];
+    this.academicCitationsCache.set(cacheKey, sortedSources);
+    return sortedSources;
   }
 
   /**

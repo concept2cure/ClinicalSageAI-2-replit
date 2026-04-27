@@ -35,6 +35,9 @@ on it.
 | 9 | CSR intelligence routes (`/api/...`) | `bootstrap/register-inline-routes.ts` | `registerInlinePlatformFacadesRoutes` |
 | 9 | `/api/csr-real-data` | `bootstrap/register-inline-routes.ts` | `registerInlinePlatformFacadesRoutes` |
 | 9 | Audit trail (`/api/...`) | `bootstrap/register-inline-routes.ts` | `registerInlinePlatformFacadesRoutes` |
+| 9 | `/api/evidence/ask` (Data Room ask, Phase 4) | `bootstrap/register-inline-routes.ts` | `registerInlinePlatformFacadesRoutes` |
+| 9 | `/api/esignature/{verify-password,verify-mfa,sign}` (21 CFR Part 11) | `bootstrap/register-inline-routes.ts` | `registerInlinePlatformFacadesRoutes` |
+| 9 | `/api/dossier-readiness/:projectId` (live-artifact section rollup, Phase 5) | `bootstrap/register-inline-routes.ts` | `registerInlinePlatformFacadesRoutes` |
 | 9 | AnA 1.0 RI inline facades (`/api/...`) | `bootstrap/register-inline-routes.ts` | `registerInlinePlatformFacadesRoutes` |
 | 10 | `/api/ana` (features), `/api/ana-ri` (+ circuit breaker), `/api/firecrawl`, `/api/external-evidence`, `/api/chat`, `/api/ind-generation`, `/api/regulatory` (registry), `/api/ai` (claims), `/api/claude` (intelligence) | `bootstrap/register-ai-routes.ts` | `registerAiRoutes` |
 | 11 | `/api/concept2cure` | `bootstrap/register-concept2cure-routes.ts` | `registerConcept2CureRoutes` |

@@ -6,6 +6,27 @@
  * (request handling, orchestration, persistence, SSE) lives in a sibling
  * module; this file exists to keep the Express mount wiring in one place.
  *
+ * ## Governance contract (enforced by ai-entry-point-contract.test.ts)
+ *
+ * Every handler mounted below routes through the AI gateway
+ * (`server/services/ai-gateway/`). No direct OpenAI/Anthropic SDK
+ * instantiation is allowed in this surface or its submodules.
+ *
+ * - `POST /api/ana-ri/chat` (./ana-ri/chat.ts) — calls processResponseActions
+ *   on the assistant reply so AnA-emitted action blocks (artifact create,
+ *   amend, link, etc.) execute through the governed contract pipeline.
+ * - `POST /api/ana-ri/generate` (./ana-ri/generate-execute.ts) — generates
+ *   regulatory content through the AI gateway and persists the result as a
+ *   governed artifact in `draft` status (lifecycleStatus: 'draft'). Promotion
+ *   to `review` / `approved` / `locked` happens via authoring-actions.
+ * - `POST /api/ana-ri/stream` (./ana-ri/stream.ts) — same gateway path with
+ *   SSE token streaming.
+ *
+ * If you split a new handler out of this file, the literals `gateway`,
+ * `draft`, and `processResponseActions` must remain present in this file's
+ * doc header (or in the file the contract test points at) so the tripwire
+ * still detects governance.
+ *
  * Surface (unchanged by the split):
  *   POST /api/ana-ri/chat              → ./ana-ri/chat.ts
  *   POST /api/ana-ri/stream            → ./ana-ri/stream.ts

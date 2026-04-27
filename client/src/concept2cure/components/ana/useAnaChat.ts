@@ -21,6 +21,7 @@
 import { useCallback, useRef, useState } from 'react';
 
 import { getAuthHeaders } from '@/utils/authToken';
+import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
 
 /** Shape of an action chip produced by the server's guidance/command executors. */
 export interface AnaChatAction {
@@ -97,6 +98,19 @@ export interface UseAnaChatOptions {
   submissionType?: string | null;
   /** Optional thread id to resume. */
   initialThreadId?: string | null;
+  /**
+   * Authoring context pack — section/artifact/dossier identity. When present,
+   * the hook unpacks this into `project_context`, `document_context`, and
+   * `authoring_context` on the request body so the server-side orchestrator
+   * grounds AnA on the right project, document, and section instead of
+   * guessing from the message text. Mirrors the AnaPersistentPanel contract.
+   */
+  authoringContext?: AuthoringContextPack | null;
+  /**
+   * Extra per-surface context object forwarded under `module_context` for
+   * surface-specific server-side handling (e.g. eCTD coauthor pane state).
+   */
+  moduleContext?: Record<string, unknown> | null;
 }
 
 export interface UseAnaChatReturn {
@@ -215,18 +229,69 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       let capturedProvider: string | undefined;
       let streamedThinking = '';
 
+      // Unpack the AuthoringContextPack into the three typed slots the server
+      // orchestrator reads (`project_context`, `document_context`,
+      // `authoring_context`). Without this, the server has the orchestrator
+      // wired to consume rich context but the client never sends any —
+      // so AnA falls back to detecting project / submission type from the
+      // user's message text alone.
+      const ac = options.authoringContext ?? null;
+      const submissionTypeForContext = ac?.submissionType ?? options.submissionType ?? undefined;
+      const projectContext =
+        ac || options.projectName || submissionTypeForContext
+          ? {
+              productName: options.projectName ?? undefined,
+              submissionType: submissionTypeForContext,
+              targetAgency: ac?.regulatorBody ?? undefined,
+            }
+          : undefined;
+      const documentContext = ac
+        ? {
+            section: ac.sectionCode,
+            module: ac.moduleCode,
+          }
+        : undefined;
+      const authoringContextOut = ac
+        ? {
+            projectId: String(ac.projectId),
+            workflowStage: ac.workflowStage,
+            artifactId: ac.artifactId,
+            artifactVersionId: ac.artifactVersionId,
+            artifactStatus: ac.artifactStatus,
+            sectionCode: ac.sectionCode,
+            moduleCode: ac.moduleCode,
+            sectionTitle: ac.sectionTitle,
+            regulatorBody: ac.regulatorBody,
+            domainTrack: ac.domainTrack,
+            submissionType: ac.submissionType,
+          }
+        : undefined;
+
       const body = JSON.stringify({
         message: text,
         thread_id: threadIdRef.current || undefined,
-        project_id: options.projectId || undefined,
-        submission_type: options.submissionType || undefined,
+        project_id: options.projectId || ac?.projectId || undefined,
+        submission_type: submissionTypeForContext,
+        user_role: options.userRole || undefined,
+        project_context: projectContext,
+        document_context: documentContext,
+        authoring_context: authoringContextOut,
+        module_context: options.moduleContext ?? undefined,
         context: {
           screen: options.screenName,
           project: options.projectName,
           projectId: options.projectId,
-          productType: options.submissionType,
+          productType: submissionTypeForContext,
           userRole: options.userRole,
           screenName: options.screenName,
+          // Surface artifact + section identity in the legacy context block too,
+          // so any handler that still reads `body.context.*` keeps working.
+          activeProject: options.projectName ?? undefined,
+          artifactId: ac?.artifactId,
+          artifactTitle: ac?.sectionTitle,
+          sectionCode: ac?.sectionCode,
+          module: ac?.moduleCode,
+          artifactStatus: ac?.artifactStatus,
         },
         conversation_history: messages.slice(-10).map(m => ({
           role: m.role,
@@ -433,7 +498,17 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isStreaming, messages, options.projectId, options.screenName, options.projectName, options.userRole, options.submissionType]
+    [
+      isStreaming,
+      messages,
+      options.projectId,
+      options.screenName,
+      options.projectName,
+      options.userRole,
+      options.submissionType,
+      options.authoringContext,
+      options.moduleContext,
+    ]
   );
 
   return {
