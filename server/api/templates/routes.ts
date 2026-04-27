@@ -43,9 +43,9 @@ const upload = multer({
  */
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id'] as string);
+    const organizationId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
     if (!organizationId) {
-      return res.status(401).json({ error: 'Organization context required (x-organization-id header)' });
+      return res.status(401).json({ error: 'Organization context required' });
     }
     const { category, region, search } = req.query;
 
@@ -214,9 +214,9 @@ router.get('/catalog', async (req: Request, res: Response) => {
  */
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id'] as string);
+    const organizationId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
     if (!organizationId) {
-      return res.status(401).json({ error: 'Organization context required (x-organization-id header)' });
+      return res.status(401).json({ error: 'Organization context required' });
     }
     const { id } = req.params;
     
@@ -301,9 +301,9 @@ router.get('/:id', async (req: Request, res: Response) => {
  */
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id'] as string);
+    const organizationId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
     if (!organizationId) {
-      return res.status(401).json({ error: 'Organization context required (x-organization-id header)' });
+      return res.status(401).json({ error: 'Organization context required' });
     }
 
     const { name, category, module, description, templateType, granuleId, ichGuidance, tags } =
@@ -350,9 +350,9 @@ router.post('/', async (req: Request, res: Response) => {
  */
 router.post('/upload', upload.single('file'), async (req: Request, res: Response) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id'] as string);
+    const organizationId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
     if (!organizationId) {
-      return res.status(401).json({ error: 'Organization context required (x-organization-id header)' });
+      return res.status(401).json({ error: 'Organization context required' });
     }
 
     if (!req.file) {
@@ -400,9 +400,9 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
  */
 router.put('/:id', async (req: Request, res: Response) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id'] as string);
+    const organizationId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
     if (!organizationId) {
-      return res.status(401).json({ error: 'Organization context required (x-organization-id header)' });
+      return res.status(401).json({ error: 'Organization context required' });
     }
     const templateId = parseInt(req.params.id);
 
@@ -438,9 +438,9 @@ router.put('/:id', async (req: Request, res: Response) => {
  */
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id'] as string);
+    const organizationId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
     if (!organizationId) {
-      return res.status(401).json({ error: 'Organization context required (x-organization-id header)' });
+      return res.status(401).json({ error: 'Organization context required' });
     }
     const templateId = parseInt(req.params.id);
 
@@ -472,9 +472,9 @@ router.delete('/:id', async (req: Request, res: Response) => {
  */
 router.post('/:id/use', async (req: Request, res: Response) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id'] as string);
+    const organizationId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
     if (!organizationId) {
-      return res.status(401).json({ error: 'Organization context required (x-organization-id header)' });
+      return res.status(401).json({ error: 'Organization context required' });
     }
     const templateId = parseInt(req.params.id);
     const userId = parseInt(req.headers['x-user-id'] as string);
@@ -511,9 +511,9 @@ router.post('/:id/use', async (req: Request, res: Response) => {
  */
 router.get('/recent/documents', async (req: Request, res: Response) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id'] as string);
+    const organizationId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
     if (!organizationId) {
-      return res.status(401).json({ error: 'Organization context required (x-organization-id header)' });
+      return res.status(401).json({ error: 'Organization context required' });
     }
     const userId = parseInt(req.headers['x-user-id'] as string);
     if (!userId) {
@@ -541,9 +541,9 @@ router.get('/recent/documents', async (req: Request, res: Response) => {
  */
 router.get('/featured/list', async (req: Request, res: Response) => {
   try {
-    const organizationId = parseInt(req.headers['x-organization-id'] as string);
+    const organizationId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
     if (!organizationId) {
-      return res.status(401).json({ error: 'Organization context required (x-organization-id header)' });
+      return res.status(401).json({ error: 'Organization context required' });
     }
 
     const featured = await templateService.getFeaturedTemplates(organizationId);

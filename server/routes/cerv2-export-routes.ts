@@ -65,11 +65,9 @@ const requireEditorAccess = (req: any, res: any, next: () => void) => {
   if (!role || !allowedRoles.has(role)) {
     return res.status(403).json({ error: 'Insufficient permissions' });
   }
-  // Verify organization context exists (prevents cross-org access)
-  const headerOrg = req.header('x-organization-id') || req.header('x-org-id');
-  const tenantOrg = req.tenantContext?.organizationId;
-  const userOrg = req.user?.organizationId || req.tenantId;
-  const orgId = headerOrg || tenantOrg || userOrg;
+  // Verify organization context exists (prevents cross-org access).
+  // Trust only middleware-derived sources — never client-supplied headers.
+  const orgId = req.tenantId || req.tenantContext?.organizationId;
   if (!orgId) {
     return res.status(400).json({ error: 'Organization context required' });
   }
@@ -748,7 +746,7 @@ router.post(
 
       const projectId = Number(req.body.projectId);
       const organizationId = Number(
-        req.header('x-organization-id') || req.header('x-org-id') || '0'
+        (req as any).tenantId || (req as any).tenantContext?.organizationId || '0'
       );
       const userId = Number((req as any).userId || (req as any).user?.id || 0);
 
