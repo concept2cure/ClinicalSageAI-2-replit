@@ -2321,6 +2321,31 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     );
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // TO BE REMOVED — legacy ZenApp main return.
+  //
+  // Everything below this point renders surfaces the design-system bundle
+  // has NOT shipped. They remain reachable only through legacy state-driven
+  // navigation (handleAnaPanelNavigate fall-throughs, internal layoutMode
+  // flips not yet audited). Per CLAUDE.md "UI Source of Truth" and the
+  // user directive "Remove any surface that has not been built by Claude
+  // Design", every layoutMode rendered here is on the chopping block.
+  //
+  // Each block must be deleted as the bundle ships its replacement, or
+  // collapsed into the bundle's existing surfaces (MDX iframe / eCTD
+  // coauthor / ana_ri / home) where one already covers the workstream.
+  //
+  // Layout modes still rendered here (non-bundle, awaiting deletion):
+  //   apps, artifacts-center, biostatistics, csr-workflow, ctd,
+  //   device-diagnostics-workbench, documents, dossier-map, editor,
+  //   ind-checklist, precedent-intelligence, report-engine, review,
+  //   safety-narrative, section-workspace, setup, submissions, task-board,
+  //   templates, vault, workspace
+  //
+  // Plus the now-unreachable "project-home" / "regulatory-workspace"
+  // mounts that lived inside this return (early returns above intercept
+  // those layoutModes for the bundle Ana shell).
+  // ─────────────────────────────────────────────────────────────────────────
   return (
     <div className="zen flex h-screen w-full overflow-hidden bg-white">
       {/* CSS Variables */}
