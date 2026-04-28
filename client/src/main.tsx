@@ -5,6 +5,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import queryClient from './lib/queryClient';
+// Canonical design-system tokens (Claude Design bundle). MUST load before any
+// component CSS or CSS module so var(--accent-100), var(--bg-000), etc.
+// resolve everywhere. See design-system/CLAUDE.md "Token import" section.
+import '../../design-system/colors_and_type.css';
 import './index.css';
 import App from './App';
 import ErrorBoundary from './ErrorBoundary';
