@@ -30,9 +30,17 @@ export interface RecentThread {
   updatedAt: string;
 }
 
+export interface HomeProject {
+  id: string;
+  name: string;
+  code?: string;
+  pathway?: string;
+}
+
 export interface HomeData {
   metrics: HomeMetrics;
   recentThreads: RecentThread[];
+  projects: HomeProject[];
   loading: boolean;
 }
 
@@ -56,6 +64,7 @@ export function useHomeData(): HomeData {
     artifactDraft: null,
   });
   const [recentThreads, setRecentThreads] = useState<RecentThread[]>([]);
+  const [projects, setProjects] = useState<HomeProject[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -70,12 +79,23 @@ export function useHomeData(): HomeData {
 
       if (cancelled) return;
 
-      // Projects count
+      // Projects: count + the first 6 entries (id + name + code/pathway)
       let projectCount: number | null = null;
+      let projectList: HomeProject[] = [];
       if (projectsRes.status === 'fulfilled' && projectsRes.value) {
-        const data = (projectsRes.value as any)?.data;
-        if (Array.isArray(data)) projectCount = data.length;
-        else if (Array.isArray(projectsRes.value)) projectCount = (projectsRes.value as any[]).length;
+        const raw = (projectsRes.value as any)?.data;
+        const arr = Array.isArray(raw)
+          ? raw
+          : Array.isArray(projectsRes.value)
+            ? (projectsRes.value as any[])
+            : [];
+        projectCount = arr.length;
+        projectList = arr.slice(0, 6).map((p: any) => ({
+          id: String(p.id ?? p.projectId ?? ''),
+          name: String(p.name ?? p.title ?? p.code ?? 'Untitled project'),
+          code: p.code ? String(p.code) : undefined,
+          pathway: p.pathway ? String(p.pathway) : undefined,
+        })).filter(p => p.id);
       }
 
       // Artifact counts
@@ -102,6 +122,7 @@ export function useHomeData(): HomeData {
 
       setMetrics({ projectCount, artifactTotal, artifactDraft });
       setRecentThreads(threads);
+      setProjects(projectList);
       setLoading(false);
     };
 
@@ -109,5 +130,5 @@ export function useHomeData(): HomeData {
     return () => { cancelled = true; };
   }, []);
 
-  return { metrics, recentThreads, loading };
+  return { metrics, recentThreads, projects, loading };
 }

@@ -2077,6 +2077,24 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       .slice(0, 2)
       .map(part => part[0]?.toUpperCase() ?? '')
       .join('') || 'U';
+
+    // Route an arbitrary chat-seed string into the current AnA surface. Picks
+    // regulatory-workspace when a project is active, deep-research otherwise.
+    const seedChat = (text: string) => {
+      const t = text.trim();
+      if (!t) return;
+      setExternalChatMessage({ text: t, ts: Date.now() });
+      setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'deep-research');
+    };
+
+    // Map an At-a-glance tile slug to the bundle MDX surface that owns it.
+    const dashboardTileTarget: Record<string, string> = {
+      'submission-readiness': '#submissions',
+      'tasks-due': '#tasks',
+      'alerts': '#admin',
+      'view-all-dashboards': '#analytics',
+    };
+
     return (
       <Concept2CureHome
         user={{ name: userName, initials, role: userRole }}
@@ -2084,15 +2102,74 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           handleAnaPanelNavigate(navId);
           return true;
         }}
-        onLaunchChat={draft => {
-          const text = draft.trim();
-          if (!text) return;
-          setExternalChatMessage({ text, ts: Date.now() });
-          if (activeProjectId) {
-            setLayoutMode('regulatory-workspace');
-          } else {
-            setNewProjectOpen(true);
+        onLaunchChat={seedChat}
+        onSelectProject={projectId => openProjectWorkspace(projectId)}
+        onWorkspaceSwitch={() => setSettingsOpen(true)}
+        onOpenNotifications={() => {
+          setMdxDeepLink('#admin');
+          setLayoutMode('mdx');
+        }}
+        onOpenHelp={() => {
+          if (typeof window !== 'undefined') {
+            window.open('/help/quality', '_blank', 'noopener,noreferrer');
           }
+        }}
+        onOpenAccount={() => setSettingsOpen(true)}
+        onComposerAttach={() => {
+          setMdxDeepLink('#vault');
+          setLayoutMode('mdx');
+        }}
+        onComposerTools={() => {
+          // Tools surface = command palette (slash-style capability list).
+          if (typeof document !== 'undefined') {
+            document.dispatchEvent(
+              new KeyboardEvent('keydown', {
+                key: 'k',
+                code: 'KeyK',
+                metaKey: true,
+                ctrlKey: true,
+                bubbles: true,
+              }),
+            );
+          }
+        }}
+        onComposerModelPicker={() => {
+          setSettingsSection('ana-intelligence');
+          setSettingsOpen(true);
+        }}
+        onBriefingItemClick={item => {
+          if (item.projectId) {
+            openProjectWorkspace(item.projectId);
+            setExternalChatMessage({ text: item.t, ts: Date.now() });
+          } else {
+            seedChat(item.t);
+          }
+        }}
+        onStartFirstBriefing={item => {
+          if (!item) return;
+          if (item.projectId) {
+            openProjectWorkspace(item.projectId);
+            setExternalChatMessage({ text: item.t, ts: Date.now() });
+          } else {
+            seedChat(item.t);
+          }
+        }}
+        onDashboardTileClick={key => {
+          const hash = dashboardTileTarget[key];
+          if (hash !== undefined) {
+            setMdxDeepLink(hash);
+            setLayoutMode('mdx');
+          }
+          // 'active-projects' is the current surface — no-op.
+        }}
+        onSelectThread={threadId => {
+          setActiveThreadId(threadId);
+          setActiveConversationId(threadId);
+          setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'deep-research');
+        }}
+        onViewAllRecents={() => {
+          setMdxDeepLink('');
+          setLayoutMode('mdx');
         }}
       />
     );

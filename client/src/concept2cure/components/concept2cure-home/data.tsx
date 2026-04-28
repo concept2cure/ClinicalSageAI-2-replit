@@ -150,6 +150,10 @@ export interface BriefingItem {
   num: string;
   t: string;
   meta: string;
+  /** Project the action belongs to. Used by the home host to deep-link. */
+  projectId?: string;
+  /** Optional next-action id from /api/intelligence/projects/:id/next-actions. */
+  actionId?: string;
 }
 
 export const BRIEFING_BY_SCOPE: Record<Scope, BriefingItem[]> = {

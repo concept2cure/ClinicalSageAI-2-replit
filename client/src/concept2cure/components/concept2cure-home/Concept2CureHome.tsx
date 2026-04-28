@@ -18,11 +18,11 @@ import { Fragment, useEffect, useState } from 'react';
 import { HomeIcon } from './icons';
 import {
   NAV_ITEMS, NAV_SUB, DASH, MODULES, RECENTS, SUGGESTIONS, SCOPE_OPTIONS,
-  type Scope, type NavItem, type ModuleCard,
+  type Scope, type NavItem, type ModuleCard, type BriefingItem,
 } from './data';
 import { AnaCard } from './AnaCard';
 import { CommandPalette, type PaletteItem } from './CommandPalette';
-import { useHomeData } from './useHomeData';
+import { useHomeData, type HomeProject } from './useHomeData';
 import { useHomeBriefing } from './useHomeBriefing';
 import brandIcon from '../../../assets/concept2cure-icon.svg';
 import styles from './styles.module.css';
@@ -48,6 +48,33 @@ export interface Concept2CureHomeProps {
    * Ana auto-send on mount.
    */
   onLaunchChat?: (draft: string) => void;
+  /** Open a specific project's workspace from the rail subdrawer / Recents. */
+  onSelectProject?: (projectId: string) => void;
+  /** Open the workspace switcher — pill in the top bar. */
+  onWorkspaceSwitch?: () => void;
+  /** Open notifications surface — bell icon in the top bar. */
+  onOpenNotifications?: () => void;
+  /** Open help — help icon in the top bar. */
+  onOpenHelp?: () => void;
+  /** Open the user account menu — avatar at the bottom of the rail. */
+  onOpenAccount?: () => void;
+  /** Composer attach button — typically opens a file picker. */
+  onComposerAttach?: () => void;
+  /** Composer tools button — opens the AnA tools / slash menu. */
+  onComposerTools?: () => void;
+  /** Composer model picker chip ("AnA 1.0 RI"). */
+  onComposerModelPicker?: () => void;
+  /** Briefing row click. Receives the item; payload has projectId/actionId when
+   *  the item came from the live RIM next-actions fetch. */
+  onBriefingItemClick?: (item: BriefingItem, index: number) => void;
+  /** "Start with #1" — host opens the first briefing item. */
+  onStartFirstBriefing?: (item: BriefingItem | null) => void;
+  /** At-a-glance dashboard tile click. `key` is the tile label slug. */
+  onDashboardTileClick?: (key: string) => void;
+  /** Click on a recent activity row that's a chat thread. */
+  onSelectThread?: (threadId: string) => void;
+  /** "View all" link on the Recents section. */
+  onViewAllRecents?: () => void;
 }
 
 // Bundle App.jsx DEFAULTS — verbatim from the canvas bundle. These are the
@@ -87,12 +114,17 @@ function timeOfDay(): string {
 /* ─── Rail ─── */
 function Rail({
   activeNav, setActiveNav, collapsed, setCollapsed, user,
+  projects, onSelectProject, onOpenAccount, onOpenPalette,
 }: {
   activeNav: string;
   setActiveNav: (id: string) => void;
   collapsed: boolean;
   setCollapsed: (v: boolean) => void;
   user: User;
+  projects: HomeProject[];
+  onSelectProject?: (projectId: string) => void;
+  onOpenAccount?: () => void;
+  onOpenPalette: () => void;
 }) {
   return (
     <nav className={styles.rail} aria-label="Primary">
@@ -113,17 +145,24 @@ function Rail({
         </button>
       </div>
 
-      <div className={styles.railSearch} role="search">
+      <button
+        type="button"
+        className={styles.railSearch}
+        onClick={onOpenPalette}
+        aria-label="Open command palette"
+      >
         <span className={styles.ico}><HomeIcon name="search" size={14} /></span>
-        <input placeholder="Search artifacts, chats…" />
+        <span className={styles.railSearchText}>Search artifacts, chats…</span>
         <kbd>⌘K</kbd>
-      </div>
+      </button>
 
       <div className={styles.railSection}>Modules</div>
       <div className={styles.railNav}>
         {NAV_ITEMS.map((item: NavItem) => {
           const isActive = activeNav === item.id;
-          const sub = NAV_SUB[item.id];
+          const isProjects = item.id === 'projects';
+          const showLiveProjects = isProjects && projects.length > 0;
+          const staticSub = NAV_SUB[item.id];
           return (
             <Fragment key={item.id}>
               <button
@@ -137,14 +176,30 @@ function Rail({
                 <span className={styles.ico}><HomeIcon name={item.icon} size={16} /></span>
                 <span className={styles.lbl}>{item.label}</span>
               </button>
-              {isActive && sub && !collapsed && (
-                <div className={styles.railSub}>
-                  {sub.map((s, i) => (
-                    <button type="button" key={i} className={styles.subItem}>
-                      <span className={styles.dot} /><span>{s}</span>
-                    </button>
-                  ))}
-                </div>
+              {isActive && !collapsed && (
+                showLiveProjects ? (
+                  <div className={styles.railSub}>
+                    {projects.map(p => (
+                      <button
+                        type="button"
+                        key={p.id}
+                        className={styles.subItem}
+                        onClick={() => onSelectProject?.(p.id)}
+                      >
+                        <span className={styles.dot} />
+                        <span>{p.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : staticSub ? (
+                  <div className={styles.railSub}>
+                    {staticSub.map((s, i) => (
+                      <button type="button" key={i} className={styles.subItem}>
+                        <span className={styles.dot} /><span>{s}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : null
               )}
             </Fragment>
           );
@@ -153,7 +208,12 @@ function Rail({
 
       <div className={styles.railSpacer} />
 
-      <button type="button" className={styles.railAccount} title={user.name}>
+      <button
+        type="button"
+        className={styles.railAccount}
+        title={user.name}
+        onClick={onOpenAccount}
+      >
         <div className={styles.avatar}>{user.initials}</div>
         <div className={styles.who}>
           <div className={styles.name}>{user.name}</div>
@@ -190,11 +250,16 @@ function ScopeSwitcher({ scope, setScope }: { scope: Scope; setScope: (s: Scope)
 /* ─── TopBar ─── */
 function TopBar({
   activeNavLabel, scope, setScope, onOpenPalette,
+  workspaceLabel, onWorkspaceSwitch, onOpenNotifications, onOpenHelp,
 }: {
   activeNavLabel: string;
   scope: Scope;
   setScope: (s: Scope) => void;
   onOpenPalette: () => void;
+  workspaceLabel: string;
+  onWorkspaceSwitch?: () => void;
+  onOpenNotifications?: () => void;
+  onOpenHelp?: () => void;
 }) {
   return (
     <header className={styles.topbar}>
@@ -205,9 +270,14 @@ function TopBar({
       </div>
       <ScopeSwitcher scope={scope} setScope={setScope} />
       <div className={styles.tbDivider} />
-      <button type="button" className={styles.workspacePill} title="Switch workspace">
+      <button
+        type="button"
+        className={styles.workspacePill}
+        title="Switch workspace"
+        onClick={onWorkspaceSwitch}
+      >
         <span className={styles.sqr} aria-hidden="true" />
-        <span>BioNova Therapeutics</span>
+        <span>{workspaceLabel}</span>
         <span className={styles.chev}><HomeIcon name="down" size={14} /></span>
       </button>
       <div className={styles.tbDivider} />
@@ -215,11 +285,21 @@ function TopBar({
         <button type="button" className={styles.tbBtn} title="Search (⌘K)" onClick={onOpenPalette}>
           <HomeIcon name="search" size={16} />
         </button>
-        <button type="button" className={styles.tbBtn} title="Notifications">
+        <button
+          type="button"
+          className={styles.tbBtn}
+          title="Notifications"
+          onClick={onOpenNotifications}
+        >
           <HomeIcon name="bell" size={16} />
           <span className={styles.badge} aria-hidden="true" />
         </button>
-        <button type="button" className={styles.tbBtn} title="Help">
+        <button
+          type="button"
+          className={styles.tbBtn}
+          title="Help"
+          onClick={onOpenHelp}
+        >
           <HomeIcon name="help" size={16} />
         </button>
       </div>
@@ -231,9 +311,15 @@ function TopBar({
 function GreetAndCompose({
   userName,
   onLaunchChat,
+  onAttach,
+  onTools,
+  onModelPicker,
 }: {
   userName: string;
   onLaunchChat?: (draft: string) => void;
+  onAttach?: () => void;
+  onTools?: () => void;
+  onModelPicker?: () => void;
 }) {
   const [draft, setDraft] = useState('');
   const send = () => {
@@ -265,13 +351,27 @@ function GreetAndCompose({
           rows={1}
         />
         <div className={styles.composerActions}>
-          <button type="button" className={styles.composerIcon} title="Attach">
+          <button
+            type="button"
+            className={styles.composerIcon}
+            title="Attach"
+            onClick={onAttach}
+          >
             <HomeIcon name="attach" size={16} />
           </button>
-          <button type="button" className={styles.composerIcon} title="Tools">
+          <button
+            type="button"
+            className={styles.composerIcon}
+            title="Tools"
+            onClick={onTools}
+          >
             <HomeIcon name="tools" size={16} />
           </button>
-          <button type="button" className={styles.composerChip}>
+          <button
+            type="button"
+            className={styles.composerChip}
+            onClick={onModelPicker}
+          >
             AnA 1.0 RI <HomeIcon name="down" size={12} />
           </button>
           <button
@@ -304,7 +404,19 @@ function GreetAndCompose({
 }
 
 /* ─── Dashboard ─── */
-function Dashboard({ projectCount, artifactTotal }: { projectCount: number | null; artifactTotal: number | null }) {
+function dashKey(label: string): string {
+  return label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
+function Dashboard({
+  projectCount,
+  artifactTotal,
+  onTileClick,
+}: {
+  projectCount: number | null;
+  artifactTotal: number | null;
+  onTileClick?: (key: string) => void;
+}) {
   // Overlay real counts on top of the static demo metrics where we have them.
   const cards = DASH.map(d => {
     if (d.label === 'Active projects' && projectCount !== null) {
@@ -316,13 +428,22 @@ function Dashboard({ projectCount, artifactTotal }: { projectCount: number | nul
     <>
       <div className={styles.secHdr}>
         <div className={styles.secTitle}>At a glance</div>
-        <button type="button" className={styles.secMore}>
+        <button
+          type="button"
+          className={styles.secMore}
+          onClick={() => onTileClick?.('view-all-dashboards')}
+        >
           View all dashboards <HomeIcon name="right" size={12} />
         </button>
       </div>
       <div className={styles.dash}>
         {cards.map((d, i) => (
-          <button type="button" key={i} className={styles.dashCard}>
+          <button
+            type="button"
+            key={i}
+            className={styles.dashCard}
+            onClick={() => onTileClick?.(dashKey(d.label))}
+          >
             <div className={styles.dashLabel}>{d.label}</div>
             <div className={styles.dashMetric}>
               {d.metric}{d.unit && <span className={styles.unit}>{d.unit}</span>}
@@ -394,7 +515,15 @@ function Launcher({
 }
 
 /* ─── Recents ─── */
-function Recents({ threads }: { threads: Array<{ id: string; title: string; updatedAt: string }> }) {
+function Recents({
+  threads,
+  onSelectThread,
+  onViewAll,
+}: {
+  threads: Array<{ id: string; title: string; updatedAt: string }>;
+  onSelectThread?: (threadId: string) => void;
+  onViewAll?: () => void;
+}) {
   // Use real threads when available, otherwise fall back to static demo data.
   const showReal = threads.length > 0;
 
@@ -412,14 +541,19 @@ function Recents({ threads }: { threads: Array<{ id: string; title: string; upda
     <>
       <div className={styles.secHdr}>
         <div className={styles.secTitle}>Recent activity</div>
-        <button type="button" className={styles.secMore}>
+        <button type="button" className={styles.secMore} onClick={onViewAll}>
           View all <HomeIcon name="right" size={12} />
         </button>
       </div>
       <div className={styles.recents}>
         {showReal
           ? threads.map(t => (
-              <button type="button" key={t.id} className={styles.recentRow}>
+              <button
+                type="button"
+                key={t.id}
+                className={styles.recentRow}
+                onClick={() => onSelectThread?.(t.id)}
+              >
                 <span className={styles.rIco}><HomeIcon name="chat" size={14} /></span>
                 <span className={styles.rTtl}>
                   <span className={styles.rMod}>AnA · </span>
@@ -520,6 +654,19 @@ export function Concept2CureHome({
   user,
   onNavigate,
   onLaunchChat,
+  onSelectProject,
+  onWorkspaceSwitch,
+  onOpenNotifications,
+  onOpenHelp,
+  onOpenAccount,
+  onComposerAttach,
+  onComposerTools,
+  onComposerModelPicker,
+  onBriefingItemClick,
+  onStartFirstBriefing,
+  onDashboardTileClick,
+  onSelectThread,
+  onViewAllRecents,
 }: Concept2CureHomeProps) {
   const authUser: User = {
     name: user?.name ?? DEFAULT_USER.name,
@@ -535,7 +682,7 @@ export function Concept2CureHome({
   const [scope, setScope] = useState<Scope>('all');
   const [paletteOpen, setPaletteOpen] = useState(false);
 
-  const { metrics, recentThreads } = useHomeData();
+  const { metrics, recentThreads, projects } = useHomeData();
   const { items: briefingItems } = useHomeBriefing();
 
   // Bundle App.jsx setTweak — mirrors the tweak into the parent canvas host
@@ -634,6 +781,10 @@ export function Concept2CureHome({
         collapsed={tweaks.collapsed}
         setCollapsed={(v: boolean) => setTweak('collapsed', v)}
         user={resolvedUser}
+        projects={projects}
+        onSelectProject={onSelectProject}
+        onOpenAccount={onOpenAccount}
+        onOpenPalette={() => setPaletteOpen(true)}
       />
       <main className={styles.main}>
         <TopBar
@@ -641,21 +792,41 @@ export function Concept2CureHome({
           scope={scope}
           setScope={setScope}
           onOpenPalette={() => setPaletteOpen(true)}
+          workspaceLabel="BioNova Therapeutics"
+          onWorkspaceSwitch={onWorkspaceSwitch}
+          onOpenNotifications={onOpenNotifications}
+          onOpenHelp={onOpenHelp}
         />
         <div className={styles.page}>
           <div className={styles.pageInner}>
-            <GreetAndCompose userName={resolvedUser.name} onLaunchChat={onLaunchChat} />
+            <GreetAndCompose
+              userName={resolvedUser.name}
+              onLaunchChat={onLaunchChat}
+              onAttach={onComposerAttach}
+              onTools={onComposerTools}
+              onModelPicker={onComposerModelPicker}
+            />
             <AnaCard
               scope={scope}
               onOpenPalette={() => setPaletteOpen(true)}
               items={briefingItems ?? undefined}
               lastSyncLabel={briefingItems ? 'just now' : undefined}
+              onItemClick={onBriefingItemClick}
+              onStartFirst={onStartFirstBriefing}
             />
-            <Dashboard projectCount={metrics.projectCount} artifactTotal={metrics.artifactTotal} />
+            <Dashboard
+              projectCount={metrics.projectCount}
+              artifactTotal={metrics.artifactTotal}
+              onTileClick={onDashboardTileClick}
+            />
             <div style={{ height: 24 }} />
             <Launcher activeNav={tweaks.activeNav} setActiveNav={handleSelectNav} />
             <div style={{ height: 24 }} />
-            <Recents threads={recentThreads} />
+            <Recents
+              threads={recentThreads}
+              onSelectThread={onSelectThread}
+              onViewAll={onViewAllRecents}
+            />
           </div>
         </div>
       </main>

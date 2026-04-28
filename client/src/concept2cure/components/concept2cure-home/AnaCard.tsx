@@ -18,13 +18,25 @@ interface Props {
   items?: BriefingItem[];
   /** Override the static "3 minutes ago" subtitle. */
   lastSyncLabel?: string;
+  /** Click handler for an individual briefing row. */
+  onItemClick?: (item: BriefingItem, index: number) => void;
+  /** "Start with #1" — host opens the first briefing item. */
+  onStartFirst?: (item: BriefingItem | null) => void;
 }
 
-export function AnaCard({ scope, onOpenPalette, items, lastSyncLabel }: Props) {
+export function AnaCard({
+  scope,
+  onOpenPalette,
+  items,
+  lastSyncLabel,
+  onItemClick,
+  onStartFirst,
+}: Props) {
   const [dismissed, setDismissed] = useState(false);
   if (dismissed) return null;
 
   const briefing = items && items.length > 0 ? items : BRIEFING_BY_SCOPE[scope] ?? [];
+  const firstItem = briefing[0] ?? null;
 
   return (
     <div className={styles.anaCard} role="region" aria-label="AnA briefing">
@@ -48,7 +60,12 @@ export function AnaCard({ scope, onOpenPalette, items, lastSyncLabel }: Props) {
       </div>
       <div className={styles.anaItems}>
         {briefing.map((it, i) => (
-          <button type="button" key={i} className={styles.anaItem}>
+          <button
+            type="button"
+            key={i}
+            className={styles.anaItem}
+            onClick={() => onItemClick?.(it, i)}
+          >
             <span className={styles.anaNum}>{it.num}</span>
             <span>{it.t}</span>
             <span className={styles.anaMeta}>{it.meta}</span>
@@ -56,7 +73,12 @@ export function AnaCard({ scope, onOpenPalette, items, lastSyncLabel }: Props) {
         ))}
       </div>
       <div className={styles.anaActions}>
-        <button type="button" className={`${styles.anaBtn} ${styles.primary}`}>
+        <button
+          type="button"
+          className={`${styles.anaBtn} ${styles.primary}`}
+          disabled={!firstItem}
+          onClick={() => onStartFirst?.(firstItem)}
+        >
           Start with #1 <HomeIcon name="arrowRight" size={14} />
         </button>
         <button

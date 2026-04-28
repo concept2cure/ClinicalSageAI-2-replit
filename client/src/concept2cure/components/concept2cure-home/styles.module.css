@@ -151,14 +151,17 @@
   border: 1px solid var(--border);
   color: var(--text-400);
   font-size: 12.5px;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
   transition: border-color var(--dur-normal) var(--ease), background var(--dur-normal) var(--ease);
 }
 .railSearch:hover { border-color: var(--border-strong); }
-.railSearch input {
-  flex: 1; min-width: 0; color: var(--text-200);
-  background: transparent; border: 0; outline: 0; padding: 0; margin: 0; font: inherit;
+.railSearchText {
+  flex: 1; min-width: 0; color: var(--text-400);
+  font-size: 12.5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.railSearch input::placeholder { color: var(--text-400); }
 .railSearch kbd {
   font-family: var(--font-mono);
   font-size: 10px; color: var(--text-400);
@@ -168,7 +171,7 @@
   border: 1px solid var(--border);
 }
 .shell[data-collapsed="true"] .railSearch { padding: 0; justify-content: center; }
-.shell[data-collapsed="true"] .railSearch input,
+.shell[data-collapsed="true"] .railSearchText,
 .shell[data-collapsed="true"] .railSearch kbd { display: none; }
 
 .railSection {

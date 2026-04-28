@@ -143,7 +143,9 @@ export function useHomeBriefing(options: UseHomeBriefingOptions = {}): UseHomeBr
       const merged: Ranked[] = [];
       for (const r of actionResults) {
         if (r.status !== 'fulfilled') continue;
-        const projectName = r.value.project.name || r.value.project.title || 'Project';
+        const project = r.value.project;
+        const projectName = project.name || project.title || 'Project';
+        const projectId = project.id != null ? String(project.id) : undefined;
         for (const a of r.value.actions) {
           const title = a.title || a.description;
           if (!title) continue;
@@ -157,6 +159,8 @@ export function useHomeBriefing(options: UseHomeBriefingOptions = {}): UseHomeBr
             num: '00',
             t: title,
             meta: meta || projectName,
+            projectId,
+            actionId: a.id,
             __rank: PRIORITY_RANK[priority] ?? PRIORITY_RANK.medium,
           });
         }
@@ -168,6 +172,8 @@ export function useHomeBriefing(options: UseHomeBriefingOptions = {}): UseHomeBr
         num: String(i + 1).padStart(2, '0'),
         t: item.t,
         meta: item.meta,
+        projectId: item.projectId,
+        actionId: item.actionId,
       }));
     },
   });

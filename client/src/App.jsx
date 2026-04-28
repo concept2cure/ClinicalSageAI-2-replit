@@ -16,37 +16,6 @@ import { memoryOptimizer } from './utils/memoryOptimizer';
 // Initialize memory optimization
 memoryOptimizer.startPeriodicCleanup();
 
-// Initialize dependency monitoring and hardening
-import { packageMonitor } from './services/packageMonitorService.js';
-import { dependencyLoader, preloadCriticalComponents } from './utils/dependencyLoader.js';
-
-const isDev = import.meta.env.DEV;
-
-// Preload critical components for document editor
-const initializeDependencyHardening = async () => {
-  try {
-    if (isDev) console.log('Initializing dependency hardening system...');
-
-    const packageStatus = await packageMonitor.verifyAllPackages();
-    if (isDev) console.log('Package verification complete:', packageStatus);
-
-    const preloadResults = await preloadCriticalComponents();
-    if (isDev) console.log('Component preloading complete:', preloadResults);
-
-    if (preloadResults.failed > 0) {
-      console.warn('Some components failed to load, fallback mode activated');
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Dependency hardening initialization failed:', error);
-    return false;
-  }
-};
-
-// Initialize on app start
-initializeDependencyHardening();
-
 // Prefetch high-traffic route chunks after initial render (1.5s delay)
 const prefetchRoutes = () => {
   const routes = [
