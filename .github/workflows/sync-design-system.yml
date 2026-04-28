@@ -1,0 +1,194 @@
+# .github/workflows/sync-design-system.yml
+#
+# Pull the canonical design-system project into v2's read-only mirror at
+# design-system/ and open a PR if anything drifted. Runs on a schedule + on
+# manual dispatch. Per CLAUDE.md, design-system/ is the only path the v2
+# codebase reads from; this workflow is the transport that keeps it aligned.
+#
+# Required repo secrets / variables:
+#   - DESIGN_SYSTEM_SOURCE   (variable or secret) — git URL of the canonical
+#                            project, or a path that the runner can resolve.
+#                            If the canonical lives somewhere only Claude
+#                            project access can reach, this workflow won't run
+#                            cleanly until a fetchable URL is wired. Until
+#                            then, leave the schedule disabled and run sync
+#                            manually from a machine that can read canonical.
+#   - DESIGN_SYSTEM_REF      (variable, optional, default "main")
+#   - DESIGN_SYSTEM_SUBDIR   (variable, optional, default ".")
+#
+# Branch protection: PRs land into concept2cure-v2 (the only branch). Per
+# CLAUDE.md branch rules: no direct pushes from this workflow, only PRs
+# the human operator merges.
+
+name: Sync design-system mirror
+
+# Trigger model: manual workflow_dispatch only for now. Once the designer's
+# cadence stabilizes we can add a webhook or schedule; until then the
+# operator runs this on demand after the designer ships a revision.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Source ref / branch / tag (overrides DESIGN_SYSTEM_REF)"
+        required: false
+        type: string
+      mode:
+        description: "Sync mode"
+        required: false
+        type: choice
+        default: "sync"
+        options:
+          - sync
+          - check
+          - dry-run
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-design-system
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Sync design-system/ from canonical
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      changed: ${{ steps.drift.outputs.changed }}
+
+    steps:
+      - name: Checkout v2 (concept2cure-v2)
+        uses: actions/checkout@v4
+        with:
+          ref: concept2cure-v2
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve sync inputs
+        id: inputs
+        run: |
+          SOURCE="${{ vars.DESIGN_SYSTEM_SOURCE || secrets.DESIGN_SYSTEM_SOURCE }}"
+          if [ -z "$SOURCE" ]; then
+            echo "::error::DESIGN_SYSTEM_SOURCE is not configured."
+            echo "::error::Set repo variable or secret DESIGN_SYSTEM_SOURCE to the canonical project's git URL."
+            exit 1
+          fi
+          REF="${{ github.event.inputs.ref }}"
+          if [ -z "$REF" ]; then
+            REF="${{ vars.DESIGN_SYSTEM_REF }}"
+          fi
+          if [ -z "$REF" ]; then
+            REF="main"
+          fi
+          MODE="${{ github.event.inputs.mode }}"
+          if [ -z "$MODE" ]; then
+            MODE="sync"
+          fi
+          echo "source=$SOURCE" >> "$GITHUB_OUTPUT"
+          echo "ref=$REF"       >> "$GITHUB_OUTPUT"
+          echo "mode=$MODE"     >> "$GITHUB_OUTPUT"
+
+      - name: Run sync
+        env:
+          DESIGN_SYSTEM_SOURCE: ${{ steps.inputs.outputs.source }}
+          DESIGN_SYSTEM_REF: ${{ steps.inputs.outputs.ref }}
+          DESIGN_SYSTEM_SUBDIR: ${{ vars.DESIGN_SYSTEM_SUBDIR || '.' }}
+        run: |
+          chmod +x scripts/sync-design-system.sh
+          case "${{ steps.inputs.outputs.mode }}" in
+            check)   scripts/sync-design-system.sh --check ;;
+            dry-run) scripts/sync-design-system.sh --dry-run ;;
+            *)       scripts/sync-design-system.sh ;;
+          esac
+
+      - name: Detect drift
+        id: drift
+        if: steps.inputs.outputs.mode == 'sync'
+        run: |
+          if git diff --quiet -- design-system; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "[sync] no drift — mirror already aligned with canonical."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "[sync] drift detected — preparing PR."
+          fi
+
+      - name: Open PR with mirror update
+        if: steps.inputs.outputs.mode == 'sync' && steps.drift.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: concept2cure-v2
+          branch: chore/sync-design-system
+          delete-branch: true
+          commit-message: "chore(design-system): sync mirror from canonical"
+          title: "chore(design-system): sync mirror from canonical"
+          body: |
+            Automated sync of `design-system/` from the canonical design-system
+            project. Source ref: `${{ steps.inputs.outputs.ref }}`
+            Run: ${{ github.run_url }}
+
+            Review the diff in `design-system/` before merging. The mirror is
+            read-only for v2 — every change in this PR originates from the
+            canonical project, not from v2 callers. The
+            `verify-design-tokens` job below runs a Playwright check that
+            enforces the 2026-04-26 regression contract:
+              `var(--accent-100)` → `#d97757`
+              `var(--bg-000)`     → `#faf9f5`
+            If tokens drift, the job fails and this PR cannot merge.
+          labels: |
+            design-system
+            automated
+
+  verify-design-tokens:
+    # Regression gate from the 2026-04-26 grey-UI ship. Runs after every
+    # sync (and on the resulting PR's HEAD) to confirm `:root` resolves
+    # the canonical token values — i.e. that v2 still imports
+    # `colors_and_type.css` correctly.
+    name: Verify design tokens at :root
+    needs: sync
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout sync branch (or v2 if no PR was needed)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.sync.outputs.changed == 'true' && 'chore/sync-design-system' || 'concept2cure-v2' }}
+          fetch-depth: 1
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build client
+        run: npm run build
+
+      - name: Run design-token Playwright check
+        env:
+          BASE_URL: http://localhost:5000
+          # Token check doesn't need DB or AI; a JWT secret is enough to
+          # let the server boot in non-strict mode.
+          JWT_SECRET: ci-token-check-jwt-secret-not-for-production-use-32chars
+        run: |
+          # Boot the built server in the background, wait for /api/health,
+          # then run the focused token spec.
+          npm run start &
+          server_pid=$!
+          for i in $(seq 1 30); do
+            if curl -fsS "$BASE_URL/api/health" >/dev/null 2>&1; then break; fi
+            sleep 2
+          done
+          npx playwright test tests/e2e/design-tokens.spec.ts --project=chromium
+          kill "$server_pid" 2>/dev/null || true
+

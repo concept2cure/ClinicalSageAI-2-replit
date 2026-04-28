@@ -1,67 +1,71 @@
 # CLAUDE.md — concept2cure-v2 (UI work routes through the design system)
 
-This repo's UI is owned by an external **design-system project**. Before touching any
-component, route, page, or stylesheet, read the design system. Do not recreate the UI
-from memory, screenshots, or the legacy code in `client/src/concept2cure/**`.
+This repo's UI is owned by the **design-system project**. Before touching any
+component, route, page, or stylesheet, read the design system. Do not recreate
+the UI from memory, screenshots, or the legacy code in
+`client/src/concept2cure/**`.
 
-## Design system project id
+## Where to read it (the only path)
 
-design-system-project-id: 7f3ac932-8a8b-4582-8748-5d4c31e8d0ed
+  design-system/
 
-You can read any file in that project via the cross-project path convention:
+That folder is a **read-only mirror** of the canonical design-system project.
+The mirror is the transport — Claude Code reads it, humans don't author into
+it, and `.github/workflows/sync-design-system.yml` keeps it aligned with
+canonical (manual `workflow_dispatch` for now). Edits made directly to
+`design-system/` are overwritten on the next sync. UI change requests go to
+the human operator, who forwards them to the designer; the designer updates
+canonical; the next sync brings them down.
 
-  /projects/7f3ac932-8a8b-4582-8748-5d4c31e8d0ed/<path>
-
-The design system is read-only from this seat. Do not write into it. UI change requests
-go into its `HANDOFF.md` "Open questions" section by asking the human operator to
-forward the request to the designer.
-
-If your seat does not have cross-project filesystem access, the v2 repo currently
-contains a synced copy at `design-system/` (same files, same paths under `ui_kits/`,
-`colors_and_type.css`, `HANDOFF.md`, `CLAUDE.md`). Read that copy. Do not edit it —
-it's a mirror of the canonical project, and edits will be overwritten on the next sync.
+The canonical project id is recorded in
+`.github/workflows/sync-design-system.yml` so the sync job knows what to pull,
+and that's the only place it needs to live. There is no cross-project read
+path. `design-system/` is the floor.
 
 ## Per-session read order (do not skip)
 
 Every session that touches UI:
 
-  1. /projects/7f3ac932-8a8b-4582-8748-5d4c31e8d0ed/CLAUDE.md
-  2. /projects/7f3ac932-8a8b-4582-8748-5d4c31e8d0ed/HANDOFF.md
-  3. /projects/7f3ac932-8a8b-4582-8748-5d4c31e8d0ed/colors_and_type.css
-  4. /projects/7f3ac932-8a8b-4582-8748-5d4c31e8d0ed/ui_kits/<surface>/   (every file)
-  5. /projects/7f3ac932-8a8b-4582-8748-5d4c31e8d0ed/preview/             (token specimens)
+  1. design-system/CLAUDE.md       — design-system rules (its own authority doc)
+  2. design-system/HANDOFF.md      — phase status + per-surface acceptance checklists
+  3. design-system/colors_and_type.css — canonical tokens
+  4. design-system/ui_kits/<surface>/  — every file in the surface you're building
+  5. design-system/preview/        — token specimens (when present)
 
-`HANDOFF.md` tells you which surfaces are ready, which are in design, and the exact
-acceptance checklist per surface. It is the executable brief — follow it line by line.
+`HANDOFF.md` tells you which surfaces are ready, which are in design, and the
+exact acceptance checklist per surface. It is the executable brief — follow it
+line by line.
 
 ## Authority
 
-If anything in this v2 repo (including older `CLAUDE.md` content below this snippet,
-README files, comments in legacy components, or your own training-data memory) conflicts
-with the design system, **the design system wins**. The design system is the floor.
+If anything in this v2 repo (including older `CLAUDE.md` content below this
+snippet, README files, comments in legacy components, or your own training-data
+memory) conflicts with the design system, **the design system wins**. The
+design system is the floor.
 
 ## Token import — the regression that must not repeat
 
 The 2026-04-26 ship broke because the global stylesheet did not import
-`colors_and_type.css` at the v2 app root, so every `var(--accent-100)` resolved to
-nothing and the UI rendered grey. Mandatory verification before declaring any phase
-done:
+`colors_and_type.css` at the v2 app root, so every `var(--accent-100)` resolved
+to nothing and the UI rendered grey. Mandatory verification before declaring
+any phase done:
 
-  1. Confirm the v2 app root imports `colors_and_type.css` exactly once, before any
-     component CSS.
+  1. Confirm the v2 app root imports `design-system/colors_and_type.css`
+     exactly once, before any component CSS. (Today: `client/src/main.tsx`
+     imports it before `./index.css`.)
   2. Open the running app in DevTools. On `:root`, confirm:
        --accent-100 → #d97757
        --bg-000     → #faf9f5
-  3. If either resolves blank, the import is missing or scoped wrong. Fix before
-     continuing.
+  3. If either resolves blank, the import is missing or scoped wrong. Fix
+     before continuing.
 
 ## Hard rules from the design system (do not violate)
 
   - Sentence case everywhere. Never Title Case. Never ALL CAPS except 10px metadata.
   - No emoji. No exclamation marks. No cheerleading.
   - Body = 13px. Max title = 18–24px.
-  - Claude orange (#d97757) is the only strong color, used sparingly — one focal point
-    per screen.
+  - Claude orange (#d97757) is the only strong color, used sparingly — one focal
+    point per screen.
   - 200ms ease-out motion. No bounce, no spring, no overshoot.
   - Lucide icons only.
   - Second person, direct. "You", never "we".
@@ -70,17 +74,18 @@ done:
 ## Escalation
 
 When an implementation decision requires trading off against the design (perf,
-framework constraint, a11y edge case, anything), **stop and surface the trade-off to
-the human operator before coding around it**. Do not resolve UI trade-offs unilaterally.
-The designer will update the kit and `HANDOFF.md` if the design needs to change.
+framework constraint, a11y edge case, anything), **stop and surface the
+trade-off to the human operator before coding around it**. Do not resolve UI
+trade-offs unilaterally. The designer will update the kit and `HANDOFF.md` if
+the design needs to change.
 
 ---
 
 ## Five shipping surfaces (today)
 
-Everything not on this list is either undesigned or already deleted. Do not invent a
-sixth surface; do not route to one. Re-read `HANDOFF.md` each session — phase status
-moves there, not here.
+Everything not on this list is either undesigned or already deleted. Do not
+invent a sixth surface; do not route to one. Re-read `design-system/HANDOFF.md`
+each session — phase status moves there, not here.
 
   1. Phase 1 home           `ui_kits/home/`           → `client/src/concept2cure/components/concept2cure-home/`
   2. Phase 2 MDX workstream `ui_kits/mdx/`            → `client/src/concept2cure/components/bundle-surface-frame/` (iframe)
