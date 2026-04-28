@@ -2067,11 +2067,16 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     );
   }
 
-  // Project module deep-links (/concept2cure/project/:id/{510k,pma,cer,ectd,ind,cmc})
-  // route to the canonical bundle surface for that module, NOT the legacy
-  // CERV2Page-in-shell. Replace-or-Delete Law (CLAUDE.md): the legacy
-  // ZenSidebar + ProjectHomeDashboard + ProjectKnowledgePanel chrome that
-  // wrapped these mounts is dead for these routes.
+  // Project module deep-links route ONLY to bundle-designed surfaces.
+  // Bundle coverage today (design-system/ui_kits/):
+  //   - ectd → ClaudeEctdCoauthor (Phase 3 bundle)
+  //   - 510k → MDX iframe (#k510)
+  //   - pma  → MDX iframe (#pma)
+  //   - cer  → MDX iframe (#cer)
+  // Routes the bundle has NOT designed (ind, cmc) are NOT routed to a
+  // best-guess fallback. Per CLAUDE.md "Mirror, do not interpret":
+  // undesigned routes redirect to the project's chat-first shell
+  // (bundle ana_ri) so the user never lands on invented UI.
   if (embeddedModule && urlProjectId) {
     if (embeddedModule === 'ectd') {
       return (
@@ -2098,8 +2103,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       '510k': '#k510',
       pma: '#pma',
       cer: '#cer',
-      ind: '#submissions',
-      cmc: '#cer',
     };
     const hash = moduleHash[embeddedModule];
     if (hash !== undefined) {
@@ -2110,6 +2113,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           title={`${activeProject?.name ?? 'Project'} · ${embeddedModule.toUpperCase()}`}
         />
       );
+    }
+    // ind / cmc: bundle has not designed these surfaces. Redirect to the
+    // project's chat-first shell so the user never lands on invented UI.
+    if (location !== `/concept2cure/project/${urlProjectId}`) {
+      navigate(`/concept2cure/project/${urlProjectId}`);
     }
   }
 
@@ -2245,14 +2253,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     );
   }
 
-  // Phase 2 — Claude Design AnA RI chat shell. Renders standalone (no legacy
-  // ZenSidebar, no legacy ProjectKnowledgePanel, no project header bar) for
-  // every chat-shell layout mode. Bundle source: design-system/ui_kits/ana_ri/.
+  // Phase 2 — Claude Design AnA RI chat shell, full viewport. Bundle source:
+  // design-system/ui_kits/ana_ri/. Used for every chat-shell layoutMode.
   // Replace-or-Delete Law (CLAUDE.md): the legacy shell that wrapped these
-  // mounts is dead for these layoutModes; the inline mounts below in the
-  // legacy main return are unreachable for these modes. The embeddedModule
-  // cases were already redirected to bundle MDX / eCTD above, so any
-  // project-scoped route that reaches here is a chat-shell route.
+  // mounts is dead for these layoutModes; the inline mounts in the legacy
+  // main return are unreachable for these modes. embeddedModule cases
+  // (510k/pma/cer/ectd) were already redirected to bundle MDX / eCTD above.
   if (
     layoutMode === 'project-home' ||
     layoutMode === 'regulatory-workspace' ||
