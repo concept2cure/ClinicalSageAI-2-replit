@@ -2233,6 +2233,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             : platformGreeting?.text ||
               `How can I help with ${activeProject?.name || 'your project'}?`
         }
+        externalMessage={externalChatMessage?.text ?? null}
+        onInitialMessageConsumed={() => setExternalChatMessage(null)}
         suggestedActions={workspaceSuggestedActions}
         onActionRun={handleActionRun}
         onNavigate={handleAnaPanelNavigate}
