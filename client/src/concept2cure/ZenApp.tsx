@@ -153,6 +153,7 @@ const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect 
 import { Ana } from './components/ana';
 import { useAnaChat } from './components/ana/useAnaChat';
 import { Concept2CureHome } from './components/concept2cure-home';
+import { BundleSurfaceFrame } from './components/bundle-surface-frame';
 import {
   ClaudeEctdCoauthor,
   useEctdAuthoringData,
@@ -698,6 +699,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   const [layoutMode, setLayoutMode] = useState<LayoutMode>(
     urlProjectId ? 'regulatory-workspace' : initialProjectId ? 'project-home' : 'projects'
   );
+
+  // Phase 2 MDX deep-link hash — passed to BundleSurfaceFrame iframe src
+  // so clicking "Vault DMS" / "Tasking" / etc. from the bundle home rail
+  // lands on the right tab inside the MDX bundle prototype.
+  const [mdxDeepLink, setMdxDeepLink] = useState<string>('');
 
   // Active section code — tracks which dossier section is open in SectionWorkspace
   const [activeSectionCode, setActiveSectionCode] = useState<string | null>(null);
@@ -1365,25 +1371,32 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       // ── Bundle home rail ids (data.tsx NAV_ITEMS) ───────────────────────
       // Per CLAUDE.md Replace-or-Delete Law: bundle rail items must never
       // route to legacy panel layoutModes that would force the legacy
-      // ZenSidebar to render. Bundle ids that have a corresponding bundle
-      // surface route to that surface; bundle ids without a shipped phase
-      // route to Phase 2 Ana with an intent message so the user gets a
+      // ZenSidebar to render. Where the design-system bundle ships a
+      // canonical surface, we route to that surface; where it does not,
+      // we route to Phase 2 Ana with an intent message so the user gets a
       // bundle-faithful response instead of a legacy panel.
+      //
+      // Phase 2 MDX (design-system/ui_kits/mdx/) covers Medical Device +
+      // Diagnostics including 510(k), PMA, CER, Precedent Intelligence —
+      // mounted as the new 'mdx' layoutMode rendering the bundle prototype.
+      const BUNDLE_MDX_HASH: Record<string, string> = {
+        mdx: '',                       // bundle home — Overview tab
+        biopharma: '',                 // routes through MDX shell scope tabs
+        vault: '#vault',
+        tasking: '#tasks',
+        submission: '#submissions',
+        protocol: '#templates',
+        cmc: '#cer',                   // CER generator covers CMC docs in MDX
+        biostat: '',                   // no MDX surface yet → fall through to Ana
+        quality: '#validation',
+        reporting: '#analytics',
+        memory: '#memory',
+        artifacts: '#vault',
+        audit: '#admin',
+        admin: '#admin',
+      };
       const BUNDLE_INTENTS: Record<string, string> = {
-        mdx: 'Show me the medical-device and diagnostics workspace — projects, predicates, regulatory submissions across this domain.',
-        biopharma: 'Show me the biotech and pharma workspace — projects, INDs, NDAs, BLAs across this domain.',
-        vault: 'Open the Vault DMS — show me source documents, controlled copies, and the audit log.',
-        tasking: 'Show me Tasking and Collaboration — assigned work, open reviews, and items due this week.',
-        submission: 'Show me the Submission Center — in-flight submissions and the archive.',
-        protocol: 'Show me Protocol and Study Design — active protocols, templates, and the endpoint library.',
-        cmc: 'Show me the CMC Module — drug substance §3.2.S, drug product §3.2.P, stability studies, and specifications.',
         biostat: 'Show me Biostatistics — active SAPs, sample size calculations, interim analyses, and tables/listings/figures.',
-        quality: 'Show me Quality and Lifecycle — SOP management, CAPA, post-market surveillance, inspection readiness, and the compliance monitor.',
-        reporting: 'Show me Reports — readiness dashboards, timeline forecasting, and precedent models.',
-        memory: 'Show me AnA Memory — recent recalls, pinned facts, source traces, and the current RIM version.',
-        artifacts: 'Show me User Artifacts — recent drafts and pinned artifacts.',
-        audit: 'Show me Audit and Compliance — 21 CFR Part 11 trail, e-signatures, access log, and change history.',
-        admin: 'Show me Admin Settings — users and roles, integrations, agency credentials, and billing.',
       };
       if (normalizedPath === 'projects') {
         setLayoutMode('projects');
@@ -1391,6 +1404,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       }
       if (normalizedPath === 'ectd-coauthor') {
         setLayoutMode('ectd-coauthor');
+        return;
+      }
+      if (normalizedPath in BUNDLE_MDX_HASH) {
+        // Persist the deep-link hash so the early return for 'mdx' can
+        // pick it up and pass it to the iframe.
+        setMdxDeepLink(BUNDLE_MDX_HASH[normalizedPath]);
+        setLayoutMode('mdx');
         return;
       }
       if (normalizedPath in BUNDLE_INTENTS) {
@@ -2030,9 +2050,26 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   // userProfile sync moved to useUserProfileFromStorage hook
 
+  // Phase 2 — Claude Design MDX workstream (Medical Device + Diagnostics
+  // including 510(k), PMA, CER, Precedent Intelligence). Bundle source:
+  // design-system/ui_kits/mdx/. Mounted as the canonical bundle prototype
+  // via iframe so the user gets pixel-faithful rendering (terracotta,
+  // brand fonts, bundle's own state machine) without a multi-thousand-
+  // line React port. To swap to a real React port later, replace
+  // <BundleSurfaceFrame surface="mdx" .../> with the ported components.
+  if (layoutMode === 'mdx' && !embeddedModule) {
+    return (
+      <BundleSurfaceFrame
+        surface="mdx"
+        hash={mdxDeepLink}
+        title="Medical Device and Diagnostics workstream"
+      />
+    );
+  }
+
   // Phase 1 — Claude Design home surface. Renders standalone (no legacy
   // ZenSidebar) when the user is on the home destination and not viewing an
-  // embedded project module. Bundle source: docs/design/concept2cure-design-system/project/ui_kits/home/.
+  // embedded project module. Bundle source: design-system/ui_kits/home/.
   if (layoutMode === 'projects' && !embeddedModule) {
     const initials = (userName || 'U')
       .split(/\s+/)

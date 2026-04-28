@@ -27,6 +27,7 @@ export type ToolPanel =
 export type LayoutMode =
   // ── Global destinations ──
   | 'projects'
+  | 'mdx'
   | 'apps'
   | 'artifacts-center'
   | 'setup'
