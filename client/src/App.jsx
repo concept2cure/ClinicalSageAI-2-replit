@@ -3,22 +3,24 @@
 // Concept2Cure top-level app shell.
 //
 // Per CLAUDE.md "UI Source of Truth": the design system at design-system/
-// is the sole UI authority. The four bundle ui_kits (home, mdx, ana_ri,
-// ectd_coauthor) are the only designed surfaces. Every other page that
-// previously had a route here has been removed — Replace-or-Delete Law.
+// is the sole UI authority. Five surfaces ship today:
+//   - Phase 1 home          (ui_kits/home/)
+//   - Phase 2 MDX workstream (ui_kits/mdx/)
+//   - Phase 2 ana_ri shell  (ui_kits/ana_ri/)
+//   - Phase 3 eCTD coauthor (ui_kits/ectd_coauthor/)
+//   - Auth (ZenLogin / ZenSignup) — kept by product decision; ships in
+//     its current form until the design bundle delivers a redesign.
 //
-// What remains in this file is infrastructure (providers, error boundary)
-// and the minimum routing required to land users on the bundle:
-//   - /, /concept2cure, /concept2cure/* → ZenRouter (bundle surfaces)
-//   - /login, /signup, /sign-in, /auth   → /concept2cure/login (auth)
-//   - /client-portal*                    → /concept2cure          (legacy alias)
-//   - everything else                    → /concept2cure          (catch-all)
+// Routing in this file:
+//   - /, /concept2cure, /concept2cure/* → ZenRouter (bundle + auth)
+//   - /login, /signup, /sign-in, /auth   → /concept2cure/login
+//   - /client-portal*                    → /concept2cure (legacy alias)
+//   - everything else                    → /concept2cure (catch-all)
 //
-// TO BE REMOVED — auth (phase 5) and admin (phase 6) are flagged
-// "in design — do not build" by design-system/HANDOFF.md. They remain
-// reachable here because the app cannot function without login. Once
-// the bundle ships those surfaces, remove the auth redirect block, the
-// `<AnAAssistantProvider>` wrapper, and the global `<AnAAssistantContainer>`.
+// TO BE REMOVED — `<AnAAssistantProvider>` + `<AnAAssistantContainer>` are
+// the legacy global AnA overlay; superseded by the bundle ana_ri shell.
+// Wrapper kept only so legacy components that still import
+// useAnAAssistant don't crash. Delete once those legacy callers are gone.
 
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Switch, Route, Redirect } from 'wouter';
@@ -60,8 +62,8 @@ function App() {
                     components that import useAnAAssistant don't crash. */}
                 <AnAAssistantProvider>
                   <Switch>
-                    {/* TO BE REMOVED — auth (phase 5) is "in design"; keep
-                        the redirect block until the bundle ships login. */}
+                    {/* Auth aliases — every flavour funnels into the
+                        canonical Concept2Cure login page. */}
                     <Route path="/sign-in">{() => <Redirect to="/concept2cure/login" />}</Route>
                     <Route path="/auth">{() => <Redirect to="/concept2cure/login" />}</Route>
                     <Route path="/login">{() => <Redirect to="/concept2cure/login" />}</Route>

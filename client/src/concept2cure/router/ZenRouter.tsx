@@ -141,10 +141,9 @@ export const ZenRouter: React.FC = () => {
     <PortalAuthProvider>
       <AnimatePresence mode="wait">
         <Switch location={location} key={location}>
-          {/* TO BE REMOVED — auth (phase 5) is "in design" per
-              design-system/HANDOFF.md, but the app cannot function
-              without login. Delete the next four routes once Anthropic
-              Design ships ui_kits/auth/. */}
+          {/* Auth — ZenLogin / ZenSignup / password-reset. Kept as a
+              permanent shipping surface alongside the four design-system
+              ui_kits (home, mdx, ana_ri, ectd_coauthor). */}
           <Route path="/concept2cure/login">
             {() => (
               <PageTransition>
