@@ -166,6 +166,16 @@ export async function registerDocumentRoutes({
         mod: '../routes/predicate-intelligence.js',
         name: 'Predicate Intelligence BFF',
       },
+      {
+        path: '/api/regulatory-graph',
+        mod: '../routes/regulatory-graph.js',
+        name: 'Regulatory Graph',
+      },
+      {
+        path: '/api/standards',
+        mod: '../routes/standards.js',
+        name: 'Standards Catalog',
+      },
     ] as const;
     const evidenceResults = await Promise.allSettled(evidenceConfig.map(c => import(c.mod)));
     evidenceResults.forEach((r, i) => {

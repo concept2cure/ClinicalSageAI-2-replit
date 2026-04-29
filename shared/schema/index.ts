@@ -184,3 +184,29 @@ export type {
 
 // CMC Operating System tables (PR #352)
 export * from './cmc-os';
+
+// Regulatory Graph Foundation (claims, sections, standards, applicability)
+export {
+  deviceClaims,
+  submissionSections,
+  regulatoryStandards,
+  standardsApplicability,
+  deviceClaimsRelations,
+  submissionSectionsRelations,
+  regulatoryStandardsRelations,
+  standardsApplicabilityRelations,
+  insertDeviceClaimSchema,
+  insertSubmissionSectionSchema,
+  insertRegulatoryStandardSchema,
+  insertStandardsApplicabilitySchema,
+} from './regulatory-graph';
+export type {
+  DeviceClaim,
+  InsertDeviceClaim,
+  SubmissionSection,
+  InsertSubmissionSection,
+  RegulatoryStandard,
+  InsertRegulatoryStandard,
+  StandardsApplicability,
+  InsertStandardsApplicability,
+} from './regulatory-graph';
