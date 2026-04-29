@@ -4,7 +4,7 @@
  */
 import { useState } from 'react';
 import { I } from './icons';
-import { PR_PROJECTS } from './data';
+import { useProjectsApi } from './data';
 import type { ProjectsFilters, ArchiveMode } from './types';
 import { ProjectsListFilters } from './ProjectsListFilters';
 import { ProjectsListBulkBar } from './ProjectsListBulkBar';
@@ -42,7 +42,9 @@ export function ProjectsList({
     mode: ArchiveMode;
   } | null>(null);
 
-  const allProjects = PR_PROJECTS;
+  // Live projects with prototype-seed fallback. The hook returns the seed
+  // when the API errors or has no rows, so the surface always renders.
+  const { projects: allProjects } = useProjectsApi();
 
   const matches = (p: typeof allProjects[number]) => {
     if (query) {

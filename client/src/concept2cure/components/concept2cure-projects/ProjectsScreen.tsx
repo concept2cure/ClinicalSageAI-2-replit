@@ -5,7 +5,7 @@
  * (ProjectsScreen, lines 1297–1349).
  */
 import { useEffect, useState } from 'react';
-import { PR_PROJECTS } from './data';
+import { useProjectsApi } from './data';
 import { ProjectsList } from './ProjectsList';
 import { ProjectDetail } from './ProjectDetail';
 import { ProjectQuickSwitcher } from './modals/ProjectQuickSwitcher';
@@ -18,7 +18,10 @@ export function ProjectsScreen() {
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [notifsOpen, setNotifsOpen] = useState(false);
 
-  const project = openId ? PR_PROJECTS.find(p => p.id === openId) ?? null : null;
+  // Live API with prototype-seed fallback so the surface always renders
+  // (offline, empty tenant, or auth lapse). Per HANDOFF item 12.
+  const { projects } = useProjectsApi();
+  const project = openId ? projects.find(p => p.id === openId) ?? null : null;
 
   // ⌘K → switcher (when on the list)
   useEffect(() => {
@@ -47,7 +50,7 @@ export function ProjectsScreen() {
 
       <ProjectQuickSwitcher
         open={switcherOpen}
-        projects={PR_PROJECTS}
+        projects={projects}
         onPick={id => { setSwitcherOpen(false); setOpenId(id); }}
         onClose={() => setSwitcherOpen(false)}
         onCreate={() => { setSwitcherOpen(false); setCreating(true); }}
@@ -55,7 +58,7 @@ export function ProjectsScreen() {
 
       <ProjectNotifications
         open={notifsOpen}
-        projects={PR_PROJECTS}
+        projects={projects}
         onClose={() => setNotifsOpen(false)}
         onOpenProject={id => { setNotifsOpen(false); setOpenId(id); }}
       />

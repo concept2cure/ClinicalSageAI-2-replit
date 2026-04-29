@@ -21,6 +21,7 @@ export const PCP_TABS: PcpTab[] = [
   { id: 'instructions', label: 'Instructions', icon: 'file' },
   { id: 'team',         label: 'Team',         icon: 'users' },
   { id: 'compliance',   label: 'Compliance',   icon: 'shieldCheck' },
+  { id: 'settings',     label: 'Settings',     icon: 'sliders' },
 ];
 
 export const PCP_SUBMISSION_TYPES: { v: string; l: string }[] = [

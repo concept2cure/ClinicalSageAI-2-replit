@@ -193,15 +193,6 @@ export function ProjectConfigPanel({ project, open, onClose, onSave }: Props) {
                   placeholder="Brief description of the project…"
                 />
               </Field>
-
-              {onSave && (
-                <div className="pcp-form-foot" style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
-                  <button type="button" className="prj-btn" onClick={onClose}>Cancel</button>
-                  <button type="button" className="prj-btn primary" onClick={() => { onSave(form); onClose(); }}>
-                    Save
-                  </button>
-                </div>
-              )}
             </div>
           )}
 
@@ -367,6 +358,124 @@ export function ProjectConfigPanel({ project, open, onClose, onSave }: Props) {
                   Assign a regulatory lead responsible for submission oversight, review approvals, and compliance sign-off.
                 </p>
                 <button type="button" className="pcp-btn">Assign regulatory lead</button>
+              </div>
+            </div>
+          )}
+
+          {tab === 'settings' && (
+            <div className="pcp-tab-body">
+              <div className="pcp-card">
+                <h3 className="pcp-h3">Templates</h3>
+                <p className="pcp-section-sub">
+                  Save this project as a starting point, or apply an existing template.
+                </p>
+                <div className="pcp-tmpl-row">
+                  <button type="button" className="pcp-btn">Save as template</button>
+                  <button type="button" className="pcp-btn">Apply template…</button>
+                </div>
+                <div className="pcp-tmpl-list">
+                  <div className="pcp-tmpl-item">
+                    <div className="pcp-tmpl-item-l">
+                      <div className="pcp-tmpl-name">FDA 510(k) starter · Class II</div>
+                      <div className="pcp-tmpl-meta">9 phases · 12 sections · 4 milestone gates</div>
+                    </div>
+                    <span className="pcp-pill-out">In use</span>
+                  </div>
+                  <div className="pcp-tmpl-item">
+                    <div className="pcp-tmpl-item-l">
+                      <div className="pcp-tmpl-name">EU MDR CER · Class III</div>
+                      <div className="pcp-tmpl-meta">8 phases · MEDDEV 2.7/1 Rev 4 ordering</div>
+                    </div>
+                    <button type="button" className="pcp-link">Apply</button>
+                  </div>
+                  <div className="pcp-tmpl-item">
+                    <div className="pcp-tmpl-item-l">
+                      <div className="pcp-tmpl-name">eCTD M2–M5 · NDA</div>
+                      <div className="pcp-tmpl-meta">8 phases · ICH CTD module structure</div>
+                    </div>
+                    <button type="button" className="pcp-link">Apply</button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pcp-card">
+                <h3 className="pcp-h3">Retention policy</h3>
+                <p className="pcp-section-sub">
+                  Audit-trail entries are retained per 21 CFR Part 11 §11.10(c).
+                </p>
+                <Field label="Retention period">
+                  <select className="pcp-select" defaultValue="7y">
+                    <option value="3y">3 years</option>
+                    <option value="5y">5 years</option>
+                    <option value="7y">7 years (FDA recommended)</option>
+                    <option value="10y">10 years</option>
+                    <option value="forever">Forever</option>
+                  </select>
+                </Field>
+                <Field label="Soft-delete window">
+                  <select className="pcp-select" defaultValue="30d">
+                    <option value="7d">7 days</option>
+                    <option value="30d">30 days</option>
+                    <option value="90d">90 days</option>
+                  </select>
+                </Field>
+              </div>
+
+              <div className="pcp-card">
+                <h3 className="pcp-h3">Export project</h3>
+                <p className="pcp-section-sub">
+                  Self-contained bundle. Audit trail and SHA-256 manifest included.
+                </p>
+                <div className="pcp-export-list">
+                  <button type="button" className="pcp-export-btn">
+                    <div className="pcp-export-name">ZIP archive</div>
+                    <div className="pcp-export-meta">
+                      All chats, files, memory, instructions · ≈3.4 MB
+                    </div>
+                  </button>
+                  <button type="button" className="pcp-export-btn">
+                    <div className="pcp-export-name">eCTD bundle</div>
+                    <div className="pcp-export-meta">
+                      M1–M5 with index.xml · ready for FDA ESG · ≈9 MB
+                    </div>
+                  </button>
+                  <button type="button" className="pcp-export-btn">
+                    <div className="pcp-export-name">Audit trail · inspection PDF</div>
+                    <div className="pcp-export-meta">Tamper-evident, signed · 21 CFR Part 11</div>
+                  </button>
+                </div>
+              </div>
+
+              <div className="pcp-card pcp-danger-zone">
+                <div className="pcp-card-head">
+                  <h3 className="pcp-h3">Danger zone</h3>
+                  <span className="pcp-badge" data-tone="warn">Owner only</span>
+                </div>
+                <div className="pcp-danger-row">
+                  <div>
+                    <div className="pcp-danger-name">Archive project</div>
+                    <div className="pcp-danger-sub">Move out of active list. Data preserved.</div>
+                  </div>
+                  <button type="button" className="pcp-btn">Archive</button>
+                </div>
+                <div className="pcp-danger-row">
+                  <div>
+                    <div className="pcp-danger-name">Transfer ownership</div>
+                    <div className="pcp-danger-sub">
+                      Hand off Owner role to another member. You become Editor.
+                    </div>
+                  </div>
+                  <button type="button" className="pcp-btn">Transfer</button>
+                </div>
+                <div className="pcp-danger-row">
+                  <div>
+                    <div className="pcp-danger-name is-danger">Delete project</div>
+                    <div className="pcp-danger-sub">
+                      Soft-delete now, permanent after the retention window.
+                    </div>
+                  </div>
+                  <button type="button" className="pcp-btn is-danger">Delete…</button>
+                </div>
               </div>
             </div>
           )}

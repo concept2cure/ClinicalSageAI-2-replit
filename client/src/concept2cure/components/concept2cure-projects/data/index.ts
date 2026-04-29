@@ -29,3 +29,6 @@ export {
 export type {
   NpdRegion, NpdType, NpdFamily, NpdSection, NpdMilestone, NpdPreview,
 } from './regions';
+
+export { useProjectsApi } from './useProjectsApi';
+export type { UseProjectsApiOptions, UseProjectsApiReturn } from './useProjectsApi';
