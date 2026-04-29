@@ -198,3 +198,14 @@ export type {
   StandardsApplicability,
   InsertStandardsApplicability,
 } from './regulatory-graph';
+
+// Reviewer Simulation Runs — persisted red-team output (one row per run).
+export {
+  reviewerSimulationRuns,
+  reviewerSimulationRunsRelations,
+  insertReviewerSimulationRunSchema,
+} from './reviewer-simulation';
+export type {
+  ReviewerSimulationRun,
+  InsertReviewerSimulationRun,
+} from './reviewer-simulation';

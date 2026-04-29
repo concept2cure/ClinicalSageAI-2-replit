@@ -34,6 +34,17 @@ import {
   type StalenessReasonCode,
 } from '../services/regulatory-graph/defense-packet-staleness.service';
 import { defensePackets } from '../../shared/schema/defense-packets';
+import { regulatoryPrograms } from '../../shared/schema/programs';
+import {
+  getSimulationRun,
+  listProgramSimulations,
+  runReviewerSimulation,
+} from '../services/intelligence-engine/reviewer-simulator.service';
+import {
+  ALL_PERSONA_CODES,
+  REVIEWER_PERSONAS,
+} from '../services/intelligence-engine/reviewer-personas';
+import type { ReviewerPersonaCode } from '../services/intelligence-engine/types';
 
 const router = Router();
 router.use(authenticateToken);
@@ -329,6 +340,115 @@ router.post('/propagate/predicate', async (req: Request, res: Response) => {
     res.json(result);
   } catch (err: any) {
     res.status(500).json({ error: 'Propagation failed', detail: err?.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reviewer Red-Team Simulator
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function requireUuidProgramAccess(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  const programId = req.params.programId;
+  if (!programId) {
+    res.status(422).json({ error: 'programId is required' });
+    return;
+  }
+  const orgId = getOrgId(req);
+  if (orgId === null) {
+    res.status(403).json({ error: 'Organization context required' });
+    return;
+  }
+  const [row] = await db
+    .select({ id: regulatoryPrograms.id })
+    .from(regulatoryPrograms)
+    .where(and(eq(regulatoryPrograms.id, programId), eq(regulatoryPrograms.organizationId, orgId)))
+    .limit(1);
+  if (!row) {
+    res.status(403).json({ error: 'Access denied' });
+    return;
+  }
+  next();
+}
+
+router.get('/reviewer/personas', (_req: Request, res: Response) => {
+  res.json({
+    personas: ALL_PERSONA_CODES.map(code => {
+      const p = REVIEWER_PERSONAS[code];
+      return { code: p.code, name: p.name, scope: p.scope };
+    }),
+  });
+});
+
+router.post(
+  '/programs/:programId/reviewer-simulation',
+  requireUuidProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const programId = req.params.programId;
+    const userIdRaw = (req as any).user?.id;
+    const triggeredBy =
+      typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
+
+    const body = req.body ?? {};
+    if (!body.program || !body.intel) {
+      return res
+        .status(422)
+        .json({ error: 'program and intel facts are required in request body' });
+    }
+
+    const personas = Array.isArray(body.personas)
+      ? (body.personas as ReviewerPersonaCode[])
+      : undefined;
+
+    try {
+      const result = await runReviewerSimulation({
+        organizationId: orgId,
+        programId,
+        program: body.program,
+        packet: body.packet ?? null,
+        intel: body.intel,
+        reports: body.reports,
+        personas,
+        defensePacketId: body.defensePacketId,
+        trigger: typeof body.trigger === 'string' ? body.trigger : 'manual',
+        triggeredBy,
+        dryRun: body.dryRun === true,
+      });
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Simulation failed', detail: err?.message });
+    }
+  }
+);
+
+router.get(
+  '/programs/:programId/reviewer-simulations',
+  requireUuidProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const limit = Math.min(parseInt(String(req.query.limit ?? '50'), 10) || 50, 200);
+    try {
+      const rows = await listProgramSimulations(orgId, req.params.programId, limit);
+      res.json({ programId: req.params.programId, runs: rows, count: rows.length });
+    } catch (err: any) {
+      res.status(500).json({ error: 'List failed', detail: err?.message });
+    }
+  }
+);
+
+router.get('/reviewer-simulations/:runId', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+  try {
+    const row = await getSimulationRun(orgId, req.params.runId);
+    if (!row) return res.status(404).json({ error: 'Run not found' });
+    res.json(row);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Fetch failed', detail: err?.message });
   }
 });
 

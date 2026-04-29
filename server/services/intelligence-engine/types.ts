@@ -79,7 +79,24 @@ export interface ReviewerQuestion {
   severity: 'info' | 'warning' | 'critical';
   category: 'evidence' | 'consistency' | 'completeness' | 'methodology' | 'safety';
   sectionRef?: string;
+  // Persona attribution + regulatory citation. Added 2026-04-29 as part of the
+  // reviewer red-team simulator. Optional so existing callers compile unchanged.
+  persona?: ReviewerPersonaCode;
+  citation?: string; // e.g. '21 CFR 807.92(a)(3)' or 'MDR Annex II §3.1'
+  recommendedFix?: string;
 }
+
+/** Persona codes used by the reviewer-simulator service. */
+export type ReviewerPersonaCode =
+  | 'fda_510k_reviewer'
+  | 'fda_pma_reviewer'
+  | 'fda_software_reviewer'
+  | 'fda_cyber_reviewer'
+  | 'eu_notified_body_clinical'
+  | 'ivdr_performance_evaluator'
+  | 'biostat_reviewer'
+  | 'labeling_reviewer'
+  | 'quality_systems_reviewer';
 
 // ─── Module 5: Risk Classification ───────────────────────────────────────────
 
