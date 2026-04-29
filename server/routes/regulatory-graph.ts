@@ -24,6 +24,16 @@ import {
   traceClaimEvidence,
   traceClaimsForDocument,
 } from '../services/regulatory-graph/regulatory-graph.service';
+import {
+  getPacketDependencies,
+  propagateClaimChange,
+  propagateEvidenceChange,
+  propagatePredicateChange,
+  propagateRiskVocabChange,
+  registerPacketDependencies,
+  type StalenessReasonCode,
+} from '../services/regulatory-graph/defense-packet-staleness.service';
+import { defensePackets } from '../../shared/schema/defense-packets';
 
 const router = Router();
 router.use(authenticateToken);
@@ -172,6 +182,173 @@ router.get('/documents/:documentId/claims', async (req: Request, res: Response) 
     res.json({ documentId, claims: safe, count: safe.length });
   } catch (err: any) {
     res.status(500).json({ error: 'Reverse trace failed', detail: err?.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Defense-packet staleness propagation
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function requirePacketAccess(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  const packetId = req.params.packetId;
+  if (!packetId) {
+    res.status(422).json({ error: 'packetId is required' });
+    return;
+  }
+  const orgId = getOrgId(req);
+  if (orgId === null) {
+    res.status(403).json({ error: 'Organization context required' });
+    return;
+  }
+  const [row] = await db
+    .select({ id: defensePackets.id })
+    .from(defensePackets)
+    .where(and(eq(defensePackets.id, packetId), eq(defensePackets.organizationId, orgId)))
+    .limit(1);
+  if (!row) {
+    res.status(403).json({ error: 'Access denied' });
+    return;
+  }
+  next();
+}
+
+const VALID_REASON_CODES: ReadonlySet<StalenessReasonCode> = new Set([
+  'evidence_changed',
+  'evidence_superseded',
+  'claim_changed',
+  'claim_withdrawn',
+  'claim_superseded',
+  'predicate_changed',
+  'risk_vocab_updated',
+  'risk_code_map_updated',
+  'manual',
+]);
+
+function parseReason(input: unknown, fallback: StalenessReasonCode): StalenessReasonCode {
+  return typeof input === 'string' && VALID_REASON_CODES.has(input as StalenessReasonCode)
+    ? (input as StalenessReasonCode)
+    : fallback;
+}
+
+router.post(
+  '/defense-packets/:packetId/register-dependencies',
+  requirePacketAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user?.id;
+      const result = await registerPacketDependencies(req.params.packetId, {
+        createdById: typeof userId === 'number' ? userId : undefined,
+      });
+      if (!result) return res.status(404).json({ error: 'Packet not found' });
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Register failed', detail: err?.message });
+    }
+  }
+);
+
+router.get(
+  '/defense-packets/:packetId/dependencies',
+  requirePacketAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const orgId = getOrgId(req)!;
+      const view = await getPacketDependencies(orgId, req.params.packetId);
+      res.json({ packetId: req.params.packetId, ...view });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Dependency fetch failed', detail: err?.message });
+    }
+  }
+);
+
+router.post('/propagate/evidence', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+  const evidenceObjectId = String(req.body?.evidenceObjectId || '');
+  if (!evidenceObjectId) {
+    return res.status(422).json({ error: 'evidenceObjectId is required' });
+  }
+  const reason = parseReason(req.body?.reason, 'evidence_changed');
+  try {
+    const userId = (req as any).user?.id;
+    const result = await propagateEvidenceChange(
+      orgId,
+      evidenceObjectId,
+      reason,
+      typeof userId === 'string' ? userId : userId != null ? String(userId) : undefined
+    );
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Propagation failed', detail: err?.message });
+  }
+});
+
+router.post('/propagate/claim', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+  const claimId = parseInt(String(req.body?.claimId || ''), 10);
+  if (!Number.isFinite(claimId)) {
+    return res.status(422).json({ error: 'claimId must be an integer' });
+  }
+  const reason = parseReason(req.body?.reason, 'claim_changed');
+  try {
+    const userId = (req as any).user?.id;
+    const result = await propagateClaimChange(
+      claimId,
+      reason,
+      typeof userId === 'string' ? userId : userId != null ? String(userId) : undefined
+    );
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Propagation failed', detail: err?.message });
+  }
+});
+
+router.post('/propagate/predicate', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+  const programId = String(req.body?.programId || '');
+  const predicateKNumber = String(req.body?.predicateKNumber || '');
+  if (!programId || !predicateKNumber) {
+    return res
+      .status(422)
+      .json({ error: 'programId and predicateKNumber are required' });
+  }
+  try {
+    const userId = (req as any).user?.id;
+    const result = await propagatePredicateChange(
+      orgId,
+      programId,
+      predicateKNumber,
+      typeof userId === 'string' ? userId : userId != null ? String(userId) : undefined
+    );
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Propagation failed', detail: err?.message });
+  }
+});
+
+router.post('/propagate/risk-vocab', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+  const newVocabHash = String(req.body?.newVocabHash || '');
+  if (!newVocabHash) {
+    return res.status(422).json({ error: 'newVocabHash is required' });
+  }
+  try {
+    const userId = (req as any).user?.id;
+    const result = await propagateRiskVocabChange(
+      orgId,
+      newVocabHash,
+      typeof userId === 'string' ? userId : userId != null ? String(userId) : undefined
+    );
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Propagation failed', detail: err?.message });
   }
 });
 
