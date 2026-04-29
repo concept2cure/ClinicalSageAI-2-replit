@@ -29,7 +29,10 @@ interface ZenKeyboardState {
   commandPaletteOpen: boolean;
   settingsOpen: boolean;
   layoutMode: LayoutMode;
-  activeProjectId: number | null;
+  /** Project ids are strings now (e.g. "proj_42"); was number | null
+   *  before the API change. Loosened so existing call sites keep
+   *  compiling. The hook uses it as a presence flag, not arithmetically. */
+  activeProjectId: string | number | null | undefined;
 }
 
 export function useZenKeyboardShortcuts(

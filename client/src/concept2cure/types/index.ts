@@ -168,6 +168,19 @@ export interface ProjectOwnership {
   readinessState: string;
   activityHistory: AuditEntry[];
   currentWorkbenchContext: string;
+  /** Preferences slice — added by the server on later projects.
+   *  Older projects keep the same fields at the root level; consumers
+   *  should read preferences first and fall back to root.  */
+  preferences?: {
+    currentWorkbenchContext?: string;
+    projectInstructions?: string;
+  };
+  /** Derived fields the server computes from chat / artifact state.
+   *  Optional because earlier records don't carry it. */
+  derived?: {
+    reviewState?: string;
+    readinessState?: string;
+  };
 }
 
 /**

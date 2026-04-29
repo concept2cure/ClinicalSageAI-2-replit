@@ -87,9 +87,7 @@ import { Embedded510kHost, EmbeddedPMAHost, EmbeddedCERHost } from './components
 // [BATCH 1 DELETED] LandingPage, CommandCenterHub, IntelligenceHub, AnaDashboard,
 // AboutTrainingCenter, LegalCenter, IntegrationsPage, SubmissionOpsCommandCenter, INDWorkspace, PricingPage
 // Full Document Builder wizard (CSR + CTD across global agencies)
-const FullDocumentBuilder = lazy(() => import('./components/builder/FullDocumentBuilder'));
 // Tools Landing — curated workbench (builder is one tool inside it)
-const ToolsLanding = lazy(() => import('./components/workspace/ToolsLanding'));
 import {
   X,
   ChevronLeft,
@@ -167,8 +165,6 @@ import type {
 } from '../../../shared/types/authoring-context';
 
 // First-run onboarding experience
-const FirstRunExperience = lazy(() => import('./components/enablement/FirstRunExperience'));
-
 // [BATCH 3] SnowGlobe — removed as user-reachable world
 
 // [BATCH 1 DELETED] AboutTrainingCenter
@@ -183,61 +179,15 @@ const FirstRunExperience = lazy(() => import('./components/enablement/FirstRunEx
 
 // ─── Regulatory module standalones ────────────────────────────────────────────
 // Document Editor panel (bridge to UnifiedDocumentEditor + live APIs)
-const EditorPanel = lazy(() =>
-  import('./components/editor/EditorPanel').then(m => ({ default: m.default }))
-);
 // [BATCH 3] ECTDCoAuthorStandalone — standalone mode removed, redirects to documents
 
 // AnA 1.0 Intelligence Home (evidence-first landing surface)
-const RICopilotHome = lazy(() =>
-  import('./components/intelligence/RICopilotHome').then(m => ({
-    default: m.RICopilotHome,
-  }))
-);
-
 // Precedent Intelligence Dashboard (standalone 4-tab view)
-const PrecedentIntelligenceDashboard = lazy(() =>
-  import('./components/precedent/PrecedentIntelligenceDashboard').then(m => ({
-    default: m.PrecedentIntelligenceDashboard,
-  }))
-);
-
 // DocumentAppHub removed — absorbed into workspace flow (Wave 2)
 // ProjectLauncher removed — all project routes go directly to regulatory-workspace
 
 // ─── Regulatory module lazy-loads for tool panels ─────────────────────────────
-const CAPAManagementPanel = lazy(() =>
-  import('./components/regulatory/CAPAManagement').then(m => ({ default: m.default }))
-);
-const PostMarketSurveillancePanel = lazy(() =>
-  import('./components/regulatory/PostMarketSurveillance').then(m => ({ default: m.default }))
-);
-const InspectionReadinessPanel = lazy(() =>
-  import('./components/regulatory/InspectionReadiness').then(m => ({ default: m.default }))
-);
-const ECTDNavigatorPanel = lazy(() =>
-  import('./components/regulatory/ECTDNavigator').then(m => ({ default: m.default }))
-);
-const StudyProtocolDesignerPanel = lazy(() =>
-  import('./components/clinical/StudyProtocolDesigner').then(m => ({ default: m.default }))
-);
-const SOPManagementPanel = lazy(() =>
-  import('./components/quality/SOPManagement').then(m => ({ default: m.default }))
-);
-const RegulatoryIntelligenceFullPanel = lazy(() =>
-  import('./components/intelligence/RegulatoryIntelligencePanel').then(m => ({
-    default: m.default,
-  }))
-);
-const VaultBrowserPanel = lazy(() =>
-  import('@/components/sharepoint/SharePointFileManager').then(m => ({ default: m.default }))
-);
-
 // [BATCH 3] CMC, Vault, StudyArchitect, Templates — standalone modes removed, redirect to documents
-
-const IntelligentReportGenerator = lazy(
-  () => import('./components/reports/IntelligentReportGenerator')
-);
 
 // [BATCH 1 DELETED] AnaDashboard
 
@@ -245,65 +195,7 @@ const IntelligentReportGenerator = lazy(
 
 // [BATCH 3] AnaPlatformControlPage — demoted, redirect to projects
 
-const DocumentCanvasPanel = lazy(() =>
-  import('./components/workspace/DocumentCanvasPanel').then(m => ({
-    default: m.DocumentCanvasPanel,
-  }))
-);
-const ProjectKnowledgePanel = lazy(() =>
-  import('./components/workspace/ProjectKnowledgePanel').then(m => ({
-    default: m.ProjectKnowledgePanel,
-  }))
-);
-
 // ─── Unified workflow components ─────────────────────────────────────────────
-const ProjectHomeDashboard = lazy(() =>
-  import('./components/workflow/ProjectHomeDashboard').then(m => ({
-    default: m.ProjectHomeDashboard,
-  }))
-);
-const DossierMap = lazy(() =>
-  import('./components/workflow/DossierMap').then(m => ({ default: m.DossierMap }))
-);
-const SectionWorkspace = lazy(() =>
-  import('./components/workflow/SectionWorkspace').then(m => ({ default: m.SectionWorkspace }))
-);
-const SubmissionReadinessView = lazy(() =>
-  import('./components/workflow/SubmissionReadiness').then(m => ({
-    default: m.SubmissionReadiness,
-  }))
-);
-const SubmissionBuilderView = lazy(() =>
-  import('./components/submission/SubmissionBuilder').then(m => ({
-    default: m.default,
-  }))
-);
-const ProjectTaskBoardView = lazy(() =>
-  import('./components/workspace/ProjectTaskBoard').then(m => ({
-    default: m.ProjectTaskBoard,
-  }))
-);
-const CSRWorkflowView = lazy(() =>
-  import('./components/workflow/CSRWorkflow').then(m => ({
-    default: m.CSRWorkflow,
-  }))
-);
-const INDChecklistView = lazy(() =>
-  import('./components/workflow/INDChecklist').then(m => ({
-    default: m.INDChecklist,
-  }))
-);
-const TemplateLibraryView = lazy(() =>
-  import('./components/submission/TemplateLibrary').then(m => ({
-    default: m.default,
-  }))
-);
-const HAQManagerView = lazy(() =>
-  import('./components/workflow/HAQManager').then(m => ({
-    default: m.HAQManager,
-  }))
-);
-
 // ─── New intent-organized workspace lazy loads ──────────────────────────────
 // [BATCH 1 DELETED] IntelligenceHub
 // [BATCH cleanup] RegulatoryPrecedentIntelligence — unused, lazy import removed
@@ -319,13 +211,7 @@ const HAQManagerView = lazy(() =>
 // [BATCH 3] ClientBrandingSettings — demoted, redirect to projects
 
 // Biostatistics Platform — statistical analysis, power calculations, endpoints
-const BiostatPlatformDashboard = lazy(
-  () => import('@/components/biostat/BiostatPlatformDashboard')
-);
-
 // AnA Biostats Panel — structured input, computation, judgment, governed documents
-const AnaBiostatsPanel = lazy(() => import('@/concept2cure/components/biostats/AnaBiostatsPanel'));
-
 // [BATCH 3] TrainingManagementPage — demoted, redirect to projects
 // [BATCH 1 DELETED] IntegrationsPage
 
@@ -359,24 +245,6 @@ const AnaBiostatsPanel = lazy(() => import('@/concept2cure/components/biostats/A
 // Project Sidebar — Claude.ai-style right sidebar (Context, Instructions, Files)
 // ProjectSidebar — unused import removed
 
-// Map panel keys to lazy components
-// Early-access modules (capa, pms, inspection) gated behind feature flag
-const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
-  ...(isFeatureEnabled('ENABLE_EARLY_ACCESS_MODULES')
-    ? {
-        capa: CAPAManagementPanel,
-        pms: PostMarketSurveillancePanel,
-        inspection: InspectionReadinessPanel,
-      }
-    : {}),
-  ectd: ECTDNavigatorPanel,
-  protocol: StudyProtocolDesignerPanel,
-  sop: SOPManagementPanel,
-  intelligence: RegulatoryIntelligenceFullPanel,
-  vault: VaultBrowserPanel,
-  'doc-editor': EditorPanel,
-  'ana-biostats': AnaBiostatsPanel,
-};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -419,121 +287,6 @@ const isProjectScopedLayout = (layout: LayoutMode): boolean => PROJECT_SCOPED_LA
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // TOOL_PANELS and getProjectColor imported from ./zen-app-constants
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// TOOL PANEL WRAPPER
-// ═══════════════════════════════════════════════════════════════════════════════
-
-interface ToolPanelWrapperProps {
-  panel: Exclude<ToolPanel, null>;
-  onClose: () => void;
-  isFullscreen: boolean;
-  onToggleFullscreen: () => void;
-}
-
-const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
-  panel,
-  onClose,
-  isFullscreen,
-  onToggleFullscreen,
-}) => {
-  const config = TOOL_PANELS[panel];
-  const Icon = config.icon;
-  const PanelComponent = PANEL_COMPONENTS[panel];
-
-  if (!PanelComponent) {
-    return (
-      <div
-        className={cn(
-          'flex flex-col h-full bg-white border-l border-stone-200',
-          isFullscreen ? 'w-full' : 'w-full sm:w-80 md:w-96 lg:w-[600px]'
-        )}
-      >
-        <div className="flex items-center justify-between h-14 px-4 border-b border-stone-100 bg-stone-50/50">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg text-stone-500 hover:text-stone-700 hover:bg-stone-200/50 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <div className="flex items-center gap-2">
-              <Icon className="w-4 h-4 text-stone-600" />
-              <span className="font-medium text-stone-900">{config.title}</span>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-stone-500 hover:text-stone-700 hover:bg-stone-200/50 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <ErrorState
-          title="Tool unavailable"
-          message={`${config.title} is not enabled in this workspace.`}
-          details="This panel has no mounted component in the current shell configuration."
-          testId="tool-panel-unavailable"
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={cn(
-        'flex flex-col h-full bg-white border-l border-stone-200',
-        isFullscreen ? 'w-full' : 'w-full sm:w-80 md:w-96 lg:w-[600px]'
-      )}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between h-14 px-4 border-b border-stone-100 bg-stone-50/50">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-stone-500 hover:text-stone-700 hover:bg-stone-200/50 transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <div className="flex items-center gap-2">
-            <Icon className="w-4 h-4 text-stone-600" />
-            <span className="font-medium text-stone-900">{config.title}</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={onToggleFullscreen}
-            className="p-1.5 rounded-lg text-stone-500 hover:text-stone-700 hover:bg-stone-200/50 transition-colors"
-            title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-          >
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </button>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-stone-500 hover:text-stone-700 hover:bg-stone-200/50 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto zen-scroll">
-        <ErrorBoundary>
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center h-full">
-                <LoadingState size="sm" message="" />
-              </div>
-            }
-          >
-            <PanelComponent />
-          </Suspense>
-        </ErrorBoundary>
-      </div>
-    </div>
-  );
-};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ANALYTICS DASHBOARD — Real data from project/artifact APIs
@@ -989,7 +742,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       projectId: activeProjectId,
       layoutMode: layoutMode,
       submissionType: activeProject?.type,
-      regulatorBody: activeProject?.region || activeProject?.regulatoryRegion,
+      // `regulatoryRegion` is a server-side metadata field not present on
+      // the projects-list response shape; cast to read it loosely so the
+      // legacy API path keeps working without a wider type refactor.
+      regulatorBody: activeProject?.region || (activeProject as { regulatoryRegion?: string } | undefined)?.regulatoryRegion,
       sectionCode: activeSectionCode,
       sectionTitle: activeSectionTitle,
       artifactId: activeArtifactId,
@@ -1003,7 +759,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     layoutMode,
     activeProject?.type,
     activeProject?.region,
-    activeProject?.regulatoryRegion,
+    (activeProject as { regulatoryRegion?: string } | undefined)?.regulatoryRegion,
     activeSectionCode,
     activeSectionTitle,
     activeArtifactId,
@@ -1171,7 +927,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   const workspaceSuggestedActions = useWorkspaceSuggestedActions(
     activeProject?.type,
-    workspaceSummary
+    // Hook only reads `nextActions[]`; cast because WorkspaceSummary's
+    // SuggestedAction type is a superset of the hook's local one.
+    workspaceSummary as { nextActions?: unknown[] } | undefined as Parameters<
+      typeof useWorkspaceSuggestedActions
+    >[1]
   );
 
   // Pending draft request from IND Workspace → passed to AnA when switching to workspace mode

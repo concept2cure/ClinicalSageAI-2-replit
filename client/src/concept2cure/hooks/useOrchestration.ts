@@ -76,6 +76,14 @@ export interface ReadinessAssessment {
   blockers: ReadinessBlocker[];
   recommendations: Recommendation[];
   assessedAt: string;
+  /** Aggregate metrics computed by the server. Optional — older
+   *  records have no metrics block; consumers should null-coalesce. */
+  metrics?: {
+    readinessScore?: number;
+    artifactCount?: number;
+    signalCount?: number;
+    memoryAtomCount?: number;
+  };
 }
 
 export interface ModuleReadinessItem {
