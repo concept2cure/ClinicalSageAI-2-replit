@@ -32,3 +32,6 @@ export type {
 
 export { useProjectsApi } from './useProjectsApi';
 export type { UseProjectsApiOptions, UseProjectsApiReturn } from './useProjectsApi';
+
+export { useProjectsMutations } from './useProjectsMutations';
+export type { UseProjectsMutations } from './useProjectsMutations';

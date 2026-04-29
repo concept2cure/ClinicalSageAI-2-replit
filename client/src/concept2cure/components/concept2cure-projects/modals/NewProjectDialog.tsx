@@ -19,6 +19,7 @@ import {
   NPD_PREVIEWS, NPD_DEFAULT_PREVIEW,
   buildPhases,
   PR_PROJECTS,
+  useProjectsMutations,
 } from '../data';
 import type { NpdRegion, NpdType } from '../data';
 import type { Project } from '../types';
@@ -26,15 +27,22 @@ import type { Project } from '../types';
 interface Props {
   onClose: () => void;
   onCreated: (id: string) => void;
+  /** Called when a real backend write succeeds, so the host can refetch
+   *  the project list. Optional — without it, the wizard still updates
+   *  the in-memory PR_PROJECTS seed for the demo path. */
+  onApiCreated?: () => void;
 }
 
-export function NewProjectDialog({ onClose, onCreated }: Props) {
+export function NewProjectDialog({ onClose, onCreated, onApiCreated }: Props) {
   const [step, setStep] = useState<'region' | 'type' | 'confirm'>('region');
   const [regionCode, setRegionCode] = useState<string | null>(null);
   const [type, setType] = useState<NpdType | null>(null);
   const [name, setName] = useState('');
   const [product, setProduct] = useState('');
   const [sponsor, setSponsor] = useState('Concept2Cure');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const { createProject } = useProjectsMutations({ onSuccess: onApiCreated });
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -67,32 +75,60 @@ export function NewProjectDialog({ onClose, onCreated }: Props) {
     else if (step === 'type') { setStep('region'); setRegionCode(null); setType(null); }
   }
 
-  function create() {
-    if (!type) return;
-    const id = `pr-${Date.now().toString(36)}`;
+  async function create() {
+    if (!type || submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
     const regionMeta = NPD_REGIONS.find(r => r.region === regionCode);
-    const next: Project = {
-      id,
-      name: name.trim() || type.displayName,
-      desc: product.trim() || `${type.displayName} workspace`,
-      starred: false,
-      chats: [],
-      memory: { enabled: false, summary: '', updated: '' },
-      instructions: '',
-      files: [],
-      capacityPct: 1,
-      submissionType: type.applicationType.toUpperCase().replace(/[^A-Z0-9]/g, '') as Project['submissionType'],
-      submissionTypeLabel: type.displayName,
-      product: product.trim() || '—',
-      sponsor: sponsor.trim() || 'Concept2Cure',
-      targetAgency: regionMeta ? regionMeta.agency : '',
-      targetDate: '',
-      status: 'draft', // HANDOFF audit item 2 — drop 'planning', use 'draft'
-      phases: buildPhases(type.preset, 0),
-      daysToTarget: null,
-    };
-    PR_PROJECTS.unshift(next);
-    onCreated(id);
+    const projName = name.trim() || type.displayName;
+    const projDesc = product.trim() || `${type.displayName} workspace`;
+    const projSponsor = sponsor.trim() || 'Concept2Cure';
+    const projProduct = product.trim() || '';
+
+    try {
+      const result = await createProject({
+        name: projName,
+        description: projDesc,
+        product: projProduct,
+        sponsor: projSponsor,
+        region: regionCode ?? undefined,
+        agency: regionMeta?.agency,
+        targetAgency: regionMeta?.agency,
+        type,
+      });
+      onCreated(result.id);
+    } catch (err) {
+      // Real backend write failed (offline / not authed / new tenant
+      // without create permission). Per HANDOFF item 14 the prototype
+      // mutates the in-memory seed; we keep that as the demo fallback
+      // so the wizard's CTA always advances.
+      const fallbackId = `pr-${Date.now().toString(36)}`;
+      const next: Project = {
+        id: fallbackId,
+        name: projName,
+        desc: projDesc,
+        starred: false,
+        chats: [],
+        memory: { enabled: false, summary: '', updated: '' },
+        instructions: '',
+        files: [],
+        capacityPct: 1,
+        submissionType: type.applicationType.toUpperCase().replace(/[^A-Z0-9]/g, '') as Project['submissionType'],
+        submissionTypeLabel: type.displayName,
+        product: projProduct || '—',
+        sponsor: projSponsor,
+        targetAgency: regionMeta ? regionMeta.agency : '',
+        targetDate: '',
+        status: 'draft',
+        phases: buildPhases(type.preset, 0),
+        daysToTarget: null,
+      };
+      PR_PROJECTS.unshift(next);
+      setSubmitError(err instanceof Error ? err.message : 'Backend create failed; using demo seed.');
+      onCreated(fallbackId);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -305,11 +341,27 @@ export function NewProjectDialog({ onClose, onCreated }: Props) {
         </div>
 
         <footer className="npd-foot">
-          <button type="button" className="npd-btn ghost" onClick={onClose}>Cancel</button>
+          {submitError && (
+            <span className="npd-error" role="status" aria-live="polite">
+              {submitError}
+            </span>
+          )}
+          <button type="button" className="npd-btn ghost" onClick={onClose} disabled={submitting}>
+            Cancel
+          </button>
           {step === 'confirm' ? (
-            <button type="button" className="npd-btn primary" onClick={create}>Create project</button>
+            <button
+              type="button"
+              className="npd-btn primary"
+              onClick={create}
+              disabled={submitting}
+            >
+              {submitting ? 'Creating…' : 'Create project'}
+            </button>
           ) : (
-            <button type="button" className="npd-btn primary is-disabled" disabled>Create project</button>
+            <button type="button" className="npd-btn primary is-disabled" disabled>
+              Create project
+            </button>
           )}
         </footer>
       </div>

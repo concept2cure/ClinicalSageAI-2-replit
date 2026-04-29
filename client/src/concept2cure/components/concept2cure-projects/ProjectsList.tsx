@@ -4,7 +4,7 @@
  */
 import { useState } from 'react';
 import { I } from './icons';
-import { useProjectsApi } from './data';
+import { useProjectsApi, useProjectsMutations } from './data';
 import type { ProjectsFilters, ArchiveMode } from './types';
 import { ProjectsListFilters } from './ProjectsListFilters';
 import { ProjectsListBulkBar } from './ProjectsListBulkBar';
@@ -44,7 +44,8 @@ export function ProjectsList({
 
   // Live projects with prototype-seed fallback. The hook returns the seed
   // when the API errors or has no rows, so the surface always renders.
-  const { projects: allProjects } = useProjectsApi();
+  const { projects: allProjects, refetch } = useProjectsApi();
+  const { archiveProject, deleteProject } = useProjectsMutations({ onSuccess: refetch });
 
   const matches = (p: typeof allProjects[number]) => {
     if (query) {
@@ -200,7 +201,23 @@ export function ProjectsList({
         project={archiveTarget?.project}
         mode={archiveTarget?.mode}
         onClose={() => setArchiveTarget(null)}
-        onConfirm={() => { setArchiveTarget(null); setSelected([]); }}
+        onConfirm={async () => {
+          // Bulk-apply the chosen mode across every selected id. Errors
+          // are tolerated row-by-row so one server-side conflict
+          // doesn't strand the rest. The host refetch picks up the
+          // actual outcome.
+          const mode = archiveTarget?.mode;
+          const ids = [...selected];
+          setArchiveTarget(null);
+          setSelected([]);
+          if (!mode || ids.length === 0) return;
+          for (const id of ids) {
+            try {
+              if (mode === 'archive') await archiveProject(id);
+              if (mode === 'delete')  await deleteProject(id);
+            } catch { /* per-row failures don't block the loop */ }
+          }
+        }}
       />
     </div>
   );

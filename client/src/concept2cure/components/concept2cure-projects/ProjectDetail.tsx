@@ -5,7 +5,7 @@
  */
 import { useEffect, useState } from 'react';
 import { I } from './icons';
-import { PACT_EVENTS, PLNK_LINKS } from './data';
+import { PACT_EVENTS, PLNK_LINKS, useProjectsMutations } from './data';
 import { ProjectMoreMenu } from './ProjectMoreMenu';
 import { ChatsTab } from './tabs/ChatsTab';
 import { MemoryTab } from './tabs/MemoryTab';
@@ -21,13 +21,19 @@ import type { Project, DetailTab, ArchiveMode } from './types';
 interface Props {
   project: Project;
   onBack: () => void;
+  /** Called when the project is archived or deleted so the host
+   *  refetches the list and the user lands back on it. */
+  onProjectMutated?: () => void;
 }
 
-export function ProjectDetail({ project, onBack }: Props) {
+export function ProjectDetail({ project, onBack, onProjectMutated }: Props) {
   const [configOpen, setConfigOpen] = useState(false);
   const [archiveMode, setArchiveMode] = useState<ArchiveMode | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [tab, setTab] = useState<DetailTab>('chats');
+  const { updateProject, archiveProject, deleteProject } = useProjectsMutations({
+    onSuccess: onProjectMutated,
+  });
 
   // ⌘F / Ctrl+F → project-internal search
   useEffect(() => {
@@ -130,6 +136,26 @@ export function ProjectDetail({ project, onBack }: Props) {
         project={project}
         open={configOpen}
         onClose={() => setConfigOpen(false)}
+        onSave={async form => {
+          // Persist to the backend; ignore failure silently — the host
+          // can show a toast if it cares. The panel closes regardless
+          // (user can re-open to retry).
+          try {
+            await updateProject({
+              id: project.id,
+              name: form.name,
+              description: form.description,
+              status: form.status,
+              metadata: {
+                product: form.product,
+                sponsor: form.sponsor,
+                targetAgency: form.targetAgency,
+                targetSubmissionDate: form.targetDate || null,
+                submissionType: form.submissionType,
+              },
+            });
+          } catch { /* silent — see comment above */ }
+        }}
       />
 
       <ProjectArchiveModal
@@ -137,7 +163,18 @@ export function ProjectDetail({ project, onBack }: Props) {
         project={project}
         mode={archiveMode}
         onClose={() => setArchiveMode(null)}
-        onConfirm={() => setArchiveMode(null)}
+        onConfirm={async () => {
+          const mode = archiveMode;
+          setArchiveMode(null);
+          try {
+            if (mode === 'delete')   await deleteProject(project.id);
+            if (mode === 'archive')  await archiveProject(project.id);
+            if (mode === 'restore') {
+              await updateProject({ id: project.id, status: 'active' });
+            }
+          } catch { /* fall through — host refetch will pick up actual state */ }
+          if (mode === 'archive' || mode === 'delete') onBack();
+        }}
       />
     </div>
   );

@@ -20,7 +20,7 @@ export function ProjectsScreen() {
 
   // Live API with prototype-seed fallback so the surface always renders
   // (offline, empty tenant, or auth lapse). Per HANDOFF item 12.
-  const { projects } = useProjectsApi();
+  const { projects, refetch } = useProjectsApi();
   const project = openId ? projects.find(p => p.id === openId) ?? null : null;
 
   // ⌘K → switcher (when on the list)
@@ -38,7 +38,11 @@ export function ProjectsScreen() {
   return (
     <>
       {project ? (
-        <ProjectDetail project={project} onBack={() => setOpenId(null)} />
+        <ProjectDetail
+          project={project}
+          onBack={() => setOpenId(null)}
+          onProjectMutated={refetch}
+        />
       ) : (
         <ProjectsList
           onOpen={setOpenId}
@@ -67,6 +71,7 @@ export function ProjectsScreen() {
         <NewProjectDialog
           onClose={() => setCreating(false)}
           onCreated={id => { setCreating(false); setOpenId(id); }}
+          onApiCreated={refetch}
         />
       )}
     </>
