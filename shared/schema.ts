@@ -14947,6 +14947,7 @@ export const deviceDataCategories = pgTable('device_data_categories', {
 });
 
 // Device Test Standards - reference table for test standards (normalized)
+// 2026-04-29: extended with governance + applicability fields (replaces planned regulatory_standards table)
 export const deviceTestStandards = pgTable('device_test_standards', {
   id: serial('id').primaryKey(),
   standardCode: text('standard_code').notNull().unique(), // ISO 10993-1, IEC 60601-1, etc.
@@ -14962,6 +14963,22 @@ export const deviceTestStandards = pgTable('device_test_standards', {
   requiredTests: json('required_tests'), // JSON array of required tests
   effectiveDate: date('effective_date'),
   supersededBy: text('superseded_by'),
+  // Governance / applicability (added 2026-04-29)
+  domain: text('domain'),
+  // qms | risk | software | usability | electrical | biocompatibility |
+  // sterilization | packaging | cybersecurity | ivd_clinical_performance |
+  // labeling | clinical_investigation | symbols | other
+  appliesTo: text('applies_to').array(), // ['device','ivd','samd','ai_ml','combination']
+  fdaRecognitionNumber: varchar('fda_recognition_number', { length: 32 }),
+  fdaRecognized: boolean('fda_recognized').default(false),
+  euHarmonized: boolean('eu_harmonized').default(false),
+  jurisdictions: text('jurisdictions').array(),
+  status: varchar('status', { length: 20 }).notNull().default('active'),
+  // active | superseded | withdrawn | draft
+  supersededByStandardId: integer('superseded_by_standard_id'),
+  withdrawnAt: timestamp('withdrawn_at'),
+  summary: text('summary'),
+  sourceUrl: text('source_url'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -17816,6 +17833,19 @@ export const evidenceClaims = pgTable(
     version: integer('version').notNull().default(1),
     previousVersionId: integer('previous_version_id'),
     isCurrent: boolean('is_current').notNull().default(true),
+    // Regulatory-claim governance (added 2026-04-29 — replaces planned device_claims table)
+    code: varchar('code', { length: 80 }),
+    status: varchar('status', { length: 30 }).notNull().default('proposed'),
+    // proposed | supported | unsupported | contradicted | withdrawn | superseded
+    supersededByClaimId: integer('superseded_by_claim_id'),
+    riskLevel: varchar('risk_level', { length: 20 }), // low | medium | high | critical
+    riskRationale: text('risk_rationale'),
+    population: text('population'),
+    anatomicalSite: text('anatomical_site'),
+    useEnvironment: text('use_environment'),
+    sourceDocument: text('source_document'),
+    sourcePath: text('source_path'),
+    tags: jsonb('tags').default([]),
     metadata: jsonb('metadata').default({}),
     extractedBy: integer('extracted_by'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -17825,6 +17855,8 @@ export const evidenceClaims = pgTable(
     programIdx: index('evidence_claims_program_idx').on(table.programId),
     orgIdx: index('evidence_claims_org_idx').on(table.organizationId),
     typeIdx: index('evidence_claims_type_idx').on(table.claimType),
+    statusIdx: index('evidence_claims_status_idx').on(table.status),
+    codeIdx: index('evidence_claims_code_idx').on(table.organizationId, table.code),
   })
 );
 

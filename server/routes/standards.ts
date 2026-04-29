@@ -1,12 +1,16 @@
 /**
  * Standards Catalog & Applicability Routes
  *
- *   GET   /api/standards                              list/filter the catalog
- *   GET   /api/standards/:standardId                  fetch one
- *   GET   /api/standards/programs/:programId/applicability
- *   GET   /api/standards/programs/:programId/recommendations  (?profile= overrides)
- *   GET   /api/standards/programs/:programId/gap-report
- *   GET   /api/standards/applicability/:applicabilityId/freshness
+ * Operates against the canonical `device_test_standards` table (which was
+ * extended with governance fields: domain, applies_to, fda_recognized,
+ * eu_harmonized, jurisdictions, status, summary).
+ *
+ *   GET  /api/standards                                            list/filter catalog
+ *   GET  /api/standards/:standardId                                fetch one
+ *   GET  /api/standards/programs/:programId/applicability
+ *   GET  /api/standards/programs/:programId/recommendations
+ *   GET  /api/standards/programs/:programId/gap-report
+ *   GET  /api/standards/applicability/:applicabilityId/freshness
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
@@ -14,7 +18,7 @@ import { and, eq, ilike, or } from 'drizzle-orm';
 
 import { db } from '../db';
 import { regulatoryPrograms } from '../../shared/schema/programs';
-import { regulatoryStandards } from '../../shared/schema/regulatory-graph';
+import { deviceTestStandards } from '../../shared/schema';
 import { authenticateToken } from '../middleware/auth';
 import {
   applicabilityGapReport,
@@ -26,7 +30,6 @@ import {
 } from '../services/regulatory-graph/standards-applicability.service';
 
 const router = Router();
-
 router.use(authenticateToken);
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -40,17 +43,26 @@ function getOrgId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-async function requireProgramAccess(req: Request, res: Response, next: NextFunction) {
+async function requireProgramAccess(req: Request, res: Response, next: NextFunction): Promise<void> {
   const programId = req.params.programId;
-  if (!programId) return res.status(422).json({ error: 'programId is required' });
+  if (!programId) {
+    res.status(422).json({ error: 'programId is required' });
+    return;
+  }
   const orgId = getOrgId(req);
-  if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+  if (orgId === null) {
+    res.status(403).json({ error: 'Organization context required' });
+    return;
+  }
   const [row] = await db
     .select({ id: regulatoryPrograms.id })
     .from(regulatoryPrograms)
     .where(and(eq(regulatoryPrograms.id, programId), eq(regulatoryPrograms.organizationId, orgId)))
     .limit(1);
-  if (!row) return res.status(403).json({ error: 'Access denied' });
+  if (!row) {
+    res.status(403).json({ error: 'Access denied' });
+    return;
+  }
   next();
 }
 
@@ -72,25 +84,33 @@ function parseProfileOverrides(req: Request): Partial<ProgramProfile> {
 
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { sdo, domain, status, search } = req.query as Record<string, string | undefined>;
+    const { sdo, body, family, domain, status, search } = req.query as Record<
+      string,
+      string | undefined
+    >;
     const conditions: any[] = [];
-    if (sdo) conditions.push(eq(regulatoryStandards.sdo, sdo));
-    if (domain) conditions.push(eq(regulatoryStandards.domain, domain));
-    if (status) conditions.push(eq(regulatoryStandards.status, status));
+    // The legacy column is `standard_body` (string like 'ISO','IEC','AAMI','CLSI').
+    // Either ?sdo=ISO or ?body=ISO works.
+    if (sdo) conditions.push(eq(deviceTestStandards.standardBody, sdo));
+    if (body) conditions.push(eq(deviceTestStandards.standardBody, body));
+    if (family) conditions.push(eq(deviceTestStandards.family, family));
+    if (domain) conditions.push(eq(deviceTestStandards.domain, domain));
+    if (status) conditions.push(eq(deviceTestStandards.status, status));
     if (search) {
       const like = `%${search}%`;
       conditions.push(
         or(
-          ilike(regulatoryStandards.code, like),
-          ilike(regulatoryStandards.title, like),
-          ilike(regulatoryStandards.summary, like)
+          ilike(deviceTestStandards.standardCode, like),
+          ilike(deviceTestStandards.standardName, like),
+          ilike(deviceTestStandards.summary, like),
+          ilike(deviceTestStandards.description, like)
         )
       );
     }
-    let q = db.select().from(regulatoryStandards).$dynamic();
+    let q = db.select().from(deviceTestStandards).$dynamic();
     if (conditions.length === 1) q = q.where(conditions[0]);
     else if (conditions.length > 1) q = q.where(and(...conditions));
-    const rows = await q.orderBy(regulatoryStandards.code).limit(500);
+    const rows = await q.orderBy(deviceTestStandards.standardCode).limit(500);
     res.json({ standards: rows, count: rows.length });
   } catch (err: any) {
     res.status(500).json({ error: 'List failed', detail: err?.message });
@@ -99,10 +119,12 @@ router.get('/', async (req: Request, res: Response) => {
 
 router.get('/:standardId', async (req: Request, res: Response) => {
   try {
+    const id = parseInt(req.params.standardId, 10);
+    if (!Number.isFinite(id)) return res.status(422).json({ error: 'standardId must be an integer' });
     const [row] = await db
       .select()
-      .from(regulatoryStandards)
-      .where(eq(regulatoryStandards.id, req.params.standardId))
+      .from(deviceTestStandards)
+      .where(eq(deviceTestStandards.id, id))
       .limit(1);
     if (!row) return res.status(404).json({ error: 'Not found' });
     res.json(row);

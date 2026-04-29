@@ -185,28 +185,16 @@ export type {
 // CMC Operating System tables (PR #352)
 export * from './cmc-os';
 
-// Regulatory Graph Foundation (claims, sections, standards, applicability)
+// Standards Applicability — per-program decision linking regulatory_programs
+// to the canonical device_test_standards catalog. evidence_claims and
+// device_test_standards have been EXTENDED with governance fields in the
+// canonical shared/schema.ts (see migration 20260429_regulatory_graph.sql).
 export {
-  deviceClaims,
-  submissionSections,
-  regulatoryStandards,
   standardsApplicability,
-  deviceClaimsRelations,
-  submissionSectionsRelations,
-  regulatoryStandardsRelations,
   standardsApplicabilityRelations,
-  insertDeviceClaimSchema,
-  insertSubmissionSectionSchema,
-  insertRegulatoryStandardSchema,
   insertStandardsApplicabilitySchema,
 } from './regulatory-graph';
 export type {
-  DeviceClaim,
-  InsertDeviceClaim,
-  SubmissionSection,
-  InsertSubmissionSection,
-  RegulatoryStandard,
-  InsertRegulatoryStandard,
   StandardsApplicability,
   InsertStandardsApplicability,
 } from './regulatory-graph';

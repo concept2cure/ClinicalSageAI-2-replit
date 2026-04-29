@@ -1,38 +1,80 @@
 /**
- * Seed the regulatory_standards catalog.
+ * Upsert consensus standards into the canonical `device_test_standards` table.
  *
- * Idempotent: skips standards whose `code` already exists. Run after the
- * 20260429_regulatory_graph migration.
+ * Idempotent: matches existing rows by `standard_code` and merges in the
+ * new governance fields (domain, applies_to, fda_recognized, eu_harmonized,
+ * jurisdictions, status, summary). Inserts a new row if none exists.
+ *
+ * Run after migration `20260429_regulatory_graph.sql` has been applied.
  *
  *   tsx scripts/seed-regulatory-standards.ts
  */
 
-import { db } from '../server/db';
-import { regulatoryStandards } from '../shared/schema/regulatory-graph';
-import { REGULATORY_STANDARDS_SEED } from '../shared/schema/regulatory-standards.seed';
 import { eq } from 'drizzle-orm';
+
+import { db } from '../server/db';
+import { deviceTestStandards } from '../shared/schema';
+import { REGULATORY_STANDARDS_SEED } from '../shared/schema/regulatory-standards.seed';
 
 async function main() {
   let inserted = 0;
-  let skipped = 0;
+  let updated = 0;
 
-  for (const std of REGULATORY_STANDARDS_SEED) {
+  for (const seed of REGULATORY_STANDARDS_SEED) {
     const [existing] = await db
-      .select({ id: regulatoryStandards.id })
-      .from(regulatoryStandards)
-      .where(eq(regulatoryStandards.code, std.code))
+      .select({ id: deviceTestStandards.id })
+      .from(deviceTestStandards)
+      .where(eq(deviceTestStandards.standardCode, seed.standardCode))
       .limit(1);
 
     if (existing) {
-      skipped += 1;
-      continue;
+      // Merge governance fields onto the existing row; preserve any legacy
+      // fields the operator may have set (only overwrite those given by seed).
+      await db
+        .update(deviceTestStandards)
+        .set({
+          standardName: seed.standardName,
+          standardBody: seed.standardBody,
+          family: seed.family ?? null,
+          version: seed.version ?? null,
+          editionYear: seed.editionYear ?? null,
+          region: seed.region ?? null,
+          description: seed.description ?? null,
+          domain: seed.domain,
+          appliesTo: seed.appliesTo,
+          fdaRecognized: seed.fdaRecognized ?? false,
+          euHarmonized: seed.euHarmonized ?? false,
+          jurisdictions: seed.jurisdictions ?? [],
+          status: seed.status ?? 'active',
+          summary: seed.summary ?? null,
+          updatedAt: new Date(),
+        })
+        .where(eq(deviceTestStandards.id, existing.id));
+      updated += 1;
+    } else {
+      await db.insert(deviceTestStandards).values({
+        standardCode: seed.standardCode,
+        standardName: seed.standardName,
+        standardBody: seed.standardBody,
+        family: seed.family ?? null,
+        version: seed.version ?? null,
+        editionYear: seed.editionYear ?? null,
+        region: seed.region ?? null,
+        description: seed.description ?? null,
+        domain: seed.domain,
+        appliesTo: seed.appliesTo,
+        fdaRecognized: seed.fdaRecognized ?? false,
+        euHarmonized: seed.euHarmonized ?? false,
+        jurisdictions: seed.jurisdictions ?? [],
+        status: seed.status ?? 'active',
+        summary: seed.summary ?? null,
+      });
+      inserted += 1;
     }
-    await db.insert(regulatoryStandards).values(std);
-    inserted += 1;
   }
 
   console.log(
-    `[seed-regulatory-standards] inserted=${inserted} skipped=${skipped} total=${REGULATORY_STANDARDS_SEED.length}`
+    `[seed-regulatory-standards] inserted=${inserted} updated=${updated} total=${REGULATORY_STANDARDS_SEED.length}`
   );
 }
 
