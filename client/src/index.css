@@ -234,9 +234,12 @@
   --gradient-secondary: linear-gradient(135deg, #44403c 0%, #292524 100%);
   --gradient-accent: linear-gradient(135deg, #788c5d 0%, #647746 100%);
 
-  /* Shadows (used) */
-  --shadow-lg: 0 10px 15px rgba(20, 20, 19, 0.06), 0 4px 6px rgba(20, 20, 19, 0.04);
-  --shadow-xl: 0 20px 25px rgba(20, 20, 19, 0.08), 0 8px 10px rgba(20, 20, 19, 0.04);
+  /* Shadows. Renamed to --shadcn-* to avoid colliding with the
+   * canonical design-system --shadow-lg / --shadow-xl tokens that the
+   * Phase 3 Projects prototype CSS consumes directly. (Audit 2026-04-29.)
+   */
+  --shadcn-shadow-lg: 0 10px 15px rgba(20, 20, 19, 0.06), 0 4px 6px rgba(20, 20, 19, 0.04);
+  --shadcn-shadow-xl: 0 20px 25px rgba(20, 20, 19, 0.08), 0 8px 10px rgba(20, 20, 19, 0.04);
 
   /* Spacing (used) */
   --space-xs: 0.25rem;
@@ -244,40 +247,50 @@
   --space-md: 1rem;
   --space-lg: 1.5rem;
 
-  /* Tailwind/shadcn HSL semantic tokens */
-  --background: 45 33% 97%;
-  --foreground: 60 3% 8%;
-  --card: 0 0% 100%;
-  --card-foreground: 50 5% 8%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 50 5% 8%;
-  --muted: 45 20% 96%;
-  --muted-foreground: 40 5% 35%;
-  --primary: 18 60% 60%;
-  --primary-foreground: 45 33% 97%;
-  --secondary: 45 20% 96%;
-  --secondary-foreground: 45 33% 97%;
-  --accent: 45 20% 96%;
-  --accent-foreground: 45 33% 97%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 45 33% 97%;
-  --border: 45 17% 88%;
-  --input: 45 17% 88%;
-  --ring: 18 60% 60%;
-  --radius: 0.5rem;
-  --sidebar-background: 45 33% 97%;
-  --sidebar-foreground: 50 5% 8%;
-  --sidebar-primary: 18 60% 60%;
-  --sidebar-primary-foreground: 45 33% 97%;
-  --sidebar-accent: 45 20% 96%;
-  --sidebar-accent-foreground: 50 5% 8%;
-  --sidebar-border: 42 18% 90%;
-  --sidebar-ring: 18 60% 60%;
-  --chart-1: 18 60% 60%;
-  --chart-2: 100 20% 46%;
-  --chart-3: 210 40% 61%;
-  --chart-4: 45 70% 55%;
-  --chart-5: 340 45% 55%;
+  /* Tailwind/shadcn HSL semantic tokens.
+   * Namespaced under --shadcn-* to avoid colliding with the canonical
+   * design-system tokens loaded by main.tsx (design-system/colors_and_type.css).
+   * Canonical defines --border, --accent, etc. as direct color values
+   * (oklch); these shadcn tokens are HSL component triples that
+   * Tailwind's `hsl(var(--shadcn-xxx))` consumer wraps.
+   * Renamed 2026-04-29 after the audit found `var(--border)` from the
+   * Phase 3 prototype CSS resolved to `45 17% 88%` (invalid as a
+   * direct color), breaking borders.
+   * tailwind.config.ts colors map is updated to match.
+   */
+  --shadcn-background: 45 33% 97%;
+  --shadcn-foreground: 60 3% 8%;
+  --shadcn-card: 0 0% 100%;
+  --shadcn-card-foreground: 50 5% 8%;
+  --shadcn-popover: 0 0% 100%;
+  --shadcn-popover-foreground: 50 5% 8%;
+  --shadcn-muted: 45 20% 96%;
+  --shadcn-muted-foreground: 40 5% 35%;
+  --shadcn-primary: 18 60% 60%;
+  --shadcn-primary-foreground: 45 33% 97%;
+  --shadcn-secondary: 45 20% 96%;
+  --shadcn-secondary-foreground: 45 33% 97%;
+  --shadcn-accent: 45 20% 96%;
+  --shadcn-accent-foreground: 45 33% 97%;
+  --shadcn-destructive: 0 84% 60%;
+  --shadcn-destructive-foreground: 45 33% 97%;
+  --shadcn-border: 45 17% 88%;
+  --shadcn-input: 45 17% 88%;
+  --shadcn-ring: 18 60% 60%;
+  --shadcn-radius: 0.5rem;
+  --shadcn-sidebar-background: 45 33% 97%;
+  --shadcn-sidebar-foreground: 50 5% 8%;
+  --shadcn-sidebar-primary: 18 60% 60%;
+  --shadcn-sidebar-primary-foreground: 45 33% 97%;
+  --shadcn-sidebar-accent: 45 20% 96%;
+  --shadcn-sidebar-accent-foreground: 50 5% 8%;
+  --shadcn-sidebar-border: 42 18% 90%;
+  --shadcn-sidebar-ring: 18 60% 60%;
+  --shadcn-chart-1: 18 60% 60%;
+  --shadcn-chart-2: 100 20% 46%;
+  --shadcn-chart-3: 210 40% 61%;
+  --shadcn-chart-4: 45 70% 55%;
+  --shadcn-chart-5: 340 45% 55%;
 }
 
 /* ═══ Base element styles ═══ */
