@@ -1,0 +1,159 @@
+/**
+ * FilesTab — Project files browser (table + filter + sort + group-by).
+ * Mirror of design-system/ui_kits/home/Projects.jsx
+ * (ProjectFilesScreen, lines 703–826).
+ */
+import { useMemo, useState } from 'react';
+import { I } from '../icons';
+import type { Project, ProjectFile } from '../types';
+
+interface Props {
+  project: Project;
+}
+
+type SortKey = 'recent' | 'name' | 'size' | 'kind';
+type GroupKey = 'kind' | 'none';
+
+interface AugmentedFile extends ProjectFile {
+  uploaded: string;
+  size: string;
+  author: string;
+}
+
+export function FilesTab({ project }: Props) {
+  const [query, setQuery] = useState('');
+  const [sort, setSort] = useState<SortKey>('recent');
+  const [groupBy, setGroupBy] = useState<GroupKey>('kind');
+
+  const augmented = useMemo<AugmentedFile[]>(() => {
+    return project.files.map((f, i) => ({
+      ...f,
+      uploaded: ['12 hours ago', '1 day ago', '2 days ago', '4 days ago', '1 week ago'][i % 5],
+      size: f.lines ? `${(f.lines * 0.082).toFixed(1)} KB` : '—',
+      author: i % 2 ? 'JM Smith' : 'A Park',
+    }));
+  }, [project.files]);
+
+  const filtered = augmented.filter(f =>
+    f.name.toLowerCase().includes(query.toLowerCase()),
+  );
+  const sorted = [...filtered].sort((a, b) => {
+    if (sort === 'name') return a.name.localeCompare(b.name);
+    if (sort === 'size') return (b.lines || 0) - (a.lines || 0);
+    if (sort === 'kind') return a.kind.localeCompare(b.kind);
+    return 0;
+  });
+
+  const groups = useMemo(() => {
+    if (groupBy !== 'kind') return [{ key: 'all', items: sorted }];
+    const g: Record<string, AugmentedFile[]> = {};
+    for (const f of sorted) (g[f.kind] = g[f.kind] || []).push(f);
+    return Object.entries(g).map(([key, items]) => ({ key, items }));
+  }, [sorted, groupBy]);
+
+  return (
+    <div className="pfiles" data-screen-label={`Files · ${project.name}`}>
+      <header className="pfiles-head">
+        <div>
+          <div className="pfiles-eyebrow">Project files</div>
+          <h2 className="pfiles-title">{project.files.length} files in this project</h2>
+          <p className="pfiles-sub">
+            Files added here are available to every chat. Claude can read, cite, and update them — and tracks which sections of which files informed each answer.
+          </p>
+        </div>
+        <div className="pfiles-head-r">
+          <button type="button" className="prj-btn">Drop folder</button>
+          <button type="button" className="prj-btn primary">{I.plus} Add files</button>
+        </div>
+      </header>
+
+      <div className="pfiles-cap">
+        <div className="pfiles-cap-head">
+          <span>Project capacity</span>
+          <span className="pfiles-cap-pct">{project.capacityPct}% used</span>
+        </div>
+        <div className="prj-cap-track">
+          <div className="prj-cap-fill" style={{ width: `${project.capacityPct}%` }} />
+        </div>
+      </div>
+
+      <div className="pfiles-tools">
+        <div className="pfiles-search">
+          <span className="pfiles-search-ico">{I.search}</span>
+          <input
+            className="pfiles-search-input"
+            placeholder={`Search ${project.files.length} files…`}
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+          />
+        </div>
+        <div className="pfiles-tool-group">
+          <span className="pfiles-tool-lbl">Sort</span>
+          <select
+            className="pfiles-select"
+            value={sort}
+            onChange={e => setSort(e.target.value as SortKey)}
+          >
+            <option value="recent">Recent</option>
+            <option value="name">Name</option>
+            <option value="size">Size</option>
+            <option value="kind">Type</option>
+          </select>
+        </div>
+        <div className="pfiles-tool-group">
+          <span className="pfiles-tool-lbl">Group by</span>
+          <select
+            className="pfiles-select"
+            value={groupBy}
+            onChange={e => setGroupBy(e.target.value as GroupKey)}
+          >
+            <option value="kind">Type</option>
+            <option value="none">None</option>
+          </select>
+        </div>
+      </div>
+
+      {sorted.length === 0 && (
+        <div className="pfiles-empty">
+          <div className="pfiles-empty-ico">{I.file}</div>
+          <div className="pfiles-empty-title">No files match "{query}"</div>
+          <div className="pfiles-empty-sub">
+            Try a different search, or drop files into the project to add them.
+          </div>
+        </div>
+      )}
+
+      {groups.map(g => (
+        <section key={g.key} className="pfiles-group">
+          {groupBy === 'kind' && (
+            <div className="pfiles-group-h">
+              <span className="pfiles-group-name">{g.key}</span>
+              <span className="pfiles-group-count">{g.items.length}</span>
+            </div>
+          )}
+          <div className="pfiles-table">
+            <div className="pfiles-th">
+              <span>Name</span>
+              <span>Author</span>
+              <span>Updated</span>
+              <span>Size</span>
+              <span>Lines</span>
+            </div>
+            {g.items.map(f => (
+              <button type="button" key={f.name} className="pfiles-tr">
+                <span className="pfiles-tr-name">
+                  <span className="pfiles-tr-kind">{f.kind}</span>
+                  <span className="pfiles-tr-fname">{f.name}</span>
+                </span>
+                <span className="pfiles-tr-author">{f.author}</span>
+                <span className="pfiles-tr-when">{f.uploaded}</span>
+                <span className="pfiles-tr-size">{f.size}</span>
+                <span className="pfiles-tr-lines">{f.lines || '—'}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}

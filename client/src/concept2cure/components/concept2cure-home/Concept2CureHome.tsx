@@ -24,6 +24,7 @@ import { AnaCard } from './AnaCard';
 import { CommandPalette, type PaletteItem } from './CommandPalette';
 import { useHomeData, type HomeProject } from './useHomeData';
 import { useHomeBriefing } from './useHomeBriefing';
+import { ProjectsScreen } from '../concept2cure-projects';
 import brandIcon from '../../../assets/concept2cure-icon.svg';
 import styles from './styles.module.css';
 
@@ -798,36 +799,45 @@ export function Concept2CureHome({
           onOpenHelp={onOpenHelp}
         />
         <div className={styles.page}>
-          <div className={styles.pageInner}>
-            <GreetAndCompose
-              userName={resolvedUser.name}
-              onLaunchChat={onLaunchChat}
-              onAttach={onComposerAttach}
-              onTools={onComposerTools}
-              onModelPicker={onComposerModelPicker}
-            />
-            <AnaCard
-              scope={scope}
-              onOpenPalette={() => setPaletteOpen(true)}
-              items={briefingItems ?? undefined}
-              lastSyncLabel={briefingItems ? 'just now' : undefined}
-              onItemClick={onBriefingItemClick}
-              onStartFirst={onStartFirstBriefing}
-            />
-            <Dashboard
-              projectCount={metrics.projectCount}
-              artifactTotal={metrics.artifactTotal}
-              onTileClick={onDashboardTileClick}
-            />
-            <div style={{ height: 24 }} />
-            <Launcher activeNav={tweaks.activeNav} setActiveNav={handleSelectNav} />
-            <div style={{ height: 24 }} />
-            <Recents
-              threads={recentThreads}
-              onSelectThread={onSelectThread}
-              onViewAll={onViewAllRecents}
-            />
-          </div>
+          {tweaks.activeNav === 'projects' ? (
+            // Phase 3 Projects surface — list ↔ detail. Replaces the home
+            // dashboard content when the rail's `projects` item is active.
+            // Lives at design-system/ui_kits/home/Projects.jsx +
+            // ProjectsExtras.jsx; ported in
+            // client/src/concept2cure/components/concept2cure-projects/.
+            <ProjectsScreen />
+          ) : (
+            <div className={styles.pageInner}>
+              <GreetAndCompose
+                userName={resolvedUser.name}
+                onLaunchChat={onLaunchChat}
+                onAttach={onComposerAttach}
+                onTools={onComposerTools}
+                onModelPicker={onComposerModelPicker}
+              />
+              <AnaCard
+                scope={scope}
+                onOpenPalette={() => setPaletteOpen(true)}
+                items={briefingItems ?? undefined}
+                lastSyncLabel={briefingItems ? 'just now' : undefined}
+                onItemClick={onBriefingItemClick}
+                onStartFirst={onStartFirstBriefing}
+              />
+              <Dashboard
+                projectCount={metrics.projectCount}
+                artifactTotal={metrics.artifactTotal}
+                onTileClick={onDashboardTileClick}
+              />
+              <div style={{ height: 24 }} />
+              <Launcher activeNav={tweaks.activeNav} setActiveNav={handleSelectNav} />
+              <div style={{ height: 24 }} />
+              <Recents
+                threads={recentThreads}
+                onSelectThread={onSelectThread}
+                onViewAll={onViewAllRecents}
+              />
+            </div>
+          )}
         </div>
       </main>
 
