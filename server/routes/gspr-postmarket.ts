@@ -1,0 +1,329 @@
+/**
+ * GSPR + Post-Market Routes
+ *
+ *   GET    /api/gspr/catalog                                   list active catalog (?regulation=MDR|IVDR)
+ *   GET    /api/gspr/programs/:programId/mappings              list per-program mappings
+ *   POST   /api/gspr/programs/:programId/mappings              upsert a mapping
+ *   GET    /api/gspr/programs/:programId/coverage              coverage / gap report
+ *
+ *   GET    /api/post-market/programs/:programId/documents      list (?type=)
+ *   POST   /api/post-market/programs/:programId/documents      create (draft)
+ *   GET    /api/post-market/documents/:documentId
+ *   PATCH  /api/post-market/documents/:documentId
+ *   POST   /api/post-market/documents/:documentId/validate
+ *   POST   /api/post-market/documents/:documentId/approve
+ *   POST   /api/post-market/documents/:documentId/supersede
+ */
+
+import { Router, Request, Response, NextFunction } from 'express';
+import { and, eq } from 'drizzle-orm';
+
+import { db } from '../db';
+import { regulatoryPrograms } from '../../shared/schema/programs';
+import { authenticateToken } from '../middleware/auth';
+import {
+  computeCoverage,
+  listCatalog,
+  listProgramMappings,
+  upsertMapping,
+  type GsprProgramProfile,
+} from '../services/gspr-postmarket/gspr.service';
+import {
+  approveDocument,
+  createDocument,
+  getDocument,
+  listProgramDocuments,
+  supersedeDocument,
+  updateDocument,
+  validateDocument,
+} from '../services/gspr-postmarket/post-market.service';
+
+const router = Router();
+const postMarketRouter = Router();
+router.use(authenticateToken);
+postMarketRouter.use(authenticateToken);
+
+function getOrgId(req: Request): number | null {
+  const raw = (req as any).user?.organizationId;
+  if (raw === undefined || raw === null) return null;
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
+  return Number.isFinite(n) ? n : null;
+}
+
+async function requireProgramAccess(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const orgId = getOrgId(req);
+  if (orgId === null) {
+    res.status(403).json({ error: 'Organization context required' });
+    return;
+  }
+  const [row] = await db
+    .select({ id: regulatoryPrograms.id })
+    .from(regulatoryPrograms)
+    .where(
+      and(eq(regulatoryPrograms.id, req.params.programId), eq(regulatoryPrograms.organizationId, orgId))
+    )
+    .limit(1);
+  if (!row) {
+    res.status(403).json({ error: 'Access denied' });
+    return;
+  }
+  next();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GSPR
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/catalog', async (req: Request, res: Response) => {
+  const reg = req.query.regulation as 'MDR' | 'IVDR' | undefined;
+  if (reg && reg !== 'MDR' && reg !== 'IVDR') {
+    return res.status(422).json({ error: 'regulation must be MDR or IVDR' });
+  }
+  try {
+    const catalog = await listCatalog(reg);
+    res.json({ regulation: reg ?? 'ALL', requirements: catalog, count: catalog.length });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Catalog fetch failed', detail: err?.message });
+  }
+});
+
+router.get(
+  '/programs/:programId/mappings',
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const orgId = getOrgId(req)!;
+      const rows = await listProgramMappings(orgId, req.params.programId);
+      res.json({ programId: req.params.programId, mappings: rows, count: rows.length });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Mappings fetch failed', detail: err?.message });
+    }
+  }
+);
+
+router.post(
+  '/programs/:programId/mappings',
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const body = req.body ?? {};
+    if (!body.requirementId || !body.applicability) {
+      return res.status(422).json({ error: 'requirementId and applicability are required' });
+    }
+    try {
+      const userIdRaw = (req as any).user?.id;
+      const decidedBy =
+        typeof userIdRaw === 'string'
+          ? userIdRaw
+          : userIdRaw != null
+          ? String(userIdRaw)
+          : 'system';
+      const row = await upsertMapping({
+        ...body,
+        organizationId: orgId,
+        programId: req.params.programId,
+        decidedBy: body.decidedBy ?? decidedBy,
+        decidedAt: body.decidedAt ?? new Date(),
+      });
+      res.json(row);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Upsert failed', detail: err?.message });
+    }
+  }
+);
+
+router.get(
+  '/programs/:programId/coverage',
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const profile = req.query as Record<string, string | undefined>;
+    if (!profile.regulation || (profile.regulation !== 'MDR' && profile.regulation !== 'IVDR')) {
+      return res.status(422).json({ error: 'regulation query param must be MDR or IVDR' });
+    }
+    const built: GsprProgramProfile = {
+      regulation: profile.regulation,
+      productType: profile.productType ?? 'device',
+      deviceClass: profile.deviceClass ?? null,
+      isSoftware: profile.isSoftware === 'true',
+      isAiMl: profile.isAiMl === 'true',
+      isIvd: profile.isIvd === 'true',
+      isSterile: profile.isSterile === 'true',
+      isImplantable: profile.isImplantable === 'true',
+      hasPatientContact: profile.hasPatientContact === 'true',
+    };
+    try {
+      const report = await computeCoverage(orgId, req.params.programId, built);
+      res.json(report);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Coverage failed', detail: err?.message });
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Post-market documents
+// ─────────────────────────────────────────────────────────────────────────────
+
+const VALID_DOC_TYPES = new Set([
+  'pms_plan',
+  'pms_report',
+  'pmcf_plan',
+  'pmcf_evaluation',
+  'psur',
+  'sscp',
+] as const);
+
+postMarketRouter.get(
+  '/programs/:programId/documents',
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const t = req.query.type as string | undefined;
+    if (t && !VALID_DOC_TYPES.has(t as any)) {
+      return res.status(422).json({ error: `type must be one of: ${[...VALID_DOC_TYPES].join(', ')}` });
+    }
+    try {
+      const rows = await listProgramDocuments(orgId, req.params.programId, t as any);
+      res.json({ programId: req.params.programId, documents: rows, count: rows.length });
+    } catch (err: any) {
+      res.status(500).json({ error: 'List failed', detail: err?.message });
+    }
+  }
+);
+
+postMarketRouter.post(
+  '/programs/:programId/documents',
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const body = req.body ?? {};
+    if (!body.documentType || !VALID_DOC_TYPES.has(body.documentType)) {
+      return res.status(422).json({ error: 'documentType is required and must be valid' });
+    }
+    if (!body.code || !body.title) {
+      return res.status(422).json({ error: 'code and title are required' });
+    }
+    try {
+      const userIdRaw = (req as any).user?.id;
+      const createdBy =
+        typeof userIdRaw === 'string'
+          ? userIdRaw
+          : userIdRaw != null
+          ? String(userIdRaw)
+          : 'system';
+      const doc = await createDocument({
+        ...body,
+        organizationId: orgId,
+        programId: req.params.programId,
+        createdBy,
+        updatedBy: createdBy,
+      });
+      res.status(201).json(doc);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Create failed', detail: err?.message });
+    }
+  }
+);
+
+async function loadDocOrFail(
+  req: Request,
+  res: Response
+): Promise<{ orgId: number; doc: NonNullable<Awaited<ReturnType<typeof getDocument>>> } | null> {
+  const orgId = getOrgId(req);
+  if (orgId === null) {
+    res.status(403).json({ error: 'Organization context required' });
+    return null;
+  }
+  const doc = await getDocument(orgId, req.params.documentId);
+  if (!doc) {
+    res.status(404).json({ error: 'Document not found' });
+    return null;
+  }
+  return { orgId, doc };
+}
+
+postMarketRouter.get('/documents/:documentId', async (req: Request, res: Response) => {
+  const ctx = await loadDocOrFail(req, res);
+  if (!ctx) return;
+  res.json(ctx.doc);
+});
+
+postMarketRouter.patch('/documents/:documentId', async (req: Request, res: Response) => {
+  const ctx = await loadDocOrFail(req, res);
+  if (!ctx) return;
+  try {
+    const userIdRaw = (req as any).user?.id;
+    const updatedBy =
+      typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
+    const updated = await updateDocument(ctx.orgId, req.params.documentId, {
+      ...req.body,
+      updatedBy,
+    });
+    if (!updated) return res.status(404).json({ error: 'Document not found' });
+    res.json(updated);
+  } catch (err: any) {
+    if (err?.code === 'PM_LOCKED') return res.status(409).json({ error: 'Document is locked' });
+    res.status(500).json({ error: 'Update failed', detail: err?.message });
+  }
+});
+
+postMarketRouter.post('/documents/:documentId/validate', async (req: Request, res: Response) => {
+  const ctx = await loadDocOrFail(req, res);
+  if (!ctx) return;
+  res.json(validateDocument(ctx.doc));
+});
+
+postMarketRouter.post('/documents/:documentId/approve', async (req: Request, res: Response) => {
+  const ctx = await loadDocOrFail(req, res);
+  if (!ctx) return;
+  const userIdRaw = (req as any).user?.id;
+  const approvedBy =
+    typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
+  const signatureId = typeof req.body?.signatureId === 'string' ? req.body.signatureId : undefined;
+  try {
+    const result = await approveDocument({
+      organizationId: ctx.orgId,
+      documentId: ctx.doc.id,
+      approvedBy,
+      signatureId,
+    });
+    if ('error' in result) {
+      if (result.error === 'NOT_FOUND') return res.status(404).json({ error: 'Document not found' });
+      if (result.error === 'ALREADY_LOCKED') return res.status(409).json({ error: 'Already locked' });
+      if (result.error === 'GATE_BLOCKED') {
+        return res.status(409).json({
+          error: 'Validation gate blocked approval',
+          validation: result.validation,
+        });
+      }
+    }
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Approve failed', detail: err?.message });
+  }
+});
+
+postMarketRouter.post(
+  '/documents/:documentId/supersede',
+  async (req: Request, res: Response) => {
+    const ctx = await loadDocOrFail(req, res);
+    if (!ctx) return;
+    const userIdRaw = (req as any).user?.id;
+    const createdBy =
+      typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
+    try {
+      const newDoc = await supersedeDocument(ctx.orgId, ctx.doc.id, {
+        newTitle: typeof req.body?.newTitle === 'string' ? req.body.newTitle : undefined,
+        createdBy,
+      });
+      if (!newDoc) return res.status(404).json({ error: 'Document not found' });
+      res.status(201).json(newDoc);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Supersede failed', detail: err?.message });
+    }
+  }
+);
+
+export { postMarketRouter };
+export default router;

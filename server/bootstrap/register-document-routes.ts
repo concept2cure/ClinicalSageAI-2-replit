@@ -166,6 +166,36 @@ export async function registerDocumentRoutes({
         mod: '../routes/predicate-intelligence.js',
         name: 'Predicate Intelligence BFF',
       },
+      {
+        path: '/api/regulatory-graph',
+        mod: '../routes/regulatory-graph.js',
+        name: 'Regulatory Graph',
+      },
+      {
+        path: '/api/standards',
+        mod: '../routes/standards.js',
+        name: 'Standards Catalog',
+      },
+      {
+        path: '/api/pccp',
+        mod: '../routes/pccp.js',
+        name: 'AI/ML PCCP',
+      },
+      {
+        path: '/api/gspr',
+        mod: '../routes/gspr-postmarket.js',
+        name: 'GSPR Catalog + Mappings',
+      },
+      {
+        path: '/api/post-market',
+        mod: '../routes/post-market.js',
+        name: 'Post-Market Documents',
+      },
+      {
+        path: '/api/evidence-sufficiency',
+        mod: '../routes/evidence-sufficiency.js',
+        name: 'Evidence Sufficiency',
+      },
     ] as const;
     const evidenceResults = await Promise.allSettled(evidenceConfig.map(c => import(c.mod)));
     evidenceResults.forEach((r, i) => {

@@ -184,3 +184,79 @@ export type {
 
 // CMC Operating System tables (PR #352)
 export * from './cmc-os';
+
+// Standards Applicability — per-program decision linking regulatory_programs
+// to the canonical device_test_standards catalog. evidence_claims and
+// device_test_standards have been EXTENDED with governance fields in the
+// canonical shared/schema.ts (see migration 20260429_regulatory_graph.sql).
+export {
+  standardsApplicability,
+  standardsApplicabilityRelations,
+  insertStandardsApplicabilitySchema,
+} from './regulatory-graph';
+export type {
+  StandardsApplicability,
+  InsertStandardsApplicability,
+} from './regulatory-graph';
+
+// Reviewer Simulation Runs — persisted red-team output (one row per run).
+export {
+  reviewerSimulationRuns,
+  reviewerSimulationRunsRelations,
+  insertReviewerSimulationRunSchema,
+} from './reviewer-simulation';
+export type {
+  ReviewerSimulationRun,
+  InsertReviewerSimulationRun,
+} from './reviewer-simulation';
+
+// AI/ML Predetermined Change Control Plan (PCCP)
+export {
+  aiMlPccpPlans,
+  aiMlModifications,
+  aiMlPccpPlansRelations,
+  aiMlModificationsRelations,
+  insertAiMlPccpPlanSchema,
+  insertAiMlModificationSchema,
+} from './ai-ml-pccp';
+export type {
+  AiMlPccpPlan,
+  InsertAiMlPccpPlan,
+  AiMlModification,
+  InsertAiMlModification,
+} from './ai-ml-pccp';
+
+// GSPR (EU MDR / IVDR Annex I) + Post-Market documents
+export {
+  gsprRequirements,
+  gsprProgramMappings,
+  postMarketDocuments,
+  gsprRequirementsRelations,
+  gsprProgramMappingsRelations,
+  postMarketDocumentsRelations,
+  insertGsprRequirementSchema,
+  insertGsprProgramMappingSchema,
+  insertPostMarketDocumentSchema,
+} from './gspr-postmarket';
+export type {
+  GsprRequirement,
+  InsertGsprRequirement,
+  GsprProgramMapping,
+  InsertGsprProgramMapping,
+  PostMarketDocument,
+  InsertPostMarketDocument,
+  PostMarketDocumentType,
+} from './gspr-postmarket';
+
+// Evidence Sufficiency Assessments — PMA / De Novo / 510(k) approval-readiness
+export {
+  evidenceSufficiencyAssessments,
+  evidenceSufficiencyAssessmentsRelations,
+  insertEvidenceSufficiencyAssessmentSchema,
+} from './evidence-sufficiency';
+export type {
+  EvidenceSufficiencyAssessment,
+  InsertEvidenceSufficiencyAssessment,
+  EvidenceSufficiencyVerdict,
+  SubmissionPathway,
+} from './evidence-sufficiency';
