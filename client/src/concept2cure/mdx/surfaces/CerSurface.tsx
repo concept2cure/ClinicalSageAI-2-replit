@@ -1,0 +1,214 @@
+/**
+ * CER surface (basic) — signals + literature corpus + export plan.
+ * Ported from Surfaces.jsx > CERSurface.
+ *
+ * Note: the 7-tab CerWorkbench (Equivalence / GSPR / Lit corpus / Signals /
+ * PMS / Generator) is not present in this kit drop. When CerWorkbench.jsx +
+ * data-presub.jsx land in a later drop, swap this surface for the workbench.
+ */
+
+import * as React from 'react';
+import { I } from '../icons';
+import { CER_EXPORT, CER_LITERATURE, CER_SIGNALS } from '../data/cer';
+
+export interface CerSurfaceProps {
+  onAskAna: (text: string) => void;
+}
+
+export function CerSurface(_props: CerSurfaceProps) {
+  const maxHits = Math.max(...CER_LITERATURE.map(l => l.hits));
+  return (
+    <>
+      <div className="section-hdr">
+        <div>
+          <div className="section-title">
+            Clinical Evaluation Report · IV-415 Companion Diagnostic
+          </div>
+          <div className="section-sub">
+            EU MDR Article 61 · Notified body review Q1 2026
+          </div>
+        </div>
+        <button className="section-more">Generate draft {I.sparkles}</button>
+      </div>
+
+      <div className="col2">
+        <div>
+          <div className="panel">
+            <div className="panel-hdr">
+              <div>
+                <div className="t">Safety signals</div>
+                <div className="s">7 signals · 4 included · 1 excluded · 2 under review</div>
+              </div>
+              <div className="actions">
+                <button className="tb-btn" title="Filter">{I.filter}</button>
+                <button className="tb-btn" title="Run signal scan">{I.zap}</button>
+              </div>
+            </div>
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Source</th>
+                  <th>Event</th>
+                  <th>N</th>
+                  <th>Severity</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {CER_SIGNALS.map(s => (
+                  <tr key={s.id}>
+                    <td>
+                      <span className="k-num">{s.id}</span>
+                    </td>
+                    <td style={{ color: 'var(--text-400)', fontSize: 11 }}>{s.source}</td>
+                    <td>
+                      <div className="k-name" style={{ fontWeight: 400, fontSize: 12 }}>
+                        {s.event}
+                      </div>
+                      <div className="k-holder">{s.assess}</div>
+                    </td>
+                    <td
+                      style={{
+                        fontVariantNumeric: 'tabular-nums',
+                        color: 'var(--text-200)',
+                      }}
+                    >
+                      {s.count}
+                    </td>
+                    <td>
+                      <span className={`status-pill ${s.severity}`}>{s.severity}</span>
+                    </td>
+                    <td>
+                      <span className={`status-pill ${s.status}`}>{s.status}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="panel">
+            <div className="panel-hdr">
+              <div>
+                <div className="t">Literature corpus</div>
+                <div className="s">2,326 hits · PubMed · Embase · Cochrane · 6-year window</div>
+              </div>
+              <div className="actions">
+                <button className="tb-btn" title="Refine search">{I.search}</button>
+              </div>
+            </div>
+            <div style={{ padding: '12px 0' }}>
+              {CER_LITERATURE.map(l => (
+                <div key={l.year} className="litbar">
+                  <span className="yr">{l.year}</span>
+                  <div className="bar">
+                    <div className="bar-fill" style={{ width: `${(l.hits / maxHits) * 100}%` }} />
+                  </div>
+                  <span className="ct">{l.hits.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div className="panel">
+            <div className="panel-hdr">
+              <div>
+                <div className="t">CER sections</div>
+                <div className="s">Article 61 template · 6 sections</div>
+              </div>
+              <div className="actions">
+                <button className="tb-btn" title="Export">{I.download}</button>
+              </div>
+            </div>
+            <div className="estar">
+              {CER_EXPORT.map((s, i) => (
+                <div key={s.id} className="estar-row">
+                  <div className="estar-num">{String(i + 1).padStart(2, '0')}</div>
+                  <div className="estar-label">{s.label}</div>
+                  <span className={`status-pill ${s.status}`}>{s.status}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-hdr">
+              <div>
+                <div className="t">Generation plan</div>
+                <div className="s">AnA will draft from included signals + literature</div>
+              </div>
+            </div>
+            <div
+              className="panel-body pad"
+              style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 10,
+                  alignItems: 'flex-start',
+                  fontSize: 12,
+                  color: 'var(--text-200)',
+                  lineHeight: 1.5,
+                }}
+              >
+                <span style={{ color: 'var(--accent-100)', flexShrink: 0 }}>{I.sparkles}</span>
+                <span>
+                  Generate <b>Clinical data summary</b> from 4 included signals and 412 literature
+                  hits (2025)
+                </span>
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 10,
+                  alignItems: 'flex-start',
+                  fontSize: 12,
+                  color: 'var(--text-200)',
+                  lineHeight: 1.5,
+                }}
+              >
+                <span style={{ color: 'var(--accent-100)', flexShrink: 0 }}>{I.sparkles}</span>
+                <span>
+                  Draft <b>Safety and risk-benefit</b> with adjudicated lead-dislodgement cases
+                </span>
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 10,
+                  alignItems: 'flex-start',
+                  fontSize: 12,
+                  color: 'var(--text-200)',
+                  lineHeight: 1.5,
+                }}
+              >
+                <span style={{ color: 'var(--accent-100)', flexShrink: 0 }}>{I.sparkles}</span>
+                <span>
+                  Complete <b>PMS plan</b> using FAERS signal trajectory
+                </span>
+              </div>
+              <button
+                style={{
+                  marginTop: 6,
+                  padding: '8px 14px',
+                  background: 'var(--accent-100)',
+                  color: 'var(--text-000)',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: 12,
+                  fontWeight: 500,
+                  alignSelf: 'flex-start',
+                }}
+              >
+                Draft with AnA
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
