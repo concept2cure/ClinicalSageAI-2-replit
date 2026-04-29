@@ -181,6 +181,16 @@ export async function registerDocumentRoutes({
         mod: '../routes/pccp.js',
         name: 'AI/ML PCCP',
       },
+      {
+        path: '/api/gspr',
+        mod: '../routes/gspr-postmarket.js',
+        name: 'GSPR Catalog + Mappings',
+      },
+      {
+        path: '/api/post-market',
+        mod: '../routes/post-market.js',
+        name: 'Post-Market Documents',
+      },
     ] as const;
     const evidenceResults = await Promise.allSettled(evidenceConfig.map(c => import(c.mod)));
     evidenceResults.forEach((r, i) => {

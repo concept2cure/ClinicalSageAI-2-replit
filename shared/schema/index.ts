@@ -225,3 +225,25 @@ export type {
   AiMlModification,
   InsertAiMlModification,
 } from './ai-ml-pccp';
+
+// GSPR (EU MDR / IVDR Annex I) + Post-Market documents
+export {
+  gsprRequirements,
+  gsprProgramMappings,
+  postMarketDocuments,
+  gsprRequirementsRelations,
+  gsprProgramMappingsRelations,
+  postMarketDocumentsRelations,
+  insertGsprRequirementSchema,
+  insertGsprProgramMappingSchema,
+  insertPostMarketDocumentSchema,
+} from './gspr-postmarket';
+export type {
+  GsprRequirement,
+  InsertGsprRequirement,
+  GsprProgramMapping,
+  InsertGsprProgramMapping,
+  PostMarketDocument,
+  InsertPostMarketDocument,
+  PostMarketDocumentType,
+} from './gspr-postmarket';
