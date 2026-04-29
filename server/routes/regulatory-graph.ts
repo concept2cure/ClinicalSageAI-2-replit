@@ -45,6 +45,11 @@ import {
   REVIEWER_PERSONAS,
 } from '../services/intelligence-engine/reviewer-personas';
 import type { ReviewerPersonaCode } from '../services/intelligence-engine/types';
+import {
+  propagateRegulatoryChange,
+  type RegulatoryChangeEvent,
+} from '../services/living-file/change-router.service';
+import { programFreshnessReport } from '../services/living-file/freshness-report.service';
 
 const router = Router();
 router.use(authenticateToken);
@@ -451,6 +456,76 @@ router.get('/reviewer-simulations/:runId', async (req: Request, res: Response) =
     res.status(500).json({ error: 'Fetch failed', detail: err?.message });
   }
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Living-File: domain-event router + per-program freshness report
+// ─────────────────────────────────────────────────────────────────────────────
+
+const VALID_REG_EVENTS: ReadonlySet<RegulatoryChangeEvent> = new Set([
+  'claim_changed',
+  'claim_withdrawn',
+  'claim_superseded',
+  'evidence_changed',
+  'evidence_superseded',
+  'predicate_changed',
+  'standard_withdrawn',
+  'standard_superseded',
+  'risk_vocab_updated',
+  'risk_code_map_updated',
+  'intended_use_changed',
+  'device_profile_changed',
+]);
+
+router.post(
+  '/programs/:programId/propagate-regulatory-change',
+  requireUuidProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const body = req.body ?? {};
+    const event = body.event;
+    if (!event || !VALID_REG_EVENTS.has(event)) {
+      return res.status(422).json({
+        error: `event must be one of: ${[...VALID_REG_EVENTS].join(', ')}`,
+      });
+    }
+    if (!body.sourceId || typeof body.sourceId !== 'string') {
+      return res.status(422).json({ error: 'sourceId is required' });
+    }
+    const userIdRaw = (req as any).user?.id;
+    const userId =
+      typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : undefined;
+    try {
+      const result = await propagateRegulatoryChange({
+        organizationId: orgId,
+        programId: req.params.programId,
+        legacyProgramId:
+          typeof body.legacyProgramId === 'number' ? body.legacyProgramId : undefined,
+        event,
+        sourceId: body.sourceId,
+        sourceLabel: typeof body.sourceLabel === 'string' ? body.sourceLabel : undefined,
+        reason: typeof body.reason === 'string' ? body.reason : undefined,
+        userId,
+      });
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Propagation failed', detail: err?.message });
+    }
+  }
+);
+
+router.get(
+  '/programs/:programId/freshness',
+  requireUuidProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    try {
+      const report = await programFreshnessReport(orgId, req.params.programId);
+      res.json(report);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Freshness report failed', detail: err?.message });
+    }
+  }
+);
 
 router.post('/propagate/risk-vocab', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
