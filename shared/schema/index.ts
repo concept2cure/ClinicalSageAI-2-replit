@@ -247,3 +247,16 @@ export type {
   InsertPostMarketDocument,
   PostMarketDocumentType,
 } from './gspr-postmarket';
+
+// Evidence Sufficiency Assessments — PMA / De Novo / 510(k) approval-readiness
+export {
+  evidenceSufficiencyAssessments,
+  evidenceSufficiencyAssessmentsRelations,
+  insertEvidenceSufficiencyAssessmentSchema,
+} from './evidence-sufficiency';
+export type {
+  EvidenceSufficiencyAssessment,
+  InsertEvidenceSufficiencyAssessment,
+  EvidenceSufficiencyVerdict,
+  SubmissionPathway,
+} from './evidence-sufficiency';

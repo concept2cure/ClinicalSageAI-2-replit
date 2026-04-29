@@ -191,6 +191,11 @@ export async function registerDocumentRoutes({
         mod: '../routes/post-market.js',
         name: 'Post-Market Documents',
       },
+      {
+        path: '/api/evidence-sufficiency',
+        mod: '../routes/evidence-sufficiency.js',
+        name: 'Evidence Sufficiency',
+      },
     ] as const;
     const evidenceResults = await Promise.allSettled(evidenceConfig.map(c => import(c.mod)));
     evidenceResults.forEach((r, i) => {
