@@ -176,6 +176,11 @@ export async function registerDocumentRoutes({
         mod: '../routes/standards.js',
         name: 'Standards Catalog',
       },
+      {
+        path: '/api/pccp',
+        mod: '../routes/pccp.js',
+        name: 'AI/ML PCCP',
+      },
     ] as const;
     const evidenceResults = await Promise.allSettled(evidenceConfig.map(c => import(c.mod)));
     evidenceResults.forEach((r, i) => {

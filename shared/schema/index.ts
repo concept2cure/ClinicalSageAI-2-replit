@@ -209,3 +209,19 @@ export type {
   ReviewerSimulationRun,
   InsertReviewerSimulationRun,
 } from './reviewer-simulation';
+
+// AI/ML Predetermined Change Control Plan (PCCP)
+export {
+  aiMlPccpPlans,
+  aiMlModifications,
+  aiMlPccpPlansRelations,
+  aiMlModificationsRelations,
+  insertAiMlPccpPlanSchema,
+  insertAiMlModificationSchema,
+} from './ai-ml-pccp';
+export type {
+  AiMlPccpPlan,
+  InsertAiMlPccpPlan,
+  AiMlModification,
+  InsertAiMlModification,
+} from './ai-ml-pccp';
