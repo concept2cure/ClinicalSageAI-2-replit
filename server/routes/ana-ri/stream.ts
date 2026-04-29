@@ -127,6 +127,27 @@ router.post('/stream', async (req: Request, res: Response) => {
       'X-Accel-Buffering': 'no',
     });
 
+    // Keepalive ping. Long-running orchestration / context assembly (and the
+    // AI's first-token latency on large prompts) can leave the socket silent
+    // for >30s, which trips proxy idle timeouts (Vite dev proxy, nginx 60s,
+    // Cloudflare 100s, dev tunnels, etc.) and surfaces to the client as a
+    // "Stream Idle Timeout" error before any real token arrives. A 15s
+    // SSE-comment heartbeat keeps every intermediary alive without
+    // disturbing the client's `data:` frame parser. Cleared in the same
+    // teardown branches as the abort handler below.
+    const STREAM_KEEPALIVE_MS = 15_000;
+    const streamKeepalive = setInterval(() => {
+      try {
+        res.write(': heartbeat\n\n');
+      } catch {
+        clearInterval(streamKeepalive);
+      }
+    }, STREAM_KEEPALIVE_MS);
+    const stopKeepalive = () => clearInterval(streamKeepalive);
+    res.on('close', stopKeepalive);
+    res.on('finish', stopKeepalive);
+    req.on('close', stopKeepalive);
+
     // Status: orchestrating (planning the response, running route prefetch)
     res.write(
       `data: ${JSON.stringify({

@@ -28,12 +28,23 @@ interface SSEConnection {
   jobId: string;
   userId: number;
   connectedAt: number;
+  lastActivity: number;
 }
 
 const activeConnections = new Map<string, SSEConnection>();
 const MAX_CONNECTIONS_PER_USER = 5;
 const SSE_KEEPALIVE_MS = 15_000;
-const SSE_IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes max per connection
+// Idle window — measured from last event/keepalive write, not from connect.
+// Long-running AI actions (multi-step generations, model-side queueing) can
+// take well over the previous hard 5-minute cap, so we now only close
+// connections that have been TRULY idle (no events, no keepalive ack) for
+// this long. Default 30 minutes; tune via SSE_IDLE_TIMEOUT_MS env var.
+const SSE_IDLE_TIMEOUT_MS = (() => {
+  const raw = Number(process.env.SSE_IDLE_TIMEOUT_MS);
+  return Number.isFinite(raw) && raw > 0 ? raw : 30 * 60 * 1000;
+})();
+// Cadence of the idle-watchdog. Independent of the keepalive write cadence.
+const SSE_IDLE_CHECK_MS = 30_000;
 
 // ---------------------------------------------------------------------------
 // SSE Handler
@@ -87,38 +98,49 @@ export function handleSSEStream(req: Request, res: Response): void {
   });
 
   const connectionId = `${userId}-${jobId}-${Date.now()}`;
-  activeConnections.set(connectionId, {
+  const conn: SSEConnection = {
     res,
     jobId,
     userId,
     connectedAt: Date.now(),
-  });
+    lastActivity: Date.now(),
+  };
+  activeConnections.set(connectionId, conn);
 
   // Send initial connection confirmation
   sendSSEEvent(res, 'connected', { jobId, connectionId });
 
-  // Keepalive ping
+  // Keepalive ping — also flushes any buffering proxy and counts as activity.
   const keepalive = setInterval(() => {
     try {
       res.write(':ping\n\n');
+      conn.lastActivity = Date.now();
     } catch {
       cleanup();
     }
   }, SSE_KEEPALIVE_MS);
 
-  // Idle timeout — auto-close stale connections
-  const idleTimeout = setTimeout(() => {
+  // Idle watchdog — fires periodically; only closes the connection when the
+  // last activity (event OR keepalive write) is older than the idle window.
+  // Long-running jobs that emit progress regularly never trip this. Stuck
+  // connections that go truly silent get closed.
+  const idleWatchdog = setInterval(() => {
+    const idleFor = Date.now() - conn.lastActivity;
+    if (idleFor < SSE_IDLE_TIMEOUT_MS) return;
     try {
-      sendSSEEvent(res, 'timeout', { message: 'Connection idle timeout' });
+      sendSSEEvent(res, 'timeout', {
+        message: 'Connection idle timeout',
+        idleMs: idleFor,
+      });
       res.end();
     } catch { /* already closed */ }
     cleanup();
-  }, SSE_IDLE_TIMEOUT_MS);
+  }, SSE_IDLE_CHECK_MS);
 
   // Cleanup on disconnect
   const cleanup = () => {
     clearInterval(keepalive);
-    clearTimeout(idleTimeout);
+    clearInterval(idleWatchdog);
     activeConnections.delete(connectionId);
     logger.debug(`SSE connection closed`, { connectionId, jobId });
   };
