@@ -16,6 +16,7 @@ import {
   type GsprProgramMapping,
   type InsertGsprProgramMapping,
 } from '../../../shared/schema/gspr-postmarket';
+import { publishRegulatoryChange } from '../living-file/publish';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Profile + filter
@@ -156,15 +157,41 @@ export async function upsertMapping(
       )
     )
     .limit(1);
+
+  let row: GsprProgramMapping;
+  let applicabilityChanged = false;
+  let evidenceChanged = false;
   if (existing) {
+    applicabilityChanged = existing.applicability !== values.applicability;
+    evidenceChanged = existing.primaryEvidenceId !== (values.primaryEvidenceId ?? null);
     const [updated] = await db
       .update(gsprProgramMappings)
       .set({ ...values, updatedAt: new Date() })
       .where(eq(gsprProgramMappings.id, existing.id))
       .returning();
-    return updated;
+    row = updated;
+  } else {
+    applicabilityChanged = true;
+    const [created] = await db.insert(gsprProgramMappings).values(values).returning();
+    row = created;
   }
-  const [row] = await db.insert(gsprProgramMappings).values(values).returning();
+
+  // Living-file: a GSPR coverage decision change impacts EU pathway readiness
+  // (sufficiency, NB reviewer persona, post-market planning). Publish only
+  // when the applicability or evidence linkage actually changed; pure status
+  // updates are not propagated.
+  if (applicabilityChanged || evidenceChanged) {
+    await publishRegulatoryChange({
+      organizationId: row.organizationId,
+      programId: row.programId,
+      event: 'device_profile_changed',
+      sourceId: row.programId,
+      sourceLabel: `GSPR mapping ${row.requirementId} → ${row.applicability}`,
+      reason: applicabilityChanged ? 'gspr_applicability_changed' : 'gspr_evidence_changed',
+      userId: typeof values.decidedBy === 'string' ? values.decidedBy : undefined,
+    });
+  }
+
   return row;
 }
 

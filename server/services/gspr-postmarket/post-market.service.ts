@@ -24,6 +24,7 @@ import {
   type PostMarketDocumentType,
   type InsertPostMarketDocument,
 } from '../../../shared/schema/gspr-postmarket';
+import { publishRegulatoryChange } from '../living-file/publish';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Validator
@@ -354,6 +355,20 @@ export async function approveDocument(
     .where(eq(postMarketDocuments.id, doc.id))
     .returning();
 
+  // Living-file: an approved post-market doc updates the device profile's
+  // post-market posture. Sufficiency assessments and reviewer sims should
+  // refresh; defense packets that referenced the prior version may need
+  // staleness propagation through the reactive layer.
+  await publishRegulatoryChange({
+    organizationId: updated.organizationId,
+    programId: updated.programId,
+    event: 'device_profile_changed',
+    sourceId: updated.programId,
+    sourceLabel: `${updated.documentType} ${updated.code} v${updated.version} approved`,
+    reason: `post_market_${updated.documentType}_approved`,
+    userId: args.approvedBy,
+  });
+
   return { document: updated, validation };
 }
 
@@ -396,6 +411,19 @@ export async function supersedeDocument(
     .update(postMarketDocuments)
     .set({ status: 'superseded', updatedAt: new Date() })
     .where(eq(postMarketDocuments.id, old.id));
+
+  // Living-file: superseding a post-market doc creates a new draft baseline
+  // — surface this as a device-profile-changed event so downstream artifacts
+  // get re-evaluated through the reactive layer.
+  await publishRegulatoryChange({
+    organizationId: old.organizationId,
+    programId: old.programId,
+    event: 'device_profile_changed',
+    sourceId: old.programId,
+    sourceLabel: `${old.documentType} ${old.code} v${old.version} superseded by v${newDoc.version}`,
+    reason: `post_market_${old.documentType}_superseded`,
+    userId: patch.createdBy,
+  });
 
   return newDoc;
 }
