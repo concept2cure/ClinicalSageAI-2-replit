@@ -154,7 +154,9 @@ if [[ "$MODE" == "check" ]]; then
     echo "[sync] mirror missing at $MIRROR_DIR (would be created on full sync)." >&2
     exit 6
   fi
-  if diff -rq "$STAGE" "$MIRROR_DIR" > "$WORK_PARENT/diff.txt" 2>&1; then
+  # Exclude .sync-meta — written by the script itself after every sync,
+  # so it always shows up as drift if compared. Treat it as bookkeeping.
+  if diff -rq --exclude=".sync-meta" "$STAGE" "$MIRROR_DIR" > "$WORK_PARENT/diff.txt" 2>&1; then
     echo "[sync] mirror is up to date with canonical."
     exit 0
   else

@@ -72,6 +72,7 @@ If an implementation decision requires trading off against what ships here — p
 | Location | What it owns |
 |---|---|
 | `CLAUDE.md` (this file)     | Pointer into the system. Read first. |
+| `CLAUDE_CODE_SETUP.md`      | One-time wiring instructions for the human operator — how to point Claude Code in `concept2cure-v2` at this project. |
 | `HANDOFF.md`                | Phase status + per-surface implementation contracts. |
 | `SKILL.md`                  | Skill framing — when and how to invoke this system. |
 | `README.md`                 | Voice, tone, visual foundations, content rules, iconography. |

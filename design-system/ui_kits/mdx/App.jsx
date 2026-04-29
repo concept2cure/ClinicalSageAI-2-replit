@@ -1,4 +1,4 @@
-/* global React, ReactDOM, I, MDX_PROGRAMS, MDX_NAV_ITEMS, MDX_STUBS, ANA_MODES, EDITOR_PROGRAM, Rail, TopBar, TabBar, CmdK, AnaRail, OverviewSurface, K510Surface, PMASurface, CERSurface, PrecedentSurface, InDesignSurface, EstarEditorSurface, TasksSurface, VaultSurface, ValidationSurface, SubmissionsSurface, TemplatesSurfaceface, InDesignSurface, EstarEditorSurface */
+/* global React, ReactDOM, I, MDX_PROGRAMS, MDX_NAV_ITEMS, MDX_STUBS, ANA_MODES, EDITOR_PROGRAM, Rail, TopBar, TabBar, CmdK, AnaRail, OverviewSurface, K510Surface, PMASurface, CERSurface, PrecedentSurface, ProjectHomeSurface, PrecedentSurface, InDesignSurface, EstarEditorSurface, TasksSurface, VaultSurface, ValidationSurface, SubmissionsSurface, TemplatesSurfaceface, InDesignSurface, EstarEditorSurface */
 const { useState, useEffect } = React;
 
 /* Tweak defaults — written to disk via EDITMODE when the user toggles them.
@@ -110,13 +110,20 @@ function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, [tweaks.anaOpen]);
 
+  /* Open a program → land on Project Home (per-program dashboard).
+     Project Home is the entry point; the workbench (k510 / pma / cer) is
+     reached via the "Open workbench" CTA inside Project Home. */
   const openProgram = (prog) => {
     setSelectedProgram(prog);
-    setTweak('activeNav', prog.pathway);
+    setTweak('activeNav', 'project-home');
+  };
+  const openWorkbench = () => {
+    if (selectedProgram) setTweak('activeNav', selectedProgram.pathway);
   };
 
   const hereLabel = ({
     overview: 'Overview',
+    'project-home': 'Project home',
     k510: '510(k) Submissions',
     pma: 'PMA Submissions',
     cer: 'CER Generator',
@@ -139,6 +146,7 @@ function App() {
     tweaks.activeNav === 'k510' ? MDX_PROGRAMS[0] :
     tweaks.activeNav === 'pma'  ? MDX_PROGRAMS[2] :
     tweaks.activeNav === 'cer'  ? MDX_PROGRAMS[3] :
+    tweaks.activeNav === 'project-home' ? MDX_PROGRAMS[0] :
     null
   );
 
@@ -178,6 +186,7 @@ function App() {
       case 'validation':  Surface = <ValidationSurface onAskAna={askAna}/>; break;
       case 'submissions': Surface = <SubmissionsSurface onAskAna={askAna}/>; break;
       case 'templates':   Surface = <TemplatesSurface onAskAna={askAna}/>; break;
+      case 'project-home':Surface = <ProjectHomeSurface program={programForContext} onOpenWorkbench={openWorkbench} onAskAna={askAna} onBackToOverview={() => { setSelectedProgram(null); setTweak('activeNav', 'overview'); }}/>; break;
       default:            Surface = <OverviewSurface onOpenProgram={openProgram} onAskAna={askAna}/>;
     }
   }

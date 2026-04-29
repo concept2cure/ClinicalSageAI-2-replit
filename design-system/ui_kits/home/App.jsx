@@ -1,4 +1,4 @@
-/* global React, ReactDOM, I, NAV_ITEMS, NAV_SUB, DASH, MODULES, RECENTS, SUGGESTIONS, ScopeSwitcher, AnaCard, CommandPalette */
+/* global React, ReactDOM, I, NAV_ITEMS, NAV_SUB, DASH, MODULES, RECENTS, SUGGESTIONS, ScopeSwitcher, AnaCard, CommandPalette, ProjectsScreen */
 const { useState, useEffect } = React;
 
 /* ─────────────────────────────────────────────────────────
@@ -354,13 +354,19 @@ function App() {
         <TopBar activeNavLabel={activeNavLabel} scope={scope} setScope={setScope} onOpenPalette={() => setPaletteOpen(true)}/>
         <div className="page" data-screen-label="01 Home">
           <div className="page-inner">
-            <GreetAndCompose userName={tweaks.userName}/>
-            <AnaCard scope={scope} onOpenPalette={() => setPaletteOpen(true)}/>
-            <Dashboard/>
-            <div style={{ height: 24 }}/>
-            <Launcher activeNav={tweaks.activeNav} setActiveNav={(id) => setTweak('activeNav', id)}/>
-            <div style={{ height: 24 }}/>
-            <Recents/>
+            {tweaks.activeNav === 'projects' ? (
+              <ProjectsScreen/>
+            ) : (
+              <>
+                <GreetAndCompose userName={tweaks.userName}/>
+                <AnaCard scope={scope} onOpenPalette={() => setPaletteOpen(true)}/>
+                <Dashboard/>
+                <div style={{ height: 24 }}/>
+                <Launcher activeNav={tweaks.activeNav} setActiveNav={(id) => setTweak('activeNav', id)}/>
+                <div style={{ height: 24 }}/>
+                <Recents/>
+              </>
+            )}
           </div>
         </div>
       </main>

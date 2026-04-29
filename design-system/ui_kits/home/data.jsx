@@ -8,7 +8,7 @@ window.NAV_ITEMS = [
   { id: 'mdx',        label: 'Medical Device and Diagnostics',        icon: 'stethoscope', group: 'domain',       href: '../mdx/index.html' },
   { id: 'biopharma',  label: 'Biotech and Pharma',                    icon: 'atom',         group: 'domain',       href: null },
 
-  { id: 'projects',   label: 'Projects',                              icon: 'folder',       group: 'work',         href: '../ana_ri/index.html' },
+  { id: 'projects',   label: 'Projects',                              icon: 'folder',       group: 'work',         href: null },
   { id: 'vault',      label: 'Vault DMS',                             icon: 'vault',        group: 'work',         href: null },
   { id: 'tasking',    label: 'Tasking and Collaboration',             icon: 'checkCircle',  group: 'work',         href: null },
   { id: 'submission', label: 'Submission Center',                     icon: 'send',         group: 'work',         href: null },
