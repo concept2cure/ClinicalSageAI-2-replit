@@ -17,6 +17,7 @@ import {
   type InsertAiMlModification,
 } from '../../../shared/schema/ai-ml-pccp';
 import { validatePccp, type PccpValidationResult } from './pccp-validator.service';
+import { publishRegulatoryChange } from '../living-file/publish';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Read
@@ -153,6 +154,19 @@ export async function approvePlan(args: ApprovePlanArgs): Promise<{
     .where(eq(aiMlPccpPlans.id, plan.id))
     .returning();
 
+  // Living-file: PCCP approval changes the AI/ML governance posture, which
+  // downstream registrants (defense packets, sufficiency assessments,
+  // reviewer simulations) need to reflect.
+  await publishRegulatoryChange({
+    organizationId: updated.organizationId,
+    programId: updated.programId,
+    event: 'device_profile_changed',
+    sourceId: updated.programId,
+    sourceLabel: `PCCP ${updated.code} v${updated.version} approved`,
+    reason: 'pccp_approved',
+    userId: args.approvedBy,
+  });
+
   return { plan: updated, validation };
 }
 
@@ -241,6 +255,17 @@ export async function supersedePlan(
     .update(aiMlPccpPlans)
     .set({ status: 'superseded', updatedAt: new Date() })
     .where(eq(aiMlPccpPlans.id, old.id));
+
+  // Living-file: superseding a PCCP shifts the AI/ML governance baseline.
+  await publishRegulatoryChange({
+    organizationId: old.organizationId,
+    programId: old.programId,
+    event: 'device_profile_changed',
+    sourceId: old.programId,
+    sourceLabel: `PCCP ${old.code} v${old.version} superseded by v${newPlan.version}`,
+    reason: 'pccp_superseded',
+    userId: args.createdBy,
+  });
 
   return { newPlan, modCount: oldMods.length };
 }

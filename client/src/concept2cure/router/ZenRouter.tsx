@@ -22,6 +22,7 @@ import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZenLogin, ZenSignup, ZenAuthLayout } from '../auth';
 import { ZenApp } from '../ZenApp';
+import MdxRoute from '../mdx/MdxRoute';
 import { ProjectProvider } from '../context/ProjectContext';
 import {
   AuthProvider as PortalAuthProvider,
@@ -179,6 +180,20 @@ export const ZenRouter: React.FC = () => {
           <Route path="/billing">{() => <Redirect to="/concept2cure" />}</Route>
           <Route path="/billing/success">{() => <Redirect to="/concept2cure" />}</Route>
           <Route path="/billing/canceled">{() => <Redirect to="/concept2cure" />}</Route>
+
+          {/* MDX (Medical Device & Diagnostic) module — Phase 2 design-system
+              port. Mounted before the ZenApp catch-all so this surface is
+              reachable while the legacy ZenApp continues to handle home,
+              project detail, and other surfaces. */}
+          <Route path="/concept2cure/mdx">
+            {() => (
+              <ProtectedRoute>
+                <PageTransition>
+                  <MdxRoute />
+                </PageTransition>
+              </ProtectedRoute>
+            )}
+          </Route>
 
           {/* Bundle surfaces — ZenApp resolves layoutMode + URL into one of
               the four designed surfaces (home, mdx, ana_ri, ectd_coauthor). */}

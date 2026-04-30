@@ -1,4 +1,11 @@
-/* Zen Design System — enterprise UI foundation */
+/* Canonical Concept2Cure design-system tokens — must precede every other
+   import. Sources colors, type, spacing, radii, motion and shadow. The
+   design-system folder is the single source of truth; do not copy its
+   contents into v2's own CSS (that re-introduces the 2026-04-26 regression
+   class). See design-system/CLAUDE.md. */
+@import "../../design-system/colors_and_type.css";
+
+/* Zen Design System — enterprise UI foundation (legacy) */
 @import './concept2cure/design/zen.css';
 
 @import "tailwindcss";
