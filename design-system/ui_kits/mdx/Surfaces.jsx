@@ -389,7 +389,7 @@ function K510Surface({ program, onAskAna, onOpenEditor }) {
 }
 
 /* ═══════════ PMA ═══════════ */
-function PMASurface({ onAskAna }) {
+function PMASurface({ onAskAna, onOpenEditor }) {
   return (
     <>
       <div className="section-hdr">
@@ -397,7 +397,9 @@ function PMASurface({ onAskAna }) {
           <div className="section-title">PMA pathway · CV-330 Implantable Monitor</div>
           <div className="section-sub">Phase 5 of 10 — Pivotal trial enrollment · PMA filing Q3 2026</div>
         </div>
-        <button className="section-more">Phase report {I.right}</button>
+        <div style={{display:'flex',gap:'8px'}}>
+          <button className="section-more" onClick={onOpenEditor}>Open module editor {I.right}</button>
+        </div>
       </div>
 
       <div className="phases">
