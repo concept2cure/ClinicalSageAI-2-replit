@@ -1,256 +1,216 @@
-# Concept2Cure.RI
+# Concept2Cure.RI — Design System
 
-**The Cognitive Regulatory Ecosystem for Life Sciences**
+The visual and verbal system behind **Concept2Cure Regulatory Intelligence** and **AnA 1.0 RI** — an enterprise regulatory-intelligence platform for life sciences (biotech, pharma, medtech, CRO). Ambition: what Harvey did for law, C2C does for life sciences.
 
-[![Enterprise GA](https://img.shields.io/badge/status-Enterprise%20GA%20Hardening-blue)](https://github.com/concept2cure/Concept2Cure.RI-2-replit)
-[![21 CFR Part 11](https://img.shields.io/badge/compliance-21%20CFR%20Part%2011-green)](docs/compliance/)
-[![ISO 14971](https://img.shields.io/badge/risk%20analysis-ISO%2014971-green)](docs/compliance/)
+## Source materials
 
----
-## 🔒 **IMPORTANT: SINGLE BRANCH DEVELOPMENT**
+Pulled and distilled from:
+- **Repo** — `concept2cure/ClinicalSageAI-2-replit` @ branch `concept2cure-v2`
+  - `CLAUDE.md` — 42KB of non-negotiable product/design rules
+  - `client/src/index.css`, `client/src/concept2cure/design/zen.css` — canonical CSS vars
+  - `client/src/design-system/tokens.ts`, `motion.ts` — token definitions
+  - `client/src/component-registry.ts` — 28 governed components
+  - `client/src/concept2cure/components/**` — ~60 feature directories
+  - `client/src/assets/logos/**` — regulatory agency + partner marks
+- **Authoritative design principles** — `.claude/skills/claude-ui-design-principles.md` (12 principles), `chat-first-design.md`, `motion-discipline.md`, `microcopy-tone.md`, `accessibility-enforcement.md`, `regulatory-compliance-ux.md`
 
-**All work MUST be done on:** `concept2cure-v2`
+The reader may not have access to this repo — store full paths here for re-fetching.
 
-- ❌ Do NOT create feature branches
-- ❌ Do NOT work on `main` directly  
-- ❌ Do NOT recreate auth, portal, or Cortex components
-- ✅ See `.github/COPILOT_INSTRUCTIONS.md` for full rules
+## The product
 
-**Agents & Developers**: Read `.github/BRANCH_LOCK.md` before starting work.
+**Concept2Cure.RI** is a React + TypeScript (Vite) app; the entire client lives under `client/src/concept2cure/` with `ZenApp.tsx` as the shell. It surfaces **AnA 1.0 RI** — a chat-first regulatory-intelligence assistant that sits on top of the **RIM** (Regulatory Intelligence Model), a proprietary non-LLM layer that accumulates regulatory judgment over time.
 
----
+### Primary surfaces
+1. **App shell** (`ZenApp`) — thin icon rail + top bar + conversation-centered empty state + bottom composer. This is the *one* canonical UI.
+2. **AnA chat** (`AnaPersistentPanel`) — the product. Every capability is invoked through it; there is no "new screen" for features.
+3. **Editor** (`UnifiedDocumentEditor` / ProseMirror / TipTap) — serif reading surface for regulatory documents.
+4. **Auth** (`ZenLogin`, `ZenSignup`) — calm split-screen sign-in.
 
-## Overview
-
-Concept2Cure.RI is an enterprise-grade regulatory intelligence platform that transforms how life sciences companies prepare, submit, and manage regulatory documentation.
-
-### Key Capabilities
-
-| Module | Description | Status |
-|--------|-------------|--------|
-| **CER Generator** | EU MDR/IVDR Clinical Evaluation Reports | ✅ Production |
-| **510(k) eSTAR** | FDA 510(k) electronic submissions | ✅ Production |
-| **eCTD CoAuthor** | Real-time collaborative document authoring | ✅ Production |
-| **CMC Platform** | Chemistry, Manufacturing, Controls | ✅ Production |
-| **Stability Studies** | ICH-compliant stability management | ✅ Production |
-| **Cognitive Ecosystem** | LangGraph-powered AI agents | 🔄 Beta |
+### Governed components (28)
+Primitives (Button, Badge, Input, Textarea, Card, Dialog, Tabs, Select, Alert, Table, Progress, Tooltip, DropdownMenu, Switch, Checkbox, Skeleton), Layout (WorkspaceHeader, WorkspaceHeaderRich, PageTitleHeader, WorkspaceCanvas, WorkspaceStatusBadge, SectionPanel), State wrappers (DataStateWrapper, LoadingState, ErrorState), Patterns (ConversationBubble, MetricCard, ActionBar, EmptyState). The registry is the single source of truth — raw `<button>` / `<input>` are forbidden.
 
 ---
 
-## Architecture
+## Content fundamentals
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    CORTEX PRIME (AI Brain)                   │
-│  Knowledge Atoms │ Threads │ Agents │ Dual Embeddings        │
-├─────────────────────────────────────────────────────────────┤
-│                 COGNITIVE ECOSYSTEM (LangGraph)              │
-│  Agent Runtime │ Workflows │ Human-in-the-Loop │ Checkpoints │
-├─────────────────────────────────────────────────────────────┤
-│              21 CFR PART 11 COMPLIANCE LAYER                 │
-│  Audit Trails │ E-Signatures │ RBAC │ Hash Chains            │
-└─────────────────────────────────────────────────────────────┘
-```
+**Voice is reviewer-grade, not marketing-grade.** The product speaks to regulatory professionals whose work is audited under 21 CFR Part 11 / GxP. Every string must feel factual enough to survive an FDA inspection.
 
----
+- **Second person, direct.** "You". Avoid "we" unless referring to the company.
+- **Sentence case everywhere** — titles, headings, buttons, menu items. Never Title Case. Never ALL CAPS except 10px metadata labels.
+- **Active voice, specific verbs.** "Draft Section 2.5", not "Let's get started with drafting!".
+- **No exclamation marks. No emoji.** Ever. Not in UI, not in copy, not in empty states. Emoji in a regulatory tool reads as unprofessional and will break client trust.
+- **No cheerleading.** No "", "Awesome!", "You're all set!". The system never celebrates — it confirms.
+- **No "Are you sure?"**. Trust the user. Destructive actions get a calm confirmation dialog with a clear action label, not a panicked one.
+- **Status is factual.** "Drafting", "In review", "Approved", "Blocked", "Locked", "Ready" — these are the workflow states, and they appear as quiet stone-colored pills, not neon badges.
+- **Microcopy is specific.** Empty states describe what will appear, not "Nothing here yet!". Errors say what failed and what to try — never "Oops!" or "Something went wrong".
+- **Time-of-day greeting is the only warmth.** "Good morning, {firstName}" on the home surface — once, subtle, no follow-up fluff.
+- **Numbers over adjectives.** "Reviewed by 12 reviewers across 4 agencies" beats "comprehensively reviewed".
 
-## Quick Start
+### Examples (lifted from the codebase)
 
-```bash
-# Clone repository
-git clone https://github.com/concept2cure/Concept2Cure.RI-2-replit.git
-cd Concept2Cure.RI-2-replit
+| Good                                           | Bad                                       |
+| ---------------------------------------------- | ----------------------------------------- |
+| "What's on your mind?"                         | "Hey! How can I help you today? 👋"       |
+| "Browse all capabilities →"                    | "See more awesome features!"              |
+| "Draft → Review → Verify → Publish"            | "Your journey to submission! 🚀"          |
+| "Section 2.5 — in review by J. Chen"           | "Almost done! 🎉"                          |
+| "Submission readiness: 87% — 3 items blocking" | "Looking good! Just a few more things..." |
 
-# Install dependencies
-npm install
+### Example prompts (home cards)
 
-# Configure environment
-cp .env.example .env
-# Edit .env and set DATABASE_URL to your Neon connection string, e.g.:
-#   DATABASE_URL=postgresql://neondb_owner:YOUR_PASSWORD@ep-YOUR-PROJECT-pooler.REGION.aws.neon.tech/neondb?sslmode=require
-# (see .env.example for full details)
-
-# Run database migrations
-npm run db:migrate
-# Optional: sync schema/table drift in local/dev
-npm run db:push
-
-# Start development server
-npm run dev
-```
+Seed content is drawn from `config/domain-prompts.ts` — 106 prompts across 19 domain groups. The 4 defaults on the home surface today are: *CTD section*, *510(k) precedent*, *biostat SAP*, *submission readiness*.
 
 ---
 
-## Testing
+## Visual foundations
 
-- `npm test` runs Jest + Vitest.
-- Integration tests are gated behind `RUN_INTEGRATION_TESTS=true` and require a Postgres database via `TEST_DATABASE_URL` (or `DATABASE_URL`) with the GCC migrations applied (including the innovation platform schema). CI provisions a test database and runs these with the flag enabled.
+### Motif
+**Calm, intelligent, restrained.** A reviewer's desk, not a marketing site. Warm cream paper, terracotta ink for actions, olive for approval, amber for review. The visual vocabulary is *Anthropic Claude* — intentional; the product openly claims inspiration.
 
-- Phase 5 (Intelligent Document System) migrations are required for `tests/phase5/migration.test.ts`. In dev you can either apply the migration manually or let the test runner attempt to apply it when explicitly allowed:
+### Color
+- **Canvas** is warm cream `#faf9f5`, not white. White is reserved for *elevated* surfaces (cards, popovers). This single decision sets the whole tone.
+- **Accent** is terracotta `#d97757` — used sparingly, only for the primary call-to-action, brand marks, and focus rings. Never decoratively.
+- **AI persona** is a muted blue `#6a9bcc` — used exclusively for the AnA assistant avatar, typing dots, and assistant message bubbles.
+- **Status** colors are earthy, never saturated: olive success `#788c5d`, warm amber warning `#d97706`, muted red error `#dc3545`.
+- **Neutrals** are *stone*, not gray — warm undertone. 11 steps from `#ffffff` to `#141413`. Text default is `#141413` (near-black, never `#000`).
+- **Gradients** exist but are reserved for the logo / icon mark (blue→darker-blue with gold DNA helix). Never used for backgrounds of cards, buttons, or sections.
 
-  - Manual: run `node scripts/apply_phase5_migrations.mjs` with `DATABASE_URL` set.
-  - Auto-apply (dev-only): set `APPLY_PHASE5_MIGRATIONS=true` and re-run `npm test` (the Phase 5 tests will attempt to apply `db/migrations/20260129_phase5_intelligent_document_system.sql` and re-run checks).
+### Type
+- **Chrome** (buttons, menus, labels, nav) — system sans (`-apple-system, Inter, …`). Deliberate: chrome disappears.
+- **Long-form reading** (chat response, editor) — serif (`Lora` in the web client, `Georgia` in ProseMirror). Brings gravitas.
+- **Mono** — `JetBrains Mono` for code, IDs, citations.
+- **Size is tiny.** `text-lg` (18px) is the *max* title size outside marketing. Body is 13px. Metadata is 10px uppercase tracking-wider. Never shout.
+- **Weight** tops at 600. 700+ is forbidden in chrome.
 
-  **Safety:** Auto-apply is opt-in and intended for local/dev usage only. Never enable this in production or shared/staging environments without explicit coordination with the DB owner.
+### Spacing, radius, borders
+- **4px grid.** Tokens: 2/4/6/8/12/16/20/24/32/40/48/64/80.
+- **Radius**: 6px (chips) / 8px (buttons, inputs) / 12px (cards) / 16px (chat composer, large panels) / 24px (dialogs) / full (avatars, pills).
+- **Borders are barely visible** — `#e8e6dc` or `#f4f3ee`. The content is the interface; frames don't compete with it.
 
----
+### Shadows & elevation
+- Warm, subtle, never dramatic. All shadows use `rgb(20 20 19 / 0.05)` max. A card lifts 1–2px on hover, never more.
+- No colored drop-shadows. No inner shadows except `inset 0 2px 4px` on form fields if at all.
+- `--shadow-glow` (terracotta 10% alpha, 20px) exists only for the primary button `:focus` and the chat composer `:focus-within`.
 
-## Documentation
+### Backgrounds
+- **Solid**, flat, warm cream. No patterns. No textures. No illustrations. No gradient meshes.
+- Sidebar is `--canvas-muted` (`#f4f3ee`); page is `--canvas` (`#faf9f5`); cards are `--canvas-elevated` (`#ffffff`). That 3-layer shift does all the work.
 
-| Category | Description |
-|----------|-------------|
-| [Architecture](docs/architecture/) | Technical architecture and design decisions |
-| [Compliance](docs/compliance/) | 21 CFR Part 11, ISO 14971, validation docs |
-| [Deployment](docs/deployment/) | Deployment guides and infrastructure |
-| [Modules](docs/modules/) | Module-specific documentation |
-| [Guides](docs/guides/) | User and developer guides |
+### Animation & motion
+Per the `motion-discipline` skill: **200ms ease-out by default. No bounce. No spring. No overshoot.**
+- `transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1)` is the global default.
+- Entrances: fade + 4–8px slide-up, 200ms.
+- `prefers-reduced-motion` kills all animation to 1ms.
+- Typing dots on AnA use a 2s pulse — the only rhythmic motion in the product.
+- Buttons: no scale on hover. Avatars: no scale. Cards: 1px translateY(-1px). That is the entire motion vocabulary.
 
-### Key Documents
+### Hover / press / focus
+- **Hover**: background shifts one stone step darker (`--canvas` → `--canvas-muted`), or ink lightens one step. Never opacity-based.
+- **Press** (buttons): no visible down-state beyond `:active` darker-bg. No scale.
+- **Focus**: 2px offset outline in `--accent` for keyboards; or `box-shadow: 0 0 0 3px var(--accent-subtle)` for form fields. Never removed.
+- **Disabled**: `opacity: 0.5; pointer-events: none;`. Always.
 
-- [Product Vision Roadmap](docs/PRODUCT_VISION_ROADMAP.md) - Strategic plan 2026-2030
-- [Agent Architecture](docs/AGENT_ARCHITECTURE.md) - AI agent system design
-- [Service Consolidation](docs/SERVICE_CONSOLIDATION_PLAN.md) - Codebase cleanup plan
-- [Consolidation Summary](docs/CONSOLIDATION_SUMMARY.md) - Recent cleanup work
-- [Local Infra Warnings](docs/guides/local-dev-infra-warnings.md) - Resolve expected local DB/Redis warnings
-- [Repo Memory & Execution Discipline](docs/getting-started/REPO_MEMORY_EXECUTION_DISCIPLINE.md) - Required preflight and execution protocol before code changes
+### Iconography
+See **ICONOGRAPHY** section below.
 
----
+### Transparency & blur
+- Used exactly once: **command-palette overlay** (`rgba(0,0,0,0.4)` + `backdrop-filter: blur(4px)`).
+- Never on cards, never on sidebars. No glassmorphism.
 
-## Project Structure
+### Imagery
+- **No stock photography.** No illustrated heroes. No AI-generated art.
+- The only raster-ish assets are **regulatory agency logos** (FDA, EMA, PMDA, Health Canada, MHRA, TGA, NMPA, MFDS, WHO) and **compliance marks** (21 CFR Part 11, ICH GCP, HIPAA, GDPR, ISO, CE). All SVG. All used at small sizes (16–32px) inline, or 80–120px when displayed as a trust strip.
+- The brand icon is a blue-gradient rounded square with a gold DNA helix. It is the only piece of "art" in the product.
 
-```
-Concept2Cure.RI/
-├── client/              # React frontend
-├── server/              # Express backend
-│   ├── routes/          # API endpoints
-│   ├── services/        # Business logic
-│   │   └── cognitive-ecosystem/  # LangGraph agents
-│   └── middleware/      # Express middleware
-├── db/migrations/       # Database migrations
-├── shared/              # Shared TypeScript schemas
-├── docs/                # Documentation
-├── scripts/             # Build, deploy, automation
-│   ├── automation/      # Utility scripts
-│   ├── build/           # Build scripts
-│   ├── deploy/          # Deployment scripts
-│   ├── import/          # Data import scripts
-│   └── test/            # Test scripts
-└── backend/             # Python services
-```
+### Cards
+- Background `#ffffff` on a `#faf9f5` canvas. Border `1px solid #f4f3ee` (almost invisible). Radius `12px` (`--radius-lg`). Shadow `--shadow-xs` resting; `--shadow-sm` on hover, with `translateY(-1px)`. Padding `1.5rem`.
 
----
+### Layout rules
+- **Chat-first**: composer fixed at bottom when active; conversation scrolls above. Content column capped at `--content-max: 768px` — no full-bleed text.
+- **Thin icon rail** (56px collapsed, 260px expanded) is the one nav authority. No second sidebar ever.
+- **Topbar** is 48px — thin, never larger.
+- **Mobile**: panels become fixed overlays on small screens (no nested scroll).
 
-## Technology Stack
-
-### Backend
-- **Runtime:** Node.js 20+
-- **Framework:** Express.js
-- **Database:** PostgreSQL 15 with pgvector
-- **ORM:** Drizzle ORM
-- **AI:** Kimi AI (Moonshot), multi-provider router
-
-### Frontend
-- **Framework:** React 18
-- **Build:** Vite
-- **Styling:** Tailwind CSS
-- **State:** React Query
-
-### Infrastructure
-- **Cloud:** AWS (recommended), Azure, GCP
-- **Container:** Docker
-- **CI/CD:** GitHub Actions
+### Density
+Professional tool, not a consumer app. Rows compact (`h-8` to `h-10` list items). Every element earns its space. No decorative whitespace padding on professional surfaces.
 
 ---
 
-## Compliance
+## Iconography
 
-Concept2Cure.RI is designed for regulated environments:
+**Lucide React** is the production icon library (imported on every screen — `Folder`, `ClipboardList`, `Globe`, `FileText`, `PenLine`, `FlaskConical`, `BookOpen`, `AlertTriangle`, `BarChart2`, `CheckSquare` are shown in `zen-app-constants.ts` alone). Stroke-based, 1.5–2px weight, 16/20/24px.
 
-- **21 CFR Part 11** - Electronic records and signatures
-- **EU Annex 11** - Computerized systems
-- **ISO 14971** - Risk management for medical devices
-- **HIPAA** - Health data protection
-- **FHIR R4** - Healthcare interoperability
+- **CDN**: `https://unpkg.com/lucide-static@latest/icons/{name}.svg` — use when rendering in mocks outside the React app.
+- **In React**: `import { Folder } from 'lucide-react'`.
+- **Never mix icon systems.** No Heroicons, no Feather, no Phosphor, no Font Awesome. One stroke style, one library.
+- **Never emoji.** Already covered in Content Fundamentals — repeating because the temptation is strong. The product is audited; emoji in the UI is a compliance-UX smell.
+- **No custom drawn SVGs** for icons except the brand mark itself (`assets/concept2cure-icon.svg`) and the regulatory agency / partner logos in `assets/logos/`.
+- **Unicode arrows are OK** as navigation cues (`→`, `←`) because they're text and scale with font size. Used sparingly.
 
----
+### Agency & compliance logos (shipped)
+All SVG, in `assets/logos/`:
+- **Regulatory agencies**: FDA, EMA, PMDA, Health Canada, MHRA, TGA, NMPA, MFDS, WHO, ICH
+- **Compliance marks**: 21 CFR Part 11, ICH GCP, HIPAA, GDPR, ISO, CE
+- **Partner / standards**: ASCO, NIH, ESMO, HHS, CDC, EPA
+- **Brand**: `concept2cure-icon.svg` — the DNA helix on blue gradient
 
-## API Overview
-
-### Cognitive Ecosystem (New!)
-```
-POST /api/cognitive/agents         # Create agent session
-POST /api/cognitive/workflows      # Start LangGraph workflow
-POST /api/cognitive/fhir/validate  # FHIR R4 validation
-POST /api/cognitive/dossiers       # Global dossier management
-GET  /api/cognitive/health         # Health check
-```
-
-### Regulatory Modules
-```
-POST /api/cer/generate             # Generate CER
-POST /api/510k/submissions         # 510(k) submission
-POST /api/ectd/documents           # eCTD document management
-POST /api/cmc/projects             # CMC project management
-```
+These are displayed as trust strips on auth / marketing surfaces and as inline signal tags inside chat responses (e.g. "FDA precedent found — 2023").
 
 ---
 
-## Database Management
+## Index
 
-### Schema
-
-The database schema is defined in `shared/schema.ts` using Drizzle ORM.
-
-```bash
-# View current schema
-cat shared/schema.ts
-
-# Generate migration from schema changes
-npx drizzle-kit generate:pg
-```
-
-### Migrations
-
-```bash
-# Development: Push schema directly (recommended)
-npx drizzle-kit push:pg
-
-# Production: Run migrations
-npx drizzle-kit migrate
-```
-
-> **Note:** Legacy migrations with numbering conflicts have been archived to `db/migrations/_legacy/`. See `db/migrations/_legacy/README.md` for details.
+Root of this design system:
+- `README.md` — **you are here**
+- `SKILL.md` — agent invocation (works as a Claude Code Skill too)
+- `colors_and_type.css` — the token surface (CSS custom props + semantic classes)
+- `fonts/` — font files (currently **placeholder** — see *Caveats*)
+- `assets/` — brand icon + 25 agency/partner/compliance logos
+- `preview/` — individual specimen HTML cards for the design-system review tab
+- `ui_kits/home/` — **Phase 1, ready to implement.** Front-door Home screen: 15-item rail (4 tiers), time-of-day greeting + composer, AnA proactive briefing, at-a-glance dashboard, module launcher, domain scope switcher, ⌘K palette
+- `CLAUDE.md` — source-of-truth pointer read by Claude Code each session
+- `HANDOFF.md` — per-phase implementation contracts for Claude Code
+- `ui_kits/ana_ri/` — hi-fi recreation of the Concept2Cure.RI product (AnA chat-first shell)
+- `ui_kits/ectd_coauthor/` — **System-Aware Artifact Architecture** · 3-pane eCTD Co-Authoring workbench (tree · intelligence · artifact) with provenance hovers, streaming reveal, and focus mode
 
 ---
 
-## Contributing
+## System-Aware Artifact Architecture
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Per the 2026 design spec, every C2C module implements a single canonical pattern:
 
----
+| Zone | Purpose | Width | Visual |
+|---|---|---|---|
+| **Tree drawer** | Contextual navigation (eCTD, study, submission) | 240px, collapsible | `--canvas-muted` |
+| **Intelligence** | Chat with AnA, tool-use, streaming | 35% of remaining | `--background` (paper) |
+| **Artifact** | Live-rendered regulatory work product | 65% of remaining | `--background`, serif |
 
-## License
+Rules:
 
-Proprietary - Concept2Cure, Inc.
-
----
-
-## Support
-
-- **Documentation:** [docs/](docs/)
-- **Issues:** [GitHub Issues](https://github.com/concept2cure/Concept2Cure.RI-2-replit/issues)
-
-### Common Issues
-
-#### GitHub Copilot Branch Conflicts
-If you encounter issues with GitHub Copilot creating `copilot/*` branches or PRs not being found after delegation, see the [Copilot Branch Delegation Fix Guide](docs/fixes/COPILOT_BRANCH_DELEGATION_FIX.md).
-
-**Quick Fix:**
-```bash
-# If you're on a copilot/* branch by mistake:
-./scripts/fix-copilot-branch.sh
-```
+- **Asymmetric grid, not centered.** 65/35 split is the default; Focus mode collapses to 100% artifact.
+- **Tree first, chat second, artifact largest.** Real estate follows where the user looks longest.
+- **Sandboxed artifact pane.** Artifact renders in its own render tree and never inherits chat-stream state — ready to iframe-isolate for 21 CFR Part 11 compliance.
+- **Token-level reveal.** Artifact sections fade in with a 80ms stagger on append; a terracotta caret animates at the current write-head.
+- **Provenance on hover.** Every artifact paragraph carries a `data-prov` hook that reveals source file, model, confidence, and audit ID. This is the hard requirement for 21 CFR Part 11 traceability.
+- **Optimistic edits.** No save buttons. Autosave pill lives in the top bar ("Autosaved · v0.4 · 2 sec ago").
+- **No black renderings.** Every artifact (doc, PDF preview, XML, diff) is rendered on `--background` cream, never inverted.
+- **Staggered reveals, 200ms ease-out.** Bounce, spring, and overshoot are still forbidden — stagger delay is the only rhythm.
 
 ---
 
-*Concept2Cure.RI - Accelerating the Path from Concept to Cure*
+## Caveats (and what I need from you)
+
+- **Fonts not shipped.** Production uses **Lora** (serif body, Google Fonts — freely usable), plus an apparent intent to use **Styrene B** (display) and **Tiempos Text** (serif prose) — those two are commercial Klim Type Foundry families, identical to Anthropic's Claude. I fell back to **Inter** + **Source Serif Pro** + **JetBrains Mono** (all Google Fonts). **Please confirm the licensed display/serif choice** or upload the font files and I'll wire them in.
+- **No slide template** was in the repo, so I did not invent a deck. If you have a pitch deck or board deck template, attach it and I'll produce `slides/`.
+- **Only one UI kit built** — for the primary product (`ana_ri`). There is no separate marketing website or docs site in the repo. If one exists elsewhere, link it and I'll add a `ui_kits/marketing/`.
+- **Logos are the repo's current set.** Several (PMDA, MHRA, NMPA, MFDS, TGA) are very minimal 127-byte placeholder SVGs — they read as tiny text marks, not proper agency logos. If you want polished vector wordmarks, we'll need to source them.
+- **Icon font** — I flagged Lucide React, but marketing/static HTML currently pulls icons from `unpkg.com/lucide-static` on demand. If you'd prefer an installed sprite, I can generate one.
+
+## What I need from you to make this perfect
+
+**Please review the Design System tab and tell me:**
+
+1. Is the **stone / terracotta / olive** palette the direction you want, or is the tokens.ts blue/purple version the future? They disagree in the repo; I picked the one that's actually used.
+2. Do we have a **marketing website** or **docs site** outside this repo? If so, attach and I'll build the second UI kit.
+3. Font licensing — confirm Styrene B / Tiempos, or pick alternatives, or let me keep Inter / Source Serif Pro.
+4. Any **slide template** (pitch, board, all-hands) you want bottled into `slides/`?
