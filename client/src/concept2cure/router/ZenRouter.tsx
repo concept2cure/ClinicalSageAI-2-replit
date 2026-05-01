@@ -20,7 +20,8 @@
 import React, { useEffect } from 'react';
 import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ZenLogin, ZenSignup, ZenAuthLayout } from '../auth';
+import { ZenSignup, ZenAuthLayout } from '../auth';
+import { Concept2CureLogin } from '../components/concept2cure-auth';
 import { ZenApp } from '../ZenApp';
 import MdxRoute from '../mdx/MdxRoute';
 import { ProjectProvider } from '../context/ProjectContext';
@@ -149,11 +150,14 @@ export const ZenRouter: React.FC = () => {
             {() => (
               <PageTransition>
                 <AuthRoute>
-                  <ZenLogin />
+                  <Concept2CureLogin />
                 </AuthRoute>
               </PageTransition>
             )}
           </Route>
+          {/* Signup keeps the legacy ZenSignup until Claude Design ships a
+              signup kit. Concept2CureLogin only covers sign-in / MFA /
+              forgot-password / reset-password. */}
           <Route path="/concept2cure/signup">
             {() => (
               <PageTransition>
@@ -169,7 +173,7 @@ export const ZenRouter: React.FC = () => {
             {() => (
               <PageTransition>
                 <AuthRoute>
-                  <ZenLogin />
+                  <Concept2CureLogin />
                 </AuthRoute>
               </PageTransition>
             )}

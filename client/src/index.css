@@ -10,6 +10,29 @@
 
 @import "tailwindcss";
 
+/* ─── Global token-name shim ──────────────────────────────────────
+   Canonical names the brand accent --accent-main-{000,100,200} and the
+   motion duration --dur-normal. Several mirrored kit stylesheets (most
+   notably the Phase 3 Projects prototype, which is mirror-synced and
+   must not be hand-edited, plus shared module CSS files) reference the
+   shorter --accent-{000,100,200} and bare --dur. Alias once globally so
+   var() lookups resolve regardless of which name the source CSS uses.
+   Do NOT redeclare bg/text/border/radius/font tokens here — those come
+   straight from canonical. */
+:root {
+  --accent-000: var(--accent-main-000);
+  --accent-100: var(--accent-main-100);
+  --accent-200: var(--accent-main-200);
+
+  --dur: var(--dur-normal);
+
+  --border-light: var(--border-subtle, var(--border));
+
+  /* Status colors — projects-prototype.css uses bare --err/--ok aliases. */
+  --err: var(--error);
+  --ok:  var(--success);
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     scroll-behavior: auto !important;

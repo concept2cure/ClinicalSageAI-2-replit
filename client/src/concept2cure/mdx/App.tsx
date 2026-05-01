@@ -29,10 +29,14 @@ import {
 } from './workbench/Workbench';
 import { ProjectHome } from './projectHome/ProjectHome';
 import { EstarEditor } from './editors/EstarEditor';
-import { ComingSoon } from './_stubs/ComingSoon';
-import { ANA_MODES, MDX_STUBS, type AnaMode } from './data/nav';
+import { PmaEditor } from './editors/PmaEditor';
+import { CerEditor } from './editors/CerEditor';
+import { CerWorkbench } from './surfaces/cer/CerWorkbench';
+import { PreSubManager } from './presub/PreSubManager';
+import { MDX_STUBS, type AnaMode } from './data/nav';
 import { MDX_PROGRAMS, type Program } from './data/programs';
 import { EDITOR_PROGRAM } from './data/editor';
+import { useAnaChat } from '../components/ana/useAnaChat';
 
 const HERE_LABEL: Record<string, string> = {
   overview:       'Overview',
@@ -81,14 +85,25 @@ function persist(key: string, value: unknown) {
 
 const DEFAULT_USER = { name: 'Jordan Chen', initials: 'JC', role: 'Enterprise · Reg Affairs' };
 
-export function App() {
-  const [activeNav,    setActiveNav]    = React.useState<string>(() => getStored('mdx.activeNav', 'overview'));
+export interface AppProps {
+  /** Initial active workstream tab. Overrides the localStorage-persisted value
+   *  for this mount. Used when MDX is embedded under a specific project module
+   *  (e.g. from ZenApp embeddedModule = '510k' → initialNav = 'k510'). */
+  initialNav?: string;
+  /** Optional project display name to override the program-fixture title in
+   *  context. Surfaces the correct project name in topbar / AnA grounding. */
+  projectName?: string | null;
+}
+
+export function App({ initialNav, projectName }: AppProps = {}) {
+  const [activeNav,    setActiveNav]    = React.useState<string>(() =>
+    initialNav ?? getStored('mdx.activeNav', 'overview'),
+  );
   const [railCollapsed,setRailCollapsed]= React.useState<boolean>(() => getStored('mdx.railCollapsed', false));
   const [anaOpen,      setAnaOpen]      = React.useState<boolean>(() => getStored('mdx.anaOpen', false));
   const [anaMode,      setAnaMode]      = React.useState<AnaMode['id']>(() => getStored('mdx.anaMode', 'standard'));
   const [selectedProgram, setSelectedProgram] = React.useState<Program | null>(null);
   const [cmdkOpen, setCmdkOpen] = React.useState(false);
-  const [messages, setMessages] = React.useState<AnaMessage[]>([]);
 
   // First-visit discovery — open AnA once.
   React.useEffect(() => {
@@ -141,31 +156,67 @@ export function App() {
     return null;
   }, [activeNav, selectedProgram]);
 
-  const askAna = (text: string, opts: { tool?: string } = {}) => {
-    if (!text) return;
-    const now = 'just now';
-    const activeMode = ANA_MODES.find(m => m.id === anaMode)!;
-    setMessages(ms => [
-      ...ms,
-      { role: 'user', body: text, when: now, mode: anaMode },
-      {
-        role: 'ana',
-        body: opts.tool
-          ? `Would run \`${opts.tool}\` via gateway in ${activeMode.label} mode.`
-          : 'Routing via gateway… (this is the UI stub — real response streams here in production).',
-        when: now,
-        mode: anaMode,
-      },
-    ]);
-    setAnaOpen(true);
-  };
+  // ─── AnA chat — wired to the real gateway ──────────────────────────
+  // Mirrors the Phase 1 home wiring: useAnaChat owns the SSE round-trip
+  // with /api/ana-ri/stream. The MDX program code goes into module_context
+  // so the orchestrator can ground on the active workstream.
+  const programIdForAna = programForContext?.id ?? null;
+  const programNameForAna = projectName ?? programForContext?.title ?? null;
+  const submissionTypeForAna =
+    programForContext?.pathway === 'k510' ? '510K'
+    : programForContext?.pathway === 'pma' ? 'PMA'
+    : programForContext?.pathway === 'cer' ? 'CER'
+    : null;
+  const anaChat = useAnaChat({
+    projectId: programIdForAna,
+    projectName: programNameForAna,
+    screenName: HERE_LABEL[activeNav] || 'MDX',
+    submissionType: submissionTypeForAna,
+    moduleContext: { workstream: 'mdx', activeNav, anaMode },
+  });
 
-  const inEditor = activeNav === 'editor';
+  // Adapt useAnaChat messages to the AnaRail's local AnaMessage shape.
+  const messages: AnaMessage[] = React.useMemo(
+    () =>
+      anaChat.messages.map(m => ({
+        role: m.role === 'assistant' ? ('ana' as const) : ('user' as const),
+        body: m.text || (m.streaming ? (m.statusPhase || 'Routing…') : ''),
+        when: m.sentAt
+          ? new Date(m.sentAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+          : 'just now',
+        mode: anaMode,
+      })),
+    [anaChat.messages, anaMode],
+  );
+
+  const askAna = React.useCallback(
+    (text: string, opts: { tool?: string } = {}) => {
+      if (!text) return;
+      // The CmdK palette uses `tool` to dispatch named capabilities.
+      // Until the server orchestrator accepts a typed tool field, embed
+      // the tool id into the message text so the gateway can route it.
+      const payload = opts.tool ? `>${opts.tool} ${text}`.trim() : text;
+      void anaChat.send(payload);
+      setAnaOpen(true);
+    },
+    [anaChat],
+  );
+
+  const editorRoute: 'estar' | 'pma' | 'cer' | null =
+    activeNav === 'editor'      ? 'estar' :
+    activeNav === 'pma-editor'  ? 'pma'   :
+    activeNav === 'cer-editor'  ? 'cer'   :
+    null;
+  const inEditor = editorRoute !== null;
   const hereLabel = HERE_LABEL[activeNav] || 'Overview';
 
   let surface: React.ReactNode;
-  if (inEditor) {
+  if (editorRoute === 'estar') {
     surface = <EstarEditor initialMode={anaMode} />;
+  } else if (editorRoute === 'pma') {
+    surface = <PmaEditor initialMode={anaMode} />;
+  } else if (editorRoute === 'cer') {
+    surface = <CerEditor initialMode={anaMode} />;
   } else if (MDX_STUBS[activeNav]) {
     surface = <InDesignSurface stub={MDX_STUBS[activeNav]} />;
   } else {
@@ -174,7 +225,7 @@ export function App() {
         surface = <K510Surface program={programForContext} onAskAna={askAna} onOpenEditor={openEditor} />;
         break;
       case 'pma':
-        surface = <PmaSurface onAskAna={askAna} />;
+        surface = <PmaSurface onAskAna={askAna} onOpenEditor={() => setActiveNav('pma-editor')} />;
         break;
       case 'cer':
         surface = <CerSurface onAskAna={askAna} />;
@@ -210,42 +261,16 @@ export function App() {
           />
         );
         break;
-      // Surfaces whose source files are absent in this kit drop:
       case 'cer-workbench':
         surface = (
-          <ComingSoon
-            title="CER seven-tab workbench"
-            description="Equivalence, GSPR, Literature corpus, Signals, PMS and Generator sub-tabs ship in a later kit drop. Use the basic CER surface in the meantime."
-            icon="microscope"
+          <CerWorkbench
+            onAskAna={askAna}
+            onOpenEditor={() => setActiveNav('cer-editor')}
           />
         );
         break;
       case 'pre-sub':
-        surface = (
-          <ComingSoon
-            title="Pre-submission manager"
-            description="Q-Sub pipeline, question authoring, FDA response matching, and commitment tracking ship in a later kit drop."
-            icon="clipboardList"
-          />
-        );
-        break;
-      case 'pma-editor':
-        surface = (
-          <ComingSoon
-            title="PMA module editor"
-            description="The shared three-pane DocumentEditor primitive that powers PMA and CER section editing ships in a later kit drop. The eSTAR editor for 510(k) is available now from the 510(k) surface."
-            icon="shieldCheck"
-          />
-        );
-        break;
-      case 'cer-editor':
-        surface = (
-          <ComingSoon
-            title="CER section editor"
-            description="The shared three-pane DocumentEditor primitive that powers PMA and CER section editing ships in a later kit drop."
-            icon="microscope"
-          />
-        );
+        surface = <PreSubManager onAskAna={askAna} />;
         break;
       default:
         surface = <Overview onOpenProgram={openProgram} onAskAna={askAna} />;
@@ -266,30 +291,44 @@ export function App() {
         user={DEFAULT_USER}
       />
       <main className="main">
-        {inEditor ? (
-          <div className="ed-breadcrumb-bar">
-            <button
-              className="ed-exit"
-              onClick={() => setActiveNav('k510')}
-              title="Back to 510(k)"
-            >
-              {I.arrowLeft}
-              <span>Back to 510(k)</span>
-            </button>
-            <span className="ed-crumb-sep">{I.right}</span>
-            <span className="ed-crumb">{EDITOR_PROGRAM.title}</span>
-            <span className="ed-crumb-sep">{I.right}</span>
-            <span className="ed-crumb here">510(k) module editor</span>
-            <span className="tb-spacer" style={{ flex: 1 }} />
-            <button
-              className="tb-btn"
-              onClick={() => setCmdkOpen(true)}
-              title="Command palette"
-            >
-              {I.search}
-            </button>
-          </div>
-        ) : (
+        {inEditor ? (() => {
+          const exitNav: string =
+            editorRoute === 'pma' ? 'pma' :
+            editorRoute === 'cer' ? 'cer-workbench' :
+            'k510';
+          const exitLabel: string =
+            editorRoute === 'pma' ? 'Back to PMA' :
+            editorRoute === 'cer' ? 'Back to CER workbench' :
+            'Back to 510(k)';
+          const editorLabel: string =
+            editorRoute === 'pma' ? 'PMA module editor' :
+            editorRoute === 'cer' ? 'CER section editor' :
+            '510(k) module editor';
+          return (
+            <div className="ed-breadcrumb-bar">
+              <button
+                className="ed-exit"
+                onClick={() => setActiveNav(exitNav)}
+                title={exitLabel}
+              >
+                {I.arrowLeft}
+                <span>{exitLabel}</span>
+              </button>
+              <span className="ed-crumb-sep">{I.right}</span>
+              <span className="ed-crumb">{EDITOR_PROGRAM.title}</span>
+              <span className="ed-crumb-sep">{I.right}</span>
+              <span className="ed-crumb here">{editorLabel}</span>
+              <span className="tb-spacer" style={{ flex: 1 }} />
+              <button
+                className="tb-btn"
+                onClick={() => setCmdkOpen(true)}
+                title="Command palette"
+              >
+                {I.search}
+              </button>
+            </div>
+          );
+        })() : (
           <>
             <TopBar
               hereLabel={hereLabel}
@@ -300,7 +339,10 @@ export function App() {
           </>
         )}
         {inEditor ? (
-          <div className="ed-main-scroll" data-screen-label="MDX · 510(k) editor">
+          <div
+            className="ed-main-scroll"
+            data-screen-label={`MDX · ${editorRoute === 'pma' ? 'PMA editor' : editorRoute === 'cer' ? 'CER editor' : '510(k) editor'}`}
+          >
             {surface}
           </div>
         ) : (
