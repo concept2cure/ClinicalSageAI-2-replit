@@ -9,9 +9,10 @@ import { PMA_MODULES, PMA_PHASES, PMA_TRIAL_METRICS } from '../data/pma';
 
 export interface PmaSurfaceProps {
   onAskAna: (text: string) => void;
+  onOpenEditor?: () => void;
 }
 
-export function PmaSurface(_props: PmaSurfaceProps) {
+export function PmaSurface({ onOpenEditor }: PmaSurfaceProps) {
   return (
     <>
       <div className="section-hdr">
@@ -21,7 +22,9 @@ export function PmaSurface(_props: PmaSurfaceProps) {
             Phase 5 of 10 — Pivotal trial enrollment · PMA filing Q3 2026
           </div>
         </div>
-        <button className="section-more">Phase report {I.right}</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="section-more" onClick={onOpenEditor}>Open module editor {I.right}</button>
+        </div>
       </div>
 
       <div className="phases">

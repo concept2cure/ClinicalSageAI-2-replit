@@ -29,7 +29,10 @@ import {
 } from './workbench/Workbench';
 import { ProjectHome } from './projectHome/ProjectHome';
 import { EstarEditor } from './editors/EstarEditor';
-import { ComingSoon } from './_stubs/ComingSoon';
+import { PmaEditor } from './editors/PmaEditor';
+import { CerEditor } from './editors/CerEditor';
+import { CerWorkbench } from './surfaces/cer/CerWorkbench';
+import { PreSubManager } from './presub/PreSubManager';
 import { ANA_MODES, MDX_STUBS, type AnaMode } from './data/nav';
 import { MDX_PROGRAMS, type Program } from './data/programs';
 import { EDITOR_PROGRAM } from './data/editor';
@@ -160,12 +163,21 @@ export function App() {
     setAnaOpen(true);
   };
 
-  const inEditor = activeNav === 'editor';
+  const editorRoute: 'estar' | 'pma' | 'cer' | null =
+    activeNav === 'editor'      ? 'estar' :
+    activeNav === 'pma-editor'  ? 'pma'   :
+    activeNav === 'cer-editor'  ? 'cer'   :
+    null;
+  const inEditor = editorRoute !== null;
   const hereLabel = HERE_LABEL[activeNav] || 'Overview';
 
   let surface: React.ReactNode;
-  if (inEditor) {
+  if (editorRoute === 'estar') {
     surface = <EstarEditor initialMode={anaMode} />;
+  } else if (editorRoute === 'pma') {
+    surface = <PmaEditor initialMode={anaMode} />;
+  } else if (editorRoute === 'cer') {
+    surface = <CerEditor initialMode={anaMode} />;
   } else if (MDX_STUBS[activeNav]) {
     surface = <InDesignSurface stub={MDX_STUBS[activeNav]} />;
   } else {
@@ -174,7 +186,7 @@ export function App() {
         surface = <K510Surface program={programForContext} onAskAna={askAna} onOpenEditor={openEditor} />;
         break;
       case 'pma':
-        surface = <PmaSurface onAskAna={askAna} />;
+        surface = <PmaSurface onAskAna={askAna} onOpenEditor={() => setActiveNav('pma-editor')} />;
         break;
       case 'cer':
         surface = <CerSurface onAskAna={askAna} />;
@@ -210,42 +222,16 @@ export function App() {
           />
         );
         break;
-      // Surfaces whose source files are absent in this kit drop:
       case 'cer-workbench':
         surface = (
-          <ComingSoon
-            title="CER seven-tab workbench"
-            description="Equivalence, GSPR, Literature corpus, Signals, PMS and Generator sub-tabs ship in a later kit drop. Use the basic CER surface in the meantime."
-            icon="microscope"
+          <CerWorkbench
+            onAskAna={askAna}
+            onOpenEditor={() => setActiveNav('cer-editor')}
           />
         );
         break;
       case 'pre-sub':
-        surface = (
-          <ComingSoon
-            title="Pre-submission manager"
-            description="Q-Sub pipeline, question authoring, FDA response matching, and commitment tracking ship in a later kit drop."
-            icon="clipboardList"
-          />
-        );
-        break;
-      case 'pma-editor':
-        surface = (
-          <ComingSoon
-            title="PMA module editor"
-            description="The shared three-pane DocumentEditor primitive that powers PMA and CER section editing ships in a later kit drop. The eSTAR editor for 510(k) is available now from the 510(k) surface."
-            icon="shieldCheck"
-          />
-        );
-        break;
-      case 'cer-editor':
-        surface = (
-          <ComingSoon
-            title="CER section editor"
-            description="The shared three-pane DocumentEditor primitive that powers PMA and CER section editing ships in a later kit drop."
-            icon="microscope"
-          />
-        );
+        surface = <PreSubManager onAskAna={askAna} />;
         break;
       default:
         surface = <Overview onOpenProgram={openProgram} onAskAna={askAna} />;
@@ -266,30 +252,44 @@ export function App() {
         user={DEFAULT_USER}
       />
       <main className="main">
-        {inEditor ? (
-          <div className="ed-breadcrumb-bar">
-            <button
-              className="ed-exit"
-              onClick={() => setActiveNav('k510')}
-              title="Back to 510(k)"
-            >
-              {I.arrowLeft}
-              <span>Back to 510(k)</span>
-            </button>
-            <span className="ed-crumb-sep">{I.right}</span>
-            <span className="ed-crumb">{EDITOR_PROGRAM.title}</span>
-            <span className="ed-crumb-sep">{I.right}</span>
-            <span className="ed-crumb here">510(k) module editor</span>
-            <span className="tb-spacer" style={{ flex: 1 }} />
-            <button
-              className="tb-btn"
-              onClick={() => setCmdkOpen(true)}
-              title="Command palette"
-            >
-              {I.search}
-            </button>
-          </div>
-        ) : (
+        {inEditor ? (() => {
+          const exitNav: string =
+            editorRoute === 'pma' ? 'pma' :
+            editorRoute === 'cer' ? 'cer-workbench' :
+            'k510';
+          const exitLabel: string =
+            editorRoute === 'pma' ? 'Back to PMA' :
+            editorRoute === 'cer' ? 'Back to CER workbench' :
+            'Back to 510(k)';
+          const editorLabel: string =
+            editorRoute === 'pma' ? 'PMA module editor' :
+            editorRoute === 'cer' ? 'CER section editor' :
+            '510(k) module editor';
+          return (
+            <div className="ed-breadcrumb-bar">
+              <button
+                className="ed-exit"
+                onClick={() => setActiveNav(exitNav)}
+                title={exitLabel}
+              >
+                {I.arrowLeft}
+                <span>{exitLabel}</span>
+              </button>
+              <span className="ed-crumb-sep">{I.right}</span>
+              <span className="ed-crumb">{EDITOR_PROGRAM.title}</span>
+              <span className="ed-crumb-sep">{I.right}</span>
+              <span className="ed-crumb here">{editorLabel}</span>
+              <span className="tb-spacer" style={{ flex: 1 }} />
+              <button
+                className="tb-btn"
+                onClick={() => setCmdkOpen(true)}
+                title="Command palette"
+              >
+                {I.search}
+              </button>
+            </div>
+          );
+        })() : (
           <>
             <TopBar
               hereLabel={hereLabel}
@@ -300,7 +300,10 @@ export function App() {
           </>
         )}
         {inEditor ? (
-          <div className="ed-main-scroll" data-screen-label="MDX · 510(k) editor">
+          <div
+            className="ed-main-scroll"
+            data-screen-label={`MDX · ${editorRoute === 'pma' ? 'PMA editor' : editorRoute === 'cer' ? 'CER editor' : '510(k) editor'}`}
+          >
             {surface}
           </div>
         ) : (
