@@ -20,7 +20,7 @@ import {
   authService,
   useAuth as usePortalAuth,
   type MfaMethod,
-} from '@/portal-v2/services/authService';
+} from '@/services/portal/authService';
 
 import { computeRedirect } from '../../auth/redirectUtils';
 import brandIcon from '../../../assets/concept2cure-icon.svg';

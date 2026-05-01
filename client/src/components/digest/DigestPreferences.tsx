@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from '@/portal-v2/services/authService';
+import { useAuth } from '@/services/portal/authService';
 
 interface DigestPreferences {
   include_exports: boolean;

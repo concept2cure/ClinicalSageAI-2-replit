@@ -21,7 +21,7 @@ import React, {
   ReactNode,
   useCallback,
 } from 'react';
-import { useAuth } from '@/portal-v2/services/authService';
+import { useAuth } from '@/services/portal/authService';
 import { useTenant } from '@/contexts/TenantContext';
 import { apiRequest } from '@/lib/queryClient';
 

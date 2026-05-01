@@ -8,7 +8,7 @@
  */
 
 import React, { createContext, useContext, useMemo, useState, useCallback } from 'react';
-import { useAuth } from '@/portal-v2/services/authService';
+import { useAuth } from '@/services/portal/authService';
 import { getExperienceConfig, hasPermission, type Permission } from './portalPolicy';
 import { getModuleConfig, getRolePreset, type RoleModulePreset } from './moduleRegistry';
 import type {

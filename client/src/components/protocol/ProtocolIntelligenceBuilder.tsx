@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/portal-v2/services/authService';
+import { useAuth } from '@/services/portal/authService';
 import { toast } from '@/hooks/use-toast';
 
 export default function ProtocolIntelligenceBuilder() {

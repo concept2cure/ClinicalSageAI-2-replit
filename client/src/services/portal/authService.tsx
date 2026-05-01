@@ -12,7 +12,7 @@
  * @compliance FDA 21 CFR Part 11.10(d), NIST 800-63B
  */
 
-import { authLogger } from '../utils/logger';
+import { authLogger } from './logger';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES & INTERFACES

@@ -28,7 +28,7 @@ import { ProjectProvider } from '../context/ProjectContext';
 import {
   AuthProvider as PortalAuthProvider,
   useAuth as usePortalAuth,
-} from '@/portal-v2/services/authService';
+} from '@/services/portal/authService';
 
 // Module-deep-link route policy is shared by ZenApp; the bridge components
 // that previously lived here (Project510kBridge, ProjectPMABridge,

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { useAuth } from '../portal-v2/services/authService';
+import { useAuth } from '../services/portal/authService';
 
 /**
  * Protected Route Component
