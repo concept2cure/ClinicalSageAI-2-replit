@@ -55,7 +55,6 @@ import { NewProjectModal } from './components/projects/ProjectSwitcher';
 import ProjectConfigPanel from './components/workspace/ProjectConfigPanel';
 // [BATCH 3] WorkflowTimeline — renderer removed, import kept for type compatibility
 // [BATCH 3] ProjectFilesCompact — unused, import removed
-import { ProjectHeaderBar, getProjectAccentColor } from './components/workspace/ProjectHeaderBar';
 // [BATCH 3] CustomInstructions — knowledge-base renderer removed
 import { useProjectTasks } from './hooks/useProjectTasks';
 import { useAuthoringIntelligence } from './hooks/useAuthoringIntelligence';
@@ -685,7 +684,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     );
   }, [activeRawProject]);
 
-  // Readiness score for the active project (displayed in ProjectHeaderBar)
+  // Readiness score for the active project (displayed in TopBar)
   const { data: readinessData } = useReadinessAssessment(
     activeProjectId ? Number(activeProjectId) : null
   );
