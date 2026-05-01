@@ -458,9 +458,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     urlProjectId ? 'regulatory-workspace' : initialProjectId ? 'project-home' : 'projects'
   );
 
-  // Phase 2 MDX deep-link hash — passed to BundleSurfaceFrame iframe src
-  // so clicking "Vault DMS" / "Tasking" / etc. from the bundle home rail
-  // lands on the right tab inside the MDX bundle prototype.
+  // Phase 2 MDX deep-link hash — mapped to MdxRoute initialNav so clicking
+  // "Vault DMS" / "Tasking" / etc. from the home rail lands on the right
+  // tab inside the React MDX shell. See hashToMdxNav() above.
   const [mdxDeepLink, setMdxDeepLink] = useState<string>('');
 
   // Active section code — tracks which dossier section is open in SectionWorkspace
@@ -1817,10 +1817,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   // Phase 2 — Claude Design MDX workstream (Medical Device + Diagnostics
   // including 510(k), PMA, CER, Precedent Intelligence). Bundle source:
-  // design-system/ui_kits/mdx/. Mounted as the canonical bundle prototype
-  // The MDX workstream is now the React port at client/src/concept2cure/mdx/.
-  // Replaces the prior BundleSurfaceFrame iframe so the surface participates
-  // in v2 routing, auth, AnA streaming, and project context.
+  // The MDX workstream is the React port at client/src/concept2cure/mdx/,
+  // sourced from design-system/ui_kits/mdx/. The prior iframe wrapper was
+  // retired in Phase 2 (commit 4e5f63d4).
   if (layoutMode === 'mdx' && !embeddedModule) {
     return <MdxRoute initialNav={hashToMdxNav(mdxDeepLink)} />;
   }
