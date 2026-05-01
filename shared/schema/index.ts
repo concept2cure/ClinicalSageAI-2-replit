@@ -260,3 +260,31 @@ export type {
   EvidenceSufficiencyVerdict,
   SubmissionPathway,
 } from './evidence-sufficiency';
+
+// Q-Submission program (Pre-Sub / SIR / SRD / Agreement / Informational)
+export {
+  qSubmissions,
+  qSubMeetings,
+  qSubQuestions,
+  qSubCommitments,
+  qSubTimelineEntries,
+  qSubmissionsRelations,
+  qSubMeetingsRelations,
+  qSubQuestionsRelations,
+  qSubCommitmentsRelations,
+  qSubTimelineRelations,
+  insertQSubmissionSchema,
+  insertQSubQuestionSchema,
+  insertQSubCommitmentSchema,
+  Q_SUB_TYPES,
+  Q_SUB_STAGES,
+  QUESTION_STATUSES,
+  DOSSIER_LINK_KINDS,
+} from './q-sub';
+export type {
+  QSubmission,
+  QSubMeeting,
+  QSubQuestion,
+  QSubCommitment,
+  QSubTimelineEntry,
+} from './q-sub';
