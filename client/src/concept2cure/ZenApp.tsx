@@ -31,7 +31,6 @@ import { useLocation, Redirect } from 'wouter';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenCommandPalette } from './components/command/ZenCommandPalette';
 
 // Stage 10 extracted modules
