@@ -5,7 +5,34 @@
    docked AnA panel (380px, collapsible to 44px icon strip).
    ═════════════════════════════════════════════════════════════════ */
 
+/* ─── Token shim ─────────────────────────────────────────────────
+   Canonical tokens come from design-system/colors_and_type.css
+   (imported once at client/src/main.tsx). Two gaps to bridge:
 
+   1. Canonical names the brand accent --accent-main-{000,100,200}
+      while the kit's component CSS references --accent-{000,100,200}.
+      Alias here rather than mutating canonical.
+   2. Component-level layout constants (rail/topbar/tabbar/AnA widths)
+      are kit-local and don't belong in the canonical token surface.
+
+   Everything else (--bg-*, --text-*, --border, --success/--warning/
+   --error, --font-*, --radius-*, --ease, --dur, --shadow-*) is
+   supplied by canonical and intentionally not re-declared. */
+:root {
+  --accent-000: var(--accent-main-000);
+  --accent-100: var(--accent-main-100);
+  --accent-200: var(--accent-main-200);
+
+  --dur: var(--dur-normal);
+
+  --rail-expanded:  260px;
+  --rail-collapsed: 56px;
+  --tabbar:         44px;
+  --ana-expanded:   400px;
+  --ana-seam:       32px;
+
+  --black: #141413;
+}
 
 /* ─── Reset ─── */
 *, *::before, *::after { box-sizing: border-box; }
