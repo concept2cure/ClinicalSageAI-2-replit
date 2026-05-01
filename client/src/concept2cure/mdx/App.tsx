@@ -33,9 +33,10 @@ import { PmaEditor } from './editors/PmaEditor';
 import { CerEditor } from './editors/CerEditor';
 import { CerWorkbench } from './surfaces/cer/CerWorkbench';
 import { PreSubManager } from './presub/PreSubManager';
-import { ANA_MODES, MDX_STUBS, type AnaMode } from './data/nav';
+import { MDX_STUBS, type AnaMode } from './data/nav';
 import { MDX_PROGRAMS, type Program } from './data/programs';
 import { EDITOR_PROGRAM } from './data/editor';
+import { useAnaChat } from '../components/ana/useAnaChat';
 
 const HERE_LABEL: Record<string, string> = {
   overview:       'Overview',
@@ -91,7 +92,6 @@ export function App() {
   const [anaMode,      setAnaMode]      = React.useState<AnaMode['id']>(() => getStored('mdx.anaMode', 'standard'));
   const [selectedProgram, setSelectedProgram] = React.useState<Program | null>(null);
   const [cmdkOpen, setCmdkOpen] = React.useState(false);
-  const [messages, setMessages] = React.useState<AnaMessage[]>([]);
 
   // First-visit discovery — open AnA once.
   React.useEffect(() => {
@@ -144,24 +144,51 @@ export function App() {
     return null;
   }, [activeNav, selectedProgram]);
 
-  const askAna = (text: string, opts: { tool?: string } = {}) => {
-    if (!text) return;
-    const now = 'just now';
-    const activeMode = ANA_MODES.find(m => m.id === anaMode)!;
-    setMessages(ms => [
-      ...ms,
-      { role: 'user', body: text, when: now, mode: anaMode },
-      {
-        role: 'ana',
-        body: opts.tool
-          ? `Would run \`${opts.tool}\` via gateway in ${activeMode.label} mode.`
-          : 'Routing via gateway… (this is the UI stub — real response streams here in production).',
-        when: now,
+  // ─── AnA chat — wired to the real gateway ──────────────────────────
+  // Mirrors the Phase 1 home wiring: useAnaChat owns the SSE round-trip
+  // with /api/ana-ri/stream. The MDX program code goes into module_context
+  // so the orchestrator can ground on the active workstream.
+  const programIdForAna = programForContext?.id ?? null;
+  const programNameForAna = programForContext?.title ?? null;
+  const submissionTypeForAna =
+    programForContext?.pathway === 'k510' ? '510K'
+    : programForContext?.pathway === 'pma' ? 'PMA'
+    : programForContext?.pathway === 'cer' ? 'CER'
+    : null;
+  const anaChat = useAnaChat({
+    projectId: programIdForAna,
+    projectName: programNameForAna,
+    screenName: HERE_LABEL[activeNav] || 'MDX',
+    submissionType: submissionTypeForAna,
+    moduleContext: { workstream: 'mdx', activeNav, anaMode },
+  });
+
+  // Adapt useAnaChat messages to the AnaRail's local AnaMessage shape.
+  const messages: AnaMessage[] = React.useMemo(
+    () =>
+      anaChat.messages.map(m => ({
+        role: m.role === 'assistant' ? ('ana' as const) : ('user' as const),
+        body: m.text || (m.streaming ? (m.statusPhase || 'Routing…') : ''),
+        when: m.sentAt
+          ? new Date(m.sentAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+          : 'just now',
         mode: anaMode,
-      },
-    ]);
-    setAnaOpen(true);
-  };
+      })),
+    [anaChat.messages, anaMode],
+  );
+
+  const askAna = React.useCallback(
+    (text: string, opts: { tool?: string } = {}) => {
+      if (!text) return;
+      // The CmdK palette uses `tool` to dispatch named capabilities.
+      // Until the server orchestrator accepts a typed tool field, embed
+      // the tool id into the message text so the gateway can route it.
+      const payload = opts.tool ? `>${opts.tool} ${text}`.trim() : text;
+      void anaChat.send(payload);
+      setAnaOpen(true);
+    },
+    [anaChat],
+  );
 
   const editorRoute: 'estar' | 'pma' | 'cer' | null =
     activeNav === 'editor'      ? 'estar' :
