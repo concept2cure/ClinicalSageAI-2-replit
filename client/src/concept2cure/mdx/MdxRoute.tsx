@@ -12,6 +12,13 @@ import { App } from './App';
 
 import './app.css';
 
-export default function MdxRoute() {
-  return <App />;
+export interface MdxRouteProps {
+  /** Initial workstream tab — k510 / pma / cer / project-home / overview / etc. */
+  initialNav?: string;
+  /** Project name to render in the topbar context, when mounted under a project. */
+  projectName?: string | null;
+}
+
+export default function MdxRoute({ initialNav, projectName }: MdxRouteProps = {}) {
+  return <App initialNav={initialNav} projectName={projectName} />;
 }

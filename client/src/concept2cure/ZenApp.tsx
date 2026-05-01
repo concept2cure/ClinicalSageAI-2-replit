@@ -148,7 +148,19 @@ const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect 
 import { Ana } from './components/ana';
 import { useAnaChat } from './components/ana/useAnaChat';
 import { Concept2CureHome } from './components/concept2cure-home';
-import { BundleSurfaceFrame } from './components/bundle-surface-frame';
+import MdxRoute from './mdx/MdxRoute';
+
+/** Map MDX deep-link hashes (#k510, #pma, #cer, #vault, #admin, …) to the
+ *  React MDX App's activeNav identifiers. Returns undefined when no hash is
+ *  present so App falls back to its persisted/default activeNav. */
+function hashToMdxNav(hash: string | null | undefined): string | undefined {
+  if (!hash) return undefined;
+  const h = hash.startsWith('#') ? hash.slice(1) : hash;
+  // The bundle hash vocabulary maps 1:1 to App's activeNav identifiers
+  // (k510, pma, cer, predicate, tasks, vault, validation, submissions,
+  // templates, analytics, memory, admin, project-home, overview, …).
+  return h || undefined;
+}
 import {
   ClaudeEctdCoauthor,
   useEctdAuthoringData,
@@ -1806,18 +1818,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // Phase 2 — Claude Design MDX workstream (Medical Device + Diagnostics
   // including 510(k), PMA, CER, Precedent Intelligence). Bundle source:
   // design-system/ui_kits/mdx/. Mounted as the canonical bundle prototype
-  // via iframe so the user gets pixel-faithful rendering (terracotta,
-  // brand fonts, bundle's own state machine) without a multi-thousand-
-  // line React port. To swap to a real React port later, replace
-  // <BundleSurfaceFrame surface="mdx" .../> with the ported components.
+  // The MDX workstream is now the React port at client/src/concept2cure/mdx/.
+  // Replaces the prior BundleSurfaceFrame iframe so the surface participates
+  // in v2 routing, auth, AnA streaming, and project context.
   if (layoutMode === 'mdx' && !embeddedModule) {
-    return (
-      <BundleSurfaceFrame
-        surface="mdx"
-        hash={mdxDeepLink}
-        title="Medical Device and Diagnostics workstream"
-      />
-    );
+    return <MdxRoute initialNav={hashToMdxNav(mdxDeepLink)} />;
   }
 
   // Project module deep-links route ONLY to bundle-designed surfaces.
@@ -1860,10 +1865,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     const hash = moduleHash[embeddedModule];
     if (hash !== undefined) {
       return (
-        <BundleSurfaceFrame
-          surface="mdx"
-          hash={hash}
-          title={`${activeProject?.name ?? 'Project'} · ${embeddedModule.toUpperCase()}`}
+        <MdxRoute
+          initialNav={hashToMdxNav(hash)}
+          projectName={activeProject?.name}
         />
       );
     }

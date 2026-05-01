@@ -85,8 +85,20 @@ function persist(key: string, value: unknown) {
 
 const DEFAULT_USER = { name: 'Jordan Chen', initials: 'JC', role: 'Enterprise · Reg Affairs' };
 
-export function App() {
-  const [activeNav,    setActiveNav]    = React.useState<string>(() => getStored('mdx.activeNav', 'overview'));
+export interface AppProps {
+  /** Initial active workstream tab. Overrides the localStorage-persisted value
+   *  for this mount. Used when MDX is embedded under a specific project module
+   *  (e.g. from ZenApp embeddedModule = '510k' → initialNav = 'k510'). */
+  initialNav?: string;
+  /** Optional project display name to override the program-fixture title in
+   *  context. Surfaces the correct project name in topbar / AnA grounding. */
+  projectName?: string | null;
+}
+
+export function App({ initialNav, projectName }: AppProps = {}) {
+  const [activeNav,    setActiveNav]    = React.useState<string>(() =>
+    initialNav ?? getStored('mdx.activeNav', 'overview'),
+  );
   const [railCollapsed,setRailCollapsed]= React.useState<boolean>(() => getStored('mdx.railCollapsed', false));
   const [anaOpen,      setAnaOpen]      = React.useState<boolean>(() => getStored('mdx.anaOpen', false));
   const [anaMode,      setAnaMode]      = React.useState<AnaMode['id']>(() => getStored('mdx.anaMode', 'standard'));
@@ -149,7 +161,7 @@ export function App() {
   // with /api/ana-ri/stream. The MDX program code goes into module_context
   // so the orchestrator can ground on the active workstream.
   const programIdForAna = programForContext?.id ?? null;
-  const programNameForAna = programForContext?.title ?? null;
+  const programNameForAna = projectName ?? programForContext?.title ?? null;
   const submissionTypeForAna =
     programForContext?.pathway === 'k510' ? '510K'
     : programForContext?.pathway === 'pma' ? 'PMA'
