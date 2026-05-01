@@ -1,4 +1,4 @@
-import type { MfaMethod } from '@/portal-v2/services/authService';
+import type { MfaMethod } from '@/services/portal/authService';
 
 export const normalizeEmail = (value: string): string => value.trim().toLowerCase();
 

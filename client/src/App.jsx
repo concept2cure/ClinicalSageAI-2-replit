@@ -25,7 +25,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Switch, Route, Redirect } from 'wouter';
 import { lazy, Suspense } from 'react';
-import { AuthProvider } from './portal-v2/services/authService';
+import { AuthProvider } from './services/portal/authService';
 import queryClient from './lib/queryClient';
 import { TenantProvider } from './contexts/TenantContext.tsx';
 import { AnAAssistantProvider } from './contexts/AnAAssistantContext';

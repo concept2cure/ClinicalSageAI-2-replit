@@ -1,7 +1,7 @@
 // import React, { createContext, useState, useEffect, useContext } from 'react';
 
 /**
- * @deprecated Legacy auth context. Use portal-v2 authService provider instead.
+ * @deprecated Legacy auth context. Use @/services/portal/authService provider instead.
  */
 export {};
 /*
