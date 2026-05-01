@@ -13,7 +13,7 @@ pdf2image>=1.17.0             # Strategy 6: pdf->image via poppler (OCR fallback
 # === Document Extraction - DOCX / XLSX / TXT ===
 python-docx>=0.8.11           # Read/write DOCX (extraction + generation)
 openpyxl>=3.1.0               # Read XLSX spreadsheets
-mammoth>=1.6.0                # DOCX plain-text extraction
+mammoth>=1.12.0                # DOCX plain-text extraction
 docx2txt>=0.8                 # DOCX fallback extractor
 tiktoken>=0.5.0               # Token counting for context window trimming
 
