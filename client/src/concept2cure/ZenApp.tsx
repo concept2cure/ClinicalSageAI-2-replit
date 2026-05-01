@@ -46,9 +46,6 @@ import {
 import { useZenKeyboardShortcuts } from './hooks/useZenKeyboardShortcuts';
 import { useUserProfileFromStorage } from './hooks/useUserProfileFromStorage';
 import { useWorkspaceSuggestedActions } from './hooks/useWorkspaceSuggestedActions';
-const ZenSettings = React.lazy(() =>
-  import('./components/settings/ZenSettings').then(m => ({ default: m.ZenSettings }))
-);
 // [BATCH 3] WorkflowTimeline — renderer removed, import kept for type compatibility
 // [BATCH 3] ProjectFilesCompact — unused, import removed
 // [BATCH 3] CustomInstructions — knowledge-base renderer removed

@@ -22,27 +22,6 @@ export * from './artifacts';
 // Template components
 export * from './templates';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CONVERGENT CANVAS - Phase 52 Sherpa System
-// ─────────────────────────────────────────────────────────────────────────────
-
-export {
-  MorningBriefingPanel,
-  IndustryWorkspace,
-  SHERPA_PERSONAS,
-  CANVAS_ZONES,
-  type IndustryMode,
-  type IndustryWorkspaceProps,
-  type SherpaPersonaId,
-} from './canvas';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ZEN MINIMALIST COMPONENTS (Claude.ai / ChatGPT style)
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Settings
-export { ZenSettings } from './settings';
-
 // Welcome & Onboarding (Claude.ai style)
 export { WelcomeBackScreen } from './common/WelcomeBackScreen';
 
@@ -52,28 +31,11 @@ export { LumenProjectAssistant } from './assistant/LumenProjectAssistant';
 // Artifact Viewer (Claude.ai style)
 export { ArtifactViewer } from './artifacts/ArtifactViewer';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ENTERPRISE REGULATORY COMPONENTS
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Dashboard Components
-export { RoleDashboard } from './dashboards/RoleDashboard';
-export { IndustryRoleDashboard } from './dashboards/IndustryRoleDashboard';
-
 // Calendar Components
 export { RegulatoryCalendar } from './calendar/RegulatoryCalendar';
 
 // Submission Components
 export { DossierNavigator } from './submission/DossierNavigator';
-
-// Medical Writing Components
-export { MedicalWriterQueue } from './writing/MedicalWriterQueue';
-
-// Collaboration Components
-export { TeamCollaborationPanel } from './collaboration/TeamCollaborationPanel';
-
-// Wizard Components
-export { QuickStartWizard } from './wizard/QuickStartWizard';
 
 // Quality Components
 export { SOPManagement } from './quality/SOPManagement';
