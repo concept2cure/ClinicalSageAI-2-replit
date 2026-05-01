@@ -75,17 +75,11 @@ export { DossierNavigator } from './submission/DossierNavigator';
 // Medical Writing Components
 export { MedicalWriterQueue } from './writing/MedicalWriterQueue';
 
-// CRO Components
-export { CROResourceDashboard } from './cro/CROResourceDashboard';
-
 // Collaboration Components
 export { TeamCollaborationPanel } from './collaboration/TeamCollaborationPanel';
 
 // Wizard Components
 export { QuickStartWizard } from './wizard/QuickStartWizard';
-
-// Shell Components
-export { IndustryWorkspaceShell } from './shell/IndustryWorkspaceShell';
 
 // Projects
 export { ProjectTimeline } from './projects/ProjectTimeline';

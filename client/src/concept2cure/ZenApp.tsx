@@ -78,7 +78,6 @@ import { isFeatureEnabled } from '@/flags/featureFlags';
 import { getProjectModuleRoutePolicy } from './router/projectModuleRoutePolicy';
 import { evaluateApprovedRoute } from './router/approvedRoutePolicy';
 import { normalizeLayoutMode } from './router/zenRouteNormalization';
-import { Embedded510kHost, EmbeddedPMAHost, EmbeddedCERHost } from './components/shell/EmbeddedModuleHosts';
 
 // EmbeddedCERV2Page / EmbeddedPMAWorkspace / FDA510kWorkspacePage removed —
 // non-bundle surfaces. /project/:id/{510k,pma,cer} now route to the bundle
@@ -155,7 +154,6 @@ import {
   useEctdAuthoringData,
   useEctdReadiness,
 } from './components/claude-ectd-coauthor';
-import { GlobalOperatingShell } from './components/shell/GlobalOperatingShell';
 
 // Canonical authoring context resolver
 import { resolveAuthoringContext } from './services/authoring-context-resolver';
