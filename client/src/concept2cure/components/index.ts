@@ -40,14 +40,8 @@ export {
 // ZEN MINIMALIST COMPONENTS (Claude.ai / ChatGPT style)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Command Palette
-export { ZenCommandPalette } from './command';
-
 // Settings
 export { ZenSettings } from './settings';
-
-// Projects
-export { ProjectSwitcher } from './projects';
 
 // Welcome & Onboarding (Claude.ai style)
 export { WelcomeBackScreen } from './common/WelcomeBackScreen';
@@ -80,9 +74,6 @@ export { TeamCollaborationPanel } from './collaboration/TeamCollaborationPanel';
 
 // Wizard Components
 export { QuickStartWizard } from './wizard/QuickStartWizard';
-
-// Projects
-export { ProjectTimeline } from './projects/ProjectTimeline';
 
 // Quality Components
 export { SOPManagement } from './quality/SOPManagement';

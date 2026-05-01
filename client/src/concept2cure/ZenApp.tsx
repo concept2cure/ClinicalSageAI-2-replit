@@ -31,7 +31,6 @@ import { useLocation, Redirect } from 'wouter';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { ZenCommandPalette } from './components/command/ZenCommandPalette';
 
 // Stage 10 extracted modules
 import {
@@ -50,11 +49,8 @@ import { useWorkspaceSuggestedActions } from './hooks/useWorkspaceSuggestedActio
 const ZenSettings = React.lazy(() =>
   import('./components/settings/ZenSettings').then(m => ({ default: m.ZenSettings }))
 );
-import { NewProjectModal } from './components/projects/ProjectSwitcher';
-import ProjectConfigPanel from './components/workspace/ProjectConfigPanel';
 // [BATCH 3] WorkflowTimeline — renderer removed, import kept for type compatibility
 // [BATCH 3] ProjectFilesCompact — unused, import removed
-import { ProjectHeaderBar, getProjectAccentColor } from './components/workspace/ProjectHeaderBar';
 // [BATCH 3] CustomInstructions — knowledge-base renderer removed
 import { useProjectTasks } from './hooks/useProjectTasks';
 import { useAuthoringIntelligence } from './hooks/useAuthoringIntelligence';
@@ -70,7 +66,6 @@ import {
   useRecommendations,
 } from './hooks/useIntelligence';
 
-import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
 import { ErrorBoundary } from './components/ErrorBoundary';
 // IndustryMode type unused — removed
 // [BATCH 3] ProductAuditQuestionnaire — renderer removed
@@ -87,7 +82,6 @@ import { normalizeLayoutMode } from './router/zenRouteNormalization';
 // Full Document Builder wizard (CSR + CTD across global agencies)
 const FullDocumentBuilder = lazy(() => import('./components/builder/FullDocumentBuilder'));
 // Tools Landing — curated workbench (builder is one tool inside it)
-const ToolsLanding = lazy(() => import('./components/workspace/ToolsLanding'));
 import {
   X,
   ChevronLeft,
@@ -164,7 +158,6 @@ import type {
 } from '../../../shared/types/authoring-context';
 
 // First-run onboarding experience
-const FirstRunExperience = lazy(() => import('./components/enablement/FirstRunExperience'));
 
 // [BATCH 3] SnowGlobe — removed as user-reachable world
 
@@ -264,41 +257,6 @@ const DossierMap = lazy(() =>
 );
 const SectionWorkspace = lazy(() =>
   import('./components/workflow/SectionWorkspace').then(m => ({ default: m.SectionWorkspace }))
-);
-const SubmissionReadinessView = lazy(() =>
-  import('./components/workflow/SubmissionReadiness').then(m => ({
-    default: m.SubmissionReadiness,
-  }))
-);
-const SubmissionBuilderView = lazy(() =>
-  import('./components/submission/SubmissionBuilder').then(m => ({
-    default: m.default,
-  }))
-);
-const ProjectTaskBoardView = lazy(() =>
-  import('./components/workspace/ProjectTaskBoard').then(m => ({
-    default: m.ProjectTaskBoard,
-  }))
-);
-const CSRWorkflowView = lazy(() =>
-  import('./components/workflow/CSRWorkflow').then(m => ({
-    default: m.CSRWorkflow,
-  }))
-);
-const INDChecklistView = lazy(() =>
-  import('./components/workflow/INDChecklist').then(m => ({
-    default: m.INDChecklist,
-  }))
-);
-const TemplateLibraryView = lazy(() =>
-  import('./components/submission/TemplateLibrary').then(m => ({
-    default: m.default,
-  }))
-);
-const HAQManagerView = lazy(() =>
-  import('./components/workflow/HAQManager').then(m => ({
-    default: m.HAQManager,
-  }))
 );
 
 // ─── New intent-organized workspace lazy loads ──────────────────────────────
