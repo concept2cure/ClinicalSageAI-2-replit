@@ -16,8 +16,8 @@ import React, {
   useReducer,
   useEffect,
 } from 'react';
-import { sessionLogger, securityLogger } from '../utils/logger';
-import type { UserRole } from '../core/portalTypes';
+import { sessionLogger, securityLogger } from '@/services/portal/logger';
+import type { UserRole } from './portalTypes';
 import type {
   Organization,
   UserProfile,
@@ -27,19 +27,19 @@ import type {
   PermissionAction,
   ResourceType,
   AuditLogEntry,
-} from '../core/securityTypes';
+} from './securityTypes';
 import type {
   ComplianceConfig,
   ComplianceHealth,
   SoDValidation,
-} from '../core/regulatoryCompliance';
+} from './regulatoryCompliance';
 import {
   validateSoD,
   hasPermission,
   getArchetypeConfig,
   ROLE_PERMISSION_PRESETS,
   getComplianceCategory,
-} from '../core/regulatoryCompliance';
+} from './regulatoryCompliance';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STATE TYPES

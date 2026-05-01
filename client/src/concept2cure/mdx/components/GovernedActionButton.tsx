@@ -11,9 +11,10 @@
  * it walks the user through the reason → sign → mutate → log chain. If any
  * step fails the mutation does not run.
  *
- * The visual currently delegates to portal-v2's ElectronicSignatureGate
- * engine (which is Part-11-compliant but pre-Claude-Design). When Claude
- * Design ships an e-sign kit, swap the inner Gate component without
+ * The visual currently delegates to the legacy-esign island's
+ * ElectronicSignatureGate engine (Part-11-compliant but pre-Claude-Design,
+ * relocated from portal-v2 in Action C of UI_MIGRATION_MAP_2026-05-01).
+ * When Claude Design ships an e-sign kit, swap the inner Gate without
  * changing this file's contract — every consumer keeps working.
  *
  * Usage:
@@ -37,7 +38,7 @@ import {
   type ElectronicSignature,
   type SignatureRequiredAction,
   type SignatureMeaning,
-} from '@/portal-v2/components/security/ElectronicSignature';
+} from '@/components/legacy-esign/ElectronicSignature';
 
 export interface GovernedActionContext {
   reason: string;

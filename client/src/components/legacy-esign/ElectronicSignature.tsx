@@ -26,13 +26,13 @@ import {
   Calendar,
   Hash,
 } from 'lucide-react';
-import { useSecurityContext } from '../../hooks/useSecurityContext';
+import { useSecurityContext } from './useSecurityContext';
 import type {
   ElectronicSignature,
   SignatureMeaning,
   AuditLogEntry,
-} from '../../core/securityTypes';
-import type { SignatureRequiredAction } from '../../core/regulatoryCompliance';
+} from './securityTypes';
+import type { SignatureRequiredAction } from './regulatoryCompliance';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
