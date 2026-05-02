@@ -305,6 +305,33 @@ export function requireGovernedToolGate(
 
 // ─── Helpers exposed to handlers ───────────────────────────────────────────
 
+/**
+ * Build the standard `details.*` shape every `agent.ana.*` audit row
+ * carries. Handlers spread this into their auditService.logAction call:
+ *
+ *     details: {
+ *       ...agentAuditDetails(ctx, gate),
+ *       programId: row.programId,
+ *       title: row.title,
+ *     },
+ *
+ * Captures: actorKind, agentReason, reasonReferencedArtifact (soft
+ * signal), and the chat-thread / chat-message ids if present so an
+ * auditor can trace the conversation that produced the mutation.
+ */
+export function agentAuditDetails(
+  ctx: CommandContext,
+  gate: PolicyCheck,
+): Record<string, unknown> {
+  return {
+    actorKind: 'agent:ana',
+    agentReason: gate.reason,
+    reasonReferencedArtifact: gate.reasonReferencedArtifact === true,
+    threadId: ctx.threadId ?? null,
+    chatMessageId: ctx.chatMessageId ?? null,
+  };
+}
+
 /** Map a TenantAccessError-like thrown error to a CommandResult. */
 export function mapServiceError(action: string, err: unknown): CommandResult {
   if (err instanceof Error && err.name === 'TenantAccessError') {

@@ -48,6 +48,10 @@ import {
   MDX_COMMAND_METADATA_PHASE3,
 } from './mdx-command-handlers-phase3';
 import { loadAnaToolPolicy } from './mdx-tool-policy';
+import {
+  explainAuditRow,
+  EXPLAIN_AUDIT_ROW_METADATA,
+} from './mdx-explain-audit-row';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -63,9 +67,17 @@ export interface CommandContext {
    * Chat thread id. When present, the AnA-MDX governed-tool gate uses
    * it to look up pending actions stashed in mdx-pending-actions, so a
    * user can confirm a proposed action in a follow-up turn without
-   * re-stating every parameter.
+   * re-stating every parameter. Also written into audit details so an
+   * auditor can pull the chat that produced any agent.ana.* mutation.
    */
   threadId?: string;
+  /**
+   * Chat message id of the user turn that produced the command. Written
+   * into audit details for forensic linkage. The chat layer assigns
+   * this when persisting the user message; if absent, audit linkage
+   * falls back to threadId only.
+   */
+  chatMessageId?: string;
   /**
    * Per-tenant AnA tool policy. Stamped by `executeCommands` once per
    * dispatch from `organizations.settings.anaToolPolicy`. Read by the
@@ -4313,6 +4325,8 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   ...MDX_COMMAND_METADATA_PHASE2,
   // ─── MDX governed mutations — phase 3 (predicate proxy) ────────────
   ...MDX_COMMAND_METADATA_PHASE3,
+  // ─── Auditor capability ────────────────────────────────────────────
+  EXPLAIN_AUDIT_ROW_METADATA,
 ];
 
 /**
@@ -4500,6 +4514,8 @@ export async function executeCommands(
     // MDX governed mutations — phase 3 (predicate.candidate.set_status,
     // se_matrix.patch). Proxy through BFF to the Python shadow service.
     ...MDX_COMMAND_HANDLERS_PHASE3,
+    // Audit-row explainer — read-only auditor capability.
+    'audit.explain': explainAuditRow,
   };
 
   for (const cmd of commands) {

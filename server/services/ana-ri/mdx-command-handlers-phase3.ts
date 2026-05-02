@@ -22,7 +22,7 @@
 
 import auditService from '../auditService';
 import type { CommandContext, CommandResult } from './command-executor';
-import { requireGovernedToolGate, mapServiceError } from './mdx-tool-policy';
+import { requireGovernedToolGate, mapServiceError, agentAuditDetails } from './mdx-tool-policy';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -155,8 +155,7 @@ export async function predicateCandidateSetStatus(
       resourceType: 'predicate_candidate',
       resourceId: candidateId,
       details: {
-        actorKind: 'agent:ana',
-        agentReason: gate.reason,
+        ...agentAuditDetails(ctx, gate),
         programId,
         status,
       },
@@ -239,8 +238,7 @@ export async function seMatrixPatch(
       resourceType: 'se_matrix_row',
       resourceId: matrixRowId,
       details: {
-        actorKind: 'agent:ana',
-        agentReason: gate.reason,
+        ...agentAuditDetails(ctx, gate),
         programId,
         fieldsChanged: Object.keys(patch),
       },
@@ -331,8 +329,7 @@ export async function correspondenceIngest(
       resourceType: 'regulatory_correspondence',
       resourceId: String(correspondenceId ?? `${projectId}:${submissionId}`),
       details: {
-        actorKind: 'agent:ana',
-        agentReason: gate.reason,
+        ...agentAuditDetails(ctx, gate),
         projectId,
         submissionId,
         subject,

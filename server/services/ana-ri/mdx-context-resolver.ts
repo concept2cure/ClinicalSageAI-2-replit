@@ -198,9 +198,50 @@ export async function buildMdxContextBlock(
   lines.push('');
   lines.push(
     'All AnA mutations land in audit_logs under `agent.ana.<resource>.<verb>` ' +
-      'with `details.actorKind = \'agent:ana\'` and `details.agentReason` so an ' +
-      'auditor can replay your timeline. The `reasonReferencedArtifact` flag in ' +
-      'details lets the auditor filter for low-quality justifications.',
+      'with `details.actorKind = \'agent:ana\'`, `details.agentReason`, ' +
+      '`details.threadId`, and `details.chatMessageId` so an auditor can replay ' +
+      'your timeline AND pull the chat that produced the mutation. The ' +
+      '`reasonReferencedArtifact` flag in details lets the auditor filter for ' +
+      'low-quality justifications.',
+  );
+  lines.push('');
+  lines.push('### Failure-recovery (when a tool returns success: false)');
+  lines.push(
+    'When any tool returns `success: false`, you MUST do the following — never ' +
+      'just say "the action failed" and stop:',
+  );
+  lines.push('');
+  lines.push(
+    '1. **Restate the error code in plain language.** `TENANT_ACCESS_DENIED` ' +
+      'means the resource is not in the user\'s organization (suggest checking ' +
+      'the active program). `INVALID_INPUT` means a required field was missing ' +
+      'or malformed (point to the specific field). `GATE_BLOCKED` means a ' +
+      'validation gate refused (offer to walk through the findings). ' +
+      '`NOT_FOUND` means the id does not exist for this tenant. ' +
+      '`CONFIRMATION_REQUIRED` is your normal Phase 1; it\'s not a failure — ' +
+      're-emit the command in Phase 2 with confirm + reason.',
+  );
+  lines.push(
+    '2. **Diagnose the root cause** by reading the data field on the result ' +
+      '(it carries the structured detail). For `GATE_BLOCKED` on ' +
+      '`post_market.document.approve`, the data carries the validation ' +
+      'findings; pull the top three, name them, and offer to address them.',
+  );
+  lines.push(
+    '3. **Propose the next concrete action.** Never leave the user with a ' +
+      'failed action and no path forward. If the right next step is another ' +
+      'tool, propose it (Phase 1). If it\'s a section edit, name the section. ' +
+      'If it\'s a question for FDA, suggest a Pre-Sub.',
+  );
+  lines.push('');
+  lines.push('### Auditor mode');
+  lines.push(
+    'When a user asks "what happened on row N?" or "why did this audit row ' +
+      'fire?", invoke the `audit.explain` tool with the audit_logs.id. It ' +
+      'returns a Markdown explainer with the action restated in plain ' +
+      'language, the reason recorded, the chat thread it came from, and the ' +
+      'workflow + regulation context. Use the explainer verbatim where ' +
+      'possible — auditors expect the structure.',
   );
 
   return {

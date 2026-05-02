@@ -41,7 +41,7 @@ import {
 } from '../evidence-sufficiency/evidence-sufficiency.service';
 import { runReviewerSimulation } from '../intelligence-engine/reviewer-simulator.service';
 import type { CommandContext, CommandResult } from './command-executor';
-import { requireGovernedToolGate, mapServiceError } from './mdx-tool-policy';
+import { requireGovernedToolGate, mapServiceError, agentAuditDetails } from './mdx-tool-policy';
 
 // ─── Local helpers ──────────────────────────────────────────────────────────
 
@@ -87,8 +87,7 @@ export async function gsprMappingUpsert(
       resourceType: 'gspr_program_mapping',
       resourceId: String((row as any)?.id ?? `${programId}:${requirementId}`),
       details: {
-        actorKind: 'agent:ana',
-        agentReason: gate.reason,
+        ...agentAuditDetails(ctx, gate),
         programId,
         requirementId,
         applicability,
@@ -150,8 +149,7 @@ export async function postMarketDocumentCreate(
       resourceType: 'post_market_document',
       resourceId: String((doc as any)?.id ?? code),
       details: {
-        actorKind: 'agent:ana',
-        agentReason: gate.reason,
+        ...agentAuditDetails(ctx, gate),
         programId,
         documentType,
         code,
@@ -199,7 +197,7 @@ export async function postMarketDocumentApprove(
         action: 'agent.ana.post_market.document.approve.blocked',
         resourceType: 'post_market_document',
         resourceId: documentId,
-        details: { actorKind: 'agent:ana', agentReason: gate.reason, reason: code },
+        details: { ...agentAuditDetails(ctx, gate), reason: code },
       });
       return {
         success: false,
@@ -217,8 +215,7 @@ export async function postMarketDocumentApprove(
       resourceType: 'post_market_document',
       resourceId: documentId,
       details: {
-        actorKind: 'agent:ana',
-        agentReason: gate.reason,
+        ...agentAuditDetails(ctx, gate),
         signatureId: typeof params.signatureId === 'string' ? params.signatureId : null,
       },
     });
@@ -288,8 +285,7 @@ export async function evidenceSufficiencyAssess(
       resourceType: 'evidence_sufficiency_assessment',
       resourceId: (result as any)?.id ?? programId,
       details: {
-        actorKind: 'agent:ana',
-        agentReason: gate.reason,
+        ...agentAuditDetails(ctx, gate),
         programId,
         pathway,
         verdict: (result as any)?.verdict ?? null,
@@ -351,8 +347,7 @@ export async function reviewerSimulationRun(
       resourceType: 'reviewer_simulation_run',
       resourceId: (result as any)?.runId ?? programId,
       details: {
-        actorKind: 'agent:ana',
-        agentReason: gate.reason,
+        ...agentAuditDetails(ctx, gate),
         programId,
         personaCount: Array.isArray(params.personas) ? params.personas.length : null,
       },
@@ -405,8 +400,7 @@ export async function postMarketDocumentUpdate(
       resourceType: 'post_market_document',
       resourceId: documentId,
       details: {
-        actorKind: 'agent:ana',
-        agentReason: gate.reason,
+        ...agentAuditDetails(ctx, gate),
         fieldsChanged: Object.keys(patch),
       },
     });
@@ -453,8 +447,7 @@ export async function postMarketDocumentValidate(
       resourceType: 'post_market_document',
       resourceId: documentId,
       details: {
-        actorKind: 'agent:ana',
-        agentReason: gate.reason,
+        ...agentAuditDetails(ctx, gate),
         passed: (result as any)?.valid ?? null,
         findings: Array.isArray((result as any)?.findings) ? (result as any).findings.length : null,
       },
@@ -502,8 +495,7 @@ export async function postMarketDocumentSupersede(
       resourceType: 'post_market_document',
       resourceId: documentId,
       details: {
-        actorKind: 'agent:ana',
-        agentReason: gate.reason,
+        ...agentAuditDetails(ctx, gate),
         newDocumentId: (newDoc as any)?.id ?? null,
         newTitle: typeof params.newTitle === 'string' ? params.newTitle : null,
       },

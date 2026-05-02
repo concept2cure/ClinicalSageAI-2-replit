@@ -38,7 +38,7 @@ import {
 import { Q_SUB_TYPES } from '../../../shared/schema/q-sub';
 import auditService from '../auditService';
 import type { CommandContext, CommandResult } from './command-executor';
-import { requireGovernedToolGate, mapServiceError } from './mdx-tool-policy';
+import { requireGovernedToolGate, mapServiceError, agentAuditDetails } from './mdx-tool-policy';
 
 // ─── Local helpers ──────────────────────────────────────────────────────────
 
@@ -114,9 +114,7 @@ export async function qSubCreate(
       resourceType: 'q_submission',
       resourceId: String(row.id),
       details: {
-        actorKind: 'agent:ana',
-        agentReason: gate.reason,
-        reasonReferencedArtifact: gate.reasonReferencedArtifact === true,
+        ...agentAuditDetails(ctx, gate),
         programId: row.programId,
         qSubType: row.qSubType,
         title: row.title,
@@ -186,8 +184,7 @@ export async function qSubCommitmentSetRolledIn(
       resourceType: 'q_sub_commitment',
       resourceId: String(updated.id),
       details: {
-        actorKind: 'agent:ana',
-        agentReason: gate.reason,
+        ...agentAuditDetails(ctx, gate),
         displayCode: updated.displayCode,
         dossierLinkSectionId: updated.dossierLinkSectionId,
         rolledIn: updated.rolledIn,
@@ -288,8 +285,7 @@ export async function sectionApprove(
       resourceType: 'cerv2_510k_section',
       resourceId: String(sectionId),
       details: {
-        actorKind: 'agent:ana',
-        agentReason: gate.reason,
+        ...agentAuditDetails(ctx, gate),
         sectionNumber: before.section_number,
         previousStatus: before.status ?? null,
         newStatus: targetStatus,
@@ -385,6 +381,9 @@ export async function preflightModule(
       resourceId: `${projectId}:${moduleCode}`,
       details: {
         actorKind: 'agent:ana',
+        // Read-only action: no gate, hence no agentReason / artifact flag.
+        threadId: ctx.threadId ?? null,
+        chatMessageId: ctx.chatMessageId ?? null,
         moduleCode,
         overall: body?.overall ?? null,
         majorBlockerCount: Array.isArray(body?.majorBlockers) ? body.majorBlockers.length : 0,
@@ -449,8 +448,7 @@ export async function esgTransmit(
       resourceType: 'fda_510k_submission_package',
       resourceId: String((response as any)?.packageId ?? projectId),
       details: {
-        actorKind: 'agent:ana',
-        agentReason: gate.reason,
+        ...agentAuditDetails(ctx, gate),
         projectId,
         transactionId: (response as any)?.transactionId ?? null,
       },
@@ -470,8 +468,7 @@ export async function esgTransmit(
       resourceType: 'fda_510k_submission_package',
       resourceId: String(projectId),
       details: {
-        actorKind: 'agent:ana',
-        agentReason: gate.reason,
+        ...agentAuditDetails(ctx, gate),
         error: err instanceof Error ? err.message : 'unknown',
       },
     });
