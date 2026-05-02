@@ -13,23 +13,25 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { qSubSvc, sectionPool, esgSvc, audit } = vi.hoisted(() => ({
-  qSubSvc: {
-    createQSubmission: vi.fn(),
-    setCommitmentRolledIn: vi.fn(),
-  },
-  sectionPool: {
-    query: vi.fn(),
-  },
-  esgSvc: {
-    submitToFDA: vi.fn(),
-  },
-  audit: { logAction: vi.fn().mockResolvedValue(undefined) },
-}));
-
-class TenantAccessError extends Error {
-  constructor(m: string) { super(m); this.name = 'TenantAccessError'; }
-}
+const { qSubSvc, sectionPool, esgSvc, audit, TenantAccessError } = vi.hoisted(() => {
+  class TenantAccessError extends Error {
+    constructor(m: string) { super(m); this.name = 'TenantAccessError'; }
+  }
+  return {
+    qSubSvc: {
+      createQSubmission: vi.fn(),
+      setCommitmentRolledIn: vi.fn(),
+    },
+    sectionPool: {
+      query: vi.fn(),
+    },
+    esgSvc: {
+      submitToFDA: vi.fn(),
+    },
+    audit: { logAction: vi.fn().mockResolvedValue(undefined) },
+    TenantAccessError,
+  };
+});
 
 vi.mock('../../q-sub/q-sub.service', () => ({
   createQSubmission: (...a: any[]) => qSubSvc.createQSubmission(...a),
@@ -46,7 +48,11 @@ vi.mock('../../auditService', () => ({
   default: audit,
 }));
 
-vi.mock('../../db', () => ({
+// The handler's relative import path (`'../../db'` from
+// server/services/ana-ri) resolves to server/db.ts. From this test file
+// (server/services/ana-ri/__tests__/) the matching mock path is
+// `'../../../db'` — one extra level up to escape the __tests__ folder.
+vi.mock('../../../db', () => ({
   pool: sectionPool,
 }));
 
@@ -61,6 +67,7 @@ import {
   qSubCreate,
   qSubCommitmentSetRolledIn,
   sectionApprove,
+  sectionUpdate,
   esgTransmit,
   preflightModule,
 } from '../mdx-command-handlers';
@@ -324,6 +331,161 @@ describe('section.approve', () => {
     expect(r.data?.newStatus).toBe('validated');
     expect(audit.logAction).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'agent.ana.section.approve' }),
+    );
+  });
+});
+
+// ─── Section update (content edit via chat) ────────────────────────────────
+
+describe('section.update', () => {
+  const goodGate = { confirm: 'yes', reason: 'predicate analysis finalized after PSC review' };
+
+  it('rejects without confirm', async () => {
+    const r = await sectionUpdate(CTX, { sectionId: 42, content: 'new body' });
+    expect(r.action).toBe('confirmation_required');
+    expect(sectionPool.query).not.toHaveBeenCalled();
+  });
+
+  it('rejects non-numeric sectionId', async () => {
+    const r = await sectionUpdate(CTX, { ...goodGate, sectionId: 'forty-two', content: 'x' });
+    expect(r.error).toBe('INVALID_INPUT');
+    expect(r.message).toMatch(/sectionId/);
+  });
+
+  it('rejects non-string content', async () => {
+    const r = await sectionUpdate(CTX, { ...goodGate, sectionId: 42, content: 123 });
+    expect(r.error).toBe('INVALID_INPUT');
+    expect(r.message).toMatch(/content/);
+  });
+
+  it('rejects oversize content (>1MB)', async () => {
+    const r = await sectionUpdate(CTX, {
+      ...goodGate,
+      sectionId: 42,
+      content: 'a'.repeat(1_000_001),
+    });
+    expect(r.error).toBe('INVALID_INPUT');
+    expect(r.message).toMatch(/1MB/);
+  });
+
+  it('rejects unknown status', async () => {
+    const r = await sectionUpdate(CTX, {
+      ...goodGate,
+      sectionId: 42,
+      content: 'x',
+      status: 'rejected',
+    });
+    expect(r.error).toBe('INVALID_INPUT');
+    expect(r.message).toMatch(/status/);
+  });
+
+  it('rejects out-of-range completionPercentage', async () => {
+    const r = await sectionUpdate(CTX, {
+      ...goodGate,
+      sectionId: 42,
+      content: 'x',
+      completionPercentage: 150,
+    });
+    expect(r.error).toBe('INVALID_INPUT');
+    expect(r.message).toMatch(/completionPercentage/);
+  });
+
+  it('returns NOT_FOUND when section not in org', async () => {
+    sectionPool.query.mockResolvedValueOnce({ rows: [] });
+    const r = await sectionUpdate(CTX, { ...goodGate, sectionId: 42, content: 'new body' });
+    expect(r.success).toBe(false);
+    expect(r.error).toBe('NOT_FOUND');
+  });
+
+  it('updates content, writes a version row, audits agent.ana.section.edit', async () => {
+    sectionPool.query
+      // SELECT existing
+      .mockResolvedValueOnce({
+        rows: [{
+          id: 42,
+          section_number: '6.0',
+          section_title: 'Substantial Equivalence',
+          status: 'drafting',
+          content: 'old body',
+          completion_percentage: 40,
+        }],
+      })
+      // UPDATE cerv2_510k_sections
+      .mockResolvedValueOnce({ rows: [] })
+      // SELECT MAX(version_number)
+      .mockResolvedValueOnce({ rows: [{ max_version: 3 }] })
+      // INSERT cerv2_section_versions
+      .mockResolvedValueOnce({ rows: [] });
+
+    const r = await sectionUpdate(CTX, {
+      ...goodGate,
+      sectionId: 42,
+      content: 'OR-801 is substantially equivalent to K191822.',
+      status: 'validated',
+      completionPercentage: 100,
+    });
+
+    expect(r.success).toBe(true);
+    expect(r.data?.versionNumber).toBe(4);
+    expect(r.data?.previousLength).toBe('old body'.length);
+    expect(r.data?.newLength).toBe('OR-801 is substantially equivalent to K191822.'.length);
+    expect(r.data?.status).toBe('validated');
+    expect(r.data?.completionPercentage).toBe(100);
+
+    // Four queries: SELECT existing, UPDATE, SELECT max(version), INSERT version.
+    expect(sectionPool.query).toHaveBeenCalledTimes(4);
+
+    expect(audit.logAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'agent.ana.section.edit',
+        tenantId: 11,
+        userId: 7,
+        resourceType: 'cerv2_510k_section',
+        resourceId: '42',
+        details: expect.objectContaining({
+          actorKind: 'agent:ana',
+          sectionNumber: '6.0',
+          versionNumber: 4,
+          fieldsChanged: expect.arrayContaining(['content', 'status', 'completion_percentage']),
+          previousLength: 'old body'.length,
+          statusChanged: 'drafting → validated',
+        }),
+      }),
+    );
+  });
+
+  it('preserves status when caller omits it (content-only edit)', async () => {
+    sectionPool.query
+      .mockResolvedValueOnce({
+        rows: [{
+          id: 42,
+          section_number: '6.0',
+          section_title: 'SE',
+          status: 'drafting',
+          content: 'old',
+          completion_percentage: 40,
+        }],
+      })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ max_version: 0 }] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const r = await sectionUpdate(CTX, {
+      ...goodGate,
+      sectionId: 42,
+      content: 'new body',
+    });
+
+    expect(r.success).toBe(true);
+    expect(r.data?.status).toBe('drafting'); // unchanged
+    expect(r.data?.versionNumber).toBe(1);
+    expect(audit.logAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        details: expect.objectContaining({
+          fieldsChanged: ['content'],
+          statusChanged: null,
+        }),
+      }),
     );
   });
 });

@@ -309,6 +309,216 @@ export async function sectionApprove(
   }
 }
 
+// ─── Section content update (eSTAR / 510(k)) ────────────────────────────────
+
+/**
+ * AnA-driven section content edit. Mirrors the human path at
+ * PATCH /api/cerv2-sections/:sectionId — same tenant gate, same version
+ * row, same `section.edit` audit row + the `agent.ana.section.edit`
+ * counterpart so an auditor can filter agent vs. human edits.
+ *
+ * Use case: "Update §6.0 to read 'OR-801 is substantially equivalent to
+ * K191822 …'". The user can edit the document via chat, and the version
+ * history captures both the previous and new content for the diff.
+ *
+ * Per the comment on sectionApprove above — in GA, the route + this
+ * handler should call into a single section service rather than each
+ * inline its own update. For BETA they share the schema and audit shape,
+ * which is the property that matters for compliance.
+ */
+export async function sectionUpdate(
+  ctx: CommandContext,
+  params: Record<string, unknown>,
+): Promise<CommandResult> {
+  const action = 'section.update';
+  const gate = requireGovernedToolGate(action, ctx, params);
+  if (!gate.ok) return gate.result;
+
+  const sectionId = Number(params.sectionId);
+  if (!Number.isFinite(sectionId)) {
+    return {
+      success: false,
+      action,
+      message: 'sectionId is required (numeric).',
+      error: 'INVALID_INPUT',
+    };
+  }
+  if (typeof params.content !== 'string') {
+    return {
+      success: false,
+      action,
+      message: 'content is required (string).',
+      error: 'INVALID_INPUT',
+    };
+  }
+  const newContent = params.content;
+  // 1MB cap — the largest 510(k) section in the wild we have seen is ~120KB.
+  if (newContent.length > 1_000_000) {
+    return {
+      success: false,
+      action,
+      message: 'content exceeds 1MB limit.',
+      error: 'INVALID_INPUT',
+    };
+  }
+
+  let nextStatus: string | null = null;
+  if (typeof params.status === 'string') {
+    const s = params.status.toLowerCase();
+    if (!['todo', 'drafting', 'validated', 'approved'].includes(s)) {
+      return {
+        success: false,
+        action,
+        message: 'status must be one of: todo, drafting, validated, approved.',
+        error: 'INVALID_INPUT',
+      };
+    }
+    nextStatus = s;
+  }
+
+  let nextCompletion: number | null = null;
+  if (params.completionPercentage !== undefined && params.completionPercentage !== null) {
+    const n = Number(params.completionPercentage);
+    if (!Number.isInteger(n) || n < 0 || n > 100) {
+      return {
+        success: false,
+        action,
+        message: 'completionPercentage must be an integer 0–100.',
+        error: 'INVALID_INPUT',
+      };
+    }
+    nextCompletion = n;
+  }
+
+  const { pool } = await import('../../db');
+
+  try {
+    const existing = await pool.query(
+      `SELECT id, section_number, section_title, status, content, completion_percentage
+         FROM cerv2_510k_sections
+        WHERE organization_id = $1 AND id = $2 LIMIT 1`,
+      [ctx.organizationId, sectionId],
+    );
+    if (existing.rows.length === 0) {
+      return {
+        success: false,
+        action,
+        message: `Section ${sectionId} not found in your organization.`,
+        error: 'NOT_FOUND',
+      };
+    }
+    const before = existing.rows[0];
+
+    const targetStatus = nextStatus ?? before.status ?? 'drafting';
+    const targetCompletion =
+      nextCompletion ?? Number(before.completion_percentage ?? 0);
+    const now = new Date();
+
+    await pool.query(
+      `UPDATE cerv2_510k_sections
+          SET content = $1,
+              status = $2,
+              completion_percentage = $3,
+              updated_at = $4,
+              last_edited_by = $5
+        WHERE organization_id = $6 AND id = $7`,
+      [newContent, targetStatus, targetCompletion, now, ctx.userId, ctx.organizationId, sectionId],
+    );
+
+    // Insert a version row so the diff trail mirrors the human edit path.
+    const versionRow = await pool.query(
+      `SELECT COALESCE(MAX(version_number), 0) AS max_version
+         FROM cerv2_section_versions
+        WHERE organization_id = $1 AND section_id = $2`,
+      [ctx.organizationId, sectionId],
+    );
+    const nextVersion = Number(versionRow.rows[0]?.max_version ?? 0) + 1;
+    const fieldsChanged: string[] = ['content'];
+    if (nextStatus !== null && nextStatus !== before.status) fieldsChanged.push('status');
+    if (
+      nextCompletion !== null &&
+      nextCompletion !== Number(before.completion_percentage ?? 0)
+    ) {
+      fieldsChanged.push('completion_percentage');
+    }
+
+    await pool.query(
+      `INSERT INTO cerv2_section_versions
+        (section_id, organization_id, version_number, change_type, change_summary,
+         content, status, completion_percentage, fields_changed,
+         previous_values, new_values,
+         changed_by, changed_by_name, changed_at, created_at)
+       VALUES ($1, $2, $3, 'edited', $4,
+               $5, $6, $7, $8,
+               $9, $10,
+               $11, $12, $13, $13)`,
+      [
+        sectionId,
+        ctx.organizationId,
+        nextVersion,
+        `Edited via AnA (thread ${ctx.threadId ?? '-'})`,
+        newContent,
+        targetStatus,
+        targetCompletion,
+        fieldsChanged,
+        JSON.stringify({
+          content: before.content ?? '',
+          status: before.status ?? 'todo',
+          completion_percentage: Number(before.completion_percentage ?? 0),
+        }),
+        JSON.stringify({
+          content: newContent,
+          status: targetStatus,
+          completion_percentage: targetCompletion,
+        }),
+        ctx.userId,
+        `ana:${ctx.userId}`,
+        now,
+      ],
+    );
+
+    void auditService.logAction({
+      tenantId: ctx.organizationId,
+      userId: ctx.userId,
+      action: 'agent.ana.section.edit',
+      resourceType: 'cerv2_510k_section',
+      resourceId: String(sectionId),
+      details: {
+        ...agentAuditDetails(ctx, gate),
+        sectionNumber: before.section_number,
+        versionNumber: nextVersion,
+        fieldsChanged,
+        previousLength: (before.content ?? '').length,
+        newLength: newContent.length,
+        statusChanged:
+          nextStatus !== null && nextStatus !== before.status
+            ? `${before.status ?? 'todo'} → ${targetStatus}`
+            : null,
+      },
+    });
+
+    return {
+      success: true,
+      action,
+      data: {
+        sectionId,
+        sectionNumber: before.section_number,
+        sectionTitle: before.section_title,
+        versionNumber: nextVersion,
+        previousLength: (before.content ?? '').length,
+        newLength: newContent.length,
+        status: targetStatus,
+        completionPercentage: targetCompletion,
+      },
+      message:
+        `Updated §${before.section_number} (${(before.content ?? '').length} → ${newContent.length} chars). ` +
+        `Version ${nextVersion} recorded; section.edit + agent.ana.section.edit audit rows written.`,
+    };
+  } catch (err) {
+    return mapServiceError(action, err);
+  }
+}
+
 // ─── 510(k) module pre-flight (read-only — no confirmation required) ────────
 
 /**
@@ -506,6 +716,18 @@ export const MDX_COMMAND_METADATA = [
     example: '"Approve section 42 as validated, reason: peer review complete."',
   },
   {
+    name: 'section.update',
+    description:
+      'Edit the content of an eSTAR / 510(k) section. Replaces the section ' +
+      'body with new text and writes a new version row so the diff trail ' +
+      'matches the human edit path. Optional status (todo|drafting|validated|' +
+      'approved) and completionPercentage (0–100). Requires confirm and reason.',
+    parameters:
+      'sectionId (numeric), content (string ≤1MB), status?, completionPercentage?, confirm="yes", reason',
+    example:
+      '"Update section 87 to read \'OR-801 is substantially equivalent to K191822 …\', reason: predicate analysis finalized after PSC review."',
+  },
+  {
     name: 'k510_workflow.preflight',
     description:
       'Run a pre-flight RTA gate on a 510(k) project module. Read-only; no ' +
@@ -534,6 +756,7 @@ export const MDX_COMMAND_HANDLERS: Record<
   'q_sub.create': qSubCreate,
   'q_sub.commitment.set_rolled_in': qSubCommitmentSetRolledIn,
   'section.approve': sectionApprove,
+  'section.update': sectionUpdate,
   'k510_workflow.preflight': preflightModule,
   'k510_workflow.transmit': esgTransmit,
 };
