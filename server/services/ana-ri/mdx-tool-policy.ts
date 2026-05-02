@@ -93,8 +93,7 @@ export async function loadAnaToolPolicy(
  * keeps every tool call hot-path-free of an extra DB query.
  */
 function getCachedPolicy(ctx: CommandContext): AnaToolPolicy {
-  const raw = (ctx as unknown as { anaToolPolicy?: AnaToolPolicy }).anaToolPolicy;
-  return raw ?? {};
+  return ctx.anaToolPolicy ?? {};
 }
 
 // ─── Reason-quality filter ─────────────────────────────────────────────────

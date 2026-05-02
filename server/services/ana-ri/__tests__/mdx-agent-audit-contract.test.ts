@@ -28,6 +28,10 @@ const { svc, audit } = vi.hoisted(() => ({
     })),
     upsertMapping: vi.fn(async () => ({ id: 'm-1' })),
     createDocument: vi.fn(async () => ({ id: 'd-1', code: 'PMCF-1' })),
+    updateDocument: vi.fn(async () => ({ id: 'd-1', updated: true })),
+    validateDocument: vi.fn(() => ({ valid: true, findings: [] })),
+    supersedeDocument: vi.fn(async () => ({ id: 'd-2' })),
+    getDocument: vi.fn(async () => ({ id: 'd-1' })),
     approveDocument: vi.fn(async () => ({ ok: true })),
     assessSufficiency: vi.fn(async () => ({ id: 'a-1', verdict: 'sufficient', overallScore: 90 })),
     runReviewerSimulation: vi.fn(async () => ({ runId: 'rs-1' })),
@@ -70,10 +74,10 @@ vi.mock('../../gspr-postmarket/gspr.service', () => ({
 vi.mock('../../gspr-postmarket/post-market.service', () => ({
   approveDocument: (...a: any[]) => svc.approveDocument(...a),
   createDocument: (...a: any[]) => svc.createDocument(...a),
-  supersedeDocument: vi.fn(),
-  updateDocument: vi.fn(),
-  validateDocument: vi.fn(),
-  getDocument: vi.fn(),
+  supersedeDocument: (...a: any[]) => svc.supersedeDocument(...a),
+  updateDocument: (...a: any[]) => svc.updateDocument(...a),
+  validateDocument: (...a: any[]) => svc.validateDocument(...a),
+  getDocument: (...a: any[]) => svc.getDocument(...a),
 }));
 vi.mock('../../evidence-sufficiency/evidence-sufficiency.service', () => ({
   assessSufficiency: (...a: any[]) => svc.assessSufficiency(...a),
@@ -98,7 +102,13 @@ import {
 import {
   predicateCandidateSetStatus,
   seMatrixPatch,
+  correspondenceIngest,
 } from '../mdx-command-handlers-phase3';
+import {
+  postMarketDocumentUpdate,
+  postMarketDocumentValidate,
+  postMarketDocumentSupersede,
+} from '../mdx-command-handlers-phase2';
 
 const CTX = { userId: 7, organizationId: 11 };
 const PROGRAM = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1';
@@ -232,6 +242,54 @@ const PROBES: Probe[] = [
         patch: { resolution: 'resolved' },
       });
     },
+  },
+  {
+    tool: 'correspondence.ingest',
+    expectedAction: 'agent.ana.correspondence.ingest',
+    invoke: () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true,
+        status: 201,
+        json: async () => ({ data: { id: 'corr-1' }, issues: [], downstreamActions: [] }),
+      }));
+      process.env.ANA_SERVICE_TOKEN = 'test-svc';
+      return correspondenceIngest(CTX, {
+        ...yes,
+        projectId: 99,
+        submissionId: 'K251102',
+        subject: 'FDA AI letter',
+        summary: 'received today; please ingest the attached letter',
+      });
+    },
+  },
+  {
+    tool: 'post_market.document.update',
+    expectedAction: 'agent.ana.post_market.document.update',
+    invoke: () =>
+      postMarketDocumentUpdate(CTX, {
+        ...yes,
+        documentId: 'd-1',
+        patch: { assignee: 'sarah.chen' },
+      }),
+  },
+  {
+    tool: 'post_market.document.validate',
+    expectedAction: 'agent.ana.post_market.document.validate',
+    invoke: () =>
+      postMarketDocumentValidate(CTX, {
+        ...yes,
+        documentId: 'd-1',
+      }),
+  },
+  {
+    tool: 'post_market.document.supersede',
+    expectedAction: 'agent.ana.post_market.document.supersede',
+    invoke: () =>
+      postMarketDocumentSupersede(CTX, {
+        ...yes,
+        documentId: 'd-1',
+        newTitle: 'PMCF-2026-Q1',
+      }),
   },
 ];
 

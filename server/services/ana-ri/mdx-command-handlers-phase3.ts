@@ -257,6 +257,100 @@ export async function seMatrixPatch(
   }
 }
 
+// ─── correspondence.ingest ──────────────────────────────────────────────────
+
+export async function correspondenceIngest(
+  ctx: CommandContext,
+  params: Record<string, unknown>,
+): Promise<CommandResult> {
+  const action = 'correspondence.ingest';
+  const gate = requireGovernedToolGate(action, ctx, params);
+  if (!gate.ok) return gate.result;
+
+  const projectId = Number(params.projectId);
+  if (!Number.isFinite(projectId) || projectId <= 0) {
+    return { success: false, action, message: 'projectId is required (positive integer).', error: 'INVALID_INPUT' };
+  }
+  const submissionId = typeof params.submissionId === 'string' ? params.submissionId.trim() : '';
+  if (!submissionId) {
+    return { success: false, action, message: 'submissionId is required.', error: 'INVALID_INPUT' };
+  }
+  const subject = typeof params.subject === 'string' ? params.subject.trim() : '';
+  if (subject.length < 3) {
+    return { success: false, action, message: 'subject is required (≥ 3 chars).', error: 'INVALID_INPUT' };
+  }
+
+  // The BFF requires either parsedText or summary with ≥ 8 non-whitespace chars.
+  const parsedText = typeof params.parsedText === 'string' ? params.parsedText : null;
+  const summary = typeof params.summary === 'string' ? params.summary : null;
+  const sourceText = (parsedText ?? summary ?? '').trim();
+  if (sourceText.length < 8) {
+    return {
+      success: false,
+      action,
+      message: 'parsedText or summary is required (≥ 8 non-whitespace chars).',
+      error: 'INVALID_INPUT',
+    };
+  }
+
+  const body: Record<string, unknown> = {
+    projectId,
+    submissionId,
+    subject,
+  };
+  if (parsedText !== null) body.parsedText = parsedText;
+  if (summary !== null) body.summary = summary;
+  for (const k of ['direction', 'sourceChannel', 'communicationType', 'sender', 'recipients',
+                   'receivedAt', 'dueDate', 'urgency', 'responseRequired', 'attachments'] as const) {
+    if (params[k] !== undefined) body[k] = params[k];
+  }
+
+  try {
+    const proxy = await proxyToBff(ctx, {
+      action,
+      method: 'POST',
+      path: '/api/regulatory-correspondence/correspondence/intake',
+      body,
+    });
+    if (!proxy.ok) {
+      return {
+        success: false,
+        action,
+        message: `Correspondence ingest refused (HTTP ${proxy.status}).`,
+        error: proxy.status === 403 ? 'TENANT_ACCESS_DENIED' : 'EXECUTION_FAILED',
+        data: proxy.body as Record<string, unknown>,
+      };
+    }
+    const responseBody = proxy.body as Record<string, unknown>;
+    const correspondenceId = (responseBody?.data as any)?.id ?? null;
+
+    void auditService.logAction({
+      tenantId: ctx.organizationId,
+      userId: ctx.userId,
+      action: 'agent.ana.correspondence.ingest',
+      resourceType: 'regulatory_correspondence',
+      resourceId: String(correspondenceId ?? `${projectId}:${submissionId}`),
+      details: {
+        actorKind: 'agent:ana',
+        agentReason: gate.reason,
+        projectId,
+        submissionId,
+        subject,
+        issueCount: Array.isArray(responseBody?.issues) ? (responseBody.issues as unknown[]).length : 0,
+      },
+    });
+
+    return {
+      success: true,
+      action,
+      data: responseBody,
+      message: `Ingested correspondence ${correspondenceId ?? '(no-id)'}: ${subject}.`,
+    };
+  } catch (err) {
+    return mapServiceError(action, err);
+  }
+}
+
 // ─── Metadata ───────────────────────────────────────────────────────────────
 
 export const MDX_COMMAND_METADATA_PHASE3 = [
@@ -280,6 +374,18 @@ export const MDX_COMMAND_METADATA_PHASE3 = [
     example:
       '"Patch SE matrix row m-12 to mark trend-arrow technology difference as resolved."',
   },
+  {
+    name: 'correspondence.ingest',
+    description:
+      'Ingest an FDA / regulator communication (AI letter, deficiency, IR, ' +
+      'meeting minutes) into the regulatory-correspondence module. Body shape ' +
+      'mirrors POST /api/regulatory-correspondence/correspondence/intake. ' +
+      'Tenant scope enforced by the BFF. Requires confirm + reason.',
+    parameters:
+      'projectId, submissionId, subject, parsedText|summary, direction?, urgency?, attachments?, confirm="yes", reason',
+    example:
+      '"Ingest the FDA AI letter received today on submission K251102, summary attached."',
+  },
 ];
 
 export const MDX_COMMAND_HANDLERS_PHASE3: Record<
@@ -288,4 +394,5 @@ export const MDX_COMMAND_HANDLERS_PHASE3: Record<
 > = {
   'predicate.candidate.set_status': predicateCandidateSetStatus,
   'se_matrix.patch': seMatrixPatch,
+  'correspondence.ingest': correspondenceIngest,
 };

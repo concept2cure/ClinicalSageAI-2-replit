@@ -59,6 +59,16 @@ export interface CommandContext {
   activeProjectId?: number;
   userName?: string;
   userRole?: string;
+  /**
+   * Per-tenant AnA tool policy. Stamped by `executeCommands` once per
+   * dispatch from `organizations.settings.anaToolPolicy`. Read by the
+   * shared gate in mdx-tool-policy.ts. Undefined = default = all tools
+   * allowed.
+   */
+  anaToolPolicy?: {
+    allow?: string[];
+    deny?: string[];
+  };
 }
 
 export interface CommandResult {
@@ -4376,16 +4386,16 @@ export async function executeCommands(
   // populating it here means handlers don't need to know about the load.
   // Loader is fail-soft: any DB error → default-allow.
   if (
-    (ctx as any).anaToolPolicy === undefined &&
+    ctx.anaToolPolicy === undefined &&
     ctx.organizationId !== undefined &&
     Number.isFinite(ctx.organizationId)
   ) {
     try {
       if (pool) {
-        (ctx as any).anaToolPolicy = await loadAnaToolPolicy(pool, ctx.organizationId);
+        ctx.anaToolPolicy = await loadAnaToolPolicy(pool, ctx.organizationId);
       }
     } catch {
-      (ctx as any).anaToolPolicy = {};
+      ctx.anaToolPolicy = {};
     }
   }
 
