@@ -72,6 +72,8 @@ Status legend:
 | **AnA-initiated post-market doc validate**          | AnA tool `post_market.document.validate`          | `agent.ana.post_market.document.validate`| ✓      | Confirm + reason; lightweight, but the validation event is itself audited. |
 | **AnA-initiated post-market doc supersede**         | AnA tool `post_market.document.supersede`         | `agent.ana.post_market.document.supersede`| ✓     | Confirm + reason. |
 | **AnA tool policy update**                          | `PUT /api/ana-tool-policy`                        | `ana_tool_policy.update`                 | ✓      | Admin-only; previous + new policy captured in details so an auditor can replay the timeline. |
+| **MDX context snapshot read**                       | `GET /api/ana/mdx-context-snapshot`               | `mdx.context_snapshot.read`              | ✓      | Read-only; logged so an auditor sees when a UI surface pulled the proactive snapshot. |
+| **AnA explain audit row**                           | AnA tool `audit.explain`                          | `agent.ana.audit.explain`                | ✓      | Read-only auditor capability; itself audited so explanation requests are traceable. |
 
 ### `details.reasonReferencedArtifact` soft signal
 

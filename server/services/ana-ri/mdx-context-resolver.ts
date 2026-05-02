@@ -33,6 +33,12 @@ import {
   getMdxOnboardingMilestone,
   type MdxOnboardingMilestone,
 } from './mdx-onboarding-milestone';
+import {
+  loadMdxKnowledgeOverrides,
+  applySurfaceOverride,
+  applyWorkflowOverride,
+  type MdxKnowledgeOverrides,
+} from './mdx-knowledge-overrides';
 
 export interface MdxContextResolverInput {
   organizationId: number;
@@ -47,13 +53,16 @@ export interface MdxContextResolverInput {
 export interface MdxContextResolverOutput {
   /** Final Markdown block ready to append to AnA's system prompt. */
   systemPromptBlock: string;
-  /** Structured payload available for callers that want to render natively. */
+  /** Structured payload available for callers that want to render natively
+   *  (Anya rail UI, dashboards, server-rendered pages). */
   payload: {
     surface: ReturnType<typeof getSurface>;
     milestone: MdxOnboardingMilestone | null;
     alerts: MdxAlert[];
     workflowsRelevant: typeof MDX_WORKFLOWS;
     toolsRelevant: typeof MDX_TOOLS;
+    /** Tenant-specific additional notes, if any (Markdown). */
+    tenantExtraNotes: string | null;
   };
 }
 
@@ -67,20 +76,29 @@ export async function buildMdxContextBlock(
   client: Pool | PoolClient,
   input: MdxContextResolverInput,
 ): Promise<MdxContextResolverOutput> {
-  const surface = input.activeNav ? getSurface(input.activeNav) : null;
+  const baseSurface = input.activeNav ? getSurface(input.activeNav) : null;
 
   // ── Collect inputs in parallel; never let one failure blank the rest ──
-  const [milestone, snapshot] = await Promise.all([
+  const [milestone, snapshot, overrides] = await Promise.all([
     safe(() => getMdxOnboardingMilestone(client, input.organizationId)),
     input.includeProactive === false
       ? Promise.resolve(null)
       : safe(() => buildMdxProactiveSnapshot(client, input.organizationId)),
+    safe(() => loadMdxKnowledgeOverrides(client, input.organizationId)),
   ]);
+  const tenantOverrides: MdxKnowledgeOverrides = overrides ?? {};
+
+  // Apply tenant overrides to the active surface (and to relevant
+  // workflows below). The base pack is never mutated; merge produces
+  // a new object.
+  const surface = baseSurface ? applySurfaceOverride(baseSurface, tenantOverrides) : null;
 
   const alerts = snapshot?.alerts ?? [];
-  const workflowsRelevant = surface
-    ? MDX_WORKFLOWS.filter(w => w.surfaces.includes(surface.key))
-    : MDX_WORKFLOWS;
+  const workflowsRelevant = (
+    surface
+      ? MDX_WORKFLOWS.filter(w => w.surfaces.includes(surface.key))
+      : MDX_WORKFLOWS
+  ).map(w => applyWorkflowOverride(w, tenantOverrides));
   const toolsRelevant = surface
     ? MDX_TOOLS.filter(t => surface.relevantTools.includes(t.name))
     : MDX_TOOLS;
@@ -244,6 +262,14 @@ export async function buildMdxContextBlock(
       'possible — auditors expect the structure.',
   );
 
+  // Tenant-specific extra notes (free-form Markdown, appended last so
+  // the platform's directives bind first; tenant guidance amplifies).
+  if (tenantOverrides.extraNotes && tenantOverrides.extraNotes.trim().length > 0) {
+    lines.push('');
+    lines.push('### Tenant-specific notes');
+    lines.push(tenantOverrides.extraNotes.trim());
+  }
+
   return {
     systemPromptBlock: lines.join('\n'),
     payload: {
@@ -252,6 +278,7 @@ export async function buildMdxContextBlock(
       alerts,
       workflowsRelevant,
       toolsRelevant,
+      tenantExtraNotes: tenantOverrides.extraNotes ?? null,
     },
   };
 }

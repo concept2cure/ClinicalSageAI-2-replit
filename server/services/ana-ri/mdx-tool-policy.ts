@@ -30,6 +30,7 @@ import {
   lookupPendingAction,
   clearPendingAction,
 } from './mdx-pending-actions';
+import { checkAnaToolRateLimit } from './mdx-tool-rate-limit';
 
 // ─── Confirmation contract ──────────────────────────────────────────────────
 
@@ -189,6 +190,16 @@ export function requireGovernedToolGate(
         }
       }
     }
+  }
+
+  // ── 0.5. Per-tool rate limit ─────────────────────────────────────────
+  // Defends against runaway agent loops. Identity is `<org>:<action>`
+  // so tenants share no counter and tools share no counter. ESG
+  // transmit has the strictest ceiling (5/hr); audit.explain has the
+  // most generous (200/hr). See mdx-tool-rate-limit.ts.
+  const rate = checkAnaToolRateLimit(ctx, action);
+  if (!rate.allowed && rate.result) {
+    return { ok: false, reason: '', result: rate.result };
   }
 
   // ── 1. Tenant policy gate ─────────────────────────────────────────────

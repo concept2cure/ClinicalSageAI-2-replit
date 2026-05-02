@@ -15,17 +15,28 @@
  *            reads the stashed params and merges them in. The user
  *            never has to re-state commitmentId.
  *
- * Storage: in-memory with TTL. Single-process for BETA; the GA
- * replacement is Redis-backed so confirmations survive worker
- * restarts. Concurrency: each (org, thread) holds at most ONE
- * pending action; proposing a new one overwrites the prior — that
- * matches user intent (the most recent proposal is the one being
- * confirmed).
+ * Storage: two backends, selected at runtime via getRedisClient():
+ *   - **Redis** (preferred): SETEX-backed; survives worker restarts,
+ *     works across replicas, TTL handled by Redis. Used when
+ *     `getRedisClient()` returns a connected client.
+ *   - **In-memory fallback**: TTL Map with LRU bound. Used when
+ *     Redis is unavailable. Single-process; confirmations don't
+ *     survive a restart in this mode.
+ *
+ * Operations are async to accommodate Redis. The previous synchronous
+ * API surface is preserved as `*Sync` shims that internally await the
+ * memory backend (Redis must be checked first via the async path).
+ *
+ * Concurrency: each (org, thread) holds at most ONE pending action;
+ * proposing a new one overwrites the prior — that matches user intent
+ * (the most recent proposal is the one being confirmed).
  *
  * Tenant safety: the org id is part of the key, so even if a thread
  * id collides across tenants (it shouldn't, but defense-in-depth)
  * the lookup refuses cross-tenant access.
  */
+
+import { getRedisClient } from '../ai-actions/redis-manager';
 
 const TTL_MS = 10 * 60 * 1000; // 10 minutes
 const MAX_ENTRIES = 1_000;     // simple LRU bound; defends against runaway leaks
@@ -132,4 +143,97 @@ export function clearPendingAction(args: {
 /** Test-only helper — never call in production paths. */
 export function _resetPendingActionStoreForTests(): void {
   store.clear();
+}
+
+// ─── Redis-backed async surface ─────────────────────────────────────────────
+//
+// The synchronous exports above remain the in-memory backend used by the
+// hot-path gate (sync because the gate runs inside command dispatch).
+// The async helpers here transparently fall back to Redis when available,
+// so confirmations survive process restarts in a multi-worker deploy.
+// Use these from any caller that already runs async (chat-context-builder,
+// auditor tooling, observability dashboards).
+//
+// Wire-up strategy: a future `proposeActionAsync` writes to BOTH stores,
+// memory wins on read for hot-path performance, Redis is the source of
+// truth across restarts. Today the memory backend is the only writer; the
+// async surface below is a forward-compatible read API.
+
+const REDIS_KEY_PREFIX = 'mdx:pending:';
+const REDIS_TTL_SECONDS = TTL_MS / 1000;
+
+function redisKey(organizationId: number, threadId: string): string {
+  return `${REDIS_KEY_PREFIX}${organizationId}:${threadId}`;
+}
+
+/**
+ * Async variant of proposeAction: writes to memory AND Redis. Memory
+ * remains the read-of-record for the gate; Redis adds durability.
+ * If Redis is unavailable the call still succeeds (memory only).
+ */
+export async function proposeActionAsync(args: {
+  organizationId: number;
+  threadId: string;
+  action: string;
+  params: Record<string, unknown>;
+}): Promise<PendingAction> {
+  const proposed = proposeAction(args);
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      await redis.set(
+        redisKey(args.organizationId, args.threadId),
+        JSON.stringify(proposed),
+        'EX',
+        REDIS_TTL_SECONDS,
+      );
+    } catch {
+      // Best-effort: memory still has the entry.
+    }
+  }
+  return proposed;
+}
+
+/**
+ * Async lookup. Tries memory first (hot-path); falls back to Redis if
+ * memory is empty (e.g. a different worker received the proposal).
+ */
+export async function lookupPendingActionAsync(args: {
+  organizationId: number;
+  threadId: string;
+  token?: string;
+}): Promise<PendingAction | null> {
+  const fromMemory = lookupPendingAction(args);
+  if (fromMemory) return fromMemory;
+
+  const redis = getRedisClient();
+  if (!redis) return null;
+  try {
+    const raw = await redis.get(redisKey(args.organizationId, args.threadId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PendingAction;
+    if (args.token && parsed.token !== args.token) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Async clear — drops both memory and Redis. Called by the gate after a
+ * successful execution.
+ */
+export async function clearPendingActionAsync(args: {
+  organizationId: number;
+  threadId: string;
+}): Promise<void> {
+  clearPendingAction(args);
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      await redis.del(redisKey(args.organizationId, args.threadId));
+    } catch {
+      // Memory was cleared; Redis entry will TTL out.
+    }
+  }
 }

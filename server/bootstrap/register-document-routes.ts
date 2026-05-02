@@ -216,6 +216,11 @@ export async function registerDocumentRoutes({
         mod: '../routes/ana-tool-policy.js',
         name: 'AnA tool policy (per-tenant allow/deny)',
       },
+      {
+        path: '/api/ana',
+        mod: '../routes/ana-mdx-context.js',
+        name: 'AnA MDX context snapshot (UI consumption)',
+      },
     ] as const;
     const evidenceResults = await Promise.allSettled(evidenceConfig.map(c => import(c.mod)));
     evidenceResults.forEach((r, i) => {
