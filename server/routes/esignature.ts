@@ -27,6 +27,7 @@ import bcrypt from 'bcryptjs';
 import { createHash } from 'crypto';
 import { pool } from '../db.js';
 import { verifyToken as verifyMfaToken } from '../services/mfaService.js';
+import auditService from '../services/auditService';
 
 const router = Router();
 
@@ -246,6 +247,29 @@ router.post('/sign', async (req: Request, res: Response) => {
         deviceInfo ? JSON.stringify(deviceInfo) : null,
       ]
     );
+
+    // 21 CFR Part 11 §11.10(e): every signing event lands in the central
+    // audit trail in addition to the electronic_signatures row. The signature
+    // hash is included so an auditor can correlate the two tables.
+    void auditService.logAction({
+      tenantId: (req as any).user?.organizationId ?? null,
+      userId,
+      action: 'esignature.sign',
+      resourceType: 'electronic_signature',
+      resourceId: String(result.rows[0].id),
+      ipAddress,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: {
+        documentId: Number(documentId),
+        versionId: Number(versionId),
+        signaturePurpose,
+        signatureMeaning: signatureMeaning ?? null,
+        action,
+        signatureHash,
+        secondFactorVerified: Boolean(secondFactorVerified),
+      },
+    });
+
     return res.status(201).json({
       signatureId: result.rows[0].id,
       signatureHash,

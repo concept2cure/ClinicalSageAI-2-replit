@@ -17,6 +17,7 @@ import {
   getAssessment,
   listProgramAssessments,
 } from '../services/evidence-sufficiency/evidence-sufficiency.service';
+import auditService from '../services/auditService';
 import type { SubmissionPathway } from '../../shared/schema/evidence-sufficiency';
 
 const router = Router();
@@ -81,6 +82,25 @@ router.post(
         triggeredBy,
         dryRun: body.dryRun === true,
       });
+
+      // Persisted assessments land in the audit trail; dry runs don't.
+      if (!body.dryRun) {
+        void auditService.logAction({
+          tenantId: orgId,
+          userId: triggeredBy,
+          action: 'evidence_sufficiency.assess',
+          resourceType: 'evidence_sufficiency_assessment',
+          resourceId: (result as any)?.id ?? req.params.programId,
+          details: {
+            programId: req.params.programId,
+            pathway: body.pathway,
+            verdict: (result as any)?.verdict ?? null,
+            overallScore: (result as any)?.overallScore ?? null,
+            trigger: typeof body.trigger === 'string' ? body.trigger : 'manual',
+          },
+        });
+      }
+
       res.json(result);
     } catch (err: any) {
       res.status(500).json({ error: 'Assessment failed', detail: err?.message });
