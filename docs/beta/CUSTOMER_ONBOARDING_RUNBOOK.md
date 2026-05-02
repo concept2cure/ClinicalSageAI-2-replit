@@ -143,20 +143,33 @@ The BETA agreement commits Concept2Cure to:
 
 If a BETA design partner exits before the BETA window closes:
 
-1. **Snapshot their data.** Run the customer-export job (currently a
-   manual `pg_dump`-by-org-id; full export endpoint is a GA item).
-2. **Hash-chain attestation.** Generate the tamper-proof attestation
-   report for their portion of the chain.
-3. **Hand off the snapshot + attestation** to the customer per the DPA.
-4. **Disable login** on the org. Do not delete the underlying rows; the
+1. **Snapshot their data.** Authenticate as a tenant admin and call:
+   ```
+   GET /api/tenant-export
+   ```
+   Returns a single JSON manifest with every program / Q-Sub / evidence-
+   sufficiency / post-market / GSPR / section row plus row counts.
+2. **Hash-chain attestation.**
+   ```
+   GET /api/tenant-export/attestation
+   ```
+   Returns an HMAC-signed JSON report verifying chain integrity for the
+   tenant's portion of `audit_events`. Customer keeps it as proof.
+3. **Audit log export.** Use the existing signed audit export endpoint
+   (`/api/audit/exports`) to get the full per-tenant audit trail.
+4. **Hand off the three artifacts** to the customer per the DPA.
+5. **Disable login** on the org. Do not delete the underlying rows; the
    audit trail must persist for the full retention period regardless of
    account status. Mark `organizations.status = 'archived'`.
-5. **Decommission BETA-specific resources** (predicate-shadow capacity,
+6. **Decommission BETA-specific resources** (predicate-shadow capacity,
    test data, etc.) per the off-boarding ticket.
 
 ## Open items
 
-- [ ] Build the customer-export endpoint (currently `pg_dump` manual).
-- [ ] Build the audit-trail attestation report generator.
-- [ ] Build a BETA admin dashboard for support engineers (currently
-      everything is psql + the BFF API).
+- [x] Customer-export endpoint shipped at `GET /api/tenant-export`.
+- [x] Audit-trail attestation report shipped at
+      `GET /api/tenant-export/attestation`.
+- [ ] BETA admin dashboard for support engineers (currently everything is
+      psql + the BFF API).
+- [ ] AUDIT_ATTESTATION_KEY rotation procedure documented (currently a
+      single key; rotation requires a downtime window or dual-key support).

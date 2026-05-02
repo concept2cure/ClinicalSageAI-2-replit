@@ -46,10 +46,34 @@ on the closure date.
 - **Hot (queryable via the BFF):** rows ≤ 24 months old.
 - **Cold (S3 archive, restorable on request):** rows > 24 months old.
 
-A nightly job (not yet implemented) moves rows older than 24 months out
-of the live database into the archive. Retrieval from cold takes up to
-12 hours per Glacier Deep Archive SLA. Restore requests are placed
-through the support runbook.
+A nightly job moves rows older than 24 months out of the live database
+into the archive. Retrieval from cold takes up to 12 hours per Glacier
+Deep Archive SLA. Restore requests are placed through the support
+runbook.
+
+### Archive job
+
+Implemented at `server/services/audit/audit-archive.service.ts`. Runner
+script: `scripts/run-audit-archive.mjs`. Invoke via `npm run audit:archive`
+or directly from cron:
+
+```cron
+0 3 * * *  cd /opt/concept2cure && npm run audit:archive >> /var/log/audit-archive.log 2>&1
+```
+
+Contract — the job aborts the batch (rows stay in hot) when:
+- the sink throws, or
+- the sink reports a checksum mismatch against the locally-computed hash.
+
+Sinks today:
+
+| Sink                       | Use                                                         |
+|----------------------------|-------------------------------------------------------------|
+| `FilesystemArchiveSink`    | Dev, CI, BETA single-tenant (writes to `AUDIT_ARCHIVE_DIR`). |
+| `S3ArchiveSink` (GA)       | Reserved — write to a separate AWS account with one-way trust per the DR section below. |
+
+The job is idempotent: re-running picks up where it left off because the
+cutoff is a date, not a stored watermark.
 
 ## Database role policy
 
@@ -133,8 +157,15 @@ For BETA, the customer-facing data-processing agreement (DPA) commits to:
 
 ## Open items
 
-- [ ] Implement the nightly archive job (currently the hot table grows
-      indefinitely on BETA tenants).
-- [ ] Implement the daily hash-chain verification Cron and dashboard.
-- [ ] Document customer-export endpoint (currently no UI surface).
-- [ ] Write the IQ check that runs the role-grants SQL.
+- [x] Implement the nightly archive job (`audit-archive.service.ts` +
+      `npm run audit:archive`).
+- [x] Customer-export endpoint shipped at `GET /api/tenant-export` plus
+      attestation at `GET /api/tenant-export/attestation`.
+- [ ] Build the S3ArchiveSink for production deployments (BETA uses the
+      filesystem sink — fine for single-tenant scale).
+- [ ] Wire the daily hash-chain verification Cron into the operations
+      dashboard. The verification logic lives in
+      `server/services/audit/chainIntegrityMonitor.ts` already; the
+      missing piece is the dashboard widget.
+- [ ] Add the role-grants verification SQL to the IQ template (currently
+      lives in this doc only).

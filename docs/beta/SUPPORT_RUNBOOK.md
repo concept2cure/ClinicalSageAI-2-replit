@@ -191,9 +191,16 @@ nightly archive job either isn't running or doesn't exist yet.
 SELECT count(*), min(created_at), max(created_at) FROM audit_logs;
 ```
 
-**Fix.** If the count is > 5M for a single BETA tenant, escalate. The
-nightly archive job is an open item per
-`docs/operations/audit-log-retention-policy.md`.
+**Fix.** Run the archive job once, then verify it's scheduled in cron:
+```bash
+AUDIT_ARCHIVE_BATCH_SIZE=2000 npm run audit:archive
+```
+Followed by:
+```bash
+crontab -l | grep audit-archive
+```
+If no cron entry exists, install one per
+`docs/operations/audit-log-retention-policy.md` §Archive job.
 
 ## Escalation paths
 

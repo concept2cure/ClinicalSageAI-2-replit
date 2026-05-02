@@ -54,6 +54,7 @@
     "db:seed": "node scripts/seed-ga-demo.mjs",
     "db:seed:admin": "node scripts/seed-admin.mjs",
     "db:seed:mdx-beta": "node scripts/seed-mdx-beta.mjs",
+    "audit:archive": "tsx scripts/run-audit-archive.mjs",
     "db:check": "node scripts/db_check.js",
     "db:status": "node scripts/db_status.js",
     "db:readiness": "node scripts/db/readiness-audit.mjs",

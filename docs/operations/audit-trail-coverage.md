@@ -54,6 +54,8 @@ Status legend:
 | **Reviewer simulation run**                         | `POST /api/regulatory-graph/programs/:p/reviewer-simulation` | `reviewer_simulation.run`     | ✓      | Persisted runs only (dry runs not logged). |
 | **Decision lineage write**                          | `POST /api/decision-lineage/...`                  | `decision_lineage.write`                 | ✓      | Pre-existing. |
 | **Authentication events**                           | `/api/auth/login`, `/api/auth/refresh`, etc.      | `auth.login.success` / `auth.login.fail` etc. | ✓ | Pre-existing via `auth_audit_log` + `auditService`. |
+| **Tenant data export**                              | `GET /api/tenant-export`                          | `tenant.export`                          | ✓      | Off-boarding artifact. Captures resource counts in details. |
+| **Tenant attestation generate**                     | `GET /api/tenant-export/attestation`              | `tenant.attestation.generate`            | ✓      | HMAC-signed hash-chain integrity report. Captures attestation verdict (INTACT / BROKEN / EMPTY). |
 
 ## Action-code taxonomy
 

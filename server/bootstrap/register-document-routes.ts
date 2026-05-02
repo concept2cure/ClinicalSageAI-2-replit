@@ -206,6 +206,11 @@ export async function registerDocumentRoutes({
         mod: '../routes/_ops-predicate-shadow.js',
         name: 'Predicate Intelligence — ops probes',
       },
+      {
+        path: '/api/tenant-export',
+        mod: '../routes/tenant-export.js',
+        name: 'Tenant data export + attestation',
+      },
     ] as const;
     const evidenceResults = await Promise.allSettled(evidenceConfig.map(c => import(c.mod)));
     evidenceResults.forEach((r, i) => {
