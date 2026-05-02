@@ -43,6 +43,10 @@ import {
   MDX_COMMAND_HANDLERS_PHASE2,
   MDX_COMMAND_METADATA_PHASE2,
 } from './mdx-command-handlers-phase2';
+import {
+  MDX_COMMAND_HANDLERS_PHASE3,
+  MDX_COMMAND_METADATA_PHASE3,
+} from './mdx-command-handlers-phase3';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -4289,6 +4293,8 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   // ─── MDX governed mutations — phase 2 (GSPR, post-market, evidence,
   //                                       reviewer-sim) ────────────────
   ...MDX_COMMAND_METADATA_PHASE2,
+  // ─── MDX governed mutations — phase 3 (predicate proxy) ────────────
+  ...MDX_COMMAND_METADATA_PHASE3,
 ];
 
 /**
@@ -4453,6 +4459,9 @@ export async function executeCommands(
     // MDX governed mutations — phase 2 (GSPR, post-market, evidence-sufficiency,
     // reviewer-simulation). Same governance contract as phase 1.
     ...MDX_COMMAND_HANDLERS_PHASE2,
+    // MDX governed mutations — phase 3 (predicate.candidate.set_status,
+    // se_matrix.patch). Proxy through BFF to the Python shadow service.
+    ...MDX_COMMAND_HANDLERS_PHASE3,
   };
 
   for (const cmd of commands) {

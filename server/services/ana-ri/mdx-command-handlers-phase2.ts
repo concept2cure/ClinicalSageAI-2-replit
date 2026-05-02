@@ -41,61 +41,11 @@ import {
 } from '../evidence-sufficiency/evidence-sufficiency.service';
 import { runReviewerSimulation } from '../intelligence-engine/reviewer-simulator.service';
 import type { CommandContext, CommandResult } from './command-executor';
+import { requireGovernedToolGate, mapServiceError } from './mdx-tool-policy';
 
-// ─── Shared helpers (same contract as phase 1) ──────────────────────────────
+// ─── Local helpers ──────────────────────────────────────────────────────────
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const MIN_REASON_LENGTH = 10;
-
-interface ConfirmCheck {
-  ok: boolean;
-  result: CommandResult;
-  reason: string;
-}
-
-function requireAgentConfirm(
-  action: string,
-  params: Record<string, unknown>,
-): ConfirmCheck {
-  const confirm = typeof params.confirm === 'string' ? params.confirm.toLowerCase() : '';
-  const reasonRaw = typeof params.reason === 'string' ? params.reason.trim() : '';
-
-  if (confirm !== 'yes') {
-    return {
-      ok: false,
-      reason: '',
-      result: {
-        success: false,
-        action: 'confirmation_required',
-        message:
-          `This is a governed mutation (action='${action}'). Re-issue the ` +
-          `command with confirm='yes' and a reason describing why this ` +
-          `change is being made.`,
-        data: { requiredAction: action, requiredFields: ['confirm', 'reason'] },
-        error: 'CONFIRMATION_REQUIRED',
-      },
-    };
-  }
-  if (reasonRaw.length < MIN_REASON_LENGTH) {
-    return {
-      ok: false,
-      reason: '',
-      result: {
-        success: false,
-        action: 'confirmation_required',
-        message: `reason must be at least ${MIN_REASON_LENGTH} characters describing why this change is being made.`,
-        data: { requiredAction: action, requiredFields: ['reason'] },
-        error: 'REASON_TOO_SHORT',
-      },
-    };
-  }
-  return { ok: true, reason: reasonRaw, result: null as unknown as CommandResult };
-}
-
-function failResult(action: string, err: unknown): CommandResult {
-  const detail = err instanceof Error ? err.message : 'unknown';
-  return { success: false, action, message: `Action failed: ${detail}`, error: 'EXECUTION_FAILED' };
-}
 
 // ─── GSPR mapping upsert ────────────────────────────────────────────────────
 
@@ -104,7 +54,7 @@ export async function gsprMappingUpsert(
   params: Record<string, unknown>,
 ): Promise<CommandResult> {
   const action = 'gspr.mapping.upsert';
-  const gate = requireAgentConfirm(action, params);
+  const gate = requireGovernedToolGate(action, ctx, params);
   if (!gate.ok) return gate.result;
 
   const programId = typeof params.programId === 'string' ? params.programId : '';
@@ -152,7 +102,7 @@ export async function gsprMappingUpsert(
       message: `Upserted GSPR mapping (${requirementId} → ${applicability}) on program ${programId}.`,
     };
   } catch (err) {
-    return failResult(action, err);
+    return mapServiceError(action, err);
   }
 }
 
@@ -163,7 +113,7 @@ export async function postMarketDocumentCreate(
   params: Record<string, unknown>,
 ): Promise<CommandResult> {
   const action = 'post_market.document.create';
-  const gate = requireAgentConfirm(action, params);
+  const gate = requireGovernedToolGate(action, ctx, params);
   if (!gate.ok) return gate.result;
 
   const programId = typeof params.programId === 'string' ? params.programId : '';
@@ -216,7 +166,7 @@ export async function postMarketDocumentCreate(
       message: `Created post-market document ${code} (${documentType}).`,
     };
   } catch (err) {
-    return failResult(action, err);
+    return mapServiceError(action, err);
   }
 }
 
@@ -225,7 +175,7 @@ export async function postMarketDocumentApprove(
   params: Record<string, unknown>,
 ): Promise<CommandResult> {
   const action = 'post_market.document.approve';
-  const gate = requireAgentConfirm(action, params);
+  const gate = requireGovernedToolGate(action, ctx, params);
   if (!gate.ok) return gate.result;
 
   const documentId = typeof params.documentId === 'string' ? params.documentId : '';
@@ -280,7 +230,7 @@ export async function postMarketDocumentApprove(
       message: `Approved post-market document ${documentId}.`,
     };
   } catch (err) {
-    return failResult(action, err);
+    return mapServiceError(action, err);
   }
 }
 
@@ -291,7 +241,7 @@ export async function evidenceSufficiencyAssess(
   params: Record<string, unknown>,
 ): Promise<CommandResult> {
   const action = 'evidence_sufficiency.assess';
-  const gate = requireAgentConfirm(action, params);
+  const gate = requireGovernedToolGate(action, ctx, params);
   if (!gate.ok) return gate.result;
 
   const programId = typeof params.programId === 'string' ? params.programId : '';
@@ -354,7 +304,7 @@ export async function evidenceSufficiencyAssess(
       message: `Assessed evidence sufficiency: verdict=${(result as any)?.verdict}.`,
     };
   } catch (err) {
-    return failResult(action, err);
+    return mapServiceError(action, err);
   }
 }
 
@@ -365,7 +315,7 @@ export async function reviewerSimulationRun(
   params: Record<string, unknown>,
 ): Promise<CommandResult> {
   const action = 'reviewer_simulation.run';
-  const gate = requireAgentConfirm(action, params);
+  const gate = requireGovernedToolGate(action, ctx, params);
   if (!gate.ok) return gate.result;
 
   const programId = typeof params.programId === 'string' ? params.programId : '';
@@ -415,7 +365,7 @@ export async function reviewerSimulationRun(
       message: `Ran reviewer simulation on program ${programId}.`,
     };
   } catch (err) {
-    return failResult(action, err);
+    return mapServiceError(action, err);
   }
 }
 

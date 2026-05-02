@@ -95,6 +95,10 @@ import {
   evidenceSufficiencyAssess,
   reviewerSimulationRun,
 } from '../mdx-command-handlers-phase2';
+import {
+  predicateCandidateSetStatus,
+  seMatrixPatch,
+} from '../mdx-command-handlers-phase3';
 
 const CTX = { userId: 7, organizationId: 11 };
 const PROGRAM = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1';
@@ -195,6 +199,39 @@ const PROBES: Probe[] = [
         program: { id: PROGRAM },
         intel: { facts: [] },
       }),
+  },
+  {
+    tool: 'predicate.candidate.set_status',
+    expectedAction: 'agent.ana.predicate.candidate.status',
+    invoke: () => {
+      // Stub fetch + service token for the proxy.
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true, status: 200, json: async () => ({ id: 'c-1' }),
+      }));
+      process.env.ANA_SERVICE_TOKEN = 'test-svc';
+      return predicateCandidateSetStatus(CTX, {
+        ...yes,
+        candidateId: 'c-1',
+        programId: PROGRAM,
+        status: 'primary',
+      });
+    },
+  },
+  {
+    tool: 'se_matrix.patch',
+    expectedAction: 'agent.ana.se_matrix.patch',
+    invoke: () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true, status: 200, json: async () => ({ id: 'm-1' }),
+      }));
+      process.env.ANA_SERVICE_TOKEN = 'test-svc';
+      return seMatrixPatch(CTX, {
+        ...yes,
+        matrixRowId: 'm-1',
+        programId: PROGRAM,
+        patch: { resolution: 'resolved' },
+      });
+    },
   },
 ];
 

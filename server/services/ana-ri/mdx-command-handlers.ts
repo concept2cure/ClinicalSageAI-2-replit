@@ -38,83 +38,11 @@ import {
 import { Q_SUB_TYPES } from '../../../shared/schema/q-sub';
 import auditService from '../auditService';
 import type { CommandContext, CommandResult } from './command-executor';
+import { requireGovernedToolGate, mapServiceError } from './mdx-tool-policy';
 
-// ─── Confirmation helper ────────────────────────────────────────────────────
+// ─── Local helpers ──────────────────────────────────────────────────────────
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const MIN_REASON_LENGTH = 10;
-
-interface ConfirmCheck {
-  ok: boolean;
-  /** When ok=false, the CommandResult to return verbatim. */
-  result: CommandResult;
-  /** When ok=true, the validated reason string. */
-  reason: string;
-}
-
-/**
- * Enforces the two-phase governed-action protocol on a chat-initiated
- * mutation. The handler must either receive `confirm: 'yes'` + `reason: …`
- * or return the produced CommandResult directly.
- *
- * Used at the top of every handler that mutates state.
- */
-function requireAgentConfirm(
-  action: string,
-  params: Record<string, unknown>,
-): ConfirmCheck {
-  const confirm = typeof params.confirm === 'string' ? params.confirm.toLowerCase() : '';
-  const reasonRaw = typeof params.reason === 'string' ? params.reason.trim() : '';
-
-  if (confirm !== 'yes') {
-    return {
-      ok: false,
-      reason: '',
-      result: {
-        success: false,
-        action: 'confirmation_required',
-        message:
-          `This is a governed mutation (action='${action}'). Re-issue the ` +
-          `command with confirm='yes' and a reason describing why this ` +
-          `change is being made.`,
-        data: { requiredAction: action, requiredFields: ['confirm', 'reason'] },
-        error: 'CONFIRMATION_REQUIRED',
-      },
-    };
-  }
-  if (reasonRaw.length < MIN_REASON_LENGTH) {
-    return {
-      ok: false,
-      reason: '',
-      result: {
-        success: false,
-        action: 'confirmation_required',
-        message: `reason must be at least ${MIN_REASON_LENGTH} characters describing why this change is being made.`,
-        data: { requiredAction: action, requiredFields: ['reason'] },
-        error: 'REASON_TOO_SHORT',
-      },
-    };
-  }
-  return { ok: true, reason: reasonRaw, result: null as unknown as CommandResult };
-}
-
-function notFoundOrAccessResult(action: string, err: unknown): CommandResult {
-  if (err instanceof TenantAccessError) {
-    return {
-      success: false,
-      action,
-      message: 'Access denied: the resource is not in your organization.',
-      error: 'TENANT_ACCESS_DENIED',
-    };
-  }
-  const detail = err instanceof Error ? err.message : 'unknown';
-  return {
-    success: false,
-    action,
-    message: `Action failed: ${detail}`,
-    error: 'EXECUTION_FAILED',
-  };
-}
 
 // ─── Q-Sub create ───────────────────────────────────────────────────────────
 
@@ -123,7 +51,7 @@ export async function qSubCreate(
   params: Record<string, unknown>,
 ): Promise<CommandResult> {
   const action = 'q_sub.create';
-  const gate = requireAgentConfirm(action, params);
+  const gate = requireGovernedToolGate(action, ctx, params);
   if (!gate.ok) return gate.result;
 
   const programId = typeof params.programId === 'string' ? params.programId : '';
@@ -209,7 +137,7 @@ export async function qSubCreate(
         `It is in stage 'plan' until you file the package.`,
     };
   } catch (err) {
-    return notFoundOrAccessResult(action, err);
+    return mapServiceError(action, err);
   }
 }
 
@@ -220,7 +148,7 @@ export async function qSubCommitmentSetRolledIn(
   params: Record<string, unknown>,
 ): Promise<CommandResult> {
   const action = 'q_sub.commitment.set_rolled_in';
-  const gate = requireAgentConfirm(action, params);
+  const gate = requireGovernedToolGate(action, ctx, params);
   if (!gate.ok) return gate.result;
 
   const commitmentId = typeof params.commitmentId === 'string' ? params.commitmentId : '';
@@ -278,7 +206,7 @@ export async function qSubCommitmentSetRolledIn(
         : `Cleared rolled-in flag on commitment ${updated.displayCode}.`,
     };
   } catch (err) {
-    return notFoundOrAccessResult(action, err);
+    return mapServiceError(action, err);
   }
 }
 
@@ -300,7 +228,7 @@ export async function sectionApprove(
   params: Record<string, unknown>,
 ): Promise<CommandResult> {
   const action = 'section.approve';
-  const gate = requireAgentConfirm(action, params);
+  const gate = requireGovernedToolGate(action, ctx, params);
   if (!gate.ok) return gate.result;
 
   const sectionId = Number(params.sectionId);
@@ -380,7 +308,7 @@ export async function sectionApprove(
       message: `Section §${before.section_number} approved (${before.status ?? 'todo'} → ${targetStatus}).`,
     };
   } catch (err) {
-    return notFoundOrAccessResult(action, err);
+    return mapServiceError(action, err);
   }
 }
 
@@ -469,7 +397,7 @@ export async function preflightModule(
       message: `Pre-flight for module ${moduleCode}: ${body?.overall ?? 'unknown'}.`,
     };
   } catch (err) {
-    return notFoundOrAccessResult(action, err);
+    return mapServiceError(action, err);
   }
 }
 
@@ -490,30 +418,13 @@ export async function esgTransmit(
 ): Promise<CommandResult> {
   const action = 'k510_workflow.transmit';
 
-  // Custom confirmation gate (stricter than the default).
-  const confirm = typeof params.confirm === 'string' ? params.confirm.toLowerCase() : '';
-  const reasonRaw = typeof params.reason === 'string' ? params.reason.trim() : '';
-  if (confirm !== 'yes-transmit') {
-    return {
-      success: false,
-      action: 'confirmation_required',
-      message:
-        `Transmit to FDA ESG is the most consequential mutation in this ` +
-        `platform. Re-issue with confirm='yes-transmit' and a reason of at ` +
-        `least 30 characters describing why this transmission is occurring.`,
-      data: { requiredAction: action, requiredFields: ['confirm', 'reason'] },
-      error: 'CONFIRMATION_REQUIRED',
-    };
-  }
-  if (reasonRaw.length < 30) {
-    return {
-      success: false,
-      action: 'confirmation_required',
-      message: 'reason must be at least 30 characters for an ESG transmit.',
-      data: { requiredAction: action, requiredFields: ['reason'] },
-      error: 'REASON_TOO_SHORT',
-    };
-  }
+  // Strictest gate: 'yes-transmit' literal + 30-char reason. Tenant
+  // policy + reason-quality filters apply too.
+  const gate = requireGovernedToolGate(action, ctx, params, {
+    expected: 'yes-transmit',
+    minReasonLength: 30,
+  });
+  if (!gate.ok) return gate.result;
 
   const projectId = Number(params.projectId);
   if (!Number.isFinite(projectId)) {
@@ -538,7 +449,7 @@ export async function esgTransmit(
       resourceId: String((response as any)?.packageId ?? projectId),
       details: {
         actorKind: 'agent:ana',
-        agentReason: reasonRaw,
+        agentReason: gate.reason,
         projectId,
         transactionId: (response as any)?.transactionId ?? null,
       },
@@ -559,11 +470,11 @@ export async function esgTransmit(
       resourceId: String(projectId),
       details: {
         actorKind: 'agent:ana',
-        agentReason: reasonRaw,
+        agentReason: gate.reason,
         error: err instanceof Error ? err.message : 'unknown',
       },
     });
-    return notFoundOrAccessResult(action, err);
+    return mapServiceError(action, err);
   }
 }
 

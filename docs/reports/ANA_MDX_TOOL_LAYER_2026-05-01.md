@@ -106,24 +106,34 @@ Audit-trail coverage map updated at
 
 ## Tools NOT yet wired (follow-up)
 
-These fit the same pattern but ship in a follow-up so this PR stays
-small enough to review:
+After phases 1-3 the only remaining gap is:
 
-- `gspr.mapping.upsert`
-- `post_market.document.{create,update,validate,approve,supersede}`
-- `evidence_sufficiency.assess`
-- `reviewer_simulation.run`
-- `correspondence.ingest` (gated on Claude Design brief #2 surfacing)
-- `predicate.candidate.set_status` / `se_matrix.patch` (proxy through
-  the BFF route since the underlying mutation lives in the Python
-  shadow service)
+- `correspondence.ingest` — gated on Claude Design brief #2 surfacing.
+  The handler is intentionally not wired because AnA-driven ingestion
+  without the receiving UI surface is low-value.
 
-## Permission model (deferred)
+## Permission model — shipped in phase 3
 
-For BETA, every authenticated user with admin role can invoke every
-tool. Per-tool / per-tenant permission gating (e.g. "Org X disables
-ESG transmit by AnA") is a GA item. The hooks are in place — adding
-a permission check at the top of each handler is straightforward.
+Per-tool / per-tenant gating ships via `mdx-tool-policy.ts`. Tenant
+admins set `organizations.settings.anaToolPolicy = { deny?: [], allow?: [] }`:
+
+- **`deny: ['k510_workflow.transmit']`** — AnA refuses ESG transmit
+  for this tenant; everything else allowed.
+- **`allow: ['q_sub.create', 'q_sub.commitment.set_rolled_in']`** —
+  allowlist mode; AnA can ONLY invoke these two tools.
+- **No policy** (default) — every tool allowed.
+
+The policy is read from `ctx.anaToolPolicy` (cached at session start
+to avoid a DB hit on every tool call). Refusals return
+`error: 'TOOL_DENIED'` or `'TOOL_NOT_ALLOWED'`.
+
+## Reason-quality filter — shipped in phase 3
+
+`reason: 'aaaaaaaaaaaaaaa'` clears the length check but adds zero
+auditable signal. The shared gate now also rejects any reason with
+fewer than 5 distinct non-whitespace characters
+(`error: 'REASON_DEGENERATE'`). Real reasons easily clear this — e.g.
+`'per FDA AI letter triage outcome'` has 19 distinct characters.
 
 ## Tests
 

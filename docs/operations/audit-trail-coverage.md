@@ -66,6 +66,8 @@ Status legend:
 | **AnA-initiated post-market doc approve**           | AnA tool `post_market.document.approve`           | `agent.ana.post_market.document.approve` / `..approve.blocked` | ✓ | Blocked attempts also logged. |
 | **AnA-initiated evidence-sufficiency assess**       | AnA tool `evidence_sufficiency.assess`            | `agent.ana.evidence_sufficiency.assess`  | ✓      | Confirm + reason; never dry-run. |
 | **AnA-initiated reviewer simulation**               | AnA tool `reviewer_simulation.run`                | `agent.ana.reviewer_simulation.run`      | ✓      | Confirm + reason; persisted run. |
+| **AnA-initiated predicate candidate status**        | AnA tool `predicate.candidate.set_status`         | `agent.ana.predicate.candidate.status`   | ✓      | Proxies through BFF to Python shadow; logs after upstream 2xx. |
+| **AnA-initiated SE matrix patch**                   | AnA tool `se_matrix.patch`                        | `agent.ana.se_matrix.patch`              | ✓      | Proxies through BFF to Python shadow; logs fieldsChanged in details. |
 
 ## Action-code taxonomy
 
