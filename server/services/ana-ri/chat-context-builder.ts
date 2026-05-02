@@ -28,6 +28,7 @@ import { enrichContextForChat } from './context-enrichment.js';
 import { getThreadMessages } from '../chat-thread-helpers.js';
 import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
 import { decisionLifecycleService } from '../decision-lifecycle-service.js';
+import { buildMdxContextBlock } from './mdx-context-resolver.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -254,6 +255,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     submission_type,
     conversation_history,
     authoring_context,
+    module_context,
   } = req.body;
 
   // Validate inputs
@@ -381,7 +383,37 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     }
   }
 
-  const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + governedContextBlock + skillBundleBlock + memoryResult.memoryBlock + enrichment.block;
+  // ── MDX workstream block ──
+  // When the user is in the medical-device workstream, append the MDX
+  // context resolver's output: active surface knowledge, onboarding
+  // milestone, proactive alerts (deadlines / blockers / stale sections),
+  // relevant tools, governed-mutation contract reminder. Failures
+  // degrade silently — AnA still gets every other block.
+  let mdxContextBlock = '';
+  if (
+    module_context &&
+    typeof module_context === 'object' &&
+    (module_context as any).workstream === 'mdx' &&
+    numericOrgId !== null &&
+    pool
+  ) {
+    try {
+      const result = await buildMdxContextBlock(pool, {
+        organizationId: numericOrgId,
+        activeNav: typeof (module_context as any).activeNav === 'string'
+          ? (module_context as any).activeNav
+          : undefined,
+        activeProgramCode: typeof (module_context as any).activeProgramCode === 'string'
+          ? (module_context as any).activeProgramCode
+          : null,
+      });
+      mdxContextBlock = '\n\n' + result.systemPromptBlock;
+    } catch {
+      // fail-soft
+    }
+  }
+
+  const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + governedContextBlock + skillBundleBlock + memoryResult.memoryBlock + enrichment.block + mdxContextBlock;
 
   // Build messages array
   const messages: GatewayMessage[] = [{ role: 'system', content: fullSystemPrompt }];
