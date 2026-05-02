@@ -109,6 +109,7 @@ import {
   postMarketDocumentValidate,
   postMarketDocumentSupersede,
 } from '../mdx-command-handlers-phase2';
+import { explainAuditRow } from '../mdx-explain-audit-row';
 
 const CTX = { userId: 7, organizationId: 11 };
 const PROGRAM = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1';
@@ -290,6 +291,38 @@ const PROBES: Probe[] = [
         documentId: 'd-1',
         newTitle: 'PMCF-2026-Q1',
       }),
+  },
+  {
+    // Read-only auditor capability — has no confirm/reason but still
+    // emits an agent.ana.audit.explain row so the contract test stays
+    // honest about every dispatch entry.
+    tool: 'audit.explain',
+    expectedAction: 'agent.ana.audit.explain',
+    invoke: () => {
+      // The handler reads from `pool` lazily via dynamic import. Stub
+      // a minimal db module that returns one row.
+      vi.doMock('../../db', () => ({
+        pool: {
+          query: vi.fn(async () => ({
+            rows: [
+              {
+                id: 1,
+                tenant_id: CTX.organizationId,
+                user_id: CTX.userId,
+                action: 'agent.ana.q_sub.create',
+                table_name: 'q_submission',
+                record_id: 'q-1',
+                new_values: { actorKind: 'agent:ana', agentReason: 'r' },
+                ip_address: null,
+                user_agent: null,
+                created_at: '2026-04-15T10:00:00Z',
+              },
+            ],
+          })),
+        },
+      }));
+      return explainAuditRow(CTX, { auditRowId: 1 });
+    },
   },
 ];
 
