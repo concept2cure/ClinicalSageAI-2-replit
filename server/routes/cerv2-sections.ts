@@ -9,6 +9,15 @@ import { cerv2510kSections, cerv2SectionVersions } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import { db } from '../db';
 import { createScopedLogger } from '../utils/logger';
+import auditService from '../services/auditService';
+
+const SECTION_APPROVAL_STATES: ReadonlySet<string> = new Set(['validated', 'approved']);
+
+function statusBecameApproved(prev: string | null | undefined, next: string | null | undefined): boolean {
+  const wasApproved = prev != null && SECTION_APPROVAL_STATES.has(prev);
+  const isApproved = next != null && SECTION_APPROVAL_STATES.has(next);
+  return !wasApproved && isApproved;
+}
 
 const router = Router();
 const logger = createScopedLogger('cerv2-sections');
@@ -236,6 +245,21 @@ router.post('/', authMiddleware, async (req, res) => {
       userAgent: req.headers['user-agent'] ?? null,
     });
 
+    void auditService.logAction({
+      tenantId: organizationId,
+      userId: userId ?? null,
+      action: 'section.create',
+      resourceType: 'cerv2_510k_section',
+      resourceId: String(inserted.id),
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: {
+        sectionNumber: inserted.sectionNumber,
+        sectionTitle: inserted.sectionTitle,
+        documentId: inserted.documentId ?? null,
+      },
+    });
+
     return res.status(201).json({ section: serializeSection(inserted) });
   } catch (error) {
     logger.error('Failed to create section', { error });
@@ -351,6 +375,44 @@ router.patch('/:sectionId', authMiddleware, async (req, res) => {
       userAgent: req.headers['user-agent'] ?? null,
     });
 
+    // Reflect into the central audit_logs. The cerv2_section_versions row
+    // above is the rich change record; this row gives auditors a single
+    // unified table to query across resources. A status flip into a
+    // section-approval state is logged with action `section.approve`
+    // separately so reviewers can find sign-offs directly.
+    void auditService.logAction({
+      tenantId: organizationId,
+      userId: userId ?? null,
+      action: 'section.edit',
+      resourceType: 'cerv2_510k_section',
+      resourceId: String(sectionId),
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: {
+        sectionNumber: updated.sectionNumber,
+        versionNumber: nextVersion,
+        fieldsChanged: Object.keys(parsed.data),
+      },
+    });
+
+    if (statusBecameApproved(existing.status, updated.status)) {
+      void auditService.logAction({
+        tenantId: organizationId,
+        userId: userId ?? null,
+        action: 'section.approve',
+        resourceType: 'cerv2_510k_section',
+        resourceId: String(sectionId),
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: {
+          sectionNumber: updated.sectionNumber,
+          previousStatus: existing.status ?? null,
+          newStatus: updated.status ?? null,
+          versionNumber: nextVersion,
+        },
+      });
+    }
+
     return res.json({ section: serializeSection(updated) });
   } catch (error) {
     logger.error('Failed to update section', { error, sectionId });
@@ -383,6 +445,20 @@ router.delete('/:sectionId', authMiddleware, async (req, res) => {
     if (!deleted.length) {
       return res.status(404).json({ error: 'Section not found' });
     }
+
+    void auditService.logAction({
+      tenantId: organizationId,
+      userId: resolveUserId(req) ?? null,
+      action: 'section.delete',
+      resourceType: 'cerv2_510k_section',
+      resourceId: String(sectionId),
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: {
+        sectionNumber: deleted[0].sectionNumber,
+        sectionTitle: deleted[0].sectionTitle,
+      },
+    });
 
     return res.json({ success: true });
   } catch (error) {

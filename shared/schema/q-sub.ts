@@ -21,9 +21,10 @@
  *                                 receiving artifact knows what's owed
  *   q_sub_timeline_entries      — append-only event log for the lifecycle
  *
- * STATUS: DRAFT. Not yet wired into the route layer or migration runner.
- * Next step: review with backend lead, finalize, generate migration via
- *   drizzle-kit generate, mount router under /api/q-sub/*.
+ * Tenant isolation is enforced at the service layer by joining
+ * regulatoryPrograms (organization_id) before every read or write — Q-Sub
+ * tables themselves carry only program_id, mirroring evidence-sufficiency
+ * and post-market.
  */
 
 import { relations, InferSelectModel } from 'drizzle-orm';
@@ -35,14 +36,11 @@ import {
   uuid,
   varchar,
   boolean,
-  json,
   index,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
-
-import { regulatoryPrograms } from './programs';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Q-Submissions
@@ -82,6 +80,9 @@ export const qSubmissions = pgTable(
 
     // List-row tone for risk colouring: '' | 'ok' | 'warn' | 'err'.
     tone: varchar('tone', { length: 8 }).default(''),
+
+    // Per-submission narrative shown on the detail surface.
+    summary: text('summary'),
 
     // Audit metadata.
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

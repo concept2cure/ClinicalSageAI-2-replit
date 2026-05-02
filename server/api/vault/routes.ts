@@ -9,6 +9,7 @@ import type { Pool, PoolClient } from 'pg';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { getRequestDbClient } from '../../middleware/tenantContext';
+import auditService from '../../services/auditService';
 
 const router = Router();
 
@@ -82,6 +83,25 @@ router.post('/documents', upload.single('file'), async (req: Request, res: Respo
     `,
       [result.rows[0].id]
     );
+
+    void auditService.logAction({
+      tenantId: (req as any).user?.organizationId ?? null,
+      userId: (req as any).user?.id ?? null,
+      action: 'vault.upload',
+      resourceType: 'vault_document',
+      resourceId: String(result.rows[0].id),
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: {
+        programId: programId ?? null,
+        projectId: projectId ?? null,
+        title,
+        documentType: documentType ?? null,
+        classification: classification ?? null,
+        size: file.size,
+        mime: file.mimetype,
+      },
+    });
 
     res.status(201).json({
       success: true,

@@ -8,6 +8,7 @@ import { TemplateMapper } from '../services/documentTemplateMapper';
 import { MemStorage } from '../storage';
 import FDA510kComplianceTracker from '../services/510kComplianceTracker';
 import DocumentOrchestrationService from '../services/DocumentOrchestrationService';
+import auditService from '../services/auditService';
 
 const memStorage = new MemStorage();
 const getStorage = async () => memStorage;
@@ -218,6 +219,22 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
         console.error('[510k-workflow] Document generation error:', docError);
         // Don't fail the workflow save if document generation fails
       }
+
+      void auditService.logAction({
+        tenantId: parseInt(organizationId) || 0,
+        userId: parseInt((req.headers['x-user-id'] as string) || '') || null,
+        action: 'k510_workflow.transition',
+        resourceType: 'fda_510k_project',
+        resourceId: String(projectId),
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: {
+          stage,
+          section: section ?? null,
+          completedSteps: Array.isArray(req.body.completedSteps) ? req.body.completedSteps : [],
+          autoPopulated,
+        },
+      });
 
       res.status(200).json({
         success: true,

@@ -50,6 +50,7 @@ import {
   type RegulatoryChangeEvent,
 } from '../services/living-file/change-router.service';
 import { programFreshnessReport } from '../services/living-file/freshness-report.service';
+import auditService from '../services/auditService';
 
 const router = Router();
 router.use(authenticateToken);
@@ -423,6 +424,26 @@ router.post(
         triggeredBy,
         dryRun: body.dryRun === true,
       });
+
+      // Persisted runs land in the audit trail; dry runs don't.
+      if (!body.dryRun) {
+        void auditService.logAction({
+          tenantId: orgId,
+          userId: triggeredBy,
+          action: 'reviewer_simulation.run',
+          resourceType: 'reviewer_simulation_run',
+          resourceId: (result as any)?.runId ?? programId,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'] as string | undefined,
+          details: {
+            programId,
+            personaCount: Array.isArray(personas) ? personas.length : null,
+            defensePacketId: body.defensePacketId ?? null,
+            trigger: typeof body.trigger === 'string' ? body.trigger : 'manual',
+          },
+        });
+      }
+
       res.json(result);
     } catch (err: any) {
       res.status(500).json({ error: 'Simulation failed', detail: err?.message });

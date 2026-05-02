@@ -196,6 +196,21 @@ export async function registerDocumentRoutes({
         mod: '../routes/evidence-sufficiency.js',
         name: 'Evidence Sufficiency',
       },
+      {
+        path: '/api/q-sub',
+        mod: '../routes/q-sub.js',
+        name: 'Q-Submissions (Pre-Sub / SIR / SRD)',
+      },
+      {
+        path: '/api/_ops/predicate-intelligence',
+        mod: '../routes/_ops-predicate-shadow.js',
+        name: 'Predicate Intelligence — ops probes',
+      },
+      {
+        path: '/api/tenant-export',
+        mod: '../routes/tenant-export.js',
+        name: 'Tenant data export + attestation',
+      },
     ] as const;
     const evidenceResults = await Promise.allSettled(evidenceConfig.map(c => import(c.mod)));
     evidenceResults.forEach((r, i) => {
