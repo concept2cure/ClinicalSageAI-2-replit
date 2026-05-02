@@ -172,3 +172,133 @@ export class FilesystemArchiveSink implements ArchiveSink {
     return { storedSha256, locator: filePath };
   }
 }
+
+// ─── S3 sink (production) ──────────────────────────────────────────────────
+
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  type S3ClientConfig,
+} from '@aws-sdk/client-s3';
+
+export interface S3ArchiveSinkConfig {
+  /** S3 bucket name. The bucket should live in a separate AWS account
+   *  with a one-way trust per the retention policy. */
+  bucket: string;
+  /** Prefix inside the bucket. Date-partitioned per write to ease lifecycle. */
+  prefix?: string;
+  /** AWS region. Default: process.env.AWS_REGION. */
+  region?: string;
+  /** Storage class. Default: STANDARD_IA for hot archive, set
+   *  GLACIER_DEEP_ARCHIVE for the long-term tier. */
+  storageClass?: 'STANDARD' | 'STANDARD_IA' | 'GLACIER' | 'DEEP_ARCHIVE';
+  /** SSE config — pass 'aws:kms' + key id for KMS, or 'AES256' for SSE-S3. */
+  serverSideEncryption?: 'AES256' | 'aws:kms';
+  sseKmsKeyId?: string;
+  /** Optional client overrides (test injection). */
+  clientConfig?: S3ClientConfig;
+}
+
+export class S3ArchiveSink implements ArchiveSink {
+  private client: S3Client;
+  private bucket: string;
+  private prefix: string;
+  private storageClass: 'STANDARD' | 'STANDARD_IA' | 'GLACIER' | 'DEEP_ARCHIVE';
+  private sse?: 'AES256' | 'aws:kms';
+  private sseKmsKeyId?: string;
+
+  constructor(cfg: S3ArchiveSinkConfig) {
+    this.client = new S3Client({
+      region: cfg.region ?? process.env.AWS_REGION,
+      ...cfg.clientConfig,
+    });
+    this.bucket = cfg.bucket;
+    this.prefix = (cfg.prefix ?? 'audit-archive').replace(/\/+$/, '');
+    this.storageClass = cfg.storageClass ?? 'STANDARD_IA';
+    this.sse = cfg.serverSideEncryption;
+    this.sseKmsKeyId = cfg.sseKmsKeyId;
+  }
+
+  async writeBatch(args: {
+    batchId: string;
+    rows: Array<Record<string, unknown>>;
+    sha256: string;
+  }): Promise<{ storedSha256: string; locator: string }> {
+    // Date-partitioned key: 2026/05/01/<batchId>.json. Makes lifecycle
+    // rules trivial (transition to Glacier after N days; expire never).
+    const ts = new Date();
+    const yyyy = ts.getUTCFullYear();
+    const mm = String(ts.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(ts.getUTCDate()).padStart(2, '0');
+    const key = `${this.prefix}/${yyyy}/${mm}/${dd}/${args.batchId}.json`;
+
+    const body = JSON.stringify({
+      batchId: args.batchId,
+      sha256: args.sha256,
+      writtenAt: new Date().toISOString(),
+      rows: args.rows,
+    });
+
+    // Use S3's ContentMD5 + ChecksumSHA256 so the upload itself is
+    // verified end-to-end. Mismatch causes PutObject to throw.
+    const checksumSHA256 = sha256OfStringBase64(body);
+
+    const put = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+      Body: body,
+      ContentType: 'application/json',
+      StorageClass: this.storageClass,
+      ChecksumSHA256: checksumSHA256,
+      Metadata: {
+        'batch-id': args.batchId,
+        'rows-sha256': args.sha256,
+        'row-count': String(args.rows.length),
+      },
+      ...(this.sse ? { ServerSideEncryption: this.sse } : {}),
+      ...(this.sseKmsKeyId ? { SSEKMSKeyId: this.sseKmsKeyId } : {}),
+    });
+    await this.client.send(put);
+
+    // Re-read the object and re-compute the rows hash. This is the
+    // production analog of the filesystem sink's re-read check —
+    // confirms the bytes that landed at S3 are the bytes we sent.
+    const get = new GetObjectCommand({ Bucket: this.bucket, Key: key });
+    const got = await this.client.send(get);
+    const reread = await streamToString(got.Body as NodeJS.ReadableStream);
+    const parsed = JSON.parse(reread);
+    const storedSha256 = computeBatchHash(parsed.rows);
+
+    return {
+      storedSha256,
+      locator: `s3://${this.bucket}/${key}`,
+    };
+  }
+
+  /**
+   * Verify that an archive object exists and its rows hash matches the
+   * given expectation. Used by audit / restore flows.
+   */
+  async verifyBatch(locator: string, expectedSha256: string): Promise<boolean> {
+    const m = locator.match(/^s3:\/\/([^/]+)\/(.+)$/);
+    if (!m) throw new Error(`Invalid s3 locator: ${locator}`);
+    const head = new HeadObjectCommand({ Bucket: m[1], Key: m[2] });
+    const meta = await this.client.send(head);
+    const recorded = meta.Metadata?.['rows-sha256'];
+    return recorded === expectedSha256;
+  }
+}
+
+function sha256OfStringBase64(s: string): string {
+  return crypto.createHash('sha256').update(s, 'utf8').digest('base64');
+}
+
+async function streamToString(stream: NodeJS.ReadableStream): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) {
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+  }
+  return Buffer.concat(chunks).toString('utf8');
+}

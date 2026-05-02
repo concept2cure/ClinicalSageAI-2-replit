@@ -62,9 +62,55 @@ For each, capture the **fact that it is set** (not the secret value).
 | Latest dated migration in `db/migrations/` is applied      | yes      |          |             |
 | `q_submissions` table exists                               | yes      |          |             |
 | `q_sub_questions`, `_commitments`, `_meetings`, `_timeline` exist | yes |          |             |
-| `audit_logs` table exists with INSERT-only role grant      | yes      |          |             |
+| `audit_logs` table exists                                   | yes      |          |             |
 | Tamper-proof audit table exists with hash-chain trigger    | yes      |          |             |
 | Tenant indexes (`reg_programs_org_idx`, `q_submissions_program_idx`) exist | yes | |   |
+
+### 5a. Audit-table role grants (21 CFR Part 11)
+
+The application role MUST NOT be able to UPDATE or DELETE on any audit
+table. Run the verification SQL from
+`docs/operations/audit-log-retention-policy.md` and capture the result:
+
+```sql
+SELECT grantee, table_name, privilege_type
+FROM information_schema.role_table_grants
+WHERE grantee IN ('bff_app')
+  AND table_schema = 'public'
+  AND table_name IN (
+    'audit_logs',
+    'tamper_proof_audit_log',
+    'authoring_audit_trail',
+    'cerv2_section_versions',
+    'auth_audit_log',
+    'electronic_signatures',
+    'audit_events'
+  )
+  AND privilege_type IN ('UPDATE', 'DELETE');
+```
+
+| Check                                          | Expected           | Captured | Pass / Fail |
+|------------------------------------------------|--------------------|----------|-------------|
+| Query returns zero rows                        | 0 rows             |          |             |
+
+If the query returns any row, the role policy is broken and the IQ
+**MUST FAIL**. The fix is to revoke UPDATE / DELETE on the listed tables
+from `bff_app` and re-run the check.
+
+### 5b. Hash-chain verification baseline
+
+Run the daily verification once at install time so the report is
+attached to the IQ package:
+
+```bash
+npm run audit:verify:full
+```
+
+| Check                          | Expected | Captured | Pass / Fail |
+|--------------------------------|----------|----------|-------------|
+| Verdict                        | INTACT (or EMPTY for new install) | |  |
+| Broken links                   | 0        |          |             |
+| Report path                    | (capture) |         |             |
 
 Capture the migration manifest hash:
 

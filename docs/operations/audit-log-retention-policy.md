@@ -161,11 +161,16 @@ For BETA, the customer-facing data-processing agreement (DPA) commits to:
       `npm run audit:archive`).
 - [x] Customer-export endpoint shipped at `GET /api/tenant-export` plus
       attestation at `GET /api/tenant-export/attestation`.
-- [ ] Build the S3ArchiveSink for production deployments (BETA uses the
-      filesystem sink — fine for single-tenant scale).
-- [ ] Wire the daily hash-chain verification Cron into the operations
-      dashboard. The verification logic lives in
-      `server/services/audit/chainIntegrityMonitor.ts` already; the
-      missing piece is the dashboard widget.
-- [ ] Add the role-grants verification SQL to the IQ template (currently
-      lives in this doc only).
+- [x] S3ArchiveSink shipped — set `AUDIT_ARCHIVE_SINK=s3` plus the S3
+      env vars to use it in production.
+- [x] Daily hash-chain verification cron shipped at
+      `scripts/run-chain-verify.mjs` (`npm run audit:verify:24h` /
+      `audit:verify:full`). Failures append a
+      `audit.chain_integrity_failure` event into the chain itself.
+- [x] Role-grants verification SQL added to the IQ template §5a.
+- [x] Attestation key rotation procedure with dual-key support
+      documented at `docs/operations/attestation-key-rotation.md`.
+- [ ] Operations-dashboard widget for the verification reports
+      (currently they land as JSON files; dashboard tile is a follow-up).
+- [ ] HSM / KMS-backed signing for attestation reports (currently HMAC
+      with an env-var key; KMS replaces this in GA).

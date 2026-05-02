@@ -133,3 +133,69 @@ describe('attestation key configuration', () => {
     vi.stubEnv('AUDIT_ATTESTATION_KEY', 'a-very-secret-attestation-key-32-chars');
   });
 });
+
+describe('key rotation', () => {
+  it('embeds the current key id in the signature', async () => {
+    vi.stubEnv('AUDIT_ATTESTATION_KEY', 'a-very-secret-attestation-key-32-chars');
+    vi.stubEnv('AUDIT_ATTESTATION_KEY_ID', 'k2');
+    const c = client(
+      new Map<string, any[]>([
+        ['organizations', [ORG]],
+        ['audit_events', []],
+      ]),
+    );
+    const report = await generateAttestation(c, ORG.id);
+    expect(report.signature.keyId).toBe('k2');
+    expect(verifyAttestationSignature(report)).toBe(true);
+  });
+
+  it('verifies a report signed under the previous key', async () => {
+    // Step 1: sign under k1.
+    vi.stubEnv('AUDIT_ATTESTATION_KEY', 'old-key-32-chars-aaaaaaaaaaaaaaaaa');
+    vi.stubEnv('AUDIT_ATTESTATION_KEY_ID', 'k1');
+    vi.stubEnv('AUDIT_ATTESTATION_KEY_PREV', '');
+    vi.stubEnv('AUDIT_ATTESTATION_KEY_PREV_ID', '');
+    const c = client(
+      new Map<string, any[]>([
+        ['organizations', [ORG]],
+        ['audit_events', []],
+      ]),
+    );
+    const report = await generateAttestation(c, ORG.id);
+    expect(report.signature.keyId).toBe('k1');
+
+    // Step 2: rotate — k2 is now current, k1 is "previous". The old
+    // report must still verify.
+    vi.stubEnv('AUDIT_ATTESTATION_KEY', 'new-key-32-chars-bbbbbbbbbbbbbbbbb');
+    vi.stubEnv('AUDIT_ATTESTATION_KEY_ID', 'k2');
+    vi.stubEnv('AUDIT_ATTESTATION_KEY_PREV', 'old-key-32-chars-aaaaaaaaaaaaaaaaa');
+    vi.stubEnv('AUDIT_ATTESTATION_KEY_PREV_ID', 'k1');
+    expect(verifyAttestationSignature(report)).toBe(true);
+
+    // Reset for other tests.
+    vi.stubEnv('AUDIT_ATTESTATION_KEY', 'a-very-secret-attestation-key-32-chars');
+    vi.stubEnv('AUDIT_ATTESTATION_KEY_ID', 'k1');
+    vi.stubEnv('AUDIT_ATTESTATION_KEY_PREV', '');
+    vi.stubEnv('AUDIT_ATTESTATION_KEY_PREV_ID', '');
+  });
+
+  it('refuses verification when the report was signed under an unknown key', async () => {
+    vi.stubEnv('AUDIT_ATTESTATION_KEY', 'current-key-32-chars-aaaaaaaaaaaa');
+    vi.stubEnv('AUDIT_ATTESTATION_KEY_ID', 'k2');
+    vi.stubEnv('AUDIT_ATTESTATION_KEY_PREV', '');
+    vi.stubEnv('AUDIT_ATTESTATION_KEY_PREV_ID', '');
+    const c = client(
+      new Map<string, any[]>([
+        ['organizations', [ORG]],
+        ['audit_events', []],
+      ]),
+    );
+    const report = await generateAttestation(c, ORG.id);
+    // Tamper with the keyId so it doesn't match k2 or any configured prev.
+    const tampered = { ...report, signature: { ...report.signature, keyId: 'unknown' } };
+    expect(verifyAttestationSignature(tampered)).toBe(false);
+
+    vi.stubEnv('AUDIT_ATTESTATION_KEY', 'a-very-secret-attestation-key-32-chars');
+    vi.stubEnv('AUDIT_ATTESTATION_KEY_ID', 'k1');
+  });
+});

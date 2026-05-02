@@ -32,6 +32,7 @@ export interface AttestationReport {
   attestation: 'INTACT' | 'BROKEN' | 'EMPTY';
   signature: {
     algorithm: 'HMAC-SHA256';
+    keyId: string;
     value: string;
   };
 }
@@ -43,12 +44,31 @@ export class AttestationKeyMissingError extends Error {
   }
 }
 
-function getKey(): Buffer {
+/**
+ * Resolve the active signing key. Newly-generated reports always use the
+ * current key (`AUDIT_ATTESTATION_KEY`). The key id is embedded in the
+ * report so rotated keys can still verify older reports — the verifier
+ * picks `current` or `previous` by id.
+ */
+function getCurrentKey(): { id: string; secret: Buffer } {
   const raw = process.env.AUDIT_ATTESTATION_KEY;
   if (!raw || raw.length < 32) {
     throw new AttestationKeyMissingError();
   }
-  return Buffer.from(raw, 'utf8');
+  const id = process.env.AUDIT_ATTESTATION_KEY_ID || 'k1';
+  return { id, secret: Buffer.from(raw, 'utf8') };
+}
+
+function resolveVerifyKey(id: string): Buffer | null {
+  const current = process.env.AUDIT_ATTESTATION_KEY;
+  const currentId = process.env.AUDIT_ATTESTATION_KEY_ID || 'k1';
+  if (current && id === currentId) return Buffer.from(current, 'utf8');
+
+  const previous = process.env.AUDIT_ATTESTATION_KEY_PREV;
+  const previousId = process.env.AUDIT_ATTESTATION_KEY_PREV_ID;
+  if (previous && previousId && id === previousId) return Buffer.from(previous, 'utf8');
+
+  return null;
 }
 
 export async function generateAttestation(
@@ -126,7 +146,8 @@ export async function generateAttestation(
 
 export function verifyAttestationSignature(report: AttestationReport): boolean {
   try {
-    const key = getKey();
+    const key = resolveVerifyKey(report.signature.keyId);
+    if (!key) return false;
     const { signature, ...body } = report;
     const expected = crypto
       .createHmac('sha256', key)
@@ -142,12 +163,12 @@ export function verifyAttestationSignature(report: AttestationReport): boolean {
 }
 
 function signed(body: Omit<AttestationReport, 'signature'>): AttestationReport {
-  const key = getKey();
+  const { id, secret } = getCurrentKey();
   const value = crypto
-    .createHmac('sha256', key)
+    .createHmac('sha256', secret)
     .update(canonicalJSON(body))
     .digest('hex');
-  return { ...body, signature: { algorithm: 'HMAC-SHA256', value } };
+  return { ...body, signature: { algorithm: 'HMAC-SHA256', keyId: id, value } };
 }
 
 // Canonical JSON: sorted keys, no whitespace. Matches what verifiers expect.
