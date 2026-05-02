@@ -22,9 +22,12 @@ import request from 'supertest';
 const ORG_A = 11;
 const ORG_B = 22;
 
-const PROGRAM_ORG_B = 'p-org-b';
-const QSUB_ORG_B = 'q-org-b';
-const COMMITMENT_ORG_B = 'c-org-b';
+// UUID-shaped fixture ids — the route now validates programId format
+// and rejects non-uuid input as 422 before the service can refuse the
+// cross-tenant write as 403.
+const PROGRAM_ORG_B = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+const QSUB_ORG_B = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
+const COMMITMENT_ORG_B = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
 
 const { svc, authState } = vi.hoisted(() => {
   // The mocked service mirrors the contract of ../../services/q-sub/q-sub.service:

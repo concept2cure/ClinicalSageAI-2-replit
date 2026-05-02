@@ -41,6 +41,21 @@ export async function pullEstarSections(
 ): Promise<PulledSection[]> {
   if (req.sectionNumbers.length === 0) return [];
 
+  // The eSTAR convention stores section numbers as decimals ("3.0", "6.0",
+  // "11.0"). Q-Sub commitments and the default cover-letter caller pass
+  // the integer form ("3", "6", "11"). Match both spellings — exact OR the
+  // same number with a ".0" suffix — so callers don't have to know the
+  // local storage convention.
+  const expanded = new Set<string>();
+  for (const n of req.sectionNumbers) {
+    expanded.add(n);
+    if (/^\d+$/.test(n)) {
+      expanded.add(`${n}.0`);
+    } else if (/^\d+\.0$/.test(n)) {
+      expanded.add(n.slice(0, -2));
+    }
+  }
+
   const rows = await db
     .select({
       sectionNumber: cerv2510kSections.sectionNumber,
@@ -53,11 +68,21 @@ export async function pullEstarSections(
       and(
         eq(cerv2510kSections.organizationId, req.organizationId),
         eq(cerv2510kSections.documentId, req.documentId),
-        inArray(cerv2510kSections.sectionNumber, req.sectionNumbers),
+        inArray(cerv2510kSections.sectionNumber, [...expanded]),
       ),
     );
 
-  const byNumber = new Map(rows.map(r => [r.sectionNumber, r]));
+  // Build the lookup keyed by both the canonical-stored value AND the
+  // requested form so the caller's exact section number resolves either way.
+  const byNumber = new Map<string, (typeof rows)[number]>();
+  for (const row of rows) {
+    byNumber.set(row.sectionNumber, row);
+    if (/^\d+\.0$/.test(row.sectionNumber)) {
+      byNumber.set(row.sectionNumber.slice(0, -2), row);
+    } else if (/^\d+$/.test(row.sectionNumber)) {
+      byNumber.set(`${row.sectionNumber}.0`, row);
+    }
+  }
 
   // Return one PulledSection per requested number, in request order, marking
   // missing rows explicitly. This makes the composer's job stable across

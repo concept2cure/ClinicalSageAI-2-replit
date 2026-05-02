@@ -14,7 +14,7 @@
  * BETA, in-memory is fine — the largest expected dump is a few MB.
  */
 
-import { Pool, PoolClient } from 'pg';
+import type { Pool, PoolClient } from 'pg';
 
 export interface TenantExportManifest {
   schemaVersion: '1.0';

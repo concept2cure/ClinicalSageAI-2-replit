@@ -128,12 +128,15 @@ async function main() {
 
   if (verdict === 'BROKEN') {
     // Record the failure in the chain itself so it persists across restarts.
+    // entity_id is INTEGER per the schema. Use 0 as a sentinel for system-
+    // originated events (the entity is the chain itself, not a domain row).
+    // entity_type carries the human-readable scope.
     try {
       await pool.query(
         `INSERT INTO audit_events
           (organization_id, event_type, entity_type, entity_id, user_id, user_name,
            user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant)
-         VALUES (1, 'audit.chain_integrity_failure', 'audit_chain', 'cron_verify',
+         VALUES (1, 'audit.chain_integrity_failure', 'audit_chain.cron_verify', 0,
                  0, 'system', 'system', '127.0.0.1', NOW(), $1, $2, true, true)`,
         [
           `Chain integrity verification failed: ${broken.length} broken link(s)`,

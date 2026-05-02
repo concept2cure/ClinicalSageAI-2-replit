@@ -22,7 +22,16 @@
  */
 
 import crypto from 'crypto';
+import { promises as fs } from 'fs';
+import path from 'path';
 import type { Pool, PoolClient } from 'pg';
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  type S3ClientConfig,
+} from '@aws-sdk/client-s3';
 
 export interface ArchiveSink {
   /**
@@ -144,9 +153,6 @@ function canonicalJSON(value: unknown): string {
 
 // ─── Filesystem sink (dev/CI; production overrides with S3) ────────────────
 
-import { promises as fs } from 'fs';
-import path from 'path';
-
 export class FilesystemArchiveSink implements ArchiveSink {
   constructor(private dir: string) {}
 
@@ -174,14 +180,6 @@ export class FilesystemArchiveSink implements ArchiveSink {
 }
 
 // ─── S3 sink (production) ──────────────────────────────────────────────────
-
-import {
-  S3Client,
-  PutObjectCommand,
-  GetObjectCommand,
-  HeadObjectCommand,
-  type S3ClientConfig,
-} from '@aws-sdk/client-s3';
 
 export interface S3ArchiveSinkConfig {
   /** S3 bucket name. The bucket should live in a separate AWS account

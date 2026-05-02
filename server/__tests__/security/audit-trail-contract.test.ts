@@ -72,7 +72,7 @@ vi.mock('../../db', () => ({
       values: (v: any) => {
         dbCalls.push({ kind: 'insert', v });
         return {
-          returning: async () => [{ id: 'q-new', programId: 'p-1' }],
+          returning: async () => [{ id: 'q-new', programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1' }],
         };
       },
     }),
@@ -103,7 +103,7 @@ vi.mock('../../services/q-sub/q-sub.service', () => ({
   TenantAccessError: class extends Error {},
   listQSubsForOrg: vi.fn(async () => []),
   getQSubDetail: vi.fn(async () => ({ id: 'q' })),
-  createQSubmission: vi.fn(async () => ({ id: 'q-new', programId: 'p-1' })),
+  createQSubmission: vi.fn(async () => ({ id: 'q-new', programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1' })),
   setCommitmentRolledIn: vi.fn(async () => ({ id: 'c-1', rolledIn: true })),
   Q_SUB_TYPES: ['presub'],
   Q_SUB_STAGES: ['plan'],
@@ -164,7 +164,7 @@ describe('Audit-trail contract — every governed mutation logs one row', () => 
     const app = await bootRouter('../../routes/q-sub', '/api/q-sub');
     await request(app)
       .post('/api/q-sub')
-      .send({ programId: 'p-1', qSubType: 'presub', title: 'test' });
+      .send({ programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', qSubType: 'presub', title: 'test' });
     expect(actionsFromAudit()).toContain('q_sub.create');
   });
 

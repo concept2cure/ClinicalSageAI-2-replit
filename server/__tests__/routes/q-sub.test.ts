@@ -86,13 +86,13 @@ describe('GET /api/q-sub', () => {
 
   it('passes filters to the service and returns rows', async () => {
     svc.listQSubsForOrg.mockResolvedValue([{ id: 'q-1' }]);
-    const res = await request(app).get('/api/q-sub?type=presub&stage=await&program_id=p-1');
+    const res = await request(app).get('/api/q-sub?type=presub&stage=await&program_id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1');
     expect(res.status).toBe(200);
     expect(res.body.count).toBe(1);
     expect(svc.listQSubsForOrg).toHaveBeenCalledWith(7, {
       type: 'presub',
       stage: 'await',
-      programId: 'p-1',
+      programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
     });
   });
 });
@@ -105,17 +105,25 @@ describe('POST /api/q-sub', () => {
     expect(res.status).toBe(422);
   });
 
+  it('returns 422 when programId is not a UUID', async () => {
+    const res = await request(app)
+      .post('/api/q-sub')
+      .send({ programId: 'not-a-uuid', qSubType: 'presub', title: 'x' });
+    expect(res.status).toBe(422);
+    expect(res.body.error).toMatch(/UUID/i);
+  });
+
   it('returns 422 when qSubType is invalid', async () => {
     const res = await request(app)
       .post('/api/q-sub')
-      .send({ programId: 'p-1', qSubType: 'pre-sub', title: 'x' });
+      .send({ programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', qSubType: 'pre-sub', title: 'x' });
     expect(res.status).toBe(422);
   });
 
   it('returns 422 when title is empty', async () => {
     const res = await request(app)
       .post('/api/q-sub')
-      .send({ programId: 'p-1', qSubType: 'presub', title: '   ' });
+      .send({ programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', qSubType: 'presub', title: '   ' });
     expect(res.status).toBe(422);
   });
 
@@ -123,7 +131,7 @@ describe('POST /api/q-sub', () => {
     const res = await request(app)
       .post('/api/q-sub')
       .send({
-        programId: 'p-1',
+        programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
         qSubType: 'presub',
         title: 'x',
         targetDate: 'not-a-date',
@@ -135,15 +143,15 @@ describe('POST /api/q-sub', () => {
     svc.createQSubmission.mockRejectedValue(new TenantAccessError('nope'));
     const res = await request(app)
       .post('/api/q-sub')
-      .send({ programId: 'p-1', qSubType: 'presub', title: 'x' });
+      .send({ programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', qSubType: 'presub', title: 'x' });
     expect(res.status).toBe(403);
   });
 
   it('returns 201 on success', async () => {
-    svc.createQSubmission.mockResolvedValue({ id: 'q-new', programId: 'p-1' });
+    svc.createQSubmission.mockResolvedValue({ id: 'q-new', programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1' });
     const res = await request(app)
       .post('/api/q-sub')
-      .send({ programId: 'p-1', qSubType: 'presub', title: 'x' });
+      .send({ programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', qSubType: 'presub', title: 'x' });
     expect(res.status).toBe(201);
     expect(res.body.id).toBe('q-new');
   });

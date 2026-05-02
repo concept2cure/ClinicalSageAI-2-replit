@@ -70,4 +70,44 @@ describe('pullEstarSections', () => {
     expect(result[0].status).toBe('empty');
     expect(result[0].content).toBeNull();
   });
+
+  it('matches eSTAR-style "3.0" when caller asks for "3"', async () => {
+    // The eSTAR convention stores section numbers as "3.0", "6.0" etc.
+    // Q-Sub commitments and the cover-letter caller pass "3", "6". The
+    // service must resolve both spellings.
+    dbMock.select.mockReturnValue(
+      returnsRows([
+        { sectionNumber: '3.0', sectionTitle: 'IFU', content: 'IFU body', completionPercentage: 100 },
+      ]),
+    );
+
+    const result = await pullEstarSections({
+      organizationId: 1,
+      documentId: 1,
+      sectionNumbers: ['3'],
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].sectionNumber).toBe('3');
+    expect(result[0].status).toBe('present');
+    expect(result[0].content).toBe('IFU body');
+  });
+
+  it('matches "3" when caller asks for "3.0"', async () => {
+    dbMock.select.mockReturnValue(
+      returnsRows([
+        { sectionNumber: '3', sectionTitle: 'IFU', content: 'IFU body', completionPercentage: 100 },
+      ]),
+    );
+
+    const result = await pullEstarSections({
+      organizationId: 1,
+      documentId: 1,
+      sectionNumbers: ['3.0'],
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].sectionNumber).toBe('3.0');
+    expect(result[0].status).toBe('present');
+  });
 });

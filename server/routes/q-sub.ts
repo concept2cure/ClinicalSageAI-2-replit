@@ -100,6 +100,12 @@ router.post('/', async (req: Request, res: Response) => {
   if (!programId) {
     return res.status(422).json({ error: 'programId is required' });
   }
+  // regulatory_programs.id is uuid; non-uuid input would fail downstream
+  // with "invalid input syntax for type uuid". Surface as 422 here so the
+  // client gets a clean validation error rather than a 500.
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(programId)) {
+    return res.status(422).json({ error: 'programId must be a UUID' });
+  }
   const qSubType = typeof body.qSubType === 'string' ? body.qSubType : null;
   if (!qSubType || !TYPE_SET.has(qSubType)) {
     return res.status(422).json({ error: `qSubType must be one of: ${Q_SUB_TYPES.join(', ')}` });
