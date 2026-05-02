@@ -44,6 +44,8 @@ export interface AnaRailProps {
   }>;
   milestone?: { id: string; label: string; nextStep: string } | null;
   onAlertClick?: (alertId: string) => void;
+  /** Optional: open the live document preview from the rail. */
+  onOpenDocumentPreview?: () => void;
 }
 
 export function AnaRail({
@@ -58,6 +60,7 @@ export function AnaRail({
   alerts,
   milestone,
   onAlertClick,
+  onOpenDocumentPreview,
 }: AnaRailProps) {
   const [draft, setDraft] = React.useState('');
   const suggestions = MDX_SUGGESTIONS[activeNav] || MDX_SUGGESTIONS.overview;
@@ -96,6 +99,16 @@ export function AnaRail({
           </div>
         </div>
         <div className="ana-rail-actions">
+          {onOpenDocumentPreview && (
+            <button
+              className="tb-btn"
+              onClick={onOpenDocumentPreview}
+              title="Preview document · ⌘D"
+              aria-label="Preview document"
+            >
+              {I.file}
+            </button>
+          )}
           <button className="tb-btn" title="History">{I.clock}</button>
           <button className="tb-btn" title="New thread">{I.plus}</button>
           <button

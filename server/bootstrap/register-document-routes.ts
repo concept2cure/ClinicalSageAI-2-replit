@@ -221,6 +221,11 @@ export async function registerDocumentRoutes({
         mod: '../routes/ana-mdx-context.js',
         name: 'AnA MDX context snapshot (UI consumption)',
       },
+      {
+        path: '/api/510k/projects',
+        mod: '../routes/k510-document-preview.js',
+        name: '510(k) live document preview (assembled view + Markdown)',
+      },
     ] as const;
     const evidenceResults = await Promise.allSettled(evidenceConfig.map(c => import(c.mod)));
     evidenceResults.forEach((r, i) => {

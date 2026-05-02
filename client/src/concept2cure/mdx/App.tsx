@@ -38,6 +38,7 @@ import { MDX_PROGRAMS, type Program } from './data/programs';
 import { EDITOR_PROGRAM } from './data/editor';
 import { useAnaChat } from '../components/ana/useAnaChat';
 import { useMdxContextSnapshot } from './hooks/useMdxContextSnapshot';
+import { DocumentPreview } from './components/DocumentPreview';
 
 const HERE_LABEL: Record<string, string> = {
   overview:       'Overview',
@@ -105,6 +106,7 @@ export function App({ initialNav, projectName }: AppProps = {}) {
   const [anaMode,      setAnaMode]      = React.useState<AnaMode['id']>(() => getStored('mdx.anaMode', 'standard'));
   const [selectedProgram, setSelectedProgram] = React.useState<Program | null>(null);
   const [cmdkOpen, setCmdkOpen] = React.useState(false);
+  const [docPreviewOpen, setDocPreviewOpen] = React.useState(false);
 
   // First-visit discovery — open AnA once.
   React.useEffect(() => {
@@ -122,7 +124,7 @@ export function App({ initialNav, projectName }: AppProps = {}) {
   React.useEffect(() => persist('mdx.anaOpen', anaOpen), [anaOpen]);
   React.useEffect(() => persist('mdx.anaMode', anaMode), [anaMode]);
 
-  // Global keyboard — ⌘K palette, ⌘\ AnA toggle.
+  // Global keyboard — ⌘K palette, ⌘\ AnA toggle, ⌘D document preview, Esc closes preview.
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
@@ -133,6 +135,13 @@ export function App({ initialNav, projectName }: AppProps = {}) {
       if (mod && e.key === '\\') {
         e.preventDefault();
         setAnaOpen(o => !o);
+      }
+      if (mod && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        setDocPreviewOpen(o => !o);
+      }
+      if (e.key === 'Escape') {
+        setDocPreviewOpen(false);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -379,6 +388,9 @@ export function App({ initialNav, projectName }: AppProps = {}) {
             const alert = mdxSnapshot.snapshot?.alerts.find(a => a.id === id);
             if (alert) askAna(`Tell me more about: ${alert.message}`);
           }}
+          onOpenDocumentPreview={
+            programForContext ? () => setDocPreviewOpen(true) : undefined
+          }
         />
       )}
 
@@ -391,6 +403,15 @@ export function App({ initialNav, projectName }: AppProps = {}) {
         onAskAna={askAna}
         mode={anaMode}
         setMode={setAnaMode}
+      />
+      <DocumentPreview
+        // BFF resolves numeric id, UUID, or program code in priority
+        // order. Pass the program's code so BETA fixtures resolve
+        // (e.g. 'OR-801'); GA tenants whose programs.id is a UUID also
+        // resolve via the same endpoint.
+        projectId={programForContext?.code ?? programForContext?.id ?? null}
+        open={docPreviewOpen}
+        onClose={() => setDocPreviewOpen(false)}
       />
     </div>
   );

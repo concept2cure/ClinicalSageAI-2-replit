@@ -52,6 +52,10 @@ import {
   explainAuditRow,
   EXPLAIN_AUDIT_ROW_METADATA,
 } from './mdx-explain-audit-row';
+import {
+  documentPreview,
+  DOCUMENT_PREVIEW_METADATA,
+} from './mdx-document-preview-tool';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -4327,6 +4331,8 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   ...MDX_COMMAND_METADATA_PHASE3,
   // ─── Auditor capability ────────────────────────────────────────────
   EXPLAIN_AUDIT_ROW_METADATA,
+  // ─── Live 510(k) document preview (read-only from chat) ────────────
+  DOCUMENT_PREVIEW_METADATA,
 ];
 
 /**
@@ -4516,6 +4522,8 @@ export async function executeCommands(
     ...MDX_COMMAND_HANDLERS_PHASE3,
     // Audit-row explainer — read-only auditor capability.
     'audit.explain': explainAuditRow,
+    // Live 510(k) document preview — read-only canvas access from chat.
+    'k510_workflow.document_preview': documentPreview,
   };
 
   for (const cmd of commands) {
