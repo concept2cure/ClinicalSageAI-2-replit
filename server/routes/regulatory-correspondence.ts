@@ -20,6 +20,7 @@ import { getSecureOrgId } from '../utils/tenantContext';
 import { getOrCreateProfile } from '../services/intelligence/project-intelligence-service';
 import { db } from '../db';
 import { projectMemoryEntries } from '@shared/schema';
+import auditService from '../services/auditService';
 import {
   ISSUE_EXTRACTION_VERSION,
   ISSUE_PARSER_VERSION,
@@ -639,6 +640,26 @@ router.post('/correspondence/intake', async (req, res) => {
       eventType: 'correspondence_ingested',
       summary: record.subject,
     });
+
+    // Central audit trail. The timeline event above is the per-correspondence
+    // narrative; this row gives auditors a single unified table to query.
+    void auditService.logAction({
+      tenantId: orgId,
+      userId,
+      action: 'correspondence.ingest',
+      resourceType: 'regulatory_correspondence',
+      resourceId: String(id),
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: {
+        projectId: record.projectId,
+        submissionId: record.submissionId,
+        subject: record.subject,
+        issueCount: extracted.length,
+        blockerOpenedCount: downstreamActions.filter(a => a.blockerOpened).length,
+      },
+    });
+
   return res.status(201).json({ data: record, issues: extracted, downstreamActions });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Unknown error';

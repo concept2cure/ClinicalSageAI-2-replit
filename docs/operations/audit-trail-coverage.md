@@ -27,25 +27,28 @@ Status legend:
 
 | Surface                                             | Path                                              | Action code                              | Status | Notes |
 |-----------------------------------------------------|---------------------------------------------------|------------------------------------------|--------|-------|
-| **Q-Submission create**                             | `POST /api/q-sub`                                 | `q_sub.create`                           | ✓      | This PR. |
-| **Q-Sub commitment rolled-in toggle**               | `PATCH /api/q-sub/commitments/:id/rolled-in`      | `q_sub.commitment.rolled_in` / `..rolled_out` | ✓ | This PR. |
-| **E-signature sign event**                          | `POST /api/esignature/sign`                       | `esignature.sign`                        | ✓      | This PR. Hash + IP + UA in details. |
-| **Evidence Sufficiency assess (persisted)**         | `POST /api/evidence-sufficiency/programs/:programId/assess` | `evidence_sufficiency.assess`  | ✓ | This PR. Dry runs are NOT logged. |
-| **eSTAR / 510(k) section edit**                     | `POST/PATCH /api/cerv2-sections/...`              | `section.edit`                           | ✗      | Missing in route layer. Add via service-side wrapper. |
-| **eSTAR section approval / sign-off**               | `POST /api/cerv2-sections/:id/approve`            | `section.approve`                        | ✗      | Required for OQ §W2 step 5. |
-| **GSPR mapping upsert**                             | `POST /api/gspr/programs/:programId/mappings`     | `gspr.mapping.upsert`                    | ✗      | One mutation; ~10 LOC to add. |
-| **Post-Market document create**                     | `POST /api/post-market/documents`                 | `post_market.document.create`            | ✗      |       |
-| **Post-Market document update**                     | `PATCH /api/post-market/documents/:id`            | `post_market.document.update`            | ✗      |       |
-| **Post-Market document approve**                    | `POST /api/post-market/documents/:id/approve`     | `post_market.document.approve`           | ✗      | High priority — Part 11. |
-| **Post-Market document validate**                   | `POST /api/post-market/documents/:id/validate`    | `post_market.document.validate`          | ✗      |       |
-| **Authoring section save**                          | `POST /api/authoring/sections/:id`                | `authoring.section.save`                 | ◐      | Writes `authoring_audit_trail`; needs reflection in central `audit_logs`. |
+| **Q-Submission create**                             | `POST /api/q-sub`                                 | `q_sub.create`                           | ✓      | Q-Sub PR. |
+| **Q-Sub commitment rolled-in toggle**               | `PATCH /api/q-sub/commitments/:id/rolled-in`      | `q_sub.commitment.rolled_in` / `..rolled_out` | ✓ | Q-Sub PR. |
+| **E-signature sign event**                          | `POST /api/esignature/sign`                       | `esignature.sign`                        | ✓      | Hash + IP + UA in details. |
+| **Evidence Sufficiency assess (persisted)**         | `POST /api/evidence-sufficiency/programs/:programId/assess` | `evidence_sufficiency.assess`  | ✓ | Dry runs are NOT logged. |
+| **eSTAR / 510(k) section create**                   | `POST /api/cerv2-sections/`                       | `section.create`                         | ✓      | This PR. |
+| **eSTAR / 510(k) section edit**                     | `PATCH /api/cerv2-sections/:sectionId`            | `section.edit`                           | ✓      | This PR. Reflects `cerv2_section_versions` into central log. |
+| **eSTAR section approval / sign-off**               | `PATCH /api/cerv2-sections/:sectionId` (status → validated/approved) | `section.approve`     | ✓      | This PR. Fires only on transition into approval state. |
+| **eSTAR section delete**                            | `DELETE /api/cerv2-sections/:sectionId`           | `section.delete`                         | ✓      | This PR. |
+| **GSPR mapping upsert**                             | `POST /api/gspr/programs/:programId/mappings`     | `gspr.mapping.upsert`                    | ✓      | This PR. |
+| **Post-Market document create**                     | `POST /api/post-market/programs/:programId/documents` | `post_market.document.create`        | ✓      | This PR. |
+| **Post-Market document update**                     | `PATCH /api/post-market/documents/:id`            | `post_market.document.update`            | ✓      | This PR. |
+| **Post-Market document approve**                    | `POST /api/post-market/documents/:id/approve`     | `post_market.document.approve` / `..approve.blocked` | ✓ | This PR. Blocked attempts logged separately. |
+| **Post-Market document validate**                   | `POST /api/post-market/documents/:id/validate`    | `post_market.document.validate`          | ✓      | This PR. |
+| **Post-Market document supersede**                  | `POST /api/post-market/documents/:id/supersede`   | `post_market.document.supersede`         | ✓      | This PR. |
+| **Authoring section save**                          | `POST /api/authoring/sections/:id`                | `authoring.section.save`                 | ◐      | Writes `authoring_audit_trail`; central reflection still TODO. |
 | **510(k) workflow stage transition**                | `POST /api/510k-workflow/transition`              | `k510_workflow.transition`               | ✗      |       |
 | **510(k) pre-flight invocation**                    | `POST /api/510k-workflow/preflight`               | `k510_workflow.preflight`                | ✗      |       |
-| **510(k) ESG transmit**                             | `POST /api/510k-workflow/transmit`                | `k510_workflow.transmit`                 | ✗      | Most consequential mutation in the system. Must be ✓ before BETA. |
+| **510(k) ESG transmit**                             | `POST /api/510k/:projectId/esg/submit`            | `k510_workflow.transmit` / `..transmit.failed` | ✓ | This PR. Failed transmits logged separately for the audit timeline. |
 | **Predicate intelligence candidate status**         | `PATCH /api/predicate-intelligence/candidates/:id/status` | `predicate.candidate.status`     | ✗      | Currently a proxy passthrough; the BFF should log even when the shadow handles the write. |
 | **SE matrix patch**                                 | `PATCH /api/predicate-intelligence/se-matrix/:id` | `se_matrix.patch`                        | ✗      |       |
-| **Regulatory correspondence ingest**                | `POST /api/regulatory-correspondence/ingest`      | `correspondence.ingest`                  | ✗      |       |
-| **Response package compile**                        | `POST /api/regulatory-correspondence/responses/compile` | `correspondence.response.compile`  | ✗      | Cover-letter §-pull this PR — caller path still needs the audit. |
+| **Regulatory correspondence ingest**                | `POST /api/regulatory-correspondence/correspondence/intake` | `correspondence.ingest`        | ✓      | This PR. Issue + blocker counts captured in details. |
+| **Response package compile**                        | `POST /api/regulatory-correspondence/response-packages` | `correspondence.response.compile`  | ✗      |       |
 | **Vault upload**                                    | `POST /api/vault/upload`                          | `vault.upload`                           | ?      | Verify in follow-up. |
 | **Reviewer simulation run**                         | `POST /api/regulatory-graph/reviewer-simulations` | `reviewer_simulation.run`                | ?      | Verify in follow-up. |
 | **Decision lineage write**                          | `POST /api/decision-lineage/...`                  | `decision_lineage.write`                 | ✓      | Pre-existing. |
@@ -112,18 +115,23 @@ it lands as part of C7 closure.
 
 ## Closure plan
 
-To take this map from the current "✓ where I touched / ✗ everywhere else"
-state to fully ✓:
+The high-value Part 11 paths (transmit, section approve, post-market
+approve, correspondence ingest) and all post-market / GSPR mutations
+landed in the second backend PR. What remains:
 
-1. **W6** — Add audit calls for the high-value Part 11 paths still ✗:
-   `section.approve`, `post_market.document.approve`,
-   `k510_workflow.transmit`, `correspondence.ingest`. ~1 day.
-2. **W7** — Add audit calls for the ✗ medium-value paths:
-   `gspr.mapping.upsert`, all post-market document mutations, predicate
-   candidate status, SE matrix patch, response.compile. ~2 days.
-3. **W8** — Reflect `authoring_audit_trail` writes into the central
-   `audit_logs` table via a dual-write helper. ~0.5 day.
-4. **W9** — Land the cross-cutting test that asserts every governed
-   mutation writes one (and only one) audit row. ~1 day.
+1. **510(k) workflow stage transitions + pre-flight** — `k510_workflow.transition`
+   and `k510_workflow.preflight`. Find the current handlers (likely on
+   `510k-workflow-routes.ts`) and add the same pattern as the transmit
+   handler. ~0.5 day.
+2. **Predicate-intelligence proxy reflection** — `predicate.candidate.status`
+   and `se_matrix.patch`. The BFF currently forwards to the shadow without
+   logging; add a log call after a 2xx response. ~0.5 day.
+3. **Response package compile** — `correspondence.response.compile`. Add
+   the audit call once the response surface lands (gated on Claude Design
+   brief #2). ~0.25 day during that PR.
+4. **Authoring audit-trail dual-write** — reflect `authoring_audit_trail`
+   into the central `audit_logs` via a service-side helper. ~0.5 day.
+5. **Cross-cutting per-mutation test** — assert every governed mutation
+   writes one (and only one) `audit_logs` row. ~1 day.
 
-Total to fully ✓: ~4-5 days, owner TBD.
+Total remaining to fully ✓: ~2-3 days, owner TBD.

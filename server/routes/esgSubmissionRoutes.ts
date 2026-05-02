@@ -3,6 +3,7 @@ import ESGSubmissionService from '../services/ESGSubmissionService.js';
 import { db } from '../db';
 import { fda510kSubmissionPackages, fda510kProjects } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import auditService from '../services/auditService';
 
 const router = Router();
 const esgService = new ESGSubmissionService();
@@ -26,11 +27,46 @@ router.post('/api/510k/:projectId/esg/submit', async (req, res) => {
       organizationId
     );
 
+    // Most consequential mutation in the platform: a real submission to
+    // FDA. The central audit trail captures who, what, when, and the FDA-
+    // assigned tracking handle so an auditor can replay the timeline.
+    void auditService.logAction({
+      tenantId: organizationId,
+      userId,
+      action: 'k510_workflow.transmit',
+      resourceType: 'fda_510k_submission_package',
+      resourceId: String((response as any)?.packageId ?? (response as any)?.transactionId ?? projectId),
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: {
+        projectId: parseInt(projectId),
+        transactionId: (response as any)?.transactionId ?? null,
+        submissionId: (response as any)?.submissionId ?? null,
+        ackStatus: (response as any)?.ackStatus ?? null,
+      },
+    });
+
     res.json({
       success: true,
       ...response
     });
   } catch (error) {
+    // Failed transmits are also audited — a refused submission is itself
+    // a Part 11 event.
+    void auditService.logAction({
+      tenantId: Number((req as any).user?.organizationId || (req as any).tenantId) || 0,
+      userId: parseInt(req.headers['x-user-id'] as string || '') || null,
+      action: 'k510_workflow.transmit.failed',
+      resourceType: 'fda_510k_submission_package',
+      resourceId: req.params.projectId,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: {
+        projectId: parseInt(req.params.projectId),
+        error: error instanceof Error ? error.message : String(error),
+      },
+    });
+
     console.error('ESG submission error:', error);
     res.status(500).json({
       success: false,

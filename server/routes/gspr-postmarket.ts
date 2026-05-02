@@ -37,6 +37,13 @@ import {
   updateDocument,
   validateDocument,
 } from '../services/gspr-postmarket/post-market.service';
+import auditService from '../services/auditService';
+
+function userIdFromReq(req: Request): string | null {
+  const raw = (req as any).user?.id;
+  if (raw === undefined || raw === null) return null;
+  return typeof raw === 'string' ? raw : String(raw);
+}
 
 const router = Router();
 const postMarketRouter = Router();
@@ -125,6 +132,22 @@ router.post(
         decidedBy: body.decidedBy ?? decidedBy,
         decidedAt: body.decidedAt ?? new Date(),
       });
+
+      void auditService.logAction({
+        tenantId: orgId,
+        userId: decidedBy,
+        action: 'gspr.mapping.upsert',
+        resourceType: 'gspr_program_mapping',
+        resourceId: String((row as any)?.id ?? `${req.params.programId}:${body.requirementId}`),
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: {
+          programId: req.params.programId,
+          requirementId: body.requirementId,
+          applicability: body.applicability,
+        },
+      });
+
       res.json(row);
     } catch (err: any) {
       res.status(500).json({ error: 'Upsert failed', detail: err?.message });
@@ -219,6 +242,23 @@ postMarketRouter.post(
         createdBy,
         updatedBy: createdBy,
       });
+
+      void auditService.logAction({
+        tenantId: orgId,
+        userId: createdBy,
+        action: 'post_market.document.create',
+        resourceType: 'post_market_document',
+        resourceId: String((doc as any)?.id ?? body.code),
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: {
+          programId: req.params.programId,
+          documentType: body.documentType,
+          code: body.code,
+          title: body.title,
+        },
+      });
+
       res.status(201).json(doc);
     } catch (err: any) {
       res.status(500).json({ error: 'Create failed', detail: err?.message });
@@ -261,6 +301,20 @@ postMarketRouter.patch('/documents/:documentId', async (req: Request, res: Respo
       updatedBy,
     });
     if (!updated) return res.status(404).json({ error: 'Document not found' });
+
+    void auditService.logAction({
+      tenantId: ctx.orgId,
+      userId: updatedBy,
+      action: 'post_market.document.update',
+      resourceType: 'post_market_document',
+      resourceId: req.params.documentId,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: {
+        fieldsChanged: Object.keys(req.body ?? {}),
+      },
+    });
+
     res.json(updated);
   } catch (err: any) {
     if (err?.code === 'PM_LOCKED') return res.status(409).json({ error: 'Document is locked' });
@@ -271,7 +325,23 @@ postMarketRouter.patch('/documents/:documentId', async (req: Request, res: Respo
 postMarketRouter.post('/documents/:documentId/validate', async (req: Request, res: Response) => {
   const ctx = await loadDocOrFail(req, res);
   if (!ctx) return;
-  res.json(validateDocument(ctx.doc));
+  const result = validateDocument(ctx.doc);
+
+  void auditService.logAction({
+    tenantId: ctx.orgId,
+    userId: userIdFromReq(req),
+    action: 'post_market.document.validate',
+    resourceType: 'post_market_document',
+    resourceId: req.params.documentId,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'] as string | undefined,
+    details: {
+      passed: (result as any)?.valid ?? null,
+      findings: Array.isArray((result as any)?.findings) ? (result as any).findings.length : null,
+    },
+  });
+
+  res.json(result);
 });
 
 postMarketRouter.post('/documents/:documentId/approve', async (req: Request, res: Response) => {
@@ -292,11 +362,35 @@ postMarketRouter.post('/documents/:documentId/approve', async (req: Request, res
       if (result.error === 'NOT_FOUND') return res.status(404).json({ error: 'Document not found' });
       if (result.error === 'ALREADY_LOCKED') return res.status(409).json({ error: 'Already locked' });
       if (result.error === 'GATE_BLOCKED') {
+        // A blocked approval is itself a Part 11 event — record it.
+        void auditService.logAction({
+          tenantId: ctx.orgId,
+          userId: approvedBy,
+          action: 'post_market.document.approve.blocked',
+          resourceType: 'post_market_document',
+          resourceId: ctx.doc.id,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'] as string | undefined,
+          details: { reason: 'GATE_BLOCKED', signatureId: signatureId ?? null },
+        });
         return res.status(409).json({
           error: 'Validation gate blocked approval',
           validation: result.validation,
         });
       }
+    } else {
+      void auditService.logAction({
+        tenantId: ctx.orgId,
+        userId: approvedBy,
+        action: 'post_market.document.approve',
+        resourceType: 'post_market_document',
+        resourceId: ctx.doc.id,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: {
+          signatureId: signatureId ?? null,
+        },
+      });
     }
     res.json(result);
   } catch (err: any) {
@@ -318,6 +412,21 @@ postMarketRouter.post(
         createdBy,
       });
       if (!newDoc) return res.status(404).json({ error: 'Document not found' });
+
+      void auditService.logAction({
+        tenantId: ctx.orgId,
+        userId: createdBy,
+        action: 'post_market.document.supersede',
+        resourceType: 'post_market_document',
+        resourceId: ctx.doc.id,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: {
+          newDocumentId: (newDoc as any)?.id ?? null,
+          newTitle: req.body?.newTitle ?? null,
+        },
+      });
+
       res.status(201).json(newDoc);
     } catch (err: any) {
       res.status(500).json({ error: 'Supersede failed', detail: err?.message });
