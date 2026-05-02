@@ -26,6 +26,31 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '../db.js';
 import { regulatoryPrograms } from '../../shared/schema/programs.js';
 import { authenticateToken } from '../middleware/auth.js';
+import auditService from '../services/auditService.js';
+
+function logProxyMutation(
+  req: Request,
+  result: { status: number },
+  spec: { action: string; resourceType: string; resourceId: string; details?: Record<string, unknown> },
+): void {
+  // Only the BFF knows the calling user. Log every successful upstream
+  // mutation so the central audit_logs reflects writes even when the data
+  // lives upstream in the shadow service.
+  if (result.status < 200 || result.status >= 300) return;
+  void auditService.logAction({
+    tenantId: (req as any).user?.organizationId ?? null,
+    userId: (req as any).user?.id ?? null,
+    action: spec.action,
+    resourceType: spec.resourceType,
+    resourceId: spec.resourceId,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'] as string | undefined,
+    details: {
+      programId: req.query.program_id ?? req.body?.program_id ?? null,
+      ...(spec.details ?? {}),
+    },
+  });
+}
 
 const router = Router();
 
@@ -272,6 +297,12 @@ router.patch(
         method: 'PATCH',
         body: req.body,
       });
+      logProxyMutation(req, result, {
+        action: 'predicate.candidate.status',
+        resourceType: 'predicate_candidate',
+        resourceId: req.params.id,
+        details: { status: req.body?.status ?? null },
+      });
       sendProxyResponse(res, result);
     } catch (err: any) {
       res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
@@ -354,6 +385,12 @@ router.patch('/se-matrix/:id', requireConfigured, requireProgramAccess, async (r
     const result = await proxyToShadow(`/predicate/se-matrix/${req.params.id}`, {
       method: 'PATCH',
       body: req.body,
+    });
+    logProxyMutation(req, result, {
+      action: 'se_matrix.patch',
+      resourceType: 'se_matrix_row',
+      resourceId: req.params.id,
+      details: { fieldsChanged: Object.keys(req.body ?? {}) },
     });
     sendProxyResponse(res, result);
   } catch (err: any) {

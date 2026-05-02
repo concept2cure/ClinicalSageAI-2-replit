@@ -12,6 +12,7 @@ import { Router, Request, Response } from 'express';
 import {
   resolveGovernedContext,
 } from '../services/concept2cure/governedDocumentContractService.js';
+import auditService from '../services/auditService';
 
 const router = Router();
 
@@ -2045,6 +2046,25 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
       );
     } catch { /* non-blocking */ }
 
+    void auditService.logAction({
+      tenantId: orgId,
+      userId: (req as any).user?.id ?? null,
+      action: 'k510_workflow.preflight',
+      resourceType: 'k510_module_preflight',
+      resourceId: `${projectId}:${moduleCode}`,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: {
+        projectId: Number(projectId),
+        moduleCode,
+        regulatorBody: regulatorBody ?? null,
+        submissionType: submissionType ?? null,
+        overall,
+        majorBlockerCount: Array.isArray(majorBlockers) ? majorBlockers.length : 0,
+        decisionId: decisionRecord?.id ?? null,
+      },
+    });
+
     return res.json({
       status: 'data', action: 'module_preflight', moduleCode,
       regulatorBody, submissionType, overall, summary,
@@ -2226,6 +2246,24 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
         { regulatorBody, submissionType }
       );
     } catch { /* non-blocking */ }
+
+    void auditService.logAction({
+      tenantId: orgId,
+      userId: (req as any).user?.id ?? null,
+      action: 'k510_workflow.preflight',
+      resourceType: 'k510_dossier_preflight',
+      resourceId: String(projectId),
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: {
+        projectId: Number(projectId),
+        regulatorBody: regulatorBody ?? null,
+        submissionType: submissionType ?? null,
+        overall,
+        majorBlockerCount: Array.isArray(majorBlockers) ? majorBlockers.length : 0,
+        decisionId: decisionRecord?.id ?? null,
+      },
+    });
 
     return res.json({
       status: 'data', action: 'dossier_preflight',

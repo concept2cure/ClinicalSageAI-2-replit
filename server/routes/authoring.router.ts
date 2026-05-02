@@ -9,6 +9,7 @@ import crypto from 'crypto';
 import { PDFDocument } from 'pdf-lib';
 import * as jose from 'jose';
 import { getPool } from '../db';
+import auditService from '../services/auditService';
 
 const router = Router();
 
@@ -230,6 +231,30 @@ const createAuditTrail = async (
     );
 
     console.log(`Audit trail created: ${operationType} on doc ${docId} by ${actorEmail}`);
+
+    // Reflect into the central audit_logs table so the unified audit query
+    // sees authoring events alongside every other governed mutation. The
+    // dedicated authoring_audit_trail row above remains the rich record
+    // (full before/after content + content hashes); this is the index entry.
+    void auditService.logAction({
+      tenantId,
+      userId: actorEmail,
+      action: `authoring.section.${operationType}`,
+      resourceType: sectionId ? 'authoring_section' : 'authoring_document',
+      resourceId: sectionId ?? docId,
+      ipAddress,
+      userAgent,
+      details: {
+        docId,
+        sectionId,
+        operationType,
+        contentHashBefore: hashBefore,
+        contentHashAfter: hashAfter,
+        changeReason: changeReason ?? null,
+        actorRole,
+        sessionId,
+      },
+    });
   } catch (error) {
     // Audit logging must never fail silently in production
     console.error('CRITICAL: Failed to create audit trail:', error);

@@ -41,14 +41,15 @@ Status legend:
 | **Post-Market document approve**                    | `POST /api/post-market/documents/:id/approve`     | `post_market.document.approve` / `..approve.blocked` | ✓ | This PR. Blocked attempts logged separately. |
 | **Post-Market document validate**                   | `POST /api/post-market/documents/:id/validate`    | `post_market.document.validate`          | ✓      | This PR. |
 | **Post-Market document supersede**                  | `POST /api/post-market/documents/:id/supersede`   | `post_market.document.supersede`         | ✓      | This PR. |
-| **Authoring section save**                          | `POST /api/authoring/sections/:id`                | `authoring.section.save`                 | ◐      | Writes `authoring_audit_trail`; central reflection still TODO. |
-| **510(k) workflow stage transition**                | `POST /api/510k-workflow/transition`              | `k510_workflow.transition`               | ✗      |       |
-| **510(k) pre-flight invocation**                    | `POST /api/510k-workflow/preflight`               | `k510_workflow.preflight`                | ✗      |       |
-| **510(k) ESG transmit**                             | `POST /api/510k/:projectId/esg/submit`            | `k510_workflow.transmit` / `..transmit.failed` | ✓ | This PR. Failed transmits logged separately for the audit timeline. |
-| **Predicate intelligence candidate status**         | `PATCH /api/predicate-intelligence/candidates/:id/status` | `predicate.candidate.status`     | ✗      | Currently a proxy passthrough; the BFF should log even when the shadow handles the write. |
-| **SE matrix patch**                                 | `PATCH /api/predicate-intelligence/se-matrix/:id` | `se_matrix.patch`                        | ✗      |       |
-| **Regulatory correspondence ingest**                | `POST /api/regulatory-correspondence/correspondence/intake` | `correspondence.ingest`        | ✓      | This PR. Issue + blocker counts captured in details. |
-| **Response package compile**                        | `POST /api/regulatory-correspondence/response-packages` | `correspondence.response.compile`  | ✗      |       |
+| **Authoring section save**                          | `POST /api/authoring/sections/:id`                | `authoring.section.<op>`                 | ✓      | Final PR. Dual-write helper reflects `authoring_audit_trail` rows into central `audit_logs` with hashes only (full content stays in the rich table). |
+| **510(k) workflow stage transition**                | `POST /api/510k-workflow/:projectId`              | `k510_workflow.transition`               | ✓      | Final PR. |
+| **510(k) module pre-flight**                        | `POST /api/authoring-actions/module-preflight`    | `k510_workflow.preflight`                | ✓      | Final PR. Captures overall + blocker count. |
+| **510(k) dossier pre-flight**                       | `POST /api/authoring-actions/dossier-preflight`   | `k510_workflow.preflight`                | ✓      | Final PR. |
+| **510(k) ESG transmit**                             | `POST /api/510k/:projectId/esg/submit`            | `k510_workflow.transmit` / `..transmit.failed` | ✓ | Failed transmits logged separately. |
+| **Predicate intelligence candidate status**         | `PATCH /api/predicate-intelligence/candidates/:id/status` | `predicate.candidate.status`     | ✓      | Final PR. Logged on 2xx upstream response via `logProxyMutation` helper. |
+| **SE matrix patch**                                 | `PATCH /api/predicate-intelligence/se-matrix/:id` | `se_matrix.patch`                        | ✓      | Final PR. Same proxy-reflection pattern. |
+| **Regulatory correspondence ingest**                | `POST /api/regulatory-correspondence/correspondence/intake` | `correspondence.ingest`        | ✓      | Issue + blocker counts captured. |
+| **Response package compile**                        | `POST /api/regulatory-correspondence/response-packages` | `correspondence.response.compile`  | ✗      | Still gated on Claude Design brief #2; will land with the surface. |
 | **Vault upload**                                    | `POST /api/vault/upload`                          | `vault.upload`                           | ?      | Verify in follow-up. |
 | **Reviewer simulation run**                         | `POST /api/regulatory-graph/reviewer-simulations` | `reviewer_simulation.run`                | ?      | Verify in follow-up. |
 | **Decision lineage write**                          | `POST /api/decision-lineage/...`                  | `decision_lineage.write`                 | ✓      | Pre-existing. |
@@ -115,23 +116,20 @@ it lands as part of C7 closure.
 
 ## Closure plan
 
-The high-value Part 11 paths (transmit, section approve, post-market
-approve, correspondence ingest) and all post-market / GSPR mutations
-landed in the second backend PR. What remains:
+All high-value Part 11 paths are ✓ as of the final closure PR. Audit
+coverage is now complete for every BETA-relevant governed mutation
+except `correspondence.response.compile`, which is gated on Claude
+Design brief #2 — the audit call will land alongside the surface.
 
-1. **510(k) workflow stage transitions + pre-flight** — `k510_workflow.transition`
-   and `k510_workflow.preflight`. Find the current handlers (likely on
-   `510k-workflow-routes.ts`) and add the same pattern as the transmit
-   handler. ~0.5 day.
-2. **Predicate-intelligence proxy reflection** — `predicate.candidate.status`
-   and `se_matrix.patch`. The BFF currently forwards to the shadow without
-   logging; add a log call after a 2xx response. ~0.5 day.
-3. **Response package compile** — `correspondence.response.compile`. Add
-   the audit call once the response surface lands (gated on Claude Design
-   brief #2). ~0.25 day during that PR.
-4. **Authoring audit-trail dual-write** — reflect `authoring_audit_trail`
-   into the central `audit_logs` via a service-side helper. ~0.5 day.
-5. **Cross-cutting per-mutation test** — assert every governed mutation
-   writes one (and only one) `audit_logs` row. ~1 day.
+The cross-cutting contract test
+(`server/__tests__/security/audit-trail-contract.test.ts`) is the
+regression net: any future PR that removes or forgets an audit call will
+fail the test and surface the missing action code by name.
 
-Total remaining to fully ✓: ~2-3 days, owner TBD.
+Remaining open items (none gate BETA):
+
+1. **`correspondence.response.compile`** — landing alongside Brief #2.
+2. **Vault upload + reviewer simulation** — listed as `?` in the table
+   above; verify in a follow-up PR by reading the existing handlers.
+3. **Audit-log retention policy** — define how long `audit_logs` and the
+   tamper-proof chain are retained. Tracked under B7 hardening.
