@@ -124,6 +124,57 @@ If the user just says "What's the status here?" AnA can:
 | `__tests__/mdx-context-resolver.test.ts`                            | Active-surface render, unknown nav, alert sorting + truncation, includeProactive=false short-circuit, fail-soft when downstreams throw. |
 | `__tests__/mdx-onboarding-milestone.test.ts`                        | Each milestone id reached by the right signal counts; fail-soft on per-query DB errors. |
 
+## Multi-turn confirmation (added)
+
+**Problem closed.** Without this, a user has to re-state every action
+parameter in the same turn that contains `confirm: 'yes'` + `reason`.
+That's awkward in chat ("yes, do it because X" should suffice).
+
+**Solution.** A small in-memory store keyed by `(organizationId, threadId)`
+holds the most recently proposed action's params for 10 minutes:
+
+```
+Turn 1 — user: "Mark commitment cm-1142-3 as rolled in"
+         AnA emits: { command: 'q_sub.commitment.set_rolled_in',
+                       params: { commitmentId: 'cm-1142-3', rolledIn: true } }
+         Gate sees no confirm; stashes params; returns
+           confirmation_required (data.pendingActionToken: 'pa-abc123').
+
+Turn 2 — user: "yes — SAP was amended per FDA Pre-Sub Q251142 §11.4"
+         AnA emits: { command: 'q_sub.commitment.set_rolled_in',
+                       params: { confirm: 'yes', reason: 'SAP was amended ...' } }
+         Gate looks up the pending action by (org, thread), merges the
+         stashed { commitmentId, rolledIn } in, then runs the rest of
+         the validation. Mutation executes.
+```
+
+**Tenant safety.** The store is keyed by `(organizationId, threadId)`.
+A pending action stashed under tenant A cannot be retrieved by tenant B
+even if thread ids collide.
+
+**Files:**
+- `server/services/ana-ri/mdx-pending-actions.ts` (TTL store, fail-safe LRU bound).
+- `server/services/ana-ri/mdx-tool-policy.ts` (merge-then-validate at the top of the gate).
+- `CommandContext.threadId` added so the gate has the key.
+
+## Anti-fabrication soft signal (added)
+
+The gate now flags whether the reason cites a concrete artifact and
+exposes the boolean as `gate.reasonReferencedArtifact`. Handlers stamp
+the audit row with this so an auditor can filter for low-quality
+justifications. **Soft signal, not a refusal** — too aggressive a
+refusal frustrates legitimate flows.
+
+Pattern bank: section numbers (§6.1), Q-numbers (Q251142), K-numbers
+(K212284), commitment codes (cm-1142-3), ISO / ASTM / CFR standards,
+ISO dates, "Mar 14, 2025" dates. See `ARTIFACT_REFERENCE_PATTERNS` in
+`mdx-tool-policy.ts`.
+
+The system-prompt block reminds AnA: *the reason must be the user's
+explanation, never fabricated; cite a concrete artifact when the user
+mentions one*. Pulls AnA toward audit-strong reasons without breaking
+chat flow when the user is being terse.
+
 ## Open follow-ups (none gating)
 
 1. **Native UI rendering of the resolver payload.** The resolver returns
@@ -135,13 +186,13 @@ If the user just says "What's the status here?" AnA can:
    lists relevant workflows by id; on a follow-up the prompt could
    inline the steps when the user asks "how do I run W3?". Marginal
    gain; defer.
-3. **Reason-preservation across multi-turn confirmation.** When AnA
-   proposes a mutation and the user confirms in a follow-up turn, the
-   reason needs to flow through. Today the user has to re-state both
-   the action and the reason in the same message. Future: the chat
-   layer remembers the proposed action for one turn so the user can
-   reply with `confirm: yes, reason: …` alone.
-4. **`mdx-proactive-signals.ts` correspondence query** assumes a
+3. **Back-fill `reasonReferencedArtifact` into all 14 governed handlers.**
+   `q_sub.create` is the canonical example shipped in this PR; the
+   remaining handlers each need ~3 LOC to forward the flag. ~30 LOC total.
+4. **Redis-backed pending-action store.** In-memory works for BETA
+   single-process; GA needs Redis so confirmations survive worker
+   restarts.
+5. **`mdx-proactive-signals.ts` correspondence query** assumes a
    `correspondences` table with `response_status` and `urgency`. Some
    tenants may have a slightly different schema; the query is wrapped
    in fail-soft try/catch. If the gap surfaces in production, we extract

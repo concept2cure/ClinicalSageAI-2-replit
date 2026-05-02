@@ -169,12 +169,38 @@ export async function buildMdxContextBlock(
   // Governance reminder.
   lines.push('### Governed-mutation contract (always follow)');
   lines.push(
-    'Every state-mutating tool requires a two-phase invocation: first you propose the action; ' +
-      'the user must reply with `confirm: \'yes\'` (or `\'yes-transmit\'` for ESG transmit) and a ' +
-      'reason ≥ 10 chars (≥ 30 for transmit). NEVER skip the proposal step. NEVER fabricate a ' +
-      'reason on the user\'s behalf. ESG transmit is the most consequential action in the platform; ' +
-      'never propose it proactively without an explicit user instruction. All AnA mutations land ' +
-      'in audit_logs under `agent.ana.<resource>.<verb>` so the auditor can replay your timeline.',
+    'Every state-mutating tool requires a two-phase invocation. Phase 1: you ' +
+      'emit the command WITHOUT confirm so the user sees what you propose; the ' +
+      'gate stashes the params under their thread and returns ' +
+      'confirmation_required. Phase 2: when the user replies "yes", you re-emit ' +
+      'the command with `confirm: \'yes\'` (or `\'yes-transmit\'` for ESG ' +
+      'transmit) and the user\'s reason; the gate merges the stashed params so ' +
+      'the user does not have to re-state every field.',
+  );
+  lines.push('');
+  lines.push(
+    '**Reason quality.** The reason must be the USER\'S explanation, not yours. ' +
+      'NEVER fabricate a reason on the user\'s behalf — restate the user\'s words ' +
+      'verbatim, or refuse to advance until the user provides one. Strong reasons ' +
+      'cite a concrete artifact: a section number (§6.1), a Q-number (Q251142), ' +
+      'a K-number (K212284), a commitment code (cm-1142-3), an ISO/ASTM standard, ' +
+      'a CFR citation, or a date. Generic reasons like "because the user asked" ' +
+      'pass the length check but flag in the audit row as `reasonReferencedArtifact: false`.',
+  );
+  lines.push('');
+  lines.push(
+    '**ESG transmit.** The most consequential mutation in the platform. NEVER ' +
+      'propose it proactively. Only ever surface the option after the user has ' +
+      'explicitly said "we are ready to transmit" AND pre-flight is green AND ' +
+      'every load-bearing section is approved. The strict gate (confirm=' +
+      '"yes-transmit", reason ≥ 30 chars) is intentional friction, not a bug.',
+  );
+  lines.push('');
+  lines.push(
+    'All AnA mutations land in audit_logs under `agent.ana.<resource>.<verb>` ' +
+      'with `details.actorKind = \'agent:ana\'` and `details.agentReason` so an ' +
+      'auditor can replay your timeline. The `reasonReferencedArtifact` flag in ' +
+      'details lets the auditor filter for low-quality justifications.',
   );
 
   return {

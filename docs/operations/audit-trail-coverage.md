@@ -73,6 +73,32 @@ Status legend:
 | **AnA-initiated post-market doc supersede**         | AnA tool `post_market.document.supersede`         | `agent.ana.post_market.document.supersede`| ✓     | Confirm + reason. |
 | **AnA tool policy update**                          | `PUT /api/ana-tool-policy`                        | `ana_tool_policy.update`                 | ✓      | Admin-only; previous + new policy captured in details so an auditor can replay the timeline. |
 
+### `details.reasonReferencedArtifact` soft signal
+
+Every `agent.ana.*` audit row carries a boolean
+`details.reasonReferencedArtifact` flag. The shared gate at
+`server/services/ana-ri/mdx-tool-policy.ts` runs the user-supplied
+reason through a regex bank that detects citations of section numbers
+(§6.1), Q-numbers (Q251142), K-numbers (K212284), commitment codes
+(cm-1142-3), ISO / ASTM / CFR standards, and dates. Reasons that cite
+at least one set the flag to `true`. Reasons that pass length checks
+but cite nothing (e.g. "because the user asked") get `false`.
+
+The flag is an audit signal, not a refusal — it lets an auditor filter
+for low-quality justifications via:
+
+```sql
+SELECT created_at, action, details->>'agentReason' AS reason, user_id
+FROM audit_logs
+WHERE action LIKE 'agent.ana.%'
+  AND details->>'reasonReferencedArtifact' = 'false';
+```
+
+To make use of the flag, every handler should pass it through:
+`details.reasonReferencedArtifact: gate.reasonReferencedArtifact === true`.
+As of this PR, `q_sub.create` is the canonical example; the remaining
+handlers will be back-filled in a follow-up.
+
 ## Action-code taxonomy
 
 ### Resource prefixes (canonical)

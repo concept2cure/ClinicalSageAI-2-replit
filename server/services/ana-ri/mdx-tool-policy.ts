@@ -1,22 +1,35 @@
 /**
  * AnA-MDX tool policy — shared gate for every governed MDX tool handler.
  *
- * Consolidates three checks every state-mutating tool needs:
+ * Consolidates four checks every state-mutating tool needs:
  *
- *   1. Confirmation (`confirm`/`reason` two-phase invocation contract).
- *   2. Per-tenant permission (allow / deny lists in
+ *   1. Multi-turn confirmation merge — if the user replied 'confirm: yes'
+ *      in a follow-up turn after AnA proposed an action, pull the stashed
+ *      params out of `mdx-pending-actions.ts` and merge them in so the
+ *      user does not have to re-state every field.
+ *   2. Confirmation (`confirm`/`reason` two-phase invocation contract).
+ *   3. Per-tenant permission (allow / deny lists in
  *      organizations.settings.anaToolPolicy).
- *   3. Reason-quality filter (defends against degenerate reason strings
- *      that pass the length check but carry no auditable signal).
+ *   4. Reason-quality filter — defends against degenerate reasons that
+ *      pass the length check but carry no auditable signal. Also emits
+ *      a SOFT `reasonReferencedArtifact` flag so handlers can record
+ *      whether the reason mentioned a concrete artifact (section number,
+ *      Q-number, commitment code, FDA letter id, SOP id, or date).
  *
  * Returns a single object the handler either short-circuits on (gate
  * failed) or treats as a green light (gate passed; carries the
- * validated reason).
+ * validated reason + the artifact-reference flag).
  *
- * Used by mdx-command-handlers.ts and mdx-command-handlers-phase2.ts.
+ * Used by mdx-command-handlers.ts and mdx-command-handlers-phase2.ts /
+ * phase3.ts.
  */
 
 import type { CommandContext, CommandResult } from './command-executor';
+import {
+  proposeAction,
+  lookupPendingAction,
+  clearPendingAction,
+} from './mdx-pending-actions';
 
 // ─── Confirmation contract ──────────────────────────────────────────────────
 
@@ -37,6 +50,11 @@ export interface PolicyCheck {
   result: CommandResult;
   /** When ok=true, the validated trimmed reason string. */
   reason: string;
+  /** When ok=true, did the reason cite a concrete artifact? Soft signal
+   *  only — handlers stamp the audit row with this so an auditor can
+   *  filter for "AnA-initiated mutations whose reason did NOT cite a
+   *  specific artifact". */
+  reasonReferencedArtifact?: boolean;
 }
 
 /**
@@ -99,6 +117,32 @@ function getCachedPolicy(ctx: CommandContext): AnaToolPolicy {
 // ─── Reason-quality filter ─────────────────────────────────────────────────
 
 /**
+ * Patterns that indicate the reason cites a concrete artifact. Hits any
+ * one and we flag `reasonReferencedArtifact = true`. The list is
+ * intentionally generous — false positives are fine; false negatives
+ * (legit reason flagged as fabricated) are not.
+ */
+const ARTIFACT_REFERENCE_PATTERNS: RegExp[] = [
+  /§\s*\d+/i,                            // section number "§6"
+  /\bsection\s+\d+(\.\d+)?\b/i,           // "section 11" / "section 3.2"
+  /\bQ\d{4,}/,                            // FDA Q-number "Q251142"
+  /\bK\d{6}\b/,                           // FDA K-number "K212284"
+  /\bcm-[a-z0-9-]+/i,                     // commitment display code "cm-1142-3"
+  /\bSAP\b/,                              // statistical analysis plan
+  /\bSOP[-\s]?[A-Z0-9-]+\b/i,             // SOP reference
+  /\bAI\s+letter\b|\bdeficiency\b|\bIR\b/i, // FDA letter / deficiency / IR
+  /\bISO[-\s]?\d{3,}/i,                   // ISO standard
+  /\bASTM[-\s]?[A-Z]?\d{3,}/i,            // ASTM standard
+  /\b21\s*CFR\s*(?:§|Part)?\s*\d+/i,      // 21 CFR citation
+  /\b[A-Za-z][a-z]+\s+\d{1,2},?\s+20\d{2}\b/, // "Mar 14, 2025"
+  /\b\d{4}-\d{2}-\d{2}\b/,                // ISO date
+];
+
+function reasonCitesArtifact(reason: string): boolean {
+  return ARTIFACT_REFERENCE_PATTERNS.some(re => re.test(reason));
+}
+
+/**
  * Counts distinct characters in a reason string, ignoring case + whitespace.
  * Reasons made of one repeated character (e.g. 'aaaaaaaaaa') trip the
  * minimum and get refused.
@@ -121,6 +165,31 @@ export function requireGovernedToolGate(
 ): PolicyCheck {
   const expected = (reqs.expected ?? 'yes').toLowerCase();
   const minLen = reqs.minReasonLength ?? DEFAULT_REASON_MIN;
+  const threadId = typeof ctx.threadId === 'string' ? ctx.threadId : null;
+
+  // ── 0. Multi-turn confirmation merge ─────────────────────────────────
+  // If the caller looks like a confirming reply (confirm + reason
+  // present, but the rest of the params is sparse), pull the proposed
+  // action out of the pending-action store and merge its captured
+  // params in. Mutates `params` IN PLACE so downstream handler logic
+  // reads merged values without changes.
+  if (
+    threadId &&
+    Number.isFinite(ctx.organizationId) &&
+    typeof params.confirm === 'string'
+  ) {
+    const pending = lookupPendingAction({
+      organizationId: ctx.organizationId,
+      threadId,
+    });
+    if (pending && pending.action === action) {
+      for (const [k, v] of Object.entries(pending.params)) {
+        if (params[k] === undefined) {
+          params[k] = v;
+        }
+      }
+    }
+  }
 
   // ── 1. Tenant policy gate ─────────────────────────────────────────────
   const policy = getCachedPolicy(ctx);
@@ -158,6 +227,20 @@ export function requireGovernedToolGate(
       expected === 'yes'
         ? `Re-issue with confirm='yes' and a reason ≥ ${minLen} chars.`
         : `Re-issue with confirm='${expected}' and a reason ≥ ${minLen} chars.`;
+    // Stash whatever params the user supplied so the next turn can
+    // confirm without re-stating them. Token returned in the response
+    // so the chat layer can echo it; the gate's merge step will find
+    // the pending action by (org, thread) anyway.
+    let pendingActionToken: string | undefined;
+    if (threadId && Number.isFinite(ctx.organizationId)) {
+      const stashed = proposeAction({
+        organizationId: ctx.organizationId,
+        threadId,
+        action,
+        params,
+      });
+      pendingActionToken = stashed.token;
+    }
     return {
       ok: false,
       reason: '',
@@ -170,6 +253,7 @@ export function requireGovernedToolGate(
           requiredFields: ['confirm', 'reason'],
           confirmExpected: expected,
           reasonMinLength: minLen,
+          pendingActionToken,
         },
         error: 'CONFIRMATION_REQUIRED',
       },
@@ -206,7 +290,17 @@ export function requireGovernedToolGate(
     };
   }
 
-  return { ok: true, reason: reasonRaw, result: null as unknown as CommandResult };
+  // Gate passed; clear any stale pending action for this (org, thread).
+  if (threadId && Number.isFinite(ctx.organizationId)) {
+    clearPendingAction({ organizationId: ctx.organizationId, threadId });
+  }
+
+  return {
+    ok: true,
+    reason: reasonRaw,
+    reasonReferencedArtifact: reasonCitesArtifact(reasonRaw),
+    result: null as unknown as CommandResult,
+  };
 }
 
 // ─── Helpers exposed to handlers ───────────────────────────────────────────

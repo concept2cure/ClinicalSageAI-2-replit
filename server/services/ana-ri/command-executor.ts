@@ -60,6 +60,13 @@ export interface CommandContext {
   userName?: string;
   userRole?: string;
   /**
+   * Chat thread id. When present, the AnA-MDX governed-tool gate uses
+   * it to look up pending actions stashed in mdx-pending-actions, so a
+   * user can confirm a proposed action in a follow-up turn without
+   * re-stating every parameter.
+   */
+  threadId?: string;
+  /**
    * Per-tenant AnA tool policy. Stamped by `executeCommands` once per
    * dispatch from `organizations.settings.anaToolPolicy`. Read by the
    * shared gate in mdx-tool-policy.ts. Undefined = default = all tools

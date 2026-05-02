@@ -116,6 +116,7 @@ export async function qSubCreate(
       details: {
         actorKind: 'agent:ana',
         agentReason: gate.reason,
+        reasonReferencedArtifact: gate.reasonReferencedArtifact === true,
         programId: row.programId,
         qSubType: row.qSubType,
         title: row.title,
