@@ -27,25 +27,6 @@ export interface AnaRailProps {
   setMode: (m: AnaMode['id']) => void;
   messages: AnaMessage[];
   onSend: (text: string) => void;
-  /**
-   * Optional MDX context snapshot — when present the rail renders a
-   * compact alerts strip + onboarding milestone hint above the
-   * suggestion list. The snapshot is the same payload that backs AnA's
-   * server-side system prompt, so the rail and the chat see the same
-   * universe.
-   */
-  alerts?: Array<{
-    id: string;
-    kind: string;
-    severity: 'info' | 'warn' | 'critical';
-    message: string;
-    suggestedSurface?: string;
-    suggestedTool?: string;
-  }>;
-  milestone?: { id: string; label: string; nextStep: string } | null;
-  onAlertClick?: (alertId: string) => void;
-  /** Optional: open the live document preview from the rail. */
-  onOpenDocumentPreview?: () => void;
 }
 
 export function AnaRail({
@@ -57,10 +38,6 @@ export function AnaRail({
   setMode,
   messages,
   onSend,
-  alerts,
-  milestone,
-  onAlertClick,
-  onOpenDocumentPreview,
 }: AnaRailProps) {
   const [draft, setDraft] = React.useState('');
   const suggestions = MDX_SUGGESTIONS[activeNav] || MDX_SUGGESTIONS.overview;
@@ -99,16 +76,6 @@ export function AnaRail({
           </div>
         </div>
         <div className="ana-rail-actions">
-          {onOpenDocumentPreview && (
-            <button
-              className="tb-btn"
-              onClick={onOpenDocumentPreview}
-              title="Preview document · ⌘D"
-              aria-label="Preview document"
-            >
-              {I.file}
-            </button>
-          )}
           <button className="tb-btn" title="History">{I.clock}</button>
           <button className="tb-btn" title="New thread">{I.plus}</button>
           <button
@@ -146,39 +113,6 @@ export function AnaRail({
               {program.stage} · {program.readiness}% ready
             </div>
           </div>
-        )}
-
-        {milestone && (
-          <div className="ana-milestone">
-            <div className="lbl">Where you are</div>
-            <div className="val">{milestone.label}</div>
-            <div className="sub">{milestone.nextStep}</div>
-          </div>
-        )}
-
-        {alerts && alerts.length > 0 && (
-          <>
-            <div className="ana-section-label">Proactive ({alerts.length})</div>
-            {alerts.slice(0, 6).map(a => (
-              <button
-                key={a.id}
-                className={`ana-alert sev-${a.severity}`}
-                onClick={() => onAlertClick?.(a.id)}
-                title={a.message}
-              >
-                <span className="ana-alert-glyph" aria-hidden="true">
-                  {a.severity === 'critical' ? '!!' : a.severity === 'warn' ? '!' : '·'}
-                </span>
-                <span className="ana-alert-body">
-                  <span className="ana-alert-kind">{a.kind}</span>
-                  <span className="ana-alert-msg">{a.message}</span>
-                </span>
-              </button>
-            ))}
-            {alerts.length > 6 && (
-              <div className="ana-alert-more">and {alerts.length - 6} more</div>
-            )}
-          </>
         )}
 
         <div className="ana-section-label">Suggested for this surface</div>
