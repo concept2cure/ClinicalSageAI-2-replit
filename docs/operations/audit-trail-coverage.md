@@ -68,6 +68,10 @@ Status legend:
 | **AnA-initiated reviewer simulation**               | AnA tool `reviewer_simulation.run`                | `agent.ana.reviewer_simulation.run`      | ✓      | Confirm + reason; persisted run. |
 | **AnA-initiated predicate candidate status**        | AnA tool `predicate.candidate.set_status`         | `agent.ana.predicate.candidate.status`   | ✓      | Proxies through BFF to Python shadow; logs after upstream 2xx. |
 | **AnA-initiated SE matrix patch**                   | AnA tool `se_matrix.patch`                        | `agent.ana.se_matrix.patch`              | ✓      | Proxies through BFF to Python shadow; logs fieldsChanged in details. |
+| **AnA-initiated post-market doc update**            | AnA tool `post_market.document.update`            | `agent.ana.post_market.document.update`  | ✓      | Confirm + reason. |
+| **AnA-initiated post-market doc validate**          | AnA tool `post_market.document.validate`          | `agent.ana.post_market.document.validate`| ✓      | Confirm + reason; lightweight, but the validation event is itself audited. |
+| **AnA-initiated post-market doc supersede**         | AnA tool `post_market.document.supersede`         | `agent.ana.post_market.document.supersede`| ✓     | Confirm + reason. |
+| **AnA tool policy update**                          | `PUT /api/ana-tool-policy`                        | `ana_tool_policy.update`                 | ✓      | Admin-only; previous + new policy captured in details so an auditor can replay the timeline. |
 
 ## Action-code taxonomy
 

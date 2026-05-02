@@ -51,6 +51,39 @@ export interface AnaToolPolicy {
 }
 
 /**
+ * Load the per-tenant policy from `organizations.settings.anaToolPolicy`.
+ * Returns an empty policy when:
+ *   - the org row is missing (treat as no constraint),
+ *   - settings is null,
+ *   - the anaToolPolicy field is absent or malformed.
+ *
+ * The dispatcher calls this once per `executeCommands` invocation and
+ * stamps the result on `ctx.anaToolPolicy`. Per-tool calls then read
+ * the cached value via the gate.
+ */
+export async function loadAnaToolPolicy(
+  pool: { query: (sql: string, params: unknown[]) => Promise<{ rows: any[] }> },
+  organizationId: number,
+): Promise<AnaToolPolicy> {
+  if (!Number.isFinite(organizationId) || organizationId <= 0) return {};
+  try {
+    const { rows } = await pool.query(
+      `SELECT settings FROM organizations WHERE id = $1 LIMIT 1`,
+      [organizationId],
+    );
+    const raw = rows[0]?.settings?.anaToolPolicy;
+    if (!raw || typeof raw !== 'object') return {};
+    const policy: AnaToolPolicy = {};
+    if (Array.isArray(raw.deny)) policy.deny = raw.deny.filter((s: unknown) => typeof s === 'string');
+    if (Array.isArray(raw.allow)) policy.allow = raw.allow.filter((s: unknown) => typeof s === 'string');
+    return policy;
+  } catch {
+    // Loader must never throw — treat any DB issue as default-allow.
+    return {};
+  }
+}
+
+/**
  * Resolve policy from a CommandContext-level cache. The actual lookup
  * happens at chat-session start; this function reads the cached value
  * from `(ctx as any).anaToolPolicy`. If absent, the resolver returns

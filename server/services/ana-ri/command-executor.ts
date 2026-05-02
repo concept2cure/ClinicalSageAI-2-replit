@@ -47,6 +47,7 @@ import {
   MDX_COMMAND_HANDLERS_PHASE3,
   MDX_COMMAND_METADATA_PHASE3,
 } from './mdx-command-handlers-phase3';
+import { loadAnaToolPolicy } from './mdx-tool-policy';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -4368,6 +4369,26 @@ export async function executeCommands(
   ctx: CommandContext
 ): Promise<CommandResult[]> {
   const results: CommandResult[] = [];
+
+  // ── Load per-tenant AnA tool policy once per dispatch ──
+  // Stamps ctx.anaToolPolicy from organizations.settings.anaToolPolicy.
+  // The policy gate in mdx-tool-policy.ts reads from this cached value;
+  // populating it here means handlers don't need to know about the load.
+  // Loader is fail-soft: any DB error → default-allow.
+  if (
+    (ctx as any).anaToolPolicy === undefined &&
+    ctx.organizationId !== undefined &&
+    Number.isFinite(ctx.organizationId)
+  ) {
+    try {
+      if (pool) {
+        (ctx as any).anaToolPolicy = await loadAnaToolPolicy(pool, ctx.organizationId);
+      }
+    } catch {
+      (ctx as any).anaToolPolicy = {};
+    }
+  }
+
   const commandMap: Record<
     string,
     (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>

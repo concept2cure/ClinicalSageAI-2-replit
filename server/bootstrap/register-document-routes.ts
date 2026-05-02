@@ -211,6 +211,11 @@ export async function registerDocumentRoutes({
         mod: '../routes/tenant-export.js',
         name: 'Tenant data export + attestation',
       },
+      {
+        path: '/api/ana-tool-policy',
+        mod: '../routes/ana-tool-policy.js',
+        name: 'AnA tool policy (per-tenant allow/deny)',
+      },
     ] as const;
     const evidenceResults = await Promise.allSettled(evidenceConfig.map(c => import(c.mod)));
     evidenceResults.forEach((r, i) => {

@@ -123,9 +123,34 @@ admins set `organizations.settings.anaToolPolicy = { deny?: [], allow?: [] }`:
   allowlist mode; AnA can ONLY invoke these two tools.
 - **No policy** (default) — every tool allowed.
 
-The policy is read from `ctx.anaToolPolicy` (cached at session start
-to avoid a DB hit on every tool call). Refusals return
-`error: 'TOOL_DENIED'` or `'TOOL_NOT_ALLOWED'`.
+The policy is read from `ctx.anaToolPolicy`. The dispatcher
+(`executeCommands`) calls `loadAnaToolPolicy(pool, ctx.organizationId)`
+exactly once per command batch and stamps the result on the ctx, so
+per-tool checks are an in-memory Set lookup, not a DB hit. Loader is
+fail-soft: any DB error returns `{}` (default-allow), so a transient
+DB issue never silently elevates AnA's permissions.
+
+Refusals return `error: 'TOOL_DENIED'` or `'TOOL_NOT_ALLOWED'`.
+
+### Admin endpoints
+
+`/api/ana-tool-policy` lets a tenant admin manage their policy:
+
+| Method | Path                    | Effect                                        |
+|--------|-------------------------|-----------------------------------------------|
+| GET    | `/api/ana-tool-policy`  | Read current policy (admin-only).             |
+| PUT    | `/api/ana-tool-policy`  | Replace policy. Body: `{allow?: string[], deny?: string[]}`. Emits `ana_tool_policy.update` audit row with previous + new policy in details. Unknown keys rejected (typo defense). |
+
+## Required env vars
+
+| Var                  | Purpose                                                                                                       |
+|----------------------|---------------------------------------------------------------------------------------------------------------|
+| `ANA_SERVICE_TOKEN`  | Required for phase-3 proxy tools (`predicate.candidate.set_status`, `se_matrix.patch`). Service-to-service token used by the AnA handler when it internal-fetches the BFF. Without it, the tools return 503 with detail `ANA_SERVICE_TOKEN not configured`. |
+| `INTERNAL_BFF_URL`   | Optional; default `http://localhost:3000`. Where the AnA handler internal-fetches the BFF for proxy tools and pre-flight. |
+
+For a sidecar deployment where AnA and BFF run in the same pod,
+`INTERNAL_BFF_URL=http://localhost:3000` is correct. For a separate-pod
+deployment, point it at the BFF's cluster service.
 
 ## Reason-quality filter — shipped in phase 3
 

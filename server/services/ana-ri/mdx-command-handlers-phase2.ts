@@ -369,6 +369,157 @@ export async function reviewerSimulationRun(
   }
 }
 
+// ─── Post-market document update / validate / supersede ───────────────────
+
+export async function postMarketDocumentUpdate(
+  ctx: CommandContext,
+  params: Record<string, unknown>,
+): Promise<CommandResult> {
+  const action = 'post_market.document.update';
+  const gate = requireGovernedToolGate(action, ctx, params);
+  if (!gate.ok) return gate.result;
+
+  const documentId = typeof params.documentId === 'string' ? params.documentId : '';
+  if (!documentId) {
+    return { success: false, action, message: 'documentId is required.', error: 'INVALID_INPUT' };
+  }
+  const patch =
+    params.patch && typeof params.patch === 'object' ? (params.patch as Record<string, unknown>) : null;
+  if (!patch) {
+    return { success: false, action, message: 'patch (object) is required.', error: 'INVALID_INPUT' };
+  }
+
+  try {
+    const updated = await updateDocument(ctx.organizationId, documentId, {
+      ...patch,
+      updatedBy: `ana:${ctx.userId}`,
+    });
+    if (!updated) {
+      return { success: false, action, message: 'Document not found.', error: 'NOT_FOUND' };
+    }
+
+    void auditService.logAction({
+      tenantId: ctx.organizationId,
+      userId: ctx.userId,
+      action: 'agent.ana.post_market.document.update',
+      resourceType: 'post_market_document',
+      resourceId: documentId,
+      details: {
+        actorKind: 'agent:ana',
+        agentReason: gate.reason,
+        fieldsChanged: Object.keys(patch),
+      },
+    });
+
+    return {
+      success: true,
+      action,
+      data: updated as Record<string, unknown>,
+      message: `Updated post-market document ${documentId}.`,
+    };
+  } catch (err) {
+    return mapServiceError(action, err);
+  }
+}
+
+export async function postMarketDocumentValidate(
+  ctx: CommandContext,
+  params: Record<string, unknown>,
+): Promise<CommandResult> {
+  const action = 'post_market.document.validate';
+  // Validation is read-only-ish (returns findings; no mutation), but it
+  // PERSISTS via downstream side effects in some pathways. Gate it
+  // lightly: confirm + reason still required, since the act of running
+  // a validation against a tenant's document is itself an audit event.
+  const gate = requireGovernedToolGate(action, ctx, params);
+  if (!gate.ok) return gate.result;
+
+  const documentId = typeof params.documentId === 'string' ? params.documentId : '';
+  if (!documentId) {
+    return { success: false, action, message: 'documentId is required.', error: 'INVALID_INPUT' };
+  }
+
+  try {
+    const doc = await getDocument(ctx.organizationId, documentId);
+    if (!doc) {
+      return { success: false, action, message: 'Document not found.', error: 'NOT_FOUND' };
+    }
+    const result = validateDocument(doc);
+
+    void auditService.logAction({
+      tenantId: ctx.organizationId,
+      userId: ctx.userId,
+      action: 'agent.ana.post_market.document.validate',
+      resourceType: 'post_market_document',
+      resourceId: documentId,
+      details: {
+        actorKind: 'agent:ana',
+        agentReason: gate.reason,
+        passed: (result as any)?.valid ?? null,
+        findings: Array.isArray((result as any)?.findings) ? (result as any).findings.length : null,
+      },
+    });
+
+    return {
+      success: true,
+      action,
+      data: result as Record<string, unknown>,
+      message: `Validated post-market document ${documentId}: ${
+        (result as any)?.valid ? 'pass' : 'findings present'
+      }.`,
+    };
+  } catch (err) {
+    return mapServiceError(action, err);
+  }
+}
+
+export async function postMarketDocumentSupersede(
+  ctx: CommandContext,
+  params: Record<string, unknown>,
+): Promise<CommandResult> {
+  const action = 'post_market.document.supersede';
+  const gate = requireGovernedToolGate(action, ctx, params);
+  if (!gate.ok) return gate.result;
+
+  const documentId = typeof params.documentId === 'string' ? params.documentId : '';
+  if (!documentId) {
+    return { success: false, action, message: 'documentId is required.', error: 'INVALID_INPUT' };
+  }
+
+  try {
+    const newDoc = await supersedeDocument(ctx.organizationId, documentId, {
+      newTitle: typeof params.newTitle === 'string' ? params.newTitle : undefined,
+      createdBy: `ana:${ctx.userId}`,
+    });
+    if (!newDoc) {
+      return { success: false, action, message: 'Document not found.', error: 'NOT_FOUND' };
+    }
+
+    void auditService.logAction({
+      tenantId: ctx.organizationId,
+      userId: ctx.userId,
+      action: 'agent.ana.post_market.document.supersede',
+      resourceType: 'post_market_document',
+      resourceId: documentId,
+      details: {
+        actorKind: 'agent:ana',
+        agentReason: gate.reason,
+        newDocumentId: (newDoc as any)?.id ?? null,
+        newTitle: typeof params.newTitle === 'string' ? params.newTitle : null,
+      },
+    });
+
+    return {
+      success: true,
+      action,
+      data: newDoc as Record<string, unknown>,
+      message: `Superseded post-market document ${documentId}.`,
+    };
+  } catch (err) {
+    return mapServiceError(action, err);
+  }
+}
+
 // ─── Metadata ───────────────────────────────────────────────────────────────
 
 export const MDX_COMMAND_METADATA_PHASE2 = [
@@ -399,6 +550,27 @@ export const MDX_COMMAND_METADATA_PHASE2 = [
     example: '"Approve PMCF document d-12 with signature sig-7."',
   },
   {
+    name: 'post_market.document.update',
+    description:
+      'Patch a post-market document with arbitrary fields. Requires confirm + reason.',
+    parameters: 'documentId, patch (object), confirm="yes", reason',
+    example: '"Update PMCF document d-12, patch: {assignee: \'sarah.chen\'}"',
+  },
+  {
+    name: 'post_market.document.validate',
+    description:
+      'Run validation against a post-market document. Returns findings list. ' +
+      'Requires confirm + reason because the validation event is audited.',
+    parameters: 'documentId, confirm="yes", reason',
+    example: '"Validate PMCF document d-12 before approval."',
+  },
+  {
+    name: 'post_market.document.supersede',
+    description: 'Supersede a post-market document with a new version. Requires confirm + reason.',
+    parameters: 'documentId, newTitle?, confirm="yes", reason',
+    example: '"Supersede PMCF d-12 with new title PMCF-2026-Q1."',
+  },
+  {
     name: 'evidence_sufficiency.assess',
     description:
       'Run an evidence-sufficiency assessment for a regulatory program. ' +
@@ -425,6 +597,9 @@ export const MDX_COMMAND_HANDLERS_PHASE2: Record<
   'gspr.mapping.upsert': gsprMappingUpsert,
   'post_market.document.create': postMarketDocumentCreate,
   'post_market.document.approve': postMarketDocumentApprove,
+  'post_market.document.update': postMarketDocumentUpdate,
+  'post_market.document.validate': postMarketDocumentValidate,
+  'post_market.document.supersede': postMarketDocumentSupersede,
   'evidence_sufficiency.assess': evidenceSufficiencyAssess,
   'reviewer_simulation.run': reviewerSimulationRun,
 };
