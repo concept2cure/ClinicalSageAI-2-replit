@@ -50,8 +50,8 @@ Status legend:
 | **SE matrix patch**                                 | `PATCH /api/predicate-intelligence/se-matrix/:id` | `se_matrix.patch`                        | ✓      | Final PR. Same proxy-reflection pattern. |
 | **Regulatory correspondence ingest**                | `POST /api/regulatory-correspondence/correspondence/intake` | `correspondence.ingest`        | ✓      | Issue + blocker counts captured. |
 | **Response package compile**                        | `POST /api/regulatory-correspondence/response-packages` | `correspondence.response.compile`  | ✗      | Still gated on Claude Design brief #2; will land with the surface. |
-| **Vault upload**                                    | `POST /api/vault/upload`                          | `vault.upload`                           | ?      | Verify in follow-up. |
-| **Reviewer simulation run**                         | `POST /api/regulatory-graph/reviewer-simulations` | `reviewer_simulation.run`                | ?      | Verify in follow-up. |
+| **Vault upload**                                    | `POST /api/vault/documents`                       | `vault.upload`                           | ✓      | Captures size, mime, classification, programId. |
+| **Reviewer simulation run**                         | `POST /api/regulatory-graph/programs/:p/reviewer-simulation` | `reviewer_simulation.run`     | ✓      | Persisted runs only (dry runs not logged). |
 | **Decision lineage write**                          | `POST /api/decision-lineage/...`                  | `decision_lineage.write`                 | ✓      | Pre-existing. |
 | **Authentication events**                           | `/api/auth/login`, `/api/auth/refresh`, etc.      | `auth.login.success` / `auth.login.fail` etc. | ✓ | Pre-existing via `auth_audit_log` + `auditService`. |
 
