@@ -38,6 +38,7 @@ import {
   module3StaleSections, module3RefreshStale, module3Readiness,
   module3Contradictions, module3Lineage, module3ClassifySource,
 } from './module3-command-handlers.js';
+import { MDX_COMMAND_HANDLERS, MDX_COMMAND_METADATA } from './mdx-command-handlers';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -4276,6 +4277,11 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
     parameters: 'projectId, artifactId, sourceType, ctdSection?',
     example: '"Classify the uploaded stability report as a Module 3 stability source for 3.2.S.7"',
   },
+  // ─── MDX governed mutations (Q-Sub, eSTAR, ESG transmit) ──────────────
+  // Defined in mdx-command-handlers.ts. Each requires confirm + reason
+  // before the underlying service is invoked. See the audit-trail
+  // coverage map for the corresponding agent.ana.* action codes.
+  ...MDX_COMMAND_METADATA,
 ];
 
 /**
@@ -4435,6 +4441,11 @@ export async function executeCommands(
     module3_contradictions: module3Contradictions,
     module3_lineage: module3Lineage,
     module3_classify_source: module3ClassifySource,
+    // MDX governed mutations (Q-Sub, eSTAR sections, pre-flight, ESG
+    // transmit). Each handler enforces confirm + reason, audits with
+    // action='agent.ana.<resource>.<verb>', and tags actorKind='agent:ana'
+    // in the audit details. See mdx-command-handlers.ts.
+    ...MDX_COMMAND_HANDLERS,
   };
 
   for (const cmd of commands) {

@@ -56,6 +56,11 @@ Status legend:
 | **Authentication events**                           | `/api/auth/login`, `/api/auth/refresh`, etc.      | `auth.login.success` / `auth.login.fail` etc. | ✓ | Pre-existing via `auth_audit_log` + `auditService`. |
 | **Tenant data export**                              | `GET /api/tenant-export`                          | `tenant.export`                          | ✓      | Off-boarding artifact. Captures resource counts in details. |
 | **Tenant attestation generate**                     | `GET /api/tenant-export/attestation`              | `tenant.attestation.generate`            | ✓      | HMAC-signed hash-chain integrity report. Captures attestation verdict (INTACT / BROKEN / EMPTY). |
+| **AnA-initiated Q-Sub create**                      | AnA tool `q_sub.create` (chat)                    | `agent.ana.q_sub.create`                 | ✓      | Confirm + reason required. Reason captured in `details.agentReason`; `details.actorKind = 'agent:ana'`. |
+| **AnA-initiated Q-Sub commitment toggle**           | AnA tool `q_sub.commitment.set_rolled_in`         | `agent.ana.q_sub.commitment.rolled_in` / `..rolled_out` | ✓ | Confirm + reason required. |
+| **AnA-initiated section approve**                   | AnA tool `section.approve`                        | `agent.ana.section.approve`              | ✓      | Confirm + reason required. |
+| **AnA-initiated pre-flight**                        | AnA tool `k510_workflow.preflight`                | `agent.ana.k510_workflow.preflight`      | ✓      | Read-only — no confirmation required. |
+| **AnA-initiated ESG transmit**                      | AnA tool `k510_workflow.transmit`                 | `agent.ana.k510_workflow.transmit` / `..transmit.failed` | ✓ | Strict gate: confirm='yes-transmit' + reason ≥ 30 chars. |
 
 ## Action-code taxonomy
 
