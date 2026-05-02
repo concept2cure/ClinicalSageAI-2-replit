@@ -61,6 +61,11 @@ Status legend:
 | **AnA-initiated section approve**                   | AnA tool `section.approve`                        | `agent.ana.section.approve`              | ✓      | Confirm + reason required. |
 | **AnA-initiated pre-flight**                        | AnA tool `k510_workflow.preflight`                | `agent.ana.k510_workflow.preflight`      | ✓      | Read-only — no confirmation required. |
 | **AnA-initiated ESG transmit**                      | AnA tool `k510_workflow.transmit`                 | `agent.ana.k510_workflow.transmit` / `..transmit.failed` | ✓ | Strict gate: confirm='yes-transmit' + reason ≥ 30 chars. |
+| **AnA-initiated GSPR mapping upsert**               | AnA tool `gspr.mapping.upsert`                    | `agent.ana.gspr.mapping.upsert`          | ✓      | Confirm + reason. |
+| **AnA-initiated post-market doc create**            | AnA tool `post_market.document.create`            | `agent.ana.post_market.document.create`  | ✓      | Confirm + reason. |
+| **AnA-initiated post-market doc approve**           | AnA tool `post_market.document.approve`           | `agent.ana.post_market.document.approve` / `..approve.blocked` | ✓ | Blocked attempts also logged. |
+| **AnA-initiated evidence-sufficiency assess**       | AnA tool `evidence_sufficiency.assess`            | `agent.ana.evidence_sufficiency.assess`  | ✓      | Confirm + reason; never dry-run. |
+| **AnA-initiated reviewer simulation**               | AnA tool `reviewer_simulation.run`                | `agent.ana.reviewer_simulation.run`      | ✓      | Confirm + reason; persisted run. |
 
 ## Action-code taxonomy
 

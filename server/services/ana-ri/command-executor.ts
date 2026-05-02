@@ -39,6 +39,10 @@ import {
   module3Contradictions, module3Lineage, module3ClassifySource,
 } from './module3-command-handlers.js';
 import { MDX_COMMAND_HANDLERS, MDX_COMMAND_METADATA } from './mdx-command-handlers';
+import {
+  MDX_COMMAND_HANDLERS_PHASE2,
+  MDX_COMMAND_METADATA_PHASE2,
+} from './mdx-command-handlers-phase2';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -4277,11 +4281,14 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
     parameters: 'projectId, artifactId, sourceType, ctdSection?',
     example: '"Classify the uploaded stability report as a Module 3 stability source for 3.2.S.7"',
   },
-  // ─── MDX governed mutations (Q-Sub, eSTAR, ESG transmit) ──────────────
+  // ─── MDX governed mutations — phase 1 (Q-Sub, eSTAR, ESG transmit) ───
   // Defined in mdx-command-handlers.ts. Each requires confirm + reason
   // before the underlying service is invoked. See the audit-trail
   // coverage map for the corresponding agent.ana.* action codes.
   ...MDX_COMMAND_METADATA,
+  // ─── MDX governed mutations — phase 2 (GSPR, post-market, evidence,
+  //                                       reviewer-sim) ────────────────
+  ...MDX_COMMAND_METADATA_PHASE2,
 ];
 
 /**
@@ -4441,11 +4448,11 @@ export async function executeCommands(
     module3_contradictions: module3Contradictions,
     module3_lineage: module3Lineage,
     module3_classify_source: module3ClassifySource,
-    // MDX governed mutations (Q-Sub, eSTAR sections, pre-flight, ESG
-    // transmit). Each handler enforces confirm + reason, audits with
-    // action='agent.ana.<resource>.<verb>', and tags actorKind='agent:ana'
-    // in the audit details. See mdx-command-handlers.ts.
+    // MDX governed mutations — phase 1 (Q-Sub, eSTAR, pre-flight, ESG transmit).
     ...MDX_COMMAND_HANDLERS,
+    // MDX governed mutations — phase 2 (GSPR, post-market, evidence-sufficiency,
+    // reviewer-simulation). Same governance contract as phase 1.
+    ...MDX_COMMAND_HANDLERS_PHASE2,
   };
 
   for (const cmd of commands) {
