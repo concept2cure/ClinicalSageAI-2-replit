@@ -37,6 +37,7 @@ import { MDX_STUBS, type AnaMode } from './data/nav';
 import { MDX_PROGRAMS, type Program } from './data/programs';
 import { EDITOR_PROGRAM } from './data/editor';
 import { useAnaChat } from '../components/ana/useAnaChat';
+import { useMdxContextSnapshot } from './hooks/useMdxContextSnapshot';
 
 const HERE_LABEL: Record<string, string> = {
   overview:       'Overview',
@@ -173,6 +174,15 @@ export function App({ initialNav, projectName }: AppProps = {}) {
     screenName: HERE_LABEL[activeNav] || 'MDX',
     submissionType: submissionTypeForAna,
     moduleContext: { workstream: 'mdx', activeNav, anaMode },
+  });
+
+  // Server-side MDX context snapshot — feeds the AnA rail's proactive
+  // alerts strip + onboarding milestone hint. Same payload that backs
+  // AnA's prompt server-side, so the rail and the chat agree on what's
+  // happening in the workspace.
+  const mdxSnapshot = useMdxContextSnapshot({
+    activeNav,
+    activeProgramCode: programForContext?.code ?? null,
   });
 
   // Adapt useAnaChat messages to the AnaRail's local AnaMessage shape.
@@ -361,6 +371,14 @@ export function App({ initialNav, projectName }: AppProps = {}) {
           setMode={setAnaMode}
           messages={messages}
           onSend={askAna}
+          alerts={mdxSnapshot.snapshot?.alerts}
+          milestone={mdxSnapshot.snapshot?.milestone ?? null}
+          onAlertClick={(id) => {
+            // Click an alert → ask AnA about it. Lets the chat carry
+            // forward without inventing a new modal pattern.
+            const alert = mdxSnapshot.snapshot?.alerts.find(a => a.id === id);
+            if (alert) askAna(`Tell me more about: ${alert.message}`);
+          }}
         />
       )}
 
