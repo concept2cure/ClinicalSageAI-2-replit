@@ -17,6 +17,10 @@ export interface CerSurfaceProps {
 
 export function CerSurface({ onAskAna }: CerSurfaceProps) {
   const maxHits = Math.max(...CER_LITERATURE.map(l => l.hits));
+  const [includedOnly, setIncludedOnly] = React.useState(false);
+  const visibleSignals = includedOnly
+    ? CER_SIGNALS.filter(s => s.status === 'included')
+    : CER_SIGNALS;
   return (
     <>
       <div className="section-hdr">
@@ -50,7 +54,13 @@ export function CerSurface({ onAskAna }: CerSurfaceProps) {
                 <div className="s">7 signals · 4 included · 1 excluded · 2 under review</div>
               </div>
               <div className="actions">
-                <button className="tb-btn" title="Filter">{I.filter}</button>
+                <button
+                  className={`tb-btn${includedOnly ? ' active' : ''}`}
+                  title={includedOnly ? 'Show all signals' : 'Show included only'}
+                  onClick={() => setIncludedOnly(v => !v)}
+                >
+                  {I.filter}
+                </button>
                 <button
                   className="tb-btn"
                   title="Run a fresh signal scan with AnA"
@@ -77,7 +87,7 @@ export function CerSurface({ onAskAna }: CerSurfaceProps) {
                 </tr>
               </thead>
               <tbody>
-                {CER_SIGNALS.map(s => (
+                {visibleSignals.map(s => (
                   <tr key={s.id}>
                     <td>
                       <span className="k-num">{s.id}</span>

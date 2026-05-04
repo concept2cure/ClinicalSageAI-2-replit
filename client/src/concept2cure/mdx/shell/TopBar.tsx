@@ -25,7 +25,11 @@ export function TopBar({ hereLabel, program, onOpenPalette }: TopBarProps) {
       </div>
       <div className="tb-spacer" />
       {program && (
-        <button className="tb-pill" title="Active program">
+        <button
+          className="tb-pill"
+          title="Switch program (⌘K)"
+          onClick={onOpenPalette}
+        >
           <span className="dot" />
           <span>
             {program.code} · {program.title.split(' ').slice(0, 2).join(' ')}

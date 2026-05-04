@@ -27,6 +27,10 @@ export interface AnaRailProps {
   setMode: (m: AnaMode['id']) => void;
   messages: AnaMessage[];
   onSend: (text: string) => void;
+  /** Clear the current thread (host wires to anaChat.reset). */
+  onNewThread?: () => void;
+  /** Open thread history (host wires to its history surface). */
+  onShowHistory?: () => void;
 }
 
 export function AnaRail({
@@ -38,6 +42,8 @@ export function AnaRail({
   setMode,
   messages,
   onSend,
+  onNewThread,
+  onShowHistory,
 }: AnaRailProps) {
   const [draft, setDraft] = React.useState('');
   const suggestions = MDX_SUGGESTIONS[activeNav] || MDX_SUGGESTIONS.overview;
@@ -76,8 +82,27 @@ export function AnaRail({
           </div>
         </div>
         <div className="ana-rail-actions">
-          <button className="tb-btn" title="History">{I.clock}</button>
-          <button className="tb-btn" title="New thread">{I.plus}</button>
+          <button
+            className="tb-btn"
+            title="History"
+            onClick={onShowHistory}
+            disabled={!onShowHistory}
+          >
+            {I.clock}
+          </button>
+          <button
+            className="tb-btn"
+            title="New thread"
+            onClick={() => {
+              if (!onNewThread) return;
+              if (messages.length === 0 || window.confirm('Start a fresh AnA thread? Current messages will be cleared.')) {
+                onNewThread();
+              }
+            }}
+            disabled={!onNewThread}
+          >
+            {I.plus}
+          </button>
           <button
             className="tb-btn"
             onClick={() => setOpen(false)}

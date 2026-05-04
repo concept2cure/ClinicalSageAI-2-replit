@@ -195,7 +195,21 @@ export function FilesTab({ project, onProjectMutated }: Props) {
               <span>Lines</span>
             </div>
             {g.items.map(f => (
-              <button type="button" key={f.name} className="pfiles-tr">
+              <button
+                type="button"
+                key={f.name}
+                className="pfiles-tr"
+                title={`Download ${f.name}`}
+                onClick={() => {
+                  const url = `/api/concept2cure/documents/download/${encodeURIComponent(f.name)}`;
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = f.name;
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                }}
+              >
                 <span className="pfiles-tr-name">
                   <span className="pfiles-tr-kind">{f.kind}</span>
                   <span className="pfiles-tr-fname">{f.name}</span>

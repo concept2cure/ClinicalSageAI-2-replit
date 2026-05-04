@@ -4,7 +4,7 @@
  * Mirror of design-system/ui_kits/home/Projects.jsx (lines 330–431, the
  * `tab === 'chats'` branch of ProjectDetail).
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { I } from '../icons';
 import { ProjectTimeline } from '../ProjectTimeline';
 import type { DetailTab, Project } from '../types';
@@ -12,10 +12,34 @@ import type { DetailTab, Project } from '../types';
 interface Props {
   project: Project;
   onSwitchTab?: (tab: DetailTab) => void;
+  onProjectMutated?: () => void;
 }
 
-export function ChatsTab({ project, onSwitchTab }: Props) {
+export function ChatsTab({ project, onSwitchTab, onProjectMutated }: Props) {
   const [composer, setComposer] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const attachRef = useRef<HTMLInputElement>(null);
+
+  const uploadAttachments = async (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    setUploading(true);
+    try {
+      for (const file of Array.from(fileList)) {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('projectId', project.id);
+        await fetch('/api/concept2cure/documents/upload', {
+          method: 'POST',
+          credentials: 'include',
+          body: fd,
+        });
+      }
+      onProjectMutated?.();
+    } finally {
+      setUploading(false);
+      if (attachRef.current) attachRef.current.value = '';
+    }
+  };
 
   return (
     <div className="prj-grid">
@@ -30,7 +54,20 @@ export function ChatsTab({ project, onSwitchTab }: Props) {
             rows={1}
           />
           <div className="prj-composer-foot">
-            <button type="button" className="prj-composer-attach" title="Attach">
+            <input
+              ref={attachRef}
+              type="file"
+              multiple
+              style={{ display: 'none' }}
+              onChange={e => uploadAttachments(e.target.files)}
+            />
+            <button
+              type="button"
+              className="prj-composer-attach"
+              title={uploading ? 'Uploading…' : 'Attach files'}
+              disabled={uploading}
+              onClick={() => attachRef.current?.click()}
+            >
               {I.plus}
             </button>
             <div className="prj-composer-spacer" />

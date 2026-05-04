@@ -3,10 +3,27 @@
  * Mirror of design-system/ui_kits/home/Projects.jsx
  * (ProjectMemoryScreen, lines 509–608).
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { I } from '../icons';
 import { PMEM_LEARNINGS } from '../data';
 import type { DetailTab, Project } from '../types';
+
+const FORGOTTEN_KEY = 'concept2cure.memory.forgotten.v1';
+
+function loadForgotten(): Record<string, string[]> {
+  if (typeof localStorage === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(FORGOTTEN_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return typeof parsed === 'object' && parsed !== null ? parsed : {};
+  } catch { return {}; }
+}
+
+function persistForgotten(map: Record<string, string[]>) {
+  if (typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(FORGOTTEN_KEY, JSON.stringify(map)); } catch { /* quota */ }
+}
 
 interface Props {
   project: Project;
@@ -15,7 +32,34 @@ interface Props {
 
 export function MemoryTab({ project, onSwitchTab }: Props) {
   const [enabled, setEnabled] = useState(project.memory.enabled);
-  const learnings = PMEM_LEARNINGS[project.id] || [];
+  const [forgotten, setForgotten] = useState<string[]>([]);
+
+  useEffect(() => {
+    const map = loadForgotten();
+    setForgotten(map[project.id] || []);
+  }, [project.id]);
+
+  const allLearnings = PMEM_LEARNINGS[project.id] || [];
+  const learnings = allLearnings.filter(l => !forgotten.includes(`${l.when}|${l.kind}|${l.text}`));
+
+  const forgetOne = (key: string) => {
+    const next = [...forgotten, key];
+    setForgotten(next);
+    const map = loadForgotten();
+    map[project.id] = next;
+    persistForgotten(map);
+  };
+
+  const forgetAll = () => {
+    if (!window.confirm(
+      `Forget every learning in "${project.name}"? This is final — Claude will start fresh.`,
+    )) return;
+    const next = allLearnings.map(l => `${l.when}|${l.kind}|${l.text}`);
+    setForgotten(next);
+    const map = loadForgotten();
+    map[project.id] = next;
+    persistForgotten(map);
+  };
 
   const exportMemory = () => {
     const snapshot = {
@@ -115,16 +159,24 @@ export function MemoryTab({ project, onSwitchTab }: Props) {
                   Nothing learned yet. Start a chat — Claude will record key decisions here.
                 </li>
               )}
-              {learnings.map((l, i) => (
-                <li key={i} className="pmem-row">
-                  <span className="pmem-row-when">{l.when}</span>
-                  <span className="pmem-row-kind">{l.kind}</span>
-                  <span className="pmem-row-text">{l.text}</span>
-                  <button type="button" className="prj-icon-btn pmem-row-x" title="Forget this">
-                    {I.close}
-                  </button>
-                </li>
-              ))}
+              {learnings.map((l, i) => {
+                const key = `${l.when}|${l.kind}|${l.text}`;
+                return (
+                  <li key={i} className="pmem-row">
+                    <span className="pmem-row-when">{l.when}</span>
+                    <span className="pmem-row-kind">{l.kind}</span>
+                    <span className="pmem-row-text">{l.text}</span>
+                    <button
+                      type="button"
+                      className="prj-icon-btn pmem-row-x"
+                      title="Forget this"
+                      onClick={() => forgetOne(key)}
+                    >
+                      {I.close}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           </section>
 
@@ -143,7 +195,12 @@ export function MemoryTab({ project, onSwitchTab }: Props) {
               >
                 Audit trail
               </button>
-              <button type="button" className="pmem-danger">
+              <button
+                type="button"
+                className="pmem-danger"
+                onClick={forgetAll}
+                disabled={learnings.length === 0}
+              >
                 Forget everything in this project
               </button>
             </div>

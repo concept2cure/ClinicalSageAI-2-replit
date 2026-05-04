@@ -457,7 +457,17 @@ function ClaudeRail({
               {!c.suggest && !c.resolved && (
                 <div className="ed-comment-actions">
                   <button className="ed-btn ghost small" onClick={() => onResolveComment(c.id)}>Resolve</button>
-                  <button className="ed-btn ghost small">Reply</button>
+                  <button
+                    className="ed-btn ghost small"
+                    onClick={() =>
+                      onAsk(
+                        `Reply to comment from ${c.author} (${c.role}) on block ${c.blockId}: "${c.body}". ` +
+                          'Draft a response that addresses the issue and propose any block edits needed to resolve it.',
+                      )
+                    }
+                  >
+                    Reply
+                  </button>
                 </div>
               )}
             </div>

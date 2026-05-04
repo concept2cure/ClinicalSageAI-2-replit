@@ -361,6 +361,7 @@ export function App({ initialNav, projectName }: AppProps = {}) {
           setMode={setAnaMode}
           messages={messages}
           onSend={askAna}
+          onNewThread={() => anaChat.reset()}
         />
       )}
 

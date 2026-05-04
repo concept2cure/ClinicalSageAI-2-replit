@@ -19,6 +19,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
   const activeStageIdx = program ? program.stageIdx : 4;
   const programStatus = program ? program.status : 'active';
   const [selected, setSelected] = React.useState<Set<string>>(new Set(['K221847']));
+  const [showSelectedOnly, setShowSelectedOnly] = React.useState(false);
 
   const toggle = (k: string) => {
     const n = new Set(selected);
@@ -92,7 +93,13 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                 </div>
               </div>
               <div className="actions">
-                <button className="tb-btn" title="Filter">{I.filter}</button>
+                <button
+                  className={`tb-btn${showSelectedOnly ? ' active' : ''}`}
+                  title={showSelectedOnly ? 'Show all candidates' : 'Show selected only'}
+                  onClick={() => setShowSelectedOnly(s => !s)}
+                >
+                  {I.filter}
+                </button>
                 <button
                   className="tb-btn"
                   title="Refine query with AnA"
@@ -121,7 +128,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                 </tr>
               </thead>
               <tbody>
-                {K510_PREDICATES.map(p => {
+                {K510_PREDICATES.filter(p => !showSelectedOnly || selected.has(p.k)).map(p => {
                   const isSel = selected.has(p.k);
                   return (
                     <tr key={p.k} className={isSel ? 'multi-selected' : ''} onClick={() => toggle(p.k)}>

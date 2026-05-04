@@ -161,7 +161,9 @@ export function ProjectDetail({ project, onBack, onProjectMutated }: Props) {
         ))}
       </nav>
 
-      {tab === 'chats' && <ChatsTab project={project} onSwitchTab={setTab} />}
+      {tab === 'chats' && (
+        <ChatsTab project={project} onSwitchTab={setTab} onProjectMutated={onProjectMutated} />
+      )}
       {tab === 'memory' && <MemoryTab project={project} onSwitchTab={setTab} />}
       {tab === 'instructions' && (
         <InstructionsTab
