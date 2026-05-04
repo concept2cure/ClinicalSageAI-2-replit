@@ -10,6 +10,7 @@ import type { Project, ProjectFile } from '../types';
 interface Props {
   project: Project;
   onProjectMutated?: () => void;
+  onAskAna?: (text: string) => void;
 }
 
 type SortKey = 'recent' | 'name' | 'size' | 'kind';
@@ -21,7 +22,7 @@ interface AugmentedFile extends ProjectFile {
   author: string;
 }
 
-export function FilesTab({ project, onProjectMutated }: Props) {
+export function FilesTab({ project, onProjectMutated, onAskAna }: Props) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('recent');
   const [groupBy, setGroupBy] = useState<GroupKey>('kind');
@@ -199,16 +200,13 @@ export function FilesTab({ project, onProjectMutated }: Props) {
                 type="button"
                 key={f.name}
                 className="pfiles-tr"
-                title={`Download ${f.name}`}
-                onClick={() => {
-                  const url = `/api/concept2cure/documents/download/${encodeURIComponent(f.name)}`;
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = f.name;
-                  document.body.appendChild(a);
-                  a.click();
-                  a.remove();
-                }}
+                title={`Open ${f.name}`}
+                onClick={() =>
+                  onAskAna?.(
+                    `Open file "${f.name}" (${f.kind}, ${f.lines ?? 0} lines, uploaded ${f.uploaded}, by ${f.author}). ` +
+                      'Summarize it, surface its outline, and flag anything that affects open blockers.',
+                  )
+                }
               >
                 <span className="pfiles-tr-name">
                   <span className="pfiles-tr-kind">{f.kind}</span>
