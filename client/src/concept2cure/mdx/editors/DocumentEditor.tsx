@@ -9,6 +9,7 @@
 import * as React from 'react';
 import { I } from '../icons';
 import { ANA_MODES, type AnaMode } from '../data/nav';
+import { useLiveSections } from '../hooks/useLiveSections';
 import type {
   EditorBlock,
   EditorBlockParagraph,
@@ -251,9 +252,11 @@ interface DocPaneProps {
   validation: EditorValidation[];
   valOpen: boolean;
   setValOpen: (v: boolean) => void;
+  onLock?: () => void | Promise<void>;
+  isLocked?: boolean;
 }
 
-function DocPane({ program, content, comments, onPinComment, activePin, setActivePin, onAsk, validation, valOpen, setValOpen }: DocPaneProps) {
+function DocPane({ program, content, comments, onPinComment, activePin, setActivePin, onAsk, validation, valOpen, setValOpen, onLock, isLocked }: DocPaneProps) {
   const errs = validation.filter(v => v.severity === 'err').length;
   const warns = validation.filter(v => v.severity === 'warn').length;
   const valTone = errs > 0 ? 'err' : warns > 0 ? 'warn' : 'ok';
@@ -276,7 +279,9 @@ function DocPane({ program, content, comments, onPinComment, activePin, setActiv
           </button>
           <button className="ed-btn ghost" title="History">{I.clock}</button>
           <button className="ed-btn ghost" title="Comments">{I.chat}</button>
-          <button className="ed-btn primary">Lock section</button>
+          <button className="ed-btn primary" onClick={onLock} disabled={isLocked || !onLock}>
+            {isLocked ? 'Locked' : 'Lock section'}
+          </button>
           <ValidationPopover open={valOpen} onClose={() => setValOpen(false)} items={validation} contentNum={content.num} />
         </div>
       </header>
@@ -469,15 +474,33 @@ export interface DocumentEditorProps {
   initialActiveId: string;
   initialMode?: AnaMode['id'];
   screenLabel: string;
+  /** Real project identifier. When set, sections + content load from
+   *  /api/510k/projects/:ident/document-preview and Lock section calls
+   *  PATCH /api/cerv2-sections/:id. Falls back to fixtures when null. */
+  programIdent?: string | null;
 }
 
 export function DocumentEditor(props: DocumentEditorProps) {
   const {
     program, sections, contentMap, validationMap, comments: seedComments,
     seedMessages, quickActions, initialActiveId, initialMode = 'deep-research', screenLabel,
+    programIdent,
   } = props;
 
-  const [activeId, setActiveId] = React.useState<string | number>(initialActiveId);
+  const live = useLiveSections(programIdent ?? null);
+  const isLive = !!programIdent && !!live.contentMap && !!live.sections;
+  const liveFirstId = live.sections?.[0]?.items[0]?.id;
+  const initial = isLive && liveFirstId ? String(liveFirstId) : initialActiveId;
+  const [activeId, setActiveId] = React.useState<string | number>(initial);
+  React.useEffect(() => {
+    if (isLive && liveFirstId !== undefined) setActiveId(liveFirstId);
+  }, [isLive, liveFirstId]);
+
+  const effectiveSections: EditorSectionVolume[] = isLive && live.sections ? live.sections : sections;
+  const effectiveContentMap = isLive && live.contentMap ? live.contentMap : contentMap;
+
+  const [sessionLocked, setSessionLocked] = React.useState<Set<number>>(new Set());
+
   const [search, setSearch] = React.useState('');
   const [mode, setMode] = React.useState<AnaMode['id']>(initialMode);
   const [messages, setMessages] = React.useState<EditorMessage[]>(seedMessages);
@@ -487,8 +510,29 @@ export function DocumentEditor(props: DocumentEditorProps) {
   const [valOpen, setValOpen] = React.useState(false);
 
   const key = String(activeId);
-  const content = contentMap[key] || contentMap[initialActiveId];
-  const validation = validationMap[key] || [];
+  const content = effectiveContentMap[key] || effectiveContentMap[initialActiveId] || contentMap[initialActiveId];
+  // Validation rules ship per fixture; live mode has none until the
+  // validation kit lands. Empty array is the kit-faithful neutral state.
+  const validation = isLive ? [] : (validationMap[key] || []);
+  const isLocked = sessionLocked.has(Number(activeId)) || content.status === 'complete';
+
+  const onLock = React.useCallback(async () => {
+    if (!isLive || !content?.id) return;
+    const sectionId = Number(content.id);
+    if (!Number.isFinite(sectionId)) return;
+    const res = await fetch(`/api/cerv2-sections/${sectionId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ status: 'approved', completion_percentage: 100 }),
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      throw new Error(`Lock failed: HTTP ${res.status}${detail ? ` — ${detail.slice(0, 200)}` : ''}`);
+    }
+    setSessionLocked(prev => new Set(prev).add(sectionId));
+    live.refresh();
+  }, [isLive, content?.id, live]);
 
   const onAsk = (text: string, opts: { tool?: string } = {}) => {
     if (!text) return;
@@ -521,10 +565,11 @@ export function DocumentEditor(props: DocumentEditorProps) {
 
   return (
     <div className="ed-workbench" data-screen-label={screenLabel}>
-      <DocTree sections={sections} activeId={activeId} onPick={setActiveId} search={search} setSearch={setSearch} programDue={program.dueLabel} />
+      <DocTree sections={effectiveSections} activeId={activeId} onPick={setActiveId} search={search} setSearch={setSearch} programDue={program.dueLabel} />
       <DocPane program={program} content={content} comments={comments} onPinComment={setPinnedComment}
         activePin={activePin} setActivePin={setActivePin} onAsk={onAsk}
-        validation={validation} valOpen={valOpen} setValOpen={setValOpen} />
+        validation={validation} valOpen={valOpen} setValOpen={setValOpen}
+        onLock={isLive ? onLock : undefined} isLocked={isLocked} />
       <ClaudeRail mode={mode} setMode={setMode} messages={messages} comments={comments}
         onResolveComment={onResolveComment} onApplySuggest={onApplySuggest}
         pinnedComment={pinnedComment} setPinnedComment={setPinnedComment}

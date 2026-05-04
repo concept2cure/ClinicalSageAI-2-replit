@@ -214,9 +214,9 @@ export function App({ initialNav, projectName }: AppProps = {}) {
   if (editorRoute === 'estar') {
     surface = <EstarEditor initialMode={anaMode} programIdent={programForContext?.code ?? programForContext?.id ?? null} />;
   } else if (editorRoute === 'pma') {
-    surface = <PmaEditor initialMode={anaMode} />;
+    surface = <PmaEditor initialMode={anaMode} programIdent={programForContext?.code ?? programForContext?.id ?? null} />;
   } else if (editorRoute === 'cer') {
-    surface = <CerEditor initialMode={anaMode} />;
+    surface = <CerEditor initialMode={anaMode} programIdent={programForContext?.code ?? programForContext?.id ?? null} />;
   } else if (MDX_STUBS[activeNav]) {
     surface = <InDesignSurface stub={MDX_STUBS[activeNav]} />;
   } else {

@@ -16,7 +16,12 @@ import {
   CER_EDITOR_QUICK,
 } from '../data/editors';
 
-export function CerEditor({ initialMode = 'deep-research' }: { initialMode?: AnaMode['id'] }) {
+export interface CerEditorProps {
+  initialMode?: AnaMode['id'];
+  programIdent?: string | null;
+}
+
+export function CerEditor({ initialMode = 'deep-research', programIdent }: CerEditorProps) {
   return (
     <DocumentEditor
       program={CER_EDITOR_PROGRAM}
@@ -29,6 +34,7 @@ export function CerEditor({ initialMode = 'deep-research' }: { initialMode?: Ana
       initialActiveId="cs6"
       initialMode={initialMode}
       screenLabel="MDX · CER editor"
+      programIdent={programIdent}
     />
   );
 }

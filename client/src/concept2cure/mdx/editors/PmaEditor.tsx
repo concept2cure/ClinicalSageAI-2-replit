@@ -16,7 +16,12 @@ import {
   PMA_EDITOR_QUICK,
 } from '../data/editors';
 
-export function PmaEditor({ initialMode = 'deep-research' }: { initialMode?: AnaMode['id'] }) {
+export interface PmaEditorProps {
+  initialMode?: AnaMode['id'];
+  programIdent?: string | null;
+}
+
+export function PmaEditor({ initialMode = 'deep-research', programIdent }: PmaEditorProps) {
   return (
     <DocumentEditor
       program={PMA_EDITOR_PROGRAM}
@@ -29,6 +34,7 @@ export function PmaEditor({ initialMode = 'deep-research' }: { initialMode?: Ana
       initialActiveId="m5-1"
       initialMode={initialMode}
       screenLabel="MDX · PMA editor"
+      programIdent={programIdent}
     />
   );
 }
