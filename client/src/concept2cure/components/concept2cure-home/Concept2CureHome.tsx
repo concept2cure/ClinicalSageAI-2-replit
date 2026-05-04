@@ -467,16 +467,17 @@ function Dashboard({
 
 /* ─── Module launcher — <a href> to match bundle App.jsx ─── */
 function Launcher({
-  activeNav, setActiveNav,
+  activeNav, setActiveNav, onCustomize,
 }: {
   activeNav: string;
   setActiveNav: (id: string) => void;
+  onCustomize?: () => void;
 }) {
   return (
     <>
       <div className={styles.secHdr}>
         <div className={styles.secTitle}>All modules</div>
-        <button type="button" className={styles.secMore}>
+        <button type="button" className={styles.secMore} onClick={onCustomize}>
           Customize <HomeIcon name="right" size={12} />
         </button>
       </div>
@@ -829,7 +830,11 @@ export function Concept2CureHome({
                 onTileClick={onDashboardTileClick}
               />
               <div style={{ height: 24 }} />
-              <Launcher activeNav={tweaks.activeNav} setActiveNav={handleSelectNav} />
+              <Launcher
+                activeNav={tweaks.activeNav}
+                setActiveNav={handleSelectNav}
+                onCustomize={() => setTweaksOpen(true)}
+              />
               <div style={{ height: 24 }} />
               <Recents
                 threads={recentThreads}
