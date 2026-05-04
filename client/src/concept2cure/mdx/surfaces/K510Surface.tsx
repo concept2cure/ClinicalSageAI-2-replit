@@ -47,7 +47,16 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
         <button className="section-more" onClick={() => onOpenEditor && onOpenEditor(11)}>
           Open §11 in editor {I.arrowRight}
         </button>
-        <button className="section-more" style={{ marginLeft: 8 }}>
+        <button
+          className="section-more"
+          style={{ marginLeft: 8 }}
+          onClick={() =>
+            onAskAna(
+              `Export the eSTAR package for ${program?.code ?? 'this project'} ready for FDA filing — ` +
+                `Module 6 PDF + Form FDA 3514, packaged as a ZIP with the required attachments.`,
+            )
+          }
+        >
           Export eSTAR {I.download}
         </button>
       </div>
@@ -84,7 +93,19 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
               </div>
               <div className="actions">
                 <button className="tb-btn" title="Filter">{I.filter}</button>
-                <button className="tb-btn" title="Refine query">{I.sparkles}</button>
+                <button
+                  className="tb-btn"
+                  title="Refine query with AnA"
+                  onClick={() =>
+                    onAskAna(
+                      `Refine the predicate search for ${subjectName}. ` +
+                        `Currently ${selected.size} of ${K510_PREDICATES.length} candidates selected — ` +
+                        `suggest tighter filters and any K-numbers I might be missing.`,
+                    )
+                  }
+                >
+                  {I.sparkles}
+                </button>
               </div>
             </div>
             <table className="tbl">
@@ -162,7 +183,34 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                 </div>
               </div>
               <div className="actions">
-                <button className="tb-btn" title="Export">{I.download}</button>
+                <button
+                  className="tb-btn"
+                  title="Export SE matrix as CSV"
+                  onClick={() => {
+                    const headers = multi
+                      ? ['Attribute', 'Subject', ...selectedList.map(p => p.k)]
+                      : ['Attribute', 'Subject', 'Verdict', 'Predicate', 'Note'];
+                    const rows = K510_SE_ROWS.map(r =>
+                      multi
+                        ? [r.attr, r.subject, ...selectedList.map(() => r.predicate)]
+                        : [r.attr, r.subject, r.verdict, r.predicate, r.note ?? ''],
+                    );
+                    const csv = [headers, ...rows]
+                      .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
+                      .join('\r\n');
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${(program?.code ?? 'project').toLowerCase()}-se-matrix.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
+                  {I.download}
+                </button>
               </div>
             </div>
             {multi ? (
@@ -233,7 +281,18 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                 <div className="s">20 sections · 1 blocker</div>
               </div>
               <div className="actions">
-                <button className="tb-btn" title="Validate">{I.play}</button>
+                <button
+                  className="tb-btn"
+                  title="Run pre-flight validation"
+                  onClick={() =>
+                    onAskAna(
+                      `Run pre-flight RTA validation on the 510(k) eSTAR module for ${program?.code ?? 'this project'}. ` +
+                        `Report blockers, missing required fields, and the overall judgment.`,
+                    )
+                  }
+                >
+                  {I.play}
+                </button>
               </div>
             </div>
             <div className="estar">
