@@ -92,11 +92,9 @@ export function FilesTab({ project, onProjectMutated }: Props) {
             ref={folderInputRef}
             type="file"
             multiple
-            // @ts-expect-error - webkitdirectory is non-standard but widely supported
-            webkitdirectory=""
-            directory=""
             style={{ display: 'none' }}
             onChange={e => uploadFiles(e.target.files)}
+            {...({ webkitdirectory: '', directory: '' } as Record<string, string>)}
           />
           <input
             ref={fileInputRef}

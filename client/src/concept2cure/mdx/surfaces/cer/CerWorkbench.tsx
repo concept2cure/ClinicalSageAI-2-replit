@@ -371,7 +371,7 @@ function CerPmsPmcf({ onAskAna }: CerPmsPmcfProps) {
   const totalTarget   = CER_PMCF_STUDIES.reduce((s, x) => s + x.target, 0);
   const enrollPct     = Math.round((totalEnrolled / totalTarget) * 100);
   const complaints = openOnly
-    ? CER_PMS_COMPLAINTS.filter(c => c.status !== 'closed' && c.status !== 'complete')
+    ? CER_PMS_COMPLAINTS.filter(c => c.status !== 'closed')
     : CER_PMS_COMPLAINTS;
 
   return (
