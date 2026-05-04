@@ -15,7 +15,7 @@ export interface CerSurfaceProps {
   onAskAna: (text: string) => void;
 }
 
-export function CerSurface(_props: CerSurfaceProps) {
+export function CerSurface({ onAskAna }: CerSurfaceProps) {
   const maxHits = Math.max(...CER_LITERATURE.map(l => l.hits));
   return (
     <>
@@ -28,7 +28,17 @@ export function CerSurface(_props: CerSurfaceProps) {
             EU MDR Article 61 · Notified body review Q1 2026
           </div>
         </div>
-        <button className="section-more">Generate draft {I.sparkles}</button>
+        <button
+          className="section-more"
+          onClick={() =>
+            onAskAna(
+              'Generate the CER draft for IV-415 — pull from the included safety signals, ' +
+                'the literature corpus, and the equivalence matrix. Mark gaps in narrative form.',
+            )
+          }
+        >
+          Generate draft {I.sparkles}
+        </button>
       </div>
 
       <div className="col2">
@@ -41,7 +51,18 @@ export function CerSurface(_props: CerSurfaceProps) {
               </div>
               <div className="actions">
                 <button className="tb-btn" title="Filter">{I.filter}</button>
-                <button className="tb-btn" title="Run signal scan">{I.zap}</button>
+                <button
+                  className="tb-btn"
+                  title="Run a fresh signal scan with AnA"
+                  onClick={() =>
+                    onAskAna(
+                      'Run a fresh signal scan across FAERS, MAUDE, Eudamed and the literature corpus. ' +
+                        'Flag anything that should be re-included or escalated.',
+                    )
+                  }
+                >
+                  {I.zap}
+                </button>
               </div>
             </div>
             <table className="tbl">
@@ -95,7 +116,18 @@ export function CerSurface(_props: CerSurfaceProps) {
                 <div className="s">2,326 hits · PubMed · Embase · Cochrane · 6-year window</div>
               </div>
               <div className="actions">
-                <button className="tb-btn" title="Refine search">{I.search}</button>
+                <button
+                  className="tb-btn"
+                  title="Refine literature search with AnA"
+                  onClick={() =>
+                    onAskAna(
+                      'Refine the literature search for IV-415 — tighten the inclusion window, ' +
+                        'expand to MeSH synonyms, and flag any cohort studies missing from the corpus.',
+                    )
+                  }
+                >
+                  {I.search}
+                </button>
               </div>
             </div>
             <div style={{ padding: '12px 0' }}>
@@ -120,7 +152,28 @@ export function CerSurface(_props: CerSurfaceProps) {
                 <div className="s">Article 61 template · 6 sections</div>
               </div>
               <div className="actions">
-                <button className="tb-btn" title="Export">{I.download}</button>
+                <button
+                  className="tb-btn"
+                  title="Export CER section status as CSV"
+                  onClick={() => {
+                    const headers = ['Section', 'Status'];
+                    const rows = CER_EXPORT.map(s => [s.label, s.status]);
+                    const csv = [headers, ...rows]
+                      .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
+                      .join('\r\n');
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `cer-sections-${new Date().toISOString().slice(0, 10)}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
+                  {I.download}
+                </button>
               </div>
             </div>
             <div className="estar">

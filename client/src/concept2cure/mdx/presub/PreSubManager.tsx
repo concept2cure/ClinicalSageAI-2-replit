@@ -210,7 +210,17 @@ function PreSubDetail({ row, onJumpToDossier, onAskAna }: PreSubDetailProps) {
           >
             {I.sparkles} Summarize
           </button>
-          <button className="btn primary small">{I.download} Export package</button>
+          <button
+            className="btn primary small"
+            onClick={() =>
+              onAskAna?.(
+                `Export the Q-Submission package for ${row.qNumber} — ` +
+                  `questions + commitments + FDA responses, formatted for FDA eSTAR Section 6 attachment.`,
+              )
+            }
+          >
+            {I.download} Export package
+          </button>
         </div>
       </div>
 
@@ -338,8 +348,41 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
           </div>
         </div>
         <div className="page-actions">
-          <button className="btn ghost small">{I.download} Export</button>
-          <button className="btn primary small">{I.plus} New Q-Sub</button>
+          <button
+            className="btn ghost small"
+            onClick={() => {
+              const headers = ['Q-number', 'Program', 'Type', 'Title', 'Stage', 'Days in', 'Questions', 'Answered', 'Commitments', 'Rolled in'];
+              const rows = PRESUB_LIST.map(r => [
+                r.qNumber, r.prog, r.type, r.title, r.stage, String(r.daysIn),
+                String(r.questions), String(r.answered), String(r.commitments), String(r.rolledIn),
+              ]);
+              const csv = [headers, ...rows]
+                .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
+                .join('\r\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `presub-export-${new Date().toISOString().slice(0, 10)}.csv`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            {I.download} Export
+          </button>
+          <button
+            className="btn primary small"
+            onClick={() =>
+              onAskAna(
+                'File a new Q-Submission — pick the type (Pre-Sub / SIR / SRD / Agreement / Informational), ' +
+                  'set the FDA team and target meeting date, and seed the question list.',
+              )
+            }
+          >
+            {I.plus} New Q-Sub
+          </button>
         </div>
       </div>
 
