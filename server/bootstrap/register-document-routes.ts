@@ -202,6 +202,11 @@ export async function registerDocumentRoutes({
         name: 'Q-Submissions (Pre-Sub / SIR / SRD)',
       },
       {
+        path: '/api/capa-mdr',
+        mod: '../routes/capa-mdr.js',
+        name: 'CAPA + complaint + MDR / vigilance triage',
+      },
+      {
         path: '/api/_ops/predicate-intelligence',
         mod: '../routes/_ops-predicate-shadow.js',
         name: 'Predicate Intelligence — ops probes',
