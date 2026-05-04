@@ -325,6 +325,10 @@ interface DocumentPaneProps {
   /** When set, Lock section calls a real PATCH on the live section. */
   onLock?: () => void | Promise<void>;
   isLocked?: boolean;
+  /** History button onClick — kit-shipped data wire. */
+  onShowHistory?: () => void;
+  /** Comments button onClick — flips the right rail to Comments tab. */
+  onShowComments?: () => void;
 }
 
 function DocumentPane({
@@ -339,6 +343,8 @@ function DocumentPane({
   setValOpen,
   onLock,
   isLocked,
+  onShowHistory,
+  onShowComments,
 }: DocumentPaneProps) {
   const errs = validation.filter(v => v.severity === 'err').length;
   const warns = validation.filter(v => v.severity === 'warn').length;
@@ -368,10 +374,10 @@ function DocumentPane({
             {errs === 0 && warns > 0 && <span className="n">{warns} issue</span>}
             {errs === 0 && warns === 0 && <span className="n">Valid</span>}
           </button>
-          <button className="ed-btn ghost" title="History">
+          <button className="ed-btn ghost" title="History" onClick={onShowHistory}>
             {I.clock}
           </button>
-          <button className="ed-btn ghost" title="Comments">
+          <button className="ed-btn ghost" title="Comments" onClick={onShowComments}>
             {I.chat}
           </button>
           <button className="ed-btn primary" onClick={onLock} disabled={isLocked || !onLock}>
@@ -450,6 +456,11 @@ interface ClaudeRailProps {
   pinnedComment: EditorComment | null;
   setPinnedComment: (c: EditorComment | null) => void;
   onAsk: (text: string, opts?: { tool?: string }) => void;
+  /** Optional controlled tab — when supplied, the rail's chat/comments
+   *  tab is driven by the host (so the doc pane Comments button can
+   *  flip it). When omitted, the rail manages its own tab state. */
+  tab?: 'chat' | 'comments';
+  setTab?: (t: 'chat' | 'comments') => void;
 }
 
 function ClaudeRail({
@@ -462,9 +473,13 @@ function ClaudeRail({
   pinnedComment,
   setPinnedComment,
   onAsk,
+  tab: tabProp,
+  setTab: setTabProp,
 }: ClaudeRailProps) {
   const [input, setInput] = React.useState('');
-  const [tab, setTab] = React.useState<'chat' | 'comments'>(pinnedComment ? 'comments' : 'chat');
+  const [internalTab, setInternalTab] = React.useState<'chat' | 'comments'>(pinnedComment ? 'comments' : 'chat');
+  const tab = tabProp ?? internalTab;
+  const setTab = setTabProp ?? setInternalTab;
   const scrollRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
@@ -673,6 +688,8 @@ export function EstarEditor({ initialMode = 'deep-research', programIdent }: Est
   const [activePin, setActivePin] = React.useState<string | null>(null);
   const [pinnedComment, setPinnedComment] = React.useState<EditorComment | null>(null);
   const [valOpen, setValOpen] = React.useState(false);
+  // Lifted rail tab so the doc pane's Comments button can flip it.
+  const [railTab, setRailTab] = React.useState<'chat' | 'comments'>('chat');
   const [demoContent] = React.useState<EditorContent>(EDITOR_CONTENT_11);
   // In-session content overrides keyed by section id (apply-suggest, etc).
   // These win over live + demo so the user sees their immediate edit; the
@@ -772,6 +789,8 @@ export function EstarEditor({ initialMode = 'deep-research', programIdent }: Est
         setValOpen={setValOpen}
         onLock={isLive ? onLock : undefined}
         isLocked={isLocked}
+        onShowHistory={() => onAsk(`Show the version history for ${content.num} — last edits, who changed what, and the diff per version.`)}
+        onShowComments={() => setRailTab('comments')}
       />
       <ClaudeRail
         mode={mode}
@@ -783,6 +802,8 @@ export function EstarEditor({ initialMode = 'deep-research', programIdent }: Est
         pinnedComment={pinnedComment}
         setPinnedComment={setPinnedComment}
         onAsk={onAsk}
+        tab={railTab}
+        setTab={setRailTab}
       />
     </div>
   );
