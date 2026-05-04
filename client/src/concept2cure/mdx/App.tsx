@@ -212,7 +212,7 @@ export function App({ initialNav, projectName }: AppProps = {}) {
 
   let surface: React.ReactNode;
   if (editorRoute === 'estar') {
-    surface = <EstarEditor initialMode={anaMode} />;
+    surface = <EstarEditor initialMode={anaMode} programIdent={programForContext?.code ?? programForContext?.id ?? null} />;
   } else if (editorRoute === 'pma') {
     surface = <PmaEditor initialMode={anaMode} />;
   } else if (editorRoute === 'cer') {

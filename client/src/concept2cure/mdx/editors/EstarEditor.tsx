@@ -8,6 +8,7 @@
 import * as React from 'react';
 import { I } from '../icons';
 import { ANA_MODES, type AnaMode } from '../data/nav';
+import { useLiveSections } from '../hooks/useLiveSections';
 import {
   EDITOR_COMMENTS,
   EDITOR_CONTENT_11,
@@ -44,27 +45,30 @@ interface EditorTreeProps {
   onPick: (id: number) => void;
   search: string;
   setSearch: (q: string) => void;
+  /** Override the kit fixture with live sections from the backend. */
+  sections?: typeof EDITOR_SECTIONS;
 }
 
-function EditorTree({ activeId, onPick, search, setSearch }: EditorTreeProps) {
+function EditorTree({ activeId, onPick, search, setSearch, sections }: EditorTreeProps) {
+  const source = sections ?? EDITOR_SECTIONS;
   const q = search.trim().toLowerCase();
   const filtered = q
-    ? EDITOR_SECTIONS.map(v => ({
+    ? source.map(v => ({
         ...v,
         items: v.items.filter(
           s => s.label.toLowerCase().includes(q) || s.num.toLowerCase().includes(q),
         ),
       })).filter(v => v.items.length > 0)
-    : EDITOR_SECTIONS;
+    : source;
 
   const stats = React.useMemo(() => {
-    const all = EDITOR_SECTIONS.flatMap(v => v.items);
+    const all = source.flatMap(v => v.items);
     return {
       total:    all.filter(s => s.status !== 'na').length,
       complete: all.filter(s => s.status === 'complete').length,
       blocker:  all.filter(s => s.blocker).length,
     };
-  }, []);
+  }, [source]);
 
   return (
     <aside className="ed-tree" aria-label="Section navigator">
@@ -318,6 +322,9 @@ interface DocumentPaneProps {
   validation: EditorValidation[];
   valOpen: boolean;
   setValOpen: (v: boolean) => void;
+  /** When set, Lock section calls a real PATCH on the live section. */
+  onLock?: () => void | Promise<void>;
+  isLocked?: boolean;
 }
 
 function DocumentPane({
@@ -330,6 +337,8 @@ function DocumentPane({
   validation,
   valOpen,
   setValOpen,
+  onLock,
+  isLocked,
 }: DocumentPaneProps) {
   const errs = validation.filter(v => v.severity === 'err').length;
   const warns = validation.filter(v => v.severity === 'warn').length;
@@ -365,7 +374,9 @@ function DocumentPane({
           <button className="ed-btn ghost" title="Comments">
             {I.chat}
           </button>
-          <button className="ed-btn primary">Lock section</button>
+          <button className="ed-btn primary" onClick={onLock} disabled={isLocked || !onLock}>
+            {isLocked ? 'Locked' : 'Lock section'}
+          </button>
           <ValidationPopover open={valOpen} onClose={() => setValOpen(false)} items={validation} />
         </div>
       </header>
@@ -637,10 +648,24 @@ function ClaudeRail({
 
 export interface EstarEditorProps {
   initialMode?: AnaMode['id'];
+  /** Real project identifier (numeric id, UUID, or program code). When
+   *  set, the editor fetches the live cerv2_510k_sections via
+   *  /api/510k/projects/:ident/document-preview and Lock section calls
+   *  PATCH /api/cerv2-sections/:id with audit + version row. When null
+   *  the editor renders the kit fixture for standalone demo use. */
+  programIdent?: string | null;
 }
 
-export function EstarEditor({ initialMode = 'deep-research' }: EstarEditorProps) {
+export function EstarEditor({ initialMode = 'deep-research', programIdent }: EstarEditorProps) {
+  const live = useLiveSections(programIdent ?? null);
+  const isLive = !!programIdent && !!live.contentMap && !!live.sections;
+
+  const firstLiveId = live.sections?.[0]?.items[0]?.id;
   const [activeId, setActiveId] = React.useState(11);
+  React.useEffect(() => {
+    if (isLive && firstLiveId !== undefined) setActiveId(firstLiveId);
+  }, [isLive, firstLiveId]);
+
   const [search, setSearch] = React.useState('');
   const [mode, setMode] = React.useState<AnaMode['id']>(initialMode);
   const [messages, setMessages] = React.useState<EditorMessage[]>(EDITOR_SEED_MESSAGES);
@@ -648,7 +673,33 @@ export function EstarEditor({ initialMode = 'deep-research' }: EstarEditorProps)
   const [activePin, setActivePin] = React.useState<string | null>(null);
   const [pinnedComment, setPinnedComment] = React.useState<EditorComment | null>(null);
   const [valOpen, setValOpen] = React.useState(false);
-  const [content, setContent] = React.useState<EditorContent>(EDITOR_CONTENT_11);
+  const [demoContent] = React.useState<EditorContent>(EDITOR_CONTENT_11);
+  // In-session content overrides keyed by section id (apply-suggest, etc).
+  // These win over live + demo so the user sees their immediate edit; the
+  // next live refresh will re-sync to the server.
+  const [overrides, setOverrides] = React.useState<Record<number, EditorContent>>({});
+  const liveContent = isLive && live.contentMap ? live.contentMap[String(activeId)] : null;
+  const content: EditorContent = overrides[activeId] ?? liveContent ?? demoContent;
+
+  // Locked sections — server-side status='approved' OR locked this session.
+  const [sessionLocked, setSessionLocked] = React.useState<Set<number>>(new Set());
+  const isLocked = sessionLocked.has(activeId) || content.status === 'complete';
+
+  const onLock = React.useCallback(async () => {
+    if (!isLive || !content?.id) return;
+    const res = await fetch(`/api/cerv2-sections/${content.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ status: 'approved', completion_percentage: 100 }),
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      throw new Error(`Lock failed: HTTP ${res.status}${detail ? ` — ${detail.slice(0, 200)}` : ''}`);
+    }
+    setSessionLocked(prev => new Set(prev).add(content.id));
+    live.refresh();
+  }, [isLive, content?.id, live]);
 
   const onAsk = (text: string, opts: { tool?: string } = {}) => {
     if (!text) return;
@@ -674,14 +725,20 @@ export function EstarEditor({ initialMode = 'deep-research' }: EstarEditorProps)
 
   const onApplySuggest = (comment: EditorComment) => {
     if (!comment.suggest) return;
-    setContent(c => ({
-      ...c,
-      blocks: c.blocks.map(b =>
-        b.id === comment.suggest!.blockId
-          ? { ...b, kind: 'p' as const, spans: [{ t: comment.suggest!.text }], flags: null, confidence: 0.9, prov: (b as EditorBlockParagraph).prov }
-          : b,
-      ),
-    }));
+    setOverrides(prev => {
+      const base = prev[activeId] ?? content;
+      return {
+        ...prev,
+        [activeId]: {
+          ...base,
+          blocks: base.blocks.map(b =>
+            b.id === comment.suggest!.blockId
+              ? { ...b, kind: 'p' as const, spans: [{ t: comment.suggest!.text }], flags: null, confidence: 0.9, prov: (b as EditorBlockParagraph).prov }
+              : b,
+          ),
+        },
+      };
+    });
     onResolveComment(comment.id);
     setMessages(ms => [
       ...ms,
@@ -694,9 +751,6 @@ export function EstarEditor({ initialMode = 'deep-research' }: EstarEditorProps)
     ]);
   };
 
-  // activeId is currently pinned to 11 since this kit only ships §11 content.
-  void activeId;
-
   return (
     <div className="ed-workbench" data-screen-label="MDX · 510(k) editor">
       <EditorTree
@@ -704,6 +758,7 @@ export function EstarEditor({ initialMode = 'deep-research' }: EstarEditorProps)
         onPick={setActiveId}
         search={search}
         setSearch={setSearch}
+        sections={isLive ? (live.sections ?? undefined) : undefined}
       />
       <DocumentPane
         content={content}
@@ -715,6 +770,8 @@ export function EstarEditor({ initialMode = 'deep-research' }: EstarEditorProps)
         validation={EDITOR_VALIDATION_11}
         valOpen={valOpen}
         setValOpen={setValOpen}
+        onLock={isLive ? onLock : undefined}
+        isLocked={isLocked}
       />
       <ClaudeRail
         mode={mode}
