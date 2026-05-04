@@ -127,8 +127,16 @@ export function ProjectDetail({ project, onBack, onProjectMutated }: Props) {
           <button
             type="button"
             className="prj-icon-btn"
-            title="Star"
+            title={project.starred ? 'Unstar' : 'Star'}
             data-on={project.starred}
+            onClick={async () => {
+              try {
+                await updateProject({
+                  id: project.id,
+                  metadata: { starred: !project.starred },
+                });
+              } catch { /* host refetch will reconcile */ }
+            }}
           >
             {I.star}
           </button>
