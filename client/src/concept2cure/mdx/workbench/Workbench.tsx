@@ -35,7 +35,7 @@ export interface WorkbenchProps {
   onAskAna: (text: string, opts?: { tool?: string }) => void;
 }
 
-export function TasksSurface(_props: WorkbenchProps) {
+export function TasksSurface({ onAskAna }: WorkbenchProps) {
   const [view, setView] = React.useState<'board' | 'list'>('board');
   const [owner, setOwner] = React.useState<'all' | 'JC'>('all');
   const byCol = (id: string) =>
@@ -60,7 +60,17 @@ export function TasksSurface(_props: WorkbenchProps) {
             <button className="seg-btn" data-on={owner === 'all'} onClick={() => setOwner('all')}>All</button>
             <button className="seg-btn" data-on={owner === 'JC'} onClick={() => setOwner('JC')}>Mine</button>
           </div>
-          <button className="btn primary small">{I.plus} New task</button>
+          <button
+            className="btn primary small"
+            onClick={() =>
+              onAskAna(
+                'Create a new task. Walk me through the fields — program, section, summary, label, due date, assignee, ' +
+                  'and whether an e-signature is required — then file it to the right Kanban column.',
+              )
+            }
+          >
+            {I.plus} New task
+          </button>
         </div>
       </div>
 
@@ -88,7 +98,17 @@ export function TasksSurface(_props: WorkbenchProps) {
               </div>
               <div className="kanban-body">
                 {byCol(col.id).map(t => (
-                  <button key={t.id} className="task-card" data-tone={t.tone}>
+                  <button
+                    key={t.id}
+                    className="task-card"
+                    data-tone={t.tone}
+                    onClick={() =>
+                      onAskAna(
+                        `Open task ${t.id} — "${t.title}" on ${t.prog} §${t.sect}. ` +
+                          `Status ${t.label}, due ${t.due}, assignee ${t.assignee}. Walk me through what's needed to clear it.`,
+                      )
+                    }
+                  >
                     <div className="task-head">
                       <span className="task-prog">
                         {t.prog}
@@ -198,8 +218,40 @@ export function VaultSurface({ onAskAna }: WorkbenchProps) {
           </div>
         </div>
         <div className="page-actions">
-          <button className="btn ghost small">{I.download} Export manifest</button>
-          <button className="btn primary small">{I.plus} Upload</button>
+          <button
+            className="btn ghost small"
+            onClick={() => {
+              const headers = ['Name', 'Type', 'Kind', 'Program', 'Size', 'Version', 'Status', 'Updated', 'Author', 'SHA-256'];
+              const rows = VAULT_FILES.map(f => [
+                f.name, f.type, f.kind, f.prog, f.size, f.ver, f.status, f.updated, f.author, f.hash,
+              ]);
+              const csv = [headers, ...rows]
+                .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
+                .join('\r\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `vault-manifest-${new Date().toISOString().slice(0, 10)}.csv`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            {I.download} Export manifest
+          </button>
+          <button
+            className="btn primary small"
+            onClick={() =>
+              onAskAna(
+                'Walk me through uploading a document to the vault. Confirm the program, section, document type, ' +
+                  'version, and whether an e-signature is required, then file it into the right folder with hash + audit entry.',
+              )
+            }
+          >
+            {I.plus} Upload
+          </button>
         </div>
       </div>
 
@@ -330,8 +382,27 @@ export function VaultSurface({ onAskAna }: WorkbenchProps) {
               </div>
 
               <div className="drawer-actions">
-                <button className="btn primary small">{I.download} Download</button>
-                <button className="btn ghost small">{I.eye} Preview</button>
+                <button
+                  className="btn primary small"
+                  onClick={() =>
+                    onAskAna(
+                      `Download ${sel.name} (${sel.ver}, ${sel.size}, SHA-256 ${sel.hash}) from the vault — ` +
+                        `confirm export is permitted under the program's distribution policy and log the access in the audit trail.`,
+                    )
+                  }
+                >
+                  {I.download} Download
+                </button>
+                <button
+                  className="btn ghost small"
+                  onClick={() =>
+                    onAskAna(
+                      `Preview ${sel.name} (${sel.kind} · ${sel.ver}). Surface its outline, key claims, and any open blockers without leaving the vault.`,
+                    )
+                  }
+                >
+                  {I.eye} Preview
+                </button>
                 <button className="btn ghost small" onClick={() => onAskAna(`Summarize ${sel.name}`)}>
                   {I.sparkles} Ask Claude
                 </button>
@@ -398,7 +469,27 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
           </div>
         </div>
         <div className="page-actions">
-          <button className="btn ghost small">{I.download} Export report</button>
+          <button
+            className="btn ghost small"
+            onClick={() => {
+              const headers = ['Severity', 'Rule', 'Program', 'Section', 'Category', 'Message', 'Since'];
+              const rows = VALIDATION_RULES.map(r => [r.severity, r.id, r.prog, r.sect, r.category, r.msg, r.since]);
+              const csv = [headers, ...rows]
+                .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
+                .join('\r\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `validation-report-${new Date().toISOString().slice(0, 10)}.csv`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            {I.download} Export report
+          </button>
           <button
             className="btn primary small"
             onClick={() => onAskAna('Summarize the 3 blockers across my portfolio')}
@@ -515,7 +606,15 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
 
 export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
   const [selected, setSelected] = React.useState('s1');
+  const [statusFilter, setStatusFilter] = React.useState<'all' | 'active' | 'blocked' | 'complete'>('all');
   const sel = SUBMISSIONS.find(s => s.id === selected);
+  const visible = statusFilter === 'all'
+    ? SUBMISSIONS
+    : SUBMISSIONS.filter(s => s.status === statusFilter);
+  const cycleFilter = () => {
+    const order: Array<'all' | 'active' | 'blocked' | 'complete'> = ['all', 'active', 'blocked', 'complete'];
+    setStatusFilter(order[(order.indexOf(statusFilter) + 1) % order.length]);
+  };
 
   return (
     <>
@@ -528,8 +627,24 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
           </div>
         </div>
         <div className="page-actions">
-          <button className="btn ghost small">{I.filter} Filter</button>
-          <button className="btn primary small">{I.rocket} New submission</button>
+          <button
+            className={`btn ghost small${statusFilter !== 'all' ? ' active' : ''}`}
+            title={statusFilter === 'all' ? 'Filter submissions' : `Showing ${statusFilter} only`}
+            onClick={cycleFilter}
+          >
+            {I.filter} {statusFilter === 'all' ? 'Filter' : statusFilter}
+          </button>
+          <button
+            className="btn primary small"
+            onClick={() =>
+              onAskAna(
+                'Start a new submission. Walk me through selecting program, target authority (FDA ESG, notified body, EU MDR), ' +
+                  'pathway, package contents and cover letter — and run the gate checks before transmission.',
+              )
+            }
+          >
+            {I.rocket} New submission
+          </button>
         </div>
       </div>
 
@@ -564,7 +679,7 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
         </div>
         <div className="sub-layout">
           <div className="sub-list">
-            {SUBMISSIONS.map(s => (
+            {visible.map(s => (
               <button
                 key={s.id}
                 className="sub-row"
@@ -621,6 +736,15 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
                     <button
                       className="btn primary small"
                       disabled={sel.gate.errs > 0 || !sel.esig}
+                      onClick={() =>
+                        onAskAna(
+                          sel.status === 'complete'
+                            ? `Show me the receipt for ${sel.prog} · ${sel.title} (target ${sel.target}, transmitted ${sel.transmitAt}). ` +
+                                'Confirm the ack ID and the post-submission checklist.'
+                            : `Transmit ${sel.prog} · ${sel.title} to ${sel.target}. Re-run the gate (validation, cover letter, e-signature, package), ` +
+                                'confirm the package hash, then hand off to the ESG/NB transmitter and log the audit entry.',
+                        )
+                      }
                     >
                       {I.rocket} {sel.status === 'complete' ? 'View receipt' : 'Transmit'}
                     </button>
@@ -690,7 +814,7 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
 // Templates
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function TemplatesSurface() {
+export function TemplatesSurface({ onAskAna }: WorkbenchProps) {
   return (
     <>
       <div className="page-header">
@@ -702,12 +826,31 @@ export function TemplatesSurface() {
           </div>
         </div>
         <div className="page-actions">
-          <button className="btn primary small">{I.plus} New template</button>
+          <button
+            className="btn primary small"
+            onClick={() =>
+              onAskAna(
+                'Create a new org-approved template. Walk me through name, owner, applicable pathways (510(k), PMA, CER), ' +
+                  'tags, and the section skeleton — then version-control it.',
+              )
+            }
+          >
+            {I.plus} New template
+          </button>
         </div>
       </div>
       <div className="tpl-grid">
         {TEMPLATES.map(t => (
-          <button key={t.id} className="tpl-card">
+          <button
+            key={t.id}
+            className="tpl-card"
+            onClick={() =>
+              onAskAna(
+                `Open template "${t.name}" — owned by ${t.owner}, ${t.uses} uses, updated ${t.updated}. ` +
+                  `Show me the section skeleton and how to apply it to a program.`,
+              )
+            }
+          >
             <div className="tpl-head">
               <span className="tpl-ico">{I.template}</span>
               <span className="tpl-uses">{t.uses} uses</span>

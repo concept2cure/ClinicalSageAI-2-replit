@@ -246,7 +246,7 @@ export function App({ initialNav, projectName }: AppProps = {}) {
         surface = <SubmissionsSurface onAskAna={askAna} />;
         break;
       case 'templates':
-        surface = <TemplatesSurface />;
+        surface = <TemplatesSurface onAskAna={askAna} />;
         break;
       case 'project-home':
         surface = (

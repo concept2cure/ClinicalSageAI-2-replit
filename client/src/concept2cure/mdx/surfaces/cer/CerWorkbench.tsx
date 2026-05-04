@@ -102,7 +102,27 @@ function CerConformity({ onAskAna }: CerConformityProps) {
           <div className="section-sub">EU MDR Annex I · 23 requirements · {conformPct}% conform · {counts.gap} gap{counts.gap === 1 ? '' : 's'} blocking submission</div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button className="section-more">Export declaration {I.download}</button>
+          <button
+            className="section-more"
+            onClick={() => {
+              const headers = ['Section', 'Chapter', 'Requirement', 'Status', 'Evidence', 'Note'];
+              const rows = CER_GSPR.map(r => [r.id, r.ch, r.title, r.status, r.evidence, r.note || '']);
+              const csv = [headers, ...rows]
+                .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
+                .join('\r\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `gspr-declaration-${new Date().toISOString().slice(0, 10)}.csv`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            Export declaration {I.download}
+          </button>
         </div>
       </div>
 
@@ -225,7 +245,17 @@ function CerEquivalence({ onAskAna }: CerEquivalenceProps) {
           <div className="section-title">Equivalence assessment · Article 61(5)</div>
           <div className="section-sub">MDCG 2020-5 conformity on technical, biological and clinical dimensions</div>
         </div>
-        <button className="section-more">Generate justification {I.sparkles}</button>
+        <button
+          className="section-more"
+          onClick={() =>
+            onAskAna?.(
+              `Draft the Article 61(5) equivalence justification for IV-415 vs ${eqDef?.label ?? 'the claimed equivalent'}. ` +
+                `Walk through technical, biological and clinical dimensions per MDCG 2020-5 §A.6 — flag any criterion that isn't fully equivalent and propose gap-bridging evidence.`,
+            )
+          }
+        >
+          Generate justification {I.sparkles}
+        </button>
       </div>
 
       <div className="equiv-devices">
@@ -336,9 +366,13 @@ interface CerPmsPmcfProps {
 }
 
 function CerPmsPmcf({ onAskAna }: CerPmsPmcfProps) {
+  const [openOnly, setOpenOnly] = React.useState(false);
   const totalEnrolled = CER_PMCF_STUDIES.reduce((s, x) => s + x.n, 0);
   const totalTarget   = CER_PMCF_STUDIES.reduce((s, x) => s + x.target, 0);
   const enrollPct     = Math.round((totalEnrolled / totalTarget) * 100);
+  const complaints = openOnly
+    ? CER_PMS_COMPLAINTS.filter(c => c.status !== 'closed' && c.status !== 'complete')
+    : CER_PMS_COMPLAINTS;
 
   return (
     <>
@@ -347,7 +381,17 @@ function CerPmsPmcf({ onAskAna }: CerPmsPmcfProps) {
           <div className="section-title">Post-market surveillance · IV-415</div>
           <div className="section-sub">Article 83 PMS plan v2.1 · Annex XIV Part B PMCF · next PSUR Q1 2026</div>
         </div>
-        <button className="section-more">PSUR draft {I.sparkles}</button>
+        <button
+          className="section-more"
+          onClick={() =>
+            onAskAna?.(
+              'Draft the PSUR Q1 2026 for IV-415. Pull from the open complaints queue, the PMCF interim data, ' +
+                'and the Article 88 trend thresholds — call out any signal crossing threshold and propose CAPA actions.',
+            )
+          }
+        >
+          PSUR draft {I.sparkles}
+        </button>
       </div>
 
       <div className="cer-metrics">
@@ -373,8 +417,25 @@ function CerPmsPmcf({ onAskAna }: CerPmsPmcfProps) {
                 <div className="s">5 of 47 shown · sorted by recency · open complaints first</div>
               </div>
               <div className="actions">
-                <button className="tb-btn" title="Filter">{I.filter}</button>
-                <button className="tb-btn" title="New complaint">{I.plus}</button>
+                <button
+                  className={`tb-btn${openOnly ? ' active' : ''}`}
+                  title={openOnly ? 'Show all complaints' : 'Show open complaints only'}
+                  onClick={() => setOpenOnly(o => !o)}
+                >
+                  {I.filter}
+                </button>
+                <button
+                  className="tb-btn"
+                  title="Log a new complaint"
+                  onClick={() =>
+                    onAskAna?.(
+                      'Log a new complaint for IV-415. Walk me through the intake fields — category, severity, ' +
+                        'received date, source, narrative — and check whether it crosses the Article 88 trend threshold once filed.',
+                    )
+                  }
+                >
+                  {I.plus}
+                </button>
               </div>
             </div>
             <table className="tbl">
@@ -384,7 +445,7 @@ function CerPmsPmcf({ onAskAna }: CerPmsPmcfProps) {
                 </tr>
               </thead>
               <tbody>
-                {CER_PMS_COMPLAINTS.map(c => (
+                {complaints.map(c => (
                   <tr key={c.code}>
                     <td>
                       <span className="k-num">{c.code}</span>
