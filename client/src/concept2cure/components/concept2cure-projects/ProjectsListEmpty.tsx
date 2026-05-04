@@ -23,7 +23,9 @@ export function ProjectsListEmpty({ kind, onCreate, onClear }: Props) {
           <button type="button" className="prj-btn primary" onClick={onCreate}>
             {I.plus} New project
           </button>
-          <button type="button" className="prj-btn">Browse templates</button>
+          <button type="button" className="prj-btn" onClick={onCreate}>
+            Browse templates
+          </button>
         </div>
         <div className="ple-suggest">
           <div className="ple-suggest-h">Suggested starting points</div>

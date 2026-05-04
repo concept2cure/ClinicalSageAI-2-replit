@@ -2,11 +2,28 @@
  * ProjectsList — list view (header + filter rail + bulk bar + rows).
  * Mirror of design-system/ui_kits/home/Projects.jsx (lines 141–268).
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { I } from './icons';
 import { useProjectsApi, useProjectsMutations } from './data';
 import { downloadJsonSnapshot } from './data/useProjectsMutations';
-import type { ProjectsFilters, ArchiveMode } from './types';
+import type { ProjectsFilters, ArchiveMode, SavedView } from './types';
+
+const CUSTOM_VIEWS_KEY = 'concept2cure.projects.savedViews.v1';
+
+function loadCustomViews(): SavedView[] {
+  if (typeof localStorage === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(CUSTOM_VIEWS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch { return []; }
+}
+
+function persistCustomViews(views: SavedView[]) {
+  if (typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(CUSTOM_VIEWS_KEY, JSON.stringify(views)); } catch { /* quota */ }
+}
 import { ProjectsListFilters } from './ProjectsListFilters';
 import { ProjectsListBulkBar } from './ProjectsListBulkBar';
 import { ProjectsListEmpty } from './ProjectsListEmpty';
@@ -37,7 +54,21 @@ export function ProjectsList({
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<ProjectsFilters>(EMPTY_FILTERS);
   const [savedView, setSavedView] = useState<string | null>(null);
+  const [customViews, setCustomViews] = useState<SavedView[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
+
+  useEffect(() => {
+    setCustomViews(loadCustomViews());
+  }, []);
+
+  const saveView = (name: string, current: ProjectsFilters) => {
+    const id = `view-custom-${Date.now()}`;
+    const next: SavedView = { id, label: name, filters: current };
+    const updated = [...customViews, next];
+    setCustomViews(updated);
+    persistCustomViews(updated);
+    setSavedView(id);
+  };
   const [archiveTarget, setArchiveTarget] = useState<{
     project: { id: string; name: string; chats: []; files: [] };
     mode: ArchiveMode;
@@ -110,6 +141,8 @@ export function ProjectsList({
           onSavedView={applySavedView}
           query={query}
           onQuery={setQuery}
+          customViews={customViews}
+          onSaveView={saveView}
         />
       )}
 
