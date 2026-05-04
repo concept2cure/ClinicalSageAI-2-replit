@@ -65,7 +65,14 @@ export function Overview({ onOpenProgram, onAskAna }: OverviewProps) {
             {MDX_PROGRAMS.length} active programs across 510(k), PMA and CER pathways
           </div>
         </div>
-        <button className="section-more">Readiness report {I.right}</button>
+        <button
+          className="section-more"
+          onClick={() =>
+            onAskAna('Generate the portfolio readiness report across all MDX programs.')
+          }
+        >
+          Readiness report {I.right}
+        </button>
       </div>
       <div className="health">
         {MDX_HEALTH.map((d, i) => (
@@ -95,7 +102,14 @@ export function Overview({ onOpenProgram, onAskAna }: OverviewProps) {
             {programs.length} of {MDX_PROGRAMS.length} shown
           </div>
         </div>
-        <button className="section-more">New program {I.right}</button>
+        <button
+          className="section-more"
+          onClick={() =>
+            onAskAna('Walk me through creating a new MDX program (510(k), PMA, or CER).')
+          }
+        >
+          New program {I.right}
+        </button>
       </div>
 
       <div className="view-toolbar">

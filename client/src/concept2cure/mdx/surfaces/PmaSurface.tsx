@@ -12,7 +12,7 @@ export interface PmaSurfaceProps {
   onOpenEditor?: () => void;
 }
 
-export function PmaSurface({ onOpenEditor }: PmaSurfaceProps) {
+export function PmaSurface({ onAskAna, onOpenEditor }: PmaSurfaceProps) {
   return (
     <>
       <div className="section-hdr">
@@ -76,7 +76,17 @@ export function PmaSurface({ onOpenEditor }: PmaSurfaceProps) {
       </div>
       <div className="pma-modules">
         {PMA_MODULES.map(m => (
-          <button key={m.id} className="pma-mod">
+          <button
+            key={m.id}
+            className="pma-mod"
+            onClick={() =>
+              onAskAna(
+                `Open PMA module "${m.label}" — ${m.docs} documents · status: ${m.status}. ` +
+                  `Walk me through what's open and where I should focus.`,
+              )
+            }
+            title={`Open ${m.label}`}
+          >
             <div className="pma-mod-hdr">
               <div className="pma-mod-label">{m.label}</div>
               <span className={`status-pill ${m.status}`}>{m.status}</span>
