@@ -172,7 +172,17 @@ interface AuditEntry {
   timestamp: string;
   userId: string;
   userName: string;
-  action: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'EXPORT' | 'SIGN' | 'APPROVE' | 'AI_EDIT';
+  action:
+    | 'CREATE'
+    | 'READ'
+    | 'UPDATE'
+    | 'DELETE'
+    | 'EXPORT'
+    | 'SIGN'
+    | 'APPROVE'
+    | 'AI_EDIT'
+    | 'DUPLICATE'
+    | 'TRANSFER';
   entityType:
     | 'project'
     | 'conversation'
@@ -3141,6 +3151,196 @@ router.delete('/projects/:id', async (req: Request, res: Response) => {
   } catch (error: any) {
     logger.error('Failed to delete project', { error: error.message });
     return sendError(res, 500, 'Failed to delete project');
+  }
+});
+
+/**
+ * POST /api/concept2cure/projects/:id/export
+ * Returns a JSON snapshot of the project + linked conversations so the
+ * subscriber can back up / share / archive their work. Tenant-scoped,
+ * audited as EXPORT.
+ */
+router.post('/projects/:id/export', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const rawId = String(req.params.id ?? '');
+    const numericId = parseInt(rawId.replace('proj_', ''), 10);
+    if (isNaN(numericId)) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const [existing] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .limit(1);
+    if (!existing) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const conversations = await getConversationsFromDb(numericId, organizationId);
+    const snapshot = {
+      exportedAt: new Date().toISOString(),
+      project: {
+        id: rawId,
+        name: existing.name,
+        description: existing.description,
+        status: existing.status,
+        metadata: existing.metadata,
+        settings: existing.settings,
+        createdAt: existing.createdAt,
+        updatedAt: existing.updatedAt,
+      },
+      conversations,
+    };
+
+    await logAuditEntry(req, 'EXPORT', 'project', rawId, existing, snapshot);
+    return sendSuccess(res, snapshot);
+  } catch (error: any) {
+    logger.error('Failed to export project', { error: error.message });
+    return sendError(res, 500, 'Failed to export project');
+  }
+});
+
+/**
+ * POST /api/concept2cure/projects/:id/duplicate
+ * Clone-as-template: copies name / description / metadata / settings /
+ * type / clientWorkspaceId into a new project row. Strips conversations
+ * and audit so the copy starts clean. Audited as DUPLICATE on both
+ * source and copy ids.
+ *
+ * Body (optional): { name?: string }   — defaults to "Copy of <orig>"
+ */
+router.post('/projects/:id/duplicate', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const rawId = String(req.params.id ?? '');
+    const numericId = parseInt(rawId.replace('proj_', ''), 10);
+    if (isNaN(numericId)) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const [existing] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .limit(1);
+    if (!existing) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const overrideName =
+      typeof req.body?.name === 'string' && req.body.name.trim().length > 0
+        ? sanitizeContent(req.body.name.trim()).slice(0, 200)
+        : `Copy of ${existing.name}`;
+
+    const [created] = await db
+      .insert(projects)
+      .values({
+        organizationId,
+        clientWorkspaceId: existing.clientWorkspaceId,
+        createdById: userId ?? existing.createdById ?? null,
+        name: overrideName,
+        description: existing.description,
+        type: existing.type,
+        status: 'active',
+        metadata: existing.metadata,
+        settings: existing.settings,
+      })
+      .returning();
+
+    await logAuditEntry(req, 'DUPLICATE', 'project', `proj_${created.id}`, existing, created);
+    return sendSuccess(res, {
+      id: `proj_${created.id}`,
+      name: created.name,
+      description: created.description,
+      status: created.status,
+      organizationId: created.organizationId,
+      sourceProjectId: rawId,
+      createdAt: created.createdAt,
+      updatedAt: created.updatedAt,
+    });
+  } catch (error: any) {
+    logger.error('Failed to duplicate project', { error: error.message });
+    return sendError(res, 500, 'Failed to duplicate project');
+  }
+});
+
+const transferProjectSchema = z.object({
+  targetWorkspaceId: z.string().min(1).max(100).optional(),
+  targetUserId: z.number().int().positive().optional(),
+  targetEmail: z.string().email().optional(),
+  reason: z.string().min(10, 'Reason must be at least 10 characters').max(500),
+});
+
+/**
+ * POST /api/concept2cure/projects/:id/transfer
+ * Records the source-side transfer intent + reason and writes an
+ * audit row. Full owner-change with double-sided audit lands when the
+ * workspace-picker kit ships; until then this endpoint captures the
+ * subscriber's intent and the audit trail of who initiated it.
+ */
+router.post('/projects/:id/transfer', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const rawId = String(req.params.id ?? '');
+    const numericId = parseInt(rawId.replace('proj_', ''), 10);
+    if (isNaN(numericId)) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const data = transferProjectSchema.parse(req.body);
+    if (!data.targetWorkspaceId && !data.targetUserId && !data.targetEmail) {
+      return sendError(
+        res,
+        400,
+        'One of targetWorkspaceId / targetUserId / targetEmail is required',
+        undefined,
+        'INVALID_INPUT',
+      );
+    }
+
+    const [existing] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .limit(1);
+    if (!existing) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const transferRecord = {
+      requestedAt: new Date().toISOString(),
+      requestedBy: userId,
+      targetWorkspaceId: data.targetWorkspaceId ?? null,
+      targetUserId: data.targetUserId ?? null,
+      targetEmail: data.targetEmail ?? null,
+      reason: sanitizeContent(data.reason),
+      status: 'pending' as const,
+    };
+
+    const [updated] = await db
+      .update(projects)
+      .set({
+        metadata: {
+          ...((existing.metadata as object) || {}),
+          transfer: transferRecord,
+        },
+        updatedAt: new Date(),
+      })
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .returning();
+
+    await logAuditEntry(req, 'TRANSFER', 'project', rawId, existing, updated);
+    return sendSuccess(res, { id: rawId, transfer: transferRecord });
+  } catch (error: any) {
+    if (error?.name === 'ZodError') {
+      return sendError(res, 400, 'Invalid payload', error.errors, 'INVALID_INPUT');
+    }
+    logger.error('Failed to record transfer', { error: error.message });
+    return sendError(res, 500, 'Failed to record transfer');
   }
 });
 

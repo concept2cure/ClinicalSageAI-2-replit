@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 import { I } from './icons';
 import { PACT_EVENTS, PLNK_LINKS, useProjectsMutations } from './data';
+import { downloadJsonSnapshot } from './data/useProjectsMutations';
 import { ProjectMoreMenu } from './ProjectMoreMenu';
 import { ChatsTab } from './tabs/ChatsTab';
 import { MemoryTab } from './tabs/MemoryTab';
@@ -31,9 +32,8 @@ export function ProjectDetail({ project, onBack, onProjectMutated }: Props) {
   const [archiveMode, setArchiveMode] = useState<ArchiveMode | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [tab, setTab] = useState<DetailTab>('chats');
-  const { updateProject, archiveProject, deleteProject } = useProjectsMutations({
-    onSuccess: onProjectMutated,
-  });
+  const { updateProject, archiveProject, deleteProject, exportProject, duplicateProject } =
+    useProjectsMutations({ onSuccess: onProjectMutated });
 
   // ⌘F / Ctrl+F → project-internal search
   useEffect(() => {
@@ -86,8 +86,16 @@ export function ProjectDetail({ project, onBack, onProjectMutated }: Props) {
           <ProjectMoreMenu
             onArchive={() => setArchiveMode('archive')}
             onDelete={() => setArchiveMode('delete')}
-            onDuplicate={() => { /* HANDOFF item 10 — wire to duplicate-as-template flow */ }}
-            onExport={() => { /* HANDOFF item 10 — wire to export-zip flow */ }}
+            onDuplicate={async () => {
+              await duplicateProject(project.id);
+            }}
+            onExport={async () => {
+              const snapshot = await exportProject(project.id);
+              downloadJsonSnapshot(
+                `${project.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-export`,
+                snapshot,
+              );
+            }}
           />
           <button
             type="button"

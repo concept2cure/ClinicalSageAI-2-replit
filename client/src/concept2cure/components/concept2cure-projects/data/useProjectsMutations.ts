@@ -69,11 +69,25 @@ async function apiFetch<T>(path: string, init: ApiInit): Promise<T> {
   return (await res.json()) as T;
 }
 
+export interface TransferInput {
+  id: string;
+  targetWorkspaceId?: string;
+  targetUserId?: number;
+  targetEmail?: string;
+  reason: string;
+}
+
 export interface UseProjectsMutations {
   createProject: (input: CreateInput) => Promise<{ id: string } & Partial<Project>>;
   updateProject: (input: UpdateInput) => Promise<Partial<Project>>;
   archiveProject: (id: string) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
+  exportProject: (id: string) => Promise<unknown>;
+  duplicateProject: (
+    id: string,
+    overrideName?: string,
+  ) => Promise<{ id: string } & Partial<Project>>;
+  transferProject: (input: TransferInput) => Promise<unknown>;
 }
 
 export function useProjectsMutations(opts: { onSuccess?: () => void } = {}): UseProjectsMutations {
@@ -151,5 +165,69 @@ export function useProjectsMutations(opts: { onSuccess?: () => void } = {}): Use
     [onSuccess],
   );
 
-  return { createProject, updateProject, archiveProject, deleteProject };
+  const exportProject = useCallback(async (id: string) => {
+    const numericId = stripProjectId(id);
+    const result = await apiFetch<{ data?: unknown }>(
+      `/api/concept2cure/projects/${encodeURIComponent(numericId)}/export`,
+      { method: 'POST' },
+    );
+    return (result as { data?: unknown })?.data ?? result;
+  }, []);
+
+  const duplicateProject = useCallback(
+    async (id: string, overrideName?: string) => {
+      const numericId = stripProjectId(id);
+      const result = await apiFetch<{ data?: { id: string } & Partial<Project> }>(
+        `/api/concept2cure/projects/${encodeURIComponent(numericId)}/duplicate`,
+        { method: 'POST', body: overrideName ? { name: overrideName } : {} },
+      );
+      onSuccess?.();
+      return (result?.data ?? (result as unknown as { id: string } & Partial<Project>));
+    },
+    [onSuccess],
+  );
+
+  const transferProject = useCallback(
+    async (input: TransferInput) => {
+      const numericId = stripProjectId(input.id);
+      const body: Record<string, unknown> = { reason: input.reason };
+      if (input.targetWorkspaceId !== undefined) body.targetWorkspaceId = input.targetWorkspaceId;
+      if (input.targetUserId !== undefined) body.targetUserId = input.targetUserId;
+      if (input.targetEmail !== undefined) body.targetEmail = input.targetEmail;
+      const result = await apiFetch<{ data?: unknown }>(
+        `/api/concept2cure/projects/${encodeURIComponent(numericId)}/transfer`,
+        { method: 'POST', body },
+      );
+      onSuccess?.();
+      return (result as { data?: unknown })?.data ?? result;
+    },
+    [onSuccess],
+  );
+
+  return {
+    createProject,
+    updateProject,
+    archiveProject,
+    deleteProject,
+    exportProject,
+    duplicateProject,
+    transferProject,
+  };
+}
+
+/**
+ * Trigger a browser download of a JSON snapshot from an export response.
+ */
+export function downloadJsonSnapshot(filename: string, payload: unknown) {
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: 'application/json;charset=utf-8',
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename.endsWith('.json') ? filename : `${filename}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }

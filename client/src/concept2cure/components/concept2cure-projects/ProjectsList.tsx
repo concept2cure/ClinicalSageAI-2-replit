@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { I } from './icons';
 import { useProjectsApi, useProjectsMutations } from './data';
+import { downloadJsonSnapshot } from './data/useProjectsMutations';
 import type { ProjectsFilters, ArchiveMode } from './types';
 import { ProjectsListFilters } from './ProjectsListFilters';
 import { ProjectsListBulkBar } from './ProjectsListBulkBar';
@@ -45,7 +46,7 @@ export function ProjectsList({
   // Live projects with prototype-seed fallback. The hook returns the seed
   // when the API errors or has no rows, so the surface always renders.
   const { projects: allProjects, refetch } = useProjectsApi();
-  const { archiveProject, deleteProject } = useProjectsMutations({ onSuccess: refetch });
+  const { archiveProject, deleteProject, exportProject } = useProjectsMutations({ onSuccess: refetch });
 
   const matches = (p: typeof allProjects[number]) => {
     if (query) {
@@ -121,8 +122,15 @@ export function ProjectsList({
             mode: 'archive',
           });
         }}
-        onExport={() => { /* HANDOFF item 10 — wire to export-zip mutation */ }}
-        onTransfer={() => { /* HANDOFF item 10 — wire to transfer flow */ }}
+        onExport={async () => {
+          if (selected.length === 0) return;
+          const snapshots = await Promise.all(selected.map(id => exportProject(id)));
+          downloadJsonSnapshot(
+            `projects-export-${selected.length}-${new Date().toISOString().slice(0, 10)}`,
+            { exportedAt: new Date().toISOString(), projectCount: selected.length, projects: snapshots },
+          );
+        }}
+        onTransfer={() => { /* Transfer wire pending workspace-picker kit */ }}
         onDelete={() => {
           setArchiveTarget({
             project: { name: `${selected.length} projects`, id: 'bulk', chats: [], files: [] },
