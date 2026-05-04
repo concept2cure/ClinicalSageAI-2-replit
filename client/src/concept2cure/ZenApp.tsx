@@ -31,8 +31,6 @@ import { useLocation, Redirect } from 'wouter';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { ZenSidebar } from './components/sidebar/ZenSidebar';
-import { ZenCommandPalette } from './components/command/ZenCommandPalette';
 
 // Stage 10 extracted modules
 import {
@@ -48,11 +46,6 @@ import {
 import { useZenKeyboardShortcuts } from './hooks/useZenKeyboardShortcuts';
 import { useUserProfileFromStorage } from './hooks/useUserProfileFromStorage';
 import { useWorkspaceSuggestedActions } from './hooks/useWorkspaceSuggestedActions';
-const ZenSettings = React.lazy(() =>
-  import('./components/settings/ZenSettings').then(m => ({ default: m.ZenSettings }))
-);
-import { NewProjectModal } from './components/projects/ProjectSwitcher';
-import ProjectConfigPanel from './components/workspace/ProjectConfigPanel';
 // [BATCH 3] WorkflowTimeline — renderer removed, import kept for type compatibility
 // [BATCH 3] ProjectFilesCompact — unused, import removed
 // [BATCH 3] CustomInstructions — knowledge-base renderer removed
@@ -70,7 +63,6 @@ import {
   useRecommendations,
 } from './hooks/useIntelligence';
 
-import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
 import { ErrorBoundary } from './components/ErrorBoundary';
 // IndustryMode type unused — removed
 // [BATCH 3] ProductAuditQuestionnaire — renderer removed
@@ -253,7 +245,6 @@ import type {
 
 // Project Sidebar — Claude.ai-style right sidebar (Context, Instructions, Files)
 // ProjectSidebar — unused import removed
-
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -564,7 +555,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     }>
   >([]);
 
-
   // [C-03/C-04] Validate initialProjectId exists in the projects array.
   // If the stored/URL project was deleted or is inaccessible, fall back gracefully.
   useEffect(() => {
@@ -754,7 +744,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       // `regulatoryRegion` is a server-side metadata field not present on
       // the projects-list response shape; cast to read it loosely so the
       // legacy API path keeps working without a wider type refactor.
-      regulatorBody: activeProject?.region || (activeProject as { regulatoryRegion?: string } | undefined)?.regulatoryRegion,
+      regulatorBody:
+        activeProject?.region ||
+        (activeProject as { regulatoryRegion?: string } | undefined)?.regulatoryRegion,
       sectionCode: activeSectionCode,
       sectionTitle: activeSectionTitle,
       artifactId: activeArtifactId,
@@ -1142,14 +1134,14 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       // Diagnostics including 510(k), PMA, CER, Precedent Intelligence —
       // mounted as the new 'mdx' layoutMode rendering the bundle prototype.
       const BUNDLE_MDX_HASH: Record<string, string> = {
-        mdx: '',                       // bundle home — Overview tab
-        biopharma: '',                 // routes through MDX shell scope tabs
+        mdx: '', // bundle home — Overview tab
+        biopharma: '', // routes through MDX shell scope tabs
         vault: '#vault',
         tasking: '#tasks',
         submission: '#submissions',
         protocol: '#templates',
-        cmc: '#cer',                   // CER generator covers CMC docs in MDX
-        biostat: '',                   // no MDX surface yet → fall through to Ana
+        cmc: '#cer', // CER generator covers CMC docs in MDX
+        biostat: '', // no MDX surface yet → fall through to Ana
         quality: '#validation',
         reporting: '#analytics',
         memory: '#memory',
@@ -1158,7 +1150,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         admin: '#admin',
       };
       const BUNDLE_INTENTS: Record<string, string> = {
-        biostat: 'Show me Biostatistics — active SAPs, sample size calculations, interim analyses, and tables/listings/figures.',
+        biostat:
+          'Show me Biostatistics — active SAPs, sample size calculations, interim analyses, and tables/listings/figures.',
       };
       if (normalizedPath === 'projects') {
         setLayoutMode('projects');
@@ -1248,9 +1241,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         setLayoutMode(normalizedPath as LayoutMode);
         return;
       }
-      console.warn(
-        `[Ana] Unknown navigation target, falling back safely: ${normalizedPath}`
-      );
+      console.warn(`[Ana] Unknown navigation target, falling back safely: ${normalizedPath}`);
       setLayoutMode(activeProjectId ? 'project-home' : 'projects');
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1790,8 +1781,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   const homeGreeting = useMemo(() => {
     const firstName = (userName || 'there').split(/\s+/)[0] || 'there';
     const hour = new Date().getHours();
-    const part =
-      hour < 5 ? 'evening' : hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+    const part = hour < 5 ? 'evening' : hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
     return `Good ${part}, ${firstName}`;
   }, [userName]);
 
@@ -1860,12 +1850,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     };
     const hash = moduleHash[embeddedModule];
     if (hash !== undefined) {
-      return (
-        <MdxRoute
-          initialNav={hashToMdxNav(hash)}
-          projectName={activeProject?.name}
-        />
-      );
+      return <MdxRoute initialNav={hashToMdxNav(hash)} projectName={activeProject?.name} />;
     }
     // ind / cmc: bundle has not designed these surfaces. Redirect to the
     // project's chat-first shell so the user never lands on invented UI.
@@ -1878,12 +1863,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // ZenSidebar) when the user is on the home destination and not viewing an
   // embedded project module. Bundle source: design-system/ui_kits/home/.
   if (layoutMode === 'projects' && !embeddedModule) {
-    const initials = (userName || 'U')
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map(part => part[0]?.toUpperCase() ?? '')
-      .join('') || 'U';
+    const initials =
+      (userName || 'U')
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(part => part[0]?.toUpperCase() ?? '')
+        .join('') || 'U';
 
     // Route an arbitrary chat-seed string into the current AnA surface. Picks
     // regulatory-workspace when a project is active, deep-research otherwise.
@@ -1898,7 +1884,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     const dashboardTileTarget: Record<string, string> = {
       'submission-readiness': '#submissions',
       'tasks-due': '#tasks',
-      'alerts': '#admin',
+      alerts: '#admin',
       'view-all-dashboards': '#analytics',
     };
 
@@ -1936,7 +1922,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 metaKey: true,
                 ctrlKey: true,
                 bubbles: true,
-              }),
+              })
             );
           }
         }}

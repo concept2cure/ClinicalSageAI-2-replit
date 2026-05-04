@@ -37,7 +37,6 @@ export {
 export { useMAUDESearch as useRegulatoryMAUDESearch } from './useRegulatoryIntelligence';
 export * from './useSessionRestore';
 export * from './useTemplates';
-export * from './useZenActions';
 export * from './useLicense';
 export * from './useDeliverable';
 export * from './useReports';
