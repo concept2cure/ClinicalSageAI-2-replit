@@ -32,8 +32,41 @@ export function ProjectDetail({ project, onBack, onProjectMutated }: Props) {
   const [archiveMode, setArchiveMode] = useState<ArchiveMode | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [tab, setTab] = useState<DetailTab>('chats');
-  const { updateProject, archiveProject, deleteProject, exportProject, duplicateProject } =
+  const { updateProject, archiveProject, deleteProject, exportProject, duplicateProject, transferProject } =
     useProjectsMutations({ onSuccess: onProjectMutated });
+
+  const handleExportProject = async () => {
+    try {
+      const snapshot = await exportProject(project.id);
+      downloadJsonSnapshot(
+        `${project.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-export`,
+        snapshot,
+      );
+    } catch { /* host can retry */ }
+  };
+
+  const handleTransfer = async () => {
+    const targetEmail = window.prompt(
+      `Transfer ownership of "${project.name}".\n\nEnter the email of the new owner:`,
+    );
+    if (!targetEmail) return;
+    const reason = window.prompt(
+      'Reason for transfer (10+ characters, recorded in audit log):',
+    );
+    if (!reason || reason.trim().length < 10) {
+      window.alert('Transfer cancelled — reason must be at least 10 characters.');
+      return;
+    }
+    try {
+      await transferProject({
+        id: project.id,
+        targetEmail: targetEmail.trim(),
+        reason: reason.trim(),
+      });
+    } catch (err) {
+      window.alert(`Transfer failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
 
   // ⌘F / Ctrl+F → project-internal search
   useEffect(() => {
@@ -89,13 +122,7 @@ export function ProjectDetail({ project, onBack, onProjectMutated }: Props) {
             onDuplicate={async () => {
               await duplicateProject(project.id);
             }}
-            onExport={async () => {
-              const snapshot = await exportProject(project.id);
-              downloadJsonSnapshot(
-                `${project.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-export`,
-                snapshot,
-              );
-            }}
+            onExport={handleExportProject}
           />
           <button
             type="button"
@@ -159,6 +186,10 @@ export function ProjectDetail({ project, onBack, onProjectMutated }: Props) {
         project={project}
         open={configOpen}
         onClose={() => setConfigOpen(false)}
+        onArchive={() => setArchiveMode('archive')}
+        onDelete={() => setArchiveMode('delete')}
+        onTransfer={handleTransfer}
+        onExportProject={handleExportProject}
         onSave={async form => {
           // Persist to the backend; ignore failure silently — the host
           // can show a toast if it cares. The panel closes regardless

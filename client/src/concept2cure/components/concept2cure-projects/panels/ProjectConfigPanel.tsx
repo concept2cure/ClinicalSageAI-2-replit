@@ -41,9 +41,25 @@ interface Props {
   onClose: () => void;
   /** Per HANDOFF item 9: persists the form on a single PATCH. */
   onSave?: (form: PcpForm) => void;
+  /** Danger-zone + export wires — host owns the modal state. */
+  onArchive?: () => void;
+  onTransfer?: () => void;
+  onDelete?: () => void;
+  onExportProject?: () => void;
+  onAskAna?: (text: string) => void;
 }
 
-export function ProjectConfigPanel({ project, open, onClose, onSave }: Props) {
+export function ProjectConfigPanel({
+  project,
+  open,
+  onClose,
+  onSave,
+  onArchive,
+  onTransfer,
+  onDelete,
+  onExportProject,
+  onAskAna,
+}: Props) {
   const [tab, setTab] = useState<ConfigPanelTab>('general');
   const [form, setForm] = useState<PcpForm | null>(null);
   const [instructions, setInstructions] = useState('');
@@ -246,13 +262,15 @@ export function ProjectConfigPanel({ project, open, onClose, onSave }: Props) {
                 <p className="pcp-section-sub">
                   Add by email. New members receive an invitation with the role you specify.
                 </p>
-                <div className="pcp-invite-row">
-                  <input className="pcp-input" placeholder="name@company.com" />
-                  <select className="pcp-select pcp-invite-role" defaultValue="Editor">
-                    {PCP_ROLES.map(r => <option key={r.v} value={r.v}>{r.l}</option>)}
-                  </select>
-                  <button type="button" className="pcp-btn primary">Send invite</button>
-                </div>
+                <InviteRow
+                  onSend={(email, role) =>
+                    onAskAna?.(
+                      `Invite ${email} to project "${project.name}" as ${role}. ` +
+                        'Look them up in the org directory by email — if they aren\'t a member yet, ' +
+                        'send them an org invitation first, then add them as a project collaborator.',
+                    )
+                  }
+                />
               </div>
 
               <div className="pcp-card">
@@ -272,7 +290,17 @@ export function ProjectConfigPanel({ project, open, onClose, onSave }: Props) {
                         <select className="pcp-select pcp-mem-role" defaultValue={m.role}>
                           {PCP_ROLES.map(r => <option key={r.v} value={r.v}>{r.l}</option>)}
                         </select>
-                        <button type="button" className="pcp-link is-danger" disabled={isOwner}>
+                        <button
+                          type="button"
+                          className="pcp-link is-danger"
+                          disabled={isOwner}
+                          onClick={() =>
+                            onAskAna?.(
+                              `Remove ${m.name} (${m.email}) from project "${project.name}". ` +
+                                'Confirm any in-flight reviews are reassigned, then revoke their project access.',
+                            )
+                          }
+                        >
                           Remove
                         </button>
                       </li>
@@ -357,7 +385,19 @@ export function ProjectConfigPanel({ project, open, onClose, onSave }: Props) {
                 <p className="pcp-section-sub">
                   Assign a regulatory lead responsible for submission oversight, review approvals, and compliance sign-off.
                 </p>
-                <button type="button" className="pcp-btn">Assign regulatory lead</button>
+                <button
+                  type="button"
+                  className="pcp-btn"
+                  onClick={() =>
+                    onAskAna?.(
+                      `Assign a regulatory lead for project "${project.name}". List the active members ` +
+                        'who hold the Reviewer or Owner role, propose the strongest match for this submission type, ' +
+                        'and record the assignment with an e-sig.',
+                    )
+                  }
+                >
+                  Assign regulatory lead
+                </button>
               </div>
             </div>
           )}
@@ -370,8 +410,30 @@ export function ProjectConfigPanel({ project, open, onClose, onSave }: Props) {
                   Save this project as a starting point, or apply an existing template.
                 </p>
                 <div className="pcp-tmpl-row">
-                  <button type="button" className="pcp-btn">Save as template</button>
-                  <button type="button" className="pcp-btn">Apply template…</button>
+                  <button
+                    type="button"
+                    className="pcp-btn"
+                    onClick={() =>
+                      onAskAna?.(
+                        `Save project "${project.name}" as an org-approved template. ` +
+                          'Capture phases, sections, gates, instructions and supplier list — leave out program-specific data.',
+                      )
+                    }
+                  >
+                    Save as template
+                  </button>
+                  <button
+                    type="button"
+                    className="pcp-btn"
+                    onClick={() =>
+                      onAskAna?.(
+                        `Apply a template to project "${project.name}". Show the org-approved templates ` +
+                          'compatible with this submission type and walk me through what gets overwritten vs merged.',
+                      )
+                    }
+                  >
+                    Apply template…
+                  </button>
                 </div>
                 <div className="pcp-tmpl-list">
                   <div className="pcp-tmpl-item">
@@ -386,14 +448,36 @@ export function ProjectConfigPanel({ project, open, onClose, onSave }: Props) {
                       <div className="pcp-tmpl-name">EU MDR CER · Class III</div>
                       <div className="pcp-tmpl-meta">8 phases · MEDDEV 2.7/1 Rev 4 ordering</div>
                     </div>
-                    <button type="button" className="pcp-link">Apply</button>
+                    <button
+                      type="button"
+                      className="pcp-link"
+                      onClick={() =>
+                        onAskAna?.(
+                          `Apply template "EU MDR CER · Class III" to project "${project.name}". ` +
+                            'Walk through how the MEDDEV 2.7/1 Rev 4 phase ordering will replace the current plan.',
+                        )
+                      }
+                    >
+                      Apply
+                    </button>
                   </div>
                   <div className="pcp-tmpl-item">
                     <div className="pcp-tmpl-item-l">
                       <div className="pcp-tmpl-name">eCTD M2–M5 · NDA</div>
                       <div className="pcp-tmpl-meta">8 phases · ICH CTD module structure</div>
                     </div>
-                    <button type="button" className="pcp-link">Apply</button>
+                    <button
+                      type="button"
+                      className="pcp-link"
+                      onClick={() =>
+                        onAskAna?.(
+                          `Apply template "eCTD M2–M5 · NDA" to project "${project.name}". ` +
+                            'Walk through the ICH CTD module structure and what migrates from current state.',
+                        )
+                      }
+                    >
+                      Apply
+                    </button>
                   </div>
                 </div>
               </div>
@@ -427,19 +511,44 @@ export function ProjectConfigPanel({ project, open, onClose, onSave }: Props) {
                   Self-contained bundle. Audit trail and SHA-256 manifest included.
                 </p>
                 <div className="pcp-export-list">
-                  <button type="button" className="pcp-export-btn">
+                  <button
+                    type="button"
+                    className="pcp-export-btn"
+                    onClick={() => {
+                      onClose();
+                      onExportProject?.();
+                    }}
+                  >
                     <div className="pcp-export-name">ZIP archive</div>
                     <div className="pcp-export-meta">
                       All chats, files, memory, instructions · ≈3.4 MB
                     </div>
                   </button>
-                  <button type="button" className="pcp-export-btn">
+                  <button
+                    type="button"
+                    className="pcp-export-btn"
+                    onClick={() =>
+                      onAskAna?.(
+                        `Build the eCTD bundle for project "${project.name}". ` +
+                          'Assemble M1–M5 with index.xml, run validation against the FDA ESG manifest, and produce the ready-to-transmit package.',
+                      )
+                    }
+                  >
                     <div className="pcp-export-name">eCTD bundle</div>
                     <div className="pcp-export-meta">
                       M1–M5 with index.xml · ready for FDA ESG · ≈9 MB
                     </div>
                   </button>
-                  <button type="button" className="pcp-export-btn">
+                  <button
+                    type="button"
+                    className="pcp-export-btn"
+                    onClick={() =>
+                      onAskAna?.(
+                        `Generate the 21 CFR Part 11 inspection PDF for project "${project.name}". ` +
+                          'Bundle the audit trail with SHA-256 manifest and tamper-evident signatures, ready for FDA inspection.',
+                      )
+                    }
+                  >
                     <div className="pcp-export-name">Audit trail · inspection PDF</div>
                     <div className="pcp-export-meta">Tamper-evident, signed · 21 CFR Part 11</div>
                   </button>
@@ -456,7 +565,16 @@ export function ProjectConfigPanel({ project, open, onClose, onSave }: Props) {
                     <div className="pcp-danger-name">Archive project</div>
                     <div className="pcp-danger-sub">Move out of active list. Data preserved.</div>
                   </div>
-                  <button type="button" className="pcp-btn">Archive</button>
+                  <button
+                    type="button"
+                    className="pcp-btn"
+                    onClick={() => {
+                      onClose();
+                      onArchive?.();
+                    }}
+                  >
+                    Archive
+                  </button>
                 </div>
                 <div className="pcp-danger-row">
                   <div>
@@ -465,7 +583,16 @@ export function ProjectConfigPanel({ project, open, onClose, onSave }: Props) {
                       Hand off Owner role to another member. You become Editor.
                     </div>
                   </div>
-                  <button type="button" className="pcp-btn">Transfer</button>
+                  <button
+                    type="button"
+                    className="pcp-btn"
+                    onClick={() => {
+                      onClose();
+                      onTransfer?.();
+                    }}
+                  >
+                    Transfer
+                  </button>
                 </div>
                 <div className="pcp-danger-row">
                   <div>
@@ -474,13 +601,53 @@ export function ProjectConfigPanel({ project, open, onClose, onSave }: Props) {
                       Soft-delete now, permanent after the retention window.
                     </div>
                   </div>
-                  <button type="button" className="pcp-btn is-danger">Delete…</button>
+                  <button
+                    type="button"
+                    className="pcp-btn is-danger"
+                    onClick={() => {
+                      onClose();
+                      onDelete?.();
+                    }}
+                  >
+                    Delete…
+                  </button>
                 </div>
               </div>
             </div>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function InviteRow({ onSend }: { onSend: (email: string, role: string) => void }) {
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('Editor');
+  const send = () => {
+    if (!email.trim()) return;
+    onSend(email.trim(), role);
+    setEmail('');
+  };
+  return (
+    <div className="pcp-invite-row">
+      <input
+        className="pcp-input"
+        placeholder="name@company.com"
+        type="email"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+      />
+      <select
+        className="pcp-select pcp-invite-role"
+        value={role}
+        onChange={e => setRole(e.target.value)}
+      >
+        {PCP_ROLES.map(r => <option key={r.v} value={r.v}>{r.l}</option>)}
+      </select>
+      <button type="button" className="pcp-btn primary" onClick={send} disabled={!email.trim()}>
+        Send invite
+      </button>
     </div>
   );
 }
