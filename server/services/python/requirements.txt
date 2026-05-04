@@ -6,7 +6,7 @@ pydantic[email]==2.13.3
 pydantic-settings>=2.0.0
 python-multipart==0.0.26
 starlette>=1.0.0
-websockets>=11.0.0
+websockets>=16.0
 
 # Database dependencies
 psycopg2-binary==2.9.12
