@@ -13,13 +13,29 @@ import type { Project } from '../types';
 
 interface Props {
   project: Project;
+  onSaveInstructions?: (text: string, active: boolean) => Promise<void> | void;
 }
 
-export function InstructionsTab({ project }: Props) {
+export function InstructionsTab({ project, onSaveInstructions }: Props) {
   const [text, setText] = useState(project.instructions || '');
   const [active, setActive] = useState(!!project.instructions);
+  const [saving, setSaving] = useState(false);
   const charCount = text.length;
   const limit = 5000;
+
+  const handleSave = async (nextActive: boolean) => {
+    if (!onSaveInstructions) {
+      setActive(nextActive);
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSaveInstructions(text, nextActive);
+      setActive(nextActive);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   function applyTemplate(t: typeof PINSTR_TEMPLATES[number]) {
     const next = text ? `${text}\n\n${t.body}` : t.body;
@@ -66,11 +82,21 @@ export function InstructionsTab({ project }: Props) {
               Clear
             </button>
             <div className="pinstr-spacer" />
-            <button type="button" className="prj-btn" onClick={() => setActive(false)} disabled={!active}>
+            <button
+              type="button"
+              className="prj-btn"
+              onClick={() => handleSave(false)}
+              disabled={!active || saving}
+            >
               Pause
             </button>
-            <button type="button" className="prj-btn primary" onClick={() => setActive(true)}>
-              {active ? 'Save' : 'Save and activate'}
+            <button
+              type="button"
+              className="prj-btn primary"
+              onClick={() => handleSave(true)}
+              disabled={saving}
+            >
+              {saving ? 'Saving…' : active ? 'Save' : 'Save and activate'}
             </button>
           </div>
         </div>

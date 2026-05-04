@@ -3,12 +3,13 @@
  * Mirror of design-system/ui_kits/home/Projects.jsx
  * (ProjectFilesScreen, lines 703–826).
  */
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { Project, ProjectFile } from '../types';
 
 interface Props {
   project: Project;
+  onProjectMutated?: () => void;
 }
 
 type SortKey = 'recent' | 'name' | 'size' | 'kind';
@@ -20,10 +21,35 @@ interface AugmentedFile extends ProjectFile {
   author: string;
 }
 
-export function FilesTab({ project }: Props) {
+export function FilesTab({ project, onProjectMutated }: Props) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('recent');
   const [groupBy, setGroupBy] = useState<GroupKey>('kind');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
+
+  const uploadFiles = async (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    setUploading(true);
+    try {
+      for (const file of Array.from(fileList)) {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('projectId', project.id);
+        await fetch('/api/concept2cure/documents/upload', {
+          method: 'POST',
+          credentials: 'include',
+          body: fd,
+        });
+      }
+      onProjectMutated?.();
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (folderInputRef.current) folderInputRef.current.value = '';
+    }
+  };
 
   const augmented = useMemo<AugmentedFile[]>(() => {
     return project.files.map((f, i) => ({
@@ -62,8 +88,39 @@ export function FilesTab({ project }: Props) {
           </p>
         </div>
         <div className="pfiles-head-r">
-          <button type="button" className="prj-btn">Drop folder</button>
-          <button type="button" className="prj-btn primary">{I.plus} Add files</button>
+          <input
+            ref={folderInputRef}
+            type="file"
+            multiple
+            // @ts-expect-error - webkitdirectory is non-standard but widely supported
+            webkitdirectory=""
+            directory=""
+            style={{ display: 'none' }}
+            onChange={e => uploadFiles(e.target.files)}
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            style={{ display: 'none' }}
+            onChange={e => uploadFiles(e.target.files)}
+          />
+          <button
+            type="button"
+            className="prj-btn"
+            disabled={uploading}
+            onClick={() => folderInputRef.current?.click()}
+          >
+            Drop folder
+          </button>
+          <button
+            type="button"
+            className="prj-btn primary"
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {I.plus} {uploading ? 'Uploading…' : 'Add files'}
+          </button>
         </div>
       </header>
 

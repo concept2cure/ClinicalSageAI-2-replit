@@ -7,13 +7,14 @@
 import { useState } from 'react';
 import { I } from '../icons';
 import { ProjectTimeline } from '../ProjectTimeline';
-import type { Project } from '../types';
+import type { DetailTab, Project } from '../types';
 
 interface Props {
   project: Project;
+  onSwitchTab?: (tab: DetailTab) => void;
 }
 
-export function ChatsTab({ project }: Props) {
+export function ChatsTab({ project, onSwitchTab }: Props) {
   const [composer, setComposer] = useState('');
 
   return (
@@ -65,7 +66,14 @@ export function ChatsTab({ project }: Props) {
             <h2>Memory</h2>
             <div className="prj-side-h-r">
               <span className="prj-only-you">{I.lock} Only you</span>
-              <button type="button" className="prj-icon-btn" title="Edit memory">{I.pencil}</button>
+              <button
+                type="button"
+                className="prj-icon-btn"
+                title="Edit memory"
+                onClick={() => onSwitchTab?.('memory')}
+              >
+                {I.pencil}
+              </button>
             </div>
           </header>
           {project.memory.enabled ? (
@@ -81,7 +89,14 @@ export function ChatsTab({ project }: Props) {
         <section className="prj-side-card">
           <header className="prj-side-h">
             <h2>Instructions</h2>
-            <button type="button" className="prj-icon-btn" title="Add instructions">{I.plus}</button>
+            <button
+              type="button"
+              className="prj-icon-btn"
+              title="Add instructions"
+              onClick={() => onSwitchTab?.('instructions')}
+            >
+              {I.plus}
+            </button>
           </header>
           {project.instructions ? (
             <p className="prj-instructions">{project.instructions}</p>
@@ -95,7 +110,14 @@ export function ChatsTab({ project }: Props) {
         <section className="prj-side-card">
           <header className="prj-side-h">
             <h2>Files</h2>
-            <button type="button" className="prj-icon-btn" title="Add file">{I.plus}</button>
+            <button
+              type="button"
+              className="prj-icon-btn"
+              title="Add file"
+              onClick={() => onSwitchTab?.('files')}
+            >
+              {I.plus}
+            </button>
           </header>
           <div className="prj-cap">
             <div className="prj-cap-track">
@@ -105,7 +127,12 @@ export function ChatsTab({ project }: Props) {
           </div>
           <div className="prj-files">
             {project.files.map(f => (
-              <button type="button" key={f.name} className="prj-file">
+              <button
+                type="button"
+                key={f.name}
+                className="prj-file"
+                onClick={() => onSwitchTab?.('files')}
+              >
                 <span className="prj-file-name">{f.name}</span>
                 <span className="prj-file-lines">{f.lines ?? 0} lines</span>
                 <span className="prj-file-kind">{f.kind}</span>

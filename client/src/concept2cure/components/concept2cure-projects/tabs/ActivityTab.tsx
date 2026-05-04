@@ -66,8 +66,51 @@ export function ActivityTab({ project }: Props) {
             <span className="pact-integrity-dot" />
             Integrity verified
           </span>
-          <button type="button" className="prj-btn">Export CSV</button>
-          <button type="button" className="prj-btn">Export PDF</button>
+          <button
+            type="button"
+            className="prj-btn"
+            onClick={() => {
+              const headers = ['Timestamp', 'Kind', 'Actor', 'Role', 'Action', 'Target', 'IP', 'E-signature', 'Signature'];
+              const rows = filtered.map(e => [
+                e.ts, PACT_KIND_LABEL[e.kind] || e.kind, e.actor, e.role, e.action, e.target, e.ip,
+                e.e ? 'yes' : 'no', e.sig,
+              ]);
+              const csv = [headers, ...rows]
+                .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
+                .join('\r\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${project.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-activity-${new Date().toISOString().slice(0, 10)}.csv`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            Export CSV
+          </button>
+          <button
+            type="button"
+            className="prj-btn"
+            onClick={() => {
+              const lines = filtered.map(e =>
+                `${e.ts}  [${PACT_KIND_LABEL[e.kind] || e.kind}]  ${e.actor} (${e.role}) ${e.action} → ${e.target}  ip=${e.ip}  sig=${e.sig}${e.e ? '  e-sig=yes' : ''}`,
+              );
+              const w = window.open('', '_blank');
+              if (!w) return;
+              w.document.write(`<!doctype html><meta charset="utf-8"><title>Activity · ${project.name}</title>`);
+              w.document.write('<style>body{font-family:ui-monospace,Menlo,monospace;font-size:11px;line-height:1.5;padding:24px;color:#222}h1{font-size:14px;margin:0 0 16px}pre{white-space:pre-wrap;word-break:break-word;margin:0}</style>');
+              w.document.write(`<h1>Activity · ${project.name} · ${new Date().toISOString()}</h1>`);
+              w.document.write(`<pre>${lines.map(l => l.replace(/&/g, '&amp;').replace(/</g, '&lt;')).join('\n')}</pre>`);
+              w.document.close();
+              w.focus();
+              w.print();
+            }}
+          >
+            Export PDF
+          </button>
         </div>
       </header>
 

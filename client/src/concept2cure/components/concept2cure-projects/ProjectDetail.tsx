@@ -126,10 +126,25 @@ export function ProjectDetail({ project, onBack, onProjectMutated }: Props) {
         ))}
       </nav>
 
-      {tab === 'chats' && <ChatsTab project={project} />}
-      {tab === 'memory' && <MemoryTab project={project} />}
-      {tab === 'instructions' && <InstructionsTab project={project} />}
-      {tab === 'files' && <FilesTab project={project} />}
+      {tab === 'chats' && <ChatsTab project={project} onSwitchTab={setTab} />}
+      {tab === 'memory' && <MemoryTab project={project} onSwitchTab={setTab} />}
+      {tab === 'instructions' && (
+        <InstructionsTab
+          project={project}
+          onSaveInstructions={async (text, active) => {
+            try {
+              await updateProject({
+                id: project.id,
+                metadata: {
+                  instructions: text,
+                  instructionsActive: active,
+                },
+              });
+            } catch { /* host can re-open to retry */ }
+          }}
+        />
+      )}
+      {tab === 'files' && <FilesTab project={project} onProjectMutated={onProjectMutated} />}
       {tab === 'linked' && <LinkedTab project={project} />}
       {tab === 'activity' && <ActivityTab project={project} />}
 

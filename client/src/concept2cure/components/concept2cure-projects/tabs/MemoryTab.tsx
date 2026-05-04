@@ -6,15 +6,34 @@
 import { useState } from 'react';
 import { I } from '../icons';
 import { PMEM_LEARNINGS } from '../data';
-import type { Project } from '../types';
+import type { DetailTab, Project } from '../types';
 
 interface Props {
   project: Project;
+  onSwitchTab?: (tab: DetailTab) => void;
 }
 
-export function MemoryTab({ project }: Props) {
+export function MemoryTab({ project, onSwitchTab }: Props) {
   const [enabled, setEnabled] = useState(project.memory.enabled);
   const learnings = PMEM_LEARNINGS[project.id] || [];
+
+  const exportMemory = () => {
+    const snapshot = {
+      project: { id: project.id, name: project.name },
+      memory: project.memory,
+      learnings,
+      exportedAt: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${project.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-memory-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="pmem" data-screen-label={`Memory · ${project.name}`}>
@@ -114,8 +133,16 @@ export function MemoryTab({ project }: Props) {
               <h3 className="pmem-h3">Controls</h3>
             </header>
             <div className="pmem-controls">
-              <button type="button" className="prj-btn">Export memory</button>
-              <button type="button" className="prj-btn">Audit trail</button>
+              <button type="button" className="prj-btn" onClick={exportMemory}>
+                Export memory
+              </button>
+              <button
+                type="button"
+                className="prj-btn"
+                onClick={() => onSwitchTab?.('activity')}
+              >
+                Audit trail
+              </button>
               <button type="button" className="pmem-danger">
                 Forget everything in this project
               </button>
