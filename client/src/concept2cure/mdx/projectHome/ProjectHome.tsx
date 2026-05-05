@@ -8,6 +8,45 @@
 import * as React from 'react';
 import { I } from '../icons';
 import type { Program } from '../data/programs';
+import { useProgramDetail } from '../hooks/useMdxPrograms';
+import { useWorkbenchTasks } from '../hooks/useWorkbench';
+
+interface GovernanceRow {
+  role: string;
+  name: string;
+  sig: 'pending' | 'signed' | 'reserved';
+}
+
+/* The kit's governance row defines a 5-role surface (Reg lead / Eng owner /
+   Quality / Clinical / Submitter). The lead and team-member roles come
+   from the program; the canonical role-to-team-member mapping isn't
+   structured server-side yet, so we build the row list from what we have
+   (lead + first 4 team members), pad with the kit's role labels, and
+   leave signature state at "pending" (real e-sig status will live in the
+   submission package gate, surfaced separately). */
+function deriveGovernance(
+  leadName: string | null,
+  team: Array<{ name?: string; role?: string }> | null,
+): GovernanceRow[] {
+  const KIT_ROLES = ['Reg. lead', 'Eng. owner', 'Quality', 'Clinical', 'Submitter'];
+  const lead: GovernanceRow = { role: 'Reg. lead', name: leadName ?? 'Unassigned', sig: 'pending' };
+  const teamRows: GovernanceRow[] = (team ?? [])
+    .slice(0, 4)
+    .map((m, i) => ({
+      role: m.role ?? KIT_ROLES[i + 1] ?? 'Member',
+      name: m.name ?? 'Unassigned',
+      sig:  'pending' as const,
+    }));
+  /* Pad to 5 rows with role labels alone if team is short — keeps the
+     panel from collapsing to a stub for new programs. */
+  const padded: GovernanceRow[] = [];
+  for (let i = 0; i < KIT_ROLES.length; i++) {
+    if (i === 0) padded.push(lead);
+    else if (teamRows[i - 1]) padded.push(teamRows[i - 1]);
+    else padded.push({ role: KIT_ROLES[i], name: 'Unassigned', sig: 'reserved' });
+  }
+  return padded;
+}
 
 const PH_TASKS = [
   { id: 't1', title: 'Resolve predicate K221847 performance mismatch', section: 'SE Discussion', due: 'Today',     tone: 'err',  who: 'JC' },
@@ -124,6 +163,29 @@ export function ProjectHome({
   if (!program) return null;
   const ready = program.readiness ?? 0;
 
+  /* Live data:
+       - Program detail (lead name + team members) for the Governance panel
+       - Cross-program task list filtered to this program for "Your tasks"
+     Both fall back to the kit fixtures during load + on error. */
+  const detail = useProgramDetail(program.id);
+  const allTasks = useWorkbenchTasks();
+  const livePh = detail.detail
+    ? deriveGovernance(detail.detail.leadUserName, detail.detail.teamMembers)
+    : null;
+  const sourceGovernance = livePh ?? PH_GOVERNANCE;
+  const programCode = program.code.split(' ')[0];
+  const liveProgramTasks = allTasks.tasks?.filter(
+    (t) => t.prog === programCode || t.prog === program.id,
+  ) ?? null;
+  const sourceTasks = liveProgramTasks ?? PH_TASKS.map((t) => ({
+    id: t.id,
+    title: t.title,
+    sect: t.section,
+    due: t.due,
+    tone: t.tone,
+    assignee: t.who,
+  }));
+
   return (
     <div className="ph-root" data-screen-label={`MDX · Project Home · ${program.title}`}>
       <header className="ph-head">
@@ -186,20 +248,27 @@ export function ProjectHome({
           <section className="ph-card">
             <header className="ph-card-h">
               <h2>Your tasks</h2>
-              <span className="ph-count">{PH_TASKS.length} open</span>
+              <span className="ph-count">{sourceTasks.length} open</span>
             </header>
             <ul className="ph-tasks">
-              {PH_TASKS.map(t => (
-                <li key={t.id} className="ph-task">
-                  <span className={`ph-dot tone-${t.tone}`} />
-                  <button className="ph-task-title" onClick={onOpenWorkbench}>
-                    {t.title}
-                  </button>
-                  <span className="ph-task-sec">{t.section}</span>
-                  <span className={`ph-task-due tone-${t.tone}`}>{t.due}</span>
-                  <span className="ph-task-who">{t.who}</span>
-                </li>
-              ))}
+              {sourceTasks.map(t => {
+                const sect = ('sect' in t ? t.sect : (t as { section?: string }).section) ?? '';
+                const who  = ('assignee' in t ? t.assignee : (t as { who?: string }).who) ?? '';
+                return (
+                  <li key={t.id} className="ph-task">
+                    <span className={`ph-dot tone-${t.tone}`} />
+                    <button className="ph-task-title" onClick={onOpenWorkbench}>
+                      {t.title}
+                    </button>
+                    <span className="ph-task-sec">{sect}</span>
+                    <span className={`ph-task-due tone-${t.tone}`}>{t.due}</span>
+                    <span className="ph-task-who">{who}</span>
+                  </li>
+                );
+              })}
+              {sourceTasks.length === 0 && (
+                <li className="ph-task" style={{ color: 'var(--text-300)' }}>No open tasks for this program</li>
+              )}
             </ul>
           </section>
 
@@ -276,7 +345,7 @@ export function ProjectHome({
               <h2>Governance</h2>
             </header>
             <ul className="ph-gov">
-              {PH_GOVERNANCE.map(g => (
+              {sourceGovernance.map(g => (
                 <li key={g.role} className="ph-gov-row">
                   <span className="ph-gov-role">{g.role}</span>
                   <span className="ph-gov-name">{g.name}</span>

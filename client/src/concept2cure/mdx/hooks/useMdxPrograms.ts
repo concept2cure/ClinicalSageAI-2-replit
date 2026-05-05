@@ -267,3 +267,80 @@ export function useMdxPrograms(): UseMdxProgramsResult {
 
   return { ...state, refresh };
 }
+
+/* ─── Per-program detail (raw server shape, unadapted) ──────────────────
+   Surfaces that need the rich team-member list / lead user name / metadata
+   read from this hook directly. The kit Program shape (returned by
+   useMdxPrograms) reduces team data to initials, which is enough for cards
+   but not for governance panels. */
+
+export interface ProgramTeamMember {
+  name?: string;
+  userId?: number;
+  role?: string;
+}
+
+export interface ProgramDetail {
+  id: string;
+  name: string;
+  code: string;
+  productName: string;
+  programType: string;
+  regulatoryPath: string | null;
+  status: string;
+  phase: string | null;
+  progressPercent: number;
+  targetSubmissionDate: string | null;
+  leadUserId: number | null;
+  leadUserName: string | null;
+  teamMembers: ProgramTeamMember[] | null;
+  metadata: Record<string, unknown> | null;
+  updatedAt: string;
+}
+
+interface ProgramDetailPayload {
+  data: ProgramDetail;
+}
+
+export function useProgramDetail(programId: string | null): {
+  detail: ProgramDetail | null;
+  loading: boolean;
+  error: string | null;
+} {
+  const [state, setState] = useState<{
+    detail: ProgramDetail | null;
+    loading: boolean;
+    error: string | null;
+  }>({ detail: null, loading: false, error: null });
+  useEffect(() => {
+    if (!programId) {
+      setState({ detail: null, loading: false, error: null });
+      return;
+    }
+    let cancelled = false;
+    setState({ detail: null, loading: true, error: null });
+    fetch(`/api/regulatory-programs/${encodeURIComponent(programId)}`, {
+      credentials: 'include',
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return (await res.json()) as ProgramDetailPayload;
+      })
+      .then((p) => {
+        if (cancelled) return;
+        setState({ detail: p.data, loading: false, error: null });
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setState({
+          detail: null,
+          loading: false,
+          error: err instanceof Error ? err.message : 'Failed to load program detail',
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [programId]);
+  return state;
+}
