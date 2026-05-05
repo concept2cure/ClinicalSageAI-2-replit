@@ -113,6 +113,39 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
         })}
       </div>
 
+      {/* Predicate intelligence is provisioned by a shadow service. When
+          the live fetch errors (typical: shadow service not configured in
+          this environment) we surface an explicit banner instead of
+          silently rendering the kit fixture's example K-numbers — paying
+          clients should not see another vendor's predicates as if they
+          were their own. */}
+      {predicates.error && !predicates.rows && (
+        <div
+          className="banner-warn"
+          style={{
+            margin: '12px 0',
+            padding: '10px 14px',
+            background: 'var(--bg-050)',
+            border: '1px solid var(--border-100)',
+            borderLeft: '3px solid var(--accent-100)',
+            borderRadius: 6,
+            fontSize: 12,
+            color: 'var(--text-200)',
+            display: 'flex',
+            gap: 8,
+            alignItems: 'center',
+          }}
+          role="status"
+        >
+          <span style={{ color: 'var(--accent-100)' }}>{I.alertCircle}</span>
+          <span>
+            Predicate intelligence is configuring for your tenant. The table below shows the canonical
+            example data so you can preview the workflow; live K-number candidates appear here once the
+            shadow service is reachable.
+          </span>
+        </div>
+      )}
+
       <div className="col2">
         <div>
           <div className="panel">
@@ -121,6 +154,9 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                 <div className="t">Predicate search · K-numbers</div>
                 <div className="s">
                   {selected.size} of {sourcePredicates.length} selected · ranked by similarity · check 2+ for side-by-side
+                  {predicates.rows === null && !predicates.error && (
+                    <span style={{ marginLeft: 6, color: 'var(--text-400)' }}>· loading…</span>
+                  )}
                 </div>
               </div>
               <div className="actions">

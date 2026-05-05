@@ -109,6 +109,22 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
                 </button>
               </div>
             </div>
+            {extras.safetySignals !== null && extras.safetySignals.length === 0 ? (
+              <div
+                style={{
+                  padding: '24px 16px',
+                  textAlign: 'center',
+                  fontSize: 12,
+                  color: 'var(--text-300)',
+                }}
+              >
+                <div style={{ fontWeight: 600, color: 'var(--text-200)', marginBottom: 4 }}>
+                  No safety signals reported yet
+                </div>
+                Signals appear here once your pharmacovigilance feed is connected and adverse events
+                from FAERS · MAUDE · Eudamed · literature start landing.
+              </div>
+            ) : (
             <table className="tbl">
               <thead>
                 <tr>
@@ -151,6 +167,7 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
                 ))}
               </tbody>
             </table>
+            )}
           </div>
 
           <div className="panel">
@@ -177,7 +194,22 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
               </div>
             </div>
             <div style={{ padding: '12px 0' }}>
-              {sourceLiterature.map(l => (
+              {extras.literature !== null && literatureTotal === 0 ? (
+                <div
+                  style={{
+                    padding: '24px 16px',
+                    textAlign: 'center',
+                    fontSize: 12,
+                    color: 'var(--text-300)',
+                  }}
+                >
+                  <div style={{ fontWeight: 600, color: 'var(--text-200)', marginBottom: 4 }}>
+                    No literature corpus indexed yet
+                  </div>
+                  Run a literature search via PubMed · FDA · ClinicalTrials.gov to populate the
+                  6-year window.
+                </div>
+              ) : sourceLiterature.map(l => (
                 <div key={l.year} className="litbar">
                   <span className="yr">{l.year}</span>
                   <div className="bar">

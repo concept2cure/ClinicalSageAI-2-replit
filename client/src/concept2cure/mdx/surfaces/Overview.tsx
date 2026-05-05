@@ -220,7 +220,39 @@ export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: 
         </div>
       </div>
 
-      {view === 'grid' ? (
+      {/* Empty-state takeover. When the live fetch has resolved and this
+          tenant has zero programs that match the active filters, surface
+          explicit empty-state copy + CTAs rather than rendering the kit
+          fixture's example tiles (which would mislead paying clients
+          into thinking those programs are theirs). */}
+      {sourcePrograms.length === 0 && programs.length === 0 ? (
+        <div
+          className="empty-state"
+          style={{
+            padding: '40px 24px',
+            textAlign: 'center',
+            background: 'var(--bg-050)',
+            border: '1px dashed var(--border-100)',
+            borderRadius: 8,
+            color: 'var(--text-200)',
+          }}
+        >
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-100)', marginBottom: 6 }}>
+            No programs yet
+          </div>
+          <div style={{ fontSize: 12, marginBottom: 14 }}>
+            Programs you create appear here. Start a 510(k), PMA, or CER program from the workflow above.
+          </div>
+          <button
+            className="btn primary small"
+            onClick={() =>
+              onAskAna('Walk me through creating a new MDX program (510(k), PMA, or CER).')
+            }
+          >
+            {I.plus} Create your first program
+          </button>
+        </div>
+      ) : view === 'grid' ? (
         <div className="programs">
           {programs.map(p => (
             <button key={p.id} className="pg-card" onClick={() => onOpenProgram(p)}>

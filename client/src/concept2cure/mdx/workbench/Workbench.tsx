@@ -729,6 +729,22 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
         </div>
         <div className="sub-layout">
           <div className="sub-list">
+            {live.submissions !== null && live.submissions.length === 0 && (
+              <div
+                style={{
+                  padding: '24px 16px',
+                  textAlign: 'center',
+                  fontSize: 12,
+                  color: 'var(--text-300)',
+                }}
+              >
+                <div style={{ fontWeight: 600, color: 'var(--text-200)', marginBottom: 4 }}>
+                  No submissions yet
+                </div>
+                Packages you create appear here. Use "New submission" above to start your first FDA
+                ESG · notified body · EU MDR transmittal.
+              </div>
+            )}
             {visible.map(s => (
               <button
                 key={s.id}
