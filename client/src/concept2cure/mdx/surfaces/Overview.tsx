@@ -5,8 +5,7 @@
 
 import * as React from 'react';
 import { I } from '../icons';
-import { MDX_HEALTH, MDX_PROGRAMS, type Program, type DueTone } from '../data/programs';
-import { useMdxPrograms } from '../hooks/useMdxPrograms';
+import { MDX_HEALTH, type Program, type DueTone } from '../data/programs';
 import { AskAnaChip } from './AskAnaChip';
 
 const PATHWAY_LABEL = { k510: '510(k)', pma: 'PMA', cer: 'CER' } as const;
@@ -14,6 +13,8 @@ type PathFilter = 'all' | 'k510' | 'pma' | 'cer';
 type StatusFilter = 'all' | 'active' | 'blocked' | 'idle';
 
 export interface OverviewProps {
+  /** Live programs from App.tsx (already adapted to kit shape). */
+  programs: Program[];
   onOpenProgram: (p: Program) => void;
   onAskAna: (text: string) => void;
 }
@@ -50,15 +51,13 @@ function deriveLiveHealth(programs: Program[]): typeof MDX_HEALTH {
   ];
 }
 
-export function Overview({ onOpenProgram, onAskAna }: OverviewProps) {
-  const live = useMdxPrograms();
-
-  /* Live data wins. Fixtures stand in only during the initial fetch (so the
-     UI doesn't flash empty) and on real fetch errors (for design preview /
-     onboarding empty-state). When live programs return zero rows, the empty
-     state is rendered intentionally — that's an accurate signal to the user. */
-  const sourcePrograms: Program[] = live.programs ?? MDX_PROGRAMS;
-  const sourceHealth = live.programs ? deriveLiveHealth(live.programs) : MDX_HEALTH;
+export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: OverviewProps) {
+  /* Health KPI strip is derived from the SAME source as the cards so the
+     two never disagree. When the parent passes the kit fixture during the
+     initial fetch, MDX_HEALTH renders so the strip doesn't flash empty. */
+  const sourceHealth = sourcePrograms.length > 0
+    ? deriveLiveHealth(sourcePrograms)
+    : MDX_HEALTH;
 
   const GRID_THRESHOLD = 12;
   const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('mdx.viewMode') : null;
