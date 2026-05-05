@@ -7,6 +7,7 @@ import * as React from 'react';
 import { I } from '../icons';
 import { K510_ESTAR, K510_PREDICATES, K510_SE_ROWS, K510_STAGES } from '../data/k510';
 import type { Program } from '../data/programs';
+import { useK510EstarSections, useK510Predicates, useK510SeMatrix } from '../hooks/useK510';
 import { AskAnaChip } from './AskAnaChip';
 
 export interface K510SurfaceProps {
@@ -18,8 +19,38 @@ export interface K510SurfaceProps {
 export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProps) {
   const activeStageIdx = program ? program.stageIdx : 4;
   const programStatus = program ? program.status : 'active';
-  const [selected, setSelected] = React.useState<Set<string>>(new Set(['K221847']));
+  const programId = program?.id ?? null;
+
+  /* Live data — three independent fetches that fall back to the kit
+     fixtures during load and on error. The eSTAR fetch hits a local DB
+     endpoint; predicates + SE matrix proxy to the shadow service and
+     can 502 in dev — when they do, the fixture renders so the surface
+     remains usable. */
+  const estar     = useK510EstarSections(programId);
+  const predicates = useK510Predicates(programId);
+  const seMatrix  = useK510SeMatrix(programId);
+
+  const sourcePredicates = predicates.rows ?? K510_PREDICATES;
+  const sourceSeRows     = seMatrix.rows  ?? K510_SE_ROWS;
+  const sourceEstar      = estar.rows     ?? K510_ESTAR;
+  const estarBlockerCount = estar.rows ? estar.blockerCount : K510_ESTAR.filter(s => s.blocker).length;
+  const estarTotal = sourceEstar.length;
+
+  const initialSelectedKey = sourcePredicates[0]?.k ?? '';
+  const [selected, setSelected] = React.useState<Set<string>>(() => new Set(initialSelectedKey ? [initialSelectedKey] : []));
   const [showSelectedOnly, setShowSelectedOnly] = React.useState(false);
+
+  /* Re-seed selection when the live predicate set changes — switching
+     program (or shadow coming online) should not leave a stale K-number
+     selected from a different program. */
+  React.useEffect(() => {
+    if (!sourcePredicates.length) return;
+    setSelected((prev) => {
+      const survivors = new Set([...prev].filter((k) => sourcePredicates.some((p) => p.k === k)));
+      if (survivors.size === 0) survivors.add(sourcePredicates[0].k);
+      return survivors;
+    });
+  }, [sourcePredicates]);
 
   const toggle = (k: string) => {
     const n = new Set(selected);
@@ -29,7 +60,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
     setSelected(n);
   };
 
-  const selectedList = K510_PREDICATES.filter(p => selected.has(p.k));
+  const selectedList = sourcePredicates.filter(p => selected.has(p.k));
   const multi = selectedList.length > 1;
   const subjectName = program ? program.title : 'BX-204 CGM';
 
@@ -89,7 +120,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
               <div>
                 <div className="t">Predicate search · K-numbers</div>
                 <div className="s">
-                  {selected.size} of 6 selected · ranked by similarity · check 2+ for side-by-side
+                  {selected.size} of {sourcePredicates.length} selected · ranked by similarity · check 2+ for side-by-side
                 </div>
               </div>
               <div className="actions">
@@ -106,7 +137,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                   onClick={() =>
                     onAskAna(
                       `Refine the predicate search for ${subjectName}. ` +
-                        `Currently ${selected.size} of ${K510_PREDICATES.length} candidates selected — ` +
+                        `Currently ${selected.size} of ${sourcePredicates.length} candidates selected — ` +
                         `suggest tighter filters and any K-numbers I might be missing.`,
                     )
                   }
@@ -128,7 +159,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                 </tr>
               </thead>
               <tbody>
-                {K510_PREDICATES.filter(p => !showSelectedOnly || selected.has(p.k)).map(p => {
+                {sourcePredicates.filter(p => !showSelectedOnly || selected.has(p.k)).map(p => {
                   const isSel = selected.has(p.k);
                   return (
                     <tr key={p.k} className={isSel ? 'multi-selected' : ''} onClick={() => toggle(p.k)}>
@@ -197,7 +228,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                     const headers = multi
                       ? ['Attribute', 'Subject', ...selectedList.map(p => p.k)]
                       : ['Attribute', 'Subject', 'Verdict', 'Predicate', 'Note'];
-                    const rows = K510_SE_ROWS.map(r =>
+                    const rows = sourceSeRows.map(r =>
                       multi
                         ? [r.attr, r.subject, ...selectedList.map(() => r.predicate)]
                         : [r.attr, r.subject, r.verdict, r.predicate, r.note ?? ''],
@@ -236,7 +267,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                     </div>
                   ))}
                 </div>
-                {K510_SE_ROWS.map((r, i) => (
+                {sourceSeRows.map((r, i) => (
                   <div
                     key={i}
                     className="se-matrix-multi"
@@ -262,7 +293,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                   <div style={{ textAlign: 'center' }}>Verdict</div>
                   <div>{selectedList[0]?.k} (Predicate)</div>
                 </div>
-                {K510_SE_ROWS.map((r, i) => (
+                {sourceSeRows.map((r, i) => (
                   <div key={i} className="se-row">
                     <div className="se-attr">{r.attr}</div>
                     <div className="se-val">{r.subject}</div>
@@ -285,7 +316,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
             <div className="panel-hdr">
               <div>
                 <div className="t">eSTAR sections</div>
-                <div className="s">20 sections · 1 blocker</div>
+                <div className="s">{estarTotal} sections · {estarBlockerCount} blocker{estarBlockerCount === 1 ? '' : 's'}</div>
               </div>
               <div className="actions">
                 <button
@@ -303,7 +334,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
               </div>
             </div>
             <div className="estar">
-              {K510_ESTAR.map(s => (
+              {sourceEstar.map(s => (
                 <button
                   key={s.id}
                   className={`estar-row ${s.blocker ? 'blocker' : ''}`}
