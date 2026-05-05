@@ -53,6 +53,21 @@ export interface ChangeImpactEntry {
   affects: string[];
 }
 
+export interface SafetySignal {
+  id: string;
+  source: 'FAERS' | 'MAUDE' | 'Eudamed' | 'Literature' | 'Spontaneous';
+  event: string;
+  count: number;
+  severity: 'critical' | 'serious' | 'moderate' | 'low';
+  status: 'included' | 'excluded' | 'review';
+  detectedAt: string;
+}
+
+export interface LiteratureBucket {
+  year: number;
+  hits: number;
+}
+
 interface Payload<T> { data: T[] }
 
 function relativeWhen(iso: string): string {
@@ -72,6 +87,9 @@ export interface UseProgramExtrasResult {
   milestones:   ProgramMilestone[]   | null;
   rimRecs:      RimRecommendation[]  | null;
   changeImpact: ChangeImpactEntry[]  | null;
+  safetySignals: SafetySignal[]      | null;
+  literature:   LiteratureBucket[]   | null;
+  literatureTotal: number;
   loading: boolean;
   error: string | null;
   /** Activity rows with humanized "when" strings (e.g. "32m"). */
@@ -86,16 +104,24 @@ export function useProgramExtras(programId: string | null): UseProgramExtrasResu
     milestones:   ProgramMilestone[]   | null;
     rimRecs:      RimRecommendation[]  | null;
     changeImpact: ChangeImpactEntry[]  | null;
+    safetySignals: SafetySignal[]     | null;
+    literature:   LiteratureBucket[]  | null;
+    literatureTotal: number;
     loading: boolean;
     error: string | null;
   }>({
     activity: null, milestones: null, rimRecs: null, changeImpact: null,
+    safetySignals: null, literature: null, literatureTotal: 0,
     loading: false, error: null,
   });
 
   useEffect(() => {
     if (!programId) {
-      setState({ activity: null, milestones: null, rimRecs: null, changeImpact: null, loading: false, error: null });
+      setState({
+        activity: null, milestones: null, rimRecs: null, changeImpact: null,
+        safetySignals: null, literature: null, literatureTotal: 0,
+        loading: false, error: null,
+      });
       return;
     }
     let cancelled = false;
@@ -117,13 +143,18 @@ export function useProgramExtras(programId: string | null): UseProgramExtrasResu
       fetchJson<Payload<ProgramMilestone>>('/milestones'),
       fetchJson<Payload<RimRecommendation>>('/rim-recommendations'),
       fetchJson<Payload<ChangeImpactEntry>>('/change-impact'),
-    ]).then(([act, ms, recs, ci]) => {
+      fetchJson<Payload<SafetySignal>>('/safety-signals'),
+      fetchJson<Payload<LiteratureBucket> & { total?: number }>('/literature'),
+    ]).then(([act, ms, recs, ci, sig, lit]) => {
       if (cancelled) return;
       setState({
-        activity:     act?.data  ?? null,
-        milestones:   ms?.data   ?? null,
-        rimRecs:      recs?.data ?? null,
-        changeImpact: ci?.data   ?? null,
+        activity:        act?.data  ?? null,
+        milestones:      ms?.data   ?? null,
+        rimRecs:         recs?.data ?? null,
+        changeImpact:    ci?.data   ?? null,
+        safetySignals:   sig?.data  ?? null,
+        literature:      lit?.data  ?? null,
+        literatureTotal: lit?.total ?? 0,
         loading: false,
         error: null,
       });

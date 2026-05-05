@@ -12,6 +12,7 @@ import { I } from '../icons';
 import { CER_EXPORT, CER_LITERATURE, CER_SIGNALS } from '../data/cer';
 import type { Program } from '../data/programs';
 import { useK510EstarSections } from '../hooks/useK510';
+import { useProgramExtras } from '../hooks/useProgramExtras';
 
 export interface CerSurfaceProps {
   /** Active CER program from App.tsx. Sections and title come from here. */
@@ -20,16 +21,10 @@ export interface CerSurfaceProps {
 }
 
 export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
-  const maxHits = Math.max(...CER_LITERATURE.map(l => l.hits));
   const [includedOnly, setIncludedOnly] = React.useState(false);
-  const visibleSignals = includedOnly
-    ? CER_SIGNALS.filter(s => s.status === 'included')
-    : CER_SIGNALS;
 
   /* CER sections live in the same cerv2_510k_sections table used by 510(k)
-     and PMA — the legacy table name spans all three pathways. The
-     useK510EstarSections hook + its underlying /document-preview endpoint
-     return CER rows when the program is on the CER pathway. */
+     and PMA — the legacy table name spans all three pathways. */
   const sectionsState = useK510EstarSections(program?.id ?? null);
   const sourceSections = sectionsState.rows ?? CER_EXPORT.map((s, i) => ({
     id: i + 1,
@@ -37,6 +32,24 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
     status: s.status as never,
     blocker: false,
   }));
+
+  /* Live safety signals (FAERS / MAUDE / Eudamed / Spontaneous / Literature)
+     and year-bucketed literature corpus — both per-program. Falls back to
+     the kit fixture during initial fetch + on error. The kit's CerSignal
+     count is "n=" style (numeric), and live safety_signals doesn't carry
+     that directly; the endpoint approximates by source-grouped AE counts. */
+  const extras = useProgramExtras(program?.id ?? null);
+  const sourceSignals = extras.safetySignals ?? CER_SIGNALS;
+  const sourceLiterature = extras.literature && extras.literature.length > 0
+    ? extras.literature
+    : CER_LITERATURE;
+  const maxHits = Math.max(1, ...sourceLiterature.map((l) => l.hits));
+  const visibleSignals = includedOnly
+    ? sourceSignals.filter(s => s.status === 'included')
+    : sourceSignals;
+  const literatureTotal = extras.literatureTotal > 0
+    ? extras.literatureTotal
+    : sourceLiterature.reduce((s, l) => s + l.hits, 0);
   return (
     <>
       <div className="section-hdr">
@@ -67,7 +80,12 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
             <div className="panel-hdr">
               <div>
                 <div className="t">Safety signals</div>
-                <div className="s">7 signals · 4 included · 1 excluded · 2 under review</div>
+                <div className="s">
+                  {sourceSignals.length} signal{sourceSignals.length === 1 ? '' : 's'} ·{' '}
+                  {sourceSignals.filter(s => s.status === 'included').length} included ·{' '}
+                  {sourceSignals.filter(s => s.status === 'excluded').length} excluded ·{' '}
+                  {sourceSignals.filter(s => s.status === 'review').length} under review
+                </div>
               </div>
               <div className="actions">
                 <button
@@ -113,7 +131,7 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
                       <div className="k-name" style={{ fontWeight: 400, fontSize: 12 }}>
                         {s.event}
                       </div>
-                      <div className="k-holder">{s.assess}</div>
+                      <div className="k-holder">{('assess' in s ? s.assess : '') || ''}</div>
                     </td>
                     <td
                       style={{
@@ -139,7 +157,9 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
             <div className="panel-hdr">
               <div>
                 <div className="t">Literature corpus</div>
-                <div className="s">2,326 hits · PubMed · Embase · Cochrane · 6-year window</div>
+                <div className="s">
+                  {literatureTotal.toLocaleString()} hits · PubMed · FDA · ClinicalTrials.gov · {sourceLiterature.length}-year window
+                </div>
               </div>
               <div className="actions">
                 <button
@@ -157,7 +177,7 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
               </div>
             </div>
             <div style={{ padding: '12px 0' }}>
-              {CER_LITERATURE.map(l => (
+              {sourceLiterature.map(l => (
                 <div key={l.year} className="litbar">
                   <span className="yr">{l.year}</span>
                   <div className="bar">

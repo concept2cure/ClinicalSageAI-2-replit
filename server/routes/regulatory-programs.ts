@@ -20,11 +20,11 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { db } from '../db';
+import { db, pool } from '../db';
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { regulatoryPrograms } from '../../shared/schema/programs';
-import { users, auditLogs, cerv2510kSections } from '../../shared/schema';
-import { qSubmissions, qSubMeetings } from '../../shared/schema/q-sub';
+import { users, auditLogs, cerv2510kSections, deviceTestStandards } from '../../shared/schema';
+import { qSubmissions, qSubMeetings, qSubQuestions, qSubCommitments } from '../../shared/schema/q-sub';
 import auditService from '../services/auditService';
 
 const router = Router();
@@ -414,9 +414,6 @@ router.get('/:id/milestones', async (req: Request, res: Response) => {
    The recommendations are computed on read; the kit panel doesn't write
    them back. When the underlying state changes, the recs update.
 */
-import { qSubCommitments, qSubQuestions } from '../../shared/schema/q-sub';
-import { deviceTestStandards } from '../../shared/schema';
-
 interface RimRec {
   id: string;
   body: string;
@@ -651,6 +648,184 @@ router.get('/:id/change-impact', async (req: Request, res: Response) => {
     });
 
     res.json({ data });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+  }
+});
+
+/* ─── CER safety signals ────────────────────────────────────────────────
+   Per-program safety-signal feed for the CerSurface signals table.
+   Pulls from the safety_signals table (existing, already populated by
+   pharmacovigilance reportSignal), filtered to the caller's org + this
+   program's project linkage. The kit needs:
+     id, source (FAERS / MAUDE / Eudamed / Literature),
+     event (description), count, severity, status
+
+   Counts roll up related adverse_events when the join is meaningful;
+   severity derives from the recommended action; status maps from
+   evaluationStatus to the kit's included / excluded / review enum.
+*/
+interface SafetySignalRow {
+  id: string;
+  source: 'FAERS' | 'MAUDE' | 'Eudamed' | 'Literature' | 'Spontaneous';
+  event: string;
+  count: number;
+  severity: 'critical' | 'serious' | 'moderate' | 'low';
+  status: 'included' | 'excluded' | 'review';
+  detectedAt: string;
+}
+
+const SIGNAL_SOURCE_MAP: Record<string, SafetySignalRow['source']> = {
+  spontaneous:    'Spontaneous',
+  clinical_trial: 'FAERS',
+  literature:     'Literature',
+  registry:       'Eudamed',
+};
+
+const ACTION_TO_SEVERITY: Record<string, SafetySignalRow['severity']> = {
+  withdrawal:   'critical',
+  rems:         'serious',
+  dear_doctor:  'serious',
+  label_update: 'moderate',
+  none:         'low',
+};
+
+const STATUS_TO_KIT: Record<string, SafetySignalRow['status']> = {
+  new:              'review',
+  under_evaluation: 'review',
+  confirmed:        'included',
+  refuted:          'excluded',
+  closed:           'excluded',
+};
+
+router.get('/:id/safety-signals', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+
+    const id = String(req.params.id);
+    const [program] = await db
+      .select({ id: regulatoryPrograms.id })
+      .from(regulatoryPrograms)
+      .where(and(eq(regulatoryPrograms.id, id), eq(regulatoryPrograms.organizationId, orgId)))
+      .limit(1);
+    if (!program) return res.status(404).json({ error: 'Program not found' });
+
+    /* safety_signals.organization_id is text; cast both sides for the
+       comparison so int orgIds match the existing string-shaped data. */
+    let rows: any[] = [];
+    try {
+      const result = await pool.query(
+        `SELECT id, signal_source, description, detected_at, evaluation_status, action
+           FROM safety_signals
+          WHERE organization_id::text = $1::text
+            AND ( project_id::text = $2::text OR project_id IS NULL )
+          ORDER BY detected_at DESC
+          LIMIT 50`,
+        [String(orgId), id],
+      );
+      rows = result.rows;
+    } catch (err: any) {
+      /* Table may not exist in all environments — return empty list. */
+      if (err?.code !== '42P01') throw err;
+    }
+
+    /* Count related adverse events per signal source — a single batch
+       group-by per call. */
+    let countsBySource: Record<string, number> = {};
+    try {
+      const aeCounts = await pool.query(
+        `SELECT signal_source, COUNT(*)::int AS n
+           FROM safety_signals
+          WHERE organization_id::text = $1::text
+          GROUP BY signal_source`,
+        [String(orgId)],
+      );
+      countsBySource = Object.fromEntries(aeCounts.rows.map((r: any) => [r.signal_source, r.n]));
+    } catch {
+      /* fall through */
+    }
+
+    const data: SafetySignalRow[] = rows.map((r: any) => ({
+      id:         String(r.id),
+      source:     SIGNAL_SOURCE_MAP[r.signal_source] ?? 'Spontaneous',
+      event:      String(r.description ?? '').slice(0, 160),
+      count:      countsBySource[r.signal_source] ?? 1,
+      severity:   ACTION_TO_SEVERITY[r.action] ?? 'low',
+      status:     STATUS_TO_KIT[r.evaluation_status] ?? 'review',
+      detectedAt: r.detected_at instanceof Date ? r.detected_at.toISOString() : String(r.detected_at),
+    }));
+
+    res.json({ data });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+  }
+});
+
+/* ─── CER literature corpus ─────────────────────────────────────────────
+   Year-bucketed literature counts for CerSurface's corpus chart. Reads
+   from the persisted literature_entries table populated by
+   LiteratureAggregatorService (PubMed + FDA + ClinicalTrials.gov runs
+   write back here so subsequent reads are fast).
+
+   Window: 6 years ending current year (kit convention). When no entries
+   exist for the program's product, returns the buckets with zero counts
+   so the chart renders structure (not blank).
+*/
+
+interface LiteratureBucket {
+  year: number;
+  hits: number;
+}
+
+router.get('/:id/literature', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+
+    const id = String(req.params.id);
+    const [program] = await db
+      .select({
+        id:          regulatoryPrograms.id,
+        productName: regulatoryPrograms.productName,
+        name:        regulatoryPrograms.name,
+      })
+      .from(regulatoryPrograms)
+      .where(and(eq(regulatoryPrograms.id, id), eq(regulatoryPrograms.organizationId, orgId)))
+      .limit(1);
+    if (!program) return res.status(404).json({ error: 'Program not found' });
+
+    const productName = program.productName || program.name;
+    const currentYear = new Date().getFullYear();
+    const buckets: LiteratureBucket[] = [];
+    for (let y = currentYear - 5; y <= currentYear; y++) {
+      buckets.push({ year: y, hits: 0 });
+    }
+
+    /* Aggregate from literature_entries (the persisted result cache). */
+    try {
+      const result = await pool.query(
+        `SELECT EXTRACT(YEAR FROM publication_date)::int AS year, COUNT(*)::int AS n
+           FROM literature_entries
+          WHERE organization_id::text = $1::text
+            AND ( title  ILIKE $2 OR abstract ILIKE $2 )
+            AND publication_date >= $3
+          GROUP BY 1
+          ORDER BY 1`,
+        [String(orgId), `%${productName}%`, `${currentYear - 5}-01-01`],
+      );
+      const byYear = new Map<number, number>(result.rows.map((r: any) => [r.year, r.n]));
+      for (const b of buckets) {
+        const y = byYear.get(b.year);
+        if (y) b.hits = y;
+      }
+    } catch (err: any) {
+      if (err?.code !== '42P01') throw err;
+      /* literature_entries table missing — return empty buckets. */
+    }
+
+    const total = buckets.reduce((s, b) => s + b.hits, 0);
+    res.json({ data: buckets, total, productName });
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
