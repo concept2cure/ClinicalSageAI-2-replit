@@ -10,6 +10,7 @@ import { I } from '../icons';
 import type { Program } from '../data/programs';
 import { useProgramDetail } from '../hooks/useMdxPrograms';
 import { useWorkbenchTasks } from '../hooks/useWorkbench';
+import { useProgramExtras } from '../hooks/useProgramExtras';
 
 interface GovernanceRow {
   role: string;
@@ -169,6 +170,7 @@ export function ProjectHome({
      Both fall back to the kit fixtures during load + on error. */
   const detail = useProgramDetail(program.id);
   const allTasks = useWorkbenchTasks();
+  const extras = useProgramExtras(program.id);
   const livePh = detail.detail
     ? deriveGovernance(detail.detail.leadUserName, detail.detail.teamMembers)
     : null;
@@ -185,6 +187,14 @@ export function ProjectHome({
     tone: t.tone,
     assignee: t.who,
   }));
+
+  /* Live milestones / RIM recs / change-impact / activity. Each panel
+     falls back to kit content during load + on error so the surface
+     never renders blank — but live data wins as soon as it arrives. */
+  const sourceMilestones = extras.milestones ?? PH_MILESTONES;
+  const sourceRimRecs    = extras.rimRecs    ?? PH_RIM_RECS;
+  const sourceImpact     = extras.changeImpactFormatted ?? PH_CHANGE_IMPACT;
+  const sourceActivity   = extras.activityFormatted ?? PH_ACTIVITY;
 
   return (
     <div className="ph-root" data-screen-label={`MDX · Project Home · ${program.title}`}>
@@ -276,17 +286,17 @@ export function ProjectHome({
             <header className="ph-card-h">
               <h2>Milestones</h2>
               <span className="ph-count">
-                {PH_MILESTONES.filter(m => m.state === 'complete').length} of{' '}
-                {PH_MILESTONES.length} complete
+                {sourceMilestones.filter(m => m.state === 'complete').length} of{' '}
+                {sourceMilestones.length} complete
               </span>
             </header>
             <ol className="ph-milestones">
-              {PH_MILESTONES.map((m, i) => (
+              {sourceMilestones.map((m, i) => (
                 <li key={m.id} className={`ph-ms state-${m.state}`}>
                   <div className="ph-ms-mark">
                     <span />
                   </div>
-                  {i < PH_MILESTONES.length - 1 && <div className="ph-ms-line" />}
+                  {i < sourceMilestones.length - 1 && <div className="ph-ms-line" />}
                   <div className="ph-ms-body">
                     <div className="ph-ms-label">{m.label}</div>
                     <div className="ph-ms-date">{m.date}</div>
@@ -299,10 +309,14 @@ export function ProjectHome({
           <section className="ph-card">
             <header className="ph-card-h">
               <h2>Claude recommendations</h2>
-              <span className="ph-count">{PH_RIM_RECS.length} active</span>
+              <span className="ph-count">{sourceRimRecs.length} active</span>
             </header>
             <ul className="ph-recs">
-              {PH_RIM_RECS.map(r => (
+              {sourceRimRecs.length === 0 ? (
+                <li className="ph-rec impact-low" style={{ color: 'var(--text-300)' }}>
+                  <p className="ph-rec-body">No open recommendations — dossier in good shape.</p>
+                </li>
+              ) : sourceRimRecs.map(r => (
                 <li key={r.id} className={`ph-rec impact-${r.impact}`}>
                   <span className="ph-rec-kind">{r.kind}</span>
                   <p className="ph-rec-body">{r.body}</p>
@@ -321,7 +335,11 @@ export function ProjectHome({
               <h2>Change impact</h2>
             </header>
             <ul className="ph-impact">
-              {PH_CHANGE_IMPACT.map(c => (
+              {sourceImpact.length === 0 ? (
+                <li className="ph-impact-row" style={{ color: 'var(--text-300)' }}>
+                  <div className="ph-impact-what">No recent changes recorded.</div>
+                </li>
+              ) : sourceImpact.map(c => (
                 <li key={c.id} className="ph-impact-row">
                   <div className="ph-impact-l">
                     <span className="ph-impact-who">{c.who}</span>
@@ -360,7 +378,12 @@ export function ProjectHome({
               <h2>Recent activity</h2>
             </header>
             <ul className="ph-activity">
-              {PH_ACTIVITY.map((a, i) => (
+              {sourceActivity.length === 0 && (
+                <li className="ph-act-row" style={{ color: 'var(--text-300)' }}>
+                  <span className="ph-act-what">No recorded activity yet.</span>
+                </li>
+              )}
+              {sourceActivity.map((a, i) => (
                 <li key={i} className="ph-act-row">
                   <span className="ph-act-who">{a.who}</span>
                   <span className="ph-act-what">{a.what}</span>
