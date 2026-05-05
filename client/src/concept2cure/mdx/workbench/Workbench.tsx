@@ -26,6 +26,7 @@ import {
   VAULT_FOLDERS,
   VAULT_VERSIONS,
 } from '../data/workbench';
+import { useSubmissions, useSubmissionDetail } from '../hooks/useSubmissions';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tasks
@@ -605,12 +606,40 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
-  const [selected, setSelected] = React.useState('s1');
+  const [selected, setSelected] = React.useState<string | null>(null);
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'active' | 'blocked' | 'complete'>('all');
-  const sel = SUBMISSIONS.find(s => s.id === selected);
+
+  /* Live submissions from /api/submission-ops/packages. Falls back to the
+     kit fixture during the initial fetch and on error so the pipeline
+     pane doesn't render with zero counts. When live data returns zero,
+     the empty state below is intentional. */
+  const live = useSubmissions();
+  const sourceSubmissions = live.submissions ?? SUBMISSIONS;
+
+  /* Default selection re-syncs to the first row of the live list when it
+     arrives — avoids clicking onto a stale fixture id. */
+  React.useEffect(() => {
+    if (!sourceSubmissions.length) return;
+    const stillExists = selected != null && sourceSubmissions.some((s) => s.id === selected);
+    if (!stillExists) setSelected(sourceSubmissions[0].id);
+  }, [sourceSubmissions, selected]);
+
+  /* Per-package gate + activity log. The list endpoint omits these (they
+     come from /readiness and /milestones), so the detail hook fires when
+     a row is selected and merges its results into `sel`. */
+  const { gate: liveGate, log: liveLog } = useSubmissionDetail(selected);
+  const baseSel = sourceSubmissions.find((s) => s.id === selected);
+  const sel = baseSel
+    ? {
+        ...baseSel,
+        gate: liveGate ?? baseSel.gate,
+        log:  liveLog  ?? baseSel.log,
+      }
+    : undefined;
+
   const visible = statusFilter === 'all'
-    ? SUBMISSIONS
-    : SUBMISSIONS.filter(s => s.status === statusFilter);
+    ? sourceSubmissions
+    : sourceSubmissions.filter(s => s.status === statusFilter);
   const cycleFilter = () => {
     const order: Array<'all' | 'active' | 'blocked' | 'complete'> = ['all', 'active', 'blocked', 'complete'];
     setStatusFilter(order[(order.indexOf(statusFilter) + 1) % order.length]);
@@ -655,7 +684,7 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
         </div>
         <div className="sub-pipeline">
           {SUBMISSION_PIPELINE.map((st, i) => {
-            const count = SUBMISSIONS.filter(s => s.stage === st.id).length;
+            const count = sourceSubmissions.filter(s => s.stage === st.id).length;
             return (
               <div key={st.id} className="sub-stage">
                 <div className="sub-stage-num">{String(i + 1).padStart(2, '0')}</div>
@@ -672,9 +701,9 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
         <div className="section-head">
           <h2>Active submissions</h2>
           <span className="section-sub">
-            {SUBMISSIONS.length} total ·{' '}
-            {SUBMISSIONS.filter(s => s.status === 'active').length} active ·{' '}
-            {SUBMISSIONS.filter(s => s.status === 'blocked').length} blocked
+            {sourceSubmissions.length} total ·{' '}
+            {sourceSubmissions.filter(s => s.status === 'active').length} active ·{' '}
+            {sourceSubmissions.filter(s => s.status === 'blocked').length} blocked
           </span>
         </div>
         <div className="sub-layout">
