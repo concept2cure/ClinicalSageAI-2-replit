@@ -13,7 +13,7 @@
  *   2. SUBMISSION_GATEWAYS   — agency endpoints + receipt shapes
  *   3. SUBMISSIONS_V2        — actual filings in flight, joining the two
  *
- * The 7-stage pipeline (SUBMISSION_PIPELINE) is universal. What swaps per type
+ * The 7-stage pipeline (SUBMISSION_PIPELINE_V2) is universal. What swaps per type
  * is the contents of each stage (build outline, validator profile, package
  * format, gateway protocol, receipt fields, AIC log entries).
  *
@@ -134,7 +134,7 @@ export interface SubmissionPipelineStage {
   desc: string;
 }
 
-export const SUBMISSION_PIPELINE: SubmissionPipelineStage[] = [
+export const SUBMISSION_PIPELINE_V2: SubmissionPipelineStage[] = [
   { id: 'build',    label: 'Build',    desc: 'Assemble dossier from live editor + vault' },
   { id: 'validate', label: 'Validate', desc: 'Run agency rule profile · resolve blockers' },
   { id: 'sign',     label: 'Sign',     desc: 'Route for review · Part 11 e-signatures' },
