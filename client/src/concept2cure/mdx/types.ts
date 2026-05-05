@@ -252,9 +252,17 @@ export interface SubmissionReceiptEudamed {
   auditId: string | null;
 }
 
+export interface SubmissionReceiptCesp {
+  shape: 'cesp';
+  deliveryId: string | null;
+  validation: string | null;
+  notification: string | null;
+}
+
 export type SubmissionReceipt =
   | SubmissionReceiptEsg
   | SubmissionReceiptEudamed
+  | SubmissionReceiptCesp
   | { shape: SubmissionReceiptShape; [key: string]: unknown };
 
 /** AIC chain — hash-linked immutable record. Same schema for every
@@ -415,29 +423,63 @@ export interface CorrespondenceDeficiency {
 
 export type DraftStatus = 'unstarted' | 'drafted' | 'in_review' | 'approved' | 'sent';
 
+export type DraftReviewerStatus = 'queued' | 'pending' | 'approved' | 'signed' | 'rejected';
+
 export interface DraftReviewer {
   role: string;
   name: string;
-  status: 'queued' | 'pending' | 'signed' | 'rejected';
+  status: DraftReviewerStatus;
   signed_at?: string;
+}
+
+/** Tabular evidence inside a deficiency response — `{ cols, rows }`.
+ *  Rows are heterogeneous (string | number); the UI formats them. */
+export interface DraftResponseTable {
+  cols: string[];
+  rows: (string | number)[][];
+}
+
+export interface DraftEvidenceItem {
+  name: string;
+  kind: 'pdf' | 'doc' | 'csv' | 'xls' | 'img' | 'code' | 'file';
+  size: number;
+  source: string;
+  new: boolean;
+}
+
+export interface DraftSectionUpdate {
+  section: string;
+  diff: string;
+  summary?: string;
 }
 
 export interface DraftDeficiency {
   id: string;
   response: string;
-  evidence?: string[];
-  updates?: string[];
+  table?: DraftResponseTable;
+  discussion?: string;
+  evidence?: DraftEvidenceItem[];
+  updates?: DraftSectionUpdate[];
 }
 
-export interface CorrespondenceDraft {
-  status: DraftStatus;
+export interface CorrespondenceDraftStarted {
+  status: Exclude<DraftStatus, 'unstarted'>;
   generated_at: string;
   generated_by: 'AnA';
   intro: string;
   deficiencies: DraftDeficiency[];
   closing: string;
   reviewers: DraftReviewer[];
+  send_to?: string;
+  due?: string;
+  acknowledged_by?: string;
 }
+
+export interface CorrespondenceDraftUnstarted {
+  status: 'unstarted';
+}
+
+export type CorrespondenceDraft = CorrespondenceDraftStarted | CorrespondenceDraftUnstarted;
 
 export interface CorrespondenceDetail {
   letter: CorrespondenceLetter;
