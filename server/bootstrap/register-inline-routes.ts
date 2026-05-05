@@ -38,8 +38,6 @@ import esignatureRouter from '../routes/esignature';
 import dossierReadinessRouter from '../routes/dossier-readiness';
 import regulatorySubmissionsRoutes from '../routes/regulatorySubmissions';
 import submissionOpsRoutes from '../routes/submission-ops';
-import mdxSubmissionsRoutes from '../routes/mdx-submissions.routes';
-import mdxDossierRoutes from '../routes/mdx-dossier.routes';
 import regulatoryCorrespondenceRoutes from '../routes/regulatory-correspondence';
 import { create510kWorkflowRoutes } from '../routes/510k-workflow-routes';
 import { createPMAWorkflowRoutes } from '../routes/pma-workflow-routes';
@@ -322,11 +320,8 @@ export function registerInlineSubmissionWorkflowRoutes({
 
   // Submission Ops + Regulatory Correspondence.
   app.use('/api/submission-ops', submissionOpsRoutes);
-  app.use('/api/mdx', mdxSubmissionsRoutes);
-  app.use('/api/mdx/dossier', mdxDossierRoutes);
   app.use('/api/regulatory-correspondence', regulatoryCorrespondenceRoutes);
   console.log('✅ Submission Ops API routes mounted successfully');
-  console.log('✅ MDX Submissions adapter (kit-shaped) mounted at /api/mdx');
   console.log('✅ Regulatory Correspondence API routes mounted successfully');
 
   // 510k + PMA workflow routes.
