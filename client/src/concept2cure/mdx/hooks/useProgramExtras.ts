@@ -68,6 +68,23 @@ export interface LiteratureBucket {
   hits: number;
 }
 
+export interface PmaModule {
+  id: 'preclinical' | 'clinical' | 'manufacturing' | 'labeling' | 'statistical' | 'financial';
+  label: string;
+  desc: string;
+  docs: number;
+  status: 'complete' | 'active' | 'review' | 'draft';
+}
+
+export interface TrialMetric {
+  label: string;
+  metric: string;
+  unit?: string;
+  bar?: { pct: number; tone: 'ok' | 'warn' | 'err' };
+  meta: string;
+  tone?: 'ok' | 'warn' | 'err' | '' | undefined;
+}
+
 interface Payload<T> { data: T[] }
 
 function relativeWhen(iso: string): string {
@@ -90,6 +107,8 @@ export interface UseProgramExtrasResult {
   safetySignals: SafetySignal[]      | null;
   literature:   LiteratureBucket[]   | null;
   literatureTotal: number;
+  pmaModules:    PmaModule[]         | null;
+  pmaTrialMetrics: TrialMetric[]     | null;
   loading: boolean;
   error: string | null;
   /** Activity rows with humanized "when" strings (e.g. "32m"). */
@@ -107,11 +126,14 @@ export function useProgramExtras(programId: string | null): UseProgramExtrasResu
     safetySignals: SafetySignal[]     | null;
     literature:   LiteratureBucket[]  | null;
     literatureTotal: number;
+    pmaModules:    PmaModule[]         | null;
+    pmaTrialMetrics: TrialMetric[]     | null;
     loading: boolean;
     error: string | null;
   }>({
     activity: null, milestones: null, rimRecs: null, changeImpact: null,
     safetySignals: null, literature: null, literatureTotal: 0,
+    pmaModules: null, pmaTrialMetrics: null,
     loading: false, error: null,
   });
 
@@ -120,6 +142,7 @@ export function useProgramExtras(programId: string | null): UseProgramExtrasResu
       setState({
         activity: null, milestones: null, rimRecs: null, changeImpact: null,
         safetySignals: null, literature: null, literatureTotal: 0,
+        pmaModules: null, pmaTrialMetrics: null,
         loading: false, error: null,
       });
       return;
@@ -145,7 +168,9 @@ export function useProgramExtras(programId: string | null): UseProgramExtrasResu
       fetchJson<Payload<ChangeImpactEntry>>('/change-impact'),
       fetchJson<Payload<SafetySignal>>('/safety-signals'),
       fetchJson<Payload<LiteratureBucket> & { total?: number }>('/literature'),
-    ]).then(([act, ms, recs, ci, sig, lit]) => {
+      fetchJson<Payload<PmaModule>>('/pma-modules'),
+      fetchJson<Payload<TrialMetric>>('/pma-trial-metrics'),
+    ]).then(([act, ms, recs, ci, sig, lit, mods, trial]) => {
       if (cancelled) return;
       setState({
         activity:        act?.data  ?? null,
@@ -155,6 +180,8 @@ export function useProgramExtras(programId: string | null): UseProgramExtrasResu
         safetySignals:   sig?.data  ?? null,
         literature:      lit?.data  ?? null,
         literatureTotal: lit?.total ?? 0,
+        pmaModules:      mods?.data ?? null,
+        pmaTrialMetrics: trial?.data ?? null,
         loading: false,
         error: null,
       });

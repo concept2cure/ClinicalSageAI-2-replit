@@ -7,6 +7,7 @@ import * as React from 'react';
 import { I } from '../icons';
 import { PMA_MODULES, PMA_PHASES, PMA_TRIAL_METRICS, type PmaPhase } from '../data/pma';
 import type { Program } from '../data/programs';
+import { useProgramExtras } from '../hooks/useProgramExtras';
 
 export interface PmaSurfaceProps {
   /** Active PMA program from App.tsx. When null, the surface renders the
@@ -54,6 +55,20 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
   const activeIdx = phases.findIndex(p => p.status === 'active' || p.status === 'blocked');
   const activeLabel = phases[Math.max(activeIdx, 0)]?.label ?? PMA_PHASES[4].label;
 
+  /* Live PMA modules + trial metrics. Modules group cerv2_510k_sections by
+     PMA module taxonomy (preclinical / clinical / manufacturing /
+     labeling / statistical / financial). Trial metrics join to
+     clinical_ops.studies for the program's enrollment / sites / AE
+     rate / endpoints. Falls back to kit fixtures during load + on error. */
+  const extras = useProgramExtras(program?.id ?? null);
+  const sourceModules = extras.pmaModules && extras.pmaModules.length > 0
+    ? extras.pmaModules
+    : PMA_MODULES;
+  const sourceTrialMetrics = extras.pmaTrialMetrics && extras.pmaTrialMetrics.length > 0
+    ? extras.pmaTrialMetrics
+    : PMA_TRIAL_METRICS;
+  const totalDocs = sourceModules.reduce((s, m) => s + m.docs, 0);
+
   return (
     <>
       <div className="section-hdr">
@@ -92,7 +107,7 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
       </div>
 
       <div className="health">
-        {PMA_TRIAL_METRICS.map((d, i) => (
+        {sourceTrialMetrics.map((d, i) => (
           <div key={i} className="health-card">
             <div className="health-label">{d.label}</div>
             <div className="health-metric">
@@ -115,11 +130,13 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
       <div className="section-hdr">
         <div>
           <div className="section-title">PMA modules</div>
-          <div className="section-sub">Section-by-section assembly · 135 documents total</div>
+          <div className="section-sub">
+            Section-by-section assembly · {totalDocs} document{totalDocs === 1 ? '' : 's'} total
+          </div>
         </div>
       </div>
       <div className="pma-modules">
-        {PMA_MODULES.map(m => (
+        {sourceModules.map(m => (
           <button
             key={m.id}
             className="pma-mod"

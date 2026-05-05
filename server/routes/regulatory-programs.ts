@@ -831,6 +831,239 @@ router.get('/:id/literature', async (req: Request, res: Response) => {
   }
 });
 
+/* ─── PMA modules ───────────────────────────────────────────────────────
+   Per-program section roll-up grouped into the PMA module taxonomy
+   (preclinical / clinical / manufacturing / labeling / statistical /
+   financial). The cerv2_510k_sections table holds section rows for all
+   pathways (legacy name); we map the section.category + section.key to
+   PMA modules so the cards reflect real authoring state.
+*/
+
+interface PmaModule {
+  id: 'preclinical' | 'clinical' | 'manufacturing' | 'labeling' | 'statistical' | 'financial';
+  label: string;
+  desc: string;
+  docs: number;
+  status: 'complete' | 'active' | 'review' | 'draft';
+}
+
+const PMA_MODULE_DEFS: Array<{
+  id: PmaModule['id'];
+  label: string;
+  desc: string;
+  /** Match by category (case-insensitive) OR section_key substring. */
+  categories: string[];
+  keyPatterns: string[];
+}> = [
+  { id: 'preclinical',   label: 'Preclinical',   desc: 'Bench, animal, biocompatibility',
+    categories: ['testing', 'preclinical'], keyPatterns: ['preclinical', 'biocompat', 'bench', 'animal', 'sterilization'] },
+  { id: 'clinical',      label: 'Clinical',      desc: 'Pivotal trial — enrollment + safety',
+    categories: ['clinical'], keyPatterns: ['clinical', 'pivotal', 'investigation', 'ide'] },
+  { id: 'manufacturing', label: 'Manufacturing', desc: 'QS Regulation 21 CFR 820',
+    categories: ['device'], keyPatterns: ['manufacturing', 'production', 'cmc', 'process'] },
+  { id: 'labeling',      label: 'Labeling',      desc: 'Professional labeling · IFU',
+    categories: ['additional'], keyPatterns: ['labeling', 'ifu', 'instructions-for-use', 'prof-label'] },
+  { id: 'statistical',   label: 'Statistical',   desc: 'SAP · interim analysis · borrowing',
+    categories: [], keyPatterns: ['stat', 'sap', 'analysis-plan', 'interim'] },
+  { id: 'financial',     label: 'Financial',     desc: 'Investigator disclosures · user fee',
+    categories: ['administrative'], keyPatterns: ['financial', 'user-fee', 'disclosure', 'cover-sheet'] },
+];
+
+router.get('/:id/pma-modules', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+
+    const id = String(req.params.id);
+    const [program] = await db
+      .select({ id: regulatoryPrograms.id })
+      .from(regulatoryPrograms)
+      .where(and(eq(regulatoryPrograms.id, id), eq(regulatoryPrograms.organizationId, orgId)))
+      .limit(1);
+    if (!program) return res.status(404).json({ error: 'Program not found' });
+
+    const sections = await db
+      .select({
+        category:    cerv2510kSections.category,
+        sectionKey:  cerv2510kSections.sectionKey,
+        status:      cerv2510kSections.status,
+        completion:  cerv2510kSections.completionPercentage,
+      })
+      .from(cerv2510kSections)
+      .where(eq(cerv2510kSections.organizationId, orgId));
+
+    const data: PmaModule[] = PMA_MODULE_DEFS.map((def) => {
+      const matched = sections.filter((s) => {
+        const cat = (s.category ?? '').toLowerCase();
+        const key = (s.sectionKey ?? '').toLowerCase();
+        return def.categories.includes(cat)
+          || def.keyPatterns.some((p) => key.includes(p));
+      });
+      const total = matched.length;
+      if (total === 0) {
+        return { id: def.id, label: def.label, desc: def.desc, docs: 0, status: 'draft' as const };
+      }
+      const allDone = matched.every((m) => ['validated', 'approved'].includes(m.status ?? ''));
+      const anyReview = matched.some((m) => ['ready_for_review', 'in_review'].includes(m.status ?? ''));
+      const anyTodo  = matched.some((m) => (m.status ?? 'todo') === 'todo');
+      let status: PmaModule['status'];
+      if (allDone)         status = 'complete';
+      else if (anyReview)  status = 'review';
+      else if (anyTodo)    status = 'draft';
+      else                 status = 'active';
+      return { id: def.id, label: def.label, desc: def.desc, docs: total, status };
+    });
+
+    res.json({ data });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+  }
+});
+
+/* ─── PMA trial metrics ─────────────────────────────────────────────────
+   Per-program clinical-trial KPIs for the PmaSurface metrics strip. Joins
+   the program to its clinical_ops.studies row using either a metadata
+   override (program.metadata.clinicalStudyId) or the most-recent active
+   study in the org. Returns the kit's 4 metrics:
+     Enrolled · Sites active · AE rate · Endpoints achieved
+
+   Each metric carries a bar.pct + tone so the chart renders without
+   client-side derivation. When no study is linked, returns the metric
+   row labels with metric '—' and meta='No study linked' — surface still
+   renders structure.
+*/
+
+interface TrialMetric {
+  label: string;
+  metric: string;
+  unit?: string;
+  bar?: { pct: number; tone: 'ok' | 'warn' | 'err' };
+  meta: string;
+  tone?: 'ok' | 'warn' | 'err';
+}
+
+router.get('/:id/pma-trial-metrics', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+
+    const id = String(req.params.id);
+    const [program] = await db
+      .select({
+        id:          regulatoryPrograms.id,
+        productName: regulatoryPrograms.productName,
+        name:        regulatoryPrograms.name,
+        metadata:    regulatoryPrograms.metadata,
+      })
+      .from(regulatoryPrograms)
+      .where(and(eq(regulatoryPrograms.id, id), eq(regulatoryPrograms.organizationId, orgId)))
+      .limit(1);
+    if (!program) return res.status(404).json({ error: 'Program not found' });
+
+    const meta = (program.metadata as Record<string, unknown> | null) ?? {};
+    const overrideStudyId = typeof meta.clinicalStudyId === 'string' ? meta.clinicalStudyId : null;
+    const productLike = `%${(program.productName ?? program.name ?? '').slice(0, 60)}%`;
+
+    let study: any | null = null;
+    try {
+      const r = await pool.query(
+        overrideStudyId
+          ? `SELECT * FROM clinical_ops.studies WHERE id = $1 AND org_id::text = $2 LIMIT 1`
+          : `SELECT * FROM clinical_ops.studies
+              WHERE org_id::text = $1
+                AND (name ILIKE $2 OR indication ILIKE $2 OR therapeutic_area ILIKE $2)
+              ORDER BY updated_at DESC LIMIT 1`,
+        overrideStudyId ? [overrideStudyId, String(orgId)] : [String(orgId), productLike],
+      );
+      study = r.rows[0] ?? null;
+    } catch (err: any) {
+      if (err?.code !== '42P01' && err?.code !== '3F000') throw err;
+    }
+
+    const data: TrialMetric[] = [];
+
+    if (!study) {
+      data.push(
+        { label: 'Enrolled',          metric: '—', meta: 'No study linked', tone: 'warn' },
+        { label: 'Sites active',      metric: '—', meta: 'No study linked' },
+        { label: 'AE rate',           metric: '—', unit: '%', meta: 'Pending enrollment' },
+        { label: 'Endpoints achieved',metric: '—', meta: 'Pending interim analysis' },
+      );
+      return res.json({ data, study: null });
+    }
+
+    const enrolled       = Number(study.enrolled ?? 0);
+    const targetEnroll   = Number(study.target_enrollment ?? 0);
+    const enrollPct      = targetEnroll > 0 ? Math.round((enrolled / targetEnroll) * 100) : 0;
+    const totalSites     = Number(study.sites ?? 0);
+    const activeSites    = Number(study.active_sites ?? 0);
+    const enrollTone: 'ok' | 'warn' | 'err' = enrollPct >= 80 ? 'ok' : enrollPct >= 50 ? 'warn' : 'err';
+
+    /* AE rate from deviations table (if it exists). */
+    let aeRate: number | null = null;
+    try {
+      const aeQ = await pool.query(
+        `SELECT COUNT(*)::int AS n FROM clinical_ops.deviations
+          WHERE study_id = $1 AND severity IN ('serious','critical')`,
+        [study.id],
+      );
+      const ae = aeQ.rows[0]?.n ?? 0;
+      aeRate = enrolled > 0 ? Math.round((ae / enrolled) * 1000) / 10 : 0;
+    } catch (err: any) {
+      if (err?.code !== '42P01') throw err;
+    }
+
+    /* Endpoints achieved from clinical_ops.endpoint_results (best-effort). */
+    let endpointsAchieved: number | null = null;
+    let endpointsTotal: number | null = null;
+    try {
+      const epQ = await pool.query(
+        `SELECT
+            COUNT(*) FILTER (WHERE status = 'achieved')::int AS achieved,
+            COUNT(*)::int AS total
+           FROM clinical_ops.endpoint_results
+          WHERE study_id = $1`,
+        [study.id],
+      );
+      endpointsAchieved = epQ.rows[0]?.achieved ?? null;
+      endpointsTotal    = epQ.rows[0]?.total ?? null;
+    } catch (err: any) {
+      if (err?.code !== '42P01') throw err;
+    }
+
+    data.push(
+      { label: 'Enrolled',
+        metric: `${enrolled.toLocaleString()}/${targetEnroll.toLocaleString()}`,
+        bar:    { pct: enrollPct, tone: enrollTone },
+        meta:   `${enrollPct}% of target`,
+        tone:   enrollTone },
+      { label: 'Sites active',
+        metric: `${activeSites}/${totalSites}`,
+        meta:   totalSites > 0 ? `${Math.round((activeSites / totalSites) * 100)}% activated` : 'No sites yet',
+        tone:   activeSites === 0 ? 'warn' : '' as 'ok' | 'warn' | 'err' | undefined },
+      { label: 'AE rate',
+        metric: aeRate !== null ? aeRate.toFixed(1) : '—',
+        unit:   aeRate !== null ? '%' : undefined,
+        meta:   aeRate !== null ? `Serious + critical / enrolled` : 'No AE data',
+        tone:   aeRate !== null && aeRate > 5 ? 'err' : aeRate !== null && aeRate > 2 ? 'warn' : 'ok' },
+      { label: 'Endpoints achieved',
+        metric: endpointsTotal !== null && endpointsTotal > 0
+          ? `${endpointsAchieved}/${endpointsTotal}`
+          : '—',
+        meta:   endpointsTotal !== null && endpointsTotal > 0
+          ? 'Pre-specified primary + secondary'
+          : 'Pending interim analysis' },
+    );
+
+    res.json({
+      data,
+      study: { id: study.id, name: study.name, phase: study.phase, status: study.status },
+    });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+  }
+});
+
 void auditService;
 
 export default router;
