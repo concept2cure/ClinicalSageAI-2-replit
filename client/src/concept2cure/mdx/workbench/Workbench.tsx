@@ -27,6 +27,8 @@ import {
   VAULT_VERSIONS,
 } from '../data/workbench';
 import { useSubmissions, useSubmissionDetail } from '../hooks/useSubmissions';
+import { useWorkbenchTasks, useWorkbenchTemplates, useWorkbenchValidation } from '../hooks/useWorkbench';
+import { useMdxPrograms } from '../hooks/useMdxPrograms';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tasks
@@ -39,8 +41,16 @@ export interface WorkbenchProps {
 export function TasksSurface({ onAskAna }: WorkbenchProps) {
   const [view, setView] = React.useState<'board' | 'list'>('board');
   const [owner, setOwner] = React.useState<'all' | 'JC'>('all');
+
+  /* Live tasks from /api/submission-ops/workload (c2c_project_work_items).
+     Falls back to the kit fixture during load and on error so the Kanban
+     never renders with empty columns. */
+  const live = useWorkbenchTasks();
+  const sourceTasks = live.tasks ?? TASKS;
+  const sourceMetrics = live.metrics ?? TASKS_METRICS;
+
   const byCol = (id: string) =>
-    TASKS.filter(t => t.col === id && (owner === 'all' || t.assignee === owner));
+    sourceTasks.filter(t => t.col === id && (owner === 'all' || t.assignee === owner));
 
   return (
     <>
@@ -76,7 +86,7 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
       </div>
 
       <div className="metrics-row">
-        {TASKS_METRICS.map((m, i) => (
+        {sourceMetrics.map((m, i) => (
           <div key={i} className="metric-card" data-tone={m.tone || ''}>
             <div className="metric-label">{m.label}</div>
             <div className="metric-val">
@@ -157,7 +167,7 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
             <div>Assignee</div>
             <div>Cmt</div>
           </div>
-          {TASKS.filter(t => owner === 'all' || t.assignee === owner).map(t => (
+          {sourceTasks.filter(t => owner === 'all' || t.assignee === owner).map(t => (
             <div
               key={t.id}
               className="ctable-row"
@@ -453,7 +463,18 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
   const [sev, setSev] = React.useState<'all' | 'err' | 'warn'>('all');
   const [prog, setProg] = React.useState<string>('all');
 
-  const rules = VALIDATION_RULES.filter(
+  /* Live validation: per-program readiness matrix derived by joining
+     /api/submission-ops/blockers with the live program list, plus the
+     full rules table (each blocker becomes one row). Falls back to the
+     kit fixture during load + on error. */
+  const programsState = useMdxPrograms();
+  const programsList = programsState.programs ?? [];
+  const validation = useWorkbenchValidation(programsList);
+  const sourceRules    = validation.rules    ?? VALIDATION_RULES;
+  const sourcePrograms = validation.programs ?? VALIDATION_PROGRAMS;
+  const sourceSummary  = validation.summary  ?? VALIDATION_SUMMARY;
+
+  const rules = sourceRules.filter(
     r =>
       (sev === 'all' || r.severity === sev) &&
       (prog === 'all' || r.prog === prog),
@@ -474,7 +495,7 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
             className="btn ghost small"
             onClick={() => {
               const headers = ['Severity', 'Rule', 'Program', 'Section', 'Category', 'Message', 'Since'];
-              const rows = VALIDATION_RULES.map(r => [r.severity, r.id, r.prog, r.sect, r.category, r.msg, r.since]);
+              const rows = sourceRules.map(r => [r.severity, r.id, r.prog, r.sect, r.category, r.msg, r.since]);
               const csv = [headers, ...rows]
                 .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
                 .join('\r\n');
@@ -501,7 +522,7 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
       </div>
 
       <div className="metrics-row">
-        {VALIDATION_SUMMARY.map((m, i) => (
+        {sourceSummary.map((m, i) => (
           <div key={i} className="metric-card" data-tone={m.tone || ''}>
             <div className="metric-label">{m.label}</div>
             <div className="metric-val">
@@ -519,7 +540,7 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
           <span className="section-sub">Column order · errors · warnings · pass</span>
         </div>
         <div className="val-matrix">
-          {VALIDATION_PROGRAMS.map(p => (
+          {sourcePrograms.map(p => (
             <button
               key={p.id}
               className="val-prog-card"
@@ -844,6 +865,11 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function TemplatesSurface({ onAskAna }: WorkbenchProps) {
+  /* Live templates from /api/templates (already aggregates indTemplates +
+     documentTemplates + ectdTemplates server-side). Falls back to fixture
+     during load + on error. */
+  const live = useWorkbenchTemplates();
+  const sourceTemplates = live.templates ?? TEMPLATES;
   return (
     <>
       <div className="page-header">
@@ -869,7 +895,7 @@ export function TemplatesSurface({ onAskAna }: WorkbenchProps) {
         </div>
       </div>
       <div className="tpl-grid">
-        {TEMPLATES.map(t => (
+        {sourceTemplates.map(t => (
           <button
             key={t.id}
             className="tpl-card"

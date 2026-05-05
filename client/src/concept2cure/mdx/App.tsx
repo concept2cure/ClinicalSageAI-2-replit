@@ -272,6 +272,7 @@ export function App({ initialNav, projectName }: AppProps = {}) {
       case 'cer-workbench':
         surface = (
           <CerWorkbench
+            program={programForContext}
             onAskAna={askAna}
             onOpenEditor={() => setActiveNav('cer-editor')}
           />
