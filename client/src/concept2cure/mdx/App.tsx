@@ -233,10 +233,10 @@ export function App({ initialNav, projectName }: AppProps = {}) {
         surface = <K510Surface program={programForContext} onAskAna={askAna} onOpenEditor={openEditor} />;
         break;
       case 'pma':
-        surface = <PmaSurface onAskAna={askAna} onOpenEditor={() => setActiveNav('pma-editor')} />;
+        surface = <PmaSurface program={programForContext} onAskAna={askAna} onOpenEditor={() => setActiveNav('pma-editor')} />;
         break;
       case 'cer':
-        surface = <CerSurface onAskAna={askAna} />;
+        surface = <CerSurface program={programForContext} onAskAna={askAna} />;
         break;
       case 'predicate':
         surface = <PrecedentSurface onAskAna={askAna} />;

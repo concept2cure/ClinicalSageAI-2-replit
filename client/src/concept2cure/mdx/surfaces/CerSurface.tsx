@@ -10,26 +10,42 @@
 import * as React from 'react';
 import { I } from '../icons';
 import { CER_EXPORT, CER_LITERATURE, CER_SIGNALS } from '../data/cer';
+import type { Program } from '../data/programs';
+import { useK510EstarSections } from '../hooks/useK510';
 
 export interface CerSurfaceProps {
+  /** Active CER program from App.tsx. Sections and title come from here. */
+  program: Program | null;
   onAskAna: (text: string) => void;
 }
 
-export function CerSurface({ onAskAna }: CerSurfaceProps) {
+export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
   const maxHits = Math.max(...CER_LITERATURE.map(l => l.hits));
   const [includedOnly, setIncludedOnly] = React.useState(false);
   const visibleSignals = includedOnly
     ? CER_SIGNALS.filter(s => s.status === 'included')
     : CER_SIGNALS;
+
+  /* CER sections live in the same cerv2_510k_sections table used by 510(k)
+     and PMA — the legacy table name spans all three pathways. The
+     useK510EstarSections hook + its underlying /document-preview endpoint
+     return CER rows when the program is on the CER pathway. */
+  const sectionsState = useK510EstarSections(program?.id ?? null);
+  const sourceSections = sectionsState.rows ?? CER_EXPORT.map((s, i) => ({
+    id: i + 1,
+    label: s.label,
+    status: s.status as never,
+    blocker: false,
+  }));
   return (
     <>
       <div className="section-hdr">
         <div>
           <div className="section-title">
-            Clinical Evaluation Report · IV-415 Companion Diagnostic
+            Clinical Evaluation Report · {program ? program.title : 'IV-415 Companion Diagnostic'}
           </div>
           <div className="section-sub">
-            EU MDR Article 61 · Notified body review Q1 2026
+            EU MDR Article 61 · {program ? program.dueLabel : 'Notified body review Q1 2026'}
           </div>
         </div>
         <button
@@ -159,7 +175,7 @@ export function CerSurface({ onAskAna }: CerSurfaceProps) {
             <div className="panel-hdr">
               <div>
                 <div className="t">CER sections</div>
-                <div className="s">Article 61 template · 6 sections</div>
+                <div className="s">Article 61 template · {sourceSections.length} sections</div>
               </div>
               <div className="actions">
                 <button
@@ -167,7 +183,7 @@ export function CerSurface({ onAskAna }: CerSurfaceProps) {
                   title="Export CER section status as CSV"
                   onClick={() => {
                     const headers = ['Section', 'Status'];
-                    const rows = CER_EXPORT.map(s => [s.label, s.status]);
+                    const rows = sourceSections.map(s => [s.label, String(s.status)]);
                     const csv = [headers, ...rows]
                       .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
                       .join('\r\n');
@@ -187,7 +203,7 @@ export function CerSurface({ onAskAna }: CerSurfaceProps) {
               </div>
             </div>
             <div className="estar">
-              {CER_EXPORT.map((s, i) => (
+              {sourceSections.map((s, i) => (
                 <div key={s.id} className="estar-row">
                   <div className="estar-num">{String(i + 1).padStart(2, '0')}</div>
                   <div className="estar-label">{s.label}</div>
