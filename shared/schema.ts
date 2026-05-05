@@ -18309,3 +18309,41 @@ export const evidenceChainRecords = pgTable('evidence_chain_records', {
 }));
 
 export type EvidenceChainRecord = InferSelectModel<typeof evidenceChainRecords>;
+
+/**
+ * Saved precedent queries — user-saved searches over the predicate /
+ * precedent intelligence corpus. Each row stores the canonical search
+ * params (query string + scope) and the most recent hit count, so the
+ * PrecedentSurface "Saved queries" panel renders without re-running the
+ * search on every page view. Re-running the search updates hits.
+ */
+export const savedPrecedentQueries = pgTable('saved_precedent_queries', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').references(() => organizations.id).notNull(),
+  /** Owner — null for org-shared saved queries. */
+  userId: integer('user_id').references(() => users.id),
+  /** Display label for the query (used in the kit's panel). */
+  label: text('label').notNull(),
+  /** The search query string (free-text). */
+  query: text('query').notNull(),
+  /** Optional scope hints: deviceClass, productCode, dateRange, etc. */
+  scope: json('scope').$type<{
+    deviceClass?: string;
+    productCode?: string;
+    pathway?: '510k' | 'pma' | 'cer' | 'de_novo';
+    dateFrom?: string;
+    dateTo?: string;
+    sources?: string[];
+  } | null>(),
+  /** Cached hit count from the last run; -1 means not yet run. */
+  hits: integer('hits').default(-1).notNull(),
+  /** When the search was last executed (for the cached hits). */
+  lastRunAt: timestamp('last_run_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: index('spq_org_idx').on(table.organizationId),
+  userIdx: index('spq_user_idx').on(table.userId),
+}));
+
+export type SavedPrecedentQuery = InferSelectModel<typeof savedPrecedentQueries>;

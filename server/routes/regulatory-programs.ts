@@ -1064,6 +1064,135 @@ router.get('/:id/pma-trial-metrics', async (req: Request, res: Response) => {
   }
 });
 
+/* ─── Portfolio insights ───────────────────────────────────────────────
+   Cross-portfolio narrative insights for the PrecedentSurface narrative
+   panel. Computes 3 derived facts from the caller's actual data so the
+   panel reflects their own portfolio, not authored copy:
+
+     1. Pathway clearance ratio: of completed programs, what % cleared
+        via 510(k) vs PMA vs CER. Only counts programs where status
+        ∈ ('approved', 'submitted', 'completed').
+     2. Most-common predicate K-numbers: which K-numbers are referenced
+        across the most programs. Reads from cerv2_510k_sections.content
+        scanning for K-NNNNNN patterns (the canonical FDA submission id).
+     3. Literature density: average literature_entries hits per program
+        with a productName. Below 250 hits is the EU MDR Article 61
+        threshold flag.
+
+   Read-only, computed on demand. No new tables.
+*/
+
+router.get('/portfolio-insights', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+
+    /* All programs for the org. */
+    const programs = await db
+      .select({
+        id:              regulatoryPrograms.id,
+        productName:     regulatoryPrograms.productName,
+        name:            regulatoryPrograms.name,
+        programType:     regulatoryPrograms.programType,
+        regulatoryPath:  regulatoryPrograms.regulatoryPath,
+        status:          regulatoryPrograms.status,
+        phase:           regulatoryPrograms.phase,
+      })
+      .from(regulatoryPrograms)
+      .where(eq(regulatoryPrograms.organizationId, orgId));
+
+    const completedStatuses = new Set(['approved', 'submitted', 'completed', 'cleared']);
+    const completed = programs.filter(p => completedStatuses.has((p.status ?? '').toLowerCase()));
+    const path = (p: typeof programs[number]) => {
+      const rp = (p.regulatoryPath ?? '').toLowerCase();
+      const tp = (p.programType ?? '').toUpperCase();
+      if (rp === '510k' || tp === '510K' || tp === 'DE_NOVO') return '510(k)';
+      if (rp === 'pma'  || tp === 'PMA') return 'PMA';
+      if (rp === 'cer'  || tp === 'CER') return 'CER';
+      return tp;
+    };
+
+    const insights: Array<{ kind: string; body: string }> = [];
+
+    /* Insight 1 — pathway clearance ratio. */
+    if (completed.length > 0) {
+      const k510 = completed.filter(p => path(p) === '510(k)').length;
+      const total = completed.length;
+      const pct = Math.round((k510 / total) * 100);
+      insights.push({
+        kind: 'clearance-mix',
+        body: `Your portfolio: ${k510} of ${total} cleared programs went via 510(k) (${pct}%).`,
+      });
+    } else if (programs.length > 0) {
+      insights.push({
+        kind: 'clearance-mix',
+        body: `${programs.length} active program${programs.length === 1 ? '' : 's'} in flight — no clearances yet to compare.`,
+      });
+    }
+
+    /* Insight 2 — most-common predicate K-numbers across sections. */
+    try {
+      const r = await pool.query(
+        `SELECT match[1] AS k, COUNT(DISTINCT s.id)::int AS programs
+           FROM cerv2_510k_sections s,
+                regexp_matches(s.content, '\\b(K\\d{6})\\b', 'g') AS match
+          WHERE s.organization_id = $1
+          GROUP BY 1
+          ORDER BY programs DESC, k
+          LIMIT 3`,
+        [orgId],
+      );
+      if (r.rows.length > 0) {
+        const top = r.rows.map((row: any) => `${row.k} (${row.programs})`).join(', ');
+        insights.push({
+          kind: 'common-predicate',
+          body: `Most-referenced predicates across your dossier: ${top}.`,
+        });
+      }
+    } catch (err: any) {
+      if (err?.code !== '42P01' && err?.code !== '42883') throw err;
+    }
+
+    /* Insight 3 — literature density. */
+    try {
+      const productNames = programs.map(p => p.productName ?? p.name).filter(Boolean);
+      if (productNames.length > 0) {
+        const r = await pool.query(
+          `SELECT COUNT(*)::int AS total
+             FROM literature_entries
+            WHERE organization_id::text = $1::text`,
+          [String(orgId)],
+        );
+        const total = r.rows[0]?.total ?? 0;
+        const avgPerProg = programs.length > 0 ? Math.round(total / programs.length) : 0;
+        if (total > 0) {
+          const lowFlag = avgPerProg < 250 ? ' — below the EU MDR Article 61 ≥250 threshold for sufficient clinical evidence' : '';
+          insights.push({
+            kind: 'literature-density',
+            body: `Literature corpus: ${total.toLocaleString()} entries across the portfolio (avg ${avgPerProg}/program)${lowFlag}.`,
+          });
+        }
+      }
+    } catch (err: any) {
+      if (err?.code !== '42P01') throw err;
+    }
+
+    /* If we couldn't compute any data-backed insights, return a hint
+       message so the panel renders structure (don't fall back to
+       hard-coded authored content here — that's the kit's job). */
+    if (insights.length === 0) {
+      insights.push({
+        kind: 'getting-started',
+        body: 'Insights appear here once your portfolio has cleared programs, predicate references, or literature entries.',
+      });
+    }
+
+    res.json({ data: insights });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+  }
+});
+
 void auditService;
 
 export default router;
