@@ -30,6 +30,14 @@ async function queryAuditEvents(pool: Pool, queryParams: any, limitVal = 10, off
     conditions.push(`user_id = $${idx++}`);
     params.push(parseInt(String(queryParams.user_id || queryParams.userId)));
   }
+  if (queryParams.entity_id || queryParams.entityId) {
+    conditions.push(`entity_id = $${idx++}`);
+    params.push(parseInt(String(queryParams.entity_id || queryParams.entityId)));
+  }
+  if (queryParams.entity_type || queryParams.entityType) {
+    conditions.push(`entity_type = $${idx++}`);
+    params.push(String(queryParams.entity_type || queryParams.entityType));
+  }
   if (queryParams.start_date || queryParams.startDate) {
     conditions.push(`timestamp >= $${idx++}`);
     params.push(new Date(String(queryParams.start_date || queryParams.startDate)));
@@ -77,11 +85,14 @@ function formatAuditRow(row: any) {
     userId: String(row.user_id || ''),
     user_id: String(row.user_id || ''),
     userName: row.user_name || 'System',
+    userRole: row.user_role || '',
     action,
     actionType: action.charAt(0) + action.slice(1).toLowerCase(),
     event_type: row.event_type || '',
     severity: row.regulatory_significant ? 'warning' : 'info',
     component: row.entity_type || 'System',
+    entityId: row.entity_id != null ? String(row.entity_id) : null,
+    entityType: row.entity_type || null,
     details: row.reason || row.comments || `${action} on ${row.entity_type || 'entity'}`,
     description: row.reason || row.comments || `${action} on ${row.entity_type || 'entity'}`,
     ipAddress: row.ip_address || '',
@@ -89,6 +100,7 @@ function formatAuditRow(row: any) {
     org_id: String(row.organization_id || ''),
     project_id: String(row.entity_id || ''),
     timestamp: row.timestamp || row.created_at,
+    metadata: row.metadata ?? null,
     // Hash chain fields for Part 11 chain integrity display
     hash: row.record_hash || null,
     sequenceNumber: row.sequence_number ?? null,

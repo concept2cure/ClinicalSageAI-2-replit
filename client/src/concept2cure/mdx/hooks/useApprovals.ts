@@ -6,11 +6,10 @@
  * Endpoint: `GET /api/approval-workflows/pending`
  * (server/routes/approval-workflow.ts → ApprovalOrchestrator.getPendingApprovals).
  *
- * Shape gap (backend → kit): the backend returns workflowId + stepName +
- * assignedTo[] but does not surface kit-side fields like `due`,
- * `signed_at`, `requested_by`, `meaning`, or stage taxonomy. We map what
- * exists; the rest fall back to '—' / undefined and are TODOs for the
- * orchestrator to enrich on the response.
+ * The orchestrator's PendingApproval now exposes `requestedByName`,
+ * `dueDate`, and `stepDescription` (joined on users / lifted from
+ * workflows.metadata.due / pulled from workflow_steps.description), so
+ * every kit field maps to a real value when the data is in place.
  *
  * Filtering: the endpoint scopes to the authenticated user's pending
  * queue across all active workflows in the org; there is no per-program
@@ -27,10 +26,14 @@ interface ServerPendingApproval {
   documentId: number;
   documentTitle: string;
   stepName: string;
+  stepDescription: string;
   stepOrder: number;
   assignedTo: string[];
   requiredActions: string[];
   workflowStartedAt: string;
+  requestedByUserId: string;
+  requestedByName: string;
+  dueDate: string | null;
 }
 
 interface PendingPayload {
@@ -61,11 +64,12 @@ function rowToKit(row: ServerPendingApproval): Approval {
     target_id:    row.documentId,
     target_kind:  'Section',
     requested:    row.workflowStartedAt,
-    requested_by: '—',                                   // TODO: orchestrator enrichment
+    requested_by: row.requestedByName || row.requestedByUserId || '—',
     signer:       row.assignedTo[0] === '*' ? 'You' : row.assignedTo[0] ?? 'You',
     role:         row.stepName,
     status:       'pending' as ApprovalStatus,
-    meaning:      row.requiredActions.join(', ') || row.stepName,
+    due:          row.dueDate ?? undefined,
+    meaning:      row.stepDescription || row.requiredActions.join(', ') || row.stepName,
   };
 }
 

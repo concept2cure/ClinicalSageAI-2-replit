@@ -7,11 +7,10 @@
  * The endpoint exposes hash chain fields (record_hash, previous_hash,
  * sequence_number) directly — perfect for the kit's `hash` / `prev`.
  *
- * Filtering: the endpoint supports `org_id`, `event_type`, `user_id`,
- * `start_date`, `end_date`, and `search`. There is no `entity_id`
- * (target) filter today — when the kit pane scopes to one section we
- * filter client-side after fetch. If section-scoped lookups become
- * expensive, add `entity_id` to the WHERE clause in audit-trail-routes.
+ * Filters supported by the endpoint: `org_id`, `event_type`, `user_id`,
+ * `entity_id`, `entity_type`, `start_date`, `end_date`, `search`.
+ * Section-scoped queries push the filter to the WHERE clause via
+ * `entity_id`; previously the hook filtered client-side.
  *
  * Returns the kit's seed data shape (AuditEvent[]) so panes can drop
  * fixtures and consume this directly.
@@ -25,11 +24,14 @@ interface ServerAuditLogRow {
   userId: string;
   user_id: string;
   userName: string;
+  userRole: string;
   action: string;
   actionType: string;
   event_type: string;
   severity: 'info' | 'warning';
   component: string;
+  entityId: string | null;
+  entityType: string | null;
   details: string;
   description: string;
   ipAddress: string;
@@ -37,6 +39,7 @@ interface ServerAuditLogRow {
   org_id: string;
   project_id: string;
   timestamp: string | null;
+  metadata: Record<string, unknown> | null;
   hash: string | null;
   sequenceNumber: number | null;
   previousHash: string | null;
@@ -81,24 +84,36 @@ function toKitKind(eventType: string): AuditKind {
 }
 
 function rowToKit(row: ServerAuditLogRow): AuditEvent {
+  const meta = row.metadata ?? {};
+  const pickString = (key: string): string | undefined => {
+    const v = (meta as Record<string, unknown>)[key];
+    return typeof v === 'string' ? v : undefined;
+  };
   return {
     id:        row.id,
     when:      row.timestamp ?? new Date().toISOString(),
     kind:      toKitKind(row.event_type),
     actor:     row.userName,
-    role:      row.actionType, // backend doesn't surface user_role on /audit/logs; closest proxy
+    role:      row.userRole || row.actionType,
     target:    row.description || row.details || row.component,
-    target_id: row.project_id || undefined,
+    target_id: row.entityId ?? row.project_id ?? undefined,
     ip:        row.ipAddress,
     hash:      row.hash ?? '',
     prev:      row.previousHash ?? '',
+    /* Optional payload fields lifted from metadata if the writer set them. */
+    sig:       pickString('sig'),
+    body:      pickString('body') ?? (row.details && toKitKind(row.event_type) === 'comment' ? row.details : undefined),
+    file:      pickString('file'),
+    diff:      pickString('diff'),
+    reason:    pickString('reason') ?? (toKitKind(row.event_type) === 'section.unlock' ? row.details : undefined),
   };
 }
 
 export interface UseAuditTrailOptions {
-  /** Filter to events whose `target_id` (entity id) equals this value.
-   *  Applied client-side because the backend has no `entity_id` query param. */
+  /** Filter to events whose `entity_id` equals this value (server-side WHERE). */
   sectionId?: string | number;
+  /** Filter to a specific entity_type (e.g. 'section', 'submission'). */
+  entityType?: string;
   /** Filter to a specific event kind (e.g. only `sign` events). */
   kind?: AuditKind;
   /** Maximum events to return. Default 200. */
@@ -131,7 +146,7 @@ export function useAuditTrail(
   const [tick, setTick] = useState<number>(0);
   const refresh = useCallback(() => setTick((t: number) => t + 1), []);
 
-  const { sectionId, kind, limit = 200 } = opts;
+  const { sectionId, entityType, kind, limit = 200 } = opts;
 
   useEffect(() => {
     if (!programIdent) {
@@ -145,6 +160,8 @@ export function useAuditTrail(
     params.set('search', programIdent);
     params.set('limit', String(limit));
     if (kind) params.set('event_type', kind);
+    if (sectionId !== undefined) params.set('entity_id', String(sectionId));
+    if (entityType) params.set('entity_type', entityType);
 
     fetch(`/api/audit/logs?${params}`, { credentials: 'include' })
       .then(async (res) => {
@@ -156,11 +173,7 @@ export function useAuditTrail(
       })
       .then((payload) => {
         if (cancelled) return;
-        let events = payload.logs.map(rowToKit);
-        if (sectionId !== undefined) {
-          const want = String(sectionId);
-          events = events.filter((e) => String(e.target_id ?? '') === want);
-        }
+        const events = payload.logs.map(rowToKit);
         setState({ events, total: payload.total, loading: false, error: null });
       })
       .catch((err: unknown) => {
