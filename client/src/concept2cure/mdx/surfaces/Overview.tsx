@@ -5,7 +5,8 @@
 
 import * as React from 'react';
 import { I } from '../icons';
-import { MDX_HEALTH, MDX_PROGRAMS, type Program } from '../data/programs';
+import { MDX_HEALTH, MDX_PROGRAMS, type Program, type DueTone } from '../data/programs';
+import { useMdxPrograms } from '../hooks/useMdxPrograms';
 import { AskAnaChip } from './AskAnaChip';
 
 const PATHWAY_LABEL = { k510: '510(k)', pma: 'PMA', cer: 'CER' } as const;
@@ -17,13 +18,54 @@ export interface OverviewProps {
   onAskAna: (text: string) => void;
 }
 
+/**
+ * Live aggregate health KPIs derived from the same source-of-truth program
+ * list, so what the user sees in the strip matches what lands in the cards
+ * below. Falls back to the kit's MDX_HEALTH constants when the live list
+ * is null (loading state — keeps the KPI strip from flashing empty).
+ */
+function deriveLiveHealth(programs: Program[]): typeof MDX_HEALTH {
+  const total = programs.length;
+  const k510 = programs.filter((p) => p.pathway === 'k510').length;
+  const pma = programs.filter((p) => p.pathway === 'pma').length;
+  const cleared = programs.filter((p) => p.status === 'complete').length;
+  const blocked = programs.filter((p) => p.status === 'blocked');
+  const inFlight = programs.filter((p) => p.stageIdx >= 5 && p.status !== 'complete').length;
+  const avgReadiness = total > 0
+    ? Math.round(programs.reduce((s, p) => s + p.readiness, 0) / total)
+    : 0;
+  const readinessTone: DueTone = avgReadiness >= 70 ? 'ok' : avgReadiness >= 40 ? 'warn' : 'err';
+  const blockedMeta = blocked.length === 0
+    ? 'None open'
+    : blocked
+        .slice(0, 3)
+        .map((p) => p.code.split(' ')[0] || p.title.split(/\s+/)[0])
+        .join(' · ');
+
+  return [
+    { label: 'Active programs',      metric: String(total),         meta: `${k510} 510(k) · ${pma} PMA · ${cleared} cleared` },
+    { label: 'Average readiness',    metric: String(avgReadiness), unit: '%', bar: { pct: avgReadiness, tone: readinessTone }, meta: 'Across MDX portfolio' },
+    { label: 'Blockers open',        metric: String(blocked.length), meta: blockedMeta, tone: blocked.length > 0 ? 'err' : 'ok' },
+    { label: 'Submissions in flight',metric: String(inFlight),       meta: 'Stages: assemble · submit' },
+  ];
+}
+
 export function Overview({ onOpenProgram, onAskAna }: OverviewProps) {
+  const live = useMdxPrograms();
+
+  /* Live data wins. Fixtures stand in only during the initial fetch (so the
+     UI doesn't flash empty) and on real fetch errors (for design preview /
+     onboarding empty-state). When live programs return zero rows, the empty
+     state is rendered intentionally — that's an accurate signal to the user. */
+  const sourcePrograms: Program[] = live.programs ?? MDX_PROGRAMS;
+  const sourceHealth = live.programs ? deriveLiveHealth(live.programs) : MDX_HEALTH;
+
   const GRID_THRESHOLD = 12;
   const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('mdx.viewMode') : null;
   const defaultView: 'grid' | 'list' =
     stored === 'list' || stored === 'grid'
       ? stored
-      : MDX_PROGRAMS.length > GRID_THRESHOLD
+      : sourcePrograms.length > GRID_THRESHOLD
       ? 'list'
       : 'grid';
   const [view, setView] = React.useState<'grid' | 'list'>(defaultView);
@@ -37,24 +79,27 @@ export function Overview({ onOpenProgram, onAskAna }: OverviewProps) {
 
   const programs = React.useMemo(
     () =>
-      MDX_PROGRAMS.filter(
+      sourcePrograms.filter(
         p =>
           (pathFilter === 'all' || p.pathway === pathFilter) &&
           (statusFilter === 'all' || p.status === statusFilter),
       ),
-    [pathFilter, statusFilter],
+    [sourcePrograms, pathFilter, statusFilter],
   );
 
-  const counts = {
-    all:      MDX_PROGRAMS.length,
-    k510:     MDX_PROGRAMS.filter(p => p.pathway === 'k510').length,
-    pma:      MDX_PROGRAMS.filter(p => p.pathway === 'pma').length,
-    cer:      MDX_PROGRAMS.filter(p => p.pathway === 'cer').length,
-    active:   MDX_PROGRAMS.filter(p => p.status === 'active').length,
-    blocked:  MDX_PROGRAMS.filter(p => p.status === 'blocked').length,
-    idle:     MDX_PROGRAMS.filter(p => p.status === 'idle').length,
-    complete: MDX_PROGRAMS.filter(p => p.status === 'complete').length,
-  };
+  const counts = React.useMemo(
+    () => ({
+      all:      sourcePrograms.length,
+      k510:     sourcePrograms.filter(p => p.pathway === 'k510').length,
+      pma:      sourcePrograms.filter(p => p.pathway === 'pma').length,
+      cer:      sourcePrograms.filter(p => p.pathway === 'cer').length,
+      active:   sourcePrograms.filter(p => p.status === 'active').length,
+      blocked:  sourcePrograms.filter(p => p.status === 'blocked').length,
+      idle:     sourcePrograms.filter(p => p.status === 'idle').length,
+      complete: sourcePrograms.filter(p => p.status === 'complete').length,
+    }),
+    [sourcePrograms],
+  );
 
   return (
     <>
@@ -62,7 +107,7 @@ export function Overview({ onOpenProgram, onAskAna }: OverviewProps) {
         <div>
           <div className="section-title">Device portfolio health</div>
           <div className="section-sub">
-            {MDX_PROGRAMS.length} active programs across 510(k), PMA and CER pathways
+            {sourcePrograms.length} active programs across 510(k), PMA and CER pathways
           </div>
         </div>
         <button
@@ -75,7 +120,7 @@ export function Overview({ onOpenProgram, onAskAna }: OverviewProps) {
         </button>
       </div>
       <div className="health">
-        {MDX_HEALTH.map((d, i) => (
+        {sourceHealth.map((d, i) => (
           <div key={i} className="health-card">
             <div className="health-label">{d.label}</div>
             <div className="health-metric">
@@ -99,7 +144,7 @@ export function Overview({ onOpenProgram, onAskAna }: OverviewProps) {
         <div>
           <div className="section-title">Programs</div>
           <div className="section-sub">
-            {programs.length} of {MDX_PROGRAMS.length} shown
+            {programs.length} of {sourcePrograms.length} shown
           </div>
         </div>
         <button
