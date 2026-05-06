@@ -21,6 +21,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { DueTone, Program, ProgramPathway, ProgramStatus } from '../data/programs';
+import {
+  REGULATORY_PATH_TO_PATHWAY,
+  PROGRAM_TYPE_TO_PATHWAY,
+  PHASE_TO_STAGE_IDX,
+  STAGE_LABELS,
+} from '../../../../../shared/constants/mdx';
 
 interface ServerProgramRow {
   id: string;
@@ -52,31 +58,12 @@ interface ListPayload {
   data: ServerProgramRow[];
 }
 
-const REGULATORY_PATH_TO_PATHWAY: Record<string, ProgramPathway> = {
-  '510k':    'k510',
-  'de_novo': 'k510',
-  'pma':     'pma',
-};
-
-const PROGRAM_TYPE_TO_PATHWAY: Record<string, ProgramPathway | null> = {
-  '510K':    'k510',
-  '510(K)':  'k510',
-  '510k':    'k510',
-  'DE_NOVO': 'k510',
-  'PMA':     'pma',
-  'CER':     'cer',
-  /* Non-MDX program types — filtered out at adapter time. */
-  'IND': null,
-  'NDA': null,
-  'BLA': null,
-};
-
 function deriveKitPathway(programType: string, regulatoryPath: string | null): ProgramPathway | null {
   if (regulatoryPath && REGULATORY_PATH_TO_PATHWAY[regulatoryPath.toLowerCase()]) {
-    return REGULATORY_PATH_TO_PATHWAY[regulatoryPath.toLowerCase()];
+    return REGULATORY_PATH_TO_PATHWAY[regulatoryPath.toLowerCase()] as ProgramPathway;
   }
   const upper = (programType ?? '').toUpperCase();
-  return PROGRAM_TYPE_TO_PATHWAY[upper] ?? null;
+  return (PROGRAM_TYPE_TO_PATHWAY[upper] ?? null) as ProgramPathway | null;
 }
 
 function deriveKitStatus(status: string | null, phase: string | null): ProgramStatus {
@@ -87,18 +74,9 @@ function deriveKitStatus(status: string | null, phase: string | null): ProgramSt
   return 'active';
 }
 
-const PHASE_STAGE_IDX: Record<string, number> = {
-  planning:           0,
-  evidence_collection: 1,
-  authoring:          3,
-  review:             4,
-  submission:         6,
-  post_market:        7,
-};
-
 function deriveStageIdx(phase: string | null, progressPercent: number | null): number {
   const phaseKey = (phase ?? '').toLowerCase();
-  if (PHASE_STAGE_IDX[phaseKey] !== undefined) return PHASE_STAGE_IDX[phaseKey];
+  if (PHASE_TO_STAGE_IDX[phaseKey] !== undefined) return PHASE_TO_STAGE_IDX[phaseKey];
   const pct = progressPercent ?? 0;
   if (pct >= 91) return 6;
   if (pct >= 71) return 5;
@@ -106,17 +84,6 @@ function deriveStageIdx(phase: string | null, progressPercent: number | null): n
   if (pct >= 16) return 2;
   return 1;
 }
-
-const STAGE_LABELS = [
-  'Intake',
-  'Classify',
-  'Predicate search',
-  'Performance Testing',
-  'Substantial Equivalence',
-  'Assemble eSTAR',
-  'Submit',
-  'Cleared',
-];
 
 function deriveStageLabel(idx: number): string {
   return STAGE_LABELS[Math.max(0, Math.min(idx, STAGE_LABELS.length - 1))];

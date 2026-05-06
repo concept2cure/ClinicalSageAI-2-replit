@@ -16,6 +16,7 @@ import type {
   SubmissionLogEntry,
   SubmissionStage,
 } from '../data/workbench';
+import { FAMILY_TO_SUBMISSION_PATHWAY } from '../../../../../shared/constants/mdx';
 
 interface ServerPackage {
   id: number;
@@ -37,15 +38,6 @@ interface ListPayload {
   data: ServerPackage[];
 }
 
-const FAMILY_TO_PATHWAY: Record<string, Submission['pathway']> = {
-  '510k':    '510(k)',
-  '510(k)':  '510(k)',
-  'pma':     'PMA',
-  'cer':     'CER',
-  'ivdr_td': 'EU MDR',
-  'eu_mdr':  'EU MDR',
-  'ind':     'IND',
-};
 
 /* status → stage mapping. The schema has only active/completed/cancelled.
    Lifting to the kit's 7 stages requires structured stage info, which we
@@ -95,7 +87,7 @@ function deriveTone(stage: Submission['stage'], status: Submission['status']): S
 function adaptPackage(p: ServerPackage): Submission {
   const status = deriveStatus(p.status, p.metadata);
   const stage  = deriveStage(p.status, p.metadata);
-  const pathway = FAMILY_TO_PATHWAY[p.packageFamily.toLowerCase()] ?? p.packageFamily;
+  const pathway = (FAMILY_TO_SUBMISSION_PATHWAY[p.packageFamily.toLowerCase()] ?? p.packageFamily) as Submission['pathway'];
   const code = (p.metadata && typeof p.metadata.programCode === 'string'
     ? (p.metadata.programCode as string)
     : null) ?? `pkg-${p.id}`;

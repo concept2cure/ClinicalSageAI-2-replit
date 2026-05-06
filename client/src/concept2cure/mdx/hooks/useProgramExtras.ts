@@ -161,7 +161,13 @@ export function useProgramExtras(programId: string | null): UseProgramExtrasResu
       }
     };
 
-    Promise.all([
+    /* Promise.allSettled (not Promise.all) so a single endpoint failure
+       — say the safety_signals table missing on a beta cluster — does
+       not leave the hook stuck in loading:true forever. fetchJson()
+       above already returns null on caught errors, but
+       Promise.allSettled is defense-in-depth: a thrown exception
+       anywhere in the chain still resolves the outer promise. */
+    Promise.allSettled([
       fetchJson<Payload<ActivityEvent>>('/activity?limit=20'),
       fetchJson<Payload<ProgramMilestone>>('/milestones'),
       fetchJson<Payload<RimRecommendation>>('/rim-recommendations'),
@@ -170,22 +176,37 @@ export function useProgramExtras(programId: string | null): UseProgramExtrasResu
       fetchJson<Payload<LiteratureBucket> & { total?: number }>('/literature'),
       fetchJson<Payload<PmaModule>>('/pma-modules'),
       fetchJson<Payload<TrialMetric>>('/pma-trial-metrics'),
-    ]).then(([act, ms, recs, ci, sig, lit, mods, trial]) => {
-      if (cancelled) return;
-      setState({
-        activity:        act?.data  ?? null,
-        milestones:      ms?.data   ?? null,
-        rimRecs:         recs?.data ?? null,
-        changeImpact:    ci?.data   ?? null,
-        safetySignals:   sig?.data  ?? null,
-        literature:      lit?.data  ?? null,
-        literatureTotal: lit?.total ?? 0,
-        pmaModules:      mods?.data ?? null,
-        pmaTrialMetrics: trial?.data ?? null,
-        loading: false,
-        error: null,
+    ])
+      .then((results) => {
+        if (cancelled) return;
+        const [act, ms, recs, ci, sig, lit, mods, trial] = results.map((r) =>
+          r.status === 'fulfilled' ? r.value : null,
+        );
+        const litResult = lit as (Payload<LiteratureBucket> & { total?: number }) | null;
+        setState({
+          activity:        (act as Payload<ActivityEvent>     | null)?.data  ?? null,
+          milestones:      (ms  as Payload<ProgramMilestone>  | null)?.data  ?? null,
+          rimRecs:         (recs as Payload<RimRecommendation> | null)?.data ?? null,
+          changeImpact:    (ci  as Payload<ChangeImpactEntry> | null)?.data  ?? null,
+          safetySignals:   (sig as Payload<SafetySignal>      | null)?.data  ?? null,
+          literature:      litResult?.data ?? null,
+          literatureTotal: litResult?.total ?? 0,
+          pmaModules:      (mods  as Payload<PmaModule>  | null)?.data ?? null,
+          pmaTrialMetrics: (trial as Payload<TrialMetric> | null)?.data ?? null,
+          loading: false,
+          error: null,
+        });
+      })
+      .catch((err: unknown) => {
+        /* Defensive: if Promise.allSettled itself somehow rejects (it
+           shouldn't), record the error rather than hanging in loading. */
+        if (cancelled) return;
+        setState((s) => ({
+          ...s,
+          loading: false,
+          error: err instanceof Error ? err.message : 'Failed to load program extras',
+        }));
       });
-    });
 
     return () => { cancelled = true; };
   }, [programId]);

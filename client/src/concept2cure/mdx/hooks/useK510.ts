@@ -25,6 +25,11 @@
 
 import { useEffect, useState } from 'react';
 import type { EstarRow, EstarStatus, Predicate, PredicateStatus, SeRow } from '../data/k510';
+import {
+  ESTAR_STATUS_MAP,
+  PREDICATE_STATUS_MAP,
+  VERDICT_MAP,
+} from '../../../../../shared/constants/mdx';
 
 /* ─── Shared types ──────────────────────────────────────────────────── */
 
@@ -100,20 +105,9 @@ interface DocumentPreviewPayload {
   sections: ServerSection[];
 }
 
-const ESTAR_STATUS_MAP: Record<string, EstarStatus> = {
-  validated:        'complete',
-  approved:         'complete',
-  ready_for_review: 'review',
-  in_review:        'review',
-  drafting:         'draft',
-  todo:             'empty',
-  not_applicable:   'na',
-  na:               'na',
-};
-
 function adaptSection(s: ServerSection): EstarRow {
   const raw = (s.status ?? 'todo').toLowerCase();
-  const mapped = ESTAR_STATUS_MAP[raw];
+  const mapped = ESTAR_STATUS_MAP[raw] as EstarStatus | undefined;
   let status: EstarStatus;
   if (mapped !== undefined) {
     status = mapped;
@@ -180,15 +174,6 @@ interface CandidatesPayload {
   data?: ServerPredicateCandidate[];
 }
 
-const PREDICATE_STATUS_MAP: Record<string, PredicateStatus> = {
-  selected:  'selected',
-  candidate: 'candidate',
-  reviewed:  'reviewed',
-  rejected:  'rejected',
-  approved:  'selected',
-  pending:   'candidate',
-};
-
 function adaptPredicate(c: ServerPredicateCandidate): Predicate | null {
   const k = c.k_number ?? c.kNumber;
   const name = c.device_name ?? c.deviceName;
@@ -197,7 +182,7 @@ function adaptPredicate(c: ServerPredicateCandidate): Predicate | null {
   /* Shadow may return 0..1 or 0..100; normalize to integer percent. */
   const match = matchRaw > 0 && matchRaw <= 1 ? Math.round(matchRaw * 100) : Math.round(matchRaw);
   const cleared = c.decision_date ?? c.decisionDate ?? c.cleared ?? c.cleared_date ?? '';
-  const status = PREDICATE_STATUS_MAP[(c.status ?? '').toLowerCase()] ?? 'candidate';
+  const status: PredicateStatus = (PREDICATE_STATUS_MAP[(c.status ?? '').toLowerCase()] ?? 'candidate') as PredicateStatus;
   return {
     k,
     name,
@@ -244,15 +229,6 @@ interface SeMatrixPayload {
   data?: ServerSeRow[];
 }
 
-const VERDICT_MAP: Record<string, SeRow['verdict']> = {
-  same:        'same',
-  identical:   'same',
-  equivalent:  'equivalent',
-  similar:     'equivalent',
-  different:   'different',
-  diverges:    'different',
-};
-
 function adaptSeRow(r: ServerSeRow): SeRow | null {
   const attr = r.attribute ?? r.attr;
   if (!attr) return null;
@@ -260,7 +236,7 @@ function adaptSeRow(r: ServerSeRow): SeRow | null {
     attr,
     subject:   r.subject ?? r.subject_value ?? r.subjectValue ?? '',
     predicate: r.predicate ?? r.predicate_value ?? r.predicateValue ?? '',
-    verdict:   VERDICT_MAP[(r.verdict ?? 'equivalent').toLowerCase()] ?? 'equivalent',
+    verdict:   (VERDICT_MAP[(r.verdict ?? 'equivalent').toLowerCase()] ?? 'equivalent') as SeRow['verdict'],
     note:      r.note,
   };
 }

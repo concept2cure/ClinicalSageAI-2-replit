@@ -24,6 +24,7 @@ import { db } from '../db';
 import { and, desc, eq } from 'drizzle-orm';
 import { savedPrecedentQueries } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger';
+import { resolveOrgId, resolveUserId } from '../types/auth-request';
 
 const router = Router();
 const log = createScopedLogger('saved-precedent-queries');
@@ -66,22 +67,9 @@ const patchSchema = z
   })
   .strict();
 
-function getOrgId(req: Request): number | null {
-  const v =
-    (req as any).organizationId ??
-    (req as any).tenantContext?.organizationId ??
-    (req as any).user?.organizationId ??
-    (req as any).tenantId;
-  const n = Number(v);
-  return Number.isFinite(n) && n > 0 ? n : null;
-}
-
-function getUserId(req: Request): number | null {
-  const raw = (req as any).user?.id;
-  if (raw == null) return null;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
-  return Number.isFinite(n) ? n : null;
-}
+/* getOrgId / getUserId are thin aliases over the shared helpers. */
+const getOrgId  = resolveOrgId;
+const getUserId = resolveUserId;
 
 router.get('/', async (req: Request, res: Response) => {
   try {

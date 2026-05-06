@@ -32,6 +32,11 @@ import type {
   ValidationSummary,
 } from '../data/workbench';
 import type { Program } from '../data/programs';
+import {
+  STATUS_TO_TASK_COL,
+  TYPE_TO_TASK_KIND,
+  PATHWAY_LABEL,
+} from '../../../../../shared/constants/mdx';
 
 interface AsyncState<T> {
   data: T | null;
@@ -94,27 +99,6 @@ interface WorkloadPayload {
   rows?: ServerWorkItem[];
 }
 
-const STATUS_TO_COL: Record<string, TaskCol> = {
-  todo:       'todo',
-  pending:    'todo',
-  in_progress:'doing',
-  doing:      'doing',
-  ready_for_review: 'review',
-  review:     'review',
-  blocked:    'blocked',
-  done:       'done',
-  completed:  'done',
-};
-
-const TYPE_TO_KIND: Record<string, Task['kind']> = {
-  edit:    'edit',
-  draft:   'edit',
-  authoring: 'edit',
-  review:  'review',
-  approval:'sign',
-  sign:    'sign',
-  signoff: 'sign',
-};
 
 function formatDue(iso: string | undefined): string {
   if (!iso) return '—';
@@ -137,8 +121,8 @@ function dueToTone(iso: string | undefined): Tone {
 }
 
 function adaptTask(w: ServerWorkItem): Task {
-  const col = STATUS_TO_COL[(w.status ?? '').toLowerCase()] ?? 'todo';
-  const kind = TYPE_TO_KIND[(w.workItemType ?? w.type ?? '').toLowerCase()] ?? 'edit';
+  const col = (STATUS_TO_TASK_COL[(w.status ?? '').toLowerCase()] ?? 'todo') as TaskCol;
+  const kind = (TYPE_TO_TASK_KIND[(w.workItemType ?? w.type ?? '').toLowerCase()] ?? 'edit') as Task['kind'];
   const id = String(w.workItemId ?? w.id ?? Math.random().toString(36).slice(2, 10));
   return {
     id,
@@ -283,12 +267,6 @@ interface BlockersPayload {
   blockers?: ServerBlocker[];
   rows?: ServerBlocker[];
 }
-
-const PATHWAY_LABEL: Record<string, string> = {
-  k510: '510(k)',
-  pma:  'PMA',
-  cer:  'CER',
-};
 
 function adaptBlockerToRule(b: ServerBlocker): ValidationRule {
   const sev: ValidationRule['severity'] =

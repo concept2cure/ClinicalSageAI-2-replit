@@ -27,6 +27,17 @@ import { users, auditLogs, cerv2510kSections, deviceTestStandards } from '../../
 import { qSubmissions, qSubMeetings, qSubQuestions, qSubCommitments } from '../../shared/schema/q-sub';
 import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger';
+import { resolveOrgId } from '../types/auth-request';
+import {
+  SIGNAL_SOURCE_MAP,
+  ACTION_TO_SEVERITY,
+  STATUS_TO_KIT,
+  ACTION_TO_VERB,
+  type SignalSource,
+  type SignalSeverity,
+  type SignalKitStatus,
+  type AuditVerb,
+} from '../../shared/constants/mdx';
 
 const router = Router();
 const log = createScopedLogger('regulatory-programs');
@@ -39,14 +50,61 @@ function fail(res: Response, where: string, err: unknown): void {
   res.status(500).json({ error: message });
 }
 
-function getOrgId(req: Request): number | null {
-  const v =
-    (req as any).organizationId ??
-    (req as any).tenantContext?.organizationId ??
-    (req as any).user?.organizationId ??
-    (req as any).tenantId;
-  const n = Number(v);
-  return Number.isFinite(n) && n > 0 ? n : null;
+/* getOrgId is now a thin alias over the shared resolveOrgId helper. */
+const getOrgId = resolveOrgId;
+
+/* ─── Shared infrastructure types ──────────────────────────────────────
+   pg's `Error.code` is the 5-character SQLSTATE. We narrow on it to
+   tolerate optional / not-yet-provisioned tables without losing real
+   exceptions. Codes used:
+     42P01 = undefined_table          (table missing)
+     3F000 = invalid_schema_name      (schema missing — clinical_ops)
+     42883 = undefined_function       (function signature mismatch — regexp_matches) */
+interface PgError extends Error {
+  code?: string;
+}
+
+function isPgUndefinedTable(err: unknown): boolean {
+  return err instanceof Error && (err as PgError).code === '42P01';
+}
+
+/* ─── Postgres row shapes for raw pool.query() reads ─────────────────
+   Drizzle covers schema-aware queries, but several endpoints reach
+   for raw SQL (regex over text columns, schemas Drizzle doesn't know
+   about like clinical_ops). Each raw query has a typed row interface
+   here so handlers can map without `(r: any)`. */
+
+interface SafetySignalDbRow {
+  id: string | number;
+  signal_source: string;
+  description: string | null;
+  detected_at: Date | string;
+  evaluation_status: string;
+  action: string;
+}
+
+interface SafetySignalCountRow {
+  signal_source: string;
+  n: number;
+}
+
+interface ClinicalOpsStudyRow {
+  id: string;
+  name: string;
+  protocol: string;
+  phase: string;
+  status: string;
+  indication: string;
+  target_enrollment: number | null;
+  enrolled: number | null;
+  sites: number | null;
+  active_sites: number | null;
+  therapeutic_area: string | null;
+  start_date: Date | string | null;
+  estimated_end_date: Date | string | null;
+  org_id: string;
+  created_at: Date | string;
+  updated_at: Date | string;
 }
 
 interface ProgramRowWithLead {
@@ -267,11 +325,7 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
         changedFields.push(...Object.keys(newVals));
       }
       const action = (e.action ?? 'updated').toLowerCase();
-      const verb =
-        action === 'create' || action === 'created' ? 'created'
-        : action === 'delete' || action === 'deleted' ? 'deleted'
-        : action === 'approve' || action === 'approved' ? 'approved'
-        : 'updated';
+      const verb: AuditVerb = ACTION_TO_VERB[action] ?? 'updated';
       const what = changedFields.length === 0
         ? `${verb} program`
         : `${verb} ${changedFields.slice(0, 3).join(', ')}${changedFields.length > 3 ? ' …' : ''}`;
@@ -677,36 +731,13 @@ router.get('/:id/change-impact', async (req: Request, res: Response) => {
 */
 interface SafetySignalRow {
   id: string;
-  source: 'FAERS' | 'MAUDE' | 'Eudamed' | 'Literature' | 'Spontaneous';
+  source: SignalSource;
   event: string;
   count: number;
-  severity: 'critical' | 'serious' | 'moderate' | 'low';
-  status: 'included' | 'excluded' | 'review';
+  severity: SignalSeverity;
+  status: SignalKitStatus;
   detectedAt: string;
 }
-
-const SIGNAL_SOURCE_MAP: Record<string, SafetySignalRow['source']> = {
-  spontaneous:    'Spontaneous',
-  clinical_trial: 'FAERS',
-  literature:     'Literature',
-  registry:       'Eudamed',
-};
-
-const ACTION_TO_SEVERITY: Record<string, SafetySignalRow['severity']> = {
-  withdrawal:   'critical',
-  rems:         'serious',
-  dear_doctor:  'serious',
-  label_update: 'moderate',
-  none:         'low',
-};
-
-const STATUS_TO_KIT: Record<string, SafetySignalRow['status']> = {
-  new:              'review',
-  under_evaluation: 'review',
-  confirmed:        'included',
-  refuted:          'excluded',
-  closed:           'excluded',
-};
 
 router.get('/:id/safety-signals', async (req: Request, res: Response) => {
   try {
@@ -723,9 +754,9 @@ router.get('/:id/safety-signals', async (req: Request, res: Response) => {
 
     /* safety_signals.organization_id is text; cast both sides for the
        comparison so int orgIds match the existing string-shaped data. */
-    let rows: any[] = [];
+    let rows: SafetySignalDbRow[] = [];
     try {
-      const result = await pool.query(
+      const result = await pool.query<SafetySignalDbRow>(
         `SELECT id, signal_source, description, detected_at, evaluation_status, action
            FROM safety_signals
           WHERE organization_id::text = $1::text
@@ -735,34 +766,34 @@ router.get('/:id/safety-signals', async (req: Request, res: Response) => {
         [String(orgId), id],
       );
       rows = result.rows;
-    } catch (err: any) {
+    } catch (err: unknown) {
       /* Table may not exist in all environments — return empty list. */
-      if (err?.code !== '42P01') throw err;
+      if (!isPgUndefinedTable(err)) throw err;
     }
 
     /* Count related adverse events per signal source — a single batch
        group-by per call. */
     let countsBySource: Record<string, number> = {};
     try {
-      const aeCounts = await pool.query(
+      const aeCounts = await pool.query<SafetySignalCountRow>(
         `SELECT signal_source, COUNT(*)::int AS n
            FROM safety_signals
           WHERE organization_id::text = $1::text
           GROUP BY signal_source`,
         [String(orgId)],
       );
-      countsBySource = Object.fromEntries(aeCounts.rows.map((r: any) => [r.signal_source, r.n]));
+      countsBySource = Object.fromEntries(aeCounts.rows.map((r) => [r.signal_source, r.n]));
     } catch {
       /* fall through */
     }
 
-    const data: SafetySignalRow[] = rows.map((r: any) => ({
+    const data: SafetySignalRow[] = rows.map((r) => ({
       id:         String(r.id),
-      source:     SIGNAL_SOURCE_MAP[r.signal_source] ?? 'Spontaneous',
+      source:     (SIGNAL_SOURCE_MAP[r.signal_source] ?? 'Spontaneous') as SignalSource,
       event:      String(r.description ?? '').slice(0, 160),
       count:      countsBySource[r.signal_source] ?? 1,
-      severity:   ACTION_TO_SEVERITY[r.action] ?? 'low',
-      status:     STATUS_TO_KIT[r.evaluation_status] ?? 'review',
+      severity:   (ACTION_TO_SEVERITY[r.action] ?? 'low') as SignalSeverity,
+      status:     (STATUS_TO_KIT[r.evaluation_status] ?? 'review') as SignalKitStatus,
       detectedAt: r.detected_at instanceof Date ? r.detected_at.toISOString() : String(r.detected_at),
     }));
 
@@ -814,7 +845,7 @@ router.get('/:id/literature', async (req: Request, res: Response) => {
 
     /* Aggregate from literature_entries (the persisted result cache). */
     try {
-      const result = await pool.query(
+      const result = await pool.query<{ year: number; n: number }>(
         `SELECT EXTRACT(YEAR FROM publication_date)::int AS year, COUNT(*)::int AS n
            FROM literature_entries
           WHERE organization_id::text = $1::text
@@ -824,13 +855,13 @@ router.get('/:id/literature', async (req: Request, res: Response) => {
           ORDER BY 1`,
         [String(orgId), `%${productName}%`, `${currentYear - 5}-01-01`],
       );
-      const byYear = new Map<number, number>(result.rows.map((r: any) => [r.year, r.n]));
+      const byYear = new Map<number, number>(result.rows.map((r) => [r.year, r.n]));
       for (const b of buckets) {
         const y = byYear.get(b.year);
         if (y) b.hits = y;
       }
-    } catch (err: any) {
-      if (err?.code !== '42P01') throw err;
+    } catch (err: unknown) {
+      if (!isPgUndefinedTable(err)) throw err;
       /* literature_entries table missing — return empty buckets. */
     }
 
@@ -981,9 +1012,9 @@ router.get('/:id/pma-trial-metrics', async (req: Request, res: Response) => {
     const overrideStudyId = typeof meta.clinicalStudyId === 'string' ? meta.clinicalStudyId : null;
     const productLike = `%${(program.productName ?? program.name ?? '').slice(0, 60)}%`;
 
-    let study: any | null = null;
+    let study: ClinicalOpsStudyRow | null = null;
     try {
-      const r = await pool.query(
+      const r = await pool.query<ClinicalOpsStudyRow>(
         overrideStudyId
           ? `SELECT * FROM clinical_ops.studies WHERE id = $1 AND org_id::text = $2 LIMIT 1`
           : `SELECT * FROM clinical_ops.studies
@@ -993,8 +1024,10 @@ router.get('/:id/pma-trial-metrics', async (req: Request, res: Response) => {
         overrideStudyId ? [overrideStudyId, String(orgId)] : [String(orgId), productLike],
       );
       study = r.rows[0] ?? null;
-    } catch (err: any) {
-      if (err?.code !== '42P01' && err?.code !== '3F000') throw err;
+    } catch (err: unknown) {
+      const code = (err as PgError).code;
+      /* 42P01 = undefined_table; 3F000 = invalid_schema_name (clinical_ops missing). */
+      if (code !== '42P01' && code !== '3F000') throw err;
     }
 
     const data: TrialMetric[] = [];
@@ -1019,22 +1052,22 @@ router.get('/:id/pma-trial-metrics', async (req: Request, res: Response) => {
     /* AE rate from deviations table (if it exists). */
     let aeRate: number | null = null;
     try {
-      const aeQ = await pool.query(
+      const aeQ = await pool.query<{ n: number }>(
         `SELECT COUNT(*)::int AS n FROM clinical_ops.deviations
           WHERE study_id = $1 AND severity IN ('serious','critical')`,
         [study.id],
       );
       const ae = aeQ.rows[0]?.n ?? 0;
       aeRate = enrolled > 0 ? Math.round((ae / enrolled) * 1000) / 10 : 0;
-    } catch (err: any) {
-      if (err?.code !== '42P01') throw err;
+    } catch (err: unknown) {
+      if (!isPgUndefinedTable(err)) throw err;
     }
 
     /* Endpoints achieved from clinical_ops.endpoint_results (best-effort). */
     let endpointsAchieved: number | null = null;
     let endpointsTotal: number | null = null;
     try {
-      const epQ = await pool.query(
+      const epQ = await pool.query<{ achieved: number; total: number }>(
         `SELECT
             COUNT(*) FILTER (WHERE status = 'achieved')::int AS achieved,
             COUNT(*)::int AS total
@@ -1044,8 +1077,8 @@ router.get('/:id/pma-trial-metrics', async (req: Request, res: Response) => {
       );
       endpointsAchieved = epQ.rows[0]?.achieved ?? null;
       endpointsTotal    = epQ.rows[0]?.total ?? null;
-    } catch (err: any) {
-      if (err?.code !== '42P01') throw err;
+    } catch (err: unknown) {
+      if (!isPgUndefinedTable(err)) throw err;
     }
 
     data.push(
@@ -1149,7 +1182,7 @@ router.get('/portfolio-insights', async (req: Request, res: Response) => {
 
     /* Insight 2 — most-common predicate K-numbers across sections. */
     try {
-      const r = await pool.query(
+      const r = await pool.query<{ k: string; programs: number }>(
         `SELECT match[1] AS k, COUNT(DISTINCT s.id)::int AS programs
            FROM cerv2_510k_sections s,
                 regexp_matches(s.content, '\\b(K\\d{6})\\b', 'g') AS match
@@ -1160,21 +1193,23 @@ router.get('/portfolio-insights', async (req: Request, res: Response) => {
         [orgId],
       );
       if (r.rows.length > 0) {
-        const top = r.rows.map((row: any) => `${row.k} (${row.programs})`).join(', ');
+        const top = r.rows.map((row) => `${row.k} (${row.programs})`).join(', ');
         insights.push({
           kind: 'common-predicate',
           body: `Most-referenced predicates across your dossier: ${top}.`,
         });
       }
-    } catch (err: any) {
-      if (err?.code !== '42P01' && err?.code !== '42883') throw err;
+    } catch (err: unknown) {
+      const code = (err as PgError).code;
+      /* 42P01 = undefined_table; 42883 = undefined_function (regexp_matches signature). */
+      if (code !== '42P01' && code !== '42883') throw err;
     }
 
     /* Insight 3 — literature density. */
     try {
       const productNames = programs.map(p => p.productName ?? p.name).filter(Boolean);
       if (productNames.length > 0) {
-        const r = await pool.query(
+        const r = await pool.query<{ total: number }>(
           `SELECT COUNT(*)::int AS total
              FROM literature_entries
             WHERE organization_id::text = $1::text`,
@@ -1190,8 +1225,8 @@ router.get('/portfolio-insights', async (req: Request, res: Response) => {
           });
         }
       }
-    } catch (err: any) {
-      if (err?.code !== '42P01') throw err;
+    } catch (err: unknown) {
+      if (!isPgUndefinedTable(err)) throw err;
     }
 
     /* If we couldn't compute any data-backed insights, return a hint
