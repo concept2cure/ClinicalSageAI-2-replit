@@ -47,6 +47,11 @@ interface ServerSection {
   isRequired: boolean;
   level: number;
   displayOrder: number;
+  /* Draft provenance (added 20260506) — set when AnA drafted the section
+     via write_kit_section and the user hasn't accepted. */
+  draftSource?: string | null;
+  draftedAt?: string | null;
+  draftedSummary?: string | null;
 }
 
 interface DocumentPreviewPayload {
@@ -76,11 +81,23 @@ function adaptSection(s: ServerSection): EstarRow {
   const id = typeof s.sectionNumber === 'number'
     ? s.sectionNumber
     : Number.parseInt(String(s.sectionNumber), 10) || s.id;
+  /* Surface AnA's draft when present + not yet accepted. The server clears
+     draftSource on accept, so the affordance disappears automatically. */
+  const draft =
+    s.draftSource === 'ana' && s.draftedAt
+      ? {
+          source: 'ana' as const,
+          at: s.draftedAt,
+          summary: s.draftedSummary ?? undefined,
+          rowId: s.id,
+        }
+      : null;
   return {
     id,
     label: s.sectionTitle ?? s.sectionKey ?? `Section ${id}`,
     status,
     blocker,
+    draft,
   } as EstarRow;
 }
 
@@ -89,6 +106,9 @@ export interface UseK510EstarResult {
   blockerCount: number;
   loading: boolean;
   error: string | null;
+  /** Re-fetch the section list. Called by the AnA draft banner after a
+   *  successful accept so the affordance disappears from the list. */
+  refresh: () => void;
 }
 
 /**
@@ -111,14 +131,15 @@ export function useK510EstarSections(projectIdent: string | null): UseK510EstarR
   const url = projectIdent
     ? `/api/510k/projects/${encodeURIComponent(projectIdent)}/document-preview`
     : null;
-  const { data, loading, error } = useFetchJson<DocumentPreviewPayload>(url);
-  if (!data) return { rows: null, blockerCount: 0, loading, error };
+  const { data, loading, error, refresh } = useFetchJson<DocumentPreviewPayload>(url);
+  if (!data) return { rows: null, blockerCount: 0, loading, error, refresh };
   const rows = data.sections.map(adaptSection).sort((a, b) => a.id - b.id);
   return {
     rows,
     blockerCount: rows.filter((r) => r.blocker).length,
     loading,
     error,
+    refresh,
   };
 }
 

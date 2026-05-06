@@ -1,24 +1,24 @@
 /**
- * Claude Services — Public API
+ * AnA Services — Public API
  *
- * All Claude/Anthropic AI integrations exported from a single entry point.
+ * All AnA AI integrations exported from a single entry point.
  */
 
 export {
-  ClaudeDocumentDraftingService,
-  getClaudeDraftingService,
+  AnaDocumentDraftingService,
+  getAnaDraftingService,
   type DocumentDraftRequest,
   type DocumentDraftResponse,
   type VisionAnalysisRequest,
   type BatchDocumentRequest,
   type RegulatoryFramework,
-} from './ClaudeDocumentDraftingService';
+} from './AnaDocumentDraftingService';
 
 export {
   DOCUMENT_DRAFTING_TOOLS,
   COMPLIANCE_REVIEW_TOOLS,
   GAP_ANALYSIS_TOOLS,
-  ALL_CLAUDE_TOOLS,
+  ALL_ANA_TOOLS,
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
   LOOKUP_FDA_GUIDANCE,
@@ -28,11 +28,11 @@ export {
   GENERATE_CITATION,
   ANALYZE_PREDICATE_DEVICE,
   EXTRACT_DOCUMENT_STRUCTURE,
-} from './ClaudeToolDefinitions';
+} from './AnaToolDefinitions';
 
 export {
   executeAgenticLoop,
   registerToolHandler,
   getAvailableTools,
   type AgenticOptions,
-} from './ClaudeToolExecutor';
+} from './AnaToolExecutor';

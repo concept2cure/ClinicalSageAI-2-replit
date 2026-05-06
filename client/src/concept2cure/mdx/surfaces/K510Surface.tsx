@@ -9,6 +9,7 @@ import { K510_ESTAR, K510_PREDICATES, K510_SE_ROWS, K510_STAGES } from '../data/
 import type { Program } from '../data/programs';
 import { useK510EstarSections, useK510Predicates, useK510SeMatrix } from '../hooks/useK510';
 import { AskAnaChip } from './AskAnaChip';
+import { AnaDraftBanner } from '../components/AnaDraftBanner';
 
 export interface K510SurfaceProps {
   program: Program | null;
@@ -371,17 +372,29 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
             </div>
             <div className="estar">
               {sourceEstar.map(s => (
-                <button
-                  key={s.id}
-                  className={`estar-row ${s.blocker ? 'blocker' : ''}`}
-                  onClick={() => onOpenEditor && onOpenEditor(s.id)}
-                  title={`Open ${s.label} in editor`}
-                >
-                  <div className="estar-num">§{String(s.id).padStart(2, '0')}</div>
-                  <div className="estar-label">{s.label}</div>
-                  <span className={`status-pill ${s.status}`}>{s.status}</span>
-                  <span className="estar-open">{I.arrowRight}</span>
-                </button>
+                <React.Fragment key={s.id}>
+                  <button
+                    className={`estar-row ${s.blocker ? 'blocker' : ''}`}
+                    onClick={() => onOpenEditor && onOpenEditor(s.id)}
+                    title={`Open ${s.label} in editor`}
+                  >
+                    <div className="estar-num">§{String(s.id).padStart(2, '0')}</div>
+                    <div className="estar-label">{s.label}</div>
+                    <span className={`status-pill ${s.status}`}>{s.status}</span>
+                    <span className="estar-open">{I.arrowRight}</span>
+                  </button>
+                  {/* Surface AnA's pending draft so the user can accept or
+                      open the editor to refine. The banner reads the live
+                      draft provenance from the hook and disappears after
+                      a successful accept (estar.refresh re-fetches). */}
+                  {s.draft ? (
+                    <AnaDraftBanner
+                      draft={s.draft}
+                      onRefine={() => onOpenEditor && onOpenEditor(s.id)}
+                      onAccepted={estar.refresh}
+                    />
+                  ) : null}
+                </React.Fragment>
               ))}
             </div>
           </div>

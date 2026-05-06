@@ -1,7 +1,7 @@
 /**
- * Claude Document Drafting Service
+ * AnA Document Drafting Service
  *
- * Production-grade service for generating regulatory documents using Claude Opus 4.6
+ * Production-grade service for generating regulatory documents using the Opus model 4.6
  * with extended thinking, prompt caching, tool use, and streaming.
  *
  * Features:
@@ -17,19 +17,19 @@ import { getGateway } from '../ai-gateway/gateway';
 import type {
   GatewayRequest,
   GatewayResponse,
-  ClaudeEnhancedResponse,
+  AnaGatewayResponse,
   StreamCallback,
   ImageBlock,
   ExtendedThinkingConfig,
-  ClaudeTool,
-  ClaudeToolResult,
+  AnaTool,
+  AnaToolResult,
   TaskType,
 } from '../ai-gateway/types';
 import {
   DOCUMENT_DRAFTING_TOOLS,
   COMPLIANCE_REVIEW_TOOLS,
   GAP_ANALYSIS_TOOLS,
-} from './ClaudeToolDefinitions';
+} from './AnaToolDefinitions';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Regulatory System Prompts (cached for cost efficiency)
@@ -213,18 +213,18 @@ export interface BatchDocumentRequest {
 // Service Class
 // ─────────────────────────────────────────────────────────────────────────────
 
-export class ClaudeDocumentDraftingService {
-  private static instance: ClaudeDocumentDraftingService;
+export class AnaDocumentDraftingService {
+  private static instance: AnaDocumentDraftingService;
 
-  static getInstance(): ClaudeDocumentDraftingService {
+  static getInstance(): AnaDocumentDraftingService {
     if (!this.instance) {
-      this.instance = new ClaudeDocumentDraftingService();
+      this.instance = new AnaDocumentDraftingService();
     }
     return this.instance;
   }
 
   /**
-   * Draft a regulatory document section using Claude with full feature set.
+   * Draft a regulatory document section using the model with full feature set.
    */
   async draftDocument(req: DocumentDraftRequest): Promise<DocumentDraftResponse> {
     const gateway = getGateway();
@@ -252,7 +252,7 @@ export class ClaudeDocumentDraftingService {
       userPrompt += `\n\nEXISTING CONTENT TO REVISE:\n${req.existingContent}`;
     }
 
-    // Build gateway request with Claude features
+    // Build gateway request
     const gatewayRequest: GatewayRequest = {
       taskType: 'document_drafting',
       messages: [
@@ -267,7 +267,7 @@ export class ClaudeDocumentDraftingService {
       organizationId: req.organizationId,
       userId: req.userId,
       projectId: req.projectId,
-      callerModule: 'ClaudeDocumentDraftingService',
+      callerModule: 'AnaDocumentDraftingService',
       metadata: {
         framework: req.framework,
         sectionType: req.sectionType,
@@ -294,7 +294,7 @@ export class ClaudeDocumentDraftingService {
       gatewayRequest.onStream = req.onStream;
     }
 
-    const response = await gateway.route(gatewayRequest) as ClaudeEnhancedResponse;
+    const response = await gateway.route(gatewayRequest) as AnaGatewayResponse;
 
     return {
       content: response.content,
@@ -312,7 +312,7 @@ export class ClaudeDocumentDraftingService {
   }
 
   /**
-   * Analyze a scanned document or image using Claude Vision.
+   * Analyze a scanned document or image using the Vision-capable model.
    */
   async analyzeImage(req: VisionAnalysisRequest): Promise<DocumentDraftResponse> {
     const gateway = getGateway();
@@ -348,7 +348,7 @@ export class ClaudeDocumentDraftingService {
       maxTokens: 4096,
       organizationId: req.organizationId,
       userId: req.userId,
-      callerModule: 'ClaudeDocumentDraftingService.vision',
+      callerModule: 'AnaDocumentDraftingService.vision',
     };
 
     if (req.enableThinking) {
@@ -360,7 +360,7 @@ export class ClaudeDocumentDraftingService {
       gatewayRequest.onStream = req.onStream;
     }
 
-    const response = await gateway.route(gatewayRequest) as ClaudeEnhancedResponse;
+    const response = await gateway.route(gatewayRequest) as AnaGatewayResponse;
 
     return {
       content: response.content,
@@ -376,7 +376,7 @@ export class ClaudeDocumentDraftingService {
   }
 
   /**
-   * Run compliance review on a document section using Claude with compliance tools.
+   * Run compliance review on a document section using the model with compliance tools.
    */
   async reviewCompliance(
     content: string,
@@ -407,7 +407,7 @@ export class ClaudeDocumentDraftingService {
       promptCache: { enabled: true, type: 'ephemeral' },
       tools: COMPLIANCE_REVIEW_TOOLS,
       toolChoice: 'auto',
-      callerModule: 'ClaudeDocumentDraftingService.compliance',
+      callerModule: 'AnaDocumentDraftingService.compliance',
       organizationId: options?.organizationId,
       userId: options?.userId,
     };
@@ -421,7 +421,7 @@ export class ClaudeDocumentDraftingService {
       gatewayRequest.onStream = options.onStream;
     }
 
-    const response = await gateway.route(gatewayRequest) as ClaudeEnhancedResponse;
+    const response = await gateway.route(gatewayRequest) as AnaGatewayResponse;
 
     return {
       content: response.content,
@@ -439,7 +439,7 @@ export class ClaudeDocumentDraftingService {
   }
 
   /**
-   * Run gap analysis on a document using Claude with gap analysis tools.
+   * Run gap analysis on a document using the model with gap analysis tools.
    */
   async analyzeGaps(
     documentContent: string,
@@ -484,7 +484,7 @@ ${documentContent}`,
       promptCache: { enabled: true, type: 'ephemeral' },
       tools: GAP_ANALYSIS_TOOLS,
       toolChoice: 'auto',
-      callerModule: 'ClaudeDocumentDraftingService.gapAnalysis',
+      callerModule: 'AnaDocumentDraftingService.gapAnalysis',
       organizationId: options?.organizationId,
       userId: options?.userId,
     };
@@ -499,7 +499,7 @@ ${documentContent}`,
       gatewayRequest.onStream = options.onStream;
     }
 
-    const response = await gateway.route(gatewayRequest) as ClaudeEnhancedResponse;
+    const response = await gateway.route(gatewayRequest) as AnaGatewayResponse;
 
     return {
       content: response.content,
@@ -536,7 +536,7 @@ ${documentContent}`,
   }
 
   /**
-   * Quick completion using Claude Sonnet (faster, cheaper for simple tasks).
+   * Quick completion using the Sonnet model (faster, cheaper for simple tasks).
    */
   async quickComplete(
     prompt: string,
@@ -565,7 +565,7 @@ ${documentContent}`,
       promptCache: options?.framework ? { enabled: true, type: 'ephemeral' } : undefined,
       organizationId: options?.organizationId,
       userId: options?.userId,
-      callerModule: 'ClaudeDocumentDraftingService.quickComplete',
+      callerModule: 'AnaDocumentDraftingService.quickComplete',
     });
 
     return response.content;
@@ -573,6 +573,6 @@ ${documentContent}`,
 }
 
 // Export singleton getter
-export function getClaudeDraftingService(): ClaudeDocumentDraftingService {
-  return ClaudeDocumentDraftingService.getInstance();
+export function getAnaDraftingService(): AnaDocumentDraftingService {
+  return AnaDocumentDraftingService.getInstance();
 }

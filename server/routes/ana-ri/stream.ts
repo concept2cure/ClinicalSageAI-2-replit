@@ -47,11 +47,11 @@ import { getCachedSignalReliability } from '../../services/intelligence/learning
 import {
   getEnabledServerTools,
   getAllEnabledTools,
-  ALL_CLAUDE_TOOLS,
-} from '../../services/claude/ClaudeToolDefinitions.js';
-import { getToolHandler } from '../../services/claude/ClaudeToolExecutor.js';
+  ALL_ANA_TOOLS,
+} from '../../services/ana/AnaToolDefinitions.js';
+import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
 import { logToolRun } from '../../services/toolRegistry.js';
-import type { ClaudeEnhancedResponse } from '../../services/ai-gateway/types.js';
+import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
 import {
   getIntelligencePrefix,
   buildSectionSpecificPrompt,
@@ -480,7 +480,7 @@ router.post('/stream', async (req: Request, res: Response) => {
     // can deliver the final grounded answer. Multi-round is out of scope
     // here — for regulatory lookups one round covers the common case, and
     // the non-streaming send-message.ts path still handles multi-round.
-    const streamToolUses = (gwResponse as ClaudeEnhancedResponse).toolUses;
+    const streamToolUses = (gwResponse as AnaGatewayResponse).toolUses;
     if (streamToolUses && streamToolUses.length > 0) {
       const toolResultEntries: Array<{ tool_use_id: string; content: string; name: string }> = [];
       for (const toolUse of streamToolUses) {

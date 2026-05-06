@@ -10,6 +10,7 @@ import * as React from 'react';
 import { I } from '../icons';
 import { ANA_MODES, type AnaMode } from '../data/nav';
 import { useLiveSections } from '../hooks/useLiveSections';
+import { AnaDraftBanner } from '../components/AnaDraftBanner';
 import type {
   EditorBlock,
   EditorBlockParagraph,
@@ -256,9 +257,12 @@ interface DocPaneProps {
   isLocked?: boolean;
   onShowHistory?: () => void;
   onShowComments?: () => void;
+  /** Called after the user accepts an AnA draft so the live hook re-fetches
+   *  and the affordance disappears. */
+  onRefreshLive?: () => void;
 }
 
-function DocPane({ program, content, comments, onPinComment, activePin, setActivePin, onAsk, validation, valOpen, setValOpen, onLock, isLocked, onShowHistory, onShowComments }: DocPaneProps) {
+function DocPane({ program, content, comments, onPinComment, activePin, setActivePin, onAsk, validation, valOpen, setValOpen, onLock, isLocked, onShowHistory, onShowComments, onRefreshLive }: DocPaneProps) {
   const errs = validation.filter(v => v.severity === 'err').length;
   const warns = validation.filter(v => v.severity === 'warn').length;
   const valTone = errs > 0 ? 'err' : warns > 0 ? 'warn' : 'ok';
@@ -301,6 +305,11 @@ function DocPane({ program, content, comments, onPinComment, activePin, setActiv
               ))}
             </div>
           </div>
+          {/* AnA-draft affordance — surfaces between masthead and prose
+              when AnA wrote this section via write_kit_section. */}
+          {content.anaDraft ? (
+            <AnaDraftBanner draft={content.anaDraft} onAccepted={onRefreshLive} />
+          ) : null}
           {content.blocks.map((b: EditorBlock) => {
             if (b.kind === 'h2') return <h2 key={b.id} className="ed-h2">{b.text}</h2>;
             if (b.kind === 'table') return <BlockTable key={b.id} block={b} />;
@@ -589,7 +598,8 @@ export function DocumentEditor(props: DocumentEditorProps) {
         validation={validation} valOpen={valOpen} setValOpen={setValOpen}
         onLock={isLive ? onLock : undefined} isLocked={isLocked}
         onShowHistory={() => onAsk(`Show the version history for ${content.num} — last edits, who changed what, and the diff per version.`)}
-        onShowComments={() => setRailTab('comments')} />
+        onShowComments={() => setRailTab('comments')}
+        onRefreshLive={isLive ? live.refresh : undefined} />
       <ClaudeRail mode={mode} setMode={setMode} messages={messages} comments={comments}
         onResolveComment={onResolveComment} onApplySuggest={onApplySuggest}
         pinnedComment={pinnedComment} setPinnedComment={setPinnedComment}

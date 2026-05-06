@@ -2734,6 +2734,15 @@ export const cerv2510kSections = pgTable(
     validationErrors: json('validation_errors'),
     validationStatus: text('validation_status').default('pending'),
 
+    // Draft provenance (migration 20260506) — distinguishes AnA-drafted
+    // sections from human-typed ones so the MDX surfaces can render the
+    // "drafted by AnA — accept / refine" affordance. Null on legacy rows.
+    draftSource: text('draft_source'),
+    draftedAt: timestamp('drafted_at'),
+    draftedSummary: text('drafted_summary'),
+    acceptedAt: timestamp('accepted_at'),
+    acceptedBy: integer('accepted_by'),
+
     // Metadata
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),

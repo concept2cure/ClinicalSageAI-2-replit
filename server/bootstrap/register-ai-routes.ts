@@ -39,8 +39,8 @@ export async function registerAiRoutes({ app, pool, aiCircuitBreaker }: RouteBoo
   }
 
   try {
-    const claudeIntelligenceRoutes = await import('../routes/claude-intelligence.ts');
-    app.use('/api/claude', claudeIntelligenceRoutes.default);
+    const anaIntelligenceRoutes = await import('../routes/ana-intelligence.ts');
+    app.use('/api/claude', anaIntelligenceRoutes.default);
   } catch (error) {
     console.error('❌ Failed to mount Claude Intelligence routes:', error);
   }

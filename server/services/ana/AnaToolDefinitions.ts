@@ -1,7 +1,7 @@
 /**
- * Claude Tool Definitions — Agentic Document Generation
+ * AnA Tool Definitions — Agentic Document Generation
  *
- * Tools that Claude can invoke during document generation workflows:
+ * Tools that AnA can invoke during document generation workflows:
  * - Evidence search (clinical trials, literature)
  * - FDA guidance lookup
  * - Cross-reference validation
@@ -9,13 +9,13 @@
  * - Compliance checking
  */
 
-import type { ClaudeTool, AnthropicServerTool, AnyClaudeTool } from '../ai-gateway/types';
+import type { AnaTool, AnthropicServerTool, AnyAnaTool } from '../ai-gateway/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const SEARCH_CLINICAL_EVIDENCE: ClaudeTool = {
+export const SEARCH_CLINICAL_EVIDENCE: AnaTool = {
   name: 'search_clinical_evidence',
   description:
     'Search for clinical evidence by condition, intervention, or outcome. Returns relevant clinical trial data, study results, and evidence summaries from ClinicalTrials.gov and internal databases.',
@@ -40,7 +40,7 @@ export const SEARCH_CLINICAL_EVIDENCE: ClaudeTool = {
   },
 };
 
-export const SEARCH_LITERATURE: ClaudeTool = {
+export const SEARCH_LITERATURE: AnaTool = {
   name: 'search_literature',
   description:
     'Search published literature databases (PubMed, internal corpus) for relevant publications. Returns titles, abstracts, DOIs, and key findings.',
@@ -73,7 +73,7 @@ export const SEARCH_LITERATURE: ClaudeTool = {
 // Regulatory & Compliance Tools
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const LOOKUP_FDA_GUIDANCE: ClaudeTool = {
+export const LOOKUP_FDA_GUIDANCE: AnaTool = {
   name: 'lookup_fda_guidance',
   description:
     'Look up FDA guidance documents, regulations (21 CFR), and draft/final guidance relevant to a topic. Returns guidance title, document number, key requirements, and citation-ready references.',
@@ -99,7 +99,7 @@ export const LOOKUP_FDA_GUIDANCE: ClaudeTool = {
   },
 };
 
-export const CHECK_REGULATORY_COMPLIANCE: ClaudeTool = {
+export const CHECK_REGULATORY_COMPLIANCE: AnaTool = {
   name: 'check_regulatory_compliance',
   description:
     'Check a document section against specific regulatory requirements. Returns compliance status, gaps, and recommended remediation for each requirement.',
@@ -124,7 +124,7 @@ export const CHECK_REGULATORY_COMPLIANCE: ClaudeTool = {
   },
 };
 
-export const LOOKUP_ICH_GUIDELINE: ClaudeTool = {
+export const LOOKUP_ICH_GUIDELINE: AnaTool = {
   name: 'lookup_ich_guideline',
   description:
     'Look up ICH (International Council for Harmonisation) guidelines relevant to a topic. Returns guideline reference, key requirements, and applicable sections.',
@@ -148,7 +148,7 @@ export const LOOKUP_ICH_GUIDELINE: ClaudeTool = {
 // Cross-Reference & Validation Tools
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const VALIDATE_CROSS_REFERENCES: ClaudeTool = {
+export const VALIDATE_CROSS_REFERENCES: AnaTool = {
   name: 'validate_cross_references',
   description:
     'Validate cross-references within a document — check that cited sections exist, table/figure numbers are correct, and internal references are consistent.',
@@ -169,7 +169,7 @@ export const VALIDATE_CROSS_REFERENCES: ClaudeTool = {
   },
 };
 
-export const GENERATE_CITATION: ClaudeTool = {
+export const GENERATE_CITATION: AnaTool = {
   name: 'generate_citation',
   description:
     'Generate a properly formatted regulatory citation for a given source. Supports FDA guidance, ICH guidelines, EU MDR articles, journal articles, and 21 CFR references.',
@@ -199,7 +199,7 @@ export const GENERATE_CITATION: ClaudeTool = {
 // Document Intelligence Tools
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const ANALYZE_PREDICATE_DEVICE: ClaudeTool = {
+export const ANALYZE_PREDICATE_DEVICE: AnaTool = {
   name: 'analyze_predicate_device',
   description:
     'Analyze a predicate device for 510(k) substantial equivalence comparison. Returns device details, clearance info, indications for use, and technology comparison points.',
@@ -220,7 +220,7 @@ export const ANALYZE_PREDICATE_DEVICE: ClaudeTool = {
   },
 };
 
-export const EXTRACT_DOCUMENT_STRUCTURE: ClaudeTool = {
+export const EXTRACT_DOCUMENT_STRUCTURE: AnaTool = {
   name: 'extract_document_structure',
   description:
     'Extract and analyze the structure of an uploaded document — headings, sections, tables, figures, references. Useful for gap analysis and template matching.',
@@ -241,7 +241,7 @@ export const EXTRACT_DOCUMENT_STRUCTURE: ClaudeTool = {
   },
 };
 
-export const MINE_PRECEDENTS: ClaudeTool = {
+export const MINE_PRECEDENTS: AnaTool = {
   name: 'mine_precedents',
   description:
     "Construct a precedent-mining plan for a regulatory document type: how did recently approved drugs/devices frame the same type of content? Returns structured search targets across Drugs@FDA, EMA EPARs, FDA 510(k), PMA/De Novo databases, EUDAMED, EMA guidelines, and relevant scientific repositories — with URL templates, web_search query strings, and 'what to look for' guidance specific to the document type. This is how senior regulatory consultants calibrate: read the last three approved NDAs in the indication, read the CHMP rapporteur comments, read the FDA medical review. When web_search is enabled, AnA can execute the returned queries directly; when not, the URLs serve as a handoff for the regulatory author. Use this BEFORE drafting a document type that has meaningful precedent (Module 2.5, 510(k) SE, CER, CRL response, PIP) — the time to learn from precedent is BEFORE the first draft, not during revision.",
@@ -261,7 +261,7 @@ export const MINE_PRECEDENTS: ClaudeTool = {
   },
 };
 
-export const CHECK_NUMERICAL_INTEGRITY: ClaudeTool = {
+export const CHECK_NUMERICAL_INTEGRITY: AnaTool = {
   name: 'check_numerical_integrity',
   description:
     "Scan a single drafted artifact for same labelled quantity stated with multiple distinct values. Surfaces candidates like: sample size N=648 in the narrative but N=641 in Table 14.1; p<0.001 in text but p<0.01 in the forest plot; 100 mg/kg NOAEL in one paragraph and 200 mg/kg two pages later. This is the classic 'numbers drift between text and table' failure that triggers FDA RTFs. The checker reports CANDIDATES — multi-arm studies legitimately report different N per arm or timepoint — so the author or model must adjudicate whether each candidate is a real inconsistency or documented variance. Call this AFTER drafting a regulatory artifact containing numerical claims and BEFORE finalizing. Returns verdict (clean | review_candidates | likely_inconsistency) with per-candidate severity and context snippets.",
@@ -277,7 +277,7 @@ export const CHECK_NUMERICAL_INTEGRITY: ClaudeTool = {
   },
 };
 
-export const CHECK_DOSSIER_CONSISTENCY: ClaudeTool = {
+export const CHECK_DOSSIER_CONSISTENCY: AnaTool = {
   name: 'check_dossier_consistency',
   description:
     "Cross-check a drafted artifact against other artifacts in the same project for factual consistency — sample sizes, p-values, dose levels, NOAEL, shelf life, endpoint definitions, and CTD section cross-references. Surfaces the class of divergences that cause FDA RTFs and EMA IRs: the same labelled quantity stated with different values across Module 2 and Module 5, section references that point to non-existent targets, dose mismatches between nonclinical and clinical sections. Call this AFTER drafting a CTD section or regulatory document but BEFORE recommending it for the dossier. Returns a verdict (clean | minor_issues | needs_review | blocker) with per-divergence severity, the conflicting values, and a pointer to the source artifact — so the author can resolve the inconsistency or justify it explicitly.",
@@ -314,7 +314,7 @@ export const CHECK_DOSSIER_CONSISTENCY: ClaudeTool = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Tools for regulatory document drafting */
-export const DOCUMENT_DRAFTING_TOOLS: ClaudeTool[] = [
+export const DOCUMENT_DRAFTING_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
   LOOKUP_FDA_GUIDANCE,
@@ -324,7 +324,7 @@ export const DOCUMENT_DRAFTING_TOOLS: ClaudeTool[] = [
 ];
 
 /** Tools for compliance review */
-export const COMPLIANCE_REVIEW_TOOLS: ClaudeTool[] = [
+export const COMPLIANCE_REVIEW_TOOLS: AnaTool[] = [
   CHECK_REGULATORY_COMPLIANCE,
   LOOKUP_FDA_GUIDANCE,
   LOOKUP_ICH_GUIDELINE,
@@ -332,7 +332,7 @@ export const COMPLIANCE_REVIEW_TOOLS: ClaudeTool[] = [
 ];
 
 /** Tools for gap analysis */
-export const GAP_ANALYSIS_TOOLS: ClaudeTool[] = [
+export const GAP_ANALYSIS_TOOLS: AnaTool[] = [
   CHECK_REGULATORY_COMPLIANCE,
   EXTRACT_DOCUMENT_STRUCTURE,
   LOOKUP_FDA_GUIDANCE,
@@ -345,7 +345,7 @@ export const GAP_ANALYSIS_TOOLS: ClaudeTool[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Generate a regulatory document from scratch or template */
-export const GENERATE_DOCUMENT: ClaudeTool = {
+export const GENERATE_DOCUMENT: AnaTool = {
   name: 'generate_document',
   description: 'Generate a complete regulatory document (CSR, CTD section, CER, 510(k), protocol, SAP, IB, ICSR). Produces DOCX, PDF, or XML output. Use when the user asks to create, generate, draft, or build a regulatory document.',
   input_schema: {
@@ -397,7 +397,7 @@ export const GENERATE_DOCUMENT: ClaudeTool = {
 };
 
 /** Build a document from a client-uploaded template with string replacement and XML injection */
-export const BUILD_FROM_TEMPLATE: ClaudeTool = {
+export const BUILD_FROM_TEMPLATE: AnaTool = {
   name: 'build_from_template',
   description: 'Copy a client-uploaded DOCX template, unpack it, perform string replacement to inject content, and optionally inject raw XML for complex structures like tables and regulatory elements. Use when the user has uploaded a template and wants to fill it with project-specific content.',
   input_schema: {
@@ -438,7 +438,7 @@ export const BUILD_FROM_TEMPLATE: ClaudeTool = {
 };
 
 /** Generate an IND CTD section */
-export const IND_GENERATE_SECTION: ClaudeTool = {
+export const IND_GENERATE_SECTION: AnaTool = {
   name: 'ind_generate_section',
   description: 'Generate a specific CTD section for an IND submission. Creates a governed draft artifact with regulatory-quality content. Use when the user asks to draft, generate, or create a specific IND/CTD section (e.g., "draft section 2.5", "generate the clinical overview", "create Module 3 drug substance section").',
   input_schema: {
@@ -462,7 +462,7 @@ export const IND_GENERATE_SECTION: ClaudeTool = {
 };
 
 /** Get IND submission status and structure */
-export const IND_GET_STATUS: ClaudeTool = {
+export const IND_GET_STATUS: AnaTool = {
   name: 'ind_get_status',
   description: 'Get the complete IND submission structure and section-by-section completion status. Use when the user asks about IND progress, what sections are done, what\'s missing, or the overall readiness of their IND submission.',
   input_schema: {
@@ -478,7 +478,7 @@ export const IND_GET_STATUS: ClaudeTool = {
 };
 
 /** Rasterize a document page for visual inspection */
-export const RASTERIZE_PAGE: ClaudeTool = {
+export const RASTERIZE_PAGE: AnaTool = {
   name: 'rasterize_page',
   description: 'Rasterize (render as image) a specific page of a DOCX or PDF document for visual inspection. Returns a PNG image of the page. Use when the user wants to preview, inspect, or visually verify a generated document page.',
   input_schema: {
@@ -502,7 +502,7 @@ export const RASTERIZE_PAGE: ClaudeTool = {
 };
 
 /** Overlay content onto a PDF template (forms, headers, signatures, stamps) */
-export const PDF_OVERLAY: ClaudeTool = {
+export const PDF_OVERLAY: AnaTool = {
   name: 'pdf_overlay',
   description: 'Overlay text, images, or regulatory stamps onto specific coordinates of an existing PDF template. Use for form filling, adding signatures, watermarks, approval stamps, or finalizing templates with positioned content. Supports multi-page overlay.',
   input_schema: {
@@ -541,12 +541,12 @@ export const PDF_OVERLAY: ClaudeTool = {
 // ─────────────────────────────────────────────────────────────────────────────
 // Precedent Engine — exposes the 60KB precedent-engine.ts service as tools.
 // search() and compare() are the two highest-value entry points: search lets
-// Claude pull approved-submission records by indication/class/therapeutic
-// area; compare lets Claude pit a user's draft submission against a specific
+// AnA pulls approved-submission records by indication/class/therapeutic
+// area; compare lets AnA pit a user's draft submission against a specific
 // historical precedent and get back similarities, differences, and risk.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const LOOKUP_REGULATORY_PRECEDENTS: ClaudeTool = {
+export const LOOKUP_REGULATORY_PRECEDENTS: AnaTool = {
   name: 'lookup_regulatory_precedents',
   description:
     "Find approved or rejected regulatory submissions that resemble the user's submission across indication, device class, therapeutic area, or free-text query. Returns structured records (clearance number, applicant, decision date and outcome, predicate device, primary endpoint, FDA questions, risk factors, similarity score) so the model can ground risk claims in actual decisions instead of guessing. This is a non-LLM lookup against the local precedent corpus — fast, deterministic, and tenant-scoped. Use BEFORE drafting strategy or risk sections, BEFORE responding to FDA questions, or whenever the user asks 'has anyone done this before?' Tools that compare-against-precedent or analyze-risk should be called AFTER this returns at least one promising match.",
@@ -595,7 +595,7 @@ export const LOOKUP_REGULATORY_PRECEDENTS: ClaudeTool = {
   },
 };
 
-export const COMPARE_SUBMISSION_AGAINST_PRECEDENT: ClaudeTool = {
+export const COMPARE_SUBMISSION_AGAINST_PRECEDENT: AnaTool = {
   name: 'compare_submission_against_precedent',
   description:
     "Pit the user's drafted submission against a specific approved/rejected precedent and get a structured similarity/difference/risk report. Returns per-dimension comparisons (indication, trial design, sample size, primary endpoint, testing approach, predicate device) with match flags, impact severity, an overall risk level (low/medium/high/critical), an overall numeric score, and concrete recommendations. Call this AFTER lookup_regulatory_precedents has returned a promising precedent_id — typically the closest similarity match. The output gives the user evidence-grounded talking points for why their submission is or is not aligned with how a comparable case was decided.",
@@ -650,7 +650,7 @@ export const COMPARE_SUBMISSION_AGAINST_PRECEDENT: ClaudeTool = {
 // design.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const ASSESS_CLAIM_EVIDENCE_INTEGRITY: ClaudeTool = {
+export const ASSESS_CLAIM_EVIDENCE_INTEGRITY: AnaTool = {
   name: 'assess_claim_evidence_integrity',
   description:
     "Run the claim-to-evidence integrity check across a submission package. For each extracted claim (efficacy, safety, manufacturing, performance) the service returns whether the claim is supported, weak, unsupported, or contradicted by linked artifacts. Returns aggregate counts (total/supported/weak/unsupported/contradicted) plus the per-claim evidence link records. Call this BEFORE the user finalizes a section or hits Submit on a package — the failure mode it catches (claims that drift away from their evidence base during multi-author drafting) is one of the top causes of FDA Refuse-to-File and EMA major objections. Tenant context (organizationId) is injected from the request; the LLM does not pass it.",
@@ -666,7 +666,7 @@ export const ASSESS_CLAIM_EVIDENCE_INTEGRITY: ClaudeTool = {
   },
 };
 
-export const SIMULATE_REVIEWER_CHALLENGES: ClaudeTool = {
+export const SIMULATE_REVIEWER_CHALLENGES: AnaTool = {
   name: 'simulate_reviewer_challenges',
   description:
     "Generate the questions and objections a regulator would raise against a submission package. Runs the package through configurable reviewer lenses — skeptical reviewer, evidence sufficiency skeptic, CMC-heavy reviewer, clinical risk reviewer, biostatistics skeptic — and returns the challenges each lens surfaces (severity, lens, claim referenced, suggested response). Pre-empts the questions that arrive in FDA Information Requests, EMA Day-120 questions, and PMDA questioning rounds. Requires an existing assessment_id (run a full submission-twin assessment first if you don't have one); package_id is also required so the service can scope correctly. Tenant context is injected from the request.",
@@ -692,7 +692,7 @@ export const SIMULATE_REVIEWER_CHALLENGES: ClaudeTool = {
   },
 };
 
-export const PREDICT_CHANGE_IMPACT: ClaudeTool = {
+export const PREDICT_CHANGE_IMPACT: AnaTool = {
   name: 'predict_change_impact',
   description:
     "Predict the cascading impact of changing one artifact in a submission package — which downstream claims are affected, which sibling artifacts need updates to stay consistent, and what the regulatory risk is if the change ships unaddressed. Use BEFORE the user commits a substantive change to a section or document so they can see the blast radius first (e.g. updating the safety pool changes summary tables in M2.5 and M2.7, plus the SCS in M5). Returns ordered impact records with severity, affected_artifact, claim_dependencies, and suggested follow-up actions. Tenant context is injected from the request.",
@@ -727,7 +727,7 @@ export const PREDICT_CHANGE_IMPACT: ClaudeTool = {
 // fill (returns a path to a filled DOCX with placeholder substitutions).
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const FETCH_TEMPLATE_AND_FILL: ClaudeTool = {
+export const FETCH_TEMPLATE_AND_FILL: AnaTool = {
   name: 'fetch_template_and_fill',
   description:
     "Fetch an eCTD/regulatory template from the project's template library and (when fill_data is supplied) emit a filled DOCX with placeholder substitutions applied. Use to assemble templated documents — cover letters, eCTD module sections, CSR shells, regulatory forms — without copy-pasting from spreadsheets. Two modes: (1) call without fill_data to retrieve the template's name, category, module, content preview, and whether a Word template is attached — useful for discovering placeholders before filling; (2) call with fill_data populated to perform string-placeholder replacement and return the filled DOCX path. Tenant-scoped via ToolContext.organizationId; templates are organization-private.",
@@ -755,12 +755,108 @@ export const FETCH_TEMPLATE_AND_FILL: ClaudeTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// DOCX → PDF — canonical Word-grade rendering. Wraps the Python pipeline
+// (server/scripts/docx_pdf_pipeline.py) which shells out to headless
+// LibreOffice (`soffice --headless --convert-to pdf`). The .docx remains the
+// editable source of truth; the PDF is a downstream rendering with native
+// Word fidelity (fonts, headers/footers, page breaks, tables, styles). We
+// never render PDF directly via reportlab — see
+// docs/architecture/docx-pipeline-canonical-designation.md.
+//
+// Use after generate_document, fetch_template_and_fill, or
+// assemble_ectd_module_from_artifacts when the user asks for a PDF
+// deliverable. Optional Ghostscript compression for size-sensitive shipping
+// (FDA submission gateways, email attachments).
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const CONVERT_DOCX_TO_PDF: AnaTool = {
+  name: 'convert_docx_to_pdf',
+  description:
+    "Convert an existing .docx to a .pdf using headless LibreOffice — the canonical Word-grade rendering path. The .docx must already exist on disk (typically produced by generate_document, fetch_template_and_fill, or assemble_ectd_module_from_artifacts). Returns the path to the produced PDF, plus optional Ghostscript-compressed variant for submission gateways. The .docx is preserved as the editable source; the PDF is a downstream rendering with native fonts, page layout, headers, and footers — not a reportlab-flat render.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      input_docx_path: {
+        type: 'string',
+        description:
+          'Absolute path to the source .docx file. Typically the outputPath returned by a prior generate_document / fetch_template_and_fill / assemble_ectd_module_from_artifacts call.',
+      },
+      output_pdf_path: {
+        type: 'string',
+        description:
+          'Optional output path for the PDF. Defaults to the same directory as the input with a .pdf extension.',
+      },
+      compress: {
+        type: 'boolean',
+        description:
+          'When true, run a Ghostscript compression pass after conversion. Useful for FDA submission gateways that cap file size.',
+      },
+      quality: {
+        type: 'string',
+        enum: ['screen', 'ebook', 'printer', 'prepress', 'default'],
+        description:
+          "Ghostscript PDFSETTINGS preset. Default 'ebook' (~150dpi, web-grade). Use 'prepress' for color-critical print, 'screen' for the smallest file.",
+      },
+    },
+    required: ['input_docx_path'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MDX kit-section write-back — closes the loop between AnA's drafting and the
+// kit's section editors (K510Surface, PmaSurface, CerSurface). When the model
+// has produced a draft section (cover letter, SE discussion, device
+// description, software documentation, PMA module narrative, CER body, etc.),
+// this tool persists that content into cerv2_510k_sections.content for the
+// matching section_key — flagged as draft_source='ana' so the surface can
+// render an "AnA drafted this — accept / refine" affordance. Audit-logged.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const WRITE_KIT_SECTION: AnaTool = {
+  name: 'write_kit_section',
+  description:
+    "Write drafted section content back into the MDX kit's section editor (cerv2_510k_sections), so the user sees it inside K510Surface / PmaSurface / CerSurface instead of only in chat. Use after producing a drafted section narrative the user has asked you to author — typical section_keys include 'cover-letter', 'indications-for-use', '510k-summary', 'device-description', 'substantial-equivalence', 'software', 'cybersecurity', 'biocompatibility', 'sterilization', 'electromagnetic', 'performance-bench', 'performance-clinical', 'labeling', 'cer-main', 'cer-pmcf', 'pma-module-1' through 'pma-module-6', 'qsub-briefing', 'qsub-cover'. The section is marked as drafted-by-AnA and surfaces a review affordance; the user accepts or refines from inside the editor. Section row is matched by (organization_id, section_key); tenant-scoped via ToolContext.organizationId. Returns the updated row's id, status, and completionPercentage.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      section_key: {
+        type: 'string',
+        description:
+          "Stable section identifier matching cerv2_510k_sections.section_key (e.g. 'substantial-equivalence', 'cybersecurity', 'cer-main').",
+      },
+      content: {
+        type: 'string',
+        description:
+          'The drafted section content (markdown or plain text). Replaces the existing content of the row. Must be the finished prose intended for review, not raw notes.',
+      },
+      status: {
+        type: 'string',
+        enum: ['drafting', 'ready_for_review', 'in_review'],
+        description:
+          "Workflow status to set. Default 'drafting'. Use 'ready_for_review' when the draft is comprehensive enough for human review.",
+      },
+      completion_percentage: {
+        type: 'number',
+        description:
+          'Optional explicit completion %. If omitted, status drives a sensible default (drafting=60, ready_for_review=85, in_review=90).',
+      },
+      summary_note: {
+        type: 'string',
+        description:
+          'One-line note for the audit trail describing what this draft covers (e.g. "drafted SE discussion citing K251234 + reference device").',
+      },
+    },
+    required: ['section_key', 'content'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // eCTD Module Assembly — collects existing artifacts in a project belonging
 // to a CTD module prefix (e.g. "3.2.S") and assembles them into a single DOCX
 // via masterDocumentBuilder.generateFromScratch. Pure assembly, no AI.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS: ClaudeTool = {
+export const ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS: AnaTool = {
   name: 'assemble_ectd_module_from_artifacts',
   description:
     "Collect every artifact in a project whose CTD section starts with a given module prefix (e.g. '3.2.S' for drug substance, '2.5' for clinical overview, '5.3.5' for clinical study reports), order them by section number, and assemble a single DOCX with proper headings. Use when the user has drafted several module sections as separate artifacts and wants the assembled module document for review or submission. Pulls the latest non-archived version of each artifact, dedupes by section, and emits the output to disk. Tenant-scoped via ToolContext.organizationId.",
@@ -793,7 +889,7 @@ export const ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS: ClaudeTool = {
 // provides PROSE.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const DRAFT_510K_SUBSTANTIAL_EQUIVALENCE: ClaudeTool = {
+export const DRAFT_510K_SUBSTANTIAL_EQUIVALENCE: AnaTool = {
   name: 'draft_510k_substantial_equivalence',
   description:
     "Return the canonical FDA 510(k) Substantial Equivalence comparison structure for a subject-vs-predicate device pair, with per-section guidance and the SE table column format. Use when drafting the SE section of a 510(k) — the structure is what FDA reviewers expect, the table format is what the SE summary requires. The tool does NOT draft prose; the model uses the returned structure + the user's device data to draft each section inline. Pair with analyze_predicate_device first if predicate technical details are needed.",
@@ -822,7 +918,7 @@ export const DRAFT_510K_SUBSTANTIAL_EQUIVALENCE: ClaudeTool = {
   },
 };
 
-export const DRAFT_CLINICAL_OVERVIEW_M2_5: ClaudeTool = {
+export const DRAFT_CLINICAL_OVERVIEW_M2_5: AnaTool = {
   name: 'draft_clinical_overview_m2_5',
   description:
     "Return the ICH M4E(R2) Clinical Overview (Module 2.5) outline with the six canonical subsections (2.5.1 Product Development Rationale through 2.5.6 Benefits and Risks Conclusions), per-section drafting guidance, and per-section citation hints showing which Module 2.7 summary should be referenced. When called with project_id, also returns the project's existing artifacts so the model can suggest which ones to cite where. Use when drafting the M2.5 — pair with draft_clinical_overview_m2_5 first, then draft each section inline using the returned outline.",
@@ -847,7 +943,7 @@ export const DRAFT_CLINICAL_OVERVIEW_M2_5: ClaudeTool = {
   },
 };
 
-export const DRAFT_FDA_IR_RESPONSE: ClaudeTool = {
+export const DRAFT_FDA_IR_RESPONSE: AnaTool = {
   name: 'draft_fda_ir_response',
   description:
     "Parse a pasted FDA Information Request letter, extract the numbered questions, and return a per-question response scaffold with the canonical 3-section format (FDA Question verbatim · Sponsor Response · Supporting Data/Citation) plus cover-letter guidance. Use when the user has received an IR (typically Day 74 RTF or mid-cycle) and needs to draft a response within the 14-day window. The tool extracts questions heuristically (numbered '1.', '1.1', or 'Question N:'); if extraction fails, it tells you so you can paste a more structured version. The model drafts each response inline using the scaffold; the tool itself does not call any AI.",
@@ -864,8 +960,8 @@ export const DRAFT_FDA_IR_RESPONSE: ClaudeTool = {
   },
 };
 
-/** Custom JSON-schema tools dispatched by our local ClaudeToolExecutor. */
-export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
+/** Custom JSON-schema tools dispatched by our local AnaToolExecutor. */
+export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
   LOOKUP_FDA_GUIDANCE,
@@ -879,6 +975,8 @@ export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
   SIMULATE_REVIEWER_CHALLENGES,
   PREDICT_CHANGE_IMPACT,
   FETCH_TEMPLATE_AND_FILL,
+  CONVERT_DOCX_TO_PDF,
+  WRITE_KIT_SECTION,
   ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS,
   DRAFT_510K_SUBSTANTIAL_EQUIVALENCE,
   DRAFT_CLINICAL_OVERVIEW_M2_5,
@@ -899,10 +997,10 @@ export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 // Anthropic server-side tools (executed by Anthropic's infrastructure)
 //
-// These are NOT dispatched by our local ClaudeToolExecutor. Claude invokes
+// These are NOT dispatched by our local AnaToolExecutor. AnA invokes
 // them server-side; results arrive as content blocks in the response stream
 // (web_search_tool_result, web_fetch_tool_result, etc.). No local handler
-// needed — we just declare them in the tools array so Claude knows it can
+// needed — we just declare them in the tools array so AnA knows it can
 // reach for them.
 //
 // Gated by env flags so the rollout is controllable:
@@ -978,6 +1076,6 @@ export function getEnabledServerTools(): AnthropicServerTool[] {
  * Use this when building the `tools` array for a chat turn so AnA has
  * access to both layers simultaneously.
  */
-export function getAllEnabledTools(): AnyClaudeTool[] {
-  return [...ALL_CLAUDE_TOOLS, ...getEnabledServerTools()];
+export function getAllEnabledTools(): AnyAnaTool[] {
+  return [...ALL_ANA_TOOLS, ...getEnabledServerTools()];
 }

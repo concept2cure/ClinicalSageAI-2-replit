@@ -90,6 +90,16 @@ export interface EditorContent {
   status: EditorSectionStatus;
   masthead: EditorMastheadItem[];
   blocks: EditorBlock[];
+  /** Set when AnA drafted this section via the write_kit_section tool and
+   *  the user hasn't accepted yet. The editor renders an AnaDraftBanner
+   *  inline so the user can accept-as-is or refine-then-accept. Null on
+   *  human-typed content + on already-accepted drafts. */
+  anaDraft?: {
+    source: 'ana';
+    at: string;
+    summary?: string;
+    rowId: number;
+  } | null;
 }
 
 export interface EditorComment {

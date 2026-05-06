@@ -1,11 +1,11 @@
 /**
- * Claude Tool Executor — Agentic Orchestration Loop
+ * AnA Tool Executor — Agentic Orchestration Loop
  *
- * When Claude responds with tool_use blocks, this executor:
- * 1. Extracts the tool calls from Claude's response
+ * When AnA responds with tool_use blocks, this executor:
+ * 1. Extracts the tool calls from AnA's response
  * 2. Executes each tool against real backend services
- * 3. Sends tool results back to Claude
- * 4. Repeats until Claude produces a final text response
+ * 3. Sends tool results back to AnA
+ * 4. Repeats until AnA produces a final text response
  *
  * Integrates with existing platform services:
  * - ClinicalTrials.gov API (via MCP or direct)
@@ -18,9 +18,9 @@ import { getGateway } from '../ai-gateway/gateway';
 import type {
   GatewayRequest,
   GatewayMessage,
-  ClaudeEnhancedResponse,
-  ClaudeToolUse,
-  ClaudeTool,
+  AnaGatewayResponse,
+  AnaToolUse,
+  AnaTool,
   StreamCallback,
 } from '../ai-gateway/types';
 
@@ -558,8 +558,8 @@ registerToolHandler('check_dossier_consistency', async (input: Record<string, un
       excludeArtifactId,
     });
 
-    // Summarize for Claude — keep the response compact. Full divergences
-    // stay in the structured report; the summary gives Claude enough to
+    // Summarize for AnA — keep the response compact. Full divergences
+    // stay in the structured report; the summary gives AnA enough to
     // decide whether to recommend revisions.
     return JSON.stringify({
       verdict: report.verdict,
@@ -1043,6 +1043,194 @@ registerToolHandler('fetch_template_and_fill', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// DOCX → PDF handler — wraps the existing Python pipeline
+// (server/scripts/docx_pdf_pipeline.py → soffice --headless --convert-to pdf).
+// AnA invokes this after authoring a .docx to produce the canonical
+// Word-grade PDF deliverable. No reportlab, no flat render — the .docx is
+// the source of truth, the PDF is its native rendering.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('convert_docx_to_pdf', async (input) => {
+  const inputDocxPath = typeof input.input_docx_path === 'string' ? input.input_docx_path : '';
+  if (!inputDocxPath) {
+    return JSON.stringify({
+      error: 'convert_docx_to_pdf requires input_docx_path (string).',
+    });
+  }
+  const outputPdfPath =
+    typeof input.output_pdf_path === 'string' ? input.output_pdf_path : undefined;
+  const compress = input.compress === true;
+  const allowedQ = new Set(['screen', 'ebook', 'printer', 'prepress', 'default']);
+  const quality =
+    typeof input.quality === 'string' && allowedQ.has(input.quality)
+      ? (input.quality as 'screen' | 'ebook' | 'printer' | 'prepress' | 'default')
+      : 'ebook';
+
+  try {
+    const { runDocxPdfPipeline } = await import('../docx-pdf-pipeline.js');
+    const { promises: fs } = await import('fs');
+    const result = await runDocxPdfPipeline({
+      inputDocxPath,
+      outputPdfPath,
+      compress,
+      quality,
+    });
+    const stat = await fs.stat(result.finalPdf);
+    return JSON.stringify({
+      ok:               true,
+      inputDocx:        result.inputDocx,
+      convertedPdf:     result.convertedPdf,
+      finalPdf:         result.finalPdf,
+      sizeBytes:        stat.size,
+      compression:      result.compression ?? null,
+      message: `DOCX → PDF complete via headless LibreOffice. PDF: ${result.finalPdf}${
+        result.compression ? ` (${result.compression.compressedSizeBytes} bytes after ${quality} compression)` : ''
+      }.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `convert_docx_to_pdf failed: ${
+        err instanceof Error ? err.message : String(err)
+      }. Verify that python3 and libreoffice (soffice) are available on the host.`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MDX kit-section write-back handler — closes the loop between AnA's drafting
+// and the kit's section editors. Persists drafted content into
+// cerv2_510k_sections with draft_source='ana' so the MDX surfaces can render
+// the "drafted by AnA — accept / refine" affordance.
+//
+// Audit-logged via auditService — audit_logs row records the action so 21 CFR
+// Part 11 trail captures every AI-authored section edit.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const KIT_SECTION_DEFAULT_PCT: Record<string, number> = {
+  drafting:           60,
+  ready_for_review:   85,
+  in_review:          90,
+};
+
+registerToolHandler('write_kit_section', async (input, ctx) => {
+  const sectionKey = typeof input.section_key === 'string' ? input.section_key.trim() : '';
+  const content    = typeof input.content === 'string' ? input.content : '';
+  const status     = typeof input.status === 'string' ? input.status : 'drafting';
+  const note       = typeof input.summary_note === 'string' ? input.summary_note.trim() : '';
+  const explicitPct =
+    typeof input.completion_percentage === 'number' ? input.completion_percentage : null;
+
+  if (!sectionKey) {
+    return JSON.stringify({ error: 'write_kit_section requires section_key (string).' });
+  }
+  if (!content || content.length < 40) {
+    return JSON.stringify({
+      error:
+        'write_kit_section requires content (string ≥ 40 chars). Pass the finished drafted prose, not raw notes.',
+    });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({
+      error: 'write_kit_section requires tenant context (organizationId) — nothing was written.',
+    });
+  }
+  const allowedStatus = new Set(['drafting', 'ready_for_review', 'in_review']);
+  if (!allowedStatus.has(status)) {
+    return JSON.stringify({
+      error: `write_kit_section: status must be one of drafting | ready_for_review | in_review (got ${status}).`,
+    });
+  }
+
+  const completionPct =
+    explicitPct !== null && Number.isFinite(explicitPct)
+      ? Math.max(0, Math.min(100, Math.round(explicitPct)))
+      : KIT_SECTION_DEFAULT_PCT[status] ?? 60;
+
+  try {
+    const { getPool } = await import('../../db.js');
+    const pool = getPool();
+
+    /* The migration 20260506 creates a unique index on (organization_id,
+       section_key); the seed populates one row per key. We update in place
+       rather than insert to preserve display_order, level, parent linkage.
+       If the row doesn't exist we surface a clear error rather than silently
+       creating a free-floating row outside the kit's taxonomy. */
+    const { rows } = await pool.query(
+      `UPDATE cerv2_510k_sections
+          SET content                = $3,
+              status                 = $4,
+              completion_percentage  = $5,
+              draft_source           = 'ana',
+              drafted_at             = NOW(),
+              drafted_summary        = NULLIF($6, ''),
+              accepted_at            = NULL,
+              accepted_by            = NULL,
+              updated_at             = NOW()
+        WHERE organization_id = $1 AND section_key = $2
+        RETURNING id, section_number, section_title, section_key, status,
+                  completion_percentage AS "completionPercentage",
+                  drafted_at AS "draftedAt"`,
+      [ctx.organizationId, sectionKey, content, status, completionPct, note],
+    );
+
+    if (rows.length === 0) {
+      return JSON.stringify({
+        error: `No section found for organization with section_key='${sectionKey}'. The kit's section taxonomy must be seeded first (run \`npm run db:seed:mdx-content\`).`,
+      });
+    }
+
+    const row = rows[0];
+
+    /* Audit log — fire-and-forget, never block the response. The auditService
+       singleton handles tamper-proof chaining + Drizzle persistence. */
+    try {
+      const { auditLog } = await import('../auditService.js');
+      auditLog({
+        tenantId:     ctx.organizationId,
+        userId:       ctx.userId ?? null,
+        action:       'KIT_SECTION_DRAFTED_BY_ANA',
+        resource:     'cerv2_510k_sections',
+        resourceId:   String(row.id),
+        details: {
+          sectionKey,
+          sectionNumber: row.section_number,
+          sectionTitle:  row.section_title,
+          status:        row.status,
+          completionPercentage: row.completionPercentage,
+          contentLength: content.length,
+          summary:       note || null,
+        },
+      });
+    } catch {
+      /* never block the tool response on audit failure */
+    }
+
+    return JSON.stringify({
+      ok:                  true,
+      id:                  row.id,
+      sectionNumber:       row.section_number,
+      sectionTitle:        row.section_title,
+      sectionKey:          row.section_key,
+      status:              row.status,
+      completionPercentage: row.completionPercentage,
+      draftedAt:           row.draftedAt,
+      message: `Drafted ${row.section_title} written into the kit (${row.completionPercentage}% complete). The user will see the draft inside the editor with an accept/refine affordance.`,
+    });
+  } catch (err: unknown) {
+    const code = (err as { code?: string }).code;
+    if (code === '42P01') {
+      return JSON.stringify({
+        error:
+          "Table cerv2_510k_sections doesn't exist. Apply the MDX migrations (npm run db:push) before drafting kit sections.",
+      });
+    }
+    return JSON.stringify({
+      error: `write_kit_section failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // eCTD Module Assembly handler — pure assembly, no AI. Pulls every artifact
 // in the project whose ctd_section starts with the requested module prefix,
 // dedupes by section keeping highest version, and emits via masterDocumentBuilder.
@@ -1357,23 +1545,23 @@ export interface AgenticOptions {
 }
 
 /**
- * Execute a multi-turn agentic loop with Claude.
+ * Execute a multi-turn agentic loop with AnA.
  *
- * Claude can call tools, get results, reason further, call more tools,
+ * AnA can call tools, get results, reason further, call more tools,
  * and eventually produce a final text answer.
  */
 export async function executeAgenticLoop(
   request: GatewayRequest,
   options?: AgenticOptions
-): Promise<ClaudeEnhancedResponse> {
+): Promise<AnaGatewayResponse> {
   const gateway = getGateway();
   const maxRounds = options?.maxRounds || 5;
 
   let currentRequest = { ...request };
-  let finalResponse: ClaudeEnhancedResponse | null = null;
+  let finalResponse: AnaGatewayResponse | null = null;
 
   for (let round = 0; round < maxRounds; round++) {
-    const response = (await gateway.route(currentRequest)) as ClaudeEnhancedResponse;
+    const response = (await gateway.route(currentRequest)) as AnaGatewayResponse;
 
     // If no tool uses, we're done
     if (!response.toolUses || response.toolUses.length === 0) {
@@ -1448,7 +1636,7 @@ export async function executeAgenticLoop(
     // Force a final response without tools
     delete currentRequest.tools;
     delete currentRequest.toolChoice;
-    finalResponse = (await gateway.route(currentRequest)) as ClaudeEnhancedResponse;
+    finalResponse = (await gateway.route(currentRequest)) as AnaGatewayResponse;
   }
 
   return finalResponse;

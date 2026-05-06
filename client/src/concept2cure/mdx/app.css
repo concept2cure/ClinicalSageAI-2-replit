@@ -1747,6 +1747,94 @@ svg { display: block; }
 .estar-row:hover { background: var(--bg-050); }
 
 
+/* ───────────────────────────────────────────────────────────────────
+   AnA draft banner — inline affordance shown on a section when AnA
+   has drafted via write_kit_section and the user hasn't accepted.
+   Single-row layout: meta + actions. Reuses existing tokens; the
+   only colored element is the Accept button (Claude orange).
+   ─────────────────────────────────────────────────────────────────── */
+.ana-draft-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  background: var(--accent-000);
+  border: 1px solid var(--accent-100);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--text-200);
+  transition: background var(--dur) var(--ease);
+}
+.ana-draft-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.ana-draft-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-100);
+  flex-shrink: 0;
+}
+.ana-draft-label { font-weight: 500; color: var(--accent-200); }
+.ana-draft-summary {
+  color: var(--text-300);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.ana-draft-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.ana-draft-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+.ana-draft-btn.ghost {
+  background: transparent;
+  color: var(--text-300);
+  border-color: var(--bg-300);
+}
+.ana-draft-btn.ghost:hover { color: var(--text-200); border-color: var(--text-500); }
+.ana-draft-btn.primary {
+  background: var(--accent-100);
+  color: var(--text-000);
+  border-color: var(--accent-100);
+}
+.ana-draft-btn.primary:hover { background: var(--accent-200); border-color: var(--accent-200); }
+.ana-draft-btn[disabled] { opacity: 0.6; cursor: progress; }
+.ana-draft-btn .ana-draft-arrow svg { width: 12px; height: 12px; vertical-align: middle; }
+.ana-draft-error {
+  flex-basis: 100%;
+  font-size: 12px;
+  color: var(--error-text, #b91c1c);
+  margin-top: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ana-draft-banner, .ana-draft-btn { transition: none; }
+}
+
+
 /* ═════════════════════════════════════════════════════════════════
    WORKBENCH — Tasks · Vault · Validation · Submissions · Templates
    Shared surface chrome (page header, metric row, ctable, section)
