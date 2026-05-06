@@ -286,12 +286,60 @@ npm run db:seed:mdx-beta
 # 3. Seed content data so every kit surface demos with real data
 npm run db:seed:mdx-content
 
-# 4. Run smoke suite
-npx vitest run tests/mdx-paying-client-smoke.test.ts
+# 4. Run smoke + integration suites (58 tests total)
+npx vitest run tests/mdx-paying-client-smoke.test.ts tests/regulatory-programs-routes.test.ts
 
-# 5. Start dev + walk every surface in browser
+# 5. Start dev server
 npm run dev
+
+# 6. Probe the module health endpoint to confirm provisioning
+curl -s http://localhost:5000/api/mdx/health | jq '.data.readiness, .data.warnings'
+
+# 7. Walk every surface in browser
 ```
+
+### Module health endpoint — `GET /api/mdx/health`
+
+Production / ops tool — single round-trip probe of every backing table
++ shadow service + pathway coverage. No auth required (deployment-wide
+state, not tenant data). Response shape:
+
+```jsonc
+{
+  "data": {
+    "module":          "mdx",
+    "version":         "abc123",       // GIT_COMMIT_SHA env var, or null
+    "readiness":       "ready",        // "ready" | "partial" | "not_ready"
+    "tables": [
+      { "name": "public.regulatory_programs",  "role": "Programs list…",   "exists": true,  "rowCount": 6, "required": true },
+      { "name": "public.saved_precedent_queries","role": "PrecedentSurface…","exists": true, "rowCount": 4, "required": true },
+      // …15 tables total
+    ],
+    "shadowServices": [
+      { "name": "predicate-intelligence", "configured": true, "affectsSurfaces": ["K510Surface predicate table", "K510Surface SE matrix"] }
+    ],
+    "pathwayCoverage": [
+      { "pathway": "k510", "hasPrograms": true,  "programCount": 4 },
+      { "pathway": "pma",  "hasPrograms": true,  "programCount": 1 },
+      { "pathway": "cer",  "hasPrograms": true,  "programCount": 1 }
+    ],
+    "warnings": [],                    // empty iff readiness === "ready"
+    "probedAt": "2026-05-06T17:00:00Z"
+  }
+}
+```
+
+`readiness` is one of:
+ - **ready**     — all required tables present, no warnings
+ - **partial**   — required tables present, but optional tables missing
+                   or shadow services not configured. Surfaces will render
+                   their fallback / empty-state copy. Beta-acceptable.
+ - **not_ready** — required tables missing. The MDX module won't function;
+                   apply pending migrations.
+
+Use this endpoint as the canonical "is the platform ready" check before
+inviting a paying-client beta. Investors auditing the platform can
+verify health programmatically rather than walking surfaces by hand.
 
 ### Surface coverage after content seed
 

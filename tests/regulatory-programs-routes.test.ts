@@ -33,6 +33,10 @@ vi.mock('../server/services/regulatory-programs.service', () => ({
   requireProgramInOrg:    vi.fn(),
 }));
 
+vi.mock('../server/services/mdx-health.service', () => ({
+  probeMdxHealth: vi.fn(),
+}));
+
 /* Mock the database modules so saved-precedent-queries route handlers
    resolve without an actual db connection. */
 vi.mock('../server/db', () => ({
@@ -66,8 +70,10 @@ vi.mock('../server/db', () => ({
 }));
 
 import * as svc from '../server/services/regulatory-programs.service';
+import * as healthSvc from '../server/services/mdx-health.service';
 import regulatoryProgramsRouter from '../server/routes/regulatory-programs';
 import savedPrecedentQueriesRouter from '../server/routes/saved-precedent-queries';
+import mdxRouter from '../server/routes/mdx';
 
 const PROGRAM_ID = '11111111-2222-3333-4444-000000000204';
 
@@ -83,6 +89,7 @@ function makeApp(opts: { withAuth?: boolean } = { withAuth: true }) {
   }
   app.use('/api/regulatory-programs', regulatoryProgramsRouter);
   app.use('/api/saved-precedent-queries', savedPrecedentQueriesRouter);
+  app.use('/api/mdx', mdxRouter);
   return app;
 }
 
@@ -353,6 +360,89 @@ describe('saved-precedent-queries routes — auth + validation gates', () => {
   it('DELETE /:id returns 422 when id is non-numeric', async () => {
     const res = await request(makeApp()).delete('/api/saved-precedent-queries/abc');
     expect(res.status).toBe(422);
+  });
+});
+
+describe('mdx module health — /api/mdx/health', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('does NOT require org context (deployment-wide probe)', async () => {
+    vi.mocked(healthSvc.probeMdxHealth).mockResolvedValueOnce({
+      module: 'mdx', version: null, readiness: 'ready', tables: [],
+      shadowServices: [], pathwayCoverage: [], warnings: [], probedAt: '2026-05-06T00:00:00Z',
+    });
+    const app = makeApp({ withAuth: false });
+    const res = await request(app).get('/api/mdx/health');
+    expect(res.status).toBe(200);
+    expect(res.body.data.readiness).toBe('ready');
+  });
+
+  it('returns 200 + full report when ready', async () => {
+    vi.mocked(healthSvc.probeMdxHealth).mockResolvedValueOnce({
+      module: 'mdx',
+      version: 'abc123',
+      readiness: 'ready',
+      tables: [
+        { name: 'public.regulatory_programs', role: 'list', exists: true, rowCount: 6, required: true },
+      ],
+      shadowServices: [
+        { name: 'predicate-intelligence', configured: true, affectsSurfaces: ['K510'] },
+      ],
+      pathwayCoverage: [
+        { pathway: 'k510', hasPrograms: true, programCount: 4 },
+        { pathway: 'pma',  hasPrograms: true, programCount: 1 },
+        { pathway: 'cer',  hasPrograms: true, programCount: 1 },
+      ],
+      warnings: [],
+      probedAt: '2026-05-06T00:00:00Z',
+    });
+    const res = await request(makeApp()).get('/api/mdx/health');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('data');
+    expect(res.body.data.readiness).toBe('ready');
+    expect(res.body.data.warnings).toEqual([]);
+    expect(res.body.data.tables).toHaveLength(1);
+  });
+
+  it('reports readiness=not_ready when a required table is missing', async () => {
+    vi.mocked(healthSvc.probeMdxHealth).mockResolvedValueOnce({
+      module: 'mdx', version: null, readiness: 'not_ready',
+      tables: [
+        { name: 'public.regulatory_programs', role: 'list', exists: false, rowCount: null, required: true },
+      ],
+      shadowServices: [],
+      pathwayCoverage: [],
+      warnings: ['Required table public.regulatory_programs is not provisioned — apply the relevant migration. Affects: list.'],
+      probedAt: '2026-05-06T00:00:00Z',
+    });
+    const res = await request(makeApp()).get('/api/mdx/health');
+    expect(res.status).toBe(200);
+    expect(res.body.data.readiness).toBe('not_ready');
+    expect(res.body.data.warnings[0]).toContain('not provisioned');
+  });
+
+  it('reports readiness=partial when only optional tables missing', async () => {
+    vi.mocked(healthSvc.probeMdxHealth).mockResolvedValueOnce({
+      module: 'mdx', version: null, readiness: 'partial',
+      tables: [
+        { name: 'public.regulatory_programs', role: 'list', exists: true, rowCount: 6, required: true },
+        { name: 'clinical_ops.studies',       role: 'PMA',  exists: false, rowCount: null, required: false },
+      ],
+      shadowServices: [],
+      pathwayCoverage: [],
+      warnings: ['Optional table clinical_ops.studies is not provisioned — PMA will render the empty-state copy until provisioned.'],
+      probedAt: '2026-05-06T00:00:00Z',
+    });
+    const res = await request(makeApp()).get('/api/mdx/health');
+    expect(res.body.data.readiness).toBe('partial');
+    expect(res.body.data.warnings).toHaveLength(1);
+  });
+
+  it('returns 500 with sanitized envelope when probe throws', async () => {
+    vi.mocked(healthSvc.probeMdxHealth).mockRejectedValueOnce(new Error('pg pool exhausted'));
+    const res = await request(makeApp()).get('/api/mdx/health');
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: 'pg pool exhausted' });
   });
 });
 
