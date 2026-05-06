@@ -122,6 +122,11 @@ export interface UseWorkbenchTasksResult {
   error: string | null;
 }
 
+/**
+ * Fetch the cross-program task list from /api/submission-ops/workload
+ * (returns c2c_project_work_items rows) and adapt each row into the
+ * kit's Task shape (Kanban). Derives 4 KPI cards from the same list.
+ */
 export function useWorkbenchTasks(): UseWorkbenchTasksResult {
   const { data, loading, error } = useFetchJson<WorkloadPayload>('/api/submission-ops/workload');
   const tasks = useMemo(() => {
@@ -192,6 +197,11 @@ export interface UseWorkbenchTemplatesResult {
   error: string | null;
 }
 
+/**
+ * Fetch templates from /api/templates (server already aggregates
+ * indTemplates + documentTemplates + ectdTemplates) and adapt each
+ * row into the kit's Template shape.
+ */
 export function useWorkbenchTemplates(): UseWorkbenchTemplatesResult {
   const { data, loading, error } = useFetchJson<TemplatesPayload>('/api/templates');
   const templates = useMemo(() => {
@@ -254,6 +264,13 @@ export interface UseWorkbenchValidationResult {
   error:    string | null;
 }
 
+/**
+ * Fetch cross-program blockers from /api/submission-ops/blockers and
+ * join with the live program list (passed in by the caller — usually
+ * sourced from useMdxPrograms) to produce the per-program validation
+ * matrix and 4 summary KPI cards. Pure-derivation hook on top of one
+ * fetch + the supplied program array.
+ */
 export function useWorkbenchValidation(programs: Program[]): UseWorkbenchValidationResult {
   const { data, loading, error } = useFetchJson<BlockersPayload>('/api/submission-ops/blockers');
   const rules = useMemo(() => {

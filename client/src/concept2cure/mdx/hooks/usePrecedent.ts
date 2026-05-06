@@ -47,6 +47,16 @@ export interface UseSavedPrecedentQueriesResult {
   refreshHits: (id: number, hits: number) => Promise<SavedPrecedentQuery | null>;
 }
 
+/**
+ * CRUD hook for the org's saved precedent searches. List comes from
+ * /api/saved-precedent-queries; create / remove / refreshHits POST /
+ * DELETE / PATCH back to the same endpoint and auto-refresh the list
+ * on success.
+ *
+ * @returns `{ queries, loading, error, create, remove, refreshHits }`.
+ *   Mutators return the new row (or null on failure) for optimistic
+ *   handling at the call site.
+ */
 export function useSavedPrecedentQueries(): UseSavedPrecedentQueriesResult {
   const { data, loading, error, refresh } =
     useFetchJson<ListPayload<SavedPrecedentQuery>>('/api/saved-precedent-queries');
@@ -107,6 +117,12 @@ export interface PortfolioInsight {
   body: string;
 }
 
+/**
+ * Fetch up to 3 cross-portfolio insights derived from the org's
+ * actual data (clearance ratio, common predicate K-numbers, literature
+ * density). When the portfolio has insufficient state to compute, the
+ * server returns a single "getting started" hint.
+ */
 export function usePortfolioInsights(): {
   insights: PortfolioInsight[] | null;
   loading: boolean;

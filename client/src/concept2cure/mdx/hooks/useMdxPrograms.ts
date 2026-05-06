@@ -191,6 +191,24 @@ export interface UseMdxProgramsResult {
   refresh: () => void;
 }
 
+/**
+ * Fetch all regulatory programs visible to the caller's organization
+ * and adapt each row into the kit's Program shape (data/programs.ts).
+ *
+ * Resolves to `programs: null` while loading and on error so callers
+ * can render the kit fixture as a fallback during initial load. Once
+ * resolved, an empty array means the tenant has zero programs (the
+ * surface should render its empty-state copy).
+ *
+ * Side effects: GETs `/api/regulatory-programs`. Cancels on unmount via
+ * AbortController. Calling `refresh()` triggers a re-fetch.
+ *
+ * @returns `{ programs, loading, error, refresh }` where:
+ *   - `programs` is the adapted Program[] or null while loading/error
+ *   - `loading` flips true from request start to first response
+ *   - `error` carries the HTTP/network error message, or null
+ *   - `refresh` is a stable callback that re-runs the fetch
+ */
 export function useMdxPrograms(): UseMdxProgramsResult {
   const { data, loading, error, refresh } = useFetchJson<ListPayload>('/api/regulatory-programs');
   const programs = useMemo(
@@ -234,6 +252,20 @@ interface ProgramDetailPayload {
   data: ProgramDetail;
 }
 
+/**
+ * Fetch the rich detail for a single regulatory program (full team
+ * roster, lead user name, metadata jsonb). Used by surfaces that need
+ * data the kit-shape Program doesn't carry — primarily ProjectHome's
+ * governance panel.
+ *
+ * Pass `null` to disable the fetch (idle state). Useful when the
+ * parent program id hasn't resolved yet.
+ *
+ * @param programId UUID of the regulatoryPrograms row, or null to skip.
+ * @returns `{ detail, loading, error }` — detail is the unadapted
+ *   server shape (intentionally not adapted to Program; this hook
+ *   exposes the wider field surface).
+ */
 export function useProgramDetail(programId: string | null): {
   detail: ProgramDetail | null;
   loading: boolean;

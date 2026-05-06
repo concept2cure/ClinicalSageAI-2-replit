@@ -128,6 +128,13 @@ export interface UseSubmissionsResult {
   error: string | null;
 }
 
+/**
+ * List submission packages from /api/submission-ops/packages and adapt
+ * each c2cSubmissionPackages row into the kit's Submission shape. The
+ * list call carries the basics (id, family, title, status, target);
+ * gate counts and activity log come from useSubmissionDetail() on
+ * row selection.
+ */
 export function useSubmissions(): UseSubmissionsResult {
   const { data, loading, error } = useFetchJson<ListPayload>('/api/submission-ops/packages');
   const submissions = useMemo(
@@ -168,6 +175,14 @@ function formatRelative(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
+/**
+ * Lazy fetch of per-package gate + activity log for the selected
+ * submission row. Fires both /readiness and /milestones in parallel
+ * via Promise.allSettled — a single failed endpoint degrades that
+ * field to null without blocking the other.
+ *
+ * Pass `null` for `packageId` to disable the fetch (idle state).
+ */
 export function useSubmissionDetail(packageId: string | null): UseSubmissionDetailResult {
   const [state, setState] = useState<UseSubmissionDetailResult>({
     gate: null,

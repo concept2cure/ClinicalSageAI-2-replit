@@ -91,6 +91,22 @@ export interface UseK510EstarResult {
   error: string | null;
 }
 
+/**
+ * Fetch the eSTAR section list for a 510(k) program from
+ * /api/510k/projects/:ident/document-preview and adapt to the kit's
+ * EstarRow shape. The same endpoint backs PMA + CER section panels —
+ * the cerv2_510k_sections table is misnamed but spans all pathways.
+ *
+ * Status mapping: validated/approved → complete, in_review → review,
+ * drafting → draft, todo → empty, not_applicable → na. Required
+ * sections that are empty + zero-content are flagged as blockers
+ * (kit's pre-flight gate).
+ *
+ * @param projectIdent  numeric fda510kProjects id, regulatoryPrograms
+ *   UUID, or programmer-friendly code (e.g. 'BX-204'). Resolution
+ *   priority is on the server.
+ * @returns `{ rows, blockerCount, loading, error }`.
+ */
 export function useK510EstarSections(projectIdent: string | null): UseK510EstarResult {
   const url = projectIdent
     ? `/api/510k/projects/${encodeURIComponent(projectIdent)}/document-preview`
@@ -156,6 +172,16 @@ export interface UseK510PredicatesResult {
   error: string | null;
 }
 
+/**
+ * Fetch predicate candidates for a 510(k) program from
+ * /api/predicate-intelligence/candidates (proxies to the python shadow
+ * service). Adapter handles snake_case + camelCase responses and
+ * normalizes match scores from 0..1 to 0..100 when needed.
+ *
+ * Returns null on shadow-service unavailability so the surface can
+ * render its "Predicate intelligence is configuring" banner instead
+ * of falling back to fixture data silently.
+ */
 export function useK510Predicates(programId: string | null): UseK510PredicatesResult {
   const url = programId
     ? `/api/predicate-intelligence/candidates?program_id=${encodeURIComponent(programId)}`
@@ -201,6 +227,11 @@ export interface UseK510SeMatrixResult {
   error: string | null;
 }
 
+/**
+ * Fetch the Substantial Equivalence matrix for a 510(k) program from
+ * /api/predicate-intelligence/se-matrix (proxies to the python shadow
+ * service). Verdict normalizes to same / equivalent / different.
+ */
 export function useK510SeMatrix(programId: string | null): UseK510SeMatrixResult {
   const url = programId
     ? `/api/predicate-intelligence/se-matrix?program_id=${encodeURIComponent(programId)}`

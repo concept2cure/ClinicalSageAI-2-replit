@@ -164,6 +164,15 @@ function deriveKpis(list: PresubListRow[]): PresubKpi[] {
   ];
 }
 
+/**
+ * Fetch the Q-Sub list from /api/q-sub and adapt each row into the
+ * kit's PresubListRow shape (server shape is structurally identical;
+ * this hook bridges the type so the kit's surface compiles cleanly).
+ *
+ * Also derives the 4 KPI cards (in-flight count, rolled-in %, pending
+ * rollin, avg days in feedback) from the same list — single
+ * round-trip drives both the list and the metrics strip.
+ */
 export function usePresubList(): UsePresubListResult {
   const { data, loading, error, refresh } = useFetchJson<ListPayload>('/api/q-sub');
   /* Server shape is structurally identical to PresubListRow — assert
@@ -207,6 +216,14 @@ export interface UsePresubDetailResult {
   error: string | null;
 }
 
+/**
+ * Fetch the rich detail for a single Q-Sub from /api/q-sub/:id —
+ * questions + commitments + timeline. Adapter renames `question` →
+ * `q`, picks `commitments[0]` → `commitment` (kit's UI shows one),
+ * and parseInts the dossierLink.sectionId.
+ *
+ * Pass `null` for `id` to disable the fetch (idle state).
+ */
 export function usePresubDetail(id: string | null): UsePresubDetailResult {
   const url = id ? `/api/q-sub/${encodeURIComponent(id)}` : null;
   const { data, loading, error } = useFetchJson<ServerQSubDetail>(url);

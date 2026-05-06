@@ -117,6 +117,33 @@ export interface UseProgramExtrasResult {
   changeImpactFormatted: ChangeImpactEntry[] | null;
 }
 
+/**
+ * Fetch the eight per-program sidecar feeds in parallel and shape them
+ * for ProjectHome / CerSurface / PmaSurface consumption.
+ *
+ * Endpoints fanned out (all under /api/regulatory-programs/:id/):
+ *   /activity?limit=20      → audit-log feed
+ *   /milestones             → derived 8-step timeline
+ *   /rim-recommendations    → structural recs from dossier
+ *   /change-impact          → recent edits + cross-section refs
+ *   /safety-signals         → CER signals
+ *   /literature             → year-bucketed literature corpus
+ *   /pma-modules            → cerv2 sections grouped by PMA module
+ *   /pma-trial-metrics      → clinical_ops.studies KPIs
+ *
+ * Uses Promise.allSettled — a single failed endpoint (e.g.,
+ * safety_signals table not provisioned) degrades that field to null
+ * without blocking the other seven. The hook never sticks in
+ * `loading: true` due to a partial failure.
+ *
+ * Pass `null` for `programId` to disable all fetches (idle state).
+ *
+ * @returns `{ activity, milestones, rimRecs, changeImpact, safetySignals,
+ *   literature, literatureTotal, pmaModules, pmaTrialMetrics,
+ *   activityFormatted, changeImpactFormatted, loading, error }`. The
+ *   `*Formatted` fields are convenience copies with relative-time
+ *   strings ("32m") for direct rendering.
+ */
 export function useProgramExtras(programId: string | null): UseProgramExtrasResult {
   const [state, setState] = useState<{
     activity:     ActivityEvent[]      | null;
