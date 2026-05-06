@@ -755,6 +755,67 @@ export const FETCH_TEMPLATE_AND_FILL: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Native python-docx authoring — canonical Word-grade authoring path.
+// Spawns workers/artifact-compute/docx-python-runtime.py inside the isolated
+// compute worker (no network egress, bounded timeout) which uses python-docx
+// directly: real Document with configured fonts, page margins, headers,
+// footers, headings (h0–h3), bullet/numbered lists, tables (pipe-delimited),
+// page breaks (--- marker), inline images. Returns the .docx and — when
+// output_format='pdf' — chains through headless LibreOffice
+// (server/scripts/docx_pdf_pipeline.py) to produce a native-fidelity PDF.
+//
+// Prefer this over generate_document for paying-client deliverables that
+// must look like real Word output (regulatory submissions, investor decks,
+// signed cover letters). Keep generate_document for lightweight inline
+// composition where JSZip+OOXML fidelity is sufficient.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const AUTHOR_DOCX_NATIVE: AnaTool = {
+  name: 'author_docx_native',
+  description:
+    "Author a native Word-grade .docx using python-docx (workers/artifact-compute/docx-python-runtime.py) running inside the isolated compute worker. Real headers, footers, configured fonts (Calibri 11pt), page margins, heading levels, bullet/numbered lists (markdown-style ‐ and 1. prefixes), pipe-delimited tables, page breaks (--- marker), inline base64 images via ![alt](key). When output_format='pdf', the .docx is then converted via headless LibreOffice for native Word→PDF fidelity. Use for regulatory submissions, signed cover letters, paying-client deliverables — anything that must look like real Word output. Tenant-scoped via ToolContext (organizationId, userId, projectId).",
+  input_schema: {
+    type: 'object',
+    properties: {
+      title: {
+        type: 'string',
+        description:
+          'Document title. Used for the title page heading, the running header, and the output filename.',
+      },
+      content: {
+        type: 'string',
+        description:
+          "Markdown-style content. Supported syntax: '# H1' through '#### H4' headings, '- ' or '* ' for bullets, '1. ' for numbered, '|col|col|' rows + '|---|---|' separator for tables, '---' on its own line for a page break, '![alt](image_key)' for inline images keyed against the images map. Plain paragraphs render as Calibri body text.",
+      },
+      images: {
+        type: 'object',
+        description:
+          'Optional map of image_key → base64-encoded PNG/JPEG bytes. Referenced from content via ![alt](image_key). Omit if the document has no inline images.',
+        additionalProperties: { type: 'string' },
+      },
+      output_format: {
+        type: 'string',
+        enum: ['docx', 'pdf'],
+        description:
+          "Output format. 'docx' returns the python-docx authored Word document; 'pdf' additionally converts via headless LibreOffice. Default 'docx'.",
+      },
+      pdf_compress: {
+        type: 'boolean',
+        description:
+          'When output_format=pdf, run a Ghostscript compression pass after conversion. Useful for submission gateways that cap file size.',
+      },
+      pdf_quality: {
+        type: 'string',
+        enum: ['screen', 'ebook', 'printer', 'prepress', 'default'],
+        description:
+          "Ghostscript PDFSETTINGS preset when pdf_compress=true. Default 'ebook'.",
+      },
+    },
+    required: ['title', 'content'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DOCX → PDF — canonical Word-grade rendering. Wraps the Python pipeline
 // (server/scripts/docx_pdf_pipeline.py) which shells out to headless
 // LibreOffice (`soffice --headless --convert-to pdf`). The .docx remains the
@@ -975,6 +1036,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SIMULATE_REVIEWER_CHALLENGES,
   PREDICT_CHANGE_IMPACT,
   FETCH_TEMPLATE_AND_FILL,
+  AUTHOR_DOCX_NATIVE,
   CONVERT_DOCX_TO_PDF,
   WRITE_KIT_SECTION,
   ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS,

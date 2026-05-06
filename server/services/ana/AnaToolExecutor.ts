@@ -1043,6 +1043,130 @@ registerToolHandler('fetch_template_and_fill', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Native python-docx authoring handler — runs
+// workers/artifact-compute/docx-python-runtime.py inside the isolated compute
+// worker (no network, bounded timeout). Returns a real python-docx-authored
+// .docx with configured fonts, margins, headers, footers, headings, lists,
+// tables, page breaks, and inline images. When output_format='pdf', chains
+// the result through headless LibreOffice for native Word→PDF fidelity.
+//
+// AnA's canonical "produce a paying-client-grade document" path. Use over
+// generate_document for regulatory deliverables that must look like real
+// Word output.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('author_docx_native', async (input, ctx) => {
+  const title    = typeof input.title === 'string' ? input.title.trim() : '';
+  const content  = typeof input.content === 'string' ? input.content : '';
+  const fmt      =
+    input.output_format === 'pdf' || input.output_format === 'docx'
+      ? input.output_format
+      : 'docx';
+  const compress = input.pdf_compress === true;
+  const allowedQ = new Set(['screen', 'ebook', 'printer', 'prepress', 'default']);
+  const quality =
+    typeof input.pdf_quality === 'string' && allowedQ.has(input.pdf_quality)
+      ? (input.pdf_quality as 'screen' | 'ebook' | 'printer' | 'prepress' | 'default')
+      : 'ebook';
+  const images =
+    input.images && typeof input.images === 'object'
+      ? (input.images as Record<string, string>)
+      : undefined;
+
+  if (!title) {
+    return JSON.stringify({ error: 'author_docx_native requires title (string).' });
+  }
+  if (!content || content.length < 8) {
+    return JSON.stringify({
+      error: 'author_docx_native requires content (string ≥ 8 chars).',
+    });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({
+      error: 'author_docx_native requires tenant context (organizationId).',
+    });
+  }
+
+  try {
+    const { runIsolatedCompute } = await import('../compute/workerClient.js');
+    const { promises: fs } = await import('fs');
+    const path = await import('path');
+    const { randomUUID } = await import('crypto');
+
+    /* runIsolatedCompute spawns the python-docx subprocess in an ephemeral
+       tempdir, parses output JSON, returns the .docx as a Buffer. The
+       intent shape requires project/org/user identifiers — we surface
+       them from the tool context and use a default surface key when the
+       caller hasn't bound to a specific surface. */
+    const outputs = await runIsolatedCompute({
+      projectId:       ctx.projectId ?? 0,
+      organizationId:  ctx.organizationId,
+      requestedById:   ctx.userId ?? 0,
+      surfaceKey:      'ri_copilot',
+      intentType:      'docx_generation',
+      title,
+      content:         images
+        ? content // images are passed via metadata.images below
+        : content,
+      format:          'docx',
+      metadata:        images ? { images } : undefined,
+    });
+
+    const docx = outputs[0];
+    if (!docx || docx.outputType !== 'docx') {
+      return JSON.stringify({
+        error: 'author_docx_native: python-docx worker returned no docx output.',
+      });
+    }
+
+    /* Persist the .docx to a tempdir so downstream tools (and the user)
+       have a stable path. The compute worker itself uses an ephemeral
+       tempdir that gets cleaned; we move our copy into the builder
+       tempdir so it persists for the session. */
+    const outDir = path.resolve(process.cwd(), 'tmp', 'docbuilder', randomUUID().slice(0, 8));
+    await fs.mkdir(outDir, { recursive: true });
+    const docxPath = path.join(outDir, docx.fileName);
+    await fs.writeFile(docxPath, docx.buffer);
+
+    /* PDF requested → chain through LibreOffice. The .docx is preserved
+       as the editable source; the PDF is a downstream rendering. */
+    if (fmt === 'pdf') {
+      const { runDocxPdfPipeline } = await import('../docx-pdf-pipeline.js');
+      const pipeline = await runDocxPdfPipeline({
+        inputDocxPath: docxPath,
+        compress,
+        quality,
+      });
+      const pdfStat = await fs.stat(pipeline.finalPdf);
+      return JSON.stringify({
+        ok:           true,
+        engine:       'python-docx + libreoffice',
+        docxPath,
+        pdfPath:      pipeline.finalPdf,
+        sizeBytes:    pdfStat.size,
+        compression:  pipeline.compression ?? null,
+        message: `Authored ${docx.fileName} via python-docx and converted to PDF via headless LibreOffice. PDF: ${pipeline.finalPdf}.`,
+      });
+    }
+
+    return JSON.stringify({
+      ok:        true,
+      engine:    'python-docx',
+      docxPath,
+      sizeBytes: docx.buffer.length,
+      fileName:  docx.fileName,
+      message: `Authored ${docx.fileName} (${Math.round(docx.buffer.length / 1024)}KB) via python-docx isolated worker.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `author_docx_native failed: ${
+        err instanceof Error ? err.message : String(err)
+      }. Verify python3 and the docx package are available on the host (see services/Dockerfile).`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DOCX → PDF handler — wraps the existing Python pipeline
 // (server/scripts/docx_pdf_pipeline.py → soffice --headless --convert-to pdf).
 // AnA invokes this after authoring a .docx to produce the canonical
