@@ -249,7 +249,16 @@ schemas/                      # ?
 ## 6. Build / config files
 
 - `tsconfig.json` + `tsconfig.beta-slice.json` — beta slice is for `beta:typecheck`. OK.
-- `eslint.config.js` + `.eslintrc.cjs` — **two ESLint configs at root**. ESLint flat config (`eslint.config.js`) and legacy (`.eslintrc.cjs`) coexist. ESLint will pick `eslint.config.js` and ignore `.eslintrc.cjs`. **Delete `.eslintrc.cjs`** (or vice versa — pick one).
+- `eslint.config.js` + `.eslintrc.cjs` — **two ESLint configs at root**. ESLint 10 reads the flat config (`eslint.config.js`) and silently ignores `.eslintrc.cjs`. **However, `.eslintrc.cjs` is not a clean delete** — it carries rules the flat config is missing:
+  - `eslint-plugin-security` enforcement
+  - `eslint-plugin-tailwindcss` enforcement (incl. `tailwindcss/no-custom-classname`)
+  - Tech-debt prevention rules: `max-lines: 500`, `max-lines-per-function: 100`, `max-depth: 4`, `max-params: 5`, `complexity: 15`
+  - Stricter overrides for `modules/**` (errors on `max-lines` and `no-console`)
+  - Relaxed overrides for `_deprecated/**` paths
+  - `ignorePatterns` block (which the npm `lint` script currently tries to replicate via inline `--ignore-pattern` flags)
+  - The `concept2cure/**` override banning `LoadingOverlay`, `ThinkingDots`, and pattern matches on deprecated state imports
+
+  **Correct fix**: port the legacy rules into the flat config in a focused PR with a green lint run (likely several files will need fixes once `max-lines` is enforced). Then delete `.eslintrc.cjs`. Do not delete it first — that silently relaxes the lint surface.
 - `package.json` lint scripts have many `--ignore-pattern` flags carrying technical debt:
   ```
   --ignore-pattern client/src --ignore-pattern tests/integration/api/vault.test.js
@@ -268,7 +277,7 @@ schemas/                      # ?
 - [x] Untrack `bun.lock` (committed by mistake; project uses npm).
 - [x] Delete 1-byte garbage file `4-29-26 mdx`.
 - [ ] Archive 15 root-level audit `.md` files → `docs/archive/2026-pre-stabilization/`.
-- [ ] Delete `.eslintrc.cjs` (flat config wins) OR delete `eslint.config.js`.
+- [ ] ~~Delete `.eslintrc.cjs`~~ — **NOT safe**: legacy config has rules the flat config is missing (see §6). Port the legacy rules into the flat config first, then delete `.eslintrc.cjs`.
 - [ ] Delete `server/_deprecated_migrations/` after archiving the SQL.
 
 ### Phase B — server cleanup (one focused PR)
