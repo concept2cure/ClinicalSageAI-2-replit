@@ -18,7 +18,7 @@
  * keyed by the row id so the hook re-fetches on selection change.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import type {
   PresubKpi,
   PresubListRow,
@@ -27,6 +27,7 @@ import type {
   Commitment,
   DossierLink,
 } from '../data/presub';
+import { useFetchJson } from './useFetchJson';
 
 interface ServerQSubListRow {
   id: string;
@@ -164,65 +165,36 @@ function deriveKpis(list: PresubListRow[]): PresubKpi[] {
 }
 
 export function usePresubList(): UsePresubListResult {
-  const [state, setState] = useState<{
-    list: PresubListRow[] | null;
-    loading: boolean;
-    error: string | null;
-  }>({ list: null, loading: false, error: null });
-  const [tick, setTick] = useState(0);
-  const refresh = useCallback(() => setTick((t) => t + 1), []);
-
-  useEffect(() => {
-    let cancelled = false;
-    setState((s) => ({ ...s, loading: true, error: null }));
-    fetch('/api/q-sub', { credentials: 'include' })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return (await res.json()) as ListPayload;
-      })
-      .then((p) => {
-        if (cancelled) return;
-        /* Server shape is structurally identical to PresubListRow — assert
-           through a single typed bridge rather than copying field-by-field. */
-        const list: PresubListRow[] = p.rows.map((r) => ({
-          id:          r.id,
-          qNumber:     r.qNumber,
-          type:        r.type,
-          prog:        r.prog,
-          progTitle:   r.progTitle,
-          title:       r.title,
-          stage:       r.stage,
-          daysIn:      r.daysIn,
-          filed:       r.filed,
-          targetDate:  r.targetDate,
-          meeting:     r.meeting,
-          questions:   r.questions,
-          answered:    r.answered,
-          commitments: r.commitments,
-          rolledIn:    r.rolledIn,
-          fdaTeam:     r.fdaTeam,
-          tone:        r.tone,
-        }));
-        setState({ list, loading: false, error: null });
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setState((s) => ({
-          ...s,
-          loading: false,
-          error: err instanceof Error ? err.message : 'Failed to load Q-Subs',
-        }));
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [tick]);
-
+  const { data, loading, error, refresh } = useFetchJson<ListPayload>('/api/q-sub');
+  /* Server shape is structurally identical to PresubListRow — assert
+     through a single typed bridge rather than copying field-by-field. */
+  const list = useMemo<PresubListRow[] | null>(
+    () => (data ? data.rows.map((r) => ({
+      id:          r.id,
+      qNumber:     r.qNumber,
+      type:        r.type,
+      prog:        r.prog,
+      progTitle:   r.progTitle,
+      title:       r.title,
+      stage:       r.stage,
+      daysIn:      r.daysIn,
+      filed:       r.filed,
+      targetDate:  r.targetDate,
+      meeting:     r.meeting,
+      questions:   r.questions,
+      answered:    r.answered,
+      commitments: r.commitments,
+      rolledIn:    r.rolledIn,
+      fdaTeam:     r.fdaTeam,
+      tone:        r.tone,
+    })) : null),
+    [data],
+  );
   return {
-    list: state.list,
-    kpis: state.list ? deriveKpis(state.list) : null,
-    loading: state.loading,
-    error: state.error,
+    list,
+    kpis: list ? deriveKpis(list) : null,
+    loading,
+    error,
     refresh,
   };
 }
@@ -236,38 +208,8 @@ export interface UsePresubDetailResult {
 }
 
 export function usePresubDetail(id: string | null): UsePresubDetailResult {
-  const [state, setState] = useState<UsePresubDetailResult>({
-    detail: null,
-    loading: false,
-    error: null,
-  });
-  useEffect(() => {
-    if (!id) {
-      setState({ detail: null, loading: false, error: null });
-      return;
-    }
-    let cancelled = false;
-    setState({ detail: null, loading: true, error: null });
-    fetch(`/api/q-sub/${encodeURIComponent(id)}`, { credentials: 'include' })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return (await res.json()) as ServerQSubDetail;
-      })
-      .then((d) => {
-        if (cancelled) return;
-        setState({ detail: adaptDetail(d), loading: false, error: null });
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setState({
-          detail: null,
-          loading: false,
-          error: err instanceof Error ? err.message : 'Failed to load Q-Sub',
-        });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
-  return state;
+  const url = id ? `/api/q-sub/${encodeURIComponent(id)}` : null;
+  const { data, loading, error } = useFetchJson<ServerQSubDetail>(url);
+  const detail = useMemo(() => (data ? adaptDetail(data) : null), [data]);
+  return { detail, loading, error };
 }

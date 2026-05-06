@@ -20,6 +20,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { db, pool } from '../db';
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { regulatoryPrograms } from '../../shared/schema/programs';
@@ -28,6 +29,13 @@ import { qSubmissions, qSubMeetings, qSubQuestions, qSubCommitments } from '../.
 import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger';
 import { resolveOrgId } from '../types/auth-request';
+import {
+  ok,
+  clientError,
+  serverError,
+  orgRequired,
+  notFoundInTenant,
+} from '../lib/api-response';
 import {
   SIGNAL_SOURCE_MAP,
   ACTION_TO_SEVERITY,
@@ -42,16 +50,27 @@ import {
 const router = Router();
 const log = createScopedLogger('regulatory-programs');
 
-/* Single error helper — logs + returns 500. Keeps the 11 catch blocks
-   below DRY, and gives ops a consistent grep-able prefix. */
-function fail(res: Response, where: string, err: unknown): void {
-  const message = err instanceof Error ? err.message : 'Operation failed';
-  log.error(`${where} failed`, { err: message });
-  res.status(500).json({ error: message });
-}
+/* Errors flow through the canonical serverError() helper. We keep a
+   thin local alias so the 11 catch blocks below remain readable. */
+const fail = (res: Response, where: string, err: unknown) =>
+  serverError(res, log, where, err);
 
 /* getOrgId is now a thin alias over the shared resolveOrgId helper. */
 const getOrgId = resolveOrgId;
+
+/* ─── Query-param validators ──────────────────────────────────────────
+   GET endpoints pass through Zod schemas to catch typos / invalid
+   enums / oversized limits before they hit SQL. Each schema returns a
+   parsed object with safe defaults; the route handler reads from the
+   parsed result, never from req.query directly. */
+
+const listQuerySchema = z.object({
+  programType: z.enum(['510K', '510(K)', '510k', 'DE_NOVO', 'PMA', 'CER', 'IND', 'NDA', 'BLA']).optional(),
+});
+
+const activityQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
 
 /* ─── Shared infrastructure types ──────────────────────────────────────
    pg's `Error.code` is the 5-character SQLSTATE. We narrow on it to
@@ -136,9 +155,13 @@ interface ProgramRowWithLead {
 router.get('/', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+    if (orgId === null) return orgRequired(res);
 
-    const programType = typeof req.query.programType === 'string' ? req.query.programType : null;
+    const queryParsed = listQuerySchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      return clientError(res, 422, 'Invalid query parameters', queryParsed.error.flatten().fieldErrors);
+    }
+    const { programType } = queryParsed.data;
 
     const conditions = [eq(regulatoryPrograms.organizationId, orgId)];
     if (programType) conditions.push(eq(regulatoryPrograms.programType, programType));
@@ -186,7 +209,7 @@ router.get('/', async (req: Request, res: Response) => {
       updatedAt:            r.updatedAt.toISOString(),
     }));
 
-    res.json({ data });
+    return ok(res, data);
   } catch (e) {
     return fail(res, 'list', e);
   }
@@ -195,7 +218,7 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+    if (orgId === null) return orgRequired(res);
 
     const id = String(req.params.id);
     const [row] = await db
@@ -203,7 +226,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       .from(regulatoryPrograms)
       .where(and(eq(regulatoryPrograms.id, id), eq(regulatoryPrograms.organizationId, orgId)))
       .limit(1);
-    if (!row) return res.status(404).json({ error: 'Program not found' });
+    if (!row) return notFoundInTenant(res, 'Program');
 
     let leadUserName: string | null = null;
     if (row.leadUserId != null) {
@@ -237,7 +260,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       updatedAt:            row.updatedAt.toISOString(),
     };
 
-    res.json({ data });
+    return ok(res, data);
   } catch (e) {
     return fail(res, 'get-one', e);
   }
@@ -265,11 +288,14 @@ interface ActivityEvent {
 router.get('/:id/activity', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+    if (orgId === null) return orgRequired(res);
 
     const id = String(req.params.id);
-    const limitRaw = req.query.limit;
-    const limit = typeof limitRaw === 'string' ? Math.min(Math.max(parseInt(limitRaw, 10) || 50, 1), 200) : 50;
+    const queryParsed = activityQuerySchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      return clientError(res, 422, 'Invalid query parameters', queryParsed.error.flatten().fieldErrors);
+    }
+    const { limit } = queryParsed.data;
 
     /* Authorize: caller must have access to the program in their org. */
     const [program] = await db
@@ -277,7 +303,7 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
       .from(regulatoryPrograms)
       .where(and(eq(regulatoryPrograms.id, id), eq(regulatoryPrograms.organizationId, orgId)))
       .limit(1);
-    if (!program) return res.status(404).json({ error: 'Program not found' });
+    if (!program) return notFoundInTenant(res, 'Program');
 
     /* Pull audit_logs rows for this program. Two flavors of resourceType
        ('regulatory_program' singular and 'regulatory_programs' plural)
@@ -339,7 +365,7 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
       };
     });
 
-    res.json({ data });
+    return ok(res, data);
   } catch (e) {
     return fail(res, 'activity', e);
   }
@@ -366,7 +392,7 @@ interface Milestone {
 router.get('/:id/milestones', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+    if (orgId === null) return orgRequired(res);
 
     const id = String(req.params.id);
     const [program] = await db
@@ -374,7 +400,7 @@ router.get('/:id/milestones', async (req: Request, res: Response) => {
       .from(regulatoryPrograms)
       .where(and(eq(regulatoryPrograms.id, id), eq(regulatoryPrograms.organizationId, orgId)))
       .limit(1);
-    if (!program) return res.status(404).json({ error: 'Program not found' });
+    if (!program) return notFoundInTenant(res, 'Program');
 
     const milestones: Milestone[] = [];
     const fmtDate = (d: Date | null | undefined) =>
@@ -454,7 +480,7 @@ router.get('/:id/milestones', async (req: Request, res: Response) => {
       state: status === 'approved' ? 'complete' : 'idle',
     });
 
-    res.json({ data: milestones });
+    return ok(res, milestones);
   } catch (e) {
     return fail(res, 'milestones', e);
   }
@@ -488,7 +514,7 @@ interface RimRec {
 router.get('/:id/rim-recommendations', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+    if (orgId === null) return orgRequired(res);
 
     const id = String(req.params.id);
     const [program] = await db
@@ -496,7 +522,7 @@ router.get('/:id/rim-recommendations', async (req: Request, res: Response) => {
       .from(regulatoryPrograms)
       .where(and(eq(regulatoryPrograms.id, id), eq(regulatoryPrograms.organizationId, orgId)))
       .limit(1);
-    if (!program) return res.status(404).json({ error: 'Program not found' });
+    if (!program) return notFoundInTenant(res, 'Program');
 
     const recs: RimRec[] = [];
 
@@ -611,7 +637,7 @@ router.get('/:id/rim-recommendations', async (req: Request, res: Response) => {
       });
     }
 
-    res.json({ data: recs });
+    return ok(res, recs);
   } catch (e) {
     return fail(res, 'rim-recommendations', e);
   }
@@ -636,7 +662,7 @@ interface ChangeImpact {
 router.get('/:id/change-impact', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+    if (orgId === null) return orgRequired(res);
 
     const id = String(req.params.id);
     const [program] = await db
@@ -644,7 +670,7 @@ router.get('/:id/change-impact', async (req: Request, res: Response) => {
       .from(regulatoryPrograms)
       .where(and(eq(regulatoryPrograms.id, id), eq(regulatoryPrograms.organizationId, orgId)))
       .limit(1);
-    if (!program) return res.status(404).json({ error: 'Program not found' });
+    if (!program) return notFoundInTenant(res, 'Program');
 
     /* Recent section edits in this org (last 20 update events). */
     const recentEdits = await db
@@ -711,7 +737,7 @@ router.get('/:id/change-impact', async (req: Request, res: Response) => {
       };
     });
 
-    res.json({ data });
+    return ok(res, data);
   } catch (e) {
     return fail(res, 'change-impact', e);
   }
@@ -742,7 +768,7 @@ interface SafetySignalRow {
 router.get('/:id/safety-signals', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+    if (orgId === null) return orgRequired(res);
 
     const id = String(req.params.id);
     const [program] = await db
@@ -750,7 +776,7 @@ router.get('/:id/safety-signals', async (req: Request, res: Response) => {
       .from(regulatoryPrograms)
       .where(and(eq(regulatoryPrograms.id, id), eq(regulatoryPrograms.organizationId, orgId)))
       .limit(1);
-    if (!program) return res.status(404).json({ error: 'Program not found' });
+    if (!program) return notFoundInTenant(res, 'Program');
 
     /* safety_signals.organization_id is text; cast both sides for the
        comparison so int orgIds match the existing string-shaped data. */
@@ -797,7 +823,7 @@ router.get('/:id/safety-signals', async (req: Request, res: Response) => {
       detectedAt: r.detected_at instanceof Date ? r.detected_at.toISOString() : String(r.detected_at),
     }));
 
-    res.json({ data });
+    return ok(res, data);
   } catch (e) {
     return fail(res, 'safety-signals', e);
   }
@@ -822,7 +848,7 @@ interface LiteratureBucket {
 router.get('/:id/literature', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+    if (orgId === null) return orgRequired(res);
 
     const id = String(req.params.id);
     const [program] = await db
@@ -834,7 +860,7 @@ router.get('/:id/literature', async (req: Request, res: Response) => {
       .from(regulatoryPrograms)
       .where(and(eq(regulatoryPrograms.id, id), eq(regulatoryPrograms.organizationId, orgId)))
       .limit(1);
-    if (!program) return res.status(404).json({ error: 'Program not found' });
+    if (!program) return notFoundInTenant(res, 'Program');
 
     const productName = program.productName || program.name;
     const currentYear = new Date().getFullYear();
@@ -866,7 +892,7 @@ router.get('/:id/literature', async (req: Request, res: Response) => {
     }
 
     const total = buckets.reduce((s, b) => s + b.hits, 0);
-    res.json({ data: buckets, total, productName });
+    return ok(res, buckets, { total, productName });
   } catch (e) {
     return fail(res, 'literature', e);
   }
@@ -913,7 +939,7 @@ const PMA_MODULE_DEFS: Array<{
 router.get('/:id/pma-modules', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+    if (orgId === null) return orgRequired(res);
 
     const id = String(req.params.id);
     const [program] = await db
@@ -921,7 +947,7 @@ router.get('/:id/pma-modules', async (req: Request, res: Response) => {
       .from(regulatoryPrograms)
       .where(and(eq(regulatoryPrograms.id, id), eq(regulatoryPrograms.organizationId, orgId)))
       .limit(1);
-    if (!program) return res.status(404).json({ error: 'Program not found' });
+    if (!program) return notFoundInTenant(res, 'Program');
 
     const sections = await db
       .select({
@@ -955,7 +981,7 @@ router.get('/:id/pma-modules', async (req: Request, res: Response) => {
       return { id: def.id, label: def.label, desc: def.desc, docs: total, status };
     });
 
-    res.json({ data });
+    return ok(res, data);
   } catch (e) {
     return fail(res, 'pma-modules', e);
   }
@@ -993,7 +1019,7 @@ interface TrialMetric {
 router.get('/:id/pma-trial-metrics', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+    if (orgId === null) return orgRequired(res);
 
     const id = String(req.params.id);
     const [program] = await db
@@ -1006,7 +1032,7 @@ router.get('/:id/pma-trial-metrics', async (req: Request, res: Response) => {
       .from(regulatoryPrograms)
       .where(and(eq(regulatoryPrograms.id, id), eq(regulatoryPrograms.organizationId, orgId)))
       .limit(1);
-    if (!program) return res.status(404).json({ error: 'Program not found' });
+    if (!program) return notFoundInTenant(res, 'Program');
 
     const meta = (program.metadata as Record<string, unknown> | null) ?? {};
     const overrideStudyId = typeof meta.clinicalStudyId === 'string' ? meta.clinicalStudyId : null;
@@ -1039,7 +1065,7 @@ router.get('/:id/pma-trial-metrics', async (req: Request, res: Response) => {
         { label: 'AE rate',           metric: '—', unit: '%', meta: 'Pending enrollment' },
         { label: 'Endpoints achieved',metric: '—', meta: 'Pending interim analysis' },
       );
-      return res.json({ data, study: null });
+      return ok(res, data, { study: null });
     }
 
     const enrolled       = Number(study.enrolled ?? 0);
@@ -1105,8 +1131,7 @@ router.get('/:id/pma-trial-metrics', async (req: Request, res: Response) => {
           : 'Pending interim analysis' },
     );
 
-    res.json({
-      data,
+    return ok(res, data, {
       study: { id: study.id, name: study.name, phase: study.phase, status: study.status },
     });
   } catch (e) {
@@ -1135,7 +1160,7 @@ router.get('/:id/pma-trial-metrics', async (req: Request, res: Response) => {
 router.get('/portfolio-insights', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+    if (orgId === null) return orgRequired(res);
 
     /* All programs for the org. */
     const programs = await db
@@ -1239,7 +1264,7 @@ router.get('/portfolio-insights', async (req: Request, res: Response) => {
       });
     }
 
-    res.json({ data: insights });
+    return ok(res, insights);
   } catch (e) {
     return fail(res, 'portfolio-insights', e);
   }

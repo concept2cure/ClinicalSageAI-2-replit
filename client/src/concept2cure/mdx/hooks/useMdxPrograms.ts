@@ -19,8 +19,9 @@
  *    other workstreams and won't render in the MDX Overview surface.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import type { DueTone, Program, ProgramPathway, ProgramStatus } from '../data/programs';
+import { useFetchJson } from './useFetchJson';
 import {
   REGULATORY_PATH_TO_PATHWAY,
   PROGRAM_TYPE_TO_PATHWAY,
@@ -191,48 +192,12 @@ export interface UseMdxProgramsResult {
 }
 
 export function useMdxPrograms(): UseMdxProgramsResult {
-  const [state, setState] = useState<{
-    programs: Program[] | null;
-    loading: boolean;
-    error: string | null;
-  }>({ programs: null, loading: false, error: null });
-  const [tick, setTick] = useState<number>(0);
-  const refresh = useCallback(() => setTick((t: number) => t + 1), []);
-
-  useEffect(() => {
-    let cancelled = false;
-    setState((s) => ({ ...s, loading: true, error: null }));
-
-    fetch('/api/regulatory-programs', { credentials: 'include' })
-      .then(async (res) => {
-        if (!res.ok) {
-          const detail = await res.text().catch(() => '');
-          throw new Error(`HTTP ${res.status}${detail ? `: ${detail.slice(0, 200)}` : ''}`);
-        }
-        return (await res.json()) as ListPayload;
-      })
-      .then((payload) => {
-        if (cancelled) return;
-        const programs = payload.data
-          .map(rowToKit)
-          .filter((p): p is Program => p !== null);
-        setState({ programs, loading: false, error: null });
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setState((s) => ({
-          ...s,
-          loading: false,
-          error: err instanceof Error ? err.message : 'Failed to load programs',
-        }));
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [tick]);
-
-  return { ...state, refresh };
+  const { data, loading, error, refresh } = useFetchJson<ListPayload>('/api/regulatory-programs');
+  const programs = useMemo(
+    () => (data ? data.data.map(rowToKit).filter((p): p is Program => p !== null) : null),
+    [data],
+  );
+  return { programs, loading, error, refresh };
 }
 
 /* ─── Per-program detail (raw server shape, unadapted) ──────────────────
@@ -274,40 +239,7 @@ export function useProgramDetail(programId: string | null): {
   loading: boolean;
   error: string | null;
 } {
-  const [state, setState] = useState<{
-    detail: ProgramDetail | null;
-    loading: boolean;
-    error: string | null;
-  }>({ detail: null, loading: false, error: null });
-  useEffect(() => {
-    if (!programId) {
-      setState({ detail: null, loading: false, error: null });
-      return;
-    }
-    let cancelled = false;
-    setState({ detail: null, loading: true, error: null });
-    fetch(`/api/regulatory-programs/${encodeURIComponent(programId)}`, {
-      credentials: 'include',
-    })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return (await res.json()) as ProgramDetailPayload;
-      })
-      .then((p) => {
-        if (cancelled) return;
-        setState({ detail: p.data, loading: false, error: null });
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setState({
-          detail: null,
-          loading: false,
-          error: err instanceof Error ? err.message : 'Failed to load program detail',
-        });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [programId]);
-  return state;
+  const url = programId ? `/api/regulatory-programs/${encodeURIComponent(programId)}` : null;
+  const { data, loading, error } = useFetchJson<ProgramDetailPayload>(url);
+  return { detail: data?.data ?? null, loading, error };
 }

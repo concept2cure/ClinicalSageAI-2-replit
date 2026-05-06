@@ -13,9 +13,10 @@
  *   PATCH  /:id          update label / scope / refresh hits
  *   DELETE /:id          remove saved query
  *
- * The "refresh hits" path (PATCH with body { refresh: true }) re-runs the
- * search via the existing precedent-engine endpoint and writes back the
- * count. Optional but real — the kit's hit count is meant to be live.
+ * Every response uses the canonical { data, meta? } / { error, details? }
+ * envelopes via server/lib/api-response.ts. Mutations are validated
+ * against Zod schemas on the way in; the global audit middleware writes
+ * audit_logs entries on every successful 2xx response.
  */
 
 import { Router, Request, Response } from 'express';
@@ -25,6 +26,15 @@ import { and, desc, eq } from 'drizzle-orm';
 import { savedPrecedentQueries } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger';
 import { resolveOrgId, resolveUserId } from '../types/auth-request';
+import {
+  ok,
+  created,
+  noContent,
+  clientError,
+  serverError,
+  orgRequired,
+  notFoundInTenant,
+} from '../lib/api-response';
 
 const router = Router();
 const log = createScopedLogger('saved-precedent-queries');
@@ -67,14 +77,12 @@ const patchSchema = z
   })
   .strict();
 
-/* getOrgId / getUserId are thin aliases over the shared helpers. */
-const getOrgId  = resolveOrgId;
-const getUserId = resolveUserId;
+const idParamSchema = z.coerce.number().int().positive();
 
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const orgId = getOrgId(req);
-    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+    const orgId = resolveOrgId(req);
+    if (orgId === null) return orgRequired(res);
 
     const rows = await db
       .select()
@@ -82,36 +90,34 @@ router.get('/', async (req: Request, res: Response) => {
       .where(eq(savedPrecedentQueries.organizationId, orgId))
       .orderBy(desc(savedPrecedentQueries.updatedAt));
 
-    res.json({
-      data: rows.map((r) => ({
-        id:         r.id,
-        label:      r.label,
-        query:      r.query,
-        scope:      r.scope,
-        hits:       r.hits,
-        lastRunAt:  r.lastRunAt ? r.lastRunAt.toISOString() : null,
-        userId:     r.userId,
-        createdAt:  r.createdAt.toISOString(),
-        updatedAt:  r.updatedAt.toISOString(),
+    return ok(
+      res,
+      rows.map((r) => ({
+        id:        r.id,
+        label:     r.label,
+        query:     r.query,
+        scope:     r.scope,
+        hits:      r.hits,
+        lastRunAt: r.lastRunAt ? r.lastRunAt.toISOString() : null,
+        userId:    r.userId,
+        createdAt: r.createdAt.toISOString(),
+        updatedAt: r.updatedAt.toISOString(),
       })),
-    });
+    );
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, log, 'list', e);
   }
 });
 
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const orgId = getOrgId(req);
-    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
-    const userId = getUserId(req);
+    const orgId = resolveOrgId(req);
+    if (orgId === null) return orgRequired(res);
+    const userId = resolveUserId(req);
 
     const parsed = createSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
-      return res.status(422).json({
-        error:   'Validation failed',
-        details: parsed.error.flatten().fieldErrors,
-      });
+      return clientError(res, 422, 'Validation failed', parsed.error.flatten().fieldErrors);
     }
     const { label, query, scope } = parsed.data;
 
@@ -128,27 +134,24 @@ router.post('/', async (req: Request, res: Response) => {
       .returning();
 
     log.info('saved precedent query created', { orgId, userId, savedQueryId: row.id, label });
-    res.status(201).json({ data: row });
+    return created(res, row);
   } catch (e) {
-    log.error('create saved query failed', { err: e instanceof Error ? e.message : 'unknown' });
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, log, 'create', e);
   }
 });
 
 router.patch('/:id', async (req: Request, res: Response) => {
   try {
-    const orgId = getOrgId(req);
-    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+    const orgId = resolveOrgId(req);
+    if (orgId === null) return orgRequired(res);
 
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(422).json({ error: 'id must be an integer' });
+    const idParsed = idParamSchema.safeParse(req.params.id);
+    if (!idParsed.success) return clientError(res, 422, 'id must be a positive integer');
+    const id = idParsed.data;
 
     const parsed = patchSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
-      return res.status(422).json({
-        error:   'Validation failed',
-        details: parsed.error.flatten().fieldErrors,
-      });
+      return clientError(res, 422, 'Validation failed', parsed.error.flatten().fieldErrors);
     }
     const body = parsed.data;
     const updates: Partial<typeof savedPrecedentQueries.$inferInsert> = {
@@ -165,34 +168,34 @@ router.patch('/:id', async (req: Request, res: Response) => {
       .set(updates)
       .where(and(eq(savedPrecedentQueries.id, id), eq(savedPrecedentQueries.organizationId, orgId)))
       .returning();
-    if (!row) return res.status(404).json({ error: 'Not found' });
+    if (!row) return notFoundInTenant(res, 'Saved query');
 
     log.info('saved precedent query updated', { orgId, savedQueryId: id, fields: Object.keys(body) });
-    res.json({ data: row });
+    return ok(res, row);
   } catch (e) {
-    log.error('update saved query failed', { err: e instanceof Error ? e.message : 'unknown' });
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, log, 'update', e);
   }
 });
 
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
-    const orgId = getOrgId(req);
-    if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(422).json({ error: 'id must be an integer' });
+    const orgId = resolveOrgId(req);
+    if (orgId === null) return orgRequired(res);
+
+    const idParsed = idParamSchema.safeParse(req.params.id);
+    if (!idParsed.success) return clientError(res, 422, 'id must be a positive integer');
+    const id = idParsed.data;
 
     const [row] = await db
       .delete(savedPrecedentQueries)
       .where(and(eq(savedPrecedentQueries.id, id), eq(savedPrecedentQueries.organizationId, orgId)))
       .returning({ id: savedPrecedentQueries.id });
-    if (!row) return res.status(404).json({ error: 'Not found' });
+    if (!row) return notFoundInTenant(res, 'Saved query');
 
     log.info('saved precedent query removed', { orgId, savedQueryId: id });
-    res.status(204).end();
+    return noContent(res);
   } catch (e) {
-    log.error('delete saved query failed', { err: e instanceof Error ? e.message : 'unknown' });
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return serverError(res, log, 'delete', e);
   }
 });
 

@@ -20,7 +20,7 @@
  * No new server routes — all three endpoints already exist.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type {
   Task,
   TaskCol,
@@ -32,50 +32,12 @@ import type {
   ValidationSummary,
 } from '../data/workbench';
 import type { Program } from '../data/programs';
+import { useFetchJson } from './useFetchJson';
 import {
   STATUS_TO_TASK_COL,
   TYPE_TO_TASK_KIND,
   PATHWAY_LABEL,
 } from '../../../../../shared/constants/mdx';
-
-interface AsyncState<T> {
-  data: T | null;
-  loading: boolean;
-  error: string | null;
-}
-
-function useFetch<T>(url: string): AsyncState<T> {
-  const [state, setState] = useState<AsyncState<T>>({
-    data: null,
-    loading: false,
-    error: null,
-  });
-  useEffect(() => {
-    let cancelled = false;
-    setState((s) => ({ ...s, loading: true, error: null }));
-    fetch(url, { credentials: 'include' })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return (await res.json()) as T;
-      })
-      .then((d) => {
-        if (cancelled) return;
-        setState({ data: d, loading: false, error: null });
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setState({
-          data: null,
-          loading: false,
-          error: err instanceof Error ? err.message : 'Fetch failed',
-        });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [url]);
-  return state;
-}
 
 /* ─── Tasks ────────────────────────────────────────────────────────── */
 
@@ -161,7 +123,7 @@ export interface UseWorkbenchTasksResult {
 }
 
 export function useWorkbenchTasks(): UseWorkbenchTasksResult {
-  const { data, loading, error } = useFetch<WorkloadPayload>('/api/submission-ops/workload');
+  const { data, loading, error } = useFetchJson<WorkloadPayload>('/api/submission-ops/workload');
   const tasks = useMemo(() => {
     if (!data) return null;
     const list = data.data ?? data.workload ?? data.rows ?? [];
@@ -231,7 +193,7 @@ export interface UseWorkbenchTemplatesResult {
 }
 
 export function useWorkbenchTemplates(): UseWorkbenchTemplatesResult {
-  const { data, loading, error } = useFetch<TemplatesPayload>('/api/templates');
+  const { data, loading, error } = useFetchJson<TemplatesPayload>('/api/templates');
   const templates = useMemo(() => {
     if (!data) return null;
     const list = data.templates ?? data.data ?? [
@@ -293,7 +255,7 @@ export interface UseWorkbenchValidationResult {
 }
 
 export function useWorkbenchValidation(programs: Program[]): UseWorkbenchValidationResult {
-  const { data, loading, error } = useFetch<BlockersPayload>('/api/submission-ops/blockers');
+  const { data, loading, error } = useFetchJson<BlockersPayload>('/api/submission-ops/blockers');
   const rules = useMemo(() => {
     if (!data) return null;
     const list = data.data ?? data.blockers ?? data.rows ?? [];

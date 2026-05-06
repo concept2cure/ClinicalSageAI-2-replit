@@ -173,7 +173,7 @@ export function useProgramExtras(programId: string | null): UseProgramExtrasResu
       fetchJson<Payload<RimRecommendation>>('/rim-recommendations'),
       fetchJson<Payload<ChangeImpactEntry>>('/change-impact'),
       fetchJson<Payload<SafetySignal>>('/safety-signals'),
-      fetchJson<Payload<LiteratureBucket> & { total?: number }>('/literature'),
+      fetchJson<Payload<LiteratureBucket> & { meta?: { total?: number; productName?: string } }>('/literature'),
       fetchJson<Payload<PmaModule>>('/pma-modules'),
       fetchJson<Payload<TrialMetric>>('/pma-trial-metrics'),
     ])
@@ -182,7 +182,7 @@ export function useProgramExtras(programId: string | null): UseProgramExtrasResu
         const [act, ms, recs, ci, sig, lit, mods, trial] = results.map((r) =>
           r.status === 'fulfilled' ? r.value : null,
         );
-        const litResult = lit as (Payload<LiteratureBucket> & { total?: number }) | null;
+        const litResult = lit as (Payload<LiteratureBucket> & { meta?: { total?: number; productName?: string } }) | null;
         setState({
           activity:        (act as Payload<ActivityEvent>     | null)?.data  ?? null,
           milestones:      (ms  as Payload<ProgramMilestone>  | null)?.data  ?? null,
@@ -190,7 +190,7 @@ export function useProgramExtras(programId: string | null): UseProgramExtrasResu
           changeImpact:    (ci  as Payload<ChangeImpactEntry> | null)?.data  ?? null,
           safetySignals:   (sig as Payload<SafetySignal>      | null)?.data  ?? null,
           literature:      litResult?.data ?? null,
-          literatureTotal: litResult?.total ?? 0,
+          literatureTotal: litResult?.meta?.total ?? 0,
           pmaModules:      (mods  as Payload<PmaModule>  | null)?.data ?? null,
           pmaTrialMetrics: (trial as Payload<TrialMetric> | null)?.data ?? null,
           loading: false,

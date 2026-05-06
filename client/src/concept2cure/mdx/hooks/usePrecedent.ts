@@ -13,7 +13,8 @@
  *    (returned as a single "getting started" hint).
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
+import { useFetchJson } from './useFetchJson';
 
 export interface SavedPrecedentQuery {
   id: number;
@@ -47,81 +48,58 @@ export interface UseSavedPrecedentQueriesResult {
 }
 
 export function useSavedPrecedentQueries(): UseSavedPrecedentQueriesResult {
-  const [state, setState] = useState<{
-    queries: SavedPrecedentQuery[] | null;
-    loading: boolean;
-    error: string | null;
-  }>({ queries: null, loading: false, error: null });
-  const [tick, setTick] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    setState((s) => ({ ...s, loading: true, error: null }));
-    fetch('/api/saved-precedent-queries', { credentials: 'include' })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return (await res.json()) as ListPayload<SavedPrecedentQuery>;
-      })
-      .then((p) => {
-        if (cancelled) return;
-        setState({ queries: p.data, loading: false, error: null });
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setState({ queries: null, loading: false, error: err instanceof Error ? err.message : 'Failed' });
-      });
-    return () => { cancelled = true; };
-  }, [tick]);
+  const { data, loading, error, refresh } =
+    useFetchJson<ListPayload<SavedPrecedentQuery>>('/api/saved-precedent-queries');
 
   const create = useCallback(async (q: { label: string; query: string; scope?: SavedPrecedentQuery['scope'] }) => {
     try {
       const res = await fetch('/api/saved-precedent-queries', {
-        method:  'POST',
+        method:      'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(q),
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify(q),
       });
       if (!res.ok) return null;
       const j = (await res.json()) as SinglePayload<SavedPrecedentQuery>;
-      setTick((t) => t + 1);
+      refresh();
       return j.data;
     } catch {
       return null;
     }
-  }, []);
+  }, [refresh]);
 
   const remove = useCallback(async (id: number) => {
     try {
       const res = await fetch(`/api/saved-precedent-queries/${id}`, {
-        method: 'DELETE',
+        method:      'DELETE',
         credentials: 'include',
       });
       if (res.status !== 204) return false;
-      setTick((t) => t + 1);
+      refresh();
       return true;
     } catch {
       return false;
     }
-  }, []);
+  }, [refresh]);
 
   const refreshHits = useCallback(async (id: number, hits: number) => {
     try {
       const res = await fetch(`/api/saved-precedent-queries/${id}`, {
-        method:  'PATCH',
+        method:      'PATCH',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ hits, refresh: true }),
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify({ hits, refresh: true }),
       });
       if (!res.ok) return null;
       const j = (await res.json()) as SinglePayload<SavedPrecedentQuery>;
-      setTick((t) => t + 1);
+      refresh();
       return j.data;
     } catch {
       return null;
     }
-  }, []);
+  }, [refresh]);
 
-  return { ...state, create, remove, refreshHits };
+  return { queries: data?.data ?? null, loading, error, create, remove, refreshHits };
 }
 
 export interface PortfolioInsight {
@@ -134,28 +112,7 @@ export function usePortfolioInsights(): {
   loading: boolean;
   error: string | null;
 } {
-  const [state, setState] = useState<{
-    insights: PortfolioInsight[] | null;
-    loading: boolean;
-    error: string | null;
-  }>({ insights: null, loading: false, error: null });
-  useEffect(() => {
-    let cancelled = false;
-    setState((s) => ({ ...s, loading: true, error: null }));
-    fetch('/api/regulatory-programs/portfolio-insights', { credentials: 'include' })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return (await res.json()) as ListPayload<PortfolioInsight>;
-      })
-      .then((p) => {
-        if (cancelled) return;
-        setState({ insights: p.data, loading: false, error: null });
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setState({ insights: null, loading: false, error: err instanceof Error ? err.message : 'Failed' });
-      });
-    return () => { cancelled = true; };
-  }, []);
-  return state;
+  const { data, loading, error } =
+    useFetchJson<ListPayload<PortfolioInsight>>('/api/regulatory-programs/portfolio-insights');
+  return { insights: data?.data ?? null, loading, error };
 }

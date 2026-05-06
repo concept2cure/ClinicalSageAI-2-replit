@@ -248,3 +248,37 @@ export function bucketTone(value: number, warnMin: number, okMin: number): Tone 
   if (value >= warnMin) return 'warn';
   return 'err';
 }
+
+/* ─── HTTP envelope ─────────────────────────────────────────────────
+   Standard response shape for every MDX-owned API endpoint. All routes
+   under /api/regulatory-programs and /api/saved-precedent-queries
+   return this envelope so client adapters can unwrap consistently:
+
+     { data: T | T[], meta?: { ... } }
+
+   `data` carries the resource (single object for /:id endpoints, array
+   for list endpoints). `meta` is an optional object with sibling
+   metadata (totals, related-resource summaries, pagination cursors)
+   that the response shape needs to carry alongside the primary
+   resource. Examples in current code:
+     - /literature      → meta: { total, productName }
+     - /pma-trial-metrics → meta: { study | null } */
+
+export interface ApiEnvelope<T> {
+  data: T;
+  meta?: Record<string, unknown>;
+}
+
+/* ─── HTTP error envelope ───────────────────────────────────────────
+   Standard error shape:
+
+     { error: string, details?: object }
+
+   `error` is a human-readable message. `details` carries structured
+   field-level errors (e.g. Zod's flatten().fieldErrors output) for
+   422 responses. 500-class errors omit `details`. */
+
+export interface ApiErrorEnvelope {
+  error: string;
+  details?: Record<string, unknown>;
+}

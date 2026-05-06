@@ -10,12 +10,13 @@
  * and useSubmissionDetail() fetches gate + log for the selected row only.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type {
   Submission,
   SubmissionLogEntry,
   SubmissionStage,
 } from '../data/workbench';
+import { useFetchJson } from './useFetchJson';
 import { FAMILY_TO_SUBMISSION_PATHWAY } from '../../../../../shared/constants/mdx';
 
 interface ServerPackage {
@@ -128,37 +129,12 @@ export interface UseSubmissionsResult {
 }
 
 export function useSubmissions(): UseSubmissionsResult {
-  const [state, setState] = useState<UseSubmissionsResult>({
-    submissions: null,
-    loading: false,
-    error: null,
-  });
-  useEffect(() => {
-    let cancelled = false;
-    setState((s) => ({ ...s, loading: true, error: null }));
-    fetch('/api/submission-ops/packages', { credentials: 'include' })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return (await res.json()) as ListPayload;
-      })
-      .then((p) => {
-        if (cancelled) return;
-        const submissions = p.data.map(adaptPackage);
-        setState({ submissions, loading: false, error: null });
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setState({
-          submissions: null,
-          loading: false,
-          error: err instanceof Error ? err.message : 'Failed to load submissions',
-        });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-  return state;
+  const { data, loading, error } = useFetchJson<ListPayload>('/api/submission-ops/packages');
+  const submissions = useMemo(
+    () => (data ? data.data.map(adaptPackage) : null),
+    [data],
+  );
+  return { submissions, loading, error };
 }
 
 /* ─── Per-package detail (gate + activity log) ─────────────────────── */

@@ -23,8 +23,8 @@
  *     nothing renders empty.
  */
 
-import { useEffect, useState } from 'react';
 import type { EstarRow, EstarStatus, Predicate, PredicateStatus, SeRow } from '../data/k510';
+import { useFetchJson } from './useFetchJson';
 import {
   ESTAR_STATUS_MAP,
   PREDICATE_STATUS_MAP,
@@ -32,52 +32,6 @@ import {
 } from '../../../../../shared/constants/mdx';
 
 /* ─── Shared types ──────────────────────────────────────────────────── */
-
-interface AsyncState<T> {
-  data: T | null;
-  loading: boolean;
-  error: string | null;
-}
-
-function useFetchJson<T>(url: string | null): AsyncState<T> {
-  const [state, setState] = useState<AsyncState<T>>({
-    data: null,
-    loading: false,
-    error: null,
-  });
-  useEffect(() => {
-    if (!url) {
-      setState({ data: null, loading: false, error: null });
-      return;
-    }
-    let cancelled = false;
-    setState({ data: null, loading: true, error: null });
-    fetch(url, { credentials: 'include' })
-      .then(async (res) => {
-        if (!res.ok) {
-          const detail = await res.text().catch(() => '');
-          throw new Error(`HTTP ${res.status}${detail ? `: ${detail.slice(0, 160)}` : ''}`);
-        }
-        return (await res.json()) as T;
-      })
-      .then((data) => {
-        if (cancelled) return;
-        setState({ data, loading: false, error: null });
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setState({
-          data: null,
-          loading: false,
-          error: err instanceof Error ? err.message : 'Fetch failed',
-        });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [url]);
-  return state;
-}
 
 /* ─── eSTAR sections (LOCAL endpoint, real DB) ──────────────────────── */
 
