@@ -26,8 +26,18 @@ import { regulatoryPrograms } from '../../shared/schema/programs';
 import { users, auditLogs, cerv2510kSections, deviceTestStandards } from '../../shared/schema';
 import { qSubmissions, qSubMeetings, qSubQuestions, qSubCommitments } from '../../shared/schema/q-sub';
 import auditService from '../services/auditService';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('regulatory-programs');
+
+/* Single error helper — logs + returns 500. Keeps the 11 catch blocks
+   below DRY, and gives ops a consistent grep-able prefix. */
+function fail(res: Response, where: string, err: unknown): void {
+  const message = err instanceof Error ? err.message : 'Operation failed';
+  log.error(`${where} failed`, { err: message });
+  res.status(500).json({ error: message });
+}
 
 function getOrgId(req: Request): number | null {
   const v =
@@ -120,7 +130,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     res.json({ data });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return fail(res, 'list', e);
   }
 });
 
@@ -171,7 +181,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     res.json({ data });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return fail(res, 'get-one', e);
   }
 });
 
@@ -277,7 +287,7 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
 
     res.json({ data });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return fail(res, 'activity', e);
   }
 });
 
@@ -392,7 +402,7 @@ router.get('/:id/milestones', async (req: Request, res: Response) => {
 
     res.json({ data: milestones });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return fail(res, 'milestones', e);
   }
 });
 
@@ -549,7 +559,7 @@ router.get('/:id/rim-recommendations', async (req: Request, res: Response) => {
 
     res.json({ data: recs });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return fail(res, 'rim-recommendations', e);
   }
 });
 
@@ -649,7 +659,7 @@ router.get('/:id/change-impact', async (req: Request, res: Response) => {
 
     res.json({ data });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return fail(res, 'change-impact', e);
   }
 });
 
@@ -758,7 +768,7 @@ router.get('/:id/safety-signals', async (req: Request, res: Response) => {
 
     res.json({ data });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return fail(res, 'safety-signals', e);
   }
 });
 
@@ -827,7 +837,7 @@ router.get('/:id/literature', async (req: Request, res: Response) => {
     const total = buckets.reduce((s, b) => s + b.hits, 0);
     res.json({ data: buckets, total, productName });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return fail(res, 'literature', e);
   }
 });
 
@@ -916,15 +926,22 @@ router.get('/:id/pma-modules', async (req: Request, res: Response) => {
 
     res.json({ data });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return fail(res, 'pma-modules', e);
   }
 });
 
 /* ─── PMA trial metrics ─────────────────────────────────────────────────
-   Per-program clinical-trial KPIs for the PmaSurface metrics strip. Joins
-   the program to its clinical_ops.studies row using either a metadata
-   override (program.metadata.clinicalStudyId) or the most-recent active
-   study in the org. Returns the kit's 4 metrics:
+   Per-program clinical-trial KPIs for the PmaSurface metrics strip.
+
+   Production-recommended config:
+     program.metadata.clinicalStudyId — explicit clinical_ops.studies UUID
+     to bind the program to its IDE / pivotal study. Set this via the
+     program-edit UI (or seed script for beta). When missing, this
+     endpoint falls back to a productName-ILIKE-indication fuzzy match,
+     which can pick up the wrong study in orgs running multiple trials
+     for related products. Always set the explicit id for paying clients.
+
+   Returns the kit's 4 metrics:
      Enrolled · Sites active · AE rate · Endpoints achieved
 
    Each metric carries a bar.pct + tone so the chart renders without
@@ -1060,7 +1077,7 @@ router.get('/:id/pma-trial-metrics', async (req: Request, res: Response) => {
       study: { id: study.id, name: study.name, phase: study.phase, status: study.status },
     });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return fail(res, 'pma-trial-metrics', e);
   }
 });
 
@@ -1189,7 +1206,7 @@ router.get('/portfolio-insights', async (req: Request, res: Response) => {
 
     res.json({ data: insights });
   } catch (e) {
-    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+    return fail(res, 'portfolio-insights', e);
   }
 });
 

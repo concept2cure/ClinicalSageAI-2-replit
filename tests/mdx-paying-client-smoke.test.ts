@@ -57,6 +57,39 @@ describe('MDX paying-client smoke — drizzle schema', () => {
   });
 });
 
+describe('MDX paying-client smoke — beta seed coverage', () => {
+  /* Each pathway tab (510k / pma / cer) needs at least one program with
+     that pathway in the seed, otherwise App.tsx programs.find returns
+     undefined and the corresponding surface renders a stub. The seed
+     covers all three pathways after the IV-415 CER program addition. */
+  it('seed-mdx-beta declares programs covering 510(k), PMA and CER pathways', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const seed = fs.readFileSync(
+      path.resolve(__dirname, '../scripts/seed-mdx-beta.mjs'),
+      'utf8',
+    );
+    /* Lightweight string scan: confirm at least one program with each
+       regulatoryPath. Avoids importing the script (it has side effects). */
+    expect(seed).toMatch(/regulatoryPath:\s*'510k'/);
+    expect(seed).toMatch(/regulatoryPath:\s*'pma'/);
+    expect(seed).toMatch(/regulatoryPath:\s*'cer'/);
+  });
+
+  it('upsertProgram seed handler honours metadata jsonb field', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const seed = fs.readFileSync(
+      path.resolve(__dirname, '../scripts/seed-mdx-beta.mjs'),
+      'utf8',
+    );
+    /* The seed must persist program.metadata so paying-client demos can
+       set clinicalStudyId / ndcCode via the seed file. */
+    expect(seed).toContain('metadata');
+    expect(seed).toMatch(/JSON\.stringify\(def\.metadata/);
+  });
+});
+
 /* ─── Hook adapters — pure function contracts ──────────────────────── */
 
 describe('MDX paying-client smoke — useMdxPrograms adapter', () => {

@@ -19,11 +19,52 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { db } from '../db';
 import { and, desc, eq } from 'drizzle-orm';
 import { savedPrecedentQueries } from '../../shared/schema';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('saved-precedent-queries');
+
+/* ─── Zod schemas — validate every mutating body ──────────────────────
+   The kit panel posts plain { label, query, scope } objects. Catch shape
+   mismatches at the boundary so handlers downstream can trust the data.
+   The pathway enum mirrors the closed-enum the kit's PrecedentSurface
+   exposes; deviceClass + productCode are free strings (FDA classification
+   strings vary by product type). */
+
+const scopeSchema = z
+  .object({
+    deviceClass: z.string().max(32).optional(),
+    productCode: z.string().max(16).optional(),
+    pathway:     z.enum(['510k', 'pma', 'cer', 'de_novo']).optional(),
+    dateFrom:    z.string().datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).optional(),
+    dateTo:      z.string().datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).optional(),
+    sources:     z.array(z.string().max(64)).max(8).optional(),
+  })
+  .strict()
+  .nullable()
+  .optional();
+
+const createSchema = z
+  .object({
+    label: z.string().trim().min(1).max(120),
+    query: z.string().trim().min(1).max(2_000),
+    scope: scopeSchema,
+  })
+  .strict();
+
+const patchSchema = z
+  .object({
+    label:   z.string().trim().min(1).max(120).optional(),
+    query:   z.string().trim().min(1).max(2_000).optional(),
+    scope:   scopeSchema,
+    hits:    z.number().int().min(-1).max(100_000).optional(),
+    refresh: z.boolean().optional(),
+  })
+  .strict();
 
 function getOrgId(req: Request): number | null {
   const v =
@@ -77,13 +118,14 @@ router.post('/', async (req: Request, res: Response) => {
     if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
     const userId = getUserId(req);
 
-    const body = req.body ?? {};
-    const label = typeof body.label === 'string' ? body.label.trim() : '';
-    const query = typeof body.query === 'string' ? body.query.trim() : '';
-    if (label.length === 0) return res.status(422).json({ error: 'label is required' });
-    if (query.length === 0) return res.status(422).json({ error: 'query is required' });
-
-    const scope = body.scope && typeof body.scope === 'object' ? body.scope : null;
+    const parsed = createSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(422).json({
+        error:   'Validation failed',
+        details: parsed.error.flatten().fieldErrors,
+      });
+    }
+    const { label, query, scope } = parsed.data;
 
     const [row] = await db
       .insert(savedPrecedentQueries)
@@ -92,13 +134,15 @@ router.post('/', async (req: Request, res: Response) => {
         userId,
         label,
         query,
-        scope,
+        scope: scope ?? null,
         hits: -1,
       })
       .returning();
 
+    log.info('saved precedent query created', { orgId, userId, savedQueryId: row.id, label });
     res.status(201).json({ data: row });
   } catch (e) {
+    log.error('create saved query failed', { err: e instanceof Error ? e.message : 'unknown' });
     res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
@@ -111,15 +155,22 @@ router.patch('/:id', async (req: Request, res: Response) => {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(422).json({ error: 'id must be an integer' });
 
-    const body = req.body ?? {};
+    const parsed = patchSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(422).json({
+        error:   'Validation failed',
+        details: parsed.error.flatten().fieldErrors,
+      });
+    }
+    const body = parsed.data;
     const updates: Partial<typeof savedPrecedentQueries.$inferInsert> = {
       updatedAt: new Date(),
     };
-    if (typeof body.label === 'string')          updates.label = body.label.trim();
-    if (typeof body.query === 'string')          updates.query = body.query.trim();
-    if (body.scope && typeof body.scope === 'object') updates.scope = body.scope;
-    if (typeof body.hits === 'number')           updates.hits = body.hits;
-    if (body.refresh === true)                   updates.lastRunAt = new Date();
+    if (body.label !== undefined) updates.label = body.label;
+    if (body.query !== undefined) updates.query = body.query;
+    if (body.scope !== undefined) updates.scope = body.scope ?? null;
+    if (body.hits  !== undefined) updates.hits  = body.hits;
+    if (body.refresh === true)    updates.lastRunAt = new Date();
 
     const [row] = await db
       .update(savedPrecedentQueries)
@@ -127,8 +178,11 @@ router.patch('/:id', async (req: Request, res: Response) => {
       .where(and(eq(savedPrecedentQueries.id, id), eq(savedPrecedentQueries.organizationId, orgId)))
       .returning();
     if (!row) return res.status(404).json({ error: 'Not found' });
+
+    log.info('saved precedent query updated', { orgId, savedQueryId: id, fields: Object.keys(body) });
     res.json({ data: row });
   } catch (e) {
+    log.error('update saved query failed', { err: e instanceof Error ? e.message : 'unknown' });
     res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
@@ -145,8 +199,11 @@ router.delete('/:id', async (req: Request, res: Response) => {
       .where(and(eq(savedPrecedentQueries.id, id), eq(savedPrecedentQueries.organizationId, orgId)))
       .returning({ id: savedPrecedentQueries.id });
     if (!row) return res.status(404).json({ error: 'Not found' });
+
+    log.info('saved precedent query removed', { orgId, savedQueryId: id });
     res.status(204).end();
   } catch (e) {
+    log.error('delete saved query failed', { err: e instanceof Error ? e.message : 'unknown' });
     res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }
 });
