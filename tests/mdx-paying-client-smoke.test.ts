@@ -88,6 +88,31 @@ describe('MDX paying-client smoke — beta seed coverage', () => {
     expect(seed).toContain('metadata');
     expect(seed).toMatch(/JSON\.stringify\(def\.metadata/);
   });
+
+  it('content seed companion exists + covers every kit-surface table', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const seed = fs.readFileSync(
+      path.resolve(__dirname, '../scripts/seed-mdx-content.mjs'),
+      'utf8',
+    );
+    /* Each table that backs a kit surface must be in the content seed
+       so paying-client demos can show every panel populated. */
+    expect(seed).toContain('cerv2_510k_sections');
+    expect(seed).toContain('c2c_submission_packages');
+    expect(seed).toContain('safety_signals');
+    expect(seed).toContain('literature_entries');
+    expect(seed).toContain('saved_precedent_queries');
+  });
+
+  it('package.json exposes db:seed:mdx-content npm script', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const pkg = JSON.parse(
+      fs.readFileSync(path.resolve(__dirname, '../package.json'), 'utf8'),
+    );
+    expect(pkg.scripts['db:seed:mdx-content']).toBe('node scripts/seed-mdx-content.mjs');
+  });
 });
 
 /* ─── Hook adapters — pure function contracts ──────────────────────── */

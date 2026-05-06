@@ -240,6 +240,128 @@ Inner MDX utilities (single-device detail views, specific validators) stay until
 
 ---
 
+## Phase 2 · MDX paying-client beta (shipped 2026-05-05)
+
+Every kit surface in `ui_kits/mdx/` now reads live data from real backend
+endpoints. Branch `claude/deploy-mdx-kits-6sIb9` carries the implementation.
+This section is the contract a paying-client beta operator follows on the
+v2 cluster.
+
+### Backend surface (server/routes/regulatory-programs.ts + saved-precedent-queries.ts)
+
+`/api/regulatory-programs` — list + get + 9 sidecar endpoints powering
+every per-program panel:
+
+| Endpoint | Backs |
+|---|---|
+| `GET /` | Overview KPIs + program grid; TabBar counts |
+| `GET /:id` | ProjectHome header + governance panel |
+| `GET /:id/activity` | ProjectHome activity feed (audit_logs by record_id UUID) |
+| `GET /:id/milestones` | ProjectHome milestone timeline (derived from q_sub_meetings + section completion + program status) |
+| `GET /:id/rim-recommendations` | ProjectHome "Claude recommendations" (derived from required-but-empty sections + open Q-Sub commitments + withdrawn standards refs + in-review-but-incomplete sections) |
+| `GET /:id/change-impact` | ProjectHome change-impact panel (audit_logs section edits + section cross-reference scan) |
+| `GET /:id/safety-signals` | CerSurface signals table (safety_signals, project-scoped) |
+| `GET /:id/literature` | CerSurface literature corpus chart (literature_entries, year-bucketed) |
+| `GET /:id/pma-modules` | PmaSurface module cards (cerv2_510k_sections grouped into PMA module taxonomy) |
+| `GET /:id/pma-trial-metrics` | PmaSurface KPIs (clinical_ops.studies + .deviations + .endpoint_results) |
+| `GET /portfolio-insights` | PrecedentSurface narrative panel (data-derived: pathway clearance ratio + most-common predicate K-numbers + literature density) |
+
+`/api/saved-precedent-queries` — full CRUD over `saved_precedent_queries`
+table. Backs PrecedentSurface "Saved queries" panel.
+
+All endpoints tenant-scoped via the global auth + tenant-context
+middleware on `/api`. All write endpoints validated with strict Zod
+schemas. Mutations write `audit_logs` rows via the global audit
+middleware (21 CFR Part 11 §11.10(e) compliant for the new surface).
+
+### Pre-deploy sequence (paying-client beta)
+
+```bash
+# 1. Apply schema changes (adds saved_precedent_queries + IV-415 metadata column)
+npm run db:push
+
+# 2. Seed programs + Q-Subs (6 programs spanning 510k / pma / cer pathways)
+npm run db:seed:mdx-beta
+
+# 3. Seed content data so every kit surface demos with real data
+npm run db:seed:mdx-content
+
+# 4. Run smoke suite
+npx vitest run tests/mdx-paying-client-smoke.test.ts
+
+# 5. Start dev + walk every surface in browser
+npm run dev
+```
+
+### Surface coverage after content seed
+
+| Kit surface | Data source | Lights up after seed |
+|---|---|---|
+| Overview | regulatory_programs | ✓ 6 programs |
+| TabBar counts | useMdxPrograms | ✓ |
+| K510Surface eSTAR list | cerv2_510k_sections | ✓ 20 sections |
+| K510Surface predicates | predicate-intelligence shadow | banner if shadow not configured |
+| K510Surface SE matrix | predicate-intelligence shadow | banner if shadow not configured |
+| PmaSurface 10-phase grid | program.stageIdx | ✓ derived |
+| PmaSurface 6 modules | cerv2_510k_sections grouped by category | ✓ |
+| PmaSurface 4 trial KPIs | clinical_ops.studies (set program.metadata.clinicalStudyId) | empty until linked |
+| CerSurface sections | cerv2_510k_sections | ✓ |
+| CerSurface signals | safety_signals | ✓ 4 signals (IV-415) |
+| CerSurface literature | literature_entries | ✓ ~50 entries |
+| PrecedentSurface saved queries | saved_precedent_queries | ✓ 4 queries |
+| PrecedentSurface narrative | portfolio-insights computation | ✓ |
+| PreSubManager list + KPIs | q-submissions service | ✓ 7 Q-Subs |
+| PreSubManager detail | q-sub questions/commitments/timeline | ✓ |
+| ProjectHome readiness | program.readiness | ✓ |
+| ProjectHome tasks | submission-ops/workload (project_work_items) | empty until populated |
+| ProjectHome milestones | derived | ✓ |
+| ProjectHome RIM recs | derived | ✓ |
+| ProjectHome change-impact | audit_logs section edits | empty until edits |
+| ProjectHome governance | program.teamMembers | ✓ |
+| ProjectHome activity | audit_logs by program UUID | empty until activity |
+| Workbench Tasks | submission-ops/workload | empty until populated |
+| Workbench Validation | submission-ops/blockers + program join | ✓ |
+| Workbench Submissions | c2c_submission_packages | ✓ 5 packages |
+| Workbench Templates | /api/templates aggregator | ✓ |
+| EstarEditor / PmaEditor / CerEditor | useLiveSections + cerv2-sections PATCH | ✓ all three editors |
+| CerWorkbench tabs | composes CerSurface | ✓ |
+
+Vault (`Workbench.jsx > VaultSurface`) is intentionally not wired —
+needs its own design pass (concept2cureArtifacts has different auth +
+version semantics than the kit's VaultFile shape).
+
+### Production-recommended program metadata
+
+Set on `regulatory_programs.metadata` (jsonb) per program:
+
+| key | who reads it | why |
+|---|---|---|
+| `clinicalStudyId` | pma-trial-metrics endpoint | binds program to a specific clinical_ops.studies UUID; without it the endpoint falls back to a productName-ILIKE-indication fuzzy match that can pick up wrong studies in orgs running multiple trials |
+| `ndcCode` | (future) FAERS lookup | NDC code for FDA adverse-event API queries |
+| `programCode` | submissions adapter | preferred display code (falls back to `pkg-{packageId}`) |
+| `stage` | submissions adapter | overrides derived stage when richer state is needed |
+| `gateErrs`/`gateWarns`/`gateOk` | submissions list | per-package transmit gate counts for the row chips |
+| `fileCount` / `bytes` / `cover` / `esig` / `transmitAt` | submissions list | rich row fields; defaults are sensible when absent |
+
+### Auth + audit confirmed paths
+
+- Global auth on `/api`: `server/middleware/setup.ts:62-84` (authMiddleware
+  → tenantContextMiddleware → requireTenantContext)
+- Global mutation audit: `server/middleware/setup.ts:87` writes `audit_logs`
+  with tenant_id, user_id, action (CREATE/UPDATE/DELETE), table_name (URL),
+  record_id, new_values, ip_address, user_agent, timestamp
+
+### Smoke suite
+
+`tests/mdx-paying-client-smoke.test.ts` (20 vitest assertions):
+route modules load, drizzle schema registered, migration present,
+8 client hooks export expected functions, register-inline-routes mounts
+both new routes, kit fixtures stay structurally compatible with adapter
+outputs, content seed covers every kit-surface table, npm scripts
+register both seeds. Run via `npx vitest run tests/mdx-paying-client-smoke.test.ts`.
+
+---
+
 ## Phase 2 · MDX refinements (shipped 2026-04-23)
 
 These refinements tightened the kit after the initial Phase 2 ship. Contract addenda:
