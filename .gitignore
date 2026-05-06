@@ -3,6 +3,11 @@ node_modules/
 dist/
 .cache/
 .cerv2_program_id
+
+# Stray runtime artifacts (not part of source)
+tmp/
+logs/
+bun.lock
 __pycache__/
 *.pyc
 *.pyo
