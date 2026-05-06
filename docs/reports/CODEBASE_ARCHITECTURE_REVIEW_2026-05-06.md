@@ -307,12 +307,47 @@ schemas/                      # ?
 
 ---
 
-## 8. What this branch already changed
+## 8. What this branch landed
 
-Three changes are landed on `claude/review-codebase-architecture-eXZ6z` to capture obviously-safe wins without risking the UI evaluation in flight:
+Multiple commits on `claude/review-codebase-architecture-eXZ6z`. After every code change, `tsc --noEmit` was rerun: baseline = 2,628 pre-existing errors, after-changes = 2,628. Zero regressions.
+
+### Round 1 — junk cleanup
 
 1. `.gitignore`: added `tmp/`, `logs/`, `bun.lock`.
-2. Removed tracked junk: `4-29-26 mdx` (1-byte file) and `bun.lock` (427 KB stray Bun lockfile in an npm project).
-3. Moved `server/_deprecated_migrations/` → `docs/archive/server-deprecated-migrations/`. The directory was referenced only by `dangerfile.js`'s deprecated-paths rule, which checks added content rather than directory existence — the rule keeps working. Added a `README.md` recording the move.
+2. Deleted `4-29-26 mdx` (1-byte file) and untracked `bun.lock` (427 KB stray Bun lockfile in an npm project).
+3. Moved `server/_deprecated_migrations/` → `docs/archive/server-deprecated-migrations/`. The directory was referenced only by `dangerfile.js`'s deprecated-paths rule, which checks added content rather than directory existence — rule keeps working. Added a `README.md` recording the move.
 
-Everything else in this report is left as a **recommendation** — none of it has been applied so the UI review can proceed without code churn underneath it. Risky archive moves (the 15 root-level audit `.md` files) were skipped because each has 1–8 inter-doc references that would need to be rewritten.
+### Round 2 — server dead code (Phase B)
+
+4. Deleted **22 verified-dead `server/*.js` files** (refs=0 by import grep): `static-routes.js` (1,688 LOC), `generate-all-submissions.js` (1,188), `mock-data.js`, `seed-cerv2-sections.js`, `cer_integration.js`, `proxy-setup.mjs`, `proxy-setup-esm.mjs`, `fastapi_bridge.{js,cjs}`, `fastapi_proxy.js`, `show-ai-defense-report.js`, `standalone.js`, `direct-api.js`, `keep-alive.js`, `founder-login.js`, `diagnostics.js`, `advisor-routes.js`, `regulatory-brain-routes.js`, and 4 loose `test-*.js` / `test_*.js` scratch files. **Total: -6,313 LOC.**
+5. Removed `server/generate-all-submissions.js` from the `APPROVED_JS` allowlist in `scripts/ci/check-docx-runtime-canonicality.mjs`.
+6. Six files originally on the deletion list were spared after deeper grep showed they're live: `metrics.js` (3 importers), `data_integration.js` (1), `eudamed_client.js` (1), `cache_manager.js` (3), `openai.js` (10), `data-importer.ts` (2). Updated review accordingly.
+
+### Round 3 — dependency cleanup (Phase C)
+
+7. Dropped **15 confirmed-unused npm packages** from `package.json`:
+   - `aws-sdk` (v2 deprecated), `@sendgrid/mail`, `@langchain/openai`, `@langchain/community`, `langchain`
+   - `compromise`, `dayjs`, `remeda`
+   - `markdown-it`, `remark-parse`, `remark-stringify`, `unified`
+   - `fast-xml-parser`, `jspdf-autotable`, `pdf-annotate.js`
+8. Several packages I had originally flagged were spared after grep showed UI usage: `jspdf` (`client/src/utils/`, `client/src/services/`), `firebase` (`client/src/concept2cure/hooks/`, `config/firebase.ts`), `@xmldom/xmldom` (`client/src/services/ectdTemplates.js`), `lodash` (`client/src/components/ai/CodeAnalysisPanel.jsx`), `jsdom` (transitive risk via `jest-environment-jsdom`).
+
+### Round 4 — Prisma exit (Phase E partial)
+
+9. Deleted `server/db/prisma.ts` (defensive shim, 0 importers).
+10. Removed unused `Decimal` type import from `server/services/cognitive-ecosystem/types.ts`.
+11. Archived `prisma/schema*.prisma` → `docs/archive/prisma-legacy/` with explanatory README.
+12. Deleted `prisma/seed.js` and `scripts/seedProfiles.ts` (both 0 importers, never invoked from npm scripts).
+13. Removed `@prisma/client` package from `package.json`.
+
+### What was NOT changed — and why
+
+- **React 19 / React-DOM 18 mismatch** (§2.1): confirmed installed versions are React 19.2.6 + React-DOM 18.3.1. Either direction of the fix changes runtime behavior of UI under live evaluation. Needs explicit user choice + targeted test pass.
+- **ESLint dual-config port** (§6): lint is currently broken at the tooling layer. ESLint 10 removed APIs that `@typescript-eslint@7` depends on (`LegacyESLint`). Fixing requires holistic upgrade of `@typescript-eslint` to v8+, which has its own breaking changes. Out of scope of "consolidate configs" — this is a tooling upgrade.
+- **Prisma callers `server/services/semanticSearch.js`, `server/pipelines/{bulk_import,indexDocs}.js`, `server/prisma/client.js`**: all are CLI scripts (no exports, run directly). The chain is internally orphan per its own header comment. Left alone because human operators may still invoke them on demand; deleting needs explicit owner sign-off.
+- **DB directory consolidation** (§4.4): too many directories to audit safely in one sweep. Each needs individual ownership review.
+- **Mass markdown archive** (§4.1): inter-doc cross-references would need to be rewritten.
+
+### Summary
+
+Across four rounds: **52 files removed**, **~6,900 LOC deleted**, **16 npm packages dropped** (15 unused + Prisma), **0 typecheck regressions**. The remaining recommendations in this document each need an owner decision before proceeding.
