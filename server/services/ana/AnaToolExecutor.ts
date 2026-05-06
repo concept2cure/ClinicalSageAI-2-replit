@@ -1221,6 +1221,225 @@ registerToolHandler('convert_docx_to_pdf', async (input) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// MDX mutation handlers — Q-Sub creation, commitment rollover, program
+// metadata binding. Each routes through the existing service layer so the
+// tenant-scoping + audit + business rules stay in one place; the handler
+// is just an adapter between AnA's input shape and the service signature.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+registerToolHandler('create_q_sub', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'create_q_sub requires tenant context (organizationId).' });
+  }
+  const programId = typeof input.program_id === 'string' ? input.program_id : '';
+  const qSubType  = typeof input.q_sub_type === 'string' ? input.q_sub_type : '';
+  const title     = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!UUID_RE.test(programId)) {
+    return JSON.stringify({ error: 'create_q_sub: program_id must be a UUID.' });
+  }
+  const allowedTypes = new Set(['presub', 'sir', 'srd', 'agree', 'info']);
+  if (!allowedTypes.has(qSubType)) {
+    return JSON.stringify({
+      error: `create_q_sub: q_sub_type must be one of ${Array.from(allowedTypes).join(', ')}.`,
+    });
+  }
+  if (!title) {
+    return JSON.stringify({ error: 'create_q_sub: title is required.' });
+  }
+
+  let targetDate: Date | null = null;
+  if (typeof input.target_date === 'string' && input.target_date.length > 0) {
+    const d = new Date(input.target_date);
+    if (Number.isNaN(d.getTime())) {
+      return JSON.stringify({ error: 'create_q_sub: target_date must be ISO-8601.' });
+    }
+    targetDate = d;
+  }
+
+  try {
+    const { createQSubmission, TenantAccessError } = await import(
+      '../q-sub/q-sub.service.js'
+    );
+    const row = await createQSubmission(ctx.organizationId, {
+      programId,
+      qSubType: qSubType as 'presub' | 'sir' | 'srd' | 'agree' | 'info',
+      title,
+      fdaTeam:   typeof input.fda_team === 'string' ? input.fda_team : null,
+      targetDate,
+      summary:   typeof input.summary === 'string' ? input.summary : null,
+      createdBy: ctx.userId !== null && ctx.userId !== undefined ? String(ctx.userId) : null,
+    });
+    return JSON.stringify({
+      ok:        true,
+      qSubId:    row.id,
+      qNumber:   row.qNumber,
+      stage:     row.stage,
+      programId: row.programId,
+      message:   `Created ${row.qNumber} (${row.stage}) for program ${row.programId}.`,
+    });
+  } catch (err: unknown) {
+    const TenantAccessErrorClass = (await import('../q-sub/q-sub.service.js')).TenantAccessError;
+    if (err instanceof TenantAccessErrorClass) {
+      return JSON.stringify({
+        error: `create_q_sub: ${err.message}. The program does not belong to this organization.`,
+      });
+    }
+    return JSON.stringify({
+      error: `create_q_sub failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('update_q_sub_commitment_rolled_in', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({
+      error: 'update_q_sub_commitment_rolled_in requires tenant context (organizationId).',
+    });
+  }
+  const commitmentId = typeof input.commitment_id === 'string' ? input.commitment_id : '';
+  const rolledIn = input.rolled_in === true;
+  if (!UUID_RE.test(commitmentId)) {
+    return JSON.stringify({
+      error: 'update_q_sub_commitment_rolled_in: commitment_id must be a UUID.',
+    });
+  }
+  if (typeof input.rolled_in !== 'boolean') {
+    return JSON.stringify({
+      error: 'update_q_sub_commitment_rolled_in: rolled_in (boolean) is required.',
+    });
+  }
+
+  try {
+    const { setCommitmentRolledIn, TenantAccessError } = await import(
+      '../q-sub/q-sub.service.js'
+    );
+    const updated = await setCommitmentRolledIn(ctx.organizationId, {
+      commitmentId,
+      rolledIn,
+      rolledInBy:
+        rolledIn && ctx.userId !== null && ctx.userId !== undefined ? String(ctx.userId) : null,
+    });
+    return JSON.stringify({
+      ok:           true,
+      commitmentId: updated.id,
+      rolledIn:     updated.rolledIn,
+      message: `Marked commitment ${updated.id} as ${rolledIn ? 'rolled-in' : 'not rolled-in'}.`,
+    });
+  } catch (err: unknown) {
+    const TenantAccessErrorClass = (await import('../q-sub/q-sub.service.js')).TenantAccessError;
+    if (err instanceof TenantAccessErrorClass) {
+      return JSON.stringify({ error: `update_q_sub_commitment_rolled_in: ${err.message}.` });
+    }
+    return JSON.stringify({
+      error: `update_q_sub_commitment_rolled_in failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+/* link_program_clinical_study + set_program_metadata both write to
+   regulatory_programs.metadata (jsonb). The first is a typed convenience
+   over the second — we keep them separate for clarity in AnA's tool
+   selection ("bind a study" vs. "set arbitrary metadata"). */
+
+async function mergeProgramMetadata(
+  organizationId: number,
+  programId: string,
+  patch: Record<string, unknown>,
+): Promise<{ programId: string; metadata: Record<string, unknown> }> {
+  const { getPool } = await import('../../db.js');
+  const pool = getPool();
+  /* The COALESCE handles the rare row that has metadata=NULL; jsonb_strip_nulls
+     trims any keys the caller explicitly passed as null (delete semantics). */
+  const { rows } = await pool.query<{ id: string; metadata: Record<string, unknown> }>(
+    `UPDATE regulatory_programs
+        SET metadata   = jsonb_strip_nulls(COALESCE(metadata, '{}'::jsonb) || $3::jsonb),
+            updated_at = NOW()
+      WHERE id = $1 AND organization_id = $2
+      RETURNING id, metadata`,
+    [programId, organizationId, JSON.stringify(patch)],
+  );
+  if (rows.length === 0) {
+    throw new Error('program not found in this organization');
+  }
+  return { programId: rows[0].id, metadata: rows[0].metadata };
+}
+
+registerToolHandler('link_program_clinical_study', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({
+      error: 'link_program_clinical_study requires tenant context (organizationId).',
+    });
+  }
+  const programId = typeof input.program_id === 'string' ? input.program_id : '';
+  const studyId   = typeof input.clinical_study_id === 'string' ? input.clinical_study_id : '';
+  if (!UUID_RE.test(programId)) {
+    return JSON.stringify({ error: 'link_program_clinical_study: program_id must be a UUID.' });
+  }
+  if (!UUID_RE.test(studyId)) {
+    return JSON.stringify({
+      error: 'link_program_clinical_study: clinical_study_id must be a UUID.',
+    });
+  }
+  try {
+    const r = await mergeProgramMetadata(ctx.organizationId, programId, { clinicalStudyId: studyId });
+    return JSON.stringify({
+      ok:              true,
+      programId:       r.programId,
+      clinicalStudyId: studyId,
+      message:
+        `Bound program ${r.programId} to clinical_ops.studies ${studyId}. PMA trial-metrics will now resolve against this study.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `link_program_clinical_study failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('set_program_metadata', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({
+      error: 'set_program_metadata requires tenant context (organizationId).',
+    });
+  }
+  const programId = typeof input.program_id === 'string' ? input.program_id : '';
+  const meta = input.metadata && typeof input.metadata === 'object'
+    ? (input.metadata as Record<string, unknown>)
+    : null;
+  if (!UUID_RE.test(programId)) {
+    return JSON.stringify({ error: 'set_program_metadata: program_id must be a UUID.' });
+  }
+  if (!meta || Array.isArray(meta)) {
+    return JSON.stringify({ error: 'set_program_metadata: metadata (object) is required.' });
+  }
+  /* Defense in depth: refuse to write keys the caller can't possibly need
+     to reach here — id, organization_id, etc. are owned by the row, not
+     the metadata jsonb. */
+  for (const k of Object.keys(meta)) {
+    if (k.startsWith('_') || k === 'id' || k === 'organization_id') {
+      return JSON.stringify({
+        error: `set_program_metadata: key '${k}' is reserved.`,
+      });
+    }
+  }
+  try {
+    const r = await mergeProgramMetadata(ctx.organizationId, programId, meta);
+    return JSON.stringify({
+      ok:        true,
+      programId: r.programId,
+      metadata:  r.metadata,
+      message:   `Merged ${Object.keys(meta).length} key(s) into program metadata.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `set_program_metadata failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MDX kit-section write-back handler — closes the loop between AnA's drafting
 // and the kit's section editors. Persists drafted content into
 // cerv2_510k_sections with draft_source='ana' so the MDX surfaces can render

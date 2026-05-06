@@ -755,6 +755,117 @@ export const FETCH_TEMPLATE_AND_FILL: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// MDX mutation tools — let AnA take action against the kit's data domain.
+// These complement the read tools (lookup_*, search_*, etc.) and the
+// document-authoring tools (author_docx_native, generate_document, etc.):
+// once AnA has gathered the facts and drafted the deliverable, she can
+// also commit state changes back into the system of record. Every
+// mutation is tenant-scoped via ToolContext.organizationId and audit-logged
+// through the global mutation-audit middleware (server/middleware/setup.ts).
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const CREATE_Q_SUB: AnaTool = {
+  name: 'create_q_sub',
+  description:
+    "Create a new Q-Submission (Pre-Sub, SIR, study-risk determination, informational meeting) for a regulatory program. Use after the user agrees on the meeting topic + questions, or after AnA has identified that a Pre-Sub is the right next step. Returns the created row including the q-number, stage ('plan'), and target date so AnA can reference it in subsequent turns. Tenant-scoped: programId must belong to the caller's org.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id: {
+        type: 'string',
+        description: "regulatory_programs.id (UUID) the Q-Sub is filed under.",
+      },
+      q_sub_type: {
+        type: 'string',
+        enum: ['presub', 'sir', 'srd', 'agree', 'info'],
+        description:
+          "Q-Sub category. presub = standard Pre-Submission meeting; sir = Submission Issue Request; srd = Study Risk Determination; agree = Agreement Meeting; info = Informational Meeting.",
+      },
+      title: {
+        type: 'string',
+        description:
+          "Short topic title (e.g. 'Pre-Sub on biocompatibility strategy for IV-415').",
+      },
+      fda_team: {
+        type: 'string',
+        description: "Optional FDA branch/team (e.g. 'CDRH/OHT3/DOG/DOG2').",
+      },
+      target_date: {
+        type: 'string',
+        description: "Optional ISO-8601 target date for the meeting/feedback.",
+      },
+      summary: {
+        type: 'string',
+        description: 'Optional summary/agenda paragraph for the briefing document.',
+      },
+    },
+    required: ['program_id', 'q_sub_type', 'title'],
+  },
+};
+
+export const UPDATE_Q_SUB_COMMITMENT_ROLLED_IN: AnaTool = {
+  name: 'update_q_sub_commitment_rolled_in',
+  description:
+    "Mark a Q-Sub commitment as rolled-in (or revert) — i.e. confirmation that the agreed-to commitment is reflected in the dossier. Used after AnA verifies the dossier section that addresses the commitment. Tenant-scoped via the parent Q-Sub's program org.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      commitment_id: {
+        type: 'string',
+        description: 'q_sub_commitments.id (UUID) of the commitment row.',
+      },
+      rolled_in: {
+        type: 'boolean',
+        description: 'true to mark as rolled-in, false to revert.',
+      },
+    },
+    required: ['commitment_id', 'rolled_in'],
+  },
+};
+
+export const LINK_PROGRAM_CLINICAL_STUDY: AnaTool = {
+  name: 'link_program_clinical_study',
+  description:
+    "Bind a regulatory program to a specific clinical_ops.studies row by writing the study UUID into program.metadata.clinicalStudyId. The PMA trial-metrics endpoint reads this binding to compute Enrolled / Sites / AE rate / Endpoints-achieved — without it the endpoint falls back to a fuzzy product-name match that can pick up the wrong study in orgs running multiple trials. Use whenever the user identifies which clinical study backs a program. Tenant-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id: {
+        type: 'string',
+        description: 'regulatory_programs.id (UUID).',
+      },
+      clinical_study_id: {
+        type: 'string',
+        description: 'clinical_ops.studies.id (UUID).',
+      },
+    },
+    required: ['program_id', 'clinical_study_id'],
+  },
+};
+
+export const SET_PROGRAM_METADATA: AnaTool = {
+  name: 'set_program_metadata',
+  description:
+    "Merge keys into a regulatory program's metadata jsonb (program.metadata). Used to set production-recommended keys: clinicalStudyId (binds to clinical_ops.studies — prefer the dedicated link_program_clinical_study tool), ndcCode (FAERS lookups), programCode (display override), stage (richer stage state), gateErrs/gateWarns/gateOk (per-package transmit gate counts), fileCount/bytes/cover/esig/transmitAt (rich submission-list fields). Performs a shallow JSON merge — passing { foo: null } removes that key. Tenant-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id: {
+        type: 'string',
+        description: 'regulatory_programs.id (UUID).',
+      },
+      metadata: {
+        type: 'object',
+        description:
+          'Object whose keys are merged into program.metadata. Values must be JSON-serializable (string|number|boolean|object|null).',
+        additionalProperties: true,
+      },
+    },
+    required: ['program_id', 'metadata'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Native python-docx authoring — canonical Word-grade authoring path.
 // Spawns workers/artifact-compute/docx-python-runtime.py inside the isolated
 // compute worker (no network egress, bounded timeout) which uses python-docx
@@ -1039,6 +1150,10 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   AUTHOR_DOCX_NATIVE,
   CONVERT_DOCX_TO_PDF,
   WRITE_KIT_SECTION,
+  CREATE_Q_SUB,
+  UPDATE_Q_SUB_COMMITMENT_ROLLED_IN,
+  LINK_PROGRAM_CLINICAL_STUDY,
+  SET_PROGRAM_METADATA,
   ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS,
   DRAFT_510K_SUBSTANTIAL_EQUIVALENCE,
   DRAFT_CLINICAL_OVERVIEW_M2_5,

@@ -131,9 +131,11 @@ function adaptDetail(d: ServerQSubDetail): PresubDetail {
 
 /* ─── List + KPI derivation ────────────────────────────────────────────── */
 
+/** Canonical envelope wrapper returned by /api/q-sub list. The inner
+ *  `data` carries the rows + count; outer envelope shape is shared
+ *  with regulatory-programs and saved-precedent-queries. */
 interface ListPayload {
-  rows: ServerQSubListRow[];
-  count: number;
+  data: { rows: ServerQSubListRow[]; count: number };
 }
 
 export interface UsePresubListResult {
@@ -178,7 +180,7 @@ export function usePresubList(): UsePresubListResult {
   /* Server shape is structurally identical to PresubListRow — assert
      through a single typed bridge rather than copying field-by-field. */
   const list = useMemo<PresubListRow[] | null>(
-    () => (data ? data.rows.map((r) => ({
+    () => (data ? data.data.rows.map((r) => ({
       id:          r.id,
       qNumber:     r.qNumber,
       type:        r.type,
@@ -226,7 +228,8 @@ export interface UsePresubDetailResult {
  */
 export function usePresubDetail(id: string | null): UsePresubDetailResult {
   const url = id ? `/api/q-sub/${encodeURIComponent(id)}` : null;
-  const { data, loading, error } = useFetchJson<ServerQSubDetail>(url);
-  const detail = useMemo(() => (data ? adaptDetail(data) : null), [data]);
+  /* Canonical envelope: server returns { data: ServerQSubDetail }. */
+  const { data, loading, error } = useFetchJson<{ data: ServerQSubDetail }>(url);
+  const detail = useMemo(() => (data ? adaptDetail(data.data) : null), [data]);
   return { detail, loading, error };
 }
