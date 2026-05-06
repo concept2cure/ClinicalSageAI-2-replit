@@ -300,9 +300,10 @@ schemas/                      # ?
 
 ## 8. What this branch already changed
 
-Two changes are landed on `claude/review-codebase-architecture-eXZ6z` to capture obviously-safe wins without risking the UI evaluation in flight:
+Three changes are landed on `claude/review-codebase-architecture-eXZ6z` to capture obviously-safe wins without risking the UI evaluation in flight:
 
 1. `.gitignore`: added `tmp/`, `logs/`, `bun.lock`.
-2. Removed tracked junk: `4-29-26 mdx` (1-byte file) and `bun.lock` (stray Bun lockfile in an npm project).
+2. Removed tracked junk: `4-29-26 mdx` (1-byte file) and `bun.lock` (427 KB stray Bun lockfile in an npm project).
+3. Moved `server/_deprecated_migrations/` → `docs/archive/server-deprecated-migrations/`. The directory was referenced only by `dangerfile.js`'s deprecated-paths rule, which checks added content rather than directory existence — the rule keeps working. Added a `README.md` recording the move.
 
-Everything else in this report is left as a **recommendation** — none of it has been applied so the UI review can proceed without code churn underneath it.
+Everything else in this report is left as a **recommendation** — none of it has been applied so the UI review can proceed without code churn underneath it. Risky archive moves (the 15 root-level audit `.md` files) were skipped because each has 1–8 inter-doc references that would need to be rewritten.
