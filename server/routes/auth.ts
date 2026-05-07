@@ -30,6 +30,7 @@ import {
 } from '../services/auth-security-service';
 
 import { config } from '../config/environment';
+import { isDevAuthAllowed, devAuthDenialReason } from '../auth/dev-auth-policy';
 
 const router = Router();
 
@@ -400,9 +401,11 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     const mfaMethod = (userData as any).mfaMethod || 'email';
     const hasTotpSetup = userData.mfaEnabled === true && mfaMethod === 'totp';
 
-    // In development mode, skip MFA entirely and issue tokens directly
-    const isDev = process.env.NODE_ENV !== 'production';
-    if (isDev) {
+    // Dev-only MFA skip — gated behind isDevAuthAllowed() so it cannot be
+    // reached in any environment that hasn't explicitly opted in via
+    // NODE_ENV=development AND ALLOW_DEV_AUTH=1. Staging, beta, e2e, and
+    // production never satisfy this.
+    if (isDevAuthAllowed()) {
       const accessToken = jwt.sign(
         {
           userId: userData.id.toString(),
@@ -498,11 +501,15 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 /**
  * POST /api/auth/dev-login
  * Development-only demo login that bypasses MFA.
- * Only works when NODE_ENV !== 'production'.
- * Accepts { email } for any existing user.
+ * Only works when isDevAuthAllowed() returns true (NODE_ENV=development
+ * AND ALLOW_DEV_AUTH=1). Accepts { email } for any existing user.
  */
 router.post('/dev-login', async (req: Request, res: Response) => {
-  if (process.env.NODE_ENV === 'production') {
+  // Hard-gated behind isDevAuthAllowed(). Returns 404 (not 403) so the
+  // endpoint is invisible from any environment that hasn't explicitly
+  // enabled dev-auth.
+  if (!isDevAuthAllowed()) {
+    console.warn(`[auth] /dev-login refused: ${devAuthDenialReason()}`);
     return res
       .status(404)
       .json({ success: false, error: { code: 'NOT_FOUND', message: 'Not found' } });
