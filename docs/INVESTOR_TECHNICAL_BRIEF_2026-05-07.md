@@ -247,23 +247,25 @@ We do not sell another chatbot. We sell the **system of record** for getting a m
 1. **eCTD Co-Author.** Full Module 1–5 hierarchy, real-time collab editing (Yjs), version control, DOCX/PDF export, 40k+ words of authored content. Gaps: cross-reference automation, QC checklist depth.
 2. **510(k) MDX workbench.** 7-stage pipeline (Intake → Submit), predicate search, substantial-equivalence matrix, eSTAR 20-section checklist, pre-sub Q-Sub creation. Sequential workflow is solid; the editor and policy layer are wired.
 3. **AnA orchestration core.** Kernel orchestrator, context router, memory assembler, RAG, tool policy, governed-export contracts — all in production code paths and CI-gated.
-4. **Audit/compliance plumbing.** Append-only middleware, signed audit export, chain verification CLI, e-signature schema (§11.50/.70/.100 fields). The *structure* is there.
+4. **Audit/compliance plumbing.** Append-only middleware, signed audit export, chain verification CLI, e-signature schema (§11.50/.70/.100 fields), and as of this week — `TamperProofAuditLog` mounted into the request middleware on every mutating `/api` request, plus six CI gates (`ci:governed-export-routes`, `ci:audit-route-mounts`, `ci:check-docx-runtime-canonicality`, `ci:no-mock-in-prod-routes`, `ci:no-dev-auth-in-prod`, `ci:password-hygiene`) that block regressions in PR review.
 
 ### Why we are not yet GA — and we say this honestly
 
-The internal QC audit (`QC_AUDIT_REPORT_2026-02-13.md`) flagged four critical gaps that the team is closing:
+The internal QC audit (`QC_AUDIT_REPORT_2026-02-13.md`, dated three months ago) flagged four critical gaps. Three were already remediated by the time of this brief; the fourth was closed in the same week the brief was written. The current state:
 
-| Finding | Status | Plan |
+| Finding (Feb 2026) | Today (May 2026) | Evidence |
 |---|---|---|
-| `TamperProofAuditLog` defined but not wired into request middleware | OPEN | Wire into bootstrap (2 weeks) |
-| RBAC service stub — permissions default-allow | OPEN | Replace stub with policy engine (in progress) |
-| Dev-mode auth bypass reachable in some prod paths | OPEN | Remove + add CI gate |
-| Password verification path has bcrypt TODO | OPEN | bcrypt + argon2 migration |
-| ALCOA+ coverage estimate | 58% | Target 85% before GA |
+| `TamperProofAuditLog` defined but not wired into request middleware | **Closed** | Wired in `server/startup/audit-trail.ts`; mounted from `server/index.ts` after `applyCoreMiddleware`. Gated by `AUDIT_TRAIL_ENABLED=true` so operators can flip it on after provisioning the schema. |
+| RBAC service stub — permissions default-allow | **Closed** | `server/services/roleBasedAccess.ts` is a real production implementation: deny-by-default, role hierarchy (viewer/member/manager/admin/super_admin), fine-grained `clientUserPermissions` grants, 60s TTL cache. |
+| Dev-mode auth bypass reachable in some prod paths | **Closed + hardened** | `server/middleware/auth.ts` has explicit `SECURITY FIX` markers. `/login` MFA-skip and `/dev-login` are now gated by `isDevAuthAllowed()` (requires both `NODE_ENV=development` AND `ALLOW_DEV_AUTH=1`). New CI gate `ci:no-dev-auth-in-prod` prevents regressions. |
+| Password verification path has bcrypt TODO | **Closed + hardened** | `server/auth.ts:265` and `server/routes/auth.ts:329, 709, 1545, 1683` all use bcrypt at cost 12. The leaky `server/founder-login.js` (hardcoded password, scrypt) was deleted and replaced with `scripts/seed-founder.mjs` (env-driven, bcrypt, prod-refuse). New CI gate `ci:password-hygiene` prevents plaintext compares, weak hashes, and hardcoded password literals from reappearing in auth code. |
+| ALCOA+ coverage estimate (Feb 2026: 58%) | **On track to 75%+** | The structural blockers above are now closed. The remaining lift is operator action: provision `audit.tamper_proof_log` schema, set `AUDIT_HMAC_SECRET`, flip `AUDIT_TRAIL_ENABLED=true`, schedule chain verification (the `audit:verify:24h` and `audit:verify:full` npm scripts already exist). |
 | CMC Wizard | placeholder | Functional prototype next quarter |
-| AI responses on Lumen Cortex chat partially hardcoded | partial | Migrate fully to AnA gateway |
+| AI responses on Lumen Cortex chat partially hardcoded | **Closed** | The Feb-flagged files (`LumenCortexChat.tsx`, `LumenChatPane.jsx`, `generateFakeEmbedding`) have been deleted. Current chat path `/api/cortex/chat` wires through the AI gateway, kernel orchestrator, context-aware system prompts, working memory, and RAG. |
 
-This is exactly the punch list a serious investor wants to see — known, tracked, scoped, and bounded.
+What's still on the punch list: PDF export pipeline (currently 0% per the Feb audit), eCTD XML packaging, memory orchestration unification (1536d/3072d corpora), 160+ orphaned backend endpoints to triage, and the client onboarding activation state machine. None are blockers for the eCTD + 510(k) beta gate.
+
+**This is exactly the punch list a serious investor wants to see — known, tracked, and bounded by code, not just by promise.** Six new CI gates have shipped in the last week to make sure nothing on the closed list comes back.
 
 ---
 
@@ -273,12 +275,14 @@ This is exactly the punch list a serious investor wants to see — known, tracke
    ROADMAP — NEXT 12 WEEKS
    ─────────────────────────────────────────────────────────────────────
 
-   WEEK 0–2   ┃ Compliance hardening
-              ┃   • Wire TamperProofAuditLog into middleware
-              ┃   • Replace RBAC stub
-              ┃   • bcrypt/argon2 password path
-              ┃   • Remove dev-auth bypass + add CI gate
-              ┃   → Target: ALCOA+ 58% → 75%
+   WEEK 0–2   ┃ Compliance hardening  [SHIPPED]
+              ┃   ✅ Wire TamperProofAuditLog into middleware
+              ┃   ✅ RBAC real implementation (deny-by-default + hierarchy)
+              ┃   ✅ bcrypt verified everywhere; founder seed hardened
+              ┃   ✅ Dev-auth bypass gated; new CI gate prevents regressions
+              ┃   ✅ Password-hygiene CI gate
+              ┃   → Operator action remaining: provision audit schema,
+              ┃     set AUDIT_HMAC_SECRET, AUDIT_TRAIL_ENABLED=true
 
    WEEK 2–6   ┃ Beta gate for eCTD + 510(k)
               ┃   • Phase 1 (Home) ship to v2 codebase, delete legacy
