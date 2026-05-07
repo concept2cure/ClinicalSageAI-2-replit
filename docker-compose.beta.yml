@@ -61,7 +61,11 @@ services:
     environment:
       NODE_ENV: production
       PORT: 5000
-      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-concept2cure}?sslmode=disable
+      # sslmode=prefer: encrypt when the server offers TLS, otherwise plaintext.
+      # The stock postgres:15-alpine image does not ship TLS-on by default, so
+      # `require` would break the boot. Follow-up: bind-mount certs and the
+      # postgres `command:` to enable ssl=on, then upgrade this to `require`.
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-concept2cure}?sslmode=prefer
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
