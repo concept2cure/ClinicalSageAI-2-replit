@@ -201,7 +201,7 @@ export function initializeSocketServer(server: Server) {
         return next(new Error('Missing bearer token'));
       }
 
-      const decoded = jwt.verify(token as string, config.jwt.secret) as any;
+      const decoded = jwt.verify(token as string, config.jwt.secret, { algorithms: ["HS256"] }) as any;
       if (!decoded.organizationId || !decoded.userId) {
         return next(new Error('Invalid token claims'));
       }

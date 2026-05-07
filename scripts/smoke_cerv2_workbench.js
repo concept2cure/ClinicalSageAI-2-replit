@@ -1,8 +1,14 @@
 const logger = console;
 
 const getAuthToken = async () => {
-  const email = process.env.SMOKE_EMAIL || 'jm.smith@concept2cure.pro';
-  const password = process.env.SMOKE_PASSWORD || 'Concept2Cure2026!';
+  const email = process.env.SMOKE_EMAIL;
+  const password = process.env.SMOKE_PASSWORD;
+  if (!email || !password) {
+    logger.error(
+      '[smoke] SMOKE_EMAIL and SMOKE_PASSWORD must be set; refusing to use a hardcoded default.'
+    );
+    process.exit(1);
+  }
 
   const response = await fetch(`${baseUrl}/api/auth/login`, {
     method: 'POST',

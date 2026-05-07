@@ -83,7 +83,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
   const authenticate = async () => {
     try {
-      const decoded = jwt.verify(token, config.jwt.secret) as {
+      const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
         userId?: string;
         email?: string;
         organizationId?: string;
