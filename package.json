@@ -40,6 +40,7 @@
     "ci:governed-export-routes": "node scripts/ci/check-governed-export-routes.mjs",
     "ci:governed-export-consequence-shape": "node scripts/ci/check-governed-export-consequence-shape.mjs",
     "ci:check-docx-runtime": "node scripts/ci/check-docx-runtime-canonicality.mjs",
+    "ci:check-pdf-runtime": "node scripts/ci/check-pdf-runtime-canonicality.mjs",
     "ci:check-editor-integrity": "node scripts/ci/check-editor-extension-integrity.mjs",
     "ci:check-legacy-dep-quarantine": "node scripts/ci/check-legacy-dep-quarantine.mjs",
     "ci:audit-route-mounts": "node scripts/ci/audit-route-mounts.mjs",
