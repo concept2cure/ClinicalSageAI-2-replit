@@ -29,7 +29,9 @@ export const mockUsers: User[] = [
   {
     id: 1,
     username: 'admin',
-    password: 'admin123',
+    // Mock fixture only — not an auth credential. Real logins go through
+    // the Drizzle `users` table with bcrypt-hashed password_hash.
+    password: '',
     email: 'admin@trialsage.ai',
     role: 'admin',
     name: 'Admin User',
@@ -38,7 +40,7 @@ export const mockUsers: User[] = [
   {
     id: 2,
     username: 'demo',
-    password: 'demo123',
+    password: '',
     email: 'demo@trialsage.ai',
     role: 'user',
     name: 'Demo User',

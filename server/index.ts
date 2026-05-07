@@ -43,6 +43,7 @@ import {
   applyCoreMiddleware,
   applyDebugRequestLogging,
 } from './startup/middleware';
+import { applyAuditTrailMiddleware } from './startup/audit-trail';
 import {
   mountFastPathHealthEndpoints,
   mountDiagnosticEndpoints,
@@ -91,6 +92,12 @@ applyTelemetryMiddleware(app);
 mountFastPathHealthEndpoints(app, pool);
 
 applyCoreMiddleware(app, debugLog);
+
+// Tamper-proof audit trail (21 CFR Part 11 §11.10(e)). Mounted after the
+// core middleware so user/auth context is populated before observation,
+// but before route registration so it observes every /api request that
+// reaches a handler. No-op unless AUDIT_TRAIL_ENABLED=true.
+applyAuditTrailMiddleware(app, pool, debugLog);
 
 // Diagnostic endpoints after the security stack so they inherit CORS,
 // rate-limit, structured logging, etc.
