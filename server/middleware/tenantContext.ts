@@ -16,6 +16,7 @@ import { db } from '../db';
 import { getPool } from '../db';
 import { and, eq } from 'drizzle-orm';
 import { organizations, organizationUsers } from '../../shared/schema';
+import { runWithTenantScope } from '../db/tenantStore';
 
 // Define the tenant context interface to be attached to the request
 export interface TenantContext {
@@ -276,7 +277,20 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
       void releaseDbClient(req);
     });
 
-    return next();
+    // Establish a tenant AsyncLocalStorage scope for the rest of the request.
+    // Pool instrumentation reads this on every query so we can count which
+    // queries run without a tenant boundary — the gap that would silently
+    // turn into "zero rows" once RLS is enabled in PR B.
+    return runWithTenantScope(
+      {
+        tenantId: organizationId,
+        orgUuid: organizationUuid || null,
+        role: resolvedRole || null,
+        source: 'request',
+        caller: req.path,
+      },
+      () => next()
+    );
   } catch (error) {
     return res.status(401).json({
       error: 'Authentication required',

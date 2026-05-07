@@ -29,6 +29,7 @@ import { createScopedLogger } from '../utils/logger';
 import * as schema from '../../shared/schema';
 import { getSslConfig } from './ssl';
 import { getDatabaseUrl } from './getDatabaseUrl';
+import { instrumentPool } from './poolInstrumentation';
 
 const logger = createScopedLogger('database');
 
@@ -52,6 +53,11 @@ try {
       idle_in_transaction_session_timeout: 60000, // Kill idle-in-transaction after 60s
       allowExitOnIdle: !isProduction, // Dev: let process exit; Prod: keep pool alive
     });
+
+    // Observability hook for the RLS rollout (PR A): every pool.query /
+    // pool.connect emits a counter labelled by tenant-scope presence and
+    // caller. No DB behavior change — just measurement.
+    instrumentPool(pool);
 
     const testConnection = (retries = 3, delay = 3000) => {
       pool!.query('SELECT NOW()', (err, res) => {
