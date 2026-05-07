@@ -17,6 +17,7 @@ import {
   detectTargetAgency,
   detectSectionReference,
   isPostSectionGenerationTurn,
+  verifyRewriteClaims,
   type CitationRelationship,
 } from '../ana/submission-chat-handler';
 
@@ -427,6 +428,86 @@ describe('submission-chat-handler · parseModelResponse · intent + rewrite', ()
       rewrite: { sectionCode: '4.1', targetAgency: 'EMA', proposedContent: '' },
     });
     expect(parseModelResponse(raw).rewrite).toBeNull();
+  });
+});
+
+describe('submission-chat-handler · verifyRewriteClaims', () => {
+  const chunks = [
+    {
+      id: 'a',
+      title: 'Protocol §5.1',
+      content: 'Median age across the enrolled cohort was 47 years.',
+      score: 0.92,
+      artifactId: 'artifact_protocol_001',
+      sectionCode: '5.3.1',
+      pageRef: 'p.12',
+    },
+    {
+      id: 'b',
+      title: 'TFL-DEM-01',
+      content: 'Demographics table reproducing 47.',
+      score: 0.85,
+      artifactId: 'artifact_tfl_001',
+      sectionCode: null,
+      pageRef: null,
+    },
+    // Deliberately low relevance to trigger LOW_RELEVANCE downgrade.
+    {
+      id: 'c',
+      title: 'Older Memo',
+      content: 'Some unrelated context with the year 2018.',
+      score: 0.4,
+      artifactId: 'artifact_memo',
+      sectionCode: null,
+      pageRef: null,
+    },
+  ];
+
+  it('marks paragraphs without [SRC-n] as UNSUPPORTED', () => {
+    const proposal =
+      'A'.repeat(120) +
+      ' This paragraph has no citation.\n\n' +
+      'B'.repeat(80) +
+      ' [SRC-1]';
+    const { perParagraph, statusCounts } = verifyRewriteClaims(proposal, chunks);
+    expect(perParagraph).toHaveLength(2);
+    expect(perParagraph[0].status).toBe('UNSUPPORTED');
+    expect(perParagraph[0].citationRefs).toEqual([]);
+    expect(perParagraph[1].status).toBe('SUPPORTED');
+    expect(statusCounts.unsupported).toBe(1);
+    expect(statusCounts.supported).toBe(1);
+  });
+
+  it('downgrades to WEAK when verifier flags fire (low relevance)', () => {
+    // Cite [SRC-3] which has score 0.4 (below default LOW threshold 0.55).
+    const proposal = 'C'.repeat(150) + ' [SRC-3]';
+    const { perParagraph, statusCounts } = verifyRewriteClaims(proposal, chunks);
+    expect(perParagraph[0].status).toBe('WEAK');
+    expect(perParagraph[0].flags.some(f => f.rule === 'LOW_RELEVANCE')).toBe(
+      true
+    );
+    expect(statusCounts.weak).toBe(1);
+  });
+
+  it('handles multi-citation paragraphs and dedupes refs', () => {
+    const proposal = 'D'.repeat(100) + ' [SRC-1] [SRC-2] [SRC-1]';
+    const { perParagraph } = verifyRewriteClaims(proposal, chunks);
+    expect(perParagraph[0].status).toBe('SUPPORTED');
+    expect(perParagraph[0].citationRefs.sort()).toEqual([1, 2]);
+  });
+
+  it('returns empty per-paragraph for an empty proposal', () => {
+    const { perParagraph, statusCounts } = verifyRewriteClaims('', chunks);
+    expect(perParagraph).toEqual([]);
+    expect(statusCounts).toEqual({ supported: 0, weak: 0, unsupported: 0 });
+  });
+
+  it('ignores out-of-range [SRC-n] markers', () => {
+    const proposal = 'E'.repeat(100) + ' [SRC-99]';
+    const { perParagraph } = verifyRewriteClaims(proposal, chunks);
+    // Out-of-range refs become "no citation" → UNSUPPORTED.
+    expect(perParagraph[0].status).toBe('UNSUPPORTED');
+    expect(perParagraph[0].citationRefs).toEqual([]);
   });
 });
 

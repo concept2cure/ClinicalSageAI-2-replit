@@ -2127,6 +2127,72 @@ const applyRewriteSchema = z.object({
   acknowledgeUnsupported: z.boolean().optional(),
 });
 
+// Preview-rewrite is read-only — same rate limit as the chat path is fine.
+const previewRewriteSchema = z.object({
+  artifactId: z.string().min(1, 'artifactId is required'),
+  proposedContent: z
+    .string()
+    .min(8, 'proposedContent is too short')
+    .max(200_000, 'proposedContent exceeds the size limit'),
+});
+
+router.post(
+  '/submission-chat/preview-rewrite',
+  authenticateToken,
+  requireOrganizationContext,
+  submissionChatRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = previewRewriteSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res.status(401).json({
+        error: 'Authenticated tenant required',
+        code: 'AUTH_REQUIRED',
+      });
+    }
+    try {
+      const { previewRewrite } = await import(
+        '../services/ana/submission-chat-apply-rewrite'
+      );
+      const result = await previewRewrite({
+        artifactId: parsed.data.artifactId,
+        proposedContent: parsed.data.proposedContent,
+        organizationId,
+      });
+      return res.json(result);
+    } catch (error: any) {
+      const code = error?.code;
+      if (code === 'ARTIFACT_NOT_FOUND') {
+        return res.status(404).json({ error: error.message, code });
+      }
+      if (code === 'ARTIFACT_ORG_MISMATCH') {
+        return res.status(403).json({ error: error.message, code });
+      }
+      if (code === 'INVALID_REQUEST') {
+        return res.status(400).json({ error: error.message, code });
+      }
+      console.error(
+        '[AnA submission-chat preview-rewrite] failed:',
+        error?.message || error
+      );
+      return res.status(500).json({
+        error: 'Failed to preview rewrite',
+        code: 'PREVIEW_REWRITE_ERROR',
+      });
+    }
+  }
+);
+
 router.post(
   '/submission-chat/apply-rewrite',
   authenticateToken,

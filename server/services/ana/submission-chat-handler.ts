@@ -19,12 +19,13 @@
  */
 import { pool } from '../../db.js';
 import { ensureGateway } from '../../routes/chat/shared.js';
-import { getEmbeddingService } from '../enhancedEmbeddingService.js';
+import { getRAGPipeline } from '../advancedRAGPipeline.js';
 import { buildMemoryContextForChat } from '../memory-context-assembler.js';
 import {
   getThreadMessages,
   saveChatMessage,
 } from '../chat-thread-helpers.js';
+import { verifyClaim, type VerifierFlag } from '../../routes/chat/verifier.js';
 
 // Cross-encoder relevance threshold for retrieval — matches the chat default
 // so submission-chat doesn't surface lower-quality matches than the section
@@ -69,6 +70,20 @@ export interface SubmissionChatCitation {
 }
 
 /**
+ * Per-claim quality flags for a single paragraph in a rewrite proposal,
+ * produced by running the deterministic verifier against the proposal's
+ * cited chunks. Surfaces issues like "claim contains unmatched numbers" or
+ * "best citation relevance is below threshold" before the rewrite is
+ * applied.
+ */
+export interface RewriteClaimVerification {
+  paragraphIndex: number;
+  status: 'SUPPORTED' | 'WEAK' | 'UNSUPPORTED';
+  citationRefs: number[];
+  flags: VerifierFlag[];
+}
+
+/**
  * When the model produces a rewrite, we expose the new content alongside the
  * answer so the UI can render a diff or present it as a draft proposal. The
  * rewrite is NOT persisted to concept2cure_artifacts here — that is a
@@ -79,6 +94,76 @@ export interface SubmissionChatRewrite {
   targetAgency: string | null;
   proposedContent: string;
   rationale: string;
+  /**
+   * Per-paragraph claim-quality flags for the proposed rewrite. Populated
+   * when chunks are available; the verifier downgrades SUPPORTED → WEAK
+   * when its rules fire (low relevance, ungrounded numbers, thin support).
+   */
+  claimVerification?: RewriteClaimVerification[];
+  /**
+   * Roll-up: count of claim statuses across the proposal so the UI can
+   * render a single "n WEAK / m UNSUPPORTED" badge.
+   */
+  claimStatusCounts?: { supported: number; weak: number; unsupported: number };
+}
+
+/**
+ * Run the deterministic chat verifier across each paragraph of a proposed
+ * rewrite. Maps [SRC-n] markers in the paragraph back to the retrieved
+ * chunks so the verifier sees real citation scores + snippets — not just
+ * "did the paragraph cite anything". Pure: takes the proposal + chunks,
+ * returns the verification structure.
+ */
+export function verifyRewriteClaims(
+  proposedContent: string,
+  chunks: RetrievedChunk[]
+): {
+  perParagraph: RewriteClaimVerification[];
+  statusCounts: { supported: number; weak: number; unsupported: number };
+} {
+  const paragraphs = proposedContent
+    .split(/\n\s*\n+/)
+    .map(p => p.trim())
+    .filter(Boolean);
+  const perParagraph: RewriteClaimVerification[] = [];
+  const counts = { supported: 0, weak: 0, unsupported: 0 };
+
+  paragraphs.forEach((para, idx) => {
+    const refMatches = Array.from(para.matchAll(/\[SRC-(\d+)\]/g));
+    const refs = Array.from(
+      new Set(
+        refMatches
+          .map(m => parseInt(m[1], 10))
+          .filter(n => Number.isFinite(n) && n >= 1 && n <= chunks.length)
+      )
+    );
+    if (refs.length === 0) {
+      perParagraph.push({
+        paragraphIndex: idx,
+        status: 'UNSUPPORTED',
+        citationRefs: [],
+        flags: [],
+      });
+      counts.unsupported += 1;
+      return;
+    }
+    const citationScores = refs.map(r => chunks[r - 1].score);
+    const snippets = refs.map(r => chunks[r - 1].content || '');
+    const { flags, shouldDowngrade } = verifyClaim(para, citationScores, snippets);
+    let status: RewriteClaimVerification['status'] = 'SUPPORTED';
+    if (shouldDowngrade) status = 'WEAK';
+    perParagraph.push({
+      paragraphIndex: idx,
+      status,
+      citationRefs: refs,
+      flags,
+    });
+    if (status === 'SUPPORTED') counts.supported += 1;
+    else if (status === 'WEAK') counts.weak += 1;
+    else counts.unsupported += 1;
+  });
+
+  return { perParagraph, statusCounts: counts };
 }
 
 export interface SubmissionChatRequest {
@@ -913,56 +998,117 @@ export async function handleSubmissionChat(
     maxChars: 3000,
   });
 
-  // Step 5 — cross-document retrieval, scoped to the parent project. The
-  // retrieval query folds in recent user turns so "what about the EU cohort?"
-  // still pulls the right passages.
+  // Step 5 — cross-document retrieval through the advanced RAG pipeline.
+  // The pipeline does HyDE + multi-query + cross-encoder rerank + MMR,
+  // routed through a project-scoped initial retrieval (lumen_data_atoms +
+  // search_atoms_hybrid) so cross-project chunks never appear in the
+  // candidate set. Rewrite intent gets a second pass keyed on the active
+  // artifact's content — that surfaces passages most likely to contradict
+  // the section and feeds them in alongside the user-question results.
   const retrievalQuery = buildRetrievalQuery(input.question, history);
-  const embeddingService = getEmbeddingService(pool);
   const orgUuid = input.organizationUuid || undefined;
   const validOrgUuid =
     orgUuid && /^[0-9a-f-]{36}$/i.test(orgUuid) ? orgUuid : undefined;
 
   let rawHits: Array<{ id: string; title: string; content: string; score: number }> = [];
   if (validOrgUuid) {
-    const primary = embeddingService.searchHybrid(
-      retrievalQuery,
-      RETRIEVAL_TOP_K,
-      RETRIEVAL_THRESHOLD,
-      validOrgUuid,
-      String(artifact.project_id)
-    );
+    const ragPipeline = getRAGPipeline(pool);
+    const artifactScope = {
+      projectId: artifact.project_id,
+      organizationUuid: validOrgUuid,
+    };
 
-    // Rewrite intent: do a second pass using the ACTIVE ARTIFACT's content as
-    // the query so we surface dossier passages that are semantically close to
-    // the section being rewritten — those are the ones likely to contradict
-    // it, and the model can flag them as relationship="contradicts" so the
-    // rewrite addresses them. Cheap, runs in parallel with the primary pass.
+    // The "advanced" strategy combines HyDE + multi-query, then rerank + MMR
+    // run on top. This is the canonical cross-module retrieval path.
+    const primary = ragPipeline
+      .retrieve(retrievalQuery, {
+        strategy: 'advanced',
+        limit: RETRIEVAL_TOP_K,
+        threshold: RETRIEVAL_THRESHOLD,
+        useReranking: true,
+        useMmr: true,
+        mmrLambda: 0.7,
+        organizationUuid: validOrgUuid,
+        artifactScope,
+      })
+      .catch(err => {
+        console.warn(
+          '[AnA submission-chat] advanced RAG retrieval failed, returning empty:',
+          err?.message
+        );
+        return {
+          documents: [] as Array<{
+            id: string;
+            chunkId?: string;
+            title: string;
+            content: string;
+            finalScore: number;
+            initialScore: number;
+            rerankScore?: number;
+          }>,
+          totalCandidates: 0,
+          retrievalStrategy: 'failed',
+          processingTimeMs: 0,
+          tokensUsed: 0,
+        };
+      });
+
     const useArtifactScan =
       intent === 'rewrite' &&
       typeof artifact.content === 'string' &&
       artifact.content.trim().length > 0;
     const artifactScan = useArtifactScan
-      ? embeddingService.searchHybrid(
-          (artifact.content as string).slice(0, 2000),
-          Math.max(4, Math.floor(RETRIEVAL_TOP_K / 2)),
-          RETRIEVAL_THRESHOLD,
-          validOrgUuid!,
-          String(artifact.project_id)
-        )
-      : Promise.resolve(
-          [] as Array<{ id: string; title: string; content: string; score: number }>
-        );
+      ? ragPipeline
+          .retrieve((artifact.content as string).slice(0, 2000), {
+            // Cheaper basic strategy with rerank for the contradiction sweep —
+            // we don't need HyDE/multi-query expansion of the artifact text.
+            strategy: 'basic',
+            limit: Math.max(4, Math.floor(RETRIEVAL_TOP_K / 2)),
+            threshold: RETRIEVAL_THRESHOLD,
+            useReranking: true,
+            useMmr: false,
+            organizationUuid: validOrgUuid,
+            artifactScope,
+          })
+          .catch(err => {
+            console.warn(
+              '[AnA submission-chat] artifact-scan retrieval failed:',
+              err?.message
+            );
+            return null;
+          })
+      : Promise.resolve(null);
 
-    const [primaryHits, scanHits] = await Promise.all([primary, artifactScan]);
+    const [primaryCtx, scanCtx] = await Promise.all([primary, artifactScan]);
 
-    // Merge + dedupe by atom id, take the higher score when both pass return
-    // the same chunk, then trim back to RETRIEVAL_TOP_K.
-    const byId = new Map<string, { id: string; title: string; content: string; score: number }>();
-    for (const h of primaryHits) byId.set(h.id, h);
-    for (const h of scanHits) {
-      const existing = byId.get(h.id);
-      if (!existing || h.score > existing.score) byId.set(h.id, h);
-    }
+    // Merge + dedupe by chunk id, take the higher final score when both pass
+    // return the same chunk, then trim back to RETRIEVAL_TOP_K.
+    const byId = new Map<
+      string,
+      { id: string; title: string; content: string; score: number }
+    >();
+    const ingest = (docs: Array<{
+      id: string;
+      chunkId?: string;
+      title: string;
+      content: string;
+      finalScore: number;
+    }>) => {
+      for (const d of docs) {
+        const id = d.chunkId || d.id;
+        const incoming = {
+          id,
+          title: d.title,
+          content: d.content,
+          score: d.finalScore,
+        };
+        const existing = byId.get(id);
+        if (!existing || incoming.score > existing.score) byId.set(id, incoming);
+      }
+    };
+    ingest(primaryCtx.documents);
+    if (scanCtx) ingest(scanCtx.documents);
+
     rawHits = Array.from(byId.values())
       .sort((a, b) => b.score - a.score)
       .slice(0, RETRIEVAL_TOP_K);
@@ -1079,6 +1225,19 @@ export async function handleSubmissionChat(
   }
   if (rewrite && !rewrite.targetAgency && targetAgency) {
     rewrite.targetAgency = targetAgency;
+  }
+
+  // Run the deterministic verifier across the proposal's paragraphs so the
+  // UI / caller can see "this rewrite has 2 WEAK + 1 UNSUPPORTED claim"
+  // BEFORE clicking apply. Chunks are scored relative to the live retrieval,
+  // so the verifier sees real citation relevance, not heuristic guesses.
+  if (rewrite && rewrite.proposedContent && chunks.length > 0) {
+    const { perParagraph, statusCounts } = verifyRewriteClaims(
+      rewrite.proposedContent,
+      chunks
+    );
+    rewrite.claimVerification = perParagraph;
+    rewrite.claimStatusCounts = statusCounts;
   }
 
   // Step 8 — persist the turn. Two surfaces:

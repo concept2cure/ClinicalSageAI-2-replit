@@ -245,6 +245,111 @@ function fail(code: string, message: string): never {
   throw err;
 }
 
+/**
+ * Preview a rewrite without mutating the artifact. Runs the same verification
+ * and diff calculations the apply path does, against the current artifact's
+ * persisted content + status. This lets the UI show a quality score and
+ * change magnitude before the user confirms — and lets the apply path stay
+ * a single confirm-then-commit step rather than a multi-stage handshake.
+ *
+ * Returns null if the artifact is missing or org-mismatched (the route
+ * surfaces 404 / 403 distinctly via the same code paths the apply uses).
+ */
+export interface PreviewRewriteInput {
+  artifactId: string;
+  proposedContent: string;
+  organizationId: number;
+}
+
+export interface PreviewRewriteResult {
+  artifactId: string;
+  currentVersion: number;
+  currentStatus: string;
+  proposedContentHash: string;
+  isNoOp: boolean;
+  isLocked: boolean;
+  requiresSignature: boolean;
+  blocked: boolean;
+  blockingReasons: Array<{ code: string; message: string }>;
+  verification: RewriteVerification;
+  diff: RewriteDiffStats;
+}
+
+export async function previewRewrite(
+  input: PreviewRewriteInput
+): Promise<PreviewRewriteResult> {
+  if (!input.artifactId) fail('INVALID_REQUEST', 'artifactId is required');
+  if (!input.proposedContent || input.proposedContent.length < CONTENT_MIN_CHARS) {
+    fail('INVALID_REQUEST', 'proposedContent is too short');
+  }
+  if (input.proposedContent.length > CONTENT_MAX_CHARS) {
+    fail('INVALID_REQUEST', 'proposedContent exceeds the size limit');
+  }
+
+  const { rows } = await pool.query(
+    `SELECT artifact_id, organization_id, version, content, content_hash, status, metadata
+       FROM concept2cure_artifacts
+      WHERE artifact_id = $1
+      LIMIT 1`,
+    [input.artifactId]
+  );
+  if (rows.length === 0) fail('ARTIFACT_NOT_FOUND', `Artifact not found: ${input.artifactId}`);
+  const row = rows[0];
+  if (Number(row.organization_id) !== Number(input.organizationId)) {
+    fail('ARTIFACT_ORG_MISMATCH', 'Artifact does not belong to this organization');
+  }
+
+  const contentHash = crypto
+    .createHash('sha256')
+    .update(input.proposedContent)
+    .digest('hex');
+  const isNoOp = !!row.content_hash && row.content_hash === contentHash;
+  const isLocked = row.status === 'locked' || row.status === 'approved';
+  const requiresSignature =
+    !!row.metadata && row.metadata.requiresSignature === true;
+
+  const verification = verifyProposedContent(input.proposedContent);
+  const diff = computeRewriteDiffStats(
+    typeof row.content === 'string' ? row.content : '',
+    input.proposedContent
+  );
+
+  const blockingReasons: PreviewRewriteResult['blockingReasons'] = [];
+  if (isLocked) {
+    blockingReasons.push({
+      code: 'ARTIFACT_LOCKED',
+      message: `Artifact is in status="${row.status}" — unlock or branch a draft first.`,
+    });
+  }
+  if (isNoOp) {
+    blockingReasons.push({
+      code: 'REWRITE_NOOP',
+      message: 'Proposed content is identical to the current version.',
+    });
+  }
+  const blockingFlag = verification.flags.find(f => f.severity === 'block');
+  if (blockingFlag) {
+    blockingReasons.push({
+      code: 'UNSUPPORTED_REWRITE',
+      message: `${blockingFlag.message}. Apply will require acknowledgeUnsupported=true.`,
+    });
+  }
+
+  return {
+    artifactId: row.artifact_id,
+    currentVersion: Number(row.version) || 1,
+    currentStatus: row.status,
+    proposedContentHash: contentHash,
+    isNoOp,
+    isLocked,
+    requiresSignature,
+    blocked: blockingReasons.length > 0,
+    blockingReasons,
+    verification,
+    diff,
+  };
+}
+
 export async function applyRewrite(
   input: ApplyRewriteInput
 ): Promise<ApplyRewriteResult> {
