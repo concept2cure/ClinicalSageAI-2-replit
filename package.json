@@ -246,7 +246,7 @@
     "html2canvas": "^1.4.1",
     "http-proxy-middleware": "^3.0.3",
     "input-otp": "^1.2.4",
-    "ioredis": "5.9.2",
+    "ioredis": "5.10.1",
     "isomorphic-dompurify": "2.35.0",
     "joi": "^17.13.3",
     "jose": "6.2.2",
