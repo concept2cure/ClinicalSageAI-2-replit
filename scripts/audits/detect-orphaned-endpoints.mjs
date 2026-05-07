@@ -232,15 +232,25 @@ function discoverServerEndpoints(mountMap) {
 // client uses many different fetch wrappers.
 const CLIENT_API_REF = /['"`](\/api\/[A-Za-z0-9_\-./]*)/g;
 
-function discoverClientReferences() {
-  const clientFiles = walk(path.join(repoRoot, 'client', 'src'), [
-    '.ts',
-    '.tsx',
-    '.js',
-    '.jsx',
-  ]);
+function discoverApiReferences() {
+  // Scan both client/src/ AND server-side files (workers, jobs, internal
+  // services that fan-out to the API surface). The server-to-server pass
+  // is what shrinks the orphan-count overestimate — many endpoints flagged
+  // as "no client reference" are actually called from a worker or another
+  // route, not the UI.
+  const files = [
+    ...walk(path.join(repoRoot, 'client', 'src'), ['.ts', '.tsx', '.js', '.jsx']),
+    ...walk(path.join(repoRoot, 'server', 'workers'), ['.ts', '.js']),
+    ...walk(path.join(repoRoot, 'server', 'jobs'), ['.ts', '.js']),
+    ...walk(path.join(repoRoot, 'server', 'services'), ['.ts', '.js']),
+    ...walk(path.join(repoRoot, 'server', 'submission-ops'), ['.ts', '.js']),
+    ...walk(path.join(repoRoot, 'server', 'brain'), ['.ts', '.js']),
+    ...walk(path.join(repoRoot, 'server', 'integrations'), ['.ts', '.js']),
+    // Server routes can also fan-out to other internal endpoints.
+    ...walk(path.join(repoRoot, 'server', 'routes'), ['.ts', '.js']),
+  ];
   const refs = new Set();
-  for (const file of clientFiles) {
+  for (const file of files) {
     const text = fs.readFileSync(file, 'utf8');
     CLIENT_API_REF.lastIndex = 0;
     let m;
@@ -328,7 +338,7 @@ function suggestDecision(endpoint) {
 
 const mountMap = discoverMountMap();
 const declared = discoverServerEndpoints(mountMap);
-const clientRefs = discoverClientReferences();
+const clientRefs = discoverApiReferences();
 const owners = loadOwners();
 
 const orphans = [];
@@ -397,8 +407,10 @@ mdLines.push('');
 mdLines.push('## Summary');
 mdLines.push('');
 mdLines.push(`- Declared server endpoints: **${summary.totalDeclared}**`);
-mdLines.push(`- Consumed by client (heuristic): **${summary.totalConsumedByClient}**`);
-mdLines.push(`- Orphans (no client reference): **${summary.totalOrphans}**`);
+mdLines.push(
+  `- Consumed (client + server-to-server, heuristic): **${summary.totalConsumedByClient}**`
+);
+mdLines.push(`- Orphans (no caller reference): **${summary.totalOrphans}**`);
 mdLines.push('');
 mdLines.push('## Orphans by owner');
 mdLines.push('');

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-07T05:50:55.024Z",
+  "generatedAt": "2026-05-07T05:56:03.244Z",
   "fingerprints": [
     "server/api/vault/routes.ts:162:documents",
     "server/api/vault/routes.ts:176:documents",
@@ -16,11 +16,6 @@
     "server/db/bootstrap/seed-default-org.ts:70:users",
     "server/jobs/retentionCron.js:143:documents",
     "server/models/ind_sequence.js:162:documents",
-    "server/prisma/client.js:103:documents",
-    "server/prisma/client.js:126:documents",
-    "server/prisma/client.js:145:documents",
-    "server/prisma/client.js:153:documents",
-    "server/prisma/client.js:56:audit_logs",
     "server/routes/510k-project.routes.ts:321:projects",
     "server/routes/audit-trail-routes.ts:306:audit_events",
     "server/routes/audit-trail-routes.ts:52:audit_events",

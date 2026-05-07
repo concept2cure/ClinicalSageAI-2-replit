@@ -142,6 +142,12 @@ const ALLOWLIST_FILES = new Set([
   // Diagnostics / health.
   'server/diagnostics.js',
   'server/services/diagnostics.ts',
+  // Runtime-guarded: tenant isolation is enforced at function entry by
+  // explicit throws when where.organizationId / tenantId / documentId is
+  // missing (see server/prisma/__tests__/tenant-guards.test.ts). The
+  // static gate sees the raw SQL but can't see the guards. Hardened
+  // 2026-05-07.
+  'server/prisma/client.js',
 ]);
 
 const ALLOWLIST_PATH_PREFIXES = [

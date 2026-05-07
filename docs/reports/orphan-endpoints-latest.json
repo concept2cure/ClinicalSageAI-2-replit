@@ -1,24 +1,22 @@
 {
   "summary": {
-    "generatedAt": "2026-05-07T05:43:04.046Z",
+    "generatedAt": "2026-05-07T05:53:54.250Z",
     "totalDeclared": 1184,
-    "totalConsumedByClient": 272,
-    "totalOrphans": 912,
+    "totalConsumedByClient": 331,
+    "totalOrphans": 853,
     "byOwner": {
-      "Platform API Gateway": 603,
+      "Platform API Gateway": 558,
       "CMC Platform": 113,
-      "Regulatory Intelligence": 74,
+      "Regulatory Intelligence": 71,
       "Identity Access": 47,
       "Platform Kernel": 47,
-      "Submission Workflows": 21,
-      "Reporting Intelligence": 4,
-      "Authoring Governance": 2,
+      "Submission Workflows": 16,
       "AI Platform": 1
     },
     "byDecision": {
-      "needs-review": 893,
+      "needs-review": 837,
       "retire-candidate": 10,
-      "keep-server-only": 9
+      "keep-server-only": 6
     }
   },
   "orphans": [
@@ -30,26 +28,6 @@
       "ownerPrefix": "/api/ai",
       "owner": "AI Platform",
       "contact": "server/services/ai-gateway/",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
-      "path": "/api/documents/builder-order",
-      "file": "server/routes/document_qc_routes.ts",
-      "line": 109,
-      "ownerPrefix": "/api/documents",
-      "owner": "Authoring Governance",
-      "contact": "server/routes/documents-unified.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
-      "path": "/api/documents/bulk-approve",
-      "file": "server/routes/document_qc_routes.ts",
-      "line": 66,
-      "ownerPrefix": "/api/documents",
-      "owner": "Authoring Governance",
-      "contact": "server/routes/documents-unified.ts",
       "decision": "needs-review"
     },
     {
@@ -1743,96 +1721,6 @@
       "decision": "needs-review"
     },
     {
-      "method": "GET",
-      "path": "/api/510k/documents/:documentId",
-      "file": "server/routes/documentOrchestrationRoutes.ts",
-      "line": 137,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
-      "path": "/api/510k/documents/:documentId/lock",
-      "file": "server/routes/documentOrchestrationRoutes.ts",
-      "line": 52,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/510k/documents/:documentId/pdf/3514",
-      "file": "server/routes/documentOrchestrationRoutes.ts",
-      "line": 199,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/510k/documents/:documentId/pdf/3601",
-      "file": "server/routes/documentOrchestrationRoutes.ts",
-      "line": 169,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/510k/documents/:documentId/pdf/3881",
-      "file": "server/routes/documentOrchestrationRoutes.ts",
-      "line": 229,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
-      "path": "/api/510k/documents/:documentId/version",
-      "file": "server/routes/documentOrchestrationRoutes.ts",
-      "line": 82,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/510k/esg/acknowledgment/:transactionId",
-      "file": "server/routes/esgSubmissionRoutes.ts",
-      "line": 128,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/510k/esg/status/:transactionId",
-      "file": "server/routes/esgSubmissionRoutes.ts",
-      "line": 81,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/510k/package/:packageId",
-      "file": "server/routes/esgSubmissionRoutes.ts",
-      "line": 149,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
       "method": "POST",
       "path": "/api/account-intelligence/bundles",
       "file": "server/routes/account-intelligence.ts",
@@ -2274,16 +2162,6 @@
     },
     {
       "method": "POST",
-      "path": "/api/ana/platform/execute",
-      "file": "server/routes/ana-platform-control.ts",
-      "line": 249,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
       "path": "/api/ana/platform/modules/toggle",
       "file": "server/routes/ana-platform-control.ts",
       "line": 121,
@@ -2397,26 +2275,6 @@
       "path": "/api/atoms/:id",
       "file": "server/routes/atoms.js",
       "line": 222,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/audit-logs",
-      "file": "server/routes/audit.ts",
-      "line": 12,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/audit-logs",
-      "file": "server/routes/audit.ts",
-      "line": 547,
       "ownerPrefix": "/api",
       "owner": "Platform API Gateway",
       "contact": "server/index.ts",
@@ -3803,26 +3661,6 @@
       "decision": "needs-review"
     },
     {
-      "method": "DELETE",
-      "path": "/api/device-data-center/file/:id",
-      "file": "server/routes/document-data-center.ts",
-      "line": 231,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/device-data-center/file/:id",
-      "file": "server/routes/document-data-center.ts",
-      "line": 245,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
       "method": "GET",
       "path": "/api/device-data-center/files",
       "file": "server/routes/document-data-center.ts",
@@ -3877,56 +3715,6 @@
       "path": "/api/device-data-center/upload",
       "file": "server/routes/document-data-center.ts",
       "line": 13,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/device-projects/",
-      "file": "server/routes/device-projects.ts",
-      "line": 27,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
-      "path": "/api/device-projects/",
-      "file": "server/routes/device-projects.ts",
-      "line": 61,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/device-projects/:id",
-      "file": "server/routes/device-projects.ts",
-      "line": 144,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "DELETE",
-      "path": "/api/device-projects/:id",
-      "file": "server/routes/device-projects.ts",
-      "line": 254,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
-      "path": "/api/digest/get-data",
-      "file": "server/routes/notification_routes.ts",
-      "line": 95,
       "ownerPrefix": "/api",
       "owner": "Platform API Gateway",
       "contact": "server/index.ts",
@@ -4471,16 +4259,6 @@
       "owner": "Platform API Gateway",
       "contact": "server/index.ts",
       "decision": "keep-server-only"
-    },
-    {
-      "method": "POST",
-      "path": "/api/firecrawl/scrape",
-      "file": "server/routes/firecrawl.ts",
-      "line": 29,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
     },
     {
       "method": "GET",
@@ -5584,106 +5362,6 @@
     },
     {
       "method": "GET",
-      "path": "/api/licenses",
-      "file": "server/routes/license-routes.js",
-      "line": 225,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
-      "path": "/api/licenses",
-      "file": "server/routes/license-routes.js",
-      "line": 312,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/licenses/:id",
-      "file": "server/routes/license-routes.js",
-      "line": 266,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/licenses/:id",
-      "file": "server/routes/license-routes.js",
-      "line": 413,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
-      "path": "/api/licenses/:id/regenerate-key",
-      "file": "server/routes/license-routes.js",
-      "line": 503,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
-      "path": "/api/licenses/:id/revoke",
-      "file": "server/routes/license-routes.js",
-      "line": 477,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/licenses/:id/usage",
-      "file": "server/routes/license-routes.js",
-      "line": 536,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/licenses/client/:clientId",
-      "file": "server/routes/license-routes.js",
-      "line": 42,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/licenses/client/:clientId/usage",
-      "file": "server/routes/license-routes.js",
-      "line": 113,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
-      "path": "/api/licenses/validate-access",
-      "file": "server/routes/license-routes.js",
-      "line": 593,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
       "path": "/api/mission-control/approval-requests",
       "file": "server/routes/mission-control.ts",
       "line": 730,
@@ -6103,26 +5781,6 @@
       "decision": "needs-review"
     },
     {
-      "method": "POST",
-      "path": "/api/notify/send-comparison-notification",
-      "file": "server/routes/notification_routes.ts",
-      "line": 193,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
-      "path": "/api/notify/send-weekly-digest",
-      "file": "server/routes/notification_routes.ts",
-      "line": 36,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
       "method": "GET",
       "path": "/api/packager/formats",
       "file": "server/routes/universal-packager.ts",
@@ -6281,16 +5939,6 @@
       "owner": "Platform API Gateway",
       "contact": "server/index.ts",
       "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/pdf-tasks/download/:filename",
-      "file": "server/routes/pdf-task-routes.ts",
-      "line": 174,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "keep-server-only"
     },
     {
       "method": "GET",
@@ -7444,56 +7092,6 @@
     },
     {
       "method": "POST",
-      "path": "/api/tenant-ctq-factors",
-      "file": "server/routes/tenant-section-gating.ts",
-      "line": 201,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "DELETE",
-      "path": "/api/tenant-ctq-factors/:id",
-      "file": "server/routes/tenant-section-gating.ts",
-      "line": 284,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/tenant-ctq-factors/:section",
-      "file": "server/routes/tenant-section-gating.ts",
-      "line": 165,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/tenant-section-gating/:qmpId",
-      "file": "server/routes/tenant-section-gating.ts",
-      "line": 44,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
-      "path": "/api/tenant-section-gating/:qmpId/update",
-      "file": "server/routes/tenant-section-gating.ts",
-      "line": 80,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
       "path": "/api/test-assembly/edit",
       "file": "server/routes/test-assembly.ts",
       "line": 87,
@@ -7541,76 +7139,6 @@
       "owner": "Platform API Gateway",
       "contact": "server/index.ts",
       "decision": "retire-candidate"
-    },
-    {
-      "method": "POST",
-      "path": "/api/user/save-digest-prefs",
-      "file": "server/routes/notification_routes.ts",
-      "line": 129,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/csr/search",
-      "file": "server/routes/public-api.ts",
-      "line": 272,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/docs",
-      "file": "server/routes/public-api.ts",
-      "line": 162,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/endpoints/recommend",
-      "file": "server/routes/public-api.ts",
-      "line": 352,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/precedent/search",
-      "file": "server/routes/public-api.ts",
-      "line": 388,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/regulatory/pathways",
-      "file": "server/routes/public-api.ts",
-      "line": 313,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/trial-design/suggest",
-      "file": "server/routes/public-api.ts",
-      "line": 434,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
     },
     {
       "method": "GET",
@@ -8157,36 +7685,6 @@
       "path": "/api/regulatory-correspondence/analytics/deficiency-patterns",
       "file": "server/routes/regulatory-correspondence.ts",
       "line": 983,
-      "ownerPrefix": "/api/regulatory",
-      "owner": "Regulatory Intelligence",
-      "contact": "server/routes/regulatory*.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/regulatory-correspondence/correspondence",
-      "file": "server/routes/regulatory-correspondence.ts",
-      "line": 671,
-      "ownerPrefix": "/api/regulatory",
-      "owner": "Regulatory Intelligence",
-      "contact": "server/routes/regulatory*.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/regulatory-correspondence/correspondence/:correspondenceId",
-      "file": "server/routes/regulatory-correspondence.ts",
-      "line": 701,
-      "ownerPrefix": "/api/regulatory",
-      "owner": "Regulatory Intelligence",
-      "contact": "server/routes/regulatory*.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
-      "path": "/api/regulatory-correspondence/correspondence/intake",
-      "file": "server/routes/regulatory-correspondence.ts",
-      "line": 448,
       "ownerPrefix": "/api/regulatory",
       "owner": "Regulatory Intelligence",
       "contact": "server/routes/regulatory*.ts",
@@ -8893,46 +8391,6 @@
       "decision": "needs-review"
     },
     {
-      "method": "GET",
-      "path": "/api/reports/download/:personaId/:filename",
-      "file": "server/routes/reports/subscriptions-routes.ts",
-      "line": 14,
-      "ownerPrefix": "/api/reports",
-      "owner": "Reporting Intelligence",
-      "contact": "server/routes/reports*.ts",
-      "decision": "keep-server-only"
-    },
-    {
-      "method": "POST",
-      "path": "/api/reports/generate/:personaId",
-      "file": "server/routes/reports/subscriptions-routes.ts",
-      "line": 99,
-      "ownerPrefix": "/api/reports",
-      "owner": "Reporting Intelligence",
-      "contact": "server/routes/reports*.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/reports/preview/:personaId/:imageFile",
-      "file": "server/routes/reports/subscriptions-routes.ts",
-      "line": 56,
-      "ownerPrefix": "/api/reports",
-      "owner": "Reporting Intelligence",
-      "contact": "server/routes/reports*.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
-      "path": "/api/reports/subscribe/:personaId",
-      "file": "server/routes/reports/subscriptions-routes.ts",
-      "line": 125,
-      "ownerPrefix": "/api/reports",
-      "owner": "Reporting Intelligence",
-      "contact": "server/routes/reports*.ts",
-      "decision": "needs-review"
-    },
-    {
       "method": "POST",
       "path": "/api/ind-autodraft/generate-full",
       "file": "server/routes/ind-autodraft.ts",
@@ -9027,56 +8485,6 @@
       "path": "/api/ind-generation/structure",
       "file": "server/routes/ind-generation.ts",
       "line": 36,
-      "ownerPrefix": "/api/ind",
-      "owner": "Submission Workflows",
-      "contact": "server/routes/ind*.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/ind-pdf/:projectId/download/:filename",
-      "file": "server/routes/ind-pdf.ts",
-      "line": 575,
-      "ownerPrefix": "/api/ind",
-      "owner": "Submission Workflows",
-      "contact": "server/routes/ind*.ts",
-      "decision": "keep-server-only"
-    },
-    {
-      "method": "POST",
-      "path": "/api/ind-pdf/:projectId/extract",
-      "file": "server/routes/ind-pdf.ts",
-      "line": 618,
-      "ownerPrefix": "/api/ind",
-      "owner": "Submission Workflows",
-      "contact": "server/routes/ind*.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
-      "path": "/api/ind-pdf/:projectId/generate",
-      "file": "server/routes/ind-pdf.ts",
-      "line": 326,
-      "ownerPrefix": "/api/ind",
-      "owner": "Submission Workflows",
-      "contact": "server/routes/ind*.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
-      "path": "/api/ind-pdf/:projectId/import-content",
-      "file": "server/routes/ind-pdf.ts",
-      "line": 659,
-      "ownerPrefix": "/api/ind",
-      "owner": "Submission Workflows",
-      "contact": "server/routes/ind*.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "POST",
-      "path": "/api/ind-pdf/:projectId/section",
-      "file": "server/routes/ind-pdf.ts",
-      "line": 492,
       "ownerPrefix": "/api/ind",
       "owner": "Submission Workflows",
       "contact": "server/routes/ind*.ts",
