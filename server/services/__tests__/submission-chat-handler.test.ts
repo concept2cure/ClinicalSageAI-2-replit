@@ -12,6 +12,10 @@ import { describe, it, expect } from 'vitest';
 import {
   parseModelResponse,
   buildSystemPrompt,
+  buildRetrievalQuery,
+  classifyIntent,
+  detectTargetAgency,
+  detectSectionReference,
   isPostSectionGenerationTurn,
   type CitationRelationship,
 } from '../ana/submission-chat-handler';
@@ -172,6 +176,176 @@ describe('submission-chat-handler · buildSystemPrompt', () => {
   it('handles the no-evidence case explicitly', () => {
     const prompt = buildSystemPrompt(activeArtifact, projectArtifacts, []);
     expect(prompt).toContain('no retrieved evidence');
+  });
+});
+
+describe('submission-chat-handler · classifyIntent', () => {
+  it('classifies provenance questions', () => {
+    expect(classifyIntent('Where did the median age come from?')).toBe(
+      'provenance'
+    );
+    expect(classifyIntent('Why did you cite that?')).toBe('provenance');
+    expect(classifyIntent('Which document does this come from?')).toBe(
+      'provenance'
+    );
+    expect(classifyIntent('Show me the source for this number.')).toBe(
+      'provenance'
+    );
+  });
+
+  it('classifies cross-evidence questions', () => {
+    expect(classifyIntent('Show competing data from Study 204.')).toBe(
+      'cross_evidence'
+    );
+    expect(classifyIntent('Is anything in the IB contradicting this?')).toBe(
+      'cross_evidence'
+    );
+    expect(classifyIntent('Are there alternative data?')).toBe(
+      'cross_evidence'
+    );
+  });
+
+  it('classifies rewrite questions including agency-specific ones', () => {
+    expect(classifyIntent('Rewrite §4.1 for EMA.')).toBe('rewrite');
+    expect(classifyIntent('Make this section more concise.')).toBe('rewrite');
+    expect(classifyIntent('Adapt this for FDA reviewers.')).toBe('rewrite');
+    expect(classifyIntent('Tighten the indications paragraph.')).toBe(
+      'rewrite'
+    );
+  });
+
+  it('falls back to general for ambiguous follow-ups', () => {
+    expect(classifyIntent('What about the EU cohort?')).toBe('general');
+    expect(classifyIntent('Tell me more.')).toBe('general');
+  });
+});
+
+describe('submission-chat-handler · detectTargetAgency', () => {
+  it('returns canonical short names', () => {
+    expect(detectTargetAgency('Rewrite for EMA review.')).toBe('EMA');
+    expect(detectTargetAgency('Adapt for the FDA.')).toBe('FDA');
+    expect(detectTargetAgency('Translate this for PMDA submission.')).toBe(
+      'PMDA'
+    );
+    expect(detectTargetAgency('Send to Health Canada.')).toBe('HC');
+  });
+
+  it('returns null when no agency is mentioned', () => {
+    expect(detectTargetAgency('Make this more concise.')).toBeNull();
+  });
+});
+
+describe('submission-chat-handler · detectSectionReference', () => {
+  it('extracts an explicit § reference', () => {
+    expect(detectSectionReference('Rewrite §4.1 for EMA.', null)).toBe('4.1');
+  });
+
+  it('extracts a "section X.Y" reference', () => {
+    expect(
+      detectSectionReference('Update section 9.2 with the latest data.', null)
+    ).toBe('9.2');
+  });
+
+  it('falls back to the active section when the user said "this section"', () => {
+    expect(
+      detectSectionReference('Rewrite this section for EMA.', '5.3.5')
+    ).toBe('5.3.5');
+  });
+
+  it('returns null when there is no reference and no fallback', () => {
+    expect(detectSectionReference('Tell me more.', null)).toBeNull();
+  });
+});
+
+describe('submission-chat-handler · buildRetrievalQuery', () => {
+  it('returns the question alone when there is no history', () => {
+    expect(buildRetrievalQuery('Where did this come from?', [])).toBe(
+      'Where did this come from?'
+    );
+  });
+
+  it('folds the recent user turns into the query for coreference', () => {
+    const query = buildRetrievalQuery('What about the EU cohort?', [
+      { role: 'user', content: 'Where did the median age come from?' },
+      { role: 'assistant', content: 'It came from Protocol §5.1 [SRC-1].' },
+    ]);
+    expect(query).toContain('What about the EU cohort?');
+    expect(query).toContain('Where did the median age come from?');
+  });
+
+  it('does not duplicate the current question', () => {
+    const query = buildRetrievalQuery('Same question.', [
+      { role: 'user', content: 'Same question.' },
+    ]);
+    expect(query).toBe('Same question.');
+  });
+
+  it('only uses the most recent user turns (capped at 2)', () => {
+    const query = buildRetrievalQuery('Current.', [
+      { role: 'user', content: 'Older 1.' },
+      { role: 'user', content: 'Older 2.' },
+      { role: 'user', content: 'Recent 1.' },
+      { role: 'user', content: 'Recent 2.' },
+    ]);
+    expect(query).toContain('Recent 1.');
+    expect(query).toContain('Recent 2.');
+    expect(query).not.toContain('Older 1.');
+  });
+});
+
+describe('submission-chat-handler · parseModelResponse · intent + rewrite', () => {
+  it('extracts the intent field when the model emits one', () => {
+    const raw = JSON.stringify({
+      intent: 'provenance',
+      answer: 'It came from Protocol §5.1 [SRC-1].',
+      citations: [{ ref: 1, relationship: 'supports' }],
+    });
+    const out = parseModelResponse(raw);
+    expect(out.intent).toBe('provenance');
+  });
+
+  it('returns null intent when the field is missing or invalid', () => {
+    const raw = JSON.stringify({
+      answer: 'OK.',
+      citations: [],
+    });
+    expect(parseModelResponse(raw).intent).toBeNull();
+
+    const rawBadIntent = JSON.stringify({
+      intent: 'wat',
+      answer: 'OK.',
+      citations: [],
+    });
+    expect(parseModelResponse(rawBadIntent).intent).toBeNull();
+  });
+
+  it('extracts a rewrite payload with section + agency normalized', () => {
+    const raw = JSON.stringify({
+      intent: 'rewrite',
+      answer: 'Here is the EMA-flavored draft.',
+      citations: [],
+      rewrite: {
+        sectionCode: '4.1',
+        targetAgency: 'ema',
+        proposedContent: 'Indications: ...',
+        rationale: 'EMA SmPC §4.1 expects a benefit/risk framing.',
+      },
+    });
+    const out = parseModelResponse(raw);
+    expect(out.rewrite).not.toBeNull();
+    expect(out.rewrite?.sectionCode).toBe('4.1');
+    expect(out.rewrite?.targetAgency).toBe('EMA');
+    expect(out.rewrite?.proposedContent).toContain('Indications');
+  });
+
+  it('drops a rewrite payload that has no proposedContent', () => {
+    const raw = JSON.stringify({
+      intent: 'rewrite',
+      answer: 'I cannot rewrite without evidence.',
+      citations: [],
+      rewrite: { sectionCode: '4.1', targetAgency: 'EMA', proposedContent: '' },
+    });
+    expect(parseModelResponse(raw).rewrite).toBeNull();
   });
 });
 

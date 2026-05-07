@@ -170,7 +170,10 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           submissionChat: {
             artifactId: sub.artifactId,
             projectId: sub.projectId,
+            intent: sub.intent,
+            rewrite: sub.rewrite,
             retrieval: sub.retrieval,
+            conversation: sub.conversation,
           },
         });
       } catch (err: any) {
