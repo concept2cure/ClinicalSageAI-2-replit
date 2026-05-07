@@ -28,7 +28,7 @@ openpyxl==3.1.5
 
 # AI/NLP dependencies
 # AI/NLP dependencies
-openai==2.32.0
+openai==2.35.1
 transformers==5.5.4
 torch==2.11.0
 sentence-transformers==2.2.2
