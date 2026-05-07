@@ -2092,7 +2092,9 @@ const applyRewriteSchema = z.object({
   proposedContent: z
     .string()
     .min(8, 'proposedContent is too short')
-    .max(200_000, 'proposedContent exceeds the size limit'),
+    .max(200_000, 'proposedContent exceeds the size limit')
+    .optional(),
+  proposalId: z.string().uuid().optional(),
   reasonForChange: z
     .string()
     .min(8, 'reasonForChange must explain WHY the rewrite is being applied')
@@ -2128,13 +2130,19 @@ const applyRewriteSchema = z.object({
 });
 
 // Preview-rewrite is read-only — same rate limit as the chat path is fine.
-const previewRewriteSchema = z.object({
-  artifactId: z.string().min(1, 'artifactId is required'),
-  proposedContent: z
-    .string()
-    .min(8, 'proposedContent is too short')
-    .max(200_000, 'proposedContent exceeds the size limit'),
-});
+const previewRewriteSchema = z
+  .object({
+    artifactId: z.string().min(1, 'artifactId is required'),
+    proposedContent: z
+      .string()
+      .min(8, 'proposedContent is too short')
+      .max(200_000, 'proposedContent exceeds the size limit')
+      .optional(),
+    proposalId: z.string().uuid().optional(),
+  })
+  .refine(d => !!d.proposedContent || !!d.proposalId, {
+    message: 'proposedContent or proposalId is required',
+  });
 
 router.post(
   '/submission-chat/preview-rewrite',
@@ -2167,15 +2175,19 @@ router.post(
       const result = await previewRewrite({
         artifactId: parsed.data.artifactId,
         proposedContent: parsed.data.proposedContent,
+        proposalId: parsed.data.proposalId,
         organizationId,
       });
       return res.json(result);
     } catch (error: any) {
       const code = error?.code;
-      if (code === 'ARTIFACT_NOT_FOUND') {
+      if (code === 'ARTIFACT_NOT_FOUND' || code === 'PROPOSAL_NOT_FOUND') {
         return res.status(404).json({ error: error.message, code });
       }
-      if (code === 'ARTIFACT_ORG_MISMATCH') {
+      if (
+        code === 'ARTIFACT_ORG_MISMATCH' ||
+        code === 'PROPOSAL_ARTIFACT_MISMATCH'
+      ) {
         return res.status(403).json({ error: error.message, code });
       }
       if (code === 'INVALID_REQUEST') {
@@ -2227,6 +2239,7 @@ router.post(
       const result = await applyRewrite({
         artifactId: parsed.data.artifactId,
         proposedContent: parsed.data.proposedContent,
+        proposalId: parsed.data.proposalId,
         reasonForChange: parsed.data.reasonForChange,
         sectionCode: parsed.data.sectionCode ?? null,
         targetAgency: parsed.data.targetAgency ?? null,
@@ -2254,10 +2267,13 @@ router.post(
       });
     } catch (error: any) {
       const code = error?.code;
-      if (code === 'ARTIFACT_NOT_FOUND') {
+      if (code === 'ARTIFACT_NOT_FOUND' || code === 'PROPOSAL_NOT_FOUND') {
         return res.status(404).json({ error: error.message, code });
       }
-      if (code === 'ARTIFACT_ORG_MISMATCH') {
+      if (
+        code === 'ARTIFACT_ORG_MISMATCH' ||
+        code === 'PROPOSAL_ARTIFACT_MISMATCH'
+      ) {
         return res.status(403).json({ error: error.message, code });
       }
       if (
@@ -2265,7 +2281,11 @@ router.post(
         code === 'REWRITE_NOOP' ||
         code === 'REASON_REQUIRED' ||
         code === 'SIGNATURE_REQUIRED' ||
-        code === 'UNSUPPORTED_REWRITE'
+        code === 'UNSUPPORTED_REWRITE' ||
+        code === 'PROPOSAL_ALREADY_APPLIED' ||
+        code === 'PROPOSAL_SUPERSEDED' ||
+        code === 'PROPOSAL_EXPIRED' ||
+        code === 'PROPOSAL_HASH_MISMATCH'
       ) {
         return res.status(409).json({ error: error.message, code });
       }

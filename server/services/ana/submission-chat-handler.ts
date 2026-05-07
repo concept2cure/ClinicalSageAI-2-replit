@@ -26,6 +26,10 @@ import {
   saveChatMessage,
 } from '../chat-thread-helpers.js';
 import { verifyClaim, type VerifierFlag } from '../../routes/chat/verifier.js';
+import {
+  persistRewriteProposal,
+  getActiveProposalForThreadArtifact,
+} from './submission-chat-proposal-store.js';
 
 // Cross-encoder relevance threshold for retrieval — matches the chat default
 // so submission-chat doesn't surface lower-quality matches than the section
@@ -105,6 +109,18 @@ export interface SubmissionChatRewrite {
    * render a single "n WEAK / m UNSUPPORTED" badge.
    */
   claimStatusCounts?: { supported: number; weak: number; unsupported: number };
+  /**
+   * Server-side proposal handle. When the rewrite is persisted to the
+   * proposal store, this id is the canonical reference for confirm_apply
+   * and apply-rewrite — neither needs to trust the client to round-trip
+   * the full content. null when the store is unavailable (e.g., the
+   * migration hasn't been applied yet).
+   */
+  proposalId?: string | null;
+  /** sha256(proposedContent) — pinned at proposal time for tamper detection. */
+  proposalContentHash?: string | null;
+  /** When the proposal expires if not applied. */
+  proposalExpiresAt?: string | null;
 }
 
 /**
@@ -184,9 +200,18 @@ export interface SubmissionChatRequest {
 export interface SubmissionChatConfirmApply {
   endpoint: '/api/ana/submission-chat/apply-rewrite';
   artifactId: string;
-  /** Echoed from the request so the client can validate against its local proposal. */
-  hint: 'use_prior_rewrite_payload';
-  requiredFields: Array<'proposedContent' | 'reasonForChange' | 'signature'>;
+  /**
+   * When a server-side proposal exists for this thread+artifact, the client
+   * SHOULD apply by proposalId — the content_hash binding makes tampering
+   * detectable. Falls back to client-supplied proposedContent only when no
+   * pending proposal is on file (e.g., the proposal expired).
+   */
+  proposalId: string | null;
+  proposalExpiresAt: string | null;
+  hint: 'use_proposal_id' | 'use_prior_rewrite_payload';
+  requiredFields: Array<
+    'proposalId' | 'proposedContent' | 'reasonForChange' | 'signature'
+  >;
   signatureRequired: boolean;
   message: string;
 }
@@ -926,9 +951,22 @@ export async function handleSubmissionChat(
     const requiresSignature =
       !!(artifact as any).metadata &&
       (artifact as any).metadata.requiresSignature === true;
-    const directiveAnswer = requiresSignature
-      ? 'Ready to apply. To proceed I need a reason for the change and an electronic signature attesting to it. The artifact is marked requires-signature.'
-      : 'Ready to apply. To proceed I need a reason for the change. An electronic signature is optional but recorded if provided.';
+
+    // Look up the latest pending proposal for this thread + artifact. When
+    // one exists, the client should apply by proposalId — that's what binds
+    // the apply call to the exact content the user saw, server-side.
+    const activeProposal = await getActiveProposalForThreadArtifact(
+      input.threadId,
+      artifact.artifact_id,
+      artifact.organization_id
+    );
+
+    const hasProposal = !!activeProposal;
+    const directiveAnswer = !hasProposal
+      ? 'I do not have a pending rewrite for this artifact in this thread. Generate or refine a rewrite first, then say "apply that".'
+      : requiresSignature
+        ? 'Ready to apply. To proceed I need a reason for the change and an electronic signature attesting to it. The artifact is marked requires-signature.'
+        : 'Ready to apply. To proceed I need a reason for the change. An electronic signature is optional but recorded if provided.';
 
     // Persist the turn so the thread stays continuous.
     try {
@@ -953,6 +991,14 @@ export async function handleSubmissionChat(
       }
     }
 
+    const requiredFields: SubmissionChatConfirmApply['requiredFields'] = hasProposal
+      ? requiresSignature
+        ? ['proposalId', 'reasonForChange', 'signature']
+        : ['proposalId', 'reasonForChange']
+      : requiresSignature
+        ? ['proposedContent', 'reasonForChange', 'signature']
+        : ['proposedContent', 'reasonForChange'];
+
     return {
       threadId: input.threadId,
       artifactId: artifact.artifact_id,
@@ -964,10 +1010,12 @@ export async function handleSubmissionChat(
       confirmApply: {
         endpoint: '/api/ana/submission-chat/apply-rewrite',
         artifactId: artifact.artifact_id,
-        hint: 'use_prior_rewrite_payload',
-        requiredFields: requiresSignature
-          ? ['proposedContent', 'reasonForChange', 'signature']
-          : ['proposedContent', 'reasonForChange'],
+        proposalId: activeProposal?.id ?? null,
+        proposalExpiresAt: activeProposal?.expiresAt
+          ? new Date(activeProposal.expiresAt).toISOString()
+          : null,
+        hint: hasProposal ? 'use_proposal_id' : 'use_prior_rewrite_payload',
+        requiredFields,
         signatureRequired: requiresSignature,
         message: directiveAnswer,
       },
@@ -1238,6 +1286,44 @@ export async function handleSubmissionChat(
     );
     rewrite.claimVerification = perParagraph;
     rewrite.claimStatusCounts = statusCounts;
+  }
+
+  // Persist the proposal server-side so confirm_apply / apply-rewrite can
+  // resolve to a tamper-evident id rather than trusting the client to
+  // re-send the content. Auto-supersedes any older pending proposals for
+  // the same artifact. Best-effort: missing migration tolerated.
+  if (rewrite && rewrite.proposedContent) {
+    try {
+      const handle = await persistRewriteProposal({
+        threadId: input.threadId,
+        artifactId: artifact.artifact_id,
+        artifactPk: artifact.id,
+        organizationId: artifact.organization_id,
+        projectId: artifact.project_id,
+        sectionCode: rewrite.sectionCode,
+        targetAgency: rewrite.targetAgency,
+        rationale: rewrite.rationale ?? null,
+        proposedContent: rewrite.proposedContent,
+        claimVerification: rewrite.claimVerification ?? null,
+        claimStatusCounts: rewrite.claimStatusCounts ?? null,
+        createdBy: input.userId ?? null,
+      });
+      if (handle) {
+        rewrite.proposalId = handle.id;
+        rewrite.proposalContentHash = handle.contentHash;
+        rewrite.proposalExpiresAt = handle.expiresAt.toISOString();
+      } else {
+        rewrite.proposalId = null;
+        rewrite.proposalContentHash = null;
+        rewrite.proposalExpiresAt = null;
+      }
+    } catch (err: any) {
+      console.warn(
+        '[AnA submission-chat] proposal persist failed (continuing without):',
+        err?.message
+      );
+      rewrite.proposalId = null;
+    }
   }
 
   // Step 8 — persist the turn. Two surfaces:

@@ -19,6 +19,10 @@
 import crypto from 'node:crypto';
 import { pool } from '../../db.js';
 import { saveChatMessage } from '../chat-thread-helpers.js';
+import {
+  getProposalById,
+  markProposalApplied,
+} from './submission-chat-proposal-store.js';
 
 const UNSUPPORTED_RATIO_BLOCK_THRESHOLD = parseFloat(
   process.env.ANA_REWRITE_UNSUPPORTED_BLOCK_RATIO ?? '0.3'
@@ -190,7 +194,14 @@ export interface ApplyRewriteSignature {
 
 export interface ApplyRewriteInput {
   artifactId: string;
-  proposedContent: string;
+  /**
+   * Either proposedContent (direct) or proposalId (preferred — resolves to
+   * a server-side proposal whose content_hash is already pinned). When both
+   * are provided, the proposalId path wins and the supplied proposedContent
+   * is used as a tamper-detect cross-check.
+   */
+  proposedContent?: string;
+  proposalId?: string;
   /** WHY the change is being made — required for 21 CFR Part 11 audit trail. */
   reasonForChange: string;
   /** Optional structured metadata captured alongside the rewrite. */
@@ -232,6 +243,8 @@ export interface ApplyRewriteResult {
   signed: boolean;
   verification: RewriteVerification;
   diff: RewriteDiffStats;
+  /** Set when the apply was driven by a stored proposal. */
+  proposalId: string | null;
 }
 
 const REASON_MIN_CHARS = 8;
@@ -257,7 +270,9 @@ function fail(code: string, message: string): never {
  */
 export interface PreviewRewriteInput {
   artifactId: string;
-  proposedContent: string;
+  /** Either proposedContent (direct) or proposalId (server-side proposal). */
+  proposedContent?: string;
+  proposalId?: string;
   organizationId: number;
 }
 
@@ -279,11 +294,33 @@ export async function previewRewrite(
   input: PreviewRewriteInput
 ): Promise<PreviewRewriteResult> {
   if (!input.artifactId) fail('INVALID_REQUEST', 'artifactId is required');
-  if (!input.proposedContent || input.proposedContent.length < CONTENT_MIN_CHARS) {
-    fail('INVALID_REQUEST', 'proposedContent is too short');
-  }
-  if (input.proposedContent.length > CONTENT_MAX_CHARS) {
-    fail('INVALID_REQUEST', 'proposedContent exceeds the size limit');
+
+  let previewContent: string;
+  if (input.proposalId) {
+    const proposal = await getProposalById(
+      input.proposalId,
+      input.organizationId
+    );
+    if (!proposal) {
+      fail('PROPOSAL_NOT_FOUND', 'Proposal not found or not accessible');
+    }
+    if (proposal.artifactId !== input.artifactId) {
+      fail(
+        'PROPOSAL_ARTIFACT_MISMATCH',
+        'Proposal references a different artifact'
+      );
+    }
+    previewContent = proposal.proposedContent;
+  } else if (input.proposedContent) {
+    if (input.proposedContent.length < CONTENT_MIN_CHARS) {
+      fail('INVALID_REQUEST', 'proposedContent is too short');
+    }
+    if (input.proposedContent.length > CONTENT_MAX_CHARS) {
+      fail('INVALID_REQUEST', 'proposedContent exceeds the size limit');
+    }
+    previewContent = input.proposedContent;
+  } else {
+    fail('INVALID_REQUEST', 'proposedContent or proposalId is required');
   }
 
   const { rows } = await pool.query(
@@ -301,17 +338,17 @@ export async function previewRewrite(
 
   const contentHash = crypto
     .createHash('sha256')
-    .update(input.proposedContent)
+    .update(previewContent)
     .digest('hex');
   const isNoOp = !!row.content_hash && row.content_hash === contentHash;
   const isLocked = row.status === 'locked' || row.status === 'approved';
   const requiresSignature =
     !!row.metadata && row.metadata.requiresSignature === true;
 
-  const verification = verifyProposedContent(input.proposedContent);
+  const verification = verifyProposedContent(previewContent);
   const diff = computeRewriteDiffStats(
     typeof row.content === 'string' ? row.content : '',
-    input.proposedContent
+    previewContent
   );
 
   const blockingReasons: PreviewRewriteResult['blockingReasons'] = [];
@@ -354,12 +391,78 @@ export async function applyRewrite(
   input: ApplyRewriteInput
 ): Promise<ApplyRewriteResult> {
   if (!input.artifactId) fail('INVALID_REQUEST', 'artifactId is required');
-  if (!input.proposedContent || input.proposedContent.length < CONTENT_MIN_CHARS) {
-    fail('INVALID_REQUEST', 'proposedContent is too short');
+
+  // ── Resolve content. Two paths:
+  //   - proposalId  → fetch from the proposal store, validate org + status,
+  //                   refuse if expired / already applied / superseded; use
+  //                   stored content (tamper-evident).
+  //   - proposedContent → direct path (kept for non-chat callers and as a
+  //                   fallback when the store is unavailable).
+  // When both are provided, the proposalId wins and proposedContent is used
+  // as a cross-check against the stored content_hash.
+  let resolvedProposalId: string | null = null;
+  let newContent: string;
+
+  if (input.proposalId) {
+    const proposal = await getProposalById(
+      input.proposalId,
+      input.organizationId
+    );
+    if (!proposal) {
+      fail(
+        'PROPOSAL_NOT_FOUND',
+        'Proposal not found or not accessible to this organization'
+      );
+    }
+    if (proposal.artifactId !== input.artifactId) {
+      fail(
+        'PROPOSAL_ARTIFACT_MISMATCH',
+        'Proposal references a different artifact'
+      );
+    }
+    if (proposal.status === 'applied') {
+      fail('PROPOSAL_ALREADY_APPLIED', 'Proposal has already been applied');
+    }
+    if (proposal.status === 'superseded') {
+      fail(
+        'PROPOSAL_SUPERSEDED',
+        'A newer proposal for this artifact has superseded this one'
+      );
+    }
+    if (proposal.status === 'expired') {
+      fail('PROPOSAL_EXPIRED', 'Proposal has expired');
+    }
+    if (
+      proposal.expiresAt &&
+      new Date(proposal.expiresAt).getTime() < Date.now()
+    ) {
+      fail('PROPOSAL_EXPIRED', 'Proposal has expired');
+    }
+    if (input.proposedContent) {
+      // Cross-check the client-supplied content against the stored hash.
+      const clientHash = crypto
+        .createHash('sha256')
+        .update(input.proposedContent)
+        .digest('hex');
+      if (clientHash !== proposal.contentHash) {
+        fail(
+          'PROPOSAL_HASH_MISMATCH',
+          'Supplied proposedContent does not match the stored proposal hash'
+        );
+      }
+    }
+    resolvedProposalId = proposal.id;
+    newContent = proposal.proposedContent;
+  } else {
+    if (!input.proposedContent || input.proposedContent.length < CONTENT_MIN_CHARS) {
+      fail('INVALID_REQUEST', 'proposedContent or proposalId is required');
+    }
+    if (input.proposedContent.length > CONTENT_MAX_CHARS) {
+      fail('INVALID_REQUEST', 'proposedContent exceeds the size limit');
+    }
+    newContent = input.proposedContent;
   }
-  if (input.proposedContent.length > CONTENT_MAX_CHARS) {
-    fail('INVALID_REQUEST', 'proposedContent exceeds the size limit');
-  }
+
   const reason = (input.reasonForChange || '').trim();
   if (reason.length < REASON_MIN_CHARS) {
     fail(
@@ -373,7 +476,6 @@ export async function applyRewrite(
 
   const client = await pool.connect();
   const now = new Date();
-  const newContent = input.proposedContent;
   const contentHash = crypto.createHash('sha256').update(newContent).digest('hex');
 
   try {
@@ -612,11 +714,30 @@ export async function applyRewrite(
           },
           diff,
           acknowledgeUnsupported: !!input.acknowledgeUnsupported,
+          proposalId: resolvedProposalId,
         }),
       ]
     );
 
     await client.query('COMMIT');
+
+    // ── Mark the proposal as applied, linking it to the audit + version
+    // chain. Idempotent; missing-table and not-pending are silent no-ops.
+    if (resolvedProposalId) {
+      try {
+        await markProposalApplied(
+          resolvedProposalId,
+          auditId,
+          parseInt(versionSnapshotId, 10) || 0
+        );
+      } catch (err: any) {
+        // Non-fatal: the apply is durable regardless. Log so we notice.
+        console.warn(
+          '[AnA submission-chat apply-rewrite] proposal-applied marker failed:',
+          err?.message
+        );
+      }
+    }
 
     // ── 5. Post a system note into the thread so the next submission-chat
     // turn sees that the rewrite was applied. Best-effort, outside the
@@ -656,6 +777,7 @@ export async function applyRewrite(
       signed: !!signatureId,
       verification,
       diff,
+      proposalId: resolvedProposalId,
     };
   } catch (error) {
     await client.query('ROLLBACK');
