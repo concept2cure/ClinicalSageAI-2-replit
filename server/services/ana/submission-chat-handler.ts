@@ -212,10 +212,12 @@ async function enrichChunksWithArtifactMetadata(
 }
 
 /**
- * Build the cross-dossier evidence block and prompt the model to label each
- * citation it uses with supports / contradicts / gap.
+ * Build the cross-dossier evidence block and require the model to emit a
+ * single JSON object: { answer, citations[] }, where each citation has a
+ * structured supports / contradicts / gap label rather than relying on
+ * heuristics over the prose.
  */
-function buildSystemPrompt(
+export function buildSystemPrompt(
   activeArtifact: ArtifactRow,
   projectArtifacts: ArtifactRow[],
   chunks: RetrievedChunk[]
@@ -239,8 +241,7 @@ function buildSystemPrompt(
   return [
     'You are AnA in submission-chat mode. The user has already generated a regulatory',
     'section and is now interrogating the draft. Your scope is the ENTIRE project',
-    'dossier, not only the active document. When you cite, you MUST classify each',
-    'citation as supports | contradicts | gap relative to the user\'s question.',
+    'dossier, not only the active document.',
     '',
     'Active artifact:',
     `- ${activeArtifact.artifact_id}${activeArtifact.ctd_section ? ` ${activeArtifact.ctd_section}` : ''} ${activeArtifact.title}`,
@@ -248,47 +249,81 @@ function buildSystemPrompt(
     `Project dossier (${projectArtifacts.length} artifact${projectArtifacts.length === 1 ? '' : 's'}):`,
     dossierManifest || '- (no sibling artifacts indexed)',
     '',
-    '--- CROSS-DOSSIER EVIDENCE (cite as [SRC-n]) ---',
+    '--- CROSS-DOSSIER EVIDENCE ---',
     evidenceLines.join('\n\n') || '(no retrieved evidence — answer "I cannot verify that from the dossier")',
     '--- END EVIDENCE ---',
     '',
+    'Output contract — return ONE JSON object, nothing else, matching:',
+    '{',
+    '  "answer": string,           // prose answer with [SRC-n] inline cites',
+    '  "citations": [              // one entry per [SRC-n] you actually cite',
+    '    {',
+    '      "ref": number,          // matches the n in [SRC-n]',
+    '      "relationship": "supports" | "contradicts" | "gap"',
+    '              // supports = source backs the claim',
+    '              // contradicts = source disagrees with another cited source',
+    '              // gap = source is silent where a record is expected',
+    '    }',
+    '  ]',
+    '}',
+    '',
     'Rules:',
-    '1. Cite inline as [SRC-n]. Every factual claim must be backed by a citation.',
-    '2. If two sources disagree, surface it explicitly and label one supports / one contradicts.',
-    '3. If the answer is not present in the evidence, say so — do not infer from training data.',
-    '4. Sentence case. No exclamations. Numbers over adjectives. Second person, direct.',
+    '1. Every factual claim in the prose must be cited inline as [SRC-n].',
+    '2. If two sources disagree, cite both and label one supports / one contradicts.',
+    '3. If the dossier is silent, say so explicitly and emit a citation with relationship="gap".',
+    '4. Never infer from training data — if it isn\'t in the evidence, say so.',
+    '5. Sentence case. No exclamations. Numbers over adjectives. Second person, direct.',
   ].join('\n');
 }
 
-/**
- * Heuristic mapping of model output → citation relationship.
- * The model is asked to label inline; we additionally scan for nearby cues so
- * the structured citations[] list can be rendered without further LLM calls.
- */
-function inferRelationshipFromAnswer(
-  answer: string,
-  refIndex: number
-): CitationRelationship {
-  const ref = `[SRC-${refIndex + 1}]`;
-  const lower = answer.toLowerCase();
-  const refPos = answer.indexOf(ref);
-  if (refPos === -1) return 'supports';
+interface ModelResponseShape {
+  answer: string;
+  citations: Array<{ ref: number; relationship: CitationRelationship }>;
+}
 
-  // Look at the 200 chars surrounding the citation for contradiction cues.
-  const window = lower.slice(
-    Math.max(0, refPos - 200),
-    Math.min(lower.length, refPos + 200)
-  );
-  if (
-    /contradict|disagree|conflict|inconsisten|differ|but [a-z]+ states|however/.test(
-      window
-    )
-  ) {
-    return 'contradicts';
+/**
+ * Parse the structured JSON the model is asked to emit. Falls back gracefully
+ * when the model wraps the JSON in prose or markdown fences — we still want
+ * a usable answer rather than a 500.
+ */
+export function parseModelResponse(raw: string): ModelResponseShape {
+  const trimmed = (raw || '').trim();
+
+  // Try fenced ```json … ``` first, then bare JSON.
+  const fenceMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidates = [fenceMatch?.[1], trimmed].filter(Boolean) as string[];
+
+  for (const candidate of candidates) {
+    const start = candidate.indexOf('{');
+    const end = candidate.lastIndexOf('}');
+    if (start === -1 || end === -1 || end <= start) continue;
+    try {
+      const parsed = JSON.parse(candidate.slice(start, end + 1));
+      if (typeof parsed?.answer === 'string') {
+        const citations = Array.isArray(parsed.citations)
+          ? parsed.citations
+              .map((c: any) => ({
+                ref: Number(c?.ref),
+                relationship: normalizeRelationship(c?.relationship),
+              }))
+              .filter((c: any) => Number.isFinite(c.ref))
+          : [];
+        return { answer: parsed.answer, citations };
+      }
+    } catch {
+      /* try the next candidate */
+    }
   }
-  if (/missing|absent|not (?:present|reported|recorded|specified)|gap|unclear/.test(window)) {
-    return 'gap';
-  }
+
+  // Final fallback: treat the whole string as the answer with no structured
+  // citations. The caller still derives [SRC-n] mentions from the prose.
+  return { answer: trimmed, citations: [] };
+}
+
+function normalizeRelationship(value: unknown): CitationRelationship {
+  const v = String(value || '').toLowerCase();
+  if (v === 'contradicts' || v === 'contradict') return 'contradicts';
+  if (v === 'gap' || v === 'missing' || v === 'silent') return 'gap';
   return 'supports';
 }
 
@@ -364,26 +399,42 @@ export async function handleSubmissionChat(
     ],
     maxTokens: GENERATION_MAX_TOKENS,
     temperature: 0.2,
+    jsonMode: true,
     callerModule: 'ana-submission-chat',
     organizationId: artifact.organization_id,
     userId: input.userId ?? undefined,
   });
 
-  const answer = gwResponse.content || 'No response generated.';
+  const parsed = parseModelResponse(gwResponse.content || '');
+  const answer = parsed.answer || 'No response generated.';
 
-  // Step 5 — turn [SRC-n] markers into the structured citations[] contract.
-  const citedIndices = new Set<number>();
+  // Step 5 — assemble structured citations[]. The model emits a relationship
+  // label per [SRC-n] it cites; we union that with the actual [SRC-n]
+  // mentions in the prose so a citation list stays consistent even when the
+  // model omits it from the JSON envelope.
+  const relationshipByRef = new Map<number, CitationRelationship>();
+  for (const c of parsed.citations) {
+    if (c.ref >= 1 && c.ref <= chunks.length) {
+      relationshipByRef.set(c.ref, c.relationship);
+    }
+  }
+  const proseRefs = new Set<number>();
   const refPattern = /\[SRC-(\d+)\]/g;
   let m: RegExpExecArray | null;
   while ((m = refPattern.exec(answer)) !== null) {
-    const idx = parseInt(m[1], 10) - 1;
-    if (idx >= 0 && idx < chunks.length) citedIndices.add(idx);
+    const idx = parseInt(m[1], 10);
+    if (idx >= 1 && idx <= chunks.length) proseRefs.add(idx);
+  }
+  for (const ref of proseRefs) {
+    if (!relationshipByRef.has(ref)) relationshipByRef.set(ref, 'supports');
   }
 
-  const citations: SubmissionChatCitation[] = Array.from(citedIndices)
-    .sort((a, b) => a - b)
-    .map(idx => {
-      const c = chunks[idx];
+  const citations: SubmissionChatCitation[] = Array.from(
+    relationshipByRef.entries()
+  )
+    .sort((a, b) => a[0] - b[0])
+    .map(([ref, relationship]) => {
+      const c = chunks[ref - 1];
       const snippet =
         c.content.length > 320 ? `${c.content.slice(0, 320)}…` : c.content;
       return {
@@ -391,11 +442,43 @@ export async function handleSubmissionChat(
         sectionCode: c.sectionCode,
         pageRef: c.pageRef,
         passageSnippet: snippet,
-        relationship: inferRelationshipFromAnswer(answer, idx),
+        relationship,
         title: c.title,
         score: c.score,
       };
     });
+
+  // Step 6 — write the turn into the ai_messages provenance chain so the
+  // submission-chat exchange stays auditable and the next turn can read its
+  // own history. ai_messages and ai_threads may not exist in every env (the
+  // chat send-message handler tolerates 42P01); we mirror that behavior.
+  try {
+    await pool.query(
+      `INSERT INTO ai_threads (id, organization_id, project_id, created_by)
+       VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
+      [
+        input.threadId,
+        artifact.organization_id,
+        artifact.project_id,
+        input.userId ?? null,
+      ]
+    );
+    await pool.query(
+      `INSERT INTO ai_messages (thread_id, role, content) VALUES ($1, 'user', $2)`,
+      [input.threadId, input.question]
+    );
+    await pool.query(
+      `INSERT INTO ai_messages (thread_id, role, content) VALUES ($1, 'assistant', $2)`,
+      [input.threadId, answer]
+    );
+  } catch (e: any) {
+    if (e?.code !== '42P01') {
+      console.warn(
+        '[AnA submission-chat] ai_messages persist failed:',
+        e?.message
+      );
+    }
+  }
 
   return {
     threadId: input.threadId,
