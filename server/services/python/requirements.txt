@@ -77,4 +77,4 @@ bcrypt==5.0.0
 # Monitoring and logging
 structlog==25.5.0
 prometheus-client>=0.25.0
-prometheus-fastapi-instrumentator>=6.0.0
+prometheus-fastapi-instrumentator>=7.1.0
