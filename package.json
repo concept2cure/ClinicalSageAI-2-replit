@@ -42,6 +42,8 @@
     "ci:check-docx-runtime": "node scripts/ci/check-docx-runtime-canonicality.mjs",
     "ci:check-pdf-runtime": "node scripts/ci/check-pdf-runtime-canonicality.mjs",
     "ci:check-embedding-runtime": "node scripts/ci/check-embedding-runtime-canonicality.mjs",
+    "audit:orphaned-endpoints": "node scripts/audits/detect-orphaned-endpoints.mjs",
+    "audit:orphaned-endpoints:strict": "node scripts/audits/detect-orphaned-endpoints.mjs --threshold 950",
     "ci:check-editor-integrity": "node scripts/ci/check-editor-extension-integrity.mjs",
     "ci:check-legacy-dep-quarantine": "node scripts/ci/check-legacy-dep-quarantine.mjs",
     "ci:audit-route-mounts": "node scripts/ci/audit-route-mounts.mjs",
