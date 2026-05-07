@@ -87,7 +87,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string; email: string };
+    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as { userId: string; email: string };
     const user = await db
       .select()
       .from(users)
@@ -131,7 +131,7 @@ router.get('/me', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret) as {
+    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
       userId: string;
       email: string;
       organizationId: string;
@@ -218,7 +218,7 @@ router.patch('/me', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
+    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as { userId: string };
     const userId = parseInt(decoded.userId);
 
     const { name, title, department, bio, avatar, preferences } = req.body;
@@ -286,7 +286,7 @@ router.get('/me/notifications', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
+    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as { userId: string };
     const userId = parseInt(decoded.userId);
 
     const prefs = await db
@@ -341,7 +341,7 @@ router.patch('/me/notifications', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
+    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as { userId: string };
     const userId = parseInt(decoded.userId);
 
     const updates = req.body;
@@ -394,7 +394,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret) as {
+    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
       userId: string;
       organizationId?: string;
     };

@@ -9,8 +9,7 @@
  * - documentProcessor.js (text extraction)
  * - documentReconstruction.js (version control)
  * - documentLocking.js (concurrent access)
- * - documentIngestionWorkflow.js (import pipeline)
- * - unifiedDocumentIngestion.js (multi-format ingestion)
+ * - unifiedDocumentIngestion.js (multi-format ingestion — canonical ingestion path)
  * - documentTemplateMapper.ts (template mapping)
  * - DocumentOrchestrationService.ts (workflow orchestration)
  * - DocumentDataCenterService.ts (data center operations)
@@ -32,7 +31,6 @@ export { default as documentReconstruction } from '../documentReconstruction';
 export { default as documentLocking } from '../documentLocking';
 
 // Ingestion workflows
-export { default as documentIngestionWorkflow } from '../documentIngestionWorkflow';
 export { default as unifiedDocumentIngestion } from '../unifiedDocumentIngestion';
 
 // Template & orchestration
@@ -122,8 +120,8 @@ export const DOCUMENT_SERVICE_REGISTRY = {
   versioning: 'documentReconstruction',
   locking: 'documentLocking',
 
-  // Ingestion
-  singleIngestion: 'documentIngestionWorkflow',
+  // Ingestion (canonical path — single + batch)
+  singleIngestion: 'unifiedDocumentIngestion',
   batchIngestion: 'unifiedDocumentIngestion',
 
   // Orchestration

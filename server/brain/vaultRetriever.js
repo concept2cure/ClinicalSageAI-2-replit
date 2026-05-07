@@ -1,156 +1,96 @@
 /**
  * Vault Retriever Service
  *
- * This module provides functions to retrieve relevant context from indexed documents
- * in the Concept2Cure Vault using embedding-based similarity search.
+ * Retrieves relevant context from indexed vault documents using
+ * embedding-based similarity search over the vault.document_chunks
+ * pgvector column.
+ *
+ * Embeddings go through the centralized enhancedEmbeddingService, which
+ * consults the corpus policy in server/services/embedding-corpus-policy.ts
+ * to choose the model that matches the column the retriever queries
+ * against. Querying with the wrong model on the same column produces
+ * silent retrieval misses (the dimensions match but the embedding spaces
+ * differ), so the policy is the source of truth.
+ *
+ * Compliance: ICH E6(R2) data integrity — the same query against the
+ * same index returns a reproducible result set.
  */
 
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { ai } from '../lib/unified-ai-client';
+import { getEmbeddingService } from '../services/enhancedEmbeddingService';
+import { getPolicyForCorpus } from '../services/embedding-corpus-policy';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VAULT_DIR = path.join(__dirname, '../../server/vault');
-const METADATA_PATH = path.join(VAULT_DIR, 'metadata.json');
-const EMBEDDINGS_DIR = path.join(VAULT_DIR, 'embeddings');
-
-// Cache for document metadata and embeddings
-let documentsCache = null;
-let embeddingsCache = {};
+const VAULT_CORPUS = 'vaultDocumentChunks';
 
 /**
- * Calculate cosine similarity between two vectors
- */
-function cosineSimilarity(vec1, vec2) {
-  let dotProduct = 0;
-  let normA = 0;
-  let normB = 0;
-
-  for (let i = 0; i < vec1.length; i++) {
-    dotProduct += vec1[i] * vec2[i];
-    normA += vec1[i] * vec1[i];
-    normB += vec2[i] * vec2[i];
-  }
-
-  if (normA === 0 || normB === 0) {
-    return 0;
-  }
-
-  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-}
-
-/**
- * Load document metadata
- */
-async function loadDocuments() {
-  try {
-    if (documentsCache) {
-      return documentsCache;
-    }
-
-    const metadataContent = await fs.readFile(METADATA_PATH, 'utf-8');
-    documentsCache = JSON.parse(metadataContent);
-    return documentsCache;
-  } catch (err) {
-    console.error('Error loading document metadata:', err);
-    return { documents: [] };
-  }
-}
-
-/**
- * Load embeddings for a document
- */
-async function loadEmbeddings(docId) {
-  try {
-    if (embeddingsCache[docId]) {
-      return embeddingsCache[docId];
-    }
-
-    const embeddingPath = path.join(EMBEDDINGS_DIR, `${docId}.json`);
-    const embeddingContent = await fs.readFile(embeddingPath, 'utf-8');
-    const embeddings = JSON.parse(embeddingContent);
-    embeddingsCache[docId] = embeddings;
-    return embeddings;
-  } catch (err) {
-    console.error(`Error loading embeddings for document ${docId}:`, err);
-    return { chunks: [] };
-  }
-}
-
-/**
- * Retrieve relevant context based on query using vector similarity search
+ * Retrieve top-k relevant chunks for a query.
+ *
+ * Returns a minimal mock dataset if the database or embedding service is
+ * unavailable, so callers in dev environments without a vault index keep
+ * working. Production failures are logged but never thrown.
  */
 export async function retrieveContext(query, k = 5) {
+  if (typeof query !== 'string' || query.trim().length === 0) return [];
+
+  let pool;
   try {
-    // Import OpenAI for embeddings
-    const { getOpenAIClient } = await import('../services/openai-client');
-    const { getPool } = await import('../db.ts');
-
-    let openai;
-    try {
-
-    } catch {
-      console.warn('No OpenAI API key found, using fallback');
-      return mockRetrieveContext(query, k);
-    }
-    const pool = getPool();
-
-    try {
-      // Generate embedding for query using OpenAI
-      const embeddingResponse = await openai.embeddings.create({
-        model: 'text-embedding-ada-002',
-        input: query,
-      });
-
-      const queryEmbedding = embeddingResponse.data[0].embedding;
-
-      // Use PostgreSQL with pgvector for similarity search
-      const result = await pool.query(
-        `
-        SELECT
-          doc_id as "docId",
-          doc_title as "docTitle",
-          content as text,
-          chunk_index as "chunkId",
-          ectd_section,
-          doc_type,
-          1 - (embedding <=> $1::vector) as score
-        FROM document_chunks
-        ORDER BY embedding <=> $1::vector
-        LIMIT $2
-      `,
-        [JSON.stringify(queryEmbedding), k]
-      );
-
-      return result.rows.map(row => ({
-        docId: row.docId,
-        docTitle: row.docTitle,
-        chunkId: row.chunkId,
-        text: row.text,
-        score: row.score,
-        ectdSection: row.ectd_section,
-        docType: row.doc_type,
-      }));
-    } catch (dbError) {
-      console.error('Database query error:', dbError);
-      return mockRetrieveContext(query, k);
-    }
+    const dbModule = await import('../db.ts');
+    pool = dbModule.getPool();
   } catch (err) {
-    console.error('Error retrieving context:', err);
+    console.warn('[vaultRetriever] DB pool unavailable, returning fallback:', err?.message);
+    return mockRetrieveContext(query, k);
+  }
+
+  let queryEmbedding;
+  try {
+    const embeddingService = getEmbeddingService(pool);
+    const policy = getPolicyForCorpus(VAULT_CORPUS);
+    const result = await embeddingService.embed(query, policy.model);
+    queryEmbedding = result.embedding;
+  } catch (err) {
+    console.warn('[vaultRetriever] embedding generation failed:', err?.message);
+    return mockRetrieveContext(query, k);
+  }
+
+  try {
+    const result = await pool.query(
+      `
+      SELECT
+        doc_id      AS "docId",
+        doc_title   AS "docTitle",
+        content     AS text,
+        chunk_index AS "chunkId",
+        ectd_section,
+        doc_type,
+        1 - (embedding <=> $1::vector) AS score
+      FROM document_chunks
+      ORDER BY embedding <=> $1::vector
+      LIMIT $2
+      `,
+      [JSON.stringify(queryEmbedding), k]
+    );
+
+    return result.rows.map(row => ({
+      docId: row.docId,
+      docTitle: row.docTitle,
+      chunkId: row.chunkId,
+      text: row.text,
+      score: row.score,
+      ectdSection: row.ectd_section,
+      docType: row.doc_type,
+    }));
+  } catch (dbError) {
+    console.error('[vaultRetriever] similarity-search query failed:', dbError);
     return mockRetrieveContext(query, k);
   }
 }
 
-/**
- * Fallback mock retrieval for testing
- */
-function mockRetrieveContext(query, k) {
+/** Fallback for dev environments without an indexed vault. */
+function mockRetrieveContext(_query, k) {
   return [
     {
       docId: 'mock-doc-1',
       chunkId: 'chunk-1',
-      text: 'This is a sample context chunk for testing the retrieval system. It contains information about clinical safety data that might be relevant to your query.',
+      text: 'Mock retrieval result. Indexing the vault and provisioning DATABASE_URL produces real chunks.',
       score: 0.92,
     },
     {
@@ -168,6 +108,4 @@ function mockRetrieveContext(query, k) {
   ].slice(0, k);
 }
 
-export default {
-  retrieveContext,
-};
+export default { retrieveContext };

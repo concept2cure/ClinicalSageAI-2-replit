@@ -167,7 +167,7 @@ router.get('/session', async (req: Request, res: Response) => {
     }
 
     // Verify JWT token
-    const decoded = jwt.verify(token, config.jwt.secret) as {
+    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
       userId: string;
       email: string;
       organizationId: string;
@@ -839,7 +839,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(refreshToken, getRefreshTokenSecret()) as {
+    const decoded = jwt.verify(refreshToken, getRefreshTokenSecret(, { algorithms: ["HS256"] })) as {
       userId: string;
       email: string;
       type: string;
@@ -959,7 +959,7 @@ router.get('/me', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret) as {
+    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
       userId: string;
       email: string;
       organizationId?: string;
@@ -1249,7 +1249,7 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret) as {
+    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
       userId: string;
       email: string;
     };
@@ -1296,7 +1296,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret) as {
+    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
       userId: string;
       email: string;
     };
@@ -1359,7 +1359,7 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret) as {
+    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
       userId: string;
       email: string;
     };
@@ -1598,7 +1598,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret) as {
+    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
       userId: string;
       email: string;
     };

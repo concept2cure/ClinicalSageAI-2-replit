@@ -499,7 +499,7 @@ export function verifyMfaChallengeToken(token: string): {
   try {
     const jwtSecret = requireJwtSecret();
 
-    const decoded = jwt.verify(token, jwtSecret) as {
+    const decoded = jwt.verify(token, jwtSecret, { algorithms: ["HS256"] }) as {
       userId: string;
       email: string;
       organizationId: string;
