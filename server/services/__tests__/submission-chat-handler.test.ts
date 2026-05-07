@@ -246,6 +246,21 @@ describe('submission-chat-handler · buildSystemPrompt', () => {
 });
 
 describe('submission-chat-handler · classifyIntent', () => {
+  it('classifies confirm-apply phrases', () => {
+    expect(classifyIntent('Apply that.')).toBe('confirm_apply');
+    expect(classifyIntent('Apply the rewrite.')).toBe('confirm_apply');
+    expect(classifyIntent('Do it.')).toBe('confirm_apply');
+    expect(classifyIntent('Ship it.')).toBe('confirm_apply');
+    expect(classifyIntent('Go ahead.')).toBe('confirm_apply');
+    expect(classifyIntent('yes, apply')).toBe('confirm_apply');
+    expect(classifyIntent('Confirm.')).toBe('confirm_apply');
+  });
+
+  it('does not confuse rewrite phrases with confirm-apply', () => {
+    expect(classifyIntent('Rewrite §4.1 for EMA.')).toBe('rewrite');
+    expect(classifyIntent('Rephrase this section.')).toBe('rewrite');
+  });
+
   it('classifies provenance questions', () => {
     expect(classifyIntent('Where did the median age come from?')).toBe(
       'provenance'

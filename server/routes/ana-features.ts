@@ -2120,6 +2120,11 @@ const applyRewriteSchema = z.object({
     })
     .nullable()
     .optional(),
+  /**
+   * Acknowledge that the proposed content has uncited paragraphs. Required
+   * when the verification pass blocks; the acknowledgment is audit-logged.
+   */
+  acknowledgeUnsupported: z.boolean().optional(),
 });
 
 router.post(
@@ -2162,6 +2167,7 @@ router.post(
         rationale: parsed.data.rationale ?? null,
         threadId: parsed.data.threadId ?? null,
         signature: parsed.data.signature ?? null,
+        acknowledgeUnsupported: parsed.data.acknowledgeUnsupported ?? false,
         organizationId,
         userId,
         userName:
@@ -2192,7 +2198,8 @@ router.post(
         code === 'ARTIFACT_LOCKED' ||
         code === 'REWRITE_NOOP' ||
         code === 'REASON_REQUIRED' ||
-        code === 'SIGNATURE_REQUIRED'
+        code === 'SIGNATURE_REQUIRED' ||
+        code === 'UNSUPPORTED_REWRITE'
       ) {
         return res.status(409).json({ error: error.message, code });
       }

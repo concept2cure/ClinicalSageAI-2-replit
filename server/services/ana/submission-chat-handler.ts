@@ -48,12 +48,14 @@ export type CitationRelationship = 'supports' | 'contradicts' | 'gap';
  *   - provenance: "where did this number come from?", "why did you cite X?"
  *   - cross_evidence: "show competing data from Study 204", "is there anything contradicting this?"
  *   - rewrite: "rewrite §4.1 for EMA", "make this more concise"
+ *   - confirm_apply: "apply that", "do it", "ship it" — confirms a pending rewrite
  *   - general: anything else (clarification, summarization, follow-ups)
  */
 export type SubmissionChatIntent =
   | 'provenance'
   | 'cross_evidence'
   | 'rewrite'
+  | 'confirm_apply'
   | 'general';
 
 export interface SubmissionChatCitation {
@@ -88,6 +90,22 @@ export interface SubmissionChatRequest {
   userId?: number | null;
 }
 
+/**
+ * When the user confirms a pending rewrite ("apply that"), the handler does
+ * NOT mutate the artifact — that requires a separate POST that captures
+ * reasonForChange and (optionally) an e-signature. Instead, it returns this
+ * directive instructing the client what to do next.
+ */
+export interface SubmissionChatConfirmApply {
+  endpoint: '/api/ana/submission-chat/apply-rewrite';
+  artifactId: string;
+  /** Echoed from the request so the client can validate against its local proposal. */
+  hint: 'use_prior_rewrite_payload';
+  requiredFields: Array<'proposedContent' | 'reasonForChange' | 'signature'>;
+  signatureRequired: boolean;
+  message: string;
+}
+
 export interface SubmissionChatResponse {
   threadId: string;
   artifactId: string;
@@ -96,6 +114,8 @@ export interface SubmissionChatResponse {
   answer: string;
   citations: SubmissionChatCitation[];
   rewrite: SubmissionChatRewrite | null;
+  /** Populated when intent="confirm_apply" — tells the client what to POST next. */
+  confirmApply: SubmissionChatConfirmApply | null;
   retrieval: {
     artifactsInScope: number;
     chunksRetrieved: number;
@@ -284,7 +304,23 @@ export interface PriorCitation {
  * but the structured intent gates whether a rewrite payload is expected.
  */
 export function classifyIntent(question: string): SubmissionChatIntent {
-  const q = question.toLowerCase();
+  const q = question.toLowerCase().trim();
+
+  // Confirm-apply must be checked BEFORE rewrite — phrases like "apply that
+  // rewrite" otherwise match the rewrite branch. These are short, deliberate
+  // confirmations of a pending proposal.
+  // Match short phrases or sentence-leading confirmations.
+  if (
+    /^(apply (it|that|the (?:rewrite|change|edit|proposal|draft))|do it|ship it|go ahead|confirm|approve|yes,? apply|please apply|let'?s apply|make it so)\b/.test(
+      q
+    ) ||
+    /^(yes,?\s*(do it|apply|ship it|go ahead|confirm))\b/.test(q) ||
+    /\bapply (?:the |this |that )?(?:rewrite|change|edit|proposal|draft)\b/.test(
+      q
+    )
+  ) {
+    return 'confirm_apply';
+  }
 
   // Rewrite: "rewrite §4.1 for EMA", "redraft for FDA", "make this more concise",
   // "tighten / shorten / lengthen / restructure / convert / translate this section"
@@ -796,6 +832,77 @@ export async function handleSubmissionChat(
     artifact.ctd_section
   );
 
+  // Step 3a — confirm-apply short-circuit. The user is confirming a pending
+  // rewrite ("apply that", "do it"). Don't burn an LLM call — return a
+  // structured directive telling the client to POST the apply-rewrite
+  // endpoint with the prior rewrite payload + reasonForChange + signature.
+  // The actual mutation is governed by that route, never auto-applied here.
+  if (intent === 'confirm_apply') {
+    const requiresSignature =
+      !!(artifact as any).metadata &&
+      (artifact as any).metadata.requiresSignature === true;
+    const directiveAnswer = requiresSignature
+      ? 'Ready to apply. To proceed I need a reason for the change and an electronic signature attesting to it. The artifact is marked requires-signature.'
+      : 'Ready to apply. To proceed I need a reason for the change. An electronic signature is optional but recorded if provided.';
+
+    // Persist the turn so the thread stays continuous.
+    try {
+      await saveChatMessage(
+        input.threadId,
+        'user',
+        input.question,
+        'submission-chat:confirm'
+      );
+      await saveChatMessage(
+        input.threadId,
+        'assistant',
+        directiveAnswer,
+        'submission-chat:confirm'
+      );
+    } catch (e: any) {
+      if (e?.code !== '42P01') {
+        console.warn(
+          '[AnA submission-chat] confirm-apply persist failed:',
+          e?.message
+        );
+      }
+    }
+
+    return {
+      threadId: input.threadId,
+      artifactId: artifact.artifact_id,
+      projectId: artifact.project_id,
+      intent: 'confirm_apply',
+      answer: directiveAnswer,
+      citations: [],
+      rewrite: null,
+      confirmApply: {
+        endpoint: '/api/ana/submission-chat/apply-rewrite',
+        artifactId: artifact.artifact_id,
+        hint: 'use_prior_rewrite_payload',
+        requiredFields: requiresSignature
+          ? ['proposedContent', 'reasonForChange', 'signature']
+          : ['proposedContent', 'reasonForChange'],
+        signatureRequired: requiresSignature,
+        message: directiveAnswer,
+      },
+      retrieval: {
+        artifactsInScope: projectArtifacts.length,
+        chunksRetrieved: 0,
+        chunksConsidered: 0,
+        retrievalQuery: input.question,
+      },
+      conversation: {
+        historyMessages: 0,
+        priorCitations: 0,
+      },
+      model: 'submission-chat:confirm',
+      provider: 'system',
+      latencyMs: Date.now() - startedAt,
+      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+    };
+  }
+
   // Step 4 — project-tier memory (rules, decisions, prior answers).
   const memoryResult = await buildMemoryContextForChat({
     threadId: input.threadId,
@@ -1032,6 +1139,7 @@ export async function handleSubmissionChat(
     answer,
     citations,
     rewrite,
+    confirmApply: null,
     retrieval: {
       artifactsInScope: projectArtifacts.length,
       chunksRetrieved: chunks.length,

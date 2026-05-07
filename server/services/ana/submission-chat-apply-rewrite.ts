@@ -20,6 +20,153 @@ import crypto from 'node:crypto';
 import { pool } from '../../db.js';
 import { saveChatMessage } from '../chat-thread-helpers.js';
 
+const UNSUPPORTED_RATIO_BLOCK_THRESHOLD = parseFloat(
+  process.env.ANA_REWRITE_UNSUPPORTED_BLOCK_RATIO ?? '0.3'
+);
+const PARAGRAPH_MIN_CHARS = parseInt(
+  process.env.ANA_REWRITE_PARAGRAPH_MIN_CHARS ?? '80',
+  10
+);
+
+export interface ParagraphVerification {
+  index: number;
+  charCount: number;
+  citationCount: number;
+  status: 'cited' | 'uncited' | 'header';
+  preview: string;
+}
+
+export interface RewriteVerification {
+  totalParagraphs: number;
+  meaningfulParagraphs: number;
+  unsupportedParagraphs: number;
+  unsupportedRatio: number;
+  paragraphs: ParagraphVerification[];
+  flags: Array<{ rule: string; severity: 'warn' | 'block'; message: string }>;
+}
+
+export interface RewriteDiffStats {
+  oldLineCount: number;
+  newLineCount: number;
+  oldCharCount: number;
+  newCharCount: number;
+  linesAdded: number;
+  linesRemoved: number;
+  linesUnchanged: number;
+}
+
+/**
+ * Per-paragraph citation density check. The proposed content has already had
+ * the model do its citation work at rewrite time, so this isn't a re-grounding
+ * pass — it's a structural check: every meaningful paragraph (≥80 chars,
+ * not a header) should have at least one [SRC-n] marker. Headers and short
+ * stubs are exempt. This catches regressions where the model dropped a
+ * citation between the rewrite proposal and the apply call.
+ */
+export function verifyProposedContent(content: string): RewriteVerification {
+  const paragraphs = content.split(/\n\s*\n+/).map(p => p.trim()).filter(Boolean);
+  const result: ParagraphVerification[] = paragraphs.map((para, index) => {
+    const isHeader =
+      /^#{1,6}\s/.test(para) ||
+      /^§\s*\d/.test(para) ||
+      (para.length < PARAGRAPH_MIN_CHARS && /:$|^[A-Z][^.]{0,80}$/.test(para));
+    const charCount = para.length;
+    const citationCount = (para.match(/\[SRC-\d+\]/g) || []).length;
+    const meaningful = !isHeader && charCount >= PARAGRAPH_MIN_CHARS;
+    const status: ParagraphVerification['status'] = isHeader
+      ? 'header'
+      : citationCount > 0
+        ? 'cited'
+        : 'uncited';
+    const preview = para.length > 160 ? `${para.slice(0, 160)}…` : para;
+    return {
+      index,
+      charCount,
+      citationCount,
+      status: meaningful ? status : 'header',
+      preview,
+    };
+  });
+
+  const meaningful = result.filter(r => r.status !== 'header');
+  const unsupported = meaningful.filter(r => r.status === 'uncited');
+  const unsupportedRatio =
+    meaningful.length === 0 ? 0 : unsupported.length / meaningful.length;
+
+  const flags: RewriteVerification['flags'] = [];
+  if (unsupported.length > 0) {
+    flags.push({
+      rule: 'UNCITED_PARAGRAPHS',
+      severity:
+        unsupportedRatio >= UNSUPPORTED_RATIO_BLOCK_THRESHOLD ? 'block' : 'warn',
+      message: `${unsupported.length} of ${meaningful.length} meaningful paragraph${meaningful.length === 1 ? '' : 's'} lack [SRC-n] citations`,
+    });
+  }
+  if (meaningful.length === 0) {
+    flags.push({
+      rule: 'NO_MEANINGFUL_CONTENT',
+      severity: 'warn',
+      message: 'Proposed content contains no paragraphs ≥ minimum length',
+    });
+  }
+
+  return {
+    totalParagraphs: paragraphs.length,
+    meaningfulParagraphs: meaningful.length,
+    unsupportedParagraphs: unsupported.length,
+    unsupportedRatio,
+    paragraphs: result,
+    flags,
+  };
+}
+
+/**
+ * Compute basic line-level diff stats. Cheap O(n+m) using line-set diffs —
+ * not as precise as a true LCS-based diff, but good enough to surface
+ * "16 lines changed" in the apply response. The UI / reviewer can run a
+ * proper diff on the snapshotted prior version when needed.
+ */
+export function computeRewriteDiffStats(
+  oldContent: string,
+  newContent: string
+): RewriteDiffStats {
+  const oldLines = oldContent.split(/\r?\n/);
+  const newLines = newContent.split(/\r?\n/);
+
+  // Multiset diff: counts how many copies of each line are in each side, then
+  // takes the symmetric differences. Equal lines that appear in both sides
+  // count as "unchanged" up to min(count_old, count_new).
+  const counts = new Map<string, { o: number; n: number }>();
+  for (const line of oldLines) {
+    const e = counts.get(line) ?? { o: 0, n: 0 };
+    e.o += 1;
+    counts.set(line, e);
+  }
+  for (const line of newLines) {
+    const e = counts.get(line) ?? { o: 0, n: 0 };
+    e.n += 1;
+    counts.set(line, e);
+  }
+  let linesAdded = 0;
+  let linesRemoved = 0;
+  let linesUnchanged = 0;
+  for (const { o, n } of counts.values()) {
+    linesUnchanged += Math.min(o, n);
+    if (o > n) linesRemoved += o - n;
+    if (n > o) linesAdded += n - o;
+  }
+
+  return {
+    oldLineCount: oldLines.length,
+    newLineCount: newLines.length,
+    oldCharCount: oldContent.length,
+    newCharCount: newContent.length,
+    linesAdded,
+    linesRemoved,
+    linesUnchanged,
+  };
+}
+
 /**
  * 21 CFR Part 11 electronic signature payload. Captured at the moment the
  * rewrite is applied so the signature is bound to the new artifact_version_id
@@ -56,6 +203,12 @@ export interface ApplyRewriteInput {
    * requiresSignature=true; otherwise recorded if supplied, omitted if not.
    */
   signature?: ApplyRewriteSignature | null;
+  /**
+   * When the verification pass blocks on uncited paragraphs, the user can
+   * explicitly acknowledge the warning to proceed. The acknowledgment is
+   * audit-logged so it's defensible later.
+   */
+  acknowledgeUnsupported?: boolean;
   /** Tenant + actor — populated from auth middleware in the route. */
   organizationId: number;
   userId: number;
@@ -77,6 +230,8 @@ export interface ApplyRewriteResult {
   auditId: string;
   signatureId: string | null;
   signed: boolean;
+  verification: RewriteVerification;
+  diff: RewriteDiffStats;
 }
 
 const REASON_MIN_CHARS = 8;
@@ -166,6 +321,23 @@ export async function applyRewrite(
     if (row.content_hash && row.content_hash === contentHash) {
       fail('REWRITE_NOOP', 'Proposed content is identical to the current version');
     }
+
+    // ── Pre-apply verification: every meaningful paragraph should be cited.
+    // Block if too many lack [SRC-n] markers, unless the user has explicitly
+    // acknowledged the warning (acknowledgement is audit-logged below).
+    const verification = verifyProposedContent(newContent);
+    const blockingFlag = verification.flags.find(f => f.severity === 'block');
+    if (blockingFlag && !input.acknowledgeUnsupported) {
+      fail(
+        'UNSUPPORTED_REWRITE',
+        `${blockingFlag.message}. Set acknowledgeUnsupported=true to proceed.`
+      );
+    }
+
+    const diff = computeRewriteDiffStats(
+      typeof row.content === 'string' ? row.content : '',
+      newContent
+    );
 
     // ── 1. Snapshot the current version BEFORE overwriting ─────────────
     const snapshotResult = await client.query(
@@ -326,6 +498,15 @@ export async function applyRewrite(
           signed: !!signatureId,
           signatureId,
           signatureRequired: !!requiresSignature,
+          verification: {
+            totalParagraphs: verification.totalParagraphs,
+            meaningfulParagraphs: verification.meaningfulParagraphs,
+            unsupportedParagraphs: verification.unsupportedParagraphs,
+            unsupportedRatio: verification.unsupportedRatio,
+            flags: verification.flags,
+          },
+          diff,
+          acknowledgeUnsupported: !!input.acknowledgeUnsupported,
         }),
       ]
     );
@@ -368,6 +549,8 @@ export async function applyRewrite(
       auditId,
       signatureId,
       signed: !!signatureId,
+      verification,
+      diff,
     };
   } catch (error) {
     await client.query('ROLLBACK');
