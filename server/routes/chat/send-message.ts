@@ -36,6 +36,10 @@ import { summarizeAndStoreWorkingMemoryForThread } from '../../services/working-
 import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import type { SignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import { orchestrate, type OrchestratorOutput } from '../../services/ana-ri/orchestrator.js';
+import {
+  handleSubmissionChat,
+  isPostSectionGenerationTurn,
+} from '../../services/ana/submission-chat-handler.js';
 import { ensureGateway, normalizeBody } from './shared.js';
 import { sha256, stableStringify } from './provenance.js';
 import { verifyClaim, type VerifierFlag } from './verifier.js';
@@ -109,6 +113,75 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     }
 
     const previousMessages = await getThreadMessages(threadId);
+
+    // ── STEP 2b: SUBMISSION-CHAT AUTO-FLIP ──────────────────────────────
+    // If the user supplied an artifactId in context AND the previous assistant
+    // turn was a section generation, route this message through the
+    // submission-chat handler so retrieval scope expands to the entire
+    // dossier instead of just the active document.
+    const clientCtxEarly = (req.body.context ?? {}) as Record<string, any>;
+    const submissionChatArtifactId =
+      clientCtxEarly.artifactId || req.body.artifact_id;
+    const submissionChatExplicit = req.body.mode === 'submission-chat';
+    const shouldRunSubmissionChat =
+      typeof submissionChatArtifactId === 'string' &&
+      submissionChatArtifactId.length > 0 &&
+      (submissionChatExplicit ||
+        isPostSectionGenerationTurn(previousMessages));
+
+    if (shouldRunSubmissionChat) {
+      try {
+        const orgUuid =
+          (req as any).tenantContext?.organizationUuid ||
+          (req.headers['x-org-uuid'] as string | undefined);
+        const sub = await handleSubmissionChat({
+          threadId,
+          artifactId: submissionChatArtifactId,
+          question: message,
+          organizationId: numericOrgId ?? null,
+          organizationUuid: orgUuid ?? null,
+          userId: numericUserId || null,
+        });
+
+        // Persist user + assistant turn to legacy chat_messages so the thread
+        // remains continuous when the next message flips back to normal mode.
+        await saveMessage(threadId, 'user', message, sub.model);
+        await saveMessage(
+          threadId,
+          'assistant',
+          sub.answer,
+          sub.model,
+          sub.usage.totalTokens
+        );
+
+        return res.json({
+          answer: sub.answer,
+          response: sub.answer,
+          thread_id: threadId,
+          model: sub.model,
+          provider: sub.provider,
+          usage: {
+            prompt_tokens: sub.usage.promptTokens,
+            completion_tokens: sub.usage.completionTokens,
+            total_tokens: sub.usage.totalTokens,
+          },
+          mode: 'submission-chat',
+          citations: sub.citations,
+          submissionChat: {
+            artifactId: sub.artifactId,
+            projectId: sub.projectId,
+            retrieval: sub.retrieval,
+          },
+        });
+      } catch (err: any) {
+        // Fall through to the normal chat path on failure — the user still
+        // gets an answer, just without the cross-dossier scope.
+        console.warn(
+          '[AnA] submission-chat auto-flip failed, falling back to normal chat:',
+          err?.message
+        );
+      }
+    }
 
     // ── STEP 3: PERSIST USER MESSAGE (provenance chain) ─────────────────
     if (numericOrgId) {

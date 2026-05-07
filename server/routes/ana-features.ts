@@ -2051,4 +2051,90 @@ router.delete(
   }
 );
 
+// ---------------------------------------------------------------------------
+// 5. Submission-Chat — post-draft, cross-dossier provenance interrogation
+// ---------------------------------------------------------------------------
+//
+// Once AnA has generated a section, the user stays in the same thread and
+// asks follow-up questions about provenance. The Truth Engine answers across
+// the ENTIRE project dossier, not just the active document.
+//
+// POST /api/ana/submission-chat
+//   body: { threadId, artifactId, question }
+//   returns: { answer, citations[], retrieval, model, provider, ... }
+
+const submissionChatRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 60 * 1000,
+    maxRequests: 30,
+    message: 'Too many submission-chat requests, please slow down.',
+  },
+});
+
+const submissionChatSchema = z.object({
+  threadId: z.string().min(1, 'threadId is required'),
+  artifactId: z.string().min(1, 'artifactId is required'),
+  question: z.string().min(1, 'question is required').max(4000),
+});
+
+router.post(
+  '/submission-chat',
+  authenticateToken,
+  requireOrganizationContext,
+  submissionChatRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = submissionChatSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const organizationUuid =
+      (req as any).tenantContext?.organizationUuid ||
+      (req.headers['x-org-uuid'] as string | undefined);
+    const userId = (req as any).userId || (req as any).user?.id;
+
+    try {
+      const { handleSubmissionChat } = await import(
+        '../services/ana/submission-chat-handler'
+      );
+      const result = await handleSubmissionChat({
+        threadId: parsed.data.threadId,
+        artifactId: parsed.data.artifactId,
+        question: parsed.data.question,
+        organizationId: organizationId ?? null,
+        organizationUuid: organizationUuid ?? null,
+        userId: userId ?? null,
+      });
+      return res.json(result);
+    } catch (error: any) {
+      const code = error?.code;
+      if (code === 'ARTIFACT_NOT_FOUND') {
+        return res.status(404).json({ error: error.message, code });
+      }
+      if (code === 'ARTIFACT_ORG_MISMATCH') {
+        return res.status(403).json({ error: error.message, code });
+      }
+      if (code === 'INVALID_REQUEST') {
+        return res.status(400).json({ error: error.message, code });
+      }
+      if (code === 'AI_PROVIDER_UNAVAILABLE') {
+        return res.status(503).json({ error: error.message, code });
+      }
+      console.error('[AnA submission-chat] failed:', error?.message || error);
+      return res.status(500).json({
+        error: 'Failed to process submission-chat request',
+        code: 'SUBMISSION_CHAT_ERROR',
+      });
+    }
+  }
+);
+
 export default router;
