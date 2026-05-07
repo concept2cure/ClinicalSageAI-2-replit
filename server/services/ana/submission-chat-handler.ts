@@ -104,6 +104,7 @@ export interface SubmissionChatResponse {
   };
   conversation: {
     historyMessages: number;
+    priorCitations: number;
   };
   model: string;
   provider: string;
@@ -261,6 +262,21 @@ export interface ConversationTurn {
 }
 
 /**
+ * A citation surfaced from the most recent generation on this thread. Used
+ * to resolve coreferences like "why did you cite this source?" — without it,
+ * the model has no idea which source the user means.
+ */
+export interface PriorCitation {
+  ref: number;          // [SRC-n] from the prior turn
+  artifactId: string | null;
+  sectionCode: string | null;
+  pageRef: string | null;
+  title: string | null;
+  excerpt: string | null;
+  score: number | null;
+}
+
+/**
  * Classify the user's question so the model knows what shape of answer to
  * produce. The classifier is keyword-based — cheap, deterministic, no extra
  * LLM round-trip. The model is still free to override the framing in prose,
@@ -373,6 +389,82 @@ async function loadConversationHistory(
 }
 
 /**
+ * Pull the [SRC-n] sources cited on the most recent generation in this thread
+ * so the user can refer back to "this source" / "that citation" naturally.
+ *
+ * We join ai_generation_runs → ai_retrieval_runs → ai_retrieval_chunks for
+ * the latest generation on the thread, then enrich atom_id → artifact /
+ * section / page using the same path as the live retrieval chunks. The
+ * "ref" field is the chunk rank from the prior turn so the numbering matches
+ * the [SRC-n] markers the user actually saw.
+ *
+ * Tolerates missing tables (42P01) like the rest of the chat path.
+ */
+async function loadPriorCitations(
+  threadId: string,
+  projectArtifacts: ArtifactRow[],
+  limit = 12
+): Promise<PriorCitation[]> {
+  if (!threadId) return [];
+  try {
+    const { rows } = await pool.query(
+      `SELECT rc.atom_id, rc.title, rc.excerpt_preview, rc.score, rc.rank
+         FROM ai_generation_runs gr
+         JOIN ai_retrieval_chunks rc
+           ON rc.retrieval_run_id = gr.retrieval_run_id
+        WHERE gr.thread_id = $1
+          AND gr.retrieval_run_id IS NOT NULL
+          AND gr.id = (
+            SELECT id FROM ai_generation_runs
+             WHERE thread_id = $1
+               AND retrieval_run_id IS NOT NULL
+             ORDER BY created_at DESC
+             LIMIT 1
+          )
+        ORDER BY rc.rank ASC
+        LIMIT $2`,
+      [threadId, limit]
+    );
+    if (rows.length === 0) return [];
+
+    // Re-use the live enrichment so artifact / section / page are filled in.
+    const synthetic = rows
+      .filter((r: any) => typeof r.atom_id === 'string' && r.atom_id)
+      .map((r: any) => ({
+        id: r.atom_id as string,
+        title: (r.title as string | null) ?? '',
+        content: (r.excerpt_preview as string | null) ?? '',
+        score: Number(r.score) || 0,
+      }));
+    const enriched = await enrichChunksWithArtifactMetadata(
+      synthetic,
+      projectArtifacts
+    );
+
+    return rows.map((r: any, i: number) => {
+      const match = enriched[i];
+      return {
+        ref: Number(r.rank),
+        artifactId: match?.artifactId ?? null,
+        sectionCode: match?.sectionCode ?? null,
+        pageRef: match?.pageRef ?? null,
+        title: r.title ?? match?.title ?? null,
+        excerpt: r.excerpt_preview ?? null,
+        score: r.score === null ? null : Number(r.score),
+      };
+    });
+  } catch (e: any) {
+    if (e?.code !== '42P01') {
+      console.warn(
+        '[AnA submission-chat] prior-citations load failed:',
+        e?.message
+      );
+    }
+    return [];
+  }
+}
+
+/**
  * Synthesize a self-contained retrieval query from the current question plus
  * the most recent user turns. This handles "what about the EU cohort?" style
  * follow-ups without needing an extra LLM call: vector search is robust to
@@ -393,6 +485,32 @@ export function buildRetrievalQuery(
   // Put the current question first so embeddings weight it most heavily, then
   // append earlier user turns as additional context.
   return [question, ...recentUserTurns.filter(t => t !== question)].join(' || ');
+}
+
+/**
+ * Render the prior-turn citations so "why did you cite this source?" can
+ * resolve "this source" without re-asking the user. The numbering uses the
+ * original [SRC-n] from the prior turn so the labels match what the user saw.
+ */
+function renderPriorCitationsBlock(priorCitations: PriorCitation[]): string {
+  if (priorCitations.length === 0) return '';
+  const lines = priorCitations.map(c => {
+    const sec = c.sectionCode ? ` ${c.sectionCode}` : '';
+    const page = c.pageRef ? ` ${c.pageRef}` : '';
+    const title = c.title ?? 'untitled';
+    const excerpt = c.excerpt
+      ? c.excerpt.length > 200
+        ? `${c.excerpt.slice(0, 200)}…`
+        : c.excerpt
+      : '';
+    return `- [SRC-${c.ref}] artifact=${c.artifactId ?? 'unknown'}${sec}${page} "${title}"${excerpt ? `\n    ${excerpt}` : ''}`;
+  });
+  return [
+    '',
+    '--- PREVIOUSLY CITED IN THIS THREAD (resolve "this source" against these) ---',
+    ...lines,
+    '--- END PREVIOUS CITATIONS ---',
+  ].join('\n');
 }
 
 /**
@@ -431,12 +549,14 @@ export function buildSystemPrompt(
     targetAgency?: string | null;
     sectionReference?: string | null;
     history?: ConversationTurn[];
+    priorCitations?: PriorCitation[];
   } = {}
 ): string {
   const intent = options.intent ?? 'general';
   const targetAgency = options.targetAgency ?? null;
   const sectionReference = options.sectionReference ?? null;
   const history = options.history ?? [];
+  const priorCitations = options.priorCitations ?? [];
 
   const dossierManifest = projectArtifacts
     .map(a => {
@@ -500,6 +620,7 @@ export function buildSystemPrompt(
     '',
     `Project dossier (${projectArtifacts.length} artifact${projectArtifacts.length === 1 ? '' : 's'}):`,
     dossierManifest || '- (no sibling artifacts indexed)',
+    renderPriorCitationsBlock(priorCitations),
     renderHistoryBlock(history),
     intentBlock,
     '',
@@ -649,12 +770,13 @@ export async function handleSubmissionChat(
     artifact.organization_id
   );
 
-  // Step 2 — load conversation history so coreferences resolve and the model
-  // can refer back to "the answer above" / "the source you cited" naturally.
-  const history = await loadConversationHistory(
-    input.threadId,
-    HISTORY_TURN_LIMIT
-  );
+  // Step 2 — load conversation history + prior citations so coreferences
+  // resolve and "why did you cite this source?" can refer back to the
+  // [SRC-n] from the prior generation by exact rank.
+  const [history, priorCitations] = await Promise.all([
+    loadConversationHistory(input.threadId, HISTORY_TURN_LIMIT),
+    loadPriorCitations(input.threadId, projectArtifacts),
+  ]);
 
   // Step 3 — classify intent + extract structured hints. Cheap, deterministic.
   const intent = classifyIntent(input.question);
@@ -710,6 +832,7 @@ export async function handleSubmissionChat(
       targetAgency,
       sectionReference,
       history,
+      priorCitations,
     }) + (memoryResult.memoryBlock ? `\n${memoryResult.memoryBlock}` : '');
 
   // Pass the conversation as message turns too (in addition to the transcript
@@ -872,6 +995,7 @@ export async function handleSubmissionChat(
     },
     conversation: {
       historyMessages: history.length,
+      priorCitations: priorCitations.length,
     },
     model: modelName,
     provider: gwResponse.provider,

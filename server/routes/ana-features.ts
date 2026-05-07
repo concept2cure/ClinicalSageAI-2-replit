@@ -2077,6 +2077,117 @@ const submissionChatSchema = z.object({
   question: z.string().min(1, 'question is required').max(4000),
 });
 
+// Tighter rate limit on the governed mutation than on the read-only chat
+// path — apply-rewrite mutates an artifact and writes audit rows.
+const submissionChatApplyRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 60 * 1000,
+    maxRequests: 10,
+    message: 'Too many rewrite-apply requests, please slow down.',
+  },
+});
+
+const applyRewriteSchema = z.object({
+  artifactId: z.string().min(1, 'artifactId is required'),
+  proposedContent: z
+    .string()
+    .min(8, 'proposedContent is too short')
+    .max(200_000, 'proposedContent exceeds the size limit'),
+  reasonForChange: z
+    .string()
+    .min(8, 'reasonForChange must explain WHY the rewrite is being applied')
+    .max(2000, 'reasonForChange exceeds the size limit'),
+  sectionCode: z.string().max(64).nullable().optional(),
+  targetAgency: z.string().max(32).nullable().optional(),
+  rationale: z.string().max(4000).nullable().optional(),
+  threadId: z.string().max(128).nullable().optional(),
+});
+
+router.post(
+  '/submission-chat/apply-rewrite',
+  authenticateToken,
+  requireOrganizationContext,
+  submissionChatApplyRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = applyRewriteSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const userId = (req as any).userId || (req as any).user?.id;
+    if (!organizationId || !userId) {
+      return res.status(401).json({
+        error: 'Authenticated tenant + user required',
+        code: 'AUTH_REQUIRED',
+      });
+    }
+
+    try {
+      const { applyRewrite } = await import(
+        '../services/ana/submission-chat-apply-rewrite'
+      );
+      const result = await applyRewrite({
+        artifactId: parsed.data.artifactId,
+        proposedContent: parsed.data.proposedContent,
+        reasonForChange: parsed.data.reasonForChange,
+        sectionCode: parsed.data.sectionCode ?? null,
+        targetAgency: parsed.data.targetAgency ?? null,
+        rationale: parsed.data.rationale ?? null,
+        threadId: parsed.data.threadId ?? null,
+        organizationId,
+        userId,
+        userName:
+          (req as any).user?.name ||
+          (req as any).user?.email ||
+          `user-${userId}`,
+        userRole: (req as any).user?.role ?? 'regulatory',
+        ipAddress:
+          req.ip ||
+          (req.headers['x-forwarded-for'] as string | undefined) ||
+          'ip-not-captured',
+      });
+      return res.json({
+        ok: true,
+        ...result,
+      });
+    } catch (error: any) {
+      const code = error?.code;
+      if (code === 'ARTIFACT_NOT_FOUND') {
+        return res.status(404).json({ error: error.message, code });
+      }
+      if (code === 'ARTIFACT_ORG_MISMATCH') {
+        return res.status(403).json({ error: error.message, code });
+      }
+      if (
+        code === 'ARTIFACT_LOCKED' ||
+        code === 'REWRITE_NOOP' ||
+        code === 'REASON_REQUIRED'
+      ) {
+        return res.status(409).json({ error: error.message, code });
+      }
+      if (code === 'INVALID_REQUEST') {
+        return res.status(400).json({ error: error.message, code });
+      }
+      console.error(
+        '[AnA submission-chat apply-rewrite] failed:',
+        error?.message || error
+      );
+      return res.status(500).json({
+        error: 'Failed to apply rewrite',
+        code: 'APPLY_REWRITE_ERROR',
+      });
+    }
+  }
+);
+
 router.post(
   '/submission-chat',
   authenticateToken,

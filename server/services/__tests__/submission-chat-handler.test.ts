@@ -177,6 +177,60 @@ describe('submission-chat-handler · buildSystemPrompt', () => {
     const prompt = buildSystemPrompt(activeArtifact, projectArtifacts, []);
     expect(prompt).toContain('no retrieved evidence');
   });
+
+  it('renders a previously-cited block when prior citations are supplied', () => {
+    const prompt = buildSystemPrompt(activeArtifact, projectArtifacts, chunks, {
+      priorCitations: [
+        {
+          ref: 1,
+          artifactId: 'artifact_protocol_001',
+          sectionCode: '5.3.1',
+          pageRef: 'p.12',
+          title: 'Protocol §5.1',
+          excerpt: 'Median age 47 years.',
+          score: 0.91,
+        },
+        {
+          ref: 2,
+          artifactId: 'artifact_ib_001',
+          sectionCode: '1.14',
+          pageRef: null,
+          title: 'IB §4.3',
+          excerpt: 'Median age stated as 49.',
+          score: 0.74,
+        },
+      ],
+    });
+    expect(prompt).toContain('PREVIOUSLY CITED IN THIS THREAD');
+    expect(prompt).toContain('[SRC-1]');
+    expect(prompt).toContain('[SRC-2]');
+    expect(prompt).toContain('Protocol §5.1');
+    expect(prompt).toContain('IB §4.3');
+  });
+
+  it('does not render the prior-citations block when there are none', () => {
+    const prompt = buildSystemPrompt(activeArtifact, projectArtifacts, chunks);
+    expect(prompt).not.toContain('PREVIOUSLY CITED');
+  });
+
+  it('renders an intent block hint when intent is supplied', () => {
+    const provenance = buildSystemPrompt(
+      activeArtifact,
+      projectArtifacts,
+      chunks,
+      { intent: 'provenance' }
+    );
+    expect(provenance).toContain('PROVENANCE');
+
+    const rewrite = buildSystemPrompt(activeArtifact, projectArtifacts, chunks, {
+      intent: 'rewrite',
+      targetAgency: 'EMA',
+      sectionReference: '4.1',
+    });
+    expect(rewrite).toContain('REWRITE');
+    expect(rewrite).toContain('EMA');
+    expect(rewrite).toContain('4.1');
+  });
 });
 
 describe('submission-chat-handler · classifyIntent', () => {
