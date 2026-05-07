@@ -98,6 +98,19 @@ export const CORPUS_POLICY: readonly CorpusPolicy[] = [
     model: 'text-embedding-3-small',
     purpose: 'Biostatistics knowledge graph — endpoints, study designs, statistical methods',
   },
+  {
+    corpus: 'vaultDocumentChunks',
+    table: 'vault.document_chunks',
+    dimensions: 1536,
+    // ada-002 is registered here because that's what the historical vault
+    // index was built with (column default + writer + retriever agree).
+    // Migrating this corpus to text-embedding-3-small requires
+    // re-vectorizing every existing row; mixing models on the same column
+    // produces silent retrieval misses, not loud errors. Tracked as a
+    // separate migration in DATA_KNOWLEDGE_MEMORY_LAYER_AUDIT.md.
+    model: 'text-embedding-ada-002',
+    purpose: 'Vault document chunks — semantic similarity search over indexed vault PDFs/DOCX',
+  },
 ] as const;
 
 const POLICY_BY_CORPUS = new Map<string, CorpusPolicy>(

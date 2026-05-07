@@ -43,7 +43,8 @@ const APPROVED = new Set([
   // 2026-05-07). Migration target: route through embeddingService.embed().
   'server/services/biotechRagService.js',
   'server/services/LiteratureAggregatorService.ts',
-  'server/services/documentIngestionWorkflow.js',
+  // documentIngestionWorkflow.js — deleted 2026-05-07 (was dead + broken
+  // syntax, never imported by a live route). See git log.
   'server/services/innovation/regulatory-delta-radar-service.ts',
   'server/services/innovation/regulatory-negotiation-logbook-service.ts',
   'server/services/innovation/auto-traceability-service.ts',
@@ -56,7 +57,8 @@ const APPROVED = new Set([
   // time (2026-05-07). Migration target: enhancedEmbeddingService.embed().
   'server/api/drafting/routes.ts',
   'server/brain/vaultIndexer.js',
-  'server/brain/vaultRetriever.js',
+  // server/brain/vaultRetriever.js — migrated 2026-05-07 to
+  // embeddingService.embed() with corpus 'vaultDocumentChunks'.
   'server/openai-service.ts',
   'server/utils/populate_vector_database.js',
 ]);

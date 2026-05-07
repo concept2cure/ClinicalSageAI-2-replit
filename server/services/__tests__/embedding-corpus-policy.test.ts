@@ -71,13 +71,29 @@ describe('embedding-corpus-policy', () => {
       ).toThrow(/policy requires text-embedding-3-small/);
     });
 
-    it('throws when querying with the legacy ada model (silent retrieval miss)', () => {
-      // This is the dangerous case: ada-002 has the same dimensions as
-      // 3-small, so the insert would succeed, but retrieval results
-      // would be silently incorrect because the embedding spaces differ.
+    it('throws when querying ragChunks with the legacy ada model (silent retrieval miss)', () => {
+      // Same-dimension mismatch is the dangerous case: ada-002 has the
+      // same dimensions as 3-small, so the insert would succeed, but
+      // retrieval results would be silently incorrect because the
+      // embedding spaces differ.
       expect(() =>
         assertModelMatchesCorpus('ragChunks', 'text-embedding-ada-002')
       ).toThrow(/silent retrieval misses/);
+    });
+
+    it('passes for vaultDocumentChunks with ada-002 (legacy index, deliberate)', () => {
+      // The vault index was built with ada-002. Migration to 3-small is
+      // tracked separately in DATA_KNOWLEDGE_MEMORY_LAYER_AUDIT.md and
+      // requires re-vectorizing every existing row.
+      expect(() =>
+        assertModelMatchesCorpus('vaultDocumentChunks', 'text-embedding-ada-002')
+      ).not.toThrow();
+    });
+
+    it('throws when querying vaultDocumentChunks with 3-small (silent retrieval miss)', () => {
+      expect(() =>
+        assertModelMatchesCorpus('vaultDocumentChunks', 'text-embedding-3-small')
+      ).toThrow(/policy requires text-embedding-ada-002/);
     });
   });
 });
