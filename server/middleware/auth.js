@@ -44,7 +44,7 @@ const authenticateJWT = (req, res, next) => {
 
   try {
     // Verify the token with appropriate secret for current environment
-    const user = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] });
+    const user = jwt.verify(token, config.jwt.secret, { algorithms: ['HS256'] });
 
     // CRITICAL SECURITY CHECK: Ensure organizationId is in JWT payload
     if (!user.organizationId) {

@@ -75,7 +75,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   }
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as JWTPayload;
+    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ['HS256'] }) as JWTPayload;
     req.user = {
       id: decoded.userId || decoded.id || decoded.sub || 0,
       userId: decoded.userId || decoded.id || decoded.sub,
@@ -218,7 +218,7 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
   }
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as JWTPayload;
+    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ['HS256'] }) as JWTPayload;
     req.user = {
       id: decoded.userId || decoded.id || decoded.sub || 0,
       userId: decoded.userId || decoded.id || decoded.sub,

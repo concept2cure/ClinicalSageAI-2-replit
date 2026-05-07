@@ -1299,7 +1299,7 @@ function extractUserId(req: Request): number | null {
     if (!token) return null;
     const secret = process.env.JWT_SECRET;
     if (!secret) return null;
-    const decoded = jwt.verify(token, secret, { algorithms: ["HS256"] }) as any;
+    const decoded = jwt.verify(token, secret, { algorithms: ['HS256'] }) as any;
     return decoded?.userId ? Number(decoded.userId) : null;
   } catch {
     return null;
