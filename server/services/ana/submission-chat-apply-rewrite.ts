@@ -18,6 +18,28 @@
  */
 import crypto from 'node:crypto';
 import { pool } from '../../db.js';
+import { saveChatMessage } from '../chat-thread-helpers.js';
+
+/**
+ * 21 CFR Part 11 electronic signature payload. Captured at the moment the
+ * rewrite is applied so the signature is bound to the new artifact_version_id
+ * the apply produces. Two of the three "what makes this a Part 11 signature"
+ * elements are explicit here — meaning + signer identity. Authentication is
+ * delegated to the upstream auth middleware (the user is already token-
+ * authenticated when the route runs); the manifest records the method.
+ */
+export interface ApplyRewriteSignature {
+  /** What the signer is attesting to (e.g. "I have reviewed and approve this rewrite"). */
+  meaning: string;
+  /** Optional override; defaults to the authenticated user's name. */
+  signerName?: string | null;
+  /** Optional override; defaults to the authenticated user's email. */
+  signerEmail?: string | null;
+  /** "password" | "sso" | "mfa" | "session" — defaults to "session". */
+  authenticationMethod?: 'password' | 'sso' | 'mfa' | 'session';
+  /** Optional second-factor flag. */
+  secondFactorVerified?: boolean;
+}
 
 export interface ApplyRewriteInput {
   artifactId: string;
@@ -29,12 +51,19 @@ export interface ApplyRewriteInput {
   targetAgency?: string | null;
   rationale?: string | null;
   threadId?: string | null;
+  /**
+   * Optional Part 11 signature. Required when the artifact's metadata flags
+   * requiresSignature=true; otherwise recorded if supplied, omitted if not.
+   */
+  signature?: ApplyRewriteSignature | null;
   /** Tenant + actor — populated from auth middleware in the route. */
   organizationId: number;
   userId: number;
   userName?: string | null;
+  userEmail?: string | null;
   userRole?: string | null;
   ipAddress?: string | null;
+  userAgent?: string | null;
 }
 
 export interface ApplyRewriteResult {
@@ -46,6 +75,8 @@ export interface ApplyRewriteResult {
   contentHash: string;
   versionSnapshotId: string;
   auditId: string;
+  signatureId: string | null;
+  signed: boolean;
 }
 
 const REASON_MIN_CHARS = 8;
@@ -91,7 +122,7 @@ export async function applyRewrite(
     // ── Lock the artifact row to prevent concurrent rewrites racing ─────
     const cur = await client.query(
       `SELECT id, artifact_id, project_id, organization_id,
-              version, content, content_hash, title, status, ctd_section
+              version, content, content_hash, title, status, ctd_section, metadata
          FROM concept2cure_artifacts
         WHERE artifact_id = $1
         FOR UPDATE`,
@@ -113,6 +144,21 @@ export async function applyRewrite(
       fail(
         'ARTIFACT_LOCKED',
         `Cannot rewrite artifact in status="${row.status}". Unlock or branch a new draft first.`
+      );
+    }
+
+    // ── Part 11 gate: artifacts marked requiresSignature MUST be signed.
+    // Other artifacts may be signed optionally; the signature still gets
+    // recorded and bound to the new version when supplied.
+    const requiresSignature =
+      row.metadata && row.metadata.requiresSignature === true;
+    const hasSignature =
+      !!input.signature && typeof input.signature.meaning === 'string' &&
+      input.signature.meaning.trim().length >= 8;
+    if (requiresSignature && !hasSignature) {
+      fail(
+        'SIGNATURE_REQUIRED',
+        'This artifact requires an electronic signature on every rewrite. Provide signature.meaning attesting to the change.'
       );
     }
 
@@ -175,7 +221,73 @@ export async function applyRewrite(
       ]
     );
 
-    // ── 3. Audit log entry — UPDATE, GxP-relevant, reason captured ─────
+    // ── 3. Optional Part 11 e-signature, bound to the NEW version row.
+    // The signature hash combines meaning + signer + timestamp + content
+    // so a recorded signature is immutably tied to a specific version.
+    let signatureId: string | null = null;
+    if (hasSignature && input.signature) {
+      const signerName =
+        input.signature.signerName?.trim() ||
+        input.userName ||
+        `user-${input.userId}`;
+      const signerEmail =
+        input.signature.signerEmail?.trim() ||
+        input.userEmail ||
+        `user-${input.userId}@unknown.local`;
+      const authMethod = input.signature.authenticationMethod ?? 'session';
+      const signatureSeed = [
+        signerEmail,
+        input.signature.meaning,
+        contentHash,
+        now.toISOString(),
+      ].join('|');
+      const signatureHash = crypto
+        .createHash('sha256')
+        .update(signatureSeed)
+        .digest('hex');
+      signatureId = `sig_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+      await client.query(
+        `INSERT INTO concept2cure_signatures (
+           signature_id, artifact_id, artifact_version_id, organization_id,
+           signature_type, signature_purpose, signature_meaning,
+           signer_id, signer_name, signer_email, signer_role,
+           authentication_method, authentication_timestamp,
+           second_factor_verified, signature_hash, signature_manifest,
+           ip_address, device_info, status, signed_at, created_at, updated_at
+         ) VALUES (
+           $1,$2,$3,$4,'electronic','rewrite_apply',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,'active',$17,$17,$17
+         )`,
+        [
+          signatureId,
+          row.id,
+          versionSnapshotId,
+          input.organizationId,
+          input.signature.meaning,
+          input.userId,
+          signerName,
+          signerEmail,
+          input.userRole ?? 'regulatory',
+          authMethod,
+          now,
+          input.signature.secondFactorVerified ?? false,
+          signatureHash,
+          JSON.stringify({
+            source: 'submission_chat_apply_rewrite',
+            newVersion,
+            previousVersion: Number(row.version) || 1,
+            contentHash,
+            previousContentHash: row.content_hash ?? null,
+            reasonForChange: reason,
+            threadId: input.threadId ?? null,
+          }),
+          input.ipAddress ?? null,
+          JSON.stringify({ userAgent: input.userAgent ?? null }),
+          now,
+        ]
+      );
+    }
+
+    // ── 4. Audit log entry — UPDATE, GxP-relevant, reason captured ─────
     // change_reason is the canonical 21 CFR Part 11 column for the WHY.
     const auditId = `audit_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     await client.query(
@@ -211,11 +323,39 @@ export async function applyRewrite(
           targetAgency: input.targetAgency ?? null,
           rationale: input.rationale ?? null,
           versionSnapshotId,
+          signed: !!signatureId,
+          signatureId,
+          signatureRequired: !!requiresSignature,
         }),
       ]
     );
 
     await client.query('COMMIT');
+
+    // ── 5. Post a system note into the thread so the next submission-chat
+    // turn sees that the rewrite was applied. Best-effort, outside the
+    // transaction — the rewrite is durable regardless.
+    if (input.threadId) {
+      const note =
+        `[apply] Rewrite v${Number(row.version) || 1}→v${newVersion} of ${row.artifact_id}` +
+        ` applied. status=draft, audit_id=${auditId}` +
+        (signatureId ? `, signature_id=${signatureId}` : ', signed=false') +
+        (input.sectionCode || row.ctd_section
+          ? `, section=${input.sectionCode ?? row.ctd_section}`
+          : '') +
+        (input.targetAgency ? `, agency=${input.targetAgency}` : '') +
+        `. Reason: ${reason}`;
+      try {
+        await saveChatMessage(input.threadId, 'assistant', note, 'system');
+      } catch (e: any) {
+        if (e?.code !== '42P01') {
+          console.warn(
+            '[AnA submission-chat apply-rewrite] thread-note persist failed:',
+            e?.message
+          );
+        }
+      }
+    }
 
     return {
       artifactId: row.artifact_id,
@@ -226,6 +366,8 @@ export async function applyRewrite(
       contentHash,
       versionSnapshotId,
       auditId,
+      signatureId,
+      signed: !!signatureId,
     };
   } catch (error) {
     await client.query('ROLLBACK');

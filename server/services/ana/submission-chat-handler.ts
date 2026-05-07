@@ -129,6 +129,7 @@ interface ArtifactRow {
   title: string;
   type: string;
   category: string;
+  content?: string | null;
 }
 
 interface RetrievedChunk {
@@ -149,7 +150,7 @@ async function loadArtifact(
   organizationId?: number | null
 ): Promise<ArtifactRow> {
   const { rows } = await pool.query(
-    `SELECT id, artifact_id, project_id, organization_id, ctd_section, title, type, category
+    `SELECT id, artifact_id, project_id, organization_id, ctd_section, title, type, category, content
        FROM concept2cure_artifacts
       WHERE artifact_id = $1
       LIMIT 1`,
@@ -600,10 +601,19 @@ export function buildSystemPrompt(
           sectionReference
             ? `Target section: ${sectionReference}.`
             : 'Target: the active artifact (no explicit section reference).',
-          'In addition to the standard answer + citations, include a "rewrite"',
-          'field on the JSON envelope with the proposed new content. Ground the',
-          'rewrite in the cross-dossier evidence — every claim in the rewrite',
-          'must be defensible against [SRC-n].',
+          'The retrieved evidence below includes both passages relevant to the',
+          'user\'s question AND passages semantically close to the active section.',
+          'BEFORE proposing a rewrite:',
+          '  - Identify any [SRC-n] that contradicts the active section. Cite',
+          '    each one inline with relationship="contradicts" and quote the',
+          '    conflicting fact.',
+          '  - Identify any [SRC-n] that exposes a gap (silence where a record',
+          '    is expected). Cite with relationship="gap".',
+          'THEN propose a "rewrite" object on the JSON envelope. The rewrite',
+          'MUST acknowledge every contradiction surfaced above — either by',
+          'adopting the dossier-grounded value, or by explicitly stating the',
+          'discrepancy. Every claim in the rewrite must be defensible against',
+          '[SRC-n].',
         ].join('\n');
       default:
         return '';
@@ -807,13 +817,48 @@ export async function handleSubmissionChat(
 
   let rawHits: Array<{ id: string; title: string; content: string; score: number }> = [];
   if (validOrgUuid) {
-    rawHits = await embeddingService.searchHybrid(
+    const primary = embeddingService.searchHybrid(
       retrievalQuery,
       RETRIEVAL_TOP_K,
       RETRIEVAL_THRESHOLD,
       validOrgUuid,
       String(artifact.project_id)
     );
+
+    // Rewrite intent: do a second pass using the ACTIVE ARTIFACT's content as
+    // the query so we surface dossier passages that are semantically close to
+    // the section being rewritten — those are the ones likely to contradict
+    // it, and the model can flag them as relationship="contradicts" so the
+    // rewrite addresses them. Cheap, runs in parallel with the primary pass.
+    const useArtifactScan =
+      intent === 'rewrite' &&
+      typeof artifact.content === 'string' &&
+      artifact.content.trim().length > 0;
+    const artifactScan = useArtifactScan
+      ? embeddingService.searchHybrid(
+          (artifact.content as string).slice(0, 2000),
+          Math.max(4, Math.floor(RETRIEVAL_TOP_K / 2)),
+          RETRIEVAL_THRESHOLD,
+          validOrgUuid!,
+          String(artifact.project_id)
+        )
+      : Promise.resolve(
+          [] as Array<{ id: string; title: string; content: string; score: number }>
+        );
+
+    const [primaryHits, scanHits] = await Promise.all([primary, artifactScan]);
+
+    // Merge + dedupe by atom id, take the higher score when both pass return
+    // the same chunk, then trim back to RETRIEVAL_TOP_K.
+    const byId = new Map<string, { id: string; title: string; content: string; score: number }>();
+    for (const h of primaryHits) byId.set(h.id, h);
+    for (const h of scanHits) {
+      const existing = byId.get(h.id);
+      if (!existing || h.score > existing.score) byId.set(h.id, h);
+    }
+    rawHits = Array.from(byId.values())
+      .sort((a, b) => b.score - a.score)
+      .slice(0, RETRIEVAL_TOP_K);
   }
 
   const chunks = await enrichChunksWithArtifactMetadata(rawHits, projectArtifacts);

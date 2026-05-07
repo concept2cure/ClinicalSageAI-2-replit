@@ -231,6 +231,18 @@ describe('submission-chat-handler · buildSystemPrompt', () => {
     expect(rewrite).toContain('EMA');
     expect(rewrite).toContain('4.1');
   });
+
+  it('rewrite-intent prompt instructs the model to flag contradictions FIRST', () => {
+    const rewrite = buildSystemPrompt(activeArtifact, projectArtifacts, chunks, {
+      intent: 'rewrite',
+      targetAgency: 'EMA',
+      sectionReference: '4.1',
+    });
+    // The prompt must (a) ask for contradictions before proposing a rewrite,
+    // and (b) require the rewrite to acknowledge them.
+    expect(rewrite.toLowerCase()).toContain('contradict');
+    expect(rewrite.toLowerCase()).toMatch(/before proposing a rewrite|acknowledge every contradiction/i);
+  });
 });
 
 describe('submission-chat-handler · classifyIntent', () => {

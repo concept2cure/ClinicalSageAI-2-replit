@@ -2101,6 +2101,25 @@ const applyRewriteSchema = z.object({
   targetAgency: z.string().max(32).nullable().optional(),
   rationale: z.string().max(4000).nullable().optional(),
   threadId: z.string().max(128).nullable().optional(),
+  /**
+   * Optional 21 CFR Part 11 e-signature. Required when the artifact's
+   * metadata flags requiresSignature; otherwise recorded if supplied.
+   */
+  signature: z
+    .object({
+      meaning: z
+        .string()
+        .min(8, 'signature.meaning must attest to what is being signed')
+        .max(2000),
+      signerName: z.string().max(255).nullable().optional(),
+      signerEmail: z.string().email().nullable().optional(),
+      authenticationMethod: z
+        .enum(['password', 'sso', 'mfa', 'session'])
+        .optional(),
+      secondFactorVerified: z.boolean().optional(),
+    })
+    .nullable()
+    .optional(),
 });
 
 router.post(
@@ -2142,17 +2161,20 @@ router.post(
         targetAgency: parsed.data.targetAgency ?? null,
         rationale: parsed.data.rationale ?? null,
         threadId: parsed.data.threadId ?? null,
+        signature: parsed.data.signature ?? null,
         organizationId,
         userId,
         userName:
           (req as any).user?.name ||
           (req as any).user?.email ||
           `user-${userId}`,
+        userEmail: (req as any).user?.email ?? null,
         userRole: (req as any).user?.role ?? 'regulatory',
         ipAddress:
           req.ip ||
           (req.headers['x-forwarded-for'] as string | undefined) ||
           'ip-not-captured',
+        userAgent: (req.headers['user-agent'] as string | undefined) ?? null,
       });
       return res.json({
         ok: true,
@@ -2169,7 +2191,8 @@ router.post(
       if (
         code === 'ARTIFACT_LOCKED' ||
         code === 'REWRITE_NOOP' ||
-        code === 'REASON_REQUIRED'
+        code === 'REASON_REQUIRED' ||
+        code === 'SIGNATURE_REQUIRED'
       ) {
         return res.status(409).json({ error: error.message, code });
       }
