@@ -31,6 +31,18 @@ jobs:
       - name: Guardrails — ban direct new Pool()
         run: scripts/ci/ban-new-pool.sh
 
+      - name: Guardrails — migration prefix collisions (no regressions)
+        run: npm run ci:migration-prefix-collisions
+
+      - name: Guardrails — tenant-isolation in raw SQL (no regressions)
+        run: npm run ci:tenant-isolation:no-regression
+
+      - name: Guardrails — no leaky dev-auth gates in prod paths
+        run: npm run ci:no-dev-auth-in-prod
+
+      - name: Guardrails — password hygiene
+        run: npm run ci:password-hygiene
+
       - name: Guardrails — route mount authority audit (no regressions)
         run: npm run ci:audit-route-mounts:no-regression
 
