@@ -34,6 +34,15 @@ export interface PersonaProgramFacts {
   hasPatientContact?: boolean;
   isElectrical?: boolean;
   isIvd?: boolean;
+  // Module 4 (nonclinical) gating signals — optional so existing callers
+  // remain compatible. The preclinical persona uses these.
+  developmentStage?: string; // 'preclinical' | 'ind_enabling' | 'phase_1' | …
+  /** Indication is intended for chronic use (≥ 6 months continuous). */
+  indicationChronic?: boolean;
+  /** Highest reached / proposed clinical phase: 0=preclin, 1..4. */
+  clinicalPhase?: number;
+  /** Maximum recommended human dose, mg/kg/day, used for NOAEL margin checks. */
+  mrhdMgPerKgPerDay?: number | null;
 }
 
 /** Defense-packet facts (optional — many personas work without one). */
@@ -51,6 +60,30 @@ export interface PersonaIntelFacts {
   unsupportedClaimCount: number;
   defensibilityScore: number | null; // 0..100
   missingSections: string[];
+  /** Module 4 nonclinical intel, populated only by the preclinical loader. */
+  nonclinical?: NonclinicalIntelFacts;
+}
+
+/** Nonclinical study summary the preclinical persona reasons over. */
+export interface NonclinicalIntelFacts {
+  studies: NonclinicalStudyFact[];
+  genotoxBattery: {
+    ames: boolean;
+    inVitroMammalian: boolean;
+    inVivo: boolean;
+  };
+}
+
+export interface NonclinicalStudyFact {
+  studyType: string;
+  species: string | null;
+  durationWeeks: number | null;
+  glpCompliant: boolean | null;
+  noael: string | null;
+  /** Lowest computed NOAEL/MRHD multiple across all bases for this study. */
+  safetyMarginMultiple?: number | null;
+  /** Treat this study as pivotal (i.e., supporting clinical dosing). */
+  pivotal?: boolean;
 }
 
 export interface PersonaInputs {
@@ -437,6 +470,254 @@ const qualitySystemsReviewer: ReviewerPersona = {
   ],
 };
 
+// ── Preclinical toxicologist (Module 4 / ICH M3(R2)) ─────────────────────────
+// Surfaces ICH M3(R2) / S2(R1) / S1B nonclinical deficiencies. Active for any
+// drug/biologic submission and any program in preclinical or IND-enabling
+// development. When `intel.nonclinical` is absent the persona emits a single
+// info-level stub so the reviewer-simulator output flags that nonclinical data
+// were not loaded rather than silently skipping the lens.
+const preclinicalToxicologist: ReviewerPersona = {
+  code: 'preclinical_toxicologist',
+  name: 'Preclinical Toxicologist (ICH M3(R2))',
+  scope: 'Nonclinical safety package adequacy: species coverage, GLP, NOAEL margins, genotox, DART, carcinogenicity',
+  appliesTo: p => {
+    const drugLike =
+      p.programType === 'IND' ||
+      p.programType === 'NDA' ||
+      p.programType === 'BLA' ||
+      p.productType === 'drug' ||
+      p.productType === 'biologic' ||
+      p.productType === 'combination';
+    const stageLike =
+      p.developmentStage === 'preclinical' ||
+      p.developmentStage === 'ind_enabling' ||
+      p.developmentStage === 'phase_1' ||
+      p.developmentStage === 'phase_2' ||
+      p.developmentStage === 'phase_3';
+    return drugLike || stageLike;
+  },
+  rules: ({ program, intel }) => {
+    const out: ReviewerQuestion[] = [];
+    const nc = intel.nonclinical;
+    if (!nc) {
+      out.push(
+        q(
+          'preclinical_toxicologist',
+          'completeness',
+          'info',
+          'Nonclinical study data has not been loaded for this program. The preclinical reviewer cannot assess Module 4 adequacy until ctd_nonclinical_studies is populated for the program.',
+          'nonclinical_intel_missing',
+          'ICH M3(R2)',
+          'Ingest the preclinical study reports via /api/preclinical/ingest, or attach nonclinical facts to the simulator request.'
+        )
+      );
+      return out;
+    }
+
+    const pivotalStudies = nc.studies.filter(s => s.pivotal !== false);
+
+    // Rule: NC_GLP_PIVOTAL_MISSING ─ pivotal tox study not GLP-compliant.
+    const nonGlpPivotal = pivotalStudies.filter(s => s.glpCompliant !== true);
+    if (nonGlpPivotal.length > 0) {
+      out.push(
+        q(
+          'preclinical_toxicologist',
+          'methodology',
+          'critical',
+          `${nonGlpPivotal.length} pivotal toxicology study/studies do not declare GLP compliance. Pivotal data supporting clinical dosing must be conducted under 21 CFR Part 58.`,
+          'NC_GLP_PIVOTAL_MISSING',
+          '21 CFR Part 58; FDA Good Laboratory Practice Regulations',
+          'Bridge to a GLP-compliant repeat-dose study at the same dose levels and species, or restrict claims to non-pivotal use.'
+        )
+      );
+    }
+
+    // Rule: NC_SPECIES_COVERAGE ─ chronic repeat-dose missing rodent + non-rodent.
+    const RODENT = new Set(['rat', 'mouse', 'rodent']);
+    const longRepeat = pivotalStudies.filter(
+      s => s.studyType === 'repeat_dose_tox' && (s.durationWeeks ?? 0) >= 13
+    );
+    if (longRepeat.length > 0) {
+      const speciesSet = new Set(
+        longRepeat.map(s => (s.species ?? '').toLowerCase()).filter(Boolean)
+      );
+      const hasRodent = [...speciesSet].some(s => RODENT.has(s));
+      const hasNonRodent = [...speciesSet].some(s => s.length > 0 && !RODENT.has(s));
+      if (!(hasRodent && hasNonRodent)) {
+        out.push(
+          q(
+            'preclinical_toxicologist',
+            'completeness',
+            'critical',
+            'Repeat-dose toxicology of ≥13 weeks does not include both a rodent and a non-rodent species. ICH M3(R2) §5 expects two-species coverage to support the proposed clinical duration.',
+            'NC_SPECIES_COVERAGE',
+            'ICH M3(R2) §5',
+            'Commission a GLP study in the missing species (rodent or pharmacologically relevant non-rodent).'
+          )
+        );
+      }
+    }
+
+    // Rule: NC_NOAEL_MARGIN_INSUFFICIENT ─ smallest safety margin below threshold.
+    const margins = pivotalStudies
+      .map(s => s.safetyMarginMultiple)
+      .filter((m): m is number => typeof m === 'number' && Number.isFinite(m));
+    if (margins.length > 0) {
+      const lowest = Math.min(...margins);
+      if (lowest < 2) {
+        out.push(
+          q(
+            'preclinical_toxicologist',
+            'safety',
+            'critical',
+            `Lowest NOAEL-to-MRHD safety margin is ${lowest.toFixed(2)}×. A margin below 2× is unlikely to support the proposed clinical starting dose without additional justification.`,
+            'NC_NOAEL_MARGIN_INSUFFICIENT',
+            'FDA Guidance "Estimating the Maximum Safe Starting Dose in Initial Clinical Trials for Therapeutics in Adult Healthy Volunteers" (2005)',
+            'Lower the proposed starting dose, or provide PK exposure justification (AUC/Cmax) showing equivalent safety at the planned dose.'
+          )
+        );
+      } else if (lowest < 10) {
+        out.push(
+          q(
+            'preclinical_toxicologist',
+            'safety',
+            'warning',
+            `Lowest NOAEL-to-MRHD safety margin is ${lowest.toFixed(2)}×. Margins under 10× typically need exposure-based justification.`,
+            'NC_NOAEL_MARGIN_INSUFFICIENT',
+            'FDA Guidance "Estimating the Maximum Safe Starting Dose" (2005)',
+            'Provide AUC/Cmax-based exposure margin with rationale for the chosen species.'
+          )
+        );
+      }
+    }
+
+    // Rule: NC_GENOTOX_BATTERY_INCOMPLETE ─ ICH S2(R1) three-component battery.
+    const battery = nc.genotoxBattery;
+    const missing: string[] = [];
+    if (!battery.ames) missing.push('Ames');
+    if (!battery.inVitroMammalian) missing.push('in vitro mammalian');
+    if (!battery.inVivo) missing.push('in vivo');
+    if (missing.length > 0) {
+      out.push(
+        q(
+          'preclinical_toxicologist',
+          'completeness',
+          'critical',
+          `Genotoxicity battery is incomplete: missing ${missing.join(', ')}. ICH S2(R1) requires all three components.`,
+          'NC_GENOTOX_BATTERY_INCOMPLETE',
+          'ICH S2(R1)',
+          'Schedule the missing genotoxicity assay(s) at a GLP facility before filing.'
+        )
+      );
+    }
+
+    // Rule: NC_REPRO_TOX_STAGE_MISMATCH ─ DART required by clinical phase.
+    const phase = program.clinicalPhase ?? 0;
+    if (phase >= 2) {
+      const hasDart = nc.studies.some(s => s.studyType === 'dart');
+      if (!hasDart) {
+        out.push(
+          q(
+            'preclinical_toxicologist',
+            'completeness',
+            'warning',
+            `Phase ${phase} clinical program does not include reproductive/developmental toxicology (DART). ICH M3(R2) §11 stages DART against the clinical phase and population.`,
+            'NC_REPRO_TOX_STAGE_MISMATCH',
+            'ICH M3(R2) §11',
+            'Run staged DART package (fertility, EFD, PPND) appropriate to the proposed clinical phase.'
+          )
+        );
+      }
+    }
+
+    // Rule: NC_CARC_REQUIRED_MISSING ─ chronic indication, no carcinogenicity.
+    if (program.indicationChronic === true) {
+      const hasCarc = nc.studies.some(s => s.studyType === 'carc');
+      if (!hasCarc) {
+        out.push(
+          q(
+            'preclinical_toxicologist',
+            'completeness',
+            'warning',
+            'Indication is chronic (≥6 months continuous use) but no carcinogenicity study is on file. ICH S1B requires carc assessment or a documented waiver rationale.',
+            'NC_CARC_REQUIRED_MISSING',
+            'ICH S1B',
+            'Initiate 2-year carc study or rasH2 6-month alternative; otherwise file a scientific waiver request.'
+          )
+        );
+      }
+    }
+
+    return out;
+  },
+};
+
+// ── GLP auditor ──────────────────────────────────────────────────────────────
+// Lightweight companion to the toxicologist persona: focuses on facility +
+// attestation gaps that drive the NC_TK_DATA_MISSING / GLP-pivotal triggers.
+const glpAuditor: ReviewerPersona = {
+  code: 'glp_auditor',
+  name: 'GLP Auditor (21 CFR 58)',
+  scope: 'GLP attestation, testing facility identification, toxicokinetic coverage',
+  appliesTo: p =>
+    p.programType === 'IND' ||
+    p.programType === 'NDA' ||
+    p.programType === 'BLA' ||
+    p.productType === 'drug' ||
+    p.productType === 'biologic' ||
+    p.productType === 'combination',
+  rules: ({ intel }) => {
+    const out: ReviewerQuestion[] = [];
+    const nc = intel.nonclinical;
+    if (!nc) {
+      out.push(
+        q(
+          'glp_auditor',
+          'completeness',
+          'info',
+          'No nonclinical data loaded; GLP audit cannot run.',
+          'nonclinical_intel_missing',
+          '21 CFR Part 58'
+        )
+      );
+      return out;
+    }
+
+    // Rule: NC_TK_DATA_MISSING ─ pivotal repeat-dose without TK coverage.
+    const repeatDose = nc.studies.filter(s => s.studyType === 'repeat_dose_tox');
+    const tkStudies = nc.studies.filter(s => s.studyType === 'tk');
+    if (repeatDose.length > 0 && tkStudies.length === 0) {
+      out.push(
+        q(
+          'glp_auditor',
+          'completeness',
+          'critical',
+          'Pivotal repeat-dose toxicology is on file but no toxicokinetic data has been provided. Without TK exposure data the safety margin cannot be evaluated on an exposure basis.',
+          'NC_TK_DATA_MISSING',
+          'ICH S3A; 21 CFR Part 58',
+          'Submit the TK report from satellite groups, or include AUC/Cmax data from main-study sampling.'
+        )
+      );
+    }
+
+    // Pivotal studies missing GLP attestation (as a standalone audit signal).
+    const nonGlp = nc.studies.filter(s => s.pivotal !== false && s.glpCompliant !== true);
+    if (nonGlp.length > 0) {
+      out.push(
+        q(
+          'glp_auditor',
+          'methodology',
+          'warning',
+          `${nonGlp.length} pivotal study/studies lack an explicit GLP attestation. Confirm 21 CFR Part 58 compliance for each pivotal report.`,
+          'pivotal_glp_attestation_missing',
+          '21 CFR 58.185'
+        )
+      );
+    }
+    return out;
+  },
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Registry
 // ─────────────────────────────────────────────────────────────────────────────
@@ -451,6 +732,8 @@ export const REVIEWER_PERSONAS: Record<ReviewerPersonaCode, ReviewerPersona> = {
   biostat_reviewer: biostatReviewer,
   labeling_reviewer: labelingReviewer,
   quality_systems_reviewer: qualitySystemsReviewer,
+  preclinical_toxicologist: preclinicalToxicologist,
+  glp_auditor: glpAuditor,
 };
 
 export const ALL_PERSONA_CODES: ReviewerPersonaCode[] = Object.keys(
