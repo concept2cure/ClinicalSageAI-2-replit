@@ -2304,6 +2304,157 @@ router.post(
   }
 );
 
+// ── Proposal management endpoints ──────────────────────────────────────
+//
+// Read-only views into ana_submission_chat_proposals + a janitor sweep.
+// Tenant-scoped via requireOrganizationContext; the service layer
+// double-checks organization_id on every row.
+
+const listProposalsQuerySchema = z.object({
+  threadId: z.string().max(128).optional(),
+  artifactId: z.string().max(128).optional(),
+  status: z
+    .enum(['pending', 'applied', 'superseded', 'expired'])
+    .optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
+
+router.get(
+  '/submission-chat/proposals',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = listProposalsQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid query',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { listProposals } = await import(
+        '../services/ana/submission-chat-proposal-store'
+      );
+      const { rows, total } = await listProposals(organizationId, {
+        threadId: parsed.data.threadId,
+        artifactId: parsed.data.artifactId,
+        status: parsed.data.status,
+        limit: parsed.data.limit,
+        offset: parsed.data.offset,
+      });
+      return res.json({ total, proposals: rows });
+    } catch (err: any) {
+      console.error(
+        '[AnA submission-chat list-proposals] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to list proposals', code: 'LIST_PROPOSALS_ERROR' });
+    }
+  }
+);
+
+router.get(
+  '/submission-chat/proposals/:proposalId',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const proposalId = String(req.params.proposalId || '');
+    if (!/^[0-9a-f-]{36}$/i.test(proposalId)) {
+      return res.status(400).json({
+        error: 'proposalId must be a uuid',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getProposalWithLinkage } = await import(
+        '../services/ana/submission-chat-proposal-store'
+      );
+      const linkage = await getProposalWithLinkage(proposalId, organizationId);
+      if (!linkage) {
+        return res
+          .status(404)
+          .json({ error: 'Proposal not found', code: 'PROPOSAL_NOT_FOUND' });
+      }
+      return res.json(linkage);
+    } catch (err: any) {
+      console.error(
+        '[AnA submission-chat get-proposal] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to load proposal',
+        code: 'GET_PROPOSAL_ERROR',
+      });
+    }
+  }
+);
+
+// Janitor sweep — marks past-TTL pending proposals as expired. Scoped to the
+// caller's org. Idempotent + safe to call repeatedly. Tighter rate limit
+// because it's normally invoked by a scheduled task, not a user.
+const sweepProposalsRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 60 * 1000,
+    maxRequests: 4,
+    message: 'Too many sweep requests, please slow down.',
+  },
+});
+
+router.post(
+  '/submission-chat/proposals/sweep',
+  authenticateToken,
+  requireOrganizationContext,
+  sweepProposalsRateLimiter,
+  async (req: Request, res: Response) => {
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { sweepExpiredProposals } = await import(
+        '../services/ana/submission-chat-proposal-store'
+      );
+      const result = await sweepExpiredProposals({ organizationId });
+      return res.json({ ok: true, ...result });
+    } catch (err: any) {
+      console.error(
+        '[AnA submission-chat sweep] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Sweep failed', code: 'SWEEP_PROPOSALS_ERROR' });
+    }
+  }
+);
+
 // Streaming variant — same retrieval/scope/verification pipeline as the
 // one-shot route, but the LLM call streams tagged-output sections as SSE
 // events so a chat UI can render answer + rewrite progressively.

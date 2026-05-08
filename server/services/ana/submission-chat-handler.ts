@@ -30,6 +30,10 @@ import {
   persistRewriteProposal,
   getActiveProposalForThreadArtifact,
 } from './submission-chat-proposal-store.js';
+import {
+  emit as emitMetric,
+  countCitationMix,
+} from './submission-chat-metrics.js';
 
 // Cross-encoder relevance threshold for retrieval — matches the chat default
 // so submission-chat doesn't surface lower-quality matches than the section
@@ -1573,6 +1577,31 @@ export async function handleSubmissionChat(
       );
     }
   }
+
+  emitMetric({
+    name: 'submission_chat.turn',
+    threadId: input.threadId,
+    artifactId: artifact.artifact_id,
+    projectId: artifact.project_id,
+    organizationId: artifact.organization_id,
+    intent: resolvedIntent,
+    retrievalStrategy: rawHits.length === 0 ? 'failed' : 'advanced',
+    artifactsInScope: projectArtifacts.length,
+    chunksRetrieved: chunks.length,
+    historyMessages: history.length,
+    priorCitations: priorCitations.length,
+    citationCount: citations.length,
+    citationMix: countCitationMix(citations),
+    rewriteEmitted: !!rewrite,
+    proposalId: rewrite?.proposalId ?? null,
+    claimStatusCounts: rewrite?.claimStatusCounts ?? null,
+    streaming: false,
+    model: `${gwResponse.provider}/${gwResponse.model}`,
+    provider: gwResponse.provider,
+    latencyMs: Date.now() - startedAt,
+    promptTokens: gwResponse.usage.inputTokens,
+    completionTokens: gwResponse.usage.outputTokens,
+  });
 
   return {
     threadId: input.threadId,

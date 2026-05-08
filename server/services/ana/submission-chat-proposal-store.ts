@@ -278,3 +278,233 @@ export async function markProposalApplied(
     throw err;
   }
 }
+
+export interface ListProposalsOptions {
+  threadId?: string;
+  artifactId?: string;
+  status?: ProposalStatus | ProposalStatus[];
+  limit?: number;
+  offset?: number;
+}
+
+/**
+ * List proposals for a given org, optionally filtered by thread / artifact /
+ * status. Caps limit at 100 to avoid runaway queries; default 25.
+ */
+export async function listProposals(
+  organizationId: number,
+  options: ListProposalsOptions = {}
+): Promise<{ rows: RewriteProposalRecord[]; total: number }> {
+  const filters: string[] = ['organization_id = $1'];
+  const params: any[] = [organizationId];
+  let n = 1;
+  if (options.threadId) {
+    n += 1;
+    filters.push(`thread_id = $${n}`);
+    params.push(options.threadId);
+  }
+  if (options.artifactId) {
+    n += 1;
+    filters.push(`artifact_id = $${n}`);
+    params.push(options.artifactId);
+  }
+  if (options.status) {
+    const statuses = Array.isArray(options.status)
+      ? options.status
+      : [options.status];
+    n += 1;
+    filters.push(`status = ANY($${n}::text[])`);
+    params.push(statuses);
+  }
+  const where = `WHERE ${filters.join(' AND ')}`;
+  const limit = Math.max(1, Math.min(options.limit ?? 25, 100));
+  const offset = Math.max(0, options.offset ?? 0);
+
+  try {
+    const [rowsResult, countResult] = await Promise.all([
+      pool.query(
+        `SELECT *
+           FROM ana_submission_chat_proposals
+           ${where}
+          ORDER BY created_at DESC
+          LIMIT ${limit} OFFSET ${offset}`,
+        params
+      ),
+      pool.query(
+        `SELECT COUNT(*)::int AS c
+           FROM ana_submission_chat_proposals
+           ${where}`,
+        params
+      ),
+    ]);
+    return {
+      rows: rowsResult.rows.map(rowToRecord),
+      total: countResult.rows[0]?.c ?? 0,
+    };
+  } catch (err: any) {
+    if (isMissingTable(err)) return { rows: [], total: 0 };
+    throw err;
+  }
+}
+
+export interface ProposalLinkage {
+  proposal: RewriteProposalRecord;
+  audit: {
+    auditId: string;
+    timestamp: Date;
+    userName: string;
+    changeReason: string | null;
+    metadata: any;
+  } | null;
+  artifactVersion: {
+    id: number;
+    version: number;
+    contentHash: string | null;
+    createdAt: Date;
+  } | null;
+  signature: {
+    signatureId: string;
+    signerName: string;
+    signerEmail: string;
+    signatureMeaning: string | null;
+    signedAt: Date;
+    secondFactorVerified: boolean;
+  } | null;
+}
+
+/**
+ * Fetch a proposal plus everything it links to: the audit row produced by
+ * the apply, the artifact version it became, and the e-signature (if any).
+ * Returns null when the proposal isn't found or is cross-tenant.
+ */
+export async function getProposalWithLinkage(
+  proposalId: string,
+  organizationId: number
+): Promise<ProposalLinkage | null> {
+  const proposal = await getProposalById(proposalId, organizationId);
+  if (!proposal) return null;
+
+  let audit: ProposalLinkage['audit'] = null;
+  if (proposal.appliedAuditId) {
+    try {
+      const { rows } = await pool.query(
+        `SELECT audit_id, timestamp, user_name, change_reason, metadata
+           FROM regulatory_audit_logs
+          WHERE audit_id = $1
+            AND organization_id = $2
+          LIMIT 1`,
+        [proposal.appliedAuditId, organizationId]
+      );
+      if (rows.length > 0) {
+        audit = {
+          auditId: rows[0].audit_id,
+          timestamp: rows[0].timestamp,
+          userName: rows[0].user_name,
+          changeReason: rows[0].change_reason,
+          metadata: rows[0].metadata,
+        };
+      }
+    } catch (err: any) {
+      if (!isMissingTable(err)) {
+        console.warn(
+          '[AnA proposal-store] audit linkage load failed:',
+          err?.message
+        );
+      }
+    }
+  }
+
+  let artifactVersion: ProposalLinkage['artifactVersion'] = null;
+  if (proposal.appliedVersionId) {
+    try {
+      const { rows } = await pool.query(
+        `SELECT id, version, content_hash, created_at
+           FROM concept2cure_artifact_versions
+          WHERE id = $1
+            AND organization_id = $2
+          LIMIT 1`,
+        [proposal.appliedVersionId, organizationId]
+      );
+      if (rows.length > 0) {
+        artifactVersion = {
+          id: rows[0].id,
+          version: rows[0].version,
+          contentHash: rows[0].content_hash,
+          createdAt: rows[0].created_at,
+        };
+      }
+    } catch (err: any) {
+      if (!isMissingTable(err)) {
+        console.warn(
+          '[AnA proposal-store] artifact-version linkage load failed:',
+          err?.message
+        );
+      }
+    }
+  }
+
+  let signature: ProposalLinkage['signature'] = null;
+  if (proposal.appliedVersionId) {
+    try {
+      const { rows } = await pool.query(
+        `SELECT signature_id, signer_name, signer_email,
+                signature_meaning, signed_at, second_factor_verified
+           FROM concept2cure_signatures
+          WHERE artifact_version_id = $1
+            AND organization_id = $2
+            AND status = 'active'
+          ORDER BY signed_at DESC
+          LIMIT 1`,
+        [proposal.appliedVersionId, organizationId]
+      );
+      if (rows.length > 0) {
+        signature = {
+          signatureId: rows[0].signature_id,
+          signerName: rows[0].signer_name,
+          signerEmail: rows[0].signer_email,
+          signatureMeaning: rows[0].signature_meaning,
+          signedAt: rows[0].signed_at,
+          secondFactorVerified: !!rows[0].second_factor_verified,
+        };
+      }
+    } catch (err: any) {
+      if (!isMissingTable(err)) {
+        console.warn(
+          '[AnA proposal-store] signature linkage load failed:',
+          err?.message
+        );
+      }
+    }
+  }
+
+  return { proposal, audit, artifactVersion, signature };
+}
+
+/**
+ * Janitor: mark every pending proposal whose expires_at has passed as
+ * 'expired'. Optionally scoped to a single organization. Returns the count
+ * of rows updated. Safe to call repeatedly; idempotent.
+ */
+export async function sweepExpiredProposals(
+  scope: { organizationId?: number } = {}
+): Promise<{ expired: number }> {
+  try {
+    const params: any[] = [];
+    let where = `status = 'pending' AND expires_at < NOW()`;
+    if (scope.organizationId) {
+      params.push(scope.organizationId);
+      where += ` AND organization_id = $${params.length}`;
+    }
+    const result = await pool.query(
+      `UPDATE ana_submission_chat_proposals
+          SET status = 'expired'
+        WHERE ${where}
+        RETURNING id`,
+      params
+    );
+    return { expired: result.rows.length };
+  } catch (err: any) {
+    if (isMissingTable(err)) return { expired: 0 };
+    throw err;
+  }
+}

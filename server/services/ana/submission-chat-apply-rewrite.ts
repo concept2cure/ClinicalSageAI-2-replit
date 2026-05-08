@@ -23,6 +23,7 @@ import {
   getProposalById,
   markProposalApplied,
 } from './submission-chat-proposal-store.js';
+import { emit as emitMetric } from './submission-chat-metrics.js';
 
 const UNSUPPORTED_RATIO_BLOCK_THRESHOLD = parseFloat(
   process.env.ANA_REWRITE_UNSUPPORTED_BLOCK_RATIO ?? '0.3'
@@ -763,6 +764,27 @@ export async function applyRewrite(
         }
       }
     }
+
+    emitMetric({
+      name: 'submission_chat.apply',
+      artifactId: row.artifact_id,
+      projectId: row.project_id ?? null,
+      organizationId: input.organizationId,
+      threadId: input.threadId ?? null,
+      proposalId: resolvedProposalId,
+      previousVersion: Number(row.version) || 1,
+      newVersion,
+      signed: !!signatureId,
+      signatureRequired: !!requiresSignature,
+      acknowledgeUnsupported: !!input.acknowledgeUnsupported,
+      unsupportedRatio: verification.unsupportedRatio,
+      linesAdded: diff.linesAdded,
+      linesRemoved: diff.linesRemoved,
+      linesUnchanged: diff.linesUnchanged,
+      hasContradictionsAddressed:
+        typeof input.rationale === 'string' &&
+        /contradict/i.test(input.rationale),
+    });
 
     return {
       artifactId: row.artifact_id,
