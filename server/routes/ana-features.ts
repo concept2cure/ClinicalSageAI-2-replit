@@ -2725,6 +2725,46 @@ router.get(
   }
 );
 
+router.get(
+  '/citations/projects/:projectId/graph',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = projectIdParam.safeParse(req.params.projectId);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getProjectCitationGraph } = await import(
+        '../services/ana/citation-graph'
+      );
+      const result = await getProjectCitationGraph(parsed.data, organizationId);
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations graph] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to build citation graph',
+        code: 'CITATION_GRAPH_ERROR',
+      });
+    }
+  }
+);
+
 // Per-section expectations — "what's expected here, and how am I doing?"
 router.get(
   '/citations/:artifactId/expectations',
