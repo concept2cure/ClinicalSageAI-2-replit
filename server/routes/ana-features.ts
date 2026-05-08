@@ -3465,6 +3465,62 @@ router.get(
   }
 );
 
+// Section coverage — "is this dossier even well-formed?"
+const sectionCoverageQuerySchema = z.object({
+  submissionType: z.enum(['IND', 'NDA', 'BLA', 'ALL']).optional(),
+});
+
+router.get(
+  '/citations/projects/:projectId/section-coverage',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const queryParsed = sectionCoverageQuerySchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      return res.status(400).json({
+        error: 'submissionType must be IND, NDA, BLA, or ALL',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getProjectSectionCoverage } = await import(
+        '../services/ana/citation-section-coverage'
+      );
+      const result = await getProjectSectionCoverage(
+        projectIdParsed.data,
+        organizationId,
+        queryParsed.data.submissionType ?? 'IND'
+      );
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations section-coverage] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to load section coverage',
+        code: 'SECTION_COVERAGE_ERROR',
+      });
+    }
+  }
+);
+
 router.get(
   '/citations/projects/:projectId/graph',
   authenticateToken,
