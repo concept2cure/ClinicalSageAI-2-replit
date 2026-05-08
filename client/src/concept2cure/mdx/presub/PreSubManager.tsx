@@ -14,13 +14,13 @@ import {
   PRESUB_TYPES,
   PRESUB_STAGES,
   PRESUB_LIST,
-  PRESUB_DETAIL,
   type PresubTypeId,
   type PresubStageId,
   type PresubListRow,
   type PresubQuestion,
   type DossierLink,
 } from '../data/presub';
+import { usePresubList, usePresubDetail } from '../hooks/usePresub';
 
 interface PreSubTypeChipProps {
   type: PresubTypeId;
@@ -165,10 +165,19 @@ interface PreSubDetailProps {
 type DetailTab = 'questions' | 'timeline' | 'commitments';
 
 function PreSubDetail({ row, onJumpToDossier, onAskAna }: PreSubDetailProps) {
-  const detail = PRESUB_DETAIL[row.id];
+  /* Live detail: questions + timeline + commitments come from
+     /api/q-sub/:id. Until the fetch resolves, the strip + meeting card +
+     summary + tabs all render with the row's aggregate counts (already
+     hydrated from the list response). */
+  const { detail, loading, error } = usePresubDetail(row.id);
   const [tab, setTab] = React.useState<DetailTab>('questions');
 
   if (!detail) {
+    /* Three reasons we hit this branch: still loading, fetch failed, or
+       package is genuinely in draft (server returns 404 → error set). The
+       UI distinguishes loading from empty; errors fall through to the
+       "in draft" empty state since that's the most likely cause. */
+    const loadingState = loading;
     return (
       <div className="ps-detail">
         <div className="ps-detail-head">
@@ -179,8 +188,14 @@ function PreSubDetail({ row, onJumpToDossier, onAskAna }: PreSubDetailProps) {
           </div>
         </div>
         <div className="ps-empty">
-          <div className="ps-empty-t">Package in draft</div>
-          <div className="ps-empty-s">Question list and FDA response will appear once the Q-Sub is filed.</div>
+          <div className="ps-empty-t">{loadingState ? 'Loading detail…' : error ? 'Detail unavailable' : 'Package in draft'}</div>
+          <div className="ps-empty-s">
+            {loadingState
+              ? 'Fetching questions, timeline and commitments.'
+              : error
+              ? error
+              : 'Question list and FDA response will appear once the Q-Sub is filed.'}
+          </div>
         </div>
       </div>
     );
@@ -325,9 +340,16 @@ type StageFilter = 'all' | PresubStageId;
 export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps) {
   const [filter, setFilter] = React.useState<ListFilter>('all');
   const [stageFilter, setStageFilter] = React.useState<StageFilter>('all');
-  const [selected, setSelected] = React.useState<string>('qs-2025-1142');
+  const [selected, setSelected] = React.useState<string | null>(null);
 
-  const filtered = PRESUB_LIST
+  /* Live list + derived KPIs from /api/q-sub. Falls back to fixtures only
+     during the initial fetch so the surface doesn't flash empty. When the
+     live list returns zero rows, the empty state below renders accurately. */
+  const live = usePresubList();
+  const sourceList: PresubListRow[] = live.list ?? PRESUB_LIST;
+  const sourceKpis = live.kpis ?? PRESUB_KPIS;
+
+  const filtered = sourceList
     .filter(r => {
       if (filter === 'mine') return ['BX-204', 'OR-801'].includes(r.prog);
       if (filter !== 'all') return r.type === filter;
@@ -335,7 +357,19 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
     })
     .filter(r => stageFilter === 'all' || r.stage === stageFilter);
 
-  const sel = PRESUB_LIST.find(r => r.id === selected) || filtered[0];
+  /* Default selection: first row of the (filtered) live list. Re-syncs when
+     the list changes, so a freshly created Q-Sub becomes selectable
+     without the user clicking anything. */
+  React.useEffect(() => {
+    if (!sourceList.length) {
+      if (selected !== null) setSelected(null);
+      return;
+    }
+    const stillExists = selected != null && sourceList.some(r => r.id === selected);
+    if (!stillExists) setSelected(filtered[0]?.id ?? sourceList[0].id);
+  }, [sourceList, filtered, selected]);
+
+  const sel = sourceList.find(r => r.id === selected) || filtered[0];
 
   return (
     <>
@@ -352,7 +386,7 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
             className="btn ghost small"
             onClick={() => {
               const headers = ['Q-number', 'Program', 'Type', 'Title', 'Stage', 'Days in', 'Questions', 'Answered', 'Commitments', 'Rolled in'];
-              const rows = PRESUB_LIST.map(r => [
+              const rows = sourceList.map(r => [
                 r.qNumber, r.prog, r.type, r.title, r.stage, String(r.daysIn),
                 String(r.questions), String(r.answered), String(r.commitments), String(r.rolledIn),
               ]);
@@ -387,7 +421,7 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
       </div>
 
       <div className="metrics-row">
-        {PRESUB_KPIS.map((m, i) => (
+        {sourceKpis.map((m, i) => (
           <div key={i} className="metric-card" data-tone={m.tone || ''}>
             <div className="metric-label">{m.label}</div>
             <div className="metric-val">{m.metric}{m.unit && <span className="unit">{m.unit}</span>}</div>
@@ -400,7 +434,7 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
         <div className="section-head">
           <h2>Q-Submissions in flight</h2>
           <span className="section-sub">
-            {PRESUB_LIST.length} total · {PRESUB_LIST.filter(r => r.stage === 'await').length} awaiting FDA · {PRESUB_LIST.filter(r => r.stage === 'feedback').length} feedback received
+            {sourceList.length} total · {sourceList.filter(r => r.stage === 'await').length} awaiting FDA · {sourceList.filter(r => r.stage === 'feedback').length} feedback received
           </span>
         </div>
 

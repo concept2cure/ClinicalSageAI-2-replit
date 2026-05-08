@@ -33,12 +33,21 @@
  */
 
 import * as React from 'react';
-import {
-  ElectronicSignatureGate,
-  type ElectronicSignature,
-  type SignatureRequiredAction,
-  type SignatureMeaning,
-} from '@/components/legacy-esign/ElectronicSignature';
+import { ElectronicSignatureGate } from '@/components/legacy-esign/ElectronicSignature';
+import type { ElectronicSignature } from '@/components/legacy-esign/securityTypes';
+import type { SignatureRequiredAction } from '@/components/legacy-esign/regulatoryCompliance';
+
+/* SignatureMeaning is the 21 CFR Part 11 §11.50(b) meaning enum.
+   Defined locally here because securityTypes treats `meaning` as a free
+   string on the ElectronicSignature record, but governed-action UX needs
+   a closed set so the meaning chip renders deterministically. */
+export type SignatureMeaning =
+  | 'authorship'
+  | 'review'
+  | 'approval'
+  | 'verification'
+  | 'amendment'
+  | 'release';
 
 export interface GovernedActionContext {
   reason: string;

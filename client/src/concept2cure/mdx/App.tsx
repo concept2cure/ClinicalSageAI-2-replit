@@ -37,6 +37,7 @@ import { MDX_STUBS, type AnaMode } from './data/nav';
 import { MDX_PROGRAMS, type Program } from './data/programs';
 import { EDITOR_PROGRAM } from './data/editor';
 import { useAnaChat } from '../components/ana/useAnaChat';
+import { useMdxPrograms } from './hooks/useMdxPrograms';
 
 const HERE_LABEL: Record<string, string> = {
   overview:       'Overview',
@@ -105,6 +106,13 @@ export function App({ initialNav, projectName }: AppProps = {}) {
   const [selectedProgram, setSelectedProgram] = React.useState<Program | null>(null);
   const [cmdkOpen, setCmdkOpen] = React.useState(false);
 
+  /* Single source of truth for the program list — feeds TabBar counts,
+     the Overview surface, and pathway-default lookup below. Falls back to
+     the kit fixture only during the initial fetch / on error so the shell
+     doesn't render with zero counts. */
+  const liveProgramsResult = useMdxPrograms();
+  const programs: Program[] = liveProgramsResult.programs ?? MDX_PROGRAMS;
+
   // First-visit discovery — open AnA once.
   React.useEffect(() => {
     if (typeof localStorage === 'undefined') return;
@@ -149,12 +157,12 @@ export function App({ initialNav, projectName }: AppProps = {}) {
 
   const programForContext = React.useMemo<Program | null>(() => {
     if (selectedProgram) return selectedProgram;
-    if (activeNav === 'k510') return MDX_PROGRAMS[0];
-    if (activeNav === 'pma') return MDX_PROGRAMS[2];
-    if (activeNav === 'cer') return MDX_PROGRAMS[3];
-    if (activeNav === 'project-home') return MDX_PROGRAMS[0];
+    if (activeNav === 'k510')         return programs.find(p => p.pathway === 'k510') ?? null;
+    if (activeNav === 'pma')          return programs.find(p => p.pathway === 'pma')  ?? null;
+    if (activeNav === 'cer')          return programs.find(p => p.pathway === 'cer')  ?? null;
+    if (activeNav === 'project-home') return programs[0] ?? null;
     return null;
-  }, [activeNav, selectedProgram]);
+  }, [activeNav, selectedProgram, programs]);
 
   // ─── AnA chat — wired to the real gateway ──────────────────────────
   // Mirrors the Phase 1 home wiring: useAnaChat owns the SSE round-trip
@@ -225,10 +233,10 @@ export function App({ initialNav, projectName }: AppProps = {}) {
         surface = <K510Surface program={programForContext} onAskAna={askAna} onOpenEditor={openEditor} />;
         break;
       case 'pma':
-        surface = <PmaSurface onAskAna={askAna} onOpenEditor={() => setActiveNav('pma-editor')} />;
+        surface = <PmaSurface program={programForContext} onAskAna={askAna} onOpenEditor={() => setActiveNav('pma-editor')} />;
         break;
       case 'cer':
-        surface = <CerSurface onAskAna={askAna} />;
+        surface = <CerSurface program={programForContext} onAskAna={askAna} />;
         break;
       case 'predicate':
         surface = <PrecedentSurface onAskAna={askAna} />;
@@ -264,6 +272,7 @@ export function App({ initialNav, projectName }: AppProps = {}) {
       case 'cer-workbench':
         surface = (
           <CerWorkbench
+            program={programForContext}
             onAskAna={askAna}
             onOpenEditor={() => setActiveNav('cer-editor')}
           />
@@ -273,7 +282,7 @@ export function App({ initialNav, projectName }: AppProps = {}) {
         surface = <PreSubManager onAskAna={askAna} />;
         break;
       default:
-        surface = <Overview onOpenProgram={openProgram} onAskAna={askAna} />;
+        surface = <Overview programs={programs} onOpenProgram={openProgram} onAskAna={askAna} />;
     }
   }
 
@@ -335,7 +344,7 @@ export function App({ initialNav, projectName }: AppProps = {}) {
               program={programForContext}
               onOpenPalette={() => setCmdkOpen(true)}
             />
-            <TabBar activeNav={activeNav} setActiveNav={setActiveNav} />
+            <TabBar activeNav={activeNav} setActiveNav={setActiveNav} programs={programs} />
           </>
         )}
         {inEditor ? (

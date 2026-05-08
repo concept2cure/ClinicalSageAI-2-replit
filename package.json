@@ -76,6 +76,8 @@
     "db:seed": "node scripts/seed-ga-demo.mjs",
     "db:seed:admin": "node scripts/seed-admin.mjs",
     "db:seed:mdx-beta": "node scripts/seed-mdx-beta.mjs",
+    "db:seed:mdx-content": "node scripts/seed-mdx-content.mjs",
+    "db:seed:mdx-templates": "node scripts/seed-mdx-templates.mjs",
     "audit:archive": "tsx scripts/run-audit-archive.mjs",
     "audit:verify:24h": "node scripts/run-chain-verify.mjs --window=24h",
     "audit:verify:full": "node scripts/run-chain-verify.mjs --window=full",

@@ -26,6 +26,9 @@ import {
   VAULT_FOLDERS,
   VAULT_VERSIONS,
 } from '../data/workbench';
+import { useSubmissions, useSubmissionDetail } from '../hooks/useSubmissions';
+import { useWorkbenchTasks, useWorkbenchTemplates, useWorkbenchValidation } from '../hooks/useWorkbench';
+import { useMdxPrograms } from '../hooks/useMdxPrograms';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tasks
@@ -38,8 +41,16 @@ export interface WorkbenchProps {
 export function TasksSurface({ onAskAna }: WorkbenchProps) {
   const [view, setView] = React.useState<'board' | 'list'>('board');
   const [owner, setOwner] = React.useState<'all' | 'JC'>('all');
+
+  /* Live tasks from /api/submission-ops/workload (c2c_project_work_items).
+     Falls back to the kit fixture during load and on error so the Kanban
+     never renders with empty columns. */
+  const live = useWorkbenchTasks();
+  const sourceTasks = live.tasks ?? TASKS;
+  const sourceMetrics = live.metrics ?? TASKS_METRICS;
+
   const byCol = (id: string) =>
-    TASKS.filter(t => t.col === id && (owner === 'all' || t.assignee === owner));
+    sourceTasks.filter(t => t.col === id && (owner === 'all' || t.assignee === owner));
 
   return (
     <>
@@ -75,7 +86,7 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
       </div>
 
       <div className="metrics-row">
-        {TASKS_METRICS.map((m, i) => (
+        {sourceMetrics.map((m, i) => (
           <div key={i} className="metric-card" data-tone={m.tone || ''}>
             <div className="metric-label">{m.label}</div>
             <div className="metric-val">
@@ -156,7 +167,7 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
             <div>Assignee</div>
             <div>Cmt</div>
           </div>
-          {TASKS.filter(t => owner === 'all' || t.assignee === owner).map(t => (
+          {sourceTasks.filter(t => owner === 'all' || t.assignee === owner).map(t => (
             <div
               key={t.id}
               className="ctable-row"
@@ -452,7 +463,18 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
   const [sev, setSev] = React.useState<'all' | 'err' | 'warn'>('all');
   const [prog, setProg] = React.useState<string>('all');
 
-  const rules = VALIDATION_RULES.filter(
+  /* Live validation: per-program readiness matrix derived by joining
+     /api/submission-ops/blockers with the live program list, plus the
+     full rules table (each blocker becomes one row). Falls back to the
+     kit fixture during load + on error. */
+  const programsState = useMdxPrograms();
+  const programsList = programsState.programs ?? [];
+  const validation = useWorkbenchValidation(programsList);
+  const sourceRules    = validation.rules    ?? VALIDATION_RULES;
+  const sourcePrograms = validation.programs ?? VALIDATION_PROGRAMS;
+  const sourceSummary  = validation.summary  ?? VALIDATION_SUMMARY;
+
+  const rules = sourceRules.filter(
     r =>
       (sev === 'all' || r.severity === sev) &&
       (prog === 'all' || r.prog === prog),
@@ -473,7 +495,7 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
             className="btn ghost small"
             onClick={() => {
               const headers = ['Severity', 'Rule', 'Program', 'Section', 'Category', 'Message', 'Since'];
-              const rows = VALIDATION_RULES.map(r => [r.severity, r.id, r.prog, r.sect, r.category, r.msg, r.since]);
+              const rows = sourceRules.map(r => [r.severity, r.id, r.prog, r.sect, r.category, r.msg, r.since]);
               const csv = [headers, ...rows]
                 .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
                 .join('\r\n');
@@ -500,7 +522,7 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
       </div>
 
       <div className="metrics-row">
-        {VALIDATION_SUMMARY.map((m, i) => (
+        {sourceSummary.map((m, i) => (
           <div key={i} className="metric-card" data-tone={m.tone || ''}>
             <div className="metric-label">{m.label}</div>
             <div className="metric-val">
@@ -518,7 +540,7 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
           <span className="section-sub">Column order · errors · warnings · pass</span>
         </div>
         <div className="val-matrix">
-          {VALIDATION_PROGRAMS.map(p => (
+          {sourcePrograms.map(p => (
             <button
               key={p.id}
               className="val-prog-card"
@@ -605,12 +627,40 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
-  const [selected, setSelected] = React.useState('s1');
+  const [selected, setSelected] = React.useState<string | null>(null);
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'active' | 'blocked' | 'complete'>('all');
-  const sel = SUBMISSIONS.find(s => s.id === selected);
+
+  /* Live submissions from /api/submission-ops/packages. Falls back to the
+     kit fixture during the initial fetch and on error so the pipeline
+     pane doesn't render with zero counts. When live data returns zero,
+     the empty state below is intentional. */
+  const live = useSubmissions();
+  const sourceSubmissions = live.submissions ?? SUBMISSIONS;
+
+  /* Default selection re-syncs to the first row of the live list when it
+     arrives — avoids clicking onto a stale fixture id. */
+  React.useEffect(() => {
+    if (!sourceSubmissions.length) return;
+    const stillExists = selected != null && sourceSubmissions.some((s) => s.id === selected);
+    if (!stillExists) setSelected(sourceSubmissions[0].id);
+  }, [sourceSubmissions, selected]);
+
+  /* Per-package gate + activity log. The list endpoint omits these (they
+     come from /readiness and /milestones), so the detail hook fires when
+     a row is selected and merges its results into `sel`. */
+  const { gate: liveGate, log: liveLog } = useSubmissionDetail(selected);
+  const baseSel = sourceSubmissions.find((s) => s.id === selected);
+  const sel = baseSel
+    ? {
+        ...baseSel,
+        gate: liveGate ?? baseSel.gate,
+        log:  liveLog  ?? baseSel.log,
+      }
+    : undefined;
+
   const visible = statusFilter === 'all'
-    ? SUBMISSIONS
-    : SUBMISSIONS.filter(s => s.status === statusFilter);
+    ? sourceSubmissions
+    : sourceSubmissions.filter(s => s.status === statusFilter);
   const cycleFilter = () => {
     const order: Array<'all' | 'active' | 'blocked' | 'complete'> = ['all', 'active', 'blocked', 'complete'];
     setStatusFilter(order[(order.indexOf(statusFilter) + 1) % order.length]);
@@ -655,7 +705,7 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
         </div>
         <div className="sub-pipeline">
           {SUBMISSION_PIPELINE.map((st, i) => {
-            const count = SUBMISSIONS.filter(s => s.stage === st.id).length;
+            const count = sourceSubmissions.filter(s => s.stage === st.id).length;
             return (
               <div key={st.id} className="sub-stage">
                 <div className="sub-stage-num">{String(i + 1).padStart(2, '0')}</div>
@@ -672,13 +722,29 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
         <div className="section-head">
           <h2>Active submissions</h2>
           <span className="section-sub">
-            {SUBMISSIONS.length} total ·{' '}
-            {SUBMISSIONS.filter(s => s.status === 'active').length} active ·{' '}
-            {SUBMISSIONS.filter(s => s.status === 'blocked').length} blocked
+            {sourceSubmissions.length} total ·{' '}
+            {sourceSubmissions.filter(s => s.status === 'active').length} active ·{' '}
+            {sourceSubmissions.filter(s => s.status === 'blocked').length} blocked
           </span>
         </div>
         <div className="sub-layout">
           <div className="sub-list">
+            {live.submissions !== null && live.submissions.length === 0 && (
+              <div
+                style={{
+                  padding: '24px 16px',
+                  textAlign: 'center',
+                  fontSize: 12,
+                  color: 'var(--text-300)',
+                }}
+              >
+                <div style={{ fontWeight: 600, color: 'var(--text-200)', marginBottom: 4 }}>
+                  No submissions yet
+                </div>
+                Packages you create appear here. Use "New submission" above to start your first FDA
+                ESG · notified body · EU MDR transmittal.
+              </div>
+            )}
             {visible.map(s => (
               <button
                 key={s.id}
@@ -815,6 +881,11 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function TemplatesSurface({ onAskAna }: WorkbenchProps) {
+  /* Live templates from /api/templates (already aggregates indTemplates +
+     documentTemplates + ectdTemplates server-side). Falls back to fixture
+     during load + on error. */
+  const live = useWorkbenchTemplates();
+  const sourceTemplates = live.templates ?? TEMPLATES;
   return (
     <>
       <div className="page-header">
@@ -840,7 +911,7 @@ export function TemplatesSurface({ onAskAna }: WorkbenchProps) {
         </div>
       </div>
       <div className="tpl-grid">
-        {TEMPLATES.map(t => (
+        {sourceTemplates.map(t => (
           <button
             key={t.id}
             className="tpl-card"

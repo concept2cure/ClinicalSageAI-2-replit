@@ -23,6 +23,7 @@ import {
   unifiedDocuments,
   documentAuditLogs,
 } from '../../../shared/schema/unified_workflow';
+import { users } from '../../../shared/schema';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -80,10 +81,19 @@ export interface PendingApproval {
   documentId: number;
   documentTitle: string;
   stepName: string;
+  /** Human-readable summary of what the step approves — pulled from
+   *  workflow_steps.description if set, falls back to stepName. */
+  stepDescription: string;
   stepOrder: number;
   assignedTo: string[];
   requiredActions: string[];
   workflowStartedAt: Date;
+  /** Workflow initiator's user id (string form, matches workflows.startedBy column). */
+  requestedByUserId: string;
+  /** Workflow initiator's display name (joined from users.name); empty when not resolvable. */
+  requestedByName: string;
+  /** Optional due date sourced from workflows.metadata.due if the caller set one. */
+  dueDate: Date | null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -418,7 +428,25 @@ export class ApprovalOrchestrator {
 
     if (userApprovals.length === 0) return [];
 
-    // Enrich with document titles and step names
+    // Pre-resolve initiator names in a single round-trip (instead of per-approval)
+    const initiatorIds = Array.from(
+      new Set(
+        activeWorkflows
+          .map(w => Number(w.startedBy))
+          .filter(n => Number.isFinite(n) && n > 0),
+      ),
+    );
+    const initiatorRows = initiatorIds.length
+      ? await db
+          .select({ id: users.id, name: users.name })
+          .from(users)
+          .where(inArray(users.id, initiatorIds))
+      : [];
+    const initiatorById = new Map<number, string>(
+      initiatorRows.map(r => [r.id, r.name]),
+    );
+
+    // Enrich with document titles and step names + human initiator name + due date
     const results: PendingApproval[] = [];
     for (const approval of userApprovals) {
       const wf = activeWorkflows.find(w => w.id === approval.workflowId);
@@ -430,11 +458,25 @@ export class ApprovalOrchestrator {
         .from(unifiedDocuments)
         .where(eq(unifiedDocuments.id, wf.documentId));
 
-      // Get step name
+      // Get step name + description
       const [step] = await db
-        .select({ name: workflowSteps.name })
+        .select({ name: workflowSteps.name, description: workflowSteps.description })
         .from(workflowSteps)
         .where(eq(workflowSteps.id, approval.stepId));
+
+      const initiatorIdNum = Number(wf.startedBy);
+      const initiatorName = Number.isFinite(initiatorIdNum)
+        ? initiatorById.get(initiatorIdNum) ?? ''
+        : '';
+
+      // Optional due date — surfaced from workflow metadata (e.g. {"due": "2026-05-13"})
+      let dueDate: Date | null = null;
+      const meta = wf.metadata as Record<string, unknown> | null;
+      const rawDue = meta && typeof meta === 'object' ? meta.due ?? meta.dueDate : undefined;
+      if (typeof rawDue === 'string' || typeof rawDue === 'number' || rawDue instanceof Date) {
+        const parsed = new Date(rawDue as string | number | Date);
+        if (!Number.isNaN(parsed.getTime())) dueDate = parsed;
+      }
 
       results.push({
         approvalId: approval.id,
@@ -442,10 +484,14 @@ export class ApprovalOrchestrator {
         documentId: wf.documentId,
         documentTitle: doc?.title || 'Untitled',
         stepName: step?.name || `Step ${approval.stepOrder}`,
+        stepDescription: step?.description || step?.name || `Step ${approval.stepOrder}`,
         stepOrder: approval.stepOrder,
         assignedTo: approval.assignedTo,
         requiredActions: approval.requiredActions,
         workflowStartedAt: wf.startedAt,
+        requestedByUserId: wf.startedBy,
+        requestedByName: initiatorName,
+        dueDate,
       });
     }
 

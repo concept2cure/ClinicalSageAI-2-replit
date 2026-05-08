@@ -15,10 +15,10 @@
 
 import { Router, Request, Response } from 'express';
 import {
-  getClaudeDraftingService,
+  getAnaDraftingService,
   type DocumentDraftRequest,
   type RegulatoryFramework,
-} from '../services/claude/ClaudeDocumentDraftingService';
+} from '../services/ana/AnaDocumentDraftingService';
 import { getGateway } from '../services/ai-gateway/gateway';
 
 const router = Router();
@@ -50,7 +50,7 @@ router.post('/draft', async (req: Request, res: Response) => {
       });
     }
 
-    const service = getClaudeDraftingService();
+    const service = getAnaDraftingService();
     const result = await service.draftDocument({
       framework,
       sectionType,
@@ -108,7 +108,7 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
       'X-Accel-Buffering': 'no',
     });
 
-    const service = getClaudeDraftingService();
+    const service = getAnaDraftingService();
 
     const result = await service.draftDocument({
       framework,
@@ -172,7 +172,7 @@ router.post('/review', async (req: Request, res: Response) => {
       });
     }
 
-    const service = getClaudeDraftingService();
+    const service = getAnaDraftingService();
     const result = await service.reviewCompliance(content, framework, {
       enableThinking: enableThinking ?? true,
       organizationId: (req as any).organizationId,
@@ -204,7 +204,7 @@ router.post('/gap-analysis', async (req: Request, res: Response) => {
       });
     }
 
-    const service = getClaudeDraftingService();
+    const service = getAnaDraftingService();
     const result = await service.analyzeGaps(
       documentContent,
       framework,
@@ -241,7 +241,7 @@ router.post('/vision', async (req: Request, res: Response) => {
       });
     }
 
-    const service = getClaudeDraftingService();
+    const service = getAnaDraftingService();
     const result = await service.analyzeImage({
       imageData,
       mediaType,
@@ -283,7 +283,7 @@ router.post('/batch', async (req: Request, res: Response) => {
       });
     }
 
-    const service = getClaudeDraftingService();
+    const service = getAnaDraftingService();
 
     // Add org/user context to each request
     const enrichedRequests = requests.map((r: any) => ({
@@ -332,7 +332,7 @@ router.post('/quick', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Missing required field: prompt' });
     }
 
-    const service = getClaudeDraftingService();
+    const service = getAnaDraftingService();
     const result = await service.quickComplete(prompt, {
       framework,
       maxTokens,
@@ -365,20 +365,17 @@ router.post('/agent', async (req: Request, res: Response) => {
     }
 
     const { executeAgenticLoop } = await import(
-      '../services/claude/ClaudeToolExecutor'
+      '../services/ana/AnaToolExecutor'
     );
     const { DOCUMENT_DRAFTING_TOOLS } = await import(
-      '../services/claude/ClaudeToolDefinitions'
+      '../services/ana/AnaToolDefinitions'
     );
 
     // Build system prompt
     let system = systemPrompt || 'You are a regulatory affairs expert with access to clinical trial databases, FDA guidance, and literature search tools. Use the available tools to research and provide evidence-based answers.';
-    if (framework) {
-      const { default: draftingService } = await import(
-        '../services/claude/ClaudeDocumentDraftingService'
-      );
-      // Framework context is embedded in the system prompt
-    }
+    /* Framework context is embedded directly in the system prompt below;
+       the dynamic AnaDocumentDraftingService import was unused dead code
+       and was removed. */
 
     const result = await executeAgenticLoop(
       {
@@ -396,7 +393,7 @@ router.post('/agent', async (req: Request, res: Response) => {
         promptCache: { enabled: true, type: 'ephemeral' },
         organizationId: (req as any).organizationId,
         userId: (req as any).userId,
-        callerModule: 'claude-intelligence/agent',
+        callerModule: 'ana-intelligence/agent',
       },
       {
         maxRounds: maxRounds || 5,
@@ -429,7 +426,7 @@ router.post('/agent', async (req: Request, res: Response) => {
  */
 router.get('/tools', async (_req: Request, res: Response) => {
   const { getAvailableTools } = await import(
-    '../services/claude/ClaudeToolExecutor'
+    '../services/ana/AnaToolExecutor'
   );
   res.json({ success: true, data: { tools: getAvailableTools() } });
 });

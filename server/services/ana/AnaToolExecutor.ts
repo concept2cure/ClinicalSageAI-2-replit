@@ -1,11 +1,11 @@
 /**
- * Claude Tool Executor — Agentic Orchestration Loop
+ * AnA Tool Executor — Agentic Orchestration Loop
  *
- * When Claude responds with tool_use blocks, this executor:
- * 1. Extracts the tool calls from Claude's response
+ * When AnA responds with tool_use blocks, this executor:
+ * 1. Extracts the tool calls from AnA's response
  * 2. Executes each tool against real backend services
- * 3. Sends tool results back to Claude
- * 4. Repeats until Claude produces a final text response
+ * 3. Sends tool results back to AnA
+ * 4. Repeats until AnA produces a final text response
  *
  * Integrates with existing platform services:
  * - ClinicalTrials.gov API (via MCP or direct)
@@ -18,9 +18,9 @@ import { getGateway } from '../ai-gateway/gateway';
 import type {
   GatewayRequest,
   GatewayMessage,
-  ClaudeEnhancedResponse,
-  ClaudeToolUse,
-  ClaudeTool,
+  AnaGatewayResponse,
+  AnaToolUse,
+  AnaTool,
   StreamCallback,
 } from '../ai-gateway/types';
 
@@ -558,8 +558,8 @@ registerToolHandler('check_dossier_consistency', async (input: Record<string, un
       excludeArtifactId,
     });
 
-    // Summarize for Claude — keep the response compact. Full divergences
-    // stay in the structured report; the summary gives Claude enough to
+    // Summarize for AnA — keep the response compact. Full divergences
+    // stay in the structured report; the summary gives AnA enough to
     // decide whether to recommend revisions.
     return JSON.stringify({
       verdict: report.verdict,
@@ -1043,6 +1043,537 @@ registerToolHandler('fetch_template_and_fill', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Native python-docx authoring handler — runs
+// workers/artifact-compute/docx-python-runtime.py inside the isolated compute
+// worker (no network, bounded timeout). Returns a real python-docx-authored
+// .docx with configured fonts, margins, headers, footers, headings, lists,
+// tables, page breaks, and inline images. When output_format='pdf', chains
+// the result through headless LibreOffice for native Word→PDF fidelity.
+//
+// AnA's canonical "produce a paying-client-grade document" path. Use over
+// generate_document for regulatory deliverables that must look like real
+// Word output.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('author_docx_native', async (input, ctx) => {
+  const title    = typeof input.title === 'string' ? input.title.trim() : '';
+  const content  = typeof input.content === 'string' ? input.content : '';
+  const fmt      =
+    input.output_format === 'pdf' || input.output_format === 'docx'
+      ? input.output_format
+      : 'docx';
+  const compress = input.pdf_compress === true;
+  const allowedQ = new Set(['screen', 'ebook', 'printer', 'prepress', 'default']);
+  const quality =
+    typeof input.pdf_quality === 'string' && allowedQ.has(input.pdf_quality)
+      ? (input.pdf_quality as 'screen' | 'ebook' | 'printer' | 'prepress' | 'default')
+      : 'ebook';
+  const images =
+    input.images && typeof input.images === 'object'
+      ? (input.images as Record<string, string>)
+      : undefined;
+
+  if (!title) {
+    return JSON.stringify({ error: 'author_docx_native requires title (string).' });
+  }
+  if (!content || content.length < 8) {
+    return JSON.stringify({
+      error: 'author_docx_native requires content (string ≥ 8 chars).',
+    });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({
+      error: 'author_docx_native requires tenant context (organizationId).',
+    });
+  }
+
+  try {
+    const { runIsolatedCompute } = await import('../compute/workerClient.js');
+    const { promises: fs } = await import('fs');
+    const path = await import('path');
+    const { randomUUID } = await import('crypto');
+
+    /* runIsolatedCompute spawns the python-docx subprocess in an ephemeral
+       tempdir, parses output JSON, returns the .docx as a Buffer. The
+       intent shape requires project/org/user identifiers — we surface
+       them from the tool context and use a default surface key when the
+       caller hasn't bound to a specific surface. */
+    const outputs = await runIsolatedCompute({
+      projectId:       ctx.projectId ?? 0,
+      organizationId:  ctx.organizationId,
+      requestedById:   ctx.userId ?? 0,
+      surfaceKey:      'ri_copilot',
+      intentType:      'docx_generation',
+      title,
+      content:         images
+        ? content // images are passed via metadata.images below
+        : content,
+      format:          'docx',
+      metadata:        images ? { images } : undefined,
+    });
+
+    const docx = outputs[0];
+    if (!docx || docx.outputType !== 'docx') {
+      return JSON.stringify({
+        error: 'author_docx_native: python-docx worker returned no docx output.',
+      });
+    }
+
+    /* Persist the .docx to a tempdir so downstream tools (and the user)
+       have a stable path. The compute worker itself uses an ephemeral
+       tempdir that gets cleaned; we move our copy into the builder
+       tempdir so it persists for the session. */
+    const outDir = path.resolve(process.cwd(), 'tmp', 'docbuilder', randomUUID().slice(0, 8));
+    await fs.mkdir(outDir, { recursive: true });
+    const docxPath = path.join(outDir, docx.fileName);
+    await fs.writeFile(docxPath, docx.buffer);
+
+    /* PDF requested → chain through LibreOffice. The .docx is preserved
+       as the editable source; the PDF is a downstream rendering. */
+    if (fmt === 'pdf') {
+      const { runDocxPdfPipeline } = await import('../docx-pdf-pipeline.js');
+      const pipeline = await runDocxPdfPipeline({
+        inputDocxPath: docxPath,
+        compress,
+        quality,
+      });
+      const pdfStat = await fs.stat(pipeline.finalPdf);
+      return JSON.stringify({
+        ok:           true,
+        engine:       'python-docx + libreoffice',
+        docxPath,
+        pdfPath:      pipeline.finalPdf,
+        sizeBytes:    pdfStat.size,
+        compression:  pipeline.compression ?? null,
+        message: `Authored ${docx.fileName} via python-docx and converted to PDF via headless LibreOffice. PDF: ${pipeline.finalPdf}.`,
+      });
+    }
+
+    return JSON.stringify({
+      ok:        true,
+      engine:    'python-docx',
+      docxPath,
+      sizeBytes: docx.buffer.length,
+      fileName:  docx.fileName,
+      message: `Authored ${docx.fileName} (${Math.round(docx.buffer.length / 1024)}KB) via python-docx isolated worker.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `author_docx_native failed: ${
+        err instanceof Error ? err.message : String(err)
+      }. Verify python3 and the docx package are available on the host (see services/Dockerfile).`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DOCX → PDF handler — wraps the existing Python pipeline
+// (server/scripts/docx_pdf_pipeline.py → soffice --headless --convert-to pdf).
+// AnA invokes this after authoring a .docx to produce the canonical
+// Word-grade PDF deliverable. No reportlab, no flat render — the .docx is
+// the source of truth, the PDF is its native rendering.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('convert_docx_to_pdf', async (input) => {
+  const inputDocxPath = typeof input.input_docx_path === 'string' ? input.input_docx_path : '';
+  if (!inputDocxPath) {
+    return JSON.stringify({
+      error: 'convert_docx_to_pdf requires input_docx_path (string).',
+    });
+  }
+  const outputPdfPath =
+    typeof input.output_pdf_path === 'string' ? input.output_pdf_path : undefined;
+  const compress = input.compress === true;
+  const allowedQ = new Set(['screen', 'ebook', 'printer', 'prepress', 'default']);
+  const quality =
+    typeof input.quality === 'string' && allowedQ.has(input.quality)
+      ? (input.quality as 'screen' | 'ebook' | 'printer' | 'prepress' | 'default')
+      : 'ebook';
+
+  try {
+    const { runDocxPdfPipeline } = await import('../docx-pdf-pipeline.js');
+    const { promises: fs } = await import('fs');
+    const result = await runDocxPdfPipeline({
+      inputDocxPath,
+      outputPdfPath,
+      compress,
+      quality,
+    });
+    const stat = await fs.stat(result.finalPdf);
+    return JSON.stringify({
+      ok:               true,
+      inputDocx:        result.inputDocx,
+      convertedPdf:     result.convertedPdf,
+      finalPdf:         result.finalPdf,
+      sizeBytes:        stat.size,
+      compression:      result.compression ?? null,
+      message: `DOCX → PDF complete via headless LibreOffice. PDF: ${result.finalPdf}${
+        result.compression ? ` (${result.compression.compressedSizeBytes} bytes after ${quality} compression)` : ''
+      }.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `convert_docx_to_pdf failed: ${
+        err instanceof Error ? err.message : String(err)
+      }. Verify that python3 and libreoffice (soffice) are available on the host.`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MDX mutation handlers — Q-Sub creation, commitment rollover, program
+// metadata binding. Each routes through the existing service layer so the
+// tenant-scoping + audit + business rules stay in one place; the handler
+// is just an adapter between AnA's input shape and the service signature.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+registerToolHandler('create_q_sub', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'create_q_sub requires tenant context (organizationId).' });
+  }
+  const programId = typeof input.program_id === 'string' ? input.program_id : '';
+  const qSubType  = typeof input.q_sub_type === 'string' ? input.q_sub_type : '';
+  const title     = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!UUID_RE.test(programId)) {
+    return JSON.stringify({ error: 'create_q_sub: program_id must be a UUID.' });
+  }
+  const allowedTypes = new Set(['presub', 'sir', 'srd', 'agree', 'info']);
+  if (!allowedTypes.has(qSubType)) {
+    return JSON.stringify({
+      error: `create_q_sub: q_sub_type must be one of ${Array.from(allowedTypes).join(', ')}.`,
+    });
+  }
+  if (!title) {
+    return JSON.stringify({ error: 'create_q_sub: title is required.' });
+  }
+
+  let targetDate: Date | null = null;
+  if (typeof input.target_date === 'string' && input.target_date.length > 0) {
+    const d = new Date(input.target_date);
+    if (Number.isNaN(d.getTime())) {
+      return JSON.stringify({ error: 'create_q_sub: target_date must be ISO-8601.' });
+    }
+    targetDate = d;
+  }
+
+  try {
+    const { createQSubmission, TenantAccessError } = await import(
+      '../q-sub/q-sub.service.js'
+    );
+    const row = await createQSubmission(ctx.organizationId, {
+      programId,
+      qSubType: qSubType as 'presub' | 'sir' | 'srd' | 'agree' | 'info',
+      title,
+      fdaTeam:   typeof input.fda_team === 'string' ? input.fda_team : null,
+      targetDate,
+      summary:   typeof input.summary === 'string' ? input.summary : null,
+      createdBy: ctx.userId !== null && ctx.userId !== undefined ? String(ctx.userId) : null,
+    });
+    return JSON.stringify({
+      ok:        true,
+      qSubId:    row.id,
+      qNumber:   row.qNumber,
+      stage:     row.stage,
+      programId: row.programId,
+      message:   `Created ${row.qNumber} (${row.stage}) for program ${row.programId}.`,
+    });
+  } catch (err: unknown) {
+    const TenantAccessErrorClass = (await import('../q-sub/q-sub.service.js')).TenantAccessError;
+    if (err instanceof TenantAccessErrorClass) {
+      return JSON.stringify({
+        error: `create_q_sub: ${err.message}. The program does not belong to this organization.`,
+      });
+    }
+    return JSON.stringify({
+      error: `create_q_sub failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('update_q_sub_commitment_rolled_in', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({
+      error: 'update_q_sub_commitment_rolled_in requires tenant context (organizationId).',
+    });
+  }
+  const commitmentId = typeof input.commitment_id === 'string' ? input.commitment_id : '';
+  const rolledIn = input.rolled_in === true;
+  if (!UUID_RE.test(commitmentId)) {
+    return JSON.stringify({
+      error: 'update_q_sub_commitment_rolled_in: commitment_id must be a UUID.',
+    });
+  }
+  if (typeof input.rolled_in !== 'boolean') {
+    return JSON.stringify({
+      error: 'update_q_sub_commitment_rolled_in: rolled_in (boolean) is required.',
+    });
+  }
+
+  try {
+    const { setCommitmentRolledIn, TenantAccessError } = await import(
+      '../q-sub/q-sub.service.js'
+    );
+    const updated = await setCommitmentRolledIn(ctx.organizationId, {
+      commitmentId,
+      rolledIn,
+      rolledInBy:
+        rolledIn && ctx.userId !== null && ctx.userId !== undefined ? String(ctx.userId) : null,
+    });
+    return JSON.stringify({
+      ok:           true,
+      commitmentId: updated.id,
+      rolledIn:     updated.rolledIn,
+      message: `Marked commitment ${updated.id} as ${rolledIn ? 'rolled-in' : 'not rolled-in'}.`,
+    });
+  } catch (err: unknown) {
+    const TenantAccessErrorClass = (await import('../q-sub/q-sub.service.js')).TenantAccessError;
+    if (err instanceof TenantAccessErrorClass) {
+      return JSON.stringify({ error: `update_q_sub_commitment_rolled_in: ${err.message}.` });
+    }
+    return JSON.stringify({
+      error: `update_q_sub_commitment_rolled_in failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+/* link_program_clinical_study + set_program_metadata both write to
+   regulatory_programs.metadata (jsonb). The first is a typed convenience
+   over the second — we keep them separate for clarity in AnA's tool
+   selection ("bind a study" vs. "set arbitrary metadata"). */
+
+async function mergeProgramMetadata(
+  organizationId: number,
+  programId: string,
+  patch: Record<string, unknown>,
+): Promise<{ programId: string; metadata: Record<string, unknown> }> {
+  const { getPool } = await import('../../db.js');
+  const pool = getPool();
+  /* The COALESCE handles the rare row that has metadata=NULL; jsonb_strip_nulls
+     trims any keys the caller explicitly passed as null (delete semantics). */
+  const { rows } = await pool.query<{ id: string; metadata: Record<string, unknown> }>(
+    `UPDATE regulatory_programs
+        SET metadata   = jsonb_strip_nulls(COALESCE(metadata, '{}'::jsonb) || $3::jsonb),
+            updated_at = NOW()
+      WHERE id = $1 AND organization_id = $2
+      RETURNING id, metadata`,
+    [programId, organizationId, JSON.stringify(patch)],
+  );
+  if (rows.length === 0) {
+    throw new Error('program not found in this organization');
+  }
+  return { programId: rows[0].id, metadata: rows[0].metadata };
+}
+
+registerToolHandler('link_program_clinical_study', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({
+      error: 'link_program_clinical_study requires tenant context (organizationId).',
+    });
+  }
+  const programId = typeof input.program_id === 'string' ? input.program_id : '';
+  const studyId   = typeof input.clinical_study_id === 'string' ? input.clinical_study_id : '';
+  if (!UUID_RE.test(programId)) {
+    return JSON.stringify({ error: 'link_program_clinical_study: program_id must be a UUID.' });
+  }
+  if (!UUID_RE.test(studyId)) {
+    return JSON.stringify({
+      error: 'link_program_clinical_study: clinical_study_id must be a UUID.',
+    });
+  }
+  try {
+    const r = await mergeProgramMetadata(ctx.organizationId, programId, { clinicalStudyId: studyId });
+    return JSON.stringify({
+      ok:              true,
+      programId:       r.programId,
+      clinicalStudyId: studyId,
+      message:
+        `Bound program ${r.programId} to clinical_ops.studies ${studyId}. PMA trial-metrics will now resolve against this study.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `link_program_clinical_study failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('set_program_metadata', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({
+      error: 'set_program_metadata requires tenant context (organizationId).',
+    });
+  }
+  const programId = typeof input.program_id === 'string' ? input.program_id : '';
+  const meta = input.metadata && typeof input.metadata === 'object'
+    ? (input.metadata as Record<string, unknown>)
+    : null;
+  if (!UUID_RE.test(programId)) {
+    return JSON.stringify({ error: 'set_program_metadata: program_id must be a UUID.' });
+  }
+  if (!meta || Array.isArray(meta)) {
+    return JSON.stringify({ error: 'set_program_metadata: metadata (object) is required.' });
+  }
+  /* Defense in depth: refuse to write keys the caller can't possibly need
+     to reach here — id, organization_id, etc. are owned by the row, not
+     the metadata jsonb. */
+  for (const k of Object.keys(meta)) {
+    if (k.startsWith('_') || k === 'id' || k === 'organization_id') {
+      return JSON.stringify({
+        error: `set_program_metadata: key '${k}' is reserved.`,
+      });
+    }
+  }
+  try {
+    const r = await mergeProgramMetadata(ctx.organizationId, programId, meta);
+    return JSON.stringify({
+      ok:        true,
+      programId: r.programId,
+      metadata:  r.metadata,
+      message:   `Merged ${Object.keys(meta).length} key(s) into program metadata.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `set_program_metadata failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MDX kit-section write-back handler — closes the loop between AnA's drafting
+// and the kit's section editors. Persists drafted content into
+// cerv2_510k_sections with draft_source='ana' so the MDX surfaces can render
+// the "drafted by AnA — accept / refine" affordance.
+//
+// Audit-logged via auditService — audit_logs row records the action so 21 CFR
+// Part 11 trail captures every AI-authored section edit.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const KIT_SECTION_DEFAULT_PCT: Record<string, number> = {
+  drafting:           60,
+  ready_for_review:   85,
+  in_review:          90,
+};
+
+registerToolHandler('write_kit_section', async (input, ctx) => {
+  const sectionKey = typeof input.section_key === 'string' ? input.section_key.trim() : '';
+  const content    = typeof input.content === 'string' ? input.content : '';
+  const status     = typeof input.status === 'string' ? input.status : 'drafting';
+  const note       = typeof input.summary_note === 'string' ? input.summary_note.trim() : '';
+  const explicitPct =
+    typeof input.completion_percentage === 'number' ? input.completion_percentage : null;
+
+  if (!sectionKey) {
+    return JSON.stringify({ error: 'write_kit_section requires section_key (string).' });
+  }
+  if (!content || content.length < 40) {
+    return JSON.stringify({
+      error:
+        'write_kit_section requires content (string ≥ 40 chars). Pass the finished drafted prose, not raw notes.',
+    });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({
+      error: 'write_kit_section requires tenant context (organizationId) — nothing was written.',
+    });
+  }
+  const allowedStatus = new Set(['drafting', 'ready_for_review', 'in_review']);
+  if (!allowedStatus.has(status)) {
+    return JSON.stringify({
+      error: `write_kit_section: status must be one of drafting | ready_for_review | in_review (got ${status}).`,
+    });
+  }
+
+  const completionPct =
+    explicitPct !== null && Number.isFinite(explicitPct)
+      ? Math.max(0, Math.min(100, Math.round(explicitPct)))
+      : KIT_SECTION_DEFAULT_PCT[status] ?? 60;
+
+  try {
+    const { getPool } = await import('../../db.js');
+    const pool = getPool();
+
+    /* The migration 20260506 creates a unique index on (organization_id,
+       section_key); the seed populates one row per key. We update in place
+       rather than insert to preserve display_order, level, parent linkage.
+       If the row doesn't exist we surface a clear error rather than silently
+       creating a free-floating row outside the kit's taxonomy. */
+    const { rows } = await pool.query(
+      `UPDATE cerv2_510k_sections
+          SET content                = $3,
+              status                 = $4,
+              completion_percentage  = $5,
+              draft_source           = 'ana',
+              drafted_at             = NOW(),
+              drafted_summary        = NULLIF($6, ''),
+              accepted_at            = NULL,
+              accepted_by            = NULL,
+              updated_at             = NOW()
+        WHERE organization_id = $1 AND section_key = $2
+        RETURNING id, section_number, section_title, section_key, status,
+                  completion_percentage AS "completionPercentage",
+                  drafted_at AS "draftedAt"`,
+      [ctx.organizationId, sectionKey, content, status, completionPct, note],
+    );
+
+    if (rows.length === 0) {
+      return JSON.stringify({
+        error: `No section found for organization with section_key='${sectionKey}'. The kit's section taxonomy must be seeded first (run \`npm run db:seed:mdx-content\`).`,
+      });
+    }
+
+    const row = rows[0];
+
+    /* Audit log — fire-and-forget, never block the response. The auditService
+       singleton handles tamper-proof chaining + Drizzle persistence. */
+    try {
+      const { auditLog } = await import('../auditService.js');
+      auditLog({
+        tenantId:     ctx.organizationId,
+        userId:       ctx.userId ?? null,
+        action:       'KIT_SECTION_DRAFTED_BY_ANA',
+        resource:     'cerv2_510k_sections',
+        resourceId:   String(row.id),
+        details: {
+          sectionKey,
+          sectionNumber: row.section_number,
+          sectionTitle:  row.section_title,
+          status:        row.status,
+          completionPercentage: row.completionPercentage,
+          contentLength: content.length,
+          summary:       note || null,
+        },
+      });
+    } catch {
+      /* never block the tool response on audit failure */
+    }
+
+    return JSON.stringify({
+      ok:                  true,
+      id:                  row.id,
+      sectionNumber:       row.section_number,
+      sectionTitle:        row.section_title,
+      sectionKey:          row.section_key,
+      status:              row.status,
+      completionPercentage: row.completionPercentage,
+      draftedAt:           row.draftedAt,
+      message: `Drafted ${row.section_title} written into the kit (${row.completionPercentage}% complete). The user will see the draft inside the editor with an accept/refine affordance.`,
+    });
+  } catch (err: unknown) {
+    const code = (err as { code?: string }).code;
+    if (code === '42P01') {
+      return JSON.stringify({
+        error:
+          "Table cerv2_510k_sections doesn't exist. Apply the MDX migrations (npm run db:push) before drafting kit sections.",
+      });
+    }
+    return JSON.stringify({
+      error: `write_kit_section failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // eCTD Module Assembly handler — pure assembly, no AI. Pulls every artifact
 // in the project whose ctd_section starts with the requested module prefix,
 // dedupes by section keeping highest version, and emits via masterDocumentBuilder.
@@ -1357,23 +1888,23 @@ export interface AgenticOptions {
 }
 
 /**
- * Execute a multi-turn agentic loop with Claude.
+ * Execute a multi-turn agentic loop with AnA.
  *
- * Claude can call tools, get results, reason further, call more tools,
+ * AnA can call tools, get results, reason further, call more tools,
  * and eventually produce a final text answer.
  */
 export async function executeAgenticLoop(
   request: GatewayRequest,
   options?: AgenticOptions
-): Promise<ClaudeEnhancedResponse> {
+): Promise<AnaGatewayResponse> {
   const gateway = getGateway();
   const maxRounds = options?.maxRounds || 5;
 
   let currentRequest = { ...request };
-  let finalResponse: ClaudeEnhancedResponse | null = null;
+  let finalResponse: AnaGatewayResponse | null = null;
 
   for (let round = 0; round < maxRounds; round++) {
-    const response = (await gateway.route(currentRequest)) as ClaudeEnhancedResponse;
+    const response = (await gateway.route(currentRequest)) as AnaGatewayResponse;
 
     // If no tool uses, we're done
     if (!response.toolUses || response.toolUses.length === 0) {
@@ -1448,7 +1979,7 @@ export async function executeAgenticLoop(
     // Force a final response without tools
     delete currentRequest.tools;
     delete currentRequest.toolChoice;
-    finalResponse = (await gateway.route(currentRequest)) as ClaudeEnhancedResponse;
+    finalResponse = (await gateway.route(currentRequest)) as AnaGatewayResponse;
   }
 
   return finalResponse;

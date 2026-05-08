@@ -20,6 +20,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
 import JSZip from 'jszip';
+import { runDocxPdfPipeline } from '../docx-pdf-pipeline';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -246,12 +247,31 @@ export class MasterDocumentBuilder {
     });
 
     const safeName = (options.documentTitle || 'document').replace(/[^a-zA-Z0-9._-]/g, '_');
-    const outputPath = join(outputDir, `${safeName}_${buildId}.docx`);
-    await fs.writeFile(outputPath, outputBuffer);
+    const docxPath = join(outputDir, `${safeName}_${buildId}.docx`);
+    await fs.writeFile(docxPath, outputBuffer);
+
+    /* When the caller asked for PDF, convert the .docx through headless
+       LibreOffice (canonical Word→PDF path — see
+       docs/architecture/docx-pipeline-canonical-designation.md). The .docx
+       is the source of truth; the PDF is a downstream rendering with native
+       Word fidelity (fonts, headers/footers, page breaks, tables, styles).
+       We never render PDF directly with reportlab. */
+    if (options.outputFormat === 'pdf') {
+      const pipeline = await runDocxPdfPipeline({ inputDocxPath: docxPath });
+      const pdfStat = await fs.stat(pipeline.finalPdf);
+      return {
+        outputPath: pipeline.finalPdf,
+        format: 'pdf',
+        sizeBytes: pdfStat.size,
+        replacementsApplied,
+        xmlInjectionsApplied,
+        buildDurationMs: Date.now() - startTime,
+      };
+    }
 
     return {
-      outputPath,
-      format: options.outputFormat || 'docx',
+      outputPath: docxPath,
+      format: 'docx',
       sizeBytes: outputBuffer.length,
       replacementsApplied,
       xmlInjectionsApplied,
@@ -338,11 +358,26 @@ export class MasterDocumentBuilder {
     });
 
     const safeName = (options.documentTitle || 'document').replace(/[^a-zA-Z0-9._-]/g, '_');
-    const outputPath = join(outputDir, `${safeName}_${buildId}.docx`);
-    await fs.writeFile(outputPath, outputBuffer);
+    const docxPath = join(outputDir, `${safeName}_${buildId}.docx`);
+    await fs.writeFile(docxPath, outputBuffer);
+
+    /* PDF requested → convert via headless LibreOffice (canonical Word→PDF
+       path). The .docx remains on disk as the editable source. */
+    if (options.outputFormat === 'pdf') {
+      const pipeline = await runDocxPdfPipeline({ inputDocxPath: docxPath });
+      const pdfStat = await fs.stat(pipeline.finalPdf);
+      return {
+        outputPath: pipeline.finalPdf,
+        format: 'pdf',
+        sizeBytes: pdfStat.size,
+        replacementsApplied: 0,
+        xmlInjectionsApplied: options.sections.length,
+        buildDurationMs: Date.now() - startTime,
+      };
+    }
 
     return {
-      outputPath,
+      outputPath: docxPath,
       format: 'docx',
       sizeBytes: outputBuffer.length,
       replacementsApplied: 0,

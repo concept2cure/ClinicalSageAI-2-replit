@@ -18,7 +18,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { getToolHandler, type ToolContext } from '../ClaudeToolExecutor.js';
+import { getToolHandler, type ToolContext } from '../AnaToolExecutor.js';
 
 const NEW_TOOLS = [
   'lookup_regulatory_precedents',

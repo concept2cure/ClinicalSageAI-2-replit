@@ -77,6 +77,15 @@ const serializeSection = (section: any) => {
     sources: sources || {},
     validation_errors: section.validationErrors ?? null,
     validation_status: section.validationStatus ?? null,
+    /* Draft provenance — populated when AnA drafts the section via the
+       write_kit_section tool. The MDX surfaces read these to render the
+       "drafted by AnA — accept / refine" affordance. Null on legacy rows
+       and on rows the user has accepted. */
+    draft_source: section.draftSource ?? null,
+    drafted_at: section.draftedAt ?? null,
+    drafted_summary: section.draftedSummary ?? null,
+    accepted_at: section.acceptedAt ?? null,
+    accepted_by: section.acceptedBy ?? null,
     last_modified: section.updatedAt ?? section.createdAt,
   };
 };
@@ -494,6 +503,137 @@ router.get('/:sectionId/versions', authMiddleware, async (req, res) => {
   } catch (error) {
     logger.error('Failed to fetch versions', { error, sectionId });
     return res.status(500).json({ error: 'Failed to fetch versions' });
+  }
+});
+
+/**
+ * POST /:sectionId/accept-ana-draft — accept an AnA-drafted section.
+ *
+ * Used by the K510Surface / PmaSurface / CerSurface "accept" affordance.
+ * Clears draft_source, stamps accepted_by + accepted_at, optionally accepts
+ * a refined content body. Writes a section-version row + audit_log entry so
+ * the 21 CFR Part 11 trail captures who took the AI draft into review.
+ */
+const acceptAnaDraftSchema = z.object({
+  refined_content: z.string().optional(),
+  status: z
+    .enum(['drafting', 'ready_for_review', 'in_review', 'validated'])
+    .optional(),
+});
+
+router.post('/:sectionId/accept-ana-draft', authMiddleware, async (req, res) => {
+  const organizationId = resolveOrganizationId(req);
+  if (!organizationId) {
+    return res.status(400).json({ error: 'Organization context required' });
+  }
+  const sectionId = Number(req.params.sectionId);
+  if (!Number.isFinite(sectionId)) {
+    return res.status(400).json({ error: 'Invalid section id' });
+  }
+  const parsed = acceptAnaDraftSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Invalid payload', details: parsed.error.flatten() });
+  }
+
+  try {
+    const [existing] = await db
+      .select()
+      .from(cerv2510kSections)
+      .where(
+        and(
+          eq(cerv2510kSections.organizationId, organizationId),
+          eq(cerv2510kSections.id, sectionId),
+        ),
+      )
+      .limit(1);
+    if (!existing) {
+      return res.status(404).json({ error: 'Section not found' });
+    }
+    if (!existing.draftSource) {
+      return res.status(409).json({
+        error:
+          'No AnA draft to accept on this section. The draft has already been accepted, or the section was authored by a human.',
+      });
+    }
+
+    const userId = resolveUserId(req);
+    const acceptedAt = new Date();
+    const nextStatus = parsed.data.status ?? 'ready_for_review';
+    const nextContent = parsed.data.refined_content ?? existing.content ?? '';
+
+    const [updated] = await db
+      .update(cerv2510kSections)
+      .set({
+        content:                nextContent,
+        status:                 nextStatus,
+        draftSource:            null,
+        acceptedAt,
+        acceptedBy:             userId ?? null,
+        updatedAt:              acceptedAt,
+      })
+      .where(
+        and(
+          eq(cerv2510kSections.organizationId, organizationId),
+          eq(cerv2510kSections.id, sectionId),
+        ),
+      )
+      .returning();
+
+    const [versionRow] = await db
+      .select({ maxVersion: sql<number>`max(${cerv2SectionVersions.versionNumber})` })
+      .from(cerv2SectionVersions)
+      .where(
+        and(
+          eq(cerv2SectionVersions.organizationId, organizationId),
+          eq(cerv2SectionVersions.sectionId, sectionId),
+        ),
+      );
+    const nextVersion = Number(versionRow?.maxVersion || 0) + 1;
+
+    await db.insert(cerv2SectionVersions).values({
+      sectionId,
+      organizationId,
+      versionNumber: nextVersion,
+      changeType:    'edited',
+      changeSummary: 'Accepted AnA draft',
+      content:       updated.content ?? '',
+      fieldData:     (existing.sources as any)?.fieldData ?? null,
+      status:        updated.status ?? 'todo',
+      fieldsChanged: parsed.data.refined_content ? ['content', 'status', 'draft_source'] : ['status', 'draft_source'],
+      previousValues: {
+        content:      existing.content ?? '',
+        status:       existing.status ?? 'todo',
+        draft_source: existing.draftSource,
+      },
+      newValues: { ...parsed.data, draft_source: null, accepted_by: userId ?? null },
+      changedBy: userId === null ? undefined : userId,
+      changedByEmail: req.userEmail ?? null,
+      changedByName: (req.user as { name?: string } | undefined)?.name ?? null,
+      ipAddress: req.ip ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+    });
+
+    void auditService.logAction({
+      tenantId: organizationId,
+      userId:   userId === null ? undefined : userId,
+      action:   'section.ana_draft_accepted',
+      resourceType: 'cerv2_510k_section',
+      resourceId:   String(sectionId),
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: {
+        sectionNumber: updated.sectionNumber,
+        sectionKey:    updated.sectionKey,
+        versionNumber: nextVersion,
+        refined:       Boolean(parsed.data.refined_content),
+        status:        updated.status,
+      },
+    });
+
+    return res.json({ section: serializeSection(updated) });
+  } catch (error) {
+    logger.error('Failed to accept AnA draft', { error, sectionId });
+    return res.status(500).json({ error: 'Failed to accept AnA draft' });
   }
 });
 

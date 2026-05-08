@@ -58,7 +58,7 @@ export interface TextBlock {
 export type ContentBlock = TextBlock | ImageBlock;
 
 /** Claude tool definition for agentic workflows */
-export interface ClaudeTool {
+export interface AnaTool {
   name: string;
   description: string;
   input_schema: {
@@ -70,7 +70,7 @@ export interface ClaudeTool {
 
 /**
  * Anthropic server-side tool — executed by Anthropic's infrastructure,
- * not by our local tool dispatcher. Distinguished from {@link ClaudeTool}
+ * not by our local tool dispatcher. Distinguished from {@link AnaTool}
  * by the required `type` field (e.g. `"web_search_20250305"`,
  * `"web_fetch_20260209"`, `"code_execution_20260120"`).
  *
@@ -84,17 +84,17 @@ export interface AnthropicServerTool {
 }
 
 /** Either a custom JSON-schema tool or an Anthropic server-side tool. */
-export type AnyClaudeTool = ClaudeTool | AnthropicServerTool;
+export type AnyAnaTool = AnaTool | AnthropicServerTool;
 
 /** Tool use result from Claude */
-export interface ClaudeToolUse {
+export interface AnaToolUse {
   id: string;
   name: string;
   input: Record<string, unknown>;
 }
 
 /** Tool result to send back to Claude */
-export interface ClaudeToolResult {
+export interface AnaToolResult {
   type: 'tool_result';
   tool_use_id: string;
   content: string;
@@ -121,11 +121,11 @@ export type StreamCallback = (chunk: string, metadata?: {
 }) => void;
 
 /** Claude-enhanced gateway response with thinking and tool use */
-export interface ClaudeEnhancedResponse extends GatewayResponse {
+export interface AnaGatewayResponse extends GatewayResponse {
   /** Extended thinking output (if enabled) */
   thinking?: string;
   /** Tool use requests from Claude */
-  toolUses?: ClaudeToolUse[];
+  toolUses?: AnaToolUse[];
   /** Whether prompt cache was hit */
   cacheHit?: boolean;
   /** Cache creation/read token counts */
@@ -214,7 +214,7 @@ export interface GatewayRequest {
    * code_execution) — the two shapes are distinguished by the presence of
    * a top-level `type` field on server tools.
    */
-  tools?: AnyClaudeTool[];
+  tools?: AnyAnaTool[];
 
   /** Tool choice behavior */
   toolChoice?: 'auto' | 'any' | { type: 'tool'; name: string };
