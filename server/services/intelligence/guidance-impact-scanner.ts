@@ -549,3 +549,378 @@ export async function resolveGuidanceAlert(
 ): Promise<{ ok: boolean; row: any | null }> {
   return transitionAlert(alertId, organizationId, 'resolved', userId);
 }
+
+// ─── Bulk lifecycle transitions ──────────────────────────────────────
+
+export interface BulkTransitionResult {
+  requested: number;
+  matched: number;
+  /** Alert ids that were updated (returned from RETURNING). */
+  updated: string[];
+}
+
+async function bulkTransition(
+  alertIds: string[],
+  organizationId: number,
+  toStatus: 'acknowledged' | 'resolved',
+  userId: number | null
+): Promise<BulkTransitionResult> {
+  if (alertIds.length === 0) {
+    return { requested: 0, matched: 0, updated: [] };
+  }
+  const setClauses: string[] = ['status = $3', 'updated_at = NOW()'];
+  if (toStatus === 'acknowledged') {
+    setClauses.push('acknowledged_at = NOW()');
+    setClauses.push(`acknowledged_by = $4`);
+  } else {
+    setClauses.push('resolved_at = NOW()');
+    setClauses.push(`resolved_by = $4`);
+  }
+  // Only transition rows that aren't already in the target status —
+  // keeps timestamps and actor ids accurate (we don't overwrite an
+  // earlier acknowledger when re-acknowledging).
+  const fromStatuses =
+    toStatus === 'acknowledged' ? ['open'] : ['open', 'acknowledged'];
+  try {
+    const result = await getPool().query(
+      `UPDATE guidance_alerts
+          SET ${setClauses.join(', ')}
+        WHERE id = ANY($1::uuid[])
+          AND organization_id = $2
+          AND status = ANY($5::text[])
+        RETURNING id`,
+      [alertIds, organizationId, toStatus, userId, fromStatuses]
+    );
+    return {
+      requested: alertIds.length,
+      matched: result.rows.length,
+      updated: result.rows.map((r: any) => String(r.id)),
+    };
+  } catch (err: any) {
+    if (err?.code === '42P01') return { requested: alertIds.length, matched: 0, updated: [] };
+    throw err;
+  }
+}
+
+export async function bulkAcknowledgeGuidanceAlerts(
+  alertIds: string[],
+  organizationId: number,
+  userId: number | null
+): Promise<BulkTransitionResult> {
+  return bulkTransition(alertIds, organizationId, 'acknowledged', userId);
+}
+
+export async function bulkResolveGuidanceAlerts(
+  alertIds: string[],
+  organizationId: number,
+  userId: number | null
+): Promise<BulkTransitionResult> {
+  return bulkTransition(alertIds, organizationId, 'resolved', userId);
+}
+
+// ─── Org-scoped alert summary ────────────────────────────────────────
+
+export interface GuidanceAlertsSummary {
+  organizationId: number;
+  asOf: string;
+  bySeverity: Record<GapSeverity, number>;
+  byStatus: Record<AlertStatus, number>;
+  /** open + acknowledged with severity=critical. The ops-critical number. */
+  openCritical: number;
+  totalOpen: number;
+  topGuidanceCodes: Array<{
+    guidanceCode: string;
+    authority: string;
+    openCount: number;
+    severityHighest: GapSeverity | null;
+  }>;
+  topAffectedArtifacts: Array<{
+    artifactId: string;
+    projectId: number;
+    openCount: number;
+    severityHighest: GapSeverity | null;
+  }>;
+  /** Latest alert-creation timestamps for activity heuristics. */
+  recent: {
+    lastAlertAt: string | null;
+    lastResolvedAt: string | null;
+  };
+}
+
+const MAX_TOP_LIST = 10;
+
+const SEVERITY_RANK_LIST: GapSeverity[] = ['critical', 'major', 'minor', 'info'];
+
+function highestSeverity(values: Array<GapSeverity | null | undefined>): GapSeverity | null {
+  for (const sev of SEVERITY_RANK_LIST) {
+    if (values.some(v => v === sev)) return sev;
+  }
+  return null;
+}
+
+export async function getGuidanceAlertsSummary(
+  organizationId: number
+): Promise<GuidanceAlertsSummary> {
+  const empty: GuidanceAlertsSummary = {
+    organizationId,
+    asOf: new Date().toISOString(),
+    bySeverity: { critical: 0, major: 0, minor: 0, info: 0 },
+    byStatus: { open: 0, acknowledged: 0, resolved: 0 },
+    openCritical: 0,
+    totalOpen: 0,
+    topGuidanceCodes: [],
+    topAffectedArtifacts: [],
+    recent: { lastAlertAt: null, lastResolvedAt: null },
+  };
+
+  // 1. Per-severity counts (across all statuses).
+  // 2. Per-status counts.
+  // 3. Critical open count.
+  // 4. Top guidance codes with at least one open alert.
+  // 5. Top affected artifacts with at least one open alert.
+  // 6. Recency timestamps.
+  try {
+    const [sevRes, statRes, critRes, topCodesRes, topArtifactsRes, recencyRes] =
+      await Promise.all([
+        getPool().query(
+          `SELECT severity, COUNT(*)::int AS c
+             FROM guidance_alerts
+            WHERE organization_id = $1
+            GROUP BY severity`,
+          [organizationId]
+        ),
+        getPool().query(
+          `SELECT status, COUNT(*)::int AS c
+             FROM guidance_alerts
+            WHERE organization_id = $1
+            GROUP BY status`,
+          [organizationId]
+        ),
+        getPool().query(
+          `SELECT COUNT(*)::int AS c
+             FROM guidance_alerts
+            WHERE organization_id = $1
+              AND status IN ('open','acknowledged')
+              AND severity = 'critical'`,
+          [organizationId]
+        ),
+        getPool().query(
+          `SELECT guidance_code, guidance_authority,
+                  COUNT(*)::int                  AS open_count,
+                  MIN(
+                    CASE severity
+                      WHEN 'critical' THEN 0
+                      WHEN 'major' THEN 1
+                      WHEN 'minor' THEN 2
+                      WHEN 'info' THEN 3
+                      ELSE 4
+                    END
+                  )                                AS severity_rank
+             FROM guidance_alerts
+            WHERE organization_id = $1
+              AND status IN ('open','acknowledged')
+            GROUP BY guidance_code, guidance_authority
+            ORDER BY open_count DESC, severity_rank ASC
+            LIMIT $2`,
+          [organizationId, MAX_TOP_LIST]
+        ),
+        getPool().query(
+          `SELECT artifact_id, project_id,
+                  COUNT(*)::int                  AS open_count,
+                  MIN(
+                    CASE severity
+                      WHEN 'critical' THEN 0
+                      WHEN 'major' THEN 1
+                      WHEN 'minor' THEN 2
+                      WHEN 'info' THEN 3
+                      ELSE 4
+                    END
+                  )                                AS severity_rank
+             FROM guidance_alerts
+            WHERE organization_id = $1
+              AND status IN ('open','acknowledged')
+            GROUP BY artifact_id, project_id
+            ORDER BY open_count DESC, severity_rank ASC
+            LIMIT $2`,
+          [organizationId, MAX_TOP_LIST]
+        ),
+        getPool().query(
+          `SELECT
+             MAX(created_at)            AS last_alert_at,
+             MAX(resolved_at)           AS last_resolved_at
+           FROM guidance_alerts
+          WHERE organization_id = $1`,
+          [organizationId]
+        ),
+      ]);
+
+    const out = { ...empty };
+
+    for (const r of sevRes.rows as Array<{ severity: string; c: number }>) {
+      if ((['critical', 'major', 'minor', 'info'] as const).includes(r.severity as any)) {
+        out.bySeverity[r.severity as GapSeverity] = Number(r.c) || 0;
+      }
+    }
+    for (const r of statRes.rows as Array<{ status: string; c: number }>) {
+      if ((['open', 'acknowledged', 'resolved'] as const).includes(r.status as any)) {
+        out.byStatus[r.status as AlertStatus] = Number(r.c) || 0;
+      }
+    }
+    out.openCritical = Number(critRes.rows[0]?.c) || 0;
+    out.totalOpen = out.byStatus.open + out.byStatus.acknowledged;
+
+    out.topGuidanceCodes = topCodesRes.rows.map((r: any) => ({
+      guidanceCode: r.guidance_code,
+      authority: r.guidance_authority,
+      openCount: Number(r.open_count) || 0,
+      severityHighest:
+        (SEVERITY_RANK_LIST[Number(r.severity_rank)] as GapSeverity) ?? null,
+    }));
+    out.topAffectedArtifacts = topArtifactsRes.rows.map((r: any) => ({
+      artifactId: r.artifact_id,
+      projectId: r.project_id,
+      openCount: Number(r.open_count) || 0,
+      severityHighest:
+        (SEVERITY_RANK_LIST[Number(r.severity_rank)] as GapSeverity) ?? null,
+    }));
+    out.recent.lastAlertAt = recencyRes.rows[0]?.last_alert_at
+      ? new Date(recencyRes.rows[0].last_alert_at).toISOString()
+      : null;
+    out.recent.lastResolvedAt = recencyRes.rows[0]?.last_resolved_at
+      ? new Date(recencyRes.rows[0].last_resolved_at).toISOString()
+      : null;
+
+    return out;
+  } catch (err: any) {
+    if (err?.code === '42P01') return empty;
+    throw err;
+  }
+}
+
+// ─── Monitored-guidance catalog ──────────────────────────────────────
+
+export interface MonitoredGuidanceEntry {
+  guidanceCode: string;
+  family: string;
+  /** True when this code has a row in guidance_reference_index. */
+  registered: boolean;
+  authority: string | null;
+  currentVersion: string | null;
+  currentVersionAt: string | null;
+  /** CTD sections this code maps to via gap_classifier rules + IND sections. */
+  ctdSections: string[];
+  ruleIds: string[];
+  highestSeverity: GapSeverity | null;
+}
+
+/**
+ * Enumerate every guidance code AnA can detect changes for. Walks
+ * GAP_RULES + IND_SECTIONS, extracts every distinct guidance string,
+ * splits comma-joined codes (e.g. 'ICH M4Q(R1), 21 CFR 312.23(a)(7)'),
+ * groups by family, and joins with guidance_reference_index to surface
+ * the currently-registered version when one exists.
+ */
+export async function getMonitoredGuidanceCatalog(): Promise<{
+  asOf: string;
+  totalCodes: number;
+  entries: MonitoredGuidanceEntry[];
+}> {
+  // Walk both registries.
+  const codeMap = new Map<
+    string,
+    {
+      ctdSections: Set<string>;
+      ruleIds: Set<string>;
+      severities: GapSeverity[];
+    }
+  >();
+
+  function addCode(rawCode: string, ctdSection: string, ruleId?: string, sev?: GapSeverity) {
+    const code = rawCode.trim();
+    if (!code) return;
+    let bucket = codeMap.get(code);
+    if (!bucket) {
+      bucket = { ctdSections: new Set(), ruleIds: new Set(), severities: [] };
+      codeMap.set(code, bucket);
+    }
+    bucket.ctdSections.add(ctdSection);
+    if (ruleId) bucket.ruleIds.add(ruleId);
+    if (sev) bucket.severities.push(sev);
+  }
+
+  function splitCodes(str: string): string[] {
+    return str
+      .split(/,\s*/)
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+
+  for (const rule of GAP_RULES) {
+    for (const code of splitCodes(rule.guidance)) {
+      addCode(code, rule.sectionCode, rule.id, rule.severity);
+    }
+  }
+  for (const section of IND_SECTIONS) {
+    if (typeof section.guidance !== 'string') continue;
+    for (const code of splitCodes(section.guidance)) {
+      addCode(code, section.code);
+    }
+  }
+
+  // Join with guidance_reference_index to attach current_version when known.
+  const codes = Array.from(codeMap.keys());
+  const indexByCode = new Map<
+    string,
+    { authority: string; currentVersion: string; currentVersionAt: Date }
+  >();
+  if (codes.length > 0) {
+    try {
+      const { rows } = await getPool().query(
+        `SELECT guidance_code, authority, current_version, current_version_at
+           FROM guidance_reference_index
+          WHERE guidance_code = ANY($1::text[])`,
+        [codes]
+      );
+      for (const r of rows as Array<{
+        guidance_code: string;
+        authority: string;
+        current_version: string;
+        current_version_at: Date | string;
+      }>) {
+        indexByCode.set(r.guidance_code, {
+          authority: r.authority,
+          currentVersion: r.current_version,
+          currentVersionAt:
+            r.current_version_at instanceof Date
+              ? r.current_version_at
+              : new Date(r.current_version_at),
+        });
+      }
+    } catch (err: any) {
+      if (err?.code !== '42P01') throw err;
+    }
+  }
+
+  const entries: MonitoredGuidanceEntry[] = Array.from(codeMap.entries())
+    .map(([code, info]) => {
+      const reg = indexByCode.get(code);
+      return {
+        guidanceCode: code,
+        family: extractGuidanceFamily(code),
+        registered: !!reg,
+        authority: reg?.authority ?? null,
+        currentVersion: reg?.currentVersion ?? null,
+        currentVersionAt: reg ? reg.currentVersionAt.toISOString() : null,
+        ctdSections: Array.from(info.ctdSections).sort(),
+        ruleIds: Array.from(info.ruleIds).sort(),
+        highestSeverity: highestSeverity(info.severities),
+      };
+    })
+    .sort((a, b) => a.guidanceCode.localeCompare(b.guidanceCode));
+
+  return {
+    asOf: new Date().toISOString(),
+    totalCodes: entries.length,
+    entries,
+  };
+}

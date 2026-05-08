@@ -3026,6 +3026,272 @@ router.post(
   }
 );
 
+router.get(
+  '/guidance/alerts/summary',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getGuidanceAlertsSummary } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const result = await getGuidanceAlertsSummary(organizationId);
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA guidance alerts summary] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to load guidance alerts summary',
+        code: 'GUIDANCE_ALERTS_SUMMARY_ERROR',
+      });
+    }
+  }
+);
+
+router.get(
+  '/guidance/catalog',
+  authenticateToken,
+  async (_req: Request, res: Response) => {
+    try {
+      const { getMonitoredGuidanceCatalog } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const result = await getMonitoredGuidanceCatalog();
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA guidance catalog] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to load monitored guidance catalog',
+        code: 'GUIDANCE_CATALOG_ERROR',
+      });
+    }
+  }
+);
+
+const bulkAlertActionSchema = z.object({
+  alertIds: z.array(z.string().uuid()).min(1).max(500),
+});
+
+router.post(
+  '/guidance/alerts/bulk-acknowledge',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = bulkAlertActionSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'alertIds is required (1..500 uuids)',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { bulkAcknowledgeGuidanceAlerts } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const result = await bulkAcknowledgeGuidanceAlerts(
+        parsed.data.alertIds,
+        organizationId,
+        userId
+      );
+      return res.json({ ok: true, ...result });
+    } catch (err: any) {
+      console.error(
+        '[AnA guidance bulk-acknowledge] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to bulk acknowledge alerts',
+        code: 'GUIDANCE_BULK_ACK_ERROR',
+      });
+    }
+  }
+);
+
+router.post(
+  '/guidance/alerts/bulk-resolve',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = bulkAlertActionSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'alertIds is required (1..500 uuids)',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { bulkResolveGuidanceAlerts } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const result = await bulkResolveGuidanceAlerts(
+        parsed.data.alertIds,
+        organizationId,
+        userId
+      );
+      return res.json({ ok: true, ...result });
+    } catch (err: any) {
+      console.error(
+        '[AnA guidance bulk-resolve] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to bulk resolve alerts',
+        code: 'GUIDANCE_BULK_RESOLVE_ERROR',
+      });
+    }
+  }
+);
+
+// Webhook ingest — accepts a batched feed update and runs the scanner
+// for every entry. Tenant-scoped: scans only the caller's org. The
+// payload is authenticated via the same authenticateToken middleware
+// the rest of the surface uses; consumers wire their own HMAC at the
+// edge if they need additional verification.
+const webhookIngestSchema = z.object({
+  updates: z
+    .array(
+      z.object({
+        guidanceCode: z.string().min(1).max(128),
+        authority: guidanceAuthorityEnum,
+        newVersion: z.string().min(1).max(64),
+        sourceUrl: z.string().url().max(500).nullable().optional(),
+        metadata: z.record(z.unknown()).nullable().optional(),
+      })
+    )
+    .min(1)
+    .max(100),
+});
+
+router.post(
+  '/guidance/webhook',
+  authenticateToken,
+  requireOrganizationContext,
+  guidanceScanRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = webhookIngestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid webhook payload',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { ingestGuidanceUpdate } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const ingested: Array<{
+        guidanceCode: string;
+        changed: boolean;
+        prevVersion: string | null;
+        newVersion: string;
+        alertsCreated: number | null;
+        alertsSkippedDuplicate: number | null;
+        artifactsAffected: number | null;
+      }> = [];
+      // Process sequentially — concurrent upserts on the same code
+      // would hit the SELECT FOR UPDATE lock; sequential keeps it
+      // predictable.
+      for (const update of parsed.data.updates) {
+        try {
+          const { upsert, scan } = await ingestGuidanceUpdate({
+            guidanceCode: update.guidanceCode,
+            authority: update.authority,
+            newVersion: update.newVersion,
+            sourceUrl: update.sourceUrl ?? null,
+            metadata: update.metadata ?? null,
+            organizationId,
+          });
+          ingested.push({
+            guidanceCode: upsert.guidanceCode,
+            changed: upsert.changed,
+            prevVersion: upsert.prevVersion,
+            newVersion: upsert.newVersion,
+            alertsCreated: scan?.alertsCreated ?? null,
+            alertsSkippedDuplicate: scan?.alertsSkippedDuplicate ?? null,
+            artifactsAffected: scan?.artifactsAffected ?? null,
+          });
+        } catch (innerErr: any) {
+          console.warn(
+            '[AnA guidance webhook] update failed:',
+            update.guidanceCode,
+            innerErr?.message || innerErr
+          );
+          ingested.push({
+            guidanceCode: update.guidanceCode,
+            changed: false,
+            prevVersion: null,
+            newVersion: update.newVersion,
+            alertsCreated: null,
+            alertsSkippedDuplicate: null,
+            artifactsAffected: null,
+          });
+        }
+      }
+      return res.json({
+        ok: true,
+        organizationId,
+        received: parsed.data.updates.length,
+        ingested,
+      });
+    } catch (err: any) {
+      console.error(
+        '[AnA guidance webhook] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to ingest webhook',
+        code: 'GUIDANCE_WEBHOOK_ERROR',
+      });
+    }
+  }
+);
+
 // Document-Embedded Audit Ledger — export an artifact as .docx with the
 // AnALedger XML embedded as a custom XML part (Open XML customXml/).
 const docxExportSchema = z.object({
