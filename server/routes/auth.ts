@@ -839,7 +839,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(refreshToken, getRefreshTokenSecret(, { algorithms: ["HS256"] })) as {
+    const decoded = jwt.verify(refreshToken, getRefreshTokenSecret(), { algorithms: ["HS256"] }) as {
       userId: string;
       email: string;
       type: string;

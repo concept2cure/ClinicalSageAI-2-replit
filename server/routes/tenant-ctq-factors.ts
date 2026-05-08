@@ -10,7 +10,6 @@ import { eq, and, SQL } from 'drizzle-orm';
 import { ctqFactors } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import { requireOrganizationContext } from '../middleware/tenantContext';
-import { TenantDb } from '../db/tenantDb';
 import { createScopedLogger } from '../utils/logger';
 
 // Import the getDb helper from the tenantDbHelper

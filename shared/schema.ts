@@ -7536,7 +7536,7 @@ export const multiAgencyValidationSessions = pgTable(
     documentId: text('document_id').notNull(),
     documentVersionId: text('document_version_id'),
     userId: text('user_id').notNull(),
-    tenantId: text('tenant_id').notNull(),
+    tenantId: integer('tenant_id').notNull(),
     agencies: text('agencies').array(), // ['FDA', 'EMA', 'PMDA']
     content: text('content'), // Document content
     status: text('status').default('pending').notNull(), // pending, processing, completed, failed
@@ -18057,7 +18057,7 @@ export type InsertEvidenceChangeEvent = z.infer<typeof insertEvidenceChangeEvent
  */
 export const gapAnalysisResults = pgTable('gap_analysis_results', {
   id: serial('id').primaryKey(),
-  organizationId: text('organization_id').notNull(),
+  organizationId: integer('organization_id').notNull(),
   userId: text('user_id').notNull(),
   submissionType: text('submission_type').notNull(),
   projectId: text('project_id'),
