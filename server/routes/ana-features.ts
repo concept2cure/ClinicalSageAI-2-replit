@@ -2624,6 +2624,147 @@ router.post(
   }
 );
 
+// ── Citation run history + readiness bridge ────────────────────────────
+
+router.get(
+  '/citations/runs/:runId',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const runId = String(req.params.runId || '');
+    if (!/^[0-9a-f-]{36}$/i.test(runId)) {
+      return res
+        .status(400)
+        .json({ error: 'runId must be a uuid', code: 'INVALID_REQUEST' });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getCitationRunById } = await import(
+        '../services/ana/citation-engine'
+      );
+      const result = await getCitationRunById(runId, organizationId);
+      if (!result) {
+        return res.status(404).json({
+          error: 'Run not found',
+          code: 'CITATION_RUN_NOT_FOUND',
+        });
+      }
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations get-run] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to load run', code: 'GET_RUN_ERROR' });
+    }
+  }
+);
+
+const listRunsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
+
+router.get(
+  '/citations/:artifactId/runs',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId || artifactId.length > 128) {
+      return res
+        .status(400)
+        .json({ error: 'artifactId is required (max 128 chars)', code: 'INVALID_REQUEST' });
+    }
+    const parsed = listRunsQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid query',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { listCitationRunsForArtifact } = await import(
+        '../services/ana/citation-engine'
+      );
+      const { rows, total } = await listCitationRunsForArtifact(
+        artifactId,
+        organizationId,
+        { limit: parsed.data.limit, offset: parsed.data.offset }
+      );
+      return res.json({ artifactId, total, runs: rows });
+    } catch (err: any) {
+      console.error(
+        '[AnA citations list-runs] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to list runs', code: 'LIST_RUNS_ERROR' });
+    }
+  }
+);
+
+router.get(
+  '/citations/projects/:projectId/readiness-impact',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = projectIdParam.safeParse(req.params.projectId);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getCitationReadinessImpact } = await import(
+        '../services/ana/citation-readiness-bridge'
+      );
+      const result = await getCitationReadinessImpact(parsed.data, organizationId);
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations readiness-impact] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to derive readiness impact',
+        code: 'READINESS_IMPACT_ERROR',
+      });
+    }
+  }
+);
+
 router.get(
   '/citations/:artifactId/gaps',
   authenticateToken,
