@@ -2725,6 +2725,55 @@ router.get(
   }
 );
 
+// Per-section expectations — "what's expected here, and how am I doing?"
+router.get(
+  '/citations/:artifactId/expectations',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId || artifactId.length > 128) {
+      return res.status(400).json({
+        error: 'artifactId is required (max 128 chars)',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getArtifactSectionExpectations } = await import(
+        '../services/ana/citation-expectations'
+      );
+      const result = await getArtifactSectionExpectations(
+        artifactId,
+        organizationId
+      );
+      if (!result) {
+        return res.status(404).json({
+          error: 'Artifact not found',
+          code: 'ARTIFACT_NOT_FOUND',
+        });
+      }
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations expectations] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to load expectations', code: 'EXPECTATIONS_ERROR' });
+    }
+  }
+);
+
 // Citation search (filter the persisted citations across a project)
 const citationSearchSchema = z.object({
   q: z.string().max(500).optional(),
