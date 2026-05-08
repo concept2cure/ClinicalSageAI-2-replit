@@ -47,6 +47,20 @@ export async function registerAiRoutes({ app, pool, aiCircuitBreaker }: RouteBoo
     );
   }
 
+  // ── Citation engine: run-history pruner ────────────────────────────
+  // Keeps ana_artifact_citation_runs from growing unbounded. Per-org
+  // sweep on a fixed interval; the active run is always preserved.
+  try {
+    const { startCitationRunPruneScheduler } = await import(
+      '../services/ana/citation-run-pruner'
+    );
+    if (startCitationRunPruneScheduler()) {
+      console.log('✅ Citation run-history pruner scheduled');
+    }
+  } catch (error) {
+    console.error('❌ Failed to start citation run pruner:', error);
+  }
+
   // ── Submission-chat: OTel metrics exporter ─────────────────────────
   // Subscribes to onMetric() and emits OTel counters/histograms for every
   // submission_chat.{turn,apply} event. Gated on OTEL_ENABLED; falls back

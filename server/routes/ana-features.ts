@@ -2725,6 +2725,139 @@ router.get(
   }
 );
 
+// Citation search (filter the persisted citations across a project)
+const citationSearchSchema = z.object({
+  q: z.string().max(500).optional(),
+  status: z.enum(['supported', 'contradicted', 'gap']).optional(),
+  rule: z.string().max(64).optional(),
+  severity: z.enum(['critical', 'major', 'minor', 'info']).optional(),
+  artifactId: z.string().max(128).optional(),
+  ctdSectionPrefix: z.string().max(64).optional(),
+  sourceArtifactId: z.string().max(128).optional(),
+  limit: z.coerce.number().int().min(1).max(500).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
+
+router.get(
+  '/citations/projects/:projectId/search',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const queryParsed = citationSearchSchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      return res.status(400).json({
+        error: 'Invalid search parameters',
+        code: 'INVALID_REQUEST',
+        details: queryParsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { searchProjectCitations } = await import(
+        '../services/ana/citation-search'
+      );
+      const result = await searchProjectCitations({
+        projectId: projectIdParsed.data,
+        organizationId,
+        filters: {
+          query: queryParsed.data.q,
+          status: queryParsed.data.status,
+          rule: queryParsed.data.rule,
+          severity: queryParsed.data.severity,
+          artifactId: queryParsed.data.artifactId,
+          ctdSectionPrefix: queryParsed.data.ctdSectionPrefix,
+          sourceArtifactId: queryParsed.data.sourceArtifactId,
+        },
+        limit: queryParsed.data.limit,
+        offset: queryParsed.data.offset,
+      });
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations search] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to search citations',
+        code: 'CITATION_SEARCH_ERROR',
+      });
+    }
+  }
+);
+
+// Run-history pruning (admin-triggerable, also runs on a scheduler)
+const pruneRunsSchema = z.object({
+  keepLastN: z.number().int().min(1).max(100).optional(),
+});
+
+const pruneRunsRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 5 * 60 * 1000,
+    maxRequests: 2,
+    message: 'Run pruning is limited to 2 per 5 minutes.',
+  },
+});
+
+router.post(
+  '/citations/runs/prune',
+  authenticateToken,
+  requireOrganizationContext,
+  pruneRunsRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = pruneRunsSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { pruneOldCitationRuns } = await import(
+        '../services/ana/citation-run-pruner'
+      );
+      const result = await pruneOldCitationRuns({
+        keepLastN: parsed.data.keepLastN,
+        organizationId,
+      });
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations prune] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to prune runs',
+        code: 'CITATION_PRUNE_ERROR',
+      });
+    }
+  }
+);
+
 // Per-rule gap inventory + citation export
 
 router.get(
