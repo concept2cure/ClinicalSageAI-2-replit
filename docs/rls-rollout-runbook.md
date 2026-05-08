@@ -46,6 +46,16 @@ The whole rollout is gated on a single env var: `RLS_ENFORCE`.
 | `shadow`       | Same as off. Intent: "we're watching."                      |
 | `on`           | Policy filters. The flip.                                   |
 
+> **Critical gotcha — verify the app role is not a SUPERUSER.**
+> Postgres BYPASSRLS for superusers regardless of `FORCE ROW LEVEL
+> SECURITY`. If the connecting role is a superuser, every query
+> returns all rows whether `RLS_ENFORCE=on` or not, and the rollout
+> silently does nothing. Confirm with
+> `psql "$DATABASE_URL" -c "SELECT current_setting('is_superuser')"` —
+> the answer must be `off`. On Neon the `neondb_owner` role is NOT a
+> superuser so this is fine by default; if a different role was
+> created with `CREATE USER ... SUPERUSER`, RLS won't apply.
+
 ### 1. Land the SQL
 
 ```bash

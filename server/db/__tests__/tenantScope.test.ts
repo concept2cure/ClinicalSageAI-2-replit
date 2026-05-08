@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { EventEmitter } from 'events';
 
 import { getTenantScope, runWithTenantScope } from '../tenantStore';
-import { withTenant } from '../withTenant';
 import { instrumentPool, __resetWarnRateLimitForTests } from '../poolInstrumentation';
 import { tenantSessionVarMissing, tenantSessionVarPresent } from '../tenantSessionMetrics';
 
@@ -42,7 +41,7 @@ function counterValue(metric: any, labels: Record<string, string>): number {
   return 0;
 }
 
-describe('tenantStore + withTenant', () => {
+describe('tenantStore', () => {
   it('exposes the scope set by runWithTenantScope', () => {
     const inside = runWithTenantScope(
       { tenantId: '7', source: 'request' },
@@ -54,9 +53,9 @@ describe('tenantStore + withTenant', () => {
     expect(getTenantScope()).toBeUndefined();
   });
 
-  it('withTenant propagates across async boundaries', async () => {
-    const result = await withTenant(
-      { tenantId: 99, source: 'job', caller: 'unit-test' },
+  it('propagates the scope across async boundaries', async () => {
+    const result = await runWithTenantScope(
+      { tenantId: '99', source: 'job', caller: 'unit-test' },
       async () => {
         await Promise.resolve();
         await new Promise(resolve => setImmediate(resolve));
@@ -66,12 +65,6 @@ describe('tenantStore + withTenant', () => {
     expect(result?.tenantId).toBe('99');
     expect(result?.source).toBe('job');
     expect(result?.caller).toBe('unit-test');
-  });
-
-  it('withTenant rejects an empty tenantId', () => {
-    expect(() =>
-      withTenant({ tenantId: '', source: 'job' }, () => undefined)
-    ).toThrow(/tenantId is required/);
   });
 });
 

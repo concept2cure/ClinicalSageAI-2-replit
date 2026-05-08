@@ -3,7 +3,7 @@
  *
  * Two counters:
  *   - `tenant_session_var_present_total` — query issued from inside a tenant
- *     scope (request middleware or `withTenant`).
+ *     scope (request middleware or `withTenantConnection`).
  *   - `tenant_session_var_missing_total` — query issued from no tenant scope.
  *     Each increment is also logged at WARN with caller info so the offending
  *     code path can be hunted down before PR B flips on policy enforcement.

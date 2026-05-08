@@ -9,7 +9,8 @@
  *
  * The store is established by:
  *   - `requireTenantContext` middleware (request scope)
- *   - `withTenant(opts, fn)` helper (workers, cron, scripts)
+ *   - `withTenantConnection(opts, fn)` (workers, cron, scripts — also
+ *     acquires a dedicated client with the session vars set)
  *
  * Reading: `getTenantScope()` returns the current scope, or `undefined` when
  * code is running outside a tenant boundary (legitimate cases: health checks,
@@ -56,10 +57,9 @@ export interface TenantScope {
 const tenantStorage = new AsyncLocalStorage<TenantScope>();
 
 /**
- * Run `fn` inside a tenant scope. Returns whatever `fn` returns. Use the
- * `withTenant` helper for the common worker/script case — this raw runner
- * is exported for the request middleware which needs to call `next()`
- * inside the scope.
+ * Run `fn` inside a tenant scope. Returns whatever `fn` returns. Used by
+ * the request middleware (so `next()` runs in scope) and by
+ * `withTenantConnection` (which adds session-var setup on top).
  */
 export function runWithTenantScope<T>(scope: TenantScope, fn: () => T): T {
   return tenantStorage.run(scope, fn);

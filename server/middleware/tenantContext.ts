@@ -1,4 +1,3 @@
-// @ts-nocheck - TenantContext type conflicts with tenantDbHelper declarations
 /**
  * Tenant Context Middleware
  *
