@@ -2304,6 +2304,199 @@ router.post(
   }
 );
 
+// ── Sentence-level citation endpoints (Feature 2.1 + 2.2) ───────────────
+//
+// Run / read / list / inspect-rules surface for the citation engine.
+// All tenant-scoped via requireOrganizationContext.
+
+const runCitationsSchema = z.object({
+  artifactId: z.string().min(1, 'artifactId is required'),
+  ctdSectionOverride: z.string().max(64).nullable().optional(),
+});
+
+const runCitationsRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 60 * 1000,
+    maxRequests: 6, // engine call is heavy; throttle hard
+    message: 'Too many citation-engine runs, please slow down.',
+  },
+});
+
+router.post(
+  '/citations/run',
+  authenticateToken,
+  requireOrganizationContext,
+  runCitationsRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = runCitationsSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const organizationUuid =
+      (req as any).tenantContext?.organizationUuid ||
+      (req.headers['x-org-uuid'] as string | undefined);
+    const userId = (req as any).userId || (req as any).user?.id;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { runCitationEngine } = await import(
+        '../services/ana/citation-engine'
+      );
+      const result = await runCitationEngine(
+        parsed.data.artifactId,
+        organizationId,
+        {
+          persist: true,
+          ctdSectionOverride: parsed.data.ctdSectionOverride ?? undefined,
+          organizationUuid: organizationUuid ?? undefined,
+          userId: userId ?? null,
+        }
+      );
+      return res.json(result);
+    } catch (err: any) {
+      const code = err?.code;
+      if (code === 'ARTIFACT_NOT_FOUND') {
+        return res.status(404).json({ error: err.message, code });
+      }
+      console.error(
+        '[AnA citations run] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to run citation engine',
+        code: 'CITATIONS_RUN_ERROR',
+      });
+    }
+  }
+);
+
+router.get(
+  '/citations/gap-rules',
+  authenticateToken,
+  async (_req: Request, res: Response) => {
+    const { listAllGapRules } = await import(
+      '../services/ana/gap-classifier'
+    );
+    return res.json({ rules: listAllGapRules() });
+  }
+);
+
+router.get(
+  '/citations/gap-rules/:sectionCode',
+  authenticateToken,
+  async (req: Request, res: Response) => {
+    const sectionCode = String(req.params.sectionCode || '');
+    if (!sectionCode || sectionCode.length > 64) {
+      return res.status(400).json({
+        error: 'sectionCode is required',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const { getGapRulesForSection } = await import(
+      '../services/ana/gap-classifier'
+    );
+    return res.json({
+      sectionCode,
+      rules: getGapRulesForSection(sectionCode),
+    });
+  }
+);
+
+router.get(
+  '/citations/:artifactId',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId) {
+      return res
+        .status(400)
+        .json({ error: 'artifactId is required', code: 'INVALID_REQUEST' });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getCitationsForArtifact } = await import(
+        '../services/ana/citation-engine'
+      );
+      const result = await getCitationsForArtifact(artifactId, organizationId);
+      if (!result) {
+        return res.status(404).json({
+          error: 'Artifact not found',
+          code: 'ARTIFACT_NOT_FOUND',
+        });
+      }
+      return res.json(result);
+    } catch (err: any) {
+      console.error('[AnA citations get] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to load citations',
+        code: 'CITATIONS_GET_ERROR',
+      });
+    }
+  }
+);
+
+router.get(
+  '/citations/:artifactId/gaps',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId) {
+      return res
+        .status(400)
+        .json({ error: 'artifactId is required', code: 'INVALID_REQUEST' });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getGapsForArtifact } = await import(
+        '../services/ana/citation-engine'
+      );
+      const result = await getGapsForArtifact(artifactId, organizationId);
+      if (!result) {
+        return res.status(404).json({
+          error: 'Artifact not found',
+          code: 'ARTIFACT_NOT_FOUND',
+        });
+      }
+      return res.json(result);
+    } catch (err: any) {
+      console.error('[AnA citations gaps] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to load gaps',
+        code: 'CITATIONS_GAPS_ERROR',
+      });
+    }
+  }
+);
+
 // ── Proposal management endpoints ──────────────────────────────────────
 //
 // Read-only views into ana_submission_chat_proposals + a janitor sweep.

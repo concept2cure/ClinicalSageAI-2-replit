@@ -5292,6 +5292,11 @@ export const concept2cureArtifacts = pgTable(
     lockedById: integer('locked_by_id').references(() => users.id),
     createdById: integer('created_by_id').references(() => users.id),
     metadata: json('metadata'),
+    // Sentence-level citations (Feature 2.1): latest computed citation array
+    // produced by the citation engine. See ana/citation-engine.ts.
+    citations: jsonb('citations').default(sql`'[]'::jsonb`),
+    citationRunId: uuid('citation_run_id'),
+    citationsAt: timestamp('citations_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
