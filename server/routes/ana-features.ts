@@ -1932,7 +1932,7 @@ router.get(
   (req: Request, res: Response) => {
     try {
       if (!requireMockRoutesEnabled(res)) return;
-      const { projectId } = req.params;
+      const projectId = String(req.params.projectId ?? '');
       const store = getOrCreateProjectMemory(projectId);
 
       res.json({
@@ -1957,7 +1957,7 @@ router.post(
   (req: Request, res: Response) => {
     try {
       if (!requireMockRoutesEnabled(res)) return;
-      const { projectId } = req.params;
+      const projectId = String(req.params.projectId ?? '');
       const { type, content } = req.body as {
         type: 'preference' | 'fact' | 'decision' | 'context';
         content: string;
@@ -2028,7 +2028,8 @@ router.delete(
   (req: Request, res: Response) => {
     try {
       if (!requireMockRoutesEnabled(res)) return;
-      const { projectId, memoryId } = req.params;
+      const projectId = String(req.params.projectId ?? '');
+      const memoryId = String(req.params.memoryId ?? '');
       const store = getOrCreateProjectMemory(projectId);
 
       const index = store.memories.findIndex(m => m.id === memoryId);
@@ -5081,6 +5082,464 @@ router.post(
       return res.status(500).json({
         error: 'Failed to process submission-chat request',
         code: 'SUBMISSION_CHAT_ERROR',
+      });
+    }
+  }
+);
+
+// ─── Regulatory Authoring Plan (Feature 2.4) ──────────────────────────
+//
+// Generate, retrieve, list, approve, reject, and execute authoring plans.
+// Plans capture the AI-assembled "what we'll write" before an artifact is
+// drafted: sources to cite, cross-references, risk factors from Shadow
+// Review, contradictions from a Truth Engine pre-scan, reviewer
+// expectations from the therapeutic-area profile.
+
+const generateAuthoringPlanSchema = z.object({
+  projectId: z.coerce.number().int().positive(),
+  ctdSection: z.string().trim().min(1).max(64),
+  submissionType: z.enum(['IND', 'NDA', 'BLA', 'ALL']).optional(),
+  artifactId: z.string().trim().max(255).nullable().optional(),
+  seedQuery: z.string().trim().max(2000).optional(),
+  initialStatus: z.enum(['draft', 'pending_approval']).optional(),
+  persist: z.boolean().optional(),
+});
+
+const authoringPlanRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 60 * 1000,
+    maxRequests: 8,
+    message: 'Authoring plan generation is limited to 8 per minute (heavy compute).',
+  },
+});
+
+router.post(
+  '/authoring-plan',
+  authenticateToken,
+  requireOrganizationContext,
+  authoringPlanRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = generateAuthoringPlanSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const organizationUuid =
+      (req as any).tenantContext?.organizationUuid ||
+      (req.headers['x-org-uuid'] as string | undefined);
+    const userId = (req as any).userId || (req as any).user?.id || null;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { generateAuthoringPlan } = await import(
+        '../services/ana/authoring-plan-generator'
+      );
+      const plan = await generateAuthoringPlan({
+        projectId: parsed.data.projectId,
+        organizationId,
+        organizationUuid: organizationUuid ?? null,
+        ctdSection: parsed.data.ctdSection,
+        submissionType: parsed.data.submissionType,
+        artifactId: parsed.data.artifactId ?? null,
+        seedQuery: parsed.data.seedQuery,
+        persist: parsed.data.persist !== false,
+        initialStatus: parsed.data.initialStatus ?? 'draft',
+        createdBy: userId,
+      });
+      return res.json(plan);
+    } catch (err: any) {
+      const code = err?.code;
+      if (code === 'INVALID_REQUEST') {
+        return res.status(400).json({ error: err.message, code });
+      }
+      if (code === 'MIGRATION_PENDING') {
+        return res.status(503).json({
+          error: err.message,
+          code,
+        });
+      }
+      console.error('[AnA authoring-plan generate] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to generate authoring plan',
+        code: 'AUTHORING_PLAN_ERROR',
+      });
+    }
+  }
+);
+
+const listAuthoringPlansQuery = z.object({
+  projectId: z.coerce.number().int().positive().optional(),
+  ctdSection: z.string().trim().min(1).max(64).optional(),
+  status: z
+    .union([
+      z.enum(['draft', 'pending_approval', 'approved', 'rejected', 'executed']),
+      z.array(z.enum(['draft', 'pending_approval', 'approved', 'rejected', 'executed'])),
+    ])
+    .optional(),
+  limit: z.coerce.number().int().min(1).max(200).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
+
+router.get(
+  '/authoring-plan',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = listAuthoringPlansQuery.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid query',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { listAuthoringPlans } = await import(
+        '../services/ana/authoring-plan-generator'
+      );
+      const result = await listAuthoringPlans({
+        organizationId,
+        projectId: parsed.data.projectId,
+        ctdSection: parsed.data.ctdSection,
+        status: parsed.data.status,
+        limit: parsed.data.limit,
+        offset: parsed.data.offset,
+      });
+      return res.json(result);
+    } catch (err: any) {
+      console.error('[AnA authoring-plan list] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to list authoring plans',
+        code: 'AUTHORING_PLAN_LIST_ERROR',
+      });
+    }
+  }
+);
+
+const authoringPlanIdParam = z
+  .string()
+  .uuid({ message: 'planId must be a UUID' });
+
+router.get(
+  '/authoring-plan/:planId',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const idParsed = authoringPlanIdParam.safeParse(req.params.planId);
+    if (!idParsed.success) {
+      return res.status(400).json({
+        error: 'planId must be a UUID',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getAuthoringPlan } = await import(
+        '../services/ana/authoring-plan-generator'
+      );
+      const plan = await getAuthoringPlan(idParsed.data, organizationId);
+      if (!plan) {
+        return res
+          .status(404)
+          .json({ error: 'Authoring plan not found', code: 'NOT_FOUND' });
+      }
+      return res.json(plan);
+    } catch (err: any) {
+      console.error('[AnA authoring-plan get] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to load authoring plan',
+        code: 'AUTHORING_PLAN_GET_ERROR',
+      });
+    }
+  }
+);
+
+router.patch(
+  '/authoring-plan/:planId/submit',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const idParsed = authoringPlanIdParam.safeParse(req.params.planId);
+    if (!idParsed.success) {
+      return res.status(400).json({
+        error: 'planId must be a UUID',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { submitForApproval } = await import(
+        '../services/ana/authoring-plan-generator'
+      );
+      const plan = await submitForApproval(idParsed.data, organizationId);
+      if (!plan) {
+        return res.status(409).json({
+          error: 'Plan not found or not in draft status',
+          code: 'INVALID_TRANSITION',
+        });
+      }
+      return res.json(plan);
+    } catch (err: any) {
+      console.error('[AnA authoring-plan submit] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to submit authoring plan',
+        code: 'AUTHORING_PLAN_SUBMIT_ERROR',
+      });
+    }
+  }
+);
+
+router.patch(
+  '/authoring-plan/:planId/approve',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const idParsed = authoringPlanIdParam.safeParse(req.params.planId);
+    if (!idParsed.success) {
+      return res.status(400).json({
+        error: 'planId must be a UUID',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { approveAuthoringPlan } = await import(
+        '../services/ana/authoring-plan-generator'
+      );
+      const plan = await approveAuthoringPlan(
+        idParsed.data,
+        organizationId,
+        userId
+      );
+      if (!plan) {
+        return res.status(409).json({
+          error: 'Plan not found or not in an approvable state',
+          code: 'INVALID_TRANSITION',
+        });
+      }
+      return res.json(plan);
+    } catch (err: any) {
+      console.error('[AnA authoring-plan approve] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to approve authoring plan',
+        code: 'AUTHORING_PLAN_APPROVE_ERROR',
+      });
+    }
+  }
+);
+
+const rejectAuthoringPlanSchema = z.object({
+  reason: z.string().trim().max(2000).optional(),
+});
+
+router.patch(
+  '/authoring-plan/:planId/reject',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const idParsed = authoringPlanIdParam.safeParse(req.params.planId);
+    if (!idParsed.success) {
+      return res.status(400).json({
+        error: 'planId must be a UUID',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const bodyParsed = rejectAuthoringPlanSchema.safeParse(req.body ?? {});
+    if (!bodyParsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: bodyParsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { rejectAuthoringPlan } = await import(
+        '../services/ana/authoring-plan-generator'
+      );
+      const plan = await rejectAuthoringPlan(
+        idParsed.data,
+        organizationId,
+        userId,
+        bodyParsed.data.reason ?? null
+      );
+      if (!plan) {
+        return res.status(409).json({
+          error: 'Plan not found or not in a rejectable state',
+          code: 'INVALID_TRANSITION',
+        });
+      }
+      return res.json(plan);
+    } catch (err: any) {
+      console.error('[AnA authoring-plan reject] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to reject authoring plan',
+        code: 'AUTHORING_PLAN_REJECT_ERROR',
+      });
+    }
+  }
+);
+
+const executeAuthoringPlanSchema = z.object({
+  executedArtifactId: z.string().trim().max(255).nullable().optional(),
+});
+
+router.patch(
+  '/authoring-plan/:planId/execute',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const idParsed = authoringPlanIdParam.safeParse(req.params.planId);
+    if (!idParsed.success) {
+      return res.status(400).json({
+        error: 'planId must be a UUID',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const bodyParsed = executeAuthoringPlanSchema.safeParse(req.body ?? {});
+    if (!bodyParsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: bodyParsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { markAuthoringPlanExecuted } = await import(
+        '../services/ana/authoring-plan-generator'
+      );
+      const plan = await markAuthoringPlanExecuted(
+        idParsed.data,
+        organizationId,
+        bodyParsed.data.executedArtifactId ?? null
+      );
+      if (!plan) {
+        return res.status(409).json({
+          error: 'Plan not found or not in an executable state',
+          code: 'INVALID_TRANSITION',
+        });
+      }
+      return res.json(plan);
+    } catch (err: any) {
+      console.error('[AnA authoring-plan execute] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to mark authoring plan executed',
+        code: 'AUTHORING_PLAN_EXECUTE_ERROR',
+      });
+    }
+  }
+);
+
+router.get(
+  '/projects/:projectId/authoring-plans/active',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const ctdSection = String(req.query.ctdSection ?? '').trim();
+    if (!ctdSection || ctdSection.length > 64) {
+      return res.status(400).json({
+        error: 'ctdSection is required',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getActiveAuthoringPlanForSection } = await import(
+        '../services/ana/authoring-plan-generator'
+      );
+      const plan = await getActiveAuthoringPlanForSection(
+        projectIdParsed.data,
+        organizationId,
+        ctdSection
+      );
+      if (!plan) {
+        return res
+          .status(404)
+          .json({ error: 'No active plan for that section', code: 'NOT_FOUND' });
+      }
+      return res.json(plan);
+    } catch (err: any) {
+      console.error('[AnA authoring-plan active] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to load active authoring plan',
+        code: 'AUTHORING_PLAN_ACTIVE_ERROR',
       });
     }
   }

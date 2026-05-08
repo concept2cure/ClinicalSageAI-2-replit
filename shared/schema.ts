@@ -18459,3 +18459,81 @@ export const crossArtifactConsistencyAlerts = pgTable(
 export type CrossArtifactConsistencyAlertRow = InferSelectModel<
   typeof crossArtifactConsistencyAlerts
 >;
+
+// ═══════════════════════════════════════════════════════════════════════
+// Regulatory Authoring Plans (Feature 2.4)
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * One row per (project, ctd_section) authoring plan.
+ *
+ * Captures the AI-assembled "what we'll write" before the artifact is
+ * drafted: source artifacts to cite, cross-references, risk factors from
+ * Shadow Review, contradictions from a Truth Engine pre-scan, and
+ * therapeutic-area-driven reviewer expectations.
+ *
+ * Status flow: draft -> pending_approval -> approved -> executed
+ *                                       -> rejected
+ *
+ * Active uniqueness (draft + pending_approval) is enforced by a partial
+ * unique index — see the migration. Approved/rejected/executed plans are
+ * historical and may co-exist with a fresh active plan.
+ */
+export const authoringPlans = pgTable(
+  'authoring_plans',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    organizationId: integer('organization_id').notNull(),
+    projectId: integer('project_id').notNull(),
+    artifactId: text('artifact_id'),
+    artifactPk: integer('artifact_pk'),
+    ctdSection: text('ctd_section').notNull(),
+    submissionType: text('submission_type'),
+    status: text('status').notNull().default('draft'),
+    title: text('title'),
+    summary: text('summary'),
+    sources: jsonb('sources').notNull().default([]),
+    crossRefs: jsonb('cross_refs').notNull().default([]),
+    riskFactors: jsonb('risk_factors').notNull().default([]),
+    contradictions: jsonb('contradictions').notNull().default([]),
+    reviewerExpectations: jsonb('reviewer_expectations').notNull().default([]),
+    guidanceRefs: jsonb('guidance_refs').notNull().default([]),
+    outline: jsonb('outline').notNull().default([]),
+    therapeuticArea: text('therapeutic_area'),
+    approvedAt: timestamp('approved_at', { withTimezone: true }),
+    approvedBy: integer('approved_by'),
+    rejectedAt: timestamp('rejected_at', { withTimezone: true }),
+    rejectedBy: integer('rejected_by'),
+    rejectedReason: text('rejected_reason'),
+    executedAt: timestamp('executed_at', { withTimezone: true }),
+    executedArtifactId: text('executed_artifact_id'),
+    generatorVersion: text('generator_version'),
+    score: integer('score'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdBy: integer('created_by'),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  table => ({
+    orgIdx: index('idx_authoring_plans_org').on(table.organizationId),
+    projectIdx: index('idx_authoring_plans_project').on(
+      table.organizationId,
+      table.projectId
+    ),
+    sectionIdx: index('idx_authoring_plans_section').on(
+      table.organizationId,
+      table.projectId,
+      table.ctdSection
+    ),
+    statusIdx: index('idx_authoring_plans_status').on(
+      table.organizationId,
+      table.status
+    ),
+  })
+);
+
+export type AuthoringPlanRow = InferSelectModel<typeof authoringPlans>;

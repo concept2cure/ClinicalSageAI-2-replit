@@ -121,6 +121,34 @@ export interface LedgerRunSummary {
   modelsUsed: string[];
 }
 
+/**
+ * Lightweight authoring-plan slice embedded in the AnALedger.
+ *
+ * The full plan (sources, outline, etc.) lives in `authoring_plans` and
+ * is over-large for an embedded XML part. We surface the plan id +
+ * approval lifecycle + headline counts so the audit trail demonstrates
+ * the artifact was authored against a Reviewed plan.
+ */
+export interface LedgerAuthoringPlan {
+  planId: string;
+  ctdSection: string;
+  status: string;
+  title: string | null;
+  summary: string | null;
+  generatorVersion: string;
+  score: number;
+  sourceCount: number;
+  riskFactorCount: number;
+  contradictionCount: number;
+  therapeuticArea: string | null;
+  approvedAt: string | null;
+  approvedBy: number | null;
+  rejectedAt: string | null;
+  rejectedBy: number | null;
+  executedAt: string | null;
+  executedArtifactId: string | null;
+}
+
 export interface ArtifactLedger {
   schemaVersion: string;
   generatedAt: string;
@@ -128,6 +156,7 @@ export interface ArtifactLedger {
   organization: LedgerOrganization;
   project: LedgerProject;
   citations: LedgerCitations | null;
+  authoringPlan: LedgerAuthoringPlan | null;
   auditLog: LedgerAuditEntry[];
   signatures: LedgerSignature[];
   proposals: LedgerProposal[];
@@ -408,11 +437,17 @@ export async function collectArtifactLedger(
   const head = await loadArtifact(artifactId, organizationId);
   if (!head) return null;
 
-  const [auditLog, signatures, proposals, runs] = await Promise.all([
+  const [auditLog, signatures, proposals, runs, authoringPlan] = await Promise.all([
     loadAuditLog(artifactId, organizationId),
     loadSignatures(head.artifact.artifactPk, organizationId),
     loadProposals(artifactId, organizationId),
     loadRunSummary(artifactId, organizationId),
+    loadAuthoringPlan(
+      artifactId,
+      head.artifact.projectId,
+      head.artifact.ctdSection,
+      organizationId
+    ),
   ]);
 
   return {
@@ -422,9 +457,65 @@ export async function collectArtifactLedger(
     organization: head.organization,
     project: head.project,
     citations: head.citations,
+    authoringPlan,
     auditLog,
     signatures,
     proposals,
     runs,
   };
+}
+
+/**
+ * Pull the authoring plan most relevant to this artifact. Preference
+ * order:
+ *   1. A plan whose `artifact_id` or `executed_artifact_id` matches.
+ *   2. The most recent active plan for (project, ctd_section) — for
+ *      the case where the artifact was drafted before the plan id was
+ *      attached back.
+ *
+ * Returns null if no plan matches OR the table is missing.
+ */
+async function loadAuthoringPlan(
+  artifactId: string,
+  projectId: number,
+  ctdSection: string | null,
+  organizationId: number
+): Promise<LedgerAuthoringPlan | null> {
+  try {
+    const {
+      getLatestAuthoringPlanForArtifact,
+      getActiveAuthoringPlanForSection,
+    } = await import('../ana/authoring-plan-generator.js');
+
+    let plan = await getLatestAuthoringPlanForArtifact(artifactId, organizationId);
+    if (!plan && ctdSection) {
+      plan = await getActiveAuthoringPlanForSection(
+        projectId,
+        organizationId,
+        ctdSection
+      );
+    }
+    if (!plan || !plan.id) return null;
+    return {
+      planId: plan.id,
+      ctdSection: plan.ctdSection,
+      status: plan.status,
+      title: plan.title,
+      summary: plan.summary,
+      generatorVersion: plan.generatorVersion,
+      score: plan.score,
+      sourceCount: plan.sources.length,
+      riskFactorCount: plan.riskFactors.length,
+      contradictionCount: plan.contradictions.length,
+      therapeuticArea: plan.therapeuticArea,
+      approvedAt: plan.approvedAt ?? null,
+      approvedBy: plan.approvedBy ?? null,
+      rejectedAt: plan.rejectedAt ?? null,
+      rejectedBy: plan.rejectedBy ?? null,
+      executedAt: plan.executedAt ?? null,
+      executedArtifactId: plan.executedArtifactId ?? null,
+    };
+  } catch {
+    return null;
+  }
 }
