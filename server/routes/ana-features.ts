@@ -2455,6 +2455,46 @@ router.post(
   }
 );
 
+router.get(
+  '/submission-chat/threads/:threadId/timeline',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const threadId = String(req.params.threadId || '');
+    if (!threadId || threadId.length > 128) {
+      return res.status(400).json({
+        error: 'threadId is required',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getThreadTimeline } = await import(
+        '../services/ana/submission-chat-timeline'
+      );
+      const result = await getThreadTimeline(threadId, organizationId);
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA submission-chat thread-timeline] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to load thread timeline',
+        code: 'TIMELINE_ERROR',
+      });
+    }
+  }
+);
+
 // Streaming variant — same retrieval/scope/verification pipeline as the
 // one-shot route, but the LLM call streams tagged-output sections as SSE
 // events so a chat UI can render answer + rewrite progressively.
