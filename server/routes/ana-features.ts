@@ -2455,6 +2455,175 @@ router.get(
   }
 );
 
+// ─── Project-level citation operations ──────────────────────────────────
+//
+// Rollup, stale-list, and batch re-cite for a whole project. The single-
+// artifact endpoints above stay as-is; these are for readiness dashboards
+// and ops flows that operate on the full dossier.
+
+const projectIdParam = z.coerce.number().int().positive();
+
+router.get(
+  '/citations/projects/:projectId/rollup',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = projectIdParam.safeParse(req.params.projectId);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getProjectCitationsRollup } = await import(
+        '../services/ana/citation-engine'
+      );
+      const result = await getProjectCitationsRollup(parsed.data, organizationId);
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations project-rollup] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to load project rollup', code: 'PROJECT_ROLLUP_ERROR' });
+    }
+  }
+);
+
+router.get(
+  '/citations/projects/:projectId/stale',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = projectIdParam.safeParse(req.params.projectId);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { listStaleCitedArtifacts } = await import(
+        '../services/ana/citation-engine'
+      );
+      const stale = await listStaleCitedArtifacts(parsed.data, organizationId);
+      return res.json({
+        projectId: parsed.data,
+        organizationId,
+        staleCount: stale.length,
+        artifacts: stale,
+      });
+    } catch (err: any) {
+      console.error(
+        '[AnA citations project-stale] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to load stale list', code: 'PROJECT_STALE_ERROR' });
+    }
+  }
+);
+
+const batchRunSchema = z.object({
+  staleOnly: z.boolean().optional(),
+  ctdSectionPrefix: z.string().max(64).optional(),
+  concurrency: z.number().int().min(1).max(4).optional(),
+});
+
+// Tighter rate limiter — batch is the heaviest endpoint we expose.
+const batchRunRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 5 * 60 * 1000,
+    maxRequests: 2,
+    message: 'Batch citation runs are limited to 2 per 5 minutes.',
+  },
+});
+
+router.post(
+  '/citations/projects/:projectId/batch-run',
+  authenticateToken,
+  requireOrganizationContext,
+  batchRunRateLimiter,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const bodyParsed = batchRunSchema.safeParse(req.body ?? {});
+    if (!bodyParsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: bodyParsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const organizationUuid =
+      (req as any).tenantContext?.organizationUuid ||
+      (req.headers['x-org-uuid'] as string | undefined);
+    const userId = (req as any).userId || (req as any).user?.id;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { runCitationEngineForProject } = await import(
+        '../services/ana/citation-engine'
+      );
+      const result = await runCitationEngineForProject(
+        projectIdParsed.data,
+        organizationId,
+        {
+          staleOnly: bodyParsed.data.staleOnly ?? true,
+          ctdSectionPrefix: bodyParsed.data.ctdSectionPrefix,
+          concurrency: bodyParsed.data.concurrency,
+          organizationUuid: organizationUuid ?? undefined,
+          userId: userId ?? null,
+        }
+      );
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations project-batch-run] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to run batch citations',
+        code: 'PROJECT_BATCH_ERROR',
+      });
+    }
+  }
+);
+
 router.get(
   '/citations/:artifactId/gaps',
   authenticateToken,
