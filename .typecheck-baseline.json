@@ -2,7 +2,8 @@
   "$schema": "./scripts/ci/typecheck-baseline.schema.json",
   "_comment": "Counted error baseline for `tsc --noEmit -p tsconfig.json`. Mirrors the migration-prefix-collisions baseline pattern. The CI gate (scripts/ci/typecheck-no-regression.mjs) fails if a PR raises the count above this baseline. PRs that REDUCE the count should run `npm run ci:typecheck:write-baseline` so the new lower number lands and ratchets the bar tighter for the next PR. Goal over time: 0.",
   "_history": [
-    "2026-05-08: 2598. Initial baseline. Set when fixing the parse error at server/routes/auth.ts:842 (jwt.verify args were nested inside getRefreshTokenSecret() with a stray comma) unmasked ~2,600 latent type errors that tsc had been bailing on. The errors predate this rollout; the parse-fix made them visible. Captured as a tracked debt number rather than reverting the fix or pretending the codebase typechecks clean."
+    "2026-05-08: 2598. Initial baseline. Set when fixing the parse error at server/routes/auth.ts:842 (jwt.verify args were nested inside getRefreshTokenSecret() with a stray comma) unmasked ~2,600 latent type errors that tsc had been bailing on. The errors predate this rollout; the parse-fix made them visible. Captured as a tracked debt number rather than reverting the fix or pretending the codebase typechecks clean.",
+    "2026-05-08: 2589. Updated via --write-baseline (was 2598)."
   ],
-  "errorCount": 2598
+  "errorCount": 2589
 }
