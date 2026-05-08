@@ -34,6 +34,12 @@ jobs:
       - name: Guardrails — migration prefix collisions (no regressions)
         run: npm run ci:migration-prefix-collisions
 
+      - name: Guardrails — RLS allowlist TS↔SQL parity
+        run: npm run ci:rls-allowlist-sync
+
+      - name: Guardrails — tenant column types (no TEXT-typed tenant cols)
+        run: npm run ci:tenant-column-types
+
       - name: Guardrails — tenant-isolation in raw SQL (no regressions)
         run: npm run ci:tenant-isolation:no-regression
 

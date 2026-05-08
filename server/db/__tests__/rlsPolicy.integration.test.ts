@@ -92,6 +92,22 @@ describeIfDb('RLS policy — integration', () => {
       // the whole test — afterAll rolls back, so even a crash leaves the
       // schema untouched.
       await client.query('BEGIN');
+
+      // SUPERUSER bypasses RLS unconditionally. Local Postgres dev users
+      // and the postgres-image default in CI are both superusers, so we
+      // create a non-superuser role inside the txn and SET LOCAL ROLE
+      // into it for the rest of the test. ROLLBACK in afterAll auto-drops
+      // the role and auto-resets the SET, so concurrent runs do not
+      // collide and no state leaks.
+      const isSuper = await client.query(
+        "SELECT current_setting('is_superuser')::bool AS is_super"
+      );
+      if (isSuper.rows[0].is_super) {
+        const ROLE = `rls_test_role_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+        await client.query(`CREATE ROLE ${ROLE} NOLOGIN`);
+        await client.query(`SET LOCAL ROLE ${ROLE}`);
+      }
+
       await client.query(`
         CREATE TEMP TABLE ${TABLE} (
           id              SERIAL PRIMARY KEY,
