@@ -15,8 +15,7 @@
  */
 
 import cron from 'node-cron';
-import { pool } from '../db.js';
-import { withTenant } from '../db/withTenant';
+import { withTenantConnection } from '../db/withTenantConnection';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('memory-consolidation');
@@ -61,58 +60,74 @@ interface StaleMemoryRow {
  * conversation_working_memory id).
  */
 async function findStaleMemories(batchSize: number): Promise<StaleMemoryRow[]> {
-  const result = await pool.query<StaleMemoryRow>(
-    `SELECT
-       cwm.id,
-       cwm.conversation_id,
-       cwm.thread_id,
-       cwm.organization_id,
-       cwm.structured_data,
-       cwm.summary,
-       cwm.generated_at,
-       cc.project_id,
-       pip.id AS project_profile_id
-     FROM conversation_working_memory cwm
-     JOIN concept2cure_conversations cc
-       ON cwm.conversation_id = cc.id
-     LEFT JOIN project_intelligence_profiles pip
-       ON pip.project_id = cc.project_id
-       AND pip.organization_id = cwm.organization_id
-     WHERE cwm.generated_at < NOW() - INTERVAL '${STALE_THRESHOLD_DAYS} days'
-       AND cc.project_id IS NOT NULL
-       AND NOT EXISTS (
-         SELECT 1 FROM project_memory_entries pme
-         WHERE pme.project_id = cc.project_id
-           AND pme.category = 'conversation_summary'
-           AND pme.title LIKE '%cwm_' || cwm.id::text || '%'
-       )
-     ORDER BY cwm.generated_at ASC
-     LIMIT $1`,
-    [batchSize]
+  // Cross-tenant by design: scans every org for stale memories. Runs under
+  // app_super_admin role so the RLS policy from 0021 lets the query through
+  // even when RLS_ENFORCE=on. tenantId='0' is a placeholder — the
+  // super-admin clause matches regardless of its value.
+  return withTenantConnection<StaleMemoryRow[]>(
+    {
+      tenantId: '0',
+      role: 'app_super_admin',
+      source: 'job',
+      caller: 'memory-consolidation-job:findStaleMemories',
+    },
+    async client => {
+      const result = await client.query<StaleMemoryRow>(
+        `SELECT
+           cwm.id,
+           cwm.conversation_id,
+           cwm.thread_id,
+           cwm.organization_id,
+           cwm.structured_data,
+           cwm.summary,
+           cwm.generated_at,
+           cc.project_id,
+           pip.id AS project_profile_id
+         FROM conversation_working_memory cwm
+         JOIN concept2cure_conversations cc
+           ON cwm.conversation_id = cc.id
+         LEFT JOIN project_intelligence_profiles pip
+           ON pip.project_id = cc.project_id
+           AND pip.organization_id = cwm.organization_id
+         WHERE cwm.generated_at < NOW() - INTERVAL '${STALE_THRESHOLD_DAYS} days'
+           AND cc.project_id IS NOT NULL
+           AND NOT EXISTS (
+             SELECT 1 FROM project_memory_entries pme
+             WHERE pme.project_id = cc.project_id
+               AND pme.category = 'conversation_summary'
+               AND pme.title LIKE '%cwm_' || cwm.id::text || '%'
+           )
+         ORDER BY cwm.generated_at ASC
+         LIMIT $1`,
+        [batchSize]
+      );
+      return result.rows;
+    }
   );
-  return result.rows;
 }
 
 /**
  * Consolidate a single working memory record into a project memory entry.
  *
- * Runs inside a `withTenant` scope so the eventual RLS policy (PR B) sees
- * the right `app.current_tenant_id`. The wrapping cron tick is intentionally
- * cross-tenant (it scans for stale memories across every org); only this
- * per-row write is tenant-scoped.
+ * Runs inside a `withTenantConnection` scope: the dedicated client has
+ * app.current_tenant_id set to memory.organization_id, so the INSERT is
+ * accepted by the RLS policy from 0021 even when RLS_ENFORCE=on.
  */
 async function consolidateMemory(memory: StaleMemoryRow): Promise<boolean> {
-  return withTenant(
+  return withTenantConnection(
     {
       tenantId: memory.organization_id,
       source: 'job',
-      caller: 'memory-consolidation-job',
+      caller: 'memory-consolidation-job:consolidateMemory',
     },
-    () => consolidateMemoryInner(memory)
+    client => consolidateMemoryInner(memory, client)
   );
 }
 
-async function consolidateMemoryInner(memory: StaleMemoryRow): Promise<boolean> {
+async function consolidateMemoryInner(
+  memory: StaleMemoryRow,
+  client: import('pg').PoolClient
+): Promise<boolean> {
   try {
     // Parse structured data
     const structured =
@@ -163,7 +178,7 @@ async function consolidateMemoryInner(memory: StaleMemoryRow): Promise<boolean> 
     // Title encodes the cwm.id so the NOT EXISTS guard can detect duplicates
     const title = `Conversation summary ${dateLabel} [cwm_${memory.id}]`;
 
-    await pool.query(
+    await client.query(
       `INSERT INTO project_memory_entries (
          project_profile_id, project_id, organization_id,
          category, title, content,
