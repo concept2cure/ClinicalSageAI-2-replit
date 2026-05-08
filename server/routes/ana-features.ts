@@ -2726,6 +2726,52 @@ router.get(
 );
 
 router.get(
+  '/citations/runs/:runId/diff',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const fromRunId = String(req.params.runId || '');
+    const toRunId = String(req.query.against || '');
+    if (!/^[0-9a-f-]{36}$/i.test(fromRunId) || !/^[0-9a-f-]{36}$/i.test(toRunId)) {
+      return res.status(400).json({
+        error: 'runId and ?against must both be uuids',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { diffCitationRuns } = await import(
+        '../services/ana/citation-engine'
+      );
+      const result = await diffCitationRuns(fromRunId, toRunId, organizationId);
+      if (!result) {
+        return res.status(404).json({
+          error: 'One or both runs not found, or runs are for different artifacts',
+          code: 'CITATION_RUN_DIFF_NOT_FOUND',
+        });
+      }
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations diff] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to diff runs', code: 'CITATION_DIFF_ERROR' });
+    }
+  }
+);
+
+router.get(
   '/citations/projects/:projectId/readiness-impact',
   authenticateToken,
   requireOrganizationContext,

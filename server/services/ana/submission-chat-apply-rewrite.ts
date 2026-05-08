@@ -253,6 +253,44 @@ const REASON_MAX_CHARS = 2000;
 const CONTENT_MIN_CHARS = 8;
 const CONTENT_MAX_CHARS = 200_000;
 
+/**
+ * Schedule a citation refresh for an artifact. Resolves the org's UUID
+ * (needed for project-scoped retrieval) and runs the citation engine.
+ * Fire-and-forget by design — failures only log; the apply that triggered
+ * us is already durable.
+ *
+ * Resolves org UUID lazily here (single SELECT) so the apply path doesn't
+ * have to thread the UUID all the way through the route → service chain.
+ */
+async function scheduleAutoCitationRun(args: {
+  artifactId: string;
+  organizationId: number;
+  userId: number;
+}): Promise<void> {
+  try {
+    const { rows } = await getPool().query(
+      `SELECT uuid FROM organizations WHERE id = $1 LIMIT 1`,
+      [args.organizationId]
+    );
+    const orgUuid = rows[0]?.uuid as string | undefined;
+    const { runCitationEngine } = await import('./citation-engine.js');
+    await runCitationEngine(args.artifactId, args.organizationId, {
+      persist: true,
+      organizationUuid: orgUuid,
+      userId: args.userId,
+    });
+  } catch (err: any) {
+    // Already logged at the call site; this catch keeps the unhandled-
+    // rejection promise from leaking.
+    if (err?.code !== '42P01') {
+      console.warn(
+        '[AnA auto-citation] background run failed:',
+        err?.message || err
+      );
+    }
+  }
+}
+
 function fail(code: string, message: string): never {
   const err = new Error(message);
   (err as any).code = code;
@@ -763,6 +801,31 @@ export async function applyRewrite(
           );
         }
       }
+    }
+
+    // ── 6. Auto-citation refresh. The artifact's content just changed,
+    // so any prior citations are now stale. Fire-and-forget a background
+    // run so the next reader sees fresh citations without an explicit
+    // POST /citations/run call. Failure here is non-fatal: the apply is
+    // durable; readers will see isStale=true until the run lands.
+    //
+    // Disabled when ANA_REWRITE_AUTO_CITE_DISABLED=true so deployments
+    // can opt out (e.g. when running expensive RAG pipelines under
+    // tight budgets).
+    const autoCiteDisabled = ['1', 'true', 'yes', 'on'].includes(
+      (process.env.ANA_REWRITE_AUTO_CITE_DISABLED || '').toLowerCase()
+    );
+    if (!autoCiteDisabled) {
+      void scheduleAutoCitationRun({
+        artifactId: row.artifact_id,
+        organizationId: input.organizationId,
+        userId: input.userId,
+      }).catch(err =>
+        console.warn(
+          '[AnA submission-chat apply-rewrite] auto-citation schedule failed:',
+          err?.message || err
+        )
+      );
     }
 
     emitMetric({
