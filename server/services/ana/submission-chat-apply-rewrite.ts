@@ -17,7 +17,7 @@
  * @module server/services/ana/submission-chat-apply-rewrite
  */
 import crypto from 'node:crypto';
-import { pool } from '../../db.js';
+import { getPool } from '../../db/runtime.js';
 import { saveChatMessage } from '../chat-thread-helpers.js';
 import {
   getProposalById,
@@ -324,7 +324,7 @@ export async function previewRewrite(
     fail('INVALID_REQUEST', 'proposedContent or proposalId is required');
   }
 
-  const { rows } = await pool.query(
+  const { rows } = await getPool().query(
     `SELECT artifact_id, organization_id, version, content, content_hash, status, metadata
        FROM concept2cure_artifacts
       WHERE artifact_id = $1
@@ -475,7 +475,7 @@ export async function applyRewrite(
     fail('INVALID_REQUEST', 'reasonForChange exceeds the size limit');
   }
 
-  const client = await pool.connect();
+  const client = await getPool().connect();
   const now = new Date();
   const contentHash = crypto.createHash('sha256').update(newContent).digest('hex');
 

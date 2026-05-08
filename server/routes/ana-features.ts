@@ -2310,7 +2310,7 @@ router.post(
 // All tenant-scoped via requireOrganizationContext.
 
 const runCitationsSchema = z.object({
-  artifactId: z.string().min(1, 'artifactId is required'),
+  artifactId: z.string().min(1, 'artifactId is required').max(128),
   ctdSectionOverride: z.string().max(64).nullable().optional(),
 });
 
@@ -2419,10 +2419,10 @@ router.get(
   requireOrganizationContext,
   async (req: Request, res: Response) => {
     const artifactId = String(req.params.artifactId || '');
-    if (!artifactId) {
+    if (!artifactId || artifactId.length > 128) {
       return res
         .status(400)
-        .json({ error: 'artifactId is required', code: 'INVALID_REQUEST' });
+        .json({ error: 'artifactId is required (max 128 chars)', code: 'INVALID_REQUEST' });
     }
     const organizationId =
       (req as any).tenantContext?.organizationId ||
@@ -2461,10 +2461,10 @@ router.get(
   requireOrganizationContext,
   async (req: Request, res: Response) => {
     const artifactId = String(req.params.artifactId || '');
-    if (!artifactId) {
+    if (!artifactId || artifactId.length > 128) {
       return res
         .status(400)
-        .json({ error: 'artifactId is required', code: 'INVALID_REQUEST' });
+        .json({ error: 'artifactId is required (max 128 chars)', code: 'INVALID_REQUEST' });
     }
     const organizationId =
       (req as any).tenantContext?.organizationId ||

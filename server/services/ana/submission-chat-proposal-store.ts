@@ -21,7 +21,7 @@
  * @module server/services/ana/submission-chat-proposal-store
  */
 import crypto from 'node:crypto';
-import { pool } from '../../db.js';
+import { getPool } from '../../db/runtime.js';
 
 export type ProposalStatus = 'pending' | 'applied' | 'superseded' | 'expired';
 
@@ -119,7 +119,7 @@ export async function persistRewriteProposal(
   const ttlMs = input.ttlMs ?? DEFAULT_TTL_MS;
   const expiresAt = new Date(Date.now() + ttlMs);
 
-  const client = await pool.connect();
+  const client = await getPool().connect();
   try {
     await client.query('BEGIN');
 
@@ -193,7 +193,7 @@ export async function getActiveProposalForThreadArtifact(
   organizationId: number
 ): Promise<RewriteProposalRecord | null> {
   try {
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `SELECT *
          FROM ana_submission_chat_proposals
         WHERE thread_id = $1
@@ -208,7 +208,7 @@ export async function getActiveProposalForThreadArtifact(
     const record = rowToRecord(rows[0]);
     if (record.expiresAt && new Date(record.expiresAt).getTime() < Date.now()) {
       // Lazy-expire so getActiveProposal never returns a TTL'd one.
-      await pool
+      await getPool()
         .query(
           `UPDATE ana_submission_chat_proposals
               SET status = 'expired'
@@ -235,7 +235,7 @@ export async function getProposalById(
   organizationId: number
 ): Promise<RewriteProposalRecord | null> {
   try {
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `SELECT *
          FROM ana_submission_chat_proposals
         WHERE id = $1
@@ -261,7 +261,7 @@ export async function markProposalApplied(
   appliedVersionId: number
 ): Promise<boolean> {
   try {
-    const result = await pool.query(
+    const result = await getPool().query(
       `UPDATE ana_submission_chat_proposals
           SET status = 'applied',
               applied_audit_id = $2,
@@ -322,7 +322,7 @@ export async function listProposals(
 
   try {
     const [rowsResult, countResult] = await Promise.all([
-      pool.query(
+      getPool().query(
         `SELECT *
            FROM ana_submission_chat_proposals
            ${where}
@@ -330,7 +330,7 @@ export async function listProposals(
           LIMIT ${limit} OFFSET ${offset}`,
         params
       ),
-      pool.query(
+      getPool().query(
         `SELECT COUNT(*)::int AS c
            FROM ana_submission_chat_proposals
            ${where}`,
@@ -387,7 +387,7 @@ export async function getProposalWithLinkage(
   let audit: ProposalLinkage['audit'] = null;
   if (proposal.appliedAuditId) {
     try {
-      const { rows } = await pool.query(
+      const { rows } = await getPool().query(
         `SELECT audit_id, timestamp, user_name, change_reason, metadata
            FROM regulatory_audit_logs
           WHERE audit_id = $1
@@ -417,7 +417,7 @@ export async function getProposalWithLinkage(
   let artifactVersion: ProposalLinkage['artifactVersion'] = null;
   if (proposal.appliedVersionId) {
     try {
-      const { rows } = await pool.query(
+      const { rows } = await getPool().query(
         `SELECT id, version, content_hash, created_at
            FROM concept2cure_artifact_versions
           WHERE id = $1
@@ -446,7 +446,7 @@ export async function getProposalWithLinkage(
   let signature: ProposalLinkage['signature'] = null;
   if (proposal.appliedVersionId) {
     try {
-      const { rows } = await pool.query(
+      const { rows } = await getPool().query(
         `SELECT signature_id, signer_name, signer_email,
                 signature_meaning, signed_at, second_factor_verified
            FROM concept2cure_signatures
@@ -495,7 +495,7 @@ export async function sweepExpiredProposals(
       params.push(scope.organizationId);
       where += ` AND organization_id = $${params.length}`;
     }
-    const result = await pool.query(
+    const result = await getPool().query(
       `UPDATE ana_submission_chat_proposals
           SET status = 'expired'
         WHERE ${where}

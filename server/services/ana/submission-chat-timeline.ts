@@ -25,7 +25,7 @@
  *
  * @module server/services/ana/submission-chat-timeline
  */
-import { pool } from '../../db.js';
+import { getPool } from '../../db/runtime.js';
 
 export type TimelineEvent =
   | {
@@ -97,7 +97,7 @@ async function loadMessages(
   threadId: string
 ): Promise<TimelineEvent[]> {
   try {
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `SELECT role, content, model, tokens_used, created_at
          FROM chat_messages
         WHERE thread_id = $1
@@ -125,7 +125,7 @@ async function loadProposals(
   organizationId: number
 ): Promise<TimelineEvent[]> {
   try {
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `SELECT id, status, artifact_id, section_code, target_agency,
               content_hash, expires_at, applied_at, applied_audit_id,
               claim_status_counts, length(proposed_content) AS content_len,
@@ -169,7 +169,7 @@ async function loadApplies(
   try {
     // The apply path stuffs threadId into metadata.threadId. We pull every
     // submission_chat_rewrite UPDATE row tagged with this thread id.
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `SELECT audit_id, entity_id AS artifact_id, change_reason,
               previous_value, new_value, metadata, "timestamp"
          FROM regulatory_audit_logs

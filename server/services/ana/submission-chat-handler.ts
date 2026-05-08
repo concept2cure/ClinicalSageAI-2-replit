@@ -17,7 +17,7 @@
  *
  * @module server/services/ana/submission-chat-handler
  */
-import { pool } from '../../db.js';
+import { getPool } from '../../db/runtime.js';
 import { ensureGateway } from '../../routes/chat/shared.js';
 import { getRAGPipeline } from '../advancedRAGPipeline.js';
 import { buildMemoryContextForChat } from '../memory-context-assembler.js';
@@ -287,7 +287,7 @@ export async function loadArtifact(
   artifactId: string,
   organizationId?: number | null
 ): Promise<ArtifactRow> {
-  const { rows } = await pool.query(
+  const { rows } = await getPool().query(
     `SELECT id, artifact_id, project_id, organization_id, ctd_section, title, type, category, content
        FROM concept2cure_artifacts
       WHERE artifact_id = $1
@@ -319,7 +319,7 @@ export async function loadProjectArtifacts(
   projectId: number,
   organizationId: number
 ): Promise<ArtifactRow[]> {
-  const { rows } = await pool.query(
+  const { rows } = await getPool().query(
     `SELECT id, artifact_id, project_id, organization_id, ctd_section, title, type, category
        FROM concept2cure_artifacts
       WHERE project_id = $1
@@ -344,7 +344,7 @@ export async function enrichChunksWithArtifactMetadata(
   // 'artifact'. Look up which atom belongs to which artifact in one query so
   // we don't issue N round-trips.
   const atomIds = hits.map(h => h.id);
-  const { rows: atomRows } = await pool.query(
+  const { rows: atomRows } = await getPool().query(
     `SELECT id, source_type, source_id, metadata
        FROM lumen_data_atoms
       WHERE id = ANY($1::uuid[])`,
@@ -562,7 +562,7 @@ export async function loadPriorCitations(
 ): Promise<PriorCitation[]> {
   if (!threadId) return [];
   try {
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `SELECT rc.atom_id, rc.title, rc.excerpt_preview, rc.score, rc.rank
          FROM ai_generation_runs gr
          JOIN ai_retrieval_chunks rc
@@ -1262,7 +1262,7 @@ export async function handleSubmissionChat(
 
   let rawHits: Array<{ id: string; title: string; content: string; score: number }> = [];
   if (validOrgUuid) {
-    const ragPipeline = getRAGPipeline(pool);
+    const ragPipeline = getRAGPipeline(getPool());
     const artifactScope = {
       projectId: artifact.project_id,
       organizationUuid: validOrgUuid,
@@ -1551,7 +1551,7 @@ export async function handleSubmissionChat(
   }
 
   try {
-    await pool.query(
+    await getPool().query(
       `INSERT INTO ai_threads (id, organization_id, project_id, created_by)
        VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
       [
@@ -1561,11 +1561,11 @@ export async function handleSubmissionChat(
         input.userId ?? null,
       ]
     );
-    await pool.query(
+    await getPool().query(
       `INSERT INTO ai_messages (thread_id, role, content) VALUES ($1, 'user', $2)`,
       [input.threadId, input.question]
     );
-    await pool.query(
+    await getPool().query(
       `INSERT INTO ai_messages (thread_id, role, content) VALUES ($1, 'assistant', $2)`,
       [input.threadId, answer]
     );

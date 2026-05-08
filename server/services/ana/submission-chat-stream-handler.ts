@@ -17,7 +17,7 @@
  *
  * @module server/services/ana/submission-chat-stream-handler
  */
-import { pool } from '../../db.js';
+import { getPool } from '../../db/runtime.js';
 import { ensureGateway } from '../../routes/chat/shared.js';
 import { getRAGPipeline } from '../advancedRAGPipeline.js';
 import { buildMemoryContextForChat } from '../memory-context-assembler.js';
@@ -289,7 +289,7 @@ export async function handleSubmissionChatStream(
 
   let rawHits: Array<{ id: string; title: string; content: string; score: number }> = [];
   if (validOrgUuid) {
-    const ragPipeline = getRAGPipeline(pool);
+    const ragPipeline = getRAGPipeline(getPool());
     const artifactScope = {
       projectId: artifact.project_id,
       organizationUuid: validOrgUuid,
@@ -596,7 +596,7 @@ export async function handleSubmissionChatStream(
   }
 
   try {
-    await pool.query(
+    await getPool().query(
       `INSERT INTO ai_threads (id, organization_id, project_id, created_by)
        VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
       [
@@ -606,14 +606,14 @@ export async function handleSubmissionChatStream(
         input.userId ?? null,
       ]
     );
-    await pool.query(
+    await getPool().query(
       `INSERT INTO ai_messages (thread_id, role, content) VALUES ($1, 'user', $2)`,
       [input.threadId, input.question]
     );
     const assistantContent = rewriteText
       ? `${answerText}\n\n${rewriteText}`
       : answerText;
-    await pool.query(
+    await getPool().query(
       `INSERT INTO ai_messages (thread_id, role, content) VALUES ($1, 'assistant', $2)`,
       [input.threadId, assistantContent]
     );
