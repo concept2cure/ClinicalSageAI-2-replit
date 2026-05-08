@@ -16,6 +16,7 @@
 
 import cron from 'node-cron';
 import { pool } from '../db.js';
+import { withTenant } from '../db/withTenant';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('memory-consolidation');
@@ -94,8 +95,24 @@ async function findStaleMemories(batchSize: number): Promise<StaleMemoryRow[]> {
 
 /**
  * Consolidate a single working memory record into a project memory entry.
+ *
+ * Runs inside a `withTenant` scope so the eventual RLS policy (PR B) sees
+ * the right `app.current_tenant_id`. The wrapping cron tick is intentionally
+ * cross-tenant (it scans for stale memories across every org); only this
+ * per-row write is tenant-scoped.
  */
 async function consolidateMemory(memory: StaleMemoryRow): Promise<boolean> {
+  return withTenant(
+    {
+      tenantId: memory.organization_id,
+      source: 'job',
+      caller: 'memory-consolidation-job',
+    },
+    () => consolidateMemoryInner(memory)
+  );
+}
+
+async function consolidateMemoryInner(memory: StaleMemoryRow): Promise<boolean> {
   try {
     // Parse structured data
     const structured =
