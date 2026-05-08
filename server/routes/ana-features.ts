@@ -2725,6 +2725,91 @@ router.get(
   }
 );
 
+// Document-Embedded Audit Ledger — export an artifact as .docx with the
+// AnALedger XML embedded as a custom XML part (Open XML customXml/).
+const docxExportSchema = z.object({
+  includeProvenanceSummary: z.coerce.boolean().optional(),
+});
+
+const docxExportRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 5 * 60 * 1000,
+    maxRequests: 10,
+    message: 'Docx-with-ledger exports are limited to 10 per 5 minutes.',
+  },
+});
+
+router.post(
+  '/citations/:artifactId/export.docx',
+  authenticateToken,
+  requireOrganizationContext,
+  docxExportRateLimiter,
+  async (req: Request, res: Response) => {
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId || artifactId.length > 128) {
+      return res.status(400).json({
+        error: 'artifactId is required (max 128 chars)',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const parsed = docxExportSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { exportArtifactWithLedger } = await import(
+        '../services/export/docx-ledger-export'
+      );
+      const result = await exportArtifactWithLedger(artifactId, organizationId, {
+        includeProvenanceSummary: parsed.data.includeProvenanceSummary,
+      });
+      if (!result) {
+        return res
+          .status(404)
+          .json({ error: 'Artifact not found', code: 'ARTIFACT_NOT_FOUND' });
+      }
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      );
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${result.filename}"`
+      );
+      res.setHeader(
+        'X-AnALedger-Bytes',
+        String(result.ledgerXmlByteLength)
+      );
+      res.setHeader(
+        'X-AnALedger-Schema',
+        result.ledger.schemaVersion
+      );
+      return res.send(result.buffer);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations export.docx] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to export docx', code: 'DOCX_LEDGER_EXPORT_ERROR' });
+    }
+  }
+);
+
 // Citation engine health (org-scoped status + aggregates)
 router.get(
   '/citations/health',
