@@ -30,6 +30,7 @@ import * as schema from '../../shared/schema';
 import { getSslConfig } from './ssl';
 import { getDatabaseUrl } from './getDatabaseUrl';
 import { instrumentPool } from './poolInstrumentation';
+import { installRlsEnforcement } from './rlsEnforcement';
 
 const logger = createScopedLogger('database');
 
@@ -58,6 +59,12 @@ try {
     // pool.connect emits a counter labelled by tenant-scope presence and
     // caller. No DB behavior change — just measurement.
     instrumentPool(pool);
+
+    // Apply the RLS enforcement mode to every new connection. Default is
+    // off/shadow; the policy installed by 0021 has a leading
+    // `current_setting('app.rls_enforce') IS DISTINCT FROM 'on'` clause,
+    // so unless RLS_ENFORCE=on is explicitly set, every row passes.
+    installRlsEnforcement(pool);
 
     const testConnection = (retries = 3, delay = 3000) => {
       pool!.query('SELECT NOW()', (err, res) => {
