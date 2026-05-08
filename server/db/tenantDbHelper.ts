@@ -6,6 +6,7 @@
  */
 import { Request } from 'express';
 import { TenantDb } from './tenantDb';
+import type { TenantContext } from '../middleware/tenantContext';
 import { db } from '../db';
 import { createScopedLogger } from '../utils/logger';
 
@@ -22,17 +23,29 @@ const logger = createScopedLogger('tenant-db-helper');
  */
 export function getDb(req: Request): TenantDb | typeof db {
   try {
-    // If the tenant context is established, return a tenant-scoped database
-    if (req.tenantContext?.organizationId) {
-      return new TenantDb(req.tenantContext.organizationId);
+    // TenantDb's constructor expects the full TenantContext object — not a
+    // bare organizationId. Passing a primitive here means orgId/clientId end
+    // up undefined and every query skips its tenant filter.
+    if (req.tenantContext?.organizationId != null) {
+      const ctx = req.tenantContext;
+      return new TenantDb({
+        organizationId: ctx.organizationId == null ? null : String(ctx.organizationId),
+        organizationUuid: ctx.organizationUuid ?? null,
+        clientWorkspaceId:
+          ctx.clientWorkspaceId == null ? null : String(ctx.clientWorkspaceId),
+        module: ctx.module ?? null,
+      } satisfies TenantContext);
     }
 
-    // If only the tenantId is available, use it
-    if (req.tenantId) {
-      return new TenantDb(req.tenantId);
+    if (req.tenantId != null) {
+      return new TenantDb({
+        organizationId: String(req.tenantId),
+        organizationUuid: null,
+        clientWorkspaceId: null,
+        module: null,
+      } satisfies TenantContext);
     }
 
-    // If no tenant context is available, return the default database
     return db;
   } catch (error) {
     logger.error('Error getting tenant database', error);
