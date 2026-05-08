@@ -1178,12 +1178,21 @@ export const ctdNonclinicalStudies = pgTable(
     testingFacility: text('testing_facility'),
     studyCompletionDate: date('study_completion_date'),
 
+    // Ingestion provenance — populated by the preclinical extractor when a
+    // study row is created from a parsed PDF. Nullable so legacy/manual rows
+    // remain valid.
+    sourcePdfId: varchar('source_pdf_id', { length: 64 }),
+    extractionModel: varchar('extraction_model', { length: 64 }),
+    extractionConfidence: real('extraction_confidence'),
+    extractedAt: timestamp('extracted_at'),
+
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   table => ({
     programIdx: index('ctd_nonclin_program_idx').on(table.programId),
     typeIdx: index('ctd_nonclin_type_idx').on(table.studyType),
+    sourcePdfIdx: index('ctd_nonclin_source_pdf_idx').on(table.sourcePdfId),
   })
 );
 

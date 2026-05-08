@@ -224,6 +224,17 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
     console.error('❌ Failed to mount CER routes:', error);
   }
 
+  // ── Preclinical (Module 4) ingestion ──
+  // Mounted unconditionally; the router itself returns 503 when
+  // PRECLINICAL_INGEST_ENABLED is unset so the deny is uniform per env.
+  try {
+    const preclinicalModule = await import('../routes/preclinical');
+    app.use('/api/preclinical', preclinicalModule.default);
+    console.log('✅ Preclinical (Module 4) ingestion routes mounted');
+  } catch (error) {
+    console.error('❌ Failed to mount Preclinical routes:', error);
+  }
+
   // ── PDF task + compression ──
   try {
     const pdfTasksModule = await import('../routes/pdf-task-routes');
