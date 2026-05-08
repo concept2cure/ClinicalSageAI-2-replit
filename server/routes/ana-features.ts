@@ -2725,6 +2725,168 @@ router.get(
   }
 );
 
+// Per-rule gap inventory + citation export
+
+router.get(
+  '/citations/projects/:projectId/gaps-by-rule',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = projectIdParam.safeParse(req.params.projectId);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getProjectGapsByRule } = await import(
+        '../services/ana/citation-export'
+      );
+      const result = await getProjectGapsByRule(parsed.data, organizationId);
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations gaps-by-rule] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to load gaps-by-rule', code: 'GAPS_BY_RULE_ERROR' });
+    }
+  }
+);
+
+const exportFormatSchema = z.enum(['json', 'csv']);
+
+router.get(
+  '/citations/projects/:projectId/export',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = projectIdParam.safeParse(req.params.projectId);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const formatParsed = exportFormatSchema.safeParse(req.query.format ?? 'json');
+    if (!formatParsed.success) {
+      return res
+        .status(400)
+        .json({ error: 'format must be json or csv', code: 'INVALID_REQUEST' });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { exportProjectCitations, formatCitationsCsv, formatCitationsJsonExport } =
+        await import('../services/ana/citation-export');
+      const rows = await exportProjectCitations(parsed.data, organizationId);
+      if (formatParsed.data === 'csv') {
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="project-${parsed.data}-citations.csv"`
+        );
+        return res.send(formatCitationsCsv(rows));
+      }
+      return res.json({
+        projectId: parsed.data,
+        organizationId,
+        ...formatCitationsJsonExport(rows),
+      });
+    } catch (err: any) {
+      console.error(
+        '[AnA citations project-export] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to export project citations',
+        code: 'PROJECT_EXPORT_ERROR',
+      });
+    }
+  }
+);
+
+router.get(
+  '/citations/:artifactId/export',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId || artifactId.length > 128) {
+      return res.status(400).json({
+        error: 'artifactId is required (max 128 chars)',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const formatParsed = exportFormatSchema.safeParse(req.query.format ?? 'json');
+    if (!formatParsed.success) {
+      return res
+        .status(400)
+        .json({ error: 'format must be json or csv', code: 'INVALID_REQUEST' });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { exportArtifactCitations, formatCitationsCsv, formatCitationsJsonExport } =
+        await import('../services/ana/citation-export');
+      const rows = await exportArtifactCitations(artifactId, organizationId);
+      if (rows === null) {
+        return res
+          .status(404)
+          .json({ error: 'Artifact not found', code: 'ARTIFACT_NOT_FOUND' });
+      }
+      if (formatParsed.data === 'csv') {
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="${artifactId}-citations.csv"`
+        );
+        return res.send(formatCitationsCsv(rows));
+      }
+      return res.json({
+        artifactId,
+        organizationId,
+        ...formatCitationsJsonExport(rows),
+      });
+    } catch (err: any) {
+      console.error(
+        '[AnA citations artifact-export] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to export artifact citations',
+        code: 'ARTIFACT_EXPORT_ERROR',
+      });
+    }
+  }
+);
+
 // Project-level snapshot + diff
 const isoDateString = z
   .string()
