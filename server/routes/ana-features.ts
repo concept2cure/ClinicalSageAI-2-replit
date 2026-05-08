@@ -2725,6 +2725,72 @@ router.get(
   }
 );
 
+// Org-wide readiness overview — every project in the caller's org with
+// its readiness aggregate + the top urgent actions across all projects.
+const orgReadinessOverviewQuerySchema = z.object({
+  submissionType: z.enum(['IND', 'NDA', 'BLA', 'ALL']).optional(),
+  atRiskThreshold: z.coerce.number().int().min(0).max(100).optional(),
+  concurrency: z.coerce.number().int().min(1).max(8).optional(),
+  projectStatus: z.string().max(64).optional(),
+  excludeArchived: z.coerce.boolean().optional(),
+});
+
+const orgReadinessOverviewRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 60 * 1000,
+    maxRequests: 10,
+    message: 'Org readiness overview is limited to 10 per minute (heavy compute).',
+  },
+});
+
+router.get(
+  '/projects/readiness-overview',
+  authenticateToken,
+  requireOrganizationContext,
+  orgReadinessOverviewRateLimiter,
+  async (req: Request, res: Response) => {
+    const queryParsed = orgReadinessOverviewQuerySchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      return res.status(400).json({
+        error: 'Invalid query',
+        code: 'INVALID_REQUEST',
+        details: queryParsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getOrgReadinessOverview } = await import(
+        '../services/ana/org-readiness-overview'
+      );
+      const result = await getOrgReadinessOverview(organizationId, {
+        submissionType: queryParsed.data.submissionType,
+        atRiskThreshold: queryParsed.data.atRiskThreshold,
+        concurrency: queryParsed.data.concurrency,
+        projectStatus: queryParsed.data.projectStatus,
+        excludeArchived: queryParsed.data.excludeArchived,
+      });
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA org readiness-overview] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to compute org readiness overview',
+        code: 'ORG_READINESS_OVERVIEW_ERROR',
+      });
+    }
+  }
+);
+
 // ─── Project readiness aggregator ─────────────────────────────────────
 //
 // Synthesizes section coverage + citation engine + consistency alerts +
