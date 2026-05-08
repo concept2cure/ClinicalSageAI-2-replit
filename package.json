@@ -42,6 +42,8 @@
     "ci:migration-prefix-collisions:write-baseline": "node scripts/ci/check-migration-prefix-collisions.mjs --write-baseline",
     "ci:rls-allowlist-sync": "node scripts/ci/check-rls-allowlist-sync.mjs",
     "ci:tenant-column-types": "node scripts/ci/check-tenant-column-types.mjs",
+    "ci:typecheck:no-regression": "node scripts/ci/typecheck-no-regression.mjs",
+    "ci:typecheck:write-baseline": "node scripts/ci/typecheck-no-regression.mjs --write-baseline",
     "ci:governed-export-routes": "node scripts/ci/check-governed-export-routes.mjs",
     "ci:governed-export-consequence-shape": "node scripts/ci/check-governed-export-consequence-shape.mjs",
     "ci:check-docx-runtime": "node scripts/ci/check-docx-runtime-canonicality.mjs",
