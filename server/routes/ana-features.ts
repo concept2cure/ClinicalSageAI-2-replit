@@ -2725,6 +2725,68 @@ router.get(
   }
 );
 
+// ─── Project readiness aggregator ─────────────────────────────────────
+//
+// Synthesizes section coverage + citation engine + consistency alerts +
+// guidance alerts + therapeutic context into a single 0-100 score with
+// ranked next-action list. The dashboard endpoint.
+
+const readinessAggregateQuerySchema = z.object({
+  submissionType: z.enum(['IND', 'NDA', 'BLA', 'ALL']).optional(),
+});
+
+router.get(
+  '/projects/:projectId/readiness-aggregate',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const queryParsed = readinessAggregateQuerySchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      return res.status(400).json({
+        error: 'Invalid query',
+        code: 'INVALID_REQUEST',
+        details: queryParsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getProjectReadinessAggregate } = await import(
+        '../services/ana/project-readiness-aggregator'
+      );
+      const result = await getProjectReadinessAggregate(
+        projectIdParsed.data,
+        organizationId,
+        { submissionType: queryParsed.data.submissionType }
+      );
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA project readiness-aggregate] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to compute readiness aggregate',
+        code: 'READINESS_AGGREGATE_ERROR',
+      });
+    }
+  }
+);
+
 // ─── Therapeutic Area Context Injection (Feature 2.7) ─────────────────
 //
 // Profiles live in server/services/ana/therapeutic-area-profiles/.
