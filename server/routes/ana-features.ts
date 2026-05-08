@@ -2725,6 +2725,135 @@ router.get(
   }
 );
 
+// Project-level snapshot + diff
+const isoDateString = z
+  .string()
+  .refine(s => !Number.isNaN(new Date(s).getTime()), {
+    message: 'must be a valid ISO date string',
+  });
+
+router.get(
+  '/citations/projects/:projectId/snapshot',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const asOfRaw = (req.query.asOf as string | undefined) ?? undefined;
+    let asOfDate: Date | undefined;
+    if (asOfRaw) {
+      const parsed = isoDateString.safeParse(asOfRaw);
+      if (!parsed.success) {
+        return res.status(400).json({
+          error: 'asOf must be a valid ISO date string',
+          code: 'INVALID_REQUEST',
+        });
+      }
+      asOfDate = new Date(parsed.data);
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getProjectCitationSnapshot } = await import(
+        '../services/ana/citation-engine'
+      );
+      const result = await getProjectCitationSnapshot(
+        projectIdParsed.data,
+        organizationId,
+        asOfDate
+      );
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations project-snapshot] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to load snapshot',
+        code: 'PROJECT_SNAPSHOT_ERROR',
+      });
+    }
+  }
+);
+
+const projectDiffQuerySchema = z.object({
+  from: isoDateString,
+  to: isoDateString.optional(),
+});
+
+router.get(
+  '/citations/projects/:projectId/diff',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const queryParsed = projectDiffQuerySchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      return res.status(400).json({
+        error: '?from is required (ISO date); ?to is optional',
+        code: 'INVALID_REQUEST',
+        details: queryParsed.error.flatten(),
+      });
+    }
+    const fromDate = new Date(queryParsed.data.from);
+    const toDate = queryParsed.data.to ? new Date(queryParsed.data.to) : new Date();
+    if (fromDate.getTime() > toDate.getTime()) {
+      return res.status(400).json({
+        error: '?from must be earlier than ?to',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { diffProjectCitationSnapshots } = await import(
+        '../services/ana/citation-engine'
+      );
+      const result = await diffProjectCitationSnapshots(
+        projectIdParsed.data,
+        organizationId,
+        fromDate,
+        toDate
+      );
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA citations project-diff] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to diff project',
+        code: 'PROJECT_DIFF_ERROR',
+      });
+    }
+  }
+);
+
 router.get(
   '/citations/runs/:runId/diff',
   authenticateToken,
