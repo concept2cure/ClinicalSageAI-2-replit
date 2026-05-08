@@ -5064,6 +5064,13 @@ export const projects = pgTable(
     ownerId: integer('owner_id').references(() => users.id),
     sponsors: text('sponsors').array(), // List of sponsor IDs or names
     tags: text('tags').array(),
+    /**
+     * Therapeutic area slug (Feature 2.7) — resolves to a profile in
+     * server/services/ana/therapeutic-area-profiles/. Free-form string
+     * so adding a new profile is module-only (no migration). Null means
+     * "no profile injected".
+     */
+    therapeuticArea: text('therapeutic_area'),
     criticalToQualityFactors: json('critical_to_quality_factors'), // CtQ factors array
     riskLevel: text('risk_level').default('medium'), // low, medium, high
     riskAssessment: json('risk_assessment'),

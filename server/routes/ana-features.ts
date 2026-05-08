@@ -2725,6 +2725,225 @@ router.get(
   }
 );
 
+// ─── Therapeutic Area Context Injection (Feature 2.7) ─────────────────
+//
+// Profiles live in server/services/ana/therapeutic-area-profiles/.
+// Each profile exports contextRules / riskFactors / commonGaps /
+// guidanceRefs / reviewerExpectations / pathwayHints — injected into
+// the system prompt at runtime when a project has a therapeutic_area
+// set.
+
+router.get(
+  '/therapeutic-areas',
+  authenticateToken,
+  async (_req: Request, res: Response) => {
+    try {
+      const { listProfiles, listAcceptedSlugs } = await import(
+        '../services/ana/therapeutic-area-profiles/index'
+      );
+      const profiles = listProfiles().map(p => ({
+        id: p.id,
+        displayName: p.displayName,
+        description: p.description,
+        contextRuleCount: p.contextRules.length,
+        riskFactorCount: p.riskFactors.length,
+        commonGapCount: p.commonGaps.length,
+        guidanceRefCount: p.guidanceRefs.length,
+        reviewerExpectationCount: p.reviewerExpectations.length,
+        pathwayHintCount: p.pathwayHints.length,
+      }));
+      return res.json({
+        profiles,
+        acceptedSlugs: listAcceptedSlugs(),
+      });
+    } catch (err: any) {
+      console.error(
+        '[AnA therapeutic-areas list] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to list therapeutic areas',
+        code: 'THERAPEUTIC_AREAS_LIST_ERROR',
+      });
+    }
+  }
+);
+
+router.get(
+  '/therapeutic-areas/:slug',
+  authenticateToken,
+  async (req: Request, res: Response) => {
+    const slug = String(req.params.slug || '');
+    try {
+      const { getProfile, renderProfileForPrompt, profileRetrievalBoost } =
+        await import('../services/ana/therapeutic-area-profiles/index');
+      const profile = getProfile(slug);
+      if (!profile) {
+        return res.status(404).json({
+          error: 'Therapeutic area profile not found',
+          code: 'THERAPEUTIC_AREA_NOT_FOUND',
+        });
+      }
+      return res.json({
+        profile,
+        contextBlock: renderProfileForPrompt(profile),
+        retrievalBoost: profileRetrievalBoost(profile),
+      });
+    } catch (err: any) {
+      console.error(
+        '[AnA therapeutic-areas get] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to load therapeutic area profile',
+        code: 'THERAPEUTIC_AREA_GET_ERROR',
+      });
+    }
+  }
+);
+
+const projectTherapeuticContextQuerySchema = z.object({
+  activeCtdSection: z.string().max(64).optional(),
+  activePathway: z
+    .enum([
+      'accelerated_approval',
+      'breakthrough_therapy',
+      'fast_track',
+      'orphan_drug',
+      'priority_review',
+      'conditional_marketing_authorization',
+      'rmat',
+      'prime',
+    ])
+    .optional(),
+});
+
+router.get(
+  '/projects/:projectId/therapeutic-context',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const queryParsed = projectTherapeuticContextQuerySchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      return res.status(400).json({
+        error: 'Invalid query',
+        code: 'INVALID_REQUEST',
+        details: queryParsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getProjectTherapeuticContext } = await import(
+        '../services/ana/therapeutic-area-context'
+      );
+      const result = await getProjectTherapeuticContext(
+        projectIdParsed.data,
+        organizationId,
+        {
+          activeCtdSection: queryParsed.data.activeCtdSection,
+          activePathway: queryParsed.data.activePathway,
+        }
+      );
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA project therapeutic-context] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to load therapeutic context',
+        code: 'THERAPEUTIC_CONTEXT_ERROR',
+      });
+    }
+  }
+);
+
+const setTherapeuticAreaSchema = z.object({
+  therapeuticArea: z.string().max(64).nullable(),
+});
+
+router.patch(
+  '/projects/:projectId/therapeutic-area',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const parsed = setTherapeuticAreaSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { setProjectTherapeuticArea } = await import(
+        '../services/ana/therapeutic-area-context'
+      );
+      const result = await setProjectTherapeuticArea(
+        projectIdParsed.data,
+        organizationId,
+        parsed.data.therapeuticArea
+      );
+      if (!result.ok) {
+        return res
+          .status(404)
+          .json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' });
+      }
+      return res.json(result);
+    } catch (err: any) {
+      const code = err?.code;
+      if (code === 'INVALID_REQUEST') {
+        return res.status(400).json({ error: err.message, code });
+      }
+      if (code === 'MIGRATION_PENDING') {
+        return res.status(503).json({
+          error: 'therapeutic_area column not migrated — apply 20260508_project_therapeutic_area.sql',
+          code,
+        });
+      }
+      console.error(
+        '[AnA project set therapeutic-area] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to set therapeutic area',
+        code: 'SET_THERAPEUTIC_AREA_ERROR',
+      });
+    }
+  }
+);
+
 // ─── Cross-artifact consistency scanner ───────────────────────────────
 //
 // Walks the project's contradicts edges from the citation engine and
