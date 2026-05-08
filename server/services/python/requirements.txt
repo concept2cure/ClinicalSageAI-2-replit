@@ -34,7 +34,7 @@ torch==2.11.0
 sentence-transformers==2.2.2
 
 # Vector database
-chromadb==1.5.5
+chromadb==1.5.9
 pinecone-client==2.2.4
 
 # API and HTTP
