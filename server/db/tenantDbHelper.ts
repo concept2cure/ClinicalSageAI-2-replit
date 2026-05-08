@@ -12,10 +12,12 @@
  * consumers chained Drizzle's API (`.select().from(...).where(...)`)
  * which only worked through the fallback `db` branch.
  *
- * Today: `getDb(req)` returns a Drizzle instance bound to the
- * request-scoped Postgres client (`req.dbClient`) loaded by
- * `requireTenantContext` middleware. Same `pg.Pool` everything else uses
- * — observability counters track it, RLS policy filters it.
+ * #483 patched the constructor call so `TenantDb` actually filtered, but
+ * left the underlying postgres-js shim in place. This branch goes further:
+ * `getDb(req)` now returns a Drizzle instance bound to the request-scoped
+ * Postgres client (`req.dbClient`) loaded by `requireTenantContext`
+ * middleware. Same `pg.Pool` everything else uses — observability counters
+ * track it, RLS policy filters it. The whole `TenantDb` class is gone.
  *
  * Existing callers (`tenant-traceability`, `traceability-mapping-routes`,
  * `tenant-quality-validation`, `tenant-ctq-factors`) keep working without

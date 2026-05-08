@@ -31,12 +31,25 @@ fi
 echo "🌐 Starting Express server on port 5000..."
 cd /workspaces/Concept2Cure.RI-2-replit
 
+# Use env-provided secrets if set; otherwise mint ephemeral ones per run.
+# Never commit secrets — sessions issued under an ephemeral secret are
+# invalidated on the next restart, which is the correct behavior for dev.
+if [ -z "${JWT_SECRET:-}" ]; then
+  JWT_SECRET="$(head -c 48 /dev/urandom | base64 | tr -d '\n=' | tr '/+' '_-')"
+  echo "  ⚠️  JWT_SECRET unset — generated ephemeral secret for this run."
+fi
+if [ -z "${SESSION_SECRET:-}" ]; then
+  SESSION_SECRET="$(head -c 48 /dev/urandom | base64 | tr -d '\n=' | tr '/+' '_-')"
+  echo "  ⚠️  SESSION_SECRET unset — generated ephemeral secret for this run."
+fi
+export JWT_SECRET SESSION_SECRET
+
 DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/concept2cure-ri?sslmode=disable" \
   SKIP_DB_STARTUP_TEST=true \
   NODE_ENV=development \
   PORT=5000 \
-  JWT_SECRET=trialsage-codespace-jwt-secret-2026 \
-  SESSION_SECRET=trialsage-codespace-session-secret-2026 \
+  JWT_SECRET="$JWT_SECRET" \
+  SESSION_SECRET="$SESSION_SECRET" \
   nohup node_modules/.bin/tsx server/index.ts > /tmp/app.log 2>&1 &
 
 SERVER_PID=$!
