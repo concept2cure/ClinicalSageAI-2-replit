@@ -196,14 +196,16 @@ rollback racing with in-flight queries.
   `0020`. Adding a foreign key requires every existing value to match a
   row in `organizations.id`, which would fail on legacy / orphaned
   rows. Separate cleanup PR if desired.
-- **Does not touch `tenantDb` or `tenantDbHelper`** in `server/db/`.
-  Both are actively used by routes (`tenant-traceability`,
-  `tenant-ctq-factors`, `tenant-quality-validation`,
-  `sectionQualityGating`). They predate this rollout and use a
-  separate `postgres-js` connection rather than the shared `pg.Pool`
-  — code paths through them are NOT covered by the pool
-  instrumentation in PR A. Migrating those routes to the canonical
-  pool + `requestDb` is a follow-up.
+- **Pre-existing helpers fully cleaned up.** `tenantDb.ts` (a separate
+  `postgres-js` connection that bypassed the instrumented pool, with
+  a constructor that was being called wrong so its tenant filter never
+  engaged) is gone. `sectionQualityGating.ts` (462 lines, zero callers,
+  also broken) is gone. `tenantDbHelper.ts` survives but now delegates
+  `getDb(req)` straight to `requestDb(req)` — the four route files that
+  use it (`tenant-traceability`, `traceability-mapping-routes`,
+  `tenant-quality-validation`, `tenant-ctq-factors`) keep their existing
+  call shape and now route through the canonical pool with the RLS
+  session vars set.
 
 ## Related
 

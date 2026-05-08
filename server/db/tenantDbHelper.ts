@@ -1,56 +1,55 @@
 /**
- * Tenant Database Helper Functions
+ * Tenant database helper — backwards-compatible alias for `requestDb`.
  *
- * This file provides utility functions for working with tenant databases,
- * particularly for getting tenant-specific database instances in API routes.
+ * History: this module used to return a `TenantDb` class instance that
+ * wrapped a SEPARATE `postgres-js` connection (different driver, different
+ * pool) and applied tenant filtering by injecting `eq(table.organizationId,
+ * orgId)` into every query. In practice the constructor was being called
+ * with a string id where it expected a `TenantContext` object, so
+ * `this.orgId` was always `undefined` and the filter never engaged —
+ * meaning every "tenant-scoped" query was actually unfiltered. The only
+ * reason this didn't surface as a security issue was that all the
+ * consumers chained Drizzle's API (`.select().from(...).where(...)`)
+ * which only worked through the fallback `db` branch.
+ *
+ * Today: `getDb(req)` returns a Drizzle instance bound to the
+ * request-scoped Postgres client (`req.dbClient`) loaded by
+ * `requireTenantContext` middleware. Same `pg.Pool` everything else uses
+ * — observability counters track it, RLS policy filters it.
+ *
+ * Existing callers (`tenant-traceability`, `traceability-mapping-routes`,
+ * `tenant-quality-validation`, `tenant-ctq-factors`) keep working without
+ * any change because they already chain Drizzle methods on the result.
+ *
+ * Prefer `requestDb(req)` directly for new code — the indirection through
+ * this helper exists only to avoid churn in the four legacy route files.
  */
-import { Request } from 'express';
-import { TenantDb } from './tenantDb';
-import { db } from '../db';
-import { createScopedLogger } from '../utils/logger';
 
-const logger = createScopedLogger('tenant-db-helper');
+import type { Request } from 'express';
+import { requestDb, type RequestDb } from './requestDb';
 
 /**
- * Get a tenant-specific database instance from a request
- *
- * This function examines the request for tenant context and returns
- * either a tenant-scoped database instance or the default database.
- *
- * @param req The Express request
- * @returns A tenant-scoped database instance or the default database
+ * Get a request-scoped Drizzle instance. The returned db routes its
+ * queries through the connection that has `app.current_tenant_id` and
+ * `app.current_user_role` already set, so the RLS policy from
+ * `0021_enable_rls_everywhere.sql` recognises the scope.
  */
-export function getDb(req: Request): TenantDb | typeof db {
-  try {
-    // If the tenant context is established, return a tenant-scoped database
-    if (req.tenantContext?.organizationId) {
-      return new TenantDb(req.tenantContext.organizationId);
-    }
-
-    // If only the tenantId is available, use it
-    if (req.tenantId) {
-      return new TenantDb(req.tenantId);
-    }
-
-    // If no tenant context is available, return the default database
-    return db;
-  } catch (error) {
-    logger.error('Error getting tenant database', error);
-    return db;
-  }
+export function getDb(req: Request): RequestDb {
+  return requestDb(req);
 }
 
 /**
- * Helper function to ensure that a tenant ID is set in the request
- *
- * @param req The Express request
- * @returns The tenant ID from the request
- * @throws Error if tenant ID is not set
+ * Return the resolved tenant id for the request, throwing if it is not
+ * set. Unchanged from the previous implementation — this guard fires
+ * before queries run, so a missing tenant id surfaces as a 500 rather
+ * than silently flowing through.
  */
 export function ensureTenantId(req: Request): number {
-  if (!req.tenantId && !req.tenantContext?.organizationId) {
+  const fromContext = req.tenantContext?.organizationId;
+  const fromTop = (req as Request & { tenantId?: number | string }).tenantId;
+  const resolved = fromContext ?? fromTop;
+  if (resolved == null || resolved === '') {
     throw new Error('Tenant ID is required but not set in the request');
   }
-
-  return req.tenantId || req.tenantContext!.organizationId;
+  return typeof resolved === 'number' ? resolved : Number(resolved);
 }
