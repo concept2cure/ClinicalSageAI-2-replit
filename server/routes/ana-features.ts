@@ -2304,6 +2304,84 @@ router.post(
   }
 );
 
+// Streaming variant — same retrieval/scope/verification pipeline as the
+// one-shot route, but the LLM call streams tagged-output sections as SSE
+// events so a chat UI can render answer + rewrite progressively.
+router.post(
+  '/submission-chat/stream',
+  authenticateToken,
+  requireOrganizationContext,
+  submissionChatRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = submissionChatSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const organizationUuid =
+      (req as any).tenantContext?.organizationUuid ||
+      (req.headers['x-org-uuid'] as string | undefined);
+    const userId = (req as any).userId || (req as any).user?.id;
+
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+
+    let clientClosed = false;
+    req.on('close', () => {
+      clientClosed = true;
+    });
+
+    const writeEvent = (event: any) => {
+      if (clientClosed) return;
+      try {
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
+      } catch {
+        clientClosed = true;
+      }
+    };
+
+    try {
+      const { handleSubmissionChatStream } = await import(
+        '../services/ana/submission-chat-stream-handler'
+      );
+      await handleSubmissionChatStream(
+        {
+          threadId: parsed.data.threadId,
+          artifactId: parsed.data.artifactId,
+          question: parsed.data.question,
+          organizationId: organizationId ?? null,
+          organizationUuid: organizationUuid ?? null,
+          userId: userId ?? null,
+        },
+        writeEvent
+      );
+    } catch (err: any) {
+      writeEvent({
+        type: 'error',
+        code: 'SUBMISSION_CHAT_STREAM_ERROR',
+        message: err?.message || 'Streaming submission-chat failed',
+      });
+      console.error(
+        '[AnA submission-chat stream] failed:',
+        err?.message || err
+      );
+    } finally {
+      if (!clientClosed) res.end();
+    }
+  }
+);
+
 router.post(
   '/submission-chat',
   authenticateToken,

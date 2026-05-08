@@ -250,7 +250,11 @@ const HISTORY_TURN_LIMIT = parseInt(
 /** How many recent user turns to fold into the retrieval query for coreference. */
 const HISTORY_QUERY_TURNS = 2;
 
-interface ArtifactRow {
+/**
+ * Internal artifact / chunk shapes — exported so the streaming handler can
+ * reuse them without duplicating types.
+ */
+export interface ArtifactRow {
   id: number;
   artifact_id: string;
   project_id: number;
@@ -262,7 +266,7 @@ interface ArtifactRow {
   content?: string | null;
 }
 
-interface RetrievedChunk {
+export interface RetrievedChunk {
   id: string;
   title: string;
   content: string;
@@ -275,7 +279,7 @@ interface RetrievedChunk {
 /**
  * Load the active artifact and verify the caller's tenant matches.
  */
-async function loadArtifact(
+export async function loadArtifact(
   artifactId: string,
   organizationId?: number | null
 ): Promise<ArtifactRow> {
@@ -307,7 +311,7 @@ async function loadArtifact(
  * Pull every artifact under the same project so the retrieval scope is the
  * full dossier, not just the active document.
  */
-async function loadProjectArtifacts(
+export async function loadProjectArtifacts(
   projectId: number,
   organizationId: number
 ): Promise<ArtifactRow[]> {
@@ -326,7 +330,7 @@ async function loadProjectArtifacts(
  * Map vault hits back to the originating artifact + section so citations carry
  * { artifactId, sectionCode, pageRef } not just an opaque atom id.
  */
-async function enrichChunksWithArtifactMetadata(
+export async function enrichChunksWithArtifactMetadata(
   hits: Array<{ id: string; title: string; content: string; score: number }>,
   projectArtifacts: ArtifactRow[]
 ): Promise<RetrievedChunk[]> {
@@ -516,7 +520,7 @@ export function detectSectionReference(
  * coreferences ("the EU cohort", "the answer above") and so we can synthesize
  * a standalone retrieval query from the question + recent user turns.
  */
-async function loadConversationHistory(
+export async function loadConversationHistory(
   threadId: string,
   limit: number
 ): Promise<ConversationTurn[]> {
@@ -547,7 +551,7 @@ async function loadConversationHistory(
  *
  * Tolerates missing tables (42P01) like the rest of the chat path.
  */
-async function loadPriorCitations(
+export async function loadPriorCitations(
   threadId: string,
   projectArtifacts: ArtifactRow[],
   limit = 12
@@ -822,6 +826,200 @@ interface ModelResponseShape {
   answer: string;
   citations: Array<{ ref: number; relationship: CitationRelationship }>;
   rewrite: SubmissionChatRewrite | null;
+}
+
+/**
+ * Streaming-friendly prompt variant. Asks the model to emit tagged sections
+ * (%%ANSWER%% / %%REWRITE%% / %%STRUCTURE%% / %%END%%) instead of one JSON
+ * envelope, so the server can route token deltas to the right SSE channel
+ * as they arrive. The structured metadata still comes through as a single
+ * JSON object, just inside a marked section the parser can isolate.
+ *
+ * The dossier manifest, prior citations, conversation history, intent hint,
+ * and evidence block are identical to the non-streaming prompt — only the
+ * output contract differs.
+ */
+export function buildStreamingSystemPrompt(
+  activeArtifact: ArtifactRow,
+  projectArtifacts: ArtifactRow[],
+  chunks: RetrievedChunk[],
+  options: {
+    intent?: SubmissionChatIntent;
+    targetAgency?: string | null;
+    sectionReference?: string | null;
+    history?: ConversationTurn[];
+    priorCitations?: PriorCitation[];
+  } = {}
+): string {
+  const intent = options.intent ?? 'general';
+  const targetAgency = options.targetAgency ?? null;
+  const sectionReference = options.sectionReference ?? null;
+  const history = options.history ?? [];
+  const priorCitations = options.priorCitations ?? [];
+
+  const dossierManifest = projectArtifacts
+    .map(a => {
+      const section = a.ctd_section ? ` ${a.ctd_section}` : '';
+      const flag = a.id === activeArtifact.id ? ' (active)' : '';
+      return `- [${a.artifact_id}]${section} ${a.title}${flag}`;
+    })
+    .join('\n');
+
+  const evidenceLines = chunks.map((c, i) => {
+    const sec = c.sectionCode ? ` ${c.sectionCode}` : '';
+    const page = c.pageRef ? ` ${c.pageRef}` : '';
+    const trimmed =
+      c.content.length > 600 ? `${c.content.slice(0, 600)}…` : c.content;
+    return `[SRC-${i + 1}] artifact=${c.artifactId}${sec}${page} title="${c.title}"\n${trimmed}`;
+  });
+
+  const intentBlock = (() => {
+    switch (intent) {
+      case 'provenance':
+        return [
+          '',
+          'Detected intent: PROVENANCE.',
+          'Resolve where each fact in the user\'s question came from. If the user',
+          'refers to "this source" or "that citation", look at the conversation',
+          'history above to identify which [SRC-n] they mean and explain its role.',
+        ].join('\n');
+      case 'cross_evidence':
+        return [
+          '',
+          'Detected intent: CROSS-EVIDENCE.',
+          'The user is asking about competing or contradictory data across the',
+          'dossier. Cite both sides explicitly with supports / contradicts labels.',
+        ].join('\n');
+      case 'rewrite':
+        return [
+          '',
+          `Detected intent: REWRITE${targetAgency ? ` (target agency: ${targetAgency})` : ''}.`,
+          sectionReference
+            ? `Target section: ${sectionReference}.`
+            : 'Target: the active artifact (no explicit section reference).',
+          'Flag any [SRC-n] that contradicts the active section in %%ANSWER%%',
+          '(use relationship="contradicts" in the structure block), then emit',
+          'the proposed new content in %%REWRITE%%.',
+        ].join('\n');
+      default:
+        return '';
+    }
+  })();
+
+  return [
+    'You are AnA in submission-chat mode (streaming variant). The user has',
+    'already generated a regulatory section and is now interrogating the draft.',
+    'Your scope is the ENTIRE project dossier, not only the active document.',
+    '',
+    'Active artifact:',
+    `- ${activeArtifact.artifact_id}${activeArtifact.ctd_section ? ` ${activeArtifact.ctd_section}` : ''} ${activeArtifact.title}`,
+    '',
+    `Project dossier (${projectArtifacts.length} artifact${projectArtifacts.length === 1 ? '' : 's'}):`,
+    dossierManifest || '- (no sibling artifacts indexed)',
+    renderPriorCitationsBlock(priorCitations),
+    renderHistoryBlock(history),
+    intentBlock,
+    '',
+    '--- CROSS-DOSSIER EVIDENCE ---',
+    evidenceLines.join('\n\n') || '(no retrieved evidence — answer "I cannot verify that from the dossier")',
+    '--- END EVIDENCE ---',
+    '',
+    'Output contract — emit the following sections in order, EXACTLY one of',
+    'each, with no other text outside the markers:',
+    '',
+    '%%ANSWER%%',
+    '<prose answer with [SRC-n] inline citations>',
+    intent === 'rewrite' ? '%%REWRITE%%' : '',
+    intent === 'rewrite' ? '<the proposed new section content with [SRC-n] citations>' : '',
+    '%%STRUCTURE%%',
+    '{',
+    '  "intent": "provenance" | "cross_evidence" | "rewrite" | "general",',
+    '  "citations": [',
+    '    { "ref": <number>, "relationship": "supports" | "contradicts" | "gap" }',
+    '  ]' + (intent === 'rewrite' ? ',' : ''),
+    intent === 'rewrite'
+      ? '  "rewriteMetadata": { "sectionCode": <string|null>, "targetAgency": <string|null>, "rationale": <string> }'
+      : '',
+    '}',
+    '%%END%%',
+    '',
+    'Rules:',
+    '1. Every factual claim must be cited inline with [SRC-n].',
+    '2. If two sources disagree, cite both with supports / contradicts labels.',
+    '3. If the dossier is silent, say so and use relationship="gap".',
+    '4. Never infer from training data — if it isn\'t in the evidence, say so.',
+    '5. Resolve coreferences ("that source", "the EU cohort") against the conversation history.',
+    '6. Sentence case. No exclamations. Numbers over adjectives. Second person, direct.',
+    '7. The %%STRUCTURE%% block is JSON — no markdown fences, no commentary inside it.',
+  ]
+    .filter(line => line !== '')
+    .join('\n');
+}
+
+/**
+ * Parse the structure JSON the streaming model emits. Distinct from
+ * parseModelResponse because the streaming format separates the prose
+ * (already streamed) from the metadata (this JSON). We accept slack:
+ * the model occasionally adds trailing commentary or fences and we tolerate it.
+ */
+export function parseStreamingStructure(
+  raw: string,
+  fallbackAnswer: string,
+  fallbackRewriteContent: string
+): {
+  intent: SubmissionChatIntent | null;
+  citations: Array<{ ref: number; relationship: CitationRelationship }>;
+  rewriteMetadata: {
+    sectionCode: string | null;
+    targetAgency: string | null;
+    rationale: string;
+  } | null;
+} {
+  const trimmed = (raw || '').trim();
+  const candidates: string[] = [];
+  const fenceMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenceMatch?.[1]) candidates.push(fenceMatch[1]);
+  candidates.push(trimmed);
+
+  for (const candidate of candidates) {
+    const start = candidate.indexOf('{');
+    const end = candidate.lastIndexOf('}');
+    if (start === -1 || end === -1 || end <= start) continue;
+    try {
+      const parsed = JSON.parse(candidate.slice(start, end + 1));
+      const citations = Array.isArray(parsed?.citations)
+        ? parsed.citations
+            .map((c: any) => ({
+              ref: Number(c?.ref),
+              relationship: normalizeRelationship(c?.relationship),
+            }))
+            .filter((c: any) => Number.isFinite(c.ref))
+        : [];
+      const rm = parsed?.rewriteMetadata;
+      const rewriteMetadata =
+        rm && typeof rm === 'object'
+          ? {
+              sectionCode:
+                typeof rm.sectionCode === 'string' && rm.sectionCode.trim()
+                  ? rm.sectionCode
+                  : null,
+              targetAgency:
+                typeof rm.targetAgency === 'string' && rm.targetAgency.trim()
+                  ? String(rm.targetAgency).toUpperCase()
+                  : null,
+              rationale: typeof rm.rationale === 'string' ? rm.rationale : '',
+            }
+          : null;
+      return {
+        intent: normalizeIntent(parsed?.intent),
+        citations,
+        rewriteMetadata,
+      };
+    } catch {
+      /* try the next candidate */
+    }
+  }
+  return { intent: null, citations: [], rewriteMetadata: null };
 }
 
 /**
