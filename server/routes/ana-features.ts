@@ -2725,6 +2725,94 @@ router.get(
   }
 );
 
+// Citation engine health (org-scoped status + aggregates)
+router.get(
+  '/citations/health',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getCitationHealth } = await import(
+        '../services/ana/citation-health'
+      );
+      const result = await getCitationHealth(organizationId);
+      return res.json(result);
+    } catch (err: any) {
+      console.error('[AnA citations health] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to load citation health',
+        code: 'CITATION_HEALTH_ERROR',
+      });
+    }
+  }
+);
+
+const trendQuerySchema = z.object({
+  windowDays: z.coerce.number().int().min(1).max(365).optional(),
+  bucket: z.enum(['day', 'week', 'month']).optional(),
+});
+
+router.get(
+  '/citations/projects/:projectId/trends',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const queryParsed = trendQuerySchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      return res.status(400).json({
+        error: 'Invalid query',
+        code: 'INVALID_REQUEST',
+        details: queryParsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getProjectCitationTrend } = await import(
+        '../services/ana/citation-trends'
+      );
+      const result = await getProjectCitationTrend(
+        projectIdParsed.data,
+        organizationId,
+        {
+          windowDays: queryParsed.data.windowDays,
+          bucket: queryParsed.data.bucket,
+        }
+      );
+      return res.json(result);
+    } catch (err: any) {
+      console.error('[AnA citations trends] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to load trends',
+        code: 'CITATION_TRENDS_ERROR',
+      });
+    }
+  }
+);
+
 router.get(
   '/citations/projects/:projectId/graph',
   authenticateToken,
