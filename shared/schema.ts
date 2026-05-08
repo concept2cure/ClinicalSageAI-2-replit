@@ -18393,3 +18393,62 @@ export const guidanceAlerts = pgTable(
 
 export type GuidanceReferenceIndexRow = InferSelectModel<typeof guidanceReferenceIndex>;
 export type GuidanceAlertRow = InferSelectModel<typeof guidanceAlerts>;
+
+// ═══════════════════════════════════════════════════════════════════════
+// Cross-artifact consistency alerts
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * One row per dossier-internal contradiction surfaced by
+ * cross-artifact-consistency-scanner. Idempotent re-scans via the unique
+ * partial index on (project, artifactA, artifactB, sentenceContentHash)
+ * WHERE status IN ('open','acknowledged') — see the migration.
+ */
+export const crossArtifactConsistencyAlerts = pgTable(
+  'cross_artifact_consistency_alerts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    organizationId: integer('organization_id').notNull(),
+    projectId: integer('project_id').notNull(),
+    artifactAId: text('artifact_a_id').notNull(),
+    artifactAPk: integer('artifact_a_pk').notNull(),
+    artifactACtdSection: text('artifact_a_ctd_section'),
+    sentenceContentHash: text('sentence_content_hash').notNull(),
+    sentenceText: text('sentence_text').notNull(),
+    artifactBId: text('artifact_b_id').notNull(),
+    artifactBPk: integer('artifact_b_pk').notNull(),
+    artifactBCtdSection: text('artifact_b_ctd_section'),
+    contradictingPassage: text('contradicting_passage'),
+    severity: text('severity').notNull(),
+    severityRuleId: text('severity_rule_id'),
+    status: text('status').notNull().default('open'),
+    acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
+    acknowledgedBy: integer('acknowledged_by'),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    resolvedBy: integer('resolved_by'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  table => ({
+    orgIdx: index('idx_consistency_alerts_org').on(table.organizationId),
+    projectIdx: index('idx_consistency_alerts_project').on(
+      table.organizationId,
+      table.projectId
+    ),
+    artifactAIdx: index('idx_consistency_alerts_artifact_a').on(
+      table.artifactAId
+    ),
+    artifactBIdx: index('idx_consistency_alerts_artifact_b').on(
+      table.artifactBId
+    ),
+  })
+);
+
+export type CrossArtifactConsistencyAlertRow = InferSelectModel<
+  typeof crossArtifactConsistencyAlerts
+>;

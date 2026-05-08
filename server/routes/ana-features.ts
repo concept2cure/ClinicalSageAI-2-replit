@@ -2725,6 +2725,254 @@ router.get(
   }
 );
 
+// ─── Cross-artifact consistency scanner ───────────────────────────────
+//
+// Walks the project's contradicts edges from the citation engine and
+// persists each as an alert in cross_artifact_consistency_alerts. Same
+// pattern as the guidance scanner, but for dossier-internal
+// contradictions surfaced by the citation engine.
+
+const consistencyScanRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 5 * 60 * 1000,
+    maxRequests: 4,
+    message: 'Consistency scans are limited to 4 per 5 minutes.',
+  },
+});
+
+router.post(
+  '/consistency/projects/:projectId/scan',
+  authenticateToken,
+  requireOrganizationContext,
+  consistencyScanRateLimiter,
+  async (req: Request, res: Response) => {
+    const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
+    if (!projectIdParsed.success) {
+      return res.status(400).json({
+        error: 'projectId must be a positive integer',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { scanProjectConsistency } = await import(
+        '../services/intelligence/cross-artifact-consistency-scanner'
+      );
+      const result = await scanProjectConsistency(
+        projectIdParsed.data,
+        organizationId
+      );
+      return res.json(result);
+    } catch (err: any) {
+      console.error('[AnA consistency scan] failed:', err?.message || err);
+      return res
+        .status(500)
+        .json({ error: 'Failed to scan project consistency', code: 'CONSISTENCY_SCAN_ERROR' });
+    }
+  }
+);
+
+const consistencyAlertsQuerySchema = z.object({
+  projectId: z.coerce.number().int().positive().optional(),
+  artifactId: z.string().max(128).optional(),
+  status: z.enum(['open', 'acknowledged', 'resolved']).optional(),
+  severity: z.enum(['critical', 'major', 'minor', 'info']).optional(),
+  limit: z.coerce.number().int().min(1).max(200).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
+
+router.get(
+  '/consistency/alerts',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = consistencyAlertsQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid query',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { listConsistencyAlerts } = await import(
+        '../services/intelligence/cross-artifact-consistency-scanner'
+      );
+      const { rows, total } = await listConsistencyAlerts({
+        organizationId,
+        projectId: parsed.data.projectId,
+        artifactId: parsed.data.artifactId,
+        status: parsed.data.status,
+        severity: parsed.data.severity,
+        limit: parsed.data.limit,
+        offset: parsed.data.offset,
+      });
+      return res.json({ organizationId, total, alerts: rows });
+    } catch (err: any) {
+      console.error(
+        '[AnA consistency alerts list] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to list consistency alerts',
+        code: 'CONSISTENCY_ALERTS_ERROR',
+      });
+    }
+  }
+);
+
+router.get(
+  '/consistency/alerts/summary',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { getConsistencyAlertsSummary } = await import(
+        '../services/intelligence/cross-artifact-consistency-scanner'
+      );
+      const result = await getConsistencyAlertsSummary(organizationId);
+      return res.json(result);
+    } catch (err: any) {
+      console.error(
+        '[AnA consistency summary] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to load consistency summary',
+        code: 'CONSISTENCY_SUMMARY_ERROR',
+      });
+    }
+  }
+);
+
+router.post(
+  '/consistency/alerts/:alertId/acknowledge',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const alertId = String(req.params.alertId || '');
+    if (!/^[0-9a-f-]{36}$/i.test(alertId)) {
+      return res.status(400).json({
+        error: 'alertId must be a uuid',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { acknowledgeConsistencyAlert } = await import(
+        '../services/intelligence/cross-artifact-consistency-scanner'
+      );
+      const result = await acknowledgeConsistencyAlert(
+        alertId,
+        organizationId,
+        userId
+      );
+      if (!result.ok) {
+        return res.status(404).json({
+          error: 'Alert not found',
+          code: 'CONSISTENCY_ALERT_NOT_FOUND',
+        });
+      }
+      return res.json({ ok: true, alert: result.row });
+    } catch (err: any) {
+      console.error(
+        '[AnA consistency ack] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to acknowledge alert',
+        code: 'CONSISTENCY_ALERT_ACK_ERROR',
+      });
+    }
+  }
+);
+
+router.post(
+  '/consistency/alerts/:alertId/resolve',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const alertId = String(req.params.alertId || '');
+    if (!/^[0-9a-f-]{36}$/i.test(alertId)) {
+      return res.status(400).json({
+        error: 'alertId must be a uuid',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { resolveConsistencyAlert } = await import(
+        '../services/intelligence/cross-artifact-consistency-scanner'
+      );
+      const result = await resolveConsistencyAlert(
+        alertId,
+        organizationId,
+        userId
+      );
+      if (!result.ok) {
+        return res.status(404).json({
+          error: 'Alert not found',
+          code: 'CONSISTENCY_ALERT_NOT_FOUND',
+        });
+      }
+      return res.json({ ok: true, alert: result.row });
+    } catch (err: any) {
+      console.error(
+        '[AnA consistency resolve] failed:',
+        err?.message || err
+      );
+      return res.status(500).json({
+        error: 'Failed to resolve alert',
+        code: 'CONSISTENCY_ALERT_RESOLVE_ERROR',
+      });
+    }
+  }
+);
+
 // ─── Guidance Change Impact Scanner (Feature 2.6) ──────────────────────
 //
 // Detects when a regulatory guidance document's version changes and
