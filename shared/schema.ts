@@ -18314,3 +18314,82 @@ export const evidenceChainRecords = pgTable('evidence_chain_records', {
 }));
 
 export type EvidenceChainRecord = InferSelectModel<typeof evidenceChainRecords>;
+
+// ═══════════════════════════════════════════════════════════════════════
+// Guidance Change Impact Scanner (Feature 2.6)
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Tracks the current version of every regulatory guidance document AnA
+ * can detect changes against. When a new version is upserted, the row's
+ * previous current_version becomes the "prev" reference for any alerts
+ * that fire on the change.
+ */
+export const guidanceReferenceIndex = pgTable(
+  'guidance_reference_index',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    guidanceCode: text('guidance_code').notNull().unique(),
+    authority: text('authority').notNull(),
+    currentVersion: text('current_version').notNull(),
+    currentVersionAt: timestamp('current_version_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    sourceUrl: text('source_url'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  table => ({
+    authorityIdx: index('idx_guidance_reference_authority').on(table.authority),
+  })
+);
+
+/**
+ * Section-level impact alert produced by the guidance-impact-scanner
+ * when an artifact's CTD section is mapped (via gap-classifier rules
+ * or the IND section registry) to a guidance whose version moved.
+ */
+export const guidanceAlerts = pgTable(
+  'guidance_alerts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    organizationId: integer('organization_id').notNull(),
+    projectId: integer('project_id').notNull(),
+    artifactId: text('artifact_id').notNull(),
+    artifactPk: integer('artifact_pk').notNull(),
+    guidanceCode: text('guidance_code').notNull(),
+    guidanceAuthority: text('guidance_authority').notNull(),
+    prevVersion: text('prev_version'),
+    newVersion: text('new_version').notNull(),
+    severity: text('severity').notNull(),
+    affectedSections: jsonb('affected_sections').notNull(),
+    status: text('status').notNull().default('open'),
+    acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
+    acknowledgedBy: integer('acknowledged_by'),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    resolvedBy: integer('resolved_by'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  table => ({
+    orgIdx: index('idx_guidance_alerts_org').on(table.organizationId),
+    projectIdx: index('idx_guidance_alerts_project').on(
+      table.organizationId,
+      table.projectId
+    ),
+    artifactIdx: index('idx_guidance_alerts_artifact').on(table.artifactId),
+  })
+);
+
+export type GuidanceReferenceIndexRow = InferSelectModel<typeof guidanceReferenceIndex>;
+export type GuidanceAlertRow = InferSelectModel<typeof guidanceAlerts>;

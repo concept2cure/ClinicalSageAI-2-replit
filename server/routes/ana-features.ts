@@ -2725,6 +2725,307 @@ router.get(
   }
 );
 
+// ─── Guidance Change Impact Scanner (Feature 2.6) ──────────────────────
+//
+// Detects when a regulatory guidance document's version changes and
+// flags every artifact whose CTD section is mapped to it via the gap-
+// classifier rules or IND section registry.
+
+const guidanceAuthorityEnum = z.enum([
+  'ICH',
+  'FDA',
+  'EMA',
+  'PMDA',
+  'HC',
+  'MHRA',
+  'ICH-MULTIREGIONAL',
+]);
+
+const guidanceUpsertSchema = z.object({
+  guidanceCode: z.string().min(1).max(128),
+  authority: guidanceAuthorityEnum,
+  newVersion: z.string().min(1).max(64),
+  sourceUrl: z.string().url().max(500).nullable().optional(),
+  metadata: z.record(z.unknown()).nullable().optional(),
+  /** When set, also run the scan scoped to this org. */
+  scanOrganizationId: z.number().int().positive().optional(),
+});
+
+const guidanceScanRateLimiter = createRateLimiter({
+  api: {
+    windowMs: 60 * 1000,
+    maxRequests: 6,
+    message: 'Guidance scans are limited to 6 per minute.',
+  },
+});
+
+router.post(
+  '/guidance/upsert-version',
+  authenticateToken,
+  requireOrganizationContext,
+  guidanceScanRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = guidanceUpsertSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const callerOrgId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!callerOrgId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    // Cross-org scans are intentionally blocked at the route layer:
+    // the caller can only scan their own org. (Global / cross-tenant
+    // scans are an admin-only path that the system scheduler runs.)
+    const scanOrg =
+      typeof parsed.data.scanOrganizationId === 'number'
+        ? parsed.data.scanOrganizationId
+        : callerOrgId;
+    if (scanOrg !== callerOrgId) {
+      return res.status(403).json({
+        error: 'Cannot scan another organization',
+        code: 'CROSS_TENANT_BLOCKED',
+      });
+    }
+    try {
+      const { ingestGuidanceUpdate } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const result = await ingestGuidanceUpdate({
+        guidanceCode: parsed.data.guidanceCode,
+        authority: parsed.data.authority,
+        newVersion: parsed.data.newVersion,
+        sourceUrl: parsed.data.sourceUrl ?? null,
+        metadata: parsed.data.metadata ?? null,
+        organizationId: scanOrg,
+      });
+      return res.json(result);
+    } catch (err: any) {
+      const code = err?.code;
+      if (code === 'INVALID_REQUEST') {
+        return res.status(400).json({ error: err.message, code });
+      }
+      console.error(
+        '[AnA guidance upsert-version] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to upsert guidance version', code: 'GUIDANCE_UPSERT_ERROR' });
+    }
+  }
+);
+
+const guidanceManualScanSchema = z.object({
+  guidanceCode: z.string().min(1).max(128),
+  authority: guidanceAuthorityEnum,
+  prevVersion: z.string().max(64).nullable().optional(),
+  newVersion: z.string().min(1).max(64),
+});
+
+router.post(
+  '/guidance/scan',
+  authenticateToken,
+  requireOrganizationContext,
+  guidanceScanRateLimiter,
+  async (req: Request, res: Response) => {
+    const parsed = guidanceManualScanSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { scanArtifactsForGuidanceChange } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const result = await scanArtifactsForGuidanceChange({
+        guidanceCode: parsed.data.guidanceCode,
+        prevVersion: parsed.data.prevVersion ?? null,
+        newVersion: parsed.data.newVersion,
+        authority: parsed.data.authority,
+        organizationId,
+      });
+      return res.json(result);
+    } catch (err: any) {
+      console.error('[AnA guidance scan] failed:', err?.message || err);
+      return res
+        .status(500)
+        .json({ error: 'Failed to scan guidance change', code: 'GUIDANCE_SCAN_ERROR' });
+    }
+  }
+);
+
+const guidanceAlertsQuerySchema = z.object({
+  projectId: z.coerce.number().int().positive().optional(),
+  artifactId: z.string().max(128).optional(),
+  status: z
+    .enum(['open', 'acknowledged', 'resolved'])
+    .optional(),
+  severity: z.enum(['critical', 'major', 'minor', 'info']).optional(),
+  limit: z.coerce.number().int().min(1).max(200).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
+
+router.get(
+  '/guidance/alerts',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const parsed = guidanceAlertsQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid query',
+        code: 'INVALID_REQUEST',
+        details: parsed.error.flatten(),
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { listGuidanceAlerts } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const { rows, total } = await listGuidanceAlerts({
+        organizationId,
+        projectId: parsed.data.projectId,
+        artifactId: parsed.data.artifactId,
+        status: parsed.data.status,
+        severity: parsed.data.severity,
+        limit: parsed.data.limit,
+        offset: parsed.data.offset,
+      });
+      return res.json({
+        organizationId,
+        total,
+        alerts: rows,
+      });
+    } catch (err: any) {
+      console.error(
+        '[AnA guidance alerts list] failed:',
+        err?.message || err
+      );
+      return res
+        .status(500)
+        .json({ error: 'Failed to list guidance alerts', code: 'GUIDANCE_ALERTS_ERROR' });
+    }
+  }
+);
+
+router.post(
+  '/guidance/alerts/:alertId/acknowledge',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const alertId = String(req.params.alertId || '');
+    if (!/^[0-9a-f-]{36}$/i.test(alertId)) {
+      return res.status(400).json({
+        error: 'alertId must be a uuid',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { acknowledgeGuidanceAlert } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const result = await acknowledgeGuidanceAlert(alertId, organizationId, userId);
+      if (!result.ok) {
+        return res.status(404).json({
+          error: 'Alert not found',
+          code: 'GUIDANCE_ALERT_NOT_FOUND',
+        });
+      }
+      return res.json({ ok: true, alert: result.row });
+    } catch (err: any) {
+      console.error('[AnA guidance ack] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to acknowledge alert',
+        code: 'GUIDANCE_ALERT_ACK_ERROR',
+      });
+    }
+  }
+);
+
+router.post(
+  '/guidance/alerts/:alertId/resolve',
+  authenticateToken,
+  requireOrganizationContext,
+  async (req: Request, res: Response) => {
+    const alertId = String(req.params.alertId || '');
+    if (!/^[0-9a-f-]{36}$/i.test(alertId)) {
+      return res.status(400).json({
+        error: 'alertId must be a uuid',
+        code: 'INVALID_REQUEST',
+      });
+    }
+    const organizationId =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).tenantId ||
+      (req as any).organizationId;
+    const userId = (req as any).userId || (req as any).user?.id || null;
+    if (!organizationId) {
+      return res
+        .status(401)
+        .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    try {
+      const { resolveGuidanceAlert } = await import(
+        '../services/intelligence/guidance-impact-scanner'
+      );
+      const result = await resolveGuidanceAlert(alertId, organizationId, userId);
+      if (!result.ok) {
+        return res.status(404).json({
+          error: 'Alert not found',
+          code: 'GUIDANCE_ALERT_NOT_FOUND',
+        });
+      }
+      return res.json({ ok: true, alert: result.row });
+    } catch (err: any) {
+      console.error('[AnA guidance resolve] failed:', err?.message || err);
+      return res.status(500).json({
+        error: 'Failed to resolve alert',
+        code: 'GUIDANCE_ALERT_RESOLVE_ERROR',
+      });
+    }
+  }
+);
+
 // Document-Embedded Audit Ledger — export an artifact as .docx with the
 // AnALedger XML embedded as a custom XML part (Open XML customXml/).
 const docxExportSchema = z.object({
