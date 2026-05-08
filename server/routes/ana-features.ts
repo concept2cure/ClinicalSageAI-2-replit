@@ -10,7 +10,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { authenticateToken } from '../middleware/auth';
-import { requireOrganizationContext } from '../middleware/tenantContext';
+import { requireOrganizationContext, requireTenantContext } from '../middleware/tenantContext';
 import { createRateLimiter } from '../middleware/rateLimiter';
 import { db } from '../db';
 import { requestDb } from '../db/requestDb';
@@ -1379,7 +1379,11 @@ const gapAnalysisRequestSchema = z.object({
 router.post(
   '/gap-analysis',
   authenticateToken,
-  requireOrganizationContext,
+  // requireTenantContext (heavier than requireOrganizationContext) sets up
+  // req.dbClient with app.current_tenant_id loaded — needed because this
+  // route persists a row via requestDb(req) and the RLS policy from 0021
+  // requires the session var to accept it once RLS_ENFORCE=on.
+  requireTenantContext,
   analysisRateLimiter,
   async (req: Request, res: Response) => {
     try {

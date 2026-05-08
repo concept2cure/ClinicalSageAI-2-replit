@@ -162,6 +162,23 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:${{ env.TEST_DB_PASSWORD }}@localhost:5432/concept2cure-ri_test
 
+      - name: Smoke — apply RLS rollout migrations (0019/0020/0021)
+        # These migrations target the production schema. On a fresh test DB
+        # they each execute but find nothing to mutate (no tenant-keyed
+        # tables), so they prove the SQL parses and runs cleanly without
+        # changing behavior. This catches DO-block syntax bugs before
+        # staging/prod, where a botched migration would be far costlier.
+        run: |
+          for f in \
+            migrations/0019_tenant_column_audit.sql \
+            migrations/0020_coerce_text_tenant_columns.sql \
+            migrations/0021_enable_rls_everywhere.sql; do
+            echo "Applying $f"
+            PAGER=cat psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
+          done
+        env:
+          DATABASE_URL: postgresql://postgres:${{ env.TEST_DB_PASSWORD }}@localhost:5432/concept2cure-ri_test
+
       - name: Run integration tests
         run: npm test -- --passWithNoTests
         env:
