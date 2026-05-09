@@ -241,7 +241,11 @@ describe('Stage 12 — AI Entry Point Classification', () => {
   describe('Legacy paths (exist but not in beta shell — monitor only)', () => {
     const legacyFiles = [
       'client/src/components/ai/AnAAssistant.jsx',
-      'client/src/components/coauthor/LumenChatPane.jsx',
+      // 'client/src/components/coauthor/LumenChatPane.jsx' — deleted in 7a144fd
+      // ("chore: delete all non-Claude-Design UI under client/src/") per the
+      // CLAUDE.md design-system mandate. Removed from this list since the
+      // file no longer exists; the legacy-path tracker still serves the
+      // remaining files.
       'client/src/services/openaiService.js',
     ];
 
