@@ -45,6 +45,20 @@ vi.mock('../../server/middleware/tenantContext', () => ({
     _req.organizationId = 'test-org-123';
     next();
   },
+  // requireTenantContext is the heavier middleware that also sets up
+  // req.dbClient for RLS-aware queries. The /gap-analysis route adopted
+  // it after the RLS rollout (commit 473f95d) so requestDb(req) hits the
+  // request-scoped client. For unit tests we just need the tenant
+  // context attached — the actual dbClient isn't used because the test
+  // mocks the db module above.
+  requireTenantContext: (_req: any, _res: any, next: any) => {
+    _req.tenantContext = { organizationId: 'test-org-123' };
+    _req.organizationId = 'test-org-123';
+    _req.user = { id: 1, tenantId: 1, role: 'member' };
+    _req.userId = 1;
+    _req.tenantId = 1;
+    next();
+  },
 }));
 
 // Mock rate limiter — pass through
