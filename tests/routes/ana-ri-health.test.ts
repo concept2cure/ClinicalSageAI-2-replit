@@ -201,6 +201,15 @@ function mockCommonDeps(options: {
   }));
   vi.doMock('../../server/services/ana-ri/chat-context-builder.js', () => ({
     buildAuthoringContextBlock: vi.fn(() => ''),
+    // buildRouteContextBlock and buildChatContext were added to the
+    // module after this mock was originally written; the stream
+    // handler calls buildRouteContextBlock during orchestration setup,
+    // and without a mock impl it threw "No 'buildRouteContextBlock'
+    // export defined on the mock", which the route's catch-all
+    // returned to the SSE client as {type:error} — surfacing as the
+    // /stream-in-deterministic-mode test failure.
+    buildRouteContextBlock: vi.fn(() => ''),
+    buildChatContext: vi.fn(async () => ({ block: '', sources: [] })),
     resolveProjectIdFromBody: vi.fn((body: any) => body?.project_id || body?.context?.projectId),
     prefetchRouteIntelligenceContext: vi.fn(async () => ({
       projectIdNumber: null,
