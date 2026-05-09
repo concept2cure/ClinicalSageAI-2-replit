@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMockRequest, createMockResponse } from '../setup';
 
-const { mockGenerate, mockValidate } = vi.hoisted(() => ({
+const { mockGenerate, mockValidate, mockGovernance } = vi.hoisted(() => ({
   mockGenerate: vi.fn(async () => ({
     buffer: Buffer.from('zip-bytes'),
     filename: 'submission.zip',
@@ -13,11 +13,21 @@ const { mockGenerate, mockValidate } = vi.hoisted(() => ({
     },
   })),
   mockValidate: vi.fn(async () => ({ valid: true, errors: [] })),
+  // The handler also calls registerExportGovernanceQuick before res.send;
+  // it returns falsy when the real DB writeback fails, which then short-
+  // circuits to 500. Tests need a passing mock so res.send actually
+  // runs. Returning a truthy artifact id is sufficient (the handler
+  // checks for falsy only).
+  mockGovernance: vi.fn(async () => ({ artifactId: 'art_123' })),
 }));
 
 vi.mock('../../server/services/ectdExportService', () => ({
   generateEctdPackage: mockGenerate,
   validateEctdPackage: mockValidate,
+}));
+
+vi.mock('../../server/services/compute/exportGovernance', () => ({
+  registerExportGovernanceQuick: mockGovernance,
 }));
 
 import ectdExportRoutes from '../../server/routes/ectd-export';

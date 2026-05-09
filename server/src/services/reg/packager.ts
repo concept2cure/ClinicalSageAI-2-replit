@@ -60,8 +60,15 @@ export async function packageSequenceZip(seqId: string, region: string) {
   const indexXml = await buildIndexXml(seqId, region);
   archive.append(Buffer.from(indexXml, 'utf-8'), { name: 'index.xml' });
 
+  // Register the 'close' listener BEFORE finalize() to avoid the race
+  // where the file output stream closes before the listener attaches.
+  // Same fix as buildZipBuffer in cerv2-export-routes.ts (PR #488).
+  const closed = new Promise<void>((resolve, reject) => {
+    output.on('close', () => resolve());
+    output.on('error', reject);
+  });
   await archive.finalize();
-  await new Promise(res => output.on('close', res));
+  await closed;
 
   return outPath;
 }
